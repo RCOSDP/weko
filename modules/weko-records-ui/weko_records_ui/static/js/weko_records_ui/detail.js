@@ -80,15 +80,12 @@ require([
     let post_data = {
       workflow_id: workflow_id,
       flow_id: $('#flow_' + workflow_id).data('flow-id'),
-      itemtype_id: $('#item_type_' + workflow_id).data('itemtype-id')
+      itemtype_id: $('#item_type_' + workflow_id).data('itemtype-id'),
+      related_title : itemTitle
     };
     if (typeof community !== 'undefined' && community !== "") {
       post_uri = post_uri + "?community=" + community;
     }
-    if (typeof itemTitle !== 'undefined' && itemTitle !== "") {
-        post_uri = post_uri + "?itemtitle=" + itemTitle;
-    }
-
     let record_id = $('#recid').text();
     let file_name = $('#file_name').text();
     $.ajax({

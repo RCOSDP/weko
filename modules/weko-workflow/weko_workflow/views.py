@@ -56,7 +56,8 @@ from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
 from weko_records_ui.utils import get_list_licence
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from werkzeug.utils import import_string
 
@@ -289,12 +290,6 @@ def init_activity():
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         url = url_for('weko_workflow.display_activity',
                       activity_id=rtn.activity_id, community=comm.id)
-
-    if 'itemtitle' in getargs and request.args.get('itemtitle') != 'undefined':
-        item_title = request.args.get('itemtitle')
-        url = url_for('weko_workflow.display_activity',
-                      activity_id=rtn.activity_id, itemtitle=item_title)
-
     return jsonify(code=0, msg='success',
                    data={'redirect': url})
 
@@ -348,14 +343,6 @@ def display_activity(activity_id="0"):
         activity_id = activity_id.split("?")[0]
     activity_detail = activity.get_activity_detail(activity_id)
     item = None
-    item_title = ""
-    item_title_data = None
-    if request.method == 'GET':
-        item_title_data = request.args.get("itemtitle")
-    elif request.method == 'POST':
-        item_title_data = request.form.get('title')
-    if item_title_data:
-        item_title = item_title_data.replace("_", " ")
 
     if activity_detail and activity_detail.item_id:
         try:
@@ -446,7 +433,7 @@ def display_activity(activity_id="0"):
     is_auto_set_index_action = False
     application_item_type = False
     title = ""
-    data_type = ""
+    data_type = activity_detail.related_title
     show_autofill_metadata = True
     is_hidden_pubdate_value = False
     position_list = WEKO_USERPROFILES_POSITION_LIST
@@ -498,7 +485,7 @@ def display_activity(activity_id="0"):
                 'updated_json_schema_{}'.format(activity_id)):
             json_schema = (json_schema + "/{}").format(activity_id)
             schema_form = (schema_form + "/{}").format(activity_id)
-        title, data_type = auto_fill_title(item_type_name)
+        title = auto_fill_title(item_type_name)
         show_autofill_metadata = is_show_autofill_metadata(item_type_name)
         is_hidden_pubdate_value = is_hidden_pubdate(item_type_name)
     for step in steps:
@@ -638,7 +625,6 @@ def display_activity(activity_id="0"):
             'WEKO_ITEMS_UI_APPROVAL_MAIL_SUBITEM_KEY'),
         position_list=position_list,
         institute_position_list=institute_position_list,
-        itemTitle=item_title,
         is_enable_item_name_link=is_enable_item_name_link(
             action_endpoint, item_type_name),
         list_license=list_license,
@@ -998,15 +984,11 @@ def next_action(activity_id='0', action_id=0):
                     and action_status == ActionStatusPolicy.ACTION_DONE):
                 # new a usage report here
                 work_activity = WorkActivity()
-                current_item_id = work_activity.get_activity_detail(
-                    activity_id).item_id
-                _workflow = WorkFlow()
-                _workflow_detail = _workflow.get_workflow_by_id(
-                    activity_detail.workflow_id)
-                data_type_name = get_item_type_name(
-                    _workflow_detail.itemtype_id)
+                current_activity = work_activity.get_activity_detail(
+                    activity_id)
+                current_item_id = current_activity.item_id
                 create_usage_report(activity_id, current_item_id,
-                                    data_type_name)
+                                    current_activity.related_title)
 
             activity.update(
                 action_id=next_flow_action[0].action_id,

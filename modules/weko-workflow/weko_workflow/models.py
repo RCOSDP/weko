@@ -751,6 +751,10 @@ class Activity(db.Model, TimestampMixin):
 
     approval2 = db.Column(db.Text, nullable=True)
 
+    approval2 = db.Column(db.Text, nullable=True)
+
+    # Title of JGSS record this activity belong to
+    related_title =db.Column(db.Text, nullable=True)
 
 class ActivityAction(db.Model, TimestampMixin):
     """Define Activety."""

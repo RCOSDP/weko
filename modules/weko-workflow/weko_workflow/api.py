@@ -755,7 +755,7 @@ class WorkActivity(object):
                                 get_item_type_name(activity.get('itemtype_id'))
                             if item_type_name in application_item_types:
                                 action_has_term_of_use = True
-
+            related_title = activity.get('related_title')
             activity_confirm_term_of_use = False if\
                 action_has_term_of_use else True
             db_activity = _Activity(
@@ -773,7 +773,8 @@ class WorkActivity(object):
                 activity_status=ActivityStatusPolicy.ACTIVITY_MAKING,
                 activity_start=datetime.utcnow(),
                 activity_community_id=community_id,
-                activity_confirm_term_of_use=activity_confirm_term_of_use
+                activity_confirm_term_of_use=activity_confirm_term_of_use,
+                related_title = related_title
             )
             db.session.add(db_activity)
         except Exception as ex:
@@ -2066,19 +2067,17 @@ class WorkActivity(object):
                 item_type = get_item_type_name(workflow_detail.itemtype_id)
                 item_type_list = current_app.config[
                     'WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPES_LIST']
-                activity_data_type = current_app.config[
-                    'WEKO_ITEMS_UI_AUTO_FILL_DATA_TYPE_SETTING'].get(item_type)
                 if item_type in item_type_list:
                     usage_application_list["activity_ids"].append(
                         activity.activity_id)
                     usage_application_list["activity_data_type"][
-                        activity.activity_id] = activity_data_type
+                        activity.activity_id] = activity.related_title
                 elif item_type == current_app.config[
                         'WEKO_ITEMS_UI_OUTPUT_REPORT']:
                     output_report_list["activity_ids"].append(
                         activity.activity_id)
                     output_report_list["activity_data_type"][
-                        activity.activity_id] = activity_data_type
+                        activity.activity_id] = activity.related_title
 
         return usage_application_list, output_report_list
 

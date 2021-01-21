@@ -1640,21 +1640,10 @@ function toObject(arr) {
         let userInfoData = $("#user_info_data").val();
         if (userInfoData !== undefined && userInfoData) {
           let titleData = $("#auto_fill_title").val();
-          let dataType = $("#data_type_title").val();
+          let dataType = $("#data_type_title").val() ? $("#data_type_title").val() : "";
           if (!titleData) {
             return;
           }
-          if (!dataType) {
-            dataType = {
-              en: '',
-              ja: ''
-            }
-          } else {
-            dataType = JSON.parse(dataType);
-            dataType['en'] += " - "
-            dataType['ja'] += " - "
-          }
-          let item_tile_key = null;
           titleData = JSON.parse(titleData);
           let userName = JSON.parse(userInfoData).results["subitem_displayname"];
           let titleSubKey = "subitem_item_title";
@@ -1664,24 +1653,22 @@ function toObject(arr) {
             function ([key, value]) {
               if (value && value.type === "array" && value.items) {
                 if (value.items.properties && value.items.properties.hasOwnProperty(titleSubKey)) {
-                  if (userName) {
-                    userName = " - " + userName;
-                  }
                   $scope.item_tile_key = key;
                   let enTitle = {};
-                  enTitle[titleSubKey] = dataType['en'] + titleData['en'] + userName;
-                  enTitle[titleLanguageKey] = "en";
                   let jaTitle = {};
-                  jaTitle[titleSubKey] = dataType['ja'] + titleData['ja'] + userName;
+                  // TitleData and Username are mandatory, dataType either way
+                  enTitle[titleSubKey] = dataType ? [dataType, titleData['en'], userName].join(" - ") : [titleData['en'], userName].join(" - ");
+                  enTitle[titleLanguageKey] = "en";
+                  jaTitle[titleSubKey] = dataType ? [dataType, titleData['ja'], userName].join(" - ") : [titleData['en'], userName].join(" - ");
                   jaTitle[titleLanguageKey] = "ja";
                   recordsVM["invenioRecordsModel"][key] = [jaTitle, enTitle];
                 }
               }
             }
           );
-          if (item_tile_key != null) {
+          if ($scope.item_tile_key != null) {
             // Set read only for title
-            $scope.setFormReadOnly(item_tile_key);
+            $scope.setFormReadOnly($scope.item_tile_key);
           }
           setTimeout(function () {
             let selectionKey = "input[name='" + titleSubKey + "'], select[name='" + titleLanguageKey + "']";
@@ -1721,20 +1708,19 @@ function toObject(arr) {
         if ($scope.isExistingTitleData()) {
           return;
         }
-        let itemTitleElement = $("#item_title");
+        let itemTitleElement = $("#data_type_title");
         if (itemTitleElement !== null && itemTitleElement.val()) {
-          let itemTitle = decodeURI(itemTitleElement.val());
           let titleKey = null;
           let recordsVM = $rootScope["recordsVM"];
           for (let key in recordsVM["invenioRecordsSchema"].properties) {
             let value = recordsVM["invenioRecordsSchema"].properties[key];
-              if (value && value.properties) {
-                if (value.properties.hasOwnProperty("subitem_dataset_usage")) {
-                  titleKey = key;
-                  recordsVM.invenioRecordsModel[key] = {'subitem_dataset_usage': itemTitle};
-                  break;
-                }
+            if (value && value.properties) {
+              if (value.properties.hasOwnProperty("subitem_dataset_usage")) {
+                titleKey = key;
+                recordsVM.invenioRecordsModel[key] = { 'subitem_dataset_usage': itemTitleElement.val() };
+                break;
               }
+            }
           }
           if (titleKey != null) {
             // Set read only for title
@@ -3853,18 +3839,16 @@ function toObject(arr) {
         });
         // Collect en/ja title of selected usage application
 
-        let dataTypeEn = [];
-        let dataTypeJa = [];
+        let dataType = [];
         selectedUsageApplicationIDs.forEach(function (usageID) {
-          dataTypeEn.push($scope.corresponding_usage_data_type[usageID]["en"])
-          dataTypeJa.push($scope.corresponding_usage_data_type[usageID]["ja"])
+          dataType.push($scope.corresponding_usage_data_type[usageID])
         })
         // Set title to current title
         model[$scope.item_tile_key].forEach(function (title) {
           if (title[titleLanguageKey] === "en") {
-            title[titleSubKey] = dataTypeEn.length > 0 ? dataTypeEn.join(",") + " - " + defaultTitleEn : defaultTitleEn
+            title[titleSubKey] = dataType.length > 0 ? [dataType.join(","), defaultTitleEn].join(" - ") : defaultTitleEn
           } else if (title[titleLanguageKey] === "ja") {
-            title[titleSubKey] = dataTypeJa.length > 0 ? dataTypeJa.join(",") + " - " + defaultTitleJa : defaultTitleJa
+            title[titleSubKey] = dataType.length > 0 ? [dataType.join(","), defaultTitleJa].join(" - ") : defaultTitleJa
           }
         });
       }
