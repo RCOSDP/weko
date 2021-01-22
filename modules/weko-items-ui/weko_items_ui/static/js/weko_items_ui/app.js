@@ -3821,8 +3821,13 @@ function toObject(arr) {
 
       $scope.updateTitleForOutputReport = function (){
         // Update title in case of output report
-        let titleData = JSON.parse($("#auto_fill_title").val());
-        let outputReportTitle = JSON.parse($("#out_put_report_title").val());
+        let titleData = $("#auto_fill_title").val();
+        let outputReportTitle = $("#out_put_report_title").val();
+        if (!titleData || !outputReportTitle) {
+          return;
+        }
+        titleData = JSON.parse(titleData);
+        outputReportTitle = JSON.parse(outputReportTitle);
         if (!_.isEqual(titleData, outputReportTitle)) {
           // Only process for output report
           return;

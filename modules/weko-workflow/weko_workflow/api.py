@@ -823,7 +823,6 @@ class WorkActivity(object):
                     pid_type='actid',
                     pid_value=str(activity_id),
                     status=PIDStatus.REGISTERED
-                    # object_type='act', #Workflow Activity Object Type
                 )
                 db_activity.activity_id = action_pid.pid_value
 
@@ -1295,9 +1294,70 @@ class WorkActivity(object):
         else:
             return query
 
-    def filter_conditions(self, conditions, query):
+    @staticmethod
+    def __filter_by_title(query, title):
+        """Filter by title.
+
+        @param query:
+        @param title:
+        @return:
         """
-        Filter based on conditions.
+        if title:
+            query = query.filter(or_(
+                _Activity.title.like(i + '%') for i in title))
+        return query
+
+    @staticmethod
+    def __filter_by_user(query, user):
+        """Filter by user.
+
+        @param query:
+        @param user:
+        @return:
+        """
+        if user:
+            query = query.filter(User.email.in_(user))
+        return query
+
+    @staticmethod
+    def __filter_by_workflow(query, workflow):
+        """Filter by workflow name.
+
+        @param query:
+        @param workflow:
+        @return:
+        """
+        if workflow:
+            query = query.filter(
+                or_(_WorkFlow.flows_name.like(i + '%') for i in workflow))
+        return query
+
+    @staticmethod
+    def __filter_by_status(query, status):
+        """Filter by activity status.
+
+        @param query:
+        @param status:
+        @return:
+        """
+        if status:
+            list_status = []
+            for i in status:
+                if i == 'doing':
+                    list_status.append(
+                        ActivityStatusPolicy.ACTIVITY_MAKING)
+                elif i == 'done':
+                    list_status.append(
+                        ActivityStatusPolicy.ACTIVITY_FINALLY)
+                elif i == 'actioncancel':
+                    list_status.append(
+                        ActivityStatusPolicy.ACTIVITY_CANCEL)
+            query = query.filter(
+                _Activity.activity_status.in_(list_status))
+        return query
+
+    def filter_conditions(self, conditions: dict, query):
+        """Filter based on conditions.
 
         :param conditions:
         :param query:
@@ -1310,29 +1370,15 @@ class WorkActivity(object):
             user = conditions.get('user')
             created_from = conditions.get('createdfrom')
             created_to = conditions.get('createdto')
-
-            if title:
-                query = query.filter(or_(
-                    _Activity.title.like(i + '%') for i in title))
-            if user:
-                query = query.filter(User.email.in_(user))
-            if status:
-                list_status = []
-                for i in status:
-                    if i == 'doing':
-                        list_status.append(
-                            ActivityStatusPolicy.ACTIVITY_MAKING)
-                    elif i == 'done':
-                        list_status.append(
-                            ActivityStatusPolicy.ACTIVITY_FINALLY)
-                    elif i == 'actioncancel':
-                        list_status.append(
-                            ActivityStatusPolicy.ACTIVITY_CANCEL)
-                query = query.filter(
-                    _Activity.activity_status.in_(list_status))
-            if workflow:
-                query = query.filter(
-                    or_(_WorkFlow.flows_name.like(i + '%') for i in workflow))
+            # Filter by title
+            query = self.__filter_by_title(query, title)
+            # Filter by users
+            query = self.__filter_by_user(query, user)
+            # Filter by status
+            query = self.__filter_by_status(query, status)
+            # Filter by workflow name
+            query = self.__filter_by_workflow(query, workflow)
+            # Filter by date
             if created_from or created_to:
                 query = self.filter_by_date(created_from, created_to, query)
         return query
@@ -1516,6 +1562,102 @@ class WorkActivity(object):
 
         return query
 
+    @staticmethod
+    def __common_query_activity_list():
+        """Common query.
+
+        @return:
+        """
+        # select columns
+        common_query = db.session.query(
+            _Activity,
+            User.email,
+            _WorkFlow.flows_name,
+            _Action.action_name
+        )
+
+        # query all activities
+        common_query = common_query \
+            .outerjoin(_Flow).outerjoin(
+                _WorkFlow,
+                and_(
+                    _Activity.workflow_id == _WorkFlow.id,
+                )
+            ).outerjoin(_Action) \
+            .outerjoin(_FlowAction).outerjoin(_FlowActionRole) \
+            .outerjoin(
+                ActivityAction,
+                and_(
+                    ActivityAction.activity_id == _Activity.activity_id,
+                    ActivityAction.action_id == _Activity.action_id,
+                )
+            )
+
+        if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']:
+            common_query = common_query \
+                .outerjoin(
+                    User,
+                    and_(
+                        _Activity.activity_login_user == User.id,
+                    )
+                )
+        else:
+            common_query = common_query \
+                .outerjoin(
+                    User,
+                    and_(
+                        _Activity.activity_update_user == User.id,
+                    )
+                )
+        return common_query
+
+    @staticmethod
+    def __format_activity_data_to_show_on_workflow(activities,
+                                                   action_activities):
+        """Format activity data to show on Workflow.
+
+        @param activities:
+        @param action_activities:
+        """
+        for activity_data, last_update_user, flow_name, action_name \
+                in action_activities:
+            if activity_data.activity_status == \
+                    ActivityStatusPolicy.ACTIVITY_FINALLY:
+                activity_data.StatusDesc = ActionStatusPolicy.describe(
+                    ActionStatusPolicy.ACTION_DONE)
+            elif activity_data.activity_status == \
+                    ActivityStatusPolicy.ACTIVITY_CANCEL:
+                activity_data.StatusDesc = ActionStatusPolicy.describe(
+                    ActionStatusPolicy.ACTION_CANCELED)
+            else:
+                activity_data.StatusDesc = ActionStatusPolicy.describe(
+                    ActionStatusPolicy.ACTION_DOING)
+
+            activity_data.email = last_update_user
+            activity_data.flows_name = flow_name
+            activity_data.action_name = action_name
+
+            # Append to do and action activities into the master list
+            activities.append(activity_data)
+
+    @staticmethod
+    def __get_community_user_ids():
+        """Get community user ids.
+
+        @return:
+        """
+        community_role_name = current_app.config[
+            'WEKO_PERMISSION_ROLE_COMMUNITY']
+        community_users = User.query.outerjoin(userrole).outerjoin(
+            Role) \
+            .filter(community_role_name == Role.name) \
+            .filter(userrole.c.role_id == Role.id) \
+            .filter(User.id == userrole.c.user_id) \
+            .all()
+        community_user_ids = [community_user.id for community_user in
+                              community_users]
+        return community_user_ids
+
     def get_activity_list(self, community_id=None, conditions=None):
         """Get activity list info.
 
@@ -1524,8 +1666,6 @@ class WorkActivity(object):
         with db.session.no_autoflush:
             is_admin, is_community_admin = self.check_current_user_role()
 
-            community_role_name = current_app.config[
-                'WEKO_PERMISSION_ROLE_COMMUNITY']
             tab_list = conditions.get('tab')
 
             # Get tab of page
@@ -1534,51 +1674,10 @@ class WorkActivity(object):
             page = 1
 
             activities = []
-            community_users = User.query.outerjoin(userrole).outerjoin(
-                Role) \
-                .filter(community_role_name == Role.name) \
-                .filter(userrole.c.role_id == Role.id) \
-                .filter(User.id == userrole.c.user_id) \
-                .all()
-            community_user_ids = [
-                community_user.id for community_user in community_users]
 
-            # select columns
-            query_action_activities = db.session.query(
-                _Activity,
-                User.email,
-                _WorkFlow.flows_name,
-                _Action.action_name
-            )
+            # query activities
+            query_action_activities = self.__common_query_activity_list()
 
-            # query all activities
-            query_action_activities = query_action_activities \
-                .outerjoin(_Flow).outerjoin(_WorkFlow).outerjoin(_Action) \
-                .outerjoin(_FlowAction).outerjoin(_FlowActionRole) \
-                .outerjoin(
-                    ActivityAction,
-                    and_(
-                        ActivityAction.activity_id == _Activity.activity_id,
-                        ActivityAction.action_id == _Activity.action_id,
-                    )
-                )
-
-            if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']:
-                query_action_activities = query_action_activities \
-                    .outerjoin(
-                        User,
-                        and_(
-                            _Activity.activity_login_user == User.id,
-                        )
-                    )
-            else:
-                query_action_activities = query_action_activities \
-                    .outerjoin(
-                        User,
-                        and_(
-                            _Activity.activity_update_user == User.id,
-                        )
-                    )
             # query activities by tab is wait
             if tab == WEKO_WORKFLOW_WAIT_TAB:
                 page_wait = conditions.get('pageswait')
@@ -1598,6 +1697,7 @@ class WorkActivity(object):
                 if size_all and size_all[0].isnumeric():
                     size = size_all[0]
                 if not is_admin:
+                    community_user_ids = self.__get_community_user_ids()
                     query_action_activities = self \
                         .query_activities_by_tab_is_all(
                             query_action_activities, is_community_admin,
@@ -1612,6 +1712,7 @@ class WorkActivity(object):
                 if size_todo and size_todo[0].isnumeric():
                     size = size_todo[0]
                 if not is_admin:
+                    community_user_ids = self.__get_community_user_ids()
                     query_action_activities = self\
                         .query_activities_by_tab_is_all(
                             query_action_activities, is_community_admin,
@@ -1630,34 +1731,41 @@ class WorkActivity(object):
             count = query_action_activities.distinct(_Activity.id).count()
             max_page = math.ceil(count / int(size))
             name_param = ''
-            if int(page) > max_page:
-                page = 1
-                name_param = 'pages' + tab
-            offset = int(size) * (int(page) - 1)
-            action_activities = query_action_activities \
-                .distinct(_Activity.id).order_by(asc(_Activity.id)).limit(
-                    size).offset(offset).all()
-            for activity_data, last_update_user, flow_name, action_name \
-                    in action_activities:
-                if activity_data.activity_status == \
-                        ActivityStatusPolicy.ACTIVITY_FINALLY:
-                    activity_data.StatusDesc = ActionStatusPolicy.describe(
-                        ActionStatusPolicy.ACTION_DONE)
-                elif activity_data.activity_status == \
-                        ActivityStatusPolicy.ACTIVITY_CANCEL:
-                    activity_data.StatusDesc = ActionStatusPolicy.describe(
-                        ActionStatusPolicy.ACTION_CANCELED)
-                else:
-                    activity_data.StatusDesc = ActionStatusPolicy.describe(
-                        ActionStatusPolicy.ACTION_DOING)
-
-                activity_data.email = last_update_user
-                activity_data.flows_name = flow_name
-                activity_data.action_name = action_name
-
-                # Append to do and action activities into the master list
-                activities.append(activity_data)
+            if count > 0:
+                name_param, page = self.__get_activity_list_per_page(
+                    activities, max_page, name_param, page,
+                    query_action_activities, size, tab
+                )
             return activities, max_page, size, page, name_param
+
+    def __get_activity_list_per_page(
+        self, activities, max_page, name_param,
+        page, query_action_activities, size, tab
+    ):
+        """Get activity list per page.
+
+        @param activities:
+        @param max_page:
+        @param name_param:
+        @param page:
+        @param query_action_activities:
+        @param size:
+        @param tab:
+        @return:
+        """
+        if int(page) > max_page:
+            page = 1
+            name_param = 'pages' + tab
+        offset = int(size) * (int(page) - 1)
+        # Get activities
+        action_activities = query_action_activities \
+            .distinct(_Activity.id).order_by(asc(_Activity.id)).limit(
+                size).offset(offset).all()
+        if action_activities:
+            # Format activities
+            self.__format_activity_data_to_show_on_workflow(
+                activities, action_activities)
+        return name_param, page
 
     def get_all_activity_list(self, community_id=None):
         """Get all activity list info.
@@ -2376,7 +2484,7 @@ class GetCommunity(object):
     """Get Community Info."""
 
     @classmethod
-    def get_community_by_id(self, community_id):
+    def get_community_by_id(cls, community_id):
         """Get Community by ID."""
         from invenio_communities.models import Community
         c = Community.get(community_id)
