@@ -51,7 +51,7 @@ class ShibUser(object):
         shib_user = ShibbolethUser.query.filter_by(
                 shib_eppn=self.shib_attr['shib_eppn']).one_or_none()
         roles = [x.strip() for x in roles.split(',')]
-        role_ids = [x.id for x in Role.query.filter_by(
+        role_ids = [x.id for x in Role.query.filter(
             Role.name.in_(roles)).all()]
 
         try:
