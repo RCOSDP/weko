@@ -2073,14 +2073,15 @@ class WorkActivity(object):
                     usage_application_list["activity_ids"].append(
                         activity.activity_id)
                     usage_application_list["activity_data_type"][
-                        activity.activity_id] = activity.related_title
+                        activity.activity_id] = activity.extra_info.get(
+                        "related_title") if activity.extra_info else None
                 elif item_type == current_app.config[
-                        'WEKO_ITEMS_UI_OUTPUT_REPORT']:
+                    'WEKO_ITEMS_UI_OUTPUT_REPORT']:
                     output_report_list["activity_ids"].append(
                         activity.activity_id)
                     output_report_list["activity_data_type"][
                         activity.activity_id] = activity.extra_info.get(
-                        "related_title")
+                        "related_title") if activity.extra_info else None
 
         return usage_application_list, output_report_list
 

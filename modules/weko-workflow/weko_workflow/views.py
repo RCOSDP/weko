@@ -433,7 +433,8 @@ def display_activity(activity_id="0"):
     is_auto_set_index_action = False
     application_item_type = False
     title = ""
-    data_type = activity_detail.extra_info.get("related_title")
+    data_type = activity_detail.extra_info.get(
+        "related_title") if activity_detail.extra_info else None
     show_autofill_metadata = True
     is_hidden_pubdate_value = False
     position_list = WEKO_USERPROFILES_POSITION_LIST
@@ -989,7 +990,8 @@ def next_action(activity_id='0', action_id=0):
                 current_item_id = current_activity.item_id
                 create_usage_report(activity_id, current_item_id,
                                     current_activity.extra_info.get(
-                                        "related_title"))
+                                        "related_title") if
+                                    current_activity.extra_info else None)
 
             activity.update(
                 action_id=next_flow_action[0].action_id,
