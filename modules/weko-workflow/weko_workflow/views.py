@@ -67,8 +67,7 @@ from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
 from .models import ActionStatusPolicy, ActivityAction, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import IdentifierHandle, auto_fill_title, check_continue, \
-    create_usage_report, delete_cache_data, filter_condition, \
-    get_account_info, get_actionid, \
+    delete_cache_data, filter_condition, get_account_info, get_actionid, \
     get_activity_id_of_record_without_version, \
     get_application_and_approved_date, get_cache_data, \
     get_identifier_setting, get_term_and_condition_content, \

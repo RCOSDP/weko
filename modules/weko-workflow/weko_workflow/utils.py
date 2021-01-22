@@ -2075,20 +2075,19 @@ def create_usage_report(activity_id):
     """Auto create usage report.
 
     @param activity_id:
-    @param item_id:
-    @param data_type_name:
     @return:
     """
-    work_activity = WorkActivity()
-    item_id = work_activity.get_activity_detail(
-        activity_id).item_id
-    activity_detail = work_activity.get_activity_detail(activity_id)
+    # Get activity
+    activity_detail = WorkActivity().get_activity_detail(activity_id)
+
     _workflow = WorkFlow()
-    _workflow_detail = _workflow.get_workflow_by_id(
-        activity_detail.workflow_id)
+    # Get WF detail
+    _workflow_detail = _workflow.get_workflow_by_id(activity_detail.workflow_id)
+    # Get Item Type name
     data_type_name = get_item_type_name(
         _workflow_detail.itemtype_id)
-    usage_report_workflow = WorkFlow().find_workflow_by_name(
+    # Get usage report WF
+    usage_report_workflow = _workflow.find_workflow_by_name(
         current_app.config['WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME'])
     if not usage_report_workflow:
         return None
@@ -2097,10 +2096,9 @@ def create_usage_report(activity_id):
             workflow_id=usage_report_workflow.id,
             flow_id=usage_report_workflow.flow_id
         )
-        usage_report_activity_id = None
         usage_report_activity_id = create_record_metadata(
-            activity, item_id, activity_id, usage_report_workflow,
-            data_type_name
+            activity, activity_detail.item_id, activity_id,
+            usage_report_workflow, data_type_name
         )
         return usage_report_activity_id
 
