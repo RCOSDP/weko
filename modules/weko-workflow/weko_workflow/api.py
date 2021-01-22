@@ -755,8 +755,10 @@ class WorkActivity(object):
                                 get_item_type_name(activity.get('itemtype_id'))
                             if item_type_name in application_item_types:
                                 action_has_term_of_use = True
-            related_title = activity.get('related_title')
-            activity_confirm_term_of_use = False if\
+            extra_info = dict()
+            if activity.get('related_title'):
+                extra_info["related_title"] = activity["related_title"]
+            activity_confirm_term_of_use = False if \
                 action_has_term_of_use else True
             db_activity = _Activity(
                 # Dummy activity ID, the real one will be updated
@@ -774,7 +776,7 @@ class WorkActivity(object):
                 activity_start=datetime.utcnow(),
                 activity_community_id=community_id,
                 activity_confirm_term_of_use=activity_confirm_term_of_use,
-                related_title = related_title
+                extra_info=extra_info
             )
             db.session.add(db_activity)
         except Exception as ex:
@@ -2077,7 +2079,8 @@ class WorkActivity(object):
                     output_report_list["activity_ids"].append(
                         activity.activity_id)
                     output_report_list["activity_data_type"][
-                        activity.activity_id] = activity.related_title
+                        activity.activity_id] = activity.extra_info.get(
+                        "related_title")
 
         return usage_application_list, output_report_list
 
