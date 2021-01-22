@@ -86,18 +86,25 @@
       <a class="btn dropdown-toggle" data-toggle="dropdown" href="javascript:void(0)"
         aria-expanded="false">{{_('Add Filter')}}<strong class="caret"></strong></a>
       <ul class="dropdown-menu">
-        <li>
-          <a href="javascript:void(0)" class="filter_option" id="workflow" data-name="workflow">{{_('WorkFlow')}}</a>
-        </li>
-        <li>
-          <a href="javascript:void(0)" class="filter_option" id="user" data-name="user">{{_('User')}}</a>
-        </li>
-        <li>
-          <a href="javascript:void(0)" class="filter_option" id="item" data-name="item">{{_('Item')}}</a>
-        </li>
-        <li>
-          <a href="javascript:void(0)" class="filter_option" id="status" data-name="status">{{_('Status')}}</a>
-        </li>
+        {%- for filter in filters %}
+          {%- if filter == "workflow" %}
+            <li>
+              <a href="javascript:void(0)" class="filter_option" id="workflow" data-name="workflow">{{_('WorkFlow')}}</a>
+            </li>
+          {%- elif filter == "user" %}
+            <li>
+              <a href="javascript:void(0)" class="filter_option" id="user" data-name="user">{{_('User')}}</a>
+            </li>
+          {%- elif filter == "item" %}
+            <li>
+              <a href="javascript:void(0)" class="filter_option" id="item" data-name="item">{{_('Item')}}</a>
+            </li>
+          {%- elif filter == "status" %}
+            <li>
+              <a href="javascript:void(0)" class="filter_option" id="status" data-name="status">{{_('Status')}}</a>
+            </li>
+          {%- endif %}
+        {%- endfor %}
       </ul>
     </li>
   </ul>

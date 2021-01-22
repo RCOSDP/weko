@@ -134,7 +134,7 @@ def index():
     send_mail = current_app.config.get('WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL')
     req_per_page = current_app.config.get('WEKO_WORKFLOW_PER_PAGE')
     columns = current_app.config.get('WEKO_WORKFLOW_COLUMNS')
-
+    filters = current_app.config.get('WEKO_WORKFLOW_FILTER_COLUMNS')
     enable_show_activity = current_app.config[
         'WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']
 
@@ -170,6 +170,7 @@ def index():
         options=options,
         item_type=item_type,
         action_status=action_status,
+        filters=filters,
         **ctx
     )
 

@@ -141,6 +141,14 @@ WEKO_WORKFLOW_COLUMNS = [
 ]
 """Work flow activity columns"""
 
+WEKO_WORKFLOW_FILTER_COLUMNS = [
+    'workflow',
+    'user',
+    'item',
+    'status'
+]
+"""Work flow filters"""
+
 WEKO_WORKFLOW_VALIDATION_ENABLE = False
 """Enable validation on Flow List screen"""
 
