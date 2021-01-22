@@ -574,12 +574,16 @@ $(document).ready(function () {
           page_global.table_row_map.schema.properties[row_id] = {
             type: "array",
             title: tmp.title,
+            title_i18n: tmp.title_i18n,
             minItems: tmp.input_minItems,
             maxItems: tmp.input_maxItems,
             items: {
               type: "object",
               properties: {
                 "interim": {
+                  title: tmp.title,
+                  title_i18n: tmp.title_i18n,
+                  format: "checkboxes",
                   type: "array",
                   items: {
                     type: "string",
@@ -591,25 +595,31 @@ $(document).ready(function () {
           }
           page_global.table_row_map.form.push({
             key: row_id,
+            title: tmp.title,
             title_i18n: tmp.title_i18n,
             add: "New",
             style: {add:"btn-success"},
             items: [{
+              title: tmp.title,
+              title_i18n: tmp.title_i18n,
               key: row_id + '[].interim',
               type: "template",
               notitle: true,
-              titleMap: titleMap_tmp
-            }],
-            templateUrl: checkboxTemplate
+              titleMap: titleMap_tmp,
+              templateUrl: checkboxTemplate
+            }]
           });
         } else {
           // 選択式(プルダウン)
           page_global.table_row_map.schema.properties[row_id] = {
             title: tmp.title,                // [interim]は本当の意味を持たない
+            title_i18n: tmp.title_i18n,
             "type": "object",
             "format": "object",
             properties: {
               "interim": {
+                title: tmp.title,
+                title_i18n: tmp.title_i18n,
                 type: "array",
                 format: "checkboxes",
                 items: {
@@ -645,12 +655,15 @@ $(document).ready(function () {
           page_global.table_row_map.schema.properties[row_id] = {
             type: "array",
             title: tmp.title,
+            title_i18n: tmp.title_i18n,
             minItems: tmp.input_minItems,
             maxItems: tmp.input_maxItems,
             items: {
               type: "object",
               properties: {
                 interim: {                  // [interim]は本当の意味を持たない
+                  title: tmp.title,
+                  title_i18n: tmp.title_i18n,
                   type: "string",
                   enum: enum_tmp
                 }
@@ -659,10 +672,13 @@ $(document).ready(function () {
           }
           page_global.table_row_map.form.push({
             key: row_id,
+            title: tmp.title,
             title_i18n: tmp.title_i18n,
             add: "New",
             style: {add:"btn-success"},
             items: [{
+              title: tmp.title,
+              title_i18n: tmp.title_i18n,
               key: row_id+'[].interim',
               type: tmp.input_type,    // radios|select
               notitle: true,
@@ -671,15 +687,30 @@ $(document).ready(function () {
           });
         } else {
           page_global.table_row_map.schema.properties[row_id] = {
-            type: "string",
             title: tmp.title,
-            enum: enum_tmp
+            title_i18n: tmp.title_i18n,
+            type: "object",
+            properties: {
+              "interim": {// [interim]は本当の意味を持たない
+                title: tmp.title,
+                type: "string",
+                enum: enum_tmp,
+                format: tmp.input_type,    // radios|select
+              }
+            }
           }
           page_global.table_row_map.form.push({
-            key: row_id,
+            title: tmp.title,
             title_i18n: tmp.title_i18n,
-            type: tmp.input_type,    // radios|select
-            titleMap: titleMap_tmp
+            items: [{
+              key: row_id + '.interim',
+              type: tmp.input_type,    // radios|select
+              title_i18n: tmp.title_i18n,
+              title: tmp.title,
+              titleMap: titleMap_tmp
+            }],
+            key: row_id,
+            type: "fieldset"
           });
         }
       } else if(tmp.input_type.indexOf('cus_') != -1) {
@@ -989,9 +1020,6 @@ $(document).ready(function () {
       render_object('schema_'+meta_id, product);
     } else if('checkboxes' == $(this).val() || 'radios' == $(this).val()
             || 'select' == $(this).val()){
-      $('#chk_prev_' + meta_id + '_1').addClass('disabled');
-      checkboxMetaId.attr('disabled', true);
-      checkboxMetaId.attr('checked', false);
       checkboxMetaId.prop("checked", isAllowMultiple);
       render_select('schema_'+meta_id, '');
     } else {
@@ -1277,8 +1305,6 @@ $(document).ready(function () {
           }
         } else if('checkboxes' == data.meta_list[row_id].input_type || 'radios' == data.meta_list[row_id].input_type
                 || 'select' == data.meta_list[row_id].input_type){
-          $('#chk_prev_' + row_id + '_1').addClass('disabled');
-          $('#chk_' + row_id + '_1').attr('disabled', true);
           render_select('schema_'+row_id, data.meta_list[row_id].input_value);
         } else {
           render_empty('schema_'+row_id);

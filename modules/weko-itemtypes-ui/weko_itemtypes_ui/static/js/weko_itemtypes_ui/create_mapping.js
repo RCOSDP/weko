@@ -408,6 +408,7 @@ $(document).ready(function () {
         }
         new_sub_info.removeClass('sub_children_list hide').addClass('sub_child_list');
         new_sub_info.appendTo('#sub_children_lists');
+        new_sub_info.find('select[name="sub_itemtype_list"]').change();
       }
     } else {
       let new_sub_info = $('div.sub_children_list').clone(true);
@@ -438,6 +439,7 @@ $(document).ready(function () {
       }
       new_sub_info.removeClass('sub_children_list hide').addClass('sub_child_list');
       new_sub_info.appendTo('#sub_children_lists');
+      new_sub_info.find('select[name="sub_itemtype_list"]').change();
     }
   }
   function make_list_mapping(entries, jpcoar_key) {
@@ -463,15 +465,23 @@ $(document).ready(function () {
     }
   }
   function make_list_itemtype(entries, base_key, base_title) {
-    if(entries['type'] == 'object') {
+    if(entries['type'] == 'object' && entries['properties']) {
       for (let key in entries['properties']) {
         let value = entries['properties'][key];
-        make_list_itemtype(value, [base_key, key].join('.'), [base_title, value['title']].join('.'));
+        if(!value['title']) {
+          page_global.sub_itemtype_list.push([base_key, base_title.slice(1)]);
+        } else {
+          make_list_itemtype(value, [base_key, key].join('.'), [base_title, value['title']].join('.'));
+        }
       }
-    } else if(entries['type'] == 'array') {
+    } else if(entries['type'] == 'array' && entries['items']['properties']) {
       for (let key in entries['items']['properties']) {
-        let value = entries['items']['properties'][key]
-        make_list_itemtype(value, [base_key, key].join('.'), [base_title, value['title']].join('.'));
+        let value = entries['items']['properties'][key];
+        if(!value['title']) {
+          page_global.sub_itemtype_list.push([base_key, base_title.slice(1)]);
+        } else {
+          make_list_itemtype(value, [base_key, key].join('.'), [base_title, value['title']].join('.'));
+        }
       }
     } else {
       page_global.sub_itemtype_list.push([base_key, base_title.slice(1)]);
@@ -748,7 +758,7 @@ $(document).ready(function () {
                 if(sub_sub_itemtype.length > 0 && sub_sub_itemtype != itemtype_key) {
                   cur_obj[sub_jpcoar_arr[idx]] = {'@value':sub_sub_itemtype};
                 } else {
-                  cur_obj[sub_jpcoar_arr[idx]] = '';
+                  cur_obj[sub_jpcoar_arr[idx]] = {'@value': 'interim'};
                 }
               }
             }
