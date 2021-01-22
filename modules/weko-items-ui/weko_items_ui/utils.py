@@ -60,12 +60,14 @@ from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission, check_publish_status
 from weko_records_ui.utils import hide_item_metadata, \
     hide_item_metadata_email_only
+from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
     get_root_item_option, get_sub_item_option
 from weko_user_profiles import UserProfile
 from weko_workflow.api import WorkActivity, WorkFlow
-from weko_workflow.config import WEKO_SERVER_CNRI_HOST_LINK
+from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
+    WEKO_SERVER_CNRI_HOST_LINK
 from weko_workflow.utils import IdentifierHandle
 
 
@@ -901,7 +903,21 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                         new_label = '{}.{}'.format(
                             item_label, properties[key].get('title'))
 
-                    if properties[key]['type'] in ['array', 'object']:
+                    if properties[key].get('format', '') == 'checkboxes':
+                        new_key += '[{}]'
+                        new_label += '[{}]'
+                        if isinstance(data, dict):
+                            data = [data]
+                        if data and data[idx].get(key):
+                            for idx_c in range(len(data[idx][key])):
+                                key_list.append(new_key.format(idx_c))
+                                key_label.append(new_label.format(idx_c))
+                                key_data.append(data[idx][key][idx_c])
+                        else:
+                            key_list.append(new_key.format('0'))
+                            key_label.append(new_label.format('0'))
+                            key_data.append('')
+                    elif properties[key]['type'] in ['array', 'object']:
                         if data and idx < len(data) and data[idx].get(key):
                             m_data = data[idx][key]
                         else:
@@ -998,8 +1014,11 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
             index_ids = path.split('/')
             pos_index = []
             for index_id in index_ids:
-                index = Indexes.get_index(index_id)
-                pos_index.append(index.index_name_english if index else '')
+                index_tree = Indexes.get_index(index_id)
+                index_name = ''
+                if index_tree:
+                    index_name = index_tree.index_name_english.replace('/', '\/')
+                pos_index.append(index_name)
             records.attr_output[recid].append('/'.join(pos_index))
         records.attr_output[recid].extend(
             [''] * (max_path * 2 - len(records.attr_output[recid]))
@@ -1022,9 +1041,23 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
 
         identifier = IdentifierHandle(record.pid_recid.object_uuid)
         doi_value, doi_type = identifier.get_idt_registration_data()
+        doi_type_str = doi_type[0] if doi_type and doi_type[0] else ''
+        doi_str = doi_value[0] if doi_value and doi_value[0] else ''
+        if doi_type_str and doi_str:
+            doi_domain = ''
+            if doi_type_str == WEKO_IMPORT_DOI_TYPE[0]:
+                doi_domain = IDENTIFIER_GRANT_LIST[1][2]
+            elif doi_type_str == WEKO_IMPORT_DOI_TYPE[1]:
+                doi_domain = IDENTIFIER_GRANT_LIST[2][2]
+            elif doi_type_str == WEKO_IMPORT_DOI_TYPE[2]:
+                doi_domain = IDENTIFIER_GRANT_LIST[3][2]
+            elif doi_type_str == WEKO_IMPORT_DOI_TYPE[3]:
+                doi_domain = IDENTIFIER_GRANT_LIST[4][2]
+            if doi_domain and doi_str.startswith(doi_domain):
+                doi_str = doi_str.replace(doi_domain + '/', '', 1)
         records.attr_output[recid].extend([
-            doi_type[0] if doi_type and doi_type[0] else '',
-            doi_value[0] if doi_value and doi_value[0] else ''
+            doi_type_str,
+            doi_str
         ])
 
         records.attr_output[recid].append('')
@@ -1069,7 +1102,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                 if not labels:
                     labels = [item.get('title')]
                 data = records.attr_data[item_key].get(recid) or ['']
-                records.attr_output[recid].extend(data)
+                records.attr_output[recid].extend(
+                    data.get("attribute_value", ""))
 
         new_keys = []
         for key in keys:
