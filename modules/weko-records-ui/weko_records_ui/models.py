@@ -193,7 +193,7 @@ class FilePermission(db.Model):
     @classmethod
     def find_list_permission_by_date(cls, user_id, record_id, file_name,
                                      duration):
-        # .filter(cls.open_date >= duration) \
+        """Find user 's permission by date."""
         list_permission = db.session.query(cls) \
             .filter(
             or_(
