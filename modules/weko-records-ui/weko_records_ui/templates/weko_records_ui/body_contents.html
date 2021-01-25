@@ -216,6 +216,7 @@
 
                       <td>
                         {%- set is_file_name_url = False %}
+                        {%- if file.version_id %}
                           {%- if access_permission and billing_file_access_permission -%}
                         <a class="action-anchor" href="{{file_url}}">
                           <button class="img-rounded action-button button-sm">
@@ -232,6 +233,7 @@
                             {{_('Download')}}
                           </button>
                         </a>
+                        {%- endif -%}
                           {%- endif -%}
                         {% set file_detail_url =  file_details_url + file.filename + '?version_id=' + file.version_id %}
                         {%- if community -%}
@@ -243,6 +245,7 @@
                             {{_('Information')}}
                           </button>
                         </a>
+                        {%- if file.version_id %}
                         <a class="action-anchor preview-button {% if not file.displaytype == 'preview' %} hidden {% endif %}"
                             href="#preview_carousel" data-slide-to="{{ loop.index0 }}">
                           <button class="img-rounded action-button button-sm">
@@ -250,6 +253,7 @@
                             {{_('Preview')}}
                           </button>
                         </a>
+                        {%- endif -%}
                       </td>
                     </tr>
                   </label>
