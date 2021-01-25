@@ -59,7 +59,7 @@
         <div class="carousel-inner">
           <!-- TODO: Check if both previews below can ever both show at the same time. -->
           {% set firstPreviewFileIndex = 0 %}
-          {%- for file in files | sort(attribute='key') if filename and file.key == filename or not filename -%}
+          {%- for file in files | sort(attribute='filename') if filename and file.filename == filename or not filename -%}
             {% if file.is_thumbnail == False %}
               {% if firstPreviewFileIndex == 0 %}
                 {% set firstPreviewFileIndex = loop.index %}
@@ -67,7 +67,7 @@
             {%- if edit_page_prev %}
               {%- set access_permission = True -%}
             {% else %}
-              {%- set access_permission = record | check_file_permission(file.info()) -%}
+              {%- set access_permission = record | check_file_permission(file) -%}
             {%- endif %}
 
             {%- set is_billing_file = False -%}
@@ -78,7 +78,7 @@
             {%- if (is_billing_file and billing_file_permission and access_permission) or (not is_billing_file and access_permission)  -%}
               {%- if 'preview' in file.displaytype -%}
                 {%- set file_preview_url = url_for('invenio_records_ui.recid_file_preview',
-                  pid_value=pid.pid_value, filename=file.key) %}
+                  pid_value=pid.pid_value, filename=file.filename) %}
                 <div class="item {{ 'active' if loop.index == firstPreviewFileIndex else '' }}" id="carousel_prev_item_{{ loop.index }}">
                   <div class="embed-responsive embed-responsive-16by9">
                     {%- if 'audio' in file.mimetype -%}
@@ -92,9 +92,9 @@
                     {%- elif 'text' in file.mimetype -%}
                       <object data="{{file_preview_url}}" type="{{file.mimetype}}"></object>
                     {%- else -%}
-                      {%- if file.preview_able == true -%}
+                      {%- if file | preview_able -%}
                         <iframe class="preview-iframe" id="preview-iframe" width="100%" height="400"
-                          src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.key) }}">
+                          src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.filename) }}">
                         </iframe>
                       {%- else -%}
                         <div class="embed-responsive embed-responsive-16by9 text-center">
@@ -110,7 +110,7 @@
                 <div class="item {{ 'active' if loop.index == 1 else '' }}" id="carousel_pdf_item_{{ loop.index }}">
                   <div class="embed-responsive embed-responsive-16by9">
                     <iframe class="preview-iframe" id="preview-iframe_de" width="100%" height="400"
-                      src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.key) }}">
+                      src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.filename) }}">
                     </iframe>
                   </div>
                 </div>

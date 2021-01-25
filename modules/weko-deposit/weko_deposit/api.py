@@ -1355,38 +1355,89 @@ class WekoRecord(Record):
         :param file_metadata_list: File metadata list.
         :return: New file metadata list.
         """
-        def __check_user_permission():
-            """Check user permission.
-
-            :return: True if the login user is allowed to display file metadata.
-            """
-            is_ok = False
-            # Check guest user
-            if not current_user.is_authenticated:
-                return is_ok
-            # Check registered user
-            elif current_user and current_user.id in user_id_list:
-                is_ok = True
-            # Check super users
-            else:
-                super_users = current_app.config[
-                    'WEKO_PERMISSION_SUPER_ROLE_USER'] + (
-                    current_app.config[
-                        'WEKO_PERMISSION_ROLE_COMMUNITY'],)
-                for role in list(current_user.roles or []):
-                    if role.name in super_users:
-                        is_ok = True
-                        break
-
-            return is_ok
-
         new_file_metadata_list = []
         user_id_list = self.get('_deposit', {}).get('owners', [])
         for file in file_metadata_list:
-            if not ('open_no' in file.get('accessrole', [])
-                    and not __check_user_permission()):
+            is_permissed_user = self.__check_user_permission(user_id_list)
+            is_open_no = self.is_do_not_publish(file)
+            if self.is_input_open_access_date(file):
+                if not self.is_future_open_date(self,
+                                                file) or is_permissed_user:
+                    new_file_metadata_list.append(file)
+                else:
+                    continue
+            elif not (is_open_no and not is_permissed_user):
                 new_file_metadata_list.append(file)
         return new_file_metadata_list
+
+    @staticmethod
+    def __check_user_permission(user_id_list):
+        """Check user permission.
+
+        :return: True if the login user is allowed to display file metadata.
+        """
+        is_ok = False
+        # Check guest user
+        if not current_user.is_authenticated:
+            return is_ok
+        # Check registered user
+        elif current_user and current_user.id in user_id_list:
+            is_ok = True
+        # Check super users
+        else:
+            super_users = current_app.config[
+                              'WEKO_PERMISSION_SUPER_ROLE_USER'] + (
+                              current_app.config[
+                                  'WEKO_PERMISSION_ROLE_COMMUNITY'],)
+            for role in list(current_user.roles or []):
+                if role.name in super_users:
+                    is_ok = True
+                    break
+        return is_ok
+
+    @staticmethod
+    def is_input_open_access_date(file_metadata):
+        """Check access of file is 'Input Open Access Date'.
+
+        :return: True is 'Input Open Access Date'.
+        """
+        access_role = file_metadata.get('accessrole', '')
+        return access_role == 'open_date'
+
+    @staticmethod
+    def is_do_not_publish(file_metadata):
+        """Check access of file is 'Do not Publish'.
+
+        :return: True is 'Do not Publish'.
+        """
+        access_role = file_metadata.get('accessrole', '')
+        return access_role == 'open_no'
+
+    @staticmethod
+    def get_open_date_value(file_metadata):
+        """Get value of 'Open Date' in file.
+
+        :return: value of open date.
+        """
+        date = file_metadata.get('date', [{}])
+        date_value = date[0].get('dateValue')
+        return date_value
+
+    @staticmethod
+    def is_future_open_date(self, file_metadata):
+        """Check .
+
+        :return: .
+        """
+        # Get current date.
+        today = datetime.now().date()
+        # Get 'open_date' and convert to datetime.date.
+        date_value = self.get_open_date_value(file_metadata)
+        format = '%Y-%m-%d'
+        dt = datetime.strptime(date_value, format)
+        # Compare open_date with current date.
+        is_future = dt.date() > today
+        return is_future
 
     @property
     def pid_doi(self):
