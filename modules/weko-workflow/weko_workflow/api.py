@@ -1551,7 +1551,8 @@ class WorkActivity(object):
                 _Activity,
                 User.email,
                 _WorkFlow.flows_name,
-                _Action.action_name
+                _Action.action_name,
+                Role.name
             )
 
             # query all activities
@@ -1573,7 +1574,9 @@ class WorkActivity(object):
                         and_(
                             _Activity.activity_login_user == User.id,
                         )
-                    )
+                    ) \
+                    .outerjoin(userrole, and_(User.id == userrole.c.user_id)) \
+                    .outerjoin(Role, and_(userrole.c.role_id == Role.id))
             else:
                 query_action_activities = query_action_activities \
                     .outerjoin(
@@ -1640,8 +1643,8 @@ class WorkActivity(object):
             action_activities = query_action_activities \
                 .distinct(_Activity.id).order_by(asc(_Activity.id)).limit(
                     size).offset(offset).all()
-            for activity_data, last_update_user, flow_name, action_name \
-                    in action_activities:
+            for activity_data, last_update_user, flow_name, action_name, \
+                    role_name in action_activities:
                 if activity_data.activity_status == \
                         ActivityStatusPolicy.ACTIVITY_FINALLY:
                     activity_data.StatusDesc = ActionStatusPolicy.describe(
@@ -1657,6 +1660,7 @@ class WorkActivity(object):
                 activity_data.email = last_update_user
                 activity_data.flows_name = flow_name
                 activity_data.action_name = action_name
+                activity_data.role_name = role_name if role_name else ''
 
                 # Append to do and action activities into the master list
                 activities.append(activity_data)
@@ -2076,7 +2080,7 @@ class WorkActivity(object):
                         activity.activity_id] = activity.extra_info.get(
                         "related_title") if activity.extra_info else None
                 elif item_type == current_app.config[
-                    'WEKO_ITEMS_UI_OUTPUT_REPORT']:
+                        'WEKO_ITEMS_UI_OUTPUT_REPORT']:
                     output_report_list["activity_ids"].append(
                         activity.activity_id)
                     output_report_list["activity_data_type"][

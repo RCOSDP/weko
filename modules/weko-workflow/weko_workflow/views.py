@@ -136,6 +136,8 @@ def index():
     send_mail = current_app.config.get('WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL')
     req_per_page = current_app.config.get('WEKO_WORKFLOW_PER_PAGE')
     columns = current_app.config.get('WEKO_WORKFLOW_COLUMNS')
+    send_mail_user_group = current_app.config.get(
+        'WEKO_WORKFLOW_SEND_MAIL_USER_GROUP')
 
     enable_show_activity = current_app.config[
         'WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']
@@ -172,6 +174,7 @@ def index():
         options=options,
         item_type=item_type,
         action_status=action_status,
+        send_mail_user_group = send_mail_user_group,
         **ctx
     )
 

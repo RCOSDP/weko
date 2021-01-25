@@ -319,12 +319,13 @@
                       {% set activity_info_list = [] %}
                       {%- for activity in activities %}
                         {%- if activity.StatusDesc == action_status and activity.item_type_name == item_type %}
-                          {%- set activity_info = {"activity_id": activity.activity_id, "item": activity.title, "work_flow":activity.flows_name, "email": activity.email, "status": activity.StatusDesc} -%}
+                        {%- set activity_info = {"activity_id": activity.activity_id, "item": activity.title, "work_flow":activity.flows_name, "email": activity.email, "status": activity.StatusDesc, "user_role": activity.role_name} -%}
                           {%- set activity_info_list = activity_info_list.append(activity_info) -%}
                         {%-endif%}
                       {%- endfor %}
                       <pre hidden id="work-flow-data">{{activity_info_list|tojson}}</pre>
                       <span hidden id ="req_per_page">{{req_per_page}}</span>
+                      <span hidden id ="send_mail_user_group">{{send_mail_user_group|tojson}}</span>
                       <span hidden id ="pagination_visible_pages">{{pagination_visible_pages}}</span>
                       <span hidden id ="action_list">{{_(action_status)}}</span>
                     </tbody>
