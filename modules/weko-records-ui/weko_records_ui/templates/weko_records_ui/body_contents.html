@@ -145,6 +145,9 @@
                           {%- else -%}
                             {%- set file_label = file.filename -%}
                           {%- endif -%}
+                          {%- if file.version_id == '' -%}
+                            {%- set file_label = file.filename -%}
+                          {%- endif -%}
 
                           {%- if access_permission and billing_file_access_permission -%}
                             <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
