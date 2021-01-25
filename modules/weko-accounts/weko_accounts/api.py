@@ -47,7 +47,7 @@ class ShibUser(object):
         :return:
 
         """
-        ret = True
+        ret = None
         shib_user = ShibbolethUser.query.filter_by(
                 shib_eppn=self.shib_attr['shib_eppn']).one_or_none()
         roles = [x.strip() for x in roles.split(',')]
@@ -60,6 +60,7 @@ class ShibUser(object):
                     shib_user_id=shib_user.id).delete(synchronize_session='fetch')
                 shib_userroles = []
                 for _id in role_ids:
+                    ShibUserRole.create(shib_user_id=shib_user.id, role_id=_id)
                     shib_userroles.append(ShibUserRole(
                         shib_user_id=shib_user.id,
                         role_id=_id
@@ -67,10 +68,9 @@ class ShibUser(object):
                 db.session.add_all(shib_userroles)
                 db.session.commit()
         except Exception as ex:
-            current_app.logger.debug("An error occurred when trying to add "
-                                     "Role: {} to this User!".format(ex))
+            current_app.logger.debug(ex)
             db.session.rollback()
-            ret = False
+            ret = ex
         return ret
 
     def _get_site_license(self):
@@ -201,14 +201,22 @@ class ShibUser(object):
         shib_role_auth = self.shib_attr.get('shib_role_authority_name', '')
         if not shib_role_auth:
             current_app.logger.debug(_("Failed to get attribute."))
-            return self._set_weko_user_role(
-                current_app.config['WEKO_ACCOUNTS_GENERAL_ROLE']), error
+            ret = self._set_weko_user_role(
+                current_app.config['WEKO_ACCOUNTS_GENERAL_ROLE'])
+            if ret:
+                return False, ret
+            else:
+                return True, '' 
 
         shib_role_config = current_app.config[
             'WEKO_ACCOUNTS_SHIB_ROLE_RELATION']
         if shib_role_auth in shib_role_config.keys():
-            return self._set_weko_user_role(shib_role_config[
-                shib_role_auth]), error
+            ret = self._set_weko_user_role(shib_role_config[
+                shib_role_auth])
+            if ret:
+                return False, ret
+            else:
+                return True, '' 
         else:
             error = _("Invalid attribute.")
 
