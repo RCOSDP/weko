@@ -166,9 +166,7 @@
                           {%- endif -%}
 
                           {%- if access_permission and billing_file_access_permission -%}
-                            <!-- temp delete -->
-                            <!-- <span>{{file.checksum.split(':')[0]}}: </span>
-                            <span class="break-word">{{file.checksum.split(':')[1]}}</span> -->
+                            <!-- Show check sum -->
                           {%- else -%}
                             <div class="panel-body">
                               <span class="fa fa-key"
