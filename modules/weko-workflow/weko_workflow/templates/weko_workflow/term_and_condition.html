@@ -19,7 +19,7 @@
         <h3>{{_('Terms and Conditions')}}</h3>
 <div class="panel panel-default panel-body" style="overflow-y: auto; max-height:400px;" >
   <form id="term-and-condition-form"
-        action="/workflow/activity/detail/{{ activity.activity_id }}?itemtitle={{ itemTitle }}"
+        action="/workflow/activity/detail/{{ activity.activity_id }}"
         method="POST">
   <div class="form-check">
                 {%- for content in term_and_condition_content %}

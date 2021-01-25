@@ -2083,9 +2083,6 @@ def create_usage_report(activity_id):
     _workflow = WorkFlow()
     # Get WF detail
     _workflow_detail = _workflow.get_workflow_by_id(activity_detail.workflow_id)
-    # Get Item Type name
-    data_type_name = get_item_type_name(
-        _workflow_detail.itemtype_id)
     # Get usage report WF
     usage_report_workflow = _workflow.find_workflow_by_name(
         current_app.config['WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME'])
@@ -2098,7 +2095,8 @@ def create_usage_report(activity_id):
         )
         usage_report_activity_id = create_record_metadata(
             activity, activity_detail.item_id, activity_id,
-            usage_report_workflow, data_type_name
+            usage_report_workflow,
+            activity_detail.extra_info.get("related_title")
         )
         return usage_report_activity_id
 
@@ -2108,7 +2106,7 @@ def create_record_metadata(
     item_id,
     activity_id,
     usage_report_workflow,
-    usage_record_itemtype_name
+    related_title
 ):
     """Create record metadata for usage report.
 
@@ -2116,7 +2114,7 @@ def create_record_metadata(
     @param item_id:
     @param activity_id:
     @param usage_report_workflow:
-    @param usage_record_itemtype_name:
+    @param related_title:
     @return:
     """
     rec = RecordMetadata.query.filter_by(id=item_id).first()
@@ -2156,7 +2154,7 @@ def create_record_metadata(
         data_dict,
         schema,
         owner_id,
-        usage_record_itemtype_name
+        related_title
     )
 
     activity.update({'activity_id': new_usage_report_activity.activity_id})
@@ -2208,7 +2206,7 @@ def modify_item_metadata(
     usage_application_activity_id,
     data_dict,
     schema, owner_id,
-    usage_record_itemtype_name
+    related_title
 ):
     """Mapping usage application data to usage report."""
     if not item:
@@ -2218,18 +2216,15 @@ def modify_item_metadata(
     from weko_user_profiles.utils import get_user_profile_info
     user_profile = get_user_profile_info(int(owner_id))
     user_name = user_profile['subitem_displayname']
-
-    data_type_name = get_data_type(usage_record_itemtype_name)
-    # usage_application_activity_id
     record_title = {
         "en": '{} - {} - {} - {}'.format(
-            data_type_name.get("en"),
+            related_title,
             current_app.config.get(
                 'WEKO_ITEMS_UI_USAGE_REPORT_TITLE').get('en'),
             usage_application_activity_id, user_name
         ),
         "ja": '{} - {} - {} - {}'.format(
-            data_type_name.get("ja"),
+            related_title,
             current_app.config.get(
                 'WEKO_ITEMS_UI_USAGE_REPORT_TITLE').get('ja'),
             usage_application_activity_id, user_name
@@ -2387,21 +2382,19 @@ def auto_fill_title(item_type_name):
     @param item_type_name:
     @return:
     """
-    def _get_title(title_key, title_setting_list):
+    def _get_title(title_key):
         title_value = ''
         if auto_fill_title_value.get(title_key):
             title_value = auto_fill_title_value.get(title_key)
         return title_value
 
     title = ""
-    data_type = ""
     current_config = current_app.config
     autofill_title_setting = current_config.get(
         'WEKO_ITEMS_UI_AUTO_FILL_TITLE_SETTING')
     auto_fill_title_value = current_config.get(
         'WEKO_ITEMS_UI_AUTO_FILL_TITLE')
     if item_type_name is not None and isinstance(autofill_title_setting, dict):
-        data_type = get_data_type(item_type_name)
         usage_application_key = current_config.get(
             'WEKO_ITEMS_UI_USAGE_APPLICATION_TITLE_KEY')
         usage_report_key = current_config.get(
@@ -2415,27 +2408,12 @@ def auto_fill_title(item_type_name):
         output_registration_list = autofill_title_setting.get(
             output_registration_key, [])
         if item_type_name in usage_application_list:
-            title = _get_title(usage_application_key, usage_application_list)
+            title = _get_title(usage_application_key)
         elif item_type_name in usage_report_list:
-            title = _get_title(usage_report_key, usage_report_list)
+            title = _get_title(usage_report_key)
         elif item_type_name in output_registration_list:
-            title = _get_title(output_registration_key,
-                               output_registration_list)
-    return title, data_type
-
-
-def get_data_type(item_type_name):
-    """Get data type.
-
-    @param item_type_name: item type name.
-    @return:
-    """
-    autofill_data_type_setting = current_app.config.get(
-        'WEKO_ITEMS_UI_AUTO_FILL_DATA_TYPE_SETTING', {})
-    data_type_value = ''
-    if autofill_data_type_setting.get(item_type_name):
-        data_type_value = autofill_data_type_setting.get(item_type_name)
-    return data_type_value
+            title = _get_title(output_registration_key)
+    return title
 
 
 def exclude_admin_workflow(workflow_list):

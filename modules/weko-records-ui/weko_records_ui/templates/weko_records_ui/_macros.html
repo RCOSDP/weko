@@ -58,6 +58,7 @@
       {%- set data_item_type_id = workflow_detail.itemtype_id -%}
       {%- set data_flow_id = workflow_detail.flow_id -%}
       {%- set itemtitle = record.item_title -%}
+      <input type="hidden" id="data_type_title" name="data_type_title" value='{{itemtitle}}'>
       <div class="hide"
            id="post_uri">{{ url_for('weko_workflow.init_activity') }}</div>
       <div class="hide" id="item_type_{{ workflow_id }}"
@@ -74,7 +75,6 @@
            data-community="{{ community.id }}"
                 {%- endif -%}
            data-workflow-id="{{ workflow_id }}"
-           data-itemtitle="{{ itemtitle|urlencode }}"
            href="{{ href_url }}">
           {{ file.filename }} ({{ file.size|filesizeformat }})</a>
       {%- else -%}
@@ -94,8 +94,7 @@
     {%- endif -%}
   {%- elif permission.status == -1 -%}
     {%- set href_url = url_for('weko_workflow.display_activity', activity_id=permission.usage_application_activity_id) -%}
-    {%- set itemtitle = record.item_title -%}
-    {%- set href_url_item_title = href_url + "?itemtitle=" + itemtitle|urlencode -%}
+    {%- set href_url_item_title = href_url-%}
     {%- if is_file_name_url -%}
       <a class="forcewrap"
          href="{{ href_url_item_title }}">{{ file.filename }}

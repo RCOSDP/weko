@@ -268,6 +268,16 @@ require([
 
   });
 
+  // Whenever SelectBox is changed, re-update list activities
+  $('#setTemplate').on('change', function () {
+  // Clear all current data
+    list_checkboxes.clear();
+    $("#checkAll").prop("checked", false);
+    $("#btn_Next").attr('disabled', true);
+    var selectedTemplate = $(this).children("option:selected").val();
+  // Re-paging by selected mail template
+    pagination(data, wf_DataFilter[selectedTemplate]);
+  })
   //Click button Confirm
   $('#btn_Next').click(function () {
     $('#appendHTML, #label_template').empty();
@@ -304,10 +314,11 @@ require([
   $("#checkAll").click(function () {
     if ($(this).is(":checked")) {
       $(".checkbox-class:not(:checked)").prop("checked", true);
-      wf_Data.forEach(activity => {
+      wf_DataFilter[$('#setTemplate').val()].forEach(activity => {
         list_checkboxes.add(activity.activity_id);
       });
-      $("#btn_Next").removeAttr("disabled");
+      if(list_checkboxes.size > 0)
+        $("#btn_Next").removeAttr("disabled");
     } else {
       $(".checkbox-class").prop("checked", false);
       list_checkboxes.clear();
@@ -319,11 +330,19 @@ require([
 });
 
 
-const myarr = $("#work-flow-data").text();
-var wf_Data = JSON.parse(myarr);
+const all_activities = $("#work-flow-data").text();
+var wf_Data = JSON.parse(all_activities);
+
+const mailUserGroup = $("#send_mail_user_group").text();
+var lstMailUserGroup = JSON.parse(mailUserGroup);
 
 var list_checkboxes = new Set();
+var wf_DataFilter = {}
 
+// filter activities to groups
+for(mailGroup in lstMailUserGroup){
+  wf_DataFilter[mailGroup] = wf_Data.filter(activity => lstMailUserGroup[mailGroup].includes(activity.user_role))
+}
 var req_per_page = parseInt($("#req_per_page").text());
 var status_data = $("#action_list").text();
 
@@ -470,7 +489,7 @@ function pagination(data, wf_Data) {
 }
 
 //calling pagination function
-pagination(data, wf_Data);
+pagination(data, wf_DataFilter[$('#setTemplate').val()]);
 
 //Array to hold the checked ids
 
