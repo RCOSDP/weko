@@ -3,6 +3,9 @@ $(document).ready(function () {
   displayIndexTreeSelection();
 });
 
+const select_show = $('#select_show');
+const select_hide = $('#select_hide');
+
 $("#txt_workflow_name").keyup(function () {
   if ($("#txt_workflow_name").val().trim() == "") {
     $("#btn_create").attr("disabled", "disabled");
@@ -125,24 +128,10 @@ $("#txt_flow_name").on("change", function () {
   displayIndexTreeSelection();
 });
 
-$("#setHide").on("click", function () {
-  value_hide = $("#select_show").val();
-  text_hide = $("#select_show option:selected").text();
-  if (value_hide) {
-    $("#select_show option[value='" + value_hide + "']").remove();
-    $("#select_hide").append(
-      $("<option>", { value: value_hide, text: text_hide })
-    );
-  }
+$('#setShow').on('click', function () {
+  select_hide.find('option:selected').detach().prop("selected", false).appendTo(select_show);
 });
 
-$("#setShow").on("click", function () {
-  value_show = $("#select_hide").val();
-  text_show = $("#select_hide option:selected").text();
-  if (value_show) {
-    $("#select_hide option[value='" + value_show + "']").remove();
-    $("#select_show").append(
-      $("<option>", { value: value_show, text: text_show })
-    );
-  }
+$('#setHide').on('click', function () {
+  select_show.find('option:selected').detach().prop("selected", false).appendTo(select_hide);
 });

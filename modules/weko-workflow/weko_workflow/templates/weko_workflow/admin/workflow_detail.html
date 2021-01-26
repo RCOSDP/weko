@@ -35,6 +35,7 @@
 {% from "weko_theme/macros/modal_page.html" import all_modal %}
 {{ all_modal() }}
 <div id="alerts"></div>
+<input type="hidden" id="current_language" value="{{ current_i18n.language }}" />
 
 <div class="row">
   <div class="col-sm-offset-1 col-sm-10">
@@ -107,7 +108,7 @@
       </div>
       <div class="form-group">
         <div class="col-sm-offset-2">
-          <label class="col-sm-2 control-label">{{_('Display')}}/{{_('Hide')}}</label>
+          <label class="col-sm-2 control-label">{{ display_hide_label }}</label>
           <div class="col-sm-8" style="padding-top: 7px" >{{_('Role')}}</div>
         </div>
       </div>
@@ -116,8 +117,8 @@
           <label class="col-sm-2 control-label"></label>
           <div class="col-sm-8">
             <div class="col-sm-5 col-md-5 col-md-5 padding-display-hide">
-              <div class="col-sm-12 col-md-12 col-md-12 padding-display-hide">
-                {{_('Display')}}
+                <div class="col-sm-12 col-md-12 col-md-12 padding-display-hide">
+                {{ display_label }}
                 <br>
                 <select multiple name="select_show" id="select_show" class="form-control">
                   {%- if display_list %}
@@ -140,8 +141,8 @@
               </button>
             </div>
             <div class="col-sm-5 col-md-5 col-md-5 padding-display-hide">
-              <div class="col-sm-12 col-md-12 col-md-12 padding-display-hide">
-                {{_('Hide')}}
+                <div class="col-sm-12 col-md-12 col-md-12 padding-display-hide">
+                {{ hide_label }}
                 <br>
                 <select multiple name="select_hide" id="select_hide" class="form-control">
                   {%- if hide_list %}
