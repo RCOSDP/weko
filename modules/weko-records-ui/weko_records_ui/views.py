@@ -65,7 +65,7 @@ from .permissions import check_content_clickable, check_created_id, \
 from .utils import get_billing_file_download_permission, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, \
     get_registration_data_type, hide_by_email, hide_item_metadata, \
-    is_show_email_of_creator
+    is_show_email_of_creator, replace_license_free
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
@@ -153,7 +153,9 @@ def export(pid, record, template=None, **kwargs):
     schema_type = request.view_args.get('format')
     fmt = formats.get(schema_type)
 
+    # Custom Record Metadata for export JSON
     hide_item_metadata(record)
+    replace_license_free(record)
 
     if fmt is False:
         # If value is set to False, it means it was deprecated.
@@ -351,10 +353,10 @@ def _get_google_scholar_meta(record):
     et = etree.fromstring(recstr)
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     res = []
-    if mtdata is not None:
+    if mtdata:
         for target in target_map:
             found = mtdata.find(target, namespaces=mtdata.nsmap)
-            if found is not None:
+            if found:
                 res.append({'name': target_map[target], 'data': found.text})
         for date in mtdata.findall('datacite:date', namespaces=mtdata.nsmap):
             if date.attrib.get('dateType') == 'Available':

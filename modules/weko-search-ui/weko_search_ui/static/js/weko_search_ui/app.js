@@ -134,6 +134,41 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     $rootScope.commInfoIndex = "";
   }
 
+  $rootScope.getSettingDefault = function () {
+    let data = null;
+    $.ajax({
+        async: false,
+        method: 'GET',
+        url: '/get_search_setting',
+        headers: { 'Content-Type': 'application/json' },
+    }).then(function successCallback(response) {
+      if (response.status === 1) {
+        data = response.data;
+        if (data.dlt_index_sort_selected !== null && data.dlt_index_sort_selected !== undefined) {
+          let key_sort = data.dlt_index_sort_selected;
+          let descOrEsc = "";
+          if (key_sort.includes("_asc")) {
+            key_sort = key_sort.replace("_asc", "");
+          }
+          if (key_sort.includes("_desc")) {
+            descOrEsc = "-";
+            key_sort = key_sort.replace("_desc", "");
+          }
+          $rootScope.vm.invenioSearchCurrentArgs = {
+            method: "GET",
+            params: {
+              page: 1,
+              size: data.dlt_dis_num_selected,
+              sort: descOrEsc + key_sort
+            },
+          };
+        }
+      }
+    }, function errorCallback(error) {
+        console.log(error);
+    });
+  }
+  $rootScope.getSettingDefault();
 
   $rootScope.disable_flg = true;
   $rootScope.display_flg = true;

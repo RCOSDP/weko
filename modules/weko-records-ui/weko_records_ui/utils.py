@@ -492,3 +492,34 @@ def is_show_email_of_creator(item_type_id):
     is_hide = item_type_show_email(item_type_id)
     is_display = item_setting_show_email()
     return not is_hide and is_display
+
+
+def replace_license_free(record_metadata, is_change_label=True):
+    """Change the item name 'licensefree' to 'license_note'.
+
+    If 'licensefree' is not output as a value.
+    The value of 'licensetype' is 'license_note'.
+
+    :param record:
+    :return: None
+    """
+    _license_type = 'licensetype'
+    _license_free = 'licensefree'
+    _license_note = 'license_note'
+    _license_type_free = 'license_free'
+    _attribute_type = 'file'
+    _attribute_value_mlt = 'attribute_value_mlt'
+
+    _license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
+    if _license_dict:
+        _license_type_free = _license_dict[0].get('value')
+
+    for val in record_metadata.values():
+        if isinstance(val, dict) and \
+                val.get('attribute_type') == _attribute_type:
+            for attr in val[_attribute_value_mlt]:
+                if attr.get(_license_type) == _license_type_free:
+                    attr[_license_type] = _license_note
+                    if attr.get(_license_free) and is_change_label:
+                        attr[_license_note] = attr[_license_free]
+                        del attr[_license_free]
