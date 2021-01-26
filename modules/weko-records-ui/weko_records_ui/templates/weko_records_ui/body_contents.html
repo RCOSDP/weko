@@ -205,7 +205,7 @@
                         <!-- Creative Commons Licenses -->
                         <div>
                             {%- if not 'simple' in file.displaytype -%}
-                            {%- if 'license_free' == file.licensetype and file.version_id -%}
+                            {%- if 'license_free' == file.licensetype -%}
                               {% autoescape false %}
                               <div id="square" style="width: 1px; height: 1px; border-style: groove;"></div>
                               <span class="break-word">{{ file.licensefree | escape_str }}</span>
