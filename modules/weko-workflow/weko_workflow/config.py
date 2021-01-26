@@ -19,8 +19,6 @@
 # MA 02111-1307, USA.
 
 """Configuration for weko-workflow."""
-from weko_user_profiles.config import WEKO_USERPROFILES_STUDENT_ROLE, \
-    WEKO_USERPROFILES_GENERAL_ROLE, WEKO_USERPROFILES_GRADUATED_STUDENT_ROLE
 
 WEKO_WORKFLOW_BASE_TEMPLATE = 'weko_workflow/base.html'
 """Default base template for the demo page."""
