@@ -545,7 +545,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     files = []
     for key in record:
         meta_data = record.get(key)
-        if type(meta_data) == dict and meta_data.get('attribute_type') == "file":
+        if type(meta_data) == dict and \
+                meta_data.get('attribute_type') == "file":
             file_metadata = meta_data.get("attribute_value_mlt", [])
             for f in file_metadata:
                 if check_file_permission(record, f) or is_open_restricted(f):
@@ -557,7 +558,9 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
                         f["is_thumbnail"] = False
                     # Check show preview area.
                     base_url = "{}record/{}/files/{}".format(
-                        request.url_root, record.get('recid'), f.get("filename")
+                        request.url_root,
+                        record.get('recid'),
+                        f.get("filename")
                     )
                     url = f.get("url", {}).get("url")
                     if base_url in url:
