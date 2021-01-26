@@ -242,8 +242,8 @@
                           </button>
                         </a>
                         {%- endif -%}
-                          {%- endif -%}
-                        {% set file_detail_url =  file_details_url + file.filename + '?version_id=' + file.version_id %}
+                        {%- endif -%}
+                        {% set file_detail_url =  file_details_url + '?version_id=' + file.version_id %}
                         {%- if community -%}
                           {% set file_detail_url = file_detail_url + "&community=" + community.id %}
                         {%- endif -%}

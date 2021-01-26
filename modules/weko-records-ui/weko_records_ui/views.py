@@ -54,7 +54,7 @@ from weko_search_ui.api import get_search_detail_keyword
 from weko_workflow.api import WorkFlow
 
 from weko_records_ui.models import InstitutionName
-from weko_records_ui.utils import check_items_settings
+from weko_records_ui.utils import check_items_settings, get_file_info_list
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
@@ -537,35 +537,14 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         index_link_list = get_index_link_list()
 
     files_thumbnail = []
+    files = []
+    is_display_file_preview = False
     if record.files:
         files_thumbnail = ObjectVersion.get_by_bucket(
             record.files.bucket.id).\
             filter_by(is_thumbnail=True).all()
-    is_display_file_preview = False
-    files = []
-    for key in record:
-        meta_data = record.get(key)
-        if type(meta_data) == dict and \
-                meta_data.get('attribute_type') == "file":
-            file_metadata = meta_data.get("attribute_value_mlt", [])
-            for f in file_metadata:
-                if check_file_permission(record, f) or is_open_restricted(f):
-                    # Set default version_id.
-                    if f.get("version_id") is None:
-                        f["version_id"] = ''
-                    # Set default version_id.
-                    if f.get("is_thumbnail") is None:
-                        f["is_thumbnail"] = False
-                    # Check show preview area.
-                    base_url = "{}record/{}/files/{}".format(
-                        request.url_root,
-                        record.get('recid'),
-                        f.get("filename")
-                    )
-                    url = f.get("url", {}).get("url")
-                    if base_url in url:
-                        is_display_file_preview = True
-                    files.append(f)
+    is_display_file_preview = get_file_info_list(
+        files, is_display_file_preview, record)
     # Flag: can edit record
     can_edit = True if pid == get_record_without_version(pid) else False
 

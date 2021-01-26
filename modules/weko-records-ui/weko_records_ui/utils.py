@@ -32,7 +32,9 @@ from weko_deposit.api import WekoDeposit
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 
-from .permissions import check_user_group_permission
+from .permissions import check_user_group_permission, is_open_restricted, \
+    check_file_download_permission
+from flask import request
 
 
 def check_items_settings():
@@ -523,3 +525,38 @@ def replace_license_free(record_metadata, is_change_label=True):
                     if attr.get(_license_free) and is_change_label:
                         attr[_license_note] = attr[_license_free]
                         del attr[_license_free]
+
+
+
+def get_file_info_list(files, is_display_file_preview, record):
+    """File Information of all file in record.
+
+    :param files: all metadata of a record.
+    :param is_display_file_preview: all metadata of a record.
+    :param record: all metadata of a record.
+    :return: json files.
+    """
+    for key in record:
+        meta_data = record.get(key)
+        if type(meta_data) == dict and \
+            meta_data.get('attribute_type') == "file":
+            file_metadata = meta_data.get("attribute_value_mlt", [])
+            for f in file_metadata:
+                if check_file_download_permission(record, f) or is_open_restricted(f):
+                    # Set default version_id.
+                    if f.get("version_id") is None:
+                        f["version_id"] = ''
+                    # Set default version_id.
+                    if f.get("is_thumbnail") is None:
+                        f["is_thumbnail"] = False
+                    # Check show preview area.
+                    base_url = "{}record/{}/files/{}".format(
+                        request.url_root,
+                        record.get('recid'),
+                        f.get("filename")
+                    )
+                    url = f.get("url", {}).get("url")
+                    if base_url in url:
+                        is_display_file_preview = True
+                    files.append(f)
+    return is_display_file_preview
