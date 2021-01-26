@@ -145,17 +145,27 @@
                           {%- else -%}
                             {%- set file_label = file.filename -%}
                           {%- endif -%}
+                          <!-- version_id == '' => not upload file, but fill data for 'File Information' -->
                           {%- if file.version_id == '' -%}
                             {%- set file_label = file.filename -%}
                           {%- endif -%}
 
                           {%- if access_permission and billing_file_access_permission -%}
-                            <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
-                              href={{ file_url }}>
-                              {% autoescape false %}
-                              {{ file_label | escape_str }} ({{ file.filesize[0].value }})
-                              {% endautoescape %}
-                            </a>
+                            {%- if file.version_id == '' -%}
+                              <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
+                                href={{ file.url.url }}>
+                                {% autoescape false %}
+                                {{ file_label | escape_str }} ({{ file.filesize[0].value }})
+                                {% endautoescape %}
+                              </a>
+                            {%- else -%}
+                              <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
+                                href={{ file_url }}>
+                                {% autoescape false %}
+                                {{ file_label | escape_str }} ({{ file.filesize[0].value }})
+                                {% endautoescape %}
+                              </a>
+                            {%- endif -%}
                             <br>
                           {%- elif clickable -%}
                             {{ check_download_file(record, file, permission, community, url_for_security, is_file_name_url) }}
