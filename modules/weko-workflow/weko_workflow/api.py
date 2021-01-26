@@ -755,7 +755,9 @@ class WorkActivity(object):
                                 get_item_type_name(activity.get('itemtype_id'))
                             if item_type_name in application_item_types:
                                 action_has_term_of_use = True
-
+            extra_info = dict()
+            if activity.get('related_title'):
+                extra_info["related_title"] = activity["related_title"]
             activity_confirm_term_of_use = False if\
                 action_has_term_of_use else True
             db_activity = _Activity(
@@ -773,7 +775,8 @@ class WorkActivity(object):
                 activity_status=ActivityStatusPolicy.ACTIVITY_MAKING,
                 activity_start=datetime.utcnow(),
                 activity_community_id=community_id,
-                activity_confirm_term_of_use=activity_confirm_term_of_use
+                activity_confirm_term_of_use=activity_confirm_term_of_use,
+                extra_info=extra_info
             )
             db.session.add(db_activity)
         except Exception as ex:
@@ -1573,7 +1576,8 @@ class WorkActivity(object):
             _Activity,
             User.email,
             _WorkFlow.flows_name,
-            _Action.action_name
+            _Action.action_name,
+            Role.name
         )
 
         # query all activities
@@ -1600,7 +1604,10 @@ class WorkActivity(object):
                     and_(
                         _Activity.activity_login_user == User.id,
                     )
-                )
+                    ) \
+                    .outerjoin(userrole, and_(User.id == userrole.c.user_id)
+                           ).outerjoin(Role,
+                                       and_(userrole.c.role_id == Role.id))
         else:
             common_query = common_query \
                 .outerjoin(
@@ -1619,7 +1626,7 @@ class WorkActivity(object):
         @param activities:
         @param action_activities:
         """
-        for activity_data, last_update_user, flow_name, action_name \
+        for activity_data, last_update_user, flow_name, action_name, role_name \
                 in action_activities:
             if activity_data.activity_status == \
                     ActivityStatusPolicy.ACTIVITY_FINALLY:
@@ -1636,7 +1643,7 @@ class WorkActivity(object):
             activity_data.email = last_update_user
             activity_data.flows_name = flow_name
             activity_data.action_name = action_name
-
+            activity_data.role_name = role_name if role_name else ''
             # Append to do and action activities into the master list
             activities.append(activity_data)
 
@@ -2174,19 +2181,19 @@ class WorkActivity(object):
                 item_type = get_item_type_name(workflow_detail.itemtype_id)
                 item_type_list = current_app.config[
                     'WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPES_LIST']
-                activity_data_type = current_app.config[
-                    'WEKO_ITEMS_UI_AUTO_FILL_DATA_TYPE_SETTING'].get(item_type)
                 if item_type in item_type_list:
                     usage_application_list["activity_ids"].append(
                         activity.activity_id)
                     usage_application_list["activity_data_type"][
-                        activity.activity_id] = activity_data_type
+                        activity.activity_id] = activity.extra_info.get(
+                        "related_title") if activity.extra_info else None
                 elif item_type == current_app.config[
                         'WEKO_ITEMS_UI_OUTPUT_REPORT']:
                     output_report_list["activity_ids"].append(
                         activity.activity_id)
                     output_report_list["activity_data_type"][
-                        activity.activity_id] = activity_data_type
+                        activity.activity_id] = activity.extra_info.get(
+                        "related_title") if activity.extra_info else None
 
         return usage_application_list, output_report_list
 
