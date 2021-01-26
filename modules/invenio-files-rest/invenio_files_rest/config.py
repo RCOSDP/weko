@@ -10,6 +10,8 @@
 
 from datetime import timedelta
 
+import tempfile
+
 MAX_CONTENT_LENGTH = 16 * 1024 * 1024
 """Maximum allowed content length for form data.
 
@@ -124,7 +126,7 @@ FILES_REST_LOCATION_TYPE_LIST = [('s3', 'Amazon S3')]
 FILES_REST_UPLOAD_OWNER_FACTORIES = 'invenio_files_rest.serializer.file_uploaded_owner'
 """file update version"""
 
-FILES_REST_DEFAULT_PDF_SAVE_PATH = '/var/tmp'
+FILES_REST_DEFAULT_PDF_SAVE_PATH = tempfile.gettempdir()
 """convert pdf save path"""
 
 FILES_REST_DEFAULT_PDF_TTL = 1 * 60 * 60  # 1 hour
