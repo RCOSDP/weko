@@ -46,6 +46,7 @@ from functools import wraps
 from os.path import basename
 
 import six
+import tempfile
 from flask import current_app
 from flask_login import current_user
 from invenio_db import db
@@ -898,8 +899,7 @@ class FileInstance(db.Model, Timestamp):
                 if settings:
                     path = settings.path
                 else:
-                    path = current_app.config.get(
-                        'FILES_REST_DEFAULT_PDF_SAVE_PATH', '/var/tmp')
+                    path = current_app.config.get['FILES_REST_DEFAULT_PDF_SAVE_PATH']
                 pdf_dir = path + '/pdf_dir/' + str(self.id)
                 pdf_filename = '/data.pdf'
                 file_type = os.path.splitext(self.json['filename'])[1].lower()
