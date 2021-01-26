@@ -49,25 +49,27 @@
         </thead>
         <tbody>
         {%- for workflow in workflows %}
-          <tr>
-            <th scope="row">{{loop.index}}</th>
-            <td><a href="{{url_for('workflowsetting.workflow_detail', workflow_id=workflow.flows_id)}}">{{workflow.flows_name}}</a></td>
-            <td>{{_(workflow.itemtype.item_type_name.name)}}</td>
-            <td>{{_(workflow.flow_define.flow_name)}}</td>
-            <td>
-              {%- if workflow.display %}
-                {{ workflow.display }}
-              {%- endif %}
-            </td>
-            <td>
-              {%- if workflow.hide %}
-                {{ workflow.hide }}
-              {%- endif %}
-            </td>
-            <td class="hide"> </td>
-            <td>{{_(workflow.flow_define.flow_status.value)}}</td>
-            <td>{{workflow.updated.date()}}</td>
-          </tr>
+          {% autoescape false %}
+            <tr>
+              <th scope="row">{{loop.index}}</th>
+              <td><a href="{{url_for('workflowsetting.workflow_detail', workflow_id=workflow.flows_id)}}">{{workflow.flows_name}}</a></td>
+              <td>{{_(workflow.itemtype.item_type_name.name)}}</td>
+              <td>{{_(workflow.flow_define.flow_name)}}</td>
+              <td>
+                {%- if workflow.display %}
+                  {{ workflow.display }}
+                {%- endif %}
+              </td>
+              <td>
+                {%- if workflow.hide %}
+                  {{ workflow.hide }}
+                {%- endif %}
+              </td>
+              <td class="hide"> </td>
+              <td>{{_(workflow.flow_define.flow_status.value)}}</td>
+              <td>{{workflow.updated.date()}}</td>
+            </tr>
+          {% endautoescape %}
         {%- endfor %}
         </tbody>
       </table>
