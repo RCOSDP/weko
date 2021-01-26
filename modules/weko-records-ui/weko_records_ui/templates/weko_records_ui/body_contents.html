@@ -89,7 +89,7 @@
                   {%- if file.filename -%}
                     {%- set img = file.mimetype | get_image_src -%}
                     {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
-                        filename=file.key) %}
+                        filename=file.filename) %}
                     {%- set is_billing_file = False -%}
                     {%- set billing_file_data = "" -%}
                     {%- set billing_file_url = "" -%}
@@ -105,7 +105,7 @@
 
                     {%- set access_permission = record | check_file_permission(file) -%}
                     {%- set file_details_url = url_for('invenio_records_ui.recid_file_details', pid_value=pid.pid_value,
-                        filename=file.key) %}
+                        filename=file.filename) %}
 
                     <tr class="file-row">
                       <td rowspan="1" class="filecheck-td">
@@ -123,7 +123,7 @@
                               {%- set file_url = url_for_security('login', next=request.path) -%}
                               {%- set billing_file_class = "" -%}
                             {%- elif billing_file_permission -%}
-                              {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value, filename=file.key) -%}
+                              {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value, filename=file.filename) -%}
                               {%- set billing_file_data = "data-billing-file-permission=true data-billing-file-price=" + billing_files_prices.get(file.filename)|string -%}
                             {%- else -%}
                               {%- set billing_file_data = "data-billing-file-permission=false" -%}
@@ -187,11 +187,11 @@
                         </span>
                         {%- if 'pdf' in file.mimetype and can_download_original_pdf -%}
                           {%- set original_file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
-                                filename=file.key, original=1) %}
+                                filename=file.filename, original=1) %}
                           {%- if is_billing_file -%}
                             {%- set original_file_url = "javascript:void(0)" -%}
                               {%- if billing_file_permission -%}
-                                {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value, filename=file.key, original=1) %}
+                                {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value, filename=file.filename, original=1) %}
                               {%- endif -%}
                           {%- endif -%}
                           <div class="text-right">
