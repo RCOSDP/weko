@@ -231,7 +231,7 @@ require([
     $('#apply_spinner').append('<div class="spinner"></div>');
     mail_template = $("#setTemplate").val();
     has_error = false;
-    list_checkboxes.forEach(activity_id => {
+    list_checkboxes.forEach(function (activity_id) {
       $.ajax({
         url: '/workflow/send_mail/' + activity_id + '/' + mail_template,
         method: 'POST',
@@ -242,7 +242,7 @@ require([
         }
       });
     });
-    setTimeout(() => {
+    setTimeout(function () {
       $('.spinner').remove();
       if (has_error) {
         $('#popup_fail').addClass('in').css('display', 'block');
@@ -284,7 +284,9 @@ require([
     listCheckbox();
 
     $('#popup_approve').addClass('in').css('display', 'block');
-    let rows = wf_Data.filter(activity => list_checkboxes.has(activity.activity_id));
+    let rows = wf_Data.filter(function (activity) {
+      return list_checkboxes.has(activity.activity_id);
+    });
     // let rows;
     let i = 1;
 
@@ -314,7 +316,7 @@ require([
   $("#checkAll").click(function () {
     if ($(this).is(":checked")) {
       $(".checkbox-class:not(:checked)").prop("checked", true);
-      wf_DataFilter[$('#setTemplate').val()].forEach(activity => {
+      wf_DataFilter[$('#setTemplate').val()].forEach(function(activity) {
         list_checkboxes.add(activity.activity_id);
       });
       if(list_checkboxes.size > 0)
@@ -341,7 +343,9 @@ var wf_DataFilter = {}
 
 // filter activities to groups
 for(mailGroup in lstMailUserGroup){
-  wf_DataFilter[mailGroup] = wf_Data.filter(activity => lstMailUserGroup[mailGroup].includes(activity.user_role))
+  wf_DataFilter[mailGroup] = wf_Data.filter(function(activity) {
+    return lstMailUserGroup[mailGroup].indexOf(activity.user_role) > -1;
+  })
 }
 var req_per_page = parseInt($("#req_per_page").text());
 var status_data = $("#action_list").text();

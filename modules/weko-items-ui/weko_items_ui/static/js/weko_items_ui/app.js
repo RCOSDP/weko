@@ -1623,7 +1623,7 @@ function toObject(arr) {
                 $scope.setFormReadOnly(key);
                 setTimeout(function () {
                   $("input[name='subitem_item_title'], select[name='subitem_item_title_language']").attr("disabled", "disabled");
-                }, 1000);
+                }, 3000);
                 isExisted = true;
                 break;
               }
@@ -1673,7 +1673,7 @@ function toObject(arr) {
           setTimeout(function () {
             let selectionKey = "input[name='" + titleSubKey + "'], select[name='" + titleLanguageKey + "']";
             $(selectionKey).attr("disabled", "disabled");
-          }, 500);
+          }, 3000);
         }
       };
 
@@ -1692,7 +1692,7 @@ function toObject(arr) {
                   $scope.setFormReadOnly(key);
                   setTimeout(function () {
                     $("input[name='subitem_dataset_usage']").attr("disabled", "disabled");
-                  }, 1000);
+                  }, 3000);
                 }
                 isExisted = true;
                 break;
@@ -1728,7 +1728,7 @@ function toObject(arr) {
           }
           setTimeout(function () {
             $("input[name='subitem_dataset_usage']").attr("disabled", "disabled");
-          }, 500);
+          }, 3000);
         }
       };
 
@@ -1791,7 +1791,7 @@ function toObject(arr) {
           }
           setTimeout(function () {
             $("[name='subitem_corresponding_usage_application_id']").attr("disabled", 'disabled');
-          }, 1000);
+          }, 3000);
         }
       };
 
