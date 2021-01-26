@@ -899,7 +899,7 @@ class FileInstance(db.Model, Timestamp):
                 if settings:
                     path = settings.path
                 else:
-                    path = current_app.config.get['FILES_REST_DEFAULT_PDF_SAVE_PATH']
+                    path = current_app.config['FILES_REST_DEFAULT_PDF_SAVE_PATH']
                 pdf_dir = path + '/pdf_dir/' + str(self.id)
                 pdf_filename = '/data.pdf'
                 file_type = os.path.splitext(self.json['filename'])[1].lower()
