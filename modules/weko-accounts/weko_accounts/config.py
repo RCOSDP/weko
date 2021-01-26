@@ -35,6 +35,9 @@ WEKO_ACCOUNTS_SHIB_CACHE_PREFIX = 'Shib-Session-'
 WEKO_ACCOUNTS_SECURITY_LOGIN_USER_TEMPLATE = 'weko_accounts/login_user.html'
 """Default template for login."""
 
+WEKO_ACCOUNTS_SECURITY_REGISTER_USER_TEMPLATE = 'weko_accounts/register_user.html'
+"""Default template for user registration."""
+
 WEKO_ACCOUNTS_SECURITY_LOGIN_SHIB_USER_TEMPLATE = 'weko_accounts/' \
     'login_shibuser_pattern_1.html'
 """Shibboleth template for login."""
@@ -89,3 +92,9 @@ WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED = True
 
 WEKO_ACCOUNTS_SHIB_DP_LOGIN_DIRECTLY_ENABLED = True
 """Enable Shibboleth login system using DP selection only."""
+
+WEKO_ACCOUNTS_LOGIN_LABEL = "Log in to account"
+"""The login label"""
+
+WEKO_ACCOUNTS_REGISTER_LABEL = "Sign up for a %(sitename)s account!"
+"""The register label"""
