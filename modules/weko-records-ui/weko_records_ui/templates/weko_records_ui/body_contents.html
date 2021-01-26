@@ -157,11 +157,17 @@
                             {%- set text_url = file_url -%}
                           {%- endif -%}
 
+                          <!-- Get file size -->
+                          {%- if file.filesize -%}
+                            {%- set filesize = file.filesize[0].value -%}
+                          {%- else -%}
+                          {%- set filesize = '' -%}
+                          {%- endif -%}
                           {%- if access_permission and billing_file_access_permission -%}
                             <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
                               href={{ text_url }}>
                               {% autoescape false %}
-                              {{ file_label | escape_str }} ({{ file.filesize[0].value }})
+                              {{ file_label | escape_str }} ({{ filesize }})
                               {% endautoescape %}
                             </a>
                             <br>
@@ -170,7 +176,7 @@
                           {%- else -%}
                             <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}>
                               {% autoescape false %}
-                              {{ file_label | escape_str }} ({{ file.filesize[0].value }})
+                              {{ file_label | escape_str }} ({{ filesize }})
                               {% endautoescape %}
                             </a>
                             <br>
