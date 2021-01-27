@@ -19,13 +19,16 @@
 # MA 02111-1307, USA.
 
 """Utilities for making the PDF cover page and newly combined PDFs."""
+import errno
 import io
 import json
 import os
 import unicodedata
 from datetime import datetime
 
-from flask import current_app, request, send_file
+import gettext as _
+import tempfile
+from flask import current_app, flash, request, send_file
 from fpdf import FPDF
 from invenio_db import db
 from invenio_files_rest.views import ObjectResource
@@ -48,8 +51,7 @@ from .models import PDFCoverPageSettings
 from .utils import get_license_pdf, get_pair_value
 
 
-""" Function counting numbers of full-width character and half-width character\
-        differently """
+ERR_STR = 'Please contact the administrator.'
 
 
 def get_east_asian_width_count(text):
@@ -61,9 +63,6 @@ def get_east_asian_width_count(text):
         else:
             count += 1
     return count
-
-
-""" Function making PDF cover page """
 
 
 def make_combined_pdf(pid, fileobj, obj, lang_user):
@@ -496,6 +495,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
 
     combined_pages = PdfFileWriter()
     combined_pages.addPage(cover_page.getPage(0))
+
     for page_num in range(existing_pages.numPages):
         existing_page = existing_pages.getPage(page_num)
         combined_pages.addPage(existing_page)
@@ -505,13 +505,42 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         combined_filename = 'CV_' + datetime.now().strftime('%Y%m%d') + '_' + \
                             item_metadata_json[_file_item_id][0].get(
                                 "filename")
-
     except (KeyError, IndexError):
         combined_filename = 'CV_' + title + '.pdf'
-    combined_filepath = "/code/invenio/{}.pdf".format(combined_filename)
-    combined_file = open(combined_filepath, "wb")
-    combined_pages.write(combined_file)
-    combined_file.close()
+
+    dir_path = tempfile.gettempdir()
+    combined_filepath = dir_path + '{}.pdf'.format(combined_filename)
+
+    with open(combined_filepath, 'wb') as f:
+        try:
+            combined_pages.write(f)
+        except FileNotFoundError as ex:
+            current_app.logger.error(ex)
+            err_txt = ''.join((
+                'The storage path is incorrect.',
+                '{' + dir_path + '} ',
+                ERR_STR
+            ))
+            flash(_(err_txt), category='error')
+        except PermissionError as ex:
+            current_app.logger.error(ex)
+            err_txt = ''.join((
+                'The storage location cannot be accessed.',
+                '{' + dir_path + '} ',
+                ERR_STR
+            ))
+            flash(_(err_txt), category='error')
+        except OSError as ex:
+            if ex.errno == errno.ENOSPC:
+                current_app.logger.error(ex)
+                err_txt = ''.join((
+                    'There is not enough storage space.',
+                    '{' + dir_path + '} ',
+                    ERR_STR
+                ))
+                flash(_(err_txt), category='error')
+        except Exception as ex:
+            current_app.logger.error(ex)
 
     return send_file(
         combined_filepath,
