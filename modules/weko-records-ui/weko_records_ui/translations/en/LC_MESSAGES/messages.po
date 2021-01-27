@@ -1340,3 +1340,5 @@ msgstr "Apply"
 msgid "This data is not available to student."
 msgstr ""
 
+msgid "This data is not available for undergraduate students or those who do not register their positions."
+msgstr ""

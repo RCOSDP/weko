@@ -31,7 +31,7 @@
 {%- set items_show_list = record.items_show_list -%}
 
 {% from "weko_records_ui/item_detail.html" import output_item_detail %}
-{% from "weko_records_ui/_macros.html" import check_download_file %}
+{% from "weko_records_ui/_macros.html" import check_download_file with context %}
 <div class="panel-group">
   <div class="panel panel-default">
     <div class="panel-heading clearfix">

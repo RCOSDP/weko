@@ -44,7 +44,9 @@
           ({{ file.size|filesizeformat }})</a>
         <br>
       {%- else -%}
-      <input id="non-role-msg" type="hidden" value="{{_('This data is not available to student.')}}" />
+      {%set err_msg = "This data is not available to student."%}
+      {%if current_user.roles == [] %}{%set err_msg = "This data is not available for undergraduate students or those who do not register their positions."%} {%endif%}
+      <input id="non-role-msg" type="hidden" value="{{_(err_msg)}}" />
         <a class="action-anchor">
           <button class="img-rounded action-button button-sm" id="non-role-btn">
             <i class="action-icon fa fa-download"></i>
