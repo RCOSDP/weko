@@ -49,7 +49,6 @@ from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
 from weko_records.serializers.utils import get_item_type_name, get_mapping
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_user_profiles.utils import get_user_profile_info
-
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
 
 from .api import UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
@@ -1819,17 +1818,14 @@ def get_file_path(file_name):
     :file_name: file name
     """
     config = current_app.config
-    template_folder_path = None
-    if current_i18n.language == 'ja':
-        template_folder_path = \
-            config.get("WEKO_WORKFLOW_JAPANESE_MAIL_TEMPLATE_FOLDER_PATH")
-    elif current_i18n.language == 'en':
-        template_folder_path = \
-            config.get("WEKO_WORKFLOW_ENGLISH_MAIL_TEMPLATE_FOLDER_PATH")
+    template_folder_path = \
+        config.get("WEKO_WORKFLOW_MAIL_TEMPLATE_FOLDER_PATH")
 
-    """ Get file path (template path + file name) """
-    file_path = os.path.join(template_folder_path, file_name)
-    return file_path
+    # Get file path (template path + file name)
+    if template_folder_path is not None and file_name is not None:
+        return os.path.join(template_folder_path, file_name)
+    else:
+        return ""
 
 
 def replace_characters(data, content):
