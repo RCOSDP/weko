@@ -26,7 +26,6 @@ import uuid
 from flask import abort, jsonify, request, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
-from flask_login import current_user
 from invenio_accounts.models import Role, User
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
@@ -280,10 +279,9 @@ class WorkFlowSettingView(BaseView):
                 flows_id=uuid.uuid4()
             )
             workflow.create_workflow(form_workflow)
-            if len(list_hide) > 0:
-                workflow_detail = workflow.get_workflow_by_flows_id(
-                    form_workflow.get('flows_id'))
-                self.save_workflow_role(workflow_detail.id, list_hide)
+            workflow_detail = workflow.get_workflow_by_flows_id(
+                form_workflow.get('flows_id'))
+            self.save_workflow_role(workflow_detail.id, list_hide)
         else:
             """Update the workflow info"""
             form_workflow.update(
@@ -291,8 +289,7 @@ class WorkFlowSettingView(BaseView):
                 flows_id=workflow_id
             )
             workflow.upt_workflow(form_workflow)
-            if len(list_hide) > 0:
-                self.save_workflow_role(form_workflow.get('id'), list_hide)
+            self.save_workflow_role(form_workflow.get('id'), list_hide)
         return jsonify(code=0, msg='',
                        data={'redirect': url_for('workflowsetting.index')})
 
