@@ -45,7 +45,6 @@ from datetime import datetime
 from functools import wraps
 from os.path import basename
 
-import gettext as _
 import six
 from flask import current_app, flash
 from flask_login import current_user
@@ -916,7 +915,7 @@ class FileInstance(db.Model, Timestamp):
                    if err_strs:
                        former, latter = err_strs
                        err_txt = ''.join((former, pdf_dir, ' ', latter))
-                       flash(_(err_txt), category='error')
+                       flash(err_txt, category='error')
 
                 self.uri = pdf_dir + pdf_filename
                 self.size = os.path.getsize(pdf_dir + pdf_filename)

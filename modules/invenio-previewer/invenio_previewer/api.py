@@ -35,6 +35,7 @@ from os.path import basename, splitext
 from time import sleep
 
 from flask import current_app, url_for
+from flask_babelex import gettext as _
 
 
 class PreviewFile(object):
@@ -99,7 +100,7 @@ class PreviewFile(object):
 
 def convert_to(folder, source):
     """Convert file to pdf."""
-    ERR_STR = 'Please contact the administrator.'
+    ERR_STR = _('Please contact the administrator.')
     timeout = current_app.config['PREVIEWER_CONVERT_PDF_TIMEOUT']
     args = [
         'libreoffice',
@@ -150,20 +151,20 @@ def convert_to(folder, source):
     except FileNotFoundError as ex:
         current_app.logger.error(ex)
         err_strs = (
-            'The storage path is incorrect.',
+            _('The storage path is incorrect.'),
             ERR_STR
         )
     except PermissionError as ex:
         current_app.logger.error(ex)
         err_strs = (
-            'The storage location cannot be accessed.',
+            _('The storage location cannot be accessed.'),
             ERR_STR
         )
     except OSError as ex:
         if ex.errno == errno.ENOSPC:
             current_app.logger.error(ex)
             err_strs = (
-                'There is not enough storage space.',
+                _('There is not enough storage space.'),
                 ERR_STR
             )
     except Exception as ex:
