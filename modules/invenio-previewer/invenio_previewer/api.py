@@ -26,6 +26,7 @@
 
 from __future__ import absolute_import, print_function
 
+import errno
 import os
 import re
 import shutil
@@ -98,40 +99,83 @@ class PreviewFile(object):
 
 def convert_to(folder, source):
     """Convert file to pdf."""
+    ERR_STR = 'Please contact the administrator.'
     timeout = current_app.config['PREVIEWER_CONVERT_PDF_TIMEOUT']
-    args = ['libreoffice', '--headless', '--convert-to', 'pdf',
-            '--outdir', folder, source]
+    args = [
+        'libreoffice',
+        '--headless',
+        '--convert-to',
+        'pdf',
+        '--outdir',
+        folder,
+        source
+    ]
     os_env = dict(os.environ)
     temp_folder = "/tmp/" + source.split("/")[-2] + "_libreoffice"
+
     if os.path.exists(temp_folder):
         shutil.rmtree(temp_folder)
+
     os.mkdir(temp_folder)
     # Change home var for next subprocess for process runs faster.
     os_env['HOME'] = temp_folder
-    filename = None
+    filename = err_strs = None
+
     try:
         process_count = 0
-        while not filename and process_count <= \
-                current_app.config.get('PREVIEWER_CONVERT_PDF_RETRY_COUNT'):
-            process = subprocess.run(args, stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE, env=os_env,
-                                     timeout=timeout)
-            filename = re.search('-> (.*?) using filter',
-                                 process.stdout.decode())
+
+        while (
+            not filename and process_count <=
+            current_app.config.get('PREVIEWER_CONVERT_PDF_RETRY_COUNT')
+        ):
+            process = subprocess.run(
+                args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=os_env,
+                timeout=timeout
+            )
+            filename = re.search(
+                '-> (.*?) using filter',
+                process.stdout.decode()
+            )
+
             if not filename:
-                current_app.logger.debug('retry convert to pdf :'
-                                         + str(process_count))
+                current_app.logger.debug(
+                    'retry convert to pdf :' + str(process_count)
+                )
                 sleep(1)
+
             process_count = process_count + 1
+    except FileNotFoundError as ex:
+        current_app.logger.error(ex)
+        err_strs = (
+            'The storage path is incorrect.',
+            ERR_STR
+        )
+    except PermissionError as ex:
+        current_app.logger.error(ex)
+        err_strs = (
+            'The storage location cannot be accessed.',
+            ERR_STR
+        )
+    except OSError as ex:
+        if ex.errno == errno.ENOSPC:
+            current_app.logger.error(ex)
+            err_strs = (
+                'There is not enough storage space.',
+                ERR_STR
+            )
     except Exception as ex:
         current_app.logger.error(ex)
     finally:
         shutil.rmtree(temp_folder)
+
     if filename is None:
         current_app.logger.error('convert to pdf failure')
         raise LibreOfficeError(process.stdout.decode())
     else:
-        return filename.group(1)
+        return filename.group(1), err_strs
 
 
 class LibreOfficeError(Exception):
