@@ -333,7 +333,7 @@ require([
 
 
 const all_activities = $("#work-flow-data").text();
-var wf_Data = JSON.parse(all_activities);
+var wf_Data = JSON.parse(all_activities) ? JSON.parse(all_activities) : [];
 
 const mailUserGroup = $("#send_mail_user_group").text();
 var lstMailUserGroup = JSON.parse(mailUserGroup);
@@ -464,6 +464,7 @@ function render_table_rows(rows, req_per_page, page_no) {
 
 // Pagination logic implementation
 function pagination(data, wf_Data) {
+  if(!wf_Data) return;
   const all_data = window.btoa(unescape(encodeURIComponent(JSON.stringify(wf_Data))));
   let $pagination = $(".pagination.table_data");
   $pagination.empty();
