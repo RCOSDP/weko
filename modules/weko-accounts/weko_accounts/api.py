@@ -19,7 +19,7 @@ from invenio_db import db
 from weko_user_profiles.models import UserProfile
 from werkzeug.local import LocalProxy
 
-from .models import ShibbolethUser, ShibUserRole
+from .models import ShibbolethUser
 
 _datastore = LocalProxy(lambda: current_app.extensions['security'].datastore)
 
@@ -56,16 +56,7 @@ class ShibUser(object):
 
         try:
             with db.session.begin_nested():
-                db.session.query(ShibUserRole).filter_by(
-                    shib_user_id=shib_user.id).delete(synchronize_session='fetch')
-                shib_userroles = []
-                for _id in role_ids:
-                    ShibUserRole.create(shib_user_id=shib_user.id, role_id=_id)
-                    shib_userroles.append(ShibUserRole(
-                        shib_user_id=shib_user.id,
-                        role_id=_id
-                    ))
-                db.session.add_all(shib_userroles)
+                # db.session.add_all(shib_userroles)
                 db.session.commit()
         except Exception as ex:
             current_app.logger.debug(ex)
