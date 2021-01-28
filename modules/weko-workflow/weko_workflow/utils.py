@@ -1955,7 +1955,7 @@ def process_send_reminder_mail(activity_detail, mail_template):
     mail_info = set_mail_info(item_info, activity_detail)
 
     from weko_items_ui.utils import get_user_information
-    update_user = get_user_information(activity_detail.activity_update_user)
+    update_user = get_user_information(activity_detail.activity_login_user)
     if update_user.get('email') != '':
         mail_info['mail_address'] = update_user.get('email')
     else:

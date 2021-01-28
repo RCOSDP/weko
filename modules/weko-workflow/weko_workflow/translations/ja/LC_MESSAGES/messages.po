@@ -553,10 +553,10 @@ msgstr "メール通知"
 msgid "Email is sent successfully."
 msgstr "メールの送付が完了しました。"
 
-msgid "Remind to submit the Data Usage Report(Other than Graduated Student)"
+msgid "Remind to submit the Data Usage Report(Other than Student)"
 msgstr "JGSSデータ利用報告の手続き＜学部生以外＞"
 
-msgid "Remind to submit the Data Usage Report(Graduated Student)"
+msgid "Remind to submit the Data Usage Report(Student)"
 msgstr "JGSSデータ利用報告の手続き＜学部生＞"
 
 msgid "email will be sent."
