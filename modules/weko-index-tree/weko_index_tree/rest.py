@@ -204,7 +204,8 @@ class IndexActionResource(ContentNegotiatedMethodView):
         data = self.loaders[request.mimetype]()
         if not data:
             raise InvalidDataRESTError()
-        if not data.get('public_state') and check_doi_in_index(index_id):
+        if not (data.get('public_state') and data.get('harvest_public_state'))\
+                and check_doi_in_index(index_id):
             status = 200
             msg = '0'
         else:

@@ -195,11 +195,12 @@ def register_hdl_by_handle(handle, item_uuid):
         identifier.register_pidstore('hdl', handle)
 
 
-def item_metadata_validation(item_id, identifier_type):
+def item_metadata_validation(
+        item_id, identifier_type, record=None, is_import=False):
     """
     Validate item metadata.
 
-    :param: item_id, identifier_type
+    :param: item_id, identifier_type, record
     :return: error_list
     """
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
@@ -226,7 +227,8 @@ def item_metadata_validation(item_id, identifier_type):
                          'conference object', 'conference proceedings',
                          'conference poster']
 
-    metadata_item = MappingData(item_id)
+    metadata_item = MappingData(
+        item_id) if item_id else MappingData(record=record)
     item_type = metadata_item.get_data_item_type()
     resource_type, type_key = metadata_item.get_data_by_property("type.@value")
     type_check = check_required_data(resource_type, type_key)
@@ -318,8 +320,9 @@ def item_metadata_validation(item_id, identifier_type):
         properties['either'] = either_properties
 
     if properties and \
-            identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI'] \
-            and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI']:
+            ((identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI']
+              and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI']
+              ) or is_import):
         return validation_item_property(metadata_item, properties)
     else:
         return _('Cannot register selected DOI for current Item Type of this '
@@ -693,9 +696,9 @@ class MappingData(object):
     record = None
     item_map = None
 
-    def __init__(self, item_id):
+    def __init__(self, item_id=None, record=None):
         """Initilize pagination."""
-        self.record = WekoRecord.get_record(item_id)
+        self.record = WekoRecord.get_record(item_id) if item_id else record
         item_type = self.get_data_item_type()
         item_type_mapping = Mapping.get_record(item_type.id)
         self.item_map = get_mapping(item_type_mapping, "jpcoar_mapping")

@@ -62,8 +62,8 @@ from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD
 from weko_workflow.models import FlowDefine, WorkFlow
-from weko_workflow.utils import IdentifierHandle, check_required_data, \
-    get_identifier_setting, get_sub_item_value, register_hdl_by_handle, \
+from weko_workflow.utils import IdentifierHandle, get_identifier_setting, \
+    get_sub_item_value, item_metadata_validation, register_hdl_by_handle, \
     register_hdl_by_item_id, saving_doi_pidstore
 
 from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
@@ -1876,111 +1876,22 @@ def handle_doi_required_check(record):
         true/false -- {object} Validation result.
 
     """
-    ddi_item_type_name = 'DDI'
-    journalarticle_type = ['other（プレプリント）', 'conference paper',
-                           'data paper', 'departmental bulletin paper',
-                           'editorial', 'journal article', 'periodical',
-                           'review article', 'article']
-    thesis_types = ['thesis', 'bachelor thesis', 'master thesis',
-                    'doctoral thesis']
-    report_types = ['technical report', 'research report', 'report',
-                    'book', 'book part']
-    elearning_type = ['learning material']
-    dataset_type = ['software', 'dataset']
-    datageneral_types = ['internal report', 'policy report', 'report part',
-                         'working paper', 'interactive resource',
-                         'musical notation', 'research proposal',
-                         'technical documentation', 'workflow',
-                         'その他（その他）', 'sound', 'patent',
-                         'cartographic material', 'map', 'lecture', 'image',
-                         'still image', 'moving image', 'video',
-                         'conference object', 'conference proceedings',
-                         'conference poster']
+    record_data = {'item_type_id': record.get('item_type_id')}
+    for key, value in record.get('metadata', {}).items():
+        record_data[key] = {'attribute_value_mlt': [value]}
 
-    item_type = None
-
-    if 'doi_ra' in record and record['doi_ra'] in ['JaLC',
-                                                   'Crossref',
-                                                   'DataCite',
-                                                   'NDL JaLC']:
-        doi_type = record['doi_ra']
-        item_type_mapping = Mapping.get_record(record['item_type_id'])
-        if item_type_mapping:
-            item_type = ItemTypes.get_by_id(id_=record['item_type_id'])
-            item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
+    if 'doi_ra' in record and record['doi_ra'] in WEKO_IMPORT_DOI_TYPE:
+        error_list = item_metadata_validation(
+            None, str(WEKO_IMPORT_DOI_TYPE.index(record['doi_ra']) + 1),
+            record_data, True)
+        if isinstance(error_list, str):
+            return False
+        if error_list and (error_list.get('required')
+                           or error_list.get('either')
+                           or error_list.get('pattern')):
+            return False
         else:
-            return False
-
-        properties = {}
-        # 必須
-        required_properties = []
-        # いずれか必須
-        either_properties = []
-
-        resource_type, resource_type_key = get_data_by_property(record,
-                                                                item_map,
-                                                                'type.@value')
-        if not resource_type or not item_type \
-                or check_required_data(resource_type, resource_type_key):
-            return False
-
-        resource_type = resource_type.pop()
-        if doi_type == 'JaLC':
-            if resource_type in journalarticle_type \
-                or resource_type in report_types \
-                or (resource_type in elearning_type) \
-                    or resource_type in datageneral_types:
-                required_properties = ['title']
-                if item_type.item_type_name.name != ddi_item_type_name:
-                    required_properties.append('fileURI')
-            elif resource_type in thesis_types:
-                required_properties = ['title',
-                                       'creator']
-                if item_type.item_type_name.name != ddi_item_type_name:
-                    required_properties.append('fileURI')
-            elif resource_type in dataset_type:
-                required_properties = ['title',
-                                       'givenName']
-                if item_type.item_type_name.name != ddi_item_type_name:
-                    required_properties.append('fileURI')
-                either_properties = ['geoLocationPoint',
-                                     'geoLocationBox',
-                                     'geoLocationPlace']
-        elif doi_type == 'Crossref':
-            if resource_type in journalarticle_type:
-                required_properties = ['title',
-                                       'publisher',
-                                       'sourceIdentifier',
-                                       'sourceTitle']
-                if item_type.item_type_name.name != ddi_item_type_name:
-                    required_properties.append('fileURI')
-            elif resource_type in report_types:
-                required_properties = ['title']
-                if item_type.item_type_name.name != ddi_item_type_name:
-                    required_properties.append('fileURI')
-            elif resource_type in thesis_types:
-                required_properties = ['title',
-                                       'creator']
-                if item_type.item_type_name.name != ddi_item_type_name:
-                    required_properties.append('fileURI')
-        # DataCite DOI identifier registration
-        elif doi_type == 'DataCite' \
-                and item_type.item_type_name.name != ddi_item_type_name:
-            required_properties = ['fileURI']
-        # NDL JaLC DOI identifier registration
-        elif doi_type == 'NDL JaLC' \
-                and item_type.item_type_name.name != ddi_item_type_name:
-            required_properties = ['fileURI']
-
-        if required_properties:
-            properties['required'] = required_properties
-        if either_properties:
-            properties['either'] = either_properties
-        if properties:
-            return validation_item_property(record, item_map, properties)
-        else:
-            return False
-
+            return True
     return False
 
 
@@ -2007,216 +1918,6 @@ def get_data_by_property(record, item_map, item_property):
             for value in data_result:
                 data.append(value)
     return data, key
-
-
-def validation_item_property(record, item_map, properties):
-    """
-    Validate item property.
-
-    :param record: Record object.
-    :param item_map: Mapping Data.
-    :param properties: Property's keywords.
-    :return: True or False
-    """
-    if properties.get('required'):
-        if not validattion_item_property_required(
-                record, item_map, properties['required']):
-            return False
-    if properties.get('either'):
-        if not validattion_item_property_either_required(
-                record, item_map, properties['either']):
-            return False
-    return True
-
-
-def validattion_item_property_required(
-        record, item_map, properties):
-    """
-    Validate item property is required.
-
-    :param mapping_data: Mapping Data contain record and item_map
-    :param properties: Property's keywords
-    :return: error_list or None
-    """
-    # check jpcoar:URI
-    if 'fileURI' in properties:
-        _, key = get_data_by_property(
-            record, item_map, "file.URI.@value")
-        data = []
-        if key:
-            key = key.split('.')[0]
-            item_file = record['metadata'].get(key)
-            if item_file:
-                file_name_data = get_sub_item_value(
-                    item_file, 'filename')
-                if file_name_data:
-                    for value in file_name_data:
-                        data.append(value)
-                data.append(file_name_data)
-
-            if check_required_data(data, key + '.filename', True):
-                return False
-    # check タイトル dc:title
-    if 'title' in properties:
-        title_data, title_key = get_data_by_property(
-            record, item_map, "title.@value")
-        lang_data, lang_key = get_data_by_property(
-            record, item_map, "title.@attributes.xml:lang")
-
-        requirements = check_required_data(title_data, title_key, True)
-        lang_requirements = check_required_data(lang_data,
-                                                lang_key,
-                                                True)
-        if requirements or lang_requirements:
-            return False
-    # check 識別子 jpcoar:givenName
-    if 'givenName' in properties:
-        _, key = get_data_by_property(
-            record, item_map, "creator.givenName.@value")
-        data = []
-        if key:
-            creators = record['metadata'].get(key.split('.')[0])
-            if creators:
-                given_name_data = get_sub_item_value(
-                    creators, key.split('.')[-1])
-                if given_name_data:
-                    for value in given_name_data:
-                        data.append(value)
-                data.append(given_name_data)
-
-        if check_required_data(data, key, True):
-            return False
-    # check 識別子 jpcoar:givenName and jpcoar:nameIdentifier
-    if 'creator' in properties:
-        _, key = get_data_by_property(
-            record, item_map, "creator.givenName.@value")
-        _, idt_key = get_data_by_property(
-            record, item_map, "creator.nameIdentifier.@value")
-
-        data = []
-        idt_data = []
-        creators = record['metadata'].get(key.split('.')[0])
-        if key:
-            creator_data = get_sub_item_value(
-                creators,
-                key.split('.')[-1])
-            if creator_data:
-                for value in creator_data:
-                    data.append(value)
-        if idt_key:
-            creator_name_identifier = get_sub_item_value(
-                creators, idt_key.split('.')[-1])
-            if creator_name_identifier:
-                for value in creator_name_identifier:
-                    idt_data.append(value)
-
-        requirements = check_required_data(data, key, True)
-        idt_requirements = check_required_data(idt_data, idt_key, True)
-        if requirements and idt_requirements:
-            return False
-    # check 収録物識別子 jpcoar:sourceIdentifier
-    if 'sourceIdentifier' in properties:
-        data, key = get_data_by_property(
-            record, item_map, "sourceIdentifier.@value")
-        type_data, type_key = get_data_by_property(
-            record, item_map, "sourceIdentifier.@attributes.identifierType")
-
-        requirements = check_required_data(data, key)
-        type_requirements = check_required_data(type_data, type_key)
-        if requirements or type_requirements:
-            return False
-    # check 収録物名 jpcoar:sourceTitle
-    if 'sourceTitle' in properties:
-        data, key = get_data_by_property("sourceTitle.@value")
-        lang_data, lang_key = get_data_by_property(
-            record, item_map, "sourceTitle.@attributes.xml:lang")
-
-        requirements = check_required_data(data, key)
-        lang_requirements = check_required_data(lang_data, lang_key)
-        if requirements or lang_requirements:
-            return False
-        elif 'en' not in lang_data:
-            return False
-    # check 収録物名 dc:publisher
-    if 'publisher' in properties:
-        data, key = get_data_by_property("publisher.@value")
-        lang_data, lang_key = get_data_by_property(
-            record, item_map, "publisher.@attributes.xml:lang")
-
-        requirements = check_required_data(data, key, True)
-        lang_requirements = check_required_data(lang_data,
-                                                lang_key,
-                                                True)
-        if requirements or lang_requirements:
-            return False
-        elif 'en' not in lang_data:
-            return False
-
-    return True
-
-
-def validattion_item_property_either_required(
-        record, item_map, properties):
-    """
-    Validate item property is either required.
-
-    :param mapping_data: Mapping Data contain record and item_map
-    :param properties: Property's keywords
-    :return: error_list or None
-    """
-    if 'geoLocationPoint' in properties:
-        latitude_data, latitude_key = get_data_by_property(
-            record,
-            item_map,
-            "geoLocation.geoLocationPoint.pointLatitude.@value")
-        longitude_data, longitude_key = get_data_by_property(
-            record,
-            item_map,
-            "geoLocation.geoLocationPoint.pointLongitude.@value")
-
-        latitude_requirement = check_required_data(
-            latitude_data, latitude_key, True)
-        longitude_requirement = check_required_data(
-            longitude_data, longitude_key, True)
-
-        if latitude_requirement and longitude_requirement:
-            return False
-    # check 位置情報（空間） datacite:geoLocationBox
-    if 'geoLocationBox' in properties:
-        east_data, east_key = get_data_by_property(
-            "geoLocation.geoLocationBox.eastBoundLongitude.@value")
-        north_data, north_key = get_data_by_property(
-            "geoLocation.geoLocationBox.northBoundLatitude.@value")
-        south_data, south_key = get_data_by_property(
-            "geoLocation.geoLocationBox.southBoundLatitude.@value")
-        west_data, west_key = get_data_by_property(
-            "geoLocation.geoLocationBox.westBoundLongitude.@value")
-
-        east_requirement = check_required_data(
-            east_data, east_key, True)
-
-        north_requirement = check_required_data(
-            north_data, north_key, True)
-
-        south_requirement = check_required_data(
-            south_data, south_key, True)
-
-        west_requirement = check_required_data(
-            west_data, west_key, True)
-
-        if east_requirement and north_requirement and south_requirement and \
-                west_requirement:
-            return False
-    # check 位置情報（自由記述） datacite:geoLocationPlace
-    if 'geoLocationPlace' in properties:
-        data, key = get_data_by_property(
-            "geoLocation.geoLocationPlace.@value")
-
-        requirements = check_required_data(data, key, True)
-        if requirements:
-            return False
-
-    return True
 
 
 def handle_check_date(list_record):
