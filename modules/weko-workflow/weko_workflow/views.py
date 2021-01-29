@@ -90,11 +90,11 @@ blueprint = Blueprint(
 
 @blueprint.route('/usage-report', methods=['GET'])
 def usage_report():
+    getargs = request.args
     item_type_usage_report = current_app.config.get('WEKO_ITEMS_UI_USAGE_REPORT')
-    action_status_condition = current_app.config.get('WEKO_WORKFLOW_ACTION')
-    conditions = filter_all_condition()
+    conditions = filter_all_condition(getargs)
     conditions['workflow'] = [item_type_usage_report]
-    conditions['status'] = [action_status_condition]
+    conditions['status'] = ['doing']
     activity = WorkActivity()
     # For usage report, just get all activities with provided conditions
     activities, _, _, _, _ = activity \

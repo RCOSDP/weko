@@ -1665,7 +1665,8 @@ class WorkActivity(object):
                               community_users]
         return community_user_ids
 
-    def get_activity_list(self, community_id=None, conditions=None):
+    def get_activity_list(self, community_id=None, conditions=None,
+                          is_get_all=False):
         """Get activity list info.
 
         :return:
@@ -1741,13 +1742,13 @@ class WorkActivity(object):
             if count > 0:
                 name_param, page = self.__get_activity_list_per_page(
                     activities, max_page, name_param, page,
-                    query_action_activities, size, tab
+                    query_action_activities, size, tab, is_get_all
                 )
             return activities, max_page, size, page, name_param
 
     def __get_activity_list_per_page(
         self, activities, max_page, name_param,
-        page, query_action_activities, size, tab
+        page, query_action_activities, size, tab, is_get_all = False
     ):
         """Get activity list per page.
 
@@ -1765,9 +1766,11 @@ class WorkActivity(object):
             name_param = 'pages' + tab
         offset = int(size) * (int(page) - 1)
         # Get activities
-        action_activities = query_action_activities \
-            .distinct(_Activity.id).order_by(asc(_Activity.id)).limit(
-                size).offset(offset).all()
+        query_action_activities = query_action_activities \
+            .distinct(_Activity.id).order_by(asc(_Activity.id))
+        if not is_get_all:
+            query_action_activities = query_action_activities.limit(size).offset(offset)
+        action_activities = query_action_activities.all()
         if action_activities:
             # Format activities
             self.__format_activity_data_to_show_on_workflow(
