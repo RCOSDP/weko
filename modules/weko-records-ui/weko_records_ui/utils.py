@@ -539,6 +539,36 @@ def get_file_info_list(record):
     :param record: all metadata of a record.
     :return: json files.
     """
+    def get_file_size(p_file):
+        """Get file size and convert to byte."""
+        filesize = p_file.get('filesize', [{}])[0]
+        filesize_value = filesize.get('value', 0)
+        defined_unit = {'b': 1, 'kb': 1000, 'mb': 1000000}
+        if type(filesize_value) is str and ' ' in filesize_value:
+            size_num = filesize_value.split(' ')[0]
+            size_unit = filesize_value.split(' ')[1]
+            unit_num = defined_unit.get(size_unit.lower(), 0)
+            filesize_value = size_num * unit_num
+        return filesize_value
+
+    def set_message_for_file(p_file):
+        """Check Opendate is future date."""
+        p_file['future_date_message'] = ""
+        p_file['download_preview_message'] = ""
+        access = p_file.get("accessrole", '')
+        date = p_file.get('date')
+        if access == "open_login" and not current_user.get_id():
+            p_file['future_date_message'] = _("Restricted Access")
+        elif access == "open_date":
+            if date and isinstance(date, list) and date[0]:
+                adt = date[0].get('dateValue')
+                pdt = dt.strptime(adt, '%Y-%m-%d')
+                if pdt > dt.today():
+                    message = "Download is available from {}/{}/{}."
+                    p_file['future_date_message'] = _(message).format(pdt.year, pdt.month, pdt.day)
+                    message = "Download / Preview is available from {}/{}/{}."
+                    p_file['download_preview_message'] = _(message).format(pdt.year, pdt.month, pdt.day)
+
     is_display_file_preview = False
     files = []
     for key in record:
@@ -556,22 +586,7 @@ def get_file_info_list(record):
                     if f.get("is_thumbnail") is None:
                         f["is_thumbnail"] = False
                     # Check Opendate is future date.
-                    f['future_date_message'] = ""
-                    f['download_preview_message'] = ""
-                    date = f.get('date')
-                    if f.get("accessrole") == "open_login" and not current_user.get_id():
-                        message = "Restricted Access"
-                        f['future_date_message'] = _(message)
-                    if date and isinstance(date, list) and date[0]:
-                        adt = date[0].get('dateValue')
-                        pdt = dt.strptime(adt, '%Y-%m-%d')
-                        if pdt > dt.today():
-                            message = "Download is available from {}/{}/{}."
-                            f['future_date_message'] = _(message).format(
-                                pdt.year, pdt.month, pdt.day)
-                            message = "Download / Preview is available from {}/{}/{}."
-                            f['download_preview_message'] = _(message).format(
-                                pdt.year, pdt.month, pdt.day)
+                    set_message_for_file(f)
                     # Check show preview area.
                     # If f is uploaded in this system => show 'Preview' area.
                     base_url = "{}record/{}/files/{}".format(
@@ -582,5 +597,7 @@ def get_file_info_list(record):
                     url = f.get("url", {}).get("url")
                     if base_url in url and not f['future_date_message']:
                         is_display_file_preview = True
+                    # Get file size and convert to byte.
+                    f['size'] = get_file_size(f)
                     files.append(f)
     return is_display_file_preview, files

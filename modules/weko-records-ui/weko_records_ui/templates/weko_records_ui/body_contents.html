@@ -460,31 +460,33 @@
 
 {# {%- block javascript %} #}
   <script>
-    var parseQueryString = function() {
-      var str = window.location.search;
-      var objURL = {};
-      str.replace(
-          new RegExp( "([^?=&]+)(=([^&]*))?", "g" ),
-          function( $0, $1, $2, $3 ){
-              objURL[ $1 ] = $3;
-          }
-      );
-      return objURL;
-    };
-    var params = parseQueryString();
-    download_id = params['download'];
-    if(download_id){
-      search = window.location.search;
-      href = window.location.href;
-      window.history.replaceState( {} , '',  href.replace(search, ''));
-      $('#' + download_id).click();
-    }
-    preview_id = params['preview'];
-    if(preview_id){
-      search = window.location.search;
-      href = window.location.href;
-      window.history.replaceState( {} , '',  href.replace(search, ''));
-      $('#' + preview_id).click();
-    }
+    jQuery(window).load(function () {
+      var parseQueryString = function() {
+        var str = window.location.search;
+        var objURL = {};
+        str.replace(
+            new RegExp( "([^?=&]+)(=([^&]*))?", "g" ),
+            function( $0, $1, $2, $3 ){
+                objURL[ $1 ] = $3;
+            }
+        );
+        return objURL;
+      };
+      var params = parseQueryString();
+      download_id = params['download'];
+      if(download_id){
+        search = window.location.search;
+        href = window.location.href;
+        window.history.replaceState( {} , '',  href.replace(search, ''));
+        $('#' + download_id).click();
+      }
+      preview_id = params['preview'];
+      if(preview_id){
+        search = window.location.search;
+        href = window.location.href;
+        window.history.replaceState( {} , '',  href.replace(search, ''));
+        $('#' + preview_id).click();
+      }
+    });
   </script>
 {# {%- endblock javascript %} #}
