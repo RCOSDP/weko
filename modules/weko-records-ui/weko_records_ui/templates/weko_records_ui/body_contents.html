@@ -188,14 +188,17 @@
                                 style="font-size:18px;font-weight:bold">&nbsp;{{file.future_date_message}}</span>
                             </div>
                           {%- endif -%}
-                          {# {%- if access_permission and billing_file_access_permission -%}
+                          {%- if access_permission and billing_file_access_permission -%}
                             <!-- Show check sum -->
                           {%- else -%}
-                            <div class="panel-body">
-                              <span class="fa fa-key"
-                                style="font-size:18px;font-weight:bold">&nbsp;{{_('Restricted Access')}}</span>
-                            </div>
-                          {%- endif -%} #}
+                            <!-- Show 'Restricted Access' message -->
+                            {%- if not file.future_date_message -%}
+                              <div class="panel-body">
+                                <span class="fa fa-key"
+                                  style="font-size:18px;font-weight:bold">&nbsp;{{_('Restricted Access')}}</span>
+                              </div>
+                            {%- endif -%}
+                          {%- endif -%}
                         </span>
                         {%- if 'pdf' in file.mimetype and can_download_original_pdf -%}
                           {%- set original_file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
