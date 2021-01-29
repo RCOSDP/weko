@@ -37,6 +37,7 @@ from .permissions import check_user_group_permission, is_open_restricted, \
 from flask import request
 from datetime import datetime as dt
 from flask_babelex import gettext as _
+from flask_login import current_user
 
 
 def check_items_settings():
@@ -558,6 +559,9 @@ def get_file_info_list(record):
                     f['future_date_message'] = ""
                     f['download_preview_message'] = ""
                     date = f.get('date')
+                    if f.get("accessrole") == "open_login" and not current_user.get_id():
+                        message = "Restricted Access"
+                        f['future_date_message'] = _(message)
                     if date and isinstance(date, list) and date[0]:
                         adt = date[0].get('dateValue')
                         pdt = dt.strptime(adt, '%Y-%m-%d')
