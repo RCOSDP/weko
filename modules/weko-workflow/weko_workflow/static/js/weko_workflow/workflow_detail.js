@@ -205,6 +205,7 @@ require([
   }
 
   $('#confirm_approval_btn').click(function () {
+    startLoading($(this));
     nextAction();
   });
 
@@ -221,6 +222,7 @@ require([
         if (data.error === 1) {
           if (data['check_handle'] === 1 && data['check_continue'] === 1) {
             $("#confirm_modal").modal("show");
+            endLoading(_this);
           } else {
             nextAction();
           }
