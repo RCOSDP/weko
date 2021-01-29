@@ -29,17 +29,18 @@ from flask import current_app, request
 from flask_babelex import gettext as _
 from flask_security import current_user
 from invenio_cache import current_cache
-from invenio_db import db
-from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_i18n.ext import current_i18n
-from invenio_mail.admin import MailSettingView
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
-from invenio_records.models import RecordMetadata
 from invenio_records_files.models import RecordsBuckets
 from sqlalchemy.exc import SQLAlchemyError
+
+from invenio_db import db
+from invenio_files_rest.models import Bucket, ObjectVersion
+from invenio_mail.admin import MailSettingView
+from invenio_records.models import RecordMetadata
 from weko_admin.models import Identifier
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
@@ -50,7 +51,6 @@ from weko_records.serializers.utils import get_item_type_name, get_mapping
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_user_profiles.utils import get_user_profile_info
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
-
 from .api import UpdateItem, WorkActivity, WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_SELECT_DICT, WEKO_SERVER_CNRI_HOST_LINK
 from .models import Action as _Action
@@ -1174,6 +1174,7 @@ def get_parent_pid_with_type(pid_type, object_uuid):
         current_app.logger.error(pid_not_exist)
         return None
 
+
 def filter_all_condition(all_args):
     """
     Filter conditions.
@@ -1189,6 +1190,7 @@ def filter_all_condition(all_args):
             if key in args:
                 filter_condition(conditions, key, request.args.get(args))
     return conditions
+
 
 def filter_condition(json, name, condition):
     """

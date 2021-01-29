@@ -26,10 +26,10 @@ import uuid
 import click
 from flask import current_app
 from flask.cli import with_appcontext
-from invenio_db import db
 from sqlalchemy import asc
-from weko_records.api import ItemTypes
 
+from invenio_db import db
+from weko_records.api import ItemTypes
 from .models import Action, ActionStatus, ActionStatusPolicy, FlowAction, \
     FlowDefine, FlowStatusPolicy, WorkFlow
 
@@ -137,7 +137,7 @@ def init_workflow_tables(tables):
             action_is_need_agree=False
         ))
         if current_app.config[
-            'WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION']:
+                'WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION']:
             db_action.append(dict(
                 action_name=current_app.config[
                     'WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION'],
@@ -194,7 +194,7 @@ def init_workflow_tables(tables):
                 action_is_need_agree=False
             ))
         if current_app.config[
-            'WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION']:
+                'WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION']:
             db_action.append(dict(
                 action_name=current_app.config[
                     'WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION'],

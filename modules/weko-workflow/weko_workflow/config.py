@@ -251,7 +251,7 @@ WEKO_WORKFLOW_IDENTIFIER_GRANT_WITHDRAWN = -3
 
 WEKO_WORKFLOW_SEND_MAIL_USER_GROUP = {}
 
-WEKO_WORKFLOW_FILTER_PARAMS = ['createdfrom', 'createdto', 'workflow', 'user',
-                                'item', 'status', 'tab', 'sizewait', 'sizetodo',
-                                'sizeall',
-                                'pagesall', 'pagestodo', 'pageswait']
+WEKO_WORKFLOW_FILTER_PARAMS = [
+    'createdfrom', 'createdto', 'workflow', 'user', 'item', 'status', 'tab',
+    'sizewait', 'sizetodo', 'sizeall', 'pagesall', 'pagestodo', 'pageswait'
+]
