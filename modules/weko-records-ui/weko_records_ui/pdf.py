@@ -18,7 +18,6 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Utilities for making the PDF cover page and newly combined PDFs."""
 import errno
 import io
 import json
@@ -27,7 +26,7 @@ import unicodedata
 from datetime import datetime
 
 import tempfile
-from flask import current_app, flash, request, send_file
+from flask import current_app, flash, redirect, request, send_file, url_for
 from flask_babelex import gettext as _
 from fpdf import FPDF
 from invenio_db import db
@@ -49,9 +48,6 @@ from weko_records_ui.utils import get_record_permalink, \
 
 from .models import PDFCoverPageSettings
 from .utils import get_license_pdf, get_pair_value
-
-
-ERR_STR = _('Please contact the administrator.')
 
 
 def get_east_asian_width_count(text):
@@ -94,6 +90,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         scale = min(width_scale, height_scale)
         result_width = round(pixels_to_mm(scale * width))
         result_height = round(pixels_to_mm(scale * height))
+
         return result_width, result_height
 
     def get_center_position(imgFilename):
@@ -106,6 +103,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         # Get position x, y.
         position_x = (pdf_w - width_image) / 2
         position_y = (pdf_w - df_height) / 2
+
         return position_x, position_y
 
     def get_pid_object(pid_value):
@@ -116,6 +114,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
             PIDRelation.relation_type == 2).order_by(
             PIDRelation.index.desc()).first()
         cur_pid = pid_object if '.' in pid_value else latest_pid
+
         return cur_pid
 
     def get_current_activity_id(pid_object):
@@ -123,6 +122,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         latest_workflow = activity.get_workflow_activity_by_item_id(
             pid_object.object_uuid)
         activity_id = latest_workflow.activity_id if latest_workflow else ''
+
         return activity_id
 
     def get_url(pid_value):
@@ -130,6 +130,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         model = wr.model
         permalink = get_record_permalink(wr)
         url = ''
+
         if not permalink:
             sid = 'system_identifier_doi'
             avm = 'attribute_value_mlt'
@@ -140,12 +141,15 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
                 url = request.host_url + 'records/' + pid_value
         else:
             url = permalink
+
         return url
 
     def get_oa_policy(activity_id):
         waj = get_workflow_journal(activity_id)
         oa_policy = waj.get('keywords', '')
+
         return oa_policy
+
 
     file_path = current_app.config['PDF_COVERPAGE_LANG_FILEPATH']
     file_name = current_app.config['PDF_COVERPAGE_LANG_FILENAME']
@@ -167,7 +171,6 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     pdf.add_page()
     pdf.set_margins(20.0, 20.0)
     pdf.set_fill_color(100, 149, 237)
-
     pdf.add_font(
         'IPAexg',
         '',
@@ -203,18 +206,21 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     record = PDFCoverPageSettings.find(1)
     header_display_type = record.header_display_type
     header_output_string = record.header_output_string
-    header_output_image = record.header_output_image
+    header_output_image_name = record.header_output_image
     header_display_position = record.header_display_position
 
     # Set the header position
     positions = {}
+
     if header_display_position == 'left':
         positions['str_position'] = 'L'
         positions['img_position'] = 20
-    elif header_display_position == 'center' \
-            or header_display_position is None:
+    elif (
+        header_display_position == 'center'
+        or header_display_position is None
+    ):
         positions['str_position'] = 'C'
-        x, y = get_center_position(header_output_image)
+        x, y = get_center_position(header_output_image_name)
         positions['img_position'] = x
     elif header_display_position == 'right':
         positions['str_position'] = 'R'
@@ -252,12 +258,14 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
 
     _file = 'file.URI.@value'
     _file_item_id = None
+
     if _file in item_map:
         _file_item_id = item_map[_file].split('.')[0]
         _file_item_id = _file_item_id.replace('fileinfo', 'files')
 
     _creator = 'creator.creatorName.@value'
     _creator_item_id = None
+
     if _creator in item_map:
         _creator_item_id = item_map[_creator].split('.')[0]
 
@@ -279,6 +287,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         item_metadata_json['lang'] = 'English'
     elif item_metadata_json['lang'] == 'ja':
         item_metadata_json['lang'] = 'Japanese'
+
     try:
         lang_field = item_map['language.@value'].split('.')
         if item_metadata_json[lang_field[0]][lang_field[1]] == 'eng':
@@ -287,10 +296,12 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
             item_metadata_json['lang'] = 'Japanese'
     except BaseException:
         pass
+
     try:
         lang = item_metadata_json.get('lang')
     except (KeyError, IndexError):
         lang = None
+
     try:
         publisher_item_id = item_map[publisher_attr_lang].split('.')[0]
         publisher_lang_ids = item_map[publisher_attr_lang].split('.')[1:]
@@ -305,10 +316,12 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
                 publisher.append(publisher_name)
     except (KeyError, IndexError):
         publisher = []
+
     try:
         pubdate = item_metadata_json.get('pubdate')
     except (KeyError, IndexError):
         pubdate = None
+
     try:
         keyword_item_id = item_map[keyword_attr_lang].split('.')[0]
         keyword_item_langs = item_map[keyword_attr_lang].split('.')[1:]
@@ -319,6 +332,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         pair_name_language_keyword = get_pair_value(keyword_item_values,
                                                     keyword_item_langs,
                                                     keyword_base)
+
         for name, keyword_lang in pair_name_language_keyword:
             if keyword_lang == 'ja':
                 keywords_ja.append(name)
@@ -327,34 +341,46 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
 
     except (KeyError, IndexError):
         pass
+
     creator_items = item_metadata_json.get(_creator_item_id, [])
+
     if type(creator_items) is dict:
         creator_items = [creator_items]
+
     creator_mail_list = []
     creator_name_list = []
     creator_affiliation_list = []
     is_show_email = is_show_email_of_creator(item_type_id)
+
     for creator_item in creator_items:
         # Get creator mail
         if is_show_email:
             creator_mails = creator_item.get('creatorMails', [])
+
             for creator_mail in creator_mails:
                 mail = creator_mail.get('creatorMail', '')
                 creator_mail_list.append(mail)
+
         # Get creator name
         creator_names = creator_item.get('creatorNames', [])
+
         for creator_name in creator_names:
             name = creator_name.get('creatorName', '')
             name_lang = creator_name.get('creatorNameLang', '')
+
             if name_lang == lang_user:
                 creator_name_list.append(name)
+
         # Get creator affiliation
         creator_affiliations = creator_item.get('creatorAffiliations', [])
+
         for creator_affiliation in creator_affiliations:
             affiliation_names = creator_affiliation.get('affiliationNames', [])
+
             for affiliation_name in affiliation_names:
                 name = affiliation_name.get('affiliationName', '')
                 name_lang = affiliation_name.get('affiliationNameLang', '')
+
                 if name_lang == lang_user:
                     creator_affiliation_list.append(name)
 
@@ -374,6 +400,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     for key in metadata_dict:
         if metadata_dict[key] is None:
             metadata_dict[key] = ''
+
     metadata_list = [
         "{}: {}".format(lang_data["Metadata"]["LANG"], metadata_dict["lang"]),
         "{}: {}".format(
@@ -398,9 +425,9 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
             lang_data["Metadata"]["AFFILIATED"],
             metadata_dict["affiliation"])
     ]
-
     metadata = '\n'.join(metadata_list)
     metadata_lfnum = int(metadata.count('\n'))
+
     for item in metadata_list:
         metadata_lfnum += int(get_east_asian_width_count(item)
                               ) // max_letters_num
@@ -446,6 +473,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         license = None
 
     list_license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
+
     for item in list_license_dict:
         if item['value'] == license:
             get_license_pdf(license, item_metadata_json, pdf, _file_item_id,
@@ -454,7 +482,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     else:
         pdf.multi_cell(footer_w, footer_h, '', 0, 'L', False)
 
-    """ Convert PDF cover page data as bytecode """
+    # Convert PDF cover page data as bytecode
     output = pdf.output(dest='S').encode('latin-1')
     b_output = io.BytesIO(output)
 
@@ -466,6 +494,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     # In the case the PDF file is encrypted by the password, ''(i.e. not
     # encrypted intentionally)
     if existing_pages.isEncrypted:
+
         try:
             existing_pages.decrypt('')
         except BaseException:  # Errors such as NotImplementedError
@@ -509,6 +538,10 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         combined_filename = 'CV_' + title + '.pdf'
 
     dir_path = tempfile.gettempdir() + '/comb_pdfs/'
+
+    if not os.path.isdir(dir_path):
+        os.mkdir(dir_path)
+
     combined_filepath = dir_path + '{}.pdf'.format(combined_filename)
 
     with open(combined_filepath, 'wb') as f:
@@ -519,32 +552,47 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
             err_txt = ''.join((
                 _('The storage path is incorrect.'),
                 '{' + dir_path + '} ',
-                ERR_STR
+                _('Please contact the administrator.')
             ))
             flash(_(err_txt), category='error')
+            return redirect(url_for(
+                'weko_records_ui.parent_view_method',
+                pid_value=int(pid.pid_value)
+            ))
         except PermissionError as ex:
             current_app.logger.error(ex)
             err_txt = ''.join((
                 _('The storage location cannot be accessed.'),
                 '{' + dir_path + '} ',
-                ERR_STR
+                _('Please contact the administrator.')
             ))
             flash(_(err_txt), category='error')
+            return redirect(url_for(
+                'weko_records_ui.parent_view_method',
+                pid_value=int(pid.pid_value)
+            ))
         except OSError as ex:
             if ex.errno == errno.ENOSPC:
                 current_app.logger.error(ex)
                 err_txt = ''.join((
                     _('There is not enough storage space.'),
-                    '{' + dir_path + '} ',
-                    ERR_STR
+                    _('Please contact the administrator.')
                 ))
                 flash(_(err_txt), category='error')
+                return redirect(url_for(
+                    'weko_records_ui.parent_view_method',
+                    pid_value=int(pid.pid_value)
+                ))
         except Exception as ex:
             current_app.logger.error(ex)
-
+            return redirect(url_for(
+                'weko_records_ui.parent_view_method',
+                pid_value=int(pid.pid_value)
+            ))
     return send_file(
         combined_filepath,
         as_attachment=True,
         attachment_filename=combined_filename,
         mimetype='application/pdf',
         cache_timeout=-1)
+

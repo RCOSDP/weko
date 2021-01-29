@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: invenio-previewer 1.0.0a11\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2021-01-27 12:48+0000\n"
+"POT-Creation-Date: 2021-01-29 06:36+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,19 +18,20 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: invenio_previewer/api.py:103
-msgid "Please contact the administrator."
-msgstr ""
-
-#: invenio_previewer/api.py:154
+#: invenio_previewer/api.py:153
 msgid "The storage path is incorrect."
 msgstr ""
 
-#: invenio_previewer/api.py:160
+#: invenio_previewer/api.py:155 invenio_previewer/api.py:162
+#: invenio_previewer/api.py:169 invenio_previewer/api.py:185
+msgid "Please contact the administrator."
+msgstr ""
+
+#: invenio_previewer/api.py:160 invenio_previewer/api.py:183
 msgid "The storage location cannot be accessed."
 msgstr ""
 
-#: invenio_previewer/api.py:167
+#: invenio_previewer/api.py:168
 msgid "There is not enough storage space."
 msgstr ""
 
