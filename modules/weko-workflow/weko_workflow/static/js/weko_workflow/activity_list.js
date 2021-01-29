@@ -551,7 +551,7 @@ function getUsageReportData() {
 function analyzeParams(sURL) {
   var lstParams = sURL.split('&');
   // In case workflow and status has value but not match target workflow and status, do not exec request
-  var checkingConditions = { 'workflow': item_type_name, 'status': status_data }
+  var checkingConditions = { 'workflow': item_type_name, 'status': 'doing' }
   wfLst = [];
   statusLst = [];
   for (var i = 0; i < lstParams.length; i++) {
