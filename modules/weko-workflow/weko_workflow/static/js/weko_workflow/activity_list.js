@@ -270,12 +270,12 @@ require([
 
   // Whenever SelectBox is changed, re-update list activities
   $('#setTemplate').on('change', function () {
-  // Clear all current data
+    // Clear all current data
     lstSelectCheckboxes.clear();
     $("#checkAll").prop("checked", false);
     $("#btn_Next").attr('disabled', true);
     var selectedTemplate = $(this).children("option:selected").val();
-  // Re-paging by selected mail template
+    // Re-paging by selected mail template
     pagination(pagingOptions, wf_DataFilter[selectedTemplate]);
   })
   //Click button Confirm
@@ -293,7 +293,7 @@ require([
     //render html table
     $.each(rows, function (key, val) {
       if (Object.keys(val).length > 0) {
-        const {activity_id, item, email} = val;
+        const { activity_id, item, email } = val;
         const td = `<tr><td>${i}</td>
                     <td>${this.activity_id}</td>
                     <td>${this.item}</td>
@@ -316,10 +316,10 @@ require([
   $("#checkAll").click(function () {
     if ($(this).is(":checked")) {
       $(".checkbox-class:not(:checked)").prop("checked", true);
-      wf_DataFilter[$('#setTemplate').val()].forEach(function(activity) {
+      wf_DataFilter[$('#setTemplate').val()].forEach(function (activity) {
         lstSelectCheckboxes.add(activity.activity_id);
       });
-      if(lstSelectCheckboxes.size > 0)
+      if (lstSelectCheckboxes.size > 0)
         $("#btn_Next").removeAttr("disabled");
     } else {
       $(".checkbox-class").prop("checked", false);
@@ -345,7 +345,7 @@ var status_data = $("#action_list").text();
 var item_type_name = $("#item_type_name").text();
 
 // on page load collect data to load pagination as well as table
-const pagingOptions = {"req_per_page": req_per_page, "page_no": 1};
+const pagingOptions = { "req_per_page": req_per_page, "page_no": 1 };
 
 // At a time maximum allowed pages to be shown in pagination div
 
@@ -429,7 +429,7 @@ function render_table_rows(rows, req_per_page, page_no) {
   let count = req_per_page * (page_no - 1) + 1;
   resp.forEach(function (element) {
     if (Object.keys(element).length > 0) {
-      const {activity_id, item, work_flow, email} = element;
+      const { activity_id, item, work_flow, email } = element;
       let value_checkbox = activity_id;
       if (lstSelectCheckboxes.has(value_checkbox.toString())) {
         const td = `<tr id = "${activity_id}"><td scope="row" class="col_empty"><input class="checkbox-class" type="checkbox" checked value="${value_checkbox}"/></td>
@@ -458,7 +458,7 @@ function render_table_rows(rows, req_per_page, page_no) {
 
 // Pagination logic implementation
 function pagination(data, wf_Data) {
-  if(!wf_Data) return;
+  if (!wf_Data) return;
   const all_data = window.btoa(unescape(encodeURIComponent(JSON.stringify(wf_Data))));
   let $pagination = $(".pagination.table_data");
   $pagination.empty();
@@ -488,8 +488,8 @@ function pagination(data, wf_Data) {
 }
 
 function startPaging() {
-  for(mailGroup in lstMailUserGroup){
-    wf_DataFilter[mailGroup] = wf_DataAll.filter(function(activity) {
+  for (mailGroup in lstMailUserGroup) {
+    wf_DataFilter[mailGroup] = wf_DataAll.filter(function (activity) {
       return lstMailUserGroup[mailGroup].indexOf(activity.user_role) > -1;
     });
   }
@@ -516,11 +516,13 @@ function listCheckbox() {
   });
 }
 
-function loadingController(isStop){
-  if(isStop)
+function loadingController(isStop) {
+  if (isStop) {
     $(".lds-ring-background").addClass("hidden");
-  else
+  }
+  else {
     $(".lds-ring-background").removeClass("hidden");
+  }
 }
 
 function getUsageReportData() {
@@ -531,7 +533,7 @@ function getUsageReportData() {
     loadingController(true);
     $('#popup_send').addClass('in').css('display', 'block');
     return;
-}
+  }
   $.ajax({
     url: urlPath + '?' + sURL,
     method: 'GET',
@@ -560,6 +562,6 @@ function analyzeParams(sURL) {
       statusLst.push(sParamArr[1])
     }
   }
-  return (wfLst.length > 0 ? wfLst.includes(checkingConditions.workflow) : true) &&
-          (status.length > 0 ? status.includes(checkingConditions.status) : true);
+  return (wfLst.length > 0 ? wfLst.indexOf(checkingConditions.workflow) > -1 : true) &&
+    (statusLst.length > 0 ? statusLst.indexOf(checkingConditions.status) > -1 : true);
 }
