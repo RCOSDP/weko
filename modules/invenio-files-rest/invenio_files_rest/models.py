@@ -46,7 +46,7 @@ from functools import wraps
 from os.path import basename
 
 import six
-from flask import current_app, flash
+from flask import current_app, flash, redirect, request, url_for
 from flask_login import current_user
 from invenio_db import db
 from invenio_previewer.api import convert_to
@@ -910,12 +910,19 @@ class FileInstance(db.Model, Timestamp):
                 self.json['filename'] = \
                     self.json['filename'].replace(file_type, '.pdf')
 
+                print(request.path.split('/'))
+
                 if not os.path.isfile(pdf_dir + pdf_filename):
-                   _filename, err_strs = convert_to(pdf_dir, self.uri)
-                   if err_strs:
-                       former, latter = err_strs
-                       err_txt = ''.join((former, pdf_dir, ' ', latter))
-                       flash(err_txt, category='error')
+                    _filename, err_txt = convert_to(pdf_dir, self.uri)
+
+                    if err_txt:
+                        print(request.path.split('/'))
+                        pid_value = request.path.split('/').pop(2)
+                        flash(err_txt, category='error')
+                        return redirect(url_for(
+                            'weko_records_ui.parent_view_method',
+                            pid_value=int(pid_value)
+                        ))
 
                 self.uri = pdf_dir + pdf_filename
                 self.size = os.path.getsize(pdf_dir + pdf_filename)

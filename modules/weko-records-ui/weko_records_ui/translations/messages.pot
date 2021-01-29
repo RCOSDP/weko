@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-records-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2021-01-27 13:36+0000\n"
+"POT-Creation-Date: 2021-01-28 07:15+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -84,19 +84,20 @@ msgid ""
 "International (CC BY-NC-ND 4.0)"
 msgstr ""
 
-#: weko_records_ui/pdf.py:54
-msgid "Please contact the administrator."
-msgstr ""
-
-#: weko_records_ui/pdf.py:520
+#: weko_records_ui/pdf.py:547 weko_records_ui/pdf.py:563
 msgid "The storage path is incorrect."
 msgstr ""
 
-#: weko_records_ui/pdf.py:528
+#: weko_records_ui/pdf.py:549 weko_records_ui/pdf.py:565
+#: weko_records_ui/pdf.py:577 weko_records_ui/pdf.py:589
+msgid "Please contact the administrator."
+msgstr ""
+
+#: weko_records_ui/pdf.py:575
 msgid "The storage location cannot be accessed."
 msgstr ""
 
-#: weko_records_ui/pdf.py:537
+#: weko_records_ui/pdf.py:588
 msgid "There is not enough storage space."
 msgstr ""
 
