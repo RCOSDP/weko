@@ -1659,7 +1659,7 @@ function toObject(arr) {
                   // TitleData and Username are mandatory, dataType either way
                   enTitle[titleSubKey] = dataType ? [dataType, titleData['en'], userName].join(" - ") : [titleData['en'], userName].join(" - ");
                   enTitle[titleLanguageKey] = "en";
-                  jaTitle[titleSubKey] = dataType ? [dataType, titleData['ja'], userName].join(" - ") : [titleData['en'], userName].join(" - ");
+                  jaTitle[titleSubKey] = dataType ? [dataType, titleData['ja'], userName].join(" - ") : [titleData['ja'], userName].join(" - ");
                   jaTitle[titleLanguageKey] = "ja";
                   recordsVM["invenioRecordsModel"][key] = [jaTitle, enTitle];
                 }
