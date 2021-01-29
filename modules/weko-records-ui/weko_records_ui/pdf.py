@@ -554,11 +554,12 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
                 '{' + dir_path + '} ',
                 _('Please contact the administrator.')
             ))
-            flash(_(err_txt), category='error')
-            return redirect(url_for(
-                'weko_records_ui.parent_view_method',
-                pid_value=int(pid.pid_value)
-            ))
+            flash(err_txt, category='error')
+            return redirect(
+                current_app.config['RECORDS_UI_ENDPOINTS']['recid']['route'].replace(
+                    '<pid_value>', pid.pid_value
+                )
+            )
         except PermissionError as ex:
             current_app.logger.error(ex)
             err_txt = ''.join((
@@ -566,11 +567,12 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
                 '{' + dir_path + '} ',
                 _('Please contact the administrator.')
             ))
-            flash(_(err_txt), category='error')
-            return redirect(url_for(
-                'weko_records_ui.parent_view_method',
-                pid_value=int(pid.pid_value)
-            ))
+            flash(err_txt, category='error')
+            return redirect(
+                current_app.config['RECORDS_UI_ENDPOINTS']['recid']['route'].replace(
+                    '<pid_value>', pid.pid_value
+                )
+            )
         except OSError as ex:
             if ex.errno == errno.ENOSPC:
                 current_app.logger.error(ex)
@@ -578,21 +580,25 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
                     _('There is not enough storage space.'),
                     _('Please contact the administrator.')
                 ))
-                flash(_(err_txt), category='error')
-                return redirect(url_for(
-                    'weko_records_ui.parent_view_method',
-                    pid_value=int(pid.pid_value)
-                ))
+                flash(err_txt, category='error')
+                return redirect(
+                    current_app.config['RECORDS_UI_ENDPOINTS']['recid']['route'].replace(
+                        '<pid_value>', pid.pid_value
+                    )
+                )
         except Exception as ex:
             current_app.logger.error(ex)
-            return redirect(url_for(
-                'weko_records_ui.parent_view_method',
-                pid_value=int(pid.pid_value)
-            ))
+            return redirect(
+                current_app.config['RECORDS_UI_ENDPOINTS']['recid']['route'].replace(
+                    '<pid_value>', pid.pid_value
+                )
+            )
+
     return send_file(
         combined_filepath,
         as_attachment=True,
         attachment_filename=combined_filename,
         mimetype='application/pdf',
-        cache_timeout=-1)
+        cache_timeout=-1
+    )
 
