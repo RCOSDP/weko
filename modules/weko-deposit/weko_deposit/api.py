@@ -1288,9 +1288,9 @@ class WekoRecord(Record):
                 # Get file with current version id.
                 file_metadata_temp = []
                 exclude_attr = ['displaytype', 'accessrole', 'licensetype']
-                version_id = request.args.get("version_id", None)
+                filename = request.args.get("filename", None)
                 for f in file_metadata:
-                    if f.get('version_id', None) == version_id:
+                    if f.get('filename', None) == filename:
                         # Exclude attributes which is not use.
                         for ea in exclude_attr:
                             if f.get(ea, None):

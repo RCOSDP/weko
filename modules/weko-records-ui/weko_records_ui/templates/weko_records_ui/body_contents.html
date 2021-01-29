@@ -280,7 +280,7 @@
                           {%- endif -%}
                         {%- endif -%}
                         <!-- Show button 'Information' -->
-                        {% set file_detail_url =  file_details_url + '?version_id=' + file.version_id %}
+                        {% set file_detail_url =  file_details_url + '?filename=' + file.filename %}
                         {%- if community -%}
                           {% set file_detail_url = file_detail_url + "&community=" + community.id %}
                         {%- endif -%}
