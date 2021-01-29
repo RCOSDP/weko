@@ -540,15 +540,16 @@ def get_file_info_list(record):
     """
     def get_file_size(p_file):
         """Get file size and convert to byte."""
-        filesize = p_file.get('filesize', [{}])[0]
-        filesize_value = filesize.get('value', 0)
+        file_size = p_file.get('filesize', [{}])[0]
+        file_size_value = file_size.get('value', 0)
         defined_unit = {'b': 1, 'kb': 1000, 'mb': 1000000}
-        if type(filesize_value) is str and ' ' in filesize_value:
-            size_num = filesize_value.split(' ')[0]
-            size_unit = filesize_value.split(' ')[1]
+        if type(file_size_value) is str and ' ' in file_size_value:
+            file_size_value = file_size_value.replace(".", "")
+            size_num = file_size_value.split(' ')[0]
+            size_unit = file_size_value.split(' ')[1]
             unit_num = defined_unit.get(size_unit.lower(), 0)
-            filesize_value = size_num * unit_num
-        return filesize_value
+            file_size_value = int(size_num) * unit_num
+        return file_size_value
 
     def set_message_for_file(p_file):
         """Check Opendate is future date."""
