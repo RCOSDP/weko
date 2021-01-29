@@ -163,7 +163,7 @@ RECORDS_REST_FACETS[SEARCH_UI_SEARCH_INDEX] = dict(
                             int size = params._source.description.length;
                             for (int i=0; i<size; i++) {
                                 String valueName = params._source.description[i].value;
-                                if(params._source.description[i].descriptionType.equals("Other")) {
+                                if("Other".equals(params._source.description[i].descriptionType)) {
                                     result.add(valueName);
                                 }
                             }
@@ -230,7 +230,7 @@ RECORDS_REST_FACETS_NO_SEARCH_PERMISSION[SEARCH_UI_SEARCH_INDEX] = dict(
                             int size = params._source.description.length;
                             for (int i=0; i<size; i++) {
                                 String valueName = params._source.description[i].value;
-                                if(params._source.description[i].descriptionType.equals("Other")) {
+                                if("Other".equals(params._source.description[i].descriptionType)) {
                                     result.add(valueName);
                                 }
                             }
