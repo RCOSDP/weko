@@ -3856,6 +3856,11 @@ function toObject(arr) {
             title[titleSubKey] = dataType.length > 0 ? [dataType.join(","), defaultTitleJa].join(" - ") : defaultTitleJa
           }
         });
+
+        // Save usage data set in metadata json of output report
+        $rootScope.recordsVM.invenioRecordsModel['item_dataset_usage'] = {
+          subitem_dataset_usage : dataType.join(",")
+        };
       }
     }
     // Inject depedencies
