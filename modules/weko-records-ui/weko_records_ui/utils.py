@@ -20,9 +20,12 @@
 
 """Module of weko-records-ui utils."""
 
+from datetime import datetime as dt
 from decimal import Decimal
 
-from flask import current_app
+from flask import current_app, request
+from flask_babelex import gettext as _
+from flask_login import current_user
 from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -32,12 +35,8 @@ from weko_deposit.api import WekoDeposit
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 
-from .permissions import check_user_group_permission, is_open_restricted, \
-    check_file_download_permission
-from flask import request
-from datetime import datetime as dt
-from flask_babelex import gettext as _
-from flask_login import current_user
+from .permissions import check_file_download_permission, \
+    check_user_group_permission, is_open_restricted
 
 
 def check_items_settings():
@@ -240,7 +239,8 @@ def restore(recid):
                 pid_type='depid', object_uuid=ver.object_uuid).first()
             if depid:
                 depid.status = PIDStatus.REGISTERED
-                rec = RecordMetadata.query.filter_by(id=ver.object_uuid).first()
+                rec = RecordMetadata.query.filter_by(
+                    id=ver.object_uuid).first()
                 dep = WekoDeposit(rec.json, rec)
                 dep.indexer.update_path(dep, update_revision=False)
             pids = PersistentIdentifier.query.filter_by(
@@ -530,7 +530,6 @@ def replace_license_free(record_metadata, is_change_label=True):
                         del attr[_license_free]
 
 
-
 def get_file_info_list(record):
     """File Information of all file in record.
 
@@ -565,16 +564,18 @@ def get_file_info_list(record):
                 pdt = dt.strptime(adt, '%Y-%m-%d')
                 if pdt > dt.today():
                     message = "Download is available from {}/{}/{}."
-                    p_file['future_date_message'] = _(message).format(pdt.year, pdt.month, pdt.day)
+                    p_file['future_date_message'] = _(message).format(
+                        pdt.year, pdt.month, pdt.day)
                     message = "Download / Preview is available from {}/{}/{}."
-                    p_file['download_preview_message'] = _(message).format(pdt.year, pdt.month, pdt.day)
+                    p_file['download_preview_message'] = _(message).format(
+                        pdt.year, pdt.month, pdt.day)
 
     is_display_file_preview = False
     files = []
     for key in record:
         meta_data = record.get(key)
         if type(meta_data) == dict and \
-            meta_data.get('attribute_type') == "file":
+                meta_data.get('attribute_type', '') == "file":
             file_metadata = meta_data.get("attribute_value_mlt", [])
             for f in file_metadata:
                 if check_file_download_permission(record, f, True)\
