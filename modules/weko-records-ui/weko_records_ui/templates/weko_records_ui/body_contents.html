@@ -134,7 +134,7 @@
                           {%- endif -%}
                           {%- set is_file_name_url = True %}
                           {%- set clickable = record | check_content_file_clickable(file) -%}
-                        {%- set permission = record | get_permission(file) -%}
+                          {%- set permission = record | get_permission(file) -%}
                           <!-- Check and set file label. -->
                           {%- if file.url -%}
                             {%- if file.url.label -%}
@@ -163,6 +163,7 @@
                           {%- else -%}
                           {%- set filesize = '' -%}
                           {%- endif -%}
+                          <!-- Show FileName/Label -->
                           {%- if access_permission and billing_file_access_permission -%}
                             <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
                               href={{ text_url }}>
@@ -174,7 +175,11 @@
                           {%- elif clickable -%}
                             {{ check_download_file(record, file, permission, community, url_for_security, is_file_name_url) }}
                           {%- else -%}
-                            <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}>
+                            {%- set download_param = '?download=download-' + file.version_id %}
+                            {%- set path = request.path + download_param %}
+                            {%- set next_path = url_for_security('login', next=path) %}
+                            <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
+                                href="{{next_path}}">
                               {% autoescape false %}
                               {{ file_label | escape_str }} ({{ filesize }})
                               {% endautoescape %}

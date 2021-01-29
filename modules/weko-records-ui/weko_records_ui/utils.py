@@ -552,7 +552,7 @@ def get_file_info_list(record):
                     # Set default version_id.
                     if f.get("version_id") is None:
                         f["version_id"] = ''
-                    # Set default version_id.
+                    # Set is_thumbnail flag.
                     if f.get("is_thumbnail") is None:
                         f["is_thumbnail"] = False
                     # Check Opendate is future date.
