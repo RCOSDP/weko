@@ -1174,6 +1174,21 @@ def get_parent_pid_with_type(pid_type, object_uuid):
         current_app.logger.error(pid_not_exist)
         return None
 
+def filter_all_condition(all_args):
+    """
+    Filter conditions.
+
+    :param all_args:
+    :return:
+    """
+    conditions = {}
+    list_key_condition = current_app.config.get('WEKO_WORKFLOW_FILTER_PARAMS',
+                                                [])
+    for args in all_args:
+        for key in list_key_condition:
+            if key in args:
+                filter_condition(conditions, key, request.args.get(args))
+    return conditions
 
 def filter_condition(json, name, condition):
     """

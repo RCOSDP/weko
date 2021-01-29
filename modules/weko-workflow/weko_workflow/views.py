@@ -68,7 +68,7 @@ from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
 from .models import ActionStatusPolicy, ActivityAction, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import IdentifierHandle, auto_fill_title, check_continue, \
-    delete_cache_data, filter_condition, get_account_info, get_actionid, \
+    delete_cache_data, filter_all_condition, get_account_info, get_actionid, \
     get_activity_id_of_record_without_version, \
     get_application_and_approved_date, get_cache_data, \
     get_identifier_setting, get_term_and_condition_content, \
@@ -88,23 +88,36 @@ blueprint = Blueprint(
 )
 
 
+@blueprint.route('/usage-report', methods=['GET'])
+def usage_report():
+    item_type_usage_report = current_app.config.get('WEKO_ITEMS_UI_USAGE_REPORT')
+    action_status_condition = current_app.config.get('WEKO_WORKFLOW_ACTION')
+    conditions = filter_all_condition()
+    conditions['workflow'] = [item_type_usage_report]
+    conditions['status'] = [action_status_condition]
+    activity = WorkActivity()
+    # For usage report, just get all activities with provided conditions
+    activities, _, _, _, _ = activity \
+    .get_activity_list(conditions=conditions, is_get_all=True)
+    get_workflow_item_type_names(activities)
+    activities_result = []
+    for activity in activities:
+        _activity = {"activity_id": activity.activity_id,
+                        "item": activity.title,
+                        "work_flow": activity.flows_name,
+                        "email": activity.email,
+                        "status": activity.StatusDesc,
+                        "user_role": activity.role_name}
+        activities_result.append(_activity)
+    return jsonify(activities = activities_result)
+
 @blueprint.route('/')
 @login_required
 def index():
     """Render a basic view."""
     activity = WorkActivity()
     getargs = request.args
-
-    conditions = {}
-    list_key_condition = ['createdfrom', 'createdto', 'workflow', 'user',
-                          'item', 'status', 'tab', 'sizewait', 'sizetodo',
-                          'sizeall',
-                          'pagesall', 'pagestodo', 'pageswait']
-    for args in getargs:
-        for key in list_key_condition:
-            if key in args:
-                filter_condition(conditions, key, request.args.get(args))
-
+    conditions = filter_all_condition(getargs)
     ctx = {'community': None}
     community_id = ""
     from weko_theme.utils import get_design_layout
@@ -304,15 +317,7 @@ def list_activity():
     """List activity."""
     activity = WorkActivity()
     getargs = request.args
-    conditions = {}
-    list_key_condition = ['createdfrom', 'createdto', 'workflow', 'user',
-                          'item', 'status', 'tab', 'sizewait', 'sizetodo',
-                          'sizeall',
-                          'pagesall', 'pagestodo', 'pageswait']
-    for args in getargs:
-        for key in list_key_condition:
-            if key in args:
-                filter_condition(conditions, key, request.args.get(args))
+    conditions = filter_all_condition(getargs)
 
     activities, maxpage, size, pages, name_param = activity.get_activity_list(
         conditions=conditions)

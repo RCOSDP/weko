@@ -204,9 +204,9 @@ WEKO_WORKFLOW_APPROVE_LOCATION_DATA = ''
 """Approve Usage Application  <Location data> mail template"""
 
 WEKO_WORKFLOW_REMIND_SUBMIT_DATA_USAGE_REPORT_FOR_USER_BESIDE_STUDENT = ''
-"""Remind to submit the Data Usage Report <Other than Graduated Student> mail template"""
+"""Remind to submit the Data Usage Report <Other than Student> mail template"""
 WEKO_WORKFLOW_REMIND_SUBMIT_DATA_USAGE_REPORT_FOR_STUDENT = ''
-"""Remind to submit the Data Usage Report <Graduated Student> mail template"""
+"""Remind to submit the Data Usage Report <Student> mail template"""
 
 WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME = ''
 
@@ -250,3 +250,8 @@ WEKO_WORKFLOW_IDENTIFIER_GRANT_WITHDRAWN = -3
 """Identifier grant was withdrawn."""
 
 WEKO_WORKFLOW_SEND_MAIL_USER_GROUP = {}
+
+WEKO_WORKFLOW_FILTER_PARAMS = ['createdfrom', 'createdto', 'workflow', 'user',
+                                'item', 'status', 'tab', 'sizewait', 'sizetodo',
+                                'sizeall',
+                                'pagesall', 'pagestodo', 'pageswait']

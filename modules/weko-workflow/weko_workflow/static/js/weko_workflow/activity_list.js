@@ -92,6 +92,7 @@ require([
     jQuery.each(params, function (i, field) {
       if (field.value) {
         field.name += "_" + i;
+        field.value = field.value.trim();
         paramsAfterFilter.push(field);
       }
     });
@@ -222,7 +223,10 @@ require([
   }
 
   $('#btn_send_mail').click(function () {
-    $('#popup_send').addClass('in').css('display', 'block');
+    if (wf_DataAll.length == 0)
+      getUsageReportData();
+    else
+      startPaging();
   });
   $('#btn_close').click(function () {
     $('#popup_send').removeClass('in').css('display', 'none');
@@ -231,7 +235,7 @@ require([
     $('#apply_spinner').append('<div class="spinner"></div>');
     mail_template = $("#setTemplate").val();
     has_error = false;
-    list_checkboxes.forEach(function (activity_id) {
+    lstSelectCheckboxes.forEach(function (activity_id) {
       $.ajax({
         url: '/workflow/send_mail/' + activity_id + '/' + mail_template,
         method: 'POST',
@@ -253,10 +257,6 @@ require([
     // 15745
   });
 
-  if (wf_Data.length === 0) {
-    $("#btn_send_mail").attr('disabled', true);
-  }
-
 
   //Click button OK
   $('.btn_ok').click(function () {
@@ -264,19 +264,19 @@ require([
     $('#popup_success, #popup_approve, #popup_fail').removeClass('in').css('display', 'none');
     $(".checkbox-class, #checkAll").prop('checked', false);
     listCheckbox();
-    list_checkboxes.clear();
+    lstSelectCheckboxes.clear();
 
   });
 
   // Whenever SelectBox is changed, re-update list activities
   $('#setTemplate').on('change', function () {
   // Clear all current data
-    list_checkboxes.clear();
+    lstSelectCheckboxes.clear();
     $("#checkAll").prop("checked", false);
     $("#btn_Next").attr('disabled', true);
     var selectedTemplate = $(this).children("option:selected").val();
   // Re-paging by selected mail template
-    pagination(data, wf_DataFilter[selectedTemplate]);
+    pagination(pagingOptions, wf_DataFilter[selectedTemplate]);
   })
   //Click button Confirm
   $('#btn_Next').click(function () {
@@ -284,8 +284,8 @@ require([
     listCheckbox();
 
     $('#popup_approve').addClass('in').css('display', 'block');
-    let rows = wf_Data.filter(function (activity) {
-      return list_checkboxes.has(activity.activity_id);
+    let rows = wf_DataAll.filter(function (activity) {
+      return lstSelectCheckboxes.has(activity.activity_id);
     });
     // let rows;
     let i = 1;
@@ -317,13 +317,13 @@ require([
     if ($(this).is(":checked")) {
       $(".checkbox-class:not(:checked)").prop("checked", true);
       wf_DataFilter[$('#setTemplate').val()].forEach(function(activity) {
-        list_checkboxes.add(activity.activity_id);
+        lstSelectCheckboxes.add(activity.activity_id);
       });
-      if(list_checkboxes.size > 0)
+      if(lstSelectCheckboxes.size > 0)
         $("#btn_Next").removeAttr("disabled");
     } else {
       $(".checkbox-class").prop("checked", false);
-      list_checkboxes.clear();
+      lstSelectCheckboxes.clear();
       $("#btn_Next").attr('disabled', true);
     }
   });
@@ -332,26 +332,20 @@ require([
 });
 
 
-const all_activities = $("#work-flow-data").text();
-var wf_Data = JSON.parse(all_activities) ? JSON.parse(all_activities) : [];
+const mailUserGroup = $("#send_mail_user_group").text() ? $("#send_mail_user_group").text() : [];
 
-const mailUserGroup = $("#send_mail_user_group").text();
 var lstMailUserGroup = JSON.parse(mailUserGroup);
-
-var list_checkboxes = new Set();
+var lstSelectCheckboxes = new Set();
 var wf_DataFilter = {}
+var wf_DataAll = []
 
-// filter activities to groups
-for(mailGroup in lstMailUserGroup){
-  wf_DataFilter[mailGroup] = wf_Data.filter(function(activity) {
-    return lstMailUserGroup[mailGroup].indexOf(activity.user_role) > -1;
-  })
-}
+
 var req_per_page = parseInt($("#req_per_page").text());
 var status_data = $("#action_list").text();
+var item_type_name = $("#item_type_name").text();
 
 // on page load collect data to load pagination as well as table
-const data = {"req_per_page": req_per_page, "page_no": 1};
+const pagingOptions = {"req_per_page": req_per_page, "page_no": 1};
 
 // At a time maximum allowed pages to be shown in pagination div
 
@@ -437,7 +431,7 @@ function render_table_rows(rows, req_per_page, page_no) {
     if (Object.keys(element).length > 0) {
       const {activity_id, item, work_flow, email} = element;
       let value_checkbox = activity_id;
-      if (list_checkboxes.has(value_checkbox.toString())) {
+      if (lstSelectCheckboxes.has(value_checkbox.toString())) {
         const td = `<tr id = "${activity_id}"><td scope="row" class="col_empty"><input class="checkbox-class" type="checkbox" checked value="${value_checkbox}"/></td>
                 <td class="col_empty">${count++}</td>
                 <td class="activity_id">${activity_id}</a></td>
@@ -493,9 +487,15 @@ function pagination(data, wf_Data) {
   }
 }
 
-//calling pagination function
-pagination(data, wf_DataFilter[$('#setTemplate').val()]);
-
+function startPaging() {
+  for(mailGroup in lstMailUserGroup){
+    wf_DataFilter[mailGroup] = wf_DataAll.filter(function(activity) {
+      return lstMailUserGroup[mailGroup].indexOf(activity.user_role) > -1;
+    });
+  }
+  pagination(pagingOptions, wf_DataFilter[$('#setTemplate').val()]);
+  $('#popup_send').addClass('in').css('display', 'block');
+}
 //Array to hold the checked ids
 
 //Event listener to detect changes
@@ -504,14 +504,62 @@ function listCheckbox() {
   $('.checkbox-class').change(function () {
     let id = $(this).parents('tr').attr('id');
     if ($(this).is(":checked")) {
-      list_checkboxes.add(id);
+      lstSelectCheckboxes.add(id);
       $("#btn_Next").removeAttr('disabled');
     } else {
-      list_checkboxes.delete(id);
+      lstSelectCheckboxes.delete(id);
       $("#checkAll").prop("checked", false);
-      if (list_checkboxes.size === 0) {
+      if (lstSelectCheckboxes.size === 0) {
         $("#btn_Next").attr('disabled', true);
       }
     }
   });
+}
+
+function loadingController(isStop){
+  if(isStop)
+    $(".lds-ring-background").addClass("hidden");
+  else
+    $(".lds-ring-background").removeClass("hidden");
+}
+
+function getUsageReportData() {
+  loadingController(false);
+  var urlPath = '/workflow/usage-report';
+  var sURL = window.location.search.substring(1);
+  if (!analyzeParams(sURL)) {
+    loadingController(true);
+    $('#popup_send').addClass('in').css('display', 'block');
+    return;
+}
+  $.ajax({
+    url: urlPath + '?' + sURL,
+    method: 'GET',
+    success: function (res) {
+      wf_DataAll = res.activities;
+      startPaging();
+      loadingController(true);
+    },
+    error: function (error) {
+      console.error(error);
+      loadingController(true);
+    }
+  });
+}
+function analyzeParams(sURL) {
+  var lstParams = sURL.split('&');
+  // In case workflow and status has value but not match target workflow and status, do not exec request
+  var checkingConditions = { 'workflow': item_type_name, 'status': status_data }
+  wfLst = [];
+  statusLst = [];
+  for (var i = 0; i < lstParams.length; i++) {
+    var sParamArr = lstParams[i].split('=');
+    if (sParamArr[0].startsWith('workflow')) {
+      wfLst.push(sParamArr[1])
+    } else if (sParamArr[0].startsWith('status')) {
+      statusLst.push(sParamArr[1])
+    }
+  }
+  return (wfLst.length > 0 ? wfLst.includes(checkingConditions.workflow) : true) &&
+          (status.length > 0 ? status.includes(checkingConditions.status) : true);
 }
