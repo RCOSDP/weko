@@ -751,8 +751,6 @@ class Activity(db.Model, TimestampMixin):
 
     approval2 = db.Column(db.Text, nullable=True)
 
-    approval2 = db.Column(db.Text, nullable=True)
-
     # Some extra info want to store
     extra_info = db.Column(
         db.JSON().with_variant(
@@ -768,6 +766,7 @@ class Activity(db.Model, TimestampMixin):
         default=lambda: dict(),
         nullable=True
     )
+
 
 class ActivityAction(db.Model, TimestampMixin):
     """Define Activety."""
