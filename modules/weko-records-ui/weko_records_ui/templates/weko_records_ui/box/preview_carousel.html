@@ -60,7 +60,7 @@
           <!-- TODO: Check if both previews below can ever both show at the same time. -->
           {% set firstPreviewFileIndex = 0 %}
           {%- for file in files | sort(attribute='filename') if filename and file.filename == filename or not filename -%}
-              {% if file.is_thumbnail == False %}
+              {% if file.is_thumbnail == False && file.version_id %}
                 {% if firstPreviewFileIndex == 0 %}
                   {% set firstPreviewFileIndex = loop.index %}
                 {% endif %}
