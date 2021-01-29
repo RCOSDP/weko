@@ -55,6 +55,7 @@ from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
 from weko_handle.api import Handle
 from weko_index_tree.api import Indexes
+from weko_index_tree.utils import check_restrict_doi_with_indexes
 from weko_indextree_journal.api import Journals
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
@@ -468,6 +469,7 @@ def check_import_items(file_name: str, file_content: str,
         handle_set_change_identifier_flag(
             list_record, is_change_identifier)
         handle_check_cnri(list_record)
+        handle_check_doi_indexes(list_record)
         handle_check_doi_ra(list_record)
         handle_check_doi(list_record)
         handle_check_date(list_record)
@@ -1322,8 +1324,7 @@ def handle_check_and_prepare_index_tree(list_record):
         data = {
             'index_id': index.id if index else index_id,
             'index_name': index.index_name_english if index else index_name,
-            'parent_id': parent_id,
-            'existed': index is not None
+            'parent_id': parent_id
         }
 
         if len(index_ids) > 1:
@@ -1365,6 +1366,7 @@ def handle_check_and_prepare_index_tree(list_record):
 
         if indexes:
             item['indexes'] = indexes
+            handle_index_tree(item)
 
         if errors:
             errors = list(set(errors))
@@ -1388,24 +1390,6 @@ def handle_index_tree(item):
 
     """
     def check_and_create_index(index):
-        if not index['existed']:
-            exist_index = Indexes.get_index_by_name_english(
-                index['index_name'], index['parent_id'])
-            if exist_index:
-                index['index_id'] = exist_index.id
-            else:
-                now = datetime.now()
-                index_id = index['index_id'] if index['index_id'] \
-                    else int(datetime.timestamp(now) * 10 ** 3)
-                create_index = Indexes.create(
-                    pid=index['parent_id'],
-                    indexes={'id': index_id,
-                             'value': index['index_name']})
-                if create_index:
-                    index['index_id'] = index_id
-                    if index.get('child'):
-                        index['child']['parent_id'] = index_id
-
         if index.get('child'):
             return check_and_create_index(index['child'])
         else:
@@ -1522,6 +1506,34 @@ def handle_check_cnri(list_record):
         if error:
             item['errors'] = item['errors'] + [error] \
                 if item.get('errors') else [error]
+            item['errors'] = list(set(item['errors']))
+
+
+def handle_check_doi_indexes(list_record):
+    """Check restrict DOI with Indexes.
+
+    :argument
+        list_record -- {list} list record import.
+    :return
+
+    """
+    for item in list_record:
+        errors = []
+        doi_ra = item.get('doi_ra')
+        # Check DOI and Publish status:
+        publish_status = item.get('publish_status')
+        if doi_ra and publish_status == WEKO_IMPORT_PUBLISH_STATUS[1]:
+            errors.append(
+                _('You cannot keep an item private because it has a DOI.'))
+        # Check restrict DOI with Indexes:
+        if check_restrict_doi_with_indexes(item['metadata']['path']):
+            errors.append(
+                _('Since the item has a DOI, it must be associated with an'
+                  ' index whose index status is "Public" and whose'
+                  ' Harvest Publishing is "Public".'))
+        if errors:
+            item['errors'] = item['errors'] + errors \
+                if item.get('errors') else errors
             item['errors'] = list(set(item['errors']))
 
 
