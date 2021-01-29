@@ -537,14 +537,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         index_link_list = get_index_link_list()
 
     files_thumbnail = []
-    files = []
-    is_display_file_preview = False
     if record.files:
         files_thumbnail = ObjectVersion.get_by_bucket(
             record.files.bucket.id).\
             filter_by(is_thumbnail=True).all()
-    is_display_file_preview = get_file_info_list(
-        files, is_display_file_preview, record)
+    is_display_file_preview, files = get_file_info_list(record)
     # Flag: can edit record
     can_edit = True if pid == get_record_without_version(pid) else False
 

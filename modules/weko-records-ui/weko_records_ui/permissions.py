@@ -79,7 +79,7 @@ def file_permission_factory(record, *args, **kwargs):
     return type('FileDownLoadPermissionChecker', (), {'can': can})()
 
 
-def check_file_download_permission(record, fjson):
+def check_file_download_permission(record, fjson, is_display_file_info=False):
     """Check file download."""
     def site_license_check():
         # site license permission check
@@ -137,18 +137,22 @@ def check_file_download_permission(record, fjson):
                         is_can = True
             # access with open date
             elif 'open_date' in acsrole:
-                try:
-                    date = fjson.get('date')
-                    if date and isinstance(date, list) and date[0]:
-                        adt = date[0].get('dateValue')
-                        pdt = dt.strptime(adt, '%Y-%m-%d')
-                        is_can = True if dt.today() >= pdt else False
-                except BaseException:
-                    is_can = False
+                if is_display_file_info:
+                    # Always display the file info area in 'Detail' screen.
+                    is_can = True
+                else:
+                    try:
+                        date = fjson.get('date')
+                        if date and isinstance(date, list) and date[0]:
+                            adt = date[0].get('dateValue')
+                            pdt = dt.strptime(adt, '%Y-%m-%d')
+                            is_can = True if dt.today() >= pdt else False
+                    except BaseException:
+                        is_can = False
 
-                if not is_can:
-                    # site license permission check
-                    is_can = site_license_check()
+                    if not is_can:
+                        # site license permission check
+                        is_can = site_license_check()
 
             # access with login user
             elif 'open_login' in acsrole:
