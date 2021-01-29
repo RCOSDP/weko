@@ -58,14 +58,14 @@
         </ol>
         <div class="carousel-inner">
           <!-- TODO: Check if both previews below can ever both show at the same time. -->
-          {% set firstPreviewFileIndex = 0 %}
+          {% set firstPreviewFileIndex = {'value': 0} %}
           {%- for file in files | sort(attribute='filename') if filename and file.filename == filename or not filename -%}
-              {% if file.is_thumbnail == False and file.version_id %}
-                {% if firstPreviewFileIndex == 0 %}
-                  {% set firstPreviewFileIndex = loop.index %}
+            {% if file.version_id %}
+              {% if file.is_thumbnail == False %}
+                {% if firstPreviewFileIndex.value == 0 %}
+                  {% if firstPreviewFileIndex.update({'value': loop.index}) %} {% endif %}
                 {% endif %}
               {% endif %}
-
               {%- if edit_page_prev %}
                 {%- set access_permission = True -%}
               {% else %}
@@ -78,10 +78,10 @@
                 {%- set is_billing_file = True -%}
               {%- endif %}
 
-              {%- if (is_billing_file and billing_file_permission and access_permission) or (not is_billing_file and access_permission)  -%}
+              {%- if (is_billing_file and billing_file_permission and access_permission) or (not is_billing_file and access_permission) -%}
                 {%- if 'preview' in file.displaytype -%}
                   {%- set file_preview_url = url_for('invenio_records_ui.recid_file_preview', pid_value=pid.pid_value, filename=file.filename) %}
-                  <div class="item {{ 'active' if loop.index == firstPreviewFileIndex else '' }}" id="carousel_prev_item_{{ loop.index }}">
+                  <div class="item {{ 'active' if loop.index == firstPreviewFileIndex.value else '' }}" id="carousel_prev_item_{{ loop.index }}">
                     <div class="embed-responsive embed-responsive-16by9">
                       {%- if 'audio' in file.mimetype -%}
                         <audio controls preload="auto">
@@ -142,6 +142,7 @@
                   </div>
                 </div>
               {%- endif %}
+            {%- endif %}
           {%- endfor %}
         </div>
       </div>
