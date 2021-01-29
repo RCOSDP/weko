@@ -260,8 +260,8 @@ class Flow(object):
         :param actions:
         :return:
         """
-        if actions[0] and actions[0].get('name') != "Start" or actions[-1] and \
-                actions[-1].get('name') != "End":
+        if actions[0] and actions[0].get('name') != "Start" or actions[-1] \
+                and actions[-1].get('name') != "End":
             return False
         return True
 
@@ -1604,10 +1604,10 @@ class WorkActivity(object):
                     and_(
                         _Activity.activity_login_user == User.id,
                     )
-                    ) \
-                    .outerjoin(userrole, and_(User.id == userrole.c.user_id)
-                           ).outerjoin(Role,
-                                       and_(userrole.c.role_id == Role.id))
+                ) \
+                .outerjoin(
+                    userrole, and_(User.id == userrole.c.user_id)
+                ).outerjoin(Role, and_(userrole.c.role_id == Role.id))
         else:
             common_query = common_query \
                 .outerjoin(
@@ -1748,7 +1748,7 @@ class WorkActivity(object):
 
     def __get_activity_list_per_page(
         self, activities, max_page, name_param,
-        page, query_action_activities, size, tab, is_get_all = False
+        page, query_action_activities, size, tab, is_get_all=False
     ):
         """Get activity list per page.
 
@@ -1769,7 +1769,8 @@ class WorkActivity(object):
         query_action_activities = query_action_activities \
             .distinct(_Activity.id).order_by(asc(_Activity.id))
         if not is_get_all:
-            query_action_activities = query_action_activities.limit(size).offset(offset)
+            query_action_activities = query_action_activities.limit(
+                size).offset(offset)
         action_activities = query_action_activities.all()
         if action_activities:
             # Format activities

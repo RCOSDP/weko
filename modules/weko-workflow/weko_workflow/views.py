@@ -88,29 +88,6 @@ blueprint = Blueprint(
 )
 
 
-@blueprint.route('/usage-report', methods=['GET'])
-def usage_report():
-    getargs = request.args
-    item_type_usage_report = current_app.config.get('WEKO_ITEMS_UI_USAGE_REPORT')
-    conditions = filter_all_condition(getargs)
-    conditions['workflow'] = [item_type_usage_report]
-    conditions['status'] = ['doing']
-    activity = WorkActivity()
-    # For usage report, just get all activities with provided conditions
-    activities, _, _, _, _ = activity \
-    .get_activity_list(conditions=conditions, is_get_all=True)
-    get_workflow_item_type_names(activities)
-    activities_result = []
-    for activity in activities:
-        _activity = {"activity_id": activity.activity_id,
-                        "item": activity.title,
-                        "work_flow": activity.flows_name,
-                        "email": activity.email,
-                        "status": activity.StatusDesc,
-                        "user_role": activity.role_name}
-        activities_result.append(_activity)
-    return jsonify(activities = activities_result)
-
 @blueprint.route('/')
 @login_required
 def index():
@@ -188,7 +165,7 @@ def index():
         item_type=item_type,
         action_status=action_status,
         filters=filters,
-        send_mail_user_group = send_mail_user_group,
+        send_mail_user_group=send_mail_user_group,
         **ctx
     )
 
@@ -1494,3 +1471,33 @@ def save_activity():
         response["msg"] = str(error)
 
     return jsonify(response), 200
+
+
+@blueprint.route('/usage-report', methods=['GET'])
+def usage_report():
+    """
+    Get usage reports.
+
+    @return:
+    """
+    getargs = request.args
+    item_type_usage_report = current_app.config.get(
+        'WEKO_ITEMS_UI_USAGE_REPORT')
+    conditions = filter_all_condition(getargs)
+    conditions['workflow'] = [item_type_usage_report]
+    conditions['status'] = ['doing']
+    activity = WorkActivity()
+    # For usage report, just get all activities with provided conditions
+    activities, _, _, _, _ = activity \
+        .get_activity_list(conditions=conditions, is_get_all=True)
+    get_workflow_item_type_names(activities)
+    activities_result = []
+    for activity in activities:
+        _activity = {"activity_id": activity.activity_id,
+                     "item": activity.title,
+                     "work_flow": activity.flows_name,
+                     "email": activity.email,
+                     "status": activity.StatusDesc,
+                     "user_role": activity.role_name}
+        activities_result.append(_activity)
+    return jsonify(activities=activities_result)
