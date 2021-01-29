@@ -557,11 +557,11 @@ function analyzeParams(sURL) {
   for (var i = 0; i < lstParams.length; i++) {
     var sParamArr = lstParams[i].split('=');
     if (sParamArr[0].startsWith('workflow')) {
-      wfLst.push(sParamArr[1])
+      wfLst.push(decodeURIComponent(sParamArr[1]))
     } else if (sParamArr[0].startsWith('status')) {
       statusLst.push(sParamArr[1])
     }
   }
   return (wfLst.length > 0 ? wfLst.indexOf(checkingConditions.workflow) > -1 : true) &&
-    (statusLst.length > 0 ? statusLst.indexOf(checkingConditions.status) > -1 : true);
+    (statusLst.length > 0 ? statusLst.indexOf(checkingConditions.status.toLowerCase()) > -1 : true);
 }
