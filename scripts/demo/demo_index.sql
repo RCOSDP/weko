@@ -101,7 +101,7 @@ ALTER TABLE ONLY public.index ALTER COLUMN id SET DEFAULT nextval('public.index_
 --
 
 COPY public.index (created, updated, id, parent, "position", index_name, index_name_english, index_link_name, index_link_name_english, harvest_spec, index_link_enabled, comment, more_check, display_no, harvest_public_state, display_format, image_name, public_state, public_date, recursive_public_state, rss_status, coverpage_state, recursive_coverpage_check, browsing_role, recursive_browsing_role, contribute_role, recursive_contribute_role, browsing_group, recursive_browsing_group, contribute_group, recursive_contribute_group, owner_user_id, item_custom_sort) FROM stdin;
-2020-12-10 17:05:00.194774	2020-12-10 17:05:14.687351	1607619900140	0	0	New Index	New Index		New Index		f		f	5	t	1		t	\N	f	f	f	f	3,98,99	t	1,2,3,4,98,99	t		t		t	1	{}
+2020-12-10 17:05:00.194774	2020-12-10 17:05:14.687351	1607619900140	0	0	New Index	New Index		New Index		f		f	5	t	1		t	\N	f	f	f	f	3,-98,-99	t	1,2,3,4,-98,-99	t		t		t	1	{}
 \.
 
 
