@@ -220,7 +220,7 @@ def shib_login():
     try:
         shib_session_id = request.args.get('SHIB_ATTR_SESSION_ID', None)
 
-        if shib_session_id is None or len(shib_session_id) == 0:
+        if not shib_session_id:
             if _shib_enable and _idp_login and _idp_login_inst:
                 return redirect(_shib_login_url.format(request.url_root))
             else:
@@ -320,7 +320,7 @@ def shib_sp_login():
         rst = shib_user.get_relation_info()
 
         next_url = 'weko_accounts.shib_auto_login'
-        if rst is None:
+        if not rst:
             # Relation is not existed, cache shibboleth info to redis.
             next_url = 'weko_accounts.shib_login'
 

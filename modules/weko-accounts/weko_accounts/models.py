@@ -24,7 +24,7 @@ from invenio_accounts.models import User
 from invenio_db import db
 
 
-shibuserole = db.Table(
+shibuserrole = db.Table(
     'shibboleth_userrole',
     db.Column('shib_user_id', db.Integer(), db.ForeignKey(
         'shibboleth_user.id', name='fk_shibboleth_userrole_user_id')),
@@ -72,8 +72,10 @@ class ShibbolethUser(db.Model):
     shib_ip_range_flag = db.Column(db.String(255), nullable=True)
     """SHIB_ATTR_SITE_USER_WITHIN_IP_RANGE_FLAG"""
 
-    shib_roles = db.relationship('Role', secondary=shibuserole,
-                            backref=db.backref('shib_users', lazy='dynamic'))
+    shib_roles = db.relationship(
+        'Role',
+        secondary=shibuserrole,
+        backref=db.backref('shib_users', lazy='dynamic'))
 
     @classmethod
     def create(cls, weko_user, **kwargs):

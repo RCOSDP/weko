@@ -25,7 +25,7 @@ _datastore = LocalProxy(lambda: current_app.extensions['security'].datastore)
 
 
 class ShibUser(object):
-    """Shibuser."""
+    """Shibboleth User data model."""
 
     def __init__(self, shib_attr=None):
         """
@@ -41,28 +41,25 @@ class ShibUser(object):
 
     def _set_weko_user_role(self, roles):
         """
-        Assign role for weko3 user.
+        Assign role for Shibboleth user.
 
         :param role_name:
         :return:
 
         """
-        ret = None
-        shib_user = ShibbolethUser.query.filter_by(
-                shib_eppn=self.shib_attr['shib_eppn']).one_or_none()
-        roles = [x.strip() for x in roles.split(',')]
-        role_ids = [x.id for x in Role.query.filter(
-            Role.name.in_(roles)).all()]
+        error = None
+        roles = Role.query.filter(
+            Role.name.in_([x.strip() for x in roles.split(',')])).all()
 
         try:
             with db.session.begin_nested():
-                # db.session.add_all(shib_userroles)
-                db.session.commit()
+                self.shib_user.shib_roles.clear()
+                self.shib_user.shib_roles.extend(roles)
         except Exception as ex:
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
             db.session.rollback()
-            ret = ex
-        return ret
+            error = ex
+        return error
 
     def _get_site_license(self):
         """
@@ -82,17 +79,18 @@ class ShibUser(object):
 
         """
         shib_user = None
-        _shib_username_allowed = current_app.config[
+        shib_username_config = current_app.config[
             'WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN']
 
         if self.shib_attr['shib_eppn']:
             shib_user = ShibbolethUser.query.filter_by(
                 shib_eppn=self.shib_attr['shib_eppn']).one_or_none()
-        elif _shib_username_allowed and self.shib_attr.get('shib_user_name'):
+        if not shib_user and shib_username_config \
+                and self.shib_attr.get('shib_user_name'):
             shib_user = ShibbolethUser.query.filter_by(
                 shib_user_name=self.shib_attr['shib_user_name']).one_or_none()
 
-        if shib_user:
+        if shib_user and shib_user.weko_user:
             self.shib_user = shib_user
             if not self.user:
                 self.user = shib_user.weko_user
@@ -141,9 +139,17 @@ class ShibUser(object):
             active=True
         )
 
-        self.user = _datastore.create_user(**kwargs)
-        shib_user = ShibbolethUser.create(self.user, **self.shib_attr)
+        user = _datastore.find_user(email=self.shib_attr.get('shib_mail'))
+        if not user:
+            self.user = _datastore.create_user(**kwargs)
+        else:
+            self.user = user
+
+        shib_user = ShibbolethUser.create(
+            self.user,
+            **self.shib_attr)
         self.shib_user = shib_user
+
         return shib_user
 
     def new_shib_profile(self):
@@ -186,32 +192,24 @@ class ShibUser(object):
         error = ''
 
         if not self.user:
-            error = _(r"Can't get relation Weko User.")
+            error = _("Can't get relation Weko User.")
             return False, error
 
-        shib_role_auth = self.shib_attr.get('shib_role_authority_name', '')
-        if not shib_role_auth:
-            current_app.logger.debug(_("Failed to get attribute."))
-            ret = self._set_weko_user_role(
-                current_app.config['WEKO_ACCOUNTS_GENERAL_ROLE'])
-            if ret:
-                return False, ret
-            else:
-                return True, '' 
+        role = self.shib_attr.get('shib_role_authority_name', '')
 
         shib_role_config = current_app.config[
             'WEKO_ACCOUNTS_SHIB_ROLE_RELATION']
-        if shib_role_auth in shib_role_config.keys():
+        if role in shib_role_config.keys():
             ret = self._set_weko_user_role(shib_role_config[
-                shib_role_auth])
-            if ret:
-                return False, ret
-            else:
-                return True, '' 
+                role])
         else:
-            error = _("Invalid attribute.")
+            ret = self._set_weko_user_role(
+                current_app.config['WEKO_ACCOUNTS_GENERAL_ROLE'])
 
-        return False, error
+        if ret:
+            return False, ret
+        else:
+            return True, '' 
 
     def valid_site_license(self):
         """

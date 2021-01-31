@@ -24,7 +24,7 @@ import ipaddress
 
 from flask import current_app, request
 from flask_security import current_user
-from weko_accounts.utils import get_remote_addr
+from weko_accounts.utils import get_remote_addr, get_shib_roles
 from weko_records.api import SiteLicense
 
 
@@ -34,6 +34,9 @@ def check_site_license_permission():
     :return: True or False
     """
     ip_addr = get_remote_addr()
+    if current_user and current_user.get_id() \
+            and get_shib_roles(current_user) not in current_user.roles:
+        current_user.roles.extend(get_shib_roles(current_user))
 
     sl_lst = SiteLicense.get_records()
     if ip_addr:
