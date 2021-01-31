@@ -119,7 +119,7 @@ def shib_auto_login():
         error = shib_user.check_in()
 
         if error:
-            ShibUser.shib_user_logout()
+            # ShibUser.shib_user_logout()
             datastore.delete(cache_key)
             current_app.logger.error(error)
             flash(error, category='error')
@@ -287,7 +287,7 @@ def shib_sp_login():
     _idp_login = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED']
     _idp_login_inst = current_app.config[
         'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED']
-    _shib_username_allowed = current_app.config[
+    _shib_username_config = current_app.config[
         'WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN']
 
     try:
@@ -298,8 +298,8 @@ def shib_sp_login():
         shib_attr, error = parse_attributes()
 
         # Check SHIB_ATTR_EPPN and SHIB_ATTR_USER_NAME:
-        if error or not (shib_attr.get('shib_eppn') or \
-                _shib_username_allowed and shib_attr.get('shib_user_name')):
+        if error or not shib_attr.get('shib_eppn') and \
+                _shib_username_config and shib_attr.get('shib_user_name'):
             if _shib_enable and _idp_login and _idp_login_inst:
                 return redirect(_shib_login_url.format(request.url_root))
             else:

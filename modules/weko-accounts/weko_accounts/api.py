@@ -25,7 +25,7 @@ _datastore = LocalProxy(lambda: current_app.extensions['security'].datastore)
 
 
 class ShibUser(object):
-    """Shibboleth User data model."""
+    """Shibboleth User."""
 
     def __init__(self, shib_attr=None):
         """
@@ -50,11 +50,18 @@ class ShibUser(object):
         error = None
         roles = Role.query.filter(
             Role.name.in_([x.strip() for x in roles.split(',')])).all()
-
+        roles = list(set(roles) - set(self.user.roles))
         try:
             with db.session.begin_nested():
+                self.user.roles = list(role for role in self.user.roles \
+                    if role not in self.shib_user.shib_roles)
                 self.shib_user.shib_roles.clear()
-                self.shib_user.shib_roles.extend(roles)
+                for role in roles:
+                    if role not in self.user.roles:
+                        _datastore.add_role_to_user(
+                            self.user,
+                            role)
+                        self.shib_user.shib_roles.append(role)
         except Exception as ex:
             current_app.logger.error(ex)
             db.session.rollback()
@@ -189,11 +196,11 @@ class ShibUser(object):
         :return:
 
         """
-        error = ''
+        ret = ''
 
         if not self.user:
-            error = _("Can't get relation Weko User.")
-            return False, error
+            ret = _("Can't get relation Weko User.")
+            return False, ret
 
         role = self.shib_attr.get('shib_role_authority_name', '')
 
@@ -208,8 +215,7 @@ class ShibUser(object):
 
         if ret:
             return False, ret
-        else:
-            return True, '' 
+        return True, ret
 
     def valid_site_license(self):
         """

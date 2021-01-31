@@ -23,7 +23,6 @@
 from invenio_accounts.models import User
 from invenio_db import db
 
-
 shibuserrole = db.Table(
     'shibboleth_userrole',
     db.Column('shib_user_id', db.Integer(), db.ForeignKey(
@@ -35,7 +34,7 @@ shibuserrole = db.Table(
 
 
 class ShibbolethUser(db.Model):
-    """Shibboleth User Model."""
+    """Shibboleth User data model."""
 
     __tablename__ = "shibboleth_user"
 
@@ -96,7 +95,7 @@ class ShibbolethUser(db.Model):
         db.session.commit()
 
         return obj
-        
+
     @classmethod
     def get_user_by_email(cls, email, **kwargs):
         """Get a user by email."""
