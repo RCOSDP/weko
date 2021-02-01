@@ -47,6 +47,7 @@ download_original_pdf_permission = Permission(
 
 def page_permission_factory(record, *args, **kwargs):
     """Page permission factory."""
+
     def can(self):
         is_ok = False
 
@@ -72,6 +73,7 @@ def page_permission_factory(record, *args, **kwargs):
 
 def file_permission_factory(record, *args, **kwargs):
     """File permission factory."""
+
     def can(self):
         fjson = kwargs.get('fjson')
         return check_file_download_permission(record, fjson)
@@ -115,9 +117,9 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
         # Check super users
         else:
             super_users = current_app.config[
-                              'WEKO_PERMISSION_SUPER_ROLE_USER'] + (
-                              current_app.config[
-                                  'WEKO_PERMISSION_ROLE_COMMUNITY'],)
+                'WEKO_PERMISSION_SUPER_ROLE_USER'] + (
+                current_app.config[
+                    'WEKO_PERMISSION_ROLE_COMMUNITY'],)
             for role in list(current_user.roles or []):
                 if role.name in super_users:
                     is_ok = True

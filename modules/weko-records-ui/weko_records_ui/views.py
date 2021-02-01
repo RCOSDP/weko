@@ -807,8 +807,8 @@ def preview_able(file_json):
             'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'].keys():
         # Convert MB to Bytes in decimal
         file_size_limit = current_app.config[
-                              'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'][
-                              file_type] * 1000000
+            'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'][
+            file_type] * 1000000
         if file_size > file_size_limit:
             return False
     return True
