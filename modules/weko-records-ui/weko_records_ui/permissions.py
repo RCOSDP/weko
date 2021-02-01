@@ -98,8 +98,31 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
         with db.session.no_autoflush:
             users = User.query.filter(User.id.in_(user_id_list)).all()
             emails = [x.email for x in users]
-
         return emails
+
+    def __check_user_permission(user_id_list):
+        """Check user permission.
+
+        :return: True if the login user is allowed to display file metadata.
+        """
+        is_ok = False
+        # Check guest user
+        if not current_user.is_authenticated:
+            return is_ok
+        # Check registered user
+        elif current_user and current_user.id in user_id_list:
+            is_ok = True
+        # Check super users
+        else:
+            super_users = current_app.config[
+                              'WEKO_PERMISSION_SUPER_ROLE_USER'] + (
+                              current_app.config[
+                                  'WEKO_PERMISSION_ROLE_COMMUNITY'],)
+            for role in list(current_user.roles or []):
+                if role.name in super_users:
+                    is_ok = True
+                    break
+        return is_ok
 
     if fjson:
         is_can = True
@@ -195,8 +218,13 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
             #  can not access
             elif 'open_no' in acsrole:
                 if is_display_file_info:
-                    # Always display the file info area in 'Detail' screen.
+                    # Allow display the file info area in 'Detail' screen.
                     is_can = True
+                    is_permission_user = __check_user_permission(
+                        user_id_list)
+                    if not current_user.is_authenticated or \
+                            not is_permission_user or site_license_check():
+                        is_can = False
                 else:
                     if current_user_email in created_user_email_list:
                         # Allow created workflow user view file.

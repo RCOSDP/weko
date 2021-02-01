@@ -271,7 +271,7 @@
                             </a>
                           {%- else -%}
                             <!-- User do not permission download -->
-                            <a class="action-anchor" href="" onclick="">
+                            <a class="action-anchor" href="{{file_url}}" onclick="">
                               <button class="img-rounded action-button button-sm" id="{{download_id}}">
                                 <i class="action-icon fa fa-download"></i>
                                 {{_('Download')}}
