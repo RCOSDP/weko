@@ -110,7 +110,7 @@
     {%- endif -%}
 
   {%- elif permission.status == 1 -%}
-    {%- set is_permission_in_period = record | check_file_permission_period(file.info()) -%}
+    {%- set is_permission_in_period = record | check_file_permission_period(file) -%}
 
     {%- if is_permission_in_period -%}
       {%- set href_url = file_url -%}
