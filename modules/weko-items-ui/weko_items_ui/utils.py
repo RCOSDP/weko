@@ -261,11 +261,13 @@ def get_user_information(user_id):
     """
     result = {
         'username': '',
-        'email': ''
+        'email': '',
+        'fullname': '',
     }
     user_info = UserProfile.get_by_userid(user_id)
     if user_info is not None:
         result['username'] = user_info.get_username
+        result['fullname'] = user_info.fullname
 
     metadata = MetaData()
     metadata.reflect(bind=db.engine)

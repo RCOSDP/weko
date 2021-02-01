@@ -1978,8 +1978,8 @@ def process_send_reminder_mail(activity_detail, mail_template):
     else:
         raise ValueError('Cannot get receiver mail address')
 
-    if update_user.get('username') != '':
-        mail_info['fullname'] = update_user.get('username')
+    if update_user.get('fullname') != '':
+        mail_info['fullname'] = update_user.get('fullname')
     mail_info['template'] = mail_template
     try:
         send_mail_reminder(mail_info)
