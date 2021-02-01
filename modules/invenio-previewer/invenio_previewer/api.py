@@ -34,7 +34,7 @@ import subprocess
 from os.path import basename, splitext
 from time import sleep
 
-from flask import current_app, flash, redirect, url_for
+from flask import current_app, flash, redirect, request, url_for
 from flask_babelex import gettext as _
 
 
@@ -100,6 +100,13 @@ class PreviewFile(object):
 
 def convert_to(folder, source):
     """Convert file to pdf."""
+    def redirect_detail_page(pid_value):
+        return redirect(
+            current_app.config['RECORDS_UI_ENDPOINTS']['recid']['route'].replace(
+                '<pid_value>', pid_value
+            )
+        )
+
     timeout = current_app.config['PREVIEWER_CONVERT_PDF_TIMEOUT']
     args = [
         'libreoffice',
@@ -120,6 +127,7 @@ def convert_to(folder, source):
     # Change home var for next subprocess for process runs faster.
     os_env['HOME'] = temp_folder
     filename = err_txt = None
+    pid_value = request.path.split('/').pop(2)
 
     try:
         process_count = 0
@@ -154,6 +162,8 @@ def convert_to(folder, source):
             '{' + folder + '} ',
             _('Please contact the administrator.')
         ))
+        flash(err_txt, category='error')
+        redirect_detail_page(pid_value)
     except PermissionError as ex:
         current_app.logger.error(ex)
         err_txt = ''.join((
@@ -161,6 +171,8 @@ def convert_to(folder, source):
             '{' + folder + '} ',
             _('Please contact the administrator.')
         ))
+        flash(err_txt, category='error')
+        redirect_detail_page(pid_value)
     except OSError as ex:
         if ex.errno == errno.ENOSPC:
             current_app.logger.error(ex)
@@ -168,10 +180,14 @@ def convert_to(folder, source):
                 _('There is not enough storage space.'),
                 _('Please contact the administrator.')
             ))
+        flash(err_txt, category='error')
+        redirect_detail_page(pid_value)
     except Exception as ex:
         current_app.logger.error(ex)
         # Fill strings if necessary
         err_txt = ''
+        flash(err_txt, category='error')
+        redirect_detail_page(pid_value)
     finally:
         shutil.rmtree(temp_folder)
 
@@ -179,12 +195,7 @@ def convert_to(folder, source):
         current_app.logger.error('convert to pdf failure')
         raise LibreOfficeError(process.stdout.decode())
     else:
-        err_txt = ''.join((
-            _('The storage location cannot be accessed.'),
-            '{' + folder + '} ',
-            _('Please contact the administrator.')
-        ))
-        return filename.group(1), err_txt
+        return filename.group(1)
 
 
 class LibreOfficeError(Exception):

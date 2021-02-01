@@ -910,13 +910,7 @@ class FileInstance(db.Model, Timestamp):
                 self.json['filename'] = self.json['filename'].replace(file_type, '.pdf')
 
                 if not os.path.isfile(pdf_dir + pdf_filename):
-                    _filename, err_txt = convert_to(pdf_dir, self.uri)
-
-                    if err_txt:
-                        print(request.path.split('/'))
-                        pid_value = request.path.split('/').pop(2)
-                        flash(err_txt, category='error')
-                        return redirect('/records/{}'.format(pid_value))
+                    convert_to(pdf_dir, self.uri)
 
                 self.uri = pdf_dir + pdf_filename
                 self.size = os.path.getsize(pdf_dir + pdf_filename)
