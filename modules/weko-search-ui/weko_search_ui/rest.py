@@ -360,71 +360,53 @@ class IndexSearchResource(ContentNegotiatedMethodView):
 
 def get_heading_info(data, lang, item_type):
     """Get heading info."""
-    heading_id = None
-    lheading_id = None
-    sheading_id = None
-    lang_id = None
+    item_key = None
+    heading_subitem_key = 'subitem_heading_banner_headline'
+    subheading_subitem_key = 'subitem_heading_headline'
+    lang_subitem_key = 'subitem_heading_language'
     # get item id of heading
     if item_type and 'properties' in item_type.schema:
         for key, value in item_type.schema['properties'].items():
-            flag = False
-            if 'properties' in value and value['type'] == 'object':
-                for k, v in value['properties'].items():
-                    if v['title'] == 'Banner Headline' or \
-                            v['title'] == '大見出し':
-                        lheading_id = k
-                        flag = True
-                    elif v['title'] == 'Subheading' or v['title'] == '小見出し':
-                        sheading_id = k
-                        flag = True
-                    elif v['title'] == 'Language' or v['title'] == '言語':
-                        lang_id = k
+            if 'properties' in value \
+                    and value['type'] == 'object' \
+                    and heading_subitem_key in value['properties']:
+                item_key = key
+                break
             elif 'items' in value \
                     and value['type'] == 'array' \
-                    and 'properties' in value['items']:
-                for k, v in value['items']['properties'].items():
-                    if v['title'] == 'Banner Headline' or \
-                            v['title'] == '大見出し':
-                        lheading_id = k
-                        flag = True
-                    elif v['title'] == 'Subheading' or v['title'] == '小見出し':
-                        sheading_id = k
-                        flag = True
-                    elif v['title'] == 'Language' or v['title'] == '言語':
-                        lang_id = k
-            if flag:
-                heading_id = key
+                    and 'properties' in value['items'] \
+                    and heading_subitem_key in value['items']['properties']:
+                item_key = key
                 break
-            else:
-                lang_id = None
 
     # get heading data
-    lheading = ''
-    sheading = ''
-    if heading_id \
-            and heading_id in data['_source']['_item_metadata']:
+    heading_text = ''
+    subheading_text = ''
+    if item_key \
+            and item_key in data['_source']['_item_metadata']:
         temp = \
-            data['_source']['_item_metadata'][heading_id]['attribute_value_mlt']
+            data['_source']['_item_metadata'][item_key]['attribute_value_mlt']
         if len(temp) > 1:
             for v in temp:
-                lheading_tmp = ''
-                sheading_tmp = ''
-                if lheading_id in v:
-                    lheading_tmp = v[lheading_id]
-                if sheading_id in v:
-                    sheading_tmp = v[sheading_id]
-                if lang and lang_id in v and v[lang_id] == lang:
-                    lheading = lheading_tmp
-                    sheading = sheading_tmp
+                heading_tmp = ''
+                subheading_tmp = ''
+                if heading_subitem_key in v:
+                    heading_tmp = v[heading_subitem_key]
+                if subheading_subitem_key in v:
+                    subheading_tmp = v[subheading_subitem_key]
+                if lang and lang_subitem_key in v and v[lang_subitem_key] == lang:
+                    heading_text = heading_tmp
+                    subheading_text = subheading_tmp
                     break
-        elif len(temp) == 1 or (lheading and sheading):
-            if lheading_id in temp[0]:
-                lheading = temp[0][lheading_id]
-            if sheading_id in temp[0]:
-                sheading = temp[0][sheading_id]
-    if sheading:
-        heading = lheading + ' : ' + sheading
+        elif len(temp) == 1 \
+                or (heading_text == '' and subheading_text == ''):
+            if heading_subitem_key in temp[0]:
+                heading_text = temp[0][heading_subitem_key]
+            if subheading_subitem_key in temp[0]:
+                subheading_text = temp[0][subheading_subitem_key]
+    if subheading_text:
+        heading = heading_text + ' : ' + subheading_text
     else:
-        heading = lheading
+        heading = heading_text
 
     return heading

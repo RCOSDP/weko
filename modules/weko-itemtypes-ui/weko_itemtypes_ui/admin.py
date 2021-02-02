@@ -192,10 +192,12 @@ class ItemTypeMetaDataView(BaseView):
             )
 
             db.session.commit()
-        except BaseException:
-            raise
+        except Exception as ex:
             db.session.rollback()
-            return jsonify(msg=_('Failed to register Item type.'))
+            default_msg = _('Failed to register Item type.')
+            response = jsonify(msg='{} {}'.format(default_msg, str(ex)))
+            response.status_code = 400
+            return response
         current_app.logger.debug('itemtype register: {}'.format(item_type_id))
         flash(_('Successfuly registered Item type.'))
         redirect_url = url_for('.index', item_type_id=record.model.id)
@@ -417,7 +419,7 @@ class ItemTypeMappingView(BaseView):
                                             elem_str = elem['title_i18n'][
                                                 cur_lang]
                                 else:
-                                    elem_str = elem['title']
+                                    elem_str = elem.get('title', '')
                             for sub_elem in elem['items']:
                                 if 'key' in sub_elem and \
                                         sub_elem['key'] == key:

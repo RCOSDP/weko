@@ -835,8 +835,8 @@ def prepare_edit_item():
                 draft_workflow = activity.get_workflow_activity_by_item_id(
                     draft_pid.object_uuid)
                 if draft_workflow and \
-                        draft_workflow.action_status in [ASP.ACTION_BEGIN,
-                                                         ASP.ACTION_DOING]:
+                    draft_workflow.action_status in [ASP.ACTION_BEGIN,
+                                                     ASP.ACTION_DOING]:
                     return jsonify(
                         code=err_code,
                         msg=_("This Item is being edited.")
@@ -914,65 +914,10 @@ def ranking():
     page, render_widgets = get_design_layout(
         current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
 
-    rankings = {}
-    # most_reviewed_items
-    if settings.rankings['most_reviewed_items']:
-        result = QueryRecordViewReportHelper.get(
-            start_date=start_date.strftime('%Y-%m-%d'),
-            end_date=end_date.strftime('%Y-%m-%d'),
-            agg_size=settings.display_rank,
-            agg_sort={'value': 'desc'})
-        result['all'].sort(key=lambda x: x['total_all'], reverse=True)
-        rankings['most_reviewed_items'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='all',
-                                  title_key='record_name',
-                                  count_key='total_all', pid_key='pid_value')
+    rankings = get_ranking(settings)
 
-    # most_downloaded_items
-    if settings.rankings['most_downloaded_items']:
-        result = QueryItemRegReportHelper.get(
-            start_date=start_date.strftime('%Y-%m-%d'),
-            end_date=end_date.strftime('%Y-%m-%d'),
-            target_report='3',
-            unit='Item',
-            agg_size=settings.display_rank,
-            agg_sort={'count': 'desc'}
-            )
-        result['data'].sort(key=lambda x: x['col3'], reverse=True)
-        result2 =  parse_ranking_results(result, settings.display_rank,
-                                  list_name='data', title_key='col2',
-                                  count_key='col3', pid_key='col1')
-        rankings['most_downloaded_items'] = result2
-
-
-    # created_most_items_user
-    if settings.rankings['created_most_items_user']:
-        result = QueryItemRegReportHelper.get(
-            start_date=start_date.strftime('%Y-%m-%d'),
-            end_date=end_date.strftime('%Y-%m-%d'),
-            target_report='0',
-            unit='User',
-            agg_size=settings.display_rank,
-            agg_sort={'_count': 'desc'})
-        rankings['created_most_items_user'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='data',
-                                  title_key='user_id', count_key='count')
-
-    # most_searched_keywords
-    if settings.rankings['most_searched_keywords']:
-        result = QuerySearchReportHelper.get(
-            start_date=start_date.strftime('%Y-%m-%d'),
-            end_date=end_date.strftime('%Y-%m-%d'),
-            agg_size=settings.display_rank,
-            agg_sort={'value': 'desc'}
-        )
-        rankings['most_searched_keywords'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='all',
-                                  title_key='search_key', count_key='count')
-        x = rankings['most_searched_keywords']
+    x = rankings.get('most_searched_keywords')
+    if x:
         import urllib.parse
         for y in x:
             if y["title"].split():
@@ -980,30 +925,6 @@ def ranking():
                     urllib.parse.quote(y["title"]))
             else:
                 y["url"] = '/search?search_type=0&q={z}'.format(z=y["title"])
-
-    # new_items
-    #if settings.rankings['new_items']:
-    #    new_item_start_date = end_date - \
-    #        timedelta(days=int(settings.new_item_period) - 1)
-    #    if new_item_start_date < start_date:
-    #        new_item_start_date = start_date
-    #    result = get_new_items_by_date(
-    #        new_item_start_date.strftime('%Y-%m-%d'),
-    #        end_date.strftime('%Y-%m-%d'))
-    #    result = get_latest_items(10)
-    #    rankings['new_items'] = \
-    #        parse_ranking_results(result, settings.display_rank,
-    #                              list_name='all', title_key='record_name',
-    #                              pid_key='pid_value', date_key='create_date')
-
-    # new_items
-    if settings.rankings['new_items']:
-        result = get_latest_items(10)
-        rankings['new_items'] = \
-            parse_ranking_results(result, settings.display_rank,
-                                  list_name='all', title_key='record_name',
-                                  pid_key='pid_value', date_key='create_date')
-
     return render_template(
         current_app.config['WEKO_ITEMS_UI_RANKING_TEMPLATE'],
         page=page,
@@ -1063,7 +984,8 @@ def export():
     """Item export view."""
     export_settings = AdminSettings.get('item_export_settings') or \
         AdminSettings.Dict2Obj(
-            current_app.config['WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS'])
+        current_app.config[
+            'WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS'])
     if not export_settings.allow_item_exporting:
         return abort(403)
 
@@ -1074,7 +996,7 @@ def export():
     search_type = request.args.get('search_type', '0')  # TODO: Refactor
     community_id = ""
     ctx = {'community': None}
-    cur_index_id = search_type if search_type not in ('0', '1', ) else None
+    cur_index_id = search_type if search_type not in ('0', '1',) else None
     if 'community' in request.args:
         from weko_workflow.api import GetCommunity
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
@@ -1136,7 +1058,7 @@ def check_validation_error_msg(activity_id):
             host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
             port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
     if sessionstore.redis.exists(
-        'updated_json_schema_{}'.format(activity_id)) \
+            'updated_json_schema_{}'.format(activity_id)) \
             and sessionstore.get('updated_json_schema_{}'.format(activity_id)):
         session_data = sessionstore.get(
             'updated_json_schema_{}'.format(activity_id))
@@ -1230,3 +1152,18 @@ def session_validate():
         "msg": _('Your session has timed out. Please login again.')
     }
     return jsonify(result)
+
+
+@blueprint_api.route('/check_record_doi/<string:pid_value>', methods=['GET'])
+@login_required
+def check_record_doi(pid_value='0'):
+    """Check public status.
+
+    :param pid_value: pid_value.
+    :return:
+    """
+    from weko_deposit.api import WekoRecord
+    record = WekoRecord.get_record_by_pid(pid_value)
+    if record.pid_doi:
+        return jsonify({'code': 0})
+    return jsonify({'code': -1})

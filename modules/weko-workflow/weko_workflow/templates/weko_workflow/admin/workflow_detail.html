@@ -25,19 +25,25 @@
   {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {% endblock %}
 
+{%- block javascript %}
+  {{ super() }}
+  {% assets "workflow_detail_admin_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
 {%- block body %}
 
 {% from "weko_theme/macros/modal_page.html" import all_modal %}
 {{ all_modal() }}
 <div id="alerts"></div>
+<input type="hidden" id="current_language" value="{{ current_i18n.language }}" />
 
 <div class="row">
-  <div class="col-sm-offset-2 col-sm-8">
+  <div class="col-sm-offset-1 col-sm-10">
     <div class="form-horizontal">
       <div class="form-group">
         <div class="col-sm-offset-2">
           <label for="txt_workflow_name" class="col-sm-2 control-label">{{_('WorkFlow')}}</label>
-          <div class="col-sm-6">
+          <div class="col-sm-8">
             <input type="text" class="form-control" id="txt_workflow_name"
                                                     name="workflow_name"
                                                     placeholder="{{_('Enter the Workflow name')}}"  value="{{workflow.flows_name if workflow}}">
@@ -53,7 +59,7 @@
       <div class="form-group">
         <div class="col-sm-offset-2">
           <label class="col-sm-2 control-label" for="txt_flow_name">{{_('Flow')}}</label>
-          <div class="col-sm-6">
+          <div class="col-sm-8">
             {%- if flow_list %}
             <select class="form-control" id="txt_flow_name">
               {%- for flow in flow_list if flow %}
@@ -67,7 +73,7 @@
       <div class="form-group">
         <div class="col-sm-offset-2">
           <label class="col-sm-2 control-label" for="txt_itemtype">{{_('Item Type')}}</label>
-          <div class="col-sm-6">
+          <div class="col-sm-8">
             <select class="form-control" id="txt_itemtype">
             {%- if itemtype_list %}
               {%- for itemtype in itemtype_list if itemtype %}
@@ -80,10 +86,60 @@
           </div>
         </div>
       </div>
+      <div class="form-group">
+        <div class="col-sm-offset-2">
+          <label class="col-sm-2 control-label">{{ display_hide_label }}</label>
+          <div class="col-sm-8" style="padding-top: 7px" >{{_('Role')}}</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="col-sm-offset-2">
+          <label class="col-sm-2 control-label"></label>
+          <div class="col-sm-8">
+            <div class="col-sm-5 col-md-5 col-md-5 padding-display-hide">
+                <div class="col-sm-12 col-md-12 col-md-12 padding-display-hide">
+                {{ display_label }}
+                <br>
+                <select multiple name="select_show" id="select_show" class="form-control">
+                  {%- if display_list %}
+                    {%- for display in display_list if display %}
+                    <option value="{{display.id}}" >{{display.name}}</option>
+                    {%- endfor %}
+                  {%- endif %}
+                </select>
+              </div>
+            </div>
+            <div class="col-sm-2 col-md-2 col-md-2 text-center padding-display-hide">
+              &nbsp;<br>
+              <button type="button" class="btn btn-default" id="setHide">
+                <span class="glyphicon glyphicon-arrow-right"></span>
+              </button>
+              <br>
+              <br>
+              <button type="button" class="btn btn-default" id="setShow">
+                <span class="glyphicon glyphicon-arrow-left"></span>
+              </button>
+            </div>
+            <div class="col-sm-5 col-md-5 col-md-5 padding-display-hide">
+                <div class="col-sm-12 col-md-12 col-md-12 padding-display-hide">
+                {{ hide_label }}
+                <br>
+                <select multiple name="select_hide" id="select_hide" class="form-control">
+                  {%- if hide_list %}
+                    {%- for hide in hide_list if hide %}
+                    <option value="{{hide.id}}" >{{hide.name}}</option>
+                    {%- endfor %}
+                  {%- endif %}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="form-group hide">
         <div class="col-sm-offset-2">
           <label class="col-sm-2 control-label">{{_('Next Flow')}}</label>
-          <div class="col-sm-6">
+          <div class="col-sm-8">
             <select class="form-control">
               <option value="0"></option>
             </select>
@@ -92,7 +148,7 @@
       </div>
       <div class="form-group">
         <div class="col-sm-offset-2">
-          <div class="col-sm-offset-2 col-sm-6">
+          <div class="col-sm-offset-2 col-sm-8">
             <button type="button" class="btn btn-default" id="btn_back">
               <span class="glyphicon glyphicon-chevron-left"  aria-hidden="true"></span>&nbsp
                {{_('Back')}}
@@ -110,77 +166,12 @@
             </button>
             <div class="hide" id="delete_uri">{{url_for('workflowsetting.delete_workflow', workflow_id=workflow.flows_id)}}</div>
             {%- endif %}
- 
+
           </div>
         </div>
       </div>
     </div>
   </div>
 </div>
+
 {%- endblock %}
-
-{% block tail %}
-<script>
-  $(document).ready(function() {
-
-  function addAlert(message) {
-    $('#alerts').append(
-        '<div class="alert alert-light" id="alert-style">' +
-        '<button type="button" class="close" data-dismiss="alert">' +
-        '&times;</button>' + message + '</div>');
-         } 
-
-    $('#btn_back').on('click', function(){
-      window.history.back();
-    });
-    $('#btn_delete').on('click', function(){
-      const post_uri = $('#delete_uri').text();
-      $.ajax({
-        url: post_uri,
-        method: 'DELETE',
-        async: true,
-        contentType: 'application/json',
-        success: function(data, status) {
-          if(0 != data.code) {
-            $("#inputModal").html(data.msg);
-            $("#allModal").modal("show");
-          } else {
-            document.location.href=data.data.redirect;
-          }
-        },
-        error: function(jqXHE, status) {
-          var modalcontent =  "Delete Failed";
-          $("#inputModal").html(modalcontent);
-          $("#allModal").modal("show");
-        }
-      });
-    });
-    $('#btn_create').on('click', function(){
-      const post_uri = $('#post_uri').text();
-      post_data = {'id': $('#_id').val(),
-                   'flows_name': $('#txt_workflow_name').val(),
-                   'itemtype_id': $('#txt_itemtype').val(),
-                   'flow_id': $('#txt_flow_name').val()
-                  };
-      $.ajax({
-        url: post_uri,
-        method: 'POST',
-        async: true,
-        contentType: 'application/json',
-        data: JSON.stringify(post_data),
-        success: function(data, status) {
-          if(0 == data.code) {
-            document.location.href=data.data.redirect;
-            addAlert("Workflow created successfully.");
-          }
-        },
-        error: function(jqXHE, status) {
-            var modalcontent =  "Something went wrong.";
-            $("#inputModal").html(modalcontent);
-            $("#allModal").modal("show");
-        }
-      });
-    });
-  });
-</script>
-{% endblock %}

@@ -1298,3 +1298,12 @@ msgstr ""
 
 msgid "Summary DDI"
 msgstr ""
+
+msgid "This item has been deleted."
+msgstr ""
+
+msgid "Download is available from {}/{}/{}."
+msgstr ""
+
+msgid "Download / Preview is available from {}/{}/{}."
+msgstr ""

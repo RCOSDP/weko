@@ -33,7 +33,7 @@ import uuid
 import zipfile
 from collections import Callable, OrderedDict
 from datetime import datetime
-from functools import reduce
+from functools import partial, reduce
 from io import StringIO
 from operator import getitem
 
@@ -399,19 +399,12 @@ def parse_to_json_form(data: list, item_path_not_existed: list) -> dict:
         else:
             return
 
-    for key, name, value in data:
+    for key, value in data:
         if key in item_path_not_existed:
             continue
         key_path = handle_generate_key_path(key)
-        name_path = handle_generate_key_path(name)
         if value:
-            a = handle_check_identifier(name_path)
-            if not a:
-                set_nested_item(result, key_path, value)
-            else:
-                set_nested_item(result, key_path, value)
-                a += ' key'
-                set_nested_item(result, [a], key_path[1])
+            set_nested_item(result, key_path, value)
 
     convert_data(result)
     result = json.loads(json.dumps(result))
@@ -544,7 +537,6 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
     }
     tsv_data = []
     item_path = []
-    item_path_name = []
     check_item_type = {}
     item_path_not_existed = []
     schema = ''
@@ -583,32 +575,41 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                             })
                 elif num == 2:
                     item_path = data_row
+                    duplication_item_ids = \
+                        handle_check_duplication_item_id(item_path)
+                    if duplication_item_ids:
+                        msg = _(
+                            'The following metadata keys are duplicated.'
+                            '<br/>{}')
+                        raise Exception({
+                            'error_msg':
+                                msg.format('<br/>'.join(duplication_item_ids))
+                        })
                     if check_item_type:
-                        if not handle_check_consistence_with_item_type(
+                        not_consistent_list = \
+                            handle_check_consistence_with_item_type(
                                 check_item_type.get('item_type_id'),
-                                item_path):
+                                item_path)
+                        if not_consistent_list:
+                            msg = _('The item does not consistent with the '
+                                    'specified item type.<br/>{}')
                             raise Exception({
-                                'error_msg': _('The item does not consistent '
-                                               'with the specified item type.')
+                                'error_msg':
+                                    msg.format(
+                                        '<br/>'.join(not_consistent_list))
                             })
                         item_path_not_existed = \
                             handle_check_metadata_not_existed(
                                 item_path, check_item_type.get('item_type_id'))
-                elif num == 3:
-                    item_path_name = data_row
                 elif (num == 4 or num == 5) and data_row[0].startswith('#'):
                     continue
-                else:
+                elif num > 5:
                     data_parse_metadata = parse_to_json_form(
-                        zip(item_path, item_path_name, data_row),
-                        item_path_not_existed
-                    )
-                    json_data_parse = parse_to_json_form(
-                        zip(item_path_name, item_path, data_row),
+                        zip(item_path, data_row),
                         item_path_not_existed
                     )
 
-                    if not (data_parse_metadata or json_data_parse):
+                    if not data_parse_metadata:
                         raise Exception({
                             'error_msg': _('Cannot read tsv file correctly.')
                         })
@@ -616,7 +617,6 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                         item_type_name = check_item_type.get('name')
                         item_type_id = check_item_type.get('item_type_id')
                         tsv_item = dict(
-                            **json_data_parse,
                             **data_parse_metadata,
                             **{
                                 'item_type_name': item_type_name or '',
@@ -625,9 +625,7 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                             }
                         )
                     else:
-                        tsv_item = dict(
-                            **json_data_parse,
-                            **data_parse_metadata)
+                        tsv_item = dict(**data_parse_metadata)
                     if item_path_not_existed:
                         str_keys = ', '.join(item_path_not_existed) \
                             .replace('.metadata.', '')
@@ -821,47 +819,10 @@ def handle_check_exist_record(list_record) -> list:
                 'Unexpected error: ',
                 sys.exc_info()[0]
             )
-        if item.get('status') == 'new':
-            handle_remove_identifier(item)
         if errors:
             item['errors'] = errors
         result.append(item)
     return result
-
-
-def handle_check_identifier(name) -> str:
-    """Check data is Identifier of Identifier Registration.
-
-    :argument
-        name_path     -- {list} list name path.
-    :return
-        return       -- Name of key if is Identifier.
-
-    """
-    result = ''
-    if 'Identifier' in name or 'Identifier Registration' in name:
-        result = name[0]
-    return result
-
-
-def handle_remove_identifier(item) -> dict:
-    """Remove Identifier of Identifier Registration.
-
-    :argument
-        item         -- Item.
-    :return
-        return       -- Item had been removed property.
-
-    """
-    if item and item.get('Identifier key'):
-        del item['metadata'][item.get('Identifier key')]
-        del item['Identifier key']
-        del item['Identifier']
-    if item and item.get('Identifier Registration key'):
-        del item['metadata'][item.get('Identifier Registration key')]
-        del item['Identifier Registration key']
-        del item['Identifier Registration']
-    return item
 
 
 def make_tsv_by_line(lines):
@@ -935,6 +896,8 @@ def up_load_file(record, root_path):
     try:
         file_path = record.get('file_path', [])
         thumbnail_path = record.get('thumbnail_path', [])
+        if isinstance(thumbnail_path, str):
+            thumbnail_path = [thumbnail_path]
         if file_path or thumbnail_path:
             pid = PersistentIdentifier.query.filter_by(
                 pid_type='recid',
@@ -1374,7 +1337,7 @@ def handle_check_and_prepare_index_tree(list_record):
 
     for item in list_record:
         indexes = []
-        index_ids = item.get('IndexID')
+        index_ids = item.get('metadata', {}).get('path', [])
         pos_index = item.get('pos_index')
 
         if not index_ids and not pos_index:
@@ -1386,7 +1349,10 @@ def handle_check_and_prepare_index_tree(list_record):
                 tree_ids = [i.strip() for i in index_id.split('/')]
                 tree_names = []
                 if pos_index and x <= len(pos_index) - 1:
-                    tree_names = [i.strip() for i in pos_index[x].split('/')]
+                    tree_names = [
+                        i.strip().replace('\\/', '/')
+                        for i in re.split(r'(?<!\\)\/', pos_index[x])
+                    ]
                     if index_id == '':
                         tree_ids = ['' for i in tree_names]
                 else:
@@ -1521,6 +1487,7 @@ def handle_check_cnri(list_record):
                     else:
                         prefix = cnri
                         suffix = ''
+                    if not suffix:
                         item['cnri_suffix_not_existed'] = True
 
                     if prefix != Handle().get_prefix():
@@ -1643,6 +1610,7 @@ def handle_check_doi(list_record):
                         else:
                             prefix = doi
                             suffix = ''
+                        if not suffix:
                             item['doi_suffix_not_existed'] = True
 
                         if not item.get('ignore_check_doi_prefix') \
@@ -1696,6 +1664,7 @@ def register_item_handle(item, url_root):
         if item.get('is_change_identifier'):
             if item.get('cnri_suffix_not_existed'):
                 suffix = "{:010d}".format(int(item_id))
+                cnri = cnri[:-1] if cnri[-1] == '/' else cnri
                 cnri += '/' + suffix
             if item.get('status') == 'new':
                 register_hdl_by_handle(cnri, pid.object_uuid)
@@ -1808,9 +1777,11 @@ def register_item_doi(item):
         pid_lastest = WekoRecord.get_record_by_pid(
             lastest_version_id).pid_recid
 
+        data = None
         if is_change_identifier:
             if item.get('doi_suffix_not_existed'):
                 suffix = "{:010d}".format(int(item_id))
+                doi = doi[:-1] if doi[-1] == '/' else doi
                 doi += '/' + suffix
             if doi_ra and doi:
                 data = {
@@ -1843,7 +1814,14 @@ def register_item_doi(item):
                     is_feature_import=True
                 )
 
-        db.session.commit()
+        if data:
+            deposit = WekoDeposit.get_record(pid.object_uuid)
+            deposit.commit()
+            deposit.publish()
+            deposit = WekoDeposit.get_record(pid_lastest.object_uuid)
+            deposit.commit()
+            deposit.publish()
+            db.session.commit()
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error('item id: %s update error.' % item_id)
@@ -2263,7 +2241,7 @@ def handle_check_date(list_record):
             if attribute:
                 data_result = get_sub_item_value(attribute, _keys[-1])
                 for value in data_result:
-                    if not validattion_date_property(value):
+                    if not validation_date_property(value):
                         errors.append(
                             _('Please specify the date with any format of'
                               + ' YYYY-MM-DD, YYYY-MM, YYYY.'))
@@ -2278,13 +2256,76 @@ def handle_check_date(list_record):
                 raise Exception
         except Exception:
             errors.append(_('Please specify PubDate with YYYY-MM-DD.'))
+        # validate file open_date
+        open_date_err_msg = validation_file_open_date(record)
+        if open_date_err_msg:
+            errors.append(open_date_err_msg)
+
         if errors:
             record['errors'] = record['errors'] + errors \
                 if record.get('errors') else errors
             record['errors'] = list(set(record['errors']))
 
 
-def validattion_date_property(date_str):
+def get_data_in_deep_dict(search_key, _dict={}):
+    """
+    Get data of key in a deep dictionary.
+
+    :param search_key: key.
+    :param _dict: Dict.
+    :return: List of result. Ex: [{'tree_key': key, 'value': value}]
+    """
+    def add_parrent_key(parrent_key, idx=None, data={}):
+        if idx is not None:
+            data['tree_key'] = '{}[{}].{}'.format(
+                parrent_key, idx, data.get('tree_key', ''))
+        else:
+            data['tree_key'] = '{}.{}'.format(
+                parrent_key, data.get('tree_key', ''))
+        return data
+    result = []
+    for key in _dict.keys():
+        value = _dict.get(key)
+        if key == search_key:
+            result.append({'tree_key': key, 'value': value})
+            break
+        else:
+            if isinstance(value, dict):
+                data = get_data_in_deep_dict(search_key, value)
+                if data:
+                    result.extend(list(map(
+                        partial(add_parrent_key, key, None), data)))
+            elif isinstance(value, list):
+                for idx, sub in enumerate(value):
+                    if not isinstance(sub, dict):
+                        continue
+                    data = get_data_in_deep_dict(search_key, sub)
+                    if data:
+                        result.extend(list(map(
+                            partial(add_parrent_key, key, idx), data)))
+    return result
+
+
+def validation_file_open_date(record):
+    """
+    Validate file open date.
+
+    :param record: Record
+    :return: error or None
+    """
+    open_date_values = get_data_in_deep_dict('dateValue',
+                                             record.get('metadata', {}))
+    for data in open_date_values:
+        try:
+            value = data.get('value', '')
+            if value and value != datetime.strptime(value, '%Y-%m-%d') \
+                    .strftime('%Y-%m-%d'):
+                raise Exception
+        except Exception:
+            return _('Please specify Open Access Date with YYYY-MM-DD.')
+
+
+def validation_date_property(date_str):
     """
     Validate item property is either required.
 
@@ -2351,7 +2392,7 @@ def get_change_identifier_mode_content():
 def get_root_item_option(item_id, item, sub_form={'title_i18n': {}}):
     """Handle if is root item."""
     _id = '.metadata.{}'.format(item_id)
-    _name = sub_form.get('title_i18n').get(
+    _name = sub_form.get('title_i18n', {}).get(
         current_i18n.language) or item.get('title')
 
     _option = []
@@ -2520,8 +2561,10 @@ def handle_check_thumbnail_file_type(list_record):
     error = _('Please specify the image file(gif, jpg, jpe, jpeg,'
               + ' png, bmp, tiff, tif) for the thumbnail.')
     for record in list_record:
-        thumbnail_paths = record.get('thumbnail_path', [])
-        for path in thumbnail_paths:
+        thumbnail_path = record.get('thumbnail_path', [])
+        if isinstance(thumbnail_path, str):
+            thumbnail_path = [thumbnail_path]
+        for path in thumbnail_path:
             file_extend = path.split('.')[-1]
             if file_extend not in WEKO_IMPORT_THUMBNAIL_FILE_TYPE:
                 record['errors'] = record['errors'] + [error] \
@@ -2539,10 +2582,11 @@ def handle_check_metadata_not_existed(str_keys, item_type_id=0):
     """
     result = []
     ids = handle_get_all_id_in_item_type(item_type_id)
+    ids = list(map(lambda x: re.sub(r'\[\d+\]', '', x), ids))
     for str_key in str_keys:
         if str_key.startswith('.metadata.'):
-            pre_key = re.sub(r'\[\d+\]', '[0]', str_key)
-            if pre_key != '.metadata.path[0]' and pre_key not in ids \
+            pre_key = re.sub(r'\[\d+\]', '', str_key)
+            if pre_key != '.metadata.path' and pre_key not in ids \
                     and 'iscreator' not in pre_key:
                 result.append(str_key.replace('.metadata.', ''))
     return result
@@ -2568,11 +2612,8 @@ def handle_get_all_sub_id_and_name(
         sub_form = next(
             (x for x in form if key in x.get('key', '')),
             {'title_i18n': {}})
-
-        title = item.get('title')
-        if 'title_i18n' in sub_form:
-            title = sub_form.get('title_i18n').get(current_i18n.language,item.get('title'))
-
+        title = sub_form.get('title_i18n', {}).get(
+            current_i18n.language) or item.get('title')
         if item.get('items') and item.get('items').get('properties'):
             _ids, _names = handle_get_all_sub_id_and_name(
                 item.get('items').get('properties'),
@@ -2586,6 +2627,9 @@ def handle_get_all_sub_id_and_name(
             ids += [key + '.' + _id for _id in _ids]
             names += [title + '.' + _name
                       for _name in _names]
+        elif item.get('format') == 'checkboxes':
+            ids.append(key + '[0]')
+            names.append(title + '[0]')
         else:
             ids.append(key)
             names.append(title)
@@ -2637,10 +2681,34 @@ def handle_check_consistence_with_item_type(item_type_id, keys):
         item_type_id - {str} item type id.
         keys - {list} data from line 2 of tsv file.
     :return
-        status - {bool} status.
+        ids - {list} ids is not consistent.
     """
+    result = []
     ids = handle_get_all_id_in_item_type(item_type_id)
+    clean_ids = list(map(lambda x: re.sub(r'\[\d+\]', '', x), ids))
+    for _key in keys:
+        if re.sub(r'\[\d+\]', '', _key) in clean_ids \
+                and re.sub(r'\[\d+\]', '[0]', _key) not in ids:
+            result.append(_key)
+
+    clean_keys = list(map(lambda x: re.sub(r'\[\d+\]', '', x), keys))
     for _id in ids:
-        if _id not in keys:
-            return False
-    return True
+        if re.sub(r'\[\d+\]', '', _id) not in clean_keys:
+            result.append(_id)
+
+    return list(set(result))
+
+
+def handle_check_duplication_item_id(ids: list):
+    """Check duplication of item id in tsv file.
+
+    :argument
+        ids - {list} data from line 2 of tsv file.
+    :return
+        ids - {list} ids is duplication.
+    """
+    result = []
+    for element in ids:
+        if ids.count(element) > 1:
+            result.append(element)
+    return list(set(result))

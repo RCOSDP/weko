@@ -34,9 +34,8 @@ from lxml.builder import ElementMaker
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemLink, Mapping
 from xmlschema.validators import XsdAnyAttribute, XsdAnyElement, \
-    XsdAtomicBuiltin, XsdAtomicRestriction, XsdAttribute, \
-    XsdEnumerationFacet, XsdGroup, XsdPatternsFacet, XsdSingleFacet, \
-    XsdUnion
+    XsdAtomicBuiltin, XsdAtomicRestriction, XsdEnumerationFacet, XsdGroup, \
+    XsdPatternsFacet, XsdSingleFacet, XsdUnion
 
 from .api import WekoSchema
 
@@ -342,11 +341,21 @@ class SchemaTree:
                             lambda x: get_attr(x) in _need_to_nested,
                             attr.keys())) if attr else []
                     if attr and alst and _check_description_type(attr, alst):
-                        return list(map(partial(
-                            create_json, get_attr(alst[0])),
-                            list_reduce([attr.get(alst[0])]),
-                            list(list_reduce(val)))
-                        )
+                        _partial = partial(create_json, get_attr(alst[0]))
+                        list_val = list(list_reduce(val))
+                        list_attr = list(list_reduce([attr.get(alst[0])]))
+                        if list_val and list_attr:
+                            return list(map(_partial, list_attr, list_val))
+                        else:
+                            if list_val:
+                                return list(map(
+                                    lambda x: {'value': x}, list_val))
+                            elif list_attr:
+                                return list(map(
+                                    lambda x: {get_attr(alst[0]): x},
+                                    list_attr))
+                            else:
+                                return []
 
                     return list(list_reduce(val))
                 else:
@@ -436,7 +445,13 @@ class SchemaTree:
                         if atr_vm.get(key) is None:
                             yield None, id(key)
                         else:
-                            yield atr_vm[key], id(key)
+                            # In case of checkboxes, stored data will be
+                            # [a,b,c]
+                            if isinstance(atr_vm[key], list):
+                                for i in atr_vm[key]:
+                                    yield i, id(key)
+                            else:
+                                yield atr_vm[key], id(key)
                     elif isinstance(atr_vm, list):
                         for i in atr_vm:
                             if i.get(key) is None:
@@ -804,7 +819,7 @@ class SchemaTree:
                             remove_hide_data(i, parentkey + "." + k)
 
         vlst = []
-        for key_item_parent, value_item_parent in self._record.items():
+        for key_item_parent, value_item_parent in sorted(self._record.items()):
             if key_item_parent != 'pubdate' and isinstance(value_item_parent,
                                                            dict):
                 # Dict
@@ -1258,39 +1273,22 @@ class SchemaTree:
             for item in item_links:
                 __build_relation(item)
 
-    def __sanitize_str(self, s: str):
-        """Sanitize a string.
-
-        :param s:
-        :return:
-        """
-        def __replace_str(_s_str: str):
-            _s_str = _s_str.replace("&EMPTY&", "")
-            return _s_str
-
-        s = s.strip()
-        esc_str = ""
-        for i in s:
-            if ord(i) in [9, 10, 13] or (31 < ord(i) != 127):
-                esc_str += i
-        esc_str = __replace_str(esc_str)
-        return esc_str.strip()
-
     def support_for_output_xml(self, data):
         """Support for output XML.
 
         :param data:
         """
+        from weko_records.utils import remove_weko2_special_character
         if isinstance(data, dict):
             for k, v in data.items():
                 if isinstance(v, str):
-                    data[k] = self.__sanitize_str(v)
+                    data[k] = remove_weko2_special_character(v)
                 else:
                     self.support_for_output_xml(v)
         elif isinstance(data, list):
             for i in range(len(data)):
                 if isinstance(data[i], str):
-                    data[i] = self.__sanitize_str(data[i])
+                    data[i] = remove_weko2_special_character(data[i])
                 else:
                     self.support_for_output_xml(data[i])
 

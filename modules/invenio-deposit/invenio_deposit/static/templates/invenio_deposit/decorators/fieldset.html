@@ -1,6 +1,6 @@
 <fieldset ng-disabled="form.readonly"
           class="schema-form-fieldset {{ form.htmlClass }}"
-          ng-init="collapsed = form.collapsed">
+          ng-init="collapsed = form.required !== true">
     <div class="panel panel-default deposit-panel">
         <div class="panel-heading"><a ng-click="collapsed = !collapsed"
                                       class="panel-toggle">
@@ -12,10 +12,10 @@
                 </a>
             <span class="text-muted pull-right"
                   style="padding-right: 10px;">{{ form.required == true ? 'Required' : "Optional" }}</span>
-            <div class="help-block" ng-if="form.description"
-                 ng-bind-html="form.description"></div>
         </div>
         <div class="panel-body" ng-hide="collapsed">
+            <div class="help-block" ng-if="form.description"
+                ng-bind-html="form.description"></div>
             <sf-decorator ng-repeat="item in form.items"
                           form="item"></sf-decorator>
         </div>

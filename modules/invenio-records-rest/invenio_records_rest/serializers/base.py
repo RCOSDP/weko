@@ -13,6 +13,9 @@ from __future__ import absolute_import, print_function
 import copy
 
 import pytz
+from weko_records.api import Mapping
+
+from invenio_records_rest.config import RECORDS_REST_DEFAULT_MAPPING_DICT
 
 
 class SerializerMixinInterface(object):
@@ -139,9 +142,67 @@ class PreprocessorMixin(PreprocessorMixinInterface):
 
     def preprocess_record(self, pid, record, links_factory=None, **kwargs):
         """Prepare a record and persistent identifier for serialization."""
+        def get_keys(arr):
+            """Get keys."""
+            result = []
+            for i in arr:
+                result.append(i)
+                if i != arr[-1]:
+                    result.append(0)
+            return result
+
+        def get_mapping(item_type_id):
+            """Get keys of metadata record by mapping."""
+            # Get default mapping key and lang from config (defaults are None).
+            mapping_dict = RECORDS_REST_DEFAULT_MAPPING_DICT
+            # Get mapping of this record.
+            mapping = Mapping.get_record(item_type_id)
+            if not mapping:
+                return mapping_dict
+            # Update default mapping key and lang by mapping of this record.
+            identifier = 'system_identifier'
+            for k, v in mapping.items():
+                if not type(v.get('jpcoar_mapping')) is dict:
+                    continue
+                for k1, v1 in v.get('jpcoar_mapping').items():
+                    for k2, v2 in mapping_dict.items():
+                        if k1 != k2.split(':')[1] or not type(v1) is dict:
+                            continue
+                        key = identifier if identifier in k else k
+                        key_arr = ['metadata', key, 'attribute_value_mlt', 0]
+                        lang_arr = key_arr.copy()
+                        if k1 == 'creator':
+                            name = v1.get('creatorName')
+                            # Set all key for __lang
+                            attr = name.get('@attributes', {})
+                            xml_lang = attr.get('xml:lang', '').split('.')
+                            lang_arr.extend(get_keys(xml_lang))
+                            # Set all key for key
+                            name_arr = name.get('@value').split('.')
+                            key_arr.extend(get_keys(name_arr))
+                        elif '.' in v1.get('@value', ''):
+                            # Set key for __lang
+                            attr = v1.get('@attributes', {})
+                            xml_lang = attr.get('xml:lang', '').split('.')
+                            lang_arr.extend(get_keys(xml_lang))
+                            # Set all key for key
+                            name_arr = v1.get('@value').split('.')
+                            key_arr.extend(get_keys(name_arr))
+                        else:
+                            # Set key for __lang
+                            attr = v1.get('@attributes', {})
+                            lang_arr.append(attr.get('xml:lang'))
+                            # Set all key for key
+                            key_arr.append(v1.get('@value'))
+                        mapping_dict[k2] = key_arr
+                        mapping_dict['{}__lang'.format(k2)] = lang_arr
+            return mapping_dict
+
         links_factory = links_factory or (lambda x, record=None, **k: dict())
         metadata = copy.deepcopy(record.replace_refs()) if self.replace_refs \
             else record.dumps()
+        # Get keys of metadata record by mapping.
+        mapping_key_lang = get_mapping(metadata.get('item_type_id'))
         return dict(
             pid=pid,
             metadata=metadata,
@@ -151,6 +212,8 @@ class PreprocessorMixin(PreprocessorMixinInterface):
                      if record.created else None),
             updated=(pytz.utc.localize(record.updated).isoformat()
                      if record.updated else None),
+            mapping_dict=mapping_key_lang,
+            record=record
         )
 
     @staticmethod

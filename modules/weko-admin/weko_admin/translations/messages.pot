@@ -1038,7 +1038,7 @@ msgid "The same language is set for many instructions."
 msgstr ""
 
 #: weko_admin/template/weko_admin/admin/site_info.html:61
-msgid "Maximum length of instruction is 200 characters. "
+msgid "Maximum length of instruction is 1000 characters. "
 msgstr ""
 
 #: weko_admin/template/weko_admin/admin/search_management_setting.html

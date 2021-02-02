@@ -46,12 +46,13 @@ class SearchSetting(object):
             return current_app.config['RECORDS_REST_SORT_OPTIONS'], display_number
 
         for x in res:
-            key_str = x.get('id')
-            key = key_str[0:key_str.rfind('_', 1)]
-            val = current_app.config['RECORDS_REST_SORT_OPTIONS'].get(
-                current_app.config['SEARCH_UI_SEARCH_INDEX']).get(key)
-            if key not in options.keys():
-                options[key] = val
+            if isinstance(x, dict):
+                key_str = x.get('id')
+                key = key_str[0:key_str.rfind('_', 1)]
+                val = current_app.config['RECORDS_REST_SORT_OPTIONS'].get(
+                    current_app.config['SEARCH_UI_SEARCH_INDEX']).get(key)
+                if key not in options.keys():
+                    options[key] = val
 
         sort_options[current_app.config['SEARCH_UI_SEARCH_INDEX']] = options
 
@@ -89,8 +90,12 @@ class SearchSetting(object):
     @classmethod
     def get_sort_key(cls, key_str):
         """Get sort key."""
-        return current_app.config['RECORDS_REST_SORT_OPTIONS'].get(
-            current_app.config['SEARCH_UI_SEARCH_INDEX']).get(key_str).get('fields')[0]
+        sort_key = current_app.config['RECORDS_REST_SORT_OPTIONS'].get(
+            current_app.config['SEARCH_UI_SEARCH_INDEX'], {}).get(
+            key_str, {}).get('fields')
+        if isinstance(sort_key, list) and len(sort_key) > 0:
+            return sort_key[0]
+        return None
 
     @classmethod
     def get_custom_sort(cls, index_id, sort_type):
