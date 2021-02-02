@@ -147,6 +147,7 @@ class SearchSetting(object):
             nested_sorting = sort_option.get('nested')
         return nested_sorting
 
+
 def get_search_detail_keyword(str):
     """Get search detail keyword."""
     res = sm.get()

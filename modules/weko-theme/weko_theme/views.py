@@ -44,6 +44,7 @@ blueprint = Blueprint(
     static_folder='static',
 )
 
+
 @blueprint.route('/')
 def index():
     """Simplistic front page view."""
@@ -70,8 +71,6 @@ def index():
         render_widgets=render_widgets,
         render_header_footer=render_header_footer,
         **get_weko_contents(request.args))
-
-
 
 
 @blueprint.route('/edit')

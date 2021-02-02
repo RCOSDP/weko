@@ -48,7 +48,6 @@ from .utils import check_import_items, check_sub_item_is_system, \
     get_sub_item_option, get_tree_items, handle_get_all_sub_id_and_name, \
     handle_index_tree, handle_workflow, make_stats_tsv, make_tsv_by_line
 
-
 _signals = Namespace()
 searched = _signals.signal('searched')
 

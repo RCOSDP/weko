@@ -321,12 +321,12 @@ const PageBodyGrid = function () {
                 var repoHomeURL = (repoID === DEFAULT_REPOSITORY) ? '/' : ('/' + '?community=' + repoID);
                 var navbarID = 'widgetNav_' + widgetID; // Re-use to build unique class ids
                 var navbarClass = settings.menu_orientation === 'vertical' ?
-                    'nav nav-pills nav-stacked pull-left ' + navbarID : 'nav navbar-nav mr-auto';
+                    'nav nav-pills nav-stacked pull-left ' + navbarID : 'nav navbar-nav';
                 let mainLayoutTitle = "";
                 let childNavBar = "";
                 let navbarHeader = "";
                 for (let i in endpoints) {  // Create links
-                  let liClass = 'nav-item';
+                  let liClass = '';
                   let communityArgs = (repoID === DEFAULT_REPOSITORY) ? '' : '?community=' + repoID;
                   let title = endpoints[i].title;
                   let endpointsURL = endpoints[i].url;
@@ -334,9 +334,9 @@ const PageBodyGrid = function () {
                     mainLayoutTitle = title;
                   } else {
                     if (window.location.pathname === endpointsURL) {
-                      liClass +=' active';
+                      liClass = 'class="active"';
                     }
-                    childNavBar += '<li class="' + liClass + '" ><a href="' + endpointsURL + communityArgs + '">' + title + '</a></li>';
+                    childNavBar += '<li ' + liClass + '><a href="' + endpointsURL + communityArgs + '">' + title + '</a></li>';
                   }
                 }
 
@@ -352,14 +352,9 @@ const PageBodyGrid = function () {
                       mainLayoutActive = 'active';
                   }
                   navbarHeader =
-                    '<div class="navbar-header" >' +
-                    '      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#' + navbarID + '" >' +
-                    '        <span class="icon-bar"></span>' +
-                    '        <span class="icon-bar"></span>' +
-                    '        <span class="icon-bar"></span>' +
-                    '      </button>' +
-                    '      <a class="navbar-brand '+ mainLayoutActive +'" href="' + repoHomeURL + '">' + mainLayoutTitle + '</a>' +
-                    '    </div>';
+                    '<div class="navbar-header">' +
+                    '  <a class="navbar-brand '+ mainLayoutActive +'" href="' + repoHomeURL + '">' + mainLayoutTitle + '</a>' +
+                    '</div>';
                 }
 
                 let navbar =
@@ -392,17 +387,14 @@ const PageBodyGrid = function () {
                 '    background-color: transparent;' +
                 '}' +
                 '</style>' +
-                '<nav class="widget-nav navbar navbar-expand ' + navbarID + '" style="border-style: none; background-color:' + settings.menu_bg_color + ';">' +
-                //'  <div class="container-fluid" >' +
+                '<nav class="widget-nav navbar navbar-default ' + navbarID + '" style="background-color:' + settings.menu_bg_color + ';">' +
+                '  <div class="container-fluid">' +
                     navbarHeader +
-                // '    <div class="collapse navbar-collapse" id="' + navbarID + '" >' +
-                '    <div class="navbar-collapse" id="' + navbarID + '" >' +
-                '      <ul class="' + navbarClass + '" >';  // Use id to make unique class names
+                '    <div class="collapse navbar-collapse in" aria-expanded="true" id="' + navbarID + '">' +
+                '      <ul class="' + navbarClass + '">';  // Use id to make unique class names
 
                 navbar += childNavBar;
-                navbar +='</ul></div>';
-                navbar += '</div>';
-                navbar +='</nav>';
+                navbar +='</ul></div></div></nav>';
                 $("#" + menuID).append(navbar);
                 $("#" + menuID).css('height', '100%');
             }
@@ -608,7 +600,7 @@ let WidgetTheme = function () {
         let result = '<div class="grid-stack-item widget-resize">' +
             '    <div class="' + setClass +'" style="' + borderStyle + '">' +
             header +
-            '        <div class="'+ panelClasses + ' ' + headerClass + ' ' + noAutoHeight + ' " style="padding-top: 0px; padding-bottom: 0!important;'
+            '        <div class="'+ panelClasses + ' ' + headerClass + ' ' + noAutoHeight + ' " style="padding-top: 30px; padding-bottom: 0!important;'
                         + overflowY + overFlowX + this.buildCssText('background-color', backgroundColor) + ' "' + id + '>'
                         + widget_data.body +
             '        </div>' +

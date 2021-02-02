@@ -54,8 +54,8 @@ WEKO_ITEMS_UI_JSTEMPLATE_EXPORT_LIST = 'templates/weko_items_ui/' \
 
 WEKO_ITEMS_UI_INDEX_URL = '/items/index/{pid_value}'
 
-# WEKO_ITEMS_UI_RANKING_TEMPLATE = 'weko_items_ui/ranking.html'
-WEKO_ITEMS_UI_RANKING_TEMPLATE = 'weko_items_ui/ranking_top.html'
+WEKO_ITEMS_UI_RANKING_TEMPLATE = 'weko_items_ui/ranking.html'
+#WEKO_ITEMS_UI_RANKING_TEMPLATE = 'weko_items_ui/ranking_top.html'
 
 
 WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM = 100

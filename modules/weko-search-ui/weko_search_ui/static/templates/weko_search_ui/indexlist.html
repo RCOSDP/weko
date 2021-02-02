@@ -1,31 +1,22 @@
 <div class="panel panel-default"
-  >
+  ng-if="vm.invenioSearchResults.aggregations.hasOwnProperty('path') && (vm.invenioSearchResults.aggregations.path.buckets[0].length > 1 || (isCommunityRootIndex && vm.invenioSearchResults.aggregations.path.buckets[0].length > 1))">
   <div class="panel-heading clearfix">
     <h3 class="panel-title">Index List</h3>
   </div>
-  <div id="index_tree_img" ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img')" style="display: flex">
-    <img ng-if="$last" ng-src="{{vm.invenioSearchResults.aggregations.path.buckets[0][0].img}}"
-      class="img-thumbnail ng-hide" id="thumbnail_img"
-      alt={{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('/')[$index]}}
-      ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index" height="256px" width="256px">
-    <span ng-if="(vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 1 && !journal_info) || vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 2" style="padding: 0 10px">
-      <p ng-bind-html="display_comment(vm.invenioSearchResults.aggregations.path.buckets[0][0].comment) | sanitize"></p>
-    </span>
-  </div>
-  <div class="panel-body" ng-if="vm.invenioSearchResults.aggregations.hasOwnProperty('path') && (vm.invenioSearchResults.aggregations.path.buckets[0].length > 1 || (isCommunityRootIndex && vm.invenioSearchResults.aggregations.path.buckets[0].length > 1))">
+  <div class="panel-body">
     <div class="panel_bread">
       <ol class="breadcrumb" ng-if="(typeIndexList !== 'root' && !isCommunityRootIndex)">
         <li
           ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index">
           <span ng-if="is_permission">
             <a target="_self" ng-if="!$last" ng-href="/search?search_type=2&q={{ index_path }}{{commInfoIndex}}">
-            {{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('||')[$index]}} <{{vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/')[$index]}}> </a>
-            <span ng-if="$last">{{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('||')[$index]}} <{{vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/')[$index]}}></span>
+            {{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('-/-')[$index]}} <{{vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/')[$index]}}> </a>
+            <span ng-if="$last">{{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('-/-')[$index]}} <{{vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/')[$index]}}></span>
           </span>
           <span ng-if="!is_permission">
             <a target="_self" ng-if="!$last" ng-href="/search?search_type=2&q={{ index_path }}{{commInfoIndex}}">
-            {{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('||')[$index]}}</a>
-            <span ng-if="$last">{{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('||')[$index]}}</span>
+            {{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('-/-')[$index]}}</a>
+            <span ng-if="$last">{{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('-/-')[$index]}}</span>
           </span>
 
         </li>
@@ -91,7 +82,7 @@
     <span ng-hide="sort_index_list(vm.invenioSearchResults.aggregations.path.buckets[0])"></span>
     <div id="index_tree_list">
       <ul class="list-group">
-        <div class="panel-body list-group-item panel-body"
+        <div class="list-group-item"
           ng-repeat="index_path in sorted_child_list track by $index"
           ng-if="typeIndexList !== 'root' || typeIndexList === 'root'"
           style="position: relative;">

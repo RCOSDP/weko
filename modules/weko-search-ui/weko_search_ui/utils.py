@@ -157,6 +157,7 @@ def get_tree_items(index_tree_id):
     rd = search_result.to_dict()
     return rd.get('hits').get('hits')
 
+
 def delete_records(index_tree_id):
     """Bulk delete records."""
     hits = get_tree_items(index_tree_id)
@@ -2635,9 +2636,9 @@ def handle_get_all_sub_id_and_name(
             names.append(title)
 
     if root_id:
-        ids = [root_id + '.' + str(_id) for _id in ids]
+        ids = [root_id + '.' + _id for _id in ids]
     if root_name:
-        names = [root_name + '.' + str(_name)
+        names = [root_name + '.' + _name
                  for _name in names]
 
     return ids, names
