@@ -41,8 +41,6 @@ from .utils import cached_index_tree_json, filter_index_list_by_role, \
     get_index_id_list, get_publish_index_id_list, get_tree_json, \
     get_user_roles, reset_tree, sanitize
 
-from urllib import parse
-
 
 class Indexes(object):
     """Define API for index tree creation and update."""
@@ -198,7 +196,6 @@ class Indexes(object):
                         v = sanitize(v)
                     if "have_children" in k:
                         continue
-
                     setattr(index, k, v)
                 recs_group = {
                     'recursive_coverpage_check': partial(
@@ -913,7 +910,6 @@ class Indexes(object):
 
         rec_alias = aliased(recursive_t, name="rec")
         test_alias = aliased(Index, name="t")
-
         recursive_t = recursive_t.union_all(
             db.session.query(
                 test_alias.parent,

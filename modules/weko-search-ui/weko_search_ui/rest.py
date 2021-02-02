@@ -54,8 +54,6 @@ from weko_index_tree.utils import count_items, recorrect_private_items_count
 from weko_records.models import ItemType
 from werkzeug.utils import secure_filename
 
-
-
 from . import config
 
 
@@ -357,6 +355,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             links=links,
             item_links_factory=self.links_factory,
         )
+
 
 def get_heading_info(data, lang, item_type):
     """Get heading info."""
