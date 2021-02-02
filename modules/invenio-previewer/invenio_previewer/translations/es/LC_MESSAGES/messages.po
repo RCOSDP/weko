@@ -1,24 +1,42 @@
-# Translations template for invenio-previewer.
+# Spanish translations for invenio-previewer.
 # Copyright (C) 2016 CERN
 # This file is distributed under the same license as the invenio-previewer
 # project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
-# 
+#
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: invenio-previewer 1.0.0a6.dev20160623\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
-"POT-Creation-Date: 2016-08-25 16:08+0200\n"
+"POT-Creation-Date: 2021-01-29 06:36+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Alizee Pace <alizee.pace@gmail.com>, 2016\n"
-"Language-Team: Spanish (https://www.transifex.com/inveniosoftware/teams/23537/es/)\n"
+"Language: es\n"
+"Language-Team: Spanish "
+"(https://www.transifex.com/inveniosoftware/teams/23537/es/)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.3.4\n"
-"Language: es\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Generated-By: Babel 2.5.1\n"
+
+#: invenio_previewer/api.py:153
+msgid "The storage path is incorrect."
+msgstr ""
+
+#: invenio_previewer/api.py:155 invenio_previewer/api.py:162
+#: invenio_previewer/api.py:169 invenio_previewer/api.py:185
+msgid "Please contact the administrator."
+msgstr ""
+
+#: invenio_previewer/api.py:160 invenio_previewer/api.py:183
+msgid "The storage location cannot be accessed."
+msgstr ""
+
+#: invenio_previewer/api.py:168
+msgid "There is not enough storage space."
+msgstr ""
 
 #: invenio_previewer/templates/invenio_previewer/bottom.html:35
 msgid "Embed code"
@@ -39,6 +57,10 @@ msgstr ""
 #: invenio_previewer/templates/invenio_previewer/bottom.html:91
 #: invenio_previewer/templates/invenio_previewer/macros.html:59
 msgid "Download"
+msgstr ""
+
+#: invenio_previewer/templates/invenio_previewer/csv_bar.html:33
+msgid "Show more"
 msgstr ""
 
 #: invenio_previewer/templates/invenio_previewer/default.html:33
@@ -65,10 +87,11 @@ msgstr ""
 msgid "Action"
 msgstr ""
 
-#: invenio_previewer/templates/invenio_previewer/zip.html:62
+#: invenio_previewer/templates/invenio_previewer/zip.html:70
 msgid "Full screen"
 msgstr ""
 
-#: invenio_previewer/templates/invenio_previewer/zip.html:69
+#: invenio_previewer/templates/invenio_previewer/zip.html:77
 msgid "The previewer is not showing all the files"
 msgstr ""
+
