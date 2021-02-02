@@ -20,9 +20,12 @@
 
 """Module of weko-records-ui utils."""
 
+from datetime import datetime as dt
 from decimal import Decimal
 
-from flask import current_app
+from flask import current_app, request
+from flask_babelex import gettext as _
+from flask_login import current_user
 from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -32,7 +35,8 @@ from weko_deposit.api import WekoDeposit
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 
-from .permissions import check_user_group_permission
+from .permissions import check_file_download_permission, \
+    check_user_group_permission, is_open_restricted
 
 
 def check_items_settings():
@@ -235,7 +239,8 @@ def restore(recid):
                 pid_type='depid', object_uuid=ver.object_uuid).first()
             if depid:
                 depid.status = PIDStatus.REGISTERED
-                rec = RecordMetadata.query.filter_by(id=ver.object_uuid).first()
+                rec = RecordMetadata.query.filter_by(
+                    id=ver.object_uuid).first()
                 dep = WekoDeposit(rec.json, rec)
                 dep.indexer.update_path(dep, update_revision=False)
             pids = PersistentIdentifier.query.filter_by(
@@ -523,3 +528,78 @@ def replace_license_free(record_metadata, is_change_label=True):
                     if attr.get(_license_free) and is_change_label:
                         attr[_license_note] = attr[_license_free]
                         del attr[_license_free]
+
+
+def get_file_info_list(record):
+    """File Information of all file in record.
+
+    :param files: all metadata of a record.
+    :param is_display_file_preview: all metadata of a record.
+    :param record: all metadata of a record.
+    :return: json files.
+    """
+    def get_file_size(p_file):
+        """Get file size and convert to byte."""
+        file_size = p_file.get('filesize', [{}])[0]
+        file_size_value = file_size.get('value', 0)
+        defined_unit = {'b': 1, 'kb': 1000, 'mb': 1000000}
+        if type(file_size_value) is str and ' ' in file_size_value:
+            file_size_value = file_size_value.replace(".", "")
+            size_num = file_size_value.split(' ')[0]
+            size_unit = file_size_value.split(' ')[1]
+            unit_num = defined_unit.get(size_unit.lower(), 0)
+            file_size_value = int(size_num) * unit_num
+        return file_size_value
+
+    def set_message_for_file(p_file):
+        """Check Opendate is future date."""
+        p_file['future_date_message'] = ""
+        p_file['download_preview_message'] = ""
+        access = p_file.get("accessrole", '')
+        date = p_file.get('date')
+        if access == "open_login" and not current_user.get_id():
+            p_file['future_date_message'] = _("Restricted Access")
+        elif access == "open_date":
+            if date and isinstance(date, list) and date[0]:
+                adt = date[0].get('dateValue')
+                pdt = dt.strptime(adt, '%Y-%m-%d')
+                if pdt > dt.today():
+                    message = "Download is available from {}/{}/{}."
+                    p_file['future_date_message'] = _(message).format(
+                        pdt.year, pdt.month, pdt.day)
+                    message = "Download / Preview is available from {}/{}/{}."
+                    p_file['download_preview_message'] = _(message).format(
+                        pdt.year, pdt.month, pdt.day)
+
+    is_display_file_preview = False
+    files = []
+    for key in record:
+        meta_data = record.get(key)
+        if type(meta_data) == dict and \
+                meta_data.get('attribute_type', '') == "file":
+            file_metadata = meta_data.get("attribute_value_mlt", [])
+            for f in file_metadata:
+                if check_file_download_permission(record, f, True)\
+                        or is_open_restricted(f):
+                    # Set default version_id.
+                    if f.get("version_id") is None:
+                        f["version_id"] = ''
+                    # Set is_thumbnail flag.
+                    if f.get("is_thumbnail") is None:
+                        f["is_thumbnail"] = False
+                    # Check Opendate is future date.
+                    set_message_for_file(f)
+                    # Check show preview area.
+                    # If f is uploaded in this system => show 'Preview' area.
+                    base_url = "{}record/{}/files/{}".format(
+                        request.url_root,
+                        record.get('recid'),
+                        f.get("filename")
+                    )
+                    url = f.get("url", {}).get("url")
+                    if base_url in url:
+                        is_display_file_preview = True
+                    # Get file size and convert to byte.
+                    f['size'] = get_file_size(f)
+                    files.append(f)
+    return is_display_file_preview, files

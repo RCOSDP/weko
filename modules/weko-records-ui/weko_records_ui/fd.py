@@ -247,6 +247,7 @@ def file_ui(
                      or 'vnd.ms' in fileobj.mimetype
                      or 'vnd.openxmlformats' in fileobj.mimetype):
             convert_to_pdf = True
+
         # if not pdf or cover page disabled: Download directly
         # if pdf and cover page enabled and has original in query param: check
         # permission (user roles)
@@ -310,11 +311,12 @@ def add_signals_info(record, obj):
         elif len(current_user.roles) == 1:
             userrole = current_user.roles[0].name
         else:
-            max_power_role_id = 999
+            max_power_role_id = 2147483646
             for r in current_user.roles:
                 if max_power_role_id > r.id:
-                    max_power_role_id = r.id
-                    userrole = r.name
+                    if max_power_role_id == 2147483646 or r.id > 0:
+                        max_power_role_id = r.id
+                        userrole = r.name
     obj.userrole = userrole
     obj.userid = userid
 

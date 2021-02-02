@@ -299,7 +299,7 @@
 			var data = props.data;
 			if (data.hasOwnProperty('enum') && data.enum.length > 0) {
 				data.enum_original = typeof(data.enum) == 'object' ? data.enum : data.enum.split('|');
-				data.enum = typeof(data.enum) == 'object' ? data.enum.join('|') : data.enum;
+				data.enum = typeof(data.enum) == 'object' ? data.enum.filter(value => value !== null).join('|') : data.enum;
 			} else {
 				data.enum = '';
 			}
@@ -313,9 +313,7 @@
 			if (!this.state.editor) {
 				this.props.currentEnum = this.state.enum ? this.state.enum.split('|') : [];
 			}
-			this.setState({
-				enum: event.target.value
-			});
+			this.setState(this.state);
 		},
 		exportTitleMap: function exportTitleMap() {
 			var titleMap = [];

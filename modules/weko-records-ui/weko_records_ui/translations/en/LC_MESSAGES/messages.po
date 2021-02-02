@@ -1333,3 +1333,9 @@ msgstr "Summary"
 
 msgid "This item has been deleted."
 msgstr ""
+
+msgid "Download is available from {}/{}/{}."
+msgstr "Download is available from {}/{}/{}."
+
+msgid "Download / Preview is available from {}/{}/{}."
+msgstr "Download / Preview is available from {}/{}/{}."

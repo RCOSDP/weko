@@ -1,21 +1,19 @@
-# Italian translations for invenio-previewer.
-# Copyright (C) 2016 CERN
+# Japanese translations for invenio-previewer.
+# Copyright (C) 2021 CERN
 # This file is distributed under the same license as the invenio-previewer
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: invenio-previewer 1.0.0a6.dev20160623\n"
+"Project-Id-Version: invenio-previewer 1.0.0a11\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
 "POT-Creation-Date: 2021-01-29 06:36+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: Alizee Pace <alizee.pace@gmail.com>, 2016\n"
-"Language: it\n"
-"Language-Team: Italian "
-"(https://www.transifex.com/inveniosoftware/teams/23537/it/)\n"
-"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"PO-Revision-Date: 2021-01-27 12:49+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -23,41 +21,41 @@ msgstr ""
 
 #: invenio_previewer/api.py:153
 msgid "The storage path is incorrect."
-msgstr ""
+msgstr "格納先のパスが正しくありません。"
 
 #: invenio_previewer/api.py:155 invenio_previewer/api.py:162
 #: invenio_previewer/api.py:169 invenio_previewer/api.py:185
 msgid "Please contact the administrator."
-msgstr ""
+msgstr "管理者へお問い合わせください。"
 
 #: invenio_previewer/api.py:160 invenio_previewer/api.py:183
 msgid "The storage location cannot be accessed."
-msgstr ""
+msgstr "格納先にアクセスできません。"
 
 #: invenio_previewer/api.py:168
 msgid "There is not enough storage space."
-msgstr ""
+msgstr "格納先の容量が不足しています。"
 
 #: invenio_previewer/templates/invenio_previewer/bottom.html:35
 msgid "Embed code"
-msgstr "Incorpora codice"
+msgstr ""
 
 #: invenio_previewer/templates/invenio_previewer/bottom.html:45
 msgid "Close"
-msgstr "Chiudi"
+msgstr ""
 
 #: invenio_previewer/templates/invenio_previewer/bottom.html:88
 msgid "Previewing"
-msgstr "Anteprima"
+msgstr ""
 
 #: invenio_previewer/templates/invenio_previewer/bottom.html:90
 msgid "Embed"
-msgstr "Incorpora"
+msgstr ""
 
 #: invenio_previewer/templates/invenio_previewer/bottom.html:91
 #: invenio_previewer/templates/invenio_previewer/macros.html:59
 msgid "Download"
-msgstr "Scarica"
+msgstr ""
 
 #: invenio_previewer/templates/invenio_previewer/csv_bar.html:33
 msgid "Show more"
@@ -65,33 +63,33 @@ msgstr ""
 
 #: invenio_previewer/templates/invenio_previewer/default.html:33
 msgid "Cannot preview file"
-msgstr "Impossibile di vedere il file in anteprima"
+msgstr ""
 
 #: invenio_previewer/templates/invenio_previewer/default.html:34
 msgid "Sorry, we are unfortunately not able to preview this file."
-msgstr "Ci dispiace, è sfortunatamente impossibile vedere il file in anteprima."
+msgstr ""
 
 #: invenio_previewer/templates/invenio_previewer/macros.html:39
 msgid "Name"
-msgstr "Nome"
+msgstr ""
 
 #: invenio_previewer/templates/invenio_previewer/macros.html:40
 msgid "Date"
-msgstr "Data"
+msgstr ""
 
 #: invenio_previewer/templates/invenio_previewer/macros.html:41
 msgid "Size"
-msgstr "Dimensione"
+msgstr ""
 
 #: invenio_previewer/templates/invenio_previewer/macros.html:42
 msgid "Action"
-msgstr "Azione"
+msgstr ""
 
 #: invenio_previewer/templates/invenio_previewer/zip.html:70
 msgid "Full screen"
-msgstr "Schermo intero"
+msgstr ""
 
 #: invenio_previewer/templates/invenio_previewer/zip.html:77
 msgid "The previewer is not showing all the files"
-msgstr "L'anteprima non mostra tutti i files."
+msgstr ""
 
