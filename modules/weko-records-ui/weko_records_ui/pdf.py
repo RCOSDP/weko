@@ -26,9 +26,9 @@ import os
 import unicodedata
 from datetime import datetime
 
-import gettext as _
 import tempfile
 from flask import current_app, flash, request, send_file
+from flask_babelex import gettext as _
 from fpdf import FPDF
 from invenio_db import db
 from invenio_files_rest.views import ObjectResource
@@ -51,7 +51,7 @@ from .models import PDFCoverPageSettings
 from .utils import get_license_pdf, get_pair_value
 
 
-ERR_STR = 'Please contact the administrator.'
+ERR_STR = _('Please contact the administrator.')
 
 
 def get_east_asian_width_count(text):
@@ -508,7 +508,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     except (KeyError, IndexError):
         combined_filename = 'CV_' + title + '.pdf'
 
-    dir_path = tempfile.gettempdir()
+    dir_path = tempfile.gettempdir() + '/comb_pdfs/'
     combined_filepath = dir_path + '{}.pdf'.format(combined_filename)
 
     with open(combined_filepath, 'wb') as f:
@@ -517,7 +517,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         except FileNotFoundError as ex:
             current_app.logger.error(ex)
             err_txt = ''.join((
-                'The storage path is incorrect.',
+                _('The storage path is incorrect.'),
                 '{' + dir_path + '} ',
                 ERR_STR
             ))
@@ -525,7 +525,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         except PermissionError as ex:
             current_app.logger.error(ex)
             err_txt = ''.join((
-                'The storage location cannot be accessed.',
+                _('The storage location cannot be accessed.'),
                 '{' + dir_path + '} ',
                 ERR_STR
             ))
@@ -534,7 +534,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
             if ex.errno == errno.ENOSPC:
                 current_app.logger.error(ex)
                 err_txt = ''.join((
-                    'There is not enough storage space.',
+                    _('There is not enough storage space.'),
                     '{' + dir_path + '} ',
                     ERR_STR
                 ))
