@@ -25,6 +25,8 @@ import sys
 from datetime import datetime
 from functools import partial
 
+from flask.helpers import flash
+
 from elasticsearch_dsl.query import Q
 from flask import current_app, request
 from flask_security import current_user
@@ -446,7 +448,33 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     if request.values.get('format'):
         qs = request.values.get('keyword')
     else:
-        qs = request.values.get('q', '').replace(':', '\\:')
+        # Escape special characters for avoiding ES search errors
+        qs = (
+            request.values.get('q', '')
+                .replace('\\', r'\\')
+                .replace('+', r'\+')
+                .replace('-', r'\-')
+                .replace('=', r'\=')
+                .replace('&&', r'\&&')
+                .replace('||', r'\||')
+                .replace('!', r'\!')
+                .replace('(', r'\(')
+                .replace(')', r'\)')
+                .replace('{', r'\{')
+                .replace('}', r'\}')
+                .replace('[', r'\[')
+                .replace(']', r'\]')
+                .replace('^', r'\^')
+                .replace('"', r'\"')
+                .replace('~', r'\~')
+                .replace('*', r'\*')
+                .replace('?', r'\?')
+                .replace(':', r'\:')
+                .replace('/', r'\/')
+        )
+
+        if '<' in qs or '>' in qs:
+            flash('"<"と">"は検索に使用できません', category='warning')
 
     # full text search
     if search_type == config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']:
@@ -503,6 +531,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             urlkwargs.add('sort', sort_key)
 
     urlkwargs.add('q', query_q)
+    print(search, urlkwargs)
     return search, urlkwargs
 
 
