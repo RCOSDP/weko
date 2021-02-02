@@ -234,11 +234,11 @@ class IndexActionResource(ContentNegotiatedMethodView):
             raise IndexNotFoundRESTError()
 
         msg = ''
-        error = ''
+        errors = []
         if check_doi_in_index(index_id):
             status = 200
-            error = _('The index cannot be deleted because there is'
-                      ' a link from an item that has a DOI.')
+            errors.append(_('The index cannot be deleted because there is'
+                      ' a link from an item that has a DOI.'))
         else:
             action = request.values.get('action', 'all')
             res = self.record_class.get_self_path(index_id)
@@ -256,7 +256,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
             status = 200
             msg = 'Index deleted successfully.'
         return make_response(jsonify(
-            {'status': status, 'message': msg, 'errors': [error]}),
+            {'status': status, 'message': msg, 'errors': errors}),
             status)
 
 

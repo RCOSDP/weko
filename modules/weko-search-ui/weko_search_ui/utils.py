@@ -1526,7 +1526,8 @@ def handle_check_doi_indexes(list_record):
             errors.append(
                 _('You cannot keep an item private because it has a DOI.'))
         # Check restrict DOI with Indexes:
-        if check_restrict_doi_with_indexes(item['metadata']['path']):
+        index_ids = [str(idx) for idx in item['metadata']['path']]
+        if check_restrict_doi_with_indexes(index_ids):
             errors.append(
                 _('Since the item has a DOI, it must be associated with an'
                   ' index whose index status is "Public" and whose'

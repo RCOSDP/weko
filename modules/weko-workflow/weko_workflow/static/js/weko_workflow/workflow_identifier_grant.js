@@ -303,7 +303,7 @@ require([
     if (identifier_grant > 0) {
       return checkRestrictDoiIndexes(identifier_grant, actionButton);
     } else if ($('#btn_withdraw').length > 0) {
-      checkRestrictDoiIndexes(actionButton);
+      return checkRestrictDoiIndexes(0, actionButton);
     }
     return false;
   }
