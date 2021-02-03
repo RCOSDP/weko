@@ -264,7 +264,8 @@ def shib_sp_login():
         shib_attr, error = parse_attributes()
 
         # Check SHIB_ATTR_EPPN and SHIB_ATTR_USER_NAME:
-        if error or not (shib_attr.get('shib_eppn', None) \
+        if error or not (
+                shib_attr.get('shib_eppn', None)
                 or _shib_username_config and shib_attr.get('shib_user_name')):
             return _redirect_method()
 

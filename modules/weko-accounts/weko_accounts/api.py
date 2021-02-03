@@ -54,7 +54,8 @@ class ShibUser(object):
 
         try:
             with db.session.begin_nested():
-                self.user.roles = list(role for role in self.user.roles \
+                self.user.roles = list(
+                    role for role in self.user.roles
                     if role not in self.shib_user.shib_roles)
                 self.shib_user.shib_roles.clear()
                 for role in roles:
