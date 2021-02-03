@@ -23,9 +23,6 @@ import random
 import string
 
 from flask import current_app, request
-from invenio_db import db
-
-from .models import ShibbolethUser
 
 
 def get_remote_addr():
@@ -74,18 +71,3 @@ def parse_attributes():
             error = True
 
     return attrs, error
-
-
-def get_shib_roles(user):
-    """Parse arguments from environment variables."""
-    if not user or not user.get_id():
-        return []
-
-    with db.session.no_autoflush:
-        shib_user = ShibbolethUser.query.filter_by(
-            shib_mail=user.email).one_or_none()
-
-        if shib_user:
-            return shib_user.shib_roles
-        else:
-            return []

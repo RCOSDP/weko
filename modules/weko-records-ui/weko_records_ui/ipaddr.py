@@ -24,7 +24,7 @@ import ipaddress
 
 from flask import current_app, request
 from flask_security import current_user
-from weko_accounts.utils import get_remote_addr, get_shib_roles
+from weko_accounts.utils import get_remote_addr
 from weko_records.api import SiteLicense
 
 
