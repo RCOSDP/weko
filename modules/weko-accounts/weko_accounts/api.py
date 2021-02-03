@@ -49,8 +49,9 @@ class ShibUser(object):
         """
         error = None
         roles = Role.query.filter(
-            Role.name.in_([x.strip() for x in roles.split(',')])).all()
+            Role.name.in_(roles)).all()
         roles = list(set(roles) - set(self.user.roles))
+
         try:
             with db.session.begin_nested():
                 self.user.roles = list(role for role in self.user.roles \
@@ -101,6 +102,8 @@ class ShibUser(object):
             self.shib_user = shib_user
             if not self.user:
                 self.user = shib_user.weko_user
+        else:
+            return None
 
         return shib_user
 
@@ -124,13 +127,23 @@ class ShibUser(object):
         """
         Create new relation info with the user who belong with the email.
 
-        :return: ShibbolenUser instance
+        :return: ShibbolethUser instance
 
         """
-        self.user = User.query.filter_by(email=account).one_or_none()
-        shib_user = ShibbolethUser.create(self.user, **self.shib_attr)
-        self.shib_user = shib_user
-        return shib_user
+        self.user = User.query.filter_by(email=account).first()
+        try:
+            with db.session.begin_nested():
+                self.user.email = self.shib_attr['shib_mail']
+            db.session.commit()
+            self.shib_user = ShibbolethUser.create(
+                self.user,
+                **self.shib_attr
+            )
+        except Exception as ex:
+            current_app.logger.error(ex)
+            db.session.rollback()
+
+        return self.shib_user
 
     def new_relation_info(self):
         """
@@ -202,13 +215,14 @@ class ShibUser(object):
             ret = _("Can't get relation Weko User.")
             return False, ret
 
-        role = self.shib_attr.get('shib_role_authority_name', '')
+        roles = self.shib_attr.get('shib_role_authority_name', '')
 
-        shib_role_config = current_app.config[
-            'WEKO_ACCOUNTS_SHIB_ROLE_RELATION']
-        if role in shib_role_config.keys():
-            ret = self._set_weko_user_role(shib_role_config[
-                role])
+        shib_roles = current_app.config['WEKO_ACCOUNTS_SHIB_ROLE_RELATION']
+        roles = [x.strip() for x in roles.split(',')]
+
+        if set(roles).issubset(set(shib_roles.keys())):
+            _roles = [shib_roles[role] for role in roles]
+            ret = self._set_weko_user_role(_roles)
         else:
             ret = self._set_weko_user_role(
                 current_app.config['WEKO_ACCOUNTS_GENERAL_ROLE'])
