@@ -179,6 +179,12 @@ class Index(db.Model, Timestamp):
 
     # index_items = db.relationship('IndexItems', back_populates='index', cascade='delete')
 
+    biblio_flag = db.Column(db.Boolean(name='biblio_flag'), nullable=True, default=False)
+    """Flag of Items' statistics of the index."""
+
+    online_issn = db.Column(db.Text, nullable=True, default='')
+    """Online ISSN of the index."""
+
     def __iter__(self):
         """Iter."""
         for name in dir(Index):

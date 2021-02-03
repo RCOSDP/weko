@@ -24,7 +24,7 @@ from .models import OAISet
 from .provider import OAIIDProvider
 from .query import get_records
 from .resumption_token import serialize
-from .utils import datetime_to_datestamp, serializer
+from .utils import datetime_to_datestamp, handle_license_free, serializer
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
 NS_OAIPMH_XSD = 'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
@@ -310,7 +310,6 @@ def getrecord(**kwargs):
 
     record_dumper = serializer(kwargs['metadataPrefix'])
     pid = OAIIDProvider.get(pid_value=kwargs['identifier']).pid
-    # record = Record.get_record(pid.object_uuid)
 
     identify = OaiIdentify.get_all()
     harvest_public_state, record = WekoRecord.get_record_with_hps(
@@ -348,8 +347,12 @@ def getrecord(**kwargs):
                             etree.QName(NS_OAIPMH, 'metadata'))
 
     etree_record = copy.deepcopy(record)
+
     if not etree_record.get('system_identifier_doi', None):
         etree_record['system_identifier_doi'] = get_identifier(record)
+
+    # Merge licensetype and licensefree
+    etree_record = handle_license_free(etree_record)
 
     root = record_dumper(pid, {'_source': etree_record})
 
@@ -443,6 +446,9 @@ def listrecords(**kwargs):
             e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
                                                           'metadata'))
             etree_record = copy.deepcopy(record['json'])
+
+            # Merge licensetype and licensefree
+            handle_license_free(etree_record['_source']['_item_metadata'])
 
             e_metadata.append(record_dumper(pid, etree_record))
         except Exception:

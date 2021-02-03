@@ -570,6 +570,42 @@ function toObject(arr) {
       $scope.bibliographic_titles = "bibliographic_titles";
       $scope.disableFileTextURLInterval = null;
 
+      /**
+        * hook for check duplication file upload
+        * @memberof WekoRecordsCtrl
+        * @function hookAddFiles
+        */
+      $rootScope.hookAddFiles = function (files) {
+        if (files !== null) {
+          if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes(".0")) {
+            $rootScope.filesVM.addFiles(files);
+          } else {
+            let duplicateFiles = [];
+            files.forEach(function (file) {
+              let duplicateFile = [];
+              if ($rootScope.filesVM.files.length > 0) {
+                duplicateFile = $rootScope.filesVM.files.filter(function (f) {
+                  return f.key === file.name;
+                });
+              }
+              if (duplicateFile.length === 0) {
+                $rootScope.filesVM.addFiles([file]);
+              } else {
+                duplicateFiles.push(duplicateFile[0].key);
+              }
+            });
+
+            // Generate error message and show modal
+            if (duplicateFiles.length > 0) {
+              let message = $("#duplicate_files_error").val() + '<br/><br/>';
+              message += duplicateFiles.join(', ');
+              $("#inputModal").html(message);
+              $("#allModal").modal("show");
+            }
+          }
+        }
+      }
+
       $scope.searchFilemetaKey = function () {
         if ($scope.filemeta_keys.length > 0) {
           return $scope.filemeta_keys;
@@ -3858,42 +3894,6 @@ function toObject(arr) {
             $rootScope.filesVM.remove(file);
           }
         };
-
-        /**
-          * hook for check duplication file upload
-          * @memberof WekoRecordsCtrl
-          * @function hookAddFiles
-          */
-        $rootScope.hookAddFiles = function (files) {
-          if (files !== null) {
-            if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes(".0")) {
-              $rootScope.filesVM.addFiles(files);
-            } else {
-              let duplicateFiles = [];
-              files.forEach(function (file) {
-                let duplicateFile = [];
-                if ($rootScope.filesVM.files.length > 0) {
-                  duplicateFile = $rootScope.filesVM.files.filter(function (f) {
-                    return f.key === file.name;
-                  });
-                }
-                if (duplicateFile.length === 0) {
-                  $rootScope.filesVM.addFiles([file]);
-                } else {
-                  duplicateFiles.push(duplicateFile[0].key);
-                }
-              });
-
-              // Generate error message and show modal
-              if (duplicateFiles.length > 0) {
-                let message = $("#duplicate_files_error").val() + '<br/><br/>';
-                message += duplicateFiles.join(', ');
-                $("#inputModal").html(message);
-                $("#allModal").modal("show");
-              }
-            }
-          }
-        }
 
         /**
           * Direct upload

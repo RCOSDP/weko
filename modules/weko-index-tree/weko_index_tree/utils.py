@@ -234,11 +234,11 @@ def check_roles(user_role, roles):
         roles = roles.split(',')
     if not user_role[0]:
         if current_user.is_authenticated:
-            role = [x for x in (user_role[1] or ['98'])
+            role = [x for x in (user_role[1] or ['-98'])
                     if str(x) in (roles or [])]
-            if not role and (user_role[1] or "98" not in roles):
+            if not role and (user_role[1] or "-98" not in roles):
                 is_can = False
-        elif "99" not in roles:
+        elif "-99" not in roles:
             is_can = False
     return is_can
 

@@ -168,15 +168,10 @@ require([
                 key_sort=key_sort.replace("_desc", "");
                 key_sort = "-" + key_sort;
             }
-            if (window.location.search.indexOf("sort") === -1) {
+            if (!window.location.search.includes(key_sort)) {
                 search = insertParam(search, "sort", key_sort); 
-            } else {
-                if (window.location.search.indexOf(key_sort) === -1) {
-                    search = insertParam(search, "sort", key_sort); 
-                }
             }
-            var page_count = document.getElementById("page_count");
-            if(page_count !== null && page_count !== undefined) {
+            if(size !== null && size !== undefined) {
                 search = insertParam(search, "size", size);
             }
             if ($("#item_management_bulk_update").length != 0) {

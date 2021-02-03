@@ -54,7 +54,7 @@ from weko_search_ui.api import get_search_detail_keyword
 from weko_workflow.api import WorkFlow
 
 from weko_records_ui.models import InstitutionName
-from weko_records_ui.utils import check_items_settings
+from weko_records_ui.utils import check_items_settings, get_file_info_list
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
@@ -65,7 +65,7 @@ from .permissions import check_content_clickable, check_created_id, \
 from .utils import get_billing_file_download_permission, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, \
     get_registration_data_type, hide_by_email, hide_item_metadata, \
-    is_show_email_of_creator
+    is_show_email_of_creator, replace_license_free
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
@@ -153,7 +153,9 @@ def export(pid, record, template=None, **kwargs):
     schema_type = request.view_args.get('format')
     fmt = formats.get(schema_type)
 
+    # Custom Record Metadata for export JSON
     hide_item_metadata(record)
+    replace_license_free(record)
 
     if fmt is False:
         # If value is set to False, it means it was deprecated.
@@ -351,10 +353,10 @@ def _get_google_scholar_meta(record):
     et = etree.fromstring(recstr)
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     res = []
-    if mtdata is not None:
+    if mtdata:
         for target in target_map:
             found = mtdata.find(target, namespaces=mtdata.nsmap)
-            if found is not None:
+            if found:
                 res.append({'name': target_map[target], 'data': found.text})
         for date in mtdata.findall('datacite:date', namespaces=mtdata.nsmap):
             if date.attrib.get('dateType') == 'Available':
@@ -539,10 +541,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         files_thumbnail = ObjectVersion.get_by_bucket(
             record.files.bucket.id).\
             filter_by(is_thumbnail=True).all()
-    files = []
-    for f in record.files:
-        if check_file_permission(record, f.data) or is_open_restricted(f.data):
-            files.append(f)
+    is_display_file_preview, files = get_file_info_list(record)
     # Flag: can edit record
     can_edit = True if pid == get_record_without_version(pid) else False
 
@@ -582,6 +581,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         can_edit=can_edit,
         open_day_display_flg=open_day_display_flg,
         path_name_dict=path_name_dict,
+        is_display_file_preview=is_display_file_preview,
         **ctx,
         **kwargs
     )
@@ -791,3 +791,24 @@ def escape_str(s):
             '\r\n',
             br_char).replace('\r', br_char).replace('\n', br_char)
     return s
+
+
+@blueprint.app_template_filter('preview_able')
+def preview_able(file_json):
+    """Check whether file can be previewed or not."""
+    file_type = ''
+    file_size = file_json.get('size')
+    file_format = file_json.get('format', '')
+    for k, v in current_app.config['WEKO_ITEMS_UI_MS_MIME_TYPE'].items():
+        if file_format in v:
+            file_type = k
+            break
+    if file_type in current_app.config[
+            'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'].keys():
+        # Convert MB to Bytes in decimal
+        file_size_limit = current_app.config[
+            'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'][
+            file_type] * 1000000
+        if file_size > file_size_limit:
+            return False
+    return True
