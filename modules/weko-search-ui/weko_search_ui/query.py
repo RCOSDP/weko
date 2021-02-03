@@ -27,7 +27,9 @@ from functools import partial
 
 from elasticsearch_dsl.query import Q
 from flask import current_app, request
+from flask_babelex import gettext as _
 from flask_security import current_user
+from flask.helpers import flash
 from invenio_communities.models import Community
 from invenio_records_rest.errors import InvalidQueryRESTError
 from weko_index_tree.api import Indexes
@@ -446,7 +448,33 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     if request.values.get('format'):
         qs = request.values.get('keyword')
     else:
-        qs = request.values.get('q', '').replace(':', '\\:')
+        # Escape special characters for avoiding ES search errors
+        qs = (
+            request.values.get('q', '')
+                .replace('\\', r'\\')
+                .replace('+', r'\+')
+                .replace('-', r'\-')
+                .replace('=', r'\=')
+                .replace('&&', r'\&&')
+                .replace('||', r'\||')
+                .replace('!', r'\!')
+                .replace('(', r'\(')
+                .replace(')', r'\)')
+                .replace('{', r'\{')
+                .replace('}', r'\}')
+                .replace('[', r'\[')
+                .replace(']', r'\]')
+                .replace('^', r'\^')
+                .replace('"', r'\"')
+                .replace('~', r'\~')
+                .replace('*', r'\*')
+                .replace('?', r'\?')
+                .replace(':', r'\:')
+                .replace('/', r'\/')
+        )
+
+        if '<' in qs or '>' in qs:
+            flash(_('"<" and ">" are cannot be used for searching.'), category='warning')
 
     # full text search
     if search_type == config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']:
@@ -503,6 +531,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             urlkwargs.add('sort', sort_key)
 
     urlkwargs.add('q', query_q)
+    print(search, urlkwargs)
     return search, urlkwargs
 
 
