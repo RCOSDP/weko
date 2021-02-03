@@ -1009,6 +1009,16 @@ $(document).ready(function () {
       let product = properties_obj[$(this).val().substr(4)].schema;
       let product_forms = properties_obj[$(this).val().substr(4)].forms;
       isAllowMultiple = properties_obj[$(this).val().substr(4)].is_file;
+      for(key in product.properties) {
+        if(isAllowMultiple || product.properties[key]["isHide"] ==true){
+          product.properties[key]["showListDisable"] = true
+          product.properties[key]["specifyNLDisable"] = true
+        }
+        if(isAllowMultiple){
+          product.properties[key]["isHide"] = true
+          product.properties[key]["hideDisable"] = true
+        }
+      }
       $('#chk_prev_' + meta_id + '_1').removeClass('disabled');
       if (isAllowMultiple) {
         checkboxMetaId.attr('disabled', true);
@@ -1292,14 +1302,18 @@ $(document).ready(function () {
             itemTypePropertiesSchema,
             itemTypeSchema);
             // Set disable attribute for child in case parent is set Hide
+          let isAllowMultiple = properties_obj[data.meta_list[row_id].input_type.substr(4)].is_file;
           for(key in properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties){
-            if(properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["isHide"] ==true){
+            if(isAllowMultiple || properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["isHide"] ==true){
               properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["showListDisable"] = true
               properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["specifyNLDisable"] = true
             }
+            if(isAllowMultiple){
+              properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["isHide"] = true
+              properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["hideDisable"] = true
+            }
           }
           render_object('schema_'+row_id, properties_obj[data.meta_list[row_id].input_type.substr(4)].schema);
-          let isAllowMultiple = properties_obj[data.meta_list[row_id].input_type.substr(4)].is_file;
           if (isAllowMultiple) {
             multipleCheckbox.attr('disabled', true);
           }

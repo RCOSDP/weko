@@ -416,8 +416,10 @@
 				for (var key in item.items.properties) {
 					if (disable == true) {
 						item.items.properties[key][option.disableKey] = true;
-						item.items.properties[key][option.optionKey] = true;
-						this.handleOptionDisable(item.items.properties[key], true,option)
+						if (option.optionKey === "isHide") {
+							item.items.properties[key][option.optionKey] = true;
+						}
+						this.handleOptionDisable(item.items.properties[key], true, option)
 					}
 					else {
 						if((option == this.defaultDict.showList || option == this.defaultDict.specifyNewline) && item.items.properties[key][this.defaultDict.hide.optionKey] == true){
@@ -425,15 +427,17 @@
 						}else{
 							item.items.properties[key][option.disableKey] = false;
 						}
-						this.handleOptionDisable(item.items.properties[key], item.items.properties[key].isShowList || false,option)
+						this.handleOptionDisable(item.items.properties[key], item.items.properties[key][option.disableKey], option)
 					}
 				}
 			}else if(item.hasOwnProperty("properties")) {
 				for (var key in item.properties) {
 					if (disable == true) {
 						item.properties[key][option.disableKey] = true;
-						item.properties[key][option.optionKey] = true;
-						this.handleOptionDisable(item.properties[key], true,option)
+						if (option.optionKey === "isHide") {
+							item.properties[key][option.optionKey] = true;
+						}
+						this.handleOptionDisable(item.properties[key], true, option)
 					}
 					else {
 						if((option == this.defaultDict.showList || option == this.defaultDict.specifyNewline) && item.properties[key][this.defaultDict.hide.optionKey] == true){
@@ -441,7 +445,7 @@
 						}else{
 							item.properties[key][option.disableKey] = false;
 						}
-						this.handleOptionDisable(item.properties[key], item.properties[key].isShowList || false,option)
+						this.handleOptionDisable(item.properties[key], item.properties[key][option.disableKey], option)
 					}
 				}
 			}
@@ -479,10 +483,10 @@
 			}
 			if(data.editor === false){
 				for (var key in data.properties) {
-					this.setChildShowAndNewline(data.properties[key],"isShowList","parent_isShowList",data.properties[key]["isShowList"] == true || false)
-					this.setChildShowAndNewline(data.properties[key],"isSpecifyNewline","parent_isSpecifyNewline",data.properties[key]["isSpecifyNewline"] == true || false)
+					this.setChildShowAndNewline(data.properties[key], "isShowList", "parent_isShowList", data.properties[key]["isShowList"] == true || false)
+					this.setChildShowAndNewline(data.properties[key], "isSpecifyNewline", "parent_isSpecifyNewline", data.properties[key]["isSpecifyNewline"] == true || false)
 					for (var option in this.defaultDict) {
-						this.handleOptionDisable(data.properties[key], data.properties[key][this.defaultDict[option].optionKey] || false, this.defaultDict[option])
+						this.handleOptionDisable(data.properties[key], data.properties[key][this.defaultDict[option].disableKey], this.defaultDict[option])
 					}
 				}
 			}
