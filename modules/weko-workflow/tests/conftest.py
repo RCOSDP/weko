@@ -1,55 +1,85 @@
-# -*- coding: utf-8 -*-
-#
-# This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
-#
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-
-"""Pytest configuration."""
-
-import shutil
-import tempfile
-
 import pytest
-from flask import Flask
-from flask_babelex import Babel
 
+# need to init this fixture to create app,
+# please refer to:
+# invenio_app.factory.create_app,
+# invenio_app.factory.create_ui
+# invenio_app.factory.create_api
+# for difference purposes
+# please also refer to pytest_invenio.fixtures.app to get
+# idea why we need this fixture
+@pytest.fixture(scope='module')
+def create_app():
+    from invenio_app.factory import create_ui
+    return create_ui
 
-@pytest.yield_fixture()
-def instance_path():
-    """Temporary instance path."""
-    path = tempfile.mkdtemp()
-    yield path
-    shutil.rmtree(path)
+# customize the "app_config" from the pytest_invenio.fixtures for our purpose
+@pytest.fixture(scope='module')
+def app_config(app_config):
+    app_config['ACCOUNTS_USE_CELERY'] = False
+    app_config['LOGIN_DISABLED'] = False
+    app_config['SECRET_KEY'] = 'hai'
+    app_config[
+        'SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/test'
+    app_config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+    app_config['SQLALCHEMY_ECHO'] = False
+    app_config['TEST_USER_EMAIL'] = 'test_user@example.com'
+    app_config['TEST_USER_PASSWORD'] = 'test_password'
+    app_config['TESTING'] = True
+    app_config['WTF_CSRF_ENABLED'] = False
+    app_config['DEBUG'] = False
+    app_config['SEARCH_INDEX_PREFIX'] = 'test-tenant123'
 
+    app_config['BROKER_URL'] = 'amqp://guest:guest@rabbitmq:5672//'
+    app_config['CELERY_BROKER_URL'] = 'amqp://guest:guest@rabbitmq:5672//'
+    app_config['INDEXER_DEFAULT_INDEX'] = '{}weko-item-v1.0.0'. \
+        format(app_config['SEARCH_INDEX_PREFIX'])
+    app_config['WEKO_ITEMS_UI_APPLICATION_FOR_LIFE'] = "ライフ利用申請"
+    app_config['WEKO_ITEMS_UI_APPLICATION_FOR_ACCUMULATION'] = "累積利用申請"
+    app_config['WEKO_ITEMS_UI_APPLICATION_FOR_COMBINATIONAL_ANALYSIS'] = \
+        "組合せ分析利用申請"
+    app_config['WEKO_ITEMS_UI_APPLICATION_FOR_PERFECTURES'] = "都道府県利用申請"
+    app_config['WEKO_ITEMS_UI_APPLICATION_FOR_LOCATION_INFORMATION'] = \
+        "地点情報利用申請"
+    app_config['WEKO_ITEMS_UI_USAGE_REPORT'] = "利用報告"
+    app_config['WEKO_ITEMS_UI_OUTPUT_REPORT'] = "成果物登録"
+    app_config['WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPES_LIST'] = [
+        app_config['WEKO_ITEMS_UI_APPLICATION_FOR_LIFE'],
+        app_config['WEKO_ITEMS_UI_APPLICATION_FOR_ACCUMULATION'],
+        app_config['WEKO_ITEMS_UI_APPLICATION_FOR_COMBINATIONAL_ANALYSIS'],
+        app_config['WEKO_ITEMS_UI_APPLICATION_FOR_PERFECTURES'],
+        app_config['WEKO_ITEMS_UI_APPLICATION_FOR_LOCATION_INFORMATION'],
+    ]
+    app_config['WEKO_RECORDS_UI_DOWNLOAD_DAYS'] = 7
+    app_config['WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME'] = 'Usage Report'
+    app_config['WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION'] = \
+        'Item Registration for Usage Application'
 
-@pytest.fixture()
-def base_app(instance_path):
-    """Flask application fixture."""
-    app_ = Flask('testapp', instance_path=instance_path)
-    app_.config.update(
-        SECRET_KEY='SECRET_KEY',
-        TESTING=True,
-    )
-    Babel(app_)
-    return app_
+    app_config['WEKO_RECORDS_UI_USAGE_APPLICATION_WORKFLOW_DICT'] = [
+        {
+            'life': [
+                {
+                    'role': 'General',
+                    'workflow_name': 'Life Usage Application - General'
+                },
+                {
+                    'role': 'Student',
+                    'workflow_name': 'Life Usage Application - Student'
+                },
+                {
+                    'role': 'Graduated Student',
+                    'workflow_name':
+                        'Life Usage Application - Graduated Student'
+                }
+            ]
+        }
+    ]
+    
 
+ 
 
-@pytest.yield_fixture()
-def app(base_app):
-    """Flask application fixture."""
-    with base_app.app_context():
-        yield base_app
+    
+
+ 
+
+    return app_config

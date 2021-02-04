@@ -1,0 +1,86 @@
+﻿{
+    "_buckets": {
+      "deposit": "39e20c00-c833-4280-8b0d-51fca6a3d524"
+    },
+    "_deposit": {
+      "created_by": 1,
+      "id": "1",
+      "owner": "1",
+      "owners": [
+        1
+      ],
+      "owners_ext": {
+        "displayname": "student_user",
+        "email": "student@inveniosoftware.org",
+        "username": "student_user"
+      },
+      "pid": {
+        "revision_id": 0,
+        "type": "recid",
+        "value": "1"
+      },
+      "status": "draft"
+    },
+    "_oai": {
+      "id": "oai:invenio:recid/248"
+    },
+    "control_number": "100",
+    "item_1574156621314": {
+      "attribute_name": "User Information",
+      "attribute_value_mlt": [
+        {
+          "subitem_affiliated_division/department": "department",
+          "subitem_affiliated_institution": [
+            {
+              "subitem_affiliated_institution_name": "institution A",
+              "subitem_affiliated_institution_position": "Member"
+            }
+          ],
+          "subitem_fullname": "student",
+          "subitem_mail_address": "student@inveniosoftware.org",
+          "subitem_phone_number": "09345556",
+          "subitem_position": "Student",
+          "subitem_university/institution": "university"
+        }
+      ]
+    },
+    "item_1574156824929": {
+      "attribute_name": "Advisor",
+      "attribute_value_mlt": [
+        {
+          "subitem_advisor_mail_address": "info@inveniosoftware.org"
+        }
+      ]
+    },
+    "item_1578298297844": {
+      "attribute_name": "Item Title",
+      "attribute_value_mlt": [
+        {
+          "subitem_item_title": "Usage Application - student_user",
+          "subitem_item_title_language": "en"
+        },
+        {
+          "subitem_item_title": "利用申請 - student_user",
+          "subitem_item_title_language": "ja"
+        }
+      ]
+    },
+    "item_title": "Usage Application - student_user",
+    "item_type_id": "2",
+    "owner": "11",
+    "path": [
+      "1578472847540"
+    ],
+    "pubdate": {
+      "attribute_name": "PubDate",
+      "attribute_value": "2020-01-09"
+    },
+    "publish_date": "2020-01-09",
+    "publish_status": "0",
+    "recid": "1",
+    "relation_version_is_last": true,
+    "title": [
+      "Usage Application - student_user"
+    ],
+    "weko_shared_id": null
+  }

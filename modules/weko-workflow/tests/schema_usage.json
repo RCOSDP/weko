@@ -1,0 +1,349 @@
+﻿{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "required": [
+    "pubdate"
+  ],
+  "properties": {
+    "belonging_index_info": {
+      "format": "object",
+      "properties": {
+        "subitem_system_text": {
+          "format": "text",
+          "title": "System Text",
+          "type": "string"
+        }
+      },
+      "title": "Belonging Index Info",
+      "type": "object"
+    },
+    "created_date": {
+      "format": "object",
+      "properties": {
+        "subitem_date_system_type": {
+          "enum": [
+            "Accepted",
+            "Available",
+            "Collected",
+            "Copyrighted",
+            "Created",
+            "Issued",
+            "Submitted",
+            "Updated",
+            "Valid"
+          ],
+          "format": "select",
+          "title": "Date System Type",
+          "type": "string"
+        },
+        "subitem_system_date": {
+          "format": "datetime",
+          "title": "System Date",
+          "type": "string"
+        }
+      },
+      "title": "Created Date",
+      "type": "object"
+    },
+    "persistent_identifier_doi": {
+      "format": "object",
+      "properties": {
+        "subitem_system_id_rg_doi": {
+          "format": "text",
+          "title": "System Id Rg Doi",
+          "type": "string"
+        },
+        "subitem_system_id_rg_doi_type": {
+          "enum": [
+            "JaLC",
+            "Crossref",
+            "DataCite",
+            "PMID（現在不使用）"
+          ],
+          "format": "select",
+          "title": "System Id Rg Doi Type",
+          "type": "string"
+        },
+        "subitem_system_identifier_doi": {
+          "format": "text",
+          "title": "System Identifier Doi",
+          "type": "string"
+        },
+        "subitem_system_identifier_doi_type": {
+          "enum": [
+            "JaLC",
+            "Crossref",
+            "DataCite",
+            "PMID（現在不使用）"
+          ],
+          "format": "select",
+          "title": "System Identifier Doi Type",
+          "type": "string"
+        }
+      },
+      "title": "Persistent Identifier(DOI)",
+      "type": "object"
+    },
+    "persistent_identifier_h": {
+      "format": "object",
+      "properties": {
+        "subitem_system_identifier": {
+          "format": "text",
+          "title": "System Identifier",
+          "type": "string"
+        },
+        "subitem_system_identifier_type": {
+          "enum": [
+            "DOI",
+            "HDL",
+            "URI"
+          ],
+          "format": "select",
+          "title": "System Identifier Type",
+          "type": "string"
+        }
+      },
+      "title": "Persistent Identifier(Handle)",
+      "type": "object"
+    },
+    "pubdate": {
+      "format": "datetime",
+      "title": "PubDate",
+      "type": "string"
+    },
+    "ranking_page_url": {
+      "format": "object",
+      "properties": {
+        "subitem_system_identifier": {
+          "format": "text",
+          "title": "System Identifier",
+          "type": "string"
+        },
+        "subitem_system_identifier_type": {
+          "enum": [
+            "DOI",
+            "HDL",
+            "URI"
+          ],
+          "format": "select",
+          "title": "System Identifier Type",
+          "type": "string"
+        }
+      },
+      "title": "Landing Page URL",
+      "type": "object"
+    },
+    "updated_date": {
+      "format": "object",
+      "properties": {
+        "subitem_date_system_type": {
+          "enum": [
+            "Accepted",
+            "Available",
+            "Collected",
+            "Copyrighted",
+            "Created",
+            "Issued",
+            "Submitted",
+            "Updated",
+            "Valid"
+          ],
+          "format": "select",
+          "title": "Date System Type",
+          "type": "string"
+        },
+        "subitem_system_date": {
+          "format": "datetime",
+          "title": "System Date",
+          "type": "string"
+        }
+      },
+      "title": "Updated Date",
+      "type": "object"
+    },
+    "item_1574156621314": {
+      "properties": {
+        "subitem_affiliated_division/department": {
+          "format": "text",
+          "readonly": true,
+          "title": "Affiliated Division/Department",
+          "type": "string"
+        },
+        "subitem_affiliated_institution": {
+          "format": "array",
+          "items": {
+            "format": "object",
+            "properties": {
+              "subitem_affiliated_institution_name": {
+                "format": "text",
+                "readonly": true,
+                "title": "Affiliated Institution Name",
+                "type": "string"
+              },
+              "subitem_affiliated_institution_position": {
+                "format": "text",
+                "readonly": true,
+                "title": "Affiliated Institution Position",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "title": "Affiliated Institution",
+          "type": "array"
+        },
+        "subitem_fullname": {
+          "format": "text",
+          "readonly": true,
+          "title": "FullName",
+          "type": "string"
+        },
+        "subitem_mail_address": {
+          "format": "text",
+          "pattern": "^\\S+@\\S+$",
+          "readonly": true,
+          "title": "Mail Address",
+          "type": "string"
+        },
+        "subitem_phone_number": {
+          "format": "text",
+          "pattern": "\\d+",
+          "readonly": true,
+          "title": "Phone number",
+          "type": "string"
+        },
+        "subitem_position": {
+          "format": "text",
+          "readonly": true,
+          "title": "Position",
+          "type": "string"
+        },
+        "subitem_position(other)": {
+          "format": "text",
+          "readonly": true,
+          "title": "Position(Others)",
+          "type": "string"
+        },
+        "subitem_university/institution": {
+          "format": "text",
+          "readonly": true,
+          "title": "University/Institution",
+          "type": "string"
+        }
+      },
+      "title": "User Information",
+      "type": "object"
+    },
+    "item_1574156725144": {
+      "properties": {
+        "subitem_usage_location": {
+          "format": "text",
+          "title": "Usage location",
+          "type": "string"
+        }
+      },
+      "title": "Usage location",
+      "type": "object"
+    },
+    "item_1574156824929": {
+      "properties": {
+        "subitem_advisor_affiliation": {
+          "format": "text",
+          "title": "Affiliation",
+          "type": "string"
+        },
+        "subitem_advisor_fullname": {
+          "format": "text",
+          "title": "FullName",
+          "type": "string"
+        },
+        "subitem_advisor_mail_address": {
+          "format": "text",
+          "pattern": "^\\S+@\\S+$",
+          "title": "Mail Address",
+          "type": "string"
+        },
+        "subitem_advisor_phone_number": {
+          "format": "text",
+          "pattern": "\\d+",
+          "title": "Phone number",
+          "type": "string"
+        },
+        "subitem_advisor_position": {
+          "format": "select",
+          "title": "Position",
+          "type": "string"
+        },
+        "subitem_advisor_position(other)": {
+          "format": "text",
+          "title": "Position(Others)",
+          "type": "string"
+        }
+      },
+      "required": [
+        "subitem_advisor_mail_address"
+      ],
+      "title": "Advisor",
+      "type": "object"
+    },
+    "item_1574156962829": {
+      "properties": {
+        "subitem_research_title": {
+          "format": "text",
+          "title": "Research Title",
+          "type": "string"
+        }
+      },
+      "title": "Research Title",
+      "type": "object"
+    },
+    "item_1574156983988": {
+      "properties": {
+        "subitem_research_plan": {
+          "format": "textarea",
+          "title": "Research Plan",
+          "type": "string"
+        }
+      },
+      "title": "Research Plan",
+      "type": "object"
+    },
+    "item_1578298297844": {
+      "items": {
+        "properties": {
+          "subitem_item_title": {
+            "format": "text",
+            "title": "Item Title",
+            "type": "string"
+          },
+          "subitem_item_title_language": {
+            "enum": [
+              "ja",
+              "en"
+            ],
+            "format": "select",
+            "title": "Language",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "maxItems": 2,
+      "minItems": 1,
+      "title": "Item Title",
+      "type": "array"
+    },
+    "item_1578887261730": {
+      "properties": {
+        "subitem_title_data": {
+          "format": "text",
+          "title": "Title Data",
+          "type": "string"
+        }
+      },
+      "title": "Title Data",
+      "type": "object"
+    }
+  },
+  "description": ""
+}

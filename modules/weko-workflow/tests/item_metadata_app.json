@@ -1,0 +1,51 @@
+﻿{
+  "id": "100",
+  "pid": {
+    "type": "recid",
+    "value": "1",
+    "revision_id": 0
+  },
+  "lang": "en",
+  "owner": "1",
+  "title": "Usage Application - student_user",
+  "owners": [
+    11
+  ],
+  "status": "draft",
+  "$schema": "/items/jsonschema/2",
+  "pubdate": "2020-01-09",
+  "created_by": 11,
+  "owners_ext": {
+    "email": "student@inveniosoftware.org",
+    "username": "student_user",
+    "displayname": "student_user"
+  },
+  "advisor_mail": "info@inveniosoftware.org",
+  "item_1574156621314": {
+    "subitem_fullname": "student",
+    "subitem_position": "Student",
+    "subitem_mail_address": "student@inveniosoftware.org",
+    "subitem_phone_number": "09345556",
+    "subitem_affiliated_institution": [
+      {
+        "subitem_affiliated_institution_name": "institution A",
+        "subitem_affiliated_institution_position": "Member"
+      }
+    ],
+    "subitem_university/institution": "university",
+    "subitem_affiliated_division/department": "department"
+  },
+  "item_1574156824929": {
+    "subitem_advisor_mail_address": "info@inveniosoftware.org"
+  },
+  "item_1578298297844": [
+    {
+      "subitem_item_title": "Usage Application - student_user",
+      "subitem_item_title_language": "en"
+    },
+    {
+      "subitem_item_title": "利用申請 - student_user",
+      "subitem_item_title_language": "ja"
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+﻿{
+    "_buckets": {
+      "deposit": "9c9af5f7-5292-47e5-9f06-b28adaf215dc"
+    },
+    "_deposit": {
+      "created_by": 1,
+      "id": "29",
+      "owner": "1",
+      "owners": [
+        1
+      ],
+      "owners_ext": {
+        "displayname": "Admin",
+        "email": "info@inveniosoftware.org",
+        "username": "admin"
+      },
+      "pid": {
+        "revision_id": 0,
+        "type": "recid",
+        "value": "29"
+      },
+      "status": "published"
+    },
+    "_oai": {
+      "id": "oai:invenio:recid/29"
+    },
+    "control_number": "29",
+    "item_1577176141089": {
+      "attribute_name": "Data Type",
+      "attribute_value_mlt": [
+        {
+          "subitem_data_type": "life"
+        }
+      ]
+    },
+    "item_1577176284129": {
+      "attribute_name": "Content File",
+      "attribute_type": "file",
+      "attribute_value_mlt": [
+        {
+          "accessrole": "open_restricted",
+          "displaytype": "detail",
+          "filename": "201911_WEKO3_TimeSheet (1) (1) (1) (1) (15).xlsx",
+          "licensetype": "license_0",
+          "mimetype": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        }
+      ]
+    },
+    "item_1578299534890": {
+      "attribute_name": "Item Title",
+      "attribute_value_mlt": [
+        {
+          "subitem_item_title": "Life data test",
+          "subitem_item_title_language": "en"
+        }
+      ]
+    },
+    "item_title": "Life data test",
+    "item_type_id": "192",
+    "owner": "1",
+    "path": [
+      "1578472824833"
+    ],
+    "pubdate": {
+      "attribute_name": "PubDate",
+      "attribute_value": "2020-01-08"
+    },
+    "publish_date": "2020-01-08",
+    "publish_status": "0",
+    "recid": "29",
+    "relation_version_is_last": true,
+    "title": [
+      "Life data test"
+    ],
+    "weko_shared_id": null
+  }

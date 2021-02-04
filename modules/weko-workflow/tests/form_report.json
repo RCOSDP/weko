@@ -1,0 +1,550 @@
+﻿[
+  {
+    "format": "yyyy-MM-dd",
+    "key": "pubdate",
+    "required": true,
+    "templateUrl": "/static/templates/weko_deposit/datepicker.html",
+    "title": "公開日",
+    "title_i18n": {
+      "en": "PubDate",
+      "ja": "公開日"
+    },
+    "type": "template"
+  },
+  {
+    "items": [
+      {
+        "key": "item_1578299480500[].subitem_item_title",
+        "title": "アイテムタイトル",
+        "type": "text",
+        "title_i18n": {
+          "en": "Title",
+          "ja": "アイテムタイトル"
+        }
+      },
+      {
+        "key": "item_1578299480500[].subitem_item_title_language",
+        "title": "言語",
+        "titleMap": [
+          {
+            "name": "ja",
+            "value": "ja"
+          },
+          {
+            "name": "en",
+            "value": "en"
+          }
+        ],
+        "title_i18n": {
+          "en": "Language",
+          "ja": "言語"
+        },
+        "type": "select"
+      }
+    ],
+    "key": "item_1578299480500",
+    "title": "アイテムタイトル",
+    "title_i18n": {
+      "en": "Item Title",
+      "ja": "アイテムタイトル"
+    },
+    "add": "New",
+    "style": {
+      "add": "btn-success"
+    }
+  },
+  {
+    "items": [
+      {
+        "key": "item_1575270518163.subitem_fullname",
+        "title": "氏名",
+        "title_i18n": {
+          "en": "Full name",
+          "ja": "氏名"
+        },
+        "type": "text"
+      },
+      {
+        "key": "item_1575270518163.subitem_mail_address",
+        "title": "メールアドレス",
+        "title_i18n": {
+          "en": "Mail Address",
+          "ja": "メールアドレス"
+        },
+        "type": "text"
+      },
+      {
+        "key": "item_1575270518163.subitem_university/institution",
+        "title": "大学・機関",
+        "title_i18n": {
+          "en": "University/Institution",
+          "ja": "大学・機関"
+        },
+        "type": "text"
+      },
+      {
+        "key": "item_1575270518163.subitem_affiliated_division/department",
+        "title": "所属部局・部署",
+        "title_i18n": {
+          "en": "Affiliated Division/Department",
+          "ja": "所属部局・部署"
+        },
+        "type": "text"
+      },
+      {
+        "key": "item_1575270518163.subitem_position",
+        "title": "役職",
+        "title_i18n": {
+          "en": "Position",
+          "ja": "役職"
+        },
+        "type": "text"
+      },
+      {
+        "key": "item_1575270518163.subitem_position(other)",
+        "title": "役職（その他）",
+        "title_i18n": {
+          "en": "Position(Others)",
+          "ja": "役職（その他）"
+        },
+        "type": "text"
+      },
+      {
+        "key": "item_1575270518163.subitem_phone_number",
+        "title": "電話番号",
+        "title_i18n": {
+          "en": "Phone number",
+          "ja": "電話番号"
+        },
+        "type": "text"
+      },
+      {
+        "add": "New",
+        "items": [
+          {
+            "key": "item_1575270518163.subitem_affiliated_institution[].subitem_affiliated_institution_name",
+            "title": "学会名",
+            "title_i18n": {
+              "en": "Institution Name",
+              "ja": "学会名"
+            },
+            "type": "text"
+          },
+          {
+            "key": "item_1575270518163.subitem_affiliated_institution[].subitem_affiliated_institution_position",
+            "title": "学会役職",
+            "title_i18n": {
+              "en": "Institution Position",
+              "ja": "学会役職"
+            },
+            "type": "text"
+          }
+        ],
+        "key": "item_1575270518163.subitem_affiliated_institution",
+        "style": {
+          "add": "btn-success"
+        },
+        "title": "所属学会",
+        "title_i18n": {
+          "en": "Affiliated Institution",
+          "ja": "所属学会"
+        }
+      }
+    ],
+    "key": "item_1575270518163",
+    "title": "登録者の情報",
+    "title_i18n": {
+      "en": "User Information",
+      "ja": "登録者の情報"
+    },
+    "type": "fieldset"
+  },
+  {
+    "items": [
+      {
+        "key": "item_1575270689515[].subitem_corresponding_usage_application_id",
+        "title": "対応する利用申請のID",
+        "title_i18n": {
+          "en": "Corresponding Usage Application ID",
+          "ja": "対応する利用申請のID"
+        },
+        "type": "select",
+        "titleMap": []
+      }
+    ],
+    "key": "item_1575270689515",
+    "title": "対応する利用申請のID",
+    "title_i18n": {
+      "en": "Corresponding Usage Application ID",
+      "ja": "対応する利用申請のID"
+    },
+    "add": "New",
+    "style": {
+      "add": "btn-success"
+    }
+  },
+  {
+    "items": [
+      {
+        "key": "item_1575270744443.subitem_annual_report",
+        "title": "年次報告",
+        "title_i18n": {
+          "en": "Annual Report",
+          "ja": "年次報告"
+        },
+        "type": "text"
+      }
+    ],
+    "key": "item_1575270744443",
+    "title": "年次報告",
+    "title_i18n": {
+      "en": "Annual Report",
+      "ja": "年次報告"
+    },
+    "type": "fieldset"
+  },
+  {
+    "items": [
+      {
+        "key": "item_1575270782459.subitem_stop/continue",
+        "title": "終了／継続",
+        "title_i18n": {
+          "en": "Stop/Continue",
+          "ja": "終了／継続"
+        },
+        "type": "template",
+        "templateUrl": "/static/templates/weko_deposit/radios.html",
+        "titleMap": [
+          {
+            "name": "終了",
+            "name_i18n": {
+              "en": "Stop",
+              "ja": "終了"
+            },
+            "value": "Stop"
+          },
+          {
+            "name": "継続",
+            "name_i18n": {
+              "en": "Continue",
+              "ja": "継続"
+            },
+            "value": "Continue"
+          }
+        ]
+      }
+    ],
+    "key": "item_1575270782459",
+    "title": "終了／継続",
+    "title_i18n": {
+      "en": "Stop/Continue",
+      "ja": "終了／継続"
+    },
+    "type": "fieldset"
+  },
+  {
+    "items": [
+      {
+        "key": "item_1575270812723[].subitem_corresponding_output_id",
+        "title": "対応する成果物のID",
+        "title_i18n": {
+          "en": "Corresponding Output ID",
+          "ja": "対応する成果物のID"
+        },
+        "type": "select",
+        "titleMap": []
+      }
+    ],
+    "key": "item_1575270812723",
+    "title": "対応する成果物のID",
+    "title_i18n": {
+      "en": "Corresponding Output ID",
+      "ja": "対応する成果物のID"
+    },
+    "add": "New",
+    "style": {
+      "add": "btn-success"
+    }
+  },
+  {
+    "items": [
+      {
+        "key": "parentkey.subitem_system_date",
+        "title": "Date",
+        "type": "template",
+        "format": "yyyy-MM-dd",
+        "templateUrl": "/static/templates/weko_deposit/datepicker.html"
+      },
+      {
+        "key": "parentkey.subitem_system_date_type",
+        "title": "Date Type",
+        "titleMap": [
+          {
+            "name": "Accepted",
+            "value": "Accepted"
+          },
+          {
+            "name": "Available",
+            "value": "Available"
+          },
+          {
+            "name": "Collected",
+            "value": "Collected"
+          },
+          {
+            "name": "Copyrighted",
+            "value": "Copyrighted"
+          },
+          {
+            "name": "Created",
+            "value": "Created"
+          },
+          {
+            "name": "Issued",
+            "value": "Issued"
+          },
+          {
+            "name": "Submitted",
+            "value": "Submitted"
+          },
+          {
+            "name": "Updated",
+            "value": "Updated"
+          },
+          {
+            "name": "Valid",
+            "value": "Valid"
+          }
+        ],
+        "type": "select"
+      }
+    ],
+    "key": "updated_date",
+    "title": "更新日時",
+    "title_i18n": {
+      "en": "Updated Date",
+      "ja": "更新日時"
+    },
+    "type": "fieldset",
+    "condition": 1
+  },
+  {
+    "condition": 1,
+    "items": [
+      {
+        "format": "yyyy-MM-dd",
+        "key": "parentkey.subitem_system_date",
+        "templateUrl": "/static/templates/weko_deposit/datepicker.html",
+        "title": "Date",
+        "type": "template"
+      },
+      {
+        "key": "parentkey.subitem_system_date_type",
+        "title": "Date Type",
+        "titleMap": [
+          {
+            "name": "Accepted",
+            "value": "Accepted"
+          },
+          {
+            "name": "Available",
+            "value": "Available"
+          },
+          {
+            "name": "Collected",
+            "value": "Collected"
+          },
+          {
+            "name": "Copyrighted",
+            "value": "Copyrighted"
+          },
+          {
+            "name": "Created",
+            "value": "Created"
+          },
+          {
+            "name": "Issued",
+            "value": "Issued"
+          },
+          {
+            "name": "Submitted",
+            "value": "Submitted"
+          },
+          {
+            "name": "Updated",
+            "value": "Updated"
+          },
+          {
+            "name": "Valid",
+            "value": "Valid"
+          }
+        ],
+        "type": "select"
+      }
+    ],
+    "key": "created_date",
+    "title": "作成日時",
+    "title_i18n": {
+      "en": "Created Date",
+      "ja": "作成日時"
+    },
+    "type": "fieldset"
+  },
+  {
+    "condition": 1,
+    "items": [
+      {
+        "key": "parentkey.subitem_system_id_rg_doi",
+        "title": "Identifier Registration",
+        "type": "text"
+      },
+      {
+        "key": "parentkey.subitem_system_id_rg_doi_type",
+        "title": "Identifier Registration Type",
+        "titleMap": [
+          {
+            "name": "JaLC",
+            "value": "JaLC"
+          },
+          {
+            "name": "Crossref",
+            "value": "Crossref"
+          },
+          {
+            "name": "DataCite",
+            "value": "DataCite"
+          },
+          {
+            "name": "PMID（現在不使用）",
+            "value": "PMID（現在不使用）"
+          }
+        ],
+        "type": "select"
+      },
+      {
+        "key": "parentkey.subitem_system_identifier_doi",
+        "title": "Identifier",
+        "type": "text"
+      },
+      {
+        "key": "parentkey.subitem_system_identifier_doi_type",
+        "title": "Identifier Type",
+        "titleMap": [
+          {
+            "name": "JaLC",
+            "value": "JaLC"
+          },
+          {
+            "name": "Crossref",
+            "value": "Crossref"
+          },
+          {
+            "name": "DataCite",
+            "value": "DataCite"
+          },
+          {
+            "name": "PMID（現在不使用）",
+            "value": "PMID（現在不使用）"
+          }
+        ],
+        "type": "select"
+      }
+    ],
+    "key": "persistent_identifier_doi",
+    "title": "永続識別子（DOI）",
+    "title_i18n": {
+      "en": "Persistent Identifier(DOI)",
+      "ja": "永続識別子（DOI）"
+    },
+    "type": "fieldset"
+  },
+  {
+    "condition": 1,
+    "items": [
+      {
+        "key": "parentkey.subitem_system_identifier",
+        "title": "Identifier",
+        "type": "text"
+      },
+      {
+        "key": "parentkey.subitem_system_identifier_type",
+        "title": "Identifier Type",
+        "titleMap": [
+          {
+            "name": "DOI",
+            "value": "DOI"
+          },
+          {
+            "name": "HDL",
+            "value": "HDL"
+          },
+          {
+            "name": "URI",
+            "value": "URI"
+          }
+        ],
+        "type": "select"
+      }
+    ],
+    "key": "persistent_identifier_h",
+    "title": "永続識別子（ハンドル）",
+    "title_i18n": {
+      "en": "Persistent Identifier(Handle)",
+      "ja": "永続識別子（ハンドル）"
+    },
+    "type": "fieldset"
+  },
+  {
+    "condition": 1,
+    "items": [
+      {
+        "key": "parentkey.subitem_system_identifier",
+        "title": "Identifier",
+        "type": "text"
+      },
+      {
+        "key": "parentkey.subitem_system_identifier_type",
+        "title": "Identifier Type",
+        "titleMap": [
+          {
+            "name": "DOI",
+            "value": "DOI"
+          },
+          {
+            "name": "HDL",
+            "value": "HDL"
+          },
+          {
+            "name": "URI",
+            "value": "URI"
+          }
+        ],
+        "type": "select"
+      }
+    ],
+    "key": "ranking_page_url",
+    "title": "ランディングページのURL",
+    "title_i18n": {
+      "en": "Landing Page URL",
+      "ja": "ランディングページのURL"
+    },
+    "type": "fieldset"
+  },
+  {
+    "condition": 1,
+    "items": [
+      {
+        "key": "parentkey.subitem_system_text",
+        "title": "Text",
+        "type": "text"
+      }
+    ],
+    "key": "belonging_index_info",
+    "title": "所属インデックスの情報",
+    "title_i18n": {
+      "en": "Belonging Index Info",
+      "ja": "所属インデックスの情報"
+    },
+    "type": "fieldset"
+  }
+]
