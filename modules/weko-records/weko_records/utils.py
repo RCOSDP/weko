@@ -443,6 +443,7 @@ def sort_meta_data_by_options(record_hit):
 
     :param record_hit:
     """
+    from weko_records_ui.permissions import check_file_download_permission
     def get_meta_values(v):
         """Get values from metadata."""
         data_list = []
@@ -503,19 +504,35 @@ def sort_meta_data_by_options(record_hit):
                         or 'contributorMails[].contributorMail' in s['key'] \
                         or 'mails[].mail' in s['key']:
                     is_hide = is_hide | hide_email_flag
-                if '.filename' in s['key'] \
-                        or '.url.url' in s['key'] \
-                        or '.url.label' in s['key'] \
-                        or '.format' in s['key'] \
-                        or '.filesize[].value' in s['key'] \
-                        or '.accessrole' in s['key'] \
-                        or '.date[0].dateValue' in s['key']:
-                    is_hide = true
                 if not is_hide and is_show_list:
                     if is_specify_newline or len(result) == 0:
                         result.append(value)
                     else:
                         result[-1] += "," + value
+        return result
+
+    def get_file_comments(record, files):
+        """Check and get file info."""
+        result = []
+        for f in files:
+            if check_file_download_permission(record, f, False):
+                extention = ''
+                label = f.get('url', {}).get('label')
+                filename = f.get('filename', '')
+                if not label and not f.get('filesize'):
+                    label = f.get('url', {}).get('url', '')
+                elif not label:
+                    label = filename
+
+                if f.get('filesize'):
+                    idx = filename.find('.') + 1
+                    extention = filename[idx:] if idx > 0 else 'unknown'
+
+                if label:
+                    result.append({
+                        'label': label,
+                        'extention': extention
+                    })
         return result
 
     try:
@@ -526,6 +543,7 @@ def sort_meta_data_by_options(record_hit):
             return
         solst, meta_options = get_options_and_order_list(item_type_id)
         solst_dict_array = convert_data_to_dict(solst)
+        files_infor = []
         # Set value and parent option
         for lst in solst:
             key = lst[0]
@@ -533,8 +551,13 @@ def sort_meta_data_by_options(record_hit):
             option = meta_options.get(key, {}).get('option')
             if not val or not option:
                 continue
-            mlt = val.get('attribute_value_mlt')
+            mlt = val.get('attribute_value_mlt', [])
             if mlt:
+                if val.get('attribute_type', '') == 'file' \
+                        and not option.get("hidden") \
+                        and option.get("showlist"):
+                    files_infor = get_file_comments(src, mlt)
+                    continue
                 meta_data = get_all_items2(mlt, solst)
                 for m in meta_data:
                     for s in solst_dict_array:
@@ -556,6 +579,8 @@ def sort_meta_data_by_options(record_hit):
                 record_hit['_source']['_comment'].extend(items)
             else:
                 record_hit['_source']['_comment'] = items
+        if files_infor:
+            record_hit['_source']['_files_infor'] = files_infor
     except Exception:
         current_app.logger.exception(
             u'Record serialization failed {}.'.format(

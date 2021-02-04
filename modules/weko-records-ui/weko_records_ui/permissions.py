@@ -133,7 +133,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
         is_has_email = hasattr(current_user, "email")
         current_user_email = current_user.email if is_has_email else ''
         # Get email list of created workflow user.
-        user_id_list = record['_deposit']['owners']
+        user_id_list = record.get('_deposit', {}).get('owners', [])
         created_user_email_list = get_email_list_by_ids(user_id_list)
 
         # Registered user
