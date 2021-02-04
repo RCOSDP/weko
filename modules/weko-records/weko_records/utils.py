@@ -503,6 +503,14 @@ def sort_meta_data_by_options(record_hit):
                         or 'contributorMails[].contributorMail' in s['key'] \
                         or 'mails[].mail' in s['key']:
                     is_hide = is_hide | hide_email_flag
+                if '.filename' in s['key'] \
+                        or '.url.url' in s['key'] \
+                        or '.url.label' in s['key'] \
+                        or '.format' in s['key'] \
+                        or '.filesize[].value' in s['key'] \
+                        or '.accessrole' in s['key'] \
+                        or '.date[0].dateValue' in s['key']:
+                    is_hide = true
                 if not is_hide and is_show_list:
                     if is_specify_newline or len(result) == 0:
                         result.append(value)
