@@ -1475,30 +1475,35 @@ def combine_record_file_urls(record, meta_prefix='jpcoar'):
                 if attr.get('filename'):
                     if not attr.get(file_keys[1]):
                         attr[file_keys[1]] = {}
+                    is_manual = check_url_is_manual(attr.get('version_id'))
                     if not (attr[file_keys[1]].get(file_keys[2])
-                            and check_url_is_manual(attr.get('version_id'))):
+                            and is_manual):
                         attr[file_keys[1]][file_keys[2]] = \
                             create_files_url(
                                 request.url_root,
                                 record.get('recid'),
-                                attr.get('filename'))
+                                attr.get('filename'),
+                                is_manual)
         elif isinstance(attr_mlt, dict) and \
                 attr_mlt.get('filename'):
             if not attr_mlt.get(file_keys[1]):
                 attr_mlt[file_keys[1]] = {}
-            if not (attr_mlt[file_keys[1]].get(file_keys[2])
-                    and check_url_is_manual(attr_mlt.get('version_id'))):
+            is_manual = check_url_is_manual(attr_mlt.get('version_id'))
+            if not (attr_mlt[file_keys[1]].get(file_keys[2]) and is_manual):
                 attr_mlt[file_keys[1]][file_keys[2]] = \
                     create_files_url(
                         request.url_root,
                         record.get('recid'),
-                        attr_mlt.get('filename'))
+                        attr_mlt.get('filename'),
+                        is_manual)
 
     return record
 
 
-def create_files_url(root_url, record_id, filename):
+def create_files_url(root_url, record_id, filename, is_manual=False):
     """Generation of downloading file url."""
+    if is_manual:
+        return ''
     return "{}record/{}/files/{}".format(
         root_url,
         record_id,

@@ -147,7 +147,13 @@
                           {%- endif -%}
                           <!-- version_id == '' => not upload file, but fill data for 'File Information' -->
                           {%- if file.version_id == '' -%}
-                            {%- set file_label = file.filename -%}
+                            {%- if file.url.label -%}
+                              {%- set file_label = file.url.label -%}
+                            {%- elif file.url.url -%}
+                              {%- set file_label = file.url.url -%}
+                            {%- else -%}
+                              {%- set file_label = file.filename -%}
+                            {%- endif -%}
                             {%- if file.url.url -%}
                               {%- set text_url = file.url.url -%}
                             {%- else -%}
@@ -159,16 +165,16 @@
 
                           <!-- Get file size -->
                           {%- if file.filesize -%}
-                            {%- set filesize = file.filesize[0].value -%}
+                            {%- set filesize = '(' + file.filesize[0].value + ')' -%}
                           {%- else -%}
                           {%- set filesize = '' -%}
                           {%- endif -%}
                           <!-- Show FileName/Label -->
                           {%- if access_permission and billing_file_access_permission -%}
                             <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
-                              href={{ text_url }}>
+                              {% if text_url %} href={{ text_url }} {% endif %}>
                               {% autoescape false %}
-                              {{ file_label | escape_str }} ({{ filesize }})
+                              {{ file_label | escape_str }} {{ filesize }}
                               {% endautoescape %}
                             </a>
                             <br>
@@ -181,7 +187,7 @@
                             <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
                                 href="{{next_path}}">
                               {% autoescape false %}
-                              {{ file_label | escape_str }} ({{ filesize }})
+                              {{ file_label | escape_str }} {{ filesize }}
                               {% endautoescape %}
                             </a>
                             <br>
