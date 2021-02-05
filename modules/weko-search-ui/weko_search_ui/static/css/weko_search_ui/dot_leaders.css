@@ -49,3 +49,23 @@ ul.leaders span + span {
 .border-color-transparent {
   border-color: transparent !important;
 }
+
+.extention-button, 
+.extention-button:active, 
+.extention-button:focus, 
+.extention-button:hover {
+  border: solid gray 1px;
+  color: #23527c;
+  text-decoration: none;
+  display: inline-block;
+  min-width: 100px;
+  text-align: center;
+}
+
+.dot-button, 
+.dot-button:active, 
+.dot-button:focus, 
+.dot-button:hover {
+  color: #23527c;
+  text-decoration: none;
+}

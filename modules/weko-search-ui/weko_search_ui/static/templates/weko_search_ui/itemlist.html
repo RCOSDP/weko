@@ -39,5 +39,12 @@
       <pre class="pre-scrollable">{{ record | json }}</pre>
     </div>
     -->
+    <div class="row">
+      <div class="col-sm-2" ng-repeat="file_info in record.metadata._files_info track by $index">        
+        <a ng-href="{{file_info.url}}" target="_blank" class="extention-button" data-toggle="tooltip" title="{{file_info.label}}">
+          {{file_info.extention?file_info.extention:'URL'|escapeTitle}}
+        </a>
+      </div>      
+    </div>
   </div>
 </div>
