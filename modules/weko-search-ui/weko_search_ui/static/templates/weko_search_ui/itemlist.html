@@ -40,10 +40,44 @@
     </div>
     -->
     <div class="row">
-      <div class="col-sm-2" ng-repeat="file_info in record.metadata._files_info track by $index">        
-        <a ng-href="{{file_info.url}}" target="_blank" class="extention-button" data-toggle="tooltip" title="{{file_info.label}}">
-          {{file_info.extention?file_info.extention:'URL'|escapeTitle}}
-        </a>
+      <div class="visible-xs-block">
+        <div class="col-xs-4" ng-repeat="file_info in record.metadata._files_info |limitTo:3 track by $index" ng-hide="record.metadata._files_info.length > 3 && $index == 2">
+          <a ng-href="{{file_info.url}}" target="_blank" class="extention-button" data-toggle="tooltip"
+            title="{{file_info.label}}">
+            {{file_info.extention?file_info.extention:'URL'|escapeTitle}}
+          </a>          
+        </div>
+        <div class="col-xs-4" ng-show="record.metadata._files_info.length > 3">
+          <a ng-href="/records/{{ record.id }}{{commInfo}}" class="dot-button">
+            ● ● ●
+          </a>
+        </div>
+      </div>   
+      <div class="visible-sm-block">
+        <div class="col-sm-3" ng-repeat="file_info in record.metadata._files_info |limitTo:4 track by $index" ng-hide="record.metadata._files_info.length > 4 && $index == 3">
+          <a ng-href="{{file_info.url}}" target="_blank" class="extention-button" data-toggle="tooltip"
+            title="{{file_info.label}}">
+            {{file_info.extention?file_info.extention:'URL'|escapeTitle}}
+          </a>          
+        </div>
+        <div class="col-sm-3" ng-show="record.metadata._files_info.length > 4">
+          <a ng-href="/records/{{ record.id }}{{commInfo}}" class="dot-button">
+            ● ● ●
+          </a>
+        </div>
+      </div>
+      <div class="visible-md-block visible-lg-block">
+        <div class="col-md-2 col-lg-2" ng-repeat="file_info in record.metadata._files_info |limitTo:6 track by $index" ng-hide="record.metadata._files_info.length > 6 && $index == 5">
+          <a ng-href="{{file_info.url}}" target="_blank" class="extention-button" data-toggle="tooltip"
+            title="{{file_info.label}}">
+            {{file_info.extention?file_info.extention:'URL'|escapeTitle}}
+          </a>          
+        </div>
+        <div class="col-md-2 col-lg-2" ng-show="record.metadata._files_info.length > 6">
+          <a ng-href="/records/{{ record.id }}{{commInfo}}" class="dot-button">
+            ● ● ●
+          </a>
+        </div>
       </div>      
     </div>
   </div>
