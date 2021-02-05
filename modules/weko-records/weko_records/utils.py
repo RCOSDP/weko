@@ -519,12 +519,12 @@ def sort_meta_data_by_options(record_hit):
                 extention = ''
                 label = f.get('url', {}).get('label')
                 filename = f.get('filename', '')
-                if not label and not f.get('filesize'):
+                if not label and not f.get('version_id'):
                     label = f.get('url', {}).get('url', '')
                 elif not label:
                     label = filename
 
-                if f.get('filesize'):
+                if f.get('version_id'):
                     idx = filename.find('.') + 1
                     extention = filename[idx:] if idx > 0 else 'unknown'
 
