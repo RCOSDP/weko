@@ -531,7 +531,8 @@ def sort_meta_data_by_options(record_hit):
                 if label:
                     result.append({
                         'label': label,
-                        'extention': extention
+                        'extention': extention,
+                        'url': f.get('url', {}).get('url', '')
                     })
         return result
 
@@ -543,7 +544,7 @@ def sort_meta_data_by_options(record_hit):
             return
         solst, meta_options = get_options_and_order_list(item_type_id)
         solst_dict_array = convert_data_to_dict(solst)
-        files_infor = []
+        files_info = []
         # Set value and parent option
         for lst in solst:
             key = lst[0]
@@ -556,7 +557,7 @@ def sort_meta_data_by_options(record_hit):
                 if val.get('attribute_type', '') == 'file' \
                         and not option.get("hidden") \
                         and option.get("showlist"):
-                    files_infor = get_file_comments(src, mlt)
+                    files_info = get_file_comments(src, mlt)
                     continue
                 meta_data = get_all_items2(mlt, solst)
                 for m in meta_data:
@@ -579,8 +580,8 @@ def sort_meta_data_by_options(record_hit):
                 record_hit['_source']['_comment'].extend(items)
             else:
                 record_hit['_source']['_comment'] = items
-        if files_infor:
-            record_hit['_source']['_files_infor'] = files_infor
+        if files_info:
+            record_hit['_source']['_files_info'] = files_info
     except Exception:
         current_app.logger.exception(
             u'Record serialization failed {}.'.format(
