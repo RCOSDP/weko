@@ -197,6 +197,8 @@ def shib_login():
         shib_session_id = request.args.get('SHIB_ATTR_SESSION_ID', None)
 
         if not shib_session_id:
+            current_app.logger.error(_("Missing SHIB_ATTR_SESSION_ID!"))
+            flash(_("Missing SHIB_ATTR_SESSION_ID!"), category='error')
             return _redirect_method()
 
         datastore = RedisStore(redis.StrictRedis.from_url(
@@ -205,11 +207,18 @@ def shib_login():
             'WEKO_ACCOUNTS_SHIB_CACHE_PREFIX'] + shib_session_id
 
         if not datastore.redis.exists(cache_key):
+            current_app.logger.error(
+                _("Missing WEKO_ACCOUNTS_SHIB_CACHE_PREFIX!"))
+            flash(
+                _("Missing WEKO_ACCOUNTS_SHIB_CACHE_PREFIX!"),
+                category='error')
             return _redirect_method()
 
         cache_val = datastore.get(cache_key)
 
         if not cache_val:
+            current_app.logger.error(_("Missing SHIB_ATTR!"))
+            flash(_("Missing SHIB_ATTR!"), category='error')
             datastore.delete(cache_key)
             return _redirect_method()
 
@@ -228,8 +237,11 @@ def shib_login():
 
         for role in roles:
             if role not in shib_roles.keys():
-                current_app.logger.error(_("Invalid attribute."))
-                flash(_("Invalid attribute."), category='error')
+                current_app.logger.error(
+                    _("Invalid SHIB_ATTR_ROLE_AUTHORITY_NAME."))
+                flash(
+                    _("Invalid SHIB_ATTR_ROLE_AUTHORITY_NAME."),
+                    category='error')
                 return _redirect_method()
 
         _datastore = LocalProxy(
@@ -259,6 +271,7 @@ def shib_sp_login():
     try:
         shib_session_id = request.form.get('SHIB_ATTR_SESSION_ID', None)
         if not shib_session_id and not _shib_enable:
+            flash(_("Missing SHIB_ATTR_SESSION_ID!"), category='error')
             return redirect(url_for_security('login'))
 
         shib_attr, error = parse_attributes()
@@ -267,6 +280,7 @@ def shib_sp_login():
         if error or not (
                 shib_attr.get('shib_eppn', None)
                 or _shib_username_config and shib_attr.get('shib_user_name')):
+            flash(_("Missing SHIB_ATTRs!"), category='error')
             return _redirect_method()
 
         datastore = RedisStore(redis.StrictRedis.from_url(
