@@ -170,6 +170,7 @@ class ShibUser(object):
             self.user,
             **self.shib_attr)
         self.shib_user = shib_user
+        self.new_shib_profile()
 
         return shib_user
 

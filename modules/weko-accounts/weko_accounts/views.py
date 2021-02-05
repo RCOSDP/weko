@@ -141,10 +141,12 @@ def confirm_user():
     """
     try:
         if request.form.get('csrf_random', '') != session['csrf_random']:
+            flash('csrf_random', category='error')
             return _redirect_method()
 
         shib_session_id = session['shib_session_id']
         if not shib_session_id:
+            flash('shib_session_id', category='error')
             return _redirect_method()
 
         datastore = RedisStore(redis.StrictRedis.from_url(
@@ -153,10 +155,12 @@ def confirm_user():
             'WEKO_ACCOUNTS_SHIB_CACHE_PREFIX'] + shib_session_id
 
         if not datastore.redis.exists(cache_key):
+            flash('cache_key', category='error')
             return _redirect_method()
 
         cache_val = datastore.get(cache_key)
         if not cache_val:
+            flash('cache_val', category='error')
             datastore.delete(cache_key)
             return _redirect_method()
 
@@ -165,10 +169,12 @@ def confirm_user():
         account = request.form.get('WEKO_ATTR_ACCOUNT', None)
         password = request.form.get('WEKO_ATTR_PWD', None)
         if not shib_user.check_weko_user(account, password):
+            flash('check_weko_user', category='error')
             datastore.delete(cache_key)
             return _redirect_method()
 
         if not shib_user.bind_relation_info(account):
+            flash('bind_relation_info', category='error')
             return _redirect_method()
 
         error = shib_user.check_in()
