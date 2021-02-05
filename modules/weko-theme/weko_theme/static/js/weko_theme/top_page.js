@@ -133,7 +133,6 @@ require([
     }
 
     //Url query コントロール
-
     function SearchSubmit() {
         if ($('#search_type_fulltext').prop('checked')) {
             sessionStorage.setItem('search_type', '0');
@@ -150,11 +149,11 @@ require([
                })
             });
             $('#q').serializeArray().map(function (item) {
-              search = insertParam(search, item.name, item.value.replace(/\+/g, ' '))
+              search = insertParam(search, item.name, item.value)
             })
             if ($('#community').val() && $('#q').val.trim().length > 0) {
                 $('#community').serializeArray().map(function (item) {
-                  search = insertParam(search, item.name, item.value.replace(/\+/g, ' '))
+                  search = insertParam(search, item.name, item.value)
                 })
             }
             // var btn = sessionStorage.getItem('btn', '');
@@ -169,7 +168,7 @@ require([
                 key_sort = "-" + key_sort;
             }
             if (!window.location.search.includes(key_sort)) {
-                search = insertParam(search, "sort", key_sort); 
+                search = insertParam(search, "sort", key_sort);
             }
             if(size !== null && size !== undefined) {
                 search = insertParam(search, "size", size);
