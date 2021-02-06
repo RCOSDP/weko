@@ -71,7 +71,7 @@
           {{ super() }}
         </div>
       </div>
-      {%- from "weko_theme/macros/footer-community.html" import community_footer_widget with context %}
+      {%- from "weko_theme/macros/footer-community.html" import community_footer_widget %}
       {{ community_footer_widget(render_widgets, community, link=False, subtitle='') }}
     </div>
   <div class="communities"></div>
@@ -127,6 +127,22 @@
           {% set mycommunities = display_seting.mycommunities %}
           {% include "invenio_communities/communities_list_body.html" %}
         {% endif %}
+      </div>
+    {% endif %}
+    {%-if community_id %}
+    <div class="col-sm-{{ 12-width|int }} col-md-{{ 12-width|int }} col-lg-{{ 12-width|int }}">
+      {% set display_seting  = settings | get_init_display_setting() %}
+          {% set sort_option = {} %}
+          {% set index_id = index_id %}
+          {% set index_display_format = '1' %}
+          {% set disply_setting = {} %}
+          {% set search_hidden_params = {'size': 20, 'q': index_id, 'search_type': '2'} %}
+          {% set journal_info = None %}
+          {% set allow_item_exporting = True %}
+          {% set is_permission = display_seting.is_permission %}
+          {% set is_login = display_seting.is_login %}
+          <input type="hidden" id="index_id_q" value="{{ index_id }}">
+          {% include "weko_search_ui/body_contents.html" %}
       </div>
     {% endif %}
   </div>

@@ -387,7 +387,7 @@ const PageBodyGrid = function () {
                 '    background-color: transparent;' +
                 '}' +
                 '</style>' +
-                '<nav class="widget-nav navbar navbar-default ' + navbarID + '" style="background-color:' + settings.menu_bg_color + ';">' +
+                '<nav class="widget-nav navbar navbar-default ' + navbarID + '" style="border: none; background-color:' + settings.menu_bg_color + ';">' +
                 '  <div class="container-fluid">' +
                     navbarHeader +
                 '    <div class="collapse navbar-collapse in" aria-expanded="true" id="' + navbarID + '">' +

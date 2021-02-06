@@ -160,6 +160,8 @@ def view(community):
 
     ctx = {'community': community}
     community_id = community.id
+    index_id = community.index.id
+
     # Get index style
     style = IndexStyle.get(
         current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
@@ -173,7 +175,7 @@ def view(community):
 
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
-        sort_option=sort_options, detail_condition=detail_condition, community_id=community_id, width=width, height=height, ** ctx
+        sort_option=sort_options, detail_condition=detail_condition, community_id=community_id, index_id=index_id,width=width, height=height, ** ctx
     )
 
 
