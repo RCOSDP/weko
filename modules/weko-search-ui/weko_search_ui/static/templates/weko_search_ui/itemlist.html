@@ -40,9 +40,10 @@
     </div>
     -->
     <div class="row">
+      <!-- 小型携帯用ディスプレイ -->
       <div class="visible-xs-block">
         <div class="col-xs-4" ng-repeat="file_info in record.metadata._files_info |limitTo:3 track by $index" ng-hide="record.metadata._files_info.length > 3 && $index == 2">
-          <a ng-href="{{file_info.url}}" target="_blank" class="extention-button" data-toggle="tooltip"
+          <a ng-href="{{file_info.url}}" target="{{file_info.extention?'_self':'_blank'}}" class="extention-button" data-toggle="tooltip"
             title="{{file_info.label}}">
             {{file_info.extention?file_info.extention:'URL'|escapeTitle}}
           </a>          
@@ -52,10 +53,11 @@
             ● ● ●
           </a>
         </div>
-      </div>   
+      </div>  
+      <!-- モバイル向けディスプレイ --> 
       <div class="visible-sm-block">
         <div class="col-sm-3" ng-repeat="file_info in record.metadata._files_info |limitTo:4 track by $index" ng-hide="record.metadata._files_info.length > 4 && $index == 3">
-          <a ng-href="{{file_info.url}}" target="_blank" class="extention-button" data-toggle="tooltip"
+          <a ng-href="{{file_info.url}}" target="{{file_info.extention?'_self':'_blank'}}" class="extention-button" data-toggle="tooltip"
             title="{{file_info.label}}">
             {{file_info.extention?file_info.extention:'URL'|escapeTitle}}
           </a>          
@@ -66,9 +68,10 @@
           </a>
         </div>
       </div>
+      <!-- タブレット/デスクトップ用ディスプレイ --> 
       <div class="visible-md-block visible-lg-block">
         <div class="col-md-2 col-lg-2" ng-repeat="file_info in record.metadata._files_info |limitTo:6 track by $index" ng-hide="record.metadata._files_info.length > 6 && $index == 5">
-          <a ng-href="{{file_info.url}}" target="_blank" class="extention-button" data-toggle="tooltip"
+          <a ng-href="{{file_info.url}}" target="{{file_info.extention?'_self':'_blank'}}" class="extention-button" data-toggle="tooltip"
             title="{{file_info.label}}">
             {{file_info.extention?file_info.extention:'URL'|escapeTitle}}
           </a>          
