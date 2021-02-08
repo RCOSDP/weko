@@ -601,6 +601,6 @@ def get_file_info_list(record):
                         is_display_file_preview = True
                     # Get file size and convert to byte.
                     f['size'] = get_file_size(f)
-                    f['mimetype'] = f.get('format')
+                    f['mimetype'] = f.get('format', '')
                     files.append(f)
     return is_display_file_preview, files
