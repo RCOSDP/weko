@@ -177,7 +177,7 @@
                     }
                 });
                 sessionStorage.setItem('detail_search_conditions', angular.toJson($scope.condition_data));
-                if (data !== null && data.key !== null && data.value !== null) { 
+                if (data !== null && data.key !== null && data.value !== null) {
                     query_str += "&" + data.key + "=" + data.value;
                 }
                 var url = '/search?page=1' + query_str;
@@ -187,6 +187,8 @@
                   url = '/admin/items' + url + '&item_management=delete';
                 }
 
+                // URI-encode '+' in advance for preventing from being converted to '%20'(space)
+                url = url.replace(/\+/g, encodeURIComponent('+'))
                 window.location.href = url
             }
             //

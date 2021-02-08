@@ -531,7 +531,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             urlkwargs.add('sort', sort_key)
 
     urlkwargs.add('q', query_q)
-    print(search, urlkwargs)
     return search, urlkwargs
 
 
