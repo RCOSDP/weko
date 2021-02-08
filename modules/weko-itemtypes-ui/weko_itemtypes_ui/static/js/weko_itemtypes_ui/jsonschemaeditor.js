@@ -299,7 +299,7 @@
 			var data = props.data;
 			if (data.hasOwnProperty('enum') && data.enum.length > 0) {
 				data.enum_original = typeof(data.enum) == 'object' ? data.enum : data.enum.split('|');
-				data.enum = typeof(data.enum) == 'object' ? data.enum.filter(value => value !== null).join('|') : data.enum;
+				data.enum = typeof(data.enum) == 'object' ? data.enum.filter(function(value){return value !== null}).join('|') : data.enum;
 			} else {
 				data.enum = '';
 			}
@@ -927,13 +927,13 @@
 					var itemKey = self.state.propertyItems[index];
 					//Hide item on Properties & Meta.
 					let hideItems = ['iscreator'];
-					let isHideItems = hideItems.includes(itemKey);
+					let isHideItems = hideItems.indexOf(itemKey) !== -1;
 					if(isHideItems) return;
 
 					var copiedState = self.state.properties[name]; // JSON.parse(JSON.stringify(self.state.properties[index]));
 					var optionForm = mapping('subitem' + index, copiedState, self.state.editor, self.onChange);
 					let allowedChangeArray = ['checkboxes', 'radios', 'select'];
-					let isDisabledFormat = !allowedChangeArray.includes(value.format);
+					let isDisabledFormat = allowedChangeArray.indexOf(value.format) === -1;
 					let disabledFormatSelect = isDisabledFormat && !self.state.editor;
 					let isEditor = self.state.editor ? ' hide' : '';
 					//Get unique key of Localization Settings.
@@ -989,7 +989,7 @@
 											onChange: self.changeItem,
 											style: {width: "305px !important"}
 										}
-									),
+									)
 								),
 								React.createElement('p', {className: isEditor},
 									React.createElement('button', {

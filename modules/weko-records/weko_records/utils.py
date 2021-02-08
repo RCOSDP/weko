@@ -444,6 +444,7 @@ def sort_meta_data_by_options(record_hit):
     :param record_hit:
     """
     from weko_records_ui.permissions import check_file_download_permission
+
     def get_meta_values(v):
         """Get values from metadata."""
         data_list = []
