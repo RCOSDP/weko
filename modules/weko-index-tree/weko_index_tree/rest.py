@@ -237,8 +237,9 @@ class IndexActionResource(ContentNegotiatedMethodView):
         errors = []
         if check_doi_in_index(index_id):
             status = 200
-            errors.append(_('The index cannot be deleted because there is'
-                      ' a link from an item that has a DOI.'))
+            errors.append(
+                _('The index cannot be deleted because there is'
+                  ' a link from an item that has a DOI.'))
         else:
             action = request.values.get('action', 'all')
             res = self.record_class.get_self_path(index_id)
