@@ -8,9 +8,8 @@
 
 """Invenio Files Rest module configuration file."""
 
-from datetime import timedelta
-
 import tempfile
+from datetime import timedelta
 
 MAX_CONTENT_LENGTH = 16 * 1024 * 1024
 """Maximum allowed content length for form data.

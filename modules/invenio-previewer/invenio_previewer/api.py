@@ -102,8 +102,9 @@ def convert_to(folder, source):
     """Convert file to pdf."""
     def redirect_detail_page(pid_value):
         return redirect(
-            current_app.config['RECORDS_UI_ENDPOINTS']['recid']['route'].replace(
-                '<pid_value>', pid_value
+            current_app.config[
+                'RECORDS_UI_ENDPOINTS']['recid']['route'].replace(
+                    '<pid_value>', pid_value
             )
         )
 
@@ -133,8 +134,8 @@ def convert_to(folder, source):
         process_count = 0
 
         while (
-            not filename and process_count <=
-            current_app.config.get('PREVIEWER_CONVERT_PDF_RETRY_COUNT')
+            not filename and process_count
+            <= current_app.config.get('PREVIEWER_CONVERT_PDF_RETRY_COUNT')
         ):
             process = subprocess.run(
                 args,
