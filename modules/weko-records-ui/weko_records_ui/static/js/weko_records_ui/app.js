@@ -5,7 +5,7 @@
         ]);
 
         function ItemController($scope, $modal, $http, $window) {
-            $scope.openConfirm = function(message, url, rdt) {
+            $scope.openConfirm = function(message, url, rdt, id) {
                 var confirmModalScope = $scope.$new();
                 confirmModalScope.modalInstance = $modal({
                     templateUrl: "confirm-modal.html",
@@ -21,6 +21,9 @@
                         },
                         rdt: function() {
                             return rdt;
+                        },
+                        id: function() {
+                            return id;
                         }
                     }
                 });
@@ -262,21 +265,33 @@
         ];
 
         //function ConfirmController($scope, $modalInstance, msg) {
-        function ConfirmController($scope, $http, $window, msg, url, rdt) {
+        function ConfirmController($scope, $http, $window, msg, url, rdt, id) {
             $scope.message = msg;
 
             $scope.ok = function() {
                 $scope.modalInstance.hide();
-                $http.post(url).then(
-                    function(response) {
-                        // success callback
-                        $window.location.href = rdt;
-                    },
-                    function(response) {
-                        // failure call back
-                        console.log(response);
-                    }
-                );
+                $http({
+                    method: 'GET',
+                    url: "/api/items/check_record_doi/" + id,
+                }).then(function successCallback(response) {
+                    if (0 == response.data.code) {
+                        $('[role="alert"]').css('display', 'inline-block');
+                        $('[role="alert"]').text($("#delete_message").val());
+                      } else {
+                        $http.post(url).then(
+                            function(response) {
+                                // success callback
+                                $window.location.href = rdt;
+                            },
+                            function(response) {
+                                // failure call back
+                                console.log(response);
+                            }
+                        );
+                      };
+                }, function errorCallback(response) {
+                    console.log('Error api /api/items/check_public_status');
+                });
             };
 
             $scope.cancel = function() {

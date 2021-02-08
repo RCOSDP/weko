@@ -1,6 +1,9 @@
 // require(["jquery", "bootstrap"],function() {});
 $(document).ready(function () {
   var checkboxTemplate = "/static/templates/weko_deposit/checkboxes.html";
+// Number of callbacks(requests) when rendering the page, When add a new callback,
+// please increase/decrease appropriately
+  var requestNum = 0;
   src_render = {};
   src_mapping = {};
   page_global = {
@@ -107,6 +110,8 @@ $(document).ready(function () {
     itemname = itemname.substr(0,itemname.lastIndexOf('('));
     $('#itemtype_name').val(itemname);
     url_update_schema = '/admin/itemtypes/'+$('#item-type-lists').val()+'/register';
+  }else{
+    endLoading();
   }
 
   $('.radio_versionup').on('click', function(){
@@ -569,12 +574,16 @@ $(document).ready(function () {
           page_global.table_row_map.schema.properties[row_id] = {
             type: "array",
             title: tmp.title,
+            title_i18n: tmp.title_i18n,
             minItems: tmp.input_minItems,
             maxItems: tmp.input_maxItems,
             items: {
               type: "object",
               properties: {
                 "interim": {
+                  title: tmp.title,
+                  title_i18n: tmp.title_i18n,
+                  format: "checkboxes",
                   type: "array",
                   items: {
                     type: "string",
@@ -586,25 +595,31 @@ $(document).ready(function () {
           }
           page_global.table_row_map.form.push({
             key: row_id,
+            title: tmp.title,
             title_i18n: tmp.title_i18n,
             add: "New",
             style: {add:"btn-success"},
             items: [{
+              title: tmp.title,
+              title_i18n: tmp.title_i18n,
               key: row_id + '[].interim',
               type: "template",
               notitle: true,
-              titleMap: titleMap_tmp
-            }],
-            templateUrl: checkboxTemplate
+              titleMap: titleMap_tmp,
+              templateUrl: checkboxTemplate
+            }]
           });
         } else {
           // 選択式(プルダウン)
           page_global.table_row_map.schema.properties[row_id] = {
             title: tmp.title,                // [interim]は本当の意味を持たない
+            title_i18n: tmp.title_i18n,
             "type": "object",
             "format": "object",
             properties: {
               "interim": {
+                title: tmp.title,
+                title_i18n: tmp.title_i18n,
                 type: "array",
                 format: "checkboxes",
                 items: {
@@ -640,12 +655,15 @@ $(document).ready(function () {
           page_global.table_row_map.schema.properties[row_id] = {
             type: "array",
             title: tmp.title,
+            title_i18n: tmp.title_i18n,
             minItems: tmp.input_minItems,
             maxItems: tmp.input_maxItems,
             items: {
               type: "object",
               properties: {
                 interim: {                  // [interim]は本当の意味を持たない
+                  title: tmp.title,
+                  title_i18n: tmp.title_i18n,
                   type: "string",
                   enum: enum_tmp
                 }
@@ -654,10 +672,13 @@ $(document).ready(function () {
           }
           page_global.table_row_map.form.push({
             key: row_id,
+            title: tmp.title,
             title_i18n: tmp.title_i18n,
             add: "New",
             style: {add:"btn-success"},
             items: [{
+              title: tmp.title,
+              title_i18n: tmp.title_i18n,
               key: row_id+'[].interim',
               type: tmp.input_type,    // radios|select
               notitle: true,
@@ -666,15 +687,30 @@ $(document).ready(function () {
           });
         } else {
           page_global.table_row_map.schema.properties[row_id] = {
-            type: "string",
             title: tmp.title,
-            enum: enum_tmp
+            title_i18n: tmp.title_i18n,
+            type: "object",
+            properties: {
+              "interim": {// [interim]は本当の意味を持たない
+                title: tmp.title,
+                type: "string",
+                enum: enum_tmp,
+                format: tmp.input_type,    // radios|select
+              }
+            }
           }
           page_global.table_row_map.form.push({
-            key: row_id,
+            title: tmp.title,
             title_i18n: tmp.title_i18n,
-            type: tmp.input_type,    // radios|select
-            titleMap: titleMap_tmp
+            items: [{
+              key: row_id + '.interim',
+              type: tmp.input_type,    // radios|select
+              title_i18n: tmp.title_i18n,
+              title: tmp.title,
+              titleMap: titleMap_tmp
+            }],
+            key: row_id,
+            type: "fieldset"
           });
         }
       } else if(tmp.input_type.indexOf('cus_') != -1) {
@@ -984,9 +1020,6 @@ $(document).ready(function () {
       render_object('schema_'+meta_id, product);
     } else if('checkboxes' == $(this).val() || 'radios' == $(this).val()
             || 'select' == $(this).val()){
-      $('#chk_prev_' + meta_id + '_1').addClass('disabled');
-      checkboxMetaId.attr('disabled', true);
-      checkboxMetaId.attr('checked', false);
       checkboxMetaId.prop("checked", isAllowMultiple);
       render_select('schema_'+meta_id, '');
     } else {
@@ -1040,7 +1073,14 @@ $(document).ready(function () {
         }
       },
       error: function(textStatus,errorThrown){
-        $('.modal-body').text('Error: ' + JSON.stringify(textStatus));
+        let message;
+        if (textStatus.status === 400) {
+          let response = JSON.parse(textStatus.responseText);
+          message = response.msg;
+        } else {
+          message = JSON.stringify(textStatus);
+        }
+        $('.modal-body').text('Error: ' + message);
         $('#myModal').modal('show');
       }
     });
@@ -1168,8 +1208,18 @@ $(document).ready(function () {
     }
   });
 
-  if($('#item-type-lists').val().length > 0) {
-    $.get('/admin/itemtypes/' + $('#item-type-lists').val() + '/render', function(data, status){
+  function endLoading() {
+    if(requestNum == 0){
+      $(".container").removeClass("hidden");
+      $(".lds-ring-background").addClass("hidden");
+    }
+  }
+
+  if ($('#item-type-lists').val().length > 0) {
+// This condition contains 2 callbacks(requests), if you add new here
+// or somewhere else, please increase/decrease this value too
+    requestNum = 2;
+    $.get('/admin/itemtypes/' + $('#item-type-lists').val() + '/render', function (data, status) {
       let changedProperties = [];
       Object.keys(data).forEach(function(key) {
         src_render[key] = data[key];
@@ -1255,8 +1305,6 @@ $(document).ready(function () {
           }
         } else if('checkboxes' == data.meta_list[row_id].input_type || 'radios' == data.meta_list[row_id].input_type
                 || 'select' == data.meta_list[row_id].input_type){
-          $('#chk_prev_' + row_id + '_1').addClass('disabled');
-          $('#chk_' + row_id + '_1').attr('disabled', true);
           render_select('schema_'+row_id, data.meta_list[row_id].input_value);
         } else {
           render_empty('schema_'+row_id);
@@ -1273,11 +1321,15 @@ $(document).ready(function () {
       if($('input[type=radio][name=item_type]:checked').val() === 'deleted') {
         $('div.metadata-content *').not('[id=btn_restore_itemtype_schema]').prop('disabled', true);
       }
+      requestNum--;
+      endLoading();
     });
     $.get('/api/itemtypes/' + $('#item-type-lists').val() + '/mapping', function(data, status){
       Object.keys(data).forEach(function(key){
         src_mapping[key] = data[key];
       });
+      requestNum--;
+      endLoading();
     });
   }
   $('input[type=radio][name=item_type][value=normal]').click()
@@ -1607,6 +1659,9 @@ $(document).ready(function () {
   }
 
   function setRequiredListFromItemTypeToProperty(property,itemType) {
+    if (property == undefined || itemType == undefined){
+      return;
+    }
     if (itemType.hasOwnProperty("required")) {
       property["required"] = itemType["required"]
     }
@@ -1746,7 +1801,12 @@ $(document).ready(function () {
       if (property.hasOwnProperty('items'))
         delete property.items
     }
-    if (property.format == 'checkboxes') {
+     if (property.format == 'radios') {
+      form.type = "radios"
+      if (form.hasOwnProperty('templateUrl')){
+        delete form.templateUrl
+      }
+    } else if (property.format == 'checkboxes') {
       property['items'] = {
         type: "string",
         enum: property.enum

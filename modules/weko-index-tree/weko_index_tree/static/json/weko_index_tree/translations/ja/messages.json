@@ -63,6 +63,18 @@
         null,
         "所属しているアイテムのメタデータを外部に公開しない場合はチェックをOFFにしてください"
     ],
+    "Online_Issn": [
+        null,
+        "ONLINE ISSN"
+    ],
+    "Biblio_Flag_Text": [
+        null,
+        "このインデックス直下のアイテムの利用統計を集計する"
+    ],
+    "Biblio_Flag_Warning": [
+        null,
+        "※子インデックスへ再帰的に設定値が反映されます"
+    ],
     "Browsing_Privilege": [
         null,
         "閲覧権限"
@@ -162,5 +174,13 @@
     "Display": [
         null,
         "表示する"
+    ],
+    "Msg_Save_DOI": [
+        null,
+        "DOI付与済みのアイテムがあるため、このインデックスを非公開にすることはできません。"
+    ],
+    "Msg_Delete_DOI": [
+        null,
+        "DOI付与済みのアイテムがあるため、このインデックスを削除することはできません。"
     ]
 }

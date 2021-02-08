@@ -112,3 +112,9 @@ msgstr "アップロード開始"
 
 #~ msgid "Display"
 #~ msgstr "表示する"
+
+msgid "This item cannot be set to private because a DOI is granted."
+msgstr "DOIが付与されているため、このアイテムを非公開にすることはできません。"
+
+msgid "This item cannot be deleted because a DOI is granted."
+msgstr "DOIが付与されているため、このアイテムを削除することはできません。"

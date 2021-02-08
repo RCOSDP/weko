@@ -735,7 +735,7 @@ class WidgetDesignPageServices:
         :return: formatted data of WidgetDesignPage.
         """
         result = {
-            'result': False,
+            'result': True,
             'error': ''
         }
         is_edit = data.get('is_edit', False)
@@ -751,7 +751,7 @@ class WidgetDesignPageServices:
         multi_lang_data = data.get('multi_lang_data')
         is_main_layout = data.get('is_main_layout')
         try:
-            result['result'] = WidgetDesignPage.create_or_update(
+            WidgetDesignPage.create_or_update(
                 repository_id, Markup.escape(title), url,
                 Markup.escape(content), page_id=page_id,
                 settings=settings, multi_lang_data=multi_lang_data,
@@ -759,13 +759,15 @@ class WidgetDesignPageServices:
             )
 
             # Update Main Layout Id for widget design setting and widget item
-            if result['result'] and is_main_layout and is_edit:
+            if is_main_layout and is_edit:
                 cls._update_main_layout_id_for_widget(repository_id)
 
-        except IntegrityError:
-            result['error'] = _('Unable to save page: URL already exists.')
-        except Exception as e:
-            current_app.logger.error(e)
+        except ValueError as ex:
+            result['result'] = False
+            result['error'] = 'Unable to save page: {}'.format(str(ex))
+        except Exception as ex:
+            current_app.logger.error(ex)
+            result['result'] = False
             result['error'] = _('Unable to save page: Unexpected error.')
         return result
 

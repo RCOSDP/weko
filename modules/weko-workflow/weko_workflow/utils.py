@@ -37,6 +37,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from weko_admin.models import Identifier
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
+from weko_index_tree.models import Index
 from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypes, \
     Mapping
 from weko_records.serializers.utils import get_mapping
@@ -119,6 +120,7 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
                 identifier = IdentifierHandle(item_id)
                 identifier.update_idt_registration_metadata(doi_register_val,
                                                             doi_register_typ)
+            update_indexes_public_state(item_id)
             current_app.logger.info(_('DOI successfully registered!'))
     except Exception as ex:
         current_app.logger.exception(str(ex))
@@ -239,7 +241,7 @@ def item_metadata_validation(item_id, identifier_type):
             'doi': '',
             'url': '',
             "msg": 'Resource Type Property either missing '
-            'or jpcoar mapping not correct!',
+                   'or jpcoar mapping not correct!',
             'error_type': 'no_resource_type'
         }
 
@@ -262,8 +264,8 @@ def item_metadata_validation(item_id, identifier_type):
         # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
         # 別表2-6 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【汎用データ】
         if resource_type in journalarticle_type \
-            or resource_type in report_types \
-            or (resource_type in elearning_type) \
+                or resource_type in report_types \
+                or (resource_type in elearning_type) \
                 or resource_type in datageneral_types:
             required_properties = ['title']
             if item_type.item_type_name.name != ddi_item_type_name:
@@ -1036,7 +1038,7 @@ def delete_unregister_buckets(record_uuid):
                         delete_record_bucket = RecordsBuckets.query.filter_by(
                             bucket_id=draft_object.bucket_id).all()
                         if len(delete_record_bucket) == 1:
-                            delete_pid_object = PersistentIdentifier.query.\
+                            delete_pid_object = PersistentIdentifier.query. \
                                 filter_by(pid_type='recid',
                                           object_type='rec',
                                           object_uuid=delete_record_bucket[
@@ -1245,14 +1247,14 @@ def prepare_edit_workflow(post_activity, recid, deposit):
 
         if identifier:
             if identifier.get('action_identifier_select') > \
-                    current_app.config.get(
-                        "WEKO_WORKFLOW_IDENTIFIER_GRANT_DOI", 0):
+                current_app.config.get(
+                    "WEKO_WORKFLOW_IDENTIFIER_GRANT_DOI", 0):
                 identifier['action_identifier_select'] = \
                     current_app.config.get(
                         "WEKO_WORKFLOW_IDENTIFIER_GRANT_CAN_WITHDRAW", -1)
             elif identifier.get('action_identifier_select') == \
-                    current_app.config.get(
-                        "WEKO_WORKFLOW_IDENTIFIER_GRANT_IS_WITHDRAWING", -2):
+                current_app.config.get(
+                    "WEKO_WORKFLOW_IDENTIFIER_GRANT_IS_WITHDRAWING", -2):
                 identifier['action_identifier_select'] = \
                     current_app.config.get(
                         "WEKO_WORKFLOW_IDENTIFIER_GRANT_WITHDRAWN", -3)
@@ -1329,7 +1331,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                 _deposit = WekoDeposit(_record, _record.model)
                 _deposit['path'] = deposit.get('path', [])
 
-                parent_record = _deposit.\
+                parent_record = _deposit. \
                     merge_data_to_record_without_version(current_pid)
                 _deposit.publish()
 
@@ -1346,14 +1348,14 @@ def handle_finish_workflow(deposit, current_pid, recid):
                         maintain_record,
                         maintain_record.model)
                     maintain_deposit['path'] = deposit.get('path', [])
-                    new_parent_record = maintain_deposit.\
+                    new_parent_record = maintain_deposit. \
                         merge_data_to_record_without_version(current_pid)
                     maintain_deposit.publish()
                     combine_record_file_urls(new_parent_record)
                     new_parent_record.update_feedback_mail()
                     new_parent_record.commit()
                     updated_item.publish(new_parent_record)
-                else:   # Handle Upgrade workflow
+                else:  # Handle Upgrade workflow
                     draft_pid = PersistentIdentifier.get(
                         'recid',
                         '{}.0'.format(pid_without_ver.pid_value)
@@ -1361,7 +1363,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     draft_deposit = WekoDeposit.get_record(
                         draft_pid.object_uuid)
                     draft_deposit['path'] = deposit.get('path', [])
-                    new_draft_record = draft_deposit.\
+                    new_draft_record = draft_deposit. \
                         merge_data_to_record_without_version(current_pid)
                     draft_deposit.publish()
                     combine_record_file_urls(new_draft_record)
@@ -1501,3 +1503,25 @@ def create_files_url(root_url, record_id, filename):
         root_url,
         record_id,
         filename)
+
+
+def update_indexes_public_state(item_id):
+    """Update indexes public state.
+
+    :param item_id: Item id.
+
+    :return:
+    """
+    rm = RecordMetadata.query.filter_by(id=item_id).first()
+    index_id_list = rm.json['path']
+    updated_index_ids = []
+    update_db = False
+    for index_ids in index_id_list:
+        for index_id in index_ids.split('/'):
+            if index_id not in updated_index_ids:
+                updated_index_ids.append(index_id)
+                update_db = True
+                index = Index.query.filter_by(id=index_id).first()
+                index.public_state = True
+    if update_db:
+        db.session.commit()

@@ -18,7 +18,7 @@ const save_label = document.getElementById("save_label").value;
 const must_set_at_least_1_site_name_label = document.getElementById("must_set_at_least_1_site_name_label").value;
 const please_input_site_infomation_for_empty_field_label = document.getElementById("please_input_site_infomation_for_empty_field_label").value;
 const the_same_language_is_set_for_many_site_names_label = document.getElementById("the_same_language_is_set_for_many_site_names_label").value;
-const the_notify_limit_to_200_characters = document.getElementById("the_notify_limit_to_200_characters").value;
+const the_notify_limit_to_1000_characters = document.getElementById("the_notify_limit_to_1000_characters").value;
 const the_same_language_is_set_for_many_notify_label = document.getElementById("the_same_language_is_set_for_many_notify_label").value;
 const error_when_get_languages_label = document.getElementById("error_when_get_languages_label").value;
 const error_when_get_site_infomation_label = document.getElementById("error_when_get_site_infomation_label").value;
@@ -324,9 +324,9 @@ class MainLayout extends React.Component {
             status: false
           }
         }
-        if(item.notify_name.length > 200){
+        if(item.notify_name.length > 1000){
           return {
-            message : the_notify_limit_to_200_characters,
+            message : the_notify_limit_to_1000_characters,
             item: [`site_name_${item.index}`],
             status: false
           }
@@ -567,7 +567,7 @@ class MainLayout extends React.Component {
                         </div>
                         <div className="col-md-6">
                           <textarea
-                            maxlength="200"
+                            maxlength="1000"
                             rows="3"
                             className="form-control"
                             id="notify_name"

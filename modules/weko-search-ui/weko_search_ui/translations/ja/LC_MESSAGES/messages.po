@@ -522,8 +522,14 @@ msgstr "指定されたアイテムタイプが最新のバージョンでない
 msgid "The following items are not registered because they do not exist in the specified item type. {}"
 msgstr "次の項目指定されたアイテムタイプに存在しないため登録されません。{}"
 
-msgid "The item does not consistent with the specified item type."
-msgstr "指定されたアイテムタイプと項目が一致しません。"
+msgid "The item does not consistent with the specified item type.<br/>{}"
+msgstr "指定されたアイテムタイプと項目が一致しません。<br/>{}"
 
 msgid "Cannot read tsv file correctly."
 msgstr "TSVファイルが正しく読み込めません。"
+
+msgid "Please specify Open Access Date with YYYY-MM-DD."
+msgstr "オープンアクセスの日付はYYYY-MM-DDで指定してください。"
+
+msgid "The following metadata keys are duplicated.<br/>{}"
+msgstr "以下のメタデータキーが重複しています。<br/>{}"

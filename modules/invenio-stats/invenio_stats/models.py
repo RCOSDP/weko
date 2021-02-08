@@ -39,7 +39,11 @@ class _StataModelBase(Timestamp):
         default=lambda: dict(),
         nullable=True,
     )
-    date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    date = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+        index=True)
 
     @classmethod
     def get_all(
@@ -185,7 +189,8 @@ def _generate_id():
     :return:
     """
     current_time = datetime.utcnow().isoformat()
-    return str(uuid4()) + hashlib.sha1(current_time.encode("utf-8")).hexdigest()
+    return str(uuid4()) + \
+        hashlib.sha1(current_time.encode("utf-8")).hexdigest()
 
 
 __all__ = [

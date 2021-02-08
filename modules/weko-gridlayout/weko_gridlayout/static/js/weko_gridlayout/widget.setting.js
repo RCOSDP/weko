@@ -929,12 +929,10 @@ class ExtendComponent extends React.Component {
   }
 
   generateDisplayResult() {
-    let displayResult = ['5', '10', '20', '50', '100'];
+    let displayResult = ['0', '5', '10', '20', '50', '100'];
 
     let options = displayResult.map((value) => {
-      return (
-        <option>{value}</option>
-      )
+      return <option key={value}>{value}</option>;
     });
 
     return (

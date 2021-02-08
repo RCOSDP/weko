@@ -516,8 +516,14 @@ msgstr ""
 msgid "The following items are not registered because they do not exist in the specified item type. {}"
 msgstr ""
 
-msgid "The item does not consistent with the specified item type."
+msgid "The item does not consistent with the specified item type.<br/>{}"
 msgstr ""
 
 msgid "Cannot read tsv file correctly."
+msgstr ""
+
+msgid "Please specify Open Access Date with YYYY-MM-DD."
+msgstr ""
+
+msgid "The following metadata keys are duplicated.<br/>{}"
 msgstr ""

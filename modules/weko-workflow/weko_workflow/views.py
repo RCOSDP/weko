@@ -60,7 +60,7 @@ from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
-from .models import ActionStatusPolicy, ActivityStatusPolicy
+from .models import ActionStatusPolicy, ActivityStatusPolicy, WorkflowRole
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import IdentifierHandle, delete_cache_data, filter_condition, \
     get_account_info, get_actionid, \
@@ -159,6 +159,11 @@ def iframe_success():
     page, render_widgets = get_design_layout(
         community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
 
+    work_activity = WorkActivity()
+    activity_action = work_activity.get_activity_action_comment(
+        activity.activity_id, action_id)
+    action_comment = activity_action.action_comment \
+        if activity_action and activity_action.action_comment else ''
     return render_template('weko_workflow/item_login_success.html',
                            page=page,
                            render_widgets=render_widgets,
@@ -172,6 +177,7 @@ def iframe_success():
                            res_check=res_check,
                            pid=pid,
                            community_id=community_id,
+                           action_comment=action_comment,
                            **ctx)
 
 
@@ -181,6 +187,7 @@ def new_activity():
     """New activity."""
     workflow = WorkFlow()
     workflows = workflow.get_workflow_list()
+    workflows = workflow.get_workflows_by_roles(workflows)
     getargs = request.args
     ctx = {'community': None}
     community_id = ""
