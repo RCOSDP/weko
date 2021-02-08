@@ -270,6 +270,7 @@
 
             $scope.ok = function() {
                 $scope.modalInstance.hide();
+                $('body').removeClass('modal-open');
                 $http({
                     method: 'GET',
                     url: "/api/items/check_record_doi/" + id,
@@ -296,6 +297,7 @@
 
             $scope.cancel = function() {
                 $scope.modalInstance.hide();
+                $('body').removeClass('modal-open');
             };
         };
 

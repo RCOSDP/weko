@@ -174,13 +174,5 @@
     "Display": [
         null,
         "Display"
-    ],
-    "Msg_Save_DOI": [
-        null,
-        "This index cannot be set to private because there are some items have been granted DOI."
-    ],
-    "Msg_Delete_DOI": [
-        null,
-        "This index cannot be deleted because there are some items have been granted DOI."
-     ]
+    ]
 }
