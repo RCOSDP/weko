@@ -416,9 +416,6 @@
 				for (var key in item.items.properties) {
 					if (disable == true) {
 						item.items.properties[key][option.disableKey] = true;
-						if (option.optionKey === "isHide") {
-							item.items.properties[key][option.optionKey] = true;
-						}
 						this.handleOptionDisable(item.items.properties[key], true, option)
 					}
 					else {
@@ -434,9 +431,6 @@
 				for (var key in item.properties) {
 					if (disable == true) {
 						item.properties[key][option.disableKey] = true;
-						if (option.optionKey === "isHide") {
-							item.properties[key][option.optionKey] = true;
-						}
 						this.handleOptionDisable(item.properties[key], true, option)
 					}
 					else {

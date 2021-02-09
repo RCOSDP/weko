@@ -1018,7 +1018,6 @@ $(document).ready(function () {
           product.properties[key]["specifyNLDisable"] = true
         }
         if(isFile){
-          product.properties[key]["isHide"] = true
           product.properties[key]["hideDisable"] = true
         }
       }
@@ -1314,7 +1313,6 @@ $(document).ready(function () {
               properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["specifyNLDisable"] = true
             }
             if(isFile){
-              properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["isHide"] = true
               properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["hideDisable"] = true
             }
           }
