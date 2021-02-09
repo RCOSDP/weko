@@ -29,7 +29,7 @@ from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
-from weko_admin.models import BillingPermission
+from weko_admin.models import AdminSettings, BillingPermission
 from weko_records.api import ItemsMetadata, ItemTypeEditHistory, \
     ItemTypeNames, ItemTypeProps, ItemTypes, Mapping
 from weko_schema_ui.api import WekoSchema
@@ -271,8 +271,18 @@ class ItemTypeMetaDataView(BaseView):
                    'forms': k.forms, 'sort': k.sort, 'is_file': is_file}
             lists[k.id] = tmp
 
-        lists['defaults'] = current_app.config[
-            'WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES']
+        settings = AdminSettings.get('default_properties_settings')
+        default_properties = current_app.config['WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES']
+        if settings:
+            if settings.show_flag:
+                lists['defaults'] = default_properties
+            else:
+                lists['defaults'] = {}
+        else:
+            if current_app.config['WEKO_ITEMTYPES_UI_SHOW_DEFAULT_PROPERTIES']:
+                lists['defaults'] = default_properties
+            else:
+                lists['defaults'] = {}
 
         return jsonify(lists)
 
