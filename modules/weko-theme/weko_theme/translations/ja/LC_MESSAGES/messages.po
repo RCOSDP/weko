@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-theme 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2021-02-08 14:37+0000\n"
+"POT-Creation-Date: 2021-02-09 08:07+0000\n"
 "PO-Revision-Date: 2018-04-12 18:01+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -157,7 +157,7 @@ msgstr "インデックスリンク"
 msgid "Index Tree"
 msgstr "インデックスツリー"
 
-#: weko_theme/templates/weko_theme/body_search.html:27
+#: weko_theme/templates/weko_theme/body_search.html:28
 msgid "Type and press enter to search"
 msgstr "入力後、Enterキーを押下し検索してください"
 
@@ -170,11 +170,16 @@ msgstr "検索"
 msgid "Advanced"
 msgstr "詳細検索"
 
-#: weko_theme/templates/weko_theme/body_search.html:51
+#: weko_theme/templates/weko_theme/body_search.html:43
+#: weko_theme/templates/weko_theme/macros/modal_page.html:67
+msgid "Close"
+msgstr "閉じる"
+
+#: weko_theme/templates/weko_theme/body_search.html:53
 msgid "Full text"
 msgstr "全文"
 
-#: weko_theme/templates/weko_theme/body_search.html:55
+#: weko_theme/templates/weko_theme/body_search.html:57
 msgid "Keyword"
 msgstr "キーワード"
 
@@ -278,10 +283,6 @@ msgstr ""
 #: weko_theme/templates/weko_theme/macros/modal_page.html:94
 msgid "Cancel"
 msgstr "キャンセル"
-
-#: weko_theme/templates/weko_theme/macros/modal_page.html:67
-msgid "Close"
-msgstr "閉じる"
 
 #: weko_theme/templates/weko_theme/macros/tabs_selector.html:24
 #: weko_theme/templates/weko_theme/macros/tabs_selector.html:29

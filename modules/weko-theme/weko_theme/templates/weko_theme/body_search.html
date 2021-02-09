@@ -22,23 +22,25 @@
   <form id="search-form" action="/search">
     <div class="row" style="height: 100%">
       <div class="col-sm-6 col-md-6 col-lg-6
-      col-sm-offset-3 col-md-offset-3 col-lg-offset-3" style="height:100%">
-        <div id="search_simple" class="input-group" id="simple-search-btn">
-          <input type="text" id="q" name="q" class="form-control" placeholder="{{_('Type and press enter to search')}}"
-            ng-model="search_q">
-          <input type="hidden" id="community" name="community" class="form-control" value="{{community_id}}">
+      col-sm-offset-3 col-md-offset-3 col-lg-offset-3 clearfix" style="height:100%">
+        <div id="search_simple" id="simple-search-btn" class="input-group" style="width: 100%;">
+            <input class="form-control" type="text" id="q" name="q"
+            placeholder="{{_('Type and press enter to search')}}" ng-model="search_q">
+            <input class="form-control" type="hidden" id="community" name="community" value="{{community_id}}">
           <div class="input-group-btn">
             <button id="top-search-btn" type="submit" class="btn btn-primary">
-              <i class="fa fa-search fa-lg"></i>
-              <span>&nbsp{{_('Search')}}&nbsp</span>
+              <i class="fa fa-search fa-lg">&nbsp</i>
+              <span id="simple-search-txt">{{_('Search')}}</span>
             </button>
           </div>
         </div>
         <div class="row-line-space"></div>
         <div id="search_detail" class="input-group pull-right">
           <button id="detail_search_main" class="btn btn-info" type="button">
-            <i class="fa fa-angle-down fa-lg"></i>
-            <span>&nbsp{{_('Advanced')}}&nbsp</span>
+            <i class="fa fa-angle-down fa-lg detail-search-open">&nbsp</i>
+            <span class="detail-search-open">{{_('Advanced')}}</span>
+            <i class="fa fa-angle-up fa-lg detail-search-close">&nbsp</i>
+            <span class="detail-search-close">{{_('Close')}}</span>
           </button>
         </div>
       </div>
