@@ -227,7 +227,6 @@ require([
         var urlParams = new URLSearchParams(window.location.search);
         var isDetailSearch = Array.from(urlParams.keys()).length > 6  // 6は簡易検索の際のクエリの数
         if (isDetailSearch) {
-            $('#top-search-btn').hide();
             $('#search_detail_metadata').collapse('show');
             $('.detail-search-open').hide();
             $('.detail-search-close').show();
@@ -260,13 +259,11 @@ require([
             var isExpanded = $('#search_detail').hasClass('expanded');
 
             if (isExpanded) {
-                $('#top-search-btn').show();
                 $('#search_detail_metadata').collapse('hide');
                 $('.detail-search-close').hide();
                 $('.detail-search-open').show();
                 $('#search_detail').removeClass('expanded');
             } else {
-                $('#top-search-btn').hide();
                 $('#search_detail_metadata').collapse('show');
                 $('.detail-search-open').hide();
                 $('.detail-search-close').show();
