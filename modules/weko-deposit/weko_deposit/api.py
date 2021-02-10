@@ -1287,7 +1287,8 @@ class WekoRecord(Record):
                     continue
                 # Get file with current version id.
                 file_metadata_temp = []
-                exclude_attr = ['displaytype', 'accessrole', 'licensetype']
+                exclude_attr = [
+                    'displaytype', 'accessrole', 'licensetype', 'licensefree']
                 filename = request.args.get("filename", None)
                 for f in file_metadata:
                     if f.get('filename', None) == filename:
