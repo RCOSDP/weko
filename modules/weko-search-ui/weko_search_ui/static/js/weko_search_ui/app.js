@@ -154,13 +154,22 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
             descOrEsc = "-";
             key_sort = key_sort.replace("_desc", "");
           }
+         
+          // Default param
+          let param = {
+            page: 1,
+            size: data.dlt_dis_num_selected,
+            sort: descOrEsc + key_sort
+          };
+
+          // If initial display setting is root index
+          if (data.init_disp_setting.init_disp_index === "0") {
+            param['search_type'] = "0";
+            param['q'] = "0";
+          }
           $rootScope.vm.invenioSearchCurrentArgs = {
             method: "GET",
-            params: {
-              page: 1,
-              size: data.dlt_dis_num_selected,
-              sort: descOrEsc + key_sort
-            },
+            params: param
           };
         }
       }
