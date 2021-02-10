@@ -59,7 +59,7 @@ WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL = '{}secure/login.php'
 """Login proxy URL."""
 
 WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP = {
-    'SHIB_ATTR_EPPN': (True, 'shib_eppn'),
+    'SHIB_ATTR_EPPN': (False, 'shib_eppn'),
     # "SHIB_ATTR_LOGIN_ID": (False, 'shib_uid'),
     # "SHIB_ATTR_HANDLE": (False, 'shib_handle'),
     'SHIB_ATTR_ROLE_AUTHORITY_NAME': (False, 'shib_role_authority_name'),
@@ -74,7 +74,8 @@ WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP = {
 WEKO_ACCOUNTS_SHIB_ROLE_RELATION = {
     '管理者': 'System Administrator',
     '図書館員': 'Repository Administrator',
-    '教員': 'Contributor'
+    '教員': 'Contributor',
+    '教官': 'Contributor'
 }
 """Role relation."""
 
@@ -89,3 +90,6 @@ WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED = True
 
 WEKO_ACCOUNTS_SHIB_DP_LOGIN_DIRECTLY_ENABLED = True
 """Enable Shibboleth login system using DP selection only."""
+
+WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN = True
+"""Allow using SHIB_ATTR_USER_NAME instead of SHIB_ATTR_EPPN."""
