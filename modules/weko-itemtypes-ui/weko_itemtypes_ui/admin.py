@@ -259,17 +259,18 @@ class ItemTypeMetaDataView(BaseView):
         lists = {}
         for k in props:
             name = k.name
-            if lang and 'title_i18n' in k.form and \
-                lang in k.form['title_i18n'] and \
-                    k.form['title_i18n'][lang]:
-                name = k.form['title_i18n'][lang]
-            is_file = False
-            if (k.schema.get('properties')
-                    and k.schema.get('properties').get('filename')):
-                is_file = True
-            tmp = {'name': name, 'schema': k.schema, 'form': k.form,
-                   'forms': k.forms, 'sort': k.sort, 'is_file': is_file}
-            lists[k.id] = tmp
+            if name and name[:2] != 'S_':
+                if lang and 'title_i18n' in k.form and \
+                    lang in k.form['title_i18n'] and \
+                        k.form['title_i18n'][lang]:
+                    name = k.form['title_i18n'][lang]
+                is_file = False
+                if (k.schema.get('properties')
+                        and k.schema.get('properties').get('filename')):
+                    is_file = True
+                tmp = {'name': name, 'schema': k.schema, 'form': k.form,
+                    'forms': k.forms, 'sort': k.sort, 'is_file': is_file}
+                lists[k.id] = tmp
 
         settings = AdminSettings.get('default_properties_settings')
         default_properties = current_app.config['WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES']
