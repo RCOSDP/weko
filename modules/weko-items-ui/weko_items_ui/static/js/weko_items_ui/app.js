@@ -3220,7 +3220,7 @@ function toObject(arr) {
             if (!newData['title']) {
               newData['title'] = item.title;
             }
-            newData['id'] = item.key[item.key.length - 1]
+            newData['id'] = item.key.join('.').replaceAll('..', '.0.')
             result.push(newData);
           }
         }
