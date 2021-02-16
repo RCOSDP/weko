@@ -17,6 +17,7 @@ require([
         }
         return false;
     }
+
     //urlからパラメタ―のキーを取得する
     function IsParamKey(sParam) {
         var sURL = window.location.search.substring(1);
@@ -38,11 +39,11 @@ require([
         var input = '';
         var IsRec = window.location.pathname.indexOf('records') > -1;
 
-        //      $('#search_detail_metadata :input:not(:checkbox), #q, #search_type :input').each(function(){
         $('#search_detail_metadata :input:not(:checkbox), #q, #search_type :input').each(function () {
             if (IsRec) {
                 input = sessionStorage.getItem($(this).attr('id'));
             } else {
+
                 if (SearchType && SearchType != '2') {
                     if (IsParamKey($(this).attr('id'))) {
                         input = GetUrlParam($(this).attr('id'));
@@ -51,10 +52,12 @@ require([
                     sessionStorage.removeItem($(this).attr('id'));
                 }
             }
+
             // 詳細展開 値入力残
             if (btn) {
                 if (btn == 'detail-search') {
                     if (IsParamKey($(this).attr('id')) || IsRec) {
+
                         if (input && input !== '') {
                             //type is text
                             $(this).val(input);
@@ -74,6 +77,7 @@ require([
                 $('#search_type_fulltext').prop('checked', true);
             }
         });
+
         // type is checkbox radio
         $('#search_detail_metadata :input:not(:text)').each(function () {
             if (IsRec) {
@@ -85,6 +89,7 @@ require([
                     sessionStorage.removeItem($(this).attr('id'));
                 }
             }
+
             // 詳細展開 値入力残
             if (btn) {
                 if (btn == 'detail-search') {
@@ -138,49 +143,58 @@ require([
         } else {
             sessionStorage.setItem('search_type', '1');
         }
+
         $('#search-form').submit(function (event) {
-            var search = window.location.search
-            search = insertParam(search, "page", 1)
+            var search = '';
+            search = insertParam(search, "page", 1);
             $('#search_type :input:checked').each(function () {
                 var list_params = $(this).serializeArray();
                 list_params.map(function (item) {
-                    search = insertParam(search, item.name, item.value)
+                    search = insertParam(search, item.name, item.value);
                 })
             });
             $('#q').serializeArray().map(function (item) {
-                search = insertParam(search, item.name, item.value)
+                search = insertParam(search, item.name, item.value);
             })
+
             if ($('#community').val() && $('#q').val.trim().length > 0) {
                 $('#community').serializeArray().map(function (item) {
-                    search = insertParam(search, item.name, item.value)
+                    search = insertParam(search, item.name, item.value);
                 })
             }
+
             // var btn = sessionStorage.getItem('btn', '');
             let data = getDefaultSetting();
             let key_sort = data.dlt_keyword_sort_selected;
             let size = data.dlt_dis_num_selected;
+
             if (key_sort.indexOf("_asc") !== -1) {
                 key_sort = key_sort.replace("_asc", "");
             }
+
             if (key_sort.indexOf("_desc") !== -1) {
                 key_sort = key_sort.replace("_desc", "");
                 key_sort = "-" + key_sort;
             }
+
             if (!window.location.search.includes(key_sort)) {
                 search = insertParam(search, "sort", key_sort);
             }
+
             if (size !== null && size !== undefined) {
                 search = insertParam(search, "size", size);
             }
+
             if ($("#item_management_bulk_update").length != 0) {
-                search = insertParam(search, "item_management", "update")
-                window.location.href = "/admin/items/search" + search
+                search = insertParam(search, "item_management", "update");
+                window.location.href = "/admin/items/search" + search;
             } else if ($("#item_management_bulk_delete").length != 0) {
-                search = insertParam(search, "item_management", "delete")
-                window.location.href = "/admin/items/search" + search
+                search = insertParam(search, "item_management", "delete");
+                window.location.href = "/admin/items/search" + search;
             } else {
                 window.location.href = "/search" + search;
             }
+
             // stop the form from submitting the normal way and refreshing the page
             event.preventDefault();
         })
@@ -188,14 +202,10 @@ require([
 
     function insertParam(search, key, value) {
         key = encodeURIComponent(key); value = encodeURIComponent(value);
-
         var s = search;
         var kvp = key + "=" + value;
-
         var r = new RegExp("(&|\\?)" + key + "=[^\&]*");
-
         s = s.replace(r, "$1" + kvp);
-
         if (!RegExp.$1) { s += (s.length > 0 ? '&' : '?') + kvp; };
 
         //again, do what you will here
@@ -204,6 +214,7 @@ require([
 
     function getDefaultSetting() {
         let data = null;
+
         $.ajax({
             async: false,
             method: 'GET',
@@ -216,6 +227,7 @@ require([
         }, function errorCallback(error) {
             console.log(error);
         });
+
         return data;
     }
 
@@ -226,6 +238,7 @@ require([
         // 詳細検索からページ遷移した場合、詳細検索のアコーディオンを開いた状態にして、ボタンのテキストを「閉じる」にセット
         var urlParams = new URLSearchParams(window.location.search);
         var isDetailSearch = Array.from(urlParams.keys()).length > 6  // 6は簡易検索の際のクエリの数
+
         if (isDetailSearch) {
             $('#search_detail_metadata').collapse('show');
             $('.detail-search-open').hide();
@@ -235,6 +248,7 @@ require([
 
         // 簡易検索ボタン
         $('#top-search-btn').on('click', function () {
+            sessionStorage.removeItem('detail_search_conditions');
             sessionStorage.setItem('btn', 'simple-search');
             SearchSubmit();
         });
@@ -242,14 +256,17 @@ require([
         $('#search_type_fulltext, #search_type_keyword').on('click', function () {
             let data = getDefaultSetting();
             let key_sort = data.dlt_keyword_sort_selected;
+
             if (key_sort.indexOf("_asc") !== -1) {
                 key_sort = key_sort.replace("_asc", "");
                 document.getElementById('sortType').value = "asc";
             }
+
             if (key_sort.indexOf("_desc") !== -1) {
                 key_sort = key_sort.replace("_desc", "");
                 document.getElementById('sortType').value = "desc";
             }
+
             document.getElementById('selectedDisplay').value = key_sort;
             document.getElementById('page_count').value = data.dlt_dis_num_selected;
         });
@@ -277,9 +294,18 @@ require([
             SearchSubmit();
         });
 
+        // 詳細検索ボタン：フォームのテキスト入力でエンターキーを押したら検索する
+        $('.detail-search-text').keypress(function (event) {
+            // 13はエンターキー
+            if (event.which == 13) {
+              $('#detail-search-btn').click();
+            }
+        });
+
         // アイテム検索結果 (search_ui/static/templates/itemlist.html)
         $('#q').on('change', function () {
             $('#search_detail_metadata :input:not(:checkbox), #q').each(function () {
+
                 if ($(this).val() !== '') {
                     sessionStorage.setItem($(this).attr('id'), $(this).val());
                 } else {
@@ -288,15 +314,15 @@ require([
             });
         });
 
-        //        // アイテム検索結果 (search_ui/static/templates/itemlist.html)
-        //        $('#search_detail_metadata :input:not(:text)').on('click', function () {
-        //            $('#search_detail_metadata :input:not(:text)').each(function () {
-        //                if ($(this).is(":checked")) {
-        //                    sessionStorage.setItem($(this).attr('id'), $(this).val());
-        //                } else {
-        //                    sessionStorage.removeItem($(this).attr('id'));
-        //                }
-        //            });
-        //        });
+        // // アイテム検索結果 (search_ui/static/templates/itemlist.html)
+        // $('#search_detail_metadata :input:not(:text)').on('click', function () {
+        //   $('#search_detail_metadata :input:not(:text)').each(function () {
+        //     if ($(this).is(":checked")) {
+        //       sessionStorage.setItem($(this).attr('id'), $(this).val());
+        //     } else {
+        //       sessionStorage.removeItem($(this).attr('id'));
+        //     }
+        //   });
+        // });
     });
 });

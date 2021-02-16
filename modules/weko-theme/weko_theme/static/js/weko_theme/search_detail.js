@@ -7,7 +7,6 @@
             $scope.condition_data = [];
             $scope.detail_search_key = [];
             $scope.default_search_key = [];
-            $scope.search_q = "";
             $scope.search_community = document.getElementById('community').value;
             $scope.search_type = "0";
             $scope.default_condition_data = []
@@ -16,6 +15,7 @@
             $scope.initData = function (data) {
                 json_obj = angular.fromJson(data)
                 db_data = json_obj.condition_setting;
+
                 angular.forEach(db_data, function (item, index, array) {
                     // useable
                     if (item.useable_status) {
@@ -30,6 +30,7 @@
                         obj_key.inx = index;
                         $scope.detail_search_key.push(obj_key);
                     };
+
                     // default display
                     if (item.default_display) {
                         var default_key = {
@@ -43,23 +44,28 @@
                         $scope.default_search_key.push(default_key);
                     };
                 });
+
                 angular.forEach($scope.default_search_key, function (item, index, array) {
                     var obj_of_condition = {
                         selected_key: '',
                         key_options: [],
                         key_value: {}
-                    }
+                    };
                     obj_of_condition.selected_key = item.id;
                     obj_of_condition.key_options = $scope.detail_search_key;
                     obj_of_condition.key_value = angular.copy(db_data[item.inx]);
                     $scope.condition_data.push(obj_of_condition)
                 });
+
                 $scope.default_condition_data = angular.fromJson(angular.toJson($scope.condition_data));
+
                 if (sessionStorage.getItem('btn') == 'detail-search') {
                     $scope.condition_data = angular.fromJson(sessionStorage.getItem('detail_search_conditions'));
                 }
+
                 $scope.update_disabled_flg();
             };
+
             // add button
             $scope.add_search_key = function () {
                 var obj_of_condition = {
@@ -68,14 +74,17 @@
                     key_value: {}
                 }
                 var flg = 0
-                    for (var sub_detail in $scope.detail_search_key) {
+
+                for (var sub_detail in $scope.detail_search_key) {
                     flg = 0
-                        for (var sub_condition in $scope.condition_data) {
-                            if ($scope.detail_search_key[sub_detail].id == $scope.condition_data[sub_condition].selected_key) {
+
+                    for (var sub_condition in $scope.condition_data) {
+                        if ($scope.detail_search_key[sub_detail].id == $scope.condition_data[sub_condition].selected_key) {
                             flg = 1
                             break;
                         }
                     }
+
                     if (flg == 0) {
                         obj_of_condition.selected_key = $scope.detail_search_key[sub_detail].id;
                         obj_of_condition.key_options = $scope.detail_search_key;
@@ -84,69 +93,88 @@
                         break;
                     }
                 }
+
                 $scope.update_disabled_flg();
             }
+
             // delete button
             $scope.delete_search_key = function (index) {
                 $scope.condition_data.splice(index, 1);
                 $scope.update_disabled_flg();
             }
+
             // change_searc_key
             $scope.change_search_key = function (index, search_key) {
                 var obj = $scope.get_search_key(search_key)
                 $scope.condition_data.splice(index, 1, obj);
                 $scope.update_disabled_flg();
             }
+
             // detail search
             $rootScope.getSettingDefault = function () {
                 let data = null;
+
                 $.ajax({
                     async: false,
                     method: 'GET',
                     url: '/get_search_setting',
                     headers: { 'Content-Type': 'application/json' },
                 }).then(function successCallback(response) {
+
                     if (response.status === 1) {
                         data = response.data;
                     }
+
                 }, function errorCallback(error) {
                     console.log(error);
                     return null;
                 });
-                if (data.dlt_keyword_sort_selected !== null && data.dlt_keyword_sort_selected !== undefined) {
+
+                if (data.dlt_keyword_sort_selected !== null
+                    && data.dlt_keyword_sort_selected !== undefined) {
                     let key_sort = data.dlt_keyword_sort_selected;
                     let descOrEsc = "";
+
                     if (key_sort.includes("_asc")) {
                         key_sort = key_sort.replace("_asc", "");
                     }
+
                     if (key_sort.includes("_desc")) {
                         descOrEsc = "-";
                         key_sort = descOrEsc + key_sort.replace("_desc", "");
                     }
+
                     return {
                         key: "sort",
                         value: key_sort
                     };
                 }
             }
+
             $scope.detail_search = function () {
-                var query_str = "";
+                let query_str = "";
                 let data = $rootScope.getSettingDefault();
+                // Add simple search query to detail search one
+                $scope.search_q = document.getElementById('q').value;
+
                 query_str = query_str + "&search_type=" + $scope.search_type + "&q=" + $scope.search_q;
+
                 if ($scope.search_community != "") {
                     query_str = query_str + "&community=" + $scope.search_community;
                 }
+
                 angular.forEach($scope.condition_data, function (item, index, array) {
-                    //
                     if (item.key_value.inputType == "text") {
-                        query_str = query_str + "&" + item.key_value.id + "=" + item.key_value.inputVal
+                        query_str = query_str + "&" + item.key_value.id + "=" + item.key_value.inputVal;
                     }
+
                     if (item.key_value.inputType == "dateRange") {
                         query_str = query_str + "&" + item.key_value.id + "_from=" + item.key_value.inputVal_from + "&" +
                             item.key_value.id + "_to=" + item.key_value.inputVal_to;
                     }
+
                     if (item.key_value.inputType == "checkbox_list") {
-                        var key_arr = "";
+                        let key_arr = "";
                         let firstItem = true;
                         angular.forEach(item.key_value.check_val, function (item, index, array) {
                             if (item.checkStus) {
@@ -157,12 +185,15 @@
                         });
                         query_str = query_str + "&" + item.key_value.id + "=" + key_arr;
                     }
+
                     if (item.key_value.inputType == "selectbox") {
-                        query_str = query_str + "&" + item.key_value.id + "=" + item.key_value.inputVal
+                        query_str = query_str + "&" + item.key_value.id + "=" + item.key_value.inputVal;
                     }
+
                     if (item.key_value.inputType == "radio_list") {
-                        query_str = query_str + "&" + item.key_value.id + "=" + item.key_value.inputVal
+                        query_str = query_str + "&" + item.key_value.id + "=" + item.key_value.inputVal;
                     }
+
                     if (item.key_value.mappingFlg) {
                         var schema_or_arr = "";
                         let firstItem = true;
@@ -176,60 +207,72 @@
                         query_str = query_str + "&" + item.key_value.mappingName + "=" + schema_or_arr;
                     }
                 });
+
                 sessionStorage.setItem('detail_search_conditions', angular.toJson($scope.condition_data));
-                if (data !== null && data.key !== null && data.value !== null) { 
+
+                if (data !== null && data.key !== null && data.value !== null) {
                     query_str += "&" + data.key + "=" + data.value;
                 }
-                var url = '/search?page=1' + query_str;
+
+                let url = '/search?page=1' + query_str;
+
                 if (angular.element('#item_management_bulk_update').length != 0) {
-                  url = '/admin/items' + url + '&item_management=update';
-                } else if(angular.element('#item_management_bulk_delete').length != 0) {
-                  url = '/admin/items' + url + '&item_management=delete';
+                    url = '/admin/items' + url + '&item_management=update';
+                } else if (angular.element('#item_management_bulk_delete').length != 0) {
+                    url = '/admin/items' + url + '&item_management=delete';
                 }
 
                 window.location.href = url
             }
-            //
+
             $scope.detail_search_clear = function () {
                 $scope.reset_data();
                 sessionStorage.setItem('detail_search_conditions', angular.toJson($scope.condition_data));
             }
+
             // set search options
             $scope.update_disabled_flg = function () {
                 var update_flg = 0;
-                    for (var sub_default_key in $scope.detail_search_key) {
+
+                for (var sub_default_key in $scope.detail_search_key) {
                     update_flg = 0;
-                        for (var sub_condition in $scope.condition_data) {
-                            if ($scope.detail_search_key[sub_default_key].id == $scope.condition_data[sub_condition].selected_key) {
+
+                    for (var sub_condition in $scope.condition_data) {
+                        if ($scope.detail_search_key[sub_default_key].id == $scope.condition_data[sub_condition].selected_key) {
                             update_flg = 1;
                             break;
                         }
                     }
+
                     if (update_flg == 1) {
-                            $scope.detail_search_key[sub_default_key].disabled_flg = true;
+                        $scope.detail_search_key[sub_default_key].disabled_flg = true;
                     } else {
-                            $scope.detail_search_key[sub_default_key].disabled_flg = false;
+                        $scope.detail_search_key[sub_default_key].disabled_flg = false;
                     }
                 }
 
             }
+
             //restart
             $scope.reset_data = function () {
                 $scope.condition_data = [];
+
                 for (var sub_default_key in $scope.detail_search_key) {
                     $scope.detail_search_key[sub_default_key].disabled_flg = false;
                 }
+
                 angular.forEach($scope.default_search_key, function (item, index, array) {
                     var obj_of_condition = {
                         selected_key: '',
                         key_options: [],
                         key_value: {}
-                    }
+                    };
                     obj_of_condition.selected_key = item.id;
                     obj_of_condition.key_options = $scope.detail_search_key;
                     obj_of_condition.key_value = angular.copy(db_data[item.inx]);
-                    $scope.condition_data.push(obj_of_condition)
+                    $scope.condition_data.push(obj_of_condition);
                 });
+
                 $scope.update_disabled_flg();
             }
 
@@ -239,8 +282,10 @@
                     selected_key: '',
                     key_options: [],
                     key_value: {}
-                }
+                };
+
                 for (var sub_default_key in $scope.detail_search_key) {
+
                     if ($scope.detail_search_key[sub_default_key].id == search_key) {
                         obj_of_condition.selected_key = search_key;
                         obj_of_condition.key_options = $scope.detail_search_key;
@@ -248,27 +293,26 @@
                         break;
                     }
                 }
+
                 return obj_of_condition;
             }
         }
+
         // Inject depedencies
         searchDetailCtrl.$inject = [
-          '$scope',
-          '$rootScope',
-          '$http',
-          '$location'
+            '$scope',
+            '$rootScope',
+            '$http',
+            '$location'
         ];
         angular.module('searchDetail.controllers')
             .controller('searchDetailCtrl', searchDetailCtrl);
-
         angular.module('searchDetailModule', ['searchDetail.controllers']);
-
         angular.module('searchDetailModule', ['searchDetail.controllers']).config(['$interpolateProvider', function (
-                $interpolateProvider) {
-                $interpolateProvider.startSymbol('[[');
-                $interpolateProvider.endSymbol(']]');　　
-            }]);
-
+            $interpolateProvider) {
+            $interpolateProvider.startSymbol('[[');
+            $interpolateProvider.endSymbol(']]');
+        }]);
         angular.bootstrap(
             document.getElementById('search_detail'), ['searchDetailModule']);
     });
