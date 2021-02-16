@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-theme 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2021-02-09 08:07+0000\n"
+"POT-Creation-Date: 2021-02-16 02:37+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -155,12 +155,12 @@ msgstr ""
 msgid "Index Tree"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search.html:28
+#: weko_theme/templates/weko_theme/body_search.html:27
 msgid "Type and press enter to search"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/body_search.html:33
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:110
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:120
 msgid "Search"
 msgstr ""
 
@@ -181,35 +181,35 @@ msgstr ""
 msgid "Keyword"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:18
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:25
 msgid "[[key_option.contents]]"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:26
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:31
 msgid "Enter Input Value"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:30
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:37
 msgid "[[sub_sel_option.contents]]"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:38
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:46
 msgid "[[sub_check.contents]]"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:47
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:56
 msgid "[[sub_radio.contents]]"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:72
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:83
 msgid "[[sub_attr.contents]]"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:97
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:108
 msgid "Add Search Condition"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:116
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:126
 msgid "Clear"
 msgstr ""
 
