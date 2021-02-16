@@ -44,6 +44,11 @@ msgstr ""
 msgid "Date"
 msgstr ""
 
+#: weko_itemtypes_ui/admin.py:280
+#: weko_itemtypes_ui/admin.py:285
+msgid "Date (Type-less）"
+msgstr ""
+
 #: weko_itemtypes_ui/views.py:112 weko_itemtypes_ui/views.py:187
 #: weko_itemtypes_ui/views.py:338
 msgid "Header Error"
