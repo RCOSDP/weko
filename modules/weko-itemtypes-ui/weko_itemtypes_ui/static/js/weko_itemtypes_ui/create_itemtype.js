@@ -1176,24 +1176,28 @@ $(document).ready(function () {
       for (var key in data) {
         if (key === 'defaults') continue;
 
-        if (data[key].name === meta_system_info.system_identifier_doi.input_type) {
-          meta_system_info.system_identifier_doi.input_type = "cus_" + key;
-        }
-        if (data[key].name === meta_system_info.system_identifier_hdl.input_type) {
-          meta_system_info.system_identifier_hdl.input_type = "cus_" + key;
-        }
-        if (data[key].name === meta_system_info.system_identifier_uri.input_type) {
-          meta_system_info.system_identifier_uri.input_type = "cus_" + key;
-        }
-        if (data[key].name === meta_system_info.system_file.input_type) {
-          meta_system_info.system_file.input_type = "cus_" + key;
-        }
-
-        option = '<option value="cus_' + key + '">' + data[key].name + '</option>';
-        if (data[key].sort != null) {
-          odered[data[key].sort] = option;
+        if (key === 'system') {
+          for (var k in data['system']) {
+            if (data['system'][k].name === meta_system_info.system_identifier_doi.input_type) {
+              meta_system_info.system_identifier_doi.input_type = "cus_" + k;
+            }
+            if (data['system'][k].name === meta_system_info.system_identifier_hdl.input_type) {
+              meta_system_info.system_identifier_hdl.input_type = "cus_" + k;
+            }
+            if (data['system'][k].name === meta_system_info.system_identifier_uri.input_type) {
+              meta_system_info.system_identifier_uri.input_type = "cus_" + k;
+            }
+            if (data['system'][k].name === meta_system_info.system_file.input_type) {
+              meta_system_info.system_file.input_type = "cus_" + k;
+            }
+          }
         } else {
-          others = others + option;
+          option = '<option value="cus_' + key + '">' + data[key].name + '</option>';
+          if (data[key].sort != null) {
+            odered[data[key].sort] = option;
+          } else {
+            others = others + option;
+          }
         }
       }
 
@@ -1431,7 +1435,7 @@ $(document).ready(function () {
       let row_id = list_key[i]
       let item = new Object()
       if(meta_system_info[row_id].input_type.indexOf('cus_') != -1) {
-        item = JSON.parse(JSON.stringify(properties_obj[meta_system_info[row_id].input_type.substr(4)].form));
+        item = JSON.parse(JSON.stringify(properties_obj['system'][meta_system_info[row_id].input_type.substr(4)].form));
         item.title = meta_system_info[row_id].title
         item.title_i18n = meta_system_info[row_id].title_i18n
         item.key = row_id
@@ -1453,7 +1457,7 @@ $(document).ready(function () {
       let row_id = list_key[i]
       let item = {};
       if(meta_system_info[row_id].input_type.indexOf('cus_') != -1) {
-        item = JSON.parse(JSON.stringify(properties_obj[meta_system_info[row_id].input_type.substr(4)].schema));
+        item = JSON.parse(JSON.stringify(properties_obj['system'][meta_system_info[row_id].input_type.substr(4)].schema));
         item.title = meta_system_info[row_id].title
       } else {
         item.type = ''

@@ -256,20 +256,22 @@ class ItemTypeMetaDataView(BaseView):
                 if prop.schema.get(WEKO_BILLING_FILE_PROP_ATT, None):
                     props.remove(prop)
 
-        lists = {}
+        lists = {'system': {}}
         for k in props:
             name = k.name
+            if lang and 'title_i18n' in k.form and \
+                lang in k.form['title_i18n'] and \
+                    k.form['title_i18n'][lang]:
+                name = k.form['title_i18n'][lang]
+            is_file = False
+            if (k.schema.get('properties')
+                    and k.schema.get('properties').get('filename')):
+                is_file = True
+            tmp = {'name': name, 'schema': k.schema, 'form': k.form,
+                'forms': k.forms, 'sort': k.sort, 'is_file': is_file}
             if name and name[:2] != 'S_':
-                if lang and 'title_i18n' in k.form and \
-                    lang in k.form['title_i18n'] and \
-                        k.form['title_i18n'][lang]:
-                    name = k.form['title_i18n'][lang]
-                is_file = False
-                if (k.schema.get('properties')
-                        and k.schema.get('properties').get('filename')):
-                    is_file = True
-                tmp = {'name': name, 'schema': k.schema, 'form': k.form,
-                    'forms': k.forms, 'sort': k.sort, 'is_file': is_file}
+                lists['system'][k.id] = tmp
+            else:
                 lists[k.id] = tmp
 
         settings = AdminSettings.get('default_properties_settings')
