@@ -380,19 +380,17 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         :param qs: Query string.
         :return: Query parser.
         """
-        q = _get_search_qs_query(qs)
-
         # add Permission filter by publish date and status
         mst = get_permission_filter()
 
-        shld = []
+        q = _get_search_qs_query(qs)
 
         if q:
-            shld.append(q)
+            mst.append(q)
 
-        shld.extend(_get_detail_keywords_query())
+        mst.extend(_get_detail_keywords_query())
 
-        return Q('bool', must=mst, should=shld) if mst or shld else Q()
+        return Q('bool', must=mst) if mst else Q()
 
     def _get_simple_search_community_query(community_id, qs=None):
         """Query parser for simple search.
@@ -404,16 +402,14 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         comm = Community.get(community_id)
         root_node_id = comm.root_node_id
 
-        mt = get_permission_filter(root_node_id)
+        mst = get_permission_filter(root_node_id)
         q = _get_search_qs_query(qs)
 
-        shld = []
-
         if q:
-            shld.append(q)
+            mst.append(q)
 
-        shld.extend(_get_detail_keywords_query())
-        return Q('bool', must=mt, should=shld) if mt or shld else Q()
+        mst.extend(_get_detail_keywords_query())
+        return Q('bool', must=mst) if mst else Q()
 
     def _get_file_content_query(qstr):
         """Query for searching indexed file contents."""
@@ -441,27 +437,25 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         :returns: Query parser.
         """
         # add  Permission filter by publish date and status
-        mt = get_permission_filter()
-
-        shld = []
+        mst = get_permission_filter()
 
         # multi keywords search filter
         mkq = _get_detail_keywords_query()
 
         # detail search
         if mkq:
-            shld.extend(mkq)
+            mst.extend(mkq)
             q = _get_search_qs_query(qs)
 
             if q:
-                shld.append(q)
+                mst.append(q)
         else:
             # Full Text Search
             if qstr:
                 q_s = _get_file_content_query(qstr)
-                shld.append(q_s)
+                mst.append(q_s)
 
-        return Q('bool', must=mt, should=shld) if mt or shld else Q()
+        return Q('bool', must=mst) if mst else Q()
 
     def _default_parser_community(community_id, qstr=None):
         """Default parser that uses the Q() from elasticsearch_dsl.
@@ -477,25 +471,23 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         root_node_id = comm.root_node_id
         mst = get_permission_filter(root_node_id)
 
-        shld = []
-
         # multi keywords search filter
         mkq = _get_detail_keywords_query()
 
         # detail search
         if mkq:
-            shld.extend(mkq)
+            mst.extend(mkq)
             q = _get_search_qs_query(qs)
 
             if q:
-                shld.append(q)
+                mst.append(q)
         else:
             # Full Text Search
             if qstr:
                 q_s = _get_file_content_query(qstr)
-                shld.append(q_s)
+                mst.append(q_s)
 
-        return Q('bool', must=mst, should=shld) if mst or shld else Q()
+        return Q('bool', must=mst) if mst else Q()
 
     from invenio_records_rest.facets import default_facets_factory
     from invenio_records_rest.sorter import default_sorter_factory
