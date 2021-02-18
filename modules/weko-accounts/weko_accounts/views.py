@@ -213,11 +213,8 @@ def shib_login():
             'WEKO_ACCOUNTS_SHIB_CACHE_PREFIX'] + shib_session_id
 
         if not datastore.redis.exists(cache_key):
-            current_app.logger.error(
-                _("Missing WEKO_ACCOUNTS_SHIB_CACHE_PREFIX!"))
-            flash(
-                _("Missing WEKO_ACCOUNTS_SHIB_CACHE_PREFIX!"),
-                category='error')
+            current_app.logger.error(_("Missing SHIB_CACHE_PREFIX!"))
+            flash(_("Missing SHIB_CACHE_PREFIX!"), category='error')
             return _redirect_method()
 
         cache_val = datastore.get(cache_key)
@@ -232,23 +229,6 @@ def shib_login():
         session['shib_session_id'] = shib_session_id
         csrf_random = generate_random_str(length=64)
         session['csrf_random'] = csrf_random
-
-        shib_role_auth = cache_val.get('shib_role_authority_name', '')
-        if not shib_role_auth:
-            current_app.logger.debug(_("Failed to get attribute."))
-
-        shib_roles = current_app.config['WEKO_ACCOUNTS_SHIB_ROLE_RELATION']
-
-        roles = [x.strip() for x in shib_role_auth.split(',')]
-
-        for role in roles:
-            if role not in shib_roles.keys():
-                current_app.logger.error(
-                    _("Invalid SHIB_ATTR_ROLE_AUTHORITY_NAME."))
-                flash(
-                    _("Invalid SHIB_ATTR_ROLE_AUTHORITY_NAME."),
-                    category='error')
-                return _redirect_method()
 
         _datastore = LocalProxy(
             lambda: current_app.extensions['security'].datastore)

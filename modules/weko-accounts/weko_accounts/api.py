@@ -225,9 +225,6 @@ class ShibUser(object):
         if set(roles).issubset(set(shib_roles.keys())):
             _roles = [shib_roles[role] for role in roles]
             ret = self._set_weko_user_role(_roles)
-        else:
-            ret = self._set_weko_user_role(
-                current_app.config['WEKO_ACCOUNTS_GENERAL_ROLE'])
 
         if ret:
             return False, ret
