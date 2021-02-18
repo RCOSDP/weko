@@ -537,6 +537,19 @@ def sort_meta_data_by_options(record_hit):
                     })
         return result
 
+    def get_file_thumbnail(thumbnails):
+        """Get file thumbnail."""
+        thumbnail = {}
+        if thumbnails and len(thumbnails) > 0:
+            subitem_thumbnails = thumbnails[0].get('subitem_thumbnail')
+            if subitem_thumbnails and len(subitem_thumbnails) > 0:
+                thumbnail = {
+                    'thumbnail_url': subitem_thumbnails[0].get('thumbnail_url', ''),
+                    'thumbnail_label': subitem_thumbnails[0].get('thumbnail_label', ''),
+                    'thumbnail_width': current_app.config['WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL']
+                }                      
+        return thumbnail
+
     try:
         src = record_hit['_source'].pop('_item_metadata')
         item_type_id = record_hit['_source'].get('item_type_id') \
@@ -559,6 +572,11 @@ def sort_meta_data_by_options(record_hit):
                         and not option.get("hidden") \
                         and option.get("showlist"):
                     files_info = get_file_comments(src, mlt)
+                    continue
+                is_thumbnail = any('subitem_thumbnail' in data for data in mlt)
+                if is_thumbnail and not option.get("hidden") \
+                        and option.get("showlist"):
+                    thumbnail = get_file_thumbnail(mlt)
                     continue
                 meta_data = get_all_items2(mlt, solst)
                 for m in meta_data:
@@ -583,6 +601,8 @@ def sort_meta_data_by_options(record_hit):
                 record_hit['_source']['_comment'] = items
         if files_info:
             record_hit['_source']['_files_info'] = files_info
+        if thumbnail:
+            record_hit['_source']['_thumbnail'] = thumbnail
     except Exception:
         current_app.logger.exception(
             u'Record serialization failed {}.'.format(
