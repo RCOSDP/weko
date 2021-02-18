@@ -174,7 +174,7 @@ def confirm_user():
             return _redirect_method()
 
         if not shib_user.bind_relation_info(account):
-            flash('bind_relation_info', category='error')
+            flash('FAILED bind_relation_info!', category='error')
             return _redirect_method()
 
         error = shib_user.check_in()

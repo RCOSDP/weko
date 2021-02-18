@@ -132,10 +132,15 @@ class ShibUser(object):
 
         """
         self.user = User.query.filter_by(email=account).first()
+        shib_username_config = current_app.config[
+            'WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN']
         try:
             with db.session.begin_nested():
                 self.user.email = self.shib_attr['shib_mail']
             db.session.commit()
+
+            if not self.shib_attr['shib_eppn'] and shib_username_config:
+                self.shib_attr['shib_eppn'] = self.shib_attr['shib_user_name']
             self.shib_user = ShibbolethUser.create(
                 self.user,
                 **self.shib_attr
