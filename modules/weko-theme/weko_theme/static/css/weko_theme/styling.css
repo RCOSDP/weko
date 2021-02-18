@@ -245,3 +245,17 @@ label.field-required::after {
 .detail-search-close {
   display: none;
 }
+
+.daterange-text-notice {
+  display: none;
+  color: red;
+}
+
+.invalid-date {
+  border: 2px solid red !important;
+}
+
+.invalid-date-notice {
+  display: none;
+  color: red;
+}

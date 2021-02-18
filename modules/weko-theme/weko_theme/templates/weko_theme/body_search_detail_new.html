@@ -58,15 +58,22 @@ USA. #}
                 </div>
                 <!--input_type is radio end-->
                 <!--input_type is daterange sta-->
-                <div ng-if="sub_data.key_value.inputType=='dateRange'" class="col-xs-3">
-                  <div class="row input-daterange input-group">
-                    <input type="text" class="input-sm form-control detail-search-text" name="[[sub_data.key_value.id]]_from"
+                <div ng-if="sub_data.key_value.inputType=='dateRange'">
+                  <div class="input-daterange input-group col-xs-4 detail-search-text">
+                    <input type="text"
+                      pattern="[0-9]{4}|[0-9]{4}(0[1-9]|1[0-2])|[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])"
+                      class="input-sm form-control detail-search-date" name="[[sub_data.key_value.id]]_from"
                       data-provide="datepicker" id="[[sub_data.key_value.id]]_from" placeholder="yyyymmdd"
-                      data-date-format="yyyymmdd" ng-model="sub_data.key_value.inputVal_from" />
+                      data-date-format="yyyymmdd" ng-model="sub_data.key_value.inputVal_from"/>
                     <span class="input-group-addon">To</span>
-                    <input type="text" class="input-sm form-control detail-search-text" name="[[sub_data.key_value.id]]_to"
+                    <input type="text"
+                      pattern="[0-9]{4}|[0-9]{4}(0[1-9]|1[0-2])|[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])"
+                      class="input-sm form-control detail-search-date" name="[[sub_data.key_value.id]]_to"
                       data-provide="datepicker" id="[[sub_data.key_value.id]]_to" placeholder="yyyymmdd"
                       data-date-format="yyyymmdd" ng-model="sub_data.key_value.inputVal_to" />
+                  </div>
+                  <div class=invalid-date-notice>
+                    <span>Field is invalid</span>
                   </div>
                 </div>
                 <!--input_type is daterange end-->

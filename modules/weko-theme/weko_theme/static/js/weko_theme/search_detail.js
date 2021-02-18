@@ -2,7 +2,6 @@
     // Bootstrap it!
     angular.element(document).ready(function () {
         angular.module('searchDetail.controllers', []);
-
         function searchDetailCtrl($scope, $rootScope, $http, $location) {
             $scope.condition_data = [];
             $scope.detail_search_key = [];
@@ -154,6 +153,7 @@
             $scope.detail_search = function () {
                 let query_str = "";
                 let data = $rootScope.getSettingDefault();
+
                 // Add simple search query to detail search one
                 $scope.search_q = document.getElementById('q').value;
 
@@ -169,8 +169,64 @@
                     }
 
                     if (item.key_value.inputType == "dateRange") {
-                        query_str = query_str + "&" + item.key_value.id + "_from=" + item.key_value.inputVal_from + "&" +
-                            item.key_value.id + "_to=" + item.key_value.inputVal_to;
+                        var inputValFrom = item.key_value.inputVal_from;
+                        var inputValTo = item.key_value.inputVal_to;
+
+                        switch (inputValFrom.length) {
+                            case 4:
+                                inputValFrom = inputValFrom + '01' + '01';
+                                break;
+                            case 6:
+                                inputValFrom = inputValFrom + '01';
+                                break;
+                            case 8:
+                                var y = inputValFrom.substring(0, 4);
+                                var m = inputValFrom.substring(4, 6);
+                                var d = inputValFrom.substring(6, 8);
+                                var date = new Date(y + '-' + m + '-' + d);
+
+                                // Fix invalid date to the first day of the month
+                                if (!(date instanceof Date) || isNaN(date)) {
+                                    var inputValFrom = y + m + '01';
+                                }
+
+                                break;
+                            default:
+                                inputValFrom = '';
+                        }
+
+                        switch (inputValTo.length) {
+                            case 4:
+                                inputValTo = inputValTo + '12' + '31';
+                                break;
+                            case 6:
+                                var y = inputValTo.substring(0, 4);
+                                var m = inputValTo.substring(4, 6);
+                                var d =new Date(Number(y), Number(m), 0).getDate();
+                                inputValTo = inputValTo + d.padStart(2, '0');
+                                break;
+                            case 8:
+                                var y = inputValTo.substring(0, 4);
+                                var m = inputValTo.substring(4, 6);
+                                var d = inputValTo.substring(6, 8);
+                                var date = new Date(y + '-' + m + '-' + d);
+                                if (date instanceof Date && !isNaN(date)) {
+                                    inputVal = String(date.getFullYear()).padStart(4, '0');
+                                               + String(date.getMonth() + 1).padStart(2, '0');
+                                               + String(date.getDate()).padStart(2, '0');
+                                // Fix invalid date to the last day of the month
+                                } else {
+                                    var validDay = new Date(Number(y), Number(m), 0).getDate();
+                                    inputValTo = y + m + String(validDay).padStart(2, '0');
+                                }
+
+                                break;
+                            default:
+                                inputValTo = '';
+                        }
+
+                        query_str = query_str + "&" + item.key_value.id + "_from=" + inputValFrom + "&" +
+                                    item.key_value.id + "_to=" + inputValTo;
                     }
 
                     if (item.key_value.inputType == "checkbox_list") {
@@ -296,6 +352,18 @@
 
                 return obj_of_condition;
             }
+
+            // $scope.inputDataOnEnter = function () {
+            //     var daterangeItems = $scope.condition_data.filter(function (item) {
+            //         return item.key_value.inputType == "dateRange";
+            //     })
+
+            //     angular.forEach(daterangeItems, function(item) {
+            //         var elem = angular.element(document.getElementsById(item.key_value.id + '_from'));
+            //         var inputVal = elem.val();
+            //     })
+            // }
+
         }
 
         // Inject depedencies
@@ -305,14 +373,15 @@
             '$http',
             '$location'
         ];
-        angular.module('searchDetail.controllers')
-            .controller('searchDetailCtrl', searchDetailCtrl);
+        angular.module('searchDetail.controllers').controller('searchDetailCtrl', searchDetailCtrl);
         angular.module('searchDetailModule', ['searchDetail.controllers']);
-        angular.module('searchDetailModule', ['searchDetail.controllers']).config(['$interpolateProvider', function (
-            $interpolateProvider) {
-            $interpolateProvider.startSymbol('[[');
-            $interpolateProvider.endSymbol(']]');
-        }]);
+        angular.module('searchDetailModule', ['searchDetail.controllers']).config(
+            [
+                '$interpolateProvider', function ($interpolateProvider) {
+                $interpolateProvider.startSymbol('[[');
+                $interpolateProvider.endSymbol(']]');
+            }]
+        );
         angular.bootstrap(
             document.getElementById('search_detail'), ['searchDetailModule']);
     });

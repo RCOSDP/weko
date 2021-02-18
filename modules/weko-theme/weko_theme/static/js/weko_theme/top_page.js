@@ -5,7 +5,7 @@ require([
     $('#body').on('load', function (event, data) {
     });
 
-    //urlからパラメタ―の値を取得
+    // urlからパラメタ―の値を取得
     function GetUrlParam(sParam) {
         var sURL = window.location.search.substring(1);
         var sURLVars = sURL.split('&');
@@ -18,7 +18,7 @@ require([
         return false;
     }
 
-    //urlからパラメタ―のキーを取得する
+    // urlからパラメタ―のキーを取得する
     function IsParamKey(sParam) {
         var sURL = window.location.search.substring(1);
         var sURLVars = sURL.split('&');
@@ -163,7 +163,6 @@ require([
                 })
             }
 
-            // var btn = sessionStorage.getItem('btn', '');
             let data = getDefaultSetting();
             let key_sort = data.dlt_keyword_sort_selected;
             let size = data.dlt_dis_num_selected;
@@ -285,6 +284,40 @@ require([
                 $('.detail-search-open').hide();
                 $('.detail-search-close').show();
                 $('#search_detail').addClass('expanded');
+            }
+        });
+
+        // bootstrap-datepickerでテキスト入力を可能にする
+        $('.detail-search-date').keypress(function () {
+            if ($('body > :last').hasClass('datepicker')) {
+                // 27はエスケープキー
+                var kbEvent = new KeyboardEvent('keydown', {keyCode: 27});
+                document.getElementById(this.id).dispatchEvent(kbEvent);
+            }
+        });
+
+        // 日付入力フォームのバリデーション
+        $('.detail-search-date').keyup(function (event) {
+            var INVALID_PATTERN_MESSAGE = 'Value is invalid';
+            var elem = document.getElementById(this.id);
+            if (event.which == 13) {
+                // サブミット時に不当な値が入力されていたら値をクリアする
+                if (elem.validity.patternMismatch) {
+                    elem.value = '';
+                } else {
+                    elem.setCustomValidity('');
+                    $('#' + this.id).removeClass('invalid-date');
+                }
+            } else {
+                if (elem.validity.patternMismatch) {
+                    elem.setCustomValidity(INVALID_PATTERN_MESSAGE);
+                    elem.reportValidity();
+                    event.preventDefault();
+                    $('#' + this.id).addClass('invalid-date');
+                } else {
+                    elem.setCustomValidity('');
+                    $('#' + this.id).removeClass('invalid-date');
+                }
             }
         });
 
