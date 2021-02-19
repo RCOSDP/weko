@@ -544,10 +544,9 @@ def sort_meta_data_by_options(record_hit):
             subitem_thumbnails = thumbnails[0].get('subitem_thumbnail')
             if subitem_thumbnails and len(subitem_thumbnails) > 0:
                 thumbnail = {
-                    'thumbnail_url': subitem_thumbnails[0].get('thumbnail_url', ''),
                     'thumbnail_label': subitem_thumbnails[0].get('thumbnail_label', ''),
                     'thumbnail_width': current_app.config['WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL']
-                }                      
+                }
         return thumbnail
 
     try:
@@ -559,6 +558,7 @@ def sort_meta_data_by_options(record_hit):
         solst, meta_options = get_options_and_order_list(item_type_id)
         solst_dict_array = convert_data_to_dict(solst)
         files_info = []
+        thumbnail = None
         # Set value and parent option
         for lst in solst:
             key = lst[0]
