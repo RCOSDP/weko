@@ -248,11 +248,11 @@ label.field-required::after {
 
 .daterange-text-notice {
   display: none;
-  color: red;
+  color: #a94442;
 }
 
 .invalid-date {
-  border: 2px solid red !important;
+  border: 2px solid #a94442 !important;
 }
 
 .hidden-invalid-date-notice {
@@ -260,5 +260,5 @@ label.field-required::after {
 }
 
 .invalid-date-notice-txt {
-  color: red;
+  color: #a94442;
 }
