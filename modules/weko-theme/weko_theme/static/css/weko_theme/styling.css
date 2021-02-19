@@ -255,7 +255,10 @@ label.field-required::after {
   border: 2px solid red !important;
 }
 
-.invalid-date-notice {
+.hidden-invalid-date-notice {
   display: none;
+}
+
+.invalid-date-notice-txt {
   color: red;
 }

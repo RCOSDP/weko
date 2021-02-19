@@ -32,7 +32,7 @@ require([
         return false;
     }
 
-    //サーチ入力の表示
+    // サーチ入力の表示
     function ArrangeSearch() {
         var btn = sessionStorage.getItem('btn');
         var SearchType = GetUrlParam('search_type');
@@ -43,7 +43,6 @@ require([
             if (IsRec) {
                 input = sessionStorage.getItem($(this).attr('id'));
             } else {
-
                 if (SearchType && SearchType != '2') {
                     if (IsParamKey($(this).attr('id'))) {
                         input = GetUrlParam($(this).attr('id'));
@@ -288,35 +287,40 @@ require([
         });
 
         // bootstrap-datepickerでテキスト入力を可能にする
-        $('.detail-search-date').keypress(function () {
-            if ($('body > :last').hasClass('datepicker')) {
-                // 27はエスケープキー
+        $('.detail-search-date').keyup(function (event) {
+            if ($('body > :last').hasClass('datepicker')
+                // 13と27はそれぞれエンターキーとエスケープキーを表す
+                && event.which !== 13
+                && event.which !== 27) {
+                var input = $(this).val()
                 var kbEvent = new KeyboardEvent('keydown', {keyCode: 27});
-                document.getElementById(this.id).dispatchEvent(kbEvent);
+                this.dispatchEvent(kbEvent);
+                $(this).val(input);
             }
         });
 
         // 日付入力フォームのバリデーション
         $('.detail-search-date').keyup(function (event) {
-            var INVALID_PATTERN_MESSAGE = 'Value is invalid';
             var elem = document.getElementById(this.id);
-            if (event.which == 13) {
-                // サブミット時に不当な値が入力されていたら値をクリアする
+            // 13はエンターキー
+            if (event.which === 13) {
+                // サブミット時に無効な値が入力されていたら値をクリアする
                 if (elem.validity.patternMismatch) {
                     elem.value = '';
                 } else {
-                    elem.setCustomValidity('');
                     $('#' + this.id).removeClass('invalid-date');
+                    var invalidDateNoticeEl = $(this).parent().next();
+                    invalidDateNoticeEl.addClass('hidden-invalid-date-notice');
                 }
             } else {
                 if (elem.validity.patternMismatch) {
-                    elem.setCustomValidity(INVALID_PATTERN_MESSAGE);
-                    elem.reportValidity();
-                    event.preventDefault();
                     $('#' + this.id).addClass('invalid-date');
+                    var invalidDateNoticeEl = $(this).parent().next();
+                    invalidDateNoticeEl.removeClass('hidden-invalid-date-notice');
                 } else {
-                    elem.setCustomValidity('');
                     $('#' + this.id).removeClass('invalid-date');
+                    var invalidDateNoticeEl = $(this).parent().next();
+                    invalidDateNoticeEl.addClass('hidden-invalid-date-notice');
                 }
             }
         });

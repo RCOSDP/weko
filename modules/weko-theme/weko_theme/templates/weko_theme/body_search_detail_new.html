@@ -72,9 +72,9 @@ USA. #}
                       data-provide="datepicker" id="[[sub_data.key_value.id]]_to" placeholder="yyyymmdd"
                       data-date-format="yyyymmdd" ng-model="sub_data.key_value.inputVal_to" />
                   </div>
-                  <div class=invalid-date-notice>
-                    <span>Field is invalid</span>
-                  </div>
+                  <p class="hidden-invalid-date-notice invalid-date-notice-txt">
+                    {{_('Field does not validate')}}
+                  </p>
                 </div>
                 <!--input_type is daterange end-->
               </div>

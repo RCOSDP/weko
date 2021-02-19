@@ -8,7 +8,7 @@
             $scope.default_search_key = [];
             $scope.search_community = document.getElementById('community').value;
             $scope.search_type = "0";
-            $scope.default_condition_data = []
+            $scope.default_condition_data = [];
 
             // page init
             $scope.initData = function (data) {
@@ -94,20 +94,19 @@
                 }
 
                 $scope.update_disabled_flg();
-            }
+            };
 
             // delete button
             $scope.delete_search_key = function (index) {
                 $scope.condition_data.splice(index, 1);
                 $scope.update_disabled_flg();
-            }
-
+            };
             // change_searc_key
             $scope.change_search_key = function (index, search_key) {
                 var obj = $scope.get_search_key(search_key)
                 $scope.condition_data.splice(index, 1, obj);
                 $scope.update_disabled_flg();
-            }
+            };
 
             // detail search
             $rootScope.getSettingDefault = function () {
@@ -173,12 +172,15 @@
                         var inputValTo = item.key_value.inputVal_to;
 
                         switch (inputValFrom.length) {
+                            // YYYY
                             case 4:
                                 inputValFrom = inputValFrom + '01' + '01';
                                 break;
+                            // YYYYMM
                             case 6:
                                 inputValFrom = inputValFrom + '01';
                                 break;
+                            // YYYYMMDD
                             case 8:
                                 var y = inputValFrom.substring(0, 4);
                                 var m = inputValFrom.substring(4, 6);
@@ -196,15 +198,18 @@
                         }
 
                         switch (inputValTo.length) {
+                            // YYYY
                             case 4:
                                 inputValTo = inputValTo + '12' + '31';
                                 break;
+                            // YYYYMM
                             case 6:
                                 var y = inputValTo.substring(0, 4);
                                 var m = inputValTo.substring(4, 6);
                                 var d =new Date(Number(y), Number(m), 0).getDate();
-                                inputValTo = inputValTo + d.padStart(2, '0');
+                                inputValTo = inputValTo + String(d).padStart(2, '0');
                                 break;
+                            //YYYYMMDD
                             case 8:
                                 var y = inputValTo.substring(0, 4);
                                 var m = inputValTo.substring(4, 6);
@@ -214,6 +219,7 @@
                                     inputVal = String(date.getFullYear()).padStart(4, '0');
                                                + String(date.getMonth() + 1).padStart(2, '0');
                                                + String(date.getDate()).padStart(2, '0');
+
                                 // Fix invalid date to the last day of the month
                                 } else {
                                     var validDay = new Date(Number(y), Number(m), 0).getDate();
