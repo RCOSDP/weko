@@ -498,6 +498,8 @@ class WekoDeposit(Deposit):
         file_meta = []
 
         for item in metas:
+            if not metas[item].get('attribute_value_mlt'):
+                continue
             itemmeta = metas[item]['attribute_value_mlt']
             if itemmeta and isinstance(itemmeta, list) \
                 and isinstance(itemmeta[0], dict) \
