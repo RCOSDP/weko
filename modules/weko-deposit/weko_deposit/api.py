@@ -724,8 +724,8 @@ class WekoDeposit(Deposit):
         if record and record.json and '$schema' in record.json:
             record.json.pop('$schema')
             flag_modified(record, 'json')
-            if record.get('_buckets'):
-                self._update_version_id(record, record['_buckets']['deposit'])
+            if record.json.get('_buckets'):
+                self._update_version_id(record.json, record.json['_buckets']['deposit'])
             db.session.merge(record)
 
     def newversion(self, pid=None, is_draft=False):
