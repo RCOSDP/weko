@@ -19,6 +19,7 @@ from datetime import datetime, timedelta
 from math import ceil
 from typing import Generator, NoReturn, Union
 
+import netaddr
 import click
 import six
 from dateutil import parser
@@ -198,8 +199,15 @@ def is_valid_access():
 
     Regard all accesses as valid if `STATS_EXCLUDED_ADDRS` is set to `[]`.
     """
-    if current_app.config['STATS_EXCLUDED_ADDRS']:
-        return get_remote_addr() not in current_app.config['STATS_EXCLUDED_ADDRS']
+    regard_list = []
+    ip_list = current_app.config['STATS_EXCLUDED_ADDRS']
+    if ip_list:
+        for i in range(len(ip_list)):
+            if ip_list[i] in "/":
+                regard_list.extend([str(k) for k in IPNetwork(ip_list[i])])
+            else:
+                regard_list.append(ip_list[i])
+        return get_remote_addr() not in regard_list
     else:
         return True
 
