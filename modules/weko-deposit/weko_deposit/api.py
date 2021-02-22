@@ -498,7 +498,7 @@ class WekoDeposit(Deposit):
         file_meta = []
 
         for item in metas:
-            itemmeta = metas[item]
+            itemmeta = metas[item]['attribute_value_mlt']
             if itemmeta and isinstance(itemmeta, list) \
                 and isinstance(itemmeta[0], dict) \
                     and itemmeta[0].get(_filename_prop):
@@ -692,7 +692,7 @@ class WekoDeposit(Deposit):
 
                 try:
                     # Upload file content to Elasticsearch
-                    self.indexer.upload_metadata(self.jrc,
+                    self.indexer.upload_metadata(:,
                                                  self.pid.object_uuid,
                                                  self.revision_id)
                 except TransportError as err:
@@ -724,6 +724,8 @@ class WekoDeposit(Deposit):
         if record and record.json and '$schema' in record.json:
             record.json.pop('$schema')
             flag_modified(record, 'json')
+            if record.get('_buckets'):
+                self._update_version_id(record, record['_buckets']['deposit'])
             db.session.merge(record)
 
     def newversion(self, pid=None, is_draft=False):
@@ -816,7 +818,7 @@ class WekoDeposit(Deposit):
                     for lst in fmd:
                         if file.obj.key == lst.get('filename'):
                             lst.update({'mimetype': file.obj.mimetype})
-                            lst.update({'version_id': file.obj.version_id})
+                            lst.update({'version_id': str(file.obj.version_id)})
 
                             # update file_files's json
                             file.obj.file.update_json(lst)
@@ -1178,12 +1180,6 @@ class WekoDeposit(Deposit):
             for content in self.jrc['content']:
                 if content.get('file'):
                     del content['file']
-
-
-    def update_version_id(self):
-        """Delete 'file' from content file metadata."""
-        with db.session.begin_nested():
-            self._update_version_id(item_metadata, snapshot.id)
 
 
 class WekoRecord(Record):
