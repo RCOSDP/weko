@@ -164,3 +164,4 @@ b2handle==1.1.2
 resync==1.0.9
 email-validator==1.0.5
 iiif-prezi==0.3.0
+netaddr==0.8.0
