@@ -268,7 +268,7 @@ class ItemTypeMetaDataView(BaseView):
                     and k.schema.get('properties').get('filename')):
                 is_file = True
             tmp = {'name': name, 'schema': k.schema, 'form': k.form,
-                'forms': k.forms, 'sort': k.sort, 'is_file': is_file}
+                   'forms': k.forms, 'sort': k.sort, 'is_file': is_file}
             if name and name[:2] == 'S_':
                 lists['system'][k.id] = tmp
             else:

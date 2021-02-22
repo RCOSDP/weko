@@ -483,18 +483,19 @@ class WekoDeposit(Deposit):
 
     def _update_version_id(self, metas, bucket_id):
         """
-        Create draft version of main record.
+        Update 'version_id' of file_metadatas.
 
         parameter:
-            recid: recid
+            metas: Record Metadata.
+            bucket_id: Bucket UUID.
         return:
             response
         """
         _filename_prop = 'filename'
 
         files_versions = ObjectVersion.get_by_bucket(bucket=bucket_id,
-                                                    with_deleted=True).all()
-        files_versions = {x.key:x.version_id for x in files_versions}
+                                                     with_deleted=True).all()
+        files_versions = {x.key: x.version_id for x in files_versions}
         file_meta = []
 
         for item in metas:
