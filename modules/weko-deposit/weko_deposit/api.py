@@ -498,7 +498,8 @@ class WekoDeposit(Deposit):
         file_meta = []
 
         for item in metas:
-            if not metas[item].get('attribute_value_mlt'):
+            if not isinstance(metas[item], dict) or \
+                    not metas[item].get('attribute_value_mlt'):
                 continue
             itemmeta = metas[item]['attribute_value_mlt']
             if itemmeta and isinstance(itemmeta, list) \
@@ -725,9 +726,10 @@ class WekoDeposit(Deposit):
         record = RecordMetadata.query.get(self.pid.object_uuid)
         if record and record.json and '$schema' in record.json:
             record.json.pop('$schema')
-            flag_modified(record, 'json')
             if record.json.get('_buckets'):
-                self._update_version_id(record.json, record.json['_buckets']['deposit'])
+                self._update_version_id(record.json,
+                                        record.json['_buckets']['deposit'])
+            flag_modified(record, 'json')
             db.session.merge(record)
 
     def newversion(self, pid=None, is_draft=False):
@@ -1149,7 +1151,6 @@ class WekoDeposit(Deposit):
                     "deposit": str(snapshot.id)
                 }
             }
-            # self._update_version_id(item_metadata, snapshot.id)
 
             args = [index, item_metadata]
             self.update(*args)
