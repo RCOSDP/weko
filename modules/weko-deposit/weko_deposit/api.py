@@ -500,6 +500,7 @@ class WekoDeposit(Deposit):
         for item in metas:
             itemmeta = metas[item]
             if itemmeta and isinstance(itemmeta, list) \
+                and isinstance(itemmeta[0], dict) \
                     and itemmeta[0].get(_filename_prop):
                 file_meta.extend(itemmeta)
             elif isinstance(itemmeta, dict) \
@@ -510,7 +511,8 @@ class WekoDeposit(Deposit):
             return False
 
         for item in file_meta:
-            item['version_id'] = files_versions[item.get(_filename_prop)]
+            item['version_id'] = str(files_versions.get(
+                item.get(_filename_prop)))
 
         return True
 
@@ -1142,7 +1144,7 @@ class WekoDeposit(Deposit):
                     "deposit": str(snapshot.id)
                 }
             }
-            _update_version_id(item_metadata, snapshot.id)
+            self._update_version_id(item_metadata, snapshot.id)
 
             args = [index, item_metadata]
             self.update(*args)

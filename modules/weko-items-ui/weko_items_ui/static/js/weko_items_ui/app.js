@@ -3729,7 +3729,7 @@ function toObject(arr) {
         let activityId = $("#activity_id").text();
         let edit_mode = sessionStorage.getItem("edit_mode_" + activityId);
         if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes(".0") || edit_mode) {
-          if (edit_mode) {
+          if (edit_mode !== null) {
             let version_radios = $('input[name ="radioVersionSelect"]');
 
             version_radios.prop('disabled', true);
