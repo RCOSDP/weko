@@ -277,12 +277,12 @@ class ItemTypeMetaDataView(BaseView):
             if settings.show_flag:
                 lists['defaults'] = default_properties
             else:
-                lists['defaults'] = {}
+                lists['defaults'] = {'0': {'name': _('Date (Type-less）'), 'value': 'datetime'}}
         else:
             if current_app.config['WEKO_ITEMTYPES_UI_SHOW_DEFAULT_PROPERTIES']:
                 lists['defaults'] = default_properties
             else:
-                lists['defaults'] = {}
+                lists['defaults'] = {'0': {'name': _('Date (Type-less）'), 'value': 'datetime'}}
 
         return jsonify(lists)
 
