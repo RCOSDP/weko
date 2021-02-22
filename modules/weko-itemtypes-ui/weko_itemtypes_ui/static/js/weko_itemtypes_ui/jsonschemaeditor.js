@@ -932,6 +932,14 @@
 					let isDisabledFormat = !allowedChangeArray.includes(value.format);
 					let disabledFormatSelect = isDisabledFormat && !self.state.editor;
 					let isEditor = self.state.editor ? ' hide' : '';
+					// Inactivate the check of "Show List" of the language sub-property.
+					var isCheckedShowList = value.isShowList;
+					var isDisableShowList = value[self.defaultDict.showList.disableKey];
+					if(value.isSubLanguage === true){
+						isDisableShowList = true;
+						isCheckedShowList = false;
+					}
+
 					//Get unique key of Localization Settings.
 					localizationSettingsKey += 1;
 					return React.createElement('div', { key: index },
@@ -1007,8 +1015,10 @@
 								React.createElement('div', { className: 'checkbox  media-right' + isEditor},
 									React.createElement('label', null,
 										React.createElement('input', {
-											type: 'checkbox', name: itemKey, disabled: value[self.defaultDict.showList.disableKey], 'data-index': index,
-											onChange: self.changeShowList, checked: value.isShowList
+											// type: 'checkbox', name: itemKey, disabled: value[self.defaultDict.showList.disableKey], 'data-index': index,
+											type: 'checkbox', name: itemKey, disabled: isDisableShowList, 'data-index': index,
+											// onChange: self.changeShowList, checked: value.isShowList
+											onChange: self.changeShowList, checked: isCheckedShowList
 										}),
 										' Show List  '
 									)

@@ -2008,7 +2008,21 @@ def get_data_by_property(record, item_map, item_property):
                 data.append(value)
     return data, key
 
+def get_key_by_property(record, item_map, item_property):
+    """
+    Get data by property text.
 
+    :param item_property: property value in item_map
+    :return: error_list or None
+    """
+    key = item_map.get(item_property)
+    data = []
+    if not key:
+        current_app.logger.error(str(item_property) + ' jpcoar:mapping '
+                                                      'is not correct')
+        return None
+    return key
+    
 def validation_item_property(record, item_map, properties):
     """
     Validate item property.
