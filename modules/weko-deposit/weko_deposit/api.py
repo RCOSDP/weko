@@ -816,6 +816,7 @@ class WekoDeposit(Deposit):
                     for lst in fmd:
                         if file.obj.key == lst.get('filename'):
                             lst.update({'mimetype': file.obj.mimetype})
+                            lst.update({'version_id': file.obj.version_id})
 
                             # update file_files's json
                             file.obj.file.update_json(lst)
@@ -1144,7 +1145,7 @@ class WekoDeposit(Deposit):
                     "deposit": str(snapshot.id)
                 }
             }
-            self._update_version_id(item_metadata, snapshot.id)
+            # self._update_version_id(item_metadata, snapshot.id)
 
             args = [index, item_metadata]
             self.update(*args)
@@ -1177,6 +1178,12 @@ class WekoDeposit(Deposit):
             for content in self.jrc['content']:
                 if content.get('file'):
                     del content['file']
+
+
+    def update_version_id(self):
+        """Delete 'file' from content file metadata."""
+        with db.session.begin_nested():
+            self._update_version_id(item_metadata, snapshot.id)
 
 
 class WekoRecord(Record):
