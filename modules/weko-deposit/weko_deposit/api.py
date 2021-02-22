@@ -481,6 +481,39 @@ class WekoDeposit(Deposit):
 
         return record
 
+    def _update_version_id(self, metas, bucket_id):
+        """
+        Create draft version of main record.
+
+        parameter:
+            recid: recid
+        return:
+            response
+        """
+        _filename_prop = 'filename'
+
+        files_versions = ObjectVersion.get_by_bucket(bucket=bucket_id,
+                                                    with_deleted=True).all()
+        files_versions = {x.key:x.version_id for x in files_versions}
+        file_meta = []
+
+        for item in metas:
+            itemmeta = metas[item]
+            if itemmeta and isinstance(itemmeta, list) \
+                    and itemmeta[0].get(_filename_prop):
+                file_meta.extend(itemmeta)
+            elif isinstance(itemmeta, dict) \
+                    and itemmeta.get(_filename_prop):
+                file_meta.extend([itemmeta])
+
+        if not file_meta:
+            return False
+
+        for item in file_meta:
+            item['version_id'] = files_versions[item.get(_filename_prop)]
+
+        return True
+
     def publish(self, pid=None, id_=None):
         """Publish the deposit."""
         if not self.data:
@@ -1109,6 +1142,8 @@ class WekoDeposit(Deposit):
                     "deposit": str(snapshot.id)
                 }
             }
+            _update_version_id(item_metadata, snapshot.id)
+
             args = [index, item_metadata]
             self.update(*args)
             # Update '_buckets'
