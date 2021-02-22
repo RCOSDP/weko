@@ -232,3 +232,33 @@ label.field-required::after {
 .padding-display-hide {
    padding: 0!important;
 }
+
+#detail_search_main {
+  background-color: #1b8391;
+  width: 110px;
+}
+
+#top-search-btn {
+  width: 110px;
+}
+
+.detail-search-close {
+  display: none;
+}
+
+.daterange-text-notice {
+  display: none;
+  color: #a94442;
+}
+
+.invalid-date {
+  border: 2px solid #a94442 !important;
+}
+
+.hidden-invalid-date-notice {
+  display: none;
+}
+
+.invalid-date-notice-txt {
+  color: #a94442;
+}
