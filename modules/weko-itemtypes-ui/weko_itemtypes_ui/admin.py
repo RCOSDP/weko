@@ -268,7 +268,7 @@ class ItemTypeMetaDataView(BaseView):
                     and k.schema.get('properties').get('filename')):
                 is_file = True
             tmp = {'name': name, 'schema': k.schema, 'form': k.form,
-                'forms': k.forms, 'sort': k.sort, 'is_file': is_file}
+                   'forms': k.forms, 'sort': k.sort, 'is_file': is_file}
             if name and name[:2] == 'S_':
                 lists['system'][k.id] = tmp
             else:
@@ -280,12 +280,18 @@ class ItemTypeMetaDataView(BaseView):
             if settings.show_flag:
                 lists['defaults'] = default_properties
             else:
-                lists['defaults'] = {'0': {'name': _('Date (Type-less）'), 'value': 'datetime'}}
+                lists['defaults'] = {
+                    '0': {
+                        'name': _('Date (Type-less）'),
+                        'value': 'datetime'}}
         else:
             if current_app.config['WEKO_ITEMTYPES_UI_SHOW_DEFAULT_PROPERTIES']:
                 lists['defaults'] = default_properties
             else:
-                lists['defaults'] = {'0': {'name': _('Date (Type-less）'), 'value': 'datetime'}}
+                lists['defaults'] = {
+                    '0': {
+                        'name': _('Date (Type-less）'),
+                        'value': 'datetime'}}
 
         return jsonify(lists)
 
