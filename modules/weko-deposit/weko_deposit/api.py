@@ -692,7 +692,7 @@ class WekoDeposit(Deposit):
 
                 try:
                     # Upload file content to Elasticsearch
-                    self.indexer.upload_metadata(:,
+                    self.indexer.upload_metadata(self.jrc,
                                                  self.pid.object_uuid,
                                                  self.revision_id)
                 except TransportError as err:
