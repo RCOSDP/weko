@@ -40,7 +40,7 @@ from weko_search_ui.api import get_search_detail_keyword
 from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
     WEKO_EXPORT_TEMPLATE_BASIC_NAME, WEKO_EXPORT_TEMPLATE_BASIC_OPTION, \
     WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
-    WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
+    WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_ITEM_ADMIN_EXPORT_TEMPLATE
 from .tasks import import_item, remove_temp_dir_task
 from .utils import check_import_items, check_sub_item_is_system, \
     create_flow_define, delete_records, get_change_identifier_mode_content, \
@@ -500,6 +500,24 @@ class ItemImportView(BaseView):
                    else urlencode({'filename': file_name}))
             })
 
+class ItemExportView(BaseView):
+    """BaseView for Admin Export."""
+
+    @expose('/', methods=['GET'])
+    def index(self):
+        """Renders an item export view.
+
+        :param
+        :return: The rendered template.
+        """
+        workflow = WorkFlow()
+        workflows = workflow.get_workflow_list()
+        workflows_js = [get_content_workflow(item) for item in workflows]
+
+        return self.render(
+            WEKO_ITEM_ADMIN_EXPORT_TEMPLATE,
+            workflows=json.dumps(workflows_js)
+        )
 
 item_management_bulk_search_adminview = {
     'view_class': ItemManagementBulkSearch,
@@ -537,9 +555,19 @@ item_management_import_adminview = {
     }
 }
 
+item_management_export_adminview = {
+    'view_class': ItemExportView,
+    'kwargs': {
+        'category': _('Items'),
+        'name': _('Export'),
+        'endpoint': 'items/export'
+    }
+}
+
 __all__ = (
     'item_management_bulk_delete_adminview',
     'item_management_bulk_search_adminview',
     'item_management_custom_sort_adminview',
-    'item_management_import_adminview'
+    'item_management_import_adminview',
+    'item_management_export_adminview'
 )
