@@ -3332,8 +3332,8 @@ function toObject(arr) {
         return true;
       }
 
-      $scope.updateDataJson = function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
-        if(!validateSession()){
+      $scope.updateDataJson = function (activityId,steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
+        if (!validateSession()) {
           return;
         }
         $scope.startLoading();
@@ -3587,6 +3587,7 @@ function toObject(arr) {
         var metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
         if (!angular.isUndefined($rootScope.filesVM)) {
           this.mappingThumbnailInfor();
+          this.updateFilenameFilesVM();
           metainfo = angular.merge(
             {},
             metainfo,
@@ -3738,6 +3739,15 @@ function toObject(arr) {
         } else {
           $('#react-component-version').hide();
         }
+      }
+
+      // Update 'filename'
+      $scope.updateFilenameFilesVM = function () {
+        $rootScope.filesVM.files.forEach(function (file) {
+          if (file.key && !file.filename) {
+            file.filename = file.key;
+          }
+        });
       }
     }
     // Inject depedencies
