@@ -19,6 +19,7 @@ require([
       queryObj: null,
       display_list_flg: false
     }
+    $scope.visible = 'true';
     page_global.queryObj = query_to_hash();
     if (page_global.queryObj) {
       $('#page_count').val(page_global.queryObj['size'])
@@ -52,7 +53,7 @@ require([
       return str;
     }
   });
-
+  $scope.visible = 'true';
   function showJournalInfo() {
     var check = setInterval(show, 500);
     function show() {

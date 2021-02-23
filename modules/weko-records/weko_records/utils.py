@@ -438,11 +438,30 @@ def get_options_and_order_list(item_type_id):
     return solst, meta_options
 
 
+def list_duplicates_of(seq,item):
+    start_at = -1
+    locs = []
+    while True:
+        try:
+            loc = seq.index(item,start_at+1)
+        except ValueError:
+            break
+        else:
+            locs.append(loc)
+            start_at = loc
+    return locs
+
+
 def sort_meta_data_by_options(record_hit):
     """Reset metadata by '_options'.
 
     :param record_hit:
     """
+    from weko_records.api import Mapping
+    from weko_records.serializers.utils import get_mapping
+    from weko_search_ui.utils import get_data_by_propertys
+    from weko_admin.utils import get_selected_language
+    web_screen_lang = get_selected_language()
     def get_meta_values(v):
         """Get values from metadata."""
         data_list = []
@@ -483,9 +502,10 @@ def sort_meta_data_by_options(record_hit):
         result = []
         _ignore_items = list()
         _license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
+        title_value = []
+        lang = []
         if _license_dict:
             _ignore_items.append(_license_dict[0].get('value'))
-
         for s in solst_dict_array:
             value = s['value']
             option = s['option']
@@ -503,14 +523,68 @@ def sort_meta_data_by_options(record_hit):
                         or 'contributorMails[].contributorMail' in s['key'] \
                         or 'mails[].mail' in s['key']:
                     is_hide = is_hide | hide_email_flag
-                if not is_hide and is_show_list:
+                flag_selected_lang = False
+                if "Lang" in s['key']:
+                    print(s['key'])
+                    flag_selected_lang = True
+                    lang = s['value'].split(',')
+                elif  s['key'].replace('Lang', '') in s['key']:
+                    flag_selected_lang = True
+                    title_value = s['value'].split(',')
+                if len(title_value) > 0 and len(lang) > 0:
+                    value = selected_value_by_language(lang, title_value, web_screen_lang['selected'])
+                    title_value = []
+                    lang = []
+                    if not is_hide and is_show_list and s['key']:
+                        flag_selected_lang = True
+                        if is_specify_newline or len(result) == 0:
+                            result.append(value)
+                        else:
+                            result[-1] += "," + value
+                if not is_hide and is_show_list and s['key'] and not flag_selected_lang:
                     if is_specify_newline or len(result) == 0:
                         result.append(value)
                     else:
                         result[-1] += "," + value
         return result
-
     try:
+        _item_metadata = record_hit['_source']
+        item_type_id = record_hit['_source']['_item_metadata']['item_type_id']
+        item_type_mapping = Mapping.get_record(item_type_id)
+        item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
+        LanguageVsValue = {}
+        suffixes = '.@attributes.xml:lang'
+        for key in item_map:
+            if key.find(suffixes) != -1:
+                # get language
+                title_languages, _title_key = get_data_by_propertys(_item_metadata, item_map, key)
+                # get value
+                prefix = key.replace(suffixes, '')
+                title_values, _title_key1 = get_data_by_propertys(_item_metadata, item_map, prefix + '.@value')
+                if prefix == "title":
+                    list_duplicates = None
+                    for i in title_languages:
+                        list_duplicates = list_duplicates_of(title_languages, i)
+                    if len(list_duplicates) > 1:
+                        list_duplicates.pop(0)
+                        if len(list_duplicates) > 0:
+                            for x in list_duplicates:
+                                title_values.pop(x)
+                                title_languages.pop(x)
+                LanguageVsValue = {**LanguageVsValue, **{prefix: {'lang': title_languages, 'val': title_values}}}
+        # selected title
+        title_Obj = LanguageVsValue.get("title", None)
+        language_priority = False
+        if title_Obj is not None:
+            lang_arr = title_Obj.get("lang", None)
+            val_arr = title_Obj.get("val", None)
+            if lang_arr is not None and len(lang_arr) > 0 and lang_arr is not "null":
+                result = selected_value_by_language(lang_arr, val_arr, web_screen_lang['selected'])
+                for idx, val in enumerate(val_arr):
+                    if val == result:
+                        record_hit['_source']['title'][idx] = record_hit['_source']['title'][0]
+                        record_hit['_source']['title'][0] = val
+                        break
         src = record_hit['_source'].pop('_item_metadata')
         item_type_id = record_hit['_source'].get('item_type_id') \
             or src.get('item_type_id')
@@ -822,3 +896,24 @@ def remove_weko2_special_character(s: str):
             esc_str += i
     esc_str = __remove_special_character(esc_str)
     return esc_str
+
+def selected_value_by_language(lang_array = [], value_array = [], lang_selected = None):
+    if (lang_array is not None and len(lang_array) > 0) and (value_array is not None and len(value_array) > 0) and isinstance(lang_selected, str):
+            # Web screen display language
+            for idx, lg in enumerate(lang_array):
+                if lg == lang_selected:
+                    return value_array[idx]
+            # English
+            for idx, lg in enumerate(lang_array):
+                if lg == "en":
+                    return value_array[idx]
+            # 1st language when registering items
+            for idx, lg in enumerate(lang_array):
+                if len(lg) > 0 and len(value_array[idx]) > 0:
+                    return value_array[idx]
+            # 1st value when registering without language
+            for idx, val in enumerate(value_array):
+                if len(val) > 0:
+                    return val
+    else:
+        return None
