@@ -739,6 +739,13 @@ def soft_delete(recid):
         return make_response('PID: ' + str(recid) + ' DELETED', 200)
     except Exception as ex:
         print(str(ex))
+        if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                and ex.args[0].get('is_locked'):
+            return jsonify(
+                code=-1,
+                is_locked=True,
+                msg=str(ex.args[0].get('msg', ''))
+            )
         abort(500)
 
 

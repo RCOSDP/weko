@@ -62,8 +62,8 @@ from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
 from .models import ActionStatusPolicy, ActivityStatusPolicy, WorkflowRole
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import IdentifierHandle, delete_cache_data, filter_condition, \
-    get_account_info, get_actionid, \
+from .utils import IdentifierHandle, check_existed_doi, delete_cache_data, \
+    filter_condition, get_account_info, get_actionid, \
     get_activity_id_of_record_without_version, get_cache_data, \
     get_identifier_setting, handle_finish_workflow, is_hidden_pubdate, \
     is_show_autofill_metadata, item_metadata_validation, register_hdl, \
@@ -1124,31 +1124,10 @@ def withdraw_confirm(activity_id='0', action_id='0'):
 
 @blueprint.route('/findDOI', methods=['POST'])
 @login_required
-def check_existed_doi():
+def find_doi():
     """Next action."""
-    doi_link = request.get_json()
-    respon = dict()
-    respon['isExistDOI'] = False
-    respon['isWithdrawnDoi'] = False
-    respon['code'] = 1
-    respon['msg'] = 'error'
-    if doi_link:
-        identifier = IdentifierHandle(None)
-        doi_pidstore = identifier.check_pidstore_exist(
-            'doi',
-            doi_link['doi_link'])
-        if doi_pidstore:
-            respon['isExistDOI'] = True
-            respon['msg'] = _('This DOI has been used already for another '
-                              'item. Please input another DOI.')
-            if doi_pidstore.status == PIDStatus.DELETED:
-                respon['isWithdrawnDoi'] = True
-                respon['msg'] = _(
-                    'This DOI was withdrawn. Please input another DOI.')
-        else:
-            respon['msg'] = _('success')
-        respon['code'] = 0
-    return jsonify(respon)
+    doi_link = request.get_json() or {}
+    return jsonify(check_existed_doi(doi_link.get('doi_link')))
 
 
 @blueprint.route(

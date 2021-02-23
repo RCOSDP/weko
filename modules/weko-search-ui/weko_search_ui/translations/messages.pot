@@ -669,3 +669,14 @@ msgstr ""
 msgid "Is the input contents discarded ?"
 msgstr ""
 
+msgid "Import is in progress on another device."
+msgstr ""
+
+msgid "Import is in progress."
+msgstr ""
+
+msgid "Cannot update because the corresponding item is being edited."
+msgstr ""
+
+msgid "The corresponding item has been deleted."
+msgstr ""

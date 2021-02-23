@@ -34,6 +34,7 @@ from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
+from weko_workflow.utils import check_another_import_is_running
 
 from weko_search_ui.api import get_search_detail_keyword
 
@@ -499,6 +500,12 @@ class ItemImportView(BaseView):
                 + ('filename=' if not file_name
                    else urlencode({'filename': file_name}))
             })
+
+    @expose('/check_import_is_available', methods=['GET'])
+    def check_import_available(self):
+        return jsonify({
+            'is_available': not check_another_import_is_running()
+        })
 
 
 item_management_bulk_search_adminview = {

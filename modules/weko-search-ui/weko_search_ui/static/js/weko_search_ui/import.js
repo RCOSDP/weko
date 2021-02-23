@@ -927,7 +927,7 @@ class ResultComponent extends React.Component {
         'Start Date': item.start_date ? item.start_date : '',
         'End Date': item.end_date ? item.end_date : '',
         'Item Id': item.item_id || '',
-        'Action': item.task_result ? item.task_result.success ? "End" : item.task_result.error ? "Error" : "" : "Start",
+        'Action': item.task_result ? item.task_result.success ? "End" : item.task_result.error ? "Error: " + item.task_result.error : "" : "Start",
         'Work Flow Status': item.task_status ? item.task_status === "PENDING" ? "To Do" : item.task_status === "SUCCESS" ? "Done" : item.task_status === "FAILURE" ? "FAILURE" : '' : ''
       }
     })
@@ -1005,7 +1005,7 @@ class ResultComponent extends React.Component {
                       <td>{item.start_date ? item.start_date : ''}</td>
                       <td>{item.end_date ? item.end_date : ''}</td>
                       <td>{item.item_id || ''}</td>
-                      <td>{item.task_result ? item.task_result.success ? end : item.task_result.error ? "Error" : "" : "Start"}</td>
+                      <td>{item.task_result ? item.task_result.success ? end : item.task_result.error ? "Error: " + item.task_result.error : "" : "Start"}</td>
                       <td>
                         {item.task_status && item.task_status === "PENDING" ? to_do : ''}
                         {item.task_status && item.task_status === "SUCCESS" ? done : ''}

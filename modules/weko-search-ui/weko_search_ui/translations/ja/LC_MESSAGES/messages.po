@@ -696,3 +696,14 @@ msgstr "入力内容を破棄してもよろしいですか？"
 #~ msgid "\"<\" and \">\" are cannot be used for searching"
 #~ msgstr ""
 
+msgid "Import is in progress on another device."
+msgstr "他の端末でインポートを実行中です。"
+
+msgid "Import is in progress."
+msgstr "インポートを実行中です。"
+
+msgid "Cannot update because the corresponding item is being edited."
+msgstr "該当アイテムが編集中のため更新できません。"
+
+msgid "The corresponding item has been deleted."
+msgstr "該当アイテムは削除済です。"

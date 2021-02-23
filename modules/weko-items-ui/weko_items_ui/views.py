@@ -34,8 +34,6 @@ from flask_security import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
-from invenio_pidrelations.models import PIDRelation
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.resolver import Resolver
 from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
@@ -48,16 +46,15 @@ from weko_records.api import ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
 from weko_workflow.api import GetCommunity, WorkActivity
-from weko_workflow.models import ActionStatusPolicy as ASP
-from weko_workflow.utils import prepare_edit_workflow
+from weko_workflow.utils import check_an_item_is_locked, prepare_edit_workflow
 from werkzeug.utils import import_string
 
 from .permissions import item_permission
-from .utils import _get_max_export_items, export_items, get_current_user, \
-    get_data_authors_prefix_settings, get_list_email, get_list_username, \
-    get_ranking, get_user_info_by_email, get_user_info_by_username, \
-    get_user_information, get_user_permission, get_workflow_by_item_type_id, \
-    hide_form_items, is_schema_include_key, \
+from .utils import _get_max_export_items, check_item_is_being_edit, \
+    export_items, get_current_user, get_data_authors_prefix_settings, \
+    get_list_email, get_list_username, get_ranking, get_user_info_by_email, \
+    get_user_info_by_username, get_user_information, get_user_permission, \
+    get_workflow_by_item_type_id, hide_form_items, is_schema_include_key, \
     remove_excluded_items_in_json_schema, sanitize_input_data, save_title, \
     set_multi_language_name, to_files_js, translate_schema_form, \
     translate_validation_message, update_index_tree_for_record, \
@@ -814,47 +811,24 @@ def prepare_edit_item():
                 msg=_('Record does not exist.')
             )
 
+        # Check Record is in import progress
+        if check_an_item_is_locked(pid_value):
+            return jsonify(
+                code=err_code,
+                msg=_('Item cannot be edited because '
+                      'the import is in progress.')
+            )
+
         # ! Check Record is being edit
         item_uuid = latest_pid.object_uuid
         post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
 
         if post_workflow:
-            if post_workflow.action_status in [ASP.ACTION_BEGIN,
-                                               ASP.ACTION_DOING]:
+            if check_item_is_being_edit(recid, post_workflow, activity):
                 return jsonify(
                     code=err_code,
-                    msg=_("This Item is being edited.")
+                    msg=_('This Item is being edited.')
                 )
-            draft_pid = PersistentIdentifier.query.filter_by(
-                pid_type='recid',
-                pid_value="{}.0".format(recid.pid_value)
-            ).one_or_none()
-
-            if draft_pid:
-                draft_workflow = activity.get_workflow_activity_by_item_id(
-                    draft_pid.object_uuid)
-                if draft_workflow and \
-                    draft_workflow.action_status in [ASP.ACTION_BEGIN,
-                                                     ASP.ACTION_DOING]:
-                    return jsonify(
-                        code=err_code,
-                        msg=_("This Item is being edited.")
-                    )
-
-                pv = PIDVersioning(child=recid)
-                latest_pid = PIDVersioning(parent=pv.parent).get_children(
-                    pid_status=PIDStatus.REGISTERED
-                ).filter(PIDRelation.relation_type == 2).order_by(
-                    PIDRelation.index.desc()).first()
-                latest_workflow = activity.get_workflow_activity_by_item_id(
-                    latest_pid.object_uuid)
-                if latest_workflow and \
-                    latest_workflow.action_status in [ASP.ACTION_BEGIN,
-                                                      ASP.ACTION_DOING]:
-                    return jsonify(
-                        code=err_code,
-                        msg=_("This Item is being edited.")
-                    )
 
             post_activity['workflow_id'] = post_workflow.workflow_id
             post_activity['flow_id'] = post_workflow.flow_id
