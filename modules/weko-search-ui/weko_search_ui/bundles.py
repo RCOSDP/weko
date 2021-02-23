@@ -57,6 +57,11 @@ weko_admin_item_import_js = Bundle(
     output="gen/import.js"
 )
 
+weko_admin_item_export_js = Bundle(
+    'js/weko_search_ui/export.js',
+    output="gen/export.js"
+)
+
 weko_moment_js = Bundle(
     'js/weko_search_ui/moment.min.js',
     output="gen/moment.min.js"
@@ -66,6 +71,12 @@ weko_admin_item_import_css = Bundle(
     'css/weko_search_ui/import.less',
     filters='cleancss',
     output="gen/import.%(version)s.css"
+)
+
+weko_admin_item_export_css = Bundle(
+    'css/weko_search_ui/export.less',
+    filters='cleancss',
+    output="gen/export.%(version)s.css"
 )
 
 weko_facet_search_js = Bundle(
