@@ -53,7 +53,7 @@ from weko_workflow.utils import prepare_edit_workflow
 from werkzeug.utils import import_string
 
 from .permissions import item_permission
-from .utils import _get_max_export_items, export_items, get_current_user, \
+from .utils import _get_max_export_items, get_current_user, \
     get_data_authors_prefix_settings, get_list_email, get_list_username, \
     get_ranking, get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, get_workflow_by_item_type_id, \
@@ -65,6 +65,7 @@ from .utils import _get_max_export_items, export_items, get_current_user, \
     update_sub_items_by_user_role, validate_form_input_data, \
     validate_save_title_and_share_user_id, validate_user, \
     validate_user_mail_and_index
+from .api import Exporter
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -989,7 +990,7 @@ def export():
         return abort(403)
 
     if request.method == 'POST':
-        return export_items(request.form.to_dict())
+        return Exporter.export_select_items(request.form.to_dict())
 
     from weko_search_ui.api import SearchSetting
     search_type = request.args.get('search_type', '0')  # TODO: Refactor
