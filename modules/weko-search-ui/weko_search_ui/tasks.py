@@ -22,6 +22,7 @@
 from datetime import datetime
 
 from celery import shared_task
+from weko_workflow.utils import delete_cache_item_lock_info
 
 from .utils import import_items_to_system, remove_temp_dir
 
@@ -32,6 +33,8 @@ def import_item(item, url_root):
     start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     result = import_items_to_system(item, url_root) or dict()
     result['start_date'] = start_date
+    delete_cache_item_lock_info(
+        item.get('id') if item.get('status') != 'new' else None)
     return result
 
 

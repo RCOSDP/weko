@@ -45,6 +45,8 @@ const next = document.getElementById("next").value;
 const error_download = document.getElementById("error_download").value;
 const error_get_lstItemType = document.getElementById("error_get_lstItemType").value;
 const internal_server_error = document.getElementById("internal_server_error").value;
+const not_available_error_another = document.getElementById("not_available_error_another").value;
+const not_available_error = document.getElementById("not_available_error").value;
 
 const workflows = JSON.parse($("#workflows").text() ? $("#workflows").text() : "");
 const urlTree = window.location.origin + '/api/tree'
@@ -55,6 +57,7 @@ const urlDownloadCheck = window.location.origin + '/admin/items/import/download_
 const urlDownloadImport = window.location.origin + '/admin/items/import/export_import'
 const urlDownloadTemplate = window.location.origin + '/admin/items/import/export_template'
 const urlImport = window.location.origin + '/admin/items/import/import'
+const urlCheckImportAvailable = window.location.origin + '/admin/items/import/check_import_is_available'
 const step = {
   "SELECT_STEP": 0,
   "IMPORT_STEP": 1,
@@ -63,6 +66,13 @@ const step = {
 
 function closeError() {
   $('#errors').empty();
+}
+
+function showErrorMsg(msg) {
+  $('#errors').append(
+    '<div class="alert alert-danger alert-dismissable">' +
+    '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
+    '&times;</button>' + msg + '</div>');
 }
 
 class MainLayout extends React.Component {
@@ -100,6 +110,7 @@ class MainLayout extends React.Component {
     this.handleImport = this.handleImport.bind(this)
     this.getStatus = this.getStatus.bind(this)
     this.updateShowMessage = this.updateShowMessage.bind(this)
+    this.handleCheckImportAvailable = this.handleCheckImportAvailable.bind(this)
   }
 
   updateShowMessage(state) {
@@ -128,6 +139,7 @@ class MainLayout extends React.Component {
       errorElement.setAttribute('id', 'errors');
       header.insertBefore(errorElement, header.firstChild);
     }
+    this.handleCheckImportAvailable();
   }
 
   handleCheck(data) {
@@ -155,27 +167,45 @@ class MainLayout extends React.Component {
             that.handleChangeTab('import');
           })
         } else {
-          $('#errors').append(
-            '<div class="alert alert-danger alert-dismissable">' +
-            '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
-            '&times;</button>' + response.error + '</div>');
+          showErrorMsg(response.error);
         }
       },
       error: function (error) {
         console.log(error);
-        $('#errors').append(
-          '<div class="alert alert-danger alert-dismissable">' +
-          '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
-          '&times;</button>' + internal_server_error + '</div>');
+        showErrorMsg(internal_server_error);
       }
     });
   }
 
+  handleCheckImportAvailable() {
+    closeError();
+    const import_start_time = sessionStorage.getItem('import_start_time');
+    let result = false;
+    $.ajax({
+      url: urlCheckImportAvailable,
+      type: 'GET',
+      dataType: "json",
+      async: false,
+      success: function (response) {
+        if (!response.is_available) {
+          showErrorMsg(import_start_time === response.start_time ? not_available_error : not_available_error_another);
+        } else {
+          result = true;
+        }
+      },
+      error: function (error) {
+        console.log(error);
+        showErrorMsg(internal_server_error);
+      }
+    });
+    return result;
+  }
+
   handleImport() {
-    const { list_record, root_path, is_import } = this.state
-    const that = this
-    if (is_import) {
-      return
+    const { list_record, root_path, is_import } = this.state;
+    const that = this;
+    if (is_import || !this.handleCheckImportAvailable()) {
+      return;
     }
     this.setState({
       is_import: true
@@ -190,6 +220,10 @@ class MainLayout extends React.Component {
       contentType: "application/json; charset=utf-8",
       dataType: "json",
       success: function (response) {
+        const import_start_time = response.data.import_start_time;
+        if (import_start_time !== '') {
+          sessionStorage.setItem('import_start_time', import_start_time);
+        }
         that.setState(() => {
           return {
             step: step.RESULT_STEP,

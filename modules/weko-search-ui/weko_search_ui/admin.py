@@ -34,7 +34,8 @@ from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
-from weko_workflow.utils import check_another_import_is_running
+from weko_workflow.utils import check_another_import_is_running, \
+    save_cache_item_lock_info
 
 from weko_search_ui.api import get_search_detail_keyword
 
@@ -295,15 +296,18 @@ class ItemImportView(BaseView):
             item['root_path'] = data.get('root_path')
             create_flow_define()
             handle_workflow(item)
+            save_cache_item_lock_info(item.get('id'))
             task = import_item.delay(item, url_root)
             tasks.append({
                 'task_id': task.task_id,
                 'item_id': item.get('id'),
             })
+        _, import_start_time = check_another_import_is_running()
         response_object = {
             "status": "success",
             "data": {
-                "tasks": tasks
+                "tasks": tasks,
+                "import_start_time": import_start_time or ''
             }
         }
         return jsonify(response_object)
@@ -503,8 +507,10 @@ class ItemImportView(BaseView):
 
     @expose('/check_import_is_available', methods=['GET'])
     def check_import_available(self):
+        is_running, start_time = check_another_import_is_running()
         return jsonify({
-            'is_available': not check_another_import_is_running()
+            'is_available': not is_running,
+            'start_time': start_time or ''
         })
 
 

@@ -21,6 +21,7 @@
 """Module of weko-workflow utils."""
 
 from copy import deepcopy
+from datetime import datetime
 
 from flask import current_app, request
 from flask_babelex import gettext as _
@@ -1426,36 +1427,57 @@ def get_cache_data(key: str):
     return current_cache.get(key) or str()
 
 
-def save_cache_item_lock_info(item_id):
+def save_cache_item_lock_info(item_id=None):
     """Save item lock information.
 
     :param item_id: Item id.
     """
-    ids = get_cache_data('item_ids_locked') or set()
-    ids.add(item_id)
+    locked_data = get_cache_data('item_ids_locked') or dict()
+    if not locked_data:
+        locked_data['start_time'] = datetime.now().strftime(
+            '%Y-%m-%dT%H:%M:%S%z')
+        locked_data['count_new_items'] = 0
+    ids = locked_data.get('ids', set())
+    if item_id:
+        ids.add(item_id)
+    else:
+        locked_data['count_new_items'] += 1
 
-    current_cache.set('item_ids_locked', ids, timeout=0)
+    locked_data['ids'] = ids
+    current_cache.set('item_ids_locked', locked_data, timeout=0)
 
 
-def delete_cache_item_lock_info(item_id):
+def delete_cache_item_lock_info(item_id=None):
     """Delete item lock information.
 
     :param item_id: Item id.
     """
-    ids = get_cache_data('item_ids_locked') or set()
-    if item_id in ids:
+    locked_data = get_cache_data('item_ids_locked') or dict()
+    if not locked_data:
+        return
+
+    ids = locked_data.get('ids', set())
+    if item_id and item_id in ids:
         ids.remove(item_id)
-    current_cache.set('item_ids_locked', ids, timeout=0)
+    elif not item_id:
+        locked_data['count_new_items'] -= 1
+
+    if ids or locked_data['count_new_items']:
+        locked_data['ids'] = ids
+        current_cache.set('item_ids_locked', locked_data, timeout=0)
+    else:
+        delete_cache_data('item_ids_locked')
 
 
-def check_an_item_is_locked(item_id):
+def check_an_item_is_locked(item_id=None):
     """Check if an item is locked.
 
     :param item_id: Item id.
 
     :return
     """
-    ids = get_cache_data('item_ids_locked') or set()
+    locked_data = get_cache_data('item_ids_locked') or dict()
+    ids = locked_data.get('ids', set())
     return item_id in ids
 
 
@@ -1464,8 +1486,9 @@ def check_another_import_is_running():
 
     :return
     """
-    ids = get_cache_data('item_ids_locked') or set()
-    return True if ids else False
+    locked_data = get_cache_data('item_ids_locked') or dict()
+    is_running = True if locked_data else False
+    return is_running, locked_data.get('start_time')
 
 
 def get_account_info(user_id):
