@@ -119,6 +119,12 @@ msgstr "リストボックス"
 msgid "Date"
 msgstr "日付"
 
+#: weko_itemtypes_ui/admin.py:280
+#: weko_itemtypes_ui/admin.py:285
+#, fuzzy
+msgid "Date (Type-less）"
+msgstr "日付（タイプなし）"
+
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:44
 msgid "Itemtype List"
 msgstr "アイテムタイプリスト"

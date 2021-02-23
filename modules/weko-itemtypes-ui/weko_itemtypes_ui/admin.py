@@ -256,7 +256,7 @@ class ItemTypeMetaDataView(BaseView):
                 if prop.schema.get(WEKO_BILLING_FILE_PROP_ATT, None):
                     props.remove(prop)
 
-        lists = {}
+        lists = {'system': {}}
         for k in props:
             name = k.name
             if lang and 'title_i18n' in k.form and \
@@ -269,7 +269,10 @@ class ItemTypeMetaDataView(BaseView):
                 is_file = True
             tmp = {'name': name, 'schema': k.schema, 'form': k.form,
                    'forms': k.forms, 'sort': k.sort, 'is_file': is_file}
-            lists[k.id] = tmp
+            if name and name[:2] == 'S_':
+                lists['system'][k.id] = tmp
+            else:
+                lists[k.id] = tmp
 
         settings = AdminSettings.get('default_properties_settings')
         default_properties = current_app.config['WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES']
@@ -277,12 +280,18 @@ class ItemTypeMetaDataView(BaseView):
             if settings.show_flag:
                 lists['defaults'] = default_properties
             else:
-                lists['defaults'] = {}
+                lists['defaults'] = {
+                    '0': {
+                        'name': _('Date (Type-less）'),
+                        'value': 'datetime'}}
         else:
             if current_app.config['WEKO_ITEMTYPES_UI_SHOW_DEFAULT_PROPERTIES']:
                 lists['defaults'] = default_properties
             else:
-                lists['defaults'] = {}
+                lists['defaults'] = {
+                    '0': {
+                        'name': _('Date (Type-less）'),
+                        'value': 'datetime'}}
 
         return jsonify(lists)
 

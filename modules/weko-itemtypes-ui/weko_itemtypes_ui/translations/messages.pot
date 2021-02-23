@@ -110,6 +110,11 @@ msgstr ""
 msgid "Date"
 msgstr ""
 
+#: weko_itemtypes_ui/admin.py:280
+#: weko_itemtypes_ui/admin.py:285
+msgid "Date (Type-less）"
+msgstr ""
+
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:44
 msgid "Itemtype List"
 msgstr ""

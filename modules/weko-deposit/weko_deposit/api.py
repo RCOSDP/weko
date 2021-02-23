@@ -481,6 +481,45 @@ class WekoDeposit(Deposit):
 
         return record
 
+    def _update_version_id(self, metas, bucket_id):
+        """
+        Update 'version_id' of file_metadatas.
+
+        parameter:
+            metas: Record Metadata.
+            bucket_id: Bucket UUID.
+        return:
+            response
+        """
+        _filename_prop = 'filename'
+
+        files_versions = ObjectVersion.get_by_bucket(bucket=bucket_id,
+                                                     with_deleted=True).all()
+        files_versions = {x.key: x.version_id for x in files_versions}
+        file_meta = []
+
+        for item in metas:
+            if not isinstance(metas[item], dict) or \
+                    not metas[item].get('attribute_value_mlt'):
+                continue
+            itemmeta = metas[item]['attribute_value_mlt']
+            if itemmeta and isinstance(itemmeta, list) \
+                and isinstance(itemmeta[0], dict) \
+                    and itemmeta[0].get(_filename_prop):
+                file_meta.extend(itemmeta)
+            elif isinstance(itemmeta, dict) \
+                    and itemmeta.get(_filename_prop):
+                file_meta.extend([itemmeta])
+
+        if not file_meta:
+            return False
+
+        for item in file_meta:
+            item['version_id'] = str(files_versions.get(
+                item.get(_filename_prop)))
+
+        return True
+
     def publish(self, pid=None, id_=None):
         """Publish the deposit."""
         deposit = None
@@ -694,6 +733,9 @@ class WekoDeposit(Deposit):
         record = RecordMetadata.query.get(self.pid.object_uuid)
         if record and record.json and '$schema' in record.json:
             record.json.pop('$schema')
+            if record.json.get('_buckets'):
+                self._update_version_id(record.json,
+                                        record.json['_buckets']['deposit'])
             flag_modified(record, 'json')
             db.session.merge(record)
 
@@ -787,6 +829,7 @@ class WekoDeposit(Deposit):
                     for lst in fmd:
                         if file.obj.key == lst.get('filename'):
                             lst.update({'mimetype': file.obj.mimetype})
+                            lst.update({'version_id': str(file.obj.version_id)})
 
                             # update file_files's json
                             file.obj.file.update_json(lst)
@@ -1115,6 +1158,7 @@ class WekoDeposit(Deposit):
                     "deposit": str(snapshot.id)
                 }
             }
+
             args = [index, item_metadata]
             self.update(*args)
             # Update '_buckets'

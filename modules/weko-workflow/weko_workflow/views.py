@@ -27,8 +27,8 @@ from collections import OrderedDict
 from functools import wraps
 
 import redis
-from flask import Blueprint, current_app, jsonify, render_template, request, \
-    session, url_for
+from flask import Blueprint, abort, current_app, jsonify, render_template, \
+    request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
@@ -82,6 +82,9 @@ blueprint = Blueprint(
 @login_required
 def index():
     """Render a basic view."""
+    if not current_user or not current_user.roles:
+        return abort(403)
+
     activity = WorkActivity()
     getargs = request.args
 
