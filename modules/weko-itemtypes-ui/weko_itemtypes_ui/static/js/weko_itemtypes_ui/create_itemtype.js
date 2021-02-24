@@ -1559,6 +1559,7 @@ $(document).ready(function () {
   }
 
   function setTitleI18nForSubPropertiesByCondition1(schemaProperties, subForms, prefixKey) {
+    if(!subForms) return;
     let properties = getPropertiesOrItems(schemaProperties);
     Object.keys(properties).map(function (propKey) {
       let propertyKey = prefixKey + '.' + propKey;
@@ -1577,6 +1578,7 @@ $(document).ready(function () {
   }
 
   function setTitleI18nForSubPropertiesByCondition2(schemaProperties, subForms, prefixKey) {
+    if(!subForms) return;
     let properties = getPropertiesOrItems(schemaProperties);
     Object.keys(properties).map(function (propKey) {
       $.each(subForms, function (ind, form) {

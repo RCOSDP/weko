@@ -273,27 +273,6 @@ def get_permission(record, fjson):
         return None
 
 
-def get_correct_usage_workflow(data_type):
-    """Get usage workflow from user_role and data_type."""
-    user_role = current_user.roles
-    for role in user_role:
-        for role_workflow_data in current_app.config[
-                'WEKO_RECORDS_UI_USAGE_APPLICATION_WORKFLOW_DICT']:
-            if data_type in role_workflow_data:
-                data = role_workflow_data[data_type]
-                current_app.logger.debug(data)
-                for value in data:
-                    if value['role'].casefold() == role.name.casefold():
-                        usage_application_workflow_name = \
-                            value['workflow_name']
-                        workflow = WorkFlow()
-                        usage_workflow = workflow.find_workflow_by_name(
-                            usage_application_workflow_name)
-                        if usage_workflow:
-                            return usage_workflow
-    return None
-
-
 def check_original_pdf_download_permission(record):
     """Check original pdf."""
     is_ok = True

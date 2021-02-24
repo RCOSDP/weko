@@ -264,21 +264,6 @@ def get_list_licence():
     return list_license_result
 
 
-def get_registration_data_type(record):
-    """Get registration data type."""
-    attribute_value_key = 'attribute_value_mlt'
-    data_type_key = 'subitem_data_type'
-
-    for item in record:
-        values = record.get(item)
-        if isinstance(values, dict) and values.get(attribute_value_key):
-            attribute = values.get(attribute_value_key)
-            if isinstance(attribute, list):
-                for data in attribute:
-                    if data_type_key in data:
-                        return data.get(data_type_key)
-
-
 def get_license_pdf(license, item_metadata_json, pdf, file_item_id, footer_w,
                     footer_h, cc_logo_xposition, item):
     """Get license pdf.

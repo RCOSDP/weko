@@ -1501,3 +1501,32 @@ def usage_report():
                      "user_role": activity.role_name}
         activities_result.append(_activity)
     return jsonify(activities=activities_result)
+
+
+@blueprint.route('/get-data-init', methods=['GET'])
+@login_required
+def get_data_init():
+    """Init data."""
+    # Get workflow.
+    workflow = WorkFlow()
+    workflows = workflow.get_workflow_list()
+    init_workflows = []
+    for workflow in workflows:
+        if workflow.open_restricted:
+            init_workflows.append(
+                {'id': workflow.id, 'flows_name': workflow.flows_name})
+    # Get roles.
+    roles = Role.query.all()
+    init_roles = []
+    init_roles.append({'id': 'none_loggin', 'name': '非ログインユーザ'})
+    for role in roles:
+        init_roles.append({'id': role.id, 'name': role.name})
+    # Get term.
+    init_terms = []
+    init_terms.append({'id': 'term_free', 'name': '自由入力'})
+    for role in roles:
+        init_terms.append({'id': role.id, 'name': role.id})
+    return jsonify(
+        init_workflows=init_workflows,
+        init_roles=init_roles,
+        init_terms=init_terms)

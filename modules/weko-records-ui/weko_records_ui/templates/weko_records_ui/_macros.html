@@ -36,8 +36,8 @@
     {%- endif -%}
   {%- elif not permission -%}
     {%- set workflow_id = '' -%}
-    {%- set usage_workflow = record | get_usage_workflow -%}
-    {%- if not usage_workflow -%}
+    {%- set usage_workflow_id = file.info() | get_usage_workflow -%}
+    {%- if not usage_workflow_id -%}
       {%- set clickable = false -%}
       {%- if is_file_name_url -%}
         <a class="forcewrap">{{ file.filename }}
@@ -53,8 +53,8 @@
           </button>
         </a>
       {%- endif -%}
-    {%- elif usage_workflow -%}
-      {%- set workflow_id = usage_workflow.id -%}
+    {%- elif usage_workflow_id -%}
+      {%- set workflow_id = usage_workflow_id -%}
       {%- set workflow_detail = workflow_id | get_workflow_detail() -%}
       {%- set data_item_type_id = workflow_detail.itemtype_id -%}
       {%- set data_flow_id = workflow_detail.flow_id -%}
