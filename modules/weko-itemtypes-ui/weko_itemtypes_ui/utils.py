@@ -333,7 +333,8 @@ def update_required_schema_not_exist_in_form(schema, forms):
 
     schema_properties = schema.get('properties')
     for k, v in schema_properties.items():
-        required_list = v.get('required')
+        required_list = v.get('items').get(
+            'required') if 'items' in v.keys() else v.get('required')
         if not required_list:
             continue
         form = get_form_by_key(k, forms)
@@ -351,5 +352,8 @@ def update_required_schema_not_exist_in_form(schema, forms):
         for exclude in excludes:
             required_list.remove(exclude)
         if len(required_list) == 0:
-            del v['required']
+            if 'items' in v.keys():
+                del v['items']['required']
+            else:
+                del v['required']
     return schema
