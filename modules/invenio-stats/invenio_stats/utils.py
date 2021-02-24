@@ -199,17 +199,16 @@ def is_valid_access():
 
     Regard all accesses as valid if `STATS_EXCLUDED_ADDRS` is set to `[]`.
     """
-    regard_list = []
     ip_list = current_app.config['STATS_EXCLUDED_ADDRS']
     if ip_list:
         for i in range(len(ip_list)):
-            if ip_list[i] in "/":
-                regard_list.extend([str(k) for k in IPNetwork(ip_list[i])])
+            if '/' in ip_list[i]:
+                if netaddr.IPAddress(get_remote_addr()) in netaddr.IPNetwork(ip_list[i]):
+                    return False
             else:
-                regard_list.append(ip_list[i])
-        return get_remote_addr() not in regard_list
-    else:
-        return True
+                if get_remote_addr()==ip_list[i]:
+                    return False
+    return True
 
 
 class QueryFileReportsHelper(object):
