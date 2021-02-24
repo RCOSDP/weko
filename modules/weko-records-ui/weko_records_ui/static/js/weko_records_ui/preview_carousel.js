@@ -16,11 +16,6 @@ $(document).ready(function() {
               .append('<li data-target="#' + carouselId + '" data-slide-to="' + i + '"></li>');
           }
       });
-      carousel.find('.item').contents().find('#preview-iframe').each(function () {
-        if ($(this).contentDocument !== null) {
-          $(this).contents()[0].body.style.textAlign = 'center';
-        }
-      });
     });
   }
 
