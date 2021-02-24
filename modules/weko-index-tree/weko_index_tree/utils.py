@@ -691,3 +691,19 @@ def check_restrict_doi_with_indexes(other_index_ids):
         if idx.public_state and idx.harvest_public_state:
             return False
     return True
+
+
+def check_has_any_item_in_index_is_locked(index_id):
+    """Check if any item in the index is locked by import process.
+
+    @param index_id:
+    @return:
+    """
+    list_records_in_es = get_record_in_es_of_index(index_id)
+    for record in list_records_in_es:
+        from weko_workflow.utils import check_an_item_is_locked
+        item_id = record.get('_source', {}).get(
+            '_item_metadata', {}).get('control_number')
+        if check_an_item_is_locked(int(item_id)):
+            return True
+    return False

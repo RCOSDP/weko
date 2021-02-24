@@ -34,7 +34,7 @@ from .errors import IndexAddedRESTError, IndexBaseRESTError, \
     IndexDeletedRESTError, IndexMovedRESTError, IndexNotFoundRESTError, \
     IndexUpdatedRESTError, InvalidDataRESTError
 from .models import Index
-from .utils import check_doi_in_index
+from .utils import check_doi_in_index, check_has_any_item_in_index_is_locked
 
 
 def need_record_permission(factory_name):
@@ -236,10 +236,11 @@ class IndexActionResource(ContentNegotiatedMethodView):
         msg = ''
         errors = []
         if check_doi_in_index(index_id):
-            status = 200
-            errors.append(
-                _('The index cannot be deleted because there is'
-                  ' a link from an item that has a DOI.'))
+            errors.append(_('The index cannot be deleted because there is'
+                            ' a link from an item that has a DOI.'))
+        elif check_has_any_item_in_index_is_locked(index_id):
+            errors.append(_('The index cannot be deleted because'
+                            ' the import is in progress.'))
         else:
             action = request.values.get('action', 'all')
             res = self.record_class.get_self_path(index_id)
@@ -254,11 +255,9 @@ class IndexActionResource(ContentNegotiatedMethodView):
             else:
                 raise InvalidDataRESTError()
 
-            status = 200
             msg = 'Index deleted successfully.'
         return make_response(jsonify(
-            {'status': status, 'message': msg, 'errors': errors}),
-            status)
+            {'status': 200, 'message': msg, 'errors': errors}), 200)
 
 
 class IndexTreeActionResource(ContentNegotiatedMethodView):
