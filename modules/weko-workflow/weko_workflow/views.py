@@ -1518,14 +1518,15 @@ def get_data_init():
     # Get roles.
     roles = Role.query.all()
     init_roles = []
-    init_roles.append({'id': 'none_loggin', 'name': '非ログインユーザ'})
+    init_roles.append({'id': 'none_loggin', 'name': _('Non-Logged In User')})
     for role in roles:
         init_roles.append({'id': role.id, 'name': role.name})
     # Get term.
     init_terms = []
-    init_terms.append({'id': 'term_free', 'name': '自由入力'})
+    init_terms.append({'id': 'term_free', 'name': _('write your own term')})
+    ### TODO
     for role in roles:
-        init_terms.append({'id': role.id, 'name': role.id})
+        init_terms.append({'id': role.id, 'name': 'Term ' + str(role.id)})
     return jsonify(
         init_workflows=init_workflows,
         init_roles=init_roles,

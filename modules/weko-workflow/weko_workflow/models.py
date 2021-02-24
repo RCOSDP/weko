@@ -637,7 +637,7 @@ class WorkFlow(db.Model, TimestampMixin):
     """workflow delete flag."""
 
     open_restricted = db.Column(db.Boolean(), nullable=False, default=False)
-    """workflow jgss flag."""
+    """Open restricted flag."""
 
 
 class Activity(db.Model, TimestampMixin):

@@ -1059,7 +1059,7 @@ function toObject(arr) {
       }
 
       $scope.initFilenameList = function () {
-        let dataInit = $scope.getDataInit();
+        let dataInit;
         var filekey = 'filename';
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
@@ -1076,20 +1076,22 @@ function toObject(arr) {
                 filemeta_filename_form['titleMap'].push({ name: file.key, value: file.key });
               }
             });
-
             /*Add data for 'Workflow' in File.*/
-            provide_schema = filemeta_schema.items.properties['provide'];
-            if(provide_schema){
-              workflow_schema = provide_schema.items.properties['workflow'];
-              if(workflow_schema){
+            var provide_schema = filemeta_schema.items.properties['provide'];
+            if (provide_schema) {
+              if (!dataInit) {
+                dataInit = $scope.getDataInit();
+              }
+              var workflow_schema = provide_schema.items.properties['workflow'];
+              if (workflow_schema) {
                 // Add enum in schema.
                 workflow_schema['enum'] = [];
                 workflow_schema['enum'].push(null);
                 // Add titleMap in form.
-                provide_form = get_subitem(filemeta_form.items, 'provide');
-                workflow_form = get_subitem(provide_form.items, 'workflow');
+                var provide_form = get_subitem(filemeta_form.items, 'provide');
+                var workflow_form = get_subitem(provide_form.items, 'workflow');
                 workflow_form['titleMap'] = [];
-                workflows = dataInit['init_workflows'];
+                var workflows = dataInit['init_workflows'];
                 for (let key in workflows) {
                   workflow_schema['enum'].push(workflows[key]['id'].toString());
                   workflow_form['titleMap'].push({
@@ -1099,16 +1101,16 @@ function toObject(arr) {
                 }
               }
               /*Add data for 'Role' in File.*/
-              role_schema = provide_schema.items.properties['role'];
-              if(role_schema){
+              var role_schema = provide_schema.items.properties['role'];
+              if (role_schema) {
                 // Add enum in schema.
                 role_schema['enum'] = [];
                 role_schema['enum'].push(null);
                 // Add titleMap in form.
-                provide_form = get_subitem(filemeta_form.items, 'provide');
-                role_form = get_subitem(provide_form.items, 'role');
+                var provide_form = get_subitem(filemeta_form.items, 'provide');
+                var role_form = get_subitem(provide_form.items, 'role');
                 role_form['titleMap'] = [];
-                roles = dataInit['init_roles'];
+                var roles = dataInit['init_roles'];
                 for (let key in roles) {
                   role_schema['enum'].push(roles[key]['id'].toString());
                   role_form['titleMap'].push({
@@ -1119,15 +1121,15 @@ function toObject(arr) {
               }
             }
             /*Add data for 'Term' in File.*/
-            term_schema = filemeta_schema.items.properties['terms'];
-            if(term_schema){
+            var term_schema = filemeta_schema.items.properties['terms'];
+            if (term_schema) {
               // Add enum in schema.
               term_schema['enum'] = [];
               term_schema['enum'].push(null);
               // Add titleMap for form.
-              term_form = get_subitem(filemeta_form.items, 'terms');
+              var term_form = get_subitem(filemeta_form.items, 'terms');
               term_form['titleMap'] = [];
-              terms = dataInit['init_terms'];
+              var terms = dataInit['init_terms'];
               for (let key in terms) {
                 term_schema['enum'].push(terms[key]['id'].toString());
                 term_form['titleMap'].push({
