@@ -537,19 +537,19 @@ class SchemaTree:
             mlst = []
             vst = []
             while is_next:
-                ctp = ()
                 cnt = 0
                 ava = ""
                 for g in glst:
                     try:
-                        eval, p = next(g)
-                        ctp += (len(p),)
-                        ava = ava + exp + eval
+                        _eval, _ = next(g)
+                        ava = ava + exp + _eval
                     except StopIteration:
                         cnt += 1
 
                 if cnt == len(glst):
                     is_next = False
+                    ret = ', '.join(map(str, vst))
+                    mlst.append([ret])
                     mlst.append(vst)
                 else:
                     if ava:
@@ -557,8 +557,14 @@ class SchemaTree:
                             ava_arr = ava.split(exp)
                             for av in ava_arr:
                                 if av:
+                                    if isinstance(av, str):
+                                        av = av.strip()
                                     vst.append(av)
                         else:
+                            if isinstance(ava, str):
+                                ret = ava[1:].strip()
+                            else:
+                                ret = ava[1:]
                             vst.append(ava[1:])
             return mlst
 
@@ -585,6 +591,9 @@ class SchemaTree:
 
             def remove_empty_tag(mp):
                 if isinstance(mp, str) and (not mp or mp not in remain_keys):
+                    for remain_key in remain_keys:
+                        if remain_key and remain_key in mp:
+                            return False
                     return True
                 elif isinstance(mp, dict):
                     remove_list = []
