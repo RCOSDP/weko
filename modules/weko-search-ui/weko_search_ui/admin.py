@@ -26,7 +26,7 @@ from datetime import datetime
 from urllib.parse import urlencode
 
 from blinker import Namespace
-from flask import Response, abort, current_app, jsonify, make_response, request
+from flask import Response, abort, current_app, jsonify, make_response, request, send_file
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_i18n.ext import current_i18n
@@ -34,6 +34,7 @@ from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
+from weko_admin.utils import get_redis_cache
 
 from weko_search_ui.api import get_search_detail_keyword
 
@@ -46,7 +47,7 @@ from .utils import check_import_items, check_sub_item_is_system, \
     create_flow_define, delete_records, get_change_identifier_mode_content, \
     get_content_workflow, get_lifetime, get_root_item_option, \
     get_sub_item_option, get_tree_items, handle_get_all_sub_id_and_name, \
-    handle_workflow, make_stats_tsv, make_tsv_by_line
+    handle_workflow, make_stats_tsv, make_tsv_by_line, Exporter
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -517,6 +518,47 @@ class ItemExportView(BaseView):
         return self.render(
             WEKO_ITEM_ADMIN_EXPORT_TEMPLATE,
             workflows=json.dumps(workflows_js)
+        )
+
+    @expose('/export_all', methods=['GET'])
+    def export_all(self):
+        """Export all items."""        
+        download_url = "https://www.google.com/"        
+        data = Exporter().get_all_items()
+        export_all.apply_async(args = (data))
+        return jsonify(data = {
+            'download_url': download_url
+        })
+
+    @expose('/check_export_status', methods=['GET'])
+    def check_export_status(self):
+        """Check export status."""
+        export_status = Exporter().get_export_status()
+        return jsonify(data = {
+            'export_status': export_status
+        })
+
+    @expose('/cancel_export', methods=['GET'])
+    def cancel_export(self):
+        """Check export status."""
+        cancel_status = Exporter().cancel_export_all()
+        # get Task ID from RedisStore               
+        return jsonify(data = {
+            'cancel_status': cancel_status
+        })
+
+    @expose('/send_to_client', methods=['GET'])
+    def send_to_client(self):
+        """
+        Funtion send file to Client
+        path: it was load from FileInstance
+        """
+        # TODO need to determined path because it releated to how to save file
+        path = None
+        return send_file(
+            path + '.zip',
+            as_attachment=True,
+            attachment_filename='export.zip'
         )
 
 item_management_bulk_search_adminview = {

@@ -655,3 +655,5 @@ WEKO_IMPORT_VALIDATE_MESSAGE = {
     '%r is not one of %r': '%rは次の決めれられた選択肢に含まれていません。%r',
     '%r is a required property': '%rは必須項目です。'
 }
+
+WEKO_ADMIN_TASK_ID_EXPORT_ALL = 'KEY_EXPORT_ALL'

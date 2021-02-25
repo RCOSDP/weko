@@ -36,6 +36,7 @@ from datetime import datetime
 from functools import partial, reduce
 from io import StringIO
 from operator import getitem
+import bagit
 
 from flask import abort, current_app, request
 from flask_babelex import gettext as _
@@ -78,8 +79,12 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, \
     WEKO_IMPORT_SUFFIX_PATTERN, WEKO_IMPORT_SYSTEM_ITEMS, \
     WEKO_IMPORT_THUMBNAIL_FILE_TYPE, WEKO_IMPORT_VALIDATE_MESSAGE, \
-    WEKO_REPO_USER, WEKO_SYS_USER
+    WEKO_REPO_USER, WEKO_SYS_USER, WEKO_ADMIN_TASK_ID_EXPORT_ALL
 from .query import feedback_email_search_factory, item_path_search_factory
+from weko_admin.utils import get_redis_cache
+from weko_items_ui.utils import write_bibtex_files, write_tsv_files
+from celery.task.control import revoke
+from invenio_files_rest.models import FileInstance, Location
 
 err_msg_suffix = 'Suffix of {} can only be used with half-width' \
     + ' alphanumeric characters and half-width symbols "_-.; () /".'
@@ -2427,3 +2432,155 @@ def handle_check_duplication_item_id(ids: list):
         if ids.count(element) > 1:
             result.append(element)
     return list(set(result))
+
+class Exporter():
+    """ Class Exporter """
+    #add code for get all data
+    @classmethod
+    def get_all_items(self):
+        """
+        function will get all items from root index
+        return: dictinary will contain all data from root index
+        """
+
+        # Get tree items
+        data_dict = {}
+        records_metadatas = RecordMetadata.query.all()
+
+        #convert to dictionary
+        data_meta = {}
+        record_ids = 0
+        for record_meta in records_metadatas:
+            record_meta = record_meta.json
+            data_meta[record_ids] = record_meta
+            record_ids = record_ids + 1
+
+        index = 0
+        record_metadatas = 0
+        while index < (len(data_meta) - 1):
+            data_dict [record_metadatas] = data_meta[index]
+            if(int(data_meta[index]['recid'].split('.')[0]) != int(data_meta[index + 1]['recid'].split('.')[0])):
+                record_metadatas = record_metadatas + 1 
+                data_dict[record_metadatas]  = data_meta[index + 1]
+                
+            index = index + 1 
+        return data_dict
+
+    def export_all():
+        """Gather all the item data and export and return as a JSON or BIBTEX.
+        Parameter
+        path is the path if file temparory
+        post_data is the data items
+        :return: JSON, BIBTEX
+        """
+        # TODO need to research how to save FileInstance with file zip
+        # TODO need to research how to upload file zip to Amazon weko 3
+
+        # code get all
+        exporter = Exporter()
+        temp_path = tempfile.TemporaryDirectory()
+        # Set export folder
+        export_path = temp_path.name + '/' + \
+            datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        # Simulate data for post_data
+        post_data = {
+            "invalid_record_ids": "[]",
+            "record_ids": "[1,2]",
+            "export_format_radio": "JSON",
+            "record_metadata": "{\"1\":{\"created\":\"2021-02-24T10:13:29.915831+00:00\",\"id\":1,\"links\":{\"self\":\"https://18.182.214.241:8018/api/records/1\"},\"metadata\":{\"_comment\":[\"test\",\"test\",\"en\"],\"_oai\":{\"id\":\"oai:invenio:00000001\"},\"control_number\":\"1\",\"heading\":\"\",\"itemtype\":\"å­¦è¡éèªè«æï¼åºçè\
+        çãã¨ã³ãã¼ã´ï¼_WA/test_1\",\"language\":[\"eng\"],\"pageEnd\":[],\"pageStart\":[],\"path\":[\"1614136027381\"],\"publish_date\":\"2021-02-24\",\"publish_status\":\"0\",\"relation_version_is_last\":true,\"title\":[\"test\"],\"type\":[\"article\"],\"weko_creator_id\":\"1\",\"weko_shared_id\":-1},\"updated\":\"2021-02-24T10:13:42.511043+00:00\"},\"2\":{\"created\":\"2021-02-24T11:02:22.339964+00:00\",\"id\":2,\"links\":{\"self\":\"https://18.182.214.241:8018/api/records/2\"},\"metadata\":{\"_comment\":[\"test_1\",\"test_1\",\"en\"],\"_oai\":{\"id\":\"oai:invenio:00000002\"},\"control_number\":\"2\",\"heading\":\"\",\"itemtype\":\"å­¦è¡éèªè«æï¼åºçè\
+        çãã¨ã³ãã¼ã´ï¼_WA/test_1\",\"language\":[\"eng\"],\"pageEnd\":[],\"pageStart\":[],\"path\":[\"1614136027381\"],\"publish_date\":\"2021-02-24\",\"publish_status\":\"0\",\"relation_version_is_last\":true,\"title\":[\"test_1\"],\"type\":[\"periodical\"],\"weko_creator_id\":\"1\",\"weko_shared_id\":-1},\"updated\":\"2021-02-24T11:04:55.374470+00:00\"}}",
+            "export_file_contents_radio": "False"
+        }
+        include_contents = False
+        export_format = 'JSON'
+        record_ids = json.loads(post_data['record_ids'])
+        invalid_record_ids = json.loads(post_data['invalid_record_ids'])
+
+        record_metadata = json.loads(post_data['record_metadata'])
+        result = {'items': []}
+        item_types_data = {}
+        try:
+            # Set export folder
+            # Double check for limits
+            for record_id in record_ids:
+                record_path = export_path + '/recid_' + str(record_id)
+                os.makedirs(record_path, exist_ok=True)
+                exported_item, list_item_role = exporter._export_item(
+                    record_id,
+                    export_format,
+                    include_contents,
+                    record_path,
+                    record_metadata.get(str(record_id))
+                )
+                result['items'].append(exported_item)
+                item_type_id = exported_item.get('item_type_id')
+                item_type = ItemTypes.get_by_id(item_type_id)
+                if not item_types_data.get(item_type_id):
+                    item_type_name = exporter.check_item_type_name(
+                        item_type.item_type_name.name)
+                    item_types_data[item_type_id] = {
+                        'item_type_id': item_type_id,
+                        'name': '{}({})'.format(
+                            item_type_name,
+                            item_type_id),
+                        'root_url': request.url_root,
+                        'jsonschema': 'items/jsonschema/' + item_type_id,
+                        'keys': [],
+                        'labels': [],
+                        'recids': [],
+                        'data': {},
+                    }
+                item_types_data[item_type_id]['recids'].append(record_id)
+
+            # Create export info file
+            if export_format == 'BIBTEX':
+                write_bibtex_files(item_types_data, export_path)
+            else:
+                write_tsv_files(item_types_data, export_path, list_item_role)
+
+            # Create bag
+            bagit.make_bag(export_path)
+            # Create download file
+            shutil.make_archive(export_path, 'zip', export_path)
+            with open(export_path + '.zip', 'rb') as file:
+                src = FileInstance.create()
+                src.set_contents(
+                    file, default_location=Location.get_default().uri)
+            db.session.commit()
+
+        except Exception:
+            current_app.logger.error('-' * 60)
+            traceback.print_exc(file=sys.stdout)
+
+    def get_export_status(self):
+        """Get Share_task Export ALL status
+            return:     True:   Success or Failed.
+                        No:     Error
+        """
+        cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+            format(name=WEKO_ADMIN_TASK_ID_EXPORT_ALL)
+        try:
+            task_id = get_redis_cache(cache_key)
+            task = self.export_all.AsyncResult(task_id)
+            status = True if not (task.successful() or task.failed())\
+                else False
+        except Exception as ex:
+            return False
+        return status
+
+    def cancel_export_all(self):
+        """Cancel Process Share_task Export ALL with revoke
+            return:     Yes:    cancel Success.
+                        No:     Error
+        """
+        cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+            format(name=WEKO_ADMIN_TASK_ID_EXPORT_ALL)
+        try:
+            task_id = get_redis_cache(cache_key)
+            task_status = self.get_export_status()
+            if task_status:
+                revoke(task_id, terminate=True)
+        except Exception as ex:
+            return False
+        return True
