@@ -3824,7 +3824,7 @@ function toObject(arr) {
             file.filename = file.key;
           }
         });
-        
+
       $scope.updateTitleForOutputReport = function (){
         // Update title in case of output report
         let titleData = $("#auto_fill_title").val();
@@ -3883,6 +3883,7 @@ function toObject(arr) {
         };
       }
     }
+  }
     // Inject depedencies
     WekoRecordsCtrl.$inject = [
       '$scope',
