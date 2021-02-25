@@ -510,6 +510,13 @@ class SchemaTree:
                 list_subitem_key.append(key)
             for value, identify in get_value_from_content_by_mapping_key(
                     atr_vm.copy(), list_subitem_key):
+                if list_subitem_key[-1] == 'licensetype':
+                    # Convert license value to license code
+                    for lic in current_app.config[
+                            'WEKO_RECORDS_UI_LICENSE_DICT']:
+                        if lic.get('value') == value:
+                            value = lic.get('code')
+                            break
                 if parent_id != identify and parent_id != 0:
                     klst.append(blst)
                     blst = []
