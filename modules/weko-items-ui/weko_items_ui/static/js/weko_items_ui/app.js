@@ -535,7 +535,7 @@ function toObject(arr) {
       $scope.bibliographic_title_lang_key = '';
       $scope.usage_report_activity_id = '';
       $scope.is_item_owner = false;
-      $scope.feedback_emails = []
+      $scope.feedback_emails = [];
       $scope.render_requirements = false;
       $scope.error_list = [];
       $scope.required_list = [];
@@ -1715,14 +1715,20 @@ function toObject(arr) {
           return;
         }
         let userInfoData = $("#user_info_data").val();
-        if (userInfoData !== undefined && userInfoData) {
+        let guestEmail = $('#current_guest_email').val();
+        if ((userInfoData !== undefined && userInfoData) || guestEmail) {
           let titleData = $("#auto_fill_title").val();
           let dataType = $("#data_type_title").val() ? $("#data_type_title").val() : "";
           if (!titleData) {
             return;
           }
+          let userName;
           titleData = JSON.parse(titleData);
-          let userName = JSON.parse(userInfoData).results["subitem_displayname"];
+          if (guestEmail) {
+            userName = guestEmail.split("@")[0];
+          } else {
+            userName = JSON.parse(userInfoData).results["subitem_displayname"];
+          }
           let titleSubKey = "subitem_item_title";
           let titleLanguageKey = "subitem_item_title_language";
           let recordsVM = $rootScope["recordsVM"];
@@ -3779,7 +3785,9 @@ function toObject(arr) {
         const actionID = cur_action_id;// Item Registration's Action ID
         let emails = $scope.feedback_emails;
         let result = true;
-
+        if ($.isEmptyObject(emails)) {
+          return result;
+        }
         $.ajax({
           url: '/workflow/save_feedback_maillist/'+ activityID+ '/'+ actionID,
           headers: {

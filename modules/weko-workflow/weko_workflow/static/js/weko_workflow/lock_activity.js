@@ -2,7 +2,12 @@ $(document).ready(function () {
   $('#step_page').focus();
   $('#activity_locked').hide();
 
+  var guestEmail = $('#current_guest_email').val();
+
   var unlock_activity = function (activity_id, locked_value) {
+    if (guestEmail) {
+      return;
+    }
     var url = '/workflow/activity/unlock/' + activity_id;
     var data = JSON.stringify({
       locked_value: locked_value
@@ -26,7 +31,7 @@ $(document).ready(function () {
   var cur_step = $('input#cur_step_for_lock').val();
   var permission = $('#hide-res-check').text(); // 0: allow, <> 0: deny
 
-  if ('end_action' !== cur_step && permission == 0) {
+  if ('end_action' !== cur_step && permission == 0 && !guestEmail) {
     $.ajax({
       type: "POST",
       cache: false,

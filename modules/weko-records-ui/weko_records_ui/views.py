@@ -62,8 +62,8 @@ from .permissions import check_content_clickable, check_created_id, \
     check_file_download_permission, check_original_pdf_download_permission, \
     check_permission_period, get_permission, is_open_restricted
 from .utils import get_billing_file_download_permission, get_groups_price, \
-    get_min_price_billing_file_download, get_record_permalink, \
-    hide_by_email, hide_item_metadata, is_show_email_of_creator
+    get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
+    hide_item_metadata, is_show_email_of_creator
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
@@ -307,10 +307,15 @@ def check_content_file_clickable(record, fjson):
 def get_usage_workflow(file_json):
     """Get correct usage workflow to redirect user.
 
-    :param record
+    :param file_json
     :return: result
     """
-    roles = current_user.roles
+    if not current_user.is_authenticated:
+        # In case guest user
+        from invenio_accounts.models import Role
+        roles = [Role(id="none_loggin")]
+    else:
+        roles = current_user.roles
     if file_json and isinstance(file_json.get("provide"), list):
         provide = file_json.get("provide")
         for role in roles:

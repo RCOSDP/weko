@@ -72,6 +72,10 @@
 {%- endblock page_footer %}
 
 {%- set items_show_list = record.items_show_list -%}
+{% set guest_email = None %}
+{% if activity and activity.extra_info and 'guest_mail' in activity.extra_info %}
+  {% set guest_email = activity.extra_info.guest_mail %}
+{% endif %}
 
 {%- block page_body_main %}
 <!--Approval confirm modal-->
@@ -153,7 +157,7 @@
                   <label>{{_('Creater')}}</label>
                 </div>
                   <div class="col-xs-12 col-md-8 col-lg-8">
-                    <p>{{activity.login_user if activity.login_user else activity.activity_login_user}}</p>
+                    <p>{{ activity.login_user if activity.login_user else (activity.activity_login_user if activity.activity_login_user else guest_email) }}</p>
                   </div>
                 </div>
               </div>
@@ -174,7 +178,7 @@
                   <label>{{_('Updater')}}</label>
                 </div>
                   <div class="col-xs-12 col-md-8 col-lg-8">
-                    <p>{{activity.update_user if activity.update_user else activity.activity_update_user}}</p>
+                    <p>{{ activity.update_user if activity.update_user else (activity.activity_update_user if activity.activity_update_user else guest_email) }}</p>
                   </div>
                 </div>
                 <div class="col-sm-1"></div>
@@ -333,9 +337,10 @@
               {%- if histories %}
               {%- for history in histories %}
                 <tr>
+                  {% set mail = history.user.email if history.user else guest_email %}
                   <td>{{history.ActionName[0]}}</td>
                   <td>{{history.action_date.strftime('%Y-%m-%d %H:%M')}}</td>
-                  <td>{{history.user.email}}</td>
+                  <td>{{mail}}</td>
                   <td>{{_(history.StatusDesc)}}</td>
                   <td>{{history.CommentDesc}}</td>
                 </tr>

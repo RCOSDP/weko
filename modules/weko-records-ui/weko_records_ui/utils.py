@@ -20,20 +20,24 @@
 
 """Module of weko-records-ui utils."""
 
+import base64
+from datetime import datetime, timedelta
 from decimal import Decimal
+from typing import NoReturn, Tuple
 
-from flask import current_app
+from flask import current_app, request
+from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
+from passlib.handlers.oracle import oracle10
 from weko_admin.models import AdminSettings
 from weko_deposit.api import WekoDeposit
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
-from weko_workflow.utils import create_usage_report
 
-from .models import FilePermission
+from .models import FileOnetimeDownload, FilePermission
 from .permissions import check_create_usage_report, check_user_group_permission
 
 
@@ -492,8 +496,131 @@ def check_and_create_usage_report(record, file_object):
     if 'open_restricted' in access_role:
         permission = check_create_usage_report(record, file_object)
         if permission is not None:
+            from weko_workflow.utils import create_usage_report
             activity_id = create_usage_report(
                 permission.usage_application_activity_id)
             if activity_id is not None:
                 FilePermission.update_usage_report_activity_id(permission,
                                                                activity_id)
+
+
+def generate_one_time_download_url(
+    file_name: str, record_id: str, guest_mail: str
+) -> str:
+    """Generate one time download URL.
+
+    :param file_name: File name
+    :param record_id: File Version ID
+    :param guest_mail: guest email
+    :return:
+    """
+    secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
+    download_pattern = current_app.config[
+        'WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN']
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    hash_value = download_pattern.format(file_name, record_id, guest_mail,
+                                         current_date)
+    secret_token = oracle10.hash(secret_key, hash_value)
+
+    token_pattern = "{} {} {} {}"
+    token = token_pattern.format(record_id, guest_mail, current_date,
+                                 secret_token)
+    token_value = base64.b64encode(token.encode()).decode()
+    host_name = request.host_url
+    url = "{}record/{}/file/onetime/{}?token={}" \
+        .format(host_name, record_id, file_name, token_value)
+    return url
+
+
+def parse_one_time_download_token(token: str) -> Tuple[str, Tuple]:
+    """Parse onetime download token
+
+    @param token:
+    @return:
+    """
+    error = _("Token is invalid.")
+    if token is None:
+        return error, ()
+    try:
+        decode_token = base64.b64decode(token.encode()).decode()
+        param = decode_token.split(" ")
+        if not param or len(param) != 4:
+            return error, ()
+
+        return "", (param[0], param[1], param[2], param[3])
+    except Exception as err:
+        current_app.logger.error(err)
+        return error, ()
+
+
+def validate_onetime_download_token(
+    file_name: str, record_id: str, guest_mail: str, date: str, token: str
+) -> Tuple[bool, str]:
+    """Validate onetime download token.
+
+    @param file_name:
+    @param record_id:
+    @param guest_mail:
+    @param date:
+    @param token:
+    @return:
+    """
+    token_invalid = _("Token is invalid.")
+    secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
+    download_deadline = current_app.config['WEKO_RECORDS_UI_DOWNLOAD_DEADLINE']
+    downloads_max = current_app.config['WEKO_RECORDS_UI_DOWNLOADS_MAX']
+    download_pattern = current_app.config[
+        'WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN']
+    hash_value = download_pattern.format(file_name, record_id, guest_mail, date)
+    if not oracle10.verify(secret_key, token, hash_value):
+        current_app.logger.debug('Validate token error: {}'.format(hash_value))
+        return False, token_invalid
+    try:
+        download_date = datetime.strptime(date, "%Y-%m-%d").date() + timedelta(
+            download_deadline)
+        current_date = datetime.now().date()
+        if current_date > download_date:
+            return False, _("The download expiration date has expired.")
+
+        file_downloads = FileOnetimeDownload.find(
+            file_name=file_name, record_id=record_id, user_mail=guest_mail
+        )
+        if file_downloads and len(file_downloads) > 0:
+            download_count = file_downloads[0].download_count
+            if download_count >= downloads_max:
+                return False, _(
+                    "The maximum number of downloads has been exceeded.")
+        return True, ""
+    except Exception as err:
+        current_app.logger.error('Validate onetime download token error:')
+        current_app.logger.error(err)
+        return False, token_invalid
+
+
+def get_onetime_download_count(file_name: str, record_id: str,
+                               user_mail: str) -> NoReturn:
+    """Get onetime download count.
+
+    @param file_name:
+    @param record_id:
+    @param user_mail:
+    @return:
+    """
+    file_downloads = FileOnetimeDownload.find(
+        file_name=file_name, record_id=record_id, user_mail=user_mail
+    )
+    return file_downloads
+
+
+def update_onetime_download_count(file_name: str, record_id: str,
+                                  user_mail: str) -> NoReturn:
+    """Update onetime download count.
+
+    @param file_name:
+    @param record_id:
+    @param user_mail:
+    @return:
+    """
+    return FileOnetimeDownload.update_download_count(
+        file_name=file_name, record_id=record_id, user_mail=user_mail
+    )
