@@ -1265,6 +1265,95 @@ def write_tsv_files(item_types_data, export_path, list_item_role):
             tsv_output = package_export_file(item_type_data)
             file.write(tsv_output.getvalue())
 
+
+def export_items(post_data):
+    """Gather all the item data and export and return as a JSON or BIBTEX.
+
+    :return: JSON, BIBTEX
+    """
+    def check_item_type_name(name):
+        """Check a list of allowed characters in filenames."""
+        new_name = re.sub(r'[\/:*"<>|\s]', '_', name)
+        return new_name
+
+    include_contents = True if \
+        post_data.get('export_file_contents_radio') == 'True' else False
+    export_format = post_data['export_format_radio']
+    record_ids = json.loads(post_data['record_ids'])
+    invalid_record_ids = json.loads(post_data['invalid_record_ids'])
+    invalid_record_ids = [int(i) for i in invalid_record_ids]
+    # Remove all invalid records
+    record_ids = set(record_ids) - set(invalid_record_ids)
+    record_metadata = json.loads(post_data['record_metadata'])
+    if len(record_ids) > _get_max_export_items():
+        return abort(400)
+    elif len(record_ids) == 0:
+        return '', 204
+
+    result = {'items': []}
+    temp_path = tempfile.TemporaryDirectory()
+    item_types_data = {}
+
+    try:
+        # Set export folder
+        export_path = temp_path.name + '/' + \
+            datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        # Double check for limits
+        for record_id in record_ids:
+            record_path = export_path + '/recid_' + str(record_id)
+            os.makedirs(record_path, exist_ok=True)
+            exported_item, list_item_role = _export_item(
+                record_id,
+                export_format,
+                include_contents,
+                record_path,
+                record_metadata.get(str(record_id))
+            )
+
+            result['items'].append(exported_item)
+
+            item_type_id = exported_item.get('item_type_id')
+            item_type = ItemTypes.get_by_id(item_type_id)
+            if not item_types_data.get(item_type_id):
+                item_type_name = check_item_type_name(
+                    item_type.item_type_name.name)
+                item_types_data[item_type_id] = {
+                    'item_type_id': item_type_id,
+                    'name': '{}({})'.format(
+                        item_type_name,
+                        item_type_id),
+                    'root_url': request.url_root,
+                    'jsonschema': 'items/jsonschema/' + item_type_id,
+                    'keys': [],
+                    'labels': [],
+                    'recids': [],
+                    'data': {},
+                }
+            item_types_data[item_type_id]['recids'].append(record_id)
+
+        # Create export info file
+        if export_format == 'BIBTEX':
+            write_bibtex_files(item_types_data, export_path)
+        else:
+            write_tsv_files(item_types_data, export_path, list_item_role)
+
+        # Create bag
+        bagit.make_bag(export_path)
+        # Create download file
+        shutil.make_archive(export_path, 'zip', export_path)
+    except Exception:
+        current_app.logger.error('-' * 60)
+        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error('-' * 60)
+        flash(_('Error occurred during item export.'), 'error')
+        return redirect(url_for('weko_items_ui.export'))
+    return send_file(
+        export_path + '.zip',
+        as_attachment=True,
+        attachment_filename='export.zip'
+    )
+
+
 def _get_max_export_items():
     """Get max amount of items to export."""
     max_table = current_app.config['WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE']
@@ -1286,6 +1375,84 @@ def _get_max_export_items():
         if role in max_table and max_table[role] > current_max:
             current_max = max_table[role]
     return current_max
+
+
+def _export_item(record_id,
+                 export_format,
+                 include_contents,
+                 tmp_path=None,
+                 records_data=None):
+    """Exports files for record according to view permissions."""
+    def del_hide_sub_metadata(keys, metadata):
+        """Delete hide metadata."""
+        if isinstance(metadata, dict):
+            data = metadata.get(keys[0])
+            if data:
+                if len(keys) > 1:
+                    del_hide_sub_metadata(keys[1:], data)
+                else:
+                    del metadata[keys[0]]
+        elif isinstance(metadata, list):
+            count = len(metadata)
+            for index in range(count):
+                del_hide_sub_metadata(keys[1:] if len(
+                    keys) > 1 else keys, metadata[index])
+
+    exported_item = {}
+    record = WekoRecord.get_record_by_pid(record_id)
+    list_item_role = {}
+    if record:
+        exported_item['record_id'] = record.id
+        exported_item['name'] = 'recid_{}'.format(record_id)
+        exported_item['files'] = []
+        exported_item['path'] = 'recid_' + str(record_id)
+        exported_item['item_type_id'] = record.get('item_type_id')
+        if not records_data:
+            records_data = record
+        if exported_item['item_type_id']:
+            list_hidden = get_ignore_item_from_mapping(
+                exported_item['item_type_id'])
+            if records_data.get('metadata'):
+                meta_data = records_data.get('metadata')
+                record_role_ids = {
+                    'weko_creator_id': meta_data.get('weko_creator_id'),
+                    'weko_shared_id': meta_data.get('weko_shared_id')
+                }
+                list_item_role.update(
+                    {exported_item['item_type_id']: record_role_ids})
+                if hide_meta_data_for_role(record_role_ids):
+                    for hide_key in list_hidden:
+                        if isinstance(hide_key, str) \
+                                and meta_data.get(hide_key):
+                            del records_data['metadata'][hide_key]
+                        elif isinstance(hide_key, list):
+                            del_hide_sub_metadata(
+                                hide_key, records_data['metadata'])
+
+        # Create metadata file.
+        with open('{}/{}_metadata.json'.format(tmp_path,
+                                               exported_item['name']),
+                  'w',
+                  encoding='utf8') as output_file:
+            json.dump(records_data, output_file, indent=2,
+                      sort_keys=True, ensure_ascii=False)
+        # First get all of the files, checking for permissions while doing so
+        if include_contents:
+            # Get files
+            for file in record.files:  # TODO: Temporary processing
+                if check_file_download_permission(record, file.info()):
+                    if file.info().get('accessrole') != 'open_restricted':
+                        exported_item['files'].append(file.info())
+                        # TODO: Then convert the item into the desired format
+                        if file:
+                            file_buffered = file.obj.file.storage().open()
+                            temp_file = open(
+                                tmp_path + '/' + file.obj.basename, 'wb')
+                            temp_file.write(file_buffered.read())
+                            temp_file.close()
+
+    return exported_item, list_item_role
+
 
 def get_new_items_by_date(start_date: str, end_date: str) -> dict:
     """Get ranking new item by date.
