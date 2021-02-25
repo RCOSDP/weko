@@ -550,7 +550,6 @@ class SchemaTree:
                     is_next = False
                     ret = ', '.join(map(str, vst))
                     mlst.append([ret])
-                    mlst.append(vst)
                 else:
                     if ava:
                         if exp in ava:
