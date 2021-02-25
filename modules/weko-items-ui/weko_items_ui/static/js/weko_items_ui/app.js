@@ -2913,11 +2913,7 @@ function toObject(arr) {
           let listItemErrors = [];
           if(schemaForm){
             for (let i = 0; i < schemaForm.length; i++) {
-              let name_list = schemaForm[i].$name.split('.');
               let name = schemaForm[i].$name;
-              if (name_list.length >= 1) {
-                name = name_list[name_list.length - 1];
-              }
               if (itemsDict.hasOwnProperty(name)) {
                 name = itemsDict[name];
               }
@@ -3212,7 +3208,7 @@ function toObject(arr) {
             result.push.apply(result, this.findRequiredItemInSchemaForm(subitem[i]));
           }
         } else {
-          if (item.required) {
+          if (item.required && item.key) {
             let newData = {
               'title': '',
               'id': '',
@@ -3224,7 +3220,7 @@ function toObject(arr) {
             if (!newData['title']) {
               newData['title'] = item.title;
             }
-            newData['id'] = item.key.join('.').replaceAll('..', '.0.')
+            newData['id'] = item.key[item.key.length - 1]
             result.push(newData);
           }
         }
@@ -3333,7 +3329,7 @@ function toObject(arr) {
       }
 
       $scope.updateDataJson = function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
-        if(!validateSession()){
+          if (!validateSession()) {
           return;
         }
         $scope.startLoading();
@@ -3587,6 +3583,7 @@ function toObject(arr) {
         var metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
         if (!angular.isUndefined($rootScope.filesVM)) {
           this.mappingThumbnailInfor();
+          this.updateFilenameFilesVM();
           metainfo = angular.merge(
             {},
             metainfo,
@@ -3738,6 +3735,15 @@ function toObject(arr) {
         } else {
           $('#react-component-version').hide();
         }
+      }
+
+      // Update 'filename'
+      $scope.updateFilenameFilesVM = function () {
+        $rootScope.filesVM.files.forEach(function (file) {
+          if (file.key && !file.filename) {
+            file.filename = file.key;
+          }
+        });
       }
     }
     // Inject depedencies
