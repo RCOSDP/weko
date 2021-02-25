@@ -329,8 +329,8 @@ msgstr "Import"
 msgid "Cannot preview because the file size is too large."
 msgstr ""
 
-msgid "Non-Logged In User"
-msgstr "Non-Logged In User"
+msgid "Guest"
+msgstr "Guest"
 
-msgid "write your own term"
-msgstr "write your own term"
+msgid "Free Input"
+msgstr "Free Input"

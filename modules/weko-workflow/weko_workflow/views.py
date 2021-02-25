@@ -1518,12 +1518,12 @@ def get_data_init():
     # Get roles.
     roles = Role.query.all()
     init_roles = []
-    init_roles.append({'id': 'none_loggin', 'name': _('Non-Logged In User')})
+    init_roles.append({'id': 'none_loggin', 'name': _('Guest')})
     for role in roles:
         init_roles.append({'id': role.id, 'name': role.name})
     # Get term.
     init_terms = []
-    init_terms.append({'id': 'term_free', 'name': _('write your own term')})
+    init_terms.append({'id': 'term_free', 'name': _('Free Input')})
     ### TODO
     for role in roles:
         init_terms.append({'id': role.id, 'name': 'Term ' + str(role.id)})

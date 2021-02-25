@@ -445,8 +445,8 @@ msgstr "入力"
 msgid "Cannot preview because the file size is too large."
 msgstr "ファイルサイズが大きいためプレビューできません。"
 
-msgid "Non-Logged In User"
-msgstr "非ログインユーザー"
+msgid "Guest"
+msgstr "非ログインユーザ"
 
-msgid "write your own term"
+msgid "Free Input"
 msgstr "自由入力"
