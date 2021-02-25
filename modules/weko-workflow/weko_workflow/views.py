@@ -360,7 +360,8 @@ def display_guest_activity(file_name=""):
     is_valid, activity_id, guest_email = validate_guest_activity(token,
                                                                  file_name)
     if not is_valid:
-        return render_template("weko_theme/error.html", error="Invalid token!")
+        return render_template("weko_theme/error.html",
+                               error=_("Token is invalid"))
 
     session['guest_token'] = token
     session['guest_email'] = guest_email
