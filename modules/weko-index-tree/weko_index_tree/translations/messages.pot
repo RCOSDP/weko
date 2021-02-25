@@ -83,5 +83,5 @@ msgstr ""
 msgid "When assigning a DOI to an item, it must be associated with an index whose index status is "Public" and Harvest Publishing is "Public"."
 msgstr ""
 
-msgid "The index cannot be deleted because the import is in progress."
+msgid "This index cannot be deleted because the item belonging to this index is being edited by the import function."
 msgstr ""

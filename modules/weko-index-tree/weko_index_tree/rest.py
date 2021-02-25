@@ -239,8 +239,9 @@ class IndexActionResource(ContentNegotiatedMethodView):
             errors.append(_('The index cannot be deleted because there is'
                             ' a link from an item that has a DOI.'))
         elif check_has_any_item_in_index_is_locked(index_id):
-            errors.append(_('The index cannot be deleted because'
-                            ' the import is in progress.'))
+            errors.append(_('This index cannot be deleted because '
+                            'the item belonging to this index is '
+                            'being edited by the import function.'))
         else:
             action = request.values.get('action', 'all')
             res = self.record_class.get_self_path(index_id)

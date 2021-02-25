@@ -688,7 +688,7 @@ def check_restrict_doi_with_indexes(other_index_ids):
     from .api import Indexes
     for index_id in other_index_ids:
         idx = Indexes.get_index(index_id.split('/')[-1])
-        if idx.public_state and idx.harvest_public_state:
+        if not idx or (idx.public_state and idx.harvest_public_state):
             return False
     return True
 

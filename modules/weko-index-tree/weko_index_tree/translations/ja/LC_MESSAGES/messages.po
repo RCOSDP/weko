@@ -134,5 +134,5 @@ msgstr "DOIが付与されているアイテムからのリンクがあるため
 msgid "When assigning a DOI to an item, it must be associated with an index whose index status is "Public" and Harvest Publishing is "Public"."
 msgstr "アイテムにDOIを付与する場合、インデックス状態が「公開」かつハーベスト公開が「公開」のインデックスとの関連付けが必要です。"
 
-msgid "The index cannot be deleted because the import is in progress."
-msgstr ""
+msgid "This index cannot be deleted because the item belonging to this index is being edited by the import function."
+msgstr "このインデクスに所属しているアイテムがインポート機能で編集中のためインデクスが削除できません。"

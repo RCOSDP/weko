@@ -1193,18 +1193,20 @@ def import_items_to_system(item: dict, url_root: str):
 
             db.session.commit()
         except Exception as ex:
+            if item.get('id'):
+                handle_remove_es_metadata(item)
+
             db.session.rollback()
             current_app.logger.error('item id: %s update error.' % item['id'])
             current_app.logger.error(ex)
+            error_id = None
             if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
-                    and ex.args[0].get('error_msg'):
-                error = ex.args[0].get('error_msg')
-            else:
-                error = str(ex)
+                    and ex.args[0].get('error_id'):
+                error_id = ex.args[0].get('error_id')
 
             return {
                 'success': False,
-                'error': error
+                'error_id': error_id
             }
     return {
         'success': True
@@ -1768,9 +1770,10 @@ def register_item_doi(item):
     """
     def check_doi_duplicated(doi_ra, data):
         duplicated_doi = check_existed_doi(get_doi_link(doi_ra, data))
-        if duplicated_doi.get('isExistDOI') \
-                or duplicated_doi.get('isWithdrawnDoi'):
-            return duplicated_doi.get('msg')
+        if duplicated_doi.get('isWithdrawnDoi'):
+            return 'is_withdraw_doi'
+        if duplicated_doi.get('isExistDOI'):
+            return 'is_duplicated_doi'
 
     item_id = str(item.get('id'))
     is_change_identifier = item.get('is_change_identifier')
@@ -1808,7 +1811,7 @@ def register_item_doi(item):
             if not pid_doi or not pid_doi.pid_value.endswith(doi):
                 doi_duplicated = check_doi_duplicated(doi_ra, data)
                 if doi_duplicated:
-                    raise Exception({'error_msg': doi_duplicated})
+                    raise Exception({'error_id': doi_duplicated})
 
                 saving_doi_pidstore(
                     pid_lastest.object_uuid,
@@ -1822,7 +1825,7 @@ def register_item_doi(item):
             data = prepare_doi_link(item_id)
             doi_duplicated = check_doi_duplicated(doi_ra, data)
             if doi_duplicated:
-                raise Exception({'error_msg': doi_duplicated})
+                raise Exception({'error_id': doi_duplicated})
             saving_doi_pidstore(
                 pid_lastest.object_uuid,
                 pid.object_uuid,
@@ -2419,20 +2422,38 @@ def handle_check_item_is_locked(item):
     from weko_items_ui.utils import check_item_is_being_edit, \
         check_item_is_deleted
     item_id = str(item.get('id'))
-    error = None
+    error_id = None
 
     if check_item_is_deleted(item_id):
-        error = _('The corresponding item has been deleted.')
+        error_id = 'item_is_deleted'
     else:
         pid = PersistentIdentifier.query.filter_by(
             pid_type='recid',
             pid_value=item_id
         ).first()
         if check_item_is_being_edit(pid):
-            error = _('Cannot update because the corresponding '
-                      'item is being edited.')
+            error_id = 'item_is_being_edit'
 
-    if error:
+    if error_id:
         raise Exception({
-            'error_msg': error
+            'error_id': error_id
         })
+
+
+def handle_remove_es_metadata(item):
+    """Remove es metadata.
+
+    :argument
+        item - {dict} Item metadata.
+    """
+    try:
+        item_id = item.get('id')
+        pid = WekoRecord.get_record_by_pid(item_id).pid_recid
+        pid_lastest = WekoRecord.get_record_by_pid(
+            item_id + '.' + str(get_latest_version_id(item_id) - 1)).pid_recid
+        deposit = WekoDeposit.get_record(pid.object_uuid)
+        deposit.indexer.delete(deposit)
+        deposit = WekoDeposit.get_record(pid_lastest.object_uuid)
+        deposit.indexer.delete(deposit)
+    except Exception as ex:
+        current_app.logger.error(ex)

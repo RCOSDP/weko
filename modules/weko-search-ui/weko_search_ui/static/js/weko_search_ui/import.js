@@ -47,6 +47,10 @@ const error_get_lstItemType = document.getElementById("error_get_lstItemType").v
 const internal_server_error = document.getElementById("internal_server_error").value;
 const not_available_error_another = document.getElementById("not_available_error_another").value;
 const not_available_error = document.getElementById("not_available_error").value;
+const is_duplicated_doi = document.getElementById("is_duplicated_doi").value;
+const is_withdraw_doi = document.getElementById("is_withdraw_doi").value;
+const item_is_deleted = document.getElementById("item_is_deleted").value;
+const item_is_being_edit = document.getElementById("item_is_being_edit").value;
 
 const workflows = JSON.parse($("#workflows").text() ? $("#workflows").text() : "");
 const urlTree = window.location.origin + '/api/tree'
@@ -73,6 +77,29 @@ function showErrorMsg(msg) {
     '<div class="alert alert-danger alert-dismissable">' +
     '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
     '&times;</button>' + msg + '</div>');
+}
+
+function getResultErrorMsg(error_id) {
+  let msg = '';
+  switch (error_id) {
+    case 'is_duplicated_doi':
+      msg = is_duplicated_doi;
+      break;
+    case 'is_withdraw_doi':
+      msg = is_withdraw_doi;
+      break;
+    case 'item_is_deleted':
+      msg = item_is_deleted;
+      break;
+    case 'item_is_being_edit':
+      msg = item_is_being_edit;
+      break;
+  }
+  if (msg === '') {
+    return 'Error';
+  } else {
+    return 'Error: ' + msg;
+  }
 }
 
 class MainLayout extends React.Component {
@@ -179,7 +206,7 @@ class MainLayout extends React.Component {
 
   handleCheckImportAvailable() {
     closeError();
-    const import_start_time = sessionStorage.getItem('import_start_time');
+    const import_start_time = localStorage.getItem('import_start_time');
     let result = false;
     $.ajax({
       url: urlCheckImportAvailable,
@@ -222,7 +249,7 @@ class MainLayout extends React.Component {
       success: function (response) {
         const import_start_time = response.data.import_start_time;
         if (import_start_time !== '') {
-          sessionStorage.setItem('import_start_time', import_start_time);
+          localStorage.setItem('import_start_time', import_start_time);
         }
         that.setState(() => {
           return {
@@ -961,7 +988,7 @@ class ResultComponent extends React.Component {
         'Start Date': item.start_date ? item.start_date : '',
         'End Date': item.end_date ? item.end_date : '',
         'Item Id': item.item_id || '',
-        'Action': item.task_result ? item.task_result.success ? "End" : item.task_result.error ? "Error: " + item.task_result.error : "" : "Start",
+        'Action': item.task_result ? item.task_result.success ? "End" : item.task_result.error_id ? getResultErrorMsg(item.task_result.error_id) : "" : "Start",
         'Work Flow Status': item.task_status ? item.task_status === "PENDING" ? "To Do" : item.task_status === "SUCCESS" ? "Done" : item.task_status === "FAILURE" ? "FAILURE" : '' : ''
       }
     })
@@ -1039,7 +1066,7 @@ class ResultComponent extends React.Component {
                       <td>{item.start_date ? item.start_date : ''}</td>
                       <td>{item.end_date ? item.end_date : ''}</td>
                       <td>{item.item_id || ''}</td>
-                      <td>{item.task_result ? item.task_result.success ? end : item.task_result.error ? "Error: " + item.task_result.error : "" : "Start"}</td>
+                      <td>{item.task_result ? item.task_result.success ? end : item.task_result.error_id ? getResultErrorMsg(item.task_result.error_id) : "" : "Start"}</td>
                       <td>
                         {item.task_status && item.task_status === "PENDING" ? to_do : ''}
                         {item.task_status && item.task_status === "SUCCESS" ? done : ''}

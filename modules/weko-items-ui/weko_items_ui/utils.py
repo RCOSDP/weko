@@ -2425,8 +2425,8 @@ def check_item_is_being_edit(
         latest_pid = PIDVersioning(child=recid).last_child
         item_uuid = latest_pid.object_uuid
         post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
-    if post_workflow.action_status in [ASP.ACTION_BEGIN,
-                                       ASP.ACTION_DOING]:
+    if post_workflow and post_workflow.action_status \
+            in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]:
         return True
 
     draft_pid = PersistentIdentifier.query.filter_by(

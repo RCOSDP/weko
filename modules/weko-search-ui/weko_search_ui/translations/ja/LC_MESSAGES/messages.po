@@ -577,7 +577,7 @@ msgid "Check Error"
 msgstr "チェックエラー"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:69
-msgid "Download"
+msgid "import_btn_download"
 msgstr "ダウンロード"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:70
@@ -713,3 +713,9 @@ msgstr "該当アイテムが編集中のため更新できません。"
 
 msgid "The corresponding item has been deleted."
 msgstr "該当アイテムは削除済です。"
+
+msgid "This DOI has been already grant for another item. Please specify another DOI."
+msgstr "このDOIは既に別のアイテムに付与されています。別のDOIを指定してください。"
+
+msgid "import_error_msg_is_withdraw_doi"
+msgstr "このDOIは取り下げられました。別のDOIを指定してください。"
