@@ -33,22 +33,6 @@
 {% from "weko_records_ui/item_detail.html" import output_item_detail %}
 {% from "weko_records_ui/_macros.html" import check_download_file %}
 
-{%- for obj in items_show_list if items_show_list is not none and items_show_list|length > 0 -%}
-  {%- set attribute_name= obj.get("attribute_name", None) -%}
-  {%- set attribute_name_i18n= obj.get("attribute_name_i18n", None) -%}
-  {%- if ("Title" in attribute_name and "Title" in attribute_name_i18n) or ("Title" in attribute_name and "タイトル" in attribute_name_i18n) or "Title" in attribute_name -%}
-    {%- set attribute_value_mlt = obj.get("attribute_value_mlt", None) -%}
-    {%- set index = loop.index - 1 -%}
-    {%- for i in range(attribute_value_mlt|length) -%}
-      {%- if (i + 1) < attribute_value_mlt|length -%}
-        {%- if attribute_value_mlt[i][0][1][0]['Language'] == attribute_value_mlt[i + 1][0][1][0]['Language'] -%}
-          {%- set items_show_list = items_show_list[index]["attribute_value_mlt"].pop(i + 1) -%}
-        {%- endif -%}
-      {%- endif -%}
-    {% endfor %}
-  {%- endif -%}
-{%- endfor -%}
-
 <div class="panel-group">
   <div class="panel panel-default">
     <div class="panel-heading clearfix">
