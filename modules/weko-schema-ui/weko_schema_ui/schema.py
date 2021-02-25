@@ -536,6 +536,7 @@ class SchemaTree:
                 glst.append(get_exp_value(lst))
             mlst = []
             vst = []
+            exp = '\\' + exp
             while is_next:
                 cnt = 0
                 ava = ""
@@ -548,22 +549,15 @@ class SchemaTree:
 
                 if cnt == len(glst):
                     is_next = False
-                    ret = ', '.join(map(str, vst))
-                    mlst.append([ret])
+                    mlst.append(vst)
                 else:
                     if ava:
                         if exp in ava:
                             ava_arr = ava.split(exp)
                             for av in ava_arr:
                                 if av:
-                                    if isinstance(av, str):
-                                        av = av.strip()
                                     vst.append(av)
                         else:
-                            if isinstance(ava, str):
-                                ret = ava[1:].strip()
-                            else:
-                                ret = ava[1:]
                             vst.append(ava[1:])
             return mlst
 
@@ -590,9 +584,6 @@ class SchemaTree:
 
             def remove_empty_tag(mp):
                 if isinstance(mp, str) and (not mp or mp not in remain_keys):
-                    for remain_key in remain_keys:
-                        if remain_key and ', ' in mp and remain_key in mp:
-                            return False
                     return True
                 elif isinstance(mp, dict):
                     remove_list = []
