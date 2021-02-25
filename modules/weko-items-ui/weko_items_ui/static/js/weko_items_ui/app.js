@@ -2099,9 +2099,8 @@ function toObject(arr) {
                     if(!$rootScope.isModelFileVersion(model[filemeta_key], file.version_id)){
                       modelFile.version_id = file.version_id;
                     }
-                    if(!modelFile.fileDate){
-                      modelFile.fileDate = [{}];
-                    }
+                    modelFile.fileDate = !modelFile.fileDate ? [{}] : modelFile.fileDate;
+                    modelFile.provide = !modelFile.provide ? [{}] : modelFile.provide;
                   }
                 })
               }
