@@ -23,7 +23,7 @@ from datetime import datetime
 
 from celery import shared_task
 
-from .utils import import_items_to_system, remove_temp_dir
+from .utils import import_items_to_system, remove_temp_dir, Exporter
 
 
 @shared_task
@@ -39,3 +39,9 @@ def import_item(item, url_root):
 def remove_temp_dir_task(path):
     """Import Item ."""
     remove_temp_dir(path)
+
+@shared_task
+def export_all():
+    """Export Item ."""
+    result = Exporter().export_all() or dict()
+    return result
