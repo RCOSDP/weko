@@ -31,7 +31,6 @@ from flask import Blueprint, abort, current_app, flash, json, jsonify, \
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
-from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
@@ -40,7 +39,7 @@ from invenio_pidstore.resolver import Resolver
 from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
 from weko_admin.models import AdminSettings, RankingSettings
-from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import check_restrict_doi_with_indexes, \
     get_index_id, get_user_roles
@@ -62,8 +61,7 @@ from .utils import _get_max_export_items, export_items, get_current_user, \
     set_multi_language_name, to_files_js, translate_schema_form, \
     translate_validation_message, update_index_tree_for_record, \
     update_json_schema_by_activity_id, update_schema_form_by_activity_id, \
-    update_sub_items_by_user_role, validate_form_input_data, \
-    validate_save_title_and_share_user_id, validate_user, \
+    update_sub_items_by_user_role, validate_form_input_data, validate_user, \
     validate_user_mail_and_index
 
 blueprint = Blueprint(
@@ -1104,22 +1102,6 @@ def corresponding_activity_list():
             get_corresponding_usage_activities(current_user.get_id())
         result = {'usage_application': usage_application_list,
                   'output_report': output_report_list}
-    return jsonify(result)
-
-
-@blueprint_api.route('/save_title_and_share_user_id', methods=['POST'])
-@login_required
-def save_title_and_share_user_id():
-    """Validate input title and shared user id for activity.
-
-    :return:
-    """
-    result = {
-        "is_valid": True,
-        "error": ""
-    }
-    data = request.get_json()
-    validate_save_title_and_share_user_id(result, data)
     return jsonify(result)
 
 

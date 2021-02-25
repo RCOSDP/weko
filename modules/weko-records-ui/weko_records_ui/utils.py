@@ -34,9 +34,9 @@ from weko_admin.models import AdminSettings
 from weko_deposit.api import WekoDeposit
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
-
+from weko_workflow.utils import create_usage_report
 from .permissions import check_file_download_permission, \
-    check_user_group_permission, is_open_restricted
+    check_user_group_permission, is_open_restricted, check_create_usage_report
 
 
 def check_items_settings():
@@ -604,3 +604,19 @@ def get_file_info_list(record):
                     f['mimetype'] = f.get('format', '')
                     files.append(f)
     return is_display_file_preview, files
+def check_and_create_usage_report(record, file_object):
+    """Check and create usage report.
+
+    :param file_object:
+    :param record:
+    :return:
+    """
+    access_role = file_object.get('accessrole', '')
+    if 'open_restricted' in access_role:
+        permission = check_create_usage_report(record, file_object)
+        if permission is not None:
+            activity_id = create_usage_report(
+                permission.usage_application_activity_id)
+            if activity_id is not None:
+                FilePermission.update_usage_report_activity_id(permission,
+                                                               activity_id)

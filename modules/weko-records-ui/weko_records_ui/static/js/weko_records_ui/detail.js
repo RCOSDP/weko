@@ -76,19 +76,16 @@ require([
     let post_uri = $('#post_uri').text();
     let workflow_id = $(this).data('workflow-id');
     let community = $(this).data('community');
-    let itemTitle = $(this).data('itemtitle');
+    let dataType = $("#data_type_title").val();
     let post_data = {
       workflow_id: workflow_id,
       flow_id: $('#flow_' + workflow_id).data('flow-id'),
-      itemtype_id: $('#item_type_' + workflow_id).data('itemtype-id')
+      itemtype_id: $('#item_type_' + workflow_id).data('itemtype-id'),
+      related_title : dataType
     };
     if (typeof community !== 'undefined' && community !== "") {
       post_uri = post_uri + "?community=" + community;
     }
-    if (typeof itemTitle !== 'undefined' && itemTitle !== "") {
-        post_uri = post_uri + "?itemtitle=" + itemTitle;
-    }
-
     let record_id = $('#recid').text();
     let file_name = $('#file_name').text();
     $.ajax({

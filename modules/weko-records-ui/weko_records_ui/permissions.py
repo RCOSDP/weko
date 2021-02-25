@@ -240,14 +240,9 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
 
 def check_open_restricted_permission(record, fjson):
     """Check 'open_restricted' file permission."""
-    user_id = current_user.get_id()
     record_id = record.get('recid')
     file_name = fjson.get('filename')
-    current_time = dt.now()
-    duration = current_time - \
-        timedelta(days=current_app.config['WEKO_RECORDS_UI_DOWNLOAD_DAYS'])
-    list_permission = FilePermission.find_list_permission_by_date(
-        user_id, record_id, file_name, duration)
+    list_permission = __get_file_permission(record_id, file_name)
     if list_permission:
         permission = list_permission[0]
         return check_permission_period(permission)
@@ -273,14 +268,9 @@ def check_content_clickable(record, fjson):
     """Check if content file is clickable."""
     if not is_open_restricted(fjson):
         return False
-    user_id = current_user.get_id()
     record_id = record.get('recid')
     file_name = fjson.get('filename')
-    current_time = dt.now()
-    duration = current_time - timedelta(
-        days=current_app.config['WEKO_RECORDS_UI_DOWNLOAD_DAYS'])
-    list_permission = FilePermission.find_list_permission_by_date(
-        user_id, record_id, file_name, duration)
+    list_permission = __get_file_permission(record_id, file_name)
     # can click if user have not log in
     if list_permission:
         permission = list_permission[0]
@@ -307,14 +297,9 @@ def get_permission(record, fjson):
     @param fjson:
     @return:
     """
-    user_id = current_user.get_id()
     record_id = record.get('recid')
     file_name = fjson.get('filename')
-    current_time = dt.now()
-    duration = current_time - \
-        timedelta(days=current_app.config['WEKO_RECORDS_UI_DOWNLOAD_DAYS'])
-    list_permission = FilePermission.find_list_permission_by_date(
-        user_id, record_id, file_name, duration)
+    list_permission = __get_file_permission(record_id, file_name)
     if list_permission:
         permission = list_permission[0]
         if permission.status == 1:
@@ -461,3 +446,40 @@ def check_created_id(record):
             elif lst.name == users[3]:
                 is_himself = False
     return is_himself
+
+
+def check_usage_report_in_permission(permission):
+    """Check usage report in permission."""
+    if permission.usage_report_activity_id is None:
+        return True
+    else:
+        return False
+
+
+def check_create_usage_report(record, file_json):
+    """Check create usage report.
+
+    @param record:
+    @param file_json:
+    @return:
+    """
+    record_id = record.get('recid')
+    file_name = file_json.get('filename')
+    list_permission = __get_file_permission(record_id, file_name)
+    if list_permission:
+        permission = list_permission[0]
+        if check_usage_report_in_permission(permission):
+            return permission
+        else:
+            return None
+
+
+def __get_file_permission(record_id, file_name):
+    """Get file permission."""
+    user_id = current_user.get_id()
+    current_time = dt.now()
+    duration = current_time - timedelta(
+        days=current_app.config['WEKO_RECORDS_UI_DOWNLOAD_DAYS'])
+    list_permission = FilePermission.find_list_permission_by_date(
+        user_id, record_id, file_name, duration)
+    return list_permission

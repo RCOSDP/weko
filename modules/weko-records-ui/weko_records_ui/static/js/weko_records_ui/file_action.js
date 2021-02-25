@@ -85,4 +85,10 @@ $(document).ready(function(){
       $(this).find('.preview-arrow-down').removeClass('hidden');
     }
   });
+
+  $('#non-role-btn').click(function() {
+    let modelContent = $('#non-role-msg').val()
+    $("#inputModal").html(modelContent);
+    $("#allModal").modal("show");
+  });
 });

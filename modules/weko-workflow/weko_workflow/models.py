@@ -638,7 +638,7 @@ class WorkFlow(db.Model, TimestampMixin):
 
 
 class Activity(db.Model, TimestampMixin):
-    """Define Activety."""
+    """Define Activity."""
 
     __tablename__ = 'workflow_activity'
 
@@ -691,10 +691,6 @@ class Activity(db.Model, TimestampMixin):
         Action,
         backref=db.backref('activity', lazy='dynamic')
     )
-
-    # action_version = db.Column(
-    #     db.String(24), nullable=True, unique=False)
-    # """action version."""
 
     action_status = db.Column(
         db.String(1), db.ForeignKey(ActionStatus.action_status_id),
@@ -751,6 +747,26 @@ class Activity(db.Model, TimestampMixin):
 
     shared_user_id = db.Column(db.Integer(), nullable=True)
 
+    approval1 = db.Column(db.Text, nullable=True)
+
+    approval2 = db.Column(db.Text, nullable=True)
+
+    # Some extra info want to store
+    extra_info = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+
 
 class ActivityAction(db.Model, TimestampMixin):
     """Define Activety."""
@@ -762,7 +778,8 @@ class ActivityAction(db.Model, TimestampMixin):
     """Activity_Action identifier."""
 
     activity_id = db.Column(
-        db.String(24), nullable=False, unique=False, index=True)
+        db.String(24), db.ForeignKey(Activity.activity_id),
+        nullable=False, unique=False, index=True)
     """activity id of Activity Action."""
 
     action_id = db.Column(

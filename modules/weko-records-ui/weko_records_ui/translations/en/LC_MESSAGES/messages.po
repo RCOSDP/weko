@@ -1339,3 +1339,8 @@ msgstr "Download is available from {}/{}/{}."
 
 msgid "Download / Preview is available from {}/{}/{}."
 msgstr "Download / Preview is available from {}/{}/{}."
+msgid "Apply JGSS"
+msgstr "Apply"
+
+msgid "This data is not available for undergraduate students or those who do not register their positions."
+msgstr ""

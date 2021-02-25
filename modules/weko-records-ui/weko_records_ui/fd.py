@@ -45,7 +45,8 @@ from .models import PDFCoverPageSettings
 from .pdf import make_combined_pdf
 from .permissions import check_original_pdf_download_permission, \
     file_permission_factory
-from .utils import get_billing_file_download_permission, get_groups_price, \
+from .utils import check_and_create_usage_report, \
+    get_billing_file_download_permission, get_groups_price, \
     get_min_price_billing_file_download, is_billing_item
 
 
@@ -221,6 +222,10 @@ def file_ui(
     # Check file contents permission
     if not file_permission_factory(record, fjson=fileobj).can():
         abort(403)
+
+    # Check and create usage report
+    if not is_preview:
+        check_and_create_usage_report(record, fileobj)
 
     # #Check permissions
     # ObjectResource.check_object_permission(obj)

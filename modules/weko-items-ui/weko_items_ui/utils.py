@@ -40,17 +40,19 @@ from flask import abort, current_app, flash, redirect, request, send_file, \
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role, userrole
-from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.api import RecordBase
 from invenio_search import RecordsSearch
-from invenio_stats.utils import QueryItemRegReportHelper, \
-    QueryRecordViewReportHelper, QuerySearchReportHelper
 from jsonschema import SchemaError, ValidationError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
+
+from invenio_db import db
+from invenio_records.api import RecordBase
+from invenio_stats.utils import QueryItemRegReportHelper, \
+    QueryRecordViewReportHelper, QuerySearchReportHelper
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import filter_index_list_by_role, get_index_id, \
@@ -66,7 +68,7 @@ from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
     get_root_item_option, get_sub_item_option
 from weko_user_profiles import UserProfile
-from weko_workflow.api import WorkActivity, WorkFlow
+from weko_workflow.api import WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     WEKO_SERVER_CNRI_HOST_LINK
 from weko_workflow.utils import IdentifierHandle
@@ -261,11 +263,13 @@ def get_user_information(user_id):
     """
     result = {
         'username': '',
-        'email': ''
+        'email': '',
+        'fullname': '',
     }
     user_info = UserProfile.get_by_userid(user_id)
     if user_info is not None:
         result['username'] = user_info.get_username
+        result['fullname'] = user_info.fullname
 
     metadata = MetaData()
     metadata.reflect(bind=db.engine)
@@ -1766,27 +1770,6 @@ def set_multi_language_name(item, cur_lang):
             if 'name_i18n' in value \
                     and len(value['name_i18n'][cur_lang]) > 0:
                 value['name'] = value['name_i18n'][cur_lang]
-
-
-def validate_save_title_and_share_user_id(result, data):
-    """Save title and shared user id for activity.
-
-    :param result: json object
-    :param data: json object
-    :return: The result.
-    """
-    try:
-        if data and isinstance(data, dict):
-            activity_id = data['activity_id']
-            title = data['title']
-            shared_user_id = data['shared_user_id']
-            activity = WorkActivity()
-            activity.update_title_and_shared_user_id(activity_id, title,
-                                                     shared_user_id)
-    except Exception as ex:
-        result['is_valid'] = False
-        result['error'] = str(ex)
-    return result
 
 
 def get_data_authors_prefix_settings():

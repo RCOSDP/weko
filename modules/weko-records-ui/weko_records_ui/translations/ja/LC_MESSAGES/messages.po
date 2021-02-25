@@ -562,3 +562,11 @@ msgstr ""
 msgid "Show All versions"
 msgstr ""
 
+msgid "This item has been deleted."
+msgstr "このアイテムは削除されています。"
+
+msgid "Apply JGSS"
+msgstr "申請"
+
+msgid "This data is not available for undergraduate students or those who do not register their positions."
+msgstr "このデータは利用できません（学部生または役職が登録されていないため）"
