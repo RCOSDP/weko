@@ -592,7 +592,7 @@ class SchemaTree:
             def remove_empty_tag(mp):
                 if isinstance(mp, str) and (not mp or mp not in remain_keys):
                     for remain_key in remain_keys:
-                        if remain_key and remain_key in mp:
+                        if remain_key and ', ' in mp and remain_key in mp:
                             return False
                     return True
                 elif isinstance(mp, dict):
