@@ -37,6 +37,7 @@ from functools import partial, reduce
 from io import StringIO
 from operator import getitem
 import bagit
+import celery
 
 from flask import abort, current_app, request
 from flask_babelex import gettext as _
@@ -82,7 +83,7 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_REPO_USER, WEKO_SYS_USER, WEKO_ADMIN_TASK_ID_EXPORT_ALL
 from .query import feedback_email_search_factory, item_path_search_factory
 from weko_admin.utils import get_redis_cache
-from weko_items_ui.utils import write_bibtex_files, write_tsv_files
+# from weko_items_ui.utils import write_bibtex_files, write_tsv_files
 from celery.task.control import revoke
 from invenio_files_rest.models import FileInstance, Location
 
@@ -2436,6 +2437,13 @@ def handle_check_duplication_item_id(ids: list):
 class Exporter():
     """ Class Exporter """
     #add code for get all data
+
+    @classmethod
+    def check_item_type_name(self, name):
+            """Check a list of allowed characters in filenames."""
+            new_name = re.sub(r'[\/:*"<>|\s]', '_', name)
+            return new_name
+
     @classmethod
     def get_all_items(self):
         """
@@ -2464,9 +2472,11 @@ class Exporter():
                 data_dict[record_metadatas]  = data_meta[index + 1]
                 
             index = index + 1 
+        data_dict[0] = data_dict
         return data_dict
 
-    def export_all():
+    def export_all_admin(self):
+        from weko_items_ui.utils import write_bibtex_files, write_tsv_files, _export_item
         """Gather all the item data and export and return as a JSON or BIBTEX.
         Parameter
         path is the path if file temparory
@@ -2477,12 +2487,12 @@ class Exporter():
         # TODO need to research how to upload file zip to Amazon weko 3
 
         # code get all
-        exporter = Exporter()
         temp_path = tempfile.TemporaryDirectory()
         # Set export folder
         export_path = temp_path.name + '/' + \
             datetime.utcnow().strftime("%Y%m%d%H%M%S")
         # Simulate data for post_data
+        post_data = Exporter().get_all_items()
         post_data = {
             "invalid_record_ids": "[]",
             "record_ids": "[1,2]",
@@ -2492,6 +2502,8 @@ class Exporter():
         çãã¨ã³ãã¼ã´ï¼_WA/test_1\",\"language\":[\"eng\"],\"pageEnd\":[],\"pageStart\":[],\"path\":[\"1614136027381\"],\"publish_date\":\"2021-02-24\",\"publish_status\":\"0\",\"relation_version_is_last\":true,\"title\":[\"test_1\"],\"type\":[\"periodical\"],\"weko_creator_id\":\"1\",\"weko_shared_id\":-1},\"updated\":\"2021-02-24T11:04:55.374470+00:00\"}}",
             "export_file_contents_radio": "False"
         }
+
+        
         include_contents = False
         export_format = 'JSON'
         record_ids = json.loads(post_data['record_ids'])
@@ -2506,7 +2518,7 @@ class Exporter():
             for record_id in record_ids:
                 record_path = export_path + '/recid_' + str(record_id)
                 os.makedirs(record_path, exist_ok=True)
-                exported_item, list_item_role = exporter._export_item(
+                exported_item, list_item_role = _export_item(
                     record_id,
                     export_format,
                     include_contents,
@@ -2517,7 +2529,7 @@ class Exporter():
                 item_type_id = exported_item.get('item_type_id')
                 item_type = ItemTypes.get_by_id(item_type_id)
                 if not item_types_data.get(item_type_id):
-                    item_type_name = exporter.check_item_type_name(
+                    item_type_name = self.check_item_type_name(
                         item_type.item_type_name.name)
                     item_types_data[item_type_id] = {
                         'item_type_id': item_type_id,
@@ -2549,9 +2561,9 @@ class Exporter():
                     file, default_location=Location.get_default().uri)
             db.session.commit()
 
-        except Exception:
-            current_app.logger.error('-' * 60)
+        except Exception as ex:
             traceback.print_exc(file=sys.stdout)
+            raise ex
 
     def get_export_status(self):
         """Get Share_task Export ALL status

@@ -24,6 +24,7 @@ import copy
 import json
 from datetime import datetime
 from urllib.parse import urlencode
+import celery
 
 from blinker import Namespace
 from flask import Response, abort, current_app, jsonify, make_response, request, send_file
@@ -42,7 +43,7 @@ from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
     WEKO_EXPORT_TEMPLATE_BASIC_NAME, WEKO_EXPORT_TEMPLATE_BASIC_OPTION, \
     WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
     WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_ITEM_ADMIN_EXPORT_TEMPLATE
-from .tasks import import_item, remove_temp_dir_task
+from .tasks import import_item, remove_temp_dir_task, export_all_items
 from .utils import check_import_items, check_sub_item_is_system, \
     create_flow_define, delete_records, get_change_identifier_mode_content, \
     get_content_workflow, get_lifetime, get_root_item_option, \
@@ -522,13 +523,15 @@ class ItemExportView(BaseView):
 
     @expose('/export_all', methods=['GET'])
     def export_all(self):
-        """Export all items."""        
-        download_url = "https://www.google.com/"        
-        data = Exporter().get_all_items()
-        export_all.apply_async(args = (data))
-        return jsonify(data = {
-            'download_url': download_url
-        })
+        """Export all items."""  
+        try:      
+            download_url = "https://www.google.com/"
+            result = export_all_items.apply_async(countdown=3)
+            return jsonify(data = {
+                'download_url': download_url
+            })
+        except Exception as ex:
+            raise ex
 
     @expose('/check_export_status', methods=['GET'])
     def check_export_status(self):
