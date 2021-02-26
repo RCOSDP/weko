@@ -50,10 +50,10 @@ USA. #}
                 </div>
                 <!--input_type is checkbox end-->
                 <!--input_type is radio sta-->
-                <div ng-if="sub_data.key_value.inputType=='radio_list'" class="radio">
+                <div ng-if="sub_data.key_value.inputType=='checkbox_list'" class="checkbox">
                   <label ng-repeat="sub_radio in sub_data.key_value.radio_val track by $index" class="radio-inline">
-                    <input type="radio" name="rights" value="[[sub_radio.id]]"
-                      ng-model="sub_data.key_value.inputVal">{{_('[[sub_radio.contents]]')}}
+                    <input type="checkbox" name="rights" value="[[sub_radio.id]]" ng-model="sub_data.key_value.inputVal" />
+                      {{_('[[sub_radio.contents]]')}}
                   </label>
                 </div>
                 <!--input_type is radio end-->

@@ -238,6 +238,7 @@
                     if (item.key_value.inputType == "checkbox_list") {
                         let key_arr = "";
                         let firstItem = true;
+
                         angular.forEach(item.key_value.check_val, function (item, index, array) {
                             if (item.checkStus) {
                                 let currentKey = firstItem ? item.id : "," + item.id;
@@ -245,6 +246,7 @@
                                 firstItem = false
                             }
                         });
+
                         query_str = query_str + "&" + item.key_value.id + "=" + key_arr;
                     }
 
@@ -253,7 +255,8 @@
                     }
 
                     if (item.key_value.inputType == "radio_list") {
-                        query_str = query_str + "&" + item.key_value.id + "=" + item.key_value.inputVal;
+                        console.log(item.key_value.inputVal)
+                        query_str = (query_str + "&" + item.key_value.id + "=" + item.key_value.inputVal).trim();
                     }
 
                     if (item.key_value.mappingFlg) {
