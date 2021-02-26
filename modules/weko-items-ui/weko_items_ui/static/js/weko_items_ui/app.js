@@ -987,7 +987,7 @@ function toObject(arr) {
             method: 'GET',
             async: false,
             success: function (data, status) {
-              let usageActivity;
+              let usageActivity = [];
               if ($scope.usage_report_activity_id !== ''){
                 usageActivity = [$scope.usage_report_activity_id];
               } else {
