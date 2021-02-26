@@ -41,7 +41,7 @@ def remove_temp_dir_task(path):
     remove_temp_dir(path)
 
 @shared_task
-def export_all():
+def export_all_items():
     """Export Item ."""
-    result = Exporter().export_all() or dict()
+    result = Exporter().export_all_admin()
     return result
