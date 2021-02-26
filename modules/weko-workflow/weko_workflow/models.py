@@ -636,7 +636,7 @@ class WorkFlow(db.Model, TimestampMixin):
     is_deleted = db.Column(db.Boolean(), nullable=False, default=False)
     """workflow delete flag."""
 
-    open_restricted = db.Column(db.Boolean(), nullable=False, default=False)
+    open_restricted = db.Column(db.Boolean(), nullable=False, default=True)
     """Open restricted flag."""
 
 
