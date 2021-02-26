@@ -980,7 +980,9 @@ function toObject(arr) {
 
         if ($scope.usageapplication_keys.length > 0 || $scope.outputapplication_keys.length > 0) {
           const acitivityUrl = '/items/corresponding-activity';
-
+          if ($('#current_guest_email').val()) {
+            return;
+          }
           activityList = {};
           $.ajax({
             url: acitivityUrl,
