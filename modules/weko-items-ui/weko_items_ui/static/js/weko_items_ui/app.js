@@ -991,8 +991,10 @@ function toObject(arr) {
               if ($scope.usage_report_activity_id !== ''){
                 usageActivity = [$scope.usage_report_activity_id];
               } else {
-                usageActivity = data['usage_application']["activity_ids"];
-                $scope.corresponding_usage_data_type = data['usage_application']["activity_data_type"]
+                if (data['usage_application']) {
+                  usageActivity = data['usage_application']["activity_ids"];
+                  $scope.corresponding_usage_data_type = data['usage_application']["activity_data_type"];
+                }
               }
               if (usageActivity.length > 0) {
                 usageActivity.forEach(function (activity) {
