@@ -1009,6 +1009,10 @@ class GuestActivity(db.Model, Timestamp):
     """Token."""
 
     def __init__(self, **kwargs):
+        """Initial guest activity.
+
+        @param kwargs:
+        """
         for k, v in kwargs.items():
             setattr(self, k, v)
 
@@ -1031,6 +1035,11 @@ class GuestActivity(db.Model, Timestamp):
 
     @classmethod
     def find_by_activity_id(cls, activity_id):
+        """Find guest activity by activity id.
+
+        @param activity_id:
+        @return:
+        """
         with db.session.no_autoflush:
             return db.session.query(cls).filter(
                 cls.activity_id == activity_id).all()
