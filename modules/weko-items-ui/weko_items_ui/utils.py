@@ -1650,7 +1650,8 @@ def validate_user_mail(email):
                 email)
             if user_info and user_info.get(
                     'user_id') is not None:
-                if int(user_info.get('user_id')) == int(current_user.get_id()):
+                if current_user.is_authenticated and int(
+                        user_info.get('user_id')) == int(current_user.get_id()):
                     result['validation'] = False
                     result['error'] = _(
                         "You cannot specify "
