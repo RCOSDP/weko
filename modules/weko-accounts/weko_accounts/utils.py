@@ -77,7 +77,8 @@ def parse_attributes():
 
 
 def login_required_customize(func):
-    """
+    """Login required custom.
+
     If you decorate a view with this, it will ensure that the current user is
     logged in and authenticated before calling the actual view. (If they are
     not, it calls the :attr:`LoginManager.unauthorized` callback.) For

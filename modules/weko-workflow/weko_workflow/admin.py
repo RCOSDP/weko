@@ -28,8 +28,8 @@ from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
 from invenio_db import db
-from weko_index_tree.models import Index
 from invenio_i18n.ext import current_i18n
+from weko_index_tree.models import Index
 from weko_records.api import ItemTypes
 
 from weko_workflow.models import Action as _Action

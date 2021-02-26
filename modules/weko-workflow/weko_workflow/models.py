@@ -986,6 +986,7 @@ class WorkflowRole(db.Model, TimestampMixin):
 
 class GuestActivity(db.Model, Timestamp):
     """Guest activity."""
+
     __tablename__ = "guest_activity"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -1013,6 +1014,11 @@ class GuestActivity(db.Model, Timestamp):
 
     @classmethod
     def create(cls, **kwargs):
+        """Create guest activity.
+
+        @param kwargs:
+        @return:
+        """
         try:
             guest_activity = cls(**kwargs)
             db.session.add(guest_activity)
@@ -1031,6 +1037,11 @@ class GuestActivity(db.Model, Timestamp):
 
     @classmethod
     def find(cls, **kwargs):
+        """Find guest activity.
+
+        @param kwargs:
+        @return:
+        """
         query = db.session.query(cls)
         if kwargs.get("user_mail"):
             query = query.filter(cls.user_mail == kwargs.get("user_mail"))
@@ -1046,6 +1057,11 @@ class GuestActivity(db.Model, Timestamp):
 
     @classmethod
     def delete(cls, guest_activity):
+        """Delete guest activity.
+
+        @param guest_activity:
+        @return:
+        """
         try:
             with db.session.begin_nested():
                 db.session.delete(guest_activity)

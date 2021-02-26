@@ -25,17 +25,17 @@ import unicodedata
 
 from flask import abort, current_app, render_template, request
 from flask_login import current_user
-from invenio_records_files.utils import record_file_factory
-from werkzeug.datastructures import Headers
-from werkzeug.urls import url_quote
-
 from invenio_files_rest import signals
 from invenio_files_rest.models import FileInstance
 from invenio_files_rest.views import ObjectResource
+from invenio_records_files.utils import record_file_factory
 from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
 from weko_records.api import FilesMetadata, ItemTypes
 from weko_user_profiles.models import UserProfile
+from werkzeug.datastructures import Headers
+from werkzeug.urls import url_quote
+
 from .models import PDFCoverPageSettings
 from .pdf import make_combined_pdf
 from .permissions import check_original_pdf_download_permission, \
@@ -235,7 +235,7 @@ def file_ui(
 
 
 def _download_file(file_obj, is_preview, lang, obj, pid, record):
-    """Download file
+    """Download file.
 
     :param file_obj:File object
     :param is_preview: preview flag.

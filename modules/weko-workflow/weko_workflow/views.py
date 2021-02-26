@@ -76,10 +76,10 @@ from .utils import IdentifierHandle, auto_fill_title, check_continue, \
     init_activity_for_guest_user, is_enable_item_name_link, \
     is_hidden_pubdate, is_show_autofill_metadata, is_usage_application, \
     is_usage_application_item_type, item_metadata_validation, \
-    process_send_notification_mail, process_send_reminder_mail, register_hdl, \
-    save_activity_data, saving_doi_pidstore, \
-    send_onetime_download_url_to_guest, update_cache_data, \
-    validate_guest_activity, prepare_data_for_guest_activity
+    prepare_data_for_guest_activity, process_send_notification_mail, \
+    process_send_reminder_mail, register_hdl, save_activity_data, \
+    saving_doi_pidstore, send_onetime_download_url_to_guest, \
+    update_cache_data, validate_guest_activity
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -683,7 +683,6 @@ def check_authority(func):
 def check_authority_action(activity_id='0', action_id=0,
                            contain_login_item_application=False):
     """Check authority."""
-
     if not current_user.is_authenticated:
         return 1
 
@@ -819,8 +818,8 @@ def next_action(activity_id='0', action_id=0):
     if current_app.config.get(
             'WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL') and \
             current_user.is_authenticated and \
-            (not activity_detail.extra_info or
-             not activity_detail.extra_info.get('guest_mail')):
+            (not activity_detail.extra_info or not
+                activity_detail.extra_info.get('guest_mail')):
         flow = Flow()
         next_flow_action = flow.get_next_flow_action(
             activity_detail.flow_define.flow_id, action_id)
@@ -1578,7 +1577,7 @@ def get_data_init():
     # Get term.
     init_terms = []
     init_terms.append({'id': 'term_free', 'name': _('Free Input')})
-    ### TODO
+    # TODO
     for role in roles:
         init_terms.append({'id': role.id, 'name': 'Term ' + str(role.id)})
     return jsonify(
