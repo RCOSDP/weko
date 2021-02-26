@@ -1283,7 +1283,7 @@ class WekoRecord(Record):
                         nval['is_thumbnail'] = True
                     elif sys_bibliographic.is_bibliographic():
                         nval['attribute_value_mlt'] = \
-                            sys_bibliographic.get_bibliographic_list()
+                            sys_bibliographic.get_bibliographic_list(False)
                     else:
                         nval['attribute_value_mlt'] = \
                             get_attribute_value_all_items(
@@ -1982,7 +1982,7 @@ class _FormatSysBibliographicInformation:
 
         return False
 
-    def get_bibliographic_list(self):
+    def get_bibliographic_list(self, is_get_list):
         """Get bibliographic information list.
 
         :return: bibliographic list
@@ -1990,7 +1990,7 @@ class _FormatSysBibliographicInformation:
         bibliographic_list = []
         for bibliographic in self.bibliographic_meta_data_lst:
             title_data, magazine, length = self._get_bibliographic(
-                bibliographic)
+                bibliographic, is_get_list)
             bibliographic_list.append({
                 'title_attribute_name': title_data,
                 'magazine_attribute_name': magazine,
@@ -1998,7 +1998,7 @@ class _FormatSysBibliographicInformation:
             })
         return bibliographic_list
 
-    def _get_bibliographic(self, bibliographic):
+    def _get_bibliographic(self, bibliographic, is_get_list):
         """Get bibliographic information data.
 
         :param bibliographic:
@@ -2006,8 +2006,17 @@ class _FormatSysBibliographicInformation:
         """
         title_data = []
         if bibliographic.get('bibliographic_titles'):
-            title_data = self._get_source_title(
-                bibliographic.get('bibliographic_titles'))
+            # title_data = self._get_source_title(
+            #     bibliographic.get('bibliographic_titles'))
+            if is_get_list:
+                current_lang = current_i18n.language
+                if not current_lang:
+                    current_lang = 'en'
+                title_data = self._get_source_title_show_list(
+                    bibliographic.get('bibliographic_titles'), current_lang)
+            else:
+                title_data = self._get_source_title(
+                    bibliographic.get('bibliographic_titles'))
         bibliographic_info_lst, length = self._get_bibliographic_information(
             bibliographic)
         return title_data, bibliographic_info_lst, length
@@ -2067,6 +2076,40 @@ class _FormatSysBibliographicInformation:
                 'bibliographic_title') else ''
             title_data.append(title)
         return title_data
+        
+    @staticmethod
+    def _get_source_title_show_list(source_titles, current_lang):
+        """Get source title in show list.
+
+        :param current_lang:
+        :param source_titles:
+        :return:
+        """
+        title_data_langs = []
+        title_data_none_langs = []
+        for source_title in source_titles:
+            title = {}
+            key = source_title.get('bibliographic_titleLang')
+            value = source_title.get('bibliographic_title')
+            if not value:
+                continue
+            elif current_lang == key:
+                return value
+            else:
+                if key:
+                    title[key] = value
+                    title_data_langs.append(title)
+                else:
+                    title_data_none_langs.append(value)
+        first_data = {}
+        for title_data_lang in title_data_langs:
+            if title_data_lang.get('en'):
+                return title_data_lang.get('en')
+
+        if len(title_data_langs)> 0:
+            return list(title_data_langs[0].values())[0]
+        return title_data_none_langs[0] if len(
+            title_data_none_langs) > 0 else None
 
     @staticmethod
     def _get_page_tart_and_page_end(page_start, page_end):

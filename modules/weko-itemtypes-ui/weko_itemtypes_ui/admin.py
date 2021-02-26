@@ -40,7 +40,7 @@ from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ATT, \
 from .permissions import item_type_permission
 from .utils import check_duplicate_mapping, fix_json_schema, \
     has_system_admin_access, remove_xsd_prefix, \
-        update_required_schema_not_exist_in_form
+    update_required_schema_not_exist_in_form
 
 
 class ItemTypeMetaDataView(BaseView):

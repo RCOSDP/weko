@@ -20,6 +20,7 @@
 
 """Item API."""
 import re
+import copy
 from collections import OrderedDict
 
 import pytz
@@ -444,7 +445,7 @@ def sort_meta_data_by_options(record_hit):
     :param record_hit:
     """
     from weko_records_ui.permissions import check_file_download_permission
-
+    from weko_deposit.api import _FormatSysBibliographicInformation
     def get_meta_values(v):
         """Get values from metadata."""
         data_list = []
@@ -480,18 +481,50 @@ def sort_meta_data_by_options(record_hit):
             solst_dict_array.append(temp)
         return solst_dict_array
 
-    def get_comment(solst_dict_array, hide_email_flag):
+    def convertStringBibinfor(data_sys_bibliographic):
+        list_data = []
+        for bibliographic_value in data_sys_bibliographic:
+            if bibliographic_value.get('title_attribute_name'):
+                list_data.append(bibliographic_value.get('title_attribute_name'))
+            for magazine in bibliographic_value.get('magazine_attribute_name'):
+                for key in magazine:
+                    list_data.append(key + ' ' + magazine[key])
+        return ", ".join(list_data)
+
+    def get_comment(solst_dict_array, hide_email_flag, src, solst):
         """Check and get info."""
         result = []
         _ignore_items = list()
         _license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
+        bibliographic_key = ''
+        author_key = ''
         if _license_dict:
             _ignore_items.append(_license_dict[0].get('value'))
 
         for s in solst_dict_array:
             value = s['value']
             option = s['option']
-            if value and value not in _ignore_items:
+            mlt = src.get(s['key'], {}).get('attribute_value_mlt', {})
+            is_author = src.get(s['key'], {}).get('attribute_type', {}) == 'creator'
+            sys_bibliographic = _FormatSysBibliographicInformation(
+                copy.deepcopy(mlt),
+                copy.deepcopy(solst)
+            )
+            if is_author:
+                author_key = s['key']
+                current_lang = current_i18n.language
+                list_author = format_creates(mlt, current_lang)
+                for author in list_author:
+                    result.append(", ".join(author))
+            elif not bibliographic_key and sys_bibliographic.is_bibliographic():
+                bibliographic_key = s['key']
+                data_bibliographic = sys_bibliographic.get_bibliographic_list(
+                    True)
+                result.append(convertStringBibinfor(data_bibliographic))
+            elif value and value not in _ignore_items \
+                    and (not author_key or author_key not in s['key']) \
+                    and (not bibliographic_key or bibliographic_key not in s['key']):        
+            #if value and value not in _ignore_items:
                 parent_option = s['parent_option']
                 is_show_list = parent_option.get(
                     'show_list') if parent_option.get(
@@ -538,6 +571,7 @@ def sort_meta_data_by_options(record_hit):
         return result
 
     try:
+        src_default =  copy.deepcopy(record_hit['_source'].get('_item_metadata'))
         src = record_hit['_source'].pop('_item_metadata')
         item_type_id = record_hit['_source'].get('item_type_id') \
             or src.get('item_type_id')
@@ -575,7 +609,8 @@ def sort_meta_data_by_options(record_hit):
                             }
                             break
         settings = AdminSettings.get('items_display_settings')
-        items = get_comment(solst_dict_array, not settings.items_display_email)
+        items = get_comment(solst_dict_array, not settings.items_display_email,
+                            src_default, solst)
         if items:
             if record_hit['_source'].get('_comment'):
                 record_hit['_source']['_comment'].extend(items)
@@ -857,3 +892,59 @@ def remove_weko2_special_character(s: str):
             esc_str += i
     esc_str = __remove_special_character(esc_str)
     return esc_str
+
+def get_result_rule_create_show_list(source_titles, current_lang):
+    """Get source title in show list.
+
+    :param current_lang:
+    :param source_titles:
+    :return:
+    """
+    result = []
+    for source_title in source_titles:
+        result.append(result_rule_create_show_list(source_title, current_lang))
+    return result
+
+def result_rule_create_show_list(source_title, current_lang):
+    title_data_langs = []
+    for key, value in source_title.items():
+        title = {}
+        if not value:
+            continue
+        elif current_lang == key:
+            return value
+        else:
+            if key:
+                title[key] = value
+                title_data_langs.append(title)
+
+    for title_data_lang in title_data_langs:
+        if title_data_lang.get('en'):
+            return title_data_lang.get('en')
+
+    if len(title_data_langs) > 0:
+        return list(title_data_langs[0].values())[0][0]    
+
+def format_creates(creates, current_lang):
+    creates_key = {
+        'creatorNames': ['creatorName', 'creatorNameLang'],
+        'familyNames': ['familyName', 'familyNameLang'],
+        'givenNames': ['givenName', 'givenNameLang'],
+    }
+    list_result = []
+    for create in creates:
+        result = {}
+        for key, value in creates_key.items():
+            if key in create:
+                for val in create[key]:
+                    key_data = val.get(value[1], 'None Language')
+                    value_data = val.get(value[0])
+                    if not value:
+                        continue
+                    elif key_data not in result:
+                        result[key_data] = []
+                        result[key_data].append(value_data)
+                    else:
+                        result[key_data].append(value_data)
+        list_result.append(result)
+    return get_result_rule_create_show_list(list_result, current_lang)
