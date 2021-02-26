@@ -42,6 +42,30 @@
          </div>
      </div>
  </div>
+
+<div id="modalSendEmailSuccess" class="modal fade"  tabindex="-1" role="dialog" aria-labelledby="updateHeader" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document"
+      style="display: table; width: 320px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                 <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">{{_('WEKO')}}</h4>
+            </div>
+            <div class="modal-body">
+                 <p id="inputModal">One fine body&hellip;</p>
+            </div>
+            <div class="modal-footer">
+              <div class="col text-center">
+                <button type="button" class="btn-default btn-secondary btn btn_ok" data-dismiss="modal">
+                  {{_("OK")}}
+                </button>
+              </div>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- Modal End -->
 {% endmacro %}
 

@@ -136,7 +136,8 @@ $(document).ready(function () {
           userMailElement.val('');
           userMailConfirmElement.val('');
           $('#email_modal').modal('hide');
-          showMessage(res.msg);
+          $("#modalSendEmailSuccess #inputModal").html(res.msg);
+          $("#modalSendEmailSuccess").modal("show");
         },
         error: function (jqXHE, status) {
         }
