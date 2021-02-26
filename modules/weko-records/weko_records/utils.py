@@ -19,6 +19,7 @@
 # MA 02111-1307, USA.
 
 """Item API."""
+import copy
 import re
 from collections import OrderedDict
 
@@ -30,9 +31,9 @@ from invenio_pidstore import current_pidstore
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.ext import pid_exists
 from invenio_pidstore.models import PersistentIdentifier
+
 from weko_admin.models import AdminSettings
 from weko_schema_ui.schema import SchemaTree
-
 from .api import ItemTypes, Mapping
 
 
@@ -461,8 +462,9 @@ def sort_meta_data_by_options(record_hit):
     from weko_records.serializers.utils import get_mapping
     from weko_search_ui.utils import get_data_by_propertys
     from weko_admin.utils import get_selected_language
-    import copy
+    from weko_deposit.api import _FormatSysBibliographicInformation
     web_screen_lang = get_selected_language()
+
     def get_meta_values(v):
         """Get values from metadata."""
         data_list = []
@@ -498,7 +500,19 @@ def sort_meta_data_by_options(record_hit):
             solst_dict_array.append(temp)
         return solst_dict_array
 
-    def get_comment(solst_dict_array, hide_email_flag, _item_metadata):
+    def convertStringBibinfor(data_sys_bibliographic):
+        list_data = []
+        for bibliographic_value in data_sys_bibliographic:
+            if bibliographic_value.get('title_attribute_name'):
+                list_data.append(
+                    bibliographic_value.get('title_attribute_name'))
+            for magazine in bibliographic_value.get('magazine_attribute_name'):
+                for key in magazine:
+                    list_data.append(key + ' ' + magazine[key])
+        return ", ".join(list_data)
+
+    def get_comment(solst_dict_array, hide_email_flag, _item_metadata, src,
+                    solst):
         """Check and get info."""
         result = []
         flag = False
@@ -506,14 +520,27 @@ def sort_meta_data_by_options(record_hit):
         _ignore_items = list()
         _license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
         is_specify_newline_array = []
+        bibliographic_key = None
         if _license_dict:
             _ignore_items.append(_license_dict[0].get('value'))
         for i,s in enumerate(solst_dict_array):
             value = s['value']
             option = s['option']
+            mlt = src.get(s['key'], {}).get('attribute_value_mlt', {})
+            sys_bibliographic = _FormatSysBibliographicInformation(
+                copy.deepcopy(mlt),
+                copy.deepcopy(solst)
+            )
             if i == (len(solst_dict_array) - 1):
                 flag = True
-            if value and value not in _ignore_items or flag:
+            if bibliographic_key is not None \
+                    and sys_bibliographic.is_bibliographic():
+                bibliographic_key = s['key']
+                data_bibliographic = sys_bibliographic.get_bibliographic_list(
+                    True)
+                result.append(convertStringBibinfor(data_bibliographic))
+            elif bibliographic_key not in s[
+                    'key'] and value and value not in _ignore_items or flag:
                 is_specify_newline = ''
                 is_hide = ''
                 if not flag:
@@ -559,6 +586,7 @@ def sort_meta_data_by_options(record_hit):
                                                 break
         return result
     try:
+        src_default = copy.deepcopy(record_hit['_source'].get('_item_metadata'))
         _item_metadata = copy.deepcopy(record_hit['_source'])
         item_type_id = record_hit['_source']['_item_metadata']['item_type_id']
         item_type_mapping = Mapping.get_record(item_type_id)
@@ -621,7 +649,8 @@ def sort_meta_data_by_options(record_hit):
                             }
                             break
         settings = AdminSettings.get('items_display_settings')
-        items = get_comment(solst_dict_array, not settings.items_display_email, _item_metadata)
+        items = get_comment(solst_dict_array, not settings.items_display_email,
+                            _item_metadata, src_default, solst)
         if items:
             if record_hit['_source'].get('_comment'):
                 record_hit['_source']['_comment'].extend(items)
