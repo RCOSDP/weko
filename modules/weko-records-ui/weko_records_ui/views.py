@@ -738,7 +738,7 @@ def soft_delete(recid):
         soft_delete_imp(recid)
         return make_response('PID: ' + str(recid) + ' DELETED', 200)
     except Exception as ex:
-        print(str(ex))
+        current_app.logger.error(ex)
         if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
                 and ex.args[0].get('is_locked'):
             return jsonify(
@@ -759,7 +759,7 @@ def restore(recid):
         restore_imp(recid)
         return make_response('PID: ' + str(recid) + ' RESTORED', 200)
     except Exception as ex:
-        print(str(ex))
+        current_app.logger.error(ex)
         abort(500)
 
 

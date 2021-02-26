@@ -10,7 +10,7 @@
 
 import json
 
-from flask import abort, flash, jsonify, redirect, url_for
+from flask import abort, current_app, flash, jsonify, redirect, url_for
 from flask_admin import expose
 from flask_admin.contrib.sqla import ModelView
 from flask_babelex import gettext as _
@@ -35,7 +35,7 @@ class RecordMetadataModelView(ModelView):
             soft_delete_imp(id)
             return jsonify(code=1, msg='PID: ' + str(id) + ' DELETED')
         except Exception as ex:
-            print(str(ex))
+            current_app.logger.error(ex)
             if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
                     and ex.args[0].get('is_locked'):
                 return jsonify(

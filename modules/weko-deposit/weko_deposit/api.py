@@ -524,7 +524,7 @@ class WekoDeposit(Deposit):
         """Publish the deposit."""
         deposit = None
         try:
-            deposit =self.publish_without_commit(pid, id_)
+            deposit = self.publish_without_commit(pid, id_)
             db.session.commit()
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)

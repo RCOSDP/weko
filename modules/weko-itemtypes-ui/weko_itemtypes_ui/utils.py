@@ -317,6 +317,7 @@ def check_duplicate_mapping(data_mapping, meta_system, item_type):
 
 def update_required_schema_not_exist_in_form(schema, forms):
     """Update required in schema.
+
     if item exist in schema but not exist in form,
     delete required in schema.
 
@@ -339,7 +340,7 @@ def update_required_schema_not_exist_in_form(schema, forms):
             continue
         form = get_form_by_key(k, forms)
         items = form.get('items', [])
-        excludes =[]
+        excludes = []
         for required in required_list:
             flag = 0
             for item in items:
