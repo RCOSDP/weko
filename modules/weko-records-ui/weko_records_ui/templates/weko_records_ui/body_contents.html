@@ -116,7 +116,6 @@
                         <span class="filename">
                           <img src="{{img}}" alt={{ file.filename }} />
                           {%- if not file.groupsprice and not access_permission and file.accessrole == 'open_login' -%}
-                            {%- set file_url = url_for_security('login', next=request.path) -%}
                             {%- set billing_file_class = "" -%}
                           {%- elif is_billing_file or file.groupsprice -%}
                             {%- if not session['user_id'] -%}
@@ -147,7 +146,13 @@
                           {%- endif -%}
                           <!-- version_id == '' => not upload file, but fill data for 'File Information' -->
                           {%- if file.version_id == '' -%}
-                            {%- set file_label = file.filename -%}
+                            {%- if file.url.label -%}
+                              {%- set file_label = file.url.label -%}
+                            {%- elif file.url.url -%}
+                              {%- set file_label = file.url.url -%}
+                            {%- else -%}
+                              {%- set file_label = file.filename -%}
+                            {%- endif -%}
                             {%- if file.url.url -%}
                               {%- set text_url = file.url.url -%}
                             {%- else -%}
@@ -159,16 +164,16 @@
 
                           <!-- Get file size -->
                           {%- if file.filesize -%}
-                            {%- set filesize = file.filesize[0].value -%}
+                            {%- set filesize = '(' + file.filesize[0].value + ')' -%}
                           {%- else -%}
                           {%- set filesize = '' -%}
                           {%- endif -%}
                           <!-- Show FileName/Label -->
                           {%- if access_permission and billing_file_access_permission -%}
                             <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
-                              href={{ text_url }}>
+                              {% if text_url %} href={{ text_url }} {% endif %}>
                               {% autoescape false %}
-                              {{ file_label | escape_str }} ({{ filesize }})
+                              {{ file_label | escape_str }} {{ filesize }}
                               {% endautoescape %}
                             </a>
                             <br>
@@ -178,12 +183,21 @@
                             {%- set download_param = '?download=download-' + file.version_id %}
                             {%- set path = request.path + download_param %}
                             {%- set next_path = url_for_security('login', next=path) %}
-                            <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
-                                href="{{next_path}}">
-                              {% autoescape false %}
-                              {{ file_label | escape_str }} ({{ filesize }})
-                              {% endautoescape %}
-                            </a>
+                            {%- if not current_user.is_authenticated -%}
+                              <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
+                                  href="{{next_path}}">
+                                {% autoescape false %}
+                                {{ file_label | escape_str }} {{ filesize }}
+                                {% endautoescape %}
+                              </a>
+                            {%- else -%}
+                              <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
+                                  href="{{file_url}}">
+                                {% autoescape false %}
+                                {{ file_label | escape_str }} {{ filesize }}
+                                {% endautoescape %}
+                              </a>
+                            {%- endif -%}
                             <br>
                           {%- endif -%}
                           <!-- Show future open date message -->
@@ -243,6 +257,8 @@
                       </td>
 
                       <td>
+                        {%- set user_not_permission = False %}
+                        {%- set urlFile_not_permission = "" %}
                         {%- set is_file_name_url = False %}
                         <!-- Show button 'Download' -->
                         {%- if file.version_id %}
@@ -271,6 +287,8 @@
                             </a>
                           {%- else -%}
                             <!-- User do not permission download -->
+                            {%- set user_not_permission = True %}
+                            {%- set urlFile_not_permission = file_url %}
                             <a class="action-anchor" href="{{file_url}}" onclick="">
                               <button class="img-rounded action-button button-sm" id="{{download_id}}">
                                 <i class="action-icon fa fa-download"></i>
@@ -284,12 +302,33 @@
                         {%- if community -%}
                           {% set file_detail_url = file_detail_url + "&community=" + community.id %}
                         {%- endif -%}
-                        <a class="action-anchor" href="{{ file_detail_url }}">
-                          <button class="img-rounded action-button button-sm">
-                            <i class="action-icon fa fa-info-circle fa-lg"></i>
-                            {{_('Information')}}
-                          </button>
-                        </a>
+                          {%- if user_not_permission -%}
+                            <a class="action-anchor" href="{{ urlFile_not_permission }}">
+                              <button class="img-rounded action-button button-sm">
+                                <i class="action-icon fa fa-info-circle fa-lg"></i>
+                                {{_('Information')}}
+                              </button>
+                            </a>
+                          {%- else -%}
+                            {%- if not access_permission and billing_file_access_permission and not current_user.is_authenticated-%}
+                            {%- set file_details_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
+                              filename=file.filename) %}
+                          {% set file_detail_url =  file_details_url + '?filename=' + file.filename %}
+                              <a class="action-anchor" href="{{ file_detail_url }}">
+                                <button class="img-rounded action-button button-sm">
+                                  <i class="action-icon fa fa-info-circle fa-lg"></i>
+                                  {{_('Information')}}
+                                </button>
+                              </a>
+                            {%- else -%}
+                              <a class="action-anchor" href="{{ file_detail_url }}">
+                                <button class="img-rounded action-button button-sm">
+                                  <i class="action-icon fa fa-info-circle fa-lg"></i>
+                                  {{_('Information')}}
+                                </button>
+                              </a>
+                            {%- endif -%}
+                          {%- endif -%}
                         <!-- Show button 'Preview' -->
                         {%- if file.version_id and file.displaytype == 'preview' -%}
                           {%- set preview_id = 'preview-' + file.version_id %}
@@ -314,11 +353,17 @@
                                   {{_('Preview')}}
                                 </button>
                               </a>
-                            {%- else -%}
-                              <!-- User do not permission preview => show message -->
-                              <a class="action-anchor preview-button" href="#" data-slide-to="{{ loop.index0 }}"
-                                  onclick="alert('{{file.download_preview_message}}')">
+                            {%- elif file.accessrole == 'open_login' -%}
+                              <!-- User do not belong to group -->
+                              <a class="action-anchor preview-button" href="{{file_url}}" data-slide-to="{{ loop.index0 }}">
                                 <button class="img-rounded action-button button-sm" id="{{preview_id}}">
+                                  <i class="action-icon fa fa-play-circle fa-lg"></i>
+                                  {{_('Preview')}}
+                                </button>
+                              </a>
+                            {%- else -%}
+                              <a class="action-anchor preview-button" href="#" data-slide-to="{{ loop.index0 }}">
+                                <button class="img-rounded action-button button-sm" id="{{preview_id}}" onclick="alert('{{file.download_preview_message}}')">
                                   <i class="action-icon fa fa-play-circle fa-lg"></i>
                                   {{_('Preview')}}
                                 </button>
@@ -377,9 +422,9 @@
             <input id="edit_message" type="hidden"
               value="{{_('The workflow is being edited.')}}" />
             <input id="delete_message" type="hidden"
-              value="{{_('This item cannot be deleted because a DOI is granted.')}}" />
+              value="{{_('The item cannot be deleted because it has a DOI.')}}" />
             <input id="change_publish_message" type="hidden"
-              value="{{_('This item cannot be set to private because a DOI is granted.')}}" />
+              value="{{_('You cannot keep an item private because it has a DOI.')}}" />
             <div class="row">
               <p class="alert alert-danger alert-dismissible text-middle collapse" role="alert"
                 style="min-width: 330px;">

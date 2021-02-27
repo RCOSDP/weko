@@ -169,11 +169,13 @@ TARGET_REPORTS = {
     'Contents Download': '3',
 }
 
-STATS_ES_INTEGER_MAX_VALUE = 2147483647
+STATS_ES_INTEGER_MAX_VALUE = 6000
 """Since ES2 using size=0 has been prohibited, so in order to accomplish
 the same thing, Integer.MAX_VALUE is used to retrieve agg buckets.
 In ES2, size=0 was internally replaced by this value, so we have effectively
 mimicked the same functonality.
+
+Changed from 2147483647 to 6000. (refs. weko#23741)
 """
 
 SEARCH_INDEX_PREFIX = os.environ.get('SEARCH_INDEX_PREFIX', '')

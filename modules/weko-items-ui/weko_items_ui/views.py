@@ -42,7 +42,8 @@ from simplekv.memory.redisstore import RedisStore
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_groups.api import Group
-from weko_index_tree.utils import get_index_id, get_user_roles
+from weko_index_tree.utils import check_restrict_doi_with_indexes, \
+    get_index_id, get_user_roles
 from weko_records.api import ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
@@ -1165,3 +1166,29 @@ def check_record_doi(pid_value='0'):
     if record.pid_doi:
         return jsonify({'code': 0})
     return jsonify({'code': -1})
+
+
+@blueprint_api.route('/check_record_doi_indexes/<string:pid_value>',
+                     methods=['GET'])
+@login_required
+def check_record_doi_indexes(pid_value='0'):
+    """Check restrict DOI and Indexes.
+
+    :param pid_value: pid_value.
+    :return:
+    """
+    doi = int(request.args.get('doi', '0'))
+    from weko_deposit.api import WekoRecord
+    record = WekoRecord.get_record_by_pid(pid_value)
+    if record.pid_doi or doi > 0:
+        idx_paths = record.get('path', [])
+        index_ids = [path.split('/')[-1] for path in idx_paths]
+        if check_restrict_doi_with_indexes(index_ids):
+            return jsonify({
+                'code': -1,
+                'message': _('When assigning a DOI to an item, it must be '
+                             'associated with an index whose index status is '
+                             '"Public" and Harvest Publishing is "Public".')
+            })
+
+    return jsonify({'code': 0})

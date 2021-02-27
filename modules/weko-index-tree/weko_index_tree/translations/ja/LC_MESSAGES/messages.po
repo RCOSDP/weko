@@ -113,8 +113,23 @@ msgstr "アップロード開始"
 #~ msgid "Display"
 #~ msgstr "表示する"
 
-msgid "This item cannot be set to private because a DOI is granted."
-msgstr "DOIが付与されているため、このアイテムを非公開にすることはできません。"
+msgid "You cannot keep an item private because it has a DOI."
+msgstr "アイテムにDOIが付与されているため、アイテムを非公開にすることはできません。"
 
-msgid "This item cannot be deleted because a DOI is granted."
-msgstr "DOIが付与されているため、このアイテムを削除することはできません。"
+msgid "The item cannot be deleted because it has a DOI."
+msgstr "アイテムにDOIが付与されているため、アイテムを削除することはできません。"
+
+msgid "Since the item has a DOI, it must be associated with an index whose index status is "Public" and whose Harvest Publishing is "Public"."
+msgstr "アイテムにDOIが付与されているため、インデックス状態が「公開」かつハーベスト公開が「公開」のインデックスに関連付けが必要です。"
+
+msgid "The index cannot be kept private because there are links from items that have a DOI."
+msgstr "DOIが付与されているアイテムからのリンクがあるため、インデックスを非公開にすることはできません。"
+
+msgid "Index harvests cannot be kept private because there are links from items that have a DOI."
+msgstr "DOIが付与されているアイテムからのリンクがあるため、インデックスのハーベストを非公開にすることはできません。"
+
+msgid "The index cannot be deleted because there is a link from an item that has a DOI."
+msgstr "DOIが付与されているアイテムからのリンクがあるため、インデックスを削除することはできません。"
+
+msgid "When assigning a DOI to an item, it must be associated with an index whose index status is "Public" and Harvest Publishing is "Public"."
+msgstr "アイテムにDOIを付与する場合、インデックス状態が「公開」かつハーベスト公開が「公開」のインデックスとの関連付けが必要です。"

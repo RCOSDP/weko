@@ -596,10 +596,11 @@ def get_file_info_list(record):
                         record.get('recid'),
                         f.get("filename")
                     )
-                    url = f.get("url", {}).get("url")
+                    url = f.get("url", {}).get("url", '')
                     if base_url in url:
                         is_display_file_preview = True
                     # Get file size and convert to byte.
                     f['size'] = get_file_size(f)
+                    f['mimetype'] = f.get('format', '')
                     files.append(f)
     return is_display_file_preview, files

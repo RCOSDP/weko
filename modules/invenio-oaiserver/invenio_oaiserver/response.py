@@ -592,24 +592,24 @@ def get_identifier(record):
     result = {
         "attribute_name": "Identifier",
         "attribute_value_mlt": [
-            {
-                "subitem_systemidt_identifier": "",
-                "subitem_systemidt_identifier_type": ""
-            }
         ]
     }
+
     if record.pid_doi:
-        identifier = record.pid_doi.pid_value
-        identifier_type = record.pid_doi.pid_type.upper()
-    elif record.pid_cnri:
-        identifier = record.pid_cnri.pid_value
-        identifier_type = record.pid_cnri.pid_type.upper()
-    else:
-        identifier = current_app.config['WEKO_SCHEMA_RECORD_URL'].format(
-            request.url_root, record['_deposit']['id'].split('.')[0])
-        identifier_type = 'URI'
-    result['attribute_value_mlt'][0][
-        'subitem_systemidt_identifier'] = identifier
-    result['attribute_value_mlt'][0][
-        'subitem_systemidt_identifier_type'] = identifier_type
+        result["attribute_value_mlt"].append(dict(
+            subitem_systemidt_identifier=record.pid_doi.pid_value,
+            subitem_systemidt_identifier_type=record.pid_doi.pid_type.upper(),
+        ))
+    if record.pid_cnri:
+        result["attribute_value_mlt"].append(dict(
+            subitem_systemidt_identifier=record.pid_cnri.pid_value,
+            subitem_systemidt_identifier_type=record.pid_cnri.pid_type.upper(),
+        ))
+    if current_app.config.get('WEKO_SCHEMA_RECORD_URL'):
+        result["attribute_value_mlt"].append(dict(
+            subitem_systemidt_identifier=current_app.config[
+                'WEKO_SCHEMA_RECORD_URL'].format(
+                request.url_root, record['_deposit']['id'].split('.')[0]),
+            subitem_systemidt_identifier_type='URI',
+        ))
     return result

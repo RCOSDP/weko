@@ -286,7 +286,10 @@ def build_search_detail_condition(doc):
     """Build search detail condition."""
     search_detail = {}
     for key, value in doc['search_detail'].items():
-        str_val = ' '.join(value)
+        if isinstance(value, list):
+            str_val = ' '.join(value)
+        else:
+            str_val = value
         if key == 'q':
             search_detail['search_key'] = str_val
         elif len(value) > 0:

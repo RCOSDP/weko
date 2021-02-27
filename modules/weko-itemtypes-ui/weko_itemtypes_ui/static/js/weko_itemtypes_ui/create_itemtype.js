@@ -916,8 +916,10 @@ $(document).ready(function () {
       } else {
         $('#chk_prev_' + row_id + '_2').removeClass('disabled');
         $('#chk_' + row_id + '_2').attr('disabled', false);
-        $('#chk_prev_' + row_id + '_3').removeClass('disabled');
-        $('#chk_' + row_id + '_3').attr('disabled', false);
+        if ($('#chk_' + row_id + '_3').attr('isFile') !== 'true') {
+          $('#chk_prev_' + row_id + '_3').removeClass('disabled');
+          $('#chk_' + row_id + '_3').attr('disabled', false);
+        }
       }
     });
   }
@@ -1003,29 +1005,40 @@ $(document).ready(function () {
   // itemtype select input change
   $('#tbody_itemtype').on('change', '.change_input_type', function(){
     var meta_id = $(this).attr('metaid');
-    let isAllowMultiple = false;
+    let isFile = false;
     let checkboxMetaId = $('#chk_' + meta_id + '_1');
+    let checkboxNLId = $('#chk_' + meta_id + '_3');
     if($(this).val().indexOf('cus_') != -1) {
       let product = properties_obj[$(this).val().substr(4)].schema;
       let product_forms = properties_obj[$(this).val().substr(4)].forms;
-      isAllowMultiple = properties_obj[$(this).val().substr(4)].is_file;
-      $('#chk_prev_' + meta_id + '_1').removeClass('disabled');
-      if (isAllowMultiple) {
-        checkboxMetaId.attr('disabled', true);
-      } else {
-        checkboxMetaId.attr('disabled', false);
+      isFile = properties_obj[$(this).val().substr(4)].is_file;
+      for(key in product.properties) {
+        if(isFile || product.properties[key]["isHide"] ==true){
+          product.properties[key]["showListDisable"] = true
+          product.properties[key]["specifyNLDisable"] = true
+        }
+        if(isFile){
+          product.properties[key]["hideDisable"] = true
+        }
       }
-      checkboxMetaId.prop("checked", isAllowMultiple);
+      $('#chk_prev_' + meta_id + '_1').removeClass('disabled');
+      checkboxMetaId.attr('disabled', isFile);
+      checkboxMetaId.prop("checked", isFile);
+      checkboxNLId.attr('disabled', isFile);
+      checkboxNLId.attr('isFile', isFile);
+      if (isFile) {
+        checkboxNLId.prop('checked', false);
+      }
       setDefaultI18n(product.properties, product_forms);
       render_object('schema_'+meta_id, product);
     } else if('checkboxes' == $(this).val() || 'radios' == $(this).val()
             || 'select' == $(this).val()){
-      checkboxMetaId.prop("checked", isAllowMultiple);
+      checkboxMetaId.prop("checked", isFile);
       render_select('schema_'+meta_id, '');
     } else {
       $('#chk_prev_' + meta_id + '_1').removeClass('disabled');
       checkboxMetaId.attr('disabled', false);
-      checkboxMetaId.prop("checked", isAllowMultiple);
+      checkboxMetaId.prop("checked", isFile);
       render_empty('schema_'+meta_id);
     }
   });
@@ -1232,6 +1245,7 @@ $(document).ready(function () {
         new_meta_row(row_id);
         let requiredCheckbox = $('#chk_'+row_id+'_0');
         let multipleCheckbox = $('#chk_'+row_id+'_1');
+        let newLineCheckbox = $('#chk_'+row_id+'_3');
         $('#txt_title_'+row_id).val(data.meta_list[row_id].title);
         //add by ryuu. start
         $('#txt_title_ja_'+row_id).val(data.meta_list[row_id].title_i18n.ja);
@@ -1292,16 +1306,22 @@ $(document).ready(function () {
             itemTypePropertiesSchema,
             itemTypeSchema);
             // Set disable attribute for child in case parent is set Hide
+          let isFile = properties_obj[data.meta_list[row_id].input_type.substr(4)].is_file;
           for(key in properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties){
-            if(properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["isHide"] ==true){
+            if(isFile || properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["isHide"] ==true){
               properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["showListDisable"] = true
               properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["specifyNLDisable"] = true
             }
+            if(isFile){
+              properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["hideDisable"] = true
+            }
           }
           render_object('schema_'+row_id, properties_obj[data.meta_list[row_id].input_type.substr(4)].schema);
-          let isAllowMultiple = properties_obj[data.meta_list[row_id].input_type.substr(4)].is_file;
-          if (isAllowMultiple) {
+          if (isFile) {
             multipleCheckbox.attr('disabled', true);
+            newLineCheckbox.attr('disabled', true);
+            newLineCheckbox.prop('checked', false);
+            newLineCheckbox.attr('isFile', true);
           }
         } else if('checkboxes' == data.meta_list[row_id].input_type || 'radios' == data.meta_list[row_id].input_type
                 || 'select' == data.meta_list[row_id].input_type){
@@ -1312,10 +1332,9 @@ $(document).ready(function () {
       });
       //Show message changed properties.
       if(changedProperties.length > 0){
-        let message = `<div class="alert alert-info alert-dismissable">
-          <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-          <p>` + changedProperties.join('</p><p>') + `</p>
-        </div>`;
+        let message = '<div class="alert alert-info alert-dismissable">' +
+        '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>'
+        '<p>' + changedProperties.join('</p><p>') + '</p></div>';
         $('section.content-header').prepend(message);
       }
       if($('input[type=radio][name=item_type]:checked').val() === 'deleted') {

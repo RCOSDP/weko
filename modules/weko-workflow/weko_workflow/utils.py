@@ -195,11 +195,12 @@ def register_hdl_by_handle(handle, item_uuid):
         identifier.register_pidstore('hdl', handle)
 
 
-def item_metadata_validation(item_id, identifier_type):
+def item_metadata_validation(
+        item_id, identifier_type, record=None, is_import=False):
     """
     Validate item metadata.
 
-    :param: item_id, identifier_type
+    :param: item_id, identifier_type, record
     :return: error_list
     """
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
@@ -226,7 +227,8 @@ def item_metadata_validation(item_id, identifier_type):
                          'conference object', 'conference proceedings',
                          'conference poster']
 
-    metadata_item = MappingData(item_id)
+    metadata_item = MappingData(
+        item_id) if item_id else MappingData(record=record)
     item_type = metadata_item.get_data_item_type()
     resource_type, type_key = metadata_item.get_data_by_property("type.@value")
     type_check = check_required_data(resource_type, type_key)
@@ -318,8 +320,9 @@ def item_metadata_validation(item_id, identifier_type):
         properties['either'] = either_properties
 
     if properties and \
-            identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI'] \
-            and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI']:
+            ((identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI']
+              and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI']
+              ) or is_import):
         return validation_item_property(metadata_item, properties)
     else:
         return _('Cannot register selected DOI for current Item Type of this '
@@ -693,9 +696,9 @@ class MappingData(object):
     record = None
     item_map = None
 
-    def __init__(self, item_id):
+    def __init__(self, item_id=None, record=None):
         """Initilize pagination."""
-        self.record = WekoRecord.get_record(item_id)
+        self.record = WekoRecord.get_record(item_id) if item_id else record
         item_type = self.get_data_item_type()
         item_type_mapping = Mapping.get_record(item_type.id)
         self.item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
@@ -1475,30 +1478,35 @@ def combine_record_file_urls(record, meta_prefix='jpcoar'):
                 if attr.get('filename'):
                     if not attr.get(file_keys[1]):
                         attr[file_keys[1]] = {}
+                    is_manual = check_url_is_manual(attr.get('version_id'))
                     if not (attr[file_keys[1]].get(file_keys[2])
-                            and check_url_is_manual(attr.get('version_id'))):
+                            and is_manual):
                         attr[file_keys[1]][file_keys[2]] = \
                             create_files_url(
                                 request.url_root,
                                 record.get('recid'),
-                                attr.get('filename'))
+                                attr.get('filename'),
+                                is_manual)
         elif isinstance(attr_mlt, dict) and \
                 attr_mlt.get('filename'):
             if not attr_mlt.get(file_keys[1]):
                 attr_mlt[file_keys[1]] = {}
-            if not (attr_mlt[file_keys[1]].get(file_keys[2])
-                    and check_url_is_manual(attr_mlt.get('version_id'))):
+            is_manual = check_url_is_manual(attr_mlt.get('version_id'))
+            if not (attr_mlt[file_keys[1]].get(file_keys[2]) and is_manual):
                 attr_mlt[file_keys[1]][file_keys[2]] = \
                     create_files_url(
                         request.url_root,
                         record.get('recid'),
-                        attr_mlt.get('filename'))
+                        attr_mlt.get('filename'),
+                        is_manual)
 
     return record
 
 
-def create_files_url(root_url, record_id, filename):
+def create_files_url(root_url, record_id, filename, is_manual=False):
     """Generation of downloading file url."""
+    if is_manual:
+        return ''
     return "{}record/{}/files/{}".format(
         root_url,
         record_id,
