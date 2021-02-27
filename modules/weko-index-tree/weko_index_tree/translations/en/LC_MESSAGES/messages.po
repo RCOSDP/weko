@@ -105,8 +105,23 @@ msgstr ""
 #~ msgid "Display"
 #~ msgstr "Display"
 
-msgid "This item cannot be set to private because a DOI is granted."
+msgid "You cannot keep an item private because it has a DOI."
 msgstr ""
 
-msgid "This item cannot be deleted because a DOI is granted."
+msgid "The item cannot be deleted because it has a DOI."
+msgstr ""
+
+msgid "Since the item has a DOI, it must be associated with an index whose index status is "Public" and whose Harvest Publishing is "Public"."
+msgstr ""
+
+msgid "The index cannot be kept private because there are links from items that have a DOI."
+msgstr ""
+
+msgid "Index harvests cannot be kept private because there are links from items that have a DOI."
+msgstr ""
+
+msgid "The index cannot be deleted because there is a link from an item that has a DOI."
+msgstr ""
+
+msgid "When assigning a DOI to an item, it must be associated with an index whose index status is "Public" and Harvest Publishing is "Public"."
 msgstr ""

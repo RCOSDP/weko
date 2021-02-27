@@ -27,9 +27,9 @@ from functools import partial
 
 from elasticsearch_dsl.query import Q
 from flask import current_app, request
+from flask.helpers import flash
 from flask_babelex import gettext as _
 from flask_security import current_user
-from flask.helpers import flash
 from invenio_communities.models import Community
 from invenio_records_rest.errors import InvalidQueryRESTError
 from weko_index_tree.api import Indexes
@@ -50,6 +50,7 @@ def get_item_type_aggs(search_index):
         facets = current_app.config['RECORDS_REST_FACETS']
     else:
         facets = current_app.config['RECORDS_REST_FACETS_NO_SEARCH_PERMISSION']
+
     return facets.get(search_index).get("aggs", {})
 
 
@@ -66,8 +67,10 @@ def get_permission_filter(comm_id=None):
     search_type = request.values.get('search_type')
 
     if comm_id:
+
         if search_type == config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']:
             self_path = Indexes.get_self_path(comm_id)
+
             if self_path and self_path.path in is_perm_paths:
                 term_list.append(self_path.path)
 
@@ -81,6 +84,7 @@ def get_permission_filter(comm_id=None):
             terms = Q('bool', should=should_path)
         else:   # In case search_type is keyword or index
             self_path = Indexes.get_self_path(comm_id)
+
             if self_path and self_path.path in is_perm_paths:
                 term_list.append(self_path.path)
 
@@ -93,8 +97,10 @@ def get_permission_filter(comm_id=None):
         terms = Q('terms', path=is_perm_paths)
 
     mut = []
+
     if is_perm:
         user_id, result = check_admin_user()
+
         if result:
             shuld = [Q('match', weko_creator_id=user_id),
                      Q('match', weko_shared_id=user_id)]
@@ -125,8 +131,13 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         :param qs: Query string.
         :return: Query parser.
         """
-        q = Q('query_string', query=qs, default_operator='and',
-              fields=['search_*', 'search_*.ja']) if qs else None
+        q = Q(
+            'query_string',
+            query=qs,
+            default_operator='and',
+            fields=['search_*', 'search_*.ja']
+        ) if qs else None
+
         return q
 
     def _get_detail_keywords_query():
@@ -137,7 +148,9 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         def _get_keywords_query(k, v):
             qry = None
             kv = request.values.get(
-                'lang') if k == 'language' else request.values.get(k)
+                'lang'
+            ) if k == 'language' else request.values.get(k)
+
             if not kv:
                 return
 
@@ -150,11 +163,16 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                         minimum_should_match='75%',
                         operator='and', fields=v)
             elif isinstance(v, dict):
+
                 for key, vlst in v.items():
+
                     if isinstance(vlst, list):
                         shud = []
-                        kvl = [x for x in kv.split(',')
-                               if x.isdecimal() and int(x) < len(vlst) + 1]
+                        kvl = [
+                            x for x in kv.split(',')
+                            if x.isdecimal() and int(x) < len(vlst) + 1
+                        ]
+
                         for j in map(
                                 partial(lambda x, y: x[int(y)], vlst), kvl):
                             name_dict = dict(operator="and")
@@ -163,16 +181,21 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
                         kvl = [x for x in kv.split(',')
                                if not x.isdecimal() and x in vlst]
+
                         for j in kvl:
                             name_dict = dict(operator="and")
                             name_dict.update(dict(query=j))
                             shud.append(Q('match', **{key: name_dict}))
+
                         if shud:
                             return Q('bool', should=shud)
+
             elif isinstance(v, tuple) and len(v) >= 2:
                 shud = []
+
                 for i in map(lambda x: v[1](x), kv.split(',')):
                     shud.append(Q('match', **{v[0]: i}))
+
                 if shud:
                     qry = Q('bool', should=shud)
 
@@ -181,10 +204,12 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         def _get_nested_query(k, v):
             # text value
             kv = request.values.get(k)
+
             if not kv:
                 return
 
             shuld = []
+
             if isinstance(v, tuple) and len(v) > 1 and isinstance(v[1], dict):
                 # attr keyword in request url
                 for attr_key, attr_val_str in map(
@@ -192,11 +217,15 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                         x, request.values.get(x)), list(
                         v[1].keys())):
                     attr_obj = v[1].get(attr_key)
+
                     if isinstance(attr_obj, dict) and attr_val_str:
+
                         if isinstance(v[0], str) and not len(v[0]):
+
                             # For ID search
                             for key in attr_val_str.split(','):
                                 attr = attr_obj.get(key)
+
                                 if isinstance(attr, tuple):
                                     attr = [attr]
 
@@ -210,8 +239,8 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                             mut = [
                                                 Q('match',
                                                   **{name: name_dict})]
-
                                             qt = None
+
                                             if '=*' in alst[1]:
                                                 name = alst[0] + \
                                                     "." + val_attr_lst[0]
@@ -228,12 +257,15 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                         else:
                             attr_key_hit = [
                                 x for x in attr_obj.keys() if v[0] + "." in x]
+
                             if attr_key_hit:
                                 vlst = attr_obj.get(attr_key_hit[0])
+
                                 if isinstance(vlst, list):
                                     attr_val = [x for x in attr_val_str.split(
                                         ',') if x.isdecimal()
                                         and int(x) < len(vlst)]
+
                                     if attr_val:
                                         mst = []
                                         name = v[0] + ".value"
@@ -255,9 +287,11 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         def _get_date_query(k, v):
             # text value
             qry = None
+
             if isinstance(v, list) and len(v) >= 2:
                 date_from = request.values.get(k + "_" + v[0][0])
                 date_to = request.values.get(k + "_" + v[0][1])
+
                 if not date_from or not date_to:
                     return
 
@@ -269,23 +303,29 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 qv = {}
                 qv.update(dict(gte=date_from))
                 qv.update(dict(lte=date_to))
+
                 if isinstance(v[1], str):
                     qry = Q('range', **{v[1]: qv})
                 elif isinstance(v[1], tuple) and len(v[1]) >= 2:
                     path = v[1][0]
                     dt = v[1][1]
+
                     if isinstance(dt, dict):
+
                         for attr_key, attr_val_str in map(
                             lambda x: (
                                 x, request.values.get(x)), list(
                                 dt.keys())):
                             attr_obj = dt.get(attr_key)
+
                             if isinstance(attr_obj, dict) and attr_val_str:
                                 attr_key_hit = [
                                     x for x in attr_obj.keys()
                                     if path + "." in x]
+
                                 if attr_key_hit:
                                     vlst = attr_obj.get(attr_key_hit[0])
+
                                     if isinstance(vlst, list):
                                         attr_val = [
                                             x for x in attr_val_str.split(',')]
@@ -309,24 +349,29 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         kn = kwd.get('nested')
 
         mut = []
+
         try:
             for k, v in ks.items():
                 qy = _get_keywords_query(k, v)
+
                 if qy:
                     mut.append(qy)
 
             for k, v in kn.items():
                 qy = _get_nested_query(k, v)
+
                 if qy:
                     mut.append(qy)
 
             for k, v in kd.items():
                 qy = _get_date_query(k, v)
+
                 if qy:
                     mut.append(qy)
         except Exception as e:
             current_app.logger.exception(
                 'Detail search query parser failed. err:{0}'.format(e))
+
         return mut
 
     def _get_simple_search_query(qs=None):
@@ -335,13 +380,17 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         :param qs: Query string.
         :return: Query parser.
         """
-        # add  Permission filter by publish date and status
-        mt = get_permission_filter()
+        # add Permission filter by publish date and status
+        mst = get_permission_filter()
+
         q = _get_search_qs_query(qs)
+
         if q:
-            mt.append(q)
-        mt.extend(_get_detail_keywords_query())
-        return Q('bool', must=mt) if mt else Q()
+            mst.append(q)
+
+        mst.extend(_get_detail_keywords_query())
+
+        return Q('bool', must=mst) if mst else Q()
 
     def _get_simple_search_community_query(community_id, qs=None):
         """Query parser for simple search.
@@ -353,13 +402,14 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         comm = Community.get(community_id)
         root_node_id = comm.root_node_id
 
-        mt = get_permission_filter(root_node_id)
+        mst = get_permission_filter(root_node_id)
         q = _get_search_qs_query(qs)
 
         if q:
-            mt.append(q)
-        mt.extend(_get_detail_keywords_query())
-        return Q('bool', must=mt) if mt else Q()
+            mst.append(q)
+
+        mst.extend(_get_detail_keywords_query())
+        return Q('bool', must=mst) if mst else Q()
 
     def _get_file_content_query(qstr):
         """Query for searching indexed file contents."""
@@ -367,8 +417,12 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                          fields=['content.attachment.content'])
 
         # Search fields may increase so leaving as multi
-        multi_q = Q('query_string', query=qs, default_operator='and',
-                    fields=['search_*', 'search_*.ja'])
+        multi_q = Q(
+            'query_string',
+            query=qs,
+            default_operator='and',
+            fields=['search_*', 'search_*.ja']
+        )
 
         nested_content = Q('nested', query=multi_cont_q, path='content')
         return Q('bool', should=[nested_content, multi_q])
@@ -383,22 +437,25 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         :returns: Query parser.
         """
         # add  Permission filter by publish date and status
-        mt = get_permission_filter()
+        mst = get_permission_filter()
 
         # multi keywords search filter
-        kmt = _get_detail_keywords_query()
+        mkq = _get_detail_keywords_query()
+
         # detail search
-        if kmt:
-            mt.extend(kmt)
+        if mkq:
+            mst.extend(mkq)
             q = _get_search_qs_query(qs)
+
             if q:
-                mt.append(q)
+                mst.append(q)
         else:
             # Full Text Search
             if qstr:
                 q_s = _get_file_content_query(qstr)
-                mt.append(q_s)
-        return Q('bool', must=mt) if mt else Q()
+                mst.append(q_s)
+
+        return Q('bool', must=mst) if mst else Q()
 
     def _default_parser_community(community_id, qstr=None):
         """Default parser that uses the Q() from elasticsearch_dsl.
@@ -412,30 +469,35 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         # add  Permission filter by publish date and status
         comm = Community.get(community_id)
         root_node_id = comm.root_node_id
-        mt = get_permission_filter(root_node_id)
+        mst = get_permission_filter(root_node_id)
 
         # multi keywords search filter
-        kmt = _get_detail_keywords_query()
+        mkq = _get_detail_keywords_query()
+
         # detail search
-        if kmt:
-            mt.extend(kmt)
+        if mkq:
+            mst.extend(mkq)
             q = _get_search_qs_query(qs)
+
             if q:
-                mt.append(q)
+                mst.append(q)
         else:
             # Full Text Search
             if qstr:
                 q_s = _get_file_content_query(qstr)
-                mt.append(q_s)
-        return Q('bool', must=mt) if mt else Q()
+                mst.append(q_s)
+
+        return Q('bool', must=mst) if mst else Q()
 
     from invenio_records_rest.facets import default_facets_factory
     from invenio_records_rest.sorter import default_sorter_factory
 
     # add by ryuu at 1004 start curate
     comm_ide = request.values.get('provisional_communities')
+
     # simple search
     comm_id_simple = request.values.get('community')
+
     # add by ryuu at 1004 end
     if comm_id_simple:
         query_parser = query_parser or _default_parser_community
@@ -451,30 +513,33 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         # Escape special characters for avoiding ES search errors
         qs = (
             request.values.get('q', '')
-                .replace('\\', r'\\')
-                .replace('+', r'\+')
-                .replace('-', r'\-')
-                .replace('=', r'\=')
-                .replace('&&', r'\&&')
-                .replace('||', r'\||')
-                .replace('!', r'\!')
-                .replace('(', r'\(')
-                .replace(')', r'\)')
-                .replace('{', r'\{')
-                .replace('}', r'\}')
-                .replace('[', r'\[')
-                .replace(']', r'\]')
-                .replace('^', r'\^')
-                .replace('"', r'\"')
-                .replace('~', r'\~')
-                .replace('*', r'\*')
-                .replace('?', r'\?')
-                .replace(':', r'\:')
-                .replace('/', r'\/')
+            .replace('\\', r'\\')
+            .replace('+', r'\+')
+            .replace('-', r'\-')
+            .replace('=', r'\=')
+            .replace('&&', r'\&&')
+            .replace('||', r'\||')
+            .replace('!', r'\!')
+            .replace('(', r'\(')
+            .replace(')', r'\)')
+            .replace('{', r'\{')
+            .replace('}', r'\}')
+            .replace('[', r'\[')
+            .replace(']', r'\]')
+            .replace('^', r'\^')
+            .replace('"', r'\"')
+            .replace('~', r'\~')
+            .replace('*', r'\*')
+            .replace('?', r'\?')
+            .replace(':', r'\:')
+            .replace('/', r'\/')
         )
 
         if '<' in qs or '>' in qs:
-            flash(_('"<" and ">" are cannot be used for searching.'), category='warning')
+            flash(
+                _('"<" and ">" cannot be used for searching.'),
+                category='warning'
+            )
 
     # full text search
     if search_type == config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']:
@@ -499,7 +564,8 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     except SyntaxError:
         current_app.logger.debug(
             "Failed parsing query: {0}".format(
-                request.values.get('q', '')),
+                request.values.get('q', '')
+            ),
             exc_info=True)
         raise InvalidQueryRESTError()
 
@@ -515,9 +581,11 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             sort_key, sort = SearchSetting.get_default_sort(
                 current_app.config['WEKO_SEARCH_TYPE_KEYWORD'])
             key_fileds = SearchSetting.get_sort_key(sort_key)
+
             if key_fileds:
                 sort_obj = dict()
                 nested_sorting = SearchSetting.get_nested_sorting(sort_key)
+
                 if sort == 'desc':
                     sort_obj[key_fileds] = dict(order='desc',
                                                 unmapped_type='long')
@@ -525,13 +593,15 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 else:
                     sort_obj[key_fileds] = dict(order='asc',
                                                 unmapped_type='long')
+
                 if nested_sorting:
                     sort_obj[key_fileds].update({'nested': nested_sorting})
+
                 search._sort.append(sort_obj)
+
             urlkwargs.add('sort', sort_key)
 
     urlkwargs.add('q', query_q)
-    print(search, urlkwargs)
     return search, urlkwargs
 
 
@@ -618,6 +688,7 @@ def item_path_search_factory(self, search, index_id=None):
             # add item type aggs
             query_q['aggs']['path']['aggs']. \
                 update(get_item_type_aggs(search._index[0]))
+
             if q:
                 mut = get_permission_filter(q)
             else:
@@ -626,6 +697,7 @@ def item_path_search_factory(self, search, index_id=None):
             if mut:
                 mut = list(map(lambda x: x.to_dict(), mut))
                 post_filter = query_q['post_filter']
+
                 if mut[0].get('bool'):
                     post_filter['bool'] = mut[0]['bool']
                 else:
@@ -637,21 +709,25 @@ def item_path_search_factory(self, search, index_id=None):
                     child_idx = Indexes.get_child_list_by_pip(q)
                     child_idx_str = ""
                     fp = Indexes.get_self_path(q)
+
                     for i in range(len(child_idx)):
+
                         if i != 0:
                             child_idx_str += "|" + str(child_idx[i][2])
                         else:
                             child_idx_str += str(child_idx[i][2])
+
                     query_q = json.dumps(query_q).replace("@index", fp.path)
                     query_q = json.loads(query_q)
-                    query_q = json.dumps(query_q).replace("@idxchild",
-                                                          child_idx_str)
+                    query_q = json.dumps(query_q).replace(
+                        "@idxchild", child_idx_str
+                    )
                     query_q = json.loads(query_q)
                 except BaseException as ex:
                     import traceback
                     traceback.print_exc(file=sys.stdout)
-            count = str(Indexes.get_index_count())
 
+            count = str(Indexes.get_index_count())
             query_q = json.dumps(query_q).replace("@count", count)
             query_q = json.loads(query_q)
 
@@ -660,7 +736,9 @@ def item_path_search_factory(self, search, index_id=None):
             # add item type aggs
             wild_card = []
             child_list = Indexes.get_child_list(q)
+
             if child_list:
+
                 for item in child_list:
                     wc = {
                         "wildcard": {
@@ -746,6 +824,7 @@ def item_path_search_factory(self, search, index_id=None):
             if mut:
                 mut = list(map(lambda x: x.to_dict(), mut))
                 post_filter = query_not_q['post_filter']
+
                 if mut[0].get('bool'):
                     post_filter['bool'] = mut[0]['bool']
                 else:
@@ -761,6 +840,7 @@ def item_path_search_factory(self, search, index_id=None):
     # create a index search query
     query_q = _get_index_earch_query()
     urlkwargs = MultiDict()
+
     try:
         # Aggregations.
         extr = search._extra.copy()
@@ -778,10 +858,12 @@ def item_path_search_factory(self, search, index_id=None):
     search, sortkwargs = default_sorter_factory(search, search_index)
 
     for key, value in sortkwargs.items():
+
         # set custom sort option
         if 'custom_sort' in value:
             ind_id = request.values.get('q', '')
             search._sort = []
+
             if value == 'custom_sort':
                 script_str, default_sort = SearchSetting.get_custom_sort(
                     ind_id, 'asc')
@@ -803,6 +885,7 @@ def item_path_search_factory(self, search, index_id=None):
             current_app.config['WEKO_SEARCH_TYPE_INDEX'], root_flag)
         sort_obj = dict()
         key_fileds = SearchSetting.get_sort_key(sort_key)
+
         if 'custom_sort' not in sort_key:
             if sort == 'desc':
                 sort_obj[key_fileds] = dict(order='desc', unmapped_type='long')
@@ -840,12 +923,16 @@ def check_admin_user():
     result = True
     user_id = current_user.get_id() \
         if current_user and current_user.is_authenticated else None
+
     if user_id:
         users = current_app.config['WEKO_PERMISSION_ROLE_USER']
+
         for lst in list(current_user.roles or []):
+
             # if is administrator
             if lst.name == users[2]:
                 result = True
+
     return user_id, result
 
 
@@ -863,6 +950,7 @@ def opensearch_factory(self, search, query_parser=None):
     """
     index_id = request.values.get('index_id')
     search_type = config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']
+
     if index_id:
         return item_path_search_factory(self,
                                         search,
@@ -897,7 +985,9 @@ def item_search_factory(self,
                            start_term,
                            end_term)
         query_filter = []
+
         if indexes:
+
             for index in indexes:
                 q_wildcard = {
                     "wildcard": {
@@ -905,6 +995,7 @@ def item_search_factory(self,
                     }
                 }
                 query_filter.append(q_wildcard)
+
         query_q = {
             "size": 10000,
             "query": {
@@ -937,6 +1028,7 @@ def item_search_factory(self,
 
     query_q = _get_query(start_date, end_date, list_index_id)
     urlkwargs = MultiDict()
+
     try:
         extr = search._extra.copy()
         search.update_from_dict(query_q)
@@ -1014,6 +1106,7 @@ def feedback_email_search_factory(self, search):
         return query_q
 
     query_q = _get_query()
+
     try:
         # Aggregations.
         extr = search._extra.copy()

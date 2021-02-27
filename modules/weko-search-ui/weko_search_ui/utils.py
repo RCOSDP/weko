@@ -55,6 +55,7 @@ from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
 from weko_handle.api import Handle
 from weko_index_tree.api import Indexes
+from weko_index_tree.utils import check_restrict_doi_with_indexes
 from weko_indextree_journal.api import Journals
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
@@ -62,8 +63,8 @@ from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD
 from weko_workflow.models import FlowDefine, WorkFlow
-from weko_workflow.utils import IdentifierHandle, check_required_data, \
-    get_identifier_setting, get_sub_item_value, register_hdl_by_handle, \
+from weko_workflow.utils import IdentifierHandle, get_identifier_setting, \
+    get_sub_item_value, item_metadata_validation, register_hdl_by_handle, \
     register_hdl_by_item_id, saving_doi_pidstore
 
 from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
@@ -468,6 +469,7 @@ def check_import_items(file_name: str, file_content: str,
         handle_set_change_identifier_flag(
             list_record, is_change_identifier)
         handle_check_cnri(list_record)
+        handle_check_doi_indexes(list_record)
         handle_check_doi_ra(list_record)
         handle_check_doi(list_record)
         handle_check_date(list_record)
@@ -1322,8 +1324,7 @@ def handle_check_and_prepare_index_tree(list_record):
         data = {
             'index_id': index.id if index else index_id,
             'index_name': index.index_name_english if index else index_name,
-            'parent_id': parent_id,
-            'existed': index is not None
+            'parent_id': parent_id
         }
 
         if len(index_ids) > 1:
@@ -1365,6 +1366,7 @@ def handle_check_and_prepare_index_tree(list_record):
 
         if indexes:
             item['indexes'] = indexes
+            handle_index_tree(item)
 
         if errors:
             errors = list(set(errors))
@@ -1388,24 +1390,6 @@ def handle_index_tree(item):
 
     """
     def check_and_create_index(index):
-        if not index['existed']:
-            exist_index = Indexes.get_index_by_name_english(
-                index['index_name'], index['parent_id'])
-            if exist_index:
-                index['index_id'] = exist_index.id
-            else:
-                now = datetime.now()
-                index_id = index['index_id'] if index['index_id'] \
-                    else int(datetime.timestamp(now) * 10 ** 3)
-                create_index = Indexes.create(
-                    pid=index['parent_id'],
-                    indexes={'id': index_id,
-                             'value': index['index_name']})
-                if create_index:
-                    index['index_id'] = index_id
-                    if index.get('child'):
-                        index['child']['parent_id'] = index_id
-
         if index.get('child'):
             return check_and_create_index(index['child'])
         else:
@@ -1522,6 +1506,35 @@ def handle_check_cnri(list_record):
         if error:
             item['errors'] = item['errors'] + [error] \
                 if item.get('errors') else [error]
+            item['errors'] = list(set(item['errors']))
+
+
+def handle_check_doi_indexes(list_record):
+    """Check restrict DOI with Indexes.
+
+    :argument
+        list_record -- {list} list record import.
+    :return
+
+    """
+    for item in list_record:
+        errors = []
+        doi_ra = item.get('doi_ra')
+        # Check DOI and Publish status:
+        publish_status = item.get('publish_status')
+        if doi_ra and publish_status == WEKO_IMPORT_PUBLISH_STATUS[1]:
+            errors.append(
+                _('You cannot keep an item private because it has a DOI.'))
+        # Check restrict DOI with Indexes:
+        index_ids = [str(idx) for idx in item['metadata']['path']]
+        if check_restrict_doi_with_indexes(index_ids):
+            errors.append(
+                _('Since the item has a DOI, it must be associated with an'
+                  ' index whose index status is "Public" and whose'
+                  ' Harvest Publishing is "Public".'))
+        if errors:
+            item['errors'] = item['errors'] + errors \
+                if item.get('errors') else errors
             item['errors'] = list(set(item['errors']))
 
 
@@ -1876,111 +1889,22 @@ def handle_doi_required_check(record):
         true/false -- {object} Validation result.
 
     """
-    ddi_item_type_name = 'DDI'
-    journalarticle_type = ['other（プレプリント）', 'conference paper',
-                           'data paper', 'departmental bulletin paper',
-                           'editorial', 'journal article', 'periodical',
-                           'review article', 'article']
-    thesis_types = ['thesis', 'bachelor thesis', 'master thesis',
-                    'doctoral thesis']
-    report_types = ['technical report', 'research report', 'report',
-                    'book', 'book part']
-    elearning_type = ['learning material']
-    dataset_type = ['software', 'dataset']
-    datageneral_types = ['internal report', 'policy report', 'report part',
-                         'working paper', 'interactive resource',
-                         'musical notation', 'research proposal',
-                         'technical documentation', 'workflow',
-                         'その他（その他）', 'sound', 'patent',
-                         'cartographic material', 'map', 'lecture', 'image',
-                         'still image', 'moving image', 'video',
-                         'conference object', 'conference proceedings',
-                         'conference poster']
+    record_data = {'item_type_id': record.get('item_type_id')}
+    for key, value in record.get('metadata', {}).items():
+        record_data[key] = {'attribute_value_mlt': [value]}
 
-    item_type = None
-
-    if 'doi_ra' in record and record['doi_ra'] in ['JaLC',
-                                                   'Crossref',
-                                                   'DataCite',
-                                                   'NDL JaLC']:
-        doi_type = record['doi_ra']
-        item_type_mapping = Mapping.get_record(record['item_type_id'])
-        if item_type_mapping:
-            item_type = ItemTypes.get_by_id(id_=record['item_type_id'])
-            item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
+    if 'doi_ra' in record and record['doi_ra'] in WEKO_IMPORT_DOI_TYPE:
+        error_list = item_metadata_validation(
+            None, str(WEKO_IMPORT_DOI_TYPE.index(record['doi_ra']) + 1),
+            record_data, True)
+        if isinstance(error_list, str):
+            return False
+        if error_list and (error_list.get('required')
+                           or error_list.get('either')
+                           or error_list.get('pattern')):
+            return False
         else:
-            return False
-
-        properties = {}
-        # 必須
-        required_properties = []
-        # いずれか必須
-        either_properties = []
-
-        resource_type, resource_type_key = get_data_by_property(record,
-                                                                item_map,
-                                                                'type.@value')
-        if not resource_type or not item_type \
-                or check_required_data(resource_type, resource_type_key):
-            return False
-
-        resource_type = resource_type.pop()
-        if doi_type == 'JaLC':
-            if resource_type in journalarticle_type \
-                or resource_type in report_types \
-                or (resource_type in elearning_type) \
-                    or resource_type in datageneral_types:
-                required_properties = ['title']
-                if item_type.item_type_name.name != ddi_item_type_name:
-                    required_properties.append('fileURI')
-            elif resource_type in thesis_types:
-                required_properties = ['title',
-                                       'creator']
-                if item_type.item_type_name.name != ddi_item_type_name:
-                    required_properties.append('fileURI')
-            elif resource_type in dataset_type:
-                required_properties = ['title',
-                                       'givenName']
-                if item_type.item_type_name.name != ddi_item_type_name:
-                    required_properties.append('fileURI')
-                either_properties = ['geoLocationPoint',
-                                     'geoLocationBox',
-                                     'geoLocationPlace']
-        elif doi_type == 'Crossref':
-            if resource_type in journalarticle_type:
-                required_properties = ['title',
-                                       'publisher',
-                                       'sourceIdentifier',
-                                       'sourceTitle']
-                if item_type.item_type_name.name != ddi_item_type_name:
-                    required_properties.append('fileURI')
-            elif resource_type in report_types:
-                required_properties = ['title']
-                if item_type.item_type_name.name != ddi_item_type_name:
-                    required_properties.append('fileURI')
-            elif resource_type in thesis_types:
-                required_properties = ['title',
-                                       'creator']
-                if item_type.item_type_name.name != ddi_item_type_name:
-                    required_properties.append('fileURI')
-        # DataCite DOI identifier registration
-        elif doi_type == 'DataCite' \
-                and item_type.item_type_name.name != ddi_item_type_name:
-            required_properties = ['fileURI']
-        # NDL JaLC DOI identifier registration
-        elif doi_type == 'NDL JaLC' \
-                and item_type.item_type_name.name != ddi_item_type_name:
-            required_properties = ['fileURI']
-
-        if required_properties:
-            properties['required'] = required_properties
-        if either_properties:
-            properties['either'] = either_properties
-        if properties:
-            return validation_item_property(record, item_map, properties)
-        else:
-            return False
-
+            return True
     return False
 
 

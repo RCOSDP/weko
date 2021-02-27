@@ -57,6 +57,20 @@ def _has_admin_access():
         .permission_factory(current_admin.admin.index_view).can()
 
 
+def _redirect_method():
+    """Redirect method for instance login to IdP."""
+    shib_login = current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']
+    shib_login_url = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL']
+    idp_login = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED']
+    idp_login_inst = current_app.config[
+        'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED']
+
+    if shib_login and idp_login and idp_login_inst:
+        return redirect(shib_login_url.format(request.url_root))
+    else:
+        return redirect(url_for_security('login'))
+
+
 @blueprint.route('/')
 def index():
     """Render a basic view."""
@@ -71,41 +85,28 @@ def shib_auto_login():
 
     :return: next url
     """
-    _shib_enable = current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']
-    _shib_login_url = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL']
-    _idp_login = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED']
-    _idp_login_inst = current_app.config[
-        'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED']
     try:
         is_auto_bind = False
         shib_session_id = request.args.get('SHIB_ATTR_SESSION_ID', None)
+
         if not shib_session_id:
             shib_session_id = session['shib_session_id']
             is_auto_bind = True
 
-        if shib_session_id is None or len(shib_session_id) == 0:
-            if _shib_enable and _idp_login and _idp_login_inst:
-                return redirect(_shib_login_url.format(request.url_root))
-            else:
-                return redirect(url_for_security('login'))
+        if not shib_session_id:
+            return _redirect_method()
 
         datastore = RedisStore(redis.StrictRedis.from_url(
             current_app.config['CACHE_REDIS_URL']))
         cache_key = current_app.config[
             'WEKO_ACCOUNTS_SHIB_CACHE_PREFIX'] + shib_session_id
         if not datastore.redis.exists(cache_key):
-            if _shib_enable and _idp_login and _idp_login_inst:
-                return redirect(_shib_login_url.format(request.url_root))
-            else:
-                return redirect(url_for_security('login'))
+            return _redirect_method()
 
         cache_val = datastore.get(cache_key)
         if not cache_val:
             datastore.delete(cache_key)
-            if _shib_enable and _idp_login and _idp_login_inst:
-                return redirect(_shib_login_url.format(request.url_root))
-            else:
-                return redirect(url_for_security('login'))
+            return _redirect_method()
 
         cache_val = json.loads(str(cache_val, encoding='utf-8'))
         shib_user = ShibUser(cache_val)
@@ -117,14 +118,10 @@ def shib_auto_login():
         error = shib_user.check_in()
 
         if error:
-            ShibUser.shib_user_logout()
             datastore.delete(cache_key)
             current_app.logger.error(error)
             flash(error, category='error')
-            if _shib_enable and _idp_login and _idp_login_inst:
-                return redirect(_shib_login_url.format(request.url_root))
-            else:
-                return redirect(url_for_security('login'))
+            return _redirect_method()
 
         if shib_user.shib_user:
             shib_user.shib_user_login()
@@ -142,58 +139,50 @@ def confirm_user():
 
     :return:
     """
-    _shib_enable = current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']
-    _shib_login_url = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL']
-    _idp_login = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED']
-    _idp_login_inst = current_app.config[
-        'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED']
     try:
-        csrf_random = request.form.get('csrf_random', '')
-        if csrf_random != session['csrf_random']:
-            if _shib_enable and _idp_login and _idp_login_inst:
-                return redirect(_shib_login_url.format(request.url_root))
-            else:
-                return redirect(url_for_security('login'))
+        if request.form.get('csrf_random', '') != session['csrf_random']:
+            flash('csrf_random', category='error')
+            return _redirect_method()
+
         shib_session_id = session['shib_session_id']
-        if shib_session_id is None or len(shib_session_id) == 0:
-            if _shib_enable and _idp_login and _idp_login_inst:
-                return redirect(_shib_login_url.format(request.url_root))
-            else:
-                return redirect(url_for_security('login'))
+        if not shib_session_id:
+            flash('shib_session_id', category='error')
+            return _redirect_method()
+
         datastore = RedisStore(redis.StrictRedis.from_url(
             current_app.config['CACHE_REDIS_URL']))
         cache_key = current_app.config[
             'WEKO_ACCOUNTS_SHIB_CACHE_PREFIX'] + shib_session_id
+
         if not datastore.redis.exists(cache_key):
-            if _shib_enable and _idp_login and _idp_login_inst:
-                return redirect(_shib_login_url.format(request.url_root))
-            else:
-                return redirect(url_for_security('login'))
+            flash('cache_key', category='error')
+            return _redirect_method()
+
         cache_val = datastore.get(cache_key)
-        if cache_val is None:
+        if not cache_val:
+            flash('cache_val', category='error')
             datastore.delete(cache_key)
-            return redirect(_shib_login_url.format(request.url_root))
+            return _redirect_method()
+
         cache_val = json.loads(str(cache_val, encoding='utf-8'))
         shib_user = ShibUser(cache_val)
         account = request.form.get('WEKO_ATTR_ACCOUNT', None)
         password = request.form.get('WEKO_ATTR_PWD', None)
         if not shib_user.check_weko_user(account, password):
+            flash('check_weko_user', category='error')
             datastore.delete(cache_key)
-            if _shib_enable and _idp_login and _idp_login_inst:
-                return redirect(_shib_login_url.format(request.url_root))
-            else:
-                return redirect(url_for_security('login'))
-        shib_user.bind_relation_info(account)
+            return _redirect_method()
+
+        if not shib_user.bind_relation_info(account):
+            flash('FAILED bind_relation_info!', category='error')
+            return _redirect_method()
 
         error = shib_user.check_in()
 
         if error:
             datastore.delete(cache_key)
             flash(error, category='error')
-            if _shib_enable and _idp_login and _idp_login_inst:
-                return redirect(_shib_login_url.format(request.url_root))
-            else:
-                return redirect(url_for_security('login'))
+            return _redirect_method()
 
         if shib_user.shib_user:
             shib_user.shib_user_login()
@@ -210,19 +199,13 @@ def shib_login():
 
     :return: confirm user page when relation is empty
     """
-    _shib_enable = current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']
-    _shib_login_url = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL']
-    _idp_login = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED']
-    _idp_login_inst = current_app.config[
-        'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED']
     try:
         shib_session_id = request.args.get('SHIB_ATTR_SESSION_ID', None)
 
-        if shib_session_id is None or len(shib_session_id) == 0:
-            if _shib_enable and _idp_login and _idp_login_inst:
-                return redirect(_shib_login_url.format(request.url_root))
-            else:
-                return redirect(url_for_security('login'))
+        if not shib_session_id:
+            current_app.logger.error(_("Missing SHIB_ATTR_SESSION_ID!"))
+            flash(_("Missing SHIB_ATTR_SESSION_ID!"), category='error')
+            return _redirect_method()
 
         datastore = RedisStore(redis.StrictRedis.from_url(
             current_app.config['CACHE_REDIS_URL']))
@@ -230,47 +213,35 @@ def shib_login():
             'WEKO_ACCOUNTS_SHIB_CACHE_PREFIX'] + shib_session_id
 
         if not datastore.redis.exists(cache_key):
-            if _shib_enable and _idp_login and _idp_login_inst:
-                return redirect(_shib_login_url.format(request.url_root))
-            else:
-                return redirect(url_for_security('login'))
+            current_app.logger.error(_("Missing SHIB_CACHE_PREFIX!"))
+            flash(_("Missing SHIB_CACHE_PREFIX!"), category='error')
+            return _redirect_method()
+
         cache_val = datastore.get(cache_key)
 
         if not cache_val:
+            current_app.logger.error(_("Missing SHIB_ATTR!"))
+            flash(_("Missing SHIB_ATTR!"), category='error')
             datastore.delete(cache_key)
-            if _shib_enable and _idp_login and _idp_login_inst:
-                return redirect(_shib_login_url.format(request.url_root))
-            else:
-                return redirect(url_for_security('login'))
+            return _redirect_method()
 
         cache_val = json.loads(str(cache_val, encoding='utf-8'))
         session['shib_session_id'] = shib_session_id
         csrf_random = generate_random_str(length=64)
         session['csrf_random'] = csrf_random
 
-        shib_role_auth = cache_val.get('shib_role_authority_name', '')
-        if not shib_role_auth:
-            current_app.logger.debug(_("Failed to get attribute."))
-
-        shib_role_config = current_app.config[
-            'WEKO_ACCOUNTS_SHIB_ROLE_RELATION']
-
-        if shib_role_auth and shib_role_auth not in shib_role_config.keys():
-            current_app.logger.error(_("Invalid attribute."))
-            flash(_("Invalid attribute."), category='error')
-            if _shib_enable and _idp_login and _idp_login_inst:
-                return redirect(_shib_login_url.format(request.url_root))
-            else:
-                return redirect(url_for_security('login'))
+        _datastore = LocalProxy(
+            lambda: current_app.extensions['security'].datastore)
+        user = _datastore.find_user(
+            email=cache_val.get('shib_mail'))
 
         return render_template(
             current_app.config['WEKO_ACCOUNTS_CONFIRM_USER_TEMPLATE'],
             csrf_random=csrf_random,
-            email=cache_val['shib_mail'] if len(
-                cache_val['shib_mail']) > 0 else '')
+            email=user.email if user else ''
+        )
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-
     return abort(400)
 
 
@@ -281,21 +252,22 @@ def shib_sp_login():
     :return: confirm page when relation is empty
     """
     _shib_enable = current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']
-    _shib_login_url = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL']
-    _idp_login = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED']
-    _idp_login_inst = current_app.config[
-        'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED']
+    _shib_username_config = current_app.config[
+        'WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN']
     try:
         shib_session_id = request.form.get('SHIB_ATTR_SESSION_ID', None)
         if not shib_session_id and not _shib_enable:
+            flash(_("Missing SHIB_ATTR_SESSION_ID!"), category='error')
             return redirect(url_for_security('login'))
 
         shib_attr, error = parse_attributes()
-        if error:
-            if _shib_enable and _idp_login and _idp_login_inst:
-                return redirect(_shib_login_url.format(request.url_root))
-            else:
-                return redirect(url_for_security('login'))
+
+        # Check SHIB_ATTR_EPPN and SHIB_ATTR_USER_NAME:
+        if error or not (
+                shib_attr.get('shib_eppn', None)
+                or _shib_username_config and shib_attr.get('shib_user_name')):
+            flash(_("Missing SHIB_ATTRs!"), category='error')
+            return _redirect_method()
 
         datastore = RedisStore(redis.StrictRedis.from_url(
             current_app.config['CACHE_REDIS_URL']))
@@ -312,7 +284,7 @@ def shib_sp_login():
         rst = shib_user.get_relation_info()
 
         next_url = 'weko_accounts.shib_auto_login'
-        if rst is None:
+        if not rst:
             # Relation is not existed, cache shibboleth info to redis.
             next_url = 'weko_accounts.shib_login'
 
@@ -323,10 +295,7 @@ def shib_sp_login():
         return url_for(next_url, **query_string)
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-        if _shib_enable and _idp_login and _idp_login_inst:
-            return redirect(_shib_login_url.format(request.url_root))
-        else:
-            return redirect(url_for_security('login'))
+        return _redirect_method()
 
 
 @blueprint.route('/shib/sp/login', methods=['GET'])

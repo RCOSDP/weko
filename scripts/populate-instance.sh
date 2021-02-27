@@ -404,6 +404,9 @@ ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
 ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
        3 "site_license_mail_settings" \
        "{'auto_send_flag': False}"
+${INVENIO_WEB_INSTANCE} admin_settings create_settings \
+       4 "default_properties_settings" \
+       "{'show_flag': True}"
 # create-admin-settings-end
 
 # create-default-authors-prefix-settings-begin

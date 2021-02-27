@@ -46,7 +46,7 @@ from .utils import check_import_items, check_sub_item_is_system, \
     create_flow_define, delete_records, get_change_identifier_mode_content, \
     get_content_workflow, get_lifetime, get_root_item_option, \
     get_sub_item_option, get_tree_items, handle_get_all_sub_id_and_name, \
-    handle_index_tree, handle_workflow, make_stats_tsv, make_tsv_by_line
+    handle_workflow, make_stats_tsv, make_tsv_by_line
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -291,7 +291,6 @@ class ItemImportView(BaseView):
             'list_record', []) if not item.get(
             'errors')]
         for item in list_record:
-            handle_index_tree(item)
             item['root_path'] = data.get('root_path')
             create_flow_define()
             handle_workflow(item)

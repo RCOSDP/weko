@@ -1,7 +1,20 @@
 <div class="panel panel-default"
-  ng-if="vm.invenioSearchResults.aggregations.hasOwnProperty('path') && (vm.invenioSearchResults.aggregations.path.buckets[0].length > 1 || (isCommunityRootIndex && vm.invenioSearchResults.aggregations.path.buckets[0].length > 1))">
+  ng-if="vm.invenioSearchResults.aggregations.hasOwnProperty('path') && (vm.invenioSearchResults.aggregations.path.buckets[0].length >= 1 || (isCommunityRootIndex && vm.invenioSearchResults.aggregations.path.buckets[0].length > 1))">
   <div class="panel-heading clearfix">
     <h3 class="panel-title">Index List</h3>
+      <ol class="breadcrumb" style="padding-bottom:0px;margin-bottom:0px" ng-if="vm.invenioSearchResults.aggregations.hasOwnProperty('path') && vm.invenioSearchResults.aggregations.path.buckets[0].length > 0 
+        && typeIndexList() != 'root'">
+        <li ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index"
+          style="list-style-position: inside;
+          padding: 10px 0 10px 20px;
+          text-indent: -1em;
+          font-size:18px">
+          <a target="_self" ng-if="!$last" ng-href="/search?search_type=2&q={{ index_path }}{{commInfoIndex}}">
+            {{vm.invenioSearchResults.aggregations.path.buckets[0][0]['path_name_dict'][index_path]}}</a>
+          <span
+            ng-if="$last">{{vm.invenioSearchResults.aggregations.path.buckets[0][0]['path_name_dict'][index_path]}}</span>
+        </li>
+      </ol>
   </div>
   <div class="panel-body">
     <div class="panel_bread">
