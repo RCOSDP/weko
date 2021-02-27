@@ -18,14 +18,16 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
+"""Utilities for making the PDF cover page and newly combined PDFs."""
+
 import errno
 import io
 import json
 import os
+import tempfile
 import unicodedata
 from datetime import datetime
 
-import tempfile
 from flask import current_app, flash, redirect, request, send_file, url_for
 from flask_babelex import gettext as _
 from fpdf import FPDF
@@ -149,7 +151,6 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         oa_policy = waj.get('keywords', '')
 
         return oa_policy
-
 
     file_path = current_app.config['PDF_COVERPAGE_LANG_FILEPATH']
     file_name = current_app.config['PDF_COVERPAGE_LANG_FILENAME']
@@ -601,4 +602,3 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         mimetype='application/pdf',
         cache_timeout=-1
     )
-

@@ -23,9 +23,18 @@
 from invenio_accounts.models import User
 from invenio_db import db
 
+shibuserrole = db.Table(
+    'shibboleth_userrole',
+    db.Column('shib_user_id', db.Integer(), db.ForeignKey(
+        'shibboleth_user.id', name='fk_shibboleth_userrole_user_id')),
+    db.Column('role_id', db.Integer(), db.ForeignKey(
+        'accounts_role.id', name='fk_shibboleth_userrole_role_id')),
+)
+"""Relationship between shibboleth users and roles."""
+
 
 class ShibbolethUser(db.Model):
-    """Shibboleth User Model."""
+    """Shibboleth User data model."""
 
     __tablename__ = "shibboleth_user"
 
@@ -33,7 +42,7 @@ class ShibbolethUser(db.Model):
     """ShibbolethUser identifier."""
 
     shib_eppn = db.Column(db.String(128), unique=True, nullable=False)
-    """SHIB_ATTR_ePPN"""
+    """SHIB_ATTR_EPPN"""
 
     weko_uid = db.Column(db.Integer, db.ForeignKey(
         User.id, name='fk_shib_weko_user_id'))
@@ -56,11 +65,16 @@ class ShibbolethUser(db.Model):
     shib_mail = db.Column(db.String(255), nullable=True)
     """SHIB_ATTR_MAIL"""
 
-    shib_user_name = db.Column(db.String(255), nullable=True)
+    shib_user_name = db.Column(db.String(255), unique=True, nullable=True)
     """SHIB_ATTR_USER_NAME"""
 
     shib_ip_range_flag = db.Column(db.String(255), nullable=True)
     """SHIB_ATTR_SITE_USER_WITHIN_IP_RANGE_FLAG"""
+
+    shib_roles = db.relationship(
+        'Role',
+        secondary=shibuserrole,
+        backref=db.backref('shib_users', lazy='dynamic'))
 
     @classmethod
     def create(cls, weko_user, **kwargs):
@@ -81,3 +95,10 @@ class ShibbolethUser(db.Model):
         db.session.commit()
 
         return obj
+
+    @classmethod
+    def get_user_by_email(cls, email, **kwargs):
+        """Get a user by email."""
+        return cls.query.filter_by(
+            shib_eppn=email,
+        ).one_or_none()

@@ -41,6 +41,9 @@ WEKO_ITEMTYPES_UI_ADMIN_MAPPING_TEMPLATE = \
 WEKO_ITEMTYPES_UI_ADMIN_ERROR_TEMPLATE = 'weko_itemtypes_ui/admin/error.html'
 """Error template for the item type page."""
 
+WEKO_ITEMTYPES_UI_SHOW_DEFAULT_PROPERTIES = True
+"""Set to show or hide default properties on the item type page."""
+
 WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES = {
     '1': {'name': _('Text Field'), 'value': 'text'},
     '2': {'name': _('Text Area'), 'value': 'textarea'},

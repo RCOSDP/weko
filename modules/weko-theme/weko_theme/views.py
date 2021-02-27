@@ -89,6 +89,7 @@ def get_default_search_setting():
         "dlt_dis_num_selected": data.get('dlt_dis_num_selected'),
         "dlt_index_sort_selected": data.get('dlt_index_sort_selected'),
         "dlt_keyword_sort_selected": data.get('dlt_keyword_sort_selected'),
+        "init_disp_setting": data.get('init_disp_setting')
     }
     return jsonify({'status': 1, "data": data})
 
