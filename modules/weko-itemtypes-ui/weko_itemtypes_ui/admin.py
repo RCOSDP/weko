@@ -39,7 +39,8 @@ from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ATT, \
     WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT
 from .permissions import item_type_permission
 from .utils import check_duplicate_mapping, fix_json_schema, \
-    has_system_admin_access, remove_xsd_prefix
+    has_system_admin_access, remove_xsd_prefix, \
+    update_required_schema_not_exist_in_form
 
 
 class ItemTypeMetaDataView(BaseView):
@@ -157,6 +158,10 @@ class ItemTypeMetaDataView(BaseView):
             json_schema = fix_json_schema(
                 table_row_map.get(
                     'schema'))
+            json_form = table_row_map.get('form')
+            json_schema = update_required_schema_not_exist_in_form(
+                json_schema, json_form)
+
             if not json_schema:
                 raise ValueError('Schema is in wrong format.')
 
@@ -256,7 +261,7 @@ class ItemTypeMetaDataView(BaseView):
                 if prop.schema.get(WEKO_BILLING_FILE_PROP_ATT, None):
                     props.remove(prop)
 
-        lists = {}
+        lists = {'system': {}}
         for k in props:
             name = k.name
             if lang and 'title_i18n' in k.form and \
@@ -269,7 +274,10 @@ class ItemTypeMetaDataView(BaseView):
                 is_file = True
             tmp = {'name': name, 'schema': k.schema, 'form': k.form,
                    'forms': k.forms, 'sort': k.sort, 'is_file': is_file}
-            lists[k.id] = tmp
+            if name and name[:2] == 'S_':
+                lists['system'][k.id] = tmp
+            else:
+                lists[k.id] = tmp
 
         settings = AdminSettings.get('default_properties_settings')
         default_properties = current_app.config['WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES']
@@ -277,12 +285,18 @@ class ItemTypeMetaDataView(BaseView):
             if settings.show_flag:
                 lists['defaults'] = default_properties
             else:
-                lists['defaults'] = {}
+                lists['defaults'] = {
+                    '0': {
+                        'name': _('Date (Type-less）'),
+                        'value': 'datetime'}}
         else:
             if current_app.config['WEKO_ITEMTYPES_UI_SHOW_DEFAULT_PROPERTIES']:
                 lists['defaults'] = default_properties
             else:
-                lists['defaults'] = {}
+                lists['defaults'] = {
+                    '0': {
+                        'name': _('Date (Type-less）'),
+                        'value': 'datetime'}}
 
         return jsonify(lists)
 
