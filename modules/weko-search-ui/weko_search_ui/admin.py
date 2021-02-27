@@ -25,6 +25,9 @@ import json
 from datetime import datetime
 from urllib.parse import urlencode
 import celery
+from celery.result import AsyncResult
+from simplekv.memory.redisstore import RedisStore
+import redis
 
 from blinker import Namespace
 from flask import Response, abort, current_app, jsonify, make_response, request, send_file
@@ -35,14 +38,15 @@ from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
-from weko_admin.utils import get_redis_cache
+from weko_admin.utils import get_redis_cache, reset_redis_cache
 
 from weko_search_ui.api import get_search_detail_keyword
 
 from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
     WEKO_EXPORT_TEMPLATE_BASIC_NAME, WEKO_EXPORT_TEMPLATE_BASIC_OPTION, \
     WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
-    WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_ITEM_ADMIN_EXPORT_TEMPLATE
+    WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_ITEM_ADMIN_EXPORT_TEMPLATE, \
+    WEKO_ADMIN_URI_EXPORT_ALL, WEKO_ADMIN_TASK_ID_EXPORT_ALL
 from .tasks import import_item, remove_temp_dir_task, export_all_items
 from .utils import check_import_items, check_sub_item_is_system, \
     create_flow_define, delete_records, get_change_identifier_mode_content, \
@@ -523,46 +527,52 @@ class ItemExportView(BaseView):
 
     @expose('/export_all', methods=['GET'])
     def export_all(self):
-        """Export all items."""  
-        try:      
-            download_url = "https://www.google.com/"
-            result = export_all_items.apply_async(countdown=3)
-            return jsonify(data = {
-                'download_url': download_url
-            })
-        except Exception as ex:
-            raise ex
+        """Export all items."""
+        cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+            format(name=WEKO_ADMIN_TASK_ID_EXPORT_ALL)
+        
+        task = export_all_items.apply_async(('https://18.182.214.241:8023/',), countdown=get_lifetime())
+
+        datastore = RedisStore(redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
+        if datastore.redis.exists(cache_key):
+            reset_redis_cache(cache_key, str(task.task_id))
+        else:
+            datastore.put(cache_key, json.dumps(str(task.task_id)).encode('utf-8'))
+        return Response(status=200)
 
     @expose('/check_export_status', methods=['GET'])
     def check_export_status(self):
         """Check export status."""
-        export_status = Exporter().get_export_status()
+        export_status, download_uri = Exporter().get_export_status()
         return jsonify(data = {
-            'export_status': export_status
+            'export_status': export_status,
+            'uri_status': True if download_uri is not None else False
         })
 
     @expose('/cancel_export', methods=['GET'])
     def cancel_export(self):
         """Check export status."""
-        cancel_status = Exporter().cancel_export_all()
         # get Task ID from RedisStore               
         return jsonify(data = {
-            'cancel_status': cancel_status
+            'cancel_status': Exporter().cancel_export_all()
         })
 
-    @expose('/send_to_client', methods=['GET'])
-    def send_to_client(self):
+    @expose('/download', methods=['GET'])
+    def download(self):
         """
         Funtion send file to Client
         path: it was load from FileInstance
         """
         # TODO need to determined path because it releated to how to save file
-        path = None
-        return send_file(
-            path + '.zip',
-            as_attachment=True,
-            attachment_filename='export.zip'
-        )
+        export_status, download_uri = Exporter().get_export_status()
+        if export_status and download_uri is not None:
+            return send_file(
+                download_uri,
+                as_attachment=True,
+                attachment_filename='export-all.zip'
+            )            
+        else:
+            return Response(status=200)
 
 item_management_bulk_search_adminview = {
     'view_class': ItemManagementBulkSearch,
@@ -604,8 +614,8 @@ item_management_export_adminview = {
     'view_class': ItemExportView,
     'kwargs': {
         'category': _('Items'),
-        'name': _('Export'),
-        'endpoint': 'items/export'
+        'name': _('Bulk Export'),
+        'endpoint': 'items/bulk-export'
     }
 }
 

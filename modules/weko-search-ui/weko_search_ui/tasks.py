@@ -25,7 +25,6 @@ from celery import shared_task
 
 from .utils import import_items_to_system, remove_temp_dir, Exporter
 
-
 @shared_task
 def import_item(item, url_root):
     """Import Item ."""
@@ -34,14 +33,17 @@ def import_item(item, url_root):
     result['start_date'] = start_date
     return result
 
-
 @shared_task
 def remove_temp_dir_task(path):
     """Import Item ."""
     remove_temp_dir(path)
 
 @shared_task
-def export_all_items():
-    """Export Item ."""
-    result = Exporter().export_all_admin()
-    return result
+def export_all_items(root_url):
+    """Export all items."""    
+    Exporter().export_all_admin(root_url)
+
+@shared_task
+def delete_export_all():
+    """Delete expried exported file."""
+    Exporter().delete_file_instance()
