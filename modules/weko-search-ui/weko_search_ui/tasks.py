@@ -24,9 +24,8 @@ from datetime import datetime
 from celery import shared_task
 from flask import current_app
 
-from .utils import Exporter, export_all_admin, import_items_to_system, \
-    remove_temp_dir
-
+from .utils import export_all, import_items_to_system, \
+    remove_temp_dir, delete_exported
 
 @shared_task
 def import_item(item, url_root):
@@ -44,21 +43,20 @@ def remove_temp_dir_task(path):
 
 
 @shared_task
-def export_all_items(root_url):
+def export_all_task(root_url):
     """Export all items."""
     from weko_admin.utils import reset_redis_cache
     _task_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_URI']
+    _expired_time = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME']
     _cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
         format(name=_task_config)
 
-    uri = export_all_admin(root_url)
-    current_app.logger.error('*' * 60)
-    reset_redis_cache(_cache_key,
-                      uri)
+    uri = export_all(root_url)
+    reset_redis_cache(_cache_key, uri)
     current_app.logger.error(uri)
-
+    delete_exported_task.apply_async(args = (uri,_cache_key,), countdown=int(_expired_time)*60)
 
 @shared_task
-def delete_export_all():
-    """Delete expried exported file."""
-    Exporter().delete_file_instance()
+def delete_exported_task(uri, cache_key):
+    """Delete expired exported file."""
+    delete_exported(uri, cache_key)
