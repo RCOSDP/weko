@@ -77,8 +77,8 @@ SEARCH_UI_JSTEMPLATE_SORT_ORDER = 'templates/weko_search_ui/togglebutton.html'
 WEKO_ITEM_ADMIN_IMPORT_TEMPLATE = 'weko_search_ui/admin/import.html'
 """import template for the import page."""
 
-WEKO_ITEM_ADMIN_EXPORT_TEMPLATE = 'weko_search_ui/admin/export.html'
-"""import template for the export page."""
+WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE = 'weko_search_ui/admin/export.html'
+"""Template for the Admin Bulk Export page."""
 
 INDEX_IMG = 'indextree/36466818-image.jpg'
 
@@ -656,6 +656,11 @@ WEKO_IMPORT_VALIDATE_MESSAGE = {
     '%r is a required property': '%rは必須項目です。'
 }
 
-WEKO_ADMIN_TASK_ID_EXPORT_ALL = 'KEY_EXPORT_ALL'
-WEKO_ADMIN_URI_EXPORT_ALL = 'URI_EXPORT_ALL'
-WEKO_ADMIN_EXPIRED_EXPORT_ALL = 30
+WEKO_SEARCH_UI_BULK_EXPORT_TASK = 'KEY_EXPORT_ALL'
+"""Template for the Admin Bulk Export page."""
+
+WEKO_SEARCH_UI_BULK_EXPORT_URI = 'URI_EXPORT_ALL'
+"""Template for the Admin Bulk Export page."""
+
+WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 30
+"""Template for the Admin Bulk Export page."""

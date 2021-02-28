@@ -22,8 +22,11 @@
 from datetime import datetime
 
 from celery import shared_task
+from flask import current_app
 
-from .utils import import_items_to_system, remove_temp_dir, Exporter
+from .utils import Exporter, export_all_admin, import_items_to_system, \
+    remove_temp_dir
+
 
 @shared_task
 def import_item(item, url_root):
@@ -33,15 +36,27 @@ def import_item(item, url_root):
     result['start_date'] = start_date
     return result
 
+
 @shared_task
 def remove_temp_dir_task(path):
     """Import Item ."""
     remove_temp_dir(path)
 
+
 @shared_task
 def export_all_items(root_url):
-    """Export all items."""    
-    Exporter().export_all_admin(root_url)
+    """Export all items."""
+    from weko_admin.utils import reset_redis_cache
+    _task_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_URI']
+    _cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+        format(name=_task_config)
+
+    uri = export_all_admin(root_url)
+    current_app.logger.error('*' * 60)
+    reset_redis_cache(_cache_key,
+                      uri)
+    current_app.logger.error(uri)
+
 
 @shared_task
 def delete_export_all():

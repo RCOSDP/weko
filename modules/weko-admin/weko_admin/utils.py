@@ -484,7 +484,8 @@ def reset_redis_cache(cache_key, value):
     try:
         datastore = RedisStore(redis.StrictRedis.from_url(
             current_app.config['CACHE_REDIS_URL']))
-        datastore.delete(cache_key)
+        if datastore.redis.exists(cache_key):
+            datastore.delete(cache_key)
         datastore.put(cache_key, value.encode('utf-8'))
     except Exception as e:
         current_app.logger.error('Could not reset redis value', e)

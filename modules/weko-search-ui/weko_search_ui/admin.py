@@ -24,35 +24,34 @@ import copy
 import json
 from datetime import datetime
 from urllib.parse import urlencode
-import celery
-from celery.result import AsyncResult
-from simplekv.memory.redisstore import RedisStore
-import redis
 
 from blinker import Namespace
-from flask import Response, abort, current_app, jsonify, make_response, request, send_file
+from celery.result import AsyncResult
+from flask import Response, abort, current_app, jsonify, make_response, \
+    request, send_file
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_i18n.ext import current_i18n
+from simplekv.memory.redisstore import RedisStore
+from weko_admin.utils import get_redis_cache, reset_redis_cache
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
-from weko_admin.utils import get_redis_cache, reset_redis_cache
 
 from weko_search_ui.api import get_search_detail_keyword
 
 from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
     WEKO_EXPORT_TEMPLATE_BASIC_NAME, WEKO_EXPORT_TEMPLATE_BASIC_OPTION, \
     WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
-    WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_ITEM_ADMIN_EXPORT_TEMPLATE, \
-    WEKO_ADMIN_URI_EXPORT_ALL, WEKO_ADMIN_TASK_ID_EXPORT_ALL
-from .tasks import import_item, remove_temp_dir_task, export_all_items
-from .utils import check_import_items, check_sub_item_is_system, \
+    WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE, \
+    WEKO_SEARCH_UI_BULK_EXPORT_TASK, WEKO_SEARCH_UI_BULK_EXPORT_URI
+from .tasks import export_all_items, import_item, remove_temp_dir_task
+from .utils import Exporter, check_import_items, check_sub_item_is_system, \
     create_flow_define, delete_records, get_change_identifier_mode_content, \
     get_content_workflow, get_lifetime, get_root_item_option, \
     get_sub_item_option, get_tree_items, handle_get_all_sub_id_and_name, \
-    handle_workflow, make_stats_tsv, make_tsv_by_line, Exporter
+    handle_workflow, make_stats_tsv, make_tsv_by_line
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -506,38 +505,36 @@ class ItemImportView(BaseView):
                    else urlencode({'filename': file_name}))
             })
 
-class ItemExportView(BaseView):
+class ItemBulkExport(BaseView):
     """BaseView for Admin Export."""
 
     @expose('/', methods=['GET'])
     def index(self):
-        """Renders an item export view.
+        """Renders admin bulk export page.
 
         :param
         :return: The rendered template.
         """
-        workflow = WorkFlow()
-        workflows = workflow.get_workflow_list()
-        workflows_js = [get_content_workflow(item) for item in workflows]
-
         return self.render(
-            WEKO_ITEM_ADMIN_EXPORT_TEMPLATE,
-            workflows=json.dumps(workflows_js)
+            WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE
         )
 
     @expose('/export_all', methods=['GET'])
     def export_all(self):
         """Export all items."""
-        cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-            format(name=WEKO_ADMIN_TASK_ID_EXPORT_ALL)
-        
-        task = export_all_items.apply_async(('https://18.182.214.241:8023/',), countdown=get_lifetime())
+        _task_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_TASK']
+        _cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+            format(name=_task_config)
 
-        datastore = RedisStore(redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
-        if datastore.redis.exists(cache_key):
-            reset_redis_cache(cache_key, str(task.task_id))
-        else:
-            datastore.put(cache_key, json.dumps(str(task.task_id)).encode('utf-8'))
+        export_task = export_all_items.apply_async(
+            args=(
+                request.url_root,
+            ))
+
+        print ('*' * 60)
+        print (export_task.task_id)
+        reset_redis_cache(_cache_key,
+                          str(export_task.task_id))
         return Response(status=200)
 
     @expose('/check_export_status', methods=['GET'])
@@ -611,7 +608,7 @@ item_management_import_adminview = {
 }
 
 item_management_export_adminview = {
-    'view_class': ItemExportView,
+    'view_class': ItemBulkExport,
     'kwargs': {
         'category': _('Items'),
         'name': _('Bulk Export'),
