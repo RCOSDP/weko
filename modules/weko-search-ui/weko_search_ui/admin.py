@@ -46,12 +46,13 @@ from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
     WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
     WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE, \
     WEKO_SEARCH_UI_BULK_EXPORT_TASK, WEKO_SEARCH_UI_BULK_EXPORT_URI
-from .tasks import export_all_items, import_item, remove_temp_dir_task
-from .utils import Exporter, check_import_items, check_sub_item_is_system, \
+from .tasks import export_all_task, import_item, remove_temp_dir_task
+from .utils import check_import_items, check_sub_item_is_system, \
     create_flow_define, delete_records, get_change_identifier_mode_content, \
     get_content_workflow, get_lifetime, get_root_item_option, \
     get_sub_item_option, get_tree_items, handle_get_all_sub_id_and_name, \
-    handle_workflow, make_stats_tsv, make_tsv_by_line
+    handle_workflow, make_stats_tsv, make_tsv_by_line, get_export_status, \
+    cancel_export_all
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -526,21 +527,19 @@ class ItemBulkExport(BaseView):
         _cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
             format(name=_task_config)
 
-        export_task = export_all_items.apply_async(
+        export_task = export_all_task.apply_async(
             args=(
                 request.url_root,
             ))
-
-        print ('*' * 60)
-        print (export_task.task_id)
         reset_redis_cache(_cache_key,
                           str(export_task.task_id))
+
         return Response(status=200)
 
     @expose('/check_export_status', methods=['GET'])
     def check_export_status(self):
         """Check export status."""
-        export_status, download_uri = Exporter().get_export_status()
+        export_status, download_uri = get_export_status()
         return jsonify(data = {
             'export_status': export_status,
             'uri_status': True if download_uri is not None else False
@@ -549,9 +548,8 @@ class ItemBulkExport(BaseView):
     @expose('/cancel_export', methods=['GET'])
     def cancel_export(self):
         """Check export status."""
-        # get Task ID from RedisStore               
         return jsonify(data = {
-            'cancel_status': Exporter().cancel_export_all()
+            'cancel_status': cancel_export_all()
         })
 
     @expose('/download', methods=['GET'])
@@ -560,9 +558,8 @@ class ItemBulkExport(BaseView):
         Funtion send file to Client
         path: it was load from FileInstance
         """
-        # TODO need to determined path because it releated to how to save file
-        export_status, download_uri = Exporter().get_export_status()
-        if export_status and download_uri is not None:
+        export_status, download_uri = get_export_status()
+        if not export_status and download_uri is not None:
             return send_file(
                 download_uri,
                 as_attachment=True,

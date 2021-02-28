@@ -2437,7 +2437,7 @@ def handle_check_duplication_item_id(ids: list):
     return list(set(result))
 
 
-def export_all_admin(root_url):
+def export_all(root_url):
     """Gather all the item data and export and return as a JSON or BIBTEX.
         Parameter
         path is the path if file temparory
@@ -2550,121 +2550,65 @@ def export_all_admin(root_url):
         current_app.logger.error(ex)
         current_app.logger.error(traceback.format_exc())
 
+def delete_exported(uri, cache_key):    
+    from simplekv.memory.redisstore import RedisStore    
+    """Delete File instance after time in file config"""
+    try:            
+        file_instance  = FileInstance.get_by_uri(uri)
+        file_instance.delete()
+        db.session.commit()
+        datastore = RedisStore(redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))        
+        if datastore.redis.exists(cache_key):
+            datastore.delete(cache_key)
+    except Exception as ex:
+        current_app.logger.error('=' * 60)
+        current_app.logger.error(ex)
+        current_app.logger.error(traceback.format_exc())
 
-class Exporter():
-    """ Class Exporter """
-    #add code for get all data
-
-    @classmethod
-    def check_item_type_name(self, name):
-            """Check a list of allowed characters in filenames."""
-            new_name = re.sub(r'[\/:*"<>|\s]', '_', name)
-            return new_name
-
-    @classmethod
-    def get_all_items(self):
-        """
-        function will get all items from root index
-        return: dictinary will contain all data from root index
-        """
-
-        # Get tree items
-        data_dict = {}
-        records_metadatas = RecordMetadata.query.all()
-
-        #convert to dictionary
-        data_meta = {}
-        record_ids = 0
-        for record_meta in records_metadatas:
-            record_meta = record_meta.json
-            data_meta[record_ids] = record_meta
-            record_ids = record_ids + 1
-
-        index = 0
-        record_metadatas = 0
-        while index < (len(data_meta) - 1):
-            data_dict [record_metadatas] = data_meta[index]
-            if(int(data_meta[index]['recid'].split('.')[0]) != int(data_meta[index + 1]['recid'].split('.')[0])):
-                record_metadatas = record_metadatas + 1 
-                data_dict[record_metadatas]  = data_meta[index + 1]
-
-            index = index + 1 
-        data_dict[0] = data_dict
-        return data_dict
-
-    @classmethod
-    def get_export_status(self):
-        """Get Share_task Export ALL status
-            return:     True:   Otthers
-                        False:  Success / Failed / Revoked
-        """
-        cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-            format(name=WEKO_SEARCH_UI_BULK_EXPORT_TASK)
-        cache_uri = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-            format(name=WEKO_SEARCH_UI_BULK_EXPORT_URI)
-        export_status = False
-        download_uri = None
-        try:
-            task_id = get_redis_cache(cache_key)
-            print(task_id)
-            download_uri = get_redis_cache(cache_uri)
-            if (task_id is not None):
-                task = AsyncResult(task_id)
-                print(task.state)
-                export_status = True if not (task.successful() or task.failed() or task.state == 'REVOKED') \
-                    else False
-        except Exception:
-            export_status = False
-        return export_status, download_uri
-
-    @classmethod
-    def check_download_uri(self):
-        """Check if download uri is existed
-            return:     True:   Existed.
-                        No:     Not Exist.
-        """
-        cache_uri = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-            format(name=WEKO_SEARCH_UI_BULK_EXPORT_URI)
-        status = False
-        try:
-            download_uri = get_redis_cache(cache_uri)
-            status = True if download_uri is not None else False
-        except Exception:
-            status = False
-        return status
-
-    @classmethod
-    def cancel_export_all(self):
-        """Cancel Process Share_task Export ALL with revoke
-            return:     Yes:    cancel Success.
-                        No:     Error
-        """
-        cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-            format(name=WEKO_SEARCH_UI_BULK_EXPORT_TASK)
-        # try:
+def cancel_export_all():
+    """Cancel Process Share_task Export ALL with revoke
+       Return:     True:   Cancel Successful.
+                    No:     Error
+    """
+    cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+        format(name=WEKO_SEARCH_UI_BULK_EXPORT_TASK)
+    try:
         task_id = get_redis_cache(cache_key)
-        task_status = self.get_export_status()
+        task_status = get_export_status()
+
         if task_status:
             revoke(task_id, terminate=True)
-        task_status = self.get_export_status()
-        # except Exception as ex:
-        #     return False
+
         return True
+    except Exception as ex:
+        current_app.logger.error('=' * 60)
+        current_app.logger.error(ex)
+        current_app.logger.error(traceback.format_exc())
+        return False    
 
-    @classmethod
-    def delete_file_instance(self):
-        from simplekv.memory.redisstore import RedisStore
-        """Delete File instance after time in file config"""        
-        cache_uri = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-            format(name=WEKO_SEARCH_UI_BULK_EXPORT_URI)
-        try:
-            file_instance  = FileInstance.get_by_uri(cache_uri)
-            file_instance.delete()
-            db.session.commit()
-
-            datastore = RedisStore(redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
-            if datastore.redis.exists(cache_uri):
-                datastore.delete(cache_uri)
-        except Exception as ex:
-            current_app.logger.error(ex)
-
+def get_export_status():
+    """Get Share_task Export ALL status
+       Return:     True:   Otthers
+                   False:  Success / Failed / Revoked
+    """
+    cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+        format(name=WEKO_SEARCH_UI_BULK_EXPORT_TASK)
+    cache_uri = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+        format(name=WEKO_SEARCH_UI_BULK_EXPORT_URI)
+    export_status = False
+    download_uri = None
+    try:
+        task_id = get_redis_cache(cache_key)
+        print(task_id)
+        download_uri = get_redis_cache(cache_uri)
+        if (task_id is not None):
+            task = AsyncResult(task_id)
+            print(task.state)
+            export_status = True if not (task.successful() or task.failed() or task.state == 'REVOKED') \
+                else False
+    except Exception as ex:
+        current_app.logger.error('=' * 60)
+        current_app.logger.error(ex)
+        current_app.logger.error(traceback.format_exc())
+        export_status = False
+    return export_status, download_uri

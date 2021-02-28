@@ -65,7 +65,7 @@ class ExportComponent extends React.Component {
       type: 'GET',
       url: urlCancelExport,
       success: function (response) {
-        if (response) {
+        if (response.data) {
           thisComponent.setState({
             isDisableExport: !response.data.cancel_status,
             isDisableCancel: response.data.cancel_status
@@ -91,10 +91,7 @@ class ExportComponent extends React.Component {
       url: urlExportAll,
       type: 'GET',
       success: function () {
-        let checkExportSttInterval = setInterval(thisComponent.checkExportStatus.bind(thisComponent),
-          thisComponent.state.interval_time);
         thisComponent.setState({
-          checkExportSttInterval: checkExportSttInterval,
           isDisableExport: true,
           isDisableCancel: false
         });
@@ -117,9 +114,14 @@ class ExportComponent extends React.Component {
       dataType: 'json',
       async: false,
       success: function (response) {
-        if (response) {
-          thisComponent.state.checkExportSttInterval && !response.data.export_status
-            && clearInterval(thisComponent.state.checkExportSttInterval);
+        if (response.data) {
+          if (!thisComponent.state.checkExportSttInterval) {
+            let checkExportSttInterval = setInterval(thisComponent.checkExportStatus.bind(thisComponent),
+              thisComponent.state.interval_time);
+            thisComponent.setState({
+              checkExportSttInterval: checkExportSttInterval
+            });
+          }
           thisComponent.setState({
             exportStatus: response.data.export_status,
             uriStatus: response.data.uri_status,
@@ -173,7 +175,7 @@ class ExportComponent extends React.Component {
             </div>
             <div className="row" className={!uriStatus ? 'hidden' : ''} >
               <div className="col-xs-12">
-                <a className={!exportStatus ? 'linkDisabled' : ''} href={urlDownload}>{urlDownload}</a>
+                <a className={exportStatus ? 'linkDisabled' : ''} href={urlDownload}>{urlDownload}</a>
               </div>
             </div>
           </div>
