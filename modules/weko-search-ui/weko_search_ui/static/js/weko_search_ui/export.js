@@ -4,7 +4,6 @@ const export_label = document.getElementById("export").value;
 const confirm_messaage = document.getElementById("confirm_messaage").value;
 const run_label = document.getElementById("run").value;
 const cancel_label = document.getElementById("cancel").value;
-const workflows = JSON.parse($("#workflows").text() ? $("#workflows").text() : "");
 
 const urlExportAll = window.location.origin + '/admin/items/bulk-export/export_all'
 const urlExportStatus = window.location.origin + '/admin/items/bulk-export/check_export_status'

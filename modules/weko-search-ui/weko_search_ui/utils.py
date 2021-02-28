@@ -81,8 +81,8 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, \
     WEKO_IMPORT_SUFFIX_PATTERN, WEKO_IMPORT_SYSTEM_ITEMS, \
     WEKO_IMPORT_THUMBNAIL_FILE_TYPE, WEKO_IMPORT_VALIDATE_MESSAGE, \
-    WEKO_REPO_USER, WEKO_SYS_USER, WEKO_ADMIN_TASK_ID_EXPORT_ALL, \
-    WEKO_ADMIN_URI_EXPORT_ALL
+    WEKO_REPO_USER, WEKO_SYS_USER, WEKO_SEARCH_UI_BULK_EXPORT_TASK, \
+    WEKO_SEARCH_UI_BULK_EXPORT_URI
 from .query import feedback_email_search_factory, item_path_search_factory
 from weko_admin.utils import get_redis_cache, reset_redis_cache
 from celery.task.control import revoke
@@ -2436,6 +2436,121 @@ def handle_check_duplication_item_id(ids: list):
             result.append(element)
     return list(set(result))
 
+
+def export_all_admin(root_url):
+    """Gather all the item data and export and return as a JSON or BIBTEX.
+        Parameter
+        path is the path if file temparory
+        post_data is the data items
+        :return: JSON, BIBTEX
+    """
+    from weko_items_ui.utils import make_stats_tsv_with_permission, package_export_file
+
+    def _itemtype_name(name):
+        """Check a list of allowed characters in filenames."""
+        return re.sub(r'[\/:*"<>|\s]', '_', name)
+
+    def _write_tsv_files(item_types_data, export_path):
+        """Write TSV data to files.
+
+        @param item_types_data:
+        @param export_path:
+        @param list_item_role:
+        @return:
+        """
+        permissions = dict(
+            permission_show_hide=lambda a: True,
+            check_created_id=lambda a: True,
+            hide_meta_data_for_role=lambda a: True,
+            current_language=lambda: True
+        )
+        for item_type_id in item_types_data:
+            try:
+                headers, records = make_stats_tsv_with_permission(
+                    item_type_id,
+                    item_types_data[item_type_id]['recids'],
+                    item_types_data[item_type_id]['data'],
+                    permissions)
+                keys, labels, is_systems, options = headers
+                item_types_data[item_type_id]['recids'].sort()
+                item_types_data[item_type_id]['keys'] = keys
+                item_types_data[item_type_id]['labels'] = labels
+                item_types_data[item_type_id]['is_systems'] = is_systems
+                item_types_data[item_type_id]['options'] = options
+                item_types_data[item_type_id]['data'] = records
+                item_type_data = item_types_data[item_type_id]
+
+                with open('{}/{}.tsv'.format(export_path,
+                                            item_type_data.get('name')),
+                        'w') as file:
+                    tsv_output = package_export_file(item_type_data)
+                    file.write(tsv_output.getvalue())
+            except Exception as ex:
+                current_app.logger.error(ex)
+                current_app.logger.error(traceback.format_exc())
+                continue
+
+    temp_path = tempfile.TemporaryDirectory()
+    try:
+        export_path = temp_path.name + '/' + \
+            datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        os.makedirs(export_path, exist_ok=True)
+
+        # get all record id
+        recids = PersistentIdentifier.query.filter_by(
+            pid_type='recid',
+            status=PIDStatus.REGISTERED).all()
+
+        record_ids = [recid.pid_value for recid in recids if recid.pid_value.isdigit()]
+        item_types_data = {}
+
+        for recid in record_ids:
+            record = WekoRecord.get_record_by_pid(recid)
+            item_type = ItemTypes.get_by_id(record.get('item_type_id'))
+            item_type_id = str(record.get('item_type_id'))
+
+            if not item_type:
+                current_app.logger.error('Corrupted Item: {}'.format(recid))
+                continue
+            elif not item_types_data.get(item_type_id):
+                item_type_name = _itemtype_name(
+                    item_type.item_type_name.name)
+                item_types_data[item_type_id] = {
+                    'item_type_id': item_type_id,
+                    'name': '{}({})'.format(
+                        item_type_name,
+                        item_type_id),
+                    'root_url': root_url,
+                    'jsonschema': 'items/jsonschema/' + item_type_id,
+                    'keys': [],
+                    'labels': [],
+                    'recids': [],
+                    'data': {},
+                }
+
+            item_types_data[item_type_id]['recids'].append(recid)
+            item_types_data[item_type_id]['data'][recid] = record
+
+        # Create export info file
+        current_app.logger.error('# _write_tsv_files')
+        _write_tsv_files(item_types_data, export_path)
+
+        # Create bag
+        current_app.logger.error('# bagit.make_bag(export_path)')
+        bagit.make_bag(export_path)
+        shutil.make_archive(export_path, 'zip', export_path)
+        with open(export_path + '.zip', 'rb') as file:
+            src = FileInstance.create()
+            src.set_contents(
+                file, default_location=Location.get_default().uri)
+        db.session.commit()
+        return src.uri if src else None
+    except Exception as ex:
+        current_app.logger.error('=' * 60)
+        current_app.logger.error(ex)
+        current_app.logger.error(traceback.format_exc())
+
+
 class Exporter():
     """ Class Exporter """
     #add code for get all data
@@ -2472,86 +2587,10 @@ class Exporter():
             if(int(data_meta[index]['recid'].split('.')[0]) != int(data_meta[index + 1]['recid'].split('.')[0])):
                 record_metadatas = record_metadatas + 1 
                 data_dict[record_metadatas]  = data_meta[index + 1]
-                
+
             index = index + 1 
         data_dict[0] = data_dict
         return data_dict
-
-    @classmethod
-    def export_all_admin(self, root_url):
-        from weko_items_ui.utils import write_tsv_files
-        from invenio_oaiharvester.utils import check_or_create_dir
-        """Gather all the item data and export and return as a JSON or BIBTEX.
-            Parameter
-            path is the path if file temparory
-            post_data is the data items
-            :return: JSON, BIBTEX
-        """        
-        # Get export path
-        current_app.logger.error('export_all_admin - 1')
-        temp_path = tempfile.TemporaryDirectory()
-        export_path = temp_path.name + '/' + \
-            datetime.utcnow().strftime("%Y%m%d%H%M%S")
-
-        # get all record id
-        recids = PersistentIdentifier.query.filter_by(
-            pid_type = 'recid', status = PIDStatus.REGISTERED).all()
-        
-        record_ids = []
-        index = 0
-        length = len(recids) - 1
-
-        record_ids.append(recids[index].pid_value)
-        current_app.logger.error('export_all_admin - 2')
-        while index < length :
-            if(int(recids[index].pid_value.split('.')[0]) != int(recids[index+1].pid_value.split('.')[0])):
-                record_ids.append(recids[index+1].pid_value.split('.')[0])
-            index = index + 1
-        
-        # Export setting
-        result = {'items': []}
-        item_types_data = {}
-        current_app.logger.error('export_all_admin - 3')
-        for record_id in record_ids:
-            record_path = export_path + '/recid_' + str(record_id)            
-            check_or_create_dir(record_path)
-            
-            exported_item = self.get_item(record_id)            
-            result['items'].append(exported_item)
-
-            item_type_id = exported_item.get('item_type_id')
-            item_type = ItemTypes.get_by_id(item_type_id)
-            
-            if not item_types_data.get(item_type_id):
-                item_type_name = self.check_item_type_name(
-                    item_type.item_type_name.name)
-                item_types_data[item_type_id] = {
-                    'item_type_id': item_type_id,
-                    'name': '{}({})'.format(
-                        item_type_name,
-                        item_type_id),
-                    'root_url': root_url,
-                    'jsonschema': 'items/jsonschema/' + item_type_id,
-                    'keys': [],
-                    'labels': [],
-                    'recids': [],
-                    'data': {},
-                }
-            
-            item_types_data[item_type_id]['recids'].append(int(record_id))
-        current_app.logger.error('export_all_admin - 4')
-        # Create export info file
-        current_app.logger.error('Start')
-        write_tsv_files(item_types_data, export_path, {})
-        current_app.logger.error('End')
-        # Create bag
-        bagit.make_bag(export_path)
-        shutil.make_archive(export_path, 'zip', export_path)
-        with open(export_path + '.zip', 'rb') as file:
-            src = FileInstance.create()
-            src.set_contents(
-                file, default_location=Location.get_default().uri)
-        db.session.commit()
 
     @classmethod
     def get_export_status(self):
@@ -2559,11 +2598,10 @@ class Exporter():
             return:     True:   Otthers
                         False:  Success / Failed / Revoked
         """
-        from .tasks import export_all_items        
         cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-            format(name=WEKO_ADMIN_TASK_ID_EXPORT_ALL)
+            format(name=WEKO_SEARCH_UI_BULK_EXPORT_TASK)
         cache_uri = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-            format(name=WEKO_ADMIN_URI_EXPORT_ALL)
+            format(name=WEKO_SEARCH_UI_BULK_EXPORT_URI)
         export_status = False
         download_uri = None
         try:
@@ -2585,9 +2623,8 @@ class Exporter():
             return:     True:   Existed.
                         No:     Not Exist.
         """
-        from .tasks import export_all_items
         cache_uri = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-            format(name=WEKO_ADMIN_URI_EXPORT_ALL)
+            format(name=WEKO_SEARCH_UI_BULK_EXPORT_URI)
         status = False
         try:
             download_uri = get_redis_cache(cache_uri)
@@ -2603,7 +2640,7 @@ class Exporter():
                         No:     Error
         """
         cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-            format(name=WEKO_ADMIN_TASK_ID_EXPORT_ALL)
+            format(name=WEKO_SEARCH_UI_BULK_EXPORT_TASK)
         # try:
         task_id = get_redis_cache(cache_key)
         task_status = self.get_export_status()
@@ -2619,7 +2656,7 @@ class Exporter():
         from simplekv.memory.redisstore import RedisStore
         """Delete File instance after time in file config"""        
         cache_uri = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-            format(name=WEKO_ADMIN_URI_EXPORT_ALL)
+            format(name=WEKO_SEARCH_UI_BULK_EXPORT_URI)
         try:
             file_instance  = FileInstance.get_by_uri(cache_uri)
             file_instance.delete()
@@ -2631,15 +2668,3 @@ class Exporter():
         except Exception as ex:
             current_app.logger.error(ex)
 
-    @classmethod
-    def get_item(self, record_id):
-        """Exports files for record according to view permissions."""        
-        exported_item = {}
-        record = WekoRecord.get_record_by_pid(record_id)
-        if record:
-            exported_item['record_id'] = record.id
-            exported_item['name'] = 'recid_{}'.format(record_id)
-            exported_item['files'] = []
-            exported_item['path'] = 'recid_' + str(record_id)
-            exported_item['item_type_id'] = record.get('item_type_id')
-        return exported_item
