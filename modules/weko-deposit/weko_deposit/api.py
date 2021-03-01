@@ -522,6 +522,17 @@ class WekoDeposit(Deposit):
 
     def publish(self, pid=None, id_=None):
         """Publish the deposit."""
+        deposit = None
+        try:
+            deposit = self.publish_without_commit(pid, id_)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.debug(ex)
+            db.session.rollback()
+        return deposit
+
+    def publish_without_commit(self, pid=None, id_=None):
+        """Publish the deposit without commit."""
         if not self.data:
             self.data = self.get('_deposit', {})
         if 'control_number' in self:
@@ -530,26 +541,21 @@ class WekoDeposit(Deposit):
             self['$schema'] = current_app.extensions['invenio-jsonschemas']. \
                 path_to_url(current_app.config['DEPOSIT_DEFAULT_JSONSCHEMA'])
         self.is_edit = True
-        try:
-            deposit = super(WekoDeposit, self).publish(pid, id_)
 
-            # update relation version current to ES
-            recid = PersistentIdentifier.query.filter_by(
-                pid_type='recid',
-                object_uuid=self.id
-            ).one_or_none()
-            relations = serialize_relations(recid)
-            if relations and 'version' in relations:
-                relations_ver = relations['version'][0]
-                relations_ver['id'] = recid.object_uuid
-                relations_ver['is_last'] = relations_ver.get('index') == 0
-                self.indexer.update_relation_version_is_last(relations_ver)
-            db.session.commit()
-            return deposit
-        except SQLAlchemyError as ex:
-            current_app.logger.debug(ex)
-            db.session.rollback()
-            return None
+        deposit = super(WekoDeposit, self).publish(pid, id_)
+        # update relation version current to ES
+        recid = PersistentIdentifier.query.filter_by(
+            pid_type='recid',
+            object_uuid=self.id
+        ).one_or_none()
+        relations = serialize_relations(recid)
+        if relations and 'version' in relations:
+            relations_ver = relations['version'][0]
+            relations_ver['id'] = recid.object_uuid
+            relations_ver['is_last'] = relations_ver.get('index') == 0
+            self.indexer.update_relation_version_is_last(relations_ver)
+
+        return deposit
 
     @classmethod
     def create(cls, data, id_=None, recid=None):

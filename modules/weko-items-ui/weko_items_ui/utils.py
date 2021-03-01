@@ -43,6 +43,8 @@ from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
+from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.api import RecordBase
 from invenio_search import RecordsSearch
@@ -69,6 +71,7 @@ from weko_user_profiles import UserProfile
 from weko_workflow.api import WorkActivity, WorkFlow
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     WEKO_SERVER_CNRI_HOST_LINK
+from weko_workflow.models import ActionStatusPolicy as ASP
 from weko_workflow.utils import IdentifierHandle
 
 
@@ -2403,3 +2406,64 @@ def check_item_has_doi(list_uuid):
     @return:
     """
     return True if filter_list_item_uuid_has_doi(list_uuid) else False
+
+
+def check_item_is_being_edit(
+        recid: PersistentIdentifier,
+        post_workflow=None,
+        activity=None):
+    """Check an item is being edit.
+
+    @param recid:
+    @param post_workflow:
+    @param activity:
+    @return: True: editing, False: available
+    """
+    if not activity:
+        activity = WorkActivity()
+    if not post_workflow:
+        latest_pid = PIDVersioning(child=recid).last_child
+        item_uuid = latest_pid.object_uuid
+        post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
+    if post_workflow and post_workflow.action_status \
+            in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]:
+        return True
+
+    draft_pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid',
+        pid_value="{}.0".format(recid.pid_value)
+    ).one_or_none()
+    if draft_pid:
+        draft_workflow = activity.get_workflow_activity_by_item_id(
+            draft_pid.object_uuid)
+        if draft_workflow and \
+            draft_workflow.action_status in [ASP.ACTION_BEGIN,
+                                             ASP.ACTION_DOING]:
+            return True
+
+        pv = PIDVersioning(child=recid)
+        latest_pid = PIDVersioning(parent=pv.parent).get_children(
+            pid_status=PIDStatus.REGISTERED
+        ).filter(PIDRelation.relation_type == 2).order_by(
+            PIDRelation.index.desc()).first()
+        latest_workflow = activity.get_workflow_activity_by_item_id(
+            latest_pid.object_uuid)
+        if latest_workflow and \
+            latest_workflow.action_status in [ASP.ACTION_BEGIN,
+                                              ASP.ACTION_DOING]:
+            return True
+    return False
+
+
+def check_item_is_deleted(recid):
+    """Check an item is deleted.
+
+    @param recid:
+    @return: True: deleted, False: available
+    """
+    pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid', pid_value=recid).first()
+    if not pid:
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', object_uuid=recid).first()
+    return pid and pid.status == PIDStatus.DELETED
