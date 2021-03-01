@@ -2453,10 +2453,10 @@ def make_stats_tsv_with_permission(item_type_id, recids, records_metadata, permi
         """Management data for exporting records."""
 
         first_recid = 0
-        cur_recid   = 0
-        recids      = []
-        records     = {}
-        attr_data   = {}
+        cur_recid = 0
+        recids = []
+        records = {}
+        attr_data = {}
         attr_output = {}
 
         def __init__(self, record_ids, records_metadata):
