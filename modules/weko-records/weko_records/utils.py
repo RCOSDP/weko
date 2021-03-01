@@ -534,14 +534,14 @@ def sort_meta_data_by_options(record_hit):
             )
             if i == (len(solst_dict_array) - 1):
                 flag = True
-            if bibliographic_key is not None \
+            if bibliographic_key is None \
                     and sys_bibliographic.is_bibliographic():
                 bibliographic_key = s['key']
                 data_bibliographic = sys_bibliographic.get_bibliographic_list(
                     True)
                 result.append(convertStringBibinfor(data_bibliographic))
-            elif (bibliographic_key and bibliographic_key not in s[
-                'key']) and value and value not in _ignore_items or flag:
+            elif not (bibliographic_key is not None and bibliographic_key in s[
+                    'key']) and value and value not in _ignore_items or flag:
                 is_specify_newline = ''
                 is_hide = ''
                 if not flag:
