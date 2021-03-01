@@ -30,6 +30,7 @@ from flask import Response, abort, current_app, jsonify, make_response, \
     request, send_file
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
+from invenio_files_rest.models import FileInstance
 from invenio_i18n.ext import current_i18n
 from weko_admin.utils import reset_redis_cache
 from weko_index_tree.api import Indexes
@@ -38,7 +39,6 @@ from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
 
 from weko_search_ui.api import get_search_detail_keyword
-from invenio_files_rest.models import FileInstance
 
 from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
     WEKO_EXPORT_TEMPLATE_BASIC_NAME, WEKO_EXPORT_TEMPLATE_BASIC_OPTION, \
