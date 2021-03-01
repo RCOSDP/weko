@@ -27,14 +27,7 @@ from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import QueryString
 from flask import current_app, request
 from flask_babelex import gettext as _
-from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
-from invenio_records.api import Record
-from invenio_records.errors import MissingModelError
-from invenio_records.models import RecordMetadata
-from invenio_records.signals import after_record_delete, after_record_insert, \
-    after_record_revert, after_record_update, before_record_delete, \
-    before_record_insert, before_record_revert, before_record_update
 from invenio_search import RecordsSearch
 from jsonpatch import apply_patch
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -42,6 +35,13 @@ from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import desc
 from werkzeug.local import LocalProxy
 
+from invenio_db import db
+from invenio_records.api import Record
+from invenio_records.errors import MissingModelError
+from invenio_records.models import RecordMetadata
+from invenio_records.signals import after_record_delete, after_record_insert, \
+    after_record_revert, after_record_update, before_record_delete, \
+    before_record_insert, before_record_revert, before_record_update
 from .fetchers import weko_record_fetcher
 from .models import FeedbackMailList as _FeedbackMailList
 from .models import FileMetadata, ItemMetadata, ItemReference, ItemType
@@ -1985,14 +1985,22 @@ class FeedbackMailList(object):
         :return: bool: True if success
         """
         try:
-            with db.session.begin_nested():
-                _FeedbackMailList.query.filter_by(
-                    item_id=item_id).delete()
+            cls.delete_without_commit(item_id)
             db.session.commit()
         except SQLAlchemyError:
             db.session.rollback()
             return False
         return True
+
+    @classmethod
+    def delete_without_commit(cls, item_id):
+        """Delete a feedback_mail_list by item_id without commit.
+
+        :param item_id: item_id of target feed_back_mail_list
+        :return: bool: True if success
+        """
+        with db.session.begin_nested():
+            _FeedbackMailList.query.filter_by(item_id=item_id).delete()
 
     @classmethod
     def delete_by_list_item_id(cls, item_ids):

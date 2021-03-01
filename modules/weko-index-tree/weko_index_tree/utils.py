@@ -28,12 +28,12 @@ from elasticsearch.exceptions import NotFoundError
 from flask import Markup, current_app, session
 from flask_login import current_user
 from invenio_cache import current_cache
-from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_search import RecordsSearch
-from sqlalchemy import MetaData, Table, text
-from weko_groups.models import Group
+from sqlalchemy import MetaData, Table
 
+from invenio_db import db
+from weko_groups.models import Group
 from .config import WEKO_INDEX_TREE_STATE_PREFIX
 from .models import Index
 
@@ -688,6 +688,22 @@ def check_restrict_doi_with_indexes(other_index_ids):
     from .api import Indexes
     for index_id in other_index_ids:
         idx = Indexes.get_index(index_id.split('/')[-1])
-        if idx.public_state and idx.harvest_public_state:
+        if not idx or (idx.public_state and idx.harvest_public_state):
             return False
     return True
+
+
+def check_has_any_item_in_index_is_locked(index_id):
+    """Check if any item in the index is locked by import process.
+
+    @param index_id:
+    @return:
+    """
+    list_records_in_es = get_record_in_es_of_index(index_id)
+    for record in list_records_in_es:
+        from weko_workflow.utils import check_an_item_is_locked
+        item_id = record.get('_source', {}).get(
+            '_item_metadata', {}).get('control_number')
+        if check_an_item_is_locked(int(item_id)):
+            return True
+    return False

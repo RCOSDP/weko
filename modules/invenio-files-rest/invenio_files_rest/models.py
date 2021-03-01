@@ -36,7 +36,6 @@ model.
 
 from __future__ import absolute_import, print_function
 
-import mimetypes
 import os
 import re
 import sys
@@ -46,24 +45,24 @@ from functools import wraps
 from os.path import basename
 
 import six
-from flask import current_app, flash, redirect, request, url_for
+from flask import current_app
 from flask_login import current_user
-from invenio_db import db
-from invenio_previewer.api import convert_to
 from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates
 from sqlalchemy.orm.exc import MultipleResultsFound
 from sqlalchemy_utils.types import JSONType, UUIDType
-from weko_admin.models import AdminSettings
 
+from invenio_db import db
+from invenio_previewer.api import convert_to
+from weko_admin.models import AdminSettings
 from .errors import BucketLockedError, FileInstanceAlreadySetError, \
     FileInstanceUnreadableError, FileSizeError, InvalidKeyError, \
     InvalidOperationError, MultipartAlreadyCompleted, \
     MultipartInvalidChunkSize, MultipartInvalidPartNumber, \
     MultipartInvalidSize, MultipartMissingParts, MultipartNotCompleted
 from .proxies import current_files_rest
-from .utils import ENCODING_MIMETYPES, guess_mimetype
+from .utils import guess_mimetype
 
 slug_pattern = re.compile('^[a-z][a-z0-9-]+$')
 
@@ -1355,12 +1354,14 @@ class ObjectVersion(db.Model, Timestamp):
         return None
 
     @classmethod
-    def get_by_bucket(cls, bucket, versions=False, with_deleted=False):
+    def get_by_bucket(cls, bucket, versions=False, with_deleted=False,
+                      asc_sort=False):
         """Return query that fetches all the objects in a bucket.
 
         :param bucket: The bucket (instance or id) to query.
         :param versions: Select all versions if True, only heads otherwise.
         :param with_deleted: Select also deleted objects if True.
+        :param asc_sort: whether prioritize acs sorting or not.
         :returns: The query to retrieve filtered objects in the given bucket.
         """
         bucket_id = bucket.id if isinstance(bucket, Bucket) else bucket
@@ -1375,7 +1376,13 @@ class ObjectVersion(db.Model, Timestamp):
         if not with_deleted:
             filters.append(cls.file_id.isnot(None))
 
-        return cls.query.filter(*filters).order_by(cls.key, cls.created.desc())
+        query = cls.query.filter(*filters)
+
+        if asc_sort:
+            query = query.order_by(cls.created.asc(), cls.key)
+        else:
+            query = query.order_by(cls.key, cls.created.desc())
+        return query
 
     @classmethod
     def relink_all(cls, old_file, new_file):

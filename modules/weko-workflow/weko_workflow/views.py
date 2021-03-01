@@ -32,7 +32,6 @@ from flask import Blueprint, abort, current_app, jsonify, render_template, \
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
-from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -42,6 +41,9 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import cast
+from werkzeug.utils import import_string
+
+from invenio_db import db
 from weko_accounts.api import ShibUser
 from weko_authors.models import Authors
 from weko_deposit.api import WekoDeposit
@@ -54,16 +56,14 @@ from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.utils import get_list_licence
-from werkzeug.utils import import_string
-
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
-from .models import ActionStatusPolicy, ActivityStatusPolicy, WorkflowRole
+from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import IdentifierHandle, delete_cache_data, filter_condition, \
-    get_account_info, get_actionid, \
+from .utils import IdentifierHandle, check_existed_doi, delete_cache_data, \
+    filter_condition, get_account_info, get_actionid, \
     get_activity_id_of_record_without_version, get_cache_data, \
     get_identifier_setting, handle_finish_workflow, is_hidden_pubdate, \
     is_show_autofill_metadata, item_metadata_validation, register_hdl, \
@@ -1127,31 +1127,10 @@ def withdraw_confirm(activity_id='0', action_id='0'):
 
 @blueprint.route('/findDOI', methods=['POST'])
 @login_required
-def check_existed_doi():
+def find_doi():
     """Next action."""
-    doi_link = request.get_json()
-    respon = dict()
-    respon['isExistDOI'] = False
-    respon['isWithdrawnDoi'] = False
-    respon['code'] = 1
-    respon['msg'] = 'error'
-    if doi_link:
-        identifier = IdentifierHandle(None)
-        doi_pidstore = identifier.check_pidstore_exist(
-            'doi',
-            doi_link['doi_link'])
-        if doi_pidstore:
-            respon['isExistDOI'] = True
-            respon['msg'] = _('This DOI has been used already for another '
-                              'item. Please input another DOI.')
-            if doi_pidstore.status == PIDStatus.DELETED:
-                respon['isWithdrawnDoi'] = True
-                respon['msg'] = _(
-                    'This DOI was withdrawn. Please input another DOI.')
-        else:
-            respon['msg'] = _('success')
-        respon['code'] = 0
-    return jsonify(respon)
+    doi_link = request.get_json() or {}
+    return jsonify(check_existed_doi(doi_link.get('doi_link')))
 
 
 @blueprint.route(

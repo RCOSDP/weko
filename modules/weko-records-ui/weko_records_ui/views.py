@@ -30,11 +30,7 @@ from flask import Blueprint, abort, current_app, escape, flash, jsonify, \
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
-from invenio_db import db
-from invenio_files_rest.models import ObjectVersion
-from invenio_files_rest.permissions import has_update_version_role
 from invenio_i18n.ext import current_i18n
-from invenio_oaiserver.response import getrecord
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -42,6 +38,11 @@ from invenio_records_ui.signals import record_viewed
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from simplekv.memory.redisstore import RedisStore
+
+from invenio_db import db
+from invenio_files_rest.models import ObjectVersion
+from invenio_files_rest.permissions import has_update_version_role
+from invenio_oaiserver.response import getrecord
 from weko_deposit.api import WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
@@ -50,18 +51,15 @@ from weko_index_tree.utils import get_index_link_list
 from weko_records.api import ItemLink
 from weko_records.serializers import citeproc_v1
 from weko_records.utils import remove_weko2_special_character
-from weko_search_ui.api import get_search_detail_keyword
-from weko_workflow.api import WorkFlow
-
 from weko_records_ui.models import InstitutionName
 from weko_records_ui.utils import check_items_settings, get_file_info_list
-
+from weko_search_ui.api import get_search_detail_keyword
+from weko_workflow.api import WorkFlow
 from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
 from .permissions import check_content_clickable, check_created_id, \
     check_file_download_permission, check_original_pdf_download_permission, \
-    check_permission_period, get_correct_usage_workflow, get_permission, \
-    is_open_restricted
+    check_permission_period, get_correct_usage_workflow, get_permission
 from .utils import get_billing_file_download_permission, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, \
     get_registration_data_type, hide_by_email, hide_item_metadata, \
@@ -540,7 +538,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     files_thumbnail = []
     if record.files:
         files_thumbnail = ObjectVersion.get_by_bucket(
-            record.files.bucket.id).\
+            record.files.bucket.id, asc_sort=True).\
             filter_by(is_thumbnail=True).all()
     is_display_file_preview, files = get_file_info_list(record)
     # Flag: can edit record
@@ -738,7 +736,14 @@ def soft_delete(recid):
         soft_delete_imp(recid)
         return make_response('PID: ' + str(recid) + ' DELETED', 200)
     except Exception as ex:
-        print(str(ex))
+        current_app.logger.error(ex)
+        if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                and ex.args[0].get('is_locked'):
+            return jsonify(
+                code=-1,
+                is_locked=True,
+                msg=str(ex.args[0].get('msg', ''))
+            )
         abort(500)
 
 
@@ -752,7 +757,7 @@ def restore(recid):
         restore_imp(recid)
         return make_response('PID: ' + str(recid) + ' RESTORED', 200)
     except Exception as ex:
-        print(str(ex))
+        current_app.logger.error(ex)
         abort(500)
 
 

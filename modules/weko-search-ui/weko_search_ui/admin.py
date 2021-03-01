@@ -30,13 +30,14 @@ from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_i18n.ext import current_i18n
+
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemTypes
-from weko_workflow.api import WorkFlow
-
 from weko_search_ui.api import get_search_detail_keyword
-
+from weko_workflow.api import WorkFlow
+from weko_workflow.utils import check_another_import_is_running, \
+    save_cache_item_lock_info
 from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
     WEKO_EXPORT_TEMPLATE_BASIC_NAME, WEKO_EXPORT_TEMPLATE_BASIC_OPTION, \
     WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
@@ -291,18 +292,22 @@ class ItemImportView(BaseView):
             'list_record', []) if not item.get(
             'errors')]
         for item in list_record:
+            item_id = item.get('id')
             item['root_path'] = data.get('root_path')
             create_flow_define()
             handle_workflow(item)
+            save_cache_item_lock_info(int(item_id) if item_id else None)
             task = import_item.delay(item, url_root)
             tasks.append({
                 'task_id': task.task_id,
-                'item_id': item.get('id'),
+                'item_id': item_id,
             })
+        _, import_start_time = check_another_import_is_running()
         response_object = {
             "status": "success",
             "data": {
-                "tasks": tasks
+                "tasks": tasks,
+                "import_start_time": import_start_time or ''
             }
         }
         return jsonify(response_object)
@@ -331,8 +336,8 @@ class ItemImportView(BaseView):
                     "task_id": task_id,
                     "item_id": task_item.get("item_id"),
                 }))
-                status = 'doing' if not (task.successful() or task.failed())\
-                    else "done"
+                status = 'doing' if not (task.successful() or task.failed()) \
+                    or status == 'doing' else "done"
             response_object = {"status": status, "result": result}
         else:
             response_object = {"status": "error", "result": result}
@@ -499,6 +504,14 @@ class ItemImportView(BaseView):
                 + ('filename=' if not file_name
                    else urlencode({'filename': file_name}))
             })
+
+    @expose('/check_import_is_available', methods=['GET'])
+    def check_import_available(self):
+        is_running, start_time = check_another_import_is_running()
+        return jsonify({
+            'is_available': not is_running,
+            'start_time': start_time or ''
+        })
 
 
 item_management_bulk_search_adminview = {

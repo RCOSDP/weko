@@ -31,9 +31,9 @@ from invenio_pidstore import current_pidstore
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.ext import pid_exists
 from invenio_pidstore.models import PersistentIdentifier
+
 from weko_admin.models import AdminSettings
 from weko_schema_ui.schema import SchemaTree
-
 from .api import ItemTypes, Mapping
 
 
@@ -617,6 +617,19 @@ def sort_meta_data_by_options(record_hit):
                         'url': f.get('url', {}).get('url', '')
                     })
         return result
+
+    def get_file_thumbnail(thumbnails):
+        """Get file thumbnail."""
+        thumbnail = {}
+        if thumbnails and len(thumbnails) > 0:
+            subitem_thumbnails = thumbnails[0].get('subitem_thumbnail')
+            if subitem_thumbnails and len(subitem_thumbnails) > 0:
+                thumbnail = {
+                    'thumbnail_label': subitem_thumbnails[0].get('thumbnail_label', ''),
+                    'thumbnail_width': current_app.config['WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL']
+                }
+        return thumbnail
+
     try:
         src_default = copy.deepcopy(record_hit['_source'].get('_item_metadata'))
         _item_metadata = copy.deepcopy(record_hit['_source'])
@@ -660,6 +673,7 @@ def sort_meta_data_by_options(record_hit):
         solst, meta_options = get_options_and_order_list(item_type_id)
         solst_dict_array = convert_data_to_dict(solst)
         files_info = []
+        thumbnail = None
         # Set value and parent option
         for lst in solst:
             key = lst[0]
@@ -673,6 +687,11 @@ def sort_meta_data_by_options(record_hit):
                         and not option.get("hidden") \
                         and option.get("showlist"):
                     files_info = get_file_comments(src, mlt)
+                    continue
+                is_thumbnail = any('subitem_thumbnail' in data for data in mlt)
+                if is_thumbnail and not option.get("hidden") \
+                        and option.get("showlist"):
+                    thumbnail = get_file_thumbnail(mlt)
                     continue
                 meta_data = get_all_items2(mlt, solst)
                 for m in meta_data:
@@ -698,6 +717,8 @@ def sort_meta_data_by_options(record_hit):
                 record_hit['_source']['_comment'] = items
         if files_info:
             record_hit['_source']['_files_info'] = files_info
+        if thumbnail:
+            record_hit['_source']['_thumbnail'] = thumbnail
     except Exception:
         current_app.logger.exception(
             u'Record serialization failed {}.'.format(

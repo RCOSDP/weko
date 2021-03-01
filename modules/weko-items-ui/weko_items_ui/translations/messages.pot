@@ -382,3 +382,9 @@ msgstr ""
 
 msgid "The same file name cannot be registered."
 msgstr ""
+
+msgid "Item cannot be edited because the import is in progress."
+msgstr ""
+
+msgid "Item cannot be deleted because the import is in progress."
+msgstr ""
