@@ -2558,7 +2558,7 @@ def delete_exported(uri, cache_key):
     try:
         with db.session.begin_nested():
             file_instance = FileInstance.get_by_uri(uri)
-            file_instance.delete()        
+            file_instance.delete()
         datastore = RedisStore(redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
         if datastore.redis.exists(cache_key):
             datastore.delete(cache_key)
