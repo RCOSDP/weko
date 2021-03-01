@@ -38,6 +38,7 @@ from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
 
 from weko_search_ui.api import get_search_detail_keyword
+from invenio_files_rest.models import FileInstance
 
 from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
     WEKO_EXPORT_TEMPLATE_BASIC_NAME, WEKO_EXPORT_TEMPLATE_BASIC_OPTION, \
@@ -560,7 +561,8 @@ class ItemBulkExport(BaseView):
         """
         export_status, download_uri = get_export_status()
         if not export_status and download_uri is not None:
-            return send_file(
+            file_instance = FileInstance.get_by_uri(download_uri)
+            return file_instance.send_file(
                 download_uri,
                 as_attachment=True,
                 attachment_filename='export-all.zip'
