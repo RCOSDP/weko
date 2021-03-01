@@ -45,12 +45,12 @@ from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
     WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE, \
     WEKO_SEARCH_UI_BULK_EXPORT_TASK, WEKO_SEARCH_UI_BULK_EXPORT_URI
 from .tasks import export_all_task, import_item, remove_temp_dir_task
-from .utils import check_import_items, check_sub_item_is_system, \
-    create_flow_define, delete_records, get_change_identifier_mode_content, \
-    get_content_workflow, get_lifetime, get_root_item_option, \
+from .utils import cancel_export_all, check_import_items, \
+    check_sub_item_is_system, create_flow_define, delete_records, \
+    get_change_identifier_mode_content, get_content_workflow, \
+    get_export_status, get_lifetime, get_root_item_option, \
     get_sub_item_option, get_tree_items, handle_get_all_sub_id_and_name, \
-    handle_workflow, make_stats_tsv, make_tsv_by_line, get_export_status, \
-    cancel_export_all
+    handle_workflow, make_stats_tsv, make_tsv_by_line
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -504,6 +504,7 @@ class ItemImportView(BaseView):
                    else urlencode({'filename': file_name}))
             })
 
+
 class ItemBulkExport(BaseView):
     """BaseView for Admin Export."""
 
@@ -523,16 +524,15 @@ class ItemBulkExport(BaseView):
         """Export all items."""
         _task_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_TASK']
         _cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-            format(name=_task_config)        
+            format(name=_task_config)
         export_status, download_uri = get_export_status()
-        
+
         if (not export_status):
             export_task = export_all_task.apply_async(
                 args=(
                     request.url_root,
                 ))
-            reset_redis_cache(_cache_key,
-                            str(export_task.task_id))
+            reset_redis_cache(_cache_key, str(export_task.task_id))
 
         return Response(status=200)
 
@@ -540,7 +540,7 @@ class ItemBulkExport(BaseView):
     def check_export_status(self):
         """Check export status."""
         export_status, download_uri = get_export_status()
-        return jsonify(data = {
+        return jsonify(data={
             'export_status': export_status,
             'uri_status': True if download_uri else False
         })
@@ -548,7 +548,7 @@ class ItemBulkExport(BaseView):
     @expose('/cancel_export', methods=['GET'])
     def cancel_export(self):
         """Check export status."""
-        return jsonify(data = {
+        return jsonify(data={
             'cancel_status': cancel_export_all()
         })
 
@@ -564,9 +564,10 @@ class ItemBulkExport(BaseView):
                 download_uri,
                 as_attachment=True,
                 attachment_filename='export-all.zip'
-            )            
+            )
         else:
             return Response(status=200)
+
 
 item_management_bulk_search_adminview = {
     'view_class': ItemManagementBulkSearch,

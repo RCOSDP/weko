@@ -26,6 +26,7 @@ from weko_records.utils import find_items
 
 from .permissions import item_permission
 
+
 @login_required
 @item_permission.require(http_exception=403)
 def item_login(item_type_id=0):

@@ -24,8 +24,9 @@ from datetime import datetime
 from celery import shared_task
 from flask import current_app
 
-from .utils import export_all, import_items_to_system, \
-    remove_temp_dir, delete_exported
+from .utils import delete_exported, export_all, import_items_to_system, \
+    remove_temp_dir
+
 
 @shared_task
 def import_item(item, url_root):
@@ -54,7 +55,8 @@ def export_all_task(root_url):
     uri = export_all(root_url)
     reset_redis_cache(_cache_key, uri)
     current_app.logger.error(uri)
-    delete_exported_task.apply_async(args = (uri,_cache_key,), countdown=int(_expired_time)*60)
+    delete_exported_task.apply_async(args=(uri, _cache_key,), countdown=int(_expired_time) * 60)
+
 
 @shared_task
 def delete_exported_task(uri, cache_key):

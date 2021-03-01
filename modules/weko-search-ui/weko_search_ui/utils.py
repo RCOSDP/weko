@@ -36,13 +36,15 @@ from datetime import datetime
 from functools import partial, reduce
 from io import StringIO
 from operator import getitem
+
 import bagit
 import redis
-
+from celery.result import AsyncResult
+from celery.task.control import revoke
 from flask import abort, current_app, request
 from flask_babelex import gettext as _
 from invenio_db import db
-from invenio_files_rest.models import ObjectVersion
+from invenio_files_rest.models import FileInstance, Location, ObjectVersion
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -52,6 +54,7 @@ from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch
 from jsonschema import Draft4Validator
 from weko_admin.models import SessionLifetime
+from weko_admin.utils import get_redis_cache
 from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
@@ -80,13 +83,9 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, \
     WEKO_IMPORT_SUFFIX_PATTERN, WEKO_IMPORT_SYSTEM_ITEMS, \
     WEKO_IMPORT_THUMBNAIL_FILE_TYPE, WEKO_IMPORT_VALIDATE_MESSAGE, \
-    WEKO_REPO_USER, WEKO_SYS_USER, WEKO_SEARCH_UI_BULK_EXPORT_TASK, \
-    WEKO_SEARCH_UI_BULK_EXPORT_URI
+    WEKO_REPO_USER, WEKO_SEARCH_UI_BULK_EXPORT_TASK, \
+    WEKO_SEARCH_UI_BULK_EXPORT_URI, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
-from weko_admin.utils import get_redis_cache
-from celery.task.control import revoke
-from invenio_files_rest.models import FileInstance, Location
-from celery.result import AsyncResult
 
 err_msg_suffix = 'Suffix of {} can only be used with half-width' \
     + ' alphanumeric characters and half-width symbols "_-.; () /".'
@@ -2480,8 +2479,7 @@ def export_all(root_url):
                 item_type_data = item_types_data[item_type_id]
 
                 with open('{}/{}.tsv'.format(export_path,
-                                            item_type_data.get('name')),
-                        'w') as file:
+                                             item_type_data.get('name')), 'w') as file:
                     tsv_output = package_export_file(item_type_data)
                     file.write(tsv_output.getvalue())
             except Exception as ex:
@@ -2550,21 +2548,23 @@ def export_all(root_url):
         current_app.logger.error(ex)
         current_app.logger.error(traceback.format_exc())
 
-def delete_exported(uri, cache_key):    
-    from simplekv.memory.redisstore import RedisStore    
+
+def delete_exported(uri, cache_key):
+    from simplekv.memory.redisstore import RedisStore
     """Delete File instance after time in file config"""
     try:
         with db.session.begin_nested():
             file_instance = FileInstance.get_by_uri(uri)
             file_instance.delete()
         db.session.commit()
-        datastore = RedisStore(redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))        
+        datastore = RedisStore(redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
         if datastore.redis.exists(cache_key):
             datastore.delete(cache_key)
     except Exception as ex:
         current_app.logger.error('=' * 60)
         current_app.logger.error(ex)
         current_app.logger.error(traceback.format_exc())
+
 
 def cancel_export_all():
     """Cancel Process Share_task Export ALL with revoke
@@ -2585,7 +2585,8 @@ def cancel_export_all():
         current_app.logger.error('=' * 60)
         current_app.logger.error(ex)
         current_app.logger.error(traceback.format_exc())
-        return False    
+        return False
+
 
 def get_export_status():
     """Get Share_task Export ALL status
