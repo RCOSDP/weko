@@ -540,7 +540,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     files_thumbnail = []
     if record.files:
         files_thumbnail = ObjectVersion.get_by_bucket(
-            record.files.bucket.id, asc_sort = True).\
+            record.files.bucket.id, asc_sort=True).\
             filter_by(is_thumbnail=True).all()
     is_display_file_preview, files = get_file_info_list(record)
     # Flag: can edit record
