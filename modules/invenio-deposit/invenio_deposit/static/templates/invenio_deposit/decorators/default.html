@@ -41,7 +41,7 @@
                         ng-model-options="form.ngModelOptions"
                         ng-disabled="form.readonly"
                         schema-validate="form"
-                        name="{{ form.key.slice(-1)[0] }}"
+                        name="{{ form.key.join('.') }}"
                         aria-describedby="{{ form.key.slice(-1)[0] + 'Status' }}">
 
                   <div ng-if="form.fieldAddonLeft || form.fieldAddonRight"
@@ -59,7 +59,7 @@
                               sf-field-model
                               ng-disabled="form.readonly"
                               schema-validate="form"
-                              name="{{ form.key.slice(-1)[0] }}"
+                              name="{{ form.key.join('.') }}"
                               aria-describedby="{{ form.key.slice(-1)[0] + 'Status' }}">
 
                         <span ng-if="form.fieldAddonRight"
@@ -108,7 +108,7 @@
             ng-model-options="form.ngModelOptions"
             ng-disabled="form.readonly"
             schema-validate="form"
-            name="{{ form.key.slice(-1)[0] }}"
+            name="{{ form.key.join('.') }}"
             aria-describedby="{{ form.key.slice(-1)[0] + 'Status' }}">
 
       <div ng-if="form.fieldAddonLeft || form.fieldAddonRight"
@@ -126,7 +126,7 @@
                   sf-field-model
                   ng-disabled="form.readonly"
                   schema-validate="form"
-                  name="{{ form.key.slice(-1)[0] }}"
+                  name="{{ form.key.join('.') }}"
                   aria-describedby="{{ form.key.slice(-1)[0] + 'Status' }}">
 
             <span ng-if="form.fieldAddonRight"
