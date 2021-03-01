@@ -54,7 +54,6 @@ def export_all_task(root_url):
 
     uri = export_all(root_url)
     reset_redis_cache(_cache_key, uri)
-    current_app.logger.error(uri)
     delete_exported_task.apply_async(args=(uri, _cache_key,), countdown=int(_expired_time) * 60)
 
 

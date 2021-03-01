@@ -2484,7 +2484,6 @@ def export_all(root_url):
                     file.write(tsv_output.getvalue())
             except Exception as ex:
                 current_app.logger.error(ex)
-                current_app.logger.error(traceback.format_exc())
                 continue
 
     temp_path = tempfile.TemporaryDirectory()
@@ -2529,11 +2528,9 @@ def export_all(root_url):
             item_types_data[item_type_id]['data'][recid] = record
 
         # Create export info file
-        current_app.logger.error('# _write_tsv_files')
         _write_tsv_files(item_types_data, export_path)
 
         # Create bag
-        current_app.logger.error('# bagit.make_bag(export_path)')
         bagit.make_bag(export_path)
         shutil.make_archive(export_path, 'zip', export_path)
         with open(export_path + '.zip', 'rb') as file:
@@ -2541,12 +2538,18 @@ def export_all(root_url):
             src.set_contents(
                 file, default_location=Location.get_default().uri)
         db.session.commit()
+
+        # Delete old file
+        _task_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_URI']
+        _cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+            format(name=_task_config)
+        prev_uri = get_redis_cache(_cache_key)
+        if (prev_uri):
+            delete_exported(prev_uri, _cache_key)
         return src.uri if src else None
     except Exception as ex:
         db.session.rollback()
-        current_app.logger.error('=' * 60)
         current_app.logger.error(ex)
-        current_app.logger.error(traceback.format_exc())
 
 
 def delete_exported(uri, cache_key):
@@ -2555,15 +2558,13 @@ def delete_exported(uri, cache_key):
     try:
         with db.session.begin_nested():
             file_instance = FileInstance.get_by_uri(uri)
-            file_instance.delete()
-        db.session.commit()
+            file_instance.delete()        
         datastore = RedisStore(redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
         if datastore.redis.exists(cache_key):
             datastore.delete(cache_key)
+        db.session.commit()
     except Exception as ex:
-        current_app.logger.error('=' * 60)
         current_app.logger.error(ex)
-        current_app.logger.error(traceback.format_exc())
 
 
 def cancel_export_all():
@@ -2582,9 +2583,7 @@ def cancel_export_all():
 
         return True
     except Exception as ex:
-        current_app.logger.error('=' * 60)
         current_app.logger.error(ex)
-        current_app.logger.error(traceback.format_exc())
         return False
 
 
@@ -2601,15 +2600,12 @@ def get_export_status():
     download_uri = None
     try:
         task_id = get_redis_cache(cache_key)
-        print(task_id)
         download_uri = get_redis_cache(cache_uri)
         if (task_id):
             task = AsyncResult(task_id)
             export_status = True if not (task.successful() or task.failed() or task.state == 'REVOKED') \
                 else False
     except Exception as ex:
-        current_app.logger.error('=' * 60)
         current_app.logger.error(ex)
-        current_app.logger.error(traceback.format_exc())
         export_status = False
     return export_status, download_uri
