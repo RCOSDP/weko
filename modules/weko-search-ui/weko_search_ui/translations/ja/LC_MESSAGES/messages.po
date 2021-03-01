@@ -714,6 +714,10 @@ msgstr "ダウンロードURL"
 
 #: weko_search_ui/templates/weko_search_ui/admin/export.html:43
 msgid "Export message"
+msgstr "全体エクスポートを実行してよいですか？"
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:43
+msgid "Cancel export message"
 msgstr "全件エクスポートの処理をキャンセルしてよいですか？"
 
 #: weko_search_ui/templates/weko_search_ui/admin/export.html:44

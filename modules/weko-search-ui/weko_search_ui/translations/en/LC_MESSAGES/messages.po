@@ -702,6 +702,10 @@ msgstr ""
 
 #: weko_search_ui/templates/weko_search_ui/admin/export.html:43
 msgid "Export message"
+msgstr "Are you sure you want to export all items?"
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:43
+msgid "Cancel export message"
 msgstr "Are you sure you want to cancel process of exporting all items?"
 
 #: weko_search_ui/templates/weko_search_ui/admin/export.html:44
