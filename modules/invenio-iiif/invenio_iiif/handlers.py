@@ -36,12 +36,9 @@ def protect_api(uuid=None, **kwargs):
     g.obj = ObjectResource.get_object(bucket, key, version_id)
     return g.obj
 
+
 def image_opener(key):
     """Handler to locate file based on key.
-
-    .. note::
-        If the file is a PDF then only the first page will be
-        returned as an image.
 
     :param key: A key encoded in the format "<bucket>:<version>:<object_key>".
     :returns: A file-like object.

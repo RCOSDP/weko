@@ -32,7 +32,7 @@ RUN cd nginx-1.18.0 && dpkg-buildpackage -b
 FROM ubuntu:focal
 
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y openssl wget curl unzip supervisor shibboleth-sp-common shibboleth-sp-utils php-fpm
+RUN apt-get update && apt-get install -y openssl wget curl unzip supervisor shibboleth-sp-common shibboleth-sp-utils php-fpm php-curl
 
 WORKDIR /tmp
 COPY --from=nginx-with-shib /tmp/nginx_1.18.0-2~focal_amd64.deb .

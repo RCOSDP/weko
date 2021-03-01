@@ -51,9 +51,11 @@ services:
       - INVENIO_ROLE_REPOSITORY=Repository Administrator
       - INVENIO_ROLE_CONTRIBUTOR=Contributor
       - INVENIO_ROLE_COMMUNITY=Community Administrator
-      - FLASK_DEBUG=0
+      - FLASK_DEBUG=1
       - SEARCH_INDEX_PREFIX=tenant1
       - INVENIO_DB_POOL_CLASS=QueuePool
+      - GOOGLE_TRACKING_ID_SYSTEM=
+      - GOOGLE_TRACKING_ID_USER=
     volumes:
       - weko3_data:/var/tmp
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
@@ -138,7 +140,7 @@ services:
     volumes:
       - es-data:/usr/share/elasticsearch/data
     environment:
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "ES_JAVA_OPTS=-Xms2048m -Xmx2048m"
     ports:
       - "29201:9200"
       - "29301:9300"
