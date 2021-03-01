@@ -54,12 +54,12 @@ js = Bundle(
 
 weko_admin_item_import_js = Bundle(
     'js/weko_search_ui/import.js',
-    output="gen/import.js"
+    output="gen/import.%(version)s.js"
 )
 
 weko_admin_item_export_js = Bundle(
     'js/weko_search_ui/export.js',
-    output="gen/export.js"
+    output="gen/export.%(version)s.js"
 )
 
 weko_moment_js = Bundle(

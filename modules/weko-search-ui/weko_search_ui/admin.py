@@ -26,14 +26,12 @@ from datetime import datetime
 from urllib.parse import urlencode
 
 from blinker import Namespace
-from celery.result import AsyncResult
 from flask import Response, abort, current_app, jsonify, make_response, \
     request, send_file
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_i18n.ext import current_i18n
-from simplekv.memory.redisstore import RedisStore
-from weko_admin.utils import get_redis_cache, reset_redis_cache
+from weko_admin.utils import reset_redis_cache
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemTypes
@@ -525,14 +523,16 @@ class ItemBulkExport(BaseView):
         """Export all items."""
         _task_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_TASK']
         _cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-            format(name=_task_config)
-
-        export_task = export_all_task.apply_async(
-            args=(
-                request.url_root,
-            ))
-        reset_redis_cache(_cache_key,
-                          str(export_task.task_id))
+            format(name=_task_config)        
+        export_status, download_uri = get_export_status()
+        
+        if (not export_status):
+            export_task = export_all_task.apply_async(
+                args=(
+                    request.url_root,
+                ))
+            reset_redis_cache(_cache_key,
+                            str(export_task.task_id))
 
         return Response(status=200)
 
@@ -542,7 +542,7 @@ class ItemBulkExport(BaseView):
         export_status, download_uri = get_export_status()
         return jsonify(data = {
             'export_status': export_status,
-            'uri_status': True if download_uri is not None else False
+            'uri_status': True if download_uri else False
         })
 
     @expose('/cancel_export', methods=['GET'])

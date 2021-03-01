@@ -2438,7 +2438,6 @@ def make_stats_tsv_with_permission(item_type_id, recids, records_metadata, permi
 
         return _id, _name, _option
 
-    current_app.logger.error('-' * 60)
     item_type = ItemTypes.get_by_id(item_type_id).render
     list_hide = get_item_from_option(item_type_id)
     hide_permission = permissions['permission_show_hide'](item_type_id)
@@ -2727,7 +2726,6 @@ def make_stats_tsv_with_permission(item_type_id, recids, records_metadata, permi
     ret.append('.metadata.pubdate')
     ret_label.append('公開日' if permissions['current_language']() == 'ja' else 'PubDate')
 
-    current_app.logger.error(len(recids))
     for recid in recids:
         record = records.records[recid]
         paths = records.attr_data['path'][recid]

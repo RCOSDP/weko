@@ -37,7 +37,6 @@ from functools import partial, reduce
 from io import StringIO
 from operator import getitem
 import bagit
-import celery
 import redis
 
 from flask import abort, current_app, request
@@ -84,7 +83,7 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_REPO_USER, WEKO_SYS_USER, WEKO_SEARCH_UI_BULK_EXPORT_TASK, \
     WEKO_SEARCH_UI_BULK_EXPORT_URI
 from .query import feedback_email_search_factory, item_path_search_factory
-from weko_admin.utils import get_redis_cache, reset_redis_cache
+from weko_admin.utils import get_redis_cache
 from celery.task.control import revoke
 from invenio_files_rest.models import FileInstance, Location
 from celery.result import AsyncResult
@@ -2546,6 +2545,7 @@ def export_all(root_url):
         db.session.commit()
         return src.uri if src else None
     except Exception as ex:
+        db.session.rollback()
         current_app.logger.error('=' * 60)
         current_app.logger.error(ex)
         current_app.logger.error(traceback.format_exc())
@@ -2553,9 +2553,10 @@ def export_all(root_url):
 def delete_exported(uri, cache_key):    
     from simplekv.memory.redisstore import RedisStore    
     """Delete File instance after time in file config"""
-    try:            
-        file_instance  = FileInstance.get_by_uri(uri)
-        file_instance.delete()
+    try:
+        with db.session.begin_nested():
+            file_instance = FileInstance.get_by_uri(uri)
+            file_instance.delete()
         db.session.commit()
         datastore = RedisStore(redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))        
         if datastore.redis.exists(cache_key):
@@ -2601,9 +2602,8 @@ def get_export_status():
         task_id = get_redis_cache(cache_key)
         print(task_id)
         download_uri = get_redis_cache(cache_uri)
-        if (task_id is not None):
+        if (task_id):
             task = AsyncResult(task_id)
-            print(task.state)
             export_status = True if not (task.successful() or task.failed() or task.state == 'REVOKED') \
                 else False
     except Exception as ex:
