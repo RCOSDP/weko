@@ -563,9 +563,9 @@ class ItemBulkExport(BaseView):
         if not export_status and download_uri is not None:
             file_instance = FileInstance.get_by_uri(download_uri)
             return file_instance.send_file(
-                download_uri,
-                as_attachment=True,
-                attachment_filename='export-all.zip'
+                'export-all.zip',
+                mimetype='application/octet-stream',
+                as_attachment=True
             )
         else:
             return Response(status=200)
