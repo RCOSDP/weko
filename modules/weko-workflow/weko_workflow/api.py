@@ -730,6 +730,32 @@ class WorkActivity(object):
             db.session.merge(activity)
         db.session.commit()
 
+    def upt_activity_metadata(self, activity_id, metadata):
+        """Update metadata to activity table.
+
+        :param activity_id:
+        :param metadata:
+        :return:
+        """
+        with db.session.begin_nested():
+            activity = _Activity.query.filter_by(
+                activity_id=activity_id).one_or_none()
+            activity.temp_data = metadata
+            db.session.merge(activity)
+        db.session.commit()
+
+    def get_activity_metadata(self, activity_id):
+        """Get metadata from activity table.
+        
+        :param activity_id:
+        :return metadata:
+        """
+        with db.session.no_autoflush:
+            activity = _Activity.query.filter_by(
+                activity_id=activity_id,).one_or_none()
+            metadata = activity.temp_data
+            return metadata
+
     def upt_activity_action_status(
             self,
             activity_id,
