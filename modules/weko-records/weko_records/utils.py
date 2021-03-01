@@ -640,6 +640,7 @@ def sort_meta_data_by_options(record_hit):
                         if val == result:
                             record_hit['_source']['title'][idx] = record_hit['_source']['title'][0]
                             record_hit['_source']['title'][0] = result
+                            record_hit['_source']['_comment'] = result.split()
                             break
         src = record_hit['_source'].pop('_item_metadata')
         item_type_id = record_hit['_source'].get('item_type_id') \
@@ -678,7 +679,6 @@ def sort_meta_data_by_options(record_hit):
                             }
                             break
         settings = AdminSettings.get('items_display_settings')
-		record_hit['_source']['_comment'] = []
         items = get_comment(solst_dict_array, not settings.items_display_email,
                             _item_metadata, src_default, solst)
         if items:
