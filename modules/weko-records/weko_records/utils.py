@@ -540,8 +540,8 @@ def sort_meta_data_by_options(record_hit):
                 data_bibliographic = sys_bibliographic.get_bibliographic_list(
                     True)
                 result.append(convertStringBibinfor(data_bibliographic))
-            elif bibliographic_key not in s[
-                    'key'] and value and value not in _ignore_items or flag:
+            elif (bibliographic_key and bibliographic_key not in s[
+                'key']) and value and value not in _ignore_items or flag:
                 is_specify_newline = ''
                 is_hide = ''
                 if not flag:
