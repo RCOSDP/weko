@@ -25,6 +25,7 @@ from weko_records.api import ItemTypes
 from weko_records.utils import find_items
 
 from .permissions import item_permission
+from .utils import is_schema_include_key
 
 
 @login_required
