@@ -2457,3 +2457,43 @@ def handle_remove_es_metadata(item):
         deposit.indexer.delete(deposit)
     except Exception as ex:
         current_app.logger.error(ex)
+
+
+def get_key_by_property(record, item_map, item_property):
+    """
+    Get data by property text.
+
+    :param item_property: property value in item_map
+    :return: error_list or None
+    """
+    key = item_map.get(item_property)
+    data = []
+    if not key:
+        current_app.logger.error(str(item_property) + ' jpcoar:mapping '
+                                                      'is not correct')
+        return None
+    return key
+
+
+def get_data_by_propertys(record, item_map, item_property):
+    """
+    Get data by property text.
+    :param item_property: property value in item_map
+    :return: error_list or None
+    """
+    key = item_map.get(item_property)
+    data = []
+    if not key:
+        current_app.logger.error(str(item_property) + ' jpcoar:mapping '
+                                                      'is not correct')
+        return None, None
+    attribute = record['_item_metadata'].get(key.split('.')[0])
+    if not attribute:
+        return None, key
+    else:
+        data_result = get_sub_item_value(
+            attribute, key.split('.')[-1])
+        if data_result:
+            for value in data_result:
+                data.append(value)
+    return data, key
