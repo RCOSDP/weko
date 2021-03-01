@@ -31,9 +31,9 @@ from invenio_pidstore import current_pidstore
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.ext import pid_exists
 from invenio_pidstore.models import PersistentIdentifier
-
 from weko_admin.models import AdminSettings
 from weko_schema_ui.schema import SchemaTree
+
 from .api import ItemTypes, Mapping
 
 
@@ -439,12 +439,12 @@ def get_options_and_order_list(item_type_id):
     return solst, meta_options
 
 
-def list_duplicates_of(seq,item):
+def list_duplicates_of(seq, item):
     start_at = -1
     locs = []
     while True:
         try:
-            loc = seq.index(item,start_at+1)
+            loc = seq.index(item, start_at + 1)
         except ValueError:
             break
         else:
@@ -465,6 +465,7 @@ def sort_meta_data_by_options(record_hit):
     from weko_admin.utils import get_selected_language
     from weko_deposit.api import _FormatSysBibliographicInformation
     web_screen_lang = get_selected_language()
+
     def get_meta_values(v):
         """Get values from metadata."""
         data_list = []
@@ -511,6 +512,32 @@ def sort_meta_data_by_options(record_hit):
                     list_data.append(key + ' ' + magazine[key])
         return ", ".join(list_data)
 
+    def data_comment(result, data_result, stt_key, is_specify_newline_array):
+        for idx, key in enumerate(stt_key):
+            lang_id = ''
+            if 'lang_id' in data_result[key]:
+                lang_id = data_result[key].get('lang_id') if "[]" not in data_result[key].get('lang_id')\
+                    else data_result[key].get('lang_id').replace("[]", '')
+                for idx2, d in enumerate(data_result.get(key)):
+                    if d not in "lang" and d not in "lang_id":
+                        lang_arr = []
+                        value_arr = []
+                        if ('lang' in data_result[key]):
+                            lang_arr = data_result[key].get('lang')
+                        if (key in data_result) and (d in data_result[key]) and ('value' in data_result[key][d]):
+                            value_arr = data_result[key][d]['value']
+                            value = selected_value_by_language(lang_arr, value_arr, lang_id, d.replace("[]", ''),
+                                web_screen_lang['selected'], _item_metadata)
+                        if value is not None and len(value) > 0:
+                            for index, n in enumerate(is_specify_newline_array):
+                                if d in n:
+                                    if n[d] or len(result) == 0:
+                                        result.append(value)
+                                    else:
+                                        result[-1] += "," + value
+                                    break
+        return result
+
     def get_comment(solst_dict_array, hide_email_flag, _item_metadata, src,
                     solst):
         """Check and get info."""
@@ -524,7 +551,7 @@ def sort_meta_data_by_options(record_hit):
         bibliographic_key = None
         if _license_dict:
             _ignore_items.append(_license_dict[0].get('value'))
-        for i,s in enumerate(solst_dict_array):
+        for i, s in enumerate(solst_dict_array):
             value = s['value']
             option = s['option']
             mlt = src.get(s['key'], {}).get('attribute_value_mlt', {})
@@ -537,13 +564,13 @@ def sort_meta_data_by_options(record_hit):
             if bibliographic_key is None \
                     and sys_bibliographic.is_bibliographic():
                 bibliographic_key = s['key']
-                data_bibliographic = sys_bibliographic.get_bibliographic_list(
-                    True)
+                data_bibliographic = sys_bibliographic.get_bibliographic_list(True)
                 result.append(convertStringBibinfor(data_bibliographic))
-            elif not (bibliographic_key is not None and bibliographic_key in s[
-                    'key']) and value and value not in _ignore_items or flag:
+            elif not (bibliographic_key is not None and bibliographic_key in s['key']) \
+                    and value and value not in _ignore_items or flag:
                 is_specify_newline = ''
                 is_hide = ''
+                is_show_list = ''
                 if not flag:
                     parent_option = s['parent_option']
                     is_show_list = parent_option.get(
@@ -563,28 +590,9 @@ def sort_meta_data_by_options(record_hit):
                         data_result, stt_key = get_value_and_lang_by_key(s['key'], solst_dict_array, data_result, stt_key)
                         is_specify_newline_array.append({s['key']: is_specify_newline})
                     if flag and len(data_result) > 0:
-                        for idx, key in enumerate(stt_key):
-                            lang_id = ''
-                            if 'lang_id' in data_result[key]:
-                                lang_id = data_result[key].get('lang_id') if "[]" not in data_result[key].get('lang_id') else data_result[key].get('lang_id').replace("[]", '')
-                            for idx2, d in enumerate(data_result.get(key)):
-                                if d not in "lang" and d not in "lang_id":
-                                    lang_arr = []
-                                    value_arr = []
-                                    if ('lang' in data_result[key]):
-                                        lang_arr = data_result[key].get('lang')
-                                    if (key in data_result) and (d in data_result[key]) and ('value' in data_result[key][d]):
-                                        value_arr = data_result[key][d]['value']
-                                    value = selected_value_by_language(lang_arr, value_arr, lang_id, d.replace("[]", ''), web_screen_lang['selected'], _item_metadata)
-                                    if value is not None and len(value) > 0:
-                                        for index, n in enumerate(is_specify_newline_array):
-                                            if d in n:
-                                                if n[d] or len(result) == 0:
-                                                    result.append(value)
-                                                else:
-                                                    result[-1] += "," + value
-                                                break
+                        result = data_comment(result, data_result, stt_key, is_specify_newline_array)
         return result
+
     def get_file_comments(record, files):
         """Check and get file info."""
         result = []
@@ -638,9 +646,11 @@ def sort_meta_data_by_options(record_hit):
                 if result is not None:
                     for idx, val in enumerate(record_hit['_source']['title']):
                         if val == result:
+                            arr = []
                             record_hit['_source']['title'][idx] = record_hit['_source']['title'][0]
                             record_hit['_source']['title'][0] = result
-                            record_hit['_source']['_comment'] = result.split()
+                            arr.append(result)
+                            record_hit['_source']['_comment'] = arr
                             break
         src = record_hit['_source'].pop('_item_metadata')
         item_type_id = record_hit['_source'].get('item_type_id') \
@@ -963,6 +973,7 @@ def remove_weko2_special_character(s: str):
     esc_str = __remove_special_character(esc_str)
     return esc_str
 
+
 def selected_value_by_language(lang_array, value_array, lang_id, val_id, lang_selected, _item_metadata):
     """select value by language.
 
@@ -972,28 +983,28 @@ def selected_value_by_language(lang_array, value_array, lang_id, val_id, lang_se
     @return:
     """
     if (lang_array is not None) and (value_array is not None) \
-        and isinstance(lang_selected, str):
+            and isinstance(lang_selected, str):
         if len(value_array) < 1:
             return None
         else:
             if len(lang_array) > 0:
                 for idx, lang in enumerate(lang_array):
                     lang_array[idx] = lang.strip()
-            if lang_selected in lang_array: # Web screen display language
+            if lang_selected in lang_array:  # Web screen display language
                 value = check_info_in_metadata(lang_id, val_id, lang_selected, _item_metadata)
                 if value is not None:
                     return value
-            if "en" in lang_array: # English
+            if "en" in lang_array:  # English
                 value = check_info_in_metadata(lang_id, val_id, "en", _item_metadata)
                 if value is not None:
                     return value
-            if len(lang_array) > 0: # 1st language when registering items
+            if len(lang_array) > 0:  # 1st language when registering items
                 for idx, lg in enumerate(lang_array):
                     if len(lg) > 0:
                         value = check_info_in_metadata(lang_id, val_id, lg, _item_metadata)
                         if value is not None:
                             return value
-            if len(value_array) > 0: # 1st value when registering without language
+            if len(value_array) > 0:  # 1st value when registering without language
                 return value_array[0]
     else:
         return None
@@ -1041,12 +1052,12 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
     @param data_result:
     @return:
     """
-    if (key is not None) and isinstance(key, str) and (data_json is not None)\
-        and (data_result is not None):
+    if (key is not None) and isinstance(key, str) and (data_json is not None) \
+            and (data_result is not None):
         save_key = ""
         key_split = key.split(".")
         if len(key_split) > 1:
-            for i,k in enumerate(key_split):
+            for i, k in enumerate(key_split):
                 if k == key_split[len(key_split) - 1] and i == (len(key_split) - 1):
                     break
                 save_key += str(k + ".") if i < len(key_split) - 2 else str(k)
@@ -1056,7 +1067,8 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
                 if save_key not in data_result.keys():
                     stt_key.append(save_key)
                     data_result = {**data_result, **{save_key: {}}}
-                if save_key in data_result.keys() and (j["title"] in "Language") or (j["title_ja"] in "Language") or (j["title_ja"] in "言語") or (j["title"] in "言語"):
+                if save_key in data_result.keys() and (j["title"] in "Language") or (j["title_ja"] in "Language") \
+                     or (j["title_ja"] in "言語") or (j["title"] in "言語"):
                     data_result[save_key] = {**data_result[save_key], **{'lang': j["value"].split(","), "lang_id": key}}
                     flag = True
                 if key not in data_result[save_key] and not flag:
