@@ -39,7 +39,8 @@ from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ATT, \
     WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT
 from .permissions import item_type_permission
 from .utils import check_duplicate_mapping, fix_json_schema, \
-    has_system_admin_access, remove_xsd_prefix
+    has_system_admin_access, remove_xsd_prefix, \
+    update_required_schema_not_exist_in_form
 
 
 class ItemTypeMetaDataView(BaseView):
@@ -157,6 +158,10 @@ class ItemTypeMetaDataView(BaseView):
             json_schema = fix_json_schema(
                 table_row_map.get(
                     'schema'))
+            json_form = table_row_map.get('form')
+            json_schema = update_required_schema_not_exist_in_form(
+                json_schema, json_form)
+
             if not json_schema:
                 raise ValueError('Schema is in wrong format.')
 

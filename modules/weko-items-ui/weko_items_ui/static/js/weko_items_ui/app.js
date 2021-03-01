@@ -3255,7 +3255,7 @@ function toObject(arr) {
             result.push.apply(result, this.findRequiredItemInSchemaForm(subitem[i]));
           }
         } else {
-          if (item.required) {
+          if (item.required && item.key) {
             let newData = {
               'title': '',
               'id': '',
