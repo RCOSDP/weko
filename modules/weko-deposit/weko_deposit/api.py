@@ -516,7 +516,7 @@ class WekoDeposit(Deposit):
 
         for item in file_meta:
             item['version_id'] = str(files_versions.get(
-                item.get(_filename_prop)))
+                item.get(_filename_prop), ''))
 
         return True
 
