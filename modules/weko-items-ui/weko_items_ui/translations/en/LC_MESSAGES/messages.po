@@ -328,3 +328,12 @@ msgstr "Import"
 
 msgid "Cannot preview because the file size is too large."
 msgstr ""
+
+msgid "The same file name cannot be registered"
+msgstr "The same file name cannot be registered"
+
+msgid "Guest"
+msgstr "Guest"
+
+msgid "Free Input"
+msgstr "Free Input"

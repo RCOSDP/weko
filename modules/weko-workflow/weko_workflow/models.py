@@ -23,11 +23,13 @@
 import uuid
 from datetime import datetime
 
+from flask import current_app
 from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
 from invenio_db import db
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.expression import desc
+from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import JSONType, UUIDType
 from sqlalchemy_utils.types.choice import ChoiceType
 from weko_groups.widgets import RadioGroupWidget
@@ -636,6 +638,9 @@ class WorkFlow(db.Model, TimestampMixin):
     is_deleted = db.Column(db.Boolean(), nullable=False, default=False)
     """workflow delete flag."""
 
+    open_restricted = db.Column(db.Boolean(), nullable=False, default=True)
+    """Open restricted flag."""
+
 
 class Activity(db.Model, TimestampMixin):
     """Define Activity."""
@@ -977,3 +982,101 @@ class WorkflowRole(db.Model, TimestampMixin):
         nullable=True, unique=False)
 
     """Relationship between workflow and roles."""
+
+
+class GuestActivity(db.Model, Timestamp):
+    """Guest activity."""
+
+    __tablename__ = "guest_activity"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    """Identifier"""
+
+    user_mail = db.Column(db.String(255), nullable=False)
+    """User mail"""
+
+    record_id = db.Column(db.String(255), nullable=False)
+    """Record identifier."""
+
+    file_name = db.Column(db.String(255), nullable=False)
+    """File name"""
+
+    activity_id = db.Column(
+        db.String(24), nullable=False, unique=True, index=True)
+    """Activity id of Guest Activity."""
+
+    token = db.Column(db.String(255), nullable=False)
+    """Token."""
+
+    def __init__(self, **kwargs):
+        """Initial guest activity.
+
+        @param kwargs:
+        """
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+    @classmethod
+    def create(cls, **kwargs):
+        """Create guest activity.
+
+        @param kwargs:
+        @return:
+        """
+        try:
+            guest_activity = cls(**kwargs)
+            db.session.add(guest_activity)
+            db.session.commit()
+            return guest_activity
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            return None
+
+    @classmethod
+    def find_by_activity_id(cls, activity_id):
+        """Find guest activity by activity id.
+
+        @param activity_id:
+        @return:
+        """
+        with db.session.no_autoflush:
+            return db.session.query(cls).filter(
+                cls.activity_id == activity_id).all()
+
+    @classmethod
+    def find(cls, **kwargs):
+        """Find guest activity.
+
+        @param kwargs:
+        @return:
+        """
+        query = db.session.query(cls)
+        if kwargs.get("user_mail"):
+            query = query.filter(cls.user_mail == kwargs.get("user_mail"))
+        if kwargs.get("record_id"):
+            query = query.filter(cls.record_id == kwargs.get("record_id"))
+        if kwargs.get("file_name"):
+            query = query.filter(cls.file_name == kwargs.get("file_name"))
+        if kwargs.get("activity_id"):
+            query = query.filter(cls.activity_id == kwargs.get("activity_id"))
+
+        with db.session.no_autoflush:
+            return query.all()
+
+    @classmethod
+    def delete(cls, guest_activity):
+        """Delete guest activity.
+
+        @param guest_activity:
+        @return:
+        """
+        try:
+            with db.session.begin_nested():
+                db.session.delete(guest_activity)
+            db.session.commit()
+            return True
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            return False

@@ -535,7 +535,7 @@ function toObject(arr) {
       $scope.bibliographic_title_lang_key = '';
       $scope.usage_report_activity_id = '';
       $scope.is_item_owner = false;
-      $scope.feedback_emails = []
+      $scope.feedback_emails = [];
       $scope.render_requirements = false;
       $scope.error_list = [];
       $scope.required_list = [];
@@ -1016,19 +1016,23 @@ function toObject(arr) {
 
         if ($scope.usageapplication_keys.length > 0 || $scope.outputapplication_keys.length > 0) {
           const acitivityUrl = '/items/corresponding-activity';
-
+          if ($('#current_guest_email').val()) {
+            return;
+          }
           activityList = {};
           $.ajax({
             url: acitivityUrl,
             method: 'GET',
             async: false,
             success: function (data, status) {
-              let usageActivity;
+              let usageActivity = [];
               if ($scope.usage_report_activity_id !== ''){
                 usageActivity = [$scope.usage_report_activity_id];
               } else {
-                usageActivity = data['usage_application']["activity_ids"];
-                $scope.corresponding_usage_data_type = data['usage_application']["activity_data_type"]
+                if (data['usage_application']) {
+                  usageActivity = data['usage_application']["activity_ids"];
+                  $scope.corresponding_usage_data_type = data['usage_application']["activity_data_type"];
+                }
               }
               if (usageActivity.length > 0) {
                 usageActivity.forEach(function (activity) {
@@ -1080,7 +1084,22 @@ function toObject(arr) {
         }
       }
 
+      $scope.getDataInit = function () {
+        var result = {'workflows': [], 'roles': []};
+        $.ajax({
+          url: '/workflow/get-data-init',
+          method: 'GET',
+          async: false,
+          success: function (data, status) {
+            result = data;
+          },
+          error: function (data, status) {}
+        });
+        return result;
+      }
+
       $scope.initFilenameList = function () {
+        let dataInit;
         var filekey = 'filename';
         $scope.searchFilemetaKey();
         $scope.filemeta_keys.forEach(function (filemeta_key) {
@@ -1088,7 +1107,7 @@ function toObject(arr) {
           filemeta_form = $scope.getFormByKey(filemeta_key);
           if (filemeta_schema && filemeta_form && filemeta_schema.items.properties[filekey]) {
             filemeta_schema.items.properties[filekey]['enum'] = [];
-            filemeta_schema.items.properties[filekey]['enum'].push(null)
+            filemeta_schema.items.properties[filekey]['enum'].push(null);
             filemeta_filename_form = get_subitem(filemeta_form.items, filekey);
             filemeta_filename_form['titleMap'] = [];
             $rootScope.filesVM.files.forEach(function (file) {
@@ -1097,6 +1116,68 @@ function toObject(arr) {
                 filemeta_filename_form['titleMap'].push({ name: file.key, value: file.key });
               }
             });
+            /*Add data for 'Workflow' in File.*/
+            var provide_schema = filemeta_schema.items.properties['provide'];
+            if (provide_schema) {
+              if (!dataInit) {
+                dataInit = $scope.getDataInit();
+              }
+              var workflow_schema = provide_schema.items.properties['workflow'];
+              if (workflow_schema) {
+                // Add enum in schema.
+                workflow_schema['enum'] = [];
+                workflow_schema['enum'].push(null);
+                // Add titleMap in form.
+                var provide_form = get_subitem(filemeta_form.items, 'provide');
+                var workflow_form = get_subitem(provide_form.items, 'workflow');
+                workflow_form['titleMap'] = [];
+                var workflows = dataInit['init_workflows'];
+                for (let key in workflows) {
+                  workflow_schema['enum'].push(workflows[key]['id'].toString());
+                  workflow_form['titleMap'].push({
+                    name: workflows[key]['flows_name'],
+                    value: workflows[key]['id'].toString()
+                  });
+                }
+              }
+              /*Add data for 'Role' in File.*/
+              var role_schema = provide_schema.items.properties['role'];
+              if (role_schema) {
+                // Add enum in schema.
+                role_schema['enum'] = [];
+                role_schema['enum'].push(null);
+                // Add titleMap in form.
+                var provide_form = get_subitem(filemeta_form.items, 'provide');
+                var role_form = get_subitem(provide_form.items, 'role');
+                role_form['titleMap'] = [];
+                var roles = dataInit['init_roles'];
+                for (let key in roles) {
+                  role_schema['enum'].push(roles[key]['id'].toString());
+                  role_form['titleMap'].push({
+                    name: roles[key]['name'],
+                    value: roles[key]['id'].toString()
+                  });
+                }
+              }
+            }
+            /*Add data for 'Term' in File.*/
+            var term_schema = filemeta_schema.items.properties['terms'];
+            if (term_schema) {
+              // Add enum in schema.
+              term_schema['enum'] = [];
+              term_schema['enum'].push(null);
+              // Add titleMap for form.
+              var term_form = get_subitem(filemeta_form.items, 'terms');
+              term_form['titleMap'] = [];
+              var terms = dataInit['init_terms'];
+              for (let key in terms) {
+                term_schema['enum'].push(terms[key]['id'].toString());
+                term_form['titleMap'].push({
+                  name: terms[key]['name'],
+                  value: terms[key]['id'].toString()
+                });
+              }
+            }
           }
 
           // Initialization groups list for billing file
@@ -1674,14 +1755,20 @@ function toObject(arr) {
           return;
         }
         let userInfoData = $("#user_info_data").val();
-        if (userInfoData !== undefined && userInfoData) {
+        let guestEmail = $('#current_guest_email').val();
+        if ((userInfoData !== undefined && userInfoData) || guestEmail) {
           let titleData = $("#auto_fill_title").val();
           let dataType = $("#data_type_title").val() ? $("#data_type_title").val() : "";
           if (!titleData) {
             return;
           }
+          let userName;
           titleData = JSON.parse(titleData);
-          let userName = JSON.parse(userInfoData).results["subitem_displayname"];
+          if (guestEmail) {
+            userName = guestEmail.split("@")[0];
+          } else {
+            userName = JSON.parse(userInfoData).results["subitem_displayname"];
+          }
           let titleSubKey = "subitem_item_title";
           let titleLanguageKey = "subitem_item_title_language";
           let recordsVM = $rootScope["recordsVM"];
@@ -2005,9 +2092,8 @@ function toObject(arr) {
                     if(!$rootScope.isModelFileVersion(model[filemeta_key], file.version_id)){
                       modelFile.version_id = file.version_id;
                     }
-                    if(!modelFile.fileDate){
-                      modelFile.fileDate = [{}];
-                    }
+                    modelFile.fileDate = !modelFile.fileDate ? [{}] : modelFile.fileDate;
+                    modelFile.provide = !modelFile.provide ? [{}] : modelFile.provide;
                   }
                 })
               }
@@ -3714,7 +3800,9 @@ function toObject(arr) {
         const actionID = cur_action_id;// Item Registration's Action ID
         let emails = $scope.feedback_emails;
         let result = true;
-
+        if ($.isEmptyObject(emails)) {
+          return result;
+        }
         $.ajax({
           url: '/workflow/save_feedback_maillist/'+ activityID+ '/'+ actionID,
           headers: {

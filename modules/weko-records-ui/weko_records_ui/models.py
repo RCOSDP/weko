@@ -23,15 +23,10 @@
 
 from datetime import datetime
 
-from flask import current_app, json
-from flask_babelex import lazy_gettext as _
-from invenio_communities.models import Community
+from flask import current_app
 from invenio_db import db
 from sqlalchemy import desc, or_
-from sqlalchemy.dialects import mysql, postgresql
-from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.sql import func
-from sqlalchemy_utils.types import JSONType
+from sqlalchemy_utils.models import Timestamp
 
 """ PDF cover page model"""
 
@@ -252,4 +247,94 @@ class FilePermission(db.Model):
         return permission
 
 
-__all__ = ('PDFCoverPageSettings')
+class FileOnetimeDownload(db.Model, Timestamp):
+    """File onetime download."""
+
+    __tablename__ = 'file_onetime_download'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    """Identifier"""
+
+    file_name = db.Column(db.String(255), nullable=False)
+    """File name"""
+
+    user_mail = db.Column(db.String(255), nullable=False)
+    """User mail"""
+
+    record_id = db.Column(db.String(255), nullable=False)
+    """Record identifier."""
+
+    download_count = db.Column(db.Integer, nullable=False, default=0)
+    """Download count"""
+
+    def __init__(self, file_name, user_mail, record_id, download_count=1):
+        """Init.
+
+        :param file_name: File name
+        :param user_mail: User mail
+        :param record_id: Record identifier
+        :param download_count: Download count
+        """
+        self.file_name = file_name
+        self.user_mail = user_mail
+        self.record_id = record_id
+        self.download_count = download_count
+
+    @classmethod
+    def create(cls, **data):
+        """Create data"""
+        try:
+            file_download = cls(**data)
+            db.session.add(file_download)
+            db.session.commit()
+            return file_download
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            return None
+
+    @classmethod
+    def update_download_count(cls, **data) -> bool:
+        """Update download count.
+
+        :param data:
+        :return:
+        """
+        try:
+            file_name = data.get("file_name")
+            user_mail = data.get("user_mail")
+            record_id = data.get("record_id")
+            file_permission = cls.find(file_name=file_name, user_mail=user_mail,
+                                       record_id=record_id)
+            if file_permission and len(file_permission) > 0:
+                for file in file_permission:
+                    file.download_count = file.download_count + 1
+                    db.session.merge(file)
+                db.session.commit()
+                return True
+            else:
+                if cls.create(**data):
+                    return True
+                else:
+                    return False
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            return False
+
+    @classmethod
+    def find(cls, **obj) -> list:
+        """Find file onetime download.
+
+        :param obj:
+        :return:
+        """
+        query = db.session.query(cls).filter(
+            cls.file_name == obj.get("file_name"),
+            cls.record_id == obj.get("record_id"),
+            cls.user_mail == obj.get("user_mail"),
+        )
+        return query.order_by(desc(cls.id)).all()
+
+
+__all__ = ('PDFCoverPageSettings', 'FilePermission', 'FileOnetimeDownload')

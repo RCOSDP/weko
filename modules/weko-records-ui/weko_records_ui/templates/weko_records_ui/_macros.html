@@ -27,8 +27,26 @@
         ({{ file.size|filesizeformat }})</a>
       <br>
     {%- else -%}
-      <a class="action-anchor" href="{{ href_url }}">
-        <button class="img-rounded action-button button-sm">
+      {% set access_role = file.info().accessrole %}
+      {% set workflow_id = file.info() | get_usage_workflow %}
+      {% set start_guest_wf = workflow_id is not none and access_role == "open_restricted" %}
+      {% if start_guest_wf %}
+        {% set workflow_detail = workflow_id | get_workflow_detail() %}
+        {% set item_type_id = workflow_detail.itemtype_id %}
+        {% set flow_id = workflow_detail.flow_id %}
+        <input id="guest_filename_data" type="hidden"
+               value="{{ file.filename }}">
+        <input id="guest_workflow_id" type="hidden" value="{{ workflow_id }}">
+        <input id="guest_itemtype_id" type="hidden" value="{{ item_type_id }}">
+        <input id="guest_flow_id" type="hidden" value="{{ flow_id }}">
+        <input id="guest_data_type_title" type="hidden"
+               value='{{ record.item_title }}'>
+        <input id="guest_record_id" type="hidden"
+               value='{{ record.recid }}'>
+      {% endif %}
+      <a class="action-anchor" {% if not start_guest_wf %}href="{{ href_url }}"{% endif %}>
+        <button class="img-rounded action-button button-sm"
+                {% if start_guest_wf %}id="non-login-role-btn"{% endif %}>
           <i class="action-icon fa fa-download"></i>
           {{ _('Apply JGSS') }}
         </button>
@@ -36,8 +54,8 @@
     {%- endif -%}
   {%- elif not permission -%}
     {%- set workflow_id = '' -%}
-    {%- set usage_workflow = record | get_usage_workflow -%}
-    {%- if not usage_workflow -%}
+    {%- set usage_workflow_id = file.info() | get_usage_workflow -%}
+    {%- if not usage_workflow_id -%}
       {%- set clickable = false -%}
       {%- if is_file_name_url -%}
         <a class="forcewrap">{{ file.filename }}
@@ -53,8 +71,8 @@
           </button>
         </a>
       {%- endif -%}
-    {%- elif usage_workflow -%}
-      {%- set workflow_id = usage_workflow.id -%}
+    {%- elif usage_workflow_id -%}
+      {%- set workflow_id = usage_workflow_id -%}
       {%- set workflow_detail = workflow_id | get_workflow_detail() -%}
       {%- set data_item_type_id = workflow_detail.itemtype_id -%}
       {%- set data_flow_id = workflow_detail.flow_id -%}

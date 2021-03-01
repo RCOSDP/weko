@@ -447,3 +447,9 @@ msgstr "ファイルサイズが大きいためプレビューできません。
 
 msgid "The same file name cannot be registered."
 msgstr "同一のファイル名は登録できません。"
+
+msgid "Guest"
+msgstr "非ログインユーザ"
+
+msgid "Free Input"
+msgstr "自由入力"

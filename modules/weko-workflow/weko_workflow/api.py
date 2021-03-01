@@ -758,8 +758,13 @@ class WorkActivity(object):
             extra_info = dict()
             if activity.get('related_title'):
                 extra_info["related_title"] = activity["related_title"]
-            activity_confirm_term_of_use = False if\
-                action_has_term_of_use else True
+            if activity.get('extra_info'):
+                extra_info = activity["extra_info"]
+            if activity.get('activity_confirm_term_of_use') is True:
+                activity_confirm_term_of_use = True
+            else:
+                activity_confirm_term_of_use = False if\
+                    action_has_term_of_use else True
             db_activity = _Activity(
                 # Dummy activity ID, the real one will be updated
                 #   after this activity is created
@@ -1826,9 +1831,14 @@ class WorkActivity(object):
         his = WorkActivityHistory()
         histories = his.get_activity_history_list(activity_id)
         history_dict = {}
+        activity = WorkActivity()
+        activity_detail = activity.get_activity_detail(histories[0].activity_id)
         for history in histories:
+            update_user_mail = history.user.email \
+                if history.user else \
+                activity_detail.extra_info.get('guest_mail')
             history_dict[history.action_id] = {
-                'Updater': history.user.email,
+                'Updater': update_user_mail,
                 'Result': ActionStatusPolicy.describe(
                     self.get_activity_action_status(
                         activity_id=activity_id,

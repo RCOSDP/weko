@@ -60,12 +60,10 @@ from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
 from .permissions import check_content_clickable, check_created_id, \
     check_file_download_permission, check_original_pdf_download_permission, \
-    check_permission_period, get_correct_usage_workflow, get_permission, \
-    is_open_restricted
+    check_permission_period, get_permission
 from .utils import get_billing_file_download_permission, get_groups_price, \
-    get_min_price_billing_file_download, get_record_permalink, \
-    get_registration_data_type, hide_by_email, hide_item_metadata, \
-    is_show_email_of_creator, replace_license_free
+    get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
+    hide_item_metadata, is_show_email_of_creator, replace_license_free
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
@@ -308,14 +306,25 @@ def check_content_file_clickable(record, fjson):
 
 
 @blueprint.app_template_filter('get_usage_workflow')
-def get_usage_workflow(record):
+def get_usage_workflow(file_json):
     """Get correct usage workflow to redirect user.
 
-    :param record
+    :param file_json
     :return: result
     """
-    data_type = get_registration_data_type(record)
-    return get_correct_usage_workflow(data_type)
+    if not current_user.is_authenticated:
+        # In case guest user
+        from invenio_accounts.models import Role
+        roles = [Role(id="none_loggin")]
+    else:
+        roles = current_user.roles
+    if file_json and isinstance(file_json.get("provide"), list):
+        provide = file_json.get("provide")
+        for role in roles:
+            for data in provide:
+                if str(role.id) == data.get("role"):
+                    return data.get("workflow")
+    return None
 
 
 @blueprint.app_template_filter('get_workflow_detail')

@@ -38,6 +38,7 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.resolver import Resolver
 from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
+from weko_accounts.utils import login_required_customize
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
@@ -185,8 +186,7 @@ def iframe_index(item_type_id=0):
 
 
 @blueprint.route('/iframe/model/save', methods=['POST'])
-@login_required
-@item_permission.require(http_exception=403)
+@login_required_customize
 def iframe_save_model():
     """Renders an item register view.
 
@@ -236,8 +236,7 @@ def iframe_error():
 @blueprint.route('/jsonschema/<int:item_type_id>', methods=['GET'])
 @blueprint.route('/jsonschema/<int:item_type_id>/<string:activity_id>',
                  methods=['GET'])
-@login_required
-@item_permission.require(http_exception=403)
+@login_required_customize
 def get_json_schema(item_type_id=0, activity_id=""):
     """Get json schema.
 
@@ -281,8 +280,7 @@ def get_json_schema(item_type_id=0, activity_id=""):
 @blueprint.route('/schemaform/<int:item_type_id>', methods=['GET'])
 @blueprint.route('/schemaform/<int:item_type_id>/<string:activity_id>',
                  methods=['GET'])
-@login_required
-@item_permission.require(http_exception=403)
+@login_required_customize
 def get_schema_form(item_type_id=0, activity_id=''):
     """Get schema form.
 
@@ -396,8 +394,7 @@ def items_index(pid_value='0'):
 
 @blueprint.route('/iframe/index/<string:pid_value>',
                  methods=['GET', 'PUT', 'POST'])
-@login_required
-@item_permission.require(http_exception=403)
+@login_required_customize
 def iframe_items_index(pid_value='0'):
     """Iframe items index."""
     try:
@@ -1024,7 +1021,7 @@ def export():
 
 
 @blueprint_api.route('/validate', methods=['POST'])
-@login_required
+@login_required_customize
 def validate():
     """Validate input data.
 
@@ -1042,8 +1039,7 @@ def validate():
 
 @blueprint_api.route('/check_validation_error_msg/<string:activity_id>',
                      methods=['GET'])
-@login_required
-@item_permission.require(http_exception=403)
+@login_required_customize
 def check_validation_error_msg(activity_id):
     """Check whether sessionstore('updated_json_schema_') is exist.
 

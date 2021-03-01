@@ -26,10 +26,10 @@ import uuid
 import click
 from flask import current_app
 from flask.cli import with_appcontext
-from sqlalchemy import asc
-
 from invenio_db import db
+from sqlalchemy import asc
 from weko_records.api import ItemTypes
+
 from .models import Action, ActionStatus, ActionStatusPolicy, FlowAction, \
     FlowDefine, FlowStatusPolicy, WorkFlow
 

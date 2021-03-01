@@ -21,7 +21,8 @@
 
 
 {% from "weko_records_ui/box/preview_carousel.html" import preview_carousel %}
-{% from "weko_theme/macros/modal_page.html" import all_modal %}
+{% from "weko_theme/macros/modal_page.html" import all_modal, email_modal %}
+{{ email_modal('email_modal', 'confirm_email_btn', _('Send'),_('Please input email address.')) }}
 {{ all_modal() }}
 
 {%- block javascript %}

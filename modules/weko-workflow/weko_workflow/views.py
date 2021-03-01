@@ -41,9 +41,9 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
-from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import cast
 from weko_accounts.api import ShibUser
+from weko_accounts.utils import login_required_customize
 from weko_authors.models import Authors
 from weko_deposit.api import WekoDeposit
 from weko_deposit.links import base_factory
@@ -56,8 +56,7 @@ from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
 from weko_records_ui.utils import get_list_licence
-from weko_user_profiles.config import \
-    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from werkzeug.utils import import_string
 
@@ -65,19 +64,22 @@ from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
-from .models import ActionStatusPolicy, ActivityAction, ActivityStatusPolicy
+from .models import ActionStatusPolicy, ActivityAction
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import IdentifierHandle, auto_fill_title, check_continue, \
-    delete_cache_data, filter_all_condition, get_account_info, get_actionid, \
+    delete_cache_data, delete_guest_activity, filter_all_condition, \
+    get_account_info, get_actionid, get_activity_display_info, \
     get_activity_id_of_record_without_version, \
     get_application_and_approved_date, get_cache_data, \
     get_identifier_setting, get_term_and_condition_content, \
     get_workflow_item_type_names, handle_finish_workflow, \
-    is_enable_item_name_link, is_hidden_pubdate, is_show_autofill_metadata, \
-    is_usage_application, is_usage_application_item_type, \
-    item_metadata_validation, process_send_notification_mail, \
+    init_activity_for_guest_user, is_enable_item_name_link, \
+    is_hidden_pubdate, is_show_autofill_metadata, is_usage_application, \
+    is_usage_application_item_type, item_metadata_validation, \
+    prepare_data_for_guest_activity, process_send_notification_mail, \
     process_send_reminder_mail, register_hdl, save_activity_data, \
-    saving_doi_pidstore, update_cache_data
+    saving_doi_pidstore, send_onetime_download_url_to_guest, \
+    update_cache_data, validate_guest_activity
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -322,6 +324,60 @@ def list_activity():
     )
 
 
+@blueprint.route('/activity/init-guest', methods=['POST'])
+def init_activity_guest():
+    """Init activity for guest user.
+
+    @return:
+    """
+    post_data = request.get_json()
+
+    data = {
+        'itemtype_id': post_data.get('item_type_id'),
+        'workflow_id': post_data.get('workflow_id'),
+        'flow_id': post_data.get('flow_id'),
+        'activity_confirm_term_of_use': True,
+        'extra_info': {
+            "guest_mail": post_data.get('guest_mail'),
+            "record_id": post_data.get('record_id'),
+            "related_title": post_data.get('guest_item_title'),
+            "file_name": post_data.get('file_name'),
+        }
+    }
+
+    if not post_data.get('guest_mail') or init_activity_for_guest_user(data):
+        return jsonify(msg=_('Email is sent successfully.'))
+    return jsonify(msg='Cannot send mail')
+
+
+@blueprint.route('/activity/guest-user/<string:file_name>', methods=['GET'])
+def display_guest_activity(file_name=""):
+    """Display activity for guest user.
+
+    @param file_name:File name
+    @return:
+    """
+    # Get token
+    token = request.args.get('token')
+    # Validate token
+    is_valid, activity_id, guest_email = validate_guest_activity(token,
+                                                                 file_name)
+    if not is_valid:
+        return render_template("weko_theme/error.html",
+                               error=_("Token is invalid"))
+
+    session['guest_token'] = token
+    session['guest_email'] = guest_email
+    session['guest_url'] = request.full_path
+
+    guest_activity = prepare_data_for_guest_activity(activity_id)
+
+    return render_template(
+        'weko_workflow/activity_detail.html',
+        **guest_activity
+    )
+
+
 @blueprint.route('/activity/detail/<string:activity_id>',
                  methods=['GET', 'POST'])
 @login_required
@@ -330,36 +386,9 @@ def display_activity(activity_id="0"):
     activity = WorkActivity()
     if "?" in activity_id:
         activity_id = activity_id.split("?")[0]
-    activity_detail = activity.get_activity_detail(activity_id)
-    item = None
-
-    if activity_detail and activity_detail.item_id:
-        try:
-            item = ItemsMetadata.get_record(id_=activity_detail.item_id)
-        except NoResultFound as ex:
-            current_app.logger.exception(str(ex))
-            item = None
-
-    steps = activity.get_activity_steps(activity_id)
-    history = WorkActivityHistory()
-    histories = history.get_activity_history_list(activity_id)
-    workflow = WorkFlow()
-    workflow_detail = workflow.get_workflow_by_id(
-        activity_detail.workflow_id)
-
-    if activity_detail.activity_status == \
-        ActivityStatusPolicy.ACTIVITY_FINALLY \
-        or activity_detail.activity_status == \
-            ActivityStatusPolicy.ACTIVITY_CANCEL:
-        activity_detail.activity_status_str = _('End')
-    else:
-        activity_detail.activity_status_str = \
-            request.args.get('status', 'ToDo')
-    cur_action = activity_detail.action
-    action_endpoint = cur_action.action_endpoint
-    action_id = cur_action.id
-    temporary_comment = activity.get_activity_action_comment(
-        activity_id=activity_id, action_id=action_id)
+    action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+        steps, temporary_comment, workflow_detail = \
+        get_activity_display_info(activity_id)
 
     # display_activity of Identifier grant
     identifier_setting = None
@@ -558,6 +587,12 @@ def display_activity(activity_id="0"):
         item_link = ItemLink.get_item_link_info(pid_without_ver)
         ctx['item_link'] = item_link
 
+    # Send onetime download URL to guest user.
+    if action_endpoint == 'end_action' and activity_detail.extra_info and \
+            activity_detail.extra_info.get('guest_mail'):
+        send_onetime_download_url_to_guest(activity_detail.activity_id,
+                                           activity_detail.extra_info)
+
     return render_template(
         'weko_workflow/activity_detail.html',
         page=page,
@@ -651,6 +686,9 @@ def check_authority(func):
 def check_authority_action(activity_id='0', action_id=0,
                            contain_login_item_application=False):
     """Check authority."""
+    if not current_user.is_authenticated:
+        return 1
+
     work = WorkActivity()
     roles, users = work.get_activity_action_role(activity_id, action_id)
     cur_user = current_user.get_id()
@@ -675,7 +713,8 @@ def check_authority_action(activity_id='0', action_id=0,
     # If action_roles is not set
     # or action roles does not contain any role of current_user:
     # Gather information
-    from .models import Activity, User
+    from invenio_accounts.models import User
+    from .models import Activity
     activity = Activity.query.filter_by(
         activity_id=activity_id).first()
     # If user is the author of activity
@@ -731,7 +770,7 @@ def check_authority_action(activity_id='0', action_id=0,
 @blueprint.route(
     '/activity/action/<string:activity_id>/<int:action_id>',
     methods=['POST'])
-@login_required
+@login_required_customize
 @check_authority
 def next_action(activity_id='0', action_id=0):
     """Next action."""
@@ -779,7 +818,11 @@ def next_action(activity_id='0', action_id=0):
             current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
         register_hdl(activity_id)
 
-    if current_app.config.get('WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL'):
+    if current_app.config.get(
+            'WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL') and \
+            current_user.is_authenticated and \
+            (not activity_detail.extra_info or not
+                activity_detail.extra_info.get('guest_mail')):
         flow = Flow()
         next_flow_action = flow.get_next_flow_action(
             activity_detail.flow_define.flow_id, action_id)
@@ -1124,7 +1167,7 @@ def get_journal(method, value):
     '/activity/action/<string:activity_id>/<int:action_id>'
     '/cancel',
     methods=['POST'])
-@login_required
+@login_required_customize
 @check_authority
 def cancel_action(activity_id='0', action_id=0):
     """Next action."""
@@ -1183,18 +1226,25 @@ def cancel_action(activity_id='0', action_id=0):
             action_status=ActionStatusPolicy.ACTION_DOING)
         return jsonify(code=-1, msg=_('Error! Cannot process quit activity!'))
 
+    if session.get("guest_url"):
+        url = session.get("guest_url")
+    else:
+        url = url_for('weko_workflow.display_activity', activity_id=activity_id)
+
+    if activity_detail.extra_info and \
+            activity_detail.extra_info.get('guest_mail'):
+        delete_guest_activity(activity_id)
+
     return jsonify(code=0,
                    msg=_('success'),
-                   data={'redirect': url_for(
-                       'weko_workflow.display_activity',
-                       activity_id=activity_id)})
+                   data={'redirect': url})
 
 
 @blueprint.route(
     '/activity/detail/<string:activity_id>/<int:action_id>'
     '/withdraw',
     methods=['POST'])
-@login_required
+@login_required_customize
 @check_authority
 def withdraw_confirm(activity_id='0', action_id='0'):
     """Check weko user info.
@@ -1249,12 +1299,15 @@ def withdraw_confirm(activity_id='0', action_id='0'):
                                 identifier_actionid,
                                 identifier)
 
+                if session.get("guest_url"):
+                    url = session.get("guest_url")
+                else:
+                    url = url_for('weko_workflow.display_activity',
+                                  activity_id=activity_id)
                 return jsonify(
                     code=0,
                     msg=_('success'),
-                    data={'redirect': url_for(
-                        'weko_workflow.display_activity',
-                        activity_id=activity_id)}
+                    data={'redirect': url}
                 )
             else:
                 return jsonify(code=-1, msg=_('DOI Persistent is not exist.'))
@@ -1456,7 +1509,7 @@ def send_mail(activity_id='0', mail_template=''):
 
 
 @blueprint.route('/save_activity_data', methods=['POST'])
-@login_required
+@login_required_customize
 def save_activity():
     """Save activity.
 
@@ -1504,3 +1557,33 @@ def usage_report():
                      "user_role": activity.role_name}
         activities_result.append(_activity)
     return jsonify(activities=activities_result)
+
+
+@blueprint.route('/get-data-init', methods=['GET'])
+@login_required
+def get_data_init():
+    """Init data."""
+    # Get workflow.
+    workflow = WorkFlow()
+    workflows = workflow.get_workflow_list()
+    init_workflows = []
+    for workflow in workflows:
+        if workflow.open_restricted:
+            init_workflows.append(
+                {'id': workflow.id, 'flows_name': workflow.flows_name})
+    # Get roles.
+    roles = Role.query.all()
+    init_roles = []
+    init_roles.append({'id': 'none_loggin', 'name': _('Guest')})
+    for role in roles:
+        init_roles.append({'id': role.id, 'name': role.name})
+    # Get term.
+    init_terms = []
+    init_terms.append({'id': 'term_free', 'name': _('Free Input')})
+    # TODO
+    for role in roles:
+        init_terms.append({'id': role.id, 'name': 'Term ' + str(role.id)})
+    return jsonify(
+        init_workflows=init_workflows,
+        init_roles=init_roles,
+        init_terms=init_terms)
