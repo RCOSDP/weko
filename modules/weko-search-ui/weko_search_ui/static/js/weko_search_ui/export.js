@@ -1,7 +1,8 @@
 const export_all_label = document.getElementById("export_all").value;
 const download_url_label = document.getElementById("download_url").value;
 const export_label = document.getElementById("export").value;
-const confirm_messaage = document.getElementById("confirm_messaage").value;
+const export_messaage = document.getElementById("export_messaage").value;
+const cancel_messaage = document.getElementById("cancel_messaage").value;
 const run_label = document.getElementById("run").value;
 const cancel_label = document.getElementById("cancel").value;
 
@@ -43,30 +44,52 @@ class ExportComponent extends React.Component {
       interval_time: 3000,
       isDisableExport: false,
       isDisableCancel: true,
+      isExport: false,
+      confirmMessage: ""
     }
     this.handleExport = this.handleExport.bind(this);
     this.handleCancel = this.handleCancel.bind(this);
-    this.handleRun = this.handleRun.bind(this);
     this.handleClose = this.handleClose.bind(this);
+    this.handleConfirm = this.handleConfirm.bind(this);
+    this.handleExecute = this.handleExecute.bind(this);
   }
 
   componentDidMount() {
     this.checkExportStatus();
   }
 
-  handleExport() {
+  handleExecute() {
+    const {
+      isExport
+    } = this.state
+    if (isExport) {
+      this.handleExport();
+    }
+    else {
+      this.handleCancel();
+    }
     this.setState({
-      show: true
+      show: false
+    });
+  }
+
+  handleConfirm(isExport) {
+    const me = this;
+    me.setState({
+      show: true,
+      isExport: isExport,
+      confirmMessage: isExport ? export_messaage : cancel_messaage
     });
   }
 
   handleCancel() {
+    const me = this;
     $.ajax({
       type: 'GET',
       url: urlCancelExport,
       success: function (response) {
         if (response.data) {
-          thisComponent.setState({
+          me.setState({
             isDisableExport: !response.data.cancel_status,
             isDisableCancel: response.data.cancel_status
           });
@@ -81,17 +104,14 @@ class ExportComponent extends React.Component {
     });
   }
 
-  handleRun() {
-    const thisComponent = this;
-    this.setState({
-      show: false
-    });
+  handleExport() {
+    const me = this;
     closeError();
     $.ajax({
       url: urlExportAll,
       type: 'GET',
       success: function () {
-        thisComponent.setState({
+        me.setState({
           isDisableExport: true,
           isDisableCancel: false
         });
@@ -106,7 +126,7 @@ class ExportComponent extends React.Component {
   }
 
   checkExportStatus() {
-    const thisComponent = this;
+    const me = this;
     closeError();
     $.ajax({
       type: 'GET',
@@ -115,14 +135,14 @@ class ExportComponent extends React.Component {
       async: false,
       success: function (response) {
         if (response.data) {
-          if (!thisComponent.state.checkExportSttInterval) {
-            let checkExportSttInterval = setInterval(thisComponent.checkExportStatus.bind(thisComponent),
-              thisComponent.state.interval_time);
-            thisComponent.setState({
+          if (!me.state.checkExportSttInterval) {
+            let checkExportSttInterval = setInterval(me.checkExportStatus.bind(me),
+              me.state.interval_time);
+            me.setState({
               checkExportSttInterval: checkExportSttInterval
             });
           }
-          thisComponent.setState({
+          me.setState({
             exportStatus: response.data.export_status,
             uriStatus: response.data.uri_status,
             isDisableExport: response.data.export_status,
@@ -151,7 +171,8 @@ class ExportComponent extends React.Component {
       isDisableExport,
       isDisableCancel,
       exportStatus,
-      uriStatus
+      uriStatus,
+      confirmMessage
     } = this.state
     return (
       <div className="export_component">
@@ -164,8 +185,8 @@ class ExportComponent extends React.Component {
             </div>
             <div className="row">
               <div className="col-xs-12 text-center">
-                <button disabled={isDisableExport} variant="primary" type="button" className="btn btn-primary" onClick={this.handleExport}>{export_label}</button>
-                <button disabled={isDisableCancel} variant="secondary" type="button" className="btn btn-primary cancel" onClick={this.handleCancel}>{cancel_label}</button>
+                <button disabled={isDisableExport} variant="primary" type="button" className="btn btn-primary" onClick={() => this.handleConfirm(true)}>{export_label}</button>
+                <button disabled={isDisableCancel} variant="secondary" type="button" className="btn btn-primary cancel" onClick={() => this.handleConfirm(false)}>{cancel_label}</button>
               </div>
             </div>
             <div className="row">
@@ -187,14 +208,14 @@ class ExportComponent extends React.Component {
           <ReactBootstrap.Modal.Body>
             <div className="col-12">
               <div className="row text-center">
-                {confirm_messaage}
+                {confirmMessage}
               </div>
             </div>
           </ReactBootstrap.Modal.Body>
           <ReactBootstrap.Modal.Footer>
             <div className="col-12">
               <div className="row text-center">
-                <button variant="primary" type="button" className="btn btn-default" onClick={this.handleRun}>{run_label}</button>
+                <button variant="primary" type="button" className="btn btn-default" onClick={this.handleExecute}>{run_label}</button>
                 <button variant="secondary" type="button" className="btn btn-default cancel" onClick={this.handleClose}>{cancel_label}</button>
               </div>
             </div>
