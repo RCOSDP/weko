@@ -292,7 +292,7 @@ msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:84
 msgid "Search"
-msgstr ""
+msgstr "検索"
 
 #: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:112
 msgid "Item list"
