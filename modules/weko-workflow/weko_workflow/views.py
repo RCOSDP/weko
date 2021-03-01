@@ -415,16 +415,11 @@ def display_activity(activity_id=0):
         deposit = WekoDeposit.get_record(item.id)
 
         # get files data after click Save btn
-        sessionstore = RedisStore(redis.StrictRedis.from_url(
-            'redis://{host}:{port}/1'.format(
-                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
-
-        if sessionstore.redis.exists('activity_item_' + str(activity_id)):
-            item_str = sessionstore.get('activity_item_' + str(activity_id))
-            item_json = json.loads(item_str.decode('utf-8'))
-            if 'files' in item_json:
-                files = item_json.get('files')
+        activity = WorkActivity()
+        metadata = activity.get_activity_metadata(activity_id)
+        item_json = json.loads(metadata.decode('utf-8'))
+        if 'files' in item_json:
+            files = item_json.get('files')
         if deposit and not files:
             files = to_files_js(deposit)
 

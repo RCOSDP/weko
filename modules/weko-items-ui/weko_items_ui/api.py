@@ -23,6 +23,7 @@ from flask_login import login_required
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemTypes
 from weko_records.utils import find_items
+from weko_workflow.api import WorkActivity
 
 from .permissions import item_permission
 from .utils import is_schema_include_key
@@ -54,16 +55,12 @@ def item_login(item_type_id=0):
             template_url = 'weko_items_ui/iframe/error.html'
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
-        sessionstore = RedisStore(redis.StrictRedis.from_url(
-            'redis://{host}:{port}/1'.format(
-                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
         activity_session = session['activity_info']
         activity_id = activity_session.get('activity_id', None)
-        if activity_id and sessionstore.redis.exists(
-                'activity_item_' + activity_id):
-            item_str = sessionstore.get('activity_item_' + activity_id)
-            item_json = json.loads(item_str)
+        if activity_id:
+            activity = WorkActivity()
+            metadata = activity.get_activity_metadata(activity_id)
+            item_json = json.loads(metadata)
             if 'metainfo' in item_json:
                 record = item_json.get('metainfo')
             if 'files' in item_json:
