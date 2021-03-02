@@ -27,22 +27,22 @@ from flask import abort, current_app, flash, json, jsonify, redirect, \
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
-from invenio_db import db
 from invenio_i18n.ext import current_i18n
+
+from invenio_db import db
 from weko_admin.models import AdminSettings, BillingPermission
 from weko_records.api import ItemsMetadata, ItemTypeEditHistory, \
     ItemTypeNames, ItemTypeProps, ItemTypes, Mapping
+from weko_records.serializers.utils import get_mapping
 from weko_schema_ui.api import WekoSchema
+from weko_search_ui.utils import get_key_by_property
 from weko_workflow.api import WorkFlow
-
 from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ATT, \
     WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT
 from .permissions import item_type_permission
 from .utils import check_duplicate_mapping, fix_json_schema, \
     has_system_admin_access, remove_xsd_prefix, \
     update_required_schema_not_exist_in_form
-from weko_records.serializers.utils import get_mapping
-from weko_search_ui.utils import get_key_by_property
 
 
 class ItemTypeMetaDataView(BaseView):
@@ -279,11 +279,11 @@ class ItemTypeMetaDataView(BaseView):
             name = k.name
             if lang and 'title_i18n' in k.form and \
                 lang in k.form['title_i18n'] and \
-                    k.form['title_i18n'][lang]:
+                k.form['title_i18n'][lang]:
                 name = k.form['title_i18n'][lang]
             is_file = False
             if (k.schema.get('properties')
-                    and k.schema.get('properties').get('filename')):
+                and k.schema.get('properties').get('filename')):
                 is_file = True
             tmp = {'name': name, 'schema': k.schema, 'form': k.form,
                    'forms': k.forms, 'sort': k.sort, 'is_file': is_file}
@@ -293,7 +293,8 @@ class ItemTypeMetaDataView(BaseView):
                 lists[k.id] = tmp
 
         settings = AdminSettings.get('default_properties_settings')
-        default_properties = current_app.config['WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES']
+        default_properties = current_app.config[
+            'WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES']
         if settings:
             if settings.show_flag:
                 lists['defaults'] = default_properties
@@ -324,7 +325,9 @@ class ItemTypePropertiesView(BaseView):
         lists = ItemTypeProps.get_records([])
         properties = lists.copy()
         defaults_property_ids = [prop.id for prop in lists if
-                                 prop.schema.get(WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT, None)]
+                                 prop.schema.get(
+                                     WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT,
+                                     None)]
         for item in lists:
             if item.id in defaults_property_ids:
                 properties.remove(item)
@@ -388,7 +391,7 @@ class ItemTypeMappingView(BaseView):
         :return: The rendered template.
         """
         try:
-            lists = ItemTypes.get_latest()    # ItemTypes.get_all()
+            lists = ItemTypes.get_latest()  # ItemTypes.get_all()
             if lists is None or len(lists) == 0:
                 return self.render(
                     current_app.config['WEKO_ITEMTYPE'
@@ -426,18 +429,18 @@ class ItemTypeMappingView(BaseView):
 
             for key in meta_system_items:
                 if isinstance(meta_system, dict) and meta_system.get(key) \
-                        and isinstance(meta_system[key], dict):
+                    and isinstance(meta_system[key], dict):
                     if meta_system[key]['title_i18n'] and cur_lang in \
                         meta_system[key]['title_i18n'] and \
                         meta_system[key]['title_i18n'][cur_lang] and \
-                            meta_system[key]['title_i18n'][cur_lang].strip():
+                        meta_system[key]['title_i18n'][cur_lang].strip():
                         meta_system[key]['title'] = \
                             meta_system[key]['title_i18n'][cur_lang]
                     else:
                         meta_system[key]['title'] = \
                             meta_system[key]['title_i18n']['en'] if \
-                            meta_system[key]['title_i18n'] and \
-                            meta_system[key]['title_i18n']['en'] else ''
+                                meta_system[key]['title_i18n'] and \
+                                meta_system[key]['title_i18n']['en'] else ''
 
             if isinstance(render_table_row, list):
                 table_rows.extend(render_table_row)
@@ -459,7 +462,7 @@ class ItemTypeMappingView(BaseView):
                                     elem_str = elem.get('title', '')
                             for sub_elem in elem['items']:
                                 if 'key' in sub_elem and \
-                                        sub_elem['key'] == key:
+                                    sub_elem['key'] == key:
                                     if 'title_i18n' in sub_elem:
                                         if cur_lang in sub_elem['title_i18n']:
                                             if len(
