@@ -404,7 +404,7 @@ def display_activity(activity_id=0):
             schema_form = (schema_form + "/{}").format(activity_id)
 
     # if 'approval' == action_endpoint:
-    if item:
+    if item and 'end_action' != action_endpoint:
         # get record data for the first time access to editing item screen
         recid = PersistentIdentifier.get_by_object(
             pid_type='recid', object_type='rec', object_uuid=item.id)
