@@ -18,17 +18,15 @@
 # MA 02111-1307, USA.
 #}
 
-{% macro check_download_file(record, file, permission, community, url_for_security, is_file_name_url) %}
+{% macro check_download_file(record, file, permission, community, url_for_security, is_file_name_url, file_label) %}
   {%- if not session['user_id'] -%}
     {%- set href_url = url_for_security('login', next=request.path) -%}
     {%- if is_file_name_url -%}
-      <a class="forcewrap"
-         href={{ href_url }}>{{ file.filename }}
-        ({{ file.size|filesizeformat }})</a>
+      <a class="forcewrap" href={{ href_url }}>{{ file_label }} ({{ file.size|filesizeformat }})</a>
       <br>
     {%- else -%}
-      {% set access_role = file.info().accessrole %}
-      {% set workflow_id = file.info() | get_usage_workflow %}
+      {% set access_role = file.accessrole %}
+      {% set workflow_id = file | get_usage_workflow %}
       {% set start_guest_wf = workflow_id is not none and access_role == "open_restricted" %}
       {% if start_guest_wf %}
         {% set workflow_detail = workflow_id | get_workflow_detail() %}
@@ -54,12 +52,11 @@
     {%- endif -%}
   {%- elif not permission -%}
     {%- set workflow_id = '' -%}
-    {%- set usage_workflow_id = file.info() | get_usage_workflow -%}
+    {%- set usage_workflow_id = file | get_usage_workflow -%}
     {%- if not usage_workflow_id -%}
       {%- set clickable = false -%}
       {%- if is_file_name_url -%}
-        <a class="forcewrap">{{ file.filename }}
-          ({{ file.size|filesizeformat }})</a>
+        <a class="forcewrap">{{ file_label }} ({{ file.size|filesizeformat }})</a>
         <br>
       {%- else -%}
         <input id="non-role-msg" type="hidden"
@@ -95,7 +92,7 @@
                 {%- endif -%}
            data-workflow-id="{{ workflow_id }}"
            href="{{ href_url }}">
-          {{ file.filename }} ({{ file.size|filesizeformat }})</a>
+          {{ file_label }} ({{ file.size|filesizeformat }})</a>
       {%- else -%}
         <a class="action-anchor" href="{{ href_url }}">
           <button id="btn-begin-{{ workflow_id }}"
@@ -115,9 +112,7 @@
     {%- set href_url = url_for('weko_workflow.display_activity', activity_id=permission.usage_application_activity_id) -%}
     {%- set href_url_item_title = href_url-%}
     {%- if is_file_name_url -%}
-      <a class="forcewrap"
-         href="{{ href_url_item_title }}">{{ file.filename }}
-        ({{ file.size|filesizeformat }})</a>
+      <a class="forcewrap" href="{{ href_url_item_title }}">{{ file_label }} ({{ file.size|filesizeformat }})</a>
       <br>
     {%- else -%}
       <a class="action-anchor" href="{{ href_url_item_title }}">
@@ -135,10 +130,7 @@
       {%- set href_url = file_url -%}
 
       {%- if is_file_name_url -%}
-        <a class="forcewrap"
-           href={{ href_url }}>{{ file.filename }}
-          ({{ file.size|filesizeformat }})
-        </a>
+        <a class="forcewrap" href={{ href_url }}>{{ file_label }} ({{ file.size|filesizeformat }}) </a>
         <br>
       {%- else -%}
         <a class="action-anchor" href="{{ href_url }}">

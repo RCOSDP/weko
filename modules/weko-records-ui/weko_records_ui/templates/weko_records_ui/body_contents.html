@@ -146,7 +146,7 @@
                             {%- set file_label = file.filename -%}
                           {%- endif -%}
                           <!-- version_id == '' => not upload file, but fill data for 'File Information' -->
-                          {%- if file.version_id == '' -%}
+                          {%- if file.version_id -%}
                             {%- if file.url.label -%}
                               {%- set file_label = file.url.label -%}
                             {%- elif file.url.url -%}
@@ -179,7 +179,7 @@
                             </a>
                             <br>
                           {%- elif clickable -%}
-                            {{ check_download_file(record, file, permission, community, url_for_security, is_file_name_url) }}
+                            {{ check_download_file(record, file, permission, community, url_for_security, is_file_name_url, file_label) }}
                           {%- else -%}
                             {%- set download_param = '?download=download-' + file.version_id %}
                             {%- set path = request.path + download_param %}
@@ -273,7 +273,7 @@
                               </button>
                             </a>
                           {%- elif clickable -%}
-                            {{ check_download_file(record, file, permission, community, url_for_security, is_file_name_url) }}
+                            {{ check_download_file(record, file, permission, community, url_for_security, is_file_name_url, file_label) }}
                           {%- elif not current_user.is_authenticated -%}
                             <!-- If user not login => redirect to login screen. -->
                             <!-- Auto click 'Download' button when logged in. -->
