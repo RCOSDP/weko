@@ -1915,6 +1915,22 @@ def get_data_by_property(record, item_map, item_property):
     return data, key
 
 
+def get_key_by_property(record, item_map, item_property):
+    """
+    Get data by property text.
+
+    :param item_property: property value in item_map
+    :return: error_list or None
+    """
+    key = item_map.get(item_property)
+    data = []
+    if not key:
+        current_app.logger.error(str(item_property) + ' jpcoar:mapping '
+                                                      'is not correct')
+        return None
+    return key
+
+
 def handle_check_date(list_record):
     """Support validate three pattern: yyyy-MM-dd, yyyy-MM, yyyy.
 

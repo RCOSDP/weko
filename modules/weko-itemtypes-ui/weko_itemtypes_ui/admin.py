@@ -41,6 +41,8 @@ from .permissions import item_type_permission
 from .utils import check_duplicate_mapping, fix_json_schema, \
     has_system_admin_access, remove_xsd_prefix, \
     update_required_schema_not_exist_in_form
+from weko_records.serializers.utils import get_mapping
+from weko_search_ui.utils import get_key_by_property
 
 
 class ItemTypeMetaDataView(BaseView):
@@ -72,6 +74,17 @@ class ItemTypeMetaDataView(BaseView):
         result = None
         if item_type_id > 0:
             result = ItemTypes.get_by_id(id_=item_type_id, with_deleted=True)
+            # Get sub-property has language
+            languageVsValue = []
+            item_type_mapping = Mapping.get_record(item_type_id)
+            item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
+            suffixes = '.@attributes.xml:lang'
+            for key in item_map:
+                # Get sub-property by format "parrent.subProperty.@attributes.xml:lang" and key.count(".") > 1
+                if key.find(suffixes) != -1:
+                    # get language
+                    _title_key = get_key_by_property(result, item_map, key)
+                    languageVsValue.append(_title_key)
         if result is None:
             result = {
                 'table_row': [],
@@ -86,7 +99,7 @@ class ItemTypeMetaDataView(BaseView):
             edit_notes = result.latest_edit_history
             result = result.render
             result['edit_notes'] = edit_notes
-
+        result['key_subproperty_languague'] = languageVsValue
         return jsonify(result)
 
     @expose('/delete', methods=['POST'])
