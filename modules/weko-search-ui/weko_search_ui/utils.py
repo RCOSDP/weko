@@ -39,16 +39,17 @@ from operator import getitem
 
 from flask import abort, current_app, request
 from flask_babelex import gettext as _
-from invenio_db import db
-from invenio_files_rest.models import ObjectVersion
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
-from invenio_records.api import Record
-from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch
 from jsonschema import Draft4Validator
+
+from invenio_db import db
+from invenio_files_rest.models import ObjectVersion
+from invenio_records.api import Record
+from invenio_records.models import RecordMetadata
 from weko_admin.models import SessionLifetime
 from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
@@ -66,7 +67,6 @@ from weko_workflow.models import FlowDefine, WorkFlow
 from weko_workflow.utils import IdentifierHandle, check_existed_doi, \
     get_identifier_setting, get_sub_item_value, item_metadata_validation, \
     register_hdl_by_handle, register_hdl_by_item_id, saving_doi_pidstore
-
 from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     RESOURCE_TYPE_URI, VERSION_TYPE_URI, \
     WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_EXTENSION, \
@@ -2494,6 +2494,7 @@ def get_key_by_property(record, item_map, item_property):
 def get_data_by_propertys(record, item_map, item_property):
     """
     Get data by property text.
+
     :param item_property: property value in item_map
     :return: error_list or None
     """
