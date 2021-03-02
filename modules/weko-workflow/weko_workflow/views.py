@@ -404,7 +404,7 @@ def display_activity(activity_id=0):
             schema_form = (schema_form + "/{}").format(activity_id)
 
     # if 'approval' == action_endpoint:
-    if item and 'end_action' != action_endpoint:
+    if item:
         # get record data for the first time access to editing item screen
         recid = PersistentIdentifier.get_by_object(
             pid_type='recid', object_type='rec', object_uuid=item.id)
@@ -417,9 +417,10 @@ def display_activity(activity_id=0):
         # get files data after click Save btn
         activity = WorkActivity()
         metadata = activity.get_activity_metadata(activity_id)
-        item_json = json.loads(metadata)
-        if 'files' in item_json:
-            files = item_json.get('files')
+        if metadata:
+            item_json = json.loads(metadata)
+            if 'files' in item_json:
+                files = item_json.get('files')
         if deposit and not files:
             files = to_files_js(deposit)
 
