@@ -107,7 +107,8 @@ WEKO_WORKFLOW_IDENTIFIER_GRANT_WITHDRAWN = -3
 WEKO_WORKFLOW_RESOURCE_TYPE_DDI = ['DDI']
 """DDI item type name."""
 
-WEKO_WORKFLOW_RESOURCE_TYPE_JOURNALARTICLE = ['article', 'conference paper',
+WEKO_WORKFLOW_RESOURCE_TYPE_JOURNALARTICLE = [
+    'article', 'conference paper',
     'data paper', 'departmental bulletin paper', 'editorial',
     'journal article', 'newspaper', 'other（プレプリント）', 'periodical',
     'review article', 'software paper']
@@ -127,7 +128,8 @@ WEKO_WORKFLOW_RESOURCE_TYPE_ELEARNING = ['learning object']
 WEKO_WORKFLOW_RESOURCE_TYPE_DATASET = ['dataset', 'software']
 """Resource type Dataset item list."""
 
-WEKO_WORKFLOW_RESOURCE_TYPE_GENERAL = ['cartographic material',
+WEKO_WORKFLOW_RESOURCE_TYPE_GENERAL = [
+    'cartographic material',
     'conference object', 'conference poster', 'conference proceedings',
     'data management plan', 'image', 'interactive resource',
     'internal report', 'interview', 'lecture', 'manuscript', 'map',
