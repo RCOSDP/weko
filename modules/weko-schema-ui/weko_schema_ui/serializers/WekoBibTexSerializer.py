@@ -106,7 +106,7 @@ class WekoBibTexSerializer():
                            'image', 'still image', 'moving image', 'video',
                            'sound',
                            'musical notation', 'interactive resource',
-                           'learning material', 'patent', 'dataset', 'software',
+                           'learning object', 'patent', 'dataset', 'software',
                            'workflow',
                            'other'],
         BibTexTypes.PHDTHESIS: ['doctoral thesis'],

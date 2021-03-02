@@ -934,19 +934,24 @@ RESOURCE_TYPE_MAP = {
     'doctoral thesis': 'Thesis',
     'thesis or dissertation': 'Thesis',
     'interactive resource': 'Multiple',
-    'learning material': 'Multiple',
+    'learning object': 'Multiple',
     'musical notation': 'Multiple',
     'research proposal': 'Multiple',
     'software': 'Multiple',
     'technical documentation': 'Multiple',
     'workflow': 'Multiple',
     'other': 'Multiple',
+    'data management plan': 'Report',
+    'interview': 'Dataset',
+    'manuscript': 'Multiple',
+    'newspaper': 'Article',
+    'software paper': 'Article',
 }
 
 RESOURCE_TYPE_URI = {
     'interactive resource':
         "http://purl.org/coar/resource_type/c_e9a0",
-    'learning material':
+    'learning object':
         "http://purl.org/coar/resource_type/c_1843",
     'musical notation':
         "http://purl.org/coar/resource_type/c_18cw",
@@ -1029,7 +1034,17 @@ RESOURCE_TYPE_URI = {
     'master thesis':
         "http://purl.org/coar/resource_type/c_bdcc",
     'doctoral thesis':
-        "http://purl.org/coar/resource_type/c_db06"
+        "http://purl.org/coar/resource_type/c_db06",
+    'data management plan':
+        "http://purl.org/coar/resource_type/c_ab20",
+    'interview':
+        "http://purl.org/coar/resource_type/c_26e4",
+    'manuscript':
+        "http://purl.org/coar/resource_type/c_0040",
+    'newspaper':
+        "http://purl.org/coar/resource_type/c_2fe3",
+    'software paper':
+        "http://purl.org/coar/resource_type/c_7bab",
 }
 
 

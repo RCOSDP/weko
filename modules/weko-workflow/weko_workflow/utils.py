@@ -207,26 +207,20 @@ def item_metadata_validation(
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
         return None
 
-    ddi_item_type_name = 'DDI'
-    journalarticle_type = ['other（プレプリント）', 'conference paper',
-                           'data paper', 'departmental bulletin paper',
-                           'editorial', 'journal article', 'periodical',
-                           'review article', 'article']
-    thesis_types = ['thesis', 'bachelor thesis', 'master thesis',
-                    'doctoral thesis']
-    report_types = ['technical report', 'research report', 'report',
-                    'book', 'book part']
-    elearning_type = ['learning material']
-    dataset_type = ['software', 'dataset']
-    datageneral_types = ['internal report', 'policy report', 'report part',
-                         'working paper', 'interactive resource',
-                         'musical notation', 'research proposal',
-                         'technical documentation', 'workflow',
-                         'その他（その他）', 'sound', 'patent',
-                         'cartographic material', 'map', 'lecture', 'image',
-                         'still image', 'moving image', 'video',
-                         'conference object', 'conference proceedings',
-                         'conference poster']
+    ddi_item_type_name = current_app.config[
+        'WEKO_WORKFLOW_RESOURCE_TYPE_DDI']
+    journalarticle_type = current_app.config[
+        'WEKO_WORKFLOW_RESOURCE_TYPE_JOURNALARTICLE']
+    thesis_types = current_app.config[
+        'WEKO_WORKFLOW_RESOURCE_TYPE_THESIS']
+    report_types = current_app.config[
+        'WEKO_WORKFLOW_RESOURCE_TYPE_REPORT']
+    elearning_type = current_app.config[
+        'WEKO_WORKFLOW_RESOURCE_TYPE_ELEARNING']
+    dataset_type = current_app.config[
+        'WEKO_WORKFLOW_RESOURCE_TYPE_DATASET']
+    datageneral_types = current_app.config[
+        'WEKO_WORKFLOW_RESOURCE_TYPE_GENERAL']
 
     metadata_item = MappingData(
         item_id) if item_id else MappingData(record=record)
@@ -243,7 +237,7 @@ def item_metadata_validation(
             'pmid': '',
             'doi': '',
             'url': '',
-            "msg": 'Resource Type Property either missing '
+            'msg': 'Resource Type Property either missing '
                    'or jpcoar mapping not correct!',
             'error_type': 'no_resource_type'
         }
@@ -256,9 +250,9 @@ def item_metadata_validation(
     resource_type = resource_type.pop()
     properties = {}
     # 必須
-    required_properties = []
+    requi_props = []
     # いずれか必須
-    either_properties = []
+    eithe_props = []
 
     # JaLC DOI identifier registration
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']:
@@ -267,63 +261,50 @@ def item_metadata_validation(
         # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
         # 別表2-6 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【汎用データ】
         if resource_type in journalarticle_type \
-                or resource_type in report_types \
-                or (resource_type in elearning_type) \
+            or resource_type in report_types \
+            or (resource_type in elearning_type) \
                 or resource_type in datageneral_types:
-            required_properties = ['title']
-            if item_type.item_type_name.name != ddi_item_type_name:
-                required_properties.append('fileURI')
+            requi_props = ['title']
         # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
         elif resource_type in thesis_types:
-            required_properties = ['title',
-                                   'creator']
-            if item_type.item_type_name.name != ddi_item_type_name:
-                required_properties.append('fileURI')
+            requi_props = ['title',
+                           'creator']
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif resource_type in dataset_type:
-            required_properties = ['title',
-                                   'givenName']
-            if item_type.item_type_name.name != ddi_item_type_name:
-                required_properties.append('fileURI')
-            either_properties = ['geoLocationPoint',
-                                 'geoLocationBox',
-                                 'geoLocationPlace']
+            requi_props = ['title',
+                           'givenName']
+            eithe_props = ['geoLocationPoint',
+                           'geoLocationBox',
+                           'geoLocationPlace']
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']:
         if resource_type in journalarticle_type:
-            required_properties = ['title',
-                                   'publisher',
-                                   'sourceIdentifier',
-                                   'sourceTitle']
-            if item_type.item_type_name.name != ddi_item_type_name:
-                required_properties.append('fileURI')
+            requi_props = ['title',
+                           'publisher',
+                           'sourceIdentifier',
+                           'sourceTitle']
         elif resource_type in report_types:
-            required_properties = ['title']
-            if item_type.item_type_name.name != ddi_item_type_name:
-                required_properties.append('fileURI')
+            requi_props = ['title']
         elif resource_type in thesis_types:
-            required_properties = ['title',
-                                   'creator']
-            if item_type.item_type_name.name != ddi_item_type_name:
-                required_properties.append('fileURI')
-    # DataCite DOI identifier registration
-    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI'] \
-            and item_type.item_type_name.name != ddi_item_type_name:
-        required_properties = ['fileURI']
-    # NDL JaLC DOI identifier registration
-    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI'] \
-            and item_type.item_type_name.name != ddi_item_type_name:
-        required_properties = ['fileURI']
+            requi_props = ['title',
+                           'creator']
+    # # DataCite DOI identifier registration
+    # elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI']:
+    # # NDL JaLC DOI identifier registration
+    # elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI']:
 
-    if required_properties:
-        properties['required'] = required_properties
-    if either_properties:
-        properties['either'] = either_properties
+    if item_type.item_type_name.name not in ddi_item_type_name:
+        requi_props = ['fileURI']
+
+    if requi_props:
+        properties['required'] = requi_props
+    if eithe_props:
+        properties['either'] = eithe_props
 
     if properties and \
-            ((identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI']
-              and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI']
-              ) or is_import):
+        ((identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI']
+          and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI']
+          ) or is_import):
         return validation_item_property(metadata_item, properties)
     else:
         return _('Cannot register selected DOI for current Item Type of this '
