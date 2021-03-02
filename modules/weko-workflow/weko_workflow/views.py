@@ -32,7 +32,7 @@ from flask import Blueprint, abort, current_app, jsonify, render_template, \
     request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
-from invenio_accounts.models import Role, userrole
+from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
@@ -55,7 +55,8 @@ from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
-from weko_records_ui.utils import get_list_licence
+from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
+    get_workflows
 from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from werkzeug.utils import import_string
@@ -64,7 +65,7 @@ from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
-from .models import ActionStatusPolicy, ActivityAction
+from .models import ActionStatusPolicy, Activity, ActivityAction
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import IdentifierHandle, auto_fill_title, check_continue, \
     delete_cache_data, delete_guest_activity, filter_all_condition, \
@@ -713,8 +714,6 @@ def check_authority_action(activity_id='0', action_id=0,
     # If action_roles is not set
     # or action roles does not contain any role of current_user:
     # Gather information
-    from invenio_accounts.models import User
-    from .models import Activity
     activity = Activity.query.filter_by(
         activity_id=activity_id).first()
     # If user is the author of activity
@@ -1563,26 +1562,9 @@ def usage_report():
 @login_required
 def get_data_init():
     """Init data."""
-    # Get workflow.
-    workflow = WorkFlow()
-    workflows = workflow.get_workflow_list()
-    init_workflows = []
-    for workflow in workflows:
-        if workflow.open_restricted:
-            init_workflows.append(
-                {'id': workflow.id, 'flows_name': workflow.flows_name})
-    # Get roles.
-    roles = Role.query.all()
-    init_roles = []
-    init_roles.append({'id': 'none_loggin', 'name': _('Guest')})
-    for role in roles:
-        init_roles.append({'id': role.id, 'name': role.name})
-    # Get term.
-    init_terms = []
-    init_terms.append({'id': 'term_free', 'name': _('Free Input')})
-    # TODO
-    for role in roles:
-        init_terms.append({'id': role.id, 'name': 'Term ' + str(role.id)})
+    init_workflows = get_workflows()
+    init_roles = get_roles()
+    init_terms = get_terms()
     return jsonify(
         init_workflows=init_workflows,
         init_roles=init_roles,

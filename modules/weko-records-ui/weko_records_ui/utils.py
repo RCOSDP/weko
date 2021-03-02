@@ -29,6 +29,7 @@ from typing import NoReturn, Tuple
 from flask import current_app, request
 from flask_babelex import gettext as _
 from flask_login import current_user
+from invenio_accounts.models import Role
 from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -38,6 +39,7 @@ from weko_admin.models import AdminSettings
 from weko_deposit.api import WekoDeposit
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
+from weko_workflow.api import WorkFlow
 
 from .models import FileOnetimeDownload, FilePermission
 from .permissions import check_create_usage_report, \
@@ -562,6 +564,15 @@ def get_file_info_list(record):
                     p_file['download_preview_message'] = _(message).format(
                         pdt.year, pdt.month, pdt.day)
 
+    def get_data_by_key_array_json(key, array_json, get_key):
+        for item in array_json:
+            if str(item.get('id')) == str(key):
+                return item.get(get_key)
+
+    workflows = get_workflows()
+    roles = get_roles()
+    terms = get_terms()
+
     is_display_file_preview = False
     files = []
     for key in record:
@@ -593,6 +604,21 @@ def get_file_info_list(record):
                     # Get file size and convert to byte.
                     f['size'] = get_file_size(f)
                     f['mimetype'] = f.get('format', '')
+                    term = f.get("terms")
+                    if term:
+                        f["terms"] = get_data_by_key_array_json(
+                            term, terms, 'name')
+                    provide = f.get("provide")
+                    if provide:
+                        for p in provide:
+                            workflow = p.get('workflow')
+                            if workflow:
+                                p['workflow'] = get_data_by_key_array_json(
+                                    workflow, workflows, 'flows_name')
+                            role = p.get('role')
+                            if role:
+                                p['role'] = get_data_by_key_array_json(
+                                    role, roles, 'name')
                     files.append(f)
     return is_display_file_preview, files
 
@@ -737,3 +763,45 @@ def update_onetime_download_count(file_name: str, record_id: str,
     return FileOnetimeDownload.update_download_count(
         file_name=file_name, record_id=record_id, user_mail=user_mail
     )
+
+
+def get_workflows():
+    """Get workflow.
+
+    @return:
+    """
+    workflow = WorkFlow()
+    workflows = workflow.get_workflow_list()
+    init_workflows = []
+    for workflow in workflows:
+        if workflow.open_restricted:
+            init_workflows.append(
+                {'id': workflow.id, 'flows_name': workflow.flows_name})
+    return init_workflows
+
+
+def get_roles():
+    """Get roles.
+
+    @return:
+    """
+    roles = Role.query.all()
+    init_roles = []
+    init_roles.append({'id': 'none_loggin', 'name': _('Guest')})
+    for role in roles:
+        init_roles.append({'id': role.id, 'name': role.name})
+    return init_roles
+
+
+def get_terms():
+    """Get terms.
+
+    @return:
+    """
+    init_terms = []
+    init_terms.append({'id': 'term_free', 'name': _('Free Input')})
+    # TODO
+    roles = Role.query.all()
+    for role in roles:
+        init_terms.append({'id': role.id, 'name': 'Term ' + str(role.id)})
+    return init_terms
