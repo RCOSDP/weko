@@ -487,7 +487,7 @@ def sort_meta_data_by_options(record_hit):
             solst_dict_array.append(temp)
         return solst_dict_array
 
-    def convertStringBibinfor(data_sys_bibliographic):
+    def convert_bibliographic(data_sys_bibliographic):
         list_data = []
         for bibliographic_value in data_sys_bibliographic:
             if bibliographic_value.get('title_attribute_name'):
@@ -497,23 +497,35 @@ def sort_meta_data_by_options(record_hit):
                 for key in magazine:
                     list_data.append(key + ' ' + magazine[key])
         return ", ".join(list_data)
-    
+
     def data_comment(result, data_result, stt_key, is_specify_newline_array):
         for idx, key in enumerate(stt_key):
             lang_id = ''
-            if 'lang_id' in data_result[key]:
-                lang_id = data_result[key].get('lang_id') if "[]" not in data_result[key].get('lang_id')\
-                    else data_result[key].get('lang_id').replace("[]", '')
+            if data_result[key] is not None:
+                if 'lang_id' in data_result[key]:
+                    lang_id = data_result[key].get('lang_id') if "[]" not in \
+                                                                 data_result[
+                                                                     key].get(
+                                                                     'lang_id') \
+                        else data_result[key].get('lang_id').replace("[]", '')
                 for idx2, d in enumerate(data_result.get(key)):
                     if d not in "lang" and d not in "lang_id":
                         lang_arr = []
                         value_arr = []
                         if ('lang' in data_result[key]):
                             lang_arr = data_result[key].get('lang')
-                        if (key in data_result) and (d in data_result[key]) and ('value' in data_result[key][d]):
+                        if (key in data_result) and (
+                            d in data_result[key]) and (
+                                'value' in data_result[key][d]):
                             value_arr = data_result[key][d]['value']
-                            value = selected_value_by_language(lang_arr, value_arr, lang_id, d.replace("[]", ''),
-                                web_screen_lang['selected'], _item_metadata)
+                            value = selected_value_by_language(lang_arr,
+                                                               value_arr,
+                                                               lang_id,
+                                                               d.replace("[]",
+                                                                         ''),
+                                                               web_screen_lang[
+                                                                   'selected'],
+                                                               _item_metadata)
                         if value is not None and len(value) > 0:
                             for index, n in enumerate(is_specify_newline_array):
                                 if d in n:
@@ -550,10 +562,14 @@ def sort_meta_data_by_options(record_hit):
             if bibliographic_key is None \
                     and sys_bibliographic.is_bibliographic():
                 bibliographic_key = s['key']
-                data_bibliographic = sys_bibliographic.get_bibliographic_list(True)
-                result.append(convertStringBibinfor(data_bibliographic))
-            elif not (bibliographic_key is not None and bibliographic_key in s['key']) \
-                    and value and value not in _ignore_items or flag:
+                bibliographic = convert_bibliographic(
+                    sys_bibliographic.get_bibliographic_list(True))
+                stt_key.append(bibliographic_key)
+                is_specify_newline_array.append({s['key']: True})
+                data_result.update({
+                    bibliographic_key: {s['key']: {"value": [bibliographic]}}})
+            elif not (bibliographic_key is not None and bibliographic_key in s[
+                    'key']) and value and value not in _ignore_items or flag:
                 is_specify_newline = ''
                 is_hide = ''
                 is_show_list = ''
@@ -568,15 +584,18 @@ def sort_meta_data_by_options(record_hit):
                     is_hide = parent_option.get('hide') if parent_option.get(
                         'hide') else option.get('hide')
                     if 'creatorMails[].creatorMail' in s['key'] \
-                            or 'contributorMails[].contributorMail' in s['key'] \
+                        or 'contributorMails[].contributorMail' in s['key'] \
                             or 'mails[].mail' in s['key']:
                         is_hide = is_hide | hide_email_flag
                 if not is_hide and is_show_list and s['key'] or flag:
                     if not flag:
-                        data_result, stt_key = get_value_and_lang_by_key(s['key'], solst_dict_array, data_result, stt_key)
-                        is_specify_newline_array.append({s['key']: is_specify_newline})
+                        data_result, stt_key = get_value_and_lang_by_key(
+                            s['key'], solst_dict_array, data_result, stt_key)
+                        is_specify_newline_array.append(
+                            {s['key']: is_specify_newline})
                     if flag and len(data_result) > 0:
-                        result = data_comment(result, data_result, stt_key, is_specify_newline_array)
+                        result = data_comment(result, data_result, stt_key,
+                                              is_specify_newline_array)
         return result
 
     def get_file_comments(record, files):
@@ -611,8 +630,10 @@ def sort_meta_data_by_options(record_hit):
             subitem_thumbnails = thumbnails[0].get('subitem_thumbnail')
             if subitem_thumbnails and len(subitem_thumbnails) > 0:
                 thumbnail = {
-                    'thumbnail_label': subitem_thumbnails[0].get('thumbnail_label', ''),
-                    'thumbnail_width': current_app.config['WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL']
+                    'thumbnail_label': subitem_thumbnails[0].get(
+                        'thumbnail_label', ''),
+                    'thumbnail_width': current_app.config[
+                        'WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL']
                 }
         return thumbnail
 
@@ -624,37 +645,45 @@ def sort_meta_data_by_options(record_hit):
             or src.get('item_type_id')
         item_type_mapping = Mapping.get_record(item_type_id)
         item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
-        LanguageVsValue = {}
+        language_dict = {}
         suffixes = '.@attributes.xml:lang'
         for key in item_map:
             if key.find(suffixes) != -1:
                 # get language
-                title_languages, _title_key = get_data_by_propertys(_item_metadata, item_map, key)
+                title_languages, _title_key = get_data_by_propertys(
+                    _item_metadata, item_map, key)
                 # get value
                 prefix = key.replace(suffixes, '')
-                title_values, _title_key1 = get_data_by_propertys(_item_metadata, item_map, prefix + '.@value')
-                LanguageVsValue = {**LanguageVsValue, **{prefix: {'lang': title_languages, 'lang-id': _title_key, 'val': title_values, 'val-id': _title_key1}}}
+                title_values, _title_key1 = get_data_by_propertys(
+                    _item_metadata, item_map, prefix + '.@value')
+                language_dict.update({
+                    prefix: {'lang': title_languages, 'lang-id': _title_key,
+                             'val': title_values, 'val-id': _title_key1}})
         # selected title
-        title_Obj = LanguageVsValue.get("title", None)
-        language_priority = False
-        if title_Obj is not None:
-            lang_arr = title_Obj.get("lang", None)
-            val_arr = title_Obj.get("val", None)
-            lang_id = title_Obj.get("lang-id", None)
-            val_id = title_Obj.get("val-id", None)
-            if lang_arr is not None and len(lang_arr) > 0 and lang_arr is not "null":
-                result = selected_value_by_language(lang_arr, val_arr, lang_id, val_id, web_screen_lang['selected'], _item_metadata)
+        title_obj = language_dict.get("title", None)
+        if title_obj is not None:
+            lang_arr = title_obj.get("lang", None)
+            val_arr = title_obj.get("val", None)
+            lang_id = title_obj.get("lang-id", None)
+            val_id = title_obj.get("val-id", None)
+            if lang_arr is not None and len(
+                    lang_arr) > 0 and lang_arr != "null":
+                result = selected_value_by_language(lang_arr, val_arr, lang_id,
+                                                    val_id,
+                                                    web_screen_lang['selected'],
+                                                    _item_metadata)
                 if result is not None:
                     for idx, val in enumerate(record_hit['_source']['title']):
                         if val == result:
                             arr = []
-                            record_hit['_source']['title'][idx] = record_hit['_source']['title'][0]
+                            record_hit['_source']['title'][idx] = \
+                                record_hit['_source']['title'][0]
                             record_hit['_source']['title'][0] = result
                             arr.append(result)
                             record_hit['_source']['_comment'] = arr
                             break
-        item_type_id = record_hit['_source'].get('item_type_id') \
-            or src.get('item_type_id')
+        item_type_id = record_hit['_source'].get('item_type_id') or src.get(
+            'item_type_id')
         if not item_type_id:
             return
         solst, meta_options = get_options_and_order_list(item_type_id)
@@ -695,7 +724,8 @@ def sort_meta_data_by_options(record_hit):
                             }
                             break
         settings = AdminSettings.get('items_display_settings')
-        items = get_comment(solst_dict_array, not settings.items_display_email, _item_metadata,
+        items = get_comment(solst_dict_array, not settings.items_display_email,
+                            _item_metadata,
                             src_default, solst)
         if items:
             if record_hit['_source'].get('_comment'):
@@ -982,8 +1012,9 @@ def remove_weko2_special_character(s: str):
     return esc_str
 
 
-def selected_value_by_language(lang_array, value_array, lang_id, val_id, lang_selected, _item_metadata):
-    """select value by language.
+def selected_value_by_language(lang_array, value_array, lang_id, val_id,
+                               lang_selected, _item_metadata):
+    """Select value by language.
 
     @param lang_array:
     @param value_array:
@@ -999,27 +1030,32 @@ def selected_value_by_language(lang_array, value_array, lang_id, val_id, lang_se
                 for idx, lang in enumerate(lang_array):
                     lang_array[idx] = lang.strip()
             if lang_selected in lang_array:  # Web screen display language
-                value = check_info_in_metadata(lang_id, val_id, lang_selected, _item_metadata)
+                value = check_info_in_metadata(lang_id, val_id, lang_selected,
+                                               _item_metadata)
                 if value is not None:
                     return value
             if "en" in lang_array:  # English
-                value = check_info_in_metadata(lang_id, val_id, "en", _item_metadata)
+                value = check_info_in_metadata(lang_id, val_id, "en",
+                                               _item_metadata)
                 if value is not None:
                     return value
-            if len(lang_array) > 0:  # 1st language when registering items
+            # 1st language when registering items
+            if len(lang_array) > 0:
                 for idx, lg in enumerate(lang_array):
                     if len(lg) > 0:
-                        value = check_info_in_metadata(lang_id, val_id, lg, _item_metadata)
+                        value = check_info_in_metadata(lang_id, val_id, lg,
+                                                       _item_metadata)
                         if value is not None:
                             return value
-            if len(value_array) > 0:  # 1st value when registering without language
+            # 1st value when registering without language
+            if len(value_array) > 0:
                 return value_array[0]
     else:
         return None
 
 
 def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
-    """check language and info corresponding in metadata.
+    """Check language and info corresponding in metadata.
 
     @param str_key_lang:
     @param str_key_val:
@@ -1027,7 +1063,9 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
     @param metadata:
     @return
     """
-    if len(str_key_lang) > 0 and (len(str_lang) > 0 or str_lang is None) and len(metadata) > 0 and str_key_val is not None and len(str_key_val) > 0:
+    if len(str_key_lang) > 0 and (
+        len(str_lang) > 0 or str_lang is None) and len(
+            metadata) > 0 and str_key_val is not None and len(str_key_val) > 0:
         if '.' in str_key_lang:
             str_key_lang = str_key_lang.split('.')
         if '.' in str_key_val:
@@ -1037,7 +1075,8 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
             obj = metadata.get(str_key_lang[0]).get('attribute_value_mlt')
             save = obj
             for ob in str_key_lang:
-                if ob not in str_key_lang[0] and ob not in str_key_lang[len(str_key_lang) - 1]:
+                if ob not in str_key_lang[0] and ob not in str_key_lang[
+                        len(str_key_lang) - 1]:
                     for x in save:
                         if x.get(ob):
                             save = x.get(ob)
@@ -1046,14 +1085,19 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
                     value = s.get(str_key_val[len(str_key_val) - 1]).strip()
                     if len(value) > 0:
                         return value
-                if (s is not None) and (s.get(str_key_lang[len(str_key_lang) - 1]) is not None) and (s.get(str_key_val[len(str_key_val) - 1]) is not None):
-                    if (s.get(str_key_lang[len(str_key_lang) - 1]).strip() == str_lang.strip()) and (str_key_val[len(str_key_val) - 1] in s) and len(s.get(str_key_val[len(str_key_val) - 1]).strip()) > 0:
+                if (s is not None) and (s.get(
+                    str_key_lang[len(str_key_lang) - 1]) is not None) and (
+                        s.get(str_key_val[len(str_key_val) - 1]) is not None):
+                    if (s.get(str_key_lang[len(
+                        str_key_lang) - 1]).strip() == str_lang.strip()) and (
+                        str_key_val[len(str_key_val) - 1] in s) and len(
+                            s.get(str_key_val[len(str_key_val) - 1]).strip()) > 0:
                         return s.get(str_key_val[len(str_key_val) - 1])
     return None
 
 
 def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
-    """get value and lang in json by key.
+    """Get value and lang in json by key.
 
     @param key:
     @param data_json:
@@ -1066,7 +1110,8 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
         key_split = key.split(".")
         if len(key_split) > 1:
             for i, k in enumerate(key_split):
-                if k == key_split[len(key_split) - 1] and i == (len(key_split) - 1):
+                if k == key_split[len(key_split) - 1] and i == (
+                        len(key_split) - 1):
                     break
                 save_key += str(k + ".") if i < len(key_split) - 2 else str(k)
         for j in data_json:
@@ -1075,12 +1120,16 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
                 if save_key not in data_result.keys():
                     stt_key.append(save_key)
                     data_result = {**data_result, **{save_key: {}}}
-                if save_key in data_result.keys() and (j["title"] in "Language") or (j["title_ja"] in "Language") \
-                     or (j["title_ja"] in "言語") or (j["title"] in "言語"):
-                    data_result[save_key] = {**data_result[save_key], **{'lang': j["value"].split(","), "lang_id": key}}
+                if save_key in data_result.keys() and (
+                    j["title"] in "Language") or (j["title_ja"] in "Language") \
+                        or (j["title_ja"] in "言語") or (j["title"] in "言語"):
+                    data_result[save_key] = {**data_result[save_key],
+                                             **{'lang': j["value"].split(","),
+                                                "lang_id": key}}
                     flag = True
                 if key not in data_result[save_key] and not flag:
-                    data_result[save_key] = {**data_result[save_key], **{key: {'value': j["value"].split(",")}}}
+                    data_result[save_key] = {**data_result[save_key], **{
+                        key: {'value': j["value"].split(",")}}}
         return data_result, stt_key
     else:
         return None
