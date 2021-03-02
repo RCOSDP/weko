@@ -60,16 +60,17 @@ def item_login(item_type_id=0):
         if activity_id:
             activity = WorkActivity()
             metadata = activity.get_activity_metadata(activity_id)
-            item_json = json.loads(metadata)
-            if 'metainfo' in item_json:
-                record = item_json.get('metainfo')
-            if 'files' in item_json:
-                files = item_json.get('files')
-                files_thumbnail = [i for i in files
-                                   if 'is_thumbnail' in i.keys()
-                                   and i['is_thumbnail']]
-            if 'endpoints' in item_json:
-                endpoints = item_json.get('endpoints')
+            if metadata:
+                item_json = json.loads(metadata)
+                if 'metainfo' in item_json:
+                    record = item_json.get('metainfo')
+                if 'files' in item_json:
+                    files = item_json.get('files')
+                    files_thumbnail = [i for i in files
+                                    if 'is_thumbnail' in i.keys()
+                                    and i['is_thumbnail']]
+                if 'endpoints' in item_json:
+                    endpoints = item_json.get('endpoints')
 
         need_file, need_billing_file = is_schema_include_key(item_type.schema)
 

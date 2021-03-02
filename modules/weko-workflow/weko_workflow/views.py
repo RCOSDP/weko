@@ -417,7 +417,7 @@ def display_activity(activity_id=0):
         # get files data after click Save btn
         activity = WorkActivity()
         metadata = activity.get_activity_metadata(activity_id)
-        item_json = json.loads(metadata.decode('utf-8'))
+        item_json = json.loads(metadata)
         if 'files' in item_json:
             files = item_json.get('files')
         if deposit and not files:

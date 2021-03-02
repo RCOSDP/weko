@@ -153,13 +153,14 @@ def iframe_index(item_type_id=0):
         if activity_id:
             activity = WorkActivity()
             metadata = activity.get_activity_metadata(activity_id)
-            item_json = json.loads(metadata)
-            if 'metainfo' in item_json:
-                record = item_json.get('metainfo')
-            if 'files' in item_json:
-                files = item_json.get('files')
-            if 'endpoints' in item_json:
-                endpoints = item_json.get('endpoints')
+            if metadata:
+                item_json = json.loads(metadata)
+                if 'metainfo' in item_json:
+                    record = item_json.get('metainfo')
+                if 'files' in item_json:
+                    files = item_json.get('files')
+                if 'endpoints' in item_json:
+                    endpoints = item_json.get('endpoints')
         need_file, need_billing_file = is_schema_include_key(item_type.schema)
 
         return render_template(
@@ -195,8 +196,7 @@ def iframe_save_model():
             sanitize_input_data(data)
             save_title(activity_id, data)
             activity = WorkActivity()
-            activity.upt_activity_metadata(
-                activity_id, json.dumps(data).encode('utf-8'))
+            activity.upt_activity_metadata(activity_id, json.dumps(data))
     except Exception as ex:
         current_app.logger.exception(str(ex))
         return jsonify(code=1, msg='Model save error')
@@ -520,13 +520,14 @@ def default_view_method(pid, record, template=None):
     if activity_id:
         activity = WorkActivity()
         metadata = activity.get_activity_metadata(activity_id)
-        item_json = json.loads(metadata)
-        if 'metainfo' in item_json:
-            record = item_json.get('metainfo')
-        if 'files' in item_json:
-            files = item_json.get('files')
-        if 'endpoints' in item_json:
-            endpoints = item_json.get('endpoints')
+        if metadata:
+            item_json = json.loads(metadata)
+            if 'metainfo' in item_json:
+                record = item_json.get('metainfo')
+            if 'files' in item_json:
+                files = item_json.get('files')
+            if 'endpoints' in item_json:
+                endpoints = item_json.get('endpoints')
     need_file, need_billing_file = is_schema_include_key(item_type.schema)
 
     return render_template(
