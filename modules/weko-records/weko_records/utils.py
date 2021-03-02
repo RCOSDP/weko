@@ -1121,8 +1121,10 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
                     stt_key.append(save_key)
                     data_result = {**data_result, **{save_key: {}}}
                 if save_key in data_result.keys() and (
-                    j["title"] in "Language") or (j["title_ja"] in "Language") \
-                        or (j["title_ja"] in "言語") or (j["title"] in "言語"):
+                    j["title"].strip() in "Language") or (
+                    j["title_ja"].strip() in "Language") \
+                    or (j["title_ja"].strip() in "言語") or (
+                        j["title"].strip() in "言語"):
                     data_result[save_key] = {**data_result[save_key],
                                              **{'lang': j["value"].split(","),
                                                 "lang_id": key}}
