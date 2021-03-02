@@ -483,3 +483,7 @@ msgstr ""
 
 msgid "Your session has timed out. Please login again."
 msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_detail.html:266
+msgid "Quit_Approval"
+msgstr "Quit"

@@ -524,3 +524,15 @@ msgstr "このアクティビティのロックを解除してよろしいでし
 
 msgid "Your session has timed out. Please login again."
 msgstr "セッションが切れました。再度ログインしてください。"
+
+#: weko_workflow/templates/weko_workflow/activity_detail.html:260
+msgid "Reject"
+msgstr "却下"
+
+#: weko_workflow/templates/weko_workflow/activity_detail.html:263
+msgid "Approval"
+msgstr "承認"
+
+#: weko_workflow/templates/weko_workflow/activity_detail.html:266
+msgid "Quit_Approval"
+msgstr "強制終了"

@@ -257,14 +257,13 @@
                 <button type="button" class="btn btn-primary action-big-button" id="btn-approval-req">{{_('Approval Request')}}</button>
                 <button type="button" class="btn btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
               {%- elif 'approval' == cur_step %}
-                <button type="button" class="btn btn-danger action-button" id="btn-return">{{_('Return')}}</button>
                 <button type="button" class="btn btn-danger action-button" id="btn-reject">{{_('Reject')}}</button>
                 <button type="button" class="btn btn-primary save-button" id="btn-draft">
                   <span class="glyphicon glyphicon-saved"></span> {{_('Save')}}</button>
                 <button type="button" class="btn btn-info action-button" id="btn-approval">{{_('Approval')}}</button>
                 <button class="btn btn-danger done-button pull-right" id="btn_quit">
                   <i class="fa fa-sign-out"></i>
-                  {{_('Quit')}}</button>
+                  {{_('Quit_Approval')}}</button>
                 {% include "weko_workflow/modal_quit_confirmation.html" %}
               {%- endif %}
               {%- if 'double_check' == cur_step %}
