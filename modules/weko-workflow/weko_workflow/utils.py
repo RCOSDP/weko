@@ -78,6 +78,7 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
     identifier_val = ''
     doi_register_val = ''
     doi_register_typ = ''
+    doi_type_values = current_app.config['WEKO_WORKFLOW_DOI_TYPE_VALUES']
 
     if doi_select == IDENTIFIER_GRANT_LIST[1][0] and data.get(
             'identifier_grant_jalc_doi_link'):
@@ -85,28 +86,28 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
         jalcdoi_tail = (jalcdoi_link.split('//')[1]).split('/')
         identifier_val = jalcdoi_link
         doi_register_val = '/'.join(jalcdoi_tail[1:])
-        doi_register_typ = 'JaLC'
+        doi_register_typ = doi_type_values[1]
     elif doi_select == IDENTIFIER_GRANT_LIST[2][0] and data.get(
             'identifier_grant_jalc_cr_doi_link'):
         jalcdoi_cr_link = data.get('identifier_grant_jalc_cr_doi_link')
         jalcdoi_cr_tail = (jalcdoi_cr_link.split('//')[1]).split('/')
         identifier_val = jalcdoi_cr_link
         doi_register_val = '/'.join(jalcdoi_cr_tail[1:])
-        doi_register_typ = 'Crossref'
+        doi_register_typ = doi_type_values[2]
     elif doi_select == IDENTIFIER_GRANT_LIST[3][0] and data.get(
             'identifier_grant_jalc_dc_doi_link'):
         jalcdoi_dc_link = data.get('identifier_grant_jalc_dc_doi_link')
         jalcdoi_dc_tail = (jalcdoi_dc_link.split('//')[1]).split('/')
         identifier_val = jalcdoi_dc_link
         doi_register_val = '/'.join(jalcdoi_dc_tail[1:])
-        doi_register_typ = 'DataCite'
+        doi_register_typ = doi_type_values[3]
     elif is_feature_import and doi_select == IDENTIFIER_GRANT_LIST[4][0] \
             and data.get('identifier_grant_ndl_jalc_doi_link'):
         ndljalcdoi_dc_link = data.get('identifier_grant_ndl_jalc_doi_link')
         ndljalcdoi_dc_tail = (ndljalcdoi_dc_link.split('//')[1]).split('/')
         identifier_val = ndljalcdoi_dc_link
         doi_register_val = '/'.join(ndljalcdoi_dc_tail[1:])
-        doi_register_typ = 'NDL JaLC'
+        doi_register_typ = doi_type_values[4]
     else:
         current_app.logger.error(_('Identifier datas are empty!'))
 
@@ -1611,3 +1612,27 @@ def check_existed_doi(doi_link):
             respon['msg'] = _('success')
         respon['code'] = 0
     return respon
+
+
+def get_subitem_data(record: dict, key: str):
+    """Check a DOI is existed.
+
+    :param doi_link: DOI link.
+
+    :return:
+    """
+    if not record.get('item_type_id'):
+        return None
+
+    type_mapping = Mapping.get_record(record['item_type_id'])
+    item_map = get_mapping(type_mapping, 'jpcoar_mapping')
+    subkey = item_map.get(key)
+
+    subkeys = subkey.split('.')
+    ret = []
+
+    if record.get(subkeys[0]) and len(subkeys) == 2:
+        for data in record[subkeys[0]]['attribute_value_mlt']:
+            ret.append(data.get(subkeys[1]))
+
+    return ret

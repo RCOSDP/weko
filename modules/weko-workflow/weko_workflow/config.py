@@ -138,3 +138,11 @@ WEKO_WORKFLOW_RESOURCE_TYPE_GENERAL = [
     'technical documentation', 'video', 'workflow', 'working paper',
     'その他（その他）']
 """Resource type General item list."""
+
+WEKO_WORKFLOW_DOI_TYPE_VALUES = {
+    1: 'JaLC',
+    2: 'Crossref',
+    3: 'DataCite',
+    4: 'NDL JaLC'
+}
+"""Identifier Registration Type values."""

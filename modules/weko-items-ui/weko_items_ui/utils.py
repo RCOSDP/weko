@@ -1948,7 +1948,6 @@ def get_options_and_order_list(item_type_id):
     :param item_type_id:
     :return: options dict and item type mapping
     """
-    from weko_records.api import Mapping
     meta_options = get_options_list(item_type_id)
     item_type_mapping = Mapping.get_record(item_type_id)
     return meta_options, item_type_mapping

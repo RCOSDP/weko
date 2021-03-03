@@ -44,17 +44,18 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import cast
 from weko_accounts.api import ShibUser
 from weko_authors.models import Authors
-from weko_deposit.api import WekoDeposit
+from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.links import base_factory
 from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
 from weko_items_ui.api import item_login
-from weko_items_ui.utils import to_files_js
-from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata
+from weko_items_ui.utils import to_files_js, get_options_and_order_list
+from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, Mapping
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.utils import get_list_licence
 from werkzeug.utils import import_string
+from weko_records.serializers.utils import get_mapping
 
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
@@ -67,7 +68,7 @@ from .utils import IdentifierHandle, check_existed_doi, delete_cache_data, \
     get_activity_id_of_record_without_version, get_cache_data, \
     get_identifier_setting, handle_finish_workflow, is_hidden_pubdate, \
     is_show_autofill_metadata, item_metadata_validation, register_hdl, \
-    saving_doi_pidstore, update_cache_data
+    saving_doi_pidstore, update_cache_data, get_subitem_data
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -746,66 +747,79 @@ def next_action(activity_id='0', action_id=0):
 
     # save pidstore_identifier to ItemsMetadata
     identifier_select = post_json.get('identifier_grant')
-    if 'identifier_grant' == action_endpoint and identifier_select:
-        idf_grant_jalc_doi_manual = post_json.get(
-            'identifier_grant_jalc_doi_suffix')
-        idf_grant_jalc_cr_doi_manual = post_json.get(
-            'identifier_grant_jalc_cr_doi_suffix')
-        idf_grant_jalc_dc_doi_manual = post_json.get(
-            'identifier_grant_jalc_dc_doi_suffix')
-        idf_grant_ndl_jalc_doi_manual = post_json.get(
-            'identifier_grant_ndl_jalc_doi_suffix')
 
-        # If is action identifier_grant, then save to to database
-        identifier_grant = {
-            'action_identifier_select': identifier_select,
-            'action_identifier_jalc_doi': idf_grant_jalc_doi_manual,
-            'action_identifier_jalc_cr_doi': idf_grant_jalc_cr_doi_manual,
-            'action_identifier_jalc_dc_doi': idf_grant_jalc_dc_doi_manual,
-            'action_identifier_ndl_jalc_doi': idf_grant_ndl_jalc_doi_manual
-        }
+    if 'identifier_grant' == action_endpoint:
+        if identifier_select:
+            idf_grant_jalc_doi_manual = post_json.get(
+                'identifier_grant_jalc_doi_suffix')
+            idf_grant_jalc_cr_doi_manual = post_json.get(
+                'identifier_grant_jalc_cr_doi_suffix')
+            idf_grant_jalc_dc_doi_manual = post_json.get(
+                'identifier_grant_jalc_dc_doi_suffix')
+            idf_grant_ndl_jalc_doi_manual = post_json.get(
+                'identifier_grant_ndl_jalc_doi_suffix')
 
-        work_activity.create_or_update_action_identifier(
-            activity_id=activity_id,
-            action_id=action_id,
-            identifier=identifier_grant
-        )
+            # If is action identifier_grant, then save to to database
+            identifier_grant = {
+                'action_identifier_select': identifier_select,
+                'action_identifier_jalc_doi': idf_grant_jalc_doi_manual,
+                'action_identifier_jalc_cr_doi': idf_grant_jalc_cr_doi_manual,
+                'action_identifier_jalc_dc_doi': idf_grant_jalc_dc_doi_manual,
+                'action_identifier_ndl_jalc_doi': idf_grant_ndl_jalc_doi_manual
+            }
 
-        error_list = item_metadata_validation(item_id, identifier_select)
-
-        if post_json.get('temporary_save') == 1:
-            return jsonify(code=0, msg=_('success'))
-
-        if isinstance(error_list, str):
-            return jsonify(code=-1, msg=_(error_list))
-
-        sessionstore = RedisStore(redis.StrictRedis.from_url(
-            'redis://{host}:{port}/1'.format(
-                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
-        if error_list:
-            sessionstore.put(
-                'updated_json_schema_{}'.format(activity_id),
-                json.dumps(error_list).encode('utf-8'),
-                ttl_secs=300)
-            return previous_action(
+            work_activity.create_or_update_action_identifier(
                 activity_id=activity_id,
                 action_id=action_id,
-                req=-1
+                identifier=identifier_grant
             )
         else:
-            if sessionstore.redis.exists(
-                    'updated_json_schema_{}'.format(activity_id)):
-                sessionstore.delete(
-                    'updated_json_schema_{}'.format(activity_id))
+            _key = 'identifierRegistration.@attributes.identifierType'
+            record = WekoRecord.get_record_by_pid(current_pid.pid_value)
+            if record.pid_doi:
+                data = get_subitem_data(record, _key)
+                doi_type_values = current_app.config[
+                    'WEKO_WORKFLOW_DOI_TYPE_VALUES']
+                for value in doi_type_values:
+                    if data[0] == doi_type_values[value]:
+                        identifier_select = str(value)
 
-        if identifier_select != IDENTIFIER_GRANT_SELECT_DICT['NotGrant'] \
-                and item_id is not None:
-            record_without_version = item_id
-            if deposit and pid_without_ver and not recid:
-                record_without_version = pid_without_ver.object_uuid
-            saving_doi_pidstore(item_id, record_without_version, post_json,
-                                int(identifier_select))
+        if identifier_select:
+            error_list = item_metadata_validation(item_id, identifier_select)
+
+            if post_json.get('temporary_save') == 1:
+                return jsonify(code=0, msg=_('success'))
+
+            if isinstance(error_list, str):
+                return jsonify(code=-1, msg=_(error_list))
+
+            sessionstore = RedisStore(redis.StrictRedis.from_url(
+                'redis://{host}:{port}/1'.format(
+                    host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+                    port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+            if error_list:
+                sessionstore.put(
+                    'updated_json_schema_{}'.format(activity_id),
+                    json.dumps(error_list).encode('utf-8'),
+                    ttl_secs=300)
+                return previous_action(
+                    activity_id=activity_id,
+                    action_id=action_id,
+                    req=-1
+                )
+            else:
+                if sessionstore.redis.exists(
+                        'updated_json_schema_{}'.format(activity_id)):
+                    sessionstore.delete(
+                        'updated_json_schema_{}'.format(activity_id))
+
+            if identifier_select != IDENTIFIER_GRANT_SELECT_DICT['NotGrant'] \
+                    and item_id is not None:
+                record_without_version = item_id
+                if deposit and pid_without_ver and not recid:
+                    record_without_version = pid_without_ver.object_uuid
+                saving_doi_pidstore(item_id, record_without_version, post_json,
+                                    int(identifier_select))
 
     rtn = history.create_activity_history(activity)
     if not rtn:
