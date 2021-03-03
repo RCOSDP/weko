@@ -273,10 +273,10 @@
               {%- elif 'oa_policy' == cur_step %}
                 <button type="button" class="btn btn-primary save-button" id="btn-draft">
                   <span class="glyphicon glyphicon-saved"></span> {{_('Save')}}</button>
-                <button type="button" class="btn btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
+                <button type="button" class="btn btn-primary done-button" id="btn-finish">{{_('Next')}}</button>
                 <button class="btn btn-danger done-button pull-right" id="btn_quit">
                   <i class="fa fa-sign-out"></i>
-                  {{_('Quit')}}</button>
+                  {{_('QuitQO')}}</button>
                 {% include "weko_workflow/modal_quit_confirmation.html" %}
               {%- endif %}
               {%- if 'end_action' == cur_step %}

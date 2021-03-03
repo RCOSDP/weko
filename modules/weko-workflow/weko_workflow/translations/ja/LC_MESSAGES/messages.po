@@ -263,6 +263,10 @@ msgstr "次へ"
 msgid "Quit"
 msgstr "終了"
 
+#: weko_workflow/templates/weko_workflow/Activity_detail.html:306
+msgid "QuitQO"
+msgstr "強制終了"
+
 #: weko_workflow/templates/weko_workflow/index.html:29
 #, python-format
 msgid "Welcome to %(module_name)s"
