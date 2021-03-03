@@ -260,8 +260,8 @@ msgstr "次へ"
 
 #: weko_workflow/templates/weko_workflow/identifier_grant.html:106
 #: weko_workflow/templates/weko_workflow/item_link.html:130
-msgid "Quit"
-msgstr "終了"
+# msgid "Quit"
+# msgstr "終了"
 
 #: weko_workflow/templates/weko_workflow/Activity_detail.html:306
 msgid "QuitQO"
