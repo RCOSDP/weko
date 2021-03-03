@@ -613,10 +613,12 @@ def get_file_info_list(record):
                         for p in provide:
                             workflow = p.get('workflow')
                             if workflow:
+                                p['workflow_id'] = workflow
                                 p['workflow'] = get_data_by_key_array_json(
                                     workflow, workflows, 'flows_name')
                             role = p.get('role')
                             if role:
+                                p['role_id'] = role
                                 p['role'] = get_data_by_key_array_json(
                                     role, roles, 'name')
                     files.append(f)
