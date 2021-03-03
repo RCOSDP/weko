@@ -323,7 +323,7 @@ def get_usage_workflow(file_json):
         for role in roles:
             for data in provide:
                 if str(role.id) == data.get("role_id"):
-                    return data.get("workflow")
+                    return data.get("workflow_id")
     return None
 
 
