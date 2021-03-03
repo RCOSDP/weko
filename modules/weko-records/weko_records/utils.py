@@ -288,7 +288,7 @@ def find_items(form):
                 current_lang = current_i18n.language
             except Exception:
                 current_lang = 'en'
-            title_i18n = node.get('title_i18n', {})\
+            title_i18n = node.get('title_i18n', {}) \
                 .get(current_lang, title)
             option = {
                 'required': node.get('required', False),
@@ -322,6 +322,7 @@ def get_all_items(nlst, klst, is_get_name=False):
     :param is_get_name:
     :return: alst
     """
+
     def get_name(key):
         for lst in klst:
             key_arr = lst[0].split('.')
@@ -509,7 +510,8 @@ def sort_meta_data_by_options(record_hit):
                                                                      'lang_id') \
                         else data_result[key].get('lang_id').replace("[]", '')
                 data = ''
-                if "stt" in data_result[key] and data_result[key].get("stt") is not None:
+                if "stt" in data_result[key] and data_result[key].get(
+                        "stt") is not None:
                     data = data_result[key].get("stt")
                 else:
                     data = data_result.get(key)
@@ -524,15 +526,16 @@ def sort_meta_data_by_options(record_hit):
                                 'value' in data_result[key][d]):
                             value_arr = data_result[key][d]['value']
                             value = selected_value_by_language(lang_arr,
-                                                            value_arr,
-                                                            lang_id,
-                                                            d.replace("[]",
-                                                                        ''),
-                                                            web_screen_lang[
-                                                                'selected'],
-                                                            _item_metadata)
+                                                               value_arr,
+                                                               lang_id,
+                                                               d.replace("[]",
+                                                                         ''),
+                                                               web_screen_lang[
+                                                                   'selected'],
+                                                               _item_metadata)
                             if value is not None and len(value) > 0:
-                                for index, n in enumerate(is_specify_newline_array):
+                                for index, n in enumerate(
+                                        is_specify_newline_array):
                                     if d in n:
                                         if n[d] or len(result) == 0:
                                             result.append(value)
@@ -646,8 +649,8 @@ def sort_meta_data_by_options(record_hit):
         src_default = copy.deepcopy(record_hit['_source'].get('_item_metadata'))
         _item_metadata = copy.deepcopy(record_hit['_source'])
         src = record_hit['_source'].pop('_item_metadata')
-        item_type_id = record_hit['_source'].get('item_type_id') \
-            or src.get('item_type_id')
+        item_type_id = record_hit['_source'].get('item_type_id') or \
+            src.get('item_type_id')
         item_type_mapping = Mapping.get_record(item_type_id)
         item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
         language_dict = {}
@@ -705,7 +708,7 @@ def sort_meta_data_by_options(record_hit):
             mlt = val.get('attribute_value_mlt', [])
             if mlt:
                 if val.get('attribute_type', '') == 'file' \
-                        and not option.get("hidden") \
+                    and not option.get("hidden") \
                         and option.get("showlist"):
                     files_info = get_file_comments(src, mlt)
                     continue
@@ -809,10 +812,10 @@ def check_has_attribute_value(node):
 
 
 def get_attribute_value_all_items(
-        root_key,
-        nlst,
-        klst,
-        is_author=False,
+    root_key,
+    nlst,
+    klst,
+    is_author=False,
         hide_email_flag=True):
     """Convert and sort item list.
 
@@ -822,11 +825,12 @@ def get_attribute_value_all_items(
     :param is_author:
     :return: alst
     """
+
     def get_name(key):
         for lst in klst:
             keys = lst[0].replace("[]", "").split('.')
             if keys[0].startswith(root_key) and key == keys[-1]:
-                return lst[2] if not is_author else '{}.{}'. format(
+                return lst[2] if not is_author else '{}.{}'.format(
                     key, lst[2])
 
     def to_sort_dict(alst, klst):
@@ -1001,6 +1005,7 @@ def remove_weko2_special_character(s: str):
 
     :param s:
     """
+
     def __remove_special_character(_s_str: str):
         pattern = r"(^(&EMPTY&,|,&EMPTY&)|(&EMPTY&,|,&EMPTY&)$|&EMPTY&)"
         _s_str = re.sub(pattern, '', _s_str)
@@ -1137,7 +1142,7 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
                 if key not in data_result[save_key] and not flag:
                     if "stt" not in data_result[save_key]:
                         data_result[save_key] = {**data_result[save_key],
-                                             **{'stt': []}}
+                                                 **{'stt': []}}
                     if "stt" in data_result[save_key]:
                         data_result[save_key]["stt"].append(key)
                     data_result[save_key] = {**data_result[save_key], **{

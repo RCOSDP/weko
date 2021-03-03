@@ -77,10 +77,12 @@ class ItemTypeMetaDataView(BaseView):
             # Get sub-property has language
             languageVsValue = []
             item_type_mapping = Mapping.get_record(item_type_id)
-            item_map = get_mapping_inactive_show_list(item_type_mapping, 'jpcoar_mapping')
+            item_map = get_mapping_inactive_show_list(item_type_mapping,
+                                                      'jpcoar_mapping')
             suffixes = '.@attributes.xml:lang'
             for key in item_map:
-                # Get sub-property by format "parrent.subProperty.@attributes.xml:lang" and key.count(".") > 1
+                # Get sub-property by format "parrent.sub
+                # Property.@attributes.xml:lang" and key.count(".") > 1
                 if key.find(suffixes) != -1:
                     # get language
                     _title_key = get_key_by_property(result, item_map, key)
@@ -279,11 +281,11 @@ class ItemTypeMetaDataView(BaseView):
             name = k.name
             if lang and 'title_i18n' in k.form and \
                 lang in k.form['title_i18n'] and \
-                k.form['title_i18n'][lang]:
+                    k.form['title_i18n'][lang]:
                 name = k.form['title_i18n'][lang]
             is_file = False
             if (k.schema.get('properties')
-                and k.schema.get('properties').get('filename')):
+                    and k.schema.get('properties').get('filename')):
                 is_file = True
             tmp = {'name': name, 'schema': k.schema, 'form': k.form,
                    'forms': k.forms, 'sort': k.sort, 'is_file': is_file}
@@ -429,18 +431,18 @@ class ItemTypeMappingView(BaseView):
 
             for key in meta_system_items:
                 if isinstance(meta_system, dict) and meta_system.get(key) \
-                    and isinstance(meta_system[key], dict):
+                        and isinstance(meta_system[key], dict):
                     if meta_system[key]['title_i18n'] and cur_lang in \
                         meta_system[key]['title_i18n'] and \
                         meta_system[key]['title_i18n'][cur_lang] and \
-                        meta_system[key]['title_i18n'][cur_lang].strip():
+                            meta_system[key]['title_i18n'][cur_lang].strip():
                         meta_system[key]['title'] = \
                             meta_system[key]['title_i18n'][cur_lang]
                     else:
                         meta_system[key]['title'] = \
                             meta_system[key]['title_i18n']['en'] if \
-                                meta_system[key]['title_i18n'] and \
-                                meta_system[key]['title_i18n']['en'] else ''
+                            meta_system[key]['title_i18n'] and \
+                            meta_system[key]['title_i18n']['en'] else ''
 
             if isinstance(render_table_row, list):
                 table_rows.extend(render_table_row)
@@ -462,7 +464,7 @@ class ItemTypeMappingView(BaseView):
                                     elem_str = elem.get('title', '')
                             for sub_elem in elem['items']:
                                 if 'key' in sub_elem and \
-                                    sub_elem['key'] == key:
+                                        sub_elem['key'] == key:
                                     if 'title_i18n' in sub_elem:
                                         if cur_lang in sub_elem['title_i18n']:
                                             if len(

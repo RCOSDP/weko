@@ -25,12 +25,11 @@ from datetime import datetime
 
 import pytz
 from flask import request
+
 from invenio_db import db
 from weko_index_tree.api import Index
-
 from weko_records.api import Mapping
 from weko_records.models import ItemType, ItemTypeName, ItemTypeProperty
-
 from .dc import DcWekoBaseExtension, DcWekoEntryExtension
 from .feed import WekoFeedGenerator
 from .opensearch import OpensearchEntryExtension, OpensearchExtension
@@ -67,6 +66,7 @@ def get_mapping(item_type_mapping, mapping_type):
 
     return schema
 
+
 def get_mapping_inactive_show_list(item_type_mapping, mapping_type):
     """Format itemtype mapping data.
 
@@ -95,7 +95,7 @@ def get_mapping_inactive_show_list(item_type_mapping, mapping_type):
             for k, v in item_schema.items():
                 tempId = item_id + '.' + v if v else item_id
                 if k in schema:
-                    k = tempId  + k
+                    k = tempId + k
                 temp_schema[k] = tempId
             schema.update(temp_schema)
 
