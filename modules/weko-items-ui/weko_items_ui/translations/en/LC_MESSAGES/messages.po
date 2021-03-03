@@ -195,8 +195,8 @@ msgid "Save"
 msgstr "Save"
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:335
-msgid "SaveQO"
-msgstr "Save (※1)"
+# msgid "SaveQO"
+# msgstr "Save (※1)"
 
 msgid "Quit"
 msgstr ""

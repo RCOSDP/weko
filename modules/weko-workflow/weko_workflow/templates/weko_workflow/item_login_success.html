@@ -267,7 +267,9 @@
     <a class="btn btn-default pull-right"
       href="{{url_for('weko_workflow.index',community=community.id)}}">{{_('Back')}}</a>
     {%-else%}
-    <a class="btn btn-default pull-right" href="{{url_for('weko_workflow.index')}}">{{_('Back')}}</a>
+    <a class="btn btn-info pull-left back-button" href="{{url_for('weko_workflow.index')}}">
+            <span class="glyphicon glyphicon-chevron-left"></span>
+            Back</a>
     {%-endif%}
   </div>
 </div>
