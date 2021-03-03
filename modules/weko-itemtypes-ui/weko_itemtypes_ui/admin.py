@@ -33,7 +33,7 @@ from invenio_db import db
 from weko_admin.models import AdminSettings, BillingPermission
 from weko_records.api import ItemsMetadata, ItemTypeEditHistory, \
     ItemTypeNames, ItemTypeProps, ItemTypes, Mapping
-from weko_records.serializers.utils import get_mapping
+from weko_records.serializers.utils import get_mapping_inactive_show_list
 from weko_schema_ui.api import WekoSchema
 from weko_search_ui.utils import get_key_by_property
 from weko_workflow.api import WorkFlow
@@ -77,7 +77,7 @@ class ItemTypeMetaDataView(BaseView):
             # Get sub-property has language
             languageVsValue = []
             item_type_mapping = Mapping.get_record(item_type_id)
-            item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
+            item_map = get_mapping_inactive_show_list(item_type_mapping, 'jpcoar_mapping')
             suffixes = '.@attributes.xml:lang'
             for key in item_map:
                 # Get sub-property by format "parrent.subProperty.@attributes.xml:lang" and key.count(".") > 1
