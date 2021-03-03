@@ -749,6 +749,7 @@ def next_action(activity_id='0', action_id=0):
     identifier_select = post_json.get('identifier_grant')
 
     if 'identifier_grant' == action_endpoint:
+        record = None
         if identifier_select:
             idf_grant_jalc_doi_manual = post_json.get(
                 'identifier_grant_jalc_doi_suffix')
@@ -814,7 +815,7 @@ def next_action(activity_id='0', action_id=0):
                         'updated_json_schema_{}'.format(activity_id))
 
             if identifier_select != IDENTIFIER_GRANT_SELECT_DICT['NotGrant'] \
-                    and item_id is not None:
+                    and item_id and not record:
                 record_without_version = item_id
                 if deposit and pid_without_ver and not recid:
                     record_without_version = pid_without_ver.object_uuid
