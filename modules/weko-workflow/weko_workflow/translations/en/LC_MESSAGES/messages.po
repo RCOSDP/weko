@@ -499,3 +499,7 @@ msgstr "Next"
 #: weko_workflow/templates/weko_workflow/identifier_grant.html:114
 msgid "Quit_identifier_grand"
 msgstr "Quit"
+
+#: weko_workflow/templates/weko_workflow/item_login_sucess.html:288
+msgid "Back"
+msgstr "Back"
