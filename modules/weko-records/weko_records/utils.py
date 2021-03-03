@@ -501,14 +501,19 @@ def sort_meta_data_by_options(record_hit):
     def data_comment(result, data_result, stt_key, is_specify_newline_array):
         for idx, key in enumerate(stt_key):
             lang_id = ''
-            if data_result[key] is not None:
+            if key in data_result and data_result[key] is not None:
                 if 'lang_id' in data_result[key]:
                     lang_id = data_result[key].get('lang_id') if "[]" not in \
                                                                  data_result[
                                                                      key].get(
                                                                      'lang_id') \
                         else data_result[key].get('lang_id').replace("[]", '')
-                for idx2, d in enumerate(data_result.get(key)):
+                data = ''
+                if "stt" in data_result[key] and data_result[key].get("stt") is not None:
+                    data = data_result[key].get("stt")
+                else:
+                    data = data_result.get(key)
+                for idx2, d in enumerate(data):
                     if d not in "lang" and d not in "lang_id":
                         lang_arr = []
                         value_arr = []
@@ -519,21 +524,21 @@ def sort_meta_data_by_options(record_hit):
                                 'value' in data_result[key][d]):
                             value_arr = data_result[key][d]['value']
                             value = selected_value_by_language(lang_arr,
-                                                               value_arr,
-                                                               lang_id,
-                                                               d.replace("[]",
-                                                                         ''),
-                                                               web_screen_lang[
-                                                                   'selected'],
-                                                               _item_metadata)
-                        if value is not None and len(value) > 0:
-                            for index, n in enumerate(is_specify_newline_array):
-                                if d in n:
-                                    if n[d] or len(result) == 0:
-                                        result.append(value)
-                                    else:
-                                        result[-1] += "," + value
-                                    break
+                                                            value_arr,
+                                                            lang_id,
+                                                            d.replace("[]",
+                                                                        ''),
+                                                            web_screen_lang[
+                                                                'selected'],
+                                                            _item_metadata)
+                            if value is not None and len(value) > 0:
+                                for index, n in enumerate(is_specify_newline_array):
+                                    if d in n:
+                                        if n[d] or len(result) == 0:
+                                            result.append(value)
+                                        else:
+                                            result[-1] += "," + value
+                                        break
         return result
 
     def get_comment(solst_dict_array, hide_email_flag, _item_metadata, src,
@@ -1130,6 +1135,11 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
                                                 "lang_id": key}}
                     flag = True
                 if key not in data_result[save_key] and not flag:
+                    if "stt" not in data_result[save_key]:
+                        data_result[save_key] = {**data_result[save_key],
+                                             **{'stt': []}}
+                    if "stt" in data_result[save_key]:
+                        data_result[save_key]["stt"].append(key)
                     data_result[save_key] = {**data_result[save_key], **{
                         key: {'value': j["value"].split(",")}}}
         return data_result, stt_key
