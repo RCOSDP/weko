@@ -1502,17 +1502,41 @@ def update_schema_remove_hidden_item(schema, render, items_name):
     return schema
 
 
+def get_files_from_metadata(record):
+    """
+    Get files from record meta_data.
+
+    @param record:
+    @return:
+    """
+    files = {}
+    for key in record:
+        meta_data = record.get(key)
+        if type(meta_data) == dict and \
+                meta_data.get('attribute_type', '') == "file":
+            file_metadata = meta_data.get("attribute_value_mlt", [])
+            for f in file_metadata:
+                if f.get("version_id"):
+                    files[f["version_id"]] = f
+            break
+    return files
+
+
 def to_files_js(record):
     """List files in a deposit."""
     res = []
     files = record.files
+    # Get files form meta_data, so that you can append any extra info to files
+    # (which not contained by file_bucket) such as license below
+    files_from_meta = get_files_from_metadata(record)
     if files is not None:
         for f in files:
             res.append({
                 'displaytype': f.get('displaytype', ''),
                 'filename': f.get('filename', ''),
                 'mimetype': f.mimetype,
-                'licensetype': f.get('licensetype', ''),
+                'licensetype': files_from_meta.get(str(f.version_id),
+                                                   {}).get("licensetype", ''),
                 'key': f.key,
                 'version_id': str(f.version_id),
                 'checksum': f.file.checksum,
