@@ -574,8 +574,11 @@ def sort_meta_data_by_options(record_hit):
                 author_key = s['key']
                 creator_result = ''
                 for author in format_creates(mlt):
-                    creator_result += ", ".join(
-                        filter(lambda x: x != '', author)) + ", "
+                    if isinstance(author, str):
+                        creator_result += author + ", "
+                    elif isinstance(author, list):
+                        creator_result += ", ".join(
+                            filter(lambda x: x != '', author)) + ", "
                 stt_key.append(author_key)
                 is_specify_newline_array.append({author_key: True})
                 data_result.update({
