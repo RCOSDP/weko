@@ -543,6 +543,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             record.files.bucket.id, asc_sort=True).\
             filter_by(is_thumbnail=True).all()
     is_display_file_preview, files = get_file_info_list(record)
+    is_hide_file_prop = record.hide_file
     # Flag: can edit record
     can_edit = True if pid == get_record_without_version(pid) else False
 
@@ -583,6 +584,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         open_day_display_flg=open_day_display_flg,
         path_name_dict=path_name_dict,
         is_display_file_preview=is_display_file_preview,
+        is_hide_file_prop=is_hide_file_prop,
         **ctx,
         **kwargs
     )

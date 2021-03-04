@@ -2329,7 +2329,7 @@ def hide_form_items(item_type, schema_form):
         hidden_items = [
             schema_form.index(form) for form in schema_form
             if form.get('items') and form[
-                'items'][0]['key'].split('.')[1] in i]
+                'items'][0]['key'].split('.')[1] == i]
         if hidden_items and i in json.dumps(schema_form):
             schema_form = update_schema_remove_hidden_item(
                 schema_form,

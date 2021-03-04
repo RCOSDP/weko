@@ -1213,6 +1213,27 @@ class WekoRecord(Record):
         return obj
 
     @property
+    def hide_file(self):
+        """Whether the file property is hidden.
+
+        Note: This function just works fine if file property has value.
+        """
+        hide_file = False
+        item_type_id = self.get('item_type_id')
+        solst, meta_options = get_options_and_order_list(item_type_id)
+        for lst in solst:
+            key = lst[0]
+            val = self.get(key)
+            option = meta_options.get(key, {}).get('option')
+            # Just get 'File'
+            if not (val and option) or val.get('attribute_type') != "file":
+                continue
+            if option.get("hidden"):
+                hide_file = True
+            break
+        return hide_file
+
+    @property
     def navi(self):
         """Return the path name."""
         navs = Indexes.get_path_name(self.get('path', []))
