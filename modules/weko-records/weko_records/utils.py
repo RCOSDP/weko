@@ -1207,7 +1207,7 @@ def result_rule_create_show_list(source_title, current_lang):
             return title_data_lang.get('en')
 
     if len(title_data_langs) > 0:
-        return list(title_data_langs[0].values())[0][0]
+        return list(title_data_langs[0].values())[0]
 
 
 def format_creates(creates):
@@ -1221,7 +1221,10 @@ def format_creates(creates):
     creates_key = OrderedDict(
         [('creatorNames', ['creatorName', 'creatorNameLang']),
          ('familyNames', ['familyName', 'familyNameLang']),
-         ('givenNames', ['givenName', 'givenNameLang'])])
+         ('givenNames', ['givenName', 'givenNameLang']),
+         ('creatorAlternatives',
+          ['creatorAlternative', 'creatorAlternativeLang'])
+         ])
     list_result = []
     for create in creates:
         result = {}
