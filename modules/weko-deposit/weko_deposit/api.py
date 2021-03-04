@@ -821,15 +821,22 @@ class WekoDeposit(Deposit):
 
     def get_content_files(self):
         """Get content file metadata."""
+        from weko_workflow.utils import get_url_root
         contents = []
         fmd = self.get_file_data()
         if fmd:
             for file in self.files:
                 if isinstance(fmd, list):
                     for lst in fmd:
-                        if file.obj.key == lst.get('filename'):
+                        filename = lst.get('filename')
+                        if file.obj.key == filename:
                             lst.update({'mimetype': file.obj.mimetype})
                             lst.update({'version_id': str(file.obj.version_id)})
+
+                            # update file url
+                            file_url = '{}record/{}/files/{}'.format(
+                                get_url_root(), self['recid'], filename)
+                            lst.update({'url': {'url': file_url}})
 
                             # update file_files's json
                             file.obj.file.update_json(lst)

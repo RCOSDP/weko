@@ -64,8 +64,9 @@ from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD
 from weko_workflow.models import FlowDefine, WorkFlow
 from weko_workflow.utils import IdentifierHandle, check_existed_doi, \
-    get_identifier_setting, get_sub_item_value, item_metadata_validation, \
-    register_hdl_by_handle, register_hdl_by_item_id, saving_doi_pidstore
+    get_identifier_setting, get_sub_item_value, get_url_root, \
+    item_metadata_validation, register_hdl_by_handle, \
+    register_hdl_by_item_id, saving_doi_pidstore
 
 from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     RESOURCE_TYPE_URI, VERSION_TYPE_URI, \
@@ -1055,7 +1056,7 @@ def register_item_metadata(item):
         FeedbackMailList.delete_without_commit(deposit.id)
         deposit.remove_feedback_mail()
 
-    with current_app.test_request_context():
+    with current_app.test_request_context(get_url_root()):
         if item['status'] in ['upgrade', 'new']:
             _deposit = deposit.newversion(pid)
             _deposit.publish_without_commit()
@@ -1159,12 +1160,11 @@ def create_flow_define():
                                      WEKO_FLOW_DEFINE_LIST_ACTION)
 
 
-def import_items_to_system(item: dict, url_root: str):
+def import_items_to_system(item: dict):
     """Validation importing zip file.
 
     :argument
         item        -- Items Metadata.
-        url_root    -- url_root.
     :return
         return      -- PID object if exist.
 
@@ -1183,7 +1183,7 @@ def import_items_to_system(item: dict, url_root: str):
             up_load_file(item, root_path)
             register_item_metadata(item)
             if current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
-                register_item_handle(item, url_root)
+                register_item_handle(item)
             register_item_doi(item)
 
             status_number = WEKO_IMPORT_PUBLISH_STATUS.index(
@@ -1651,12 +1651,11 @@ def handle_check_doi(list_record):
             item['errors'] = list(set(item['errors']))
 
 
-def register_item_handle(item, url_root):
+def register_item_handle(item):
     """Register item handle (CNRI).
 
     :argument
         item    -- {object} Record item.
-        url_root -- {str} url_root.
     :return
         response -- {object} Process status.
 
@@ -1682,7 +1681,7 @@ def register_item_handle(item, url_root):
                 register_hdl_by_handle(cnri, pid.object_uuid)
     else:
         if item.get('status') == 'new':
-            register_hdl_by_item_id(item_id, pid.object_uuid, url_root)
+            register_hdl_by_item_id(item_id, pid.object_uuid, get_url_root())
 
 
 def prepare_doi_setting():
