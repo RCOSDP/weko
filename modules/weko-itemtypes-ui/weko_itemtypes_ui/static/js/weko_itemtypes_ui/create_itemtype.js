@@ -1843,7 +1843,7 @@ $(document).ready(function () {
       delete property.enum
     } else if (property.format == 'select') {
       property.type = ["null", "string"];
-      form.type = "select";
+      form.type = form['templateUrl'] ? "template" : "select";
     }
     //Delete info not use.
     if(property.hasOwnProperty('uniqueKey')) delete property['uniqueKey'];
