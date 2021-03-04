@@ -48,7 +48,7 @@
           {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
           {%- if files | selectattr('is_thumbnail', 'equalto', False)| list | length > 0 -%}
           <!-- Preview Carousel -->
-          {% if not is_hide_file_prop %}
+          {% if not record.hide_file %}
             {%- if is_display_file_preview -%}
               {{ preview_carousel(record=record, files=files, pid=pid) }}
             {%- endif -%}
