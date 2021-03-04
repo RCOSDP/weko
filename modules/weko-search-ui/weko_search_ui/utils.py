@@ -1064,8 +1064,6 @@ def register_item_metadata(item):
             _pid = PIDVersioning(child=pid).last_child
             _record = WekoDeposit.get_record(_pid.object_uuid)
             _deposit = WekoDeposit(_record, _record.model)
-            _deposit.update(item_status, new_data)
-            _deposit.commit()
             _deposit.merge_data_to_record_without_version(pid)
             _deposit.publish_without_commit()
 
