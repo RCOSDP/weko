@@ -89,7 +89,7 @@
               <th scope="row"
                   colspan="6">{{ lst.get('attribute_name_i18n', _('Thumbnail')) }}</th>
               <td>
-                  {%- for thumb in files_thumbnail | sort(attribute='key') -%}
+                  {%- for thumb in files_thumbnail -%}
                       {%- set thumb_name = thumb.filename or thumb.key -%}
                       {%- set thumb_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
                         filename=thumb.key) %}

@@ -68,9 +68,9 @@ from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD
 from weko_workflow.models import FlowDefine, WorkFlow
-from weko_workflow.utils import IdentifierHandle, get_identifier_setting, \
-    get_sub_item_value, item_metadata_validation, register_hdl_by_handle, \
-    register_hdl_by_item_id, saving_doi_pidstore
+from weko_workflow.utils import IdentifierHandle, check_existed_doi, \
+    get_identifier_setting, get_sub_item_value, item_metadata_validation, \
+    register_hdl_by_handle, register_hdl_by_item_id, saving_doi_pidstore
 
 from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     RESOURCE_TYPE_URI, VERSION_TYPE_URI, \
@@ -869,16 +869,11 @@ def create_deposit(item_id):
         item_exist     -- {dict} item in system.
 
     """
-    try:
-        if item_id is not None:
-            dep = WekoDeposit.create({}, recid=int(item_id))
-            db.session.commit()
-        else:
-            dep = WekoDeposit.create({})
-            db.session.commit()
-        return dep['recid']
-    except Exception:
-        db.session.rollback()
+    if item_id is not None:
+        dep = WekoDeposit.create({}, recid=int(item_id))
+    else:
+        dep = WekoDeposit.create({})
+    return dep['recid']
 
 
 def clean_thumbnail_file(bucket):
@@ -902,31 +897,27 @@ def up_load_file(record, root_path):
         root_path      -- {str} root_path.
 
     """
-    try:
-        file_path = record.get('file_path', [])
-        thumbnail_path = record.get('thumbnail_path', [])
-        if isinstance(thumbnail_path, str):
-            thumbnail_path = [thumbnail_path]
-        if file_path or thumbnail_path:
-            pid = PersistentIdentifier.query.filter_by(
-                pid_type='recid',
-                pid_value=record.get('id')).first()
-            rec = RecordMetadata.query.filter_by(
-                id=pid.object_uuid).first()
-            bucket = rec.json['_buckets']['deposit']
-            clean_thumbnail_file(bucket)
-            for file_name in [*file_path, *thumbnail_path]:
-                with open(root_path + '/' + file_name, 'rb') as file:
-                    obj = ObjectVersion.create(
-                        bucket,
-                        get_file_name(file_name)
-                    )
-                    if file_name in thumbnail_path:
-                        obj.is_thumbnail = True
-                    obj.set_contents(file)
-                    db.session.commit()
-    except Exception:
-        db.session.rollback()
+    file_path = record.get('file_path', [])
+    thumbnail_path = record.get('thumbnail_path', [])
+    if isinstance(thumbnail_path, str):
+        thumbnail_path = [thumbnail_path]
+    if file_path or thumbnail_path:
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid',
+            pid_value=record.get('id')).first()
+        rec = RecordMetadata.query.filter_by(
+            id=pid.object_uuid).first()
+        bucket = rec.json['_buckets']['deposit']
+        clean_thumbnail_file(bucket)
+        for file_name in [*file_path, *thumbnail_path]:
+            with open(root_path + '/' + file_name, 'rb') as file:
+                obj = ObjectVersion.create(
+                    bucket,
+                    get_file_name(file_name)
+                )
+                if file_name in thumbnail_path:
+                    obj.is_thumbnail = True
+                obj.set_contents(file)
 
 
 def get_file_name(file_path):
@@ -1018,92 +1009,77 @@ def register_item_metadata(item):
                 file.remove()
 
     item_id = str(item.get('id'))
-    try:
-        pid = PersistentIdentifier.query.filter_by(
-            pid_type='recid',
-            pid_value=item_id
-        ).first()
+    pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid',
+        pid_value=item_id
+    ).first()
 
-        record = WekoDeposit.get_record(pid.object_uuid)
+    record = WekoDeposit.get_record(pid.object_uuid)
 
-        _deposit_data = record.dumps().get("_deposit")
-        deposit = WekoDeposit(record, record.model)
-        new_data = dict(
-            **item.get('metadata'),
-            **_deposit_data,
-            **{
-                '$schema': item.get('$schema'),
-                'title': item.get('item_title'),
-            }
-        )
-        item_status = {
-            'index': new_data['path'],
-            'actions': 'publish',
+    _deposit_data = record.dumps().get("_deposit")
+    deposit = WekoDeposit(record, record.model)
+    new_data = dict(
+        **item.get('metadata'),
+        **_deposit_data,
+        **{
+            '$schema': item.get('$schema'),
+            'title': item.get('item_title'),
         }
-        if not new_data.get('pid'):
-            new_data = dict(**new_data, **{
-                'pid': {
-                    'revision_id': 0,
-                    'type': 'recid',
-                    'value': item_id
-                }
-            })
-        new_data = autofill_thumbnail_metadata(item['item_type_id'], new_data)
-        new_data = clean_file_metadata(item['item_type_id'], new_data)
-        deposit.update(item_status, new_data)
-        if item.get('file_path'):
-            # update
-            clean_file_bucket(deposit)
-        else:
-            # delete
-            clean_all_file_in_bucket(deposit)
-        deposit.commit()
-        deposit.publish()
+    )
+    item_status = {
+        'index': new_data['path'],
+        'actions': 'publish',
+    }
+    if not new_data.get('pid'):
+        new_data = dict(**new_data, **{
+            'pid': {
+                'revision_id': 0,
+                'type': 'recid',
+                'value': item_id
+            }
+        })
+    new_data = autofill_thumbnail_metadata(item['item_type_id'], new_data)
+    new_data = clean_file_metadata(item['item_type_id'], new_data)
+    deposit.update(item_status, new_data)
+    if item.get('file_path'):
+        # update
+        clean_file_bucket(deposit)
+    else:
+        # delete
+        clean_all_file_in_bucket(deposit)
+    deposit.commit()
+    deposit.publish_without_commit()
 
-        feedback_mail_list = item['metadata'].get('feedback_mail_list')
+    feedback_mail_list = item['metadata'].get('feedback_mail_list')
+    if feedback_mail_list:
+        FeedbackMailList.update(
+            item_id=deposit.id,
+            feedback_maillist=feedback_mail_list
+        )
+        deposit.update_feedback_mail()
+    else:
+        FeedbackMailList.delete_without_commit(deposit.id)
+        deposit.remove_feedback_mail()
+
+    with current_app.test_request_context():
+        if item['status'] in ['upgrade', 'new']:
+            _deposit = deposit.newversion(pid)
+            _deposit.publish_without_commit()
+        else:
+            _pid = PIDVersioning(child=pid).last_child
+            _record = WekoDeposit.get_record(_pid.object_uuid)
+            _deposit = WekoDeposit(_record, _record.model)
+            _deposit.update(item_status, new_data)
+            _deposit.commit()
+            _deposit.merge_data_to_record_without_version(pid)
+            _deposit.publish_without_commit()
+
         if feedback_mail_list:
             FeedbackMailList.update(
-                item_id=deposit.id,
+                item_id=_deposit.id,
                 feedback_maillist=feedback_mail_list
             )
-            deposit.update_feedback_mail()
-        else:
-            FeedbackMailList.delete(deposit.id)
-            deposit.remove_feedback_mail()
-
-        with current_app.test_request_context():
-            if item['status'] in ['upgrade', 'new']:
-                _deposit = deposit.newversion(pid)
-                _deposit.publish()
-            else:
-                _pid = PIDVersioning(child=pid).last_child
-                _record = WekoDeposit.get_record(_pid.object_uuid)
-                _deposit = WekoDeposit(_record, _record.model)
-                _deposit.update(item_status, new_data)
-                _deposit.commit()
-                _deposit.merge_data_to_record_without_version(pid)
-                _deposit.publish()
-
-            if feedback_mail_list:
-                FeedbackMailList.update(
-                    item_id=_deposit.id,
-                    feedback_maillist=feedback_mail_list
-                )
-                _deposit.update_feedback_mail()
-
-        db.session.commit()
-
-    except Exception as ex:
-        db.session.rollback()
-        current_app.logger.error('item id: %s update error.' % item_id)
-        current_app.logger.error(ex)
-        return {
-            'success': False,
-            'error': str(ex)
-        }
-    return {
-        'success': True
-    }
+            _deposit.update_feedback_mail()
 
 
 def update_publish_status(item_id, status):
@@ -1118,7 +1094,6 @@ def update_publish_status(item_id, status):
     record = WekoRecord.get_record_by_pid(item_id)
     record['publish_status'] = status
     record.commit()
-    db.session.commit()
     indexer = WekoIndexer()
     indexer.update_publish_status(record)
 
@@ -1200,30 +1175,48 @@ def import_items_to_system(item: dict, url_root: str):
         return      -- PID object if exist.
 
     """
-    response = None
     if not item:
         return None
     else:
-        root_path = item.get('root_path', '')
-        if item.get('status') == 'new':
-            item_id = create_deposit(item.get('id'))
-            item['id'] = item_id
-        up_load_file(item, root_path)
-        response = register_item_metadata(item)
-        if response.get('success') and \
-                current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
-            response = register_item_handle(item, url_root)
-        if response.get('success'):
-            response = register_item_doi(item)
-        if response.get('success'):
+        try:
+            root_path = item.get('root_path', '')
+            if item.get('status') == 'new':
+                item_id = create_deposit(item.get('id'))
+                item['id'] = item_id
+            else:
+                handle_check_item_is_locked(item)
+
+            up_load_file(item, root_path)
+            register_item_metadata(item)
+            if current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
+                register_item_handle(item, url_root)
+            register_item_doi(item)
+
             status_number = WEKO_IMPORT_PUBLISH_STATUS.index(
                 item.get('publish_status')
             )
-            response = register_item_update_publish_status(
-                item,
-                str(status_number))
+            register_item_update_publish_status(item, str(status_number))
 
-        return response
+            db.session.commit()
+        except Exception as ex:
+            if item.get('id'):
+                handle_remove_es_metadata(item)
+
+            db.session.rollback()
+            current_app.logger.error('item id: %s update error.' % item['id'])
+            current_app.logger.error(ex)
+            error_id = None
+            if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                    and ex.args[0].get('error_id'):
+                error_id = ex.args[0].get('error_id')
+
+            return {
+                'success': False,
+                'error_id': error_id
+            }
+    return {
+        'success': True
+    }
 
 
 def remove_temp_dir(path):
@@ -1675,41 +1668,27 @@ def register_item_handle(item, url_root):
 
     """
     item_id = str(item.get('id'))
-    try:
-        record = WekoRecord.get_record_by_pid(item_id)
-        pid = record.pid_recid
-        pid_hdl = record.pid_cnri
-        cnri = item.get('cnri')
+    record = WekoRecord.get_record_by_pid(item_id)
+    pid = record.pid_recid
+    pid_hdl = record.pid_cnri
+    cnri = item.get('cnri')
 
-        if item.get('is_change_identifier'):
-            if item.get('cnri_suffix_not_existed'):
-                suffix = "{:010d}".format(int(item_id))
-                cnri = cnri[:-1] if cnri[-1] == '/' else cnri
-                cnri += '/' + suffix
-            if item.get('status') == 'new':
-                register_hdl_by_handle(cnri, pid.object_uuid)
-            else:
-                if pid_hdl and not pid_hdl.pid_value.endswith(cnri):
-                    pid_hdl.delete()
-                    register_hdl_by_handle(cnri, pid.object_uuid)
-                elif not pid_hdl:
-                    register_hdl_by_handle(cnri, pid.object_uuid)
+    if item.get('is_change_identifier'):
+        if item.get('cnri_suffix_not_existed'):
+            suffix = "{:010d}".format(int(item_id))
+            cnri = cnri[:-1] if cnri[-1] == '/' else cnri
+            cnri += '/' + suffix
+        if item.get('status') == 'new':
+            register_hdl_by_handle(cnri, pid.object_uuid)
         else:
-            if item.get('status') == 'new':
-                register_hdl_by_item_id(item_id, pid.object_uuid, url_root)
-
-        db.session.commit()
-    except Exception as ex:
-        db.session.rollback()
-        current_app.logger.error('item id: %s update error.' % item_id)
-        current_app.logger.error(ex)
-        return {
-            'success': False,
-            'error': str(ex)
-        }
-    return {
-        'success': True
-    }
+            if pid_hdl and not pid_hdl.pid_value.endswith(cnri):
+                pid_hdl.delete()
+                register_hdl_by_handle(cnri, pid.object_uuid)
+            elif not pid_hdl:
+                register_hdl_by_handle(cnri, pid.object_uuid)
+    else:
+        if item.get('status') == 'new':
+            register_hdl_by_item_id(item_id, pid.object_uuid, url_root)
 
 
 def prepare_doi_setting():
@@ -1748,6 +1727,18 @@ def get_doi_prefix(doi_ra):
             return identifier_setting.ndl_jalc_doi + suffix
 
 
+def get_doi_link(doi_ra, data):
+    """Get DOI link."""
+    if doi_ra == WEKO_IMPORT_DOI_TYPE[0]:
+        return data.get('identifier_grant_jalc_doi_link')
+    elif doi_ra == WEKO_IMPORT_DOI_TYPE[1]:
+        return data.get('identifier_grant_jalc_cr_doi_link')
+    elif doi_ra == WEKO_IMPORT_DOI_TYPE[2]:
+        return data.get('identifier_grant_jalc_dc_doi_link')
+    elif doi_ra == WEKO_IMPORT_DOI_TYPE[3]:
+        return data.get('identifier_grant_ndl_jalc_doi_link')
+
+
 def prepare_doi_link(item_id):
     """Get DOI link."""
     item_id = '%010d' % int(item_id)
@@ -1783,39 +1774,51 @@ def register_item_doi(item):
         response -- {object} Process status.
 
     """
+    def check_doi_duplicated(doi_ra, data):
+        duplicated_doi = check_existed_doi(get_doi_link(doi_ra, data))
+        if duplicated_doi.get('isWithdrawnDoi'):
+            return 'is_withdraw_doi'
+        if duplicated_doi.get('isExistDOI'):
+            return 'is_duplicated_doi'
+
     item_id = str(item.get('id'))
     is_change_identifier = item.get('is_change_identifier')
     doi_ra = item.get('doi_ra')
     doi = item.get('doi')
-    try:
-        record_without_version = WekoRecord.get_record_by_pid(item_id)
-        pid = record_without_version.pid_recid
-        pid_doi = record_without_version.pid_doi
 
-        lastest_version_id = item_id + '.' + \
-            str(get_latest_version_id(item_id) - 1)
-        pid_lastest = WekoRecord.get_record_by_pid(
-            lastest_version_id).pid_recid
+    record_without_version = WekoRecord.get_record_by_pid(item_id)
+    pid = record_without_version.pid_recid
+    pid_doi = record_without_version.pid_doi
 
-        data = None
-        if is_change_identifier:
-            if item.get('doi_suffix_not_existed'):
-                suffix = "{:010d}".format(int(item_id))
-                doi = doi[:-1] if doi[-1] == '/' else doi
-                doi += '/' + suffix
-            if doi_ra and doi:
-                data = {
-                    'identifier_grant_jalc_doi_link':
-                        IDENTIFIER_GRANT_LIST[1][2] + '/' + doi,
-                    'identifier_grant_jalc_cr_doi_link':
-                        IDENTIFIER_GRANT_LIST[2][2] + '/' + doi,
-                    'identifier_grant_jalc_dc_doi_link':
-                        IDENTIFIER_GRANT_LIST[3][2] + '/' + doi,
-                    'identifier_grant_ndl_jalc_doi_link':
-                        IDENTIFIER_GRANT_LIST[4][2] + '/' + doi
-                }
-                if pid_doi and not pid_doi.pid_value.endswith(doi):
-                    pid_doi.delete()
+    lastest_version_id = item_id + '.' + \
+        str(get_latest_version_id(item_id) - 1)
+    pid_lastest = WekoRecord.get_record_by_pid(
+        lastest_version_id).pid_recid
+
+    data = None
+    if is_change_identifier:
+        if item.get('doi_suffix_not_existed'):
+            suffix = "{:010d}".format(int(item_id))
+            doi = doi[:-1] if doi[-1] == '/' else doi
+            doi += '/' + suffix
+        if doi_ra and doi:
+            data = {
+                'identifier_grant_jalc_doi_link':
+                    IDENTIFIER_GRANT_LIST[1][2] + '/' + doi,
+                'identifier_grant_jalc_cr_doi_link':
+                    IDENTIFIER_GRANT_LIST[2][2] + '/' + doi,
+                'identifier_grant_jalc_dc_doi_link':
+                    IDENTIFIER_GRANT_LIST[3][2] + '/' + doi,
+                'identifier_grant_ndl_jalc_doi_link':
+                    IDENTIFIER_GRANT_LIST[4][2] + '/' + doi
+            }
+            if pid_doi and not pid_doi.pid_value.endswith(doi):
+                pid_doi.delete()
+            if not pid_doi or not pid_doi.pid_value.endswith(doi):
+                doi_duplicated = check_doi_duplicated(doi_ra, data)
+                if doi_duplicated:
+                    raise Exception({'error_id': doi_duplicated})
+
                 saving_doi_pidstore(
                     pid_lastest.object_uuid,
                     pid.object_uuid,
@@ -1823,36 +1826,27 @@ def register_item_doi(item):
                     WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1,
                     is_feature_import=True
                 )
-        else:
-            if doi_ra and not doi:
-                data = prepare_doi_link(item_id)
-                saving_doi_pidstore(
-                    pid_lastest.object_uuid,
-                    pid.object_uuid,
-                    data,
-                    WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1,
-                    is_feature_import=True
-                )
+    else:
+        if doi_ra and not doi:
+            data = prepare_doi_link(item_id)
+            doi_duplicated = check_doi_duplicated(doi_ra, data)
+            if doi_duplicated:
+                raise Exception({'error_id': doi_duplicated})
+            saving_doi_pidstore(
+                pid_lastest.object_uuid,
+                pid.object_uuid,
+                data,
+                WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1,
+                is_feature_import=True
+            )
 
-        if data:
-            deposit = WekoDeposit.get_record(pid.object_uuid)
-            deposit.commit()
-            deposit.publish()
-            deposit = WekoDeposit.get_record(pid_lastest.object_uuid)
-            deposit.commit()
-            deposit.publish()
-            db.session.commit()
-    except Exception as ex:
-        db.session.rollback()
-        current_app.logger.error('item id: %s update error.' % item_id)
-        current_app.logger.error(ex)
-        return {
-            'success': False,
-            'error': str(ex)
-        }
-    return {
-        'success': True
-    }
+    if data:
+        deposit = WekoDeposit.get_record(pid.object_uuid)
+        deposit.commit()
+        deposit.publish_without_commit()
+        deposit = WekoDeposit.get_record(pid_lastest.object_uuid)
+        deposit.commit()
+        deposit.publish_without_commit()
 
 
 def register_item_update_publish_status(item, status):
@@ -1865,25 +1859,13 @@ def register_item_update_publish_status(item, status):
         response -- {object} Process status.
 
     """
-    try:
-        item_id = str(item.get('id'))
-        lastest_version_id = item_id + '.' + \
-            str(get_latest_version_id(item_id) - 1)
+    item_id = str(item.get('id'))
+    lastest_version_id = item_id + '.' + \
+        str(get_latest_version_id(item_id) - 1)
 
-        update_publish_status(item_id, status)
-        if lastest_version_id:
-            update_publish_status(lastest_version_id, status)
-    except Exception as ex:
-        db.session.rollback()
-        current_app.logger.error('item id: %s update error.' % item_id)
-        current_app.logger.error(ex)
-        return {
-            'success': False,
-            'error': str(ex)
-        }
-    return {
-        'success': True
-    }
+    update_publish_status(item_id, status)
+    if lastest_version_id:
+        update_publish_status(lastest_version_id, status)
 
 
 def handle_doi_required_check(record):
@@ -2609,3 +2591,51 @@ def get_export_status():
         current_app.logger.error(ex)
         export_status = False
     return export_status, download_uri
+
+
+def handle_check_item_is_locked(item):
+    """Check an item is being edit or deleted.
+
+    :argument
+        item - {dict} Item metadata.
+    :return
+        response - {dict} check status.
+    """
+    from weko_items_ui.utils import check_item_is_being_edit, \
+        check_item_is_deleted
+    item_id = str(item.get('id'))
+    error_id = None
+
+    if check_item_is_deleted(item_id):
+        error_id = 'item_is_deleted'
+    else:
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid',
+            pid_value=item_id
+        ).first()
+        if check_item_is_being_edit(pid):
+            error_id = 'item_is_being_edit'
+
+    if error_id:
+        raise Exception({
+            'error_id': error_id
+        })
+
+
+def handle_remove_es_metadata(item):
+    """Remove es metadata.
+
+    :argument
+        item - {dict} Item metadata.
+    """
+    try:
+        item_id = item.get('id')
+        pid = WekoRecord.get_record_by_pid(item_id).pid_recid
+        pid_lastest = WekoRecord.get_record_by_pid(
+            item_id + '.' + str(get_latest_version_id(item_id) - 1)).pid_recid
+        deposit = WekoDeposit.get_record(pid.object_uuid)
+        deposit.indexer.delete(deposit)
+        deposit = WekoDeposit.get_record(pid_lastest.object_uuid)
+        deposit.indexer.delete(deposit)
+    except Exception as ex:
+        current_app.logger.error(ex)

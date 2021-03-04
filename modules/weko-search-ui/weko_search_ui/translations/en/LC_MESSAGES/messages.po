@@ -580,8 +580,8 @@ msgid "Check Error"
 msgstr ""
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:69
-msgid "Download"
-msgstr ""
+msgid "import_btn_download"
+msgstr "Download"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:70
 msgid "No."
@@ -711,3 +711,6 @@ msgstr "Are you sure you want to cancel process of exporting all items?"
 #: weko_search_ui/templates/weko_search_ui/admin/export.html:44
 msgid "Execute"
 msgstr ""
+
+msgid "import_error_msg_is_withdraw_doi"
+msgstr "This DOI was withdrawn. Please input another DOI."

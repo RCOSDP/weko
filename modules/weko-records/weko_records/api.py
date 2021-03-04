@@ -1985,14 +1985,22 @@ class FeedbackMailList(object):
         :return: bool: True if success
         """
         try:
-            with db.session.begin_nested():
-                _FeedbackMailList.query.filter_by(
-                    item_id=item_id).delete()
+            cls.delete_without_commit(item_id)
             db.session.commit()
         except SQLAlchemyError:
             db.session.rollback()
             return False
         return True
+
+    @classmethod
+    def delete_without_commit(cls, item_id):
+        """Delete a feedback_mail_list by item_id without commit.
+
+        :param item_id: item_id of target feed_back_mail_list
+        :return: bool: True if success
+        """
+        with db.session.begin_nested():
+            _FeedbackMailList.query.filter_by(item_id=item_id).delete()
 
     @classmethod
     def delete_by_list_item_id(cls, item_ids):

@@ -89,3 +89,9 @@ ul.leaders span + span {
     width: 100px;
   }
 }
+
+td.fitwidth {
+  width: 1px;
+  white-space: nowrap;
+  padding-right: 10px;
+}

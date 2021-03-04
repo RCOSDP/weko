@@ -21,6 +21,7 @@
 """Module of weko-workflow utils."""
 
 from copy import deepcopy
+from datetime import datetime
 
 from flask import current_app, request
 from flask_babelex import gettext as _
@@ -1403,13 +1404,14 @@ def delete_cache_data(key: str):
         current_cache.delete(key)
 
 
-def update_cache_data(key: str, value: str, timeout=0):
-    """Update cache data.
+def update_cache_data(key: str, value: str, timeout=None):
+    """Create or Update cache data.
 
     :param key: Cache key.
     :param value: Cache value.
+    :param timeout: Cache expired.
     """
-    if timeout:
+    if timeout is not None:
         current_cache.set(key, value, timeout=timeout)
     else:
         current_cache.set(key, value)
@@ -1423,6 +1425,70 @@ def get_cache_data(key: str):
     :return: Cache value.
     """
     return current_cache.get(key) or str()
+
+
+def save_cache_item_lock_info(item_id=None):
+    """Save item lock information.
+
+    :param item_id: Item id.
+    """
+    locked_data = get_cache_data('item_ids_locked') or dict()
+    if not locked_data:
+        locked_data['start_time'] = datetime.now().strftime(
+            '%Y-%m-%dT%H:%M:%S%z')
+        locked_data['count_new_items'] = 0
+    ids = locked_data.get('ids', set())
+    if item_id:
+        ids.add(item_id)
+    else:
+        locked_data['count_new_items'] += 1
+
+    locked_data['ids'] = ids
+    current_cache.set('item_ids_locked', locked_data, timeout=0)
+
+
+def delete_cache_item_lock_info(item_id=None):
+    """Delete item lock information.
+
+    :param item_id: Item id.
+    """
+    locked_data = get_cache_data('item_ids_locked') or dict()
+    if not locked_data:
+        return
+
+    ids = locked_data.get('ids', set())
+    if item_id and item_id in ids:
+        ids.remove(item_id)
+    elif not item_id:
+        locked_data['count_new_items'] -= 1
+
+    if ids or locked_data['count_new_items']:
+        locked_data['ids'] = ids
+        current_cache.set('item_ids_locked', locked_data, timeout=0)
+    else:
+        delete_cache_data('item_ids_locked')
+
+
+def check_an_item_is_locked(item_id=None):
+    """Check if an item is locked.
+
+    :param item_id: Item id.
+
+    :return
+    """
+    locked_data = get_cache_data('item_ids_locked') or dict()
+    ids = locked_data.get('ids', set())
+    return item_id in ids
+
+
+def check_another_import_is_running():
+    """Check if any items are locked by import feature.
+
+    :return
+    """
+    locked_data = get_cache_data('item_ids_locked') or dict()
+    is_running = True if locked_data else False
+    return is_running, locked_data.get('start_time')
 
 
 def get_account_info(user_id):
@@ -1533,3 +1599,34 @@ def update_indexes_public_state(item_id):
                 index.public_state = True
     if update_db:
         db.session.commit()
+
+
+def check_existed_doi(doi_link):
+    """Check a DOI is existed.
+
+    :param doi_link: DOI link.
+
+    :return:
+    """
+    respon = dict()
+    respon['isExistDOI'] = False
+    respon['isWithdrawnDoi'] = False
+    respon['code'] = 1
+    respon['msg'] = 'error'
+    if doi_link:
+        doi_pidstore = IdentifierHandle.check_pidstore_exist(
+            None,
+            'doi',
+            doi_link)
+        if doi_pidstore:
+            respon['isExistDOI'] = True
+            respon['msg'] = _('This DOI has been used already for another '
+                              'item. Please input another DOI.')
+            if doi_pidstore.status == PIDStatus.DELETED:
+                respon['isWithdrawnDoi'] = True
+                respon['msg'] = _(
+                    'This DOI was withdrawn. Please input another DOI.')
+        else:
+            respon['msg'] = _('success')
+        respon['code'] = 0
+    return respon
