@@ -221,7 +221,9 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         or header_display_position is None
     ):
         positions['str_position'] = 'C'
-        x, y = get_center_position(header_output_image_name)
+        x = 0
+        if header_output_image_name:
+            x, y = get_center_position(header_output_image_name)
         positions['img_position'] = x
     elif header_display_position == 'right':
         positions['str_position'] = 'R'
@@ -237,9 +239,9 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
             0,
             positions['str_position'],
             False)
-    else:
+    elif header_output_image_name:
         pdf.image(
-            header_output_image,
+            header_output_image_name,
             x=positions['img_position'],
             y=None,
             w=0,
