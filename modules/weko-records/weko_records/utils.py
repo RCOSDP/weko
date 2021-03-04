@@ -555,19 +555,32 @@ def sort_meta_data_by_options(record_hit):
         _license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
         is_specify_newline_array = []
         bibliographic_key = None
+        author_key = None
         if _license_dict:
             _ignore_items.append(_license_dict[0].get('value'))
         for i, s in enumerate(solst_dict_array):
             value = s['value']
             option = s['option']
             mlt = src.get(s['key'], {}).get('attribute_value_mlt', {})
+            is_author = src.get(s['key'], {}).get('attribute_type',
+                                                  {}) == 'creator'
             sys_bibliographic = _FormatSysBibliographicInformation(
                 copy.deepcopy(mlt),
                 copy.deepcopy(solst)
             )
             if i == (len(solst_dict_array) - 1):
                 flag = True
-            if bibliographic_key is None \
+            if is_author:
+                author_key = s['key']
+                creator_result = ''
+                for author in format_creates(mlt):
+                    creator_result += ", ".join(author) + ", "
+                stt_key.append(author_key)
+                is_specify_newline_array.append({author_key: True})
+                data_result.update({
+                    author_key: {
+                        s['key']: {"value": [creator_result.strip()[:-1]]}}})
+            elif bibliographic_key is None \
                     and sys_bibliographic.is_bibliographic():
                 bibliographic_key = s['key']
                 bibliographic = convert_bibliographic(
@@ -577,6 +590,7 @@ def sort_meta_data_by_options(record_hit):
                 data_result.update({
                     bibliographic_key: {s['key']: {"value": [bibliographic]}}})
             elif not (bibliographic_key is not None and bibliographic_key in s[
+                'key']) and not (author_key is not None and author_key in s[
                     'key']) and value and value not in _ignore_items or flag:
                 is_specify_newline = ''
                 is_hide = ''
@@ -1150,3 +1164,74 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
         return data_result, stt_key
     else:
         return None
+
+
+def get_result_rule_create(source_titles, current_lang):
+    """Get source title in show list.
+
+    :param current_lang:
+    :param source_titles:
+    :return:
+    """
+    result = []
+    for source_title in source_titles:
+        result.append(result_rule_create_show_list(source_title, current_lang))
+    return result
+
+
+def result_rule_create_show_list(source_title, current_lang):
+    """Result rules create show list.
+
+    @param source_title:
+    @param current_lang:
+    @return:
+    """
+    title_data_langs = []
+    for key, value in source_title.items():
+        title = {}
+        if not value:
+            continue
+        elif current_lang == key:
+            return value
+        else:
+            if key:
+                title[key] = value
+                title_data_langs.append(title)
+
+    for title_data_lang in title_data_langs:
+        if title_data_lang.get('en'):
+            return title_data_lang.get('en')
+
+    if len(title_data_langs) > 0:
+        return list(title_data_langs[0].values())[0][0]
+
+
+def format_creates(creates):
+    """Format creates.
+
+    @param creates:
+    @return:
+    """
+    from collections import OrderedDict
+    current_lang = current_i18n.language
+    creates_key = OrderedDict(
+        [('creatorNames', ['creatorName', 'creatorNameLang']),
+         ('familyNames', ['familyName', 'familyNameLang']),
+         ('givenNames', ['givenName', 'givenNameLang'])])
+    list_result = []
+    for create in creates:
+        result = {}
+        for key, value in creates_key.items():
+            if key in create:
+                for val in create[key]:
+                    key_data = val.get(value[1], 'None Language')
+                    value_data = val.get(value[0])
+                    if not value:
+                        continue
+                    elif key_data not in result:
+                        result[key_data] = []
+                        result[key_data].append(value_data)
+                    else:
+                        result[key_data].append(value_data)
+        list_result.append(result)
+    return get_result_rule_create(list_result, current_lang)
