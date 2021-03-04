@@ -1179,7 +1179,26 @@ def get_result_rule_create(source_titles, current_lang):
     """
     result = []
     for source_title in source_titles:
-        result.append(result_rule_create_show_list(source_title, current_lang))
+        temp = None
+        temp5 = ''
+        if 'nameIdentifiers' in source_title:
+            temp = source_title.pop('nameIdentifiers')
+        if 'affiliations' in source_title:
+            temp2 = source_title.pop('affiliations')
+            for affiliation in temp2:
+                temp4 = None
+                if 'affilation' in affiliation:
+                    temp4 = affiliation.pop('affilation')
+                temp3 = result_rule_create_show_list(affiliation, current_lang)
+                if temp4 is not None:
+                    temp3.insert(0, temp4)
+                temp5 += ", ".join(temp3) + ', '
+        temp1 = result_rule_create_show_list(source_title, current_lang)
+        if temp is not None:
+            temp1.insert(0, temp)
+        if temp5 != '':
+            temp1.insert(len(temp1), temp5.strip()[:-1])
+        result.append(temp1)
     return result
 
 
@@ -1225,20 +1244,72 @@ def format_creates(creates):
          ('creatorAlternatives',
           ['creatorAlternative', 'creatorAlternativeLang'])
          ])
+    name_identifiers_key = ['nameIdentifierScheme', 'nameIdentifier',
+                            'nameIdentifierURI']
+    affiliation_key = ['affiliationNameIdentifier',
+                       'affiliationNameIdentifierScheme',
+                       'affiliationNameIdentifierURI']
+    affiliation_name_key = ['affiliationName', 'affiliationNameLang']
     list_result = []
     for create in creates:
         result = {}
+        if 'nameIdentifiers' in create:
+            name_identifier_result = ''
+            for name_identifier in create.get('nameIdentifiers'):
+                for key in name_identifiers_key:
+                    if name_identifier.get(key, '') != '':
+                        name_identifier_result += ', ' + name_identifier.get(
+                            key)
+            result['nameIdentifiers'] = name_identifier_result[2:]
         for key, value in creates_key.items():
             if key in create:
+                is_added = []
                 for val in create[key]:
                     key_data = val.get(value[1], 'None Language')
                     value_data = val.get(value[0])
                     if not value:
                         continue
-                    elif key_data not in result:
-                        result[key_data] = []
-                        result[key_data].append(value_data)
-                    else:
-                        result[key_data].append(value_data)
+                    if key_data not in is_added:
+                        if key_data not in result:
+                            result[key_data] = []
+                            result[key_data].append(value_data)
+                            is_added.append(key_data)
+                        else:
+                            result[key_data].append(value_data)
+                            is_added.append(key_data)
+
+        affiliation_list = []
+        if 'creatorAffiliations' in create:
+            for name_affiliation in create.get('creatorAffiliations'):
+                result_2 = {}
+                for key, value in name_affiliation.items():
+                    if key == 'affiliationNameIdentifiers':
+                        for identity in value:
+                            affilation_result = ''
+                            for key in affiliation_key:
+                                if identity.get(key, '') != '':
+                                    affilation_result += ', ' + identity.get(
+                                        key)
+                            result_2['affilation'] = affilation_result[2:]
+                    if key == 'affiliationNames':
+                        for affiliation in value:
+                            is_added = []
+                            key_data = affiliation.get(affiliation_name_key[1],
+                                                       'None Language')
+                            value_data = affiliation.get(
+                                affiliation_name_key[0])
+                            if not value_data:
+                                continue
+                            if key_data not in is_added:
+                                if key_data not in result_2:
+                                    result_2[key_data] = []
+                                    result_2[key_data].append(value_data)
+                                    is_added.append(key_data)
+                                else:
+                                    result_2[key_data].append(value_data)
+                                    is_added.append(key_data)
+                affiliation_list.append(result_2)
+        if len(affiliation_list) > 0:
+            result['affiliations'] = affiliation_list
         list_result.append(result)
     return get_result_rule_create(list_result, current_lang)
