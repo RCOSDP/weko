@@ -364,7 +364,10 @@
                               </a>
                             {%- else -%}
                               <a class="action-anchor preview-button" href="#" data-slide-to="{{ loop.index0 }}">
-                                <button class="img-rounded action-button button-sm" id="{{preview_id}}" onclick="alert('{{file.download_preview_message}}')">
+                                <button class="img-rounded action-button button-sm" id="{{preview_id}}"
+                                  {% if file.download_preview_message %}
+                                    onclick="alert('{{file.download_preview_message}}')"
+                                  {% endif %}>
                                   <i class="action-icon fa fa-play-circle fa-lg"></i>
                                   {{_('Preview')}}
                                 </button>
