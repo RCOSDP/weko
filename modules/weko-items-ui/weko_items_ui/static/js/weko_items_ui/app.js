@@ -1213,7 +1213,7 @@ function toObject(arr) {
         }
       }
       $scope.resourceTypeSelect = function () {
-        let resourcetype = $("select[name='resourcetype']").val();
+        let resourcetype = $("select[name$='resourcetype']").val();
         resourcetype = resourcetype.split("string:").pop();
         let resourceuri = "";
         if ($scope.resourceTypeKey) {
@@ -2913,7 +2913,11 @@ function toObject(arr) {
           let listItemErrors = [];
           if(schemaForm){
             for (let i = 0; i < schemaForm.length; i++) {
+              let name_list = schemaForm[i].$name.split('.');
               let name = schemaForm[i].$name;
+              if (name_list.length >= 1) {
+                name = name_list[name_list.length - 1];
+              }
               if (itemsDict.hasOwnProperty(name)) {
                 name = itemsDict[name];
               }
@@ -3220,7 +3224,7 @@ function toObject(arr) {
             if (!newData['title']) {
               newData['title'] = item.title;
             }
-            newData['id'] = item.key[item.key.length - 1]
+            newData['id'] = item.key.join('.').replaceAll('..', '.0.')
             result.push(newData);
           }
         }

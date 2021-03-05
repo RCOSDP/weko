@@ -576,7 +576,7 @@ msgid "Check Error"
 msgstr ""
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:69
-msgid "Download"
+msgid "import_btn_download"
 msgstr ""
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:70
@@ -679,3 +679,20 @@ msgstr ""
 msgid "Is the input contents discarded ?"
 msgstr ""
 
+msgid "Import is in progress on another device."
+msgstr ""
+
+msgid "Import is in progress."
+msgstr ""
+
+msgid "Cannot update because the corresponding item is being edited."
+msgstr ""
+
+msgid "The corresponding item has been deleted."
+msgstr ""
+
+msgid "This DOI has been already grant for another item. Please specify another DOI."
+msgstr ""
+
+msgid "import_error_msg_is_withdraw_doi"
+msgstr ""

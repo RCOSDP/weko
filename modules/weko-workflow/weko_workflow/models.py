@@ -751,6 +751,22 @@ class Activity(db.Model, TimestampMixin):
 
     shared_user_id = db.Column(db.Integer(), nullable=True)
 
+    temp_data = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """temp metadata"""
+
 
 class ActivityAction(db.Model, TimestampMixin):
     """Define Activety."""

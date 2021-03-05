@@ -516,12 +516,23 @@ class WekoDeposit(Deposit):
 
         for item in file_meta:
             item['version_id'] = str(files_versions.get(
-                item.get(_filename_prop)))
+                item.get(_filename_prop), ''))
 
         return True
 
     def publish(self, pid=None, id_=None):
         """Publish the deposit."""
+        deposit = None
+        try:
+            deposit = self.publish_without_commit(pid, id_)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.debug(ex)
+            db.session.rollback()
+        return deposit
+
+    def publish_without_commit(self, pid=None, id_=None):
+        """Publish the deposit without commit."""
         if not self.data:
             self.data = self.get('_deposit', {})
         if 'control_number' in self:
@@ -530,26 +541,21 @@ class WekoDeposit(Deposit):
             self['$schema'] = current_app.extensions['invenio-jsonschemas']. \
                 path_to_url(current_app.config['DEPOSIT_DEFAULT_JSONSCHEMA'])
         self.is_edit = True
-        try:
-            deposit = super(WekoDeposit, self).publish(pid, id_)
 
-            # update relation version current to ES
-            recid = PersistentIdentifier.query.filter_by(
-                pid_type='recid',
-                object_uuid=self.id
-            ).one_or_none()
-            relations = serialize_relations(recid)
-            if relations and 'version' in relations:
-                relations_ver = relations['version'][0]
-                relations_ver['id'] = recid.object_uuid
-                relations_ver['is_last'] = relations_ver.get('index') == 0
-                self.indexer.update_relation_version_is_last(relations_ver)
-            db.session.commit()
-            return deposit
-        except SQLAlchemyError as ex:
-            current_app.logger.debug(ex)
-            db.session.rollback()
-            return None
+        deposit = super(WekoDeposit, self).publish(pid, id_)
+        # update relation version current to ES
+        recid = PersistentIdentifier.query.filter_by(
+            pid_type='recid',
+            object_uuid=self.id
+        ).one_or_none()
+        relations = serialize_relations(recid)
+        if relations and 'version' in relations:
+            relations_ver = relations['version'][0]
+            relations_ver['id'] = recid.object_uuid
+            relations_ver['is_last'] = relations_ver.get('index') == 0
+            self.indexer.update_relation_version_is_last(relations_ver)
+
+        return deposit
 
     @classmethod
     def create(cls, data, id_=None, recid=None):
@@ -815,15 +821,22 @@ class WekoDeposit(Deposit):
 
     def get_content_files(self):
         """Get content file metadata."""
+        from weko_workflow.utils import get_url_root
         contents = []
         fmd = self.get_file_data()
         if fmd:
             for file in self.files:
                 if isinstance(fmd, list):
                     for lst in fmd:
-                        if file.obj.key == lst.get('filename'):
+                        filename = lst.get('filename')
+                        if file.obj.key == filename:
                             lst.update({'mimetype': file.obj.mimetype})
                             lst.update({'version_id': str(file.obj.version_id)})
+
+                            # update file url
+                            file_url = '{}record/{}/files/{}'.format(
+                                get_url_root(), self['recid'], filename)
+                            lst.update({'url': {'url': file_url}})
 
                             # update file_files's json
                             file.obj.file.update_json(lst)
@@ -1207,6 +1220,27 @@ class WekoRecord(Record):
         return obj
 
     @property
+    def hide_file(self):
+        """Whether the file property is hidden.
+
+        Note: This function just works fine if file property has value.
+        """
+        hide_file = False
+        item_type_id = self.get('item_type_id')
+        solst, meta_options = get_options_and_order_list(item_type_id)
+        for lst in solst:
+            key = lst[0]
+            val = self.get(key)
+            option = meta_options.get(key, {}).get('option')
+            # Just get 'File'
+            if not (val and option) or val.get('attribute_type') != "file":
+                continue
+            if option.get("hidden"):
+                hide_file = True
+            break
+        return hide_file
+
+    @property
     def navi(self):
         """Return the path name."""
         navs = Indexes.get_path_name(self.get('path', []))
@@ -1334,8 +1368,9 @@ class WekoRecord(Record):
                 exclude_attr = [
                     'displaytype', 'accessrole', 'licensetype', 'licensefree']
                 filename = request.args.get("filename", None)
-                for f in file_metadata:
-                    if f.get('filename', None) == filename:
+                file_order = int(request.args.get("file_order", -1))
+                for idx, f in enumerate(file_metadata):
+                    if file_order == idx or f.get('filename') == filename:
                         # Exclude attributes which is not use.
                         for ea in exclude_attr:
                             if f.get(ea, None):

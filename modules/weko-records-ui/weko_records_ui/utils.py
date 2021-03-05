@@ -34,6 +34,7 @@ from weko_admin.models import AdminSettings
 from weko_deposit.api import WekoDeposit
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
+from weko_workflow.utils import check_an_item_is_locked
 
 from .permissions import check_file_download_permission, \
     check_user_group_permission, is_open_restricted
@@ -176,6 +177,14 @@ def soft_delete(recid):
                 pid_type='recid', object_uuid=recid).first()
         if pid.status == PIDStatus.DELETED:
             return
+
+        # Check Record is in import progress
+        if check_an_item_is_locked(int(pid.pid_value.split(".")[0])):
+            raise Exception({
+                'is_locked': True,
+                'msg': _('Item cannot be deleted because '
+                         'the import is in progress.')
+            })
 
         versioning = PIDVersioning(child=pid)
         if not versioning.exists:
@@ -582,11 +591,9 @@ def get_file_info_list(record):
                 if check_file_download_permission(record, f, True)\
                         or is_open_restricted(f):
                     # Set default version_id.
-                    if f.get("version_id") is None:
-                        f["version_id"] = ''
+                    f["version_id"] = f.get('version_id', '')
                     # Set is_thumbnail flag.
-                    if f.get("is_thumbnail") is None:
-                        f["is_thumbnail"] = False
+                    f["is_thumbnail"] = f.get('is_thumbnail', False)
                     # Check Opendate is future date.
                     set_message_for_file(f)
                     # Check show preview area.
@@ -602,5 +609,6 @@ def get_file_info_list(record):
                     # Get file size and convert to byte.
                     f['size'] = get_file_size(f)
                     f['mimetype'] = f.get('format', '')
+                    f['filename'] = f.get('filename', '')
                     files.append(f)
     return is_display_file_preview, files
