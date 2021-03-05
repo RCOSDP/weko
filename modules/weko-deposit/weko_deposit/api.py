@@ -1368,8 +1368,9 @@ class WekoRecord(Record):
                 exclude_attr = [
                     'displaytype', 'accessrole', 'licensetype', 'licensefree']
                 filename = request.args.get("filename", None)
-                for f in file_metadata:
-                    if f.get('filename', None) == filename:
+                file_order = int(request.args.get("file_order", -1))
+                for idx, f in enumerate(file_metadata):
+                    if file_order == idx or f.get('filename') == filename:
                         # Exclude attributes which is not use.
                         for ea in exclude_attr:
                             if f.get(ea, None):
