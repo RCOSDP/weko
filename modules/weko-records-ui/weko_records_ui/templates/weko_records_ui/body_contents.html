@@ -94,7 +94,7 @@
 
                   {%- set access_permission = record | check_file_permission(file) -%}
                   {%- set file_details_url = url_for('invenio_records_ui.recid_file_details', pid_value=pid.pid_value,
-                      filename=file.filename) %}
+                      filename=file.filename or '[No FileName]') %}
 
                   <tr class="file-row">
                     <td rowspan="1" class="filecheck-td">
@@ -287,7 +287,11 @@
                         {%- endif -%}
                       {%- endif -%}
                       <!-- Show button 'Information' -->
-                      {% set file_detail_url =  file_details_url + '?filename=' + file.filename %}
+                      {%- if file.filename -%}
+                        {% set file_detail_url =  file_details_url + '?filename=' + file.filename %}
+                      {%- else -%}
+                        {% set file_detail_url =  file_details_url + '?file_order=' + (loop.index - 1)|string %}
+                      {%- endif -%}
                       {%- if community -%}
                         {% set file_detail_url = file_detail_url + "&community=" + community.id %}
                       {%- endif -%}
