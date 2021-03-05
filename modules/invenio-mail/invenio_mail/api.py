@@ -57,5 +57,8 @@ def send_mail(subject: str, recipient_list: list, body=None, html=None,
         msg.html = html
         msg.attachments = attachments
         current_app.extensions['mail'].send(msg)
+        return None
     except Exception as ex:
-        current_app.logger.error('Unable to send email: ' + subject, ex)
+        current_app.logger.error('Unable to send email: {} - {}'.format(
+            subject, ex))
+        return ex

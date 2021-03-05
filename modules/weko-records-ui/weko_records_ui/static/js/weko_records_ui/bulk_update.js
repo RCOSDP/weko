@@ -295,17 +295,30 @@ require([
               });
 
               // Data
+              var _meta = JSON.stringify(itemsMeta[pid].meta);
+              itemsMeta[pid].meta['edit_mode'] = 'upgrade'
               var meta = JSON.stringify(itemsMeta[pid].meta);
               var index = JSON.stringify(itemsMeta[pid].index);
+              var version = itemsMeta[pid].version;
+
+              let next_version = version
+              if (version) {
+                next_version = version.split('.')[0] + '.' + (parseInt(version.split('.')[1]) + 1)
+              }
 
               // URL
-              var index_url = redirect_url + "/" + pid;
-              var self_url = items_url + "/" + pid;
-              var pub_url = publish_url + "/" + pid;
+              var _index_url= redirect_url + "/" + pid;
+              var _self_url = items_url    + "/" + pid;
+              var _pub_url  = publish_url  + "/" + pid;
+              var index_url = redirect_url + "/" + version;
+              var self_url  = items_url    + "/" + next_version;
+              var pub_url   = publish_url  + "/" + next_version;
 
               var error = {};
 
               // Update items
+              updateItems(_index_url, _self_url, _pub_url, _meta, index, error);
+              // Create new version
               updateItems(index_url, self_url, pub_url, meta, index, error);
 
               if(error.isError) {

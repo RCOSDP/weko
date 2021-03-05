@@ -215,8 +215,15 @@ setup_nginx_centos7 () {
         fi
         if ! $sudo getsebool -a | grep httpd | grep httpd_enable_homedirs | grep -q on; then
             $sudo setsebool -P httpd_enable_homedirs 1
+            # add static dir
             mkdir -p "/home/$(whoami)/.virtualenvs/${INVENIO_WEB_VENV}/var/instance/static"
             $sudo chcon -R -t httpd_sys_content_t "/home/$(whoami)/.virtualenvs/${INVENIO_WEB_VENV}/var/instance/static"
+            # add data dir
+            mkdir -p "/home/$(whoami)/.virtualenvs/${INVENIO_WEB_VENV}/var/instance/data"
+            $sudo chcon -R -t httpd_sys_content_t "/home/$(whoami)/.virtualenvs/${INVENIO_WEB_VENV}/var/instance/data"
+            # add conf dir
+            mkdir -p "/home/$(whoami)/.virtualenvs/${INVENIO_WEB_VENV}/var/instance/conf"
+            $sudo chcon -R -t httpd_sys_content_t "/home/$(whoami)/.virtualenvs/${INVENIO_WEB_VENV}/var/instance/conf"
         fi
     fi
 
@@ -236,6 +243,8 @@ setup_nginx_centos7 () {
 setup_libreoffice_ubuntu14 () {
     # sphinxdoc-install-web-libreoffice-ubuntu14-begin
     set +o errexit
+    $sudo mkdir -p /usr/share/man/man1
+    $sudo apt-get install default-jre libreoffice-java-common
     $sudo apt-get install -y libreoffice
     $sudo apt-get install -y fonts-ipafont fonts-ipaexfont # japanese fonts
     set -o errexit

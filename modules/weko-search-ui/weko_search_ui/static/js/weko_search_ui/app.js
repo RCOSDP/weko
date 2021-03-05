@@ -1,3 +1,9 @@
+const MESSAGE = {
+  bibtex_err: {
+    en: "Required item is not inputted.",
+    ja: "必須項目がありません。",
+  }
+}
 require([
   "jquery",
   "bootstrap",
@@ -78,10 +84,8 @@ require([
       urlVars.hasOwnProperty("search_type") &&
       urlVars["search_type"] !== "2"
     ) {
-      let q = urlVars["q"];
-      if (q) {
-        document.getElementById("q").value = urlVars["q"];
-      }
+      let searchValue = sessionStorage.getItem('q', '');
+      document.getElementById('q').value = searchValue;
     } else {
       let elem = document.getElementById("q");
       if (elem !== null && typeof elem !== "undefined") {
@@ -102,6 +106,20 @@ require([
   });
 });
 
+function getMessage(messageCode) {
+  const defaultLanguage = "en";
+  let currentLanguage = document.getElementById("current_language").value;
+  let message = MESSAGE[messageCode];
+  if (message) {
+    if (message[currentLanguage]) {
+      return message[currentLanguage];
+    } else {
+      return message[defaultLanguage];
+    }
+  } else {
+    return "";
+  }
+}
 
 //add controller to invenioSearch
 // add by ryuu. at 20181129 start
@@ -116,9 +134,58 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     $rootScope.commInfoIndex = "";
   }
 
+  $rootScope.getSettingDefault = function () {
+    let data = null;
+    $.ajax({
+        async: false,
+        method: 'GET',
+        url: '/get_search_setting',
+        headers: { 'Content-Type': 'application/json' },
+    }).then(function successCallback(response) {
+      if (response.status === 1) {
+        data = response.data;
+        if (data.dlt_index_sort_selected !== null && data.dlt_index_sort_selected !== undefined) {
+          let key_sort = data.dlt_index_sort_selected;
+          let descOrEsc = "";
+          if (key_sort.includes("_asc")) {
+            key_sort = key_sort.replace("_asc", "");
+          }
+          if (key_sort.includes("_desc")) {
+            descOrEsc = "-";
+            key_sort = key_sort.replace("_desc", "");
+          }
+         
+          // Default param
+          let param = {
+            page: 1,
+            size: data.dlt_dis_num_selected,
+            sort: descOrEsc + key_sort
+          };
+
+          // If initial display setting is root index
+          if (data.init_disp_setting.init_disp_index === "0") {
+            param['search_type'] = "0";
+            param['q'] = "0";
+          }
+          $rootScope.vm.invenioSearchCurrentArgs = {
+            method: "GET",
+            params: param
+          };
+        }
+      }
+    }, function errorCallback(error) {
+        console.log(error);
+    });
+  }
+  $rootScope.getSettingDefault();
+
   $rootScope.disable_flg = true;
   $rootScope.display_flg = true;
   $rootScope.index_id_q = $location.search().q != undefined ? $location.search().q : '';
+  let topPageIndexId = $("#index_id_q").val();
+  if (topPageIndexId !== undefined && !$rootScope.index_id_q) {
+    $rootScope.index_id_q = topPageIndexId;
+  }
   $rootScope.journal_info = [];
   $rootScope.collapse_flg = true;
   $rootScope.journal_title = $("#journal_title_i18n").val();
@@ -170,8 +237,8 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     var custom_sort_list =[]
     for (var x in data) {
       var sub = {"id":"", "custom_sort":""}
-      sub.id= x.id;
-      sub.custom_sort=x.metadata.custom_sort;
+      sub.id= data[x].id;
+      sub.custom_sort=data[x].metadata.custom_sort;
       custom_sort_list.push(sub);
     }
     var post_data = { "q_id": $rootScope.index_id_q, "sort": custom_sort_list, "es_data": data }
@@ -261,9 +328,33 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     }
   }
 
+  //Get path and name to dict.
+  $scope.getPathName = function () {
+    let aggregations = $rootScope.vm.invenioSearchResults.aggregations;
+    let path_str = "";
+    if (aggregations.hasOwnProperty("path") && aggregations.path.hasOwnProperty("buckets")) {
+      path_str = aggregations.path.buckets[0][0].key;
+    }
+    if (path_str) {
+      path_str = path_str.replace(/\//g, '_');
+    } else {
+      return;
+    }
+    $http({
+      method: 'GET',
+      url: '/get_path_name_dict/' + path_str + '?time=' + currentTime,
+      headers: {'Content-Type': 'application/json'},
+    }).then(function successCallback(response) {
+      $rootScope.vm.invenioSearchResults.aggregations.path.buckets[0][0]['path_name_dict'] = response.data;
+    }, function errorCallback(error) {
+      console.log(error);
+    });
+  }
+
   // Check all records for restricted content
   $scope.$on('invenio.search.finished', function (evt) {
-    $rootScope.display_comment_jounal()
+    $scope.getPathName();
+    $rootScope.display_comment_jounal();
   });
 }
 
@@ -277,15 +368,15 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
 
 
   // Check if current hits in selected array
-  $scope.checkIfAllInArray = function () {
-    angular.forEach($scope.vm.invenioSearchResults.hits.hits, function (record) {
+  $scope.checkIfAllInArray = function() {
+    all_in_array = true;
+    angular.forEach($scope.vm.invenioSearchResults.hits.hits, function(record) {
       item_index = $rootScope.item_export_checkboxes.indexOf(record.id);
-      if (checkAll && item_index == -1) {
-        $rootScope.item_export_checkboxes.push(record.id);
-      } else if (!checkAll && item_index >= 0) {
-        $rootScope.item_export_checkboxes.splice(item_index, 1);
+      if(item_index == -1) {
+        all_in_array = false;
       }
     });
+    return all_in_array;
   }
 
   $scope.checkAll = function (checkAll) {
@@ -326,6 +417,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
     if ($rootScope.item_export_checkboxes.length <= $rootScope.max_export_num) {
       records_metadata = $scope.getExportItemsMetadata();
       $('#record_ids').val(JSON.stringify($rootScope.item_export_checkboxes));
+      $('#invalid_record_ids').val(JSON.stringify([]));
       let export_metadata = {}
       $rootScope.item_export_checkboxes.map(function(recid) {
         $.each(records_metadata, function (index, value) {
@@ -334,10 +426,47 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
           }
         });
       })
+      let exportBibtex = document.getElementById("export_format_radio_bibtex").checked
+      if (exportBibtex) {
+        let invalidBibtexRecordIds = $scope.validateBibtexExport(Object.keys(export_metadata));
+        if (invalidBibtexRecordIds.length > 0) {
+          $('#invalid_record_ids').val(JSON.stringify(invalidBibtexRecordIds));
+          $scope.showErrMsgBibtex(invalidBibtexRecordIds);
+        }
+      }
       $('#record_metadata').val(JSON.stringify(export_metadata));
       $('#export_items_form').submit();  // Submit form and let controller handle file making
     }
     $('#item_export_button').attr("disabled", false);
+  }
+
+  $scope.validateBibtexExport = function (record_ids) {
+    var request_url = '/items/validate_bibtext_export';
+    var data = { record_ids: record_ids }
+    var invalidRecordIds = []
+    $.ajax({
+      method: 'POST',
+      url: request_url,
+      data: JSON.stringify(data),
+      async: false,
+      contentType: 'application/json',
+      success: function (data) {
+        if (data.invalid_record_ids.length) {
+          invalidRecordIds = data.invalid_record_ids;
+        }
+      },
+      error: function (status, error) {
+        console.log(error);
+      }
+    });
+    return invalidRecordIds;
+  }
+
+  $scope.showErrMsgBibtex = function (invalidRecordIds) {
+    var errMsg = getMessage('bibtex_err');
+    invalidRecordIds.forEach(function (recordId) {
+      document.getElementById('bibtex_err_' + recordId).textContent=errMsg;
+    });
   }
 
   $scope.getExportItemsMetadata = function () {
@@ -416,7 +545,44 @@ angular.module('invenioSearch')
     return function (htmlCode) {
       return $sce.trustAsHtml(htmlCode);
     }
-  }]);
+  }])
+  .filter("escapeTitle", function () {
+    return function (data) {
+      if (data){
+        data = escapeString(data);
+      }
+      return data;
+    }
+  })
+  .filter("escapeAuthor", function () {
+    return function (authorData) {
+      let tmpAuthorData = JSON.parse(JSON.stringify(authorData))
+      return escapeAuthorString(tmpAuthorData);
+    }
+  });
+
+function escapeAuthorString(data) {
+  if (Array.isArray(data) && data.length > 0) {
+    for (let i = 0; i < data.length; i++) {
+      data[i] = escapeAuthorString(data[i]);
+    }
+  } else if (typeof data === 'object') {
+    Object.keys(data).forEach(function (key) {
+      data[key] = escapeAuthorString(data[key]);
+    })
+  } else if (typeof data === 'string') {
+    data = escapeString(data)
+  }
+  return data;
+}
+
+function escapeString(data) {
+  data = data
+    .replace(/(^(&EMPTY&,|,&EMPTY&)|(&EMPTY&,|,&EMPTY&)$|&EMPTY&)/g, "")
+    .replace(/[\x00-\x1F\x7F]/g, "")
+    .trim();
+  return data === ',' ? '' : data;
+}
 
 function format_comment(comment) {
   let result = ""

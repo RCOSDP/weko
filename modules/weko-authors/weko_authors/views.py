@@ -20,6 +20,8 @@
 
 """Views for weko-authors."""
 
+import re
+
 from flask import Blueprint, current_app, json, jsonify, request
 from flask_babelex import gettext as _
 from flask_login import login_required
@@ -27,6 +29,7 @@ from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from weko_records.models import ItemMetadata
 
+from .config import WEKO_AUTHORS_IMPORT_KEY
 from .models import Authors, AuthorsPrefixSettings
 from .permissions import author_permission
 from .utils import get_author_setting_obj
@@ -75,6 +78,7 @@ def create():
         db.session.add(author)
     db.session.commit()
     return jsonify(msg=_('Success'))
+
 
 # add by ryuu. at 20180820 start
 @blueprint_api.route("/edit", methods=['POST'])
@@ -163,34 +167,39 @@ def get():
         "size": size,
         "sort": sort
     }
-    query_item = {
-        "size": 0,
-        "query": {
-            "bool": {
-                "must_not": {
-                    "match": {
-                        "weko_id": "",
-                    }
-                }
-            }
-        }, "aggs": {
-            "item_count": {
-                "terms": {
-                    "field": "weko_id"
-                }
-            }
-        }
-    }
-
     indexer = RecordIndexer()
     result = indexer.client.search(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
         doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         body=body
     )
+
+    author_id_list = []
+    for es_hit in result['hits']['hits']:
+        author_id_info = es_hit['_source']['authorIdInfo']
+        if author_id_info:
+            author_id_list.append(author_id_info[0]['authorId'])
+
+    name_id = '_item_metadata.item_creator.attribute_value_mlt.nameIdentifiers'
+    name_id += '.nameIdentifier.keyword'
+    query_item = {
+        'size': 0,
+        'query': {
+            'terms': {
+                name_id: author_id_list
+            }
+        }, 'aggs': {
+            'item_count': {
+                'terms': {
+                    'size': size,
+                    'field': name_id,
+                    'include': author_id_list
+                }
+            }
+        }
+    }
     result_itemCnt = indexer.client.search(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
-        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         body=query_item
     )
 
@@ -252,9 +261,7 @@ def mapping():
             scheme = uri = ''
             for prefix in prefix_settings:
                 if prefix.id == idTtype:
-                    scheme = prefix.name
-                    if scheme == 'KAKEN2':
-                        scheme = 'kakenhi'
+                    scheme = prefix.scheme
                     uri = prefix.url
                     return scheme, uri
             return scheme, uri
@@ -263,9 +270,11 @@ def mapping():
         for j in id_info:
             if j.get('authorIdShowFlg') == 'true':
                 scheme, uri = get_info_author_id(int(j['idType']))
-                author_id = j.get('authorId')
+                _author_id = j.get('authorId')
+                if _author_id and uri:
+                    uri = re.sub("#+$", _author_id, uri, 1)
                 tmp = {
-                    'nameIdentifier': author_id,
+                    'nameIdentifier': _author_id,
                     'nameIdentifierScheme': scheme,
                     'nameIdentifierURI': uri
                 }
@@ -304,6 +313,8 @@ def mapping():
         if v:
             last[k] = v
 
+    last['author_name'] = WEKO_AUTHORS_IMPORT_KEY.get('author_name')
+    last['author_mail'] = WEKO_AUTHORS_IMPORT_KEY.get('author_mail')
     current_app.logger.debug([last])
 
     return json.dumps([last])
@@ -318,6 +329,12 @@ def gatherById():
     gatherFrom = data["idFrom"]
     gatherFromPkId = data["idFromPkId"]
     gatherTo = data["idTo"]
+
+    # Remove the target from the gatherFrom list
+    if gatherTo in gatherFrom:
+        target_index = gatherFrom.index(gatherTo)
+        gatherFrom.pop(target_index)
+        gatherFromPkId.pop(target_index)
 
     # update DB of Author
     try:

@@ -46,19 +46,20 @@ class SearchSetting(object):
             return current_app.config['RECORDS_REST_SORT_OPTIONS'], display_number
 
         for x in res:
-            key_str = x.get('id')
-            key = key_str[0:key_str.rfind('_', 1)]
-            val = current_app.config['RECORDS_REST_SORT_OPTIONS'].get(
-                current_app.config['SEARCH_UI_SEARCH_INDEX']).get(key)
-            if key not in options.keys():
-                options[key] = val
+            if isinstance(x, dict):
+                key_str = x.get('id')
+                key = key_str[0:key_str.rfind('_', 1)]
+                val = current_app.config['RECORDS_REST_SORT_OPTIONS'].get(
+                    current_app.config['SEARCH_UI_SEARCH_INDEX']).get(key)
+                if key not in options.keys():
+                    options[key] = val
 
         sort_options[current_app.config['SEARCH_UI_SEARCH_INDEX']] = options
 
         return sort_options, display_number
 
     @classmethod
-    def get_default_sort(cls, search_type):
+    def get_default_sort(cls, search_type, root_flag=False):
         """Get default sort."""
         res = sm.get()
         sort_str = None
@@ -74,16 +75,27 @@ class SearchSetting(object):
                 sort_str = ad_config.WEKO_ADMIN_MANAGEMENT_OPTIONS['dlt_index_sort_selected']
 
         sort_key = sort_str[0:sort_str.rfind('_', 1)]
-
         sort = sort_str[sort_str.rfind('_', 1) + 1:]
+
+        if root_flag and 'custom_sort' in sort_key:
+            if search_type == current_app.config['WEKO_SEARCH_TYPE_KEYWORD']:
+                sort_str = ad_config.WEKO_ADMIN_MANAGEMENT_OPTIONS['dlt_keyword_sort_selected']
+            else:
+                sort_str = ad_config.WEKO_ADMIN_MANAGEMENT_OPTIONS['dlt_index_sort_selected']
+            sort_key = sort_str[0:sort_str.rfind('_', 1)]
+            sort = sort_str[sort_str.rfind('_', 1) + 1:]
 
         return sort_key, sort
 
     @classmethod
     def get_sort_key(cls, key_str):
         """Get sort key."""
-        return current_app.config['RECORDS_REST_SORT_OPTIONS'].get(
-            current_app.config['SEARCH_UI_SEARCH_INDEX']).get(key_str).get('fields')[0]
+        sort_key = current_app.config['RECORDS_REST_SORT_OPTIONS'].get(
+            current_app.config['SEARCH_UI_SEARCH_INDEX'], {}).get(
+            key_str, {}).get('fields')
+        if isinstance(sort_key, list) and len(sort_key) > 0:
+            return sort_key[0]
+        return None
 
     @classmethod
     def get_custom_sort(cls, index_id, sort_type):
@@ -149,7 +161,7 @@ def get_search_detail_keyword(str):
     item_type_list = get_keywords_data_load('')
     check_val = []
     for x in item_type_list:
-        sub = dict(id=x[1], contents=x[0], checkStus=False)
+        sub = dict(id=x[0], contents=x[0], checkStus=False)
         check_val.append(sub)
 
     for k_v in options:

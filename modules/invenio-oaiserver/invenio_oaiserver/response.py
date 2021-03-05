@@ -24,7 +24,7 @@ from .models import OAISet
 from .provider import OAIIDProvider
 from .query import get_records
 from .resumption_token import serialize
-from .utils import datetime_to_datestamp, serializer
+from .utils import datetime_to_datestamp, handle_license_free, serializer
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
 NS_OAIPMH_XSD = 'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
@@ -123,15 +123,6 @@ def identify(**kwargs):
                                    etree.QName(NS_OAIPMH, 'protocolVersion'))
     e_protocolVersion.text = cfg['OAISERVER_PROTOCOL_VERSION']
 
-    # add by Mr ryuu. at 2018/06/06 start
-    if oaiObj is not None:
-        cfg['OAISERVER_ADMIN_EMAILS'][0] = oaiObj.emails
-    # add by Mr ryuu. at 2018/06/06 end
-
-    for adminEmail in cfg['OAISERVER_ADMIN_EMAILS']:
-        e = SubElement(e_identify, etree.QName(NS_OAIPMH, 'adminEmail'))
-        e.text = adminEmail
-
     e_earliestDatestamp = SubElement(
         e_identify, etree.QName(
             NS_OAIPMH, 'earliestDatestamp'))
@@ -149,7 +140,7 @@ def identify(**kwargs):
 
     e_deletedRecord = SubElement(e_identify,
                                  etree.QName(NS_OAIPMH, 'deletedRecord'))
-    e_deletedRecord.text = 'no'
+    e_deletedRecord.text = 'transient'
 
     e_granularity = SubElement(e_identify,
                                etree.QName(NS_OAIPMH, 'granularity'))
@@ -274,26 +265,77 @@ def header(parent, identifier, datestamp, sets=None, deleted=False):
     return e_header
 
 
+def is_deleted_workflow(pid):
+    """Check workflow is deleted."""
+    deleted_status = "D"
+    return pid.status == deleted_status
+
+
+def is_private_workflow(record):
+    """Check publish status of workflow is private."""
+    private_status = 1
+    return int(record.get("publish_status")) == private_status
+
+
+def is_private_index(record):
+    """Check index of workflow is private."""
+    from weko_index_tree.api import Indexes
+    list_index = record.get("path")
+    index_lst = []
+    if list_index:
+        index_id_lst = []
+        for index in list_index:
+            indexes = str(index).split('/')
+            index_id_lst.append(indexes[-1])
+        index_lst = index_id_lst
+    indexes = Indexes.get_path_list(index_lst)
+    publish_state = 6
+    for index in indexes:
+        if len(indexes) == 1:
+            if not index[publish_state]:
+                return True
+        else:
+            if index[publish_state]:
+                return False
+    return False
+
+
 def getrecord(**kwargs):
     """Create OAI-PMH response for verb Identify."""
     def get_error_code_msg():
-        code = 'noRecordsMatch'
-        msg = 'The combination of the values of the from, until, ' \
-              'set and metadataPrefix arguments results in an empty list.'
+        """Get error by type."""
+        code = current_app.config.get('OAISERVER_CODE_NO_RECORDS_MATCH')
+        msg = current_app.config.get('OAISERVER_MESSAGE_NO_RECORDS_MATCH')
         return [(code, msg)]
 
     record_dumper = serializer(kwargs['metadataPrefix'])
     pid = OAIIDProvider.get(pid_value=kwargs['identifier']).pid
-    # record = Record.get_record(pid.object_uuid)
 
     identify = OaiIdentify.get_all()
     harvest_public_state, record = WekoRecord.get_record_with_hps(
         pid.object_uuid)
-    if (identify and not identify.outPutSetting) or not harvest_public_state:
-        return error(get_error_code_msg(), **kwargs)
 
     e_tree, e_getrecord = verb(**kwargs)
     e_record = SubElement(e_getrecord, etree.QName(NS_OAIPMH, 'record'))
+
+    # Harvest is private
+    if not harvest_public_state or \
+            (identify and not identify.outPutSetting):
+        return error(get_error_code_msg(), **kwargs)
+    # Item is deleted
+    # or Harvest is public & Item is private
+    # or Harvest is public & Index is private
+    elif is_deleted_workflow(pid) or (
+        harvest_public_state and is_private_workflow(record)) or (
+            harvest_public_state and is_private_index(record)):
+        header(
+            e_record,
+            identifier=pid.pid_value,
+            datestamp=record.updated,
+            sets=record.get('_oai', {}).get('sets', []),
+            deleted=True
+        )
+        return e_tree
 
     header(
         e_record,
@@ -305,24 +347,14 @@ def getrecord(**kwargs):
                             etree.QName(NS_OAIPMH, 'metadata'))
 
     etree_record = copy.deepcopy(record)
-    if check_correct_system_props_mapping(
-            pid.object_uuid,
-            current_app.config.get('OAISERVER_SYSTEM_FILE_MAPPING')):
-        etree_record = combine_record_file_urls(etree_record, pid.object_uuid)
+
+    if not etree_record.get('system_identifier_doi', None):
+        etree_record['system_identifier_doi'] = get_identifier(record)
+
+    # Merge licensetype and licensefree
+    etree_record = handle_license_free(etree_record)
 
     root = record_dumper(pid, {'_source': etree_record})
-
-    if check_correct_system_props_mapping(
-            pid.object_uuid,
-            current_app.config.get('OAISERVER_SYSTEM_IDENTIFIER_MAPPING')):
-        if record.pid_doi:
-            root = create_identifier_index(root,
-                                           pid_type=record.pid_doi.pid_type,
-                                           pid_value=record.pid_doi.pid_value)
-        if record.pid_cnri:
-            root = create_identifier_index(root,
-                                           pid_type=record.pid_cnri.pid_type,
-                                           pid_value=record.pid_cnri.pid_value)
 
     e_metadata.append(root)
     return e_tree
@@ -351,6 +383,22 @@ def listidentifiers(**kwargs):
 
 def listrecords(**kwargs):
     """Create OAI-PMH response for verb ListRecords."""
+    def get_error_code_msg():
+        """Get error by type."""
+        code = current_app.config.get('OAISERVER_CODE_NO_RECORDS_MATCH')
+        msg = current_app.config.get('OAISERVER_MESSAGE_NO_RECORDS_MATCH')
+        return [(code, msg)]
+
+    def append_deleted_record(e_listrecords, pid_object, rec):
+        e_record = SubElement(e_listrecords, etree.QName(NS_OAIPMH, 'record'))
+        header(
+            e_record,
+            identifier=pid_object.pid_value,
+            datestamp=rec.updated,
+            sets=rec.get('_oai', {}).get('sets', []),
+            deleted=True
+        )
+
     record_dumper = serializer(kwargs['metadataPrefix'])
 
     e_tree, e_listrecords = verb(**kwargs)
@@ -360,17 +408,57 @@ def listrecords(**kwargs):
         return error(get_error_code_msg(), **kwargs)
 
     for record in result.items:
-        pid = oaiid_fetcher(record['id'], record['json']['_source'])
-        e_record = SubElement(e_listrecords,
-                              etree.QName(NS_OAIPMH, 'record'))
-        header(
-            e_record,
-            identifier=pid.pid_value,
-            datestamp=record['updated'],
-            sets=record['json']['_source'].get('_oai', {}).get('sets', []),
-        )
-        e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH, 'metadata'))
-        e_metadata.append(record_dumper(pid, record['json']))
+        try:
+            pid = oaiid_fetcher(record['id'], record['json']['_source'])
+            identify = OaiIdentify.get_all()
+            pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
+            harvest_public_state, rec = WekoRecord.get_record_with_hps(
+                pid_object.object_uuid)
+            # Check output delete, noRecordsMatch
+            if identify and identify.outPutSetting:
+                if harvest_public_state:
+                    if not is_private_index(rec):
+                        if is_deleted_workflow(pid_object) or \
+                                is_private_workflow(rec):
+                            append_deleted_record(
+                                e_listrecords, pid_object, rec)
+                            continue
+                    else:
+                        append_deleted_record(e_listrecords, pid_object, rec)
+                        continue
+                else:
+                    continue
+            else:
+                continue
+            e_record = SubElement(
+                e_listrecords, etree.QName(NS_OAIPMH, 'record'))
+            header(
+                e_record,
+                identifier=pid.pid_value,
+                datestamp=record['updated'],
+                sets=record['json']['_source'].get('_oai', {}).get('sets', []),
+            )
+            db_record = WekoRecord.get_record(record['id'])
+            if not record['json']['_source']['_item_metadata']\
+                    .get('system_identifier_doi'):
+                record['json']['_source']['_item_metadata'][
+                    'system_identifier_doi'] = get_identifier(db_record)
+            e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
+                                                          'metadata'))
+            etree_record = copy.deepcopy(record['json'])
+
+            # Merge licensetype and licensefree
+            handle_license_free(etree_record['_source']['_item_metadata'])
+
+            e_metadata.append(record_dumper(pid, etree_record))
+        except Exception:
+            import traceback
+            current_app.logger.error(traceback.print_exc())
+            current_app.logger.error('Error when exporting item id'
+                                     + str(record['id']))
+    # Check <record> tag not exist.
+    if len(e_listrecords) == 0:
+        return error(get_error_code_msg(), **kwargs)
 
     resumption_token(e_listrecords, result, **kwargs)
     return e_tree
@@ -395,7 +483,7 @@ def create_identifier_index(root, **kwargs):
                                   etree.QName(NS_JPCOAR, 'identifier'),
                                   attrib={
                                       'identifierType':
-                                      kwargs['pid_type'].upper()})
+                                          kwargs['pid_type'].upper()})
         e_identifier.text = kwargs['pid_value']
         e_identifier_registration = root.find(
             'jpcoar:identifierRegistration',
@@ -433,21 +521,29 @@ def check_correct_system_props_mapping(object_uuid, system_mapping_config):
     return True
 
 
-def combine_record_file_urls(record, object_uuid):
+def combine_record_file_urls(record, object_uuid, meta_prefix):
     """Add file urls to record metadata.
 
     Get file property information by item_mapping and put to metadata.
     """
     from weko_records.api import ItemsMetadata, Mapping
     from weko_records.serializers.utils import get_mapping
+    from weko_schema_ui.schema import get_oai_metadata_formats
 
+    metadata_formats = get_oai_metadata_formats(current_app)
     item_type = ItemsMetadata.get_by_object_id(object_uuid)
     item_type_id = item_type.item_type_id
     type_mapping = Mapping.get_record(item_type_id)
-    item_map = get_mapping(type_mapping, "jpcoar_mapping")
+    mapping_type = metadata_formats[meta_prefix]['serializer'][1]['schema_type']
+    item_map = get_mapping(type_mapping,
+                           "{}_mapping".format(mapping_type))
 
-    file_keys = item_map.get(current_app.config[
-        "OAISERVER_FILE_PROPS_MAPPING"])
+    if item_map:
+        file_props = current_app.config["OAISERVER_FILE_PROPS_MAPPING"]
+        if mapping_type in file_props:
+            file_keys = item_map.get(file_props[mapping_type])
+        else:
+            file_keys = None
 
     if not file_keys:
         return record
@@ -485,3 +581,35 @@ def create_files_url(root_url, record_id, filename):
         root_url,
         record_id,
         filename)
+
+
+def get_identifier(record):
+    """Get Identifier of record(DOI or HDL), if not set URL as default.
+
+    @param record:
+    @return:
+    """
+    result = {
+        "attribute_name": "Identifier",
+        "attribute_value_mlt": [
+        ]
+    }
+
+    if record.pid_doi:
+        result["attribute_value_mlt"].append(dict(
+            subitem_systemidt_identifier=record.pid_doi.pid_value,
+            subitem_systemidt_identifier_type=record.pid_doi.pid_type.upper(),
+        ))
+    if record.pid_cnri:
+        result["attribute_value_mlt"].append(dict(
+            subitem_systemidt_identifier=record.pid_cnri.pid_value,
+            subitem_systemidt_identifier_type=record.pid_cnri.pid_type.upper(),
+        ))
+    if current_app.config.get('WEKO_SCHEMA_RECORD_URL'):
+        result["attribute_value_mlt"].append(dict(
+            subitem_systemidt_identifier=current_app.config[
+                'WEKO_SCHEMA_RECORD_URL'].format(
+                request.url_root, record['_deposit']['id'].split('.')[0]),
+            subitem_systemidt_identifier_type='URI',
+        ))
+    return result

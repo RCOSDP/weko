@@ -20,10 +20,12 @@
 
 """Blueprint for weko-records-ui."""
 
+import os
+
 import redis
 import six
 import werkzeug
-from flask import Blueprint, abort, current_app, flash, jsonify, \
+from flask import Blueprint, abort, current_app, escape, flash, jsonify, \
     make_response, redirect, render_template, request, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
@@ -40,17 +42,19 @@ from invenio_records_ui.signals import record_viewed
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from simplekv.memory.redisstore import RedisStore
-from weko_deposit.api import WekoIndexer, WekoRecord
+from weko_deposit.api import WekoRecord
 from weko_deposit.pidstore import get_record_without_version
+from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_records.api import ItemLink
 from weko_records.serializers import citeproc_v1
+from weko_records.utils import remove_weko2_special_character
 from weko_search_ui.api import get_search_detail_keyword
 from weko_workflow.api import WorkFlow
 
 from weko_records_ui.models import InstitutionName
-from weko_records_ui.utils import check_items_settings
+from weko_records_ui.utils import check_items_settings, get_file_info_list
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
@@ -60,7 +64,8 @@ from .permissions import check_content_clickable, check_created_id, \
     is_open_restricted
 from .utils import get_billing_file_download_permission, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, \
-    get_registration_data_type
+    get_registration_data_type, hide_by_email, hide_item_metadata, \
+    is_show_email_of_creator, replace_license_free
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
@@ -110,16 +115,24 @@ def publish(pid, record, template=None, **kwargs):
     from weko_deposit.api import WekoIndexer
     status = request.values.get('status')
     publish_status = record.get('publish_status')
+
+    pid_ver = PIDVersioning(child=pid)
+    last_record = WekoRecord.get_record_by_pid(pid_ver.last_child.pid_value)
+
     if not publish_status:
         record.update({'publish_status': (status or '0')})
+        last_record.update({'publish_status': (status or '0')})
     else:
         record['publish_status'] = (status or '0')
+        last_record['publish_status'] = (status or '0')
 
     record.commit()
+    last_record.commit()
     db.session.commit()
 
     indexer = WekoIndexer()
     indexer.update_publish_status(record)
+    indexer.update_publish_status(last_record)
 
     return redirect(url_for('.recid', pid_value=pid.pid_value))
 
@@ -139,6 +152,10 @@ def export(pid, record, template=None, **kwargs):
         pid.pid_type)
     schema_type = request.view_args.get('format')
     fmt = formats.get(schema_type)
+
+    # Custom Record Metadata for export JSON
+    hide_item_metadata(record)
+    replace_license_free(record)
 
     if fmt is False:
         # If value is set to False, it means it was deprecated.
@@ -336,10 +353,10 @@ def _get_google_scholar_meta(record):
     et = etree.fromstring(recstr)
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     res = []
-    if mtdata is not None:
+    if mtdata:
         for target in target_map:
             found = mtdata.find(target, namespaces=mtdata.nsmap)
-            if found is not None:
+            if found:
                 res.append({'name': target_map[target], 'data': found.text})
         for date in mtdata.findall('datacite:date', namespaces=mtdata.nsmap):
             if date.attrib.get('dateType') == 'Available':
@@ -348,13 +365,17 @@ def _get_google_scholar_meta(record):
                 res.append(
                     {'name': 'citation_publication_date', 'data': date.text})
         for relatedIdentifier in mtdata.findall(
-                'jpcoar:relatedIdentifier',
+                'jpcoar:relation/jpcoar:relatedIdentifier',
                 namespaces=mtdata.nsmap):
             if 'identifierType' in relatedIdentifier.attrib and \
                 relatedIdentifier.attrib[
                     'identifierType'] == 'DOI':
                 res.append({'name': 'citation_doi',
                             'data': relatedIdentifier.text})
+        for creator in mtdata.findall(
+                'jpcoar:creator/jpcoar:creatorName',
+                namespaces=mtdata.nsmap):
+            res.append({'name': 'citation_author', 'data': creator.text})
         for sourceIdentifier in mtdata.findall(
                 'jpcoar:sourceIdentifier',
                 namespaces=mtdata.nsmap):
@@ -366,11 +387,16 @@ def _get_google_scholar_meta(record):
         for pdf_url in mtdata.findall('jpcoar:file/jpcoar:URI',
                                       namespaces=mtdata.nsmap):
             res.append({'name': 'citation_pdf_url',
-                        'data': request.url.replace('records', 'record')
-                        + '/files/' + pdf_url.text})
+                        'data': pdf_url.text})
     res.append({'name': 'citation_dissertation_institution',
                 'data': InstitutionName.get_institution_name()})
-    res.append({'name': 'citation_abstract_html_url', 'data': request.url})
+    record_route = current_app.config['RECORDS_UI_ENDPOINTS']['recid']['route']
+    record_url = '{protocol}://{host}{path}'.format(
+        protocol=request.environ['wsgi.url_scheme'],
+        host=request.environ['HTTP_HOST'],
+        path=record_route.replace('<pid_value>', record['recid'])
+    )
+    res.append({'name': 'citation_abstract_html_url', 'data': record_url})
     return res
 
 
@@ -385,6 +411,19 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     :param kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
     """
+    path_name_dict = {'ja': {}, 'en': {}}
+    for navi in record.navi:
+        path_arr = navi.path.split('/')
+        for path in path_arr:
+            index = Indexes.get_index(index_id=path)
+            idx_name = index.index_name or ""
+            idx_name_en = index.index_name_english
+            path_name_dict['ja'][path] = idx_name.replace(
+                "\n", r"<br\>").replace("&EMPTY&", "")
+            path_name_dict['en'][path] = idx_name_en.replace(
+                "\n", r"<br\>").replace("&EMPTY&", "")
+            if not path_name_dict['ja'][path]:
+                path_name_dict['ja'][path] = path_name_dict['en'][path]
     # Get PID version object to retrieve all versions of item
     pid_ver = PIDVersioning(child=pid)
     if not pid_ver.exists or pid_ver.is_last_child:
@@ -436,8 +475,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     detail_condition = get_search_detail_keyword('')
 
     # Add Item Reference data to Record Metadata
-    pid_without_ver = record.get("recid").split('.')[0]
-    res = ItemLink.get_item_link_info(pid_without_ver)
+    res = ItemLink.get_item_link_info(record.get("recid"))
     if res:
         record["relation"] = res
     else:
@@ -455,7 +493,16 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     record['permalink_uri'] = None
     permalink = get_record_permalink(record)
     if not permalink:
-        record['permalink_uri'] = request.url
+        if record.get('system_identifier_doi') and \
+            record.get('system_identifier_doi').get(
+                'attribute_value_mlt')[0]:
+            record['permalink_uri'] = \
+                record['system_identifier_doi'][
+                    'attribute_value_mlt'][0][
+                    'subitem_systemidt_identifier']
+        else:
+            record['permalink_uri'] = '{}records/{}'.format(
+                request.url_root, record.get("recid"))
     else:
         record['permalink_uri'] = permalink
 
@@ -479,6 +526,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         billing_files_permission) if groups_price else None
 
     from weko_theme.utils import get_design_layout
+
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         request.args.get('community') or current_app.config[
@@ -492,17 +540,20 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     files_thumbnail = []
     if record.files:
         files_thumbnail = ObjectVersion.get_by_bucket(
-            record.get('_buckets').get('deposit')).\
+            record.files.bucket.id, asc_sort=True).\
             filter_by(is_thumbnail=True).all()
-    files = []
-    for f in record.files:
-        if check_file_permission(record, f.data) or is_open_restricted(f.data):
-            files.append(f)
+    is_display_file_preview, files = get_file_info_list(record)
     # Flag: can edit record
     can_edit = True if pid == get_record_without_version(pid) else False
 
     open_day_display_flg = current_app.config.get('OPEN_DATE_DISPLAY_FLG')
-
+    # Hide email of creator in pdf cover page
+    item_type_id = record['item_type_id']
+    is_show_email = is_show_email_of_creator(item_type_id)
+    if not is_show_email:
+        # list_hidden = get_ignore_item(record['item_type_id'])
+        # record = hide_by_itemtype(record, list_hidden)
+        record = hide_by_email(record)
     return render_template(
         template,
         pid=pid,
@@ -530,6 +581,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         files_thumbnail=files_thumbnail,
         can_edit=can_edit,
         open_day_display_flg=open_day_display_flg,
+        path_name_dict=path_name_dict,
+        is_display_file_preview=is_display_file_preview,
         **ctx,
         **kwargs
     )
@@ -608,9 +661,10 @@ def set_pdfcoverpage_header():
         header_output_image_filename = header_output_image_file.filename
         header_output_image = record.header_output_image
         if not header_output_image_filename == '':
-            # /home/invenio/.virtualenvs/invenio/var/instance/static/
             upload_dir = current_app.instance_path + current_app.config.get(
                 'WEKO_RECORDS_UI_PDF_HEADER_IMAGE_DIR')
+            if not os.path.isdir(upload_dir):
+                os.makedirs(upload_dir)
             header_output_image = upload_dir + header_output_image_filename
             header_output_image_file.save(header_output_image)
         header_display_position = request.form.get('header-display-position')
@@ -684,7 +738,14 @@ def soft_delete(recid):
         soft_delete_imp(recid)
         return make_response('PID: ' + str(recid) + ' DELETED', 200)
     except Exception as ex:
-        print(str(ex))
+        current_app.logger.error(ex)
+        if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                and ex.args[0].get('is_locked'):
+            return jsonify(
+                code=-1,
+                is_locked=True,
+                msg=str(ex.args[0].get('msg', ''))
+            )
         abort(500)
 
 
@@ -698,7 +759,7 @@ def restore(recid):
         restore_imp(recid)
         return make_response('PID: ' + str(recid) + ' RESTORED', 200)
     except Exception as ex:
-        print(str(ex))
+        current_app.logger.error(ex)
         abort(500)
 
 
@@ -723,18 +784,39 @@ def init_permission(recid):
         abort(500)
 
 
-@blueprint.app_template_filter('translate_content')
-def translate_content(content):
-    """Translate record detail content.
+@blueprint.app_template_filter('escape_str')
+def escape_str(s):
+    r"""Process escape, replace \n to <br/>, convert &EMPTY& to blank char.
 
-    @param content:
-    @return:
+    :param s: string
+    :return: result
     """
-    try:
-        if content:
-            return _(content)
-        else:
-            return content
-    except Exception as ex:
-        current_app.logger.debug(ex)
-        return content
+    br_char = '<br/>'
+    if s:
+        s = remove_weko2_special_character(s)
+        s = str(escape(s))
+        s = s.replace(
+            '\r\n',
+            br_char).replace('\r', br_char).replace('\n', br_char)
+    return s
+
+
+@blueprint.app_template_filter('preview_able')
+def preview_able(file_json):
+    """Check whether file can be previewed or not."""
+    file_type = ''
+    file_size = file_json.get('size')
+    file_format = file_json.get('format', '')
+    for k, v in current_app.config['WEKO_ITEMS_UI_MS_MIME_TYPE'].items():
+        if file_format in v:
+            file_type = k
+            break
+    if file_type in current_app.config[
+            'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'].keys():
+        # Convert MB to Bytes in decimal
+        file_size_limit = current_app.config[
+            'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'][
+            file_type] * 1000000
+        if file_size > file_size_limit:
+            return False
+    return True

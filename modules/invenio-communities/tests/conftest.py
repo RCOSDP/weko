@@ -37,6 +37,7 @@ from flask_babelex import Babel
 from flask_celeryext import FlaskCeleryExt
 from flask_menu import Menu
 from invenio_accounts import InvenioAccounts
+from invenio_accounts.models import User
 from invenio_accounts.testutils import create_test_user
 from invenio_assets import InvenioAssets
 from invenio_db import InvenioDB
@@ -53,6 +54,7 @@ from invenio_communities import InvenioCommunities
 from invenio_communities.models import Community
 from invenio_communities.views.api import blueprint as api_blueprint
 from invenio_communities.views.ui import blueprint as ui_blueprint
+from weko_index_tree.models import Index
 
 
 @pytest.yield_fixture()
@@ -130,10 +132,16 @@ def communities(app, db, user):
     """Create some example communities."""
     user1 = db_.session.merge(user)
 
+    index = Index()
+    db.session.add(index)
+    db.session.commit()
     comm0 = Community.create(community_id='comm1', user_id=user1.id,
-                             title='Title1', description='Description1')
-    comm1 = Community.create(community_id='comm2', user_id=user1.id, title='A')
-    comm2 = Community.create(community_id='oth3', user_id=user1.id)
+                             title='Title1', description='Description1',
+                             root_node_id=index.id)
+    comm1 = Community.create(community_id='comm2', user_id=user1.id, title='A',
+                             root_node_id=index.id)
+    comm2 = Community.create(community_id='oth3', user_id=user1.id,
+                             root_node_id=index.id)
     return comm0, comm1, comm2
 
 
@@ -151,16 +159,22 @@ def communities_for_filtering(app, db, user):
     """Create some example communities."""
     user1 = db_.session.merge(user)
 
+    index = Index()
+    db.session.add(index)
+    db.session.commit()
     comm0 = Community.create(community_id='comm1', user_id=user1.id,
                              title='Test1',
                              description=('Beautiful is better than ugly. '
-                                          'Explicit is better than implicit.'))
+                                          'Explicit is better than implicit.'),
+                             root_node_id=index.id)
     comm1 = Community.create(community_id='comm2', user_id=user1.id,
                              title='Testing case 2',
                              description=('Flat is better than nested. '
-                                          'Sparse is better than dense.'))
+                                          'Sparse is better than dense.'),
+                             root_node_id=index.id)
     comm2 = Community.create(community_id='oth3', user_id=user1.id,
                              title='A word about testing',
                              description=('Errors should never pass silently. '
-                                          'Unless explicitly silenced.'))
+                                          'Unless explicitly silenced.'),
+                             root_node_id=index.id)
     return comm0, comm1, comm2

@@ -15,23 +15,21 @@ require([
     var status = $(this).val();
     var data = { 'public_status': status };
     var urlHref = window.location.href.split('/')
-    const url = urlHref[0] + '//' + urlHref[2] + '/records/' + urlHref[4] + '/pubstatus'
+    let post_uri = "/api/items/check_record_doi/" + urlHref[4];
     $.ajax({
-      url: url,
-      type: 'POST',
-      contentType: 'application/json',
-      data: JSON.stringify(data),
-      dataType: 'json'
+      url: post_uri,
+      method: 'GET',
+      async: true,
+      success: function (res) {
+        if (0 == res.code) {
+          $('[role="alert"]').css('display', 'inline-block');
+          $('[role="alert"]').text($("#change_publish_message").val());
+        } else {
+          $("#public_status_form").submit();
+        };
+      },
+      error: function (jqXHE, status) { }
     });
-    if (status == 'Public') {
-      $(this).text('Change to Public');
-      $(this).val('Private');
-      $('#public_status').text('Private');
-    } else {
-      $(this).text('Change to Private');
-      $(this).val('Public');
-      $('#public_status ').text('Public');
-    };
   });
 
   $('a#btn_edit').on('click', function () {
@@ -130,6 +128,19 @@ require([
         error: function (jqXHE, status) {
         }
       });
+    }
+  });
+
+  var current_cite = '';
+  $('body').on('DOMSubtreeModified', '#citationResult', function (e) {
+    let cite = e.currentTarget.innerHTML;
+    if (cite.indexOf('&amp;') !== -1) {
+      cite = e.currentTarget.innerText;
+    }
+    cite = cite.replace(/<br>/g, '<br/>');
+    if (cite !== '' && cite !== current_cite) {
+      current_cite = cite;
+      $('#citationResult').html(current_cite);
     }
   });
 });

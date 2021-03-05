@@ -26,6 +26,8 @@ from datetime import timedelta
 from flask import abort, current_app
 from flask_security import current_user
 from invenio_access import Permission, action_factory
+from invenio_accounts.models import User
+from invenio_db import db
 from weko_groups.api import Group, Membership, MembershipState
 from weko_index_tree.utils import filter_index_list_by_role, get_user_roles
 from weko_records.api import ItemTypes
@@ -77,7 +79,7 @@ def file_permission_factory(record, *args, **kwargs):
     return type('FileDownLoadPermissionChecker', (), {'can': can})()
 
 
-def check_file_download_permission(record, fjson):
+def check_file_download_permission(record, fjson, is_display_file_info=False):
     """Check file download."""
     def site_license_check():
         # site license permission check
@@ -87,12 +89,60 @@ def check_file_download_permission(record, fjson):
             ) | check_user_group_permission(fjson.get('groups'))
         return False
 
+    def get_email_list_by_ids(user_id_list):
+        """Get user email list by user id list.
+
+        :param user_id_list: list id of users in table accounts_user.
+        :return: list email.
+        """
+        with db.session.no_autoflush:
+            users = User.query.filter(User.id.in_(user_id_list)).all()
+            emails = [x.email for x in users]
+        return emails
+
+    def __check_user_permission(user_id_list):
+        """Check user permission.
+
+        :return: True if the login user is allowed to display file metadata.
+        """
+        is_ok = False
+        # Check guest user
+        if not current_user.is_authenticated:
+            return is_ok
+        # Check registered user
+        elif current_user and current_user.id in user_id_list:
+            is_ok = True
+        # Check super users
+        else:
+            super_users = current_app.config[
+                'WEKO_PERMISSION_SUPER_ROLE_USER'] + (
+                current_app.config[
+                    'WEKO_PERMISSION_ROLE_COMMUNITY'],)
+            for role in list(current_user.roles or []):
+                if role.name in super_users:
+                    is_ok = True
+                    break
+        return is_ok
+
     if fjson:
         is_can = True
         acsrole = fjson.get('accessrole', '')
+        # Get email of login user.
+        is_has_email = hasattr(current_user, "email")
+        current_user_email = current_user.email if is_has_email else ''
+        # Get email list of created workflow user.
+        user_id_list = record.get('_deposit', {}).get('owners', [])
+        created_user_email_list = get_email_list_by_ids(user_id_list)
+
+        # Registered user
+        if current_user and \
+                current_user.is_authenticated and \
+                current_user.id in user_id_list:
+            return is_can
 
         # Super users
-        supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+        supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + (
+            current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY'],)
         for role in list(current_user.roles or []):
             if role.name in supers:
                 return is_can
@@ -100,9 +150,12 @@ def check_file_download_permission(record, fjson):
         try:
             # can access
             if 'open_access' in acsrole:
-                date = fjson.get('date')
-                if date:
-                    if isinstance(date, list) and date[0]:
+                if is_display_file_info:
+                    # Always display the file info area in 'Detail' screen.
+                    is_can = True
+                else:
+                    date = fjson.get('date')
+                    if date and isinstance(date, list) and date[0]:
                         adt = date[0].get('dateValue')
                         if adt:
                             pdt = dt.strptime(adt, '%Y-%m-%d')
@@ -111,48 +164,73 @@ def check_file_download_permission(record, fjson):
                             is_can = True
             # access with open date
             elif 'open_date' in acsrole:
-                try:
-                    date = fjson.get('date')
-                    if date:
-                        if isinstance(date, list) and date[0]:
+                if is_display_file_info:
+                    # Always display the file info area in 'Detail' screen.
+                    is_can = True
+                else:
+                    try:
+                        date = fjson.get('date')
+                        if date and isinstance(date, list) and date[0]:
                             adt = date[0].get('dateValue')
                             pdt = dt.strptime(adt, '%Y-%m-%d')
                             is_can = True if dt.today() >= pdt else False
-                except BaseException:
-                    is_can = False
+                    except BaseException:
+                        is_can = False
 
-                if not is_can:
-                    # site license permission check
-                    is_can = site_license_check()
+                    if not is_can:
+                        # site license permission check
+                        is_can = site_license_check()
 
             # access with login user
             elif 'open_login' in acsrole:
-                is_can = False
-                users = current_app.config['WEKO_PERMISSION_ROLE_USER']
-                for lst in list(current_user.roles or []):
-                    if lst.name in users:
-                        is_can = True
-                        break
-
-                # Billing file permission check
-                if fjson.get('groupsprice'):
-                    is_user_group_permission = False
-                    groups = fjson.get('groupsprice')
-                    for group in list(groups or []):
-                        group_id = group.get('group')
-                        if check_user_group_permission(group_id):
-                            is_user_group_permission = \
-                                check_user_group_permission(group_id)
-                            break
-                    is_can = is_can & is_user_group_permission
+                if is_display_file_info:
+                    # Always display the file info area in 'Detail' screen.
+                    is_can = True
                 else:
-                    is_can = is_can & check_user_group_permission(
-                        fjson.get('groups'))
+                    is_can = False
+                    users = current_app.config['WEKO_PERMISSION_ROLE_USER']
+                    for lst in list(current_user.roles or []):
+                        if lst.name in users:
+                            is_can = True
+                            break
+
+                    # Billing file permission check
+                    if fjson.get('groupsprice'):
+                        is_user_group_permission = False
+                        groups = fjson.get('groupsprice')
+                        for group in list(groups or []):
+                            group_id = group.get('group')
+                            if check_user_group_permission(group_id):
+                                is_user_group_permission = \
+                                    check_user_group_permission(group_id)
+                                break
+                        is_can = is_can & is_user_group_permission
+                    else:
+                        if current_user.is_authenticated:
+                            if fjson.get('groups'):
+                                is_can = check_user_group_permission(
+                                    fjson.get('groups'))
+                            else:
+                                is_can = True
+                        else:
+                            is_can = check_site_license_permission()
 
             #  can not access
             elif 'open_no' in acsrole:
-                # site license permission check
-                is_can = site_license_check()
+                if is_display_file_info:
+                    # Allow display the file info area in 'Detail' screen.
+                    is_can = True
+                    is_permission_user = __check_user_permission(
+                        user_id_list)
+                    if not current_user.is_authenticated or \
+                            not is_permission_user or site_license_check():
+                        is_can = False
+                else:
+                    if current_user_email in created_user_email_list:
+                        # Allow created workflow user view file.
+                        is_can = True
+                    else:
+                        is_can = False
             elif 'open_restricted' in acsrole:
                 is_can = check_open_restricted_permission(record, fjson)
         except BaseException:
@@ -265,7 +343,8 @@ def get_correct_usage_workflow(data_type):
                 current_app.logger.debug(data)
                 for value in data:
                     if value['role'].casefold() == role.name.casefold():
-                        usage_application_workflow_name = value['workflow_name']
+                        usage_application_workflow_name = \
+                            value['workflow_name']
                         workflow = WorkFlow()
                         usage_workflow = workflow.find_workflow_by_name(
                             usage_application_workflow_name)
@@ -304,6 +383,10 @@ def check_user_group_permission(group_id):
     user_id = current_user.get_id()
     is_ok = False
     if group_id:
+        try:
+            group_id = int(group_id)
+        except ValueError:
+            return is_ok
         if user_id:
             query = Group.query.filter_by(id=group_id).join(Membership) \
                 .filter_by(user_id=user_id, state=MembershipState.ACTIVE)

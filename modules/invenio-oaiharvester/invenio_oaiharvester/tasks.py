@@ -155,9 +155,11 @@ def process_item(record, harvesting, counter):
     xml = etree.tostring(record, encoding='utf-8').decode()
     if harvesting.metadata_prefix == 'oai_dc':
         mapper = DCMapper(xml)
-    elif harvesting.metadata_prefix == 'jpcoar':
+    elif harvesting.metadata_prefix == 'jpcoar' or \
+            harvesting.metadata_prefix == 'jpcoar_1.0':
         mapper = JPCOARMapper(xml)
-    elif harvesting.metadata_prefix == 'ddi':
+    elif harvesting.metadata_prefix == 'oai_ddi25' or \
+            harvesting.metadata_prefix == 'ddi':
         mapper = DDIMapper(xml)
     else:
         return
@@ -271,7 +273,7 @@ def is_harvest_running(id, task_id):
     for worker in actives:
         for task in actives[worker]:
             if task['name'] == 'invenio_oaiharvester.tasks.run_harvesting':
-                if eval(task['args'])[0] == str(id) and task['id'] != task_id:
+                if task['args'][0] == str(id) and task['id'] != task_id:
                     return True
     return False
 

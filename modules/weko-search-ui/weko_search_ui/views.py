@@ -25,7 +25,6 @@ from xml.etree import ElementTree
 
 from blinker import Namespace
 from flask import Blueprint, current_app, jsonify, render_template, request
-from flask_login import login_required
 from flask_security import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
@@ -112,8 +111,7 @@ def search():
             community_id, ctx = workflow_activity.get_activity_index_search(
                 activity_id=activity_id)
 
-        # Get ex-Item Links
-        recid = item['pid'].get('value') if item.get('pid') else None
+        recid = approval_record.get('control_number', None)
         if recid:
             pid_without_ver = recid.split('.')[0]
             item_link = ItemLink.get_item_link_info(pid_without_ver)
@@ -152,11 +150,12 @@ def search():
         send_info['site_license_name'] = current_user.site_license_name \
             if hasattr(current_user, 'site_license_name') else ''
         if search_type in WEKO_SEARCH_TYPE_DICT.values():
-            searched.send(
-                current_app._get_current_object(),
-                search_args=get_args,
-                info=send_info
-            )
+            if not search_type == WEKO_SEARCH_TYPE_DICT['INDEX']:
+                searched.send(
+                    current_app._get_current_object(),
+                    search_args=get_args,
+                    info=send_info
+                )
             if search_type == WEKO_SEARCH_TYPE_DICT['INDEX']:
                 cur_index_id = request.args.get('q', '0')
                 journal_info = get_journal_info(cur_index_id)
@@ -259,3 +258,21 @@ def search_feedback_mail_list():
 def get_child_list(index_id=0):
     """Get child id list to index list display."""
     return jsonify(Indexes.get_child_id_list(index_id))
+
+
+@blueprint.route("/get_path_name_dict/<string:path_str>", methods=['GET'])
+def get_path_name_dict(path_str=''):
+    """Get path and name."""
+    path_name_dict = {}
+    path_arr = path_str.split('_')
+    for path in path_arr:
+        index = Indexes.get_index(index_id=path)
+        idx_name = index.index_name
+        idx_name_en = index.index_name_english
+        if current_i18n.language == 'ja' and idx_name:
+            path_name_dict[path] = idx_name.replace(
+                "\n", r"<br\>").replace("&EMPTY&", "")
+        else:
+            path_name_dict[path] = idx_name_en.replace(
+                "\n", r"<br\>").replace("&EMPTY&", "")
+    return jsonify(path_name_dict)

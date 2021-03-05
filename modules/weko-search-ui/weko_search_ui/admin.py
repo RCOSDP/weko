@@ -20,25 +20,35 @@
 
 """Weko Search-UI admin."""
 
+import copy
 import json
 from datetime import datetime
+from urllib.parse import urlencode
 
 from blinker import Namespace
 from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
-from invenio_db import db
+from invenio_i18n.ext import current_i18n
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
+from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
+from weko_workflow.utils import check_another_import_is_running, \
+    save_cache_item_lock_info
 
 from weko_search_ui.api import get_search_detail_keyword
 
-from .config import WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
+from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
+    WEKO_EXPORT_TEMPLATE_BASIC_NAME, WEKO_EXPORT_TEMPLATE_BASIC_OPTION, \
+    WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
     WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
 from .tasks import import_item, remove_temp_dir_task
-from .utils import check_import_items, create_flow_define, delete_records, \
-    get_content_workflow, get_tree_items, handle_workflow, make_stats_tsv
+from .utils import check_import_items, check_sub_item_is_system, \
+    create_flow_define, delete_records, get_change_identifier_mode_content, \
+    get_content_workflow, get_lifetime, get_root_item_option, \
+    get_sub_item_option, get_tree_items, handle_get_all_sub_id_and_name, \
+    handle_workflow, make_stats_tsv, make_tsv_by_line
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -62,13 +72,12 @@ class ItemManagementBulkDelete(BaseView):
                     # Delete items in current_tree
                     delete_records(current_tree.id)
 
-                    # If recursively, then delete all child index trees
-                    # and theirs items
+                    # If recursively, then delete items of child indices
                     if request.values.get('recursively') == 'true'\
                             and recursive_tree is not None:
                         # Delete recursively
                         direct_child_trees = []
-                        for index, obj in enumerate(recursive_tree):
+                        for obj in recursive_tree:
                             if obj[1] != current_tree.id:
                                 child_tree = Indexes.get_index(obj[1])
 
@@ -78,10 +87,6 @@ class ItemManagementBulkDelete(BaseView):
                                 # Add the level 1 child into the current_tree
                                 if obj[0] == current_tree.id:
                                     direct_child_trees.append(child_tree.id)
-                        # Then do delete child_tree inside current_tree
-                        for cid in direct_child_trees:
-                            # Delete this tree and children
-                            Indexes.delete(cid)
 
                     return jsonify({'status': 1})
             else:
@@ -235,14 +240,19 @@ class ItemImportView(BaseView):
         data_path = ''
 
         if data:
-            result = check_import_items(data.get('file').split(",")[-1])
+            result = check_import_items(
+                data.get('file_name'),
+                data.get('file').split(",")[-1],
+                data.get('is_change_identifier')
+            )
             if isinstance(result, dict):
                 if result.get('error'):
                     return jsonify(code=0, error=result.get('error'))
                 else:
                     list_record = result.get('list_record', [])
                     data_path = result.get('data_path', '')
-        remove_temp_dir_task.delay(data_path)
+        remove_temp_dir_task.apply_async(
+            (data_path,), countdown=get_lifetime())
         return jsonify(code=1, list_record=list_record, data_path=data_path)
 
     @expose('/download_check', methods=['POST'])
@@ -282,18 +292,22 @@ class ItemImportView(BaseView):
             'list_record', []) if not item.get(
             'errors')]
         for item in list_record:
+            item_id = item.get('id')
             item['root_path'] = data.get('root_path')
             create_flow_define()
             handle_workflow(item)
+            save_cache_item_lock_info(int(item_id) if item_id else None)
             task = import_item.delay(item)
             tasks.append({
                 'task_id': task.task_id,
-                'item_id': item.get('id'),
+                'item_id': item_id,
             })
+        _, import_start_time = check_another_import_is_running()
         response_object = {
             "status": "success",
             "data": {
-                "tasks": tasks
+                "tasks": tasks,
+                "import_start_time": import_start_time or ''
             }
         }
         return jsonify(response_object)
@@ -322,8 +336,8 @@ class ItemImportView(BaseView):
                     "task_id": task_id,
                     "item_id": task_item.get("item_id"),
                 }))
-                status = 'doing' if not (task.successful() or task.failed())\
-                    else "done"
+                status = 'doing' if not (task.successful() or task.failed()) \
+                    or status == 'doing' else "done"
             response_object = {"status": status, "result": result}
         else:
             response_object = {"status": "error", "result": result}
@@ -357,12 +371,154 @@ class ItemImportView(BaseView):
                 }
             )
 
+    @expose('/get_disclaimer_text', methods=['GET'])
+    def get_disclaimer_text(self):
+        """Get disclaimer text."""
+        data = get_change_identifier_mode_content()
+        return jsonify(code=1, data=data)
+
+    @expose('/export_template', methods=['POST'])
+    def export_template(self):
+        """Download item type template."""
+        file_name = None
+        tsv_file = None
+        data = request.get_json()
+        if data:
+            item_type_id = int(data.get('item_type_id', 0))
+            if item_type_id > 0:
+                item_type = ItemTypes.get_by_id(
+                    id_=item_type_id, with_deleted=True)
+                if item_type:
+                    file_name = '{}({}).tsv'.format(
+                        item_type.item_type_name.name, item_type.id)
+                    item_type_line = [
+                        '#ItemType',
+                        '{}({})'.format(
+                            item_type.item_type_name.name, item_type.id),
+                        '{}items/jsonschema/{}'.format(
+                            request.url_root, item_type.id)
+                    ]
+                    ids_line = copy.deepcopy(WEKO_EXPORT_TEMPLATE_BASIC_ID)
+                    names_line = copy.deepcopy(WEKO_EXPORT_TEMPLATE_BASIC_NAME)
+                    systems_line = ['#'] + \
+                        ['' for _ in range(len(ids_line) - 1)]
+                    options_line = copy.deepcopy(
+                        WEKO_EXPORT_TEMPLATE_BASIC_OPTION)
+
+                    item_type = item_type.render
+                    meta_list = {**item_type.get('meta_fix', {}),
+                                 **item_type.get('meta_list', {})}
+                    meta_system = [
+                        key for key in item_type.get('meta_system', {})]
+                    schema = item_type.get('table_row_map', {}) \
+                        .get('schema', {}).get('properties', {})
+                    form = item_type.get('table_row_map', {}).get('form', [])
+
+                    count_file = 0
+                    count_thumbnail = 0
+                    for key in ['pubdate', *item_type.get('table_row', [])]:
+                        if key in meta_system:
+                            continue
+
+                        item = schema.get(key)
+                        item_option = meta_list.get(key) \
+                            if meta_list.get(key) else item
+                        sub_form = next(
+                            (x for x in form if key == x.get('key')),
+                            {'title_i18n': {}})
+                        root_id, root_name, root_option = \
+                            get_root_item_option(key, item_option, sub_form)
+                        # have not sub item
+                        if not (item.get('properties') or item.get('items')):
+                            ids_line.append(root_id)
+                            names_line.append(root_name)
+                            systems_line.append('')
+                            options_line.append(', '.join(root_option))
+                        else:
+                            # have sub item
+                            sub_items = item.get('properties') \
+                                if item.get('properties') \
+                                else item.get('items').get('properties')
+                            _ids, _names = handle_get_all_sub_id_and_name(
+                                sub_items, root_id, root_name,
+                                sub_form.get('items', []))
+                            _options = []
+                            for _id in _ids:
+                                if 'filename' in _id:
+                                    ids_line.append(
+                                        '.file_path[{}]'.format(count_file))
+                                    file_path_name = 'File Path' \
+                                        if current_i18n.language == 'en' \
+                                        else 'ファイルパス'
+                                    names_line.append('.{}[{}]'.format(
+                                        file_path_name, count_file))
+                                    systems_line.append('')
+                                    options_line.append('Allow Multiple')
+                                    count_file += 1
+                                if 'thumbnail_label' in _id:
+                                    thumbnail_path_name = 'Thumbnail Path' \
+                                        if current_i18n.language == 'en' \
+                                        else 'サムネイルパス'
+                                    if item.get('items'):
+                                        ids_line.append(
+                                            '.thumbnail_path[{}]'.format(
+                                                count_thumbnail))
+                                        names_line.append('.{}[{}]'.format(
+                                            thumbnail_path_name,
+                                            count_thumbnail))
+                                        options_line.append('Allow Multiple')
+                                        count_thumbnail += 1
+                                    else:
+                                        ids_line.append('.thumbnail_path')
+                                        names_line.append('.{}'.format(
+                                            thumbnail_path_name))
+                                        options_line.append('')
+                                    systems_line.append('')
+
+                                clean_key = _id.replace('.metadata.', '') \
+                                    .replace('[0]', '[]')
+                                _options.append(
+                                    get_sub_item_option(clean_key, form) or [])
+                                systems_line.append(
+                                    'System' if check_sub_item_is_system(
+                                        clean_key, form) else '')
+
+                            ids_line += _ids
+                            names_line += _names
+                            for _option in _options:
+                                options_line.append(
+                                    ', '.join(list(set(root_option + _option)))
+                                )
+                    tsv_file = make_tsv_by_line([
+                        item_type_line,
+                        ids_line,
+                        names_line,
+                        systems_line,
+                        options_line
+                    ])
+        return Response(
+            [] if not tsv_file else tsv_file.getvalue(),
+            mimetype="text/tsv",
+            headers={
+                "Content-disposition": "attachment; "
+                + ('filename=' if not file_name
+                   else urlencode({'filename': file_name}))
+            })
+
+    @expose('/check_import_is_available', methods=['GET'])
+    def check_import_available(self):
+        is_running, start_time = check_another_import_is_running()
+        return jsonify({
+            'is_available': not is_running,
+            'start_time': start_time or ''
+        })
+
 
 item_management_bulk_search_adminview = {
     'view_class': ItemManagementBulkSearch,
     'kwargs': {
         'endpoint': 'items/search',
-        'category': 'Items',
+        'category': _('Index Tree'),
         'name': '',
     }
 }
@@ -379,7 +535,7 @@ item_management_bulk_delete_adminview = {
 item_management_custom_sort_adminview = {
     'view_class': ItemManagementCustomSort,
     'kwargs': {
-        'category': _('Items'),
+        'category': _('Index Tree'),
         'name': _('Custom Sort'),
         'endpoint': 'items/custom_sort'
     }

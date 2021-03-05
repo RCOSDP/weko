@@ -148,18 +148,18 @@ class WekoFeedGenerator(FeedGenerator):
                 uri = etree.SubElement(author, 'uri')
                 uri.text = a.get('uri')
 
-        for l in self.__atom_link or []:
-            link = etree.SubElement(feed, 'link', href=l['href'])
-            if l.get('rel'):
-                link.attrib['rel'] = l['rel']
-            if l.get('type'):
-                link.attrib['type'] = l['type']
-            if l.get('hreflang'):
-                link.attrib['hreflang'] = l['hreflang']
-            if l.get('title'):
-                link.attrib['title'] = l['title']
-            if l.get('length'):
-                link.attrib['length'] = l['length']
+        for at_link in self.__atom_link or []:
+            link = etree.SubElement(feed, 'link', href=at_link['href'])
+            if at_link.get('rel'):
+                link.attrib['rel'] = at_link['rel']
+            if at_link.get('type'):
+                link.attrib['type'] = at_link['type']
+            if at_link.get('hreflang'):
+                link.attrib['hreflang'] = at_link['hreflang']
+            if at_link.get('title'):
+                link.attrib['title'] = at_link['title']
+            if at_link.get('length'):
+                link.attrib['length'] = at_link['length']
 
         for c in self.__atom_category or []:
             cat = etree.SubElement(feed, 'category', term=c['term'])

@@ -19,18 +19,19 @@
 # MA 02111-1307, USA.
 
 """Module of weko-index-tree utils."""
+import json
 from datetime import date, datetime
 from functools import wraps
 from operator import itemgetter
 
 from elasticsearch.exceptions import NotFoundError
-from flask import current_app, session
+from flask import Markup, current_app, session
 from flask_login import current_user
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_search import RecordsSearch
-from sqlalchemy import MetaData, Table
+from sqlalchemy import MetaData, Table, text
 from weko_groups.models import Group
 
 from .config import WEKO_INDEX_TREE_STATE_PREFIX
@@ -70,7 +71,7 @@ def cached_index_tree_json(timeout=50, key_prefix='index_tree_json'):
     return caching
 
 
-def reset_tree(tree, path=None, more_ids=None):
+def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
     """
     Reset the state of checked.
 
@@ -98,6 +99,7 @@ def reset_tree(tree, path=None, more_ids=None):
         if not roles[0]:
             # for browsing role check
             reduce_index_by_role(tree, roles, groups)
+        if not ignore_more:
             reduce_index_by_more(tree=tree, more_ids=more_ids)
 
 
@@ -129,6 +131,9 @@ def get_tree_json(index_list, root_id):
     def generate_index_dict(index_element, is_root):
         """Formats an index_element, which is a tuple, into a nicely formatted dictionary."""
         index_dict = index_element._asdict()
+        index_name = str(index_element.name).replace("&EMPTY&", "")
+        index_name = Markup.escape(index_name)
+        index_name = index_name.replace("\n", r"<br\>")
 
         if not is_root:
             pid = str(index_element.pid)
@@ -142,7 +147,8 @@ def get_tree_json(index_list, root_id):
         is_expand_on_init = str(index_element.cid) in list_index_expand
         index_dict.update({
             'id': str(index_element.cid),
-            'value': index_element.name,
+            'value': index_name,
+            'name': index_name,
             'position': index_element.position,
             'emitLoadNextLevel': False,
             'settings': {
@@ -227,11 +233,11 @@ def check_roles(user_role, roles):
         roles = roles.split(',')
     if not user_role[0]:
         if current_user.is_authenticated:
-            role = [x for x in (user_role[1] or ['98'])
+            role = [x for x in (user_role[1] or ['-98'])
                     if str(x) in (roles or [])]
-            if not role and (user_role[1] or "98" not in roles):
+            if not role and (user_role[1] or "-98" not in roles):
                 is_can = False
-        elif "99" not in roles:
+        elif "-99" not in roles:
             is_can = False
     return is_can
 
@@ -343,7 +349,7 @@ def get_index_id_list(indexes, id_list=None):
                     continue
 
                 parent = index.get('parent', '')
-                if parent is not '' and parent is not '0':
+                if parent != '' and parent != '0':
                     id_list.append(parent + '/' + index.get('id', ''))
                 else:
                     id_list.append(index.get('id', ''))
@@ -366,7 +372,7 @@ def get_publish_index_id_list(indexes, id_list=None):
 
                 parent = index.get('parent', '')
                 if index.get('public_state'):
-                    if parent is not '' and parent is not '0':
+                    if parent != '' and parent != '0':
                         id_list.append(parent + '/' + index.get('id', ''))
                     else:
                         id_list.append(index.get('id', ''))
@@ -499,3 +505,205 @@ def get_index_id(activity_id):
     else:
         index_tree_id = None
     return index_tree_id
+
+
+def sanitize(s):
+    """Sanitize input string."""
+    s = s.strip()
+    esc_str = ""
+    for i in s:
+        if ord(i) in [9, 10, 13] or (31 < ord(i) != 127):
+            esc_str += i
+    return esc_str
+
+
+def count_items(target_check_key, indexes_aggr, all_indexes):
+    """
+    Count public and private items of a target index based on index state.
+
+    :param target_check_key: id of target index
+    :param indexes_aggr: indexes aggregation returned from ES
+    :param all_indexes:
+    :return:
+    """
+    def get_child_agg_by_key():
+        """Get all child indexes of target index."""
+        lst_result = []
+        for index_aggr in indexes_aggr:
+            if index_aggr['key'].startswith(target_check_key + '/') \
+                    or index_aggr['key'] == target_check_key:
+                lst_result.append(index_aggr)
+        return lst_result
+
+    def set_private_index_count(target_index, lst_deleted):
+        """Set private count of index based on index and parent index state.
+
+        :param target_index: in of target index
+        :param lst_deleted: lst deleted indexes
+        :return:
+        """
+        temp = target_index.copy()
+        list_parent_key = temp['key'].split('/')
+        is_parent_private = False
+        while list_parent_key:
+            nearest_parent_key = list_parent_key.pop()
+            if lst_indexes_state.get(nearest_parent_key) is None:
+                lst_deleted.add(nearest_parent_key)
+                current_app.logger.warning(
+                    "Index {} is existed in ElasticSearch but not "
+                    "in DataBase".format(str(nearest_parent_key)))
+                continue
+            if lst_indexes_state[nearest_parent_key] is False:
+                is_parent_private = True
+                break
+        if is_parent_private:
+            target_index['no_available'] = target_index['doc_count']
+
+    def get_indexes_state():
+        """Get indexes state."""
+        lst_result = {}
+        for index in all_indexes:
+            lst_result[str(index.id)] = index.public_state
+        return lst_result
+
+    pub_items_count = 0
+    pri_items_count = 0
+    lst_child_agg = get_child_agg_by_key()
+    lst_indexes_state = get_indexes_state()
+    # list indexes existed in ES but deleted in DB
+    lst_indexes_deleted = set()
+    # Modify counts of index based on index and parent indexes state
+    for agg in lst_child_agg:
+        set_private_index_count(agg, lst_indexes_deleted)
+    for agg in lst_child_agg:
+        for index_deleted in lst_indexes_deleted:
+            if str(agg['key']).endswith(str(index_deleted)):
+                agg['no_available'] = 0
+                agg['doc_count'] = 0
+        pri_items_count += agg['no_available']
+        pub_items_count += agg['doc_count'] - agg['no_available']
+    return pri_items_count, pub_items_count
+
+
+def recorrect_private_items_count(agp):
+    """Re-correct private item count in case of unpublished items.
+
+    :param agp: aggregation returned from ES
+    :return:
+    """
+    for agg in agp:
+        date_range = agg["date_range"]
+        bkt = date_range['available']['buckets']
+        for bk in bkt:
+            if bk.get("from"):
+                agg["no_available"]["doc_count"] += bk.get("doc_count")
+
+
+def check_doi_in_index(index_id):
+    """Check doi in index.
+
+    @param index_id:
+    @return:
+    """
+    try:
+        if check_doi_in_list_record_es(index_id):
+            return True
+        return False
+    except Exception as e:
+        return True
+
+
+def get_record_in_es_of_index(index_id):
+    """Check doi in index.
+
+    @param index_id:
+    @return:
+    """
+    from .api import Indexes
+    query_q = {
+        "_source": {
+            "excludes": [
+                "content"
+            ]
+        },
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "prefix": {
+                            "path.tree": "@index"
+                        }
+                    },
+                    {
+                        "match": {
+                            "relation_version_is_last": "true"
+                        }
+                    }
+                ]
+            }
+        }
+    }
+    fp = Indexes.get_self_path(index_id)
+    query_q = json.dumps(query_q).replace("@index", fp.path)
+    query_q = json.loads(query_q)
+    result = []
+    search = RecordsSearch(index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
+    search = search.update_from_dict(query_q)
+    search_result = search.execute().to_dict()
+    result = search_result.get('hits', {}).get('hits', [])
+    return result
+
+
+def check_doi_in_list_record_es(index_id):
+    """Check doi in index.
+
+    @param index_id:
+    @return:
+    """
+    list_records_in_es = get_record_in_es_of_index(index_id)
+    list_uuid = []
+    list_path = []
+    for record in list_records_in_es:
+        list_uuid.append(record.get('_id'))
+        list_path.append(list(
+            filter(lambda x: not x.endswith(str(index_id)),
+                   record.get('_source', {}).get('path'))
+        ))
+    from weko_items_ui.utils import check_item_has_doi
+    if check_item_has_doi(list_uuid):
+        if not list_path:
+            return True
+        for path in list_path:
+            if check_restrict_doi_with_indexes(path):
+                return True
+    return False
+
+
+def check_restrict_doi_with_indexes(other_index_ids):
+    """Check doi in index.
+
+    @param index_id:
+    @return:
+    """
+    from .api import Indexes
+    for index_id in other_index_ids:
+        idx = Indexes.get_index(index_id.split('/')[-1])
+        if not idx or (idx.public_state and idx.harvest_public_state):
+            return False
+    return True
+
+
+def check_has_any_item_in_index_is_locked(index_id):
+    """Check if any item in the index is locked by import process.
+
+    @param index_id:
+    @return:
+    """
+    list_records_in_es = get_record_in_es_of_index(index_id)
+    for record in list_records_in_es:
+        from weko_workflow.utils import check_an_item_is_locked
+        item_id = record.get('_source', {}).get(
+            '_item_metadata', {}).get('control_number')
+        if check_an_item_is_locked(int(item_id)):
+            return True
+    return False

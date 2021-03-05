@@ -25,7 +25,7 @@ import os
 
 import numpy
 from celery import shared_task
-from flask import Blueprint, current_app
+from flask import Blueprint, current_app, request
 
 from .api import Journals
 from .models import Journal_export_processing
@@ -155,7 +155,7 @@ def export_journal_task(p_path):
                     convert_none_to_blank(item.num_last_vol_online))
                 journal_data.append(
                     convert_none_to_blank(item.num_last_issue_online))
-                journal_data.append(convert_none_to_blank(item.title_url))
+                journal_data.append(request.host_url + convert_none_to_blank(item.title_url))
                 journal_data.append(convert_none_to_blank(item.first_author))
                 journal_data.append(convert_none_to_blank(item.title_id))
                 journal_data.append(convert_none_to_blank(item.embargo_info))

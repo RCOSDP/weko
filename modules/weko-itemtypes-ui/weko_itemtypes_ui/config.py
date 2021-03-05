@@ -41,6 +41,9 @@ WEKO_ITEMTYPES_UI_ADMIN_MAPPING_TEMPLATE = \
 WEKO_ITEMTYPES_UI_ADMIN_ERROR_TEMPLATE = 'weko_itemtypes_ui/admin/error.html'
 """Error template for the item type page."""
 
+WEKO_ITEMTYPES_UI_SHOW_DEFAULT_PROPERTIES = True
+"""Set to show or hide default properties on the item type page."""
+
 WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES = {
     '1': {'name': _('Text Field'), 'value': 'text'},
     '2': {'name': _('Text Area'), 'value': 'textarea'},
@@ -54,15 +57,11 @@ WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES = {
 WEKO_BILLING_FILE_ACCESS = 1
 """Show billing file property in list."""
 
-WEKO_BILLING_FILE_PROP_ID = 103
-"""Id of billing file property."""
+WEKO_BILLING_FILE_PROP_ATT = 'billing_file_prop'
+"""Attribute to detect billing file property."""
 
-WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_IDS = [3, 60, 62, 65, 102, 103]
-"""Ids of default properties
-    3 = Right Holder
-    60 = Creator / Author
-    62 = Contributor
-    65 = File
-    102 = Bibliographic information
-    103 = Billing File
-"""
+WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT = 'system_prop'
+"""Attribute to detect property is default property which is not shown at properties screen."""
+
+WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED = True
+"""Enable Upgrade Version."""

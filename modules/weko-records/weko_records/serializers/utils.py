@@ -59,7 +59,7 @@ def get_mapping(item_type_mapping, mapping_type):
 
     schema = {}
     for item_id, maps in item_type_mapping.items():
-        if isinstance(maps[mapping_type], dict):
+        if mapping_type in maps.keys() and isinstance(maps[mapping_type], dict):
             item_schema = get_schema_key_info(maps[mapping_type], '', {})
             for k, v in item_schema.items():
                 item_schema[k] = item_id + '.' + v if v else item_id
@@ -145,7 +145,7 @@ def get_item_type_name_id(item_type_id):
             id=item_type_id).one_or_none()
         if item_name_id:
             return item_name_id.name_id
-    return None
+    return 0
 
 
 def get_item_type_name(item_type_id):
@@ -290,7 +290,7 @@ class OpenSearchDetailData:
             item_url = request.host_url + 'records/' + _pid
             fe.link(href=item_url, rel='alternate', type='text/xml')
 
-            oai_param = 'oai2d?verb=GetRecord&metadataPrefix=jpcoar&identifier='
+            oai_param = 'oai?verb=GetRecord&metadataPrefix=jpcoar&identifier='
             if self.output_type == self.OUTPUT_ATOM:
                 # Set oai
                 _oai = hit['_source']['_oai']['id']

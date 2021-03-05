@@ -358,3 +358,33 @@ msgstr ""
 
 msgid "The specified number has been exceeded. You can only select up to two fields."
 msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
+msgid "Version Management"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
+msgid "Upgrade Version"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
+msgid "Keep Version"
+msgstr ""
+
+msgid "Required item is not inputted"
+msgstr ""
+
+msgid "Feedback Mail Import"
+msgstr ""
+
+msgid "Cannot preview because the file size is too large."
+msgstr ""
+
+msgid "The same file name cannot be registered."
+msgstr ""
+
+msgid "Item cannot be edited because the import is in progress."
+msgstr ""
+
+msgid "Item cannot be deleted because the import is in progress."
+msgstr ""

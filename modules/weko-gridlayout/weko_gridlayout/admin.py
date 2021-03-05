@@ -427,6 +427,11 @@ class WidgetSettingView(ModelView):
     column_searchable_list = (
         'repository_id', 'widget_type', 'is_enabled')
 
+    column_sortable_list = (
+        'widget_id', 'repository_id', 'widget_type', 'is_enabled')
+
+    column_filters = ('repository_id', 'widget_type', 'is_enabled')
+
     column_details_list = (
         'repository_id',
         'widget_type',
@@ -454,15 +459,15 @@ class WidgetSettingView(ModelView):
 widget_adminview = dict(
     modelview=WidgetSettingView,
     model=WidgetItem,
-    category=_('Setting'),
+    category=_('Web Design'),
     name=_('Widget'),
 )
 
 widget_design_adminview = {
     'view_class': WidgetDesign,
     'kwargs': {
-        'category': _('Setting'),
-        'name': _('Widget Design'),
+        'category': _('Web Design'),
+        'name': _('Page Layout'),
         'endpoint': 'widgetdesign'
     }
 }

@@ -1,0 +1,58 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+<div class="row">
+  <div class="col-sm-1 col-md-1 col-md-1"></div>
+  <p>
+    <b>{{ _('Aggregation Period') }} : </b>
+    {{ start_date.strftime('%Y-%m-%d') }} ~
+    {{ end_date.strftime('%Y-%m-%d') }}
+  </p>
+
+  <!-- Most viewed items -->
+  {% if (rankings['most_reviewed_items'] if 'most_reviewed_items' in rankings else False) %}
+    {{ ranking_list(panel_title=_('The Most Reviewed Items'),
+                      rankings=rankings['most_reviewed_items']) }}
+  {% endif %}
+
+  <!-- Most downloaded items -->
+  {% if (rankings['most_downloaded_items'] if 'most_downloaded_items' in rankings else False) %}
+    {{ ranking_list(panel_title=_('Most Downloaded Items'),
+                      rankings=rankings['most_downloaded_items']) }}
+  {% endif %}
+
+  <!-- Most active users (item-creation) -->
+  {% if (rankings['created_most_items_user'] if 'created_most_items_user' in rankings else False) %}
+    {{ ranking_list(panel_title=_('User Who Created The Most Items'),
+                      rankings=rankings['created_most_items_user']) }}
+  {% endif %}
+
+  <!-- Search keyword ranking -->
+  {% if (rankings['most_searched_keywords'] if 'most_searched_keywords' in rankings else False) %}
+    {{ ranking_list(panel_title=_('Most Searched Keywords'),
+                      rankings=rankings['most_searched_keywords']) }}
+  {% endif %}
+
+  <!-- Recently added items -->
+  {% if (rankings['new_items'] if 'new_items' in rankings else False) %}
+    {{ ranking_list(panel_title=_('New Items'),
+                      rankings=rankings['new_items']) }}
+  {% endif %}
+  <div class="col-sm-1 col-md-1 col-md-1"></div>
+</div>

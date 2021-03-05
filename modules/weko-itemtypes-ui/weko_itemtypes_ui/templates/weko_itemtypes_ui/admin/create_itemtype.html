@@ -25,6 +25,7 @@
   {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {% assets "weko_itemtypes_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_theme_css_widget" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -53,9 +54,9 @@
                 <label class="sr-only" for="item-type-lists"></label>
                 <select class="form-control" id="item-type-lists">
                   <option value=""></option>
-                  {% for list in lists %}
-                  <option value="{{ list.item_type.0.id }}"
-                          class="{% if list.item_type.0.harvesting_type %}harvesting_type {% elif list.item_type.0.is_deleted %}deleted_type {% else %}normal_type {% endif %}{% if list.belonging_item_flg %}belonging_item{% endif %}" {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
+                  {% for item_type in item_type_list %}
+                  <option value="{{ item_type.id }}"
+                          class="{% if item_type.harvesting_type %}harvesting_type{% elif item_type.is_deleted %}deleted_type{% else %}normal_type{% endif %}" {% if item_type.id == id %}selected{% endif %}>{{ item_type.name }}({{ item_type.tag }})</option>
                   {% endfor %}
                 </select>
                </div>
@@ -96,7 +97,10 @@
       </div>
     </div>
   </div>
-<div class="container">
+<div class="lds-ring-background" style="width: auto ! important;">
+  <div class="lds-ring"></div>
+</div>
+<div class="container hidden">
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-11 metadata-content">
       <div class="row">
@@ -164,7 +168,7 @@
         </table>
         <div class="col-sm-3 col-md-3 col-lg-3">
           <button type="button" class="btn btn-success" id="btn_new_itemtype_meta">
-              <span class="glyphicon glyphicon-plus"></span>&nbsp
+              <span class="glyphicon glyphicon-plus"></span>&nbsp;
                    {{_('Add Metadata')}}</button>
         </div>
         <div class="col-sm-6 col-md-6 col-lg-5 pull-right">
@@ -174,10 +178,10 @@
                {{_('Restore')}}</button>
           {%- endif -%}
           <button type="button" class="btn btn-danger pull-right ten-pixel-right-margin" id="btn_delete_item">
-              <span class="glyphicon glyphicon-trash"></span>&nbsp
+              <span class="glyphicon glyphicon-trash"></span>&nbsp;
               {{ _('Delete') }}</button>
           <button type="button" class="btn btn-primary pull-right ten-pixel-right-margin" id="btn_create_itemtype_schema">
-              <span class="glyphicon glyphicon-save"></span>&nbsp
+              <span class="glyphicon glyphicon-save"></span>&nbsp;
               {{_('Save')}}</button>
         </div>
       </div>
@@ -238,7 +242,7 @@
       <div class="modal-footer">
         <button id="result_modal_close_btn" type="button" class="btn btn-info"
         data-dismiss="modal">
-             <span class="glyphicon glyphicon-remove"></span>&nbsp
+             <span class="glyphicon glyphicon-remove"></span>&nbsp;
                 {{_('Close')}}
         </button>
       </div>

@@ -44,10 +44,12 @@ WEKO_ITEMS_UI_UPLOAD_TEMPLATE = 'weko_items_ui/upload.html'
 WEKO_ITEMS_UI_EXPORT_TEMPLATE = 'weko_items_ui/export.html'
 """Item export template."""
 
-WEKO_ITEMS_UI_EXPORT_RESULTS_LIST_TEMPLATE = 'weko_items_ui/export_results_list.html'
+WEKO_ITEMS_UI_EXPORT_RESULTS_LIST_TEMPLATE = 'weko_items_ui/' \
+                                             'export_results_list.html'
 """Item export results list template."""
 
-WEKO_ITEMS_UI_JSTEMPLATE_EXPORT_LIST = 'templates/weko_items_ui/export_list.html'
+WEKO_ITEMS_UI_JSTEMPLATE_EXPORT_LIST = 'templates/weko_items_ui/' \
+                                       'export_list.html'
 """Javascript template for item export list."""
 
 WEKO_ITEMS_UI_INDEX_URL = '/items/index/{pid_value}'
@@ -71,18 +73,6 @@ WEKO_ITEMS_UI_EXPORT_FORMAT_JSON = 'JSON'
 
 WEKO_ITEMS_UI_EXPORT_FORMAT_BIBTEX = 'BIBTEX'
 """Format for exporting items -- BIBTEX. """
-
-IDENTIFIER_GRANT_DOI = 0
-"""Identifier grant was select."""
-
-IDENTIFIER_GRANT_CAN_WITHDRAW = -1
-"""Identifier grant can withdraw."""
-
-IDENTIFIER_GRANT_IS_WITHDRAWING = -2
-"""Identifier grant is withdrawing."""
-
-IDENTIFIER_GRANT_WITHDRAWN = -3
-"""Identifier grant was withdrawn."""
 
 WEKO_ITEMS_UI_DATA_REGISTRATION = ""
 WEKO_ITEMS_UI_APPLICATION_FOR_LIFE = ""
@@ -150,3 +140,46 @@ WEKO_ITEMS_UI_ACTION_ENDPOINT_KEY = {}
 WEKO_ITEMS_UI_APPROVAL_MAIL_SUBITEM_KEY = {}
 
 WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPES_LIST = []
+
+WEKO_ITEMS_UI_API_RETURN_CODE_ERROR = -1
+"""Number response indicates that API is not processing request."""
+
+WEKO_ITEMS_UI_MS_MIME_TYPE = {
+    'ms_word': ['application/msword',
+                'application/vnd.openxmlformats-officedocument.'
+                'wordprocessingml.document',
+                'application/vnd.openxmlformats-officedocument.'
+                'wordprocessingml.template',
+                'application/vnd.ms-word.document.macroEnabled.12',
+                'application/vnd.ms-word.template.macroEnabled.12'
+                ],
+    'ms_powerpoint': ['application/vnd.ms-powerpoint',
+                      'application/vnd.openxmlformats-officedocument.'
+                      'presentationml.presentation',
+                      'application/vnd.openxmlformats-officedocument.'
+                      'presentationml.template',
+                      'application/vnd.openxmlformats-officedocument.'
+                      'presentationml.slideshow',
+                      'application/vnd.ms-powerpoint.addin.macroEnabled.12',
+                      'application/vnd.ms-powerpoint.presentation.'
+                      'macroEnabled.12',
+                      'applcation/vnd.ms-powerpoint.template.macroEnabled.12',
+                      'application/vnd.ms-powerpoint.slideshow.macroEnabled.12'
+                      ],
+    'ms_excel': ['application/vnd.ms-excel',
+                 'application/vnd.openxmlformats-officedocument.'
+                 'spreadsheetml.sheet',
+                 'application/vnd.openxmlformats-officedocument.'
+                 'spreadsheetml.template',
+                 'application/vnd.ms-excel.sheet.macroEnabled.12',
+                 'application/vnd.ms-excel.template.macroEnabled.12',
+                 'application/vnd.ms-excel.addin.macroEnabled.12',
+                 'application/vnd.ms-excel.sheet.binary.macroEnabled.12']
+}
+
+WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT = {
+    'ms_word': 30,
+    'ms_powerpoint': 20,
+    'ms_excel': 10
+}
+"""Limit size of preview-able file."""

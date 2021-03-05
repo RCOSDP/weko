@@ -22,7 +22,7 @@
 import csv
 import os
 import zipfile
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import BytesIO, StringIO
 
 import redis
@@ -105,6 +105,8 @@ def get_search_setting():
 
     if res:
         db_obj = res.search_setting_all
+        if not db_obj.get('init_disp_setting') and res.init_disp_setting:
+            db_obj['init_disp_setting'] = res.init_disp_setting
         # current_app.logger.debug(db_str)
         # if 'False' in db_str:
         #     db_str.replace('False','false')
@@ -368,7 +370,7 @@ def make_stats_tsv(raw_stats, file_type, year, month):
         col_dict_key = file_type.split('_', 1)[1]
         cols = current_app.config['WEKO_ADMIN_REPORT_COLS'].get(col_dict_key,
                                                                 [])
-        cols[3:1] = raw_stats['all_groups']  # Insert group columns
+        cols[3:1] = raw_stats.get('all_groups')  # Insert group columns
     else:
         cols = current_app.config['WEKO_ADMIN_REPORT_COLS'].get(file_type, [])
     writer.writerow(cols)
@@ -376,33 +378,32 @@ def make_stats_tsv(raw_stats, file_type, year, month):
     # Special cases:
     # Write total for per index views
     if file_type == 'index_access':
-        writer.writerow([_('Total Detail Views'), raw_stats['total']])
-
+        writer.writerow([_('Total Detail Views'), raw_stats.get('total')])
     elif file_type in ['billing_file_download', 'billing_file_preview']:
-        write_report_tsv_rows(writer, raw_stats['all'], file_type,
-                              raw_stats['all_groups'])  # Pass all groups
+        write_report_tsv_rows(writer, raw_stats.get('all'), file_type,
+                              raw_stats.get('all_groups'))  # Pass all groups
     elif file_type == 'site_access':
         write_report_tsv_rows(writer,
-                              raw_stats['site_license'],
+                              raw_stats.get('site_license'),
                               file_type,
                               _('Site license member'))
         write_report_tsv_rows(writer,
-                              raw_stats['other'],
+                              raw_stats.get('other'),
                               file_type,
                               _('Other than site license'))
     else:
-        write_report_tsv_rows(writer, raw_stats['all'], file_type)
+        write_report_tsv_rows(writer, raw_stats.get('all'), file_type)
 
     # Write open access stats
     if sub_header_row is not None:
         writer.writerows([[''], [sub_header_row]])
         if 'open_access' in raw_stats:
             writer.writerow(cols)
-            write_report_tsv_rows(writer, raw_stats['open_access'])
+            write_report_tsv_rows(writer, raw_stats.get('open_access'))
         elif 'institution_name' in raw_stats:
             writer.writerows([[_('Institution Name')] + cols])
             write_report_tsv_rows(writer,
-                                  raw_stats['institution_name'],
+                                  raw_stats.get('institution_name'),
                                   file_type)
     return tsv_output
 
@@ -410,69 +411,72 @@ def make_stats_tsv(raw_stats, file_type, year, month):
 def write_report_tsv_rows(writer, records, file_type=None, other_info=None):
     """Write tsv rows for stats."""
     from weko_items_ui.utils import get_user_information
+    if not records:
+        return
     if isinstance(records, dict):
         records = list(records.values())
     for record in records:
         if file_type is None or \
             file_type == 'file_download' or \
                 file_type == 'file_preview':
-            writer.writerow([record['file_key'], record['index_list'],
-                             record['total'], record['no_login'],
-                             record['login'], record['site_license'],
-                             record['admin'], record['reg']])
+            writer.writerow([record.get('file_key'), record.get('index_list'),
+                             record.get('total'), record.get('no_login'),
+                             record.get('login'), record.get('site_license'),
+                             record.get('admin'), record.get('reg')])
 
         elif file_type in ['billing_file_download', 'billing_file_preview']:
-            row = [record['file_key'], record['index_list'],
-                   record['total'], record['no_login'],
-                   record['login'], record['site_license'],
-                   record['admin'], record['reg']]
+            row = [record.get('file_key'), record.get('index_list'),
+                   record.get('total'), record.get('no_login'),
+                   record.get('login'), record.get('site_license'),
+                   record.get('admin'), record.get('reg')]
             group_counts = []
             for group_name in other_info:  # Add group counts in
-                group_counts.append(record['group_counts'].get(group_name, 0))
+                if record.get('group_counts'):
+                    group_counts.append(
+                        record.get('group_counts').get(group_name, 0))
             row[3:1] = group_counts
             writer.writerow(row)
 
         elif file_type == 'index_access':
             writer.writerow(
-                [record['index_name'], record['view_count']])
+                [record.get('index_name'), record.get('view_count')])
         elif file_type == 'search_count':
-            writer.writerow([record['search_key'], record['count']])
+            writer.writerow([record.get('search_key'), record.get('count')])
         elif file_type == 'user_roles':
-            writer.writerow([record['role_name'], record['count']])
+            writer.writerow([record.get('role_name'), record.get('count')])
         elif file_type == 'detail_view':
             item_metadata_json = ItemsMetadata. \
-                get_record(record['record_id'])
+                get_record(record.get('record_id'))
             writer.writerow([
-                item_metadata_json['title'], record['index_names'],
-                record['total_all'], record['total_not_login']])
+                item_metadata_json['title'], record.get('index_names'),
+                record.get('total_all'), record.get('total_not_login')])
         elif file_type == 'file_using_per_user':
             user_email = ''
             user_name = 'Guest'
-            user_id = int(record['cur_user_id'])
+            user_id = int(record.get('cur_user_id'))
             if user_id > 0:
                 user_info = get_user_information(user_id)
                 user_email = user_info['email']
                 user_name = user_info['username']
             writer.writerow([
                 user_email, user_name,
-                record['total_download'], record['total_preview']])
+                record.get('total_download'), record.get('total_preview')])
         elif file_type == 'top_page_access':
-            writer.writerow([record['host'], record['ip'],
-                             record['count']])
-        elif file_type == 'site_access':
-            if record:
-                if other_info:
-                    writer.writerow([other_info, record['top_view'],
-                                     record['search'],
-                                     record['record_view'],
-                                     record['file_download'],
-                                     record['file_preview']])
-                else:
-                    writer.writerow([record['name'], record['top_view'],
-                                     record['search'],
-                                     record['record_view'],
-                                     record['file_download'],
-                                     record['file_preview']])
+            writer.writerow([record.get('host'), record.get('ip'),
+                             record.get('count')])
+        elif file_type == 'site_access' and record:
+            if other_info:
+                writer.writerow([other_info, record.get('top_view'),
+                                 record.get('search'),
+                                 record.get('record_view'),
+                                 record.get('file_download'),
+                                 record.get('file_preview')])
+            else:
+                writer.writerow([record.get('name'), record.get('top_view'),
+                                 record.get('search'),
+                                 record.get('record_view'),
+                                 record.get('file_download'),
+                                 record.get('file_preview')])
 
 
 def reset_redis_cache(cache_key, value):
@@ -524,9 +528,8 @@ class StatisticMail:
             string -- time with format yyyy-MM
 
         """
-        month = str(datetime.now().month - 1)
-        month = month.zfill(2)
-        return str(datetime.now().year) + '-' + month
+        previous_month = datetime.now().replace(day=1) - timedelta(days=1)
+        return previous_month.strftime("%Y-%m")
 
     @classmethod
     def send_mail_to_all(cls, list_mail_data=None, stats_date=None):
@@ -699,7 +702,7 @@ class StatisticMail:
         count_item_view = cls.get_item_view(item_id, time)
         count_item_download = cls.get_item_download(data, time)
         title = data.get("item_title")
-        url = root_url + '/records/' + data.get('control_number')
+        url = root_url + '/records/' + data.get('recid', '').split('.')[0]
         result = {
             'title': title,
             'url': url,
@@ -946,62 +949,59 @@ class FeedbackMail:
         :return: author mail
         """
         search_key = request_data.get('searchKey') or ''
-        query = {"match": {"gather_flg": 0}}
+        match = [{"term": {"gather_flg": 0}}]
+
         if search_key:
-            search_keys = search_key.split(" ")
-            match = []
-            for key in search_keys:
-                if key:
-                    match.append(
-                        {"match_phrase_prefix": {"emailInfo.email": key}})
-            query = {
-                "bool":
-                    {
-                        "should": match, "minimum_should_match": 1
-                    }
-            }
-        size = config.WEKO_ADMIN_FEEDBACK_MAIL_NUM_OF_PAGE
+            match.append(
+                {"multi_match": {"query": search_key, "type": "phrase"}})
+        query = {"bool": {"must": match}}
+        size = int(request_data.get('numOfPage')
+                   or config.WEKO_ADMIN_FEEDBACK_MAIL_NUM_OF_PAGE)
         num = request_data.get('pageNumber') or 1
         offset = (int(num) - 1) * size if int(num) > 1 else 0
-        sort_key = request_data.get('sortKey') or ''
-        sort_order = request_data.get('sortOrder') or ''
-        sort = {}
-        if sort_key and sort_order:
-            sort = {sort_key + '.raw': {"order": sort_order, "mode": "min"}}
+
         body = {
             "query": query,
             "from": offset,
             "size": size,
-            "sort": sort
-        }
-        query_item = {
-            "size": 0,
-            "query": {
-                "bool": {
-                    "must_not": {
-                        "match": {
-                            "weko_id": "",
-                        }
-                    }
-                }
-            }, "aggs": {
-                "item_count": {
-                    "terms": {
-                        "field": "weko_id"
-                    }
-                }
-            }
         }
         indexer = RecordIndexer()
         result = indexer.client.search(
             index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+            doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
             body=body
         )
-        result_item_cnt = indexer.client.search(
+
+        author_id_list = []
+        for es_hit in result['hits']['hits']:
+            author_id_info = es_hit['_source']['authorIdInfo']
+            if author_id_info:
+                author_id_list.append(author_id_info[0]['authorId'])
+
+        name_id = '_item_metadata.item_creator.attribute_value_mlt'
+        name_id += '.nameIdentifiers.nameIdentifier.keyword'
+        query_item = {
+            'size': 0,
+            'query': {
+                'terms': {
+                    name_id: author_id_list
+                }
+            }, 'aggs': {
+                'item_count': {
+                    'terms': {
+                        'field': name_id,
+                        'include': author_id_list
+                    }
+                }
+            }
+        }
+        result_itemCnt = indexer.client.search(
             index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
             body=query_item
         )
-        result['item_cnt'] = result_item_cnt
+
+        result['item_cnt'] = result_itemCnt
+
         return result
 
     @classmethod
@@ -1412,11 +1412,6 @@ class FeedbackMail:
         FeedbackMailHistory.update_lastest_status(history_id, False)
 
 
-def str_to_bool(str):
-    """Convert string to bool."""
-    return str.lower() in ['true', 't']
-
-
 def validation_site_info(site_info):
     """Validate site_info.
 
@@ -1442,7 +1437,7 @@ def validation_site_info(site_info):
         'site_name_is_required_label': __('Site name is required.'),
         'language_not_match_label': __(
             'Language is deleted from Registered Language of system.'),
-        'the_limit_is_200_characters': __('The limit is 200 characters'),
+        'the_limit_is_1000_characters': __('The limit is 1000 characters'),
     }
 
     """check site_name len"""
@@ -1504,10 +1499,10 @@ def validation_site_info(site_info):
 
     '''Check length input notify'''
     for item in notify:
-        if len(item.get('notify_name')) > 200:
+        if len(item.get('notify_name')) > 1000:
             return {
                 'error': weko_admin_site_info_message.get(
-                    'the_limit_is_200_characters'),
+                    'the_limit_is_1000_characters'),
                 'data': ["notify_" + str(item.get(
                     "index"))],
                 'status': False
@@ -1595,3 +1590,56 @@ def get_notify_for_current_language(notify):
         return ''
     else:
         return ''
+
+
+def __build_init_display_index(indexes: list,
+                               init_display_indexes: list,
+                               init_disp_index: str):
+    """Build initial display index.
+
+    :param indexes:index list from Database.
+    :param init_display_indexes:index list.
+    :param init_disp_index:selected index value
+    """
+    for child in indexes:
+        if child.get('id') and child.get('public_state') is True:
+            selected = child.get('id') == init_disp_index
+            parent = child.get('parent', "0").split('/')[-1]
+            index = {
+                "id": child.get('id'),
+                "parent": parent,
+                "text": child.get('name'),
+            }
+            if selected:
+                index['state'] = {"selected": selected}
+                index['a_attr'] = {"class": "jstree-clicked"}
+            init_display_indexes.append(index)
+            if child.get('children'):
+                __build_init_display_index(
+                    child.get('children'),
+                    init_display_indexes,
+                    init_disp_index)
+
+
+def get_init_display_index(init_disp_index: str) -> list:
+    """Get initial display index.
+
+    :param init_disp_index: Selected index.
+    :return: index list.
+    """
+    from weko_index_tree.api import Indexes
+    index_list = Indexes.get_index_tree()
+    root_index = {
+        "id": "0",
+        "parent": "#",
+        "text": "Root Index",
+        "state": {"opened": True},
+    }
+    if not init_disp_index or init_disp_index == "0":
+        root_index["state"].update({"selected": True})
+        root_index['a_attr'] = {"class": "jstree-clicked"}
+    init_display_indexes = [root_index]
+    __build_init_display_index(index_list, init_display_indexes,
+                               init_disp_index)
+
+    return init_display_indexes

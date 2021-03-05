@@ -40,8 +40,8 @@ from invenio_assets import NpmBundle
 css_bootstrap = NpmBundle(
     'css/weko_theme/styles.scss',
     depends=(
+        '../data/_variables.scss',
         'scss/invenio_theme/*.scss',
-        'css/weko_theme/_variables.scss',
         'scss/invenio_communities/variables.scss',
         'scss/invenio_communities/communities/*.scss',
     ),
@@ -80,7 +80,7 @@ js_treeview = Bundle(
     'js/weko_theme/inline.bundle.js',
     'js/weko_theme/polyfills.bundle.js',
     'js/weko_theme/main.bundle.js',
-    output="gen/index_tree_view.js"
+    output="gen/weko_theme_tree_view.js"
 )
 
 js = Bundle(

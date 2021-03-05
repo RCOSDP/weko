@@ -20,17 +20,24 @@
 
 """Module of weko-records-ui utils."""
 
+from datetime import datetime as dt
 from decimal import Decimal
 
-from flask import current_app
+from flask import current_app, request
+from flask_babelex import gettext as _
+from flask_login import current_user
 from invenio_db import db
+from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from weko_admin.models import AdminSettings
 from weko_deposit.api import WekoDeposit
-from weko_records.api import ItemTypes
+from weko_records.api import FeedbackMailList, ItemTypes, Mapping
+from weko_records.serializers.utils import get_mapping
+from weko_workflow.utils import check_an_item_is_locked
 
-from .permissions import check_user_group_permission
+from .permissions import check_file_download_permission, \
+    check_user_group_permission, is_open_restricted
 
 
 def check_items_settings():
@@ -170,18 +177,43 @@ def soft_delete(recid):
                 pid_type='recid', object_uuid=recid).first()
         if pid.status == PIDStatus.DELETED:
             return
-        depid = PersistentIdentifier.query.filter_by(
-            pid_type='depid', object_uuid=pid.object_uuid).first()
-        if depid:
-            rec = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
-            dep = WekoDeposit(rec.json, rec)
-            dep['path'] = []
-            dep.indexer.update_path(dep, update_revision=False)
-        pids = PersistentIdentifier.query.filter_by(
-            object_uuid=pid.object_uuid)
-        for p in pids:
-            p.status = PIDStatus.DELETED
-        db.session.commit()
+
+        # Check Record is in import progress
+        if check_an_item_is_locked(int(pid.pid_value.split(".")[0])):
+            raise Exception({
+                'is_locked': True,
+                'msg': _('Item cannot be deleted because '
+                         'the import is in progress.')
+            })
+
+        versioning = PIDVersioning(child=pid)
+        if not versioning.exists:
+            return
+        all_ver = versioning.children.all()
+        draft_pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid',
+            pid_value="{}.0".format(pid.pid_value.split(".")[0])
+        ).one_or_none()
+
+        if draft_pid:
+            all_ver.append(draft_pid)
+
+        for ver in all_ver:
+            depid = PersistentIdentifier.query.filter_by(
+                pid_type='depid', object_uuid=ver.object_uuid).first()
+            if depid:
+                rec = RecordMetadata.query.filter_by(
+                    id=ver.object_uuid).first()
+                dep = WekoDeposit(rec.json, rec)
+                dep['path'] = []
+                dep.indexer.update_path(dep, update_revision=False)
+                FeedbackMailList.delete(ver.object_uuid)
+                dep.remove_feedback_mail()
+            pids = PersistentIdentifier.query.filter_by(
+                object_uuid=ver.object_uuid)
+            for p in pids:
+                p.status = PIDStatus.DELETED
+            db.session.commit()
     except Exception as ex:
         db.session.rollback()
         raise ex
@@ -197,19 +229,34 @@ def restore(recid):
                 pid_type='recid', object_uuid=recid).first()
         if pid.status != PIDStatus.DELETED:
             return
-        pid.status = PIDStatus.REGISTERED
-        depid = PersistentIdentifier.query.filter_by(
-            pid_type='depid', object_uuid=pid.object_uuid).first()
-        if depid:
-            depid.status = PIDStatus.REGISTERED
-            rec = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
-            dep = WekoDeposit(rec.json, rec)
-            dep.indexer.update_path(dep, update_revision=False)
-        pids = PersistentIdentifier.query.filter_by(
-            object_uuid=pid.object_uuid)
-        for p in pids:
-            p.status = PIDStatus.REGISTERED
-        db.session.commit()
+
+        versioning = PIDVersioning(child=pid)
+        if not versioning.exists:
+            return
+        all_ver = versioning.children.all()
+        draft_pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid',
+            pid_value="{}.0".format(pid.pid_value.split(".")[0])
+        ).one_or_none()
+
+        if draft_pid:
+            all_ver.append(draft_pid)
+
+        for ver in all_ver:
+            ver.status = PIDStatus.REGISTERED
+            depid = PersistentIdentifier.query.filter_by(
+                pid_type='depid', object_uuid=ver.object_uuid).first()
+            if depid:
+                depid.status = PIDStatus.REGISTERED
+                rec = RecordMetadata.query.filter_by(
+                    id=ver.object_uuid).first()
+                dep = WekoDeposit(rec.json, rec)
+                dep.indexer.update_path(dep, update_revision=False)
+            pids = PersistentIdentifier.query.filter_by(
+                object_uuid=ver.object_uuid)
+            for p in pids:
+                p.status = PIDStatus.REGISTERED
+            db.session.commit()
     except Exception as ex:
         db.session.rollback()
         raise ex
@@ -307,3 +354,261 @@ def get_pair_value(name_keys, lang_keys, datas):
             for name, lang in get_pair_value(name_keys[1:], lang_keys[1:],
                                              datas.get(name_keys[0])):
                 yield name, lang
+
+
+def hide_item_metadata(record):
+    """Hiding emails and hidden item metadata.
+
+    :param record:
+    :return:
+    """
+    from weko_items_ui.utils import get_ignore_item, hide_meta_data_for_role
+    check_items_settings()
+
+    record['weko_creator_id'] = record.get('owner')
+
+    if hide_meta_data_for_role(record):
+        list_hidden = get_ignore_item(record['item_type_id'])
+        record = hide_by_itemtype(record, list_hidden)
+
+        if not current_app.config['EMAIL_DISPLAY_FLG']:
+            record = hide_by_email(record)
+
+        return True
+
+    record.pop('weko_creator_id')
+    return False
+
+
+def hide_item_metadata_email_only(record):
+    """Hiding emails only.
+
+    :param name_keys:
+    :param lang_keys:
+    :param datas:
+    :return:
+    """
+    from weko_items_ui.utils import hide_meta_data_for_role
+    check_items_settings()
+
+    record['weko_creator_id'] = record.get('owner')
+
+    if hide_meta_data_for_role(record) and \
+            not current_app.config['EMAIL_DISPLAY_FLG']:
+        record = hide_by_email(record)
+
+        return True
+
+    record.pop('weko_creator_id')
+    return False
+
+
+def hide_by_email(item_metadata):
+    """Hiding emails.
+
+    :param item_metadata:
+    :return:
+    """
+    subitem_keys = current_app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS']
+
+    # Hidden owners_ext.email
+    if item_metadata.get('_deposit') and \
+            item_metadata['_deposit'].get('owners_ext'):
+        del item_metadata['_deposit']['owners_ext']['email']
+
+    for item in item_metadata:
+        _item = item_metadata[item]
+        if isinstance(_item, dict) and \
+                _item.get('attribute_value_mlt'):
+            for _idx, _value in enumerate(_item['attribute_value_mlt']):
+                for key in subitem_keys:
+                    if key in _value.keys():
+                        del _item['attribute_value_mlt'][_idx][key]
+
+    return item_metadata
+
+
+def hide_by_itemtype(item_metadata, hidden_items):
+    """Hiding item type metadata.
+
+    :param item_metadata:
+    :param hidden_items:
+    :return:
+    """
+    def del_hide_sub_metadata(keys, metadata):
+        """Delete hide metadata."""
+        if isinstance(metadata, dict):
+            data = metadata.get(keys[0])
+            if data:
+                if len(keys) > 1:
+                    del_hide_sub_metadata(keys[1:], data)
+                else:
+                    del metadata[keys[0]]
+        elif isinstance(metadata, list):
+            count = len(metadata)
+            for index in range(count):
+                del_hide_sub_metadata(keys, metadata[index])
+
+    for hide_key in hidden_items:
+        if isinstance(hide_key, str) \
+                and item_metadata.get(hide_key):
+            del item_metadata[hide_key]
+        elif isinstance(hide_key, list) and \
+                item_metadata.get(hide_key[0]):
+            del_hide_sub_metadata(
+                hide_key[1:],
+                item_metadata[
+                    hide_key[0]]['attribute_value_mlt'])
+
+    return item_metadata
+
+
+def is_show_email_of_creator(item_type_id):
+    """Check setting show/hide email for 'Detail' and 'PDF Cover Page' screen.
+
+    :param item_type_id: item type id of current record.
+    :return: True/False, True: show, False: hide.
+    """
+    def get_creator_id(item_type_id):
+        type_mapping = Mapping.get_record(item_type_id)
+        item_map = get_mapping(type_mapping, "jpcoar_mapping")
+        creator = 'creator.creatorName.@value'
+        creator_id = None
+        if creator in item_map:
+            creator_id = item_map[creator].split('.')[0]
+        return creator_id
+
+    def item_type_show_email(item_type_id):
+        # Get flag of creator's email hide from item type.
+        creator_id = get_creator_id(item_type_id)
+        if not creator_id:
+            return None
+        item_type = ItemTypes.get_by_id(item_type_id)
+        schema_editor = item_type.render.get('schemaeditor', {})
+        schema = schema_editor.get('schema', {})
+        creator = schema.get(creator_id)
+        if not creator:
+            return None
+        properties = creator.get('properties', {})
+        creator_mails = properties.get('creatorMails', {})
+        items = creator_mails.get('items', {})
+        properties = items.get('properties', {})
+        creator_mail = properties.get('creatorMail', {})
+        is_hide = creator_mail.get('isHide', None)
+        return is_hide
+
+    def item_setting_show_email():
+        # Display email from setting item admin.
+        settings = AdminSettings.get('items_display_settings')
+        is_display = settings.items_display_email
+        return is_display
+
+    is_hide = item_type_show_email(item_type_id)
+    is_display = item_setting_show_email()
+    return not is_hide and is_display
+
+
+def replace_license_free(record_metadata, is_change_label=True):
+    """Change the item name 'licensefree' to 'license_note'.
+
+    If 'licensefree' is not output as a value.
+    The value of 'licensetype' is 'license_note'.
+
+    :param record:
+    :return: None
+    """
+    _license_type = 'licensetype'
+    _license_free = 'licensefree'
+    _license_note = 'license_note'
+    _license_type_free = 'license_free'
+    _attribute_type = 'file'
+    _attribute_value_mlt = 'attribute_value_mlt'
+
+    _license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
+    if _license_dict:
+        _license_type_free = _license_dict[0].get('value')
+
+    for val in record_metadata.values():
+        if isinstance(val, dict) and \
+                val.get('attribute_type') == _attribute_type:
+            for attr in val[_attribute_value_mlt]:
+                if attr.get(_license_type) == _license_type_free:
+                    attr[_license_type] = _license_note
+                    if attr.get(_license_free) and is_change_label:
+                        attr[_license_note] = attr[_license_free]
+                        del attr[_license_free]
+
+
+def get_file_info_list(record):
+    """File Information of all file in record.
+
+    :param files: all metadata of a record.
+    :param is_display_file_preview: all metadata of a record.
+    :param record: all metadata of a record.
+    :return: json files.
+    """
+    def get_file_size(p_file):
+        """Get file size and convert to byte."""
+        file_size = p_file.get('filesize', [{}])[0]
+        file_size_value = file_size.get('value', 0)
+        defined_unit = {'b': 1, 'kb': 1000, 'mb': 1000000}
+        if type(file_size_value) is str and ' ' in file_size_value:
+            file_size_value = file_size_value.replace(".", "")
+            size_num = file_size_value.split(' ')[0]
+            size_unit = file_size_value.split(' ')[1]
+            unit_num = defined_unit.get(size_unit.lower(), 0)
+            file_size_value = int(size_num) * unit_num
+        return file_size_value
+
+    def set_message_for_file(p_file):
+        """Check Opendate is future date."""
+        p_file['future_date_message'] = ""
+        p_file['download_preview_message'] = ""
+        access = p_file.get("accessrole", '')
+        date = p_file.get('date')
+        if access == "open_login" and not current_user.get_id():
+            p_file['future_date_message'] = _("Restricted Access")
+        elif access == "open_date":
+            if date and isinstance(date, list) and date[0]:
+                adt = date[0].get('dateValue')
+                pdt = dt.strptime(adt, '%Y-%m-%d')
+                if pdt > dt.today():
+                    message = "Download is available from {}/{}/{}."
+                    p_file['future_date_message'] = _(message).format(
+                        pdt.year, pdt.month, pdt.day)
+                    message = "Download / Preview is available from {}/{}/{}."
+                    p_file['download_preview_message'] = _(message).format(
+                        pdt.year, pdt.month, pdt.day)
+
+    is_display_file_preview = False
+    files = []
+    for key in record:
+        meta_data = record.get(key)
+        if type(meta_data) == dict and \
+                meta_data.get('attribute_type', '') == "file":
+            file_metadata = meta_data.get("attribute_value_mlt", [])
+            for f in file_metadata:
+                if check_file_download_permission(record, f, True)\
+                        or is_open_restricted(f):
+                    # Set default version_id.
+                    f["version_id"] = f.get('version_id', '')
+                    # Set is_thumbnail flag.
+                    f["is_thumbnail"] = f.get('is_thumbnail', False)
+                    # Check Opendate is future date.
+                    set_message_for_file(f)
+                    # Check show preview area.
+                    # If f is uploaded in this system => show 'Preview' area.
+                    base_url = "{}record/{}/files/{}".format(
+                        request.url_root,
+                        record.get('recid'),
+                        f.get("filename")
+                    )
+                    url = f.get("url", {}).get("url", '')
+                    if base_url in url:
+                        is_display_file_preview = True
+                    # Get file size and convert to byte.
+                    f['size'] = get_file_size(f)
+                    f['mimetype'] = f.get('format', '')
+                    f['filename'] = f.get('filename', '')
+                    files.append(f)
+    return is_display_file_preview, files

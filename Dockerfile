@@ -19,12 +19,13 @@
 # MA 02111-1307, USA.
 
 # Use Python-3.5:
-FROM python:3.5-slim
+FROM python:3.6-slim
 
 # Configure Weko instance:
 ENV INVENIO_WEB_HOST=127.0.0.1
 ENV INVENIO_WEB_INSTANCE=invenio
 ENV INVENIO_WEB_VENV=invenio
+ENV INVENIO_WEB_HOST_NAME=invenio
 ENV INVENIO_USER_EMAIL=wekosoftware@nii.ac.jp
 ENV INVENIO_USER_PASS=uspass123
 ENV INVENIO_POSTGRESQL_HOST=postgresql
@@ -34,9 +35,15 @@ ENV INVENIO_POSTGRESQL_DBPASS=dbpass123
 ENV INVENIO_REDIS_HOST=redis
 ENV INVENIO_ELASTICSEARCH_HOST=elasticsearch
 ENV INVENIO_RABBITMQ_HOST=rabbitmq
+ENV INVENIO_RABBITMQ_USER=guest
+ENV INVENIO_RABBITMQ_PASS=guest
+ENV INVENIO_RABBITMQ_VHOST=/
 ENV INVENIO_WORKER_HOST=127.0.0.1
 ENV SEARCH_INDEX_PREFIX=tenant1
- 
+# Configure SQLAlchemy connection pool
+# see: https://docs.sqlalchemy.org/en/12/core/pooling.html#api-documentation-available-pool-implementations
+ENV INVENIO_DB_POOL_CLASS=QueuePool
+
 # Install Weko web node pre-requisites:
 COPY scripts/provision-web.sh /tmp/
 RUN /tmp/provision-web.sh

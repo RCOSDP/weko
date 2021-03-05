@@ -2,6 +2,7 @@
 -e /code/modules/invenio-s3
 -e /code/modules/invenio-oaiserver
 -e /code/modules/invenio-oaiharvester
+-e /code/modules/invenio-oauth2server
 -e /code/modules/invenio-records
 -e /code/modules/invenio-previewer
 -e /code/modules/invenio-stats
@@ -11,6 +12,8 @@
 -e /code/modules/invenio-deposit
 -e /code/modules/invenio-resourcesyncserver
 -e /code/modules/invenio-resourcesyncclient
+-e /code/modules/invenio-queues
+-e /code/modules/invenio-db
 -e /code/modules/weko-theme
 -e /code/modules/weko-itemtypes-ui
 -e /code/modules/weko-items-ui
@@ -33,3 +36,4 @@
 -e /code/modules/weko-bulkupdate
 -e /code/modules/weko-items-autofill
 -e /code/modules/weko-sitemap
+-e /code/modules/invenio-iiif

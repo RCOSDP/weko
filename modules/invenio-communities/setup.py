@@ -34,19 +34,14 @@ readme = open('README.rst').read()
 history = open('CHANGES.rst').read()
 
 tests_require = [
-    'Flask-CeleryExt>=0.3.2',
-    'check-manifest>=0.25',
-    'coverage>=4.5.3',
-    'invenio-db>=1.0.3',
-    'invenio-mail>=1.0.2',
-    'invenio-oaiserver>=1.0.3',
-    'isort>=4.3.3',
-    'mock>=1.3.0',
-    'pydocstyle>=1.0.0',
-    'pytest-cache>=1.0',
-    'pytest-cov>=2.7.1',
-    'pytest-pep8>=1.0.6',
+    'coverage>=4.5.3,<5.0.0',
+    'mock>=3.0.0,<4.0.0',
     'pytest>=4.6.4,<5.0.0',
+    'pytest-cache',
+    'pytest-cov',
+    'pytest-pep8',
+    'pytest-invenio',
+    'responses',
 ]
 
 invenio_search_version = '1.2.2'

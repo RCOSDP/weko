@@ -34,6 +34,11 @@ if [ "${INVENIO_WEB_VENV}" = "" ]; then
     echo "[ERROR] Example: export INVENIO_WEB_VENV=invenio"
     exit 1
 fi
+if [ "${INVENIO_WEB_HOST_NAME}" = "" ]; then
+    echo "[ERROR] Please set environment variable INVENIO_WEB_HOST_NAME before runnning this script."
+    echo "[ERROR] Example: export INVENIO_WEB_HOST_NAME=invenio"
+    exit 1
+fi
 if [ "${INVENIO_USER_EMAIL}" = "" ]; then
     echo "[ERROR] Please set environment variable INVENIO_USER_EMAIL before runnning this script."
     echo "[ERROR] Example: export INVENIO_USER_EMAIL=wekosoftware@nii.ac.jp"
@@ -77,6 +82,21 @@ fi
 if [ "${INVENIO_RABBITMQ_HOST}" = "" ]; then
     echo "[ERROR] Please set environment variable INVENIO_RABBITMQ_HOST before runnning this script."
     echo "[ERROR] Example: export INVENIO_RABBITMQ_HOST=192.168.50.14"
+    exit 1
+fi
+if [ "${INVENIO_RABBITMQ_USER}" = "" ]; then
+    echo "[ERROR] Please set environment variable INVENIO_RABBITMQ_USER before runnning this script."
+    echo "[ERROR] Example: export INVENIO_RABBITMQ_USER=guest"
+    exit 1
+fi
+if [ "${INVENIO_RABBITMQ_PASS}" = "" ]; then
+    echo "[ERROR] Please set environment variable INVENIO_RABBITMQ_PASS before runnning this script."
+    echo "[ERROR] Example: export INVENIO_RABBITMQ_PASS=guest"
+    exit 1
+fi
+if [ "${INVENIO_RABBITMQ_VHOST}" = "" ]; then
+    echo "[ERROR] Please set environment variable INVENIO_RABBITMQ_VHOST before runnning this script."
+    echo "[ERROR] Example: export INVENIO_RABBITMQ_VHOST=/"
     exit 1
 fi
 if [ "${INVENIO_WORKER_HOST}" = "" ]; then
@@ -124,6 +144,16 @@ curl -XPUT 'http://elasticsearch:9200/_ingest/pipeline/item-file-pipeline' -H 'C
            "properties": [
              "content"
            ]
+         }
+       }
+     }
+   },
+   {
+     "foreach": {
+       "field": "content",
+       "processor": {
+         "remove": {
+           "field": "_ingest._value.file"
          }
        }
      }
@@ -216,6 +246,12 @@ ${INVENIO_WEB_INSTANCE} access \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} access \
+       allow "files-rest-object-read" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} access \
        allow "search-access" \
        role "${INVENIO_ROLE_REPOSITORY}" \
        role "${INVENIO_ROLE_COMMUNITY}" \
@@ -235,9 +271,7 @@ ${INVENIO_WEB_INSTANCE} access \
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "author-access" \
-       role "${INVENIO_ROLE_REPOSITORY}" \
-       role "${INVENIO_ROLE_COMMUNITY}" \
-       role "${INVENIO_ROLE_CONTRIBUTOR}"
+       role "${INVENIO_ROLE_REPOSITORY}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "items-autofill" \
@@ -370,6 +404,9 @@ ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
 ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
        3 "site_license_mail_settings" \
        "{'auto_send_flag': False}"
+${INVENIO_WEB_INSTANCE} admin_settings create_settings \
+       4 "default_properties_settings" \
+       "{'show_flag': True}"
 # create-admin-settings-end
 
 # create-default-authors-prefix-settings-begin
@@ -380,3 +417,7 @@ ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "KAKEN2" "KAKEN2" "https://kaken.nii.ac.jp/"
 # create-default-authors-prefix-settings-end
+
+# create-widget-bucket-begin
+${INVENIO_WEB_INSTANCE} widget init
+# create-widget-bucket-end

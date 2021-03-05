@@ -27,6 +27,8 @@ require([
       action_version: $('.cur_step').data('action-version'),
       pid_value: request_uri.substring(request_uri.lastIndexOf("/") + 1, request_uri.length),
     };
+    if(!validateSession())
+      return;
     send(post_uri, data,
       function (data) {
         if (data && data.code == 0) {
@@ -55,6 +57,11 @@ require([
       dataType: 'json',
       data: JSON.stringify(data),
       success: function (data, textStatus) {
+        if(data.unauthorized){
+          alert(data.msg);
+          window.location.assign("/login/?next=" + window.location.pathname);
+          return;
+      }
         handleSuccess(data);
       },
       error: function (textStatus, errorThrown) {
@@ -63,3 +70,27 @@ require([
     });
   };
 });
+function validateSession() {
+  var isValid = true;
+  $.ajax({
+    url: '/items/sessionvalidate',
+    method: 'POST',
+    contentType: "application/json",
+    async: false,
+    success: function (data, status) {
+      if (!data.unauthorized) {
+        alert(data.msg)
+        window.location.assign("/login/?next=" + window.location.pathname);
+        isValid = false;
+      } else
+        isValid = true;
+    },
+    error: function (data, status) {
+      var modalcontent = data;
+      $("#inputModal").html(modalcontent);
+      $("#allModal").modal("show");
+      isValid = false;
+    }
+  });
+  return isValid;
+}

@@ -31,11 +31,10 @@ from flask import abort, current_app, request, url_for
 from lxml import etree
 from lxml.builder import ElementMaker
 from simplekv.memory.redisstore import RedisStore
-from weko_records.api import Mapping
+from weko_records.api import ItemLink, Mapping
 from xmlschema.validators import XsdAnyAttribute, XsdAnyElement, \
-    XsdAtomicBuiltin, XsdAtomicRestriction, XsdAttribute, \
-    XsdEnumerationFacet, XsdGroup, XsdPatternsFacet, XsdSingleFacet, \
-    XsdUnion
+    XsdAtomicBuiltin, XsdAtomicRestriction, XsdEnumerationFacet, XsdGroup, \
+    XsdPatternsFacet, XsdSingleFacet, XsdUnion
 
 from .api import WekoSchema
 
@@ -111,6 +110,9 @@ class SchemaConverter:
                                 atrb.name),
                             ref=None if not hasattr(atrb, 'ref') else atrb.ref,
                             use=None if not hasattr(atrb, 'use') else atrb.use)
+                        if is_get_only_target_namespace and \
+                                attrd.get('name', None) == 'xml-lang':
+                            continue
                         if not isinstance(atrb, XsdAnyAttribute):
                             if 'lang' not in atrb.name:
                                 attrd.update(get_element_type(atrb.type))
@@ -235,7 +237,8 @@ class SchemaTree:
         self._target_namespace = ''
         schemas = WekoSchema.get_all()
         if self._record and self._item_type_id:
-            self._ignore_list = self.get_ignore_item_from_option()
+            self._ignore_list_all, self._ignore_list = \
+                self.get_ignore_item_from_option()
         for schema in schemas:
             if self._schema_name == schema.schema_name:
                 self._location = schema.schema_location
@@ -243,14 +246,21 @@ class SchemaTree:
 
     def get_ignore_item_from_option(self):
         """Get all keys of properties that is enable Hide option in metadata."""
-        ignore_list = []
+        ignore_list_parents = []
+        ignore_list_all = []
+        ignore_dict_all = {}
         from weko_records.utils import get_options_and_order_list
-        _, meta_options = get_options_and_order_list(self._item_type_id)
+        ignore_list_all, meta_options = \
+            get_options_and_order_list(self._item_type_id)
         for key, val in meta_options.items():
             hidden = val.get('option').get('hidden')
             if hidden:
-                ignore_list.append(key)
-        return ignore_list
+                ignore_list_parents.append(key)
+        for element_info in ignore_list_all:
+            element_info[0] = element_info[0].replace("[]", "")
+            # only get hide option
+            ignore_dict_all[element_info[0]] = element_info[3].get("hide")
+        return ignore_dict_all, ignore_list_parents
 
     def get_mapping_data(self):
         """
@@ -330,11 +340,21 @@ class SchemaTree:
                             lambda x: get_attr(x) in _need_to_nested,
                             attr.keys())) if attr else []
                     if attr and alst and _check_description_type(attr, alst):
-                        return list(map(partial(
-                            create_json, get_attr(alst[0])),
-                            list_reduce([attr.get(alst[0])]),
-                            list(list_reduce(val)))
-                        )
+                        _partial = partial(create_json, get_attr(alst[0]))
+                        list_val = list(list_reduce(val))
+                        list_attr = list(list_reduce([attr.get(alst[0])]))
+                        if list_val and list_attr:
+                            return list(map(_partial, list_attr, list_val))
+                        else:
+                            if list_val:
+                                return list(map(
+                                    lambda x: {'value': x}, list_val))
+                            elif list_attr:
+                                return list(map(
+                                    lambda x: {get_attr(alst[0]): x},
+                                    list_attr))
+                            else:
+                                return []
 
                     return list(list_reduce(val))
                 else:
@@ -359,6 +379,7 @@ class SchemaTree:
         obj = cls(schema_name=schema_name)
         obj._record = records
         obj._ignore_list = []
+        obj._ignore_list_all = []
         vlst = list(map(obj.__converter,
                         filter(lambda x: isinstance(x, dict),
                                obj.__get_value_list())))
@@ -423,7 +444,13 @@ class SchemaTree:
                         if atr_vm.get(key) is None:
                             yield None, id(key)
                         else:
-                            yield atr_vm[key], id(key)
+                            # In case of checkboxes, stored data will be
+                            # [a,b,c]
+                            if isinstance(atr_vm[key], list):
+                                for i in atr_vm[key]:
+                                    yield i, id(key)
+                            else:
+                                yield atr_vm[key], id(key)
                     elif isinstance(atr_vm, list):
                         for i in atr_vm:
                             if i.get(key) is None:
@@ -483,6 +510,13 @@ class SchemaTree:
                 list_subitem_key.append(key)
             for value, identify in get_value_from_content_by_mapping_key(
                     atr_vm.copy(), list_subitem_key):
+                if list_subitem_key[-1] == 'licensetype':
+                    # Convert license value to license code
+                    for lic in current_app.config[
+                            'WEKO_RECORDS_UI_LICENSE_DICT']:
+                        if lic.get('value') == value:
+                            value = lic.get('code')
+                            break
                 if parent_id != identify and parent_id != 0:
                     klst.append(blst)
                     blst = []
@@ -494,14 +528,56 @@ class SchemaTree:
                 klst.append(blst)
             return klst
 
+        def analyze_value_with_exp(nlst, exp):
+            """Get many value with exp."""
+            is_next = True
+            glst = []
+            for lst in nlst:
+                glst.append(get_exp_value(lst))
+            mlst = []
+            vst = []
+            exp = '\\' + exp
+            while is_next:
+                cnt = 0
+                ava = ""
+                for g in glst:
+                    try:
+                        _eval, _ = next(g)
+                        ava = ava + exp + _eval
+                    except StopIteration:
+                        cnt += 1
+
+                if cnt == len(glst):
+                    is_next = False
+                    mlst.append(vst)
+                else:
+                    if ava:
+                        if exp in ava:
+                            ava_arr = ava.split(exp)
+                            for av in ava_arr:
+                                if av:
+                                    vst.append(av)
+                        else:
+                            vst.append(ava[1:])
+            return mlst
+
         def get_atr_value_lst(node, atr_vm, rlst):
             for k1, v1 in node.items():
                 # if 'item' not in v1:
                 #     continue
                 if isinstance(v1, str):
-                    klst = get_items_value_lst(atr_vm, v1, rlst)
-                    if klst:
-                        node[k1] = klst
+                    exp, lk = analysis(v1)
+                    if len(lk) == 1:
+                        klst = get_items_value_lst(atr_vm, v1, rlst)
+                        if klst:
+                            node[k1] = klst
+                    elif len(lk) > 1:
+                        nlst = []
+                        for val in lk:
+                            klst = get_items_value_lst(atr_vm, val, rlst)
+                            if klst:
+                                nlst.append(klst)
+                        node[k1] = analyze_value_with_exp(nlst, exp)
 
         def get_mapping_value(mpdic, atr_vm, k, atr_name):
             remain_keys = []
@@ -613,27 +689,46 @@ class SchemaTree:
                 for k, v in dct.items():
                     if isinstance(v, dict):
                         # check if @value has value
-                        node_val = v.get('@value', None)
+                        ddi_schema = self._schema_name == current_app.config[
+                            'WEKO_SCHEMA_DDI_SCHEMA_NAME']
+                        node_val = v.get(self._v, None)
+                        node_att = v.get(self._atr, None)
                         if isinstance(node_val, list) and node_val[0]:
                             # get index of None value
                             lst_none_idx = [idx for idx, val in
                                             enumerate(node_val[0]) if
                                             val is None or val == '']
-                            if self._schema_name != current_app.config[
-                                    'WEKO_SCHEMA_DDI_SCHEMA_NAME']:
+                            if not ddi_schema:
                                 if len(lst_none_idx) > 0:
                                     # delete all None element in @value
-                                    for i in lst_none_idx:
-                                        del node_val[0][i]
-                                    # delete all None element in all @attributes
+                                    lst_val_idx = list(set(
+                                        range(len(node_val[0])))
+                                        - set(lst_none_idx))
+                                    node_val[0] = [val for idx, val in
+                                                   enumerate(node_val[0])
+                                                   if idx in lst_val_idx]
+                                    # delete all None element in all
+                                    # @attributes
                                     for key, val in v.get(self._atr,
                                                           {}).items():
-                                        for i in lst_none_idx:
-                                            del val[0][i]
+                                        val[0] = [val for idx, val
+                                                  in enumerate(val[0])
+                                                  if idx in lst_val_idx]
                             else:
                                 if not v.get(self._atr, {}).items():
-                                    for i in lst_none_idx:
-                                        del node_val[0][i]
+                                    lst_val_idx = \
+                                        list(set(range(len(node_val[0])))
+                                             - set(lst_none_idx))
+                                    node_val[0] = [v for idx, v
+                                                   in enumerate(node_val[0])
+                                                   if idx in lst_val_idx]
+                            clean[k] = v
+                        elif ddi_schema and not node_val and node_att and \
+                                node_att[next(iter(node_att))][0]:
+                            # Add len(node_att) None elements to value
+                            # in order to display att later
+                            v[self._v] = [[None] * len(
+                                node_att[next(iter(node_att))][0])]
                             clean[k] = v
                         else:
                             nested = clean_none_value(v)
@@ -674,39 +769,8 @@ class SchemaTree:
                                 nlst.append(klst)
 
                             if nlst:
-                                ava = ""
-                                is_next = True
-                                glst = []
-                                for lst in nlst:
-                                    glst.append(get_exp_value(lst))
-
-                                mlst = []
-                                vst = []
-                                mc = 0
-                                while is_next:
-                                    ctp = ()
-                                    cnt = 0
-                                    ava = ""
-                                    for g in glst:
-                                        try:
-                                            eval, p = next(g)
-                                            ctp += (len(p),)
-                                            ava = ava + exp + eval
-                                        except StopIteration:
-                                            cnt += 1
-
-                                    if cnt == len(glst):
-                                        is_next = False
-                                        mlst.append(vst)
-                                    else:
-                                        mc = max(ctp)
-                                        if ava:
-                                            if len(vst) == mc:
-                                                mlst.append(vst)
-                                                vst = []
-                                            vst.append(ava[1:])
-
-                                node_result[self._v] = mlst
+                                node_result[self._v] = analyze_value_with_exp(
+                                    nlst, exp)
                 if remove_empty:
                     remove_empty_tag(vlc)
                 vlst.append({ky: vlc})
@@ -747,16 +811,29 @@ class SchemaTree:
                             vlist_item)
             return vlst
 
+        def remove_hide_data(obj, parentkey):
+            """Remove all item that is set as hide."""
+            if isinstance(obj, dict):
+                for k, v in obj.items():
+                    if self._ignore_list_all.get(parentkey + "." + k, None):
+                        obj[k] = None
+                    elif isinstance(v, dict):
+                        remove_hide_data(v, parentkey + "." + k)
+                    elif isinstance(v, list):
+                        for i in v:
+                            remove_hide_data(i, parentkey + "." + k)
+
         vlst = []
-        for key_item_parent, value_item_parent in self._record.items():
+        for key_item_parent, value_item_parent in sorted(self._record.items()):
             if key_item_parent != 'pubdate' and isinstance(value_item_parent,
                                                            dict):
                 # Dict
                 # get value of the combination between record and \
                 # mapping data that is inited at __init__ function
                 mpdic = value_item_parent.get(
-                    self._schema_name) if self._schema_name in value_item_parent else ''
-                if mpdic is "" or (
+                    self._schema_name) \
+                    if self._schema_name in value_item_parent else ''
+                if mpdic == "" or (
                     self._ignore_list and key_item_parent
                         in self._ignore_list):
                     continue
@@ -776,6 +853,8 @@ class SchemaTree:
                 elif atr_vm and atr_name:
                     if isinstance(atr_vm, list) and isinstance(mpdic, dict):
                         for atr_vm_item in atr_vm:
+                            if self._ignore_list_all:
+                                remove_hide_data(atr_vm_item, key_item_parent)
                             vlst_child = get_mapping_value(mpdic, atr_vm_item,
                                                            key_item_parent,
                                                            atr_name)
@@ -925,21 +1004,25 @@ class SchemaTree:
                                 nodes = [node]
                                 if bool(node) and not [i for i in node.values()
                                                        if
-                                                       i and (not i.get(
-                                                           self._v) or not i.get(
-                                                           self._atr))]:
+                                                       i and (not i.get
+                                                              (self._v)
+                                                              or not i.get(
+                                                                  self._atr))]:
                                     multi = max(
                                         [len(attr) for n in node.values()
                                          if n and n.get(self._atr)
                                          and isinstance(n.get(self._atr), dict)
-                                         for attr in n.get(self._atr).values()])
+                                         for attr
+                                         in n.get(self._atr).values()])
                                     if int(multi) > 1:
-                                        multi_nodes = [copy.deepcopy(node) for _
-                                                       in
+                                        multi_nodes = [copy.deepcopy(node)
+                                                       for _ in
                                                        range(int(multi))]
-                                        for idx, item in enumerate(multi_nodes):
+                                        for idx, item in enumerate(
+                                                multi_nodes):
                                             for nd in item.values():
-                                                nd[self._v] = [nd[self._v][idx]]
+                                                nd[self._v] = \
+                                                    [nd[self._v][idx]]
                                                 for key in nd.get(self._atr):
                                                     nd.get(self._atr)[key] = [
                                                         nd.get(self._atr)[key][
@@ -1027,9 +1110,8 @@ class SchemaTree:
                         merge_json_xml(i, dct)
 
         # Function Remove custom scheme
-        def remove_custom_scheme(name_identifier, v):
-            lst_name_identifier_default = current_app.config[
-                'WEKO_SCHEMA_UI_LIST_SCHEME']
+        def remove_custom_scheme(name_identifier, v,
+                                 lst_name_identifier_default):
             if '@attributes' in name_identifier and \
                     name_identifier['@attributes'].get('nameIdentifierScheme'):
                 element_first = 0
@@ -1038,8 +1120,10 @@ class SchemaTree:
                 lst_value = []
                 if '@value' in name_identifier:
                     lst_value = name_identifier['@value'][element_first]
-                lst_name_identifier_uri = name_identifier[
-                    '@attributes']['nameIdentifierURI'][element_first]
+                if name_identifier['@attributes'].\
+                        get("nameIdentifierURI", None):
+                    lst_name_identifier_uri = name_identifier[
+                        '@attributes']['nameIdentifierURI'][element_first]
                 index_remove_items = []
                 total_remove_items = len(lst_name_identifier_scheme)
                 for identifior_item in lst_name_identifier_scheme:
@@ -1056,14 +1140,17 @@ class SchemaTree:
                         if len(lst_value) == total_remove_items:
                             lst_value.pop(index)
                             total_remove_items = total_remove_items - 1
-                        lst_name_identifier_uri.pop(index)
+                        if lst_name_identifier_uri and \
+                                index < len(lst_name_identifier_uri):
+                            lst_name_identifier_uri.pop(index)
 
         if not self._schema_obj:
             E = ElementMaker()
             root = E.Weko()
             root.text = "Sorry! This Item has not been mappinged."
             return root
-
+        self.support_for_output_xml(self._record)
+        self.__remove_files_do_not_publish()
         list_json_xml = self.__get_value_list(remove_empty=True)
         if self._schema_name == current_app.config[
                 'WEKO_SCHEMA_DDI_SCHEMA_NAME']:
@@ -1078,6 +1165,9 @@ class SchemaTree:
                                     'stdyDscr.method': set(),
                                     'stdyDscr.dataAccs': set(),
                                     'stdyDscr.othrStdyMat': set()}
+        else:
+            self.__build_jpcoar_relation(list_json_xml)
+
         node_tree = self.find_nodes(list_json_xml)
         ns = self._ns
         xsi = 'http://www.w3.org/2001/XMLSchema-instance'
@@ -1115,13 +1205,93 @@ class SchemaTree:
             for k, v in lst.items():
                 # Remove items that are not set as controlled vocabulary
                 if k in indetifier_keys:
-                    remove_custom_scheme(v[name_identifier_key], v)
+                    lst_name_identifier_default = current_app.config[
+                        'WEKO_SCHEMA_UI_LIST_SCHEME']
+                    remove_custom_scheme(v[name_identifier_key], v,
+                                         lst_name_identifier_default)
                     if affiliation_key in v:
+                        lst_name_affiliation_default = current_app.config[
+                            'WEKO_SCHEMA_UI_LIST_SCHEME_AFFILIATION']
                         remove_custom_scheme(
-                            v[affiliation_key][name_identifier_key], v)
+                            v[affiliation_key][name_identifier_key], v,
+                            lst_name_affiliation_default)
                 k = get_prefix(k)
                 set_children(k, v, root, [k])
         return root
+
+    def __remove_files_do_not_publish(self):
+        """Remove files do not publish."""
+        def __get_file_permissions(files_json):
+            new_files = []
+            for file in files_json:
+                if 'open_no' not in file.get('accessrole', []):
+                    new_files.append(file)
+            return new_files
+
+        for k, v in self._record.items():
+            if (isinstance(v, dict)
+                and v.get("attribute_type") == "file"
+                    and v.get("attribute_value_mlt")):
+                v['attribute_value_mlt'] = __get_file_permissions(
+                    v.get("attribute_value_mlt"))
+
+    def __build_jpcoar_relation(self, list_json_xml):
+        """Build JPCOAR relation.
+
+        :param list_json_xml:
+        """
+        def __build_relation(data):
+            """Build relation.
+
+            :param data:
+            """
+            relation_tmp = {
+                "relation": {}
+            }
+            _relation = relation_tmp['relation']
+            reference_type = data.get('reference_type')
+            url = data.get('url')
+            identifierType = data.get('identifierType')
+            if reference_type in current_app.config[
+                    'WEKO_SCHEMA_RELATION_TYPE']:
+                _relation.update({
+                    "@attributes": {"relationType": [[reference_type]]}
+                })
+            if url and identifierType:
+                _relation.update({
+                    "relatedIdentifier": {
+                        "@attributes": {
+                            "identifierType": identifierType
+                        },
+                        "@value": url
+                    }
+                })
+            list_json_xml.append(relation_tmp.copy())
+
+        item_links = ItemLink.get_item_link_info_output_xml(
+            self._record.get("recid"))
+        if isinstance(item_links, list):
+            for item in item_links:
+                __build_relation(item)
+
+    def support_for_output_xml(self, data):
+        """Support for output XML.
+
+        :param data:
+        """
+        from weko_records.utils import remove_weko2_special_character
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if isinstance(v, str):
+                    data[k] = remove_weko2_special_character(v)
+                else:
+                    self.support_for_output_xml(v)
+        elif isinstance(data, list):
+            for i in range(len(data)):
+                if isinstance(data[i], str):
+                    data[i] = remove_weko2_special_character(data[i])
+                else:
+                    self.support_for_output_xml(data[i])
 
     def to_list(self):
         """Get a elementName List."""
@@ -1270,10 +1440,13 @@ class SchemaTree:
                                         node.update({self._atr: atr})
                         except StopIteration:
                             pass
-                nlst.append({k: nv})
+                version_type = current_app.config['WEKO_SCHEMA_VERSION_TYPE']
+                if k == version_type['modified']:
+                    nlst.append({version_type['original']: nv})
+                else:
+                    nlst.append({k: nv})
         return nlst
         # end
-        # ---------------------------------------------------------------------------------------------------
 
 
 def cache_schema(schema_name, delete=False):

@@ -70,7 +70,7 @@
           <div id="loader_spinner" class="loader" ng-show="recordsVM.invenioRecordsLoading">
             <div class="spinner-wheel"></div>
           </div>
-          {%- if need_file or need_billing_file %}
+          {%- if need_file or need_billing_file or need_thumbnail %}
             <invenio-files-uploader
               method="PUT"
               endpoint="{{ config.DEPOSIT_FILES_API }}"
@@ -113,8 +113,8 @@
                           </button>
                       </li> -->
                       <input type="hidden" id="next-frame" value="iframe_tree">
+                      <input type="hidden" id="next-frame-upgrade" value="iframe_tree_upgrade">
                     {%- if pid %}
-
                     <!-- <li>
                           <button ng-disabled="recordsVM.invenioRecordsLoading"
                           ng-hide="!recordsVM.invenioRecordsEndpoints.initialization"
@@ -128,17 +128,21 @@
                 </div>
               </div>
               {%- if need_thumbnail %}
+                <div ng-controller='UploadController' ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                 <div class="row">
                   <div class="col-sm-12">
                     <div class="panel panel-default">
                       <div class="panel-heading">
                         <h3 class="panel-title">{{_('Thumbnail')}}</h3>
                       </div>
-                      <div ng-controller='UploadController' class="panel-body">
+                      <div class="panel-body">
                         <div class="row">
                           <div class="col-sm-12" id="app">
-                            <div class="well">
-                              <center>{{_('Drop files or folders here')}}</center>
+                            <div class="well" ngf-drag-over-class="'dragover'" ngf-drop="" ngf-change="dragoverThumbnail($newFiles)"
+                              ngf-max-size="20GB" ngf-multiple="true">
+                              <center>
+                                Drop files or folders here
+                              </center>
                             </div>
                             <p class="text-center legend"><strong>— {{_('OR')}} —</strong></p>
                             <p class="text-center">
@@ -161,8 +165,9 @@
                     </div>
                   </div>
                 </div>
+                </div>
               {%- endif %}
-              <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading"> 
+              <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                 {%- if show_automatic_metadata_input %}
                 <div class="row">
                   <div class="col-sm-12">
@@ -237,7 +242,7 @@
                         template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
                       </invenio-files-error>
                       <invenio-files-upload-zone
-                        template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
+                        template="{{ url_for('static', filename='templates/weko_items_ui/upload.html') }}">
                       </invenio-files-upload-zone>
                       <invenio-files-list
                         template="{{ url_for('static', filename='templates/weko_items_ui/upload_file_list.html') }}"
@@ -252,7 +257,7 @@
                         template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
                       </invenio-files-error>
                       <invenio-files-upload-zone
-                        template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
+                        template="{{ url_for('static', filename='templates/weko_items_ui/upload.html') }}">
                       </invenio-files-upload-zone>
                       <invenio-files-list
                         template="{{ url_for('static', filename='templates/weko_items_ui/upload_file_list.html') }}"
@@ -268,41 +273,72 @@
                   {%- block feedback_mail_list %}
                     <div id="react"></div>
                     <input id="component-search-email-name" type="hidden" value="{{_('Feedback Mail Destination')}}" />
-                    <input id="search-button-name" type="hidden" value="{{_('From author DB')}}" />
+                    <input id="open-modal-search-button-name" type="hidden" value="{{_('From author DB')}}" />
                     <input id="delete-button-name" type="hidden" value="{{_('Delete')}}" />
                     <input id="input-text-placeholder" type="hidden" value="{{_('Input text')}}" />
                     <input id="duplicate-error-message" type="hidden" value="{{_('Duplicate Email Addresses.')}}" />
                     <input id="invalid-email-format" type="hidden" value="{{_('Invalid email format.')}}" />
+                    <input id="close-button-name" type="hidden" value="{{_('Close')}}" />
+                    <input id="search-button-name" type="hidden" value="{{_('Search')}}" />
+                    <input id="name-label" type="hidden" value="{{_('Name')}}" />
+                    <input id="mail-address-label" type="hidden" value="{{_('Mail address')}}" />
+                    <input id="import-button-name" type="hidden" value="{{_('Feedback Mail Import')}}" />
                   {%- endblock feedback_mail_list %}
+
+                  {% if record|length %} <!-- Check Item Registration is edit mode then show version_management -->
+                    {%- block radio_version_management %}
+                    <div id="react-component-version">
+                      <div class="row">
+                        <div class="form-group">
+                          <label id="component-version-label" class="control-label col-sm-3 text-right field-required">
+                            {{_('Version Management')}}
+                          </label>
+                          <div class="col-sm-9">
+                            <div class="col-sm-3">
+                              <input type="radio" name="radioVersionSelect" value="update" />
+                              {{_('Upgrade Version')}}
+                            </div>
+                            <div class="col-sm-3">
+                              <input type="radio" name="radioVersionSelect" value="keep" checked/>
+                              {{_('Keep Version')}}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {%- endblock radio_version_management %}
+                  {% endif %}
                 </div>
                 <div class="row">
-                  <div class="col-sm-9">
-                    <div class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                      {%- if pid %}
-                      <button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">
-                            <span class="glyphicon glyphicon-trash"></span>&nbsp
-                            {{_('Delete')}}
-                          </button>
-                      {%- endif %}
-                      <button ng-disabled="recordsVM.invenioRecordsLoading"
-                              class="btn btn-primary"
-                              ng-click="saveDataJson('{{item_save_uri}}',{{action_id}},'{{enable_contributor}}','{{enable_feedback_maillist}}');">
-                            <span class="glyphicon glyphicon-save"></span>&nbsp
-                            {{_('Save')}}
-                      </button>
-                      <button ng-disabled="recordsVM.invenioRecordsLoading"
-                              class="btn btn-info"
-                              ng-click="updateDataJson('{{activity_id}}',{{steps}},'{{item_save_uri}}',{{action_id}},'{{is_auto_set_index_action}}','{{enable_contributor}}','{{enable_feedback_maillist}}')"> {{_('Next')}}&nbsp
-                      <span class="glyphicon glyphicon-chevron-right"></span>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="col-sm-3" style="padding-right: 0;">
-                    <div class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                  <div class="col-sm-12">
+                    <div class="col-sm-offset-3 col-sm-6">
+                      <div class="list-inline text-center" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                        {%- if pid %}
+                        <button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="true" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">
+                              <span class="glyphicon glyphicon-trash"></span>&nbsp
+                              {{_('Delete')}}
+                            </button>
+                        {%- endif %}
                         <button ng-disabled="recordsVM.invenioRecordsLoading"
-                                class="btn btn-danger" id="btn_quit">
-                          <i class="fa fa-sign-out"></i>
-                          {{_('Quit')}}</button>&nbsp
+                                class="btn btn-primary"
+                                ng-click="saveDataJson('{{item_save_uri}}',{{action_id}},'{{enable_contributor}}','{{enable_feedback_maillist}}', true, false);">
+                              <span class="glyphicon glyphicon-save"></span>&nbsp
+                              {{_('Save')}}
+                        </button>
+                        <button ng-disabled="recordsVM.invenioRecordsLoading"
+                                class="btn btn-info next-button"
+                                ng-click="updateDataJson('{{activity_id}}',{{steps}},'{{item_save_uri}}',{{action_id}},'{{is_auto_set_index_action}}','{{enable_contributor}}','{{enable_feedback_maillist}}')"> {{_('Next')}}&nbsp
+                        <span class="glyphicon glyphicon-chevron-right"></span>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="col-sm-3" style="padding-right: 10px;">
+                      <div class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                          <button ng-disabled="recordsVM.invenioRecordsLoading"
+                                  class="btn btn-danger" id="btn_quit">
+                            <i class="fa fa-sign-out"></i>
+                            {{_('Quit')}}</button>&nbsp
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -317,13 +353,13 @@
     </div>
   </div>
   <div class="modal fade" tabindex="-1" role="dialog" id="myModal">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-xlg" role="document">
       <div class="modal-content">
         <div class="modal-body">
           <app-author-search></app-author-search>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" id="btnModalClose" data-dismiss="modal">
+          <button type="button" class="btn btn-default" id="btnModalClose">
                <span class="glyphicon glyphicon-remove"></span>&nbsp
                    {{_('Close')}}
           </button>
@@ -384,6 +420,10 @@
               value="{{_('The following email address is not registered in the system. Please recheck and input.')}}">
           <input type="hidden" id="validate_maxitems_field" name="validate_maxitems_field"
               value="{{_('The specified number has been exceeded. You can only select up to two fields.')}}">
+          <input type="hidden" id="duplicate_files_error" name="duplicate_files_error"
+              value="{{_('The same file name cannot be registered.')}}">
+
+          <input type="hidden" id="item_registration_workflow" value="true">
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" id="meta-search-close" data-dismiss="modal">

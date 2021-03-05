@@ -174,7 +174,8 @@ def add_required_subitem(data):
                 properties[k] = sub_data
             else:
                 list_required_item.append(str(k))
-        sub_item['required'] = list_required_item
+        if len(list_required_item) > 0:
+            sub_item['required'] = list_required_item
     else:
         for k, v in properties.items():
             if not add_required_subitem(v):
@@ -279,10 +280,6 @@ def check_duplicate_mapping(data_mapping, meta_system, item_type):
             lst_all_des = [i for i in item_des_val if
                            i.startswith(overlap_key)]
             if lst_all_src != lst_all_des:
-                item_src_name = item_type.schema.get(
-                    'properties').get(item_src_key).get('title')
-                item_des_name = item_type.schema.get(
-                    'properties').get(item_des_key).get('title')
                 lst_duplicate.append([item_src_name, item_des_name])
 
     lst_temporary = {}
@@ -295,16 +292,70 @@ def check_duplicate_mapping(data_mapping, meta_system, item_type):
     for i in range(len(lst_mapping_detail)):
         item_src_key, item_src_val, lst_values_src = get_detail_node(
             lst_mapping_detail, i)
-        if item_src_key in meta_system:
-            continue
         for j in range(i + 1, len(lst_mapping_detail)):
             item_des_key, item_des_val, lst_values_des = get_detail_node(
                 lst_mapping_detail, j)
-            if item_des_key in meta_system:
+            if item_des_key == 'system_file' or item_src_key == 'system_file':
                 continue
+            item_des_in_sys = item_des_key in meta_system
+            item_src_in_sys = item_src_key in meta_system
             lst_overlap = list(
                 set(lst_values_src).intersection(lst_values_des))
             if lst_overlap:
-                process_overlap()
+                item_src_name = item_type.schema.get('properties').get(
+                    item_src_key).get('title')
+                item_des_name = item_type.schema.get('properties').get(
+                    item_des_key).get('title')
+                if item_des_in_sys and item_src_in_sys:
+                    continue
+                elif (item_des_in_sys or item_src_in_sys) and lst_overlap:
+                    lst_duplicate.append([item_src_name, item_des_name])
+                else:
+                    process_overlap()
 
     return lst_duplicate
+
+
+def update_required_schema_not_exist_in_form(schema, forms):
+    """Update required in schema.
+
+    if item exist in schema but not exist in form,
+    delete required in schema.
+
+    @param schema:
+    @param forms:
+    @return schema:
+    """
+    def get_form_by_key(key, forms):
+        """Get form base on key of schema."""
+        for form in forms:
+            if key == form.get('key'):
+                return form
+        return {'items': []}
+
+    schema_properties = schema.get('properties')
+    for k, v in schema_properties.items():
+        required_list = v.get('items').get(
+            'required') if 'items' in v.keys() else v.get('required')
+        if not required_list:
+            continue
+        form = get_form_by_key(k, forms)
+        items = form.get('items', [])
+        excludes = []
+        for required in required_list:
+            flag = 0
+            for item in items:
+                key = item.get('key', '').split('.')[-1]
+                if required == key:
+                    break
+                flag = flag + 1
+            if flag == len(items):
+                excludes.append(required)
+        for exclude in excludes:
+            required_list.remove(exclude)
+        if len(required_list) == 0:
+            if 'items' in v.keys():
+                del v['items']['required']
+            else:
+                del v['required']
+    return schema

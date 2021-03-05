@@ -23,7 +23,7 @@
 import uuid
 from datetime import datetime, timedelta
 
-from flask import current_app, request, session, url_for
+from flask import abort, current_app, request, session, url_for
 from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
@@ -35,8 +35,7 @@ from sqlalchemy.sql.expression import cast
 from weko_records.models import ItemMetadata
 
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
-    ITEM_REGISTRATION_FLOW_ID, WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, \
-    WEKO_WORKFLOW_WAIT_TAB
+    WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
 from .models import Action as _Action
 from .models import ActionCommentPolicy, ActionFeedbackMail, \
     ActionIdentifier, ActionJournal, ActionStatusPolicy
@@ -47,6 +46,7 @@ from .models import FlowActionRole as _FlowActionRole
 from .models import FlowDefine as _Flow
 from .models import FlowStatusPolicy
 from .models import WorkFlow as _WorkFlow
+from .models import WorkflowRole
 
 
 class Flow(object):
@@ -60,14 +60,25 @@ class Flow(object):
         :return:
         """
         try:
+            flow_name = flow.get('flow_name')
+            if not flow_name:
+                raise ValueError('Flow name cannot be empty.')
+
             with db.session.no_autoflush:
+                cur_names = map(
+                    lambda flow: flow.flow_name,
+                    _Flow.query.add_columns(_Flow.flow_name).all()
+                )
+                if flow_name in cur_names:
+                    raise ValueError('Flow name is already in use.')
+
                 action_start = _Action.query.filter_by(
                     action_endpoint='begin_action').one_or_none()
                 action_end = _Action.query.filter_by(
                     action_endpoint='end_action').one_or_none()
             _flow = _Flow(
                 flow_id=uuid.uuid4(),
-                flow_name=flow.get('flow_name'),
+                flow_name=flow_name,
                 flow_user=current_user.get_id()
             )
             _flowaction_start = _FlowAction(
@@ -91,7 +102,7 @@ class Flow(object):
         except Exception as ex:
             current_app.logger.exception(str(ex))
             db.session.rollback()
-            return None
+            raise
 
     def upt_flow(self, flow_id, flow):
         """Update flow info.
@@ -101,11 +112,24 @@ class Flow(object):
         :return:
         """
         try:
+            flow_name = flow.get('flow_name')
+            if not flow_name:
+                raise ValueError('Flow name cannot be empty.')
+
             with db.session.begin_nested():
+                # Get all names but the one being updated
+                cur_names = map(
+                    lambda flow: flow.flow_name,
+                    _Flow.query.add_columns(_Flow.flow_name)
+                    .filter(_Flow.flow_id != flow_id).all()
+                )
+                if flow_name in cur_names:
+                    raise ValueError('Flow name is already in use.')
+
                 _flow = _Flow.query.filter_by(
                     flow_id=flow_id).one_or_none()
                 if _flow:
-                    _flow.flow_name = flow.get('flow_name')
+                    _flow.flow_name = flow_name
                     _flow.flow_user = current_user.get_id()
                     db.session.merge(_flow)
             db.session.commit()
@@ -113,7 +137,7 @@ class Flow(object):
         except Exception as ex:
             current_app.logger.exception(str(ex))
             db.session.rollback()
-            return None
+            raise
 
     def get_flow_list(self):
         """Get flow list info.
@@ -121,7 +145,8 @@ class Flow(object):
         :return:
         """
         with db.session.no_autoflush:
-            query = _Flow.query.order_by(asc(_Flow.flow_id))
+            query = _Flow.query.filter_by(
+                is_deleted=False).order_by(asc(_Flow.flow_id))
             return query.all()
 
     def get_flow_detail(self, flow_id):
@@ -134,6 +159,8 @@ class Flow(object):
             query = _Flow.query.filter_by(
                 flow_id=flow_id)
             flow_detail = query.one_or_none()
+            if not flow_detail:
+                abort(500)
             for action in flow_detail.flow_actions:
                 action_roles = _FlowActionRole.query.filter_by(
                     flow_action_id=action.id).first()
@@ -146,13 +173,19 @@ class Flow(object):
         :param flow_id:
         :return:
         """
-        with db.session.begin_nested():
-            _FlowAction.query.filter_by(
-                flow_id=flow_id).delete(synchronize_session=False)
-            _Flow.query.filter_by(
-                flow_id=flow_id).delete(synchronize_session=False)
-        db.session.commit()
-        return True
+        try:
+            with db.session.begin_nested():
+                flow = _Flow.query.filter_by(
+                    flow_id=flow_id).one_or_none()
+                if flow:
+                    flow.is_deleted = True
+                    db.session.merge(flow)
+            db.session.commit()
+            return {'code': 0, 'msg': ''}
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+            return {'code': 500, 'msg': str(ex)}
 
     def upt_flow_action(self, flow_id, actions):
         """Update FlowAction Info."""
@@ -259,11 +292,12 @@ class Flow(object):
         :param flow_id: item_registration's flow id
         :return flow_action: flow action's object
         """
+        action_id = current_app.config.get(
+            "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3)
         with db.session.no_autoflush:
             flow_action = _FlowAction.query.filter_by(
                 flow_id=flow_id,
-                action_id=ITEM_REGISTRATION_FLOW_ID).all()
-            current_app.logger.debug(flow_action)
+                action_id=action_id).all()
             return flow_action
 
 
@@ -317,7 +351,8 @@ class WorkFlow(object):
         :return:
         """
         with db.session.no_autoflush:
-            query = _WorkFlow.query.order_by(asc(_WorkFlow.flows_id))
+            query = _WorkFlow.query.filter_by(
+                is_deleted=False).order_by(asc(_WorkFlow.flows_id))
             return query.all()
 
     def get_workflow_detail(self, workflow_id):
@@ -332,7 +367,7 @@ class WorkFlow(object):
             return query.one_or_none()
 
     def get_workflow_by_id(self, workflow_id):
-        """Get workflow detail info.
+        """Get workflow detail info by workflow id.
 
         :param workflow_id:
         :return:
@@ -342,17 +377,47 @@ class WorkFlow(object):
                 id=workflow_id)
             return query.one_or_none()
 
+    def get_workflow_by_flows_id(self, flows_id):
+        """Get workflow detail info by flows id.
+
+        :param flows_id:
+        :return:
+        """
+        with db.session.no_autoflush:
+            query = _WorkFlow.query.filter_by(
+                flows_id=flows_id)
+            return query.one_or_none()
+
+    def get_workflow_by_flow_id(self, flow_id):
+        """Get workflow detail info by flow id.
+
+        :param flow_id:
+        :return:
+        """
+        with db.session.no_autoflush:
+            query = _WorkFlow.query.filter_by(
+                flow_id=flow_id, is_deleted=False)
+            return query.all()
+
     def del_workflow(self, workflow_id):
         """Delete flow info.
 
         :param workflow_id:
         :return:
         """
-        with db.session.no_autoflush:
-            query = _WorkFlow.query.filter_by(
-                flows_id=workflow_id)
-            query.delete(synchronize_session=False)
-        db.session.commit()
+        try:
+            with db.session.begin_nested():
+                workflow = _WorkFlow.query.filter_by(
+                    flows_id=workflow_id).one_or_none()
+                if workflow:
+                    workflow.is_deleted = True
+                    db.session.merge(workflow)
+            db.session.commit()
+            return {'code': 0, 'msg': ''}
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+            return {'code': 500, 'msg': str(ex)}
 
     def find_workflow_by_name(self, workflow_name):
         """Find workflow by name.
@@ -362,6 +427,64 @@ class WorkFlow(object):
         """
         with db.session.no_autoflush:
             return _WorkFlow.query.filter_by(flows_name=workflow_name).first()
+
+    def update_itemtype_id(self, workflow, itemtype_id):
+        """
+        Update itemtype id to workflow.
+
+        :param workflow:
+        :param itemtype_id:
+        :return:
+        """
+        try:
+            with db.session.begin_nested():
+                if workflow:
+                    workflow.itemtype_id = itemtype_id
+                    db.session.merge(workflow)
+            db.session.commit()
+        except Exception as ex:
+            current_app.logger.exception(str(ex))
+            db.session.rollback()
+
+    def get_workflow_by_itemtype_id(self, item_type_id):
+        """Get workflow detail info by item type id.
+
+        :param item_type_id:
+        :return:
+        """
+        with db.session.no_autoflush:
+            query = _WorkFlow.query.filter_by(
+                itemtype_id=item_type_id, is_deleted=False)
+            return query.all()
+
+    def get_workflows_by_roles(self, workflows):
+        """Get list workflow.
+
+        :param workflows.
+
+        :return: wfs.
+        """
+        def get_display_role(list_hide, role):
+            displays = []
+            if isinstance(role, list):
+                for tmp in role:
+                    if not any(x.id == tmp.id for x in list_hide):
+                        displays.append(tmp)
+            return displays
+        wfs = []
+        current_user_roles = [role.id for role in current_user.roles]
+        if isinstance(workflows, list):
+            role = Role.query.all()
+            while workflows:
+                tmp = workflows.pop(0)
+                list_hide = Role.query.outerjoin(WorkflowRole) \
+                    .filter(WorkflowRole.workflow_id == tmp.id) \
+                    .filter(WorkflowRole.role_id == Role.id) \
+                    .all()
+                displays = get_display_role(list_hide, role)
+                if any(x.id in current_user_roles for x in displays):
+                    wfs.append(tmp)
+        return wfs
 
 
 class Action(object):
@@ -596,6 +719,7 @@ class WorkActivity(object):
 
         :param activity_id:
         :param action_id:
+        :param action_status:
         :return:
         """
         with db.session.begin_nested():
@@ -605,6 +729,32 @@ class WorkActivity(object):
             activity.action_status = action_status
             db.session.merge(activity)
         db.session.commit()
+
+    def upt_activity_metadata(self, activity_id, metadata):
+        """Update metadata to activity table.
+
+        :param activity_id:
+        :param metadata:
+        :return:
+        """
+        with db.session.begin_nested():
+            activity = _Activity.query.filter_by(
+                activity_id=activity_id).one_or_none()
+            activity.temp_data = metadata
+            db.session.merge(activity)
+        db.session.commit()
+
+    def get_activity_metadata(self, activity_id):
+        """Get metadata from activity table.
+
+        :param activity_id:
+        :return metadata:
+        """
+        with db.session.no_autoflush:
+            activity = _Activity.query.filter_by(
+                activity_id=activity_id,).one_or_none()
+            metadata = activity.temp_data
+            return metadata
 
     def upt_activity_action_status(
             self,
@@ -819,7 +969,8 @@ class WorkActivity(object):
         """Get activity action status."""
         with db.session.no_autoflush:
             activity_ac = ActivityAction.query.filter_by(
-                activity_id=activity_id, action_id=action_id).one()
+                activity_id=activity_id,
+                action_id=action_id).one()
             action_stus = activity_ac.action_status
             return action_stus
 
@@ -869,6 +1020,7 @@ class WorkActivity(object):
                     db_activity.action_id = activity.get('action_id')
                     db_activity.action_status = activity.get('action_status')
                     db_activity.activity_end = datetime.utcnow()
+                    db_activity.temp_data = None
                     if activity.get('item_id') is not None:
                         db_activity.item_id = activity.get('item_id')
                     db.session.merge(db_activity)
@@ -915,6 +1067,7 @@ class WorkActivity(object):
                     db_activity.activity_status = \
                         ActivityStatusPolicy.ACTIVITY_CANCEL
                     db_activity.activity_end = datetime.utcnow()
+                    db_activity.temp_data = None
                     if 'item_id' in activity:
                         db_activity.item_id = activity.get('item_id')
                     db.session.merge(db_activity)
@@ -1133,9 +1286,9 @@ class WorkActivity(object):
         self_group_ids = [role.id for role in current_user.roles]
         query = query \
             .filter((_Activity.activity_status
-                    == ActivityStatusPolicy.ACTIVITY_BEGIN)
+                     == ActivityStatusPolicy.ACTIVITY_BEGIN)
                     | (_Activity.activity_status
-                    == ActivityStatusPolicy.ACTIVITY_MAKING)) \
+                       == ActivityStatusPolicy.ACTIVITY_MAKING)) \
             .filter(
                 ((_FlowActionRole.action_user == self_user_id)
                  & (_FlowActionRole.action_user_exclude == '0'))
@@ -1549,12 +1702,13 @@ class WorkActivity(object):
     def get_workflow_activity_by_item_id(self, object_uuid):
         """Get workflow activity status by item ID.
 
-        :param item_id:
+        :param object_uuid:
         """
         try:
             with db.session.no_autoflush:
                 activity = _Activity.query.filter_by(
-                    item_id=object_uuid).one_or_none()
+                    item_id=object_uuid).order_by(
+                    _Activity.updated.desc()).first()
                 return activity
         except Exception as ex:
             current_app.logger.error(ex)
@@ -1577,6 +1731,36 @@ class WorkActivity(object):
                     activity.title = title
                     activity.shared_user_id = shared_user_id
                     db.session.add(activity)
+            db.session.commit()
+        except Exception as ex:
+            current_app.logger.exception(str(ex))
+            db.session.rollback()
+
+    def get_activity_by_workflow_id(self, workflow_id):
+        """Get workflow activity by workflow ID."""
+        try:
+            with db.session.no_autoflush:
+                activitys = _Activity.query.filter_by(
+                    workflow_id=workflow_id).all()
+                return activitys
+        except Exception as ex:
+            current_app.logger.error(ex)
+            return None
+
+    def update_title(self, activity_id, title):
+        """
+        Update title to activity.
+
+        :param activity_id:
+        :param title:
+        :return:
+        """
+        try:
+            with db.session.begin_nested():
+                activity = self.get_activity_detail(activity_id)
+                if activity:
+                    activity.title = title
+                    db.session.merge(activity)
             db.session.commit()
         except Exception as ex:
             current_app.logger.exception(str(ex))
@@ -1678,17 +1862,15 @@ class WorkActivityHistory(object):
 class UpdateItem(object):
     """The class about item."""
 
-    def publish(pid, record):
+    def publish(self, record):
         r"""Record publish  status change view.
 
         Change record publish status with given status and renders record
         export template.
 
-        :param pid: PID object.
-        :param record: Record object.
+        :param record: record object.
         :return: The rendered template.
         """
-        from invenio_db import db
         from weko_deposit.api import WekoIndexer
         publish_status = record.get('publish_status')
         if not publish_status:
@@ -1702,14 +1884,13 @@ class UpdateItem(object):
         indexer = WekoIndexer()
         indexer.update_publish_status(record)
 
-    def update_status(pid, record, status='1'):
+    def update_status(self, record, status='1'):
         r"""Record update status.
 
         :param pid: PID object.
         :param record: Record object.
         :param status: Publish status (0: publish, 1: private).
         """
-        from invenio_db import db
         from weko_deposit.api import WekoIndexer
         publish_status = record.get('publish_status')
         if not publish_status:

@@ -1,0 +1,13 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of Invenio.
+# Copyright (C) 2015-2018 CERN.
+#
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+
+-e git+https://github.com/zzzeek/alembic.git#egg=alembic
+-e git+https://github.com/kvesteri/sqlalchemy-continuum.git#egg=sqlalchemy-continuum
+-e git+https://github.com/kvesteri/sqlalchemy-utils.git#egg=sqlalchemy-utils
+-e git+https://github.com/mitsuhiko/flask-sqlalchemy.git#egg=flask-sqlalchemy
+-e git+https://github.com/zzzeek/sqlalchemy.git#egg=sqlalchemy

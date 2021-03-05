@@ -8,12 +8,12 @@
                   class="form-control {{ form.fieldHtmlClass }}"
                   id="{{ form.key.slice(-1)[0] }}"
                   sf-changed="form"
-                  placeholder="{{ form.placeholder }}"
+                  ng-attr-placeholder="{{ form.placeholder }}"
                   ng-disabled="form.readonly"
                   ng-model="$$value$$"
                   ng-model-options="form.ngModelOptions"
                   schema-validate="form"
-                  name="{{ form.key.slice(-1)[0] }}"></textarea>
+                  name="{{ form.key.join('.') }}"></textarea>
 
         <div ng-if="form.fieldAddonLeft || form.fieldAddonRight"
              ng-class="{'input-group': (form.fieldAddonLeft || form.fieldAddonRight)}">
@@ -23,12 +23,12 @@
     <textarea class="form-control {{ form.fieldHtmlClass }}"
               id="{{ form.key.slice(-1)[0] }}"
               sf-changed="form"
-              placeholder="{{ form.placeholder }}"
+              ng-attr-placeholder="{{ form.placeholder }}"
               ng-disabled="form.readonly"
               ng-model="$$value$$"
               ng-model-options="form.ngModelOptions"
               schema-validate="form"
-              name="{{ form.key.slice(-1)[0] }}"></textarea>
+              name="{{ form.key.join('.') }}"></textarea>
     <span ng-if="form.fieldAddonRight"
           class="input-group-addon"
           ng-bind-html="form.fieldAddonRight"></span>

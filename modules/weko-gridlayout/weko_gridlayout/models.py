@@ -470,7 +470,7 @@ class WidgetDesignPage(db.Model):
         nullable=True
     )
 
-    is_main_layout = db.Column(db.Boolean('is_main_layout'), nullable=True)
+    is_main_layout = db.Column(db.Boolean(name='is_main_layout'), nullable=True)
 
     multi_lang_data = db.relationship(
         'WidgetDesignPageMultiLangData',
@@ -501,15 +501,26 @@ class WidgetDesignPage(db.Model):
                 repository_id = prev.repository_id
             page = prev or WidgetDesignPage()
 
-            if not repository_id or not url:
-                return False
+            if not repository_id:
+                raise ValueError('Invalid repository.')
+            if not url:
+                raise ValueError('URL cannot be empty.')
+
+            cur_urls = map(
+                lambda design_page: design_page.url,
+                db.session.query(cls).add_columns(WidgetDesignPage.url)
+                .filter(WidgetDesignPage.id != page_id).all()
+            )
+            if url in cur_urls:
+                raise ValueError('URL is already in use.')
 
             with db.session.begin_nested():
                 page.repository_id = repository_id
                 page.title = title
                 page.url = url
                 page.content = content
-                page.settings = settings
+                if settings is not None:
+                    page.settings = settings
                 page.is_main_layout = is_main_layout
                 for lang in multi_lang_data:
                     page.multi_lang_data[lang] = \
@@ -517,7 +528,6 @@ class WidgetDesignPage(db.Model):
                             lang, multi_lang_data[lang])
                 db.session.merge(page)
             db.session.commit()
-            return True
         except Exception as ex:
             db.session.rollback()
             current_app.logger.debug(ex)

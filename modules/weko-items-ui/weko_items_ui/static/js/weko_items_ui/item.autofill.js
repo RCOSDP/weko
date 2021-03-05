@@ -77,7 +77,7 @@ class SearchMetaForm extends React.Component {
                             value={this.state.itemId.value} onChange={this.handleChange}
                             className="form-control ng-untouched ng-pristine ng-valid" />
                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  <input type="submit" value={this.props.getValue} className="btn btn-info" />
+                  <input type="submit" id="autofill_item_button" value={this.props.getValue} className="btn btn-info" />
                     </div>
                     <br />
                     <div id="auto-fill-error-div">

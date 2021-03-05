@@ -16,18 +16,14 @@ readme = open('README.rst').read()
 history = open('CHANGES.rst').read()
 
 tests_require = [
-    'SQLAlchemy-Continuum>=1.2.1',
-    'check-manifest>=0.25',
-    'coverage>=4.0',
-    'invenio-indexer>=1.0.0',
-    'invenio-jsonschemas>=1.0.0',
-    'invenio-marc21>=1.0.0a8',
-    'isort>=4.2.2',
-    'mock>=1.3.0',
-    'pydocstyle>=1.0.0',
-    'pytest-cov>=1.8.0',
-    'pytest-pep8>=1.0.6',
-    'pytest>=2.8.0,!=3.3.0',
+    'coverage>=4.5.3,<5.0.0',
+    'mock>=3.0.0,<4.0.0',
+    'pytest>=4.6.4,<5.0.0',
+    'pytest-cache',
+    'pytest-cov',
+    'pytest-pep8',
+    'pytest-invenio',
+    'responses',
 ]
 
 invenio_search_version = '1.0.0'

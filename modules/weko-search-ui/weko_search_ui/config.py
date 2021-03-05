@@ -92,7 +92,8 @@ RECORDS_REST_ENDPOINTS['recid']['search_serializers'] = {
                          ':json_v1_search'),
 }
 
-RECORDS_REST_ENDPOINTS['recid']['search_index'] = '{}-weko'.format(index_prefix)
+RECORDS_REST_ENDPOINTS['recid']['search_index'] = '{}-weko'.format(
+    index_prefix)
 RECORDS_REST_ENDPOINTS['recid']['search_type'] = 'item-v1.0.0'
 
 # Opensearch endpoint
@@ -124,6 +125,7 @@ SEARCH_UI_SEARCH_INDEX = '{}-weko'.format(index_prefix)
 
 # set item type aggs
 RECORDS_REST_FACETS = dict()
+RECORDS_REST_FACETS_NO_SEARCH_PERMISSION = dict()
 
 WEKO_FACETED_SEARCH_MAPPING = {
     'accessRights': 'accessRights',
@@ -155,7 +157,88 @@ RECORDS_REST_FACETS[SEARCH_UI_SEARCH_INDEX] = dict(
             aggs=dict(
                 dataType=dict(
                     terms=dict(
-                        field=WEKO_FACETED_SEARCH_MAPPING['dataType']))
+                        script=dict(
+                            source='''
+                            ArrayList result = new ArrayList();
+                            int size = params._source.description.length;
+                            for (int i=0; i<size; i++) {
+                                String valueName = params._source.description[i].value;
+                                if("Other".equals(params._source.description[i].descriptionType)) {
+                                    result.add(valueName);
+                                }
+                            }
+                            return result;''',
+                            lang="painless"
+                        )
+                    )
+                )
+            )
+        )
+    ),
+    post_filters=dict(
+        accessRights=terms_filter(WEKO_FACETED_SEARCH_MAPPING['accessRights']),
+        language=terms_filter(WEKO_FACETED_SEARCH_MAPPING['language']),
+        distributor=terms_filter(WEKO_FACETED_SEARCH_MAPPING['distributor']),
+        dataType=terms_filter(WEKO_FACETED_SEARCH_MAPPING['dataType']),
+    )
+)
+
+RECORDS_REST_FACETS_NO_SEARCH_PERMISSION[SEARCH_UI_SEARCH_INDEX] = dict(
+    aggs=dict(
+        accessRights=dict(
+            filter=dict(term={"publish_status": "0"}),
+            aggs=dict(
+                accessRights=dict(terms=dict(
+                    field=WEKO_FACETED_SEARCH_MAPPING['accessRights'])))),
+        language=dict(
+            filter=dict(term={"publish_status": "0"}),
+            aggs=dict(
+                language=dict(terms=dict(
+                    field=WEKO_FACETED_SEARCH_MAPPING['language'])))),
+        distributor=dict(
+            filter=dict(
+                bool=dict(
+                    must=[
+                        dict(term={"publish_status": "0"}),
+                        dict(
+                            term={
+                                "contributor.@attributes.contributorType": "Distributor"})
+                    ]
+                )
+            ),
+            aggs=dict(
+                distributor=dict(
+                    terms=dict(
+                        field=WEKO_FACETED_SEARCH_MAPPING['distributor']))
+            )
+        ),
+        dataType=dict(
+            filter=dict(
+                bool=dict(
+                    must=[
+                        dict(term={"publish_status": "0"}),
+                        dict(term={"description.descriptionType": "Other"})
+                    ]
+                )
+            ),
+            aggs=dict(
+                dataType=dict(
+                    terms=dict(
+                        script=dict(
+                            source='''
+                            ArrayList result = new ArrayList();
+                            int size = params._source.description.length;
+                            for (int i=0; i<size; i++) {
+                                String valueName = params._source.description[i].value;
+                                if("Other".equals(params._source.description[i].descriptionType)) {
+                                    result.add(valueName);
+                                }
+                            }
+                            return result;''',
+                            lang="painless"
+                        )
+                    )
+                )
             )
         )
     ),
@@ -303,21 +386,55 @@ WEKO_SEARCH_KEYWORDS_DICT = {
         "des": ["search_des", "search_des.ja"],
         "publisher": ["search_publisher", "search_publisher.ja"],
         "cname": ["search_contributor", "search_contributor.ja"],
-        "itemtype": ("item_type_id", int),
+        "itemtype": ("itemtype.keyword", str),
         "type": {
-            "type": [
+            "type.raw": [
                 "conference paper",
+                "data paper",
                 "departmental bulletin paper",
+                "editorial",
                 "journal article",
+                "newspaper",
+                "periodical",
+                "review article",
+                "software paper",
                 "article",
                 "book",
+                "book part",
+                "cartographic material",
+                "map",
                 "conference object",
+                "conference proceedings",
+                "conference poster",
                 "dataset",
+                "interview",
+                "image",
+                "still image",
+                "moving image",
+                "video",
+                "lecture",
+                "patent",
+                "internal report",
+                "report",
                 "research report",
                 "technical report",
+                "policy report",
+                "report part",
+                "working paper",
+                "data management plan",
+                "sound",
                 "thesis",
-                "learning material",
+                "bachelor thesis",
+                "master thesis",
+                "doctoral thesis",
+                "interactive resource",
+                "learning object",
+                "manuscript",
+                "musical notation",
+                "research proposal",
                 "software",
+                "technical documentation",
+                "workflow",
                 "other"
             ]
         },
@@ -339,7 +456,7 @@ WEKO_SEARCH_KEYWORDS_DICT = {
         "dissno": "dissertationNumber",
         "degreename": ["degreeName", "degreeName.ja"],
         "dgname": ["dgName", "dgName.ja"],
-        "wid": "weko_id",
+        "wid": ("creator.nameIdentifier", str),
         "iid": ("path.tree", int)
     },
     "date": {
@@ -419,3 +536,119 @@ WEKO_IMPORT_LIST_NAME = [
     'No', 'Start Date', 'End Date', 'Item Id', 'Action', 'Work Flow Status'
 ]
 WEKO_ADMIN_LIFETIME_DEFAULT = 1800
+
+WEKO_IMPORT_EMAIL_PATTERN = \
+    r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
+WEKO_IMPORT_PUBLISH_STATUS = ['public', 'private']
+WEKO_IMPORT_DOI_TYPE = ['JaLC', 'Crossref', 'DataCite', 'NDL JaLC']
+WEKO_IMPORT_SUFFIX_PATTERN = r"^([a-zA-Z0-9.\s_\-;\(\)/]){0,290}$"
+
+WEKO_IMPORT_SUBITEM_DATE_ISO = "subitem_1582683677698"
+"""Subitem ID of property Date (ISO-8601)."""
+
+#: Change identifier mode file language list
+WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LANGUAGES = ['en', 'ja']
+#: Change identifier mode file location
+WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LOCATION = '/code/modules/weko-search-ui/weko_search_ui/static/change_identifier_mode/'
+#: Change identifier mode first name file
+WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FIRST_FILE_NAME = 'change_identifier_mode'
+#: Change identifier mode file extension
+WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_EXTENSION = '.txt'
+
+WEKO_EXPORT_TEMPLATE_BASIC_ID = [
+    '#.id', '.uri', '.metadata.path[0]',
+    '.pos_index[0]', '.publish_status', '.feedback_mail[0]',
+    '.cnri', '.doi_ra', '.doi', '.edit_mode'
+]
+WEKO_EXPORT_TEMPLATE_BASIC_NAME = [
+    '#ID', 'URI', '.IndexID[0]',
+    '.POS_INDEX[0]', '.PUBLISH_STATUS', '.FEEDBACK_MAIL[0]',
+    '.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'
+]
+WEKO_EXPORT_TEMPLATE_BASIC_OPTION = [
+    '#', '', 'Allow Multiple',
+    'Allow Multiple', 'Required', 'Allow Multiple',
+    '', '', '', 'Required'
+]
+
+WEKO_IMPORT_SYSTEM_ITEMS = ['resource_type', 'version_type', 'access_right']
+WEKO_IMPORT_THUMBNAIL_FILE_TYPE = [
+    'gif',
+    'jpg',
+    'jpe',
+    'jpeg',
+    'png',
+    'bmp',
+    'tiff',
+    'tif']
+VERSION_TYPE_URI = {
+    'AO': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce',
+    'SMUR': 'http://purl.org/coar/version/c_71e4c1898caa6e32',
+    'AM': 'http://purl.org/coar/version/c_ab4af688f83e57aa',
+    'P': 'http://purl.org/coar/version/c_fa2ee174bc00049f',
+    'VoR': 'http://purl.org/coar/version/c_970fb48d4fbd8a85',
+    'CVoR': 'http://purl.org/coar/version/c_e19f295774971610',
+    'EVoR': 'http://purl.org/coar/version/c_dc82b40f9837b551',
+    'NA': 'http://purl.org/coar/version/c_be7fb7dd8ff6fe43',
+}
+ACCESS_RIGHT_TYPE_URI = {
+    'embargoed access': 'http://purl.org/coar/access_right/c_f1cf',
+    'metadata only access': 'http://purl.org/coar/access_right/c_14cb',
+    'open access': 'http://purl.org/coar/access_right/c_abf2',
+    'restricted access': 'http://purl.org/coar/access_right/c_16ec'
+}
+DATE_ISO_TEMPLATE_URL = '/static/templates/weko_deposit/datepicker_multi_format.html'
+RESOURCE_TYPE_URI = {
+    'conference paper': 'http://purl.org/coar/resource_type/c_5794',
+    'data paper': 'http://purl.org/coar/resource_type/c_beb9',
+    'departmental bulletin paper': 'http://purl.org/coar/resource_type/c_6501',
+    'editorial': 'http://purl.org/coar/resource_type/c_b239',
+    'journal article': 'http://purl.org/coar/resource_type/c_6501',
+    'newspaper': 'http://purl.org/coar/resource_type/c_2fe3',
+    'periodical': 'http://purl.org/coar/resource_type/c_2659',
+    'review article': 'http://purl.org/coar/resource_type/c_dcae04bc',
+    'software paper': 'http://purl.org/coar/resource_type/c_7bab',
+    'article': 'http://purl.org/coar/resource_type/c_6501',
+    'book': 'http://purl.org/coar/resource_type/c_2f33',
+    'book part': 'http://purl.org/coar/resource_type/c_3248',
+    'cartographic material': 'http://purl.org/coar/resource_type/c_12cc',
+    'map': 'http://purl.org/coar/resource_type/c_12cd',
+    'conference object': 'http://purl.org/coar/resource_type/c_c94f',
+    'conference proceedings': 'http://purl.org/coar/resource_type/c_f744',
+    'conference poster': 'http://purl.org/coar/resource_type/c_6670',
+    'dataset': 'http://purl.org/coar/resource_type/c_ddb1',
+    'interview': 'http://purl.org/coar/resource_type/c_26e4',
+    'image': 'http://purl.org/coar/resource_type/c_c513',
+    'still image': 'http://purl.org/coar/resource_type/c_ecc8',
+    'moving image': 'http://purl.org/coar/resource_type/c_8a7e',
+    'video': 'http://purl.org/coar/resource_type/c_12ce',
+    'lecture': 'http://purl.org/coar/resource_type/c_8544',
+    'patent': 'http://purl.org/coar/resource_type/c_15cd',
+    'internal report': 'http://purl.org/coar/resource_type/c_18ww',
+    'report': 'http://purl.org/coar/resource_type/c_93fc',
+    'research report': 'http://purl.org/coar/resource_type/c_18ws',
+    'technical report': 'http://purl.org/coar/resource_type/c_18gh',
+    'policy report': 'http://purl.org/coar/resource_type/c_186u',
+    'report part': 'http://purl.org/coar/resource_type/c_ba1f',
+    'working paper': 'http://purl.org/coar/resource_type/c_8042',
+    'data management plan': 'http://purl.org/coar/resource_type/c_ab20',
+    'sound': 'http://purl.org/coar/resource_type/c_18cc',
+    'thesis': 'http://purl.org/coar/resource_type/c_46ec',
+    'bachelor thesis': 'http://purl.org/coar/resource_type/c_7a1f',
+    'master thesis': 'http://purl.org/coar/resource_type/c_bdcc',
+    'doctoral thesis': 'http://purl.org/coar/resource_type/c_db06',
+    'interactive resource': 'http://purl.org/coar/resource_type/c_e9a0',
+    'learning object': 'http://purl.org/coar/resource_type/c_e059',
+    'manuscript': 'http://purl.org/coar/resource_type/c_0040',
+    'musical notation': 'http://purl.org/coar/resource_type/c_18cw',
+    'research proposal': 'http://purl.org/coar/resource_type/c_baaf',
+    'software': 'http://purl.org/coar/resource_type/c_5ce6',
+    'technical documentation': 'http://purl.org/coar/resource_type/c_71bd',
+    'workflow': 'http://purl.org/coar/resource_type/c_393c',
+    'other': 'http://purl.org/coar/resource_type/c_1843'
+}
+WEKO_IMPORT_VALIDATE_MESSAGE = {
+    '%r is too long': '%rの数が上限数を超えています。',
+    '%r is not one of %r': '%rは次の決めれられた選択肢に含まれていません。%r',
+    '%r is a required property': '%rは必須項目です。'
+}

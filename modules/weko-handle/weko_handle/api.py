@@ -74,3 +74,8 @@ class Handle(object):
         except Exception as e:
             current_app.logger.error(e)
             return None
+
+    def get_prefix(self):
+        """Get Handle prefix."""
+        return PIDClientCredentials.load_from_JSON(self.credential_path) \
+            .get_prefix()

@@ -708,7 +708,7 @@ msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:68
 msgid "Default Display Sort (Index Search) :"
-msgstr "デフォルトソート条件（インデクス検索）："
+msgstr "デフォルトソート条件（インデックス検索）："
 
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:70
 msgid "[[opt_index_sort.contents]]"
@@ -1144,8 +1144,8 @@ msgid "The same language is set for many instructions."
 msgstr " 同一言語を複数の注意書きに設定されています。"
 
 #: weko_admin/template/weko_admin/admin/site_info.html:61
-msgid "Maximum length of instruction is 200 characters. "
-msgstr "注意書きの字数上限は200字です。"
+msgid "Maximum length of instruction is 1000 characters. "
+msgstr "注意書きの字数上限は1000字です。"
 
 #: weko_admin/template/weko_admin/admin/search_management_setting.html
 msgid "Index Tree/Facet Display Setting"
@@ -1162,3 +1162,23 @@ msgstr "ファセット"
 #: weko_admin/template/weko_admin/admin/search_management_setting.html
 msgid "Display"
 msgstr "表示する"
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+msgid "Main Screen Initial Display Setting"
+msgstr "初期表示設定"
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+msgid "Default Contents to Display"
+msgstr "初期表示画面設定"
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+msgid "Default Index to Display"
+msgstr "初期表示インデックス表示方法"
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+msgid "Initial Display Index"
+msgstr "初期表示インデックス"
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+msgid "An index which is not open in public cannot be selected"
+msgstr "非公開インデックス以下は選択できません"

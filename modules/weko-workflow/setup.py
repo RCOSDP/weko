@@ -28,14 +28,14 @@ readme = open('README.rst').read()
 history = open('CHANGES.rst').read()
 
 tests_require = [
-    'check-manifest>=0.25',
-    'coverage>=4.0',
-    'isort>=4.2.2',
-    'pydocstyle>=1.0.0',
-    'pytest-cache>=1.0',
-    'pytest-cov>=1.8.0',
-    'pytest-pep8>=1.0.6',
-    'pytest>=2.8.0',
+    'coverage>=4.5.3,<5.0.0',
+    'mock>=3.0.0,<4.0.0',
+    'pytest>=4.6.4,<5.0.0',
+    'pytest-cache',
+    'pytest-cov',
+    'pytest-pep8',
+    'pytest-invenio',
+    'responses',
 ]
 
 extras_require = {
@@ -110,6 +110,10 @@ setup(
             'weko_workflow.bundles:js_identifier_grant',
             'workflow_quit_confirmation_js = '
             'weko_workflow.bundles:js_quit_confirmation',
+            'workflow_lock_activity_js = '
+            'weko_workflow.bundles:js_lock_activity',
+            'workflow_detail_admin_js = '
+            'weko_workflow.bundles:js_admin_workflow_detail',
         ],
         'invenio_i18n.translations': [
             'messages = weko_workflow',

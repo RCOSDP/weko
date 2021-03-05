@@ -23,16 +23,18 @@
     {%- if attribute_value_mlt is mapping -%}
         {%- for k, v in attribute_value_mlt.items() -%}
             {%- if '.name' not in k -%}
+                {% autoescape false %}
                 {%- if 'licensetype' in k -%}
                     {% set att_val  = v | get_license_icon %}
-                    {{ att_val [1] }}<br />
+                    {{ att_val[1] | escape_str }}<br />
                 {%- elif 'accessrole' in k or 'date' in k  -%}
                     {%- if is_logged_in or open_day_display_flg -%}
-                        {{ v }}<br>
+                        {{ v | escape_str }}<br>
                     {%- endif -%}
                 {%- else -%}
-                    {{ v }}<br>
+                    {{ v | escape_str }}<br>
                 {%- endif -%}
+                {% endautoescape %}
             {%- endif -%}
         {%- endfor -%}
     {%- elif attribute_value_mlt is iterable and attribute_value_mlt is not string -%}
@@ -46,7 +48,7 @@
     {%- if record_detail_data['attribute_value_mlt'] is string or not record_detail_data['attribute_value_mlt'] -%}
       <tr>
         <th scope="row"
-            colspan="6">{{ _(record_detail_data['attribute_name']) }}</th>
+            colspan="6">{{ record_detail_data['attribute_name_i18n'] }}</th>
         <td>{{ record_detail_data['attribute_value_mlt'] }}</td>
       </tr>
     {%- else -%}
@@ -54,9 +56,8 @@
           {%- if attribute_data -%}
           <tr>
             <th scope="row" colspan="6"
-            style="border-bottom: none">{{_(record_detail_data['attribute_name'])}}</th>
+            style="border-bottom: none">{{ record_detail_data['attribute_name_i18n'] }}</th>
             <td>
-              <pre class="hidden">{{ record_detail_data|tojson }}</pre>
             </td>
           </tr>
             {{ output_attribute_value_mlt(attribute_data, 1) }}
@@ -70,10 +71,8 @@
         {%- set displayflag = True -%}
         {% if parrent_name %}
             {%- set labels = parrent_name.split('.') -%}
-            {%- if labels|length == 1 or labels[0] != 'creatorMails' or config['EMAIL_DISPLAY_FLG'] -%}
-                {%- if loop.index == 1 -%}
-                    {{ child_data(parrent_name, '', level) }}
-                {%- endif -%}
+            {%- if labels|length == 1 -%}
+                {{ child_data(parrent_name, '', level) }}
             {%- else -%}
                 {%- set displayflag = False -%}
             {%- endif -%}
@@ -103,18 +102,15 @@
       {% set labels = label.split('.') %}
       {%- if labels|length > 1 -%}
           {% set label = labels[1] %}
-          {% set content = output_creator(labels[0], content) %}
       {%- endif -%}
-      {% set label_text = label %}
-      {%- if label -%}
-        {% set label_text = _(label) %}
-      {%- endif -%}
-      <th scope="row" colspan="{{ label_colspan_default - level }}" style="border-bottom: none">{{ label_text }}</th>
-      {%- if label == 'URL' -%}
-          <td><a href="{{content}}">{{ content | translate_content }}</a></td>
-      {%- else -%}
-          <td class="{%- if label == 'Research Plan' or label == 'Summary' or label == 'Annual Report' %}multiple-line{%- endif %}">{{ content | translate_content }}</td>
-      {%- endif -%}
+      <th scope="row" colspan="{{ label_colspan_default - level }}" style="border-bottom: none">{{ label }}</th>
+        {% autoescape false %}
+            {%- if label == 'URL' -%}
+                <td><a href="{{content}}">{{ content | escape_str }}</a></td>
+            {%- else -%}
+                <td class="multiple-line">{{ content | escape_str }}</td>
+            {%- endif -%}
+        {% endautoescape %}
   </tr>
 {% endmacro %}
 
@@ -123,18 +119,5 @@
       <th scope="row"
           style="border-top: none; border-bottom: none"></th>
         {{ out_table_th(parrent_length - 1) }}
-    {%- endif -%}
-{% endmacro %}
-
-{% macro output_creator(creator_key, creator_data) %}
-    {%- if creator_key == 'creatorMail' -%}
-      <a href="{{ 'mailto:' + creator_data }}">{{ creator_data }}</a>
-    {%- elif creator_key == 'creatorName' and 'name' == config['ITEM_SEARCH_FLG'] -%}
-        {%- set q = 'creator=' + creator_data -%}
-      <a href="{{ url_for('invenio_search_ui.search') + '?q=&' + q }}">{{ creator_data }}</a>
-    {%- elif creator_key == 'nameIdentifier' and creator_data -%}
-      <a href="{{ creator_data.get('uri') }}">{{ creator_data.get('name') }}</a>
-    {%- else -%}
-        {{ creator_data }}
     {%- endif -%}
 {% endmacro %}

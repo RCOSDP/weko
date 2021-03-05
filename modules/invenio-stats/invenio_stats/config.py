@@ -92,6 +92,8 @@ is the name of the emitted event.
     a request they will increase the response time.
 """
 
+STATS_EXCLUDED_ADDRS = []
+"""Fill IP Addresses which will be excluded from stats in `[]`"""
 
 STATS_AGGREGATIONS = {
     'celery-task-agg': {},
@@ -102,7 +104,6 @@ STATS_AGGREGATIONS = {
     'search-agg': {},
     'top-view-agg': {},
 }
-
 
 STATS_QUERIES = {
     'get-celery-task-report': {},
@@ -142,7 +143,6 @@ STATS_QUERIES = {
     'get-file-preview-per-site-license': {}
 }
 
-
 STATS_PERMISSION_FACTORY = weko_permission_factory
 """Permission factory used by the statistics REST API.
 
@@ -156,7 +156,6 @@ See Invenio-access and Flask-principal for a better understanding of the
 access control mechanisms.
 """
 
-
 STATS_MQ_EXCHANGE = Exchange(
     'events',
     type='direct',
@@ -164,25 +163,37 @@ STATS_MQ_EXCHANGE = Exchange(
 )
 """Default exchange used for the message queues."""
 
-
 TARGET_REPORTS = {
     'Item Registration': '1',
     'Item Detail': '2',
     'Contents Download': '3',
 }
 
-
-STATS_ES_INTEGER_MAX_VALUE = 2147483647
+STATS_ES_INTEGER_MAX_VALUE = 6000
 """Since ES2 using size=0 has been prohibited, so in order to accomplish
 the same thing, Integer.MAX_VALUE is used to retrieve agg buckets.
 In ES2, size=0 was internally replaced by this value, so we have effectively
 mimicked the same functonality.
-"""
 
+Changed from 2147483647 to 6000. (refs. weko#23741)
+"""
 
 SEARCH_INDEX_PREFIX = os.environ.get('SEARCH_INDEX_PREFIX', '')
 """Search index prefix which is set in weko config."""
 
-
 WEKO_STATS_UNKNOWN_LABEL = 'UNKNOWN'
 """Label using for missing of view or file-download stats."""
+
+STATS_EVENT_STRING = 'events'
+"""Stats event string."""
+
+STATS_AGGREGATION_INDEXES = [
+    'celery-task',
+    'file-download',
+    'file-preview',
+    'record-view',
+    'item-create',
+    'search',
+    'top-view',
+]
+"""Stats aggregation indexes."""

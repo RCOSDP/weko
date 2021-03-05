@@ -98,7 +98,7 @@ class SessionLifetime(db.Model):
         :returns: A :class:`~weko_admin.models.SessionLifetime` instance
             or ``None``.
         """
-        return cls.query.filter_by(is_delete=False).one_or_none()
+        return cls.query.filter_by(is_delete=False).first()
 
     @property
     def is_anonymous(self):
@@ -186,6 +186,22 @@ class SearchManagement(db.Model):
     )
     """ The status of display control """
 
+    init_disp_setting = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """ The Main Screen Initial Display Setting """
+
     create_date = db.Column(db.DateTime, default=datetime.now)
     """Create Time"""
 
@@ -203,6 +219,7 @@ class SearchManagement(db.Model):
                 data_obj.sort_setting = data.get('sort_options')
                 data_obj.search_conditions = data.get('detail_condition')
                 data_obj.display_control = data.get('display_control')
+                data_obj.init_disp_setting = data.get('init_disp_setting')
                 data_obj.search_setting_all = data
                 db.session.add(data_obj)
             db.session.commit()
@@ -234,6 +251,7 @@ class SearchManagement(db.Model):
                 setting_data.sort_setting = data.get('sort_options')
                 setting_data.search_conditions = data.get('detail_condition')
                 setting_data.display_control = data.get('display_control')
+                setting_data.init_disp_setting = data.get('init_disp_setting')
                 setting_data.search_setting_all = data
                 db.session.merge(setting_data)
             db.session.commit()
@@ -1654,16 +1672,18 @@ class Identifier(db.Model):
     repository = db.Column(db.String(100), nullable=False)
     """ Repository of the community """
 
-    jalc_flag = db.Column(db.Boolean, default=True)
+    jalc_flag = db.Column(db.Boolean(name='jalc_flag'), default=True)
     """ Jalc_flag of the Identifier """
 
-    jalc_crossref_flag = db.Column(db.Boolean, default=True)
+    jalc_crossref_flag = db.Column(db.Boolean(name='jalc_crossref_flag'),
+                                   default=True)
     """ Jalc_crossref_flag of the Identifier """
 
-    jalc_datacite_flag = db.Column(db.Boolean, default=True)
+    jalc_datacite_flag = db.Column(db.Boolean(name='jalc_datacite_flag'),
+                                   default=True)
     """ Jalc_datacite_flag of the Identifier """
 
-    ndl_jalc_flag = db.Column(db.Boolean, default=True)
+    ndl_jalc_flag = db.Column(db.Boolean(name='ndl_jalc_flag'), default=True)
     """ Ndl_jalc_flag of the Identifier """
 
     jalc_doi = db.Column(db.String(100), nullable=True)

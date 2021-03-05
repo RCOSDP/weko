@@ -28,15 +28,14 @@ readme = open('README.rst').read()
 history = open('CHANGES.rst').read()
 
 tests_require = [
-    'Sphinx>=1.6.5',
-    'check-manifest>=0.25',
-    'coverage>=4.0',
-    'isort>=4.2.2',
-    'pydocstyle>=1.0.0',
-    'pytest-cache>=1.0',
-    'pytest-cov>=1.8.0',
-    'pytest-pep8>=1.0.6',
-    'pytest>=2.8.0',
+    'coverage>=4.5.3,<5.0.0',
+    'mock>=3.0.0,<4.0.0',
+    'pytest>=4.6.4,<5.0.0',
+    'pytest-cache',
+    'pytest-cov',
+    'pytest-pep8',
+    'pytest-invenio',
+    'responses',
 ]
 
 extras_require = {
@@ -151,6 +150,7 @@ setup(
             'weko_admin_angular_js = weko_admin.bundles:angular_js',
             'weko_admin_site_info = weko_admin.bundles:weko_admin_site_info_js',
             'weko_admin_site_info_css = weko_admin.bundles:weko_admin_site_info_css',
+            'weko_admin_ng_js_tree = weko_admin.bundles:weko_admin_ng_js_tree_js',
         ],
         'invenio_db.models': [
             'weko_admin = weko_admin.models',

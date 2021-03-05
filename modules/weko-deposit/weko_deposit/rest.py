@@ -21,8 +21,11 @@
 """Blueprint for Weko deposit rest."""
 
 import json
+import sys
 
+import redis
 from flask import Blueprint, abort, current_app, jsonify, request
+from invenio_db import db
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record
@@ -31,6 +34,7 @@ from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_records_rest.views import pass_record
 from invenio_rest import ContentNegotiatedMethodView
+from simplekv.memory.redisstore import RedisStore
 
 from .api import WekoDeposit
 
@@ -45,6 +49,7 @@ def publish(**kwargs):
             pid_type='recid', pid_value=pid_value).first()
         r = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
         dep = WekoDeposit(r.json, r)
+        dep.update_feedback_mail()
         dep.publish()
     except BaseException:
         abort(400, "Failed to publish item")
@@ -154,7 +159,8 @@ class ItemResource(ContentNegotiatedMethodView):
 
     def __init__(self, ctx, search_serializers=None,
                  record_serializers=None,
-                 default_media_type=None, **kwargs):
+                 default_media_type=None,
+                 **kwargs):
         """Constructor."""
         super(ItemResource, self).__init__(
             method_serializers={
@@ -179,29 +185,93 @@ class ItemResource(ContentNegotiatedMethodView):
     def post(self, pid, record, **kwargs):
         """Post."""
         from weko_deposit.links import base_factory
-        response = self.make_response(pid, record, 201,
-                                      links_factory=base_factory)
-        return response
+        return self.make_response(pid,
+                                  record,
+                                  201,
+                                  links_factory=base_factory)
 
     def put(self, **kwargs):
         """Put."""
+        from weko_workflow.api import WorkActivity
+
         try:
             data = request.get_json()
-            pid = kwargs.get('pid_value').value
+            self.__sanitize_input_data(data)
+            pid_value = kwargs.get('pid_value').value
+            edit_mode = data.get('edit_mode')
 
-            # item metadata cached on Redis by pid
-            import redis
-            from simplekv.memory.redisstore import RedisStore
+            if edit_mode and edit_mode == 'upgrade':
+                data.pop('edit_mode')
+                cur_pid = PersistentIdentifier.get('recid', pid_value)
+                pid = PersistentIdentifier.get('recid', pid_value.split(".")[0])
+                deposit = WekoDeposit.get_record(pid.object_uuid)
+
+                upgrade_record = deposit.newversion(pid)
+
+                with db.session.begin_nested():
+                    if upgrade_record and ".0" in pid_value:
+                        _upgrade_record = WekoDeposit(
+                            upgrade_record,
+                            upgrade_record.model)
+                        _upgrade_record.merge_data_to_record_without_version(
+                            cur_pid)
+                    activity = WorkActivity()
+                    wf_activity = activity.get_workflow_activity_by_item_id(
+                        cur_pid.object_uuid)
+                    if wf_activity:
+                        wf_activity.item_id = upgrade_record.model.id
+                        db.session.merge(wf_activity)
+                db.session.commit()
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type='recid',
+                    object_uuid=upgrade_record.model.id).one_or_none()
+                pid_value = pid.pid_value if pid else pid_value
+
+            # Saving ItemMetadata cached on Redis by pid
             datastore = RedisStore(redis.StrictRedis.from_url(
                 current_app.config['CACHE_REDIS_URL']))
             cache_key = current_app.config[
-                'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=pid)
+                'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=pid_value)
             ttl_sec = int(current_app.config['WEKO_DEPOSIT_ITEMS_CACHE_TTL'])
             datastore.put(
                 cache_key,
                 json.dumps(data).encode('utf-8'),
                 ttl_secs=ttl_sec)
         except BaseException:
-            abort(400, "Failed to register item")
+            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            db.session.rollback()
+            abort(400, "Failed to register item!")
 
         return jsonify({'status': 'success'})
+
+    @staticmethod
+    def __sanitize_string(s: str):
+        """Sanitize string.
+
+        :param s:
+        :return:
+        """
+        s = s.strip()
+        sanitize_str = ""
+        for i in s:
+            if ord(i) in [9, 10, 13] or (31 < ord(i) != 127):
+                sanitize_str += i
+        return sanitize_str
+
+    def __sanitize_input_data(self, data):
+        """Sanitize input data.
+
+        :param data: input data.
+        """
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if isinstance(v, str):
+                    data[k] = self.__sanitize_string(v)
+                else:
+                    self.__sanitize_input_data(v)
+        elif isinstance(data, list):
+            for i in range(len(data)):
+                if isinstance(data[i], str):
+                    data[i] = self.__sanitize_string(data[i])
+                else:
+                    self.__sanitize_input_data(data[i])

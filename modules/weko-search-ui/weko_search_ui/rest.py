@@ -25,7 +25,6 @@ import json
 import os.path
 import shutil
 import uuid
-# from copy import deepcopy
 from functools import partial
 
 from flask import Blueprint, abort, current_app, jsonify, redirect, request, \
@@ -51,6 +50,7 @@ from webargs import fields
 from webargs.flaskparser import use_kwargs
 from weko_admin.models import SearchManagement as sm
 from weko_index_tree.api import Indexes
+from weko_index_tree.utils import count_items, recorrect_private_items_count
 from weko_records.models import ItemType
 from werkzeug.utils import secure_filename
 
@@ -249,28 +249,27 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             paths = []
         agp = rd["aggregations"]["path"]["buckets"]
         nlst = []
+        items_count = []
+        all_indexes = Indexes.get_all_indexes()
+        recorrect_private_items_count(agp)
+        for i in agp:
+            items_count.append({"key": i["key"], "doc_count": i["doc_count"],
+                                "no_available": i["no_available"]["doc_count"]})
+
         for p in paths:
             m = 0
+            current_idx = {}
             for k in range(len(agp)):
                 if p.path == agp[k].get("key"):
-                    agp[k]["name"] = p.name if lang == "ja" else p.name_en
-                    date_range = agp[k].pop("date_range")
-                    no_available = agp[k].pop("no_available")
-                    pub = dict()
-                    bkt = date_range['available']['buckets']
-                    if bkt:
-                        for d in bkt:
-                            pub["pub_cnt" if d.get(
-                                "to") else "un_pub_cnt"] = d.get(
-                                "doc_count")
-                        pub["un_pub_cnt"] += no_available['doc_count']
-                        agp[k]["date_range"] = pub
-                        comment = p.comment
-                        agp[k]["comment"] = comment,
-                        result = agp.pop(k)
-                        result["comment"] = comment
-                        nlst.append(result)
-                        m = 1
+                    agp[k]["name"] = p.name if p.name and lang == "ja" \
+                        else p.name_en
+                    agp[k]["date_range"] = dict()
+                    comment = p.comment
+                    agp[k]["comment"] = comment,
+                    result = agp.pop(k)
+                    result["comment"] = comment
+                    current_idx = result
+                    m = 1
                     break
             if m == 0:
                 index_id = p.path if '/' not in p.path \
@@ -280,14 +279,18 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 nd = {
                     'doc_count': 0,
                     'key': p.path,
-                    'name': p.name if lang == "ja" else p.name_en,
+                    'name': p.name if p.name and lang == "ja" else p.name_en,
                     'date_range': {
                         'pub_cnt': 0,
                         'un_pub_cnt': 0},
                     'rss_status': rss_status,
                     'comment': p.comment,
                 }
-                nlst.append(nd)
+                current_idx = nd
+            private_count, public_count = count_items((str(p.path)), items_count, all_indexes)
+            current_idx["date_range"]["pub_cnt"] = public_count
+            current_idx["date_range"]["un_pub_cnt"] = private_count
+            nlst.append(current_idx)
         agp.clear()
         # process index tree image info
         if len(nlst):
@@ -356,69 +359,53 @@ class IndexSearchResource(ContentNegotiatedMethodView):
 
 def get_heading_info(data, lang, item_type):
     """Get heading info."""
-    heading_id = None
-    lheading_id = None
-    sheading_id = None
-    lang_id = None
+    item_key = None
+    heading_subitem_key = 'subitem_heading_banner_headline'
+    subheading_subitem_key = 'subitem_heading_headline'
+    lang_subitem_key = 'subitem_heading_language'
     # get item id of heading
     if item_type and 'properties' in item_type.schema:
         for key, value in item_type.schema['properties'].items():
-            flag = False
-            if 'properties' in value and value['type'] == 'object':
-                for k, v in value['properties'].items():
-                    if v['title'] == 'Banner Headline':
-                        lheading_id = k
-                        flag = True
-                    elif v['title'] == 'Subheading':
-                        sheading_id = k
-                        flag = True
-                    elif v['title'] == 'Language':
-                        lang_id = k
+            if 'properties' in value \
+                    and value['type'] == 'object' \
+                    and heading_subitem_key in value['properties']:
+                item_key = key
+                break
             elif 'items' in value \
                     and value['type'] == 'array' \
-                    and 'properties' in value['items']:
-                for k, v in value['items']['properties'].items():
-                    if v['title'] == 'Banner Headline':
-                        lheading_id = k
-                        flag = True
-                    elif v['title'] == 'Subheading':
-                        sheading_id = k
-                        flag = True
-                    elif v['title'] == 'Language':
-                        lang_id = k
-            if flag:
-                heading_id = key
+                    and 'properties' in value['items'] \
+                    and heading_subitem_key in value['items']['properties']:
+                item_key = key
                 break
-            else:
-                lang_id = None
 
     # get heading data
-    lheading = ''
-    sheading = ''
-    if heading_id \
-            and heading_id in data['_source']['_item_metadata']:
+    heading_text = ''
+    subheading_text = ''
+    if item_key \
+            and item_key in data['_source']['_item_metadata']:
         temp = \
-            data['_source']['_item_metadata'][heading_id]['attribute_value_mlt']
+            data['_source']['_item_metadata'][item_key]['attribute_value_mlt']
         if len(temp) > 1:
             for v in temp:
-                lheading_tmp = ''
-                sheading_tmp = ''
-                if lheading_id in v:
-                    lheading_tmp = v[lheading_id]
-                if sheading_id in v:
-                    sheading_tmp = v[sheading_id]
-                if lang and lang_id in v and v[lang_id] == lang:
-                    lheading = lheading_tmp
-                    sheading = sheading_tmp
+                heading_tmp = ''
+                subheading_tmp = ''
+                if heading_subitem_key in v:
+                    heading_tmp = v[heading_subitem_key]
+                if subheading_subitem_key in v:
+                    subheading_tmp = v[subheading_subitem_key]
+                if lang and lang_subitem_key in v and v[lang_subitem_key] == lang:
+                    heading_text = heading_tmp
+                    subheading_text = subheading_tmp
                     break
-        elif len(temp) == 1 or (lheading and sheading):
-            if lheading_id in temp[0]:
-                lheading = temp[0][lheading_id]
-            if sheading_id in temp[0]:
-                sheading = temp[0][sheading_id]
-    if sheading:
-        heading = lheading + ' : ' + sheading
+        elif len(temp) == 1 \
+                or (heading_text == '' and subheading_text == ''):
+            if heading_subitem_key in temp[0]:
+                heading_text = temp[0][heading_subitem_key]
+            if subheading_subitem_key in temp[0]:
+                subheading_text = temp[0][subheading_subitem_key]
+    if subheading_text:
+        heading = heading_text + ' : ' + subheading_text
     else:
-        heading = lheading
+        heading = heading_text
 
     return heading

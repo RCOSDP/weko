@@ -21,7 +21,8 @@
 {% from "weko_records_ui/output_detail_data.html" import output_detail_data, output_attribute_value %}
 {% from "weko_records_ui/creator_detail_template.html" import output_creator_data %}
 {% from "weko_records_ui/output_bibliographic_information_detail.html" import output_bibliographic_information %}
-{% macro output_item_detail(record, files_thumbnail, pid, items_show_list, is_top_page=false, is_logged_in=false, open_day_display_flg=true) %}
+{% macro output_item_detail(record, files, files_thumbnail, pid, items_show_list, is_top_page=false, is_logged_in=false, open_day_display_flg=true) %}
+{% autoescape false %}
   <table class="table table-bordered table-striped detail-table">
       {% if record.item_type_info %}
         <tr>
@@ -33,7 +34,7 @@
           {% if 'attribute_name_hidden' not in lst.keys() %}
               {% if lst['attribute_name'] == 'Reference' %}
                 <tr>
-                  <th scope="row" colspan="6">{{ lst['attribute_name'] }}</th>
+                  <th scope="row" colspan="6">{{ lst['attribute_name_i18n'] }}</th>
                   <td>
                       {%- for l in lst['attribute_value_mlt'] %}
                         <div>
@@ -49,7 +50,7 @@
               {%- elif lst['attribute_type'] == 'creator' -%}
                  {%- if lst['attribute_value_mlt'][0].get('name') -%}
                      <tr>
-                       <th scope="row" colspan="6">{{ lst['attribute_name'] }}</th>
+                       <th scope="row" colspan="6">{{ lst['attribute_name_i18n'] }}</th>
                        <td>{{output_creator_data(lst['attribute_value_mlt'])}}
                        </td>
                      </tr>
@@ -57,37 +58,38 @@
               {%- elif lst.get('attribute_value_mlt') and ( lst['attribute_value_mlt'][0]['magazine_attribute_name'] or lst['attribute_value_mlt'][0]['title_attribute_name'] ) -%}
                  {{ output_bibliographic_information(lst) }}
               {% else %}
-                  {% if lst['attribute_value_mlt'] is undefined or lst['attribute_value_mlt']|length == 0 or lst['attribute_type'] == 'file' %}
+                {% if lst['attribute_value_mlt'] is undefined or lst['attribute_value_mlt']|length == 0 or lst['attribute_type'] == 'file' %}
+                  {%- if lst['attribute_type'] != 'file' -%}
                     {%- if lst['attribute_value'] is string or lst['attribute_value'] or lst['attribute_value_mlt']|length > 0 -%}
-                    <tr>
-                      <th scope="row"
-                          colspan="6">{{ _(lst['attribute_name']) }}</th>
-                      <td>
-                        <pre class="hide">{{ lst|tojson }}</pre>
-                          {% if lst['attribute_value'] is string %}
-                              {{ lst['attribute_value'] }}
-                          {% else %}
-                              {%- for key in lst['attribute_value'] %}
-                                  {{ key }}
-                              {% endfor %}
-                          {% endif %}
+                      <tr>
+                        <th scope="row"
+                            colspan="6">{{ lst['attribute_name_i18n'] }}</th>
+                        <td class="multiple-line">
+                          {%- if lst['attribute_value'] is string -%}
+                            {{ lst['attribute_value'] }}
+                          {%- else -%}
+                            {%- for key in lst['attribute_value'] -%}
+                              {{ key }}
+                            {%- endfor -%}
+                          {%- endif -%}
                           {%- for l in lst['attribute_value_mlt'] -%}
-                              {{ output_attribute_value(l, is_logged_in, open_day_display_flg) }}
+                            {{ output_attribute_value(l, is_logged_in, open_day_display_flg) }}
                           {%- endfor -%}
-                      </td>
-                    </tr>
+                        </td>
+                      </tr>
                     {%- endif -%}
-                  {% else %}
-                      {{ output_detail_data(lst) }}
-                  {% endif %}
+                  {%- endif -%}
+                {% else %}
+                  {{ output_detail_data(lst) }}
+                {% endif %}
               {% endif %}
           {% endif %}
-          {%- if 'attribute_name_hidden' in lst.keys() and files_thumbnail -%}
+          {%- if 'is_thumbnail' in lst.keys() and lst.get('is_thumbnail') and files_thumbnail -%}
             <tr>
               <th scope="row"
-                  colspan="6">{{ lst.get('attribute_name_hidden', _('Thumbnail')) }}</th>
+                  colspan="6">{{ lst.get('attribute_name_i18n', _('Thumbnail')) }}</th>
               <td>
-                  {%- for thumb in files_thumbnail | sort(attribute='key') -%}
+                  {%- for thumb in files_thumbnail -%}
                       {%- set thumb_name = thumb.filename or thumb.key -%}
                       {%- set thumb_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
                         filename=thumb.key) %}
@@ -108,7 +110,7 @@
           <td>
               {%- for sub_record in record.relation %}
                 <a target="_self"
-                   href="{{ sub_record.item_links }}">{{ sub_record.item_title }}</a>
+                   href="{{ sub_record.item_links }}">{{ sub_record.item_title | escape_str }}</a>
                 <br>
               {% endfor %}
           </td>
@@ -125,34 +127,37 @@
             {% endif %}
           <td>
             <div>
-              <form class="form form-inline"
+              <form class="form form-inline" id="public_status_form"
                     action="{{ url_for('invenio_records_ui.recid_publish', pid_value=pid.pid_value) }}"
                     method="POST">
-                  {% if record | check_permission %}
-                      {% if '0' in pubs %}
-                          {{ _('Public') }}
-                        <button class="btn btn-default btn-xs" type="submit"
-                                name="status" value="1"
-                                style="font-size:15px">
-                            {{ _('Change to Private') }}
-                        </button>
-                      {% else %}
-                          {{ _('Private') }}
-                        <button class="btn btn-default btn-xs" type="submit"
-                                name="status" value="0"
-                                style="font-size:15px">
-                            {{ _('Change to Public') }}
-                        </button>
-                      {% endif %}
-                  {% else %}
-                      {% if '0' in pubs %}{{ _('Publish') }}{% else %}
-                          {{ _('Private') }}
-                      {% endif %}
-                  {% endif %}
+                {% if record | check_permission %}
+                    {% if '0' in pubs %}
+                        {{ _('Public') }}
+                        <input type="hidden" name="status" value="1">
+                      <button class="btn btn-default btn-xs" type="button"
+                              name="status" value="1" id="public_status_btn"
+                              style="font-size:15px">
+                          {{ _('Change to Private') }}
+                      </button>
+                    {% else %}
+                        {{ _('Private') }}
+                        <input type="hidden" name="status" value="0">
+                      <button class="btn btn-default btn-xs" type="button"
+                              name="status" value="0" id="public_status_btn"
+                              style="font-size:15px">
+                          {{ _('Change to Public') }}
+                      </button>
+                    {% endif %}
+                {% else %}
+                    {% if '0' in pubs %}{{ _('Publish') }}{% else %}
+                        {{ _('Private') }}
+                    {% endif %}
+                {% endif %}
               </form>
             </div>
           </td>
         </tr>
       {% endif %}
   </table>
+{% endautoescape %}
 {% endmacro %}

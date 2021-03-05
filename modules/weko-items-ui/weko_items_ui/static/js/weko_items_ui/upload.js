@@ -320,31 +320,22 @@ require([
                 element.on('change', function (onChangeEvent) {
                     var files = (onChangeEvent.srcElement || onChangeEvent.target).files;
                     if (!angular.isUndefined(files) && files.length > 0) {
-                        if ($scope.$parent.model.allowMultiple != 'True') {
-                          files = Array.prototype.slice.call( files, 0, 1 );
-                          let overwriteFiles = $.extend(true,{},$scope.$parent.model.thumbnailsInfor);
-                          $.each(overwriteFiles, function(index, thumb) {
+                      if ($scope.$parent.model.allowMultiple != 'True') {
+                        files = Array.prototype.slice.call(files, 0, 1);
+                        let overwriteFiles = $.extend(true, {}, $scope.$parent.model.thumbnailsInfor);
+
+                        if (Object.keys(overwriteFiles).length > 0) {
+                          $rootScope.$$childHead.uploadingThumbnails = files;
+
+                          $.each(overwriteFiles, function (index, thumb) {
                             $rootScope.$$childHead.removeThumbnail(thumb);
                           });
+                        } else {
+                          $rootScope.$$childHead.directedUpload(files);
                         }
-                            Array.prototype.forEach.call(files, function(f) {
-                            if ($scope.$parent.model.allowedType.indexOf(f.type) < 0 ) {
-                              return;
-                            }
-                            var reader = new FileReader();
-                            f.is_thumbnail=true;
-                            reader.readAsDataURL(f);
-                        });
-                        Array.prototype.push.apply($scope.$parent.model.thumbnailsInfor,files);
-                        $rootScope.filesVM.addFiles(files);
-                        if ($rootScope.filesVM.invenioFilesEndpoints.bucket !== undefined) {
-                          var deposit_files_api = $("#deposit-files-api").val();
-                          var bucket_url = $rootScope.filesVM.invenioFilesEndpoints.bucket;
-                          var bucket_url_arr = bucket_url.split(deposit_files_api)
-                          $rootScope.filesVM.invenioFilesEndpoints.bucket = bucket_url_arr[0] + deposit_files_api + '/thumbnail' + bucket_url_arr[1];
-                        }
-                        $rootScope.filesVM.upload();
-                        $rootScope.filesVM.invenioFilesEndpoints.bucket = bucket_url;
+                      } else {
+                        $rootScope.$$childHead.directedUpload(files);
+                      }
                     }
                 });
             }

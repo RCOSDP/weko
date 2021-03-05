@@ -21,11 +21,15 @@
 """Module of weko-workflow utils."""
 
 from copy import deepcopy
+from datetime import datetime
 
 from flask import current_app, request
 from flask_babelex import gettext as _
+from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
+from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
 from invenio_records.models import RecordMetadata
@@ -34,13 +38,18 @@ from sqlalchemy.exc import SQLAlchemyError
 from weko_admin.models import Identifier
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
-from weko_records.api import ItemsMetadata, ItemTypes, Mapping
+from weko_index_tree.models import Index
+from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypes, \
+    Mapping
 from weko_records.serializers.utils import get_mapping
+from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
+from weko_user_profiles.utils import get_user_profile_info
 
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
 
-from .api import WorkActivity
+from .api import UpdateItem, WorkActivity
 from .config import IDENTIFIER_GRANT_SELECT_DICT, WEKO_SERVER_CNRI_HOST_LINK
+from .models import Action as _Action
 
 
 def get_identifier_setting(community_id):
@@ -56,7 +65,7 @@ def get_identifier_setting(community_id):
 
 
 def saving_doi_pidstore(item_id, record_without_version, data=None,
-                        doi_select=0):
+                        doi_select=0, is_feature_import=False):
     """
     Mapp doi pidstore data to ItemMetadata.
 
@@ -91,6 +100,13 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
         identifier_val = jalcdoi_dc_link
         doi_register_val = '/'.join(jalcdoi_dc_tail[1:])
         doi_register_typ = 'DataCite'
+    elif is_feature_import and doi_select == IDENTIFIER_GRANT_LIST[4][0] \
+            and data.get('identifier_grant_ndl_jalc_doi_link'):
+        ndljalcdoi_dc_link = data.get('identifier_grant_ndl_jalc_doi_link')
+        ndljalcdoi_dc_tail = (ndljalcdoi_dc_link.split('//')[1]).split('/')
+        identifier_val = ndljalcdoi_dc_link
+        doi_register_val = '/'.join(ndljalcdoi_dc_tail[1:])
+        doi_register_typ = 'NDL JaLC'
     else:
         current_app.logger.error(_('Identifier datas are empty!'))
 
@@ -98,11 +114,14 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
         if not flag_del_pidstore and identifier_val and doi_register_val:
             identifier = IdentifierHandle(record_without_version)
             reg = identifier.register_pidstore('doi', identifier_val)
+            identifier.update_idt_registration_metadata(doi_register_val,
+                                                        doi_register_typ)
 
             if reg:
                 identifier = IdentifierHandle(item_id)
                 identifier.update_idt_registration_metadata(doi_register_val,
                                                             doi_register_typ)
+            update_indexes_public_state(item_id)
             current_app.logger.info(_('DOI successfully registered!'))
     except Exception as ex:
         current_app.logger.exception(str(ex))
@@ -139,17 +158,56 @@ def register_hdl(activity_id):
         current_app.logger.info('Cannot connect Handle server!')
 
 
-def item_metadata_validation(item_id, identifier_type):
+def register_hdl_by_item_id(deposit_id, item_uuid, url_root):
+    """
+    Register HDL into Persistent Identifiers.
+
+    :param deposit_id: id
+    :param item_uuid: Item uuid
+    :param url_root: url_root
+    :return handle: HDL handle
+    """
+    record_url = url_root \
+        + 'records/' + str(deposit_id)
+
+    weko_handle = Handle()
+    handle = weko_handle.register_handle(location=record_url)
+
+    if handle:
+        handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
+        identifier = IdentifierHandle(item_uuid)
+        identifier.register_pidstore('hdl', handle)
+    else:
+        current_app.logger.info('Cannot connect Handle server!')
+
+    return handle
+
+
+def register_hdl_by_handle(handle, item_uuid):
+    """
+    Register HDL into Persistent Identifiers.
+
+    :param handle: HDL handle
+    :param item_uuid: Item uuid
+    """
+    if handle:
+        handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
+        identifier = IdentifierHandle(item_uuid)
+        identifier.register_pidstore('hdl', handle)
+
+
+def item_metadata_validation(
+        item_id, identifier_type, record=None, is_import=False):
     """
     Validate item metadata.
 
-    :param: item_id, identifier_type
+    :param: item_id, identifier_type, record
     :return: error_list
     """
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
         return None
 
-    journalarticle_nameid = [3, 5, 9]
+    ddi_item_type_name = 'DDI'
     journalarticle_type = ['other（プレプリント）', 'conference paper',
                            'data paper', 'departmental bulletin paper',
                            'editorial', 'journal article', 'periodical',
@@ -159,9 +217,7 @@ def item_metadata_validation(item_id, identifier_type):
     report_types = ['technical report', 'research report', 'report',
                     'book', 'book part']
     elearning_type = ['learning material']
-    dataset_nameid = [4]
     dataset_type = ['software', 'dataset']
-    datageneral_nameid = [1, 10]
     datageneral_types = ['internal report', 'policy report', 'report part',
                          'working paper', 'interactive resource',
                          'musical notation', 'research proposal',
@@ -172,7 +228,8 @@ def item_metadata_validation(item_id, identifier_type):
                          'conference object', 'conference proceedings',
                          'conference poster']
 
-    metadata_item = MappingData(item_id)
+    metadata_item = MappingData(
+        item_id) if item_id else MappingData(record=record)
     item_type = metadata_item.get_data_item_type()
     resource_type, type_key = metadata_item.get_data_by_property("type.@value")
     type_check = check_required_data(resource_type, type_key)
@@ -182,21 +239,26 @@ def item_metadata_validation(item_id, identifier_type):
         return {
             'required': [],
             'pattern': [],
+            'either': [],
             'pmid': '',
             'doi': '',
             'url': '',
             "msg": 'Resource Type Property either missing '
-            'or jpcoar mapping not correct!',
+                   'or jpcoar mapping not correct!',
             'error_type': 'no_resource_type'
         }
 
     if not item_type or not resource_type and type_check:
         error_list = {'required': [], 'pattern': [], 'pmid': '',
-                      'doi': '', 'url': ''}
+                      'doi': '', 'url': '', 'either': []}
         error_list['required'].append(type_key)
         return error_list
     resource_type = resource_type.pop()
-    properties = []
+    properties = {}
+    # 必須
+    required_properties = []
+    # いずれか必須
+    either_properties = []
 
     # JaLC DOI identifier registration
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']:
@@ -204,57 +266,133 @@ def item_metadata_validation(item_id, identifier_type):
         # 別表2-3 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
         # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
         # 別表2-6 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【汎用データ】
-        if item_type.name_id in journalarticle_nameid \
-            or resource_type in journalarticle_type \
-            or resource_type in report_types \
-            or (resource_type in elearning_type) \
-            or (item_type.name_id in datageneral_nameid
-                or resource_type in datageneral_types):
-            properties = ['title']
+        if resource_type in journalarticle_type \
+                or resource_type in report_types \
+                or (resource_type in elearning_type) \
+                or resource_type in datageneral_types:
+            required_properties = ['title']
+            if item_type.item_type_name.name != ddi_item_type_name:
+                required_properties.append('fileURI')
         # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
         elif resource_type in thesis_types:
-            properties = ['title',
-                          'creator']
+            required_properties = ['title',
+                                   'creator']
+            if item_type.item_type_name.name != ddi_item_type_name:
+                required_properties.append('fileURI')
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
-        elif item_type.name_id in dataset_nameid \
-                or resource_type in dataset_type:
-            properties = ['title',
-                          'givenName']
+        elif resource_type in dataset_type:
+            required_properties = ['title',
+                                   'givenName']
+            if item_type.item_type_name.name != ddi_item_type_name:
+                required_properties.append('fileURI')
+            either_properties = ['geoLocationPoint',
+                                 'geoLocationBox',
+                                 'geoLocationPlace']
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']:
-        if item_type.name_id in journalarticle_nameid or resource_type in \
-                journalarticle_type:
-            properties = ['title',
-                          'publisher',
-                          'sourceIdentifier',
-                          'sourceTitle']
+        if resource_type in journalarticle_type:
+            required_properties = ['title',
+                                   'publisher',
+                                   'sourceIdentifier',
+                                   'sourceTitle']
+            if item_type.item_type_name.name != ddi_item_type_name:
+                required_properties.append('fileURI')
         elif resource_type in report_types:
-            properties = ['title']
+            required_properties = ['title']
+            if item_type.item_type_name.name != ddi_item_type_name:
+                required_properties.append('fileURI')
         elif resource_type in thesis_types:
-            properties = ['title',
-                          'creator']
+            required_properties = ['title',
+                                   'creator']
+            if item_type.item_type_name.name != ddi_item_type_name:
+                required_properties.append('fileURI')
+    # DataCite DOI identifier registration
+    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI'] \
+            and item_type.item_type_name.name != ddi_item_type_name:
+        required_properties = ['fileURI']
+    # NDL JaLC DOI identifier registration
+    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI'] \
+            and item_type.item_type_name.name != ddi_item_type_name:
+        required_properties = ['fileURI']
 
-    if properties:
-        return validation_item_property(metadata_item,
-                                        identifier_type,
-                                        properties)
+    if required_properties:
+        properties['required'] = required_properties
+    if either_properties:
+        properties['either'] = either_properties
+
+    if properties and \
+            ((identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI']
+              and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI']
+              ) or is_import):
+        return validation_item_property(metadata_item, properties)
     else:
         return _('Cannot register selected DOI for current Item Type of this '
                  'item.')
 
 
-def validation_item_property(mapping_data, identifier_type, properties):
+def validation_item_property(mapping_data, properties):
     """
     Validate item property.
 
     :param mapping_data: Mapping Data contain record and item_map
-    :param identifier_type: Selected identifier
     :param properties: Property's keywords
     :return: error_list or None
     """
     error_list = {'required': [], 'pattern': [], 'pmid': '',
-                  'doi': '', 'url': ''}
+                  'doi': '', 'url': '', 'either': []}
     empty_list = deepcopy(error_list)
+
+    if properties.get('required'):
+        error_list_required = validattion_item_property_required(
+            mapping_data, properties['required'])
+        if error_list_required:
+            error_list['required'] = error_list_required['required']
+            error_list['pattern'] = error_list_required['pattern']
+
+    if properties.get('either'):
+        error_list_either = validattion_item_property_either_required(
+            mapping_data, properties['either'])
+        if error_list_either:
+            error_list['either'] = error_list_either
+
+    if error_list == empty_list:
+        return None
+    else:
+        return error_list
+
+
+def validattion_item_property_required(
+        mapping_data, properties):
+    """
+    Validate item property is required.
+
+    :param mapping_data: Mapping Data contain record and item_map
+    :param properties: Property's keywords
+    :return: error_list or None
+    """
+    error_list = {'required': [], 'pattern': []}
+    empty_list = deepcopy(error_list)
+    # check jpcoar:URI
+    if 'fileURI' in properties:
+        _, key = mapping_data.get_data_by_property(
+            "file.URI.@value")
+        data = []
+        if key:
+            key = key.split('.')[0]
+            item_file = mapping_data.record.get(key)
+            if item_file:
+                file_name_data = get_sub_item_value(
+                    item_file.get("attribute_value_mlt"), 'filename')
+                if file_name_data:
+                    for value in file_name_data:
+                        data.append(value)
+                data.append(file_name_data)
+
+            repeatable = True
+            requirements = check_required_data(
+                data, key + '.filename', repeatable)
+            if requirements:
+                error_list['required'] += requirements
     # check タイトル dc:title
     if 'title' in properties:
         title_data, title_key = mapping_data.get_data_by_property(
@@ -277,14 +415,15 @@ def validation_item_property(mapping_data, identifier_type, properties):
         _, key = mapping_data.get_data_by_property(
             "creator.givenName.@value")
         data = []
-        creators = mapping_data.record.get(key.split('.')[0])
         if key:
-            given_name_data = get_sub_item_value(
-                creators.get("attribute_value_mlt"), key.split('.')[-1])
-            if given_name_data:
-                for value in given_name_data:
-                    data.append(value)
-            data.append(given_name_data)
+            creators = mapping_data.record.get(key.split('.')[0])
+            if creators:
+                given_name_data = get_sub_item_value(
+                    creators.get("attribute_value_mlt"), key.split('.')[-1])
+                if given_name_data:
+                    for value in given_name_data:
+                        data.append(value)
+                data.append(given_name_data)
 
         repeatable = True
         requirements = check_required_data(data, key, repeatable)
@@ -375,7 +514,101 @@ def validation_item_property(mapping_data, identifier_type, properties):
     if error_list == empty_list:
         return None
     else:
-        error_list['required'] = list(set(error_list['required']))
+        error_list['required'] = list(
+            set(filter(None, error_list['required']))
+        )
+        error_list['pattern'] = list(set(filter(None, error_list['pattern'])))
+        return error_list
+
+
+def validattion_item_property_either_required(
+        mapping_data, properties):
+    """
+    Validate item property is either required.
+
+    :param mapping_data: Mapping Data contain record and item_map
+    :param properties: Property's keywords
+    :return: error_list or None
+    """
+    error_list = []
+    # check 位置情報（点） detacite:geoLocationPoint
+    if 'geoLocationPoint' in properties:
+        latitude_data, latitude_key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationPoint.pointLatitude.@value")
+        longitude_data, longitude_key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationPoint.pointLongitude.@value")
+
+        repeatable = True
+        requirements = []
+        latitude_requirement = check_required_data(
+            latitude_data, latitude_key, repeatable)
+        if latitude_requirement:
+            requirements += latitude_requirement
+
+        longitude_requirement = check_required_data(
+            longitude_data, longitude_key, repeatable)
+        if longitude_requirement:
+            requirements += longitude_requirement
+
+        if not requirements:
+            return None
+        else:
+            requirements = list(filter(None, requirements))
+            error_list.append(requirements)
+
+    # check 位置情報（空間） datacite:geoLocationBox
+    if 'geoLocationBox' in properties:
+        east_data, east_key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationBox.eastBoundLongitude.@value")
+        north_data, north_key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationBox.northBoundLatitude.@value")
+        south_data, south_key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationBox.southBoundLatitude.@value")
+        west_data, west_key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationBox.westBoundLongitude.@value")
+
+        repeatable = True
+        requirements = []
+        east_requirement = check_required_data(
+            east_data, east_key, repeatable)
+        if east_requirement:
+            requirements += east_requirement
+
+        north_requirement = check_required_data(
+            north_data, north_key, repeatable)
+        if north_requirement:
+            requirements += north_requirement
+
+        south_requirement = check_required_data(
+            south_data, south_key, repeatable)
+        if south_requirement:
+            requirements += south_requirement
+
+        west_requirement = check_required_data(
+            west_data, west_key, repeatable)
+        if west_requirement:
+            requirements += west_requirement
+
+        if not requirements:
+            return None
+        else:
+            requirements = list(filter(None, requirements))
+            error_list.append(requirements)
+
+    # check 位置情報（自由記述） datacite:geoLocationPlace
+    if 'geoLocationPlace' in properties:
+        data, key = mapping_data.get_data_by_property(
+            "geoLocation.geoLocationPlace.@value")
+
+        repeatable = True
+        requirements = check_required_data(data, key, repeatable)
+        if not requirements:
+            return None
+        else:
+            error_list += requirements
+
+    error_list = list(filter(None, error_list))
+    if error_list:
         return error_list
 
 
@@ -464,9 +697,9 @@ class MappingData(object):
     record = None
     item_map = None
 
-    def __init__(self, item_id):
+    def __init__(self, item_id=None, record=None):
         """Initilize pagination."""
-        self.record = WekoRecord.get_record(item_id)
+        self.record = WekoRecord.get_record(item_id) if item_id else record
         item_type = self.get_data_item_type()
         item_type_mapping = Mapping.get_record(item_type.id)
         self.item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
@@ -618,6 +851,7 @@ class IdentifierHandle(object):
 
             if doi_pidstore and doi_pidstore.status == PIDStatus.REGISTERED:
                 doi_pidstore.delete()
+                self.remove_idt_registration_metadata()
                 return doi_pidstore.status == PIDStatus.DELETED
         except PIDDoesNotExistError as pidNotEx:
             current_app.logger.error(pidNotEx)
@@ -625,6 +859,37 @@ class IdentifierHandle(object):
         except Exception as ex:
             current_app.logger.error(ex)
         return False
+
+    def remove_idt_registration_metadata(self):
+        """Remove Identifier Registration in Record Metadata.
+
+        Returns:
+            None
+
+        """
+        _, key_value = self.metadata_mapping.get_data_by_property(
+            "identifierRegistration.@value")
+        key_id = key_value.split('.')[0]
+        if self.item_metadata.get(key_id, []):
+            del self.item_metadata[key_id]
+
+            deleted_items = self.item_metadata.get('deleted_items', [])
+            if deleted_items is not None:
+                deleted_items.append(key_id)
+            else:
+                deleted_items = [key_id]
+            self.item_metadata['deleted_items'] = deleted_items
+        try:
+            with db.session.begin_nested():
+                rec = RecordMetadata.query.filter_by(id=self.item_uuid).first()
+                deposit = WekoDeposit(rec.json, rec)
+                index = {'index': deposit.get('path', []),
+                         'actions': deposit.get('publish_status')}
+                deposit.update(index, self.item_metadata)
+                deposit.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.debug(ex)
+            db.session.rollback()
 
     def update_idt_registration_metadata(self, input_value, input_type):
         """Update Identifier Registration in Record Metadata.
@@ -649,6 +914,23 @@ class IdentifierHandle(object):
                     atr_val=input_value,
                     atr_typ=input_type
                     )
+
+    def get_idt_registration_data(self):
+        """Get Identifier Registration data.
+
+        Arguments:
+
+        Returns:
+            doi_value -- {string} Identifier
+            doi_type  -- {string} Identifier type
+
+        """
+        doi_value, _ = self.metadata_mapping.get_data_by_property(
+            "identifierRegistration.@value")
+        doi_type, _ = self.metadata_mapping.get_data_by_property(
+            "identifierRegistration.@attributes.identifierType")
+
+        return doi_value, doi_type
 
     def commit(self, key_id, key_val, key_typ, atr_nam, atr_val, atr_typ):
         """Commit update.
@@ -760,7 +1042,7 @@ def delete_unregister_buckets(record_uuid):
                         delete_record_bucket = RecordsBuckets.query.filter_by(
                             bucket_id=draft_object.bucket_id).all()
                         if len(delete_record_bucket) == 1:
-                            delete_pid_object = PersistentIdentifier.query.\
+                            delete_pid_object = PersistentIdentifier.query. \
                                 filter_by(pid_type='recid',
                                           object_type='rec',
                                           object_uuid=delete_record_bucket[
@@ -870,3 +1152,413 @@ def filter_condition(json, name, condition):
         json[name].append(condition)
     else:
         json[name] = [condition]
+
+
+def get_actionid(endpoint):
+    """
+    Get action_id by action_endpoint.
+
+    parameter:
+    return: action_id
+    """
+    with db.session.no_autoflush:
+        action = _Action.query.filter_by(
+            action_endpoint=endpoint).one_or_none()
+        if action:
+            return action.id
+        else:
+            return None
+
+
+def prepare_edit_workflow(post_activity, recid, deposit):
+    """
+    Prepare Workflow Activity for draft record.
+
+    Check and create draft record with id is "x.0".
+    Create new workflow activity.
+    Clone Identifier and Feedbackmail relation to last activity.
+
+    parameter:
+        post_activity: latest activity information.
+        recid: current record id.
+        deposit: current deposit data.
+    return:
+        rtn: new activity
+
+    """
+    # ! Check pid's version
+    community = post_activity['community']
+    post_workflow = post_activity['post_workflow']
+    activity = WorkActivity()
+
+    draft_pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid',
+        pid_value="{}.0".format(recid.pid_value)
+    ).one_or_none()
+
+    if not draft_pid:
+        draft_record = deposit.prepare_draft_item(recid)
+        rtn = activity.init_activity(post_activity,
+                                     community,
+                                     draft_record.model.id)
+    else:
+        # Clone org bucket into draft record.
+        with db.session.begin_nested():
+            drf_deposit = WekoDeposit.get_record(draft_pid.object_uuid)
+            cur_deposit = WekoDeposit.get_record(recid.object_uuid)
+            cur_bucket = cur_deposit.files.bucket
+            bucket = Bucket.get(drf_deposit.files.bucket.id)
+
+            sync_bucket = RecordsBuckets.query.filter_by(
+                bucket_id=drf_deposit.files.bucket.id
+            ).first()
+            snapshot = cur_bucket.snapshot(lock=False)
+            snapshot.locked = False
+            bucket.locked = False
+
+            sync_bucket.bucket_id = snapshot.id
+            drf_deposit['_buckets']['deposit'] = str(snapshot.id)
+            bucket.remove()
+            drf_deposit.commit()
+            db.session.add(sync_bucket)
+        db.session.commit()
+        rtn = activity.init_activity(post_activity,
+                                     community,
+                                     draft_pid.object_uuid)
+
+    if rtn:
+        # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
+        identifier_actionid = get_actionid('identifier_grant')
+        if post_workflow:
+            identifier = activity.get_action_identifier_grant(
+                post_workflow.activity_id, identifier_actionid)
+        else:
+            identifier = activity.get_action_identifier_grant(
+                '', identifier_actionid)
+
+        if not identifier:
+            identifier_handle = IdentifierHandle(recid.object_uuid)
+            doi_value, doi_type = identifier_handle.get_idt_registration_data()
+            if doi_value and doi_type:
+                identifier = {
+                    'action_identifier_select':
+                        WEKO_IMPORT_DOI_TYPE.index(doi_type[0]) + 1,
+                    'action_identifier_jalc_doi': '',
+                    'action_identifier_jalc_cr_doi': '',
+                    'action_identifier_jalc_dc_doi': '',
+                    'action_identifier_ndl_jalc_doi': ''
+                }
+
+        if identifier:
+            if identifier.get('action_identifier_select') > \
+                current_app.config.get(
+                    "WEKO_WORKFLOW_IDENTIFIER_GRANT_DOI", 0):
+                identifier['action_identifier_select'] = \
+                    current_app.config.get(
+                        "WEKO_WORKFLOW_IDENTIFIER_GRANT_CAN_WITHDRAW", -1)
+            elif identifier.get('action_identifier_select') == \
+                current_app.config.get(
+                    "WEKO_WORKFLOW_IDENTIFIER_GRANT_IS_WITHDRAWING", -2):
+                identifier['action_identifier_select'] = \
+                    current_app.config.get(
+                        "WEKO_WORKFLOW_IDENTIFIER_GRANT_WITHDRAWN", -3)
+            activity.create_or_update_action_identifier(
+                rtn.activity_id,
+                identifier_actionid,
+                identifier)
+
+        mail_list = FeedbackMailList.get_mail_list_by_item_id(
+            item_id=recid.object_uuid)
+        if mail_list:
+            action_id = current_app.config.get(
+                "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3)
+            activity.create_or_update_action_feedbackmail(
+                activity_id=rtn.activity_id,
+                action_id=action_id,
+                feedback_maillist=mail_list
+            )
+
+    return rtn
+
+
+def handle_finish_workflow(deposit, current_pid, recid):
+    """
+    Get user information by email.
+
+    parameter:
+        deposit:
+        recid:
+    return:
+        acitivity_item_id
+    """
+    from weko_deposit.pidstore import get_record_without_version
+    if not deposit:
+        return None
+
+    item_id = None
+    try:
+        pid_without_ver = get_record_without_version(current_pid)
+        if ".0" in current_pid.pid_value:
+            deposit.commit()
+        deposit.publish()
+        updated_item = UpdateItem()
+        # publish record without version ID when registering newly
+        if recid:
+            # new record attached version ID
+            new_deposit = deposit.newversion(current_pid)
+            item_id = new_deposit.model.id
+            ver_attaching_deposit = WekoDeposit(
+                new_deposit,
+                new_deposit.model)
+            feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(
+                pid_without_ver.object_uuid)
+            if feedback_mail_list:
+                FeedbackMailList.update(
+                    item_id=item_id,
+                    feedback_maillist=feedback_mail_list
+                )
+                ver_attaching_deposit.update_feedback_mail()
+            ver_attaching_deposit.publish()
+
+            weko_record = WekoRecord.get_record_by_pid(current_pid.pid_value)
+            if weko_record:
+                weko_record.update_item_link(current_pid.pid_value)
+            updated_item.publish(deposit)
+            updated_item.publish(ver_attaching_deposit)
+        else:
+            # update to record without version ID when editing
+            if pid_without_ver:
+                _record = WekoDeposit.get_record(
+                    pid_without_ver.object_uuid)
+                _deposit = WekoDeposit(_record, _record.model)
+                _deposit['path'] = deposit.get('path', [])
+
+                parent_record = _deposit. \
+                    merge_data_to_record_without_version(current_pid)
+                _deposit.publish()
+
+                pv = PIDVersioning(child=pid_without_ver)
+                last_ver = PIDVersioning(parent=pv.parent).get_children(
+                    pid_status=PIDStatus.REGISTERED
+                ).filter(PIDRelation.relation_type == 2).order_by(
+                    PIDRelation.index.desc()).first()
+                # Handle Edit workflow
+                if ".0" in current_pid.pid_value:
+                    maintain_record = WekoDeposit.get_record(
+                        last_ver.object_uuid)
+                    maintain_deposit = WekoDeposit(
+                        maintain_record,
+                        maintain_record.model)
+                    maintain_deposit['path'] = deposit.get('path', [])
+                    new_parent_record = maintain_deposit. \
+                        merge_data_to_record_without_version(current_pid)
+                    maintain_deposit.publish()
+                    new_parent_record.update_feedback_mail()
+                    new_parent_record.commit()
+                    updated_item.publish(new_parent_record)
+                else:  # Handle Upgrade workflow
+                    draft_pid = PersistentIdentifier.get(
+                        'recid',
+                        '{}.0'.format(pid_without_ver.pid_value)
+                    )
+                    draft_deposit = WekoDeposit.get_record(
+                        draft_pid.object_uuid)
+                    draft_deposit['path'] = deposit.get('path', [])
+                    new_draft_record = draft_deposit. \
+                        merge_data_to_record_without_version(current_pid)
+                    draft_deposit.publish()
+                    new_draft_record.update_feedback_mail()
+                    new_draft_record.commit()
+                    updated_item.publish(new_draft_record)
+
+                weko_record = WekoRecord.get_record_by_pid(
+                    pid_without_ver.pid_value)
+                if weko_record:
+                    weko_record.update_item_link(current_pid.pid_value)
+                parent_record.update_feedback_mail()
+                parent_record.commit()
+                updated_item.publish(parent_record)
+                if ".0" in current_pid.pid_value and last_ver:
+                    item_id = last_ver.object_uuid
+                else:
+                    item_id = current_pid.object_uuid
+                db.session.commit()
+    except Exception as ex:
+        db.session.rollback()
+        current_app.logger.exception(str(ex))
+        return item_id
+    return item_id
+
+
+def delete_cache_data(key: str):
+    """Delete cache data.
+
+    :param key: Cache key.
+    """
+    current_value = current_cache.get(key) or str()
+    if current_value:
+        current_cache.delete(key)
+
+
+def update_cache_data(key: str, value: str, timeout=None):
+    """Create or Update cache data.
+
+    :param key: Cache key.
+    :param value: Cache value.
+    :param timeout: Cache expired.
+    """
+    if timeout is not None:
+        current_cache.set(key, value, timeout=timeout)
+    else:
+        current_cache.set(key, value)
+
+
+def get_cache_data(key: str):
+    """Get cache data.
+
+    :param key: Cache key.
+
+    :return: Cache value.
+    """
+    return current_cache.get(key) or str()
+
+
+def save_cache_item_lock_info(item_id=None):
+    """Save item lock information.
+
+    :param item_id: Item id.
+    """
+    locked_data = get_cache_data('item_ids_locked') or dict()
+    if not locked_data:
+        locked_data['start_time'] = datetime.now().strftime(
+            '%Y-%m-%dT%H:%M:%S%z')
+        locked_data['count_new_items'] = 0
+    ids = locked_data.get('ids', set())
+    if item_id:
+        ids.add(item_id)
+    else:
+        locked_data['count_new_items'] += 1
+
+    locked_data['ids'] = ids
+    current_cache.set('item_ids_locked', locked_data, timeout=0)
+
+
+def delete_cache_item_lock_info(item_id=None):
+    """Delete item lock information.
+
+    :param item_id: Item id.
+    """
+    locked_data = get_cache_data('item_ids_locked') or dict()
+    if not locked_data:
+        return
+
+    ids = locked_data.get('ids', set())
+    if item_id and item_id in ids:
+        ids.remove(item_id)
+    elif not item_id:
+        locked_data['count_new_items'] -= 1
+
+    if ids or locked_data['count_new_items']:
+        locked_data['ids'] = ids
+        current_cache.set('item_ids_locked', locked_data, timeout=0)
+    else:
+        delete_cache_data('item_ids_locked')
+
+
+def check_an_item_is_locked(item_id=None):
+    """Check if an item is locked.
+
+    :param item_id: Item id.
+
+    :return
+    """
+    locked_data = get_cache_data('item_ids_locked') or dict()
+    ids = locked_data.get('ids', set())
+    return item_id in ids
+
+
+def check_another_import_is_running():
+    """Check if any items are locked by import feature.
+
+    :return
+    """
+    locked_data = get_cache_data('item_ids_locked') or dict()
+    is_running = True if locked_data else False
+    return is_running, locked_data.get('start_time')
+
+
+def get_account_info(user_id):
+    """Get account's info: email, username.
+
+    :param user_id: User id.
+
+    :return: email, username.
+    """
+    data = get_user_profile_info(user_id)
+    if data:
+        return data.get('subitem_mail_address'), \
+            data.get('subitem_displayname')
+    else:
+        return None, None
+
+
+def update_indexes_public_state(item_id):
+    """Update indexes public state.
+
+    :param item_id: Item id.
+
+    :return:
+    """
+    rm = RecordMetadata.query.filter_by(id=item_id).first()
+    index_id_list = rm.json['path']
+    updated_index_ids = []
+    update_db = False
+    for index_ids in index_id_list:
+        for index_id in index_ids.split('/'):
+            if index_id not in updated_index_ids:
+                updated_index_ids.append(index_id)
+                update_db = True
+                index = Index.query.filter_by(id=index_id).first()
+                index.public_state = True
+    if update_db:
+        db.session.commit()
+
+
+def check_existed_doi(doi_link):
+    """Check a DOI is existed.
+
+    :param doi_link: DOI link.
+
+    :return:
+    """
+    respon = dict()
+    respon['isExistDOI'] = False
+    respon['isWithdrawnDoi'] = False
+    respon['code'] = 1
+    respon['msg'] = 'error'
+    if doi_link:
+        doi_pidstore = IdentifierHandle.check_pidstore_exist(
+            None,
+            'doi',
+            doi_link)
+        if doi_pidstore:
+            respon['isExistDOI'] = True
+            respon['msg'] = _('This DOI has been used already for another '
+                              'item. Please input another DOI.')
+            if doi_pidstore.status == PIDStatus.DELETED:
+                respon['isWithdrawnDoi'] = True
+                respon['msg'] = _(
+                    'This DOI was withdrawn. Please input another DOI.')
+        else:
+            respon['msg'] = _('success')
+        respon['code'] = 0
+    return respon
+
+
+def get_url_root():
+    """Check a DOI is existed.
+
+    :return: url root.
+    """
+    site_url = current_app.config['THEME_SITEURL'] + '/'
+    return request.url_root if request else site_url

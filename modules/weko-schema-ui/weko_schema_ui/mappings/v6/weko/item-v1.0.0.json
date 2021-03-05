@@ -2,7 +2,7 @@
   "settings": {
     "number_of_shards": 1,
     "number_of_replicas": 0,
-    "index.mapping.total_fields.limit": 10000,
+    "index.mapping.total_fields.limit": 50000,
     "analysis": {
       "tokenizer": {
         "ja_tokenizer": {
@@ -91,6 +91,12 @@
         },
         "itemtype": {
           "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          },
           "fielddata": true,
           "copy_to": [
             "search_other"
@@ -372,7 +378,7 @@
               ]
             },
             "value": {
-              "type": "text"
+              "type": "keyword"
             }
           }
         },
@@ -626,7 +632,7 @@
           ]
         },
         "dateGranted": {
-          "type": "text"
+          "type": "keyword"
         },
         "degreeGrantor": {
           "type": "object",
@@ -712,7 +718,7 @@
                   "index": true
                 },
                 "value": {
-                  "type": "text"
+                  "type": "keyword"
                 }
               }
             },

@@ -65,6 +65,18 @@ js_quit_confirmation = Bundle(
     output="gen/workflow_quit_confirmation.%(version)s.js"
 )
 
+js_lock_activity = Bundle(
+    'js/weko_workflow/lock_activity.js',
+    filters='requirejs',
+    output="gen/workflow_lock_activity.%(version)s.js"
+)
+
+js_admin_workflow_detail = Bundle(
+    'js/weko_workflow/admin/workflow_detail.js',
+    filters='jsmin',
+    output="gen/weko_workflow_detail.%(version)s.js",
+)
+
 css_workflow = Bundle(
     'css/weko_workflow/style.css',
     output="gen/workflow_workflow.css"

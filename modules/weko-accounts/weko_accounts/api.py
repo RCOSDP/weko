@@ -25,7 +25,7 @@ _datastore = LocalProxy(lambda: current_app.extensions['security'].datastore)
 
 
 class ShibUser(object):
-    """Shibuser."""
+    """Shibboleth User."""
 
     def __init__(self, shib_attr=None):
         """
@@ -39,30 +39,36 @@ class ShibUser(object):
         self.shib_user = None
         """The :class:`.models.ShibbolethUser` instance."""
 
-    def _set_weko_user_role(self, role_name):
+    def _set_weko_user_role(self, roles):
         """
-        Assign role for weko3 user.
+        Assign role for Shibboleth user.
 
         :param role_name:
         :return:
 
         """
-        ret = True
+        error = None
+        roles = Role.query.filter(
+            Role.name.in_(roles)).all()
+        roles = list(set(roles) - set(self.user.roles))
+
         try:
-            user_role = Role.query.filter_by(name=role_name).first()
-            if user_role in self.user.roles:
-                current_app.logger.debug("{} had been assigned to this "
-                                         "User!".format(role_name))
-                return ret
             with db.session.begin_nested():
-                ret = _datastore.add_role_to_user(self.user, user_role)
-            db.session.commit()
+                self.user.roles = list(
+                    role for role in self.user.roles
+                    if role not in self.shib_user.shib_roles)
+                self.shib_user.shib_roles.clear()
+                for role in roles:
+                    if role not in self.user.roles:
+                        _datastore.add_role_to_user(
+                            self.user,
+                            role)
+                        self.shib_user.shib_roles.append(role)
         except Exception as ex:
-            current_app.logger.debug("An error occurred when trying to add "
-                                     "Role: {} to this User!".format(ex))
+            current_app.logger.error(ex)
             db.session.rollback()
-            ret = False
-        return ret
+            error = ex
+        return error
 
     def _get_site_license(self):
         """
@@ -82,14 +88,38 @@ class ShibUser(object):
 
         """
         shib_user = None
+        shib_username_config = current_app.config[
+            'WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN']
+
         if self.shib_attr['shib_eppn']:
             shib_user = ShibbolethUser.query.filter_by(
                 shib_eppn=self.shib_attr['shib_eppn']).one_or_none()
+        if not shib_user and shib_username_config \
+                and self.shib_attr.get('shib_user_name'):
+            shib_user = ShibbolethUser.query.filter_by(
+                shib_user_name=self.shib_attr['shib_user_name']).one_or_none()
 
-        if shib_user:
+        if shib_user and shib_user.weko_user:
             self.shib_user = shib_user
             if not self.user:
                 self.user = shib_user.weko_user
+        else:
+            return None
+
+        try:
+            with db.session.begin_nested():
+                if self.shib_attr['shib_mail']:
+                    shib_user.shib_mail = self.shib_attr['shib_mail']
+                if self.shib_attr['shib_user_name']:
+                    shib_user.shib_user_name = self.shib_attr['shib_user_name']
+                if self.shib_attr['shib_role_authority_name']:
+                    shib_user.shib_role_authority_name = self.shib_attr[
+                        'shib_role_authority_name']
+            db.session.commit()
+        except Exception as ex:
+            current_app.logger.error(ex)
+            db.session.rollback()
+            return None
 
         return shib_user
 
@@ -113,13 +143,28 @@ class ShibUser(object):
         """
         Create new relation info with the user who belong with the email.
 
-        :return: ShibbolenUser instance
+        :return: ShibbolethUser instance
 
         """
-        self.user = User.query.filter_by(email=account).one_or_none()
-        shib_user = ShibbolethUser.create(self.user, **self.shib_attr)
-        self.shib_user = shib_user
-        return shib_user
+        self.user = User.query.filter_by(email=account).first()
+        shib_username_config = current_app.config[
+            'WEKO_ACCOUNTS_SHIB_ALLOW_USERNAME_INST_EPPN']
+        try:
+            with db.session.begin_nested():
+                self.user.email = self.shib_attr['shib_mail']
+            db.session.commit()
+
+            if not self.shib_attr['shib_eppn'] and shib_username_config:
+                self.shib_attr['shib_eppn'] = self.shib_attr['shib_user_name']
+            self.shib_user = ShibbolethUser.create(
+                self.user,
+                **self.shib_attr
+            )
+        except Exception as ex:
+            current_app.logger.error(ex)
+            db.session.rollback()
+
+        return self.shib_user
 
     def new_relation_info(self):
         """
@@ -128,15 +173,25 @@ class ShibUser(object):
         :return: ShibbolethUser instance
 
         """
-        kwargs = dict(email=self.shib_attr.get('shib_eppn'),
-                      password='',
-                      active=True)
-        kwargs['password'] = hash_password(kwargs['password'])
-        kwargs['confirmed_at'] = datetime.utcnow()
-        self.user = _datastore.create_user(**kwargs)
-        shib_user = ShibbolethUser.create(self.user, **self.shib_attr)
+        kwargs = dict(
+            email=self.shib_attr.get('shib_mail'),
+            password=hash_password(''),
+            confirmed_at=datetime.utcnow(),
+            active=True
+        )
+
+        user = _datastore.find_user(email=self.shib_attr.get('shib_mail'))
+        if not user:
+            self.user = _datastore.create_user(**kwargs)
+        else:
+            self.user = user
+
+        shib_user = ShibbolethUser.create(
+            self.user,
+            **self.shib_attr)
         self.shib_user = shib_user
-        # self.new_shib_profile()
+        self.new_shib_profile()
+
         return shib_user
 
     def new_shib_profile(self):
@@ -176,26 +231,24 @@ class ShibUser(object):
         :return:
 
         """
-        from .config import WEKO_GENERAL_ROLE, SHIB_ACCOUNTS_ROLE_RELATION
-        error = ''
+        ret = ''
 
         if not self.user:
-            error = _(r"Can't get relation Weko User.")
-            return False, error
+            ret = _("Can't get relation Weko User.")
+            return False, ret
 
-        shib_role_auth = self.shib_attr.get('shib_role_authority_name', '')
-        if not shib_role_auth:
-            current_app.logger.debug(_("Failed to get attribute."))
-            return self._set_weko_user_role(WEKO_GENERAL_ROLE), error
+        roles = self.shib_attr.get('shib_role_authority_name', '')
 
-        shib_role_config = SHIB_ACCOUNTS_ROLE_RELATION
-        if shib_role_auth in shib_role_config.keys():
-            return self._set_weko_user_role(shib_role_config[
-                shib_role_auth]), error
-        else:
-            error = _("Invalid attribute.")
+        shib_roles = current_app.config['WEKO_ACCOUNTS_SHIB_ROLE_RELATION']
+        roles = [x.strip() for x in roles.split(',')]
 
-        return False, error
+        if set(roles).issubset(set(shib_roles.keys())):
+            _roles = [shib_roles[role] for role in roles]
+            ret = self._set_weko_user_role(_roles)
+
+        if ret:
+            return False, ret
+        return True, ret
 
     def valid_site_license(self):
         """

@@ -11,7 +11,7 @@ from __future__ import absolute_import, print_function
 
 from flask import Flask
 
-from weko_gridlayout import wekogridlayout
+from weko_gridlayout import WekoGridLayout
 
 
 def test_version():
@@ -23,11 +23,11 @@ def test_version():
 def test_init():
     """Test extension initialization."""
     app = Flask('testapp')
-    ext = wekogridlayout(app)
+    ext = WekoGridLayout(app)
     assert 'weko-gridlayout' in app.extensions
 
     app = Flask('testapp')
-    ext = wekogridlayout()
+    ext = WekoGridLayout()
     assert 'weko-gridlayout' not in app.extensions
     ext.init_app(app)
     assert 'weko-gridlayout' in app.extensions

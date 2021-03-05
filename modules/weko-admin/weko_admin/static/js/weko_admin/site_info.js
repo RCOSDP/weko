@@ -1,6 +1,7 @@
-const urlLoadLang = '/api/admin/load_lang';
-const urlLoadSiteInfo = '/api/admin/get_site_info';
-const default_favicon = 'https://community.repo.nii.ac.jp/images/common/favicon.ico'
+const currentTime = new Date().getTime();
+const urlLoadLang = '/api/admin/load_lang' + '?time=' + currentTime;
+const urlLoadSiteInfo = '/api/admin/get_site_info' + '?time=' + currentTime;
+const default_favicon = '/static/favicon.ico'
 const default_favicon_name = 'JAIRO Cloud icon'
 const site_name_label = document.getElementById("site_name_label").value;
 const favicon_label = document.getElementById("favicon_label").value;
@@ -17,7 +18,7 @@ const save_label = document.getElementById("save_label").value;
 const must_set_at_least_1_site_name_label = document.getElementById("must_set_at_least_1_site_name_label").value;
 const please_input_site_infomation_for_empty_field_label = document.getElementById("please_input_site_infomation_for_empty_field_label").value;
 const the_same_language_is_set_for_many_site_names_label = document.getElementById("the_same_language_is_set_for_many_site_names_label").value;
-const the_notify_limit_to_200_characters = document.getElementById("the_notify_limit_to_200_characters").value;
+const the_notify_limit_to_1000_characters = document.getElementById("the_notify_limit_to_1000_characters").value;
 const the_same_language_is_set_for_many_notify_label = document.getElementById("the_same_language_is_set_for_many_notify_label").value;
 const error_when_get_languages_label = document.getElementById("error_when_get_languages_label").value;
 const error_when_get_site_infomation_label = document.getElementById("error_when_get_site_infomation_label").value;
@@ -176,26 +177,26 @@ class MainLayout extends React.Component {
       })
     }
 
-    handleSave(){
-      const {site_name,copy_right,keyword,description,favicon_name,favicon, notify} = this.state
+    handleSave() {
+      const { site_name, copy_right, keyword, description, favicon_name, favicon, notify } = this.state
       const validate = this.handleValidation()
-      console.log("validate",validate)
-      if(validate.status) {
-      const new_site_name = Array.from(site_name, (item,index) => {return {
-        ...item,
-        index: index
-      }})
-
-      const new_notify = Array.from(notify, (item,index) => {return {
-        ...item,
-        index: index
-      }});
-      fetch("/api/admin/update_site_info", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+      console.log("validate", validate)
+      if (validate.status) {
+        let new_site_name = JSON.parse(JSON.stringify(site_name))
+        for (let index = 0; index < new_site_name.length; index++) {
+          new_site_name[index].index = index
+        }
+        let new_notify = JSON.parse(JSON.stringify(notify))
+        for (let index = 0; index < new_notify.length; index++) {
+          new_notify[index].index = index
+        }
+        const that = this
+        $.ajax({
+          url: "/api/admin/update_site_info",
+          type: 'POST',
+          dataType: "json",
+          contentType: 'application/json',
+          data: JSON.stringify({
             site_name: new_site_name,
             copy_right: copy_right,
             keyword: keyword,
@@ -204,35 +205,37 @@ class MainLayout extends React.Component {
             favicon: favicon,
             notify: new_notify
           }),
-      })
-      .then(res => res.json())
-      .then((result) => {
-        console.log(result)
-        if(result.error) {
-          this.setState({
-            errors: result.data,
-            success: false,
-            list_error: error,
-            show_alert: true
-          },()=>{
-            this.handle_focus_error()
-          })
-        } else {
-        this.setState({
-          success: true,
-          show_alert: true
-        })
-        }
-      });
+          success: function (result) {
+            console.log(result)
+            if (result.error) {
+              that.setState({
+                errors: result.data,
+                success: false,
+                list_error: error,
+                show_alert: true
+              }, () => {
+                that.handle_focus_error()
+              })
+            } else {
+              that.setState({
+                success: true,
+                show_alert: true
+              })
+            }
+          },
+          error: function (error) {
+            console.log(error);
+          }
+        });
       } else {
         this.setState({
-            errors: validate.item,
-            success: false,
-            list_error: validate.message,
-            show_alert: true
-          },()=>{
-            this.handle_focus_error()
-          })
+          errors: validate.item,
+          success: false,
+          list_error: validate.message,
+          show_alert: true
+        }, () => {
+          this.handle_focus_error()
+        })
       }
     }
 
@@ -250,8 +253,14 @@ class MainLayout extends React.Component {
     handleValidation(){
       const {site_name, list_lang_register, notify} = this.state
       const errors = {}
-      const site_name_test = Array.from(site_name, (item, key) => ({...item, index: key}))
-      const list_lang_code = Array.from(list_lang_register, item => item.lang_code)
+      let site_name_test = JSON.parse(JSON.stringify(site_name))
+      for (let index = 0; index < site_name_test.length; index++) {
+        site_name_test[index].index = index
+      }
+      let list_lang_code = []
+      for (let index = 0; index < list_lang_register.length; index++) {
+        list_lang_code.push(list_lang_register[index].lang_code)
+      }
       const errors_mess = []
       if(!site_name.length) {
         errors_mess.push(must_set_at_least_1_site_name_label)
@@ -285,7 +294,7 @@ class MainLayout extends React.Component {
             status: false
           }
         }
-        if(!list_lang_code.includes(item.language)){
+        if(list_lang_code.indexOf(item.language) == -1){
           return {
             message : language_not_match_label,
             item: [`site_name_${item.index}`],
@@ -294,7 +303,10 @@ class MainLayout extends React.Component {
         }
       }
 
-      const notify_test = Array.from(notify, (item, key) => ({...item, index: key}));
+      let notify_test = JSON.parse(JSON.stringify(notify))
+      for (let index = 0; index < notify_test.length; index++) {
+        notify_test[index].index = index
+      }
       for (let index in notify_test) {
         const item = notify_test[index];
         const check_dub = notify_test.filter(nt => nt.language === item.language && nt.language);
@@ -305,16 +317,16 @@ class MainLayout extends React.Component {
             status: false
           }
         }
-        if(!list_lang_code.includes(item.language)){
+        if(list_lang_code.indexOf(item.language) == -1){
           return {
             message : language_not_match_label,
             item: [`site_name_${item.index}`],
             status: false
           }
         }
-        if(item.notify_name.length > 200){
+        if(item.notify_name.length > 1000){
           return {
-            message : the_notify_limit_to_200_characters,
+            message : the_notify_limit_to_1000_characters,
             item: [`site_name_${item.index}`],
             status: false
           }
@@ -345,7 +357,6 @@ class MainLayout extends React.Component {
             this.setState({
                 favicon: reader.result,
             });
-            this.fake_change_icon(reader.result)
         }
 
         reader.readAsDataURL(file);
@@ -556,7 +567,7 @@ class MainLayout extends React.Component {
                         </div>
                         <div className="col-md-6">
                           <textarea
-                            maxlength="200"
+                            maxlength="1000"
                             rows="3"
                             className="form-control"
                             id="notify_name"

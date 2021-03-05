@@ -1,0 +1,101 @@
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - invenio-communities
+          - invenio-deposit
+          - invenio-files-rest
+          - invenio-mail
+          - invenio-oaiharvester
+          - invenio-oaiserver
+          - invenio-oauth2server
+          - invenio-previewer
+          - invenio-records
+          - invenio-records-rest
+          - invenio-resourcesyncclient
+          - invenio-resourcesyncserver
+          - invenio-s3
+          - invenio-stats
+          - weko-accounts
+          - weko-admin
+          - weko-authors
+          - weko-bulkupdate
+          - weko-deposit
+          - weko-gridlayout
+          - weko-groups
+          - weko-handle
+          - weko-index-tree
+          - weko-indextree-journal
+          - weko-items-autofill
+          - weko-items-ui
+          - weko-itemtypes-ui
+          - weko-logging
+          - weko-plugins
+          - weko-records
+          - weko-records-ui
+          - weko-schema-ui
+          - weko-search-ui
+          - weko-sitemap
+          - weko-theme
+          - weko-user-profiles
+          - weko-workflow
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/pip
+            venv
+          key: unit-test
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install python3-setuptools libpq-dev libedit-dev libsqlite3-dev
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.5.9
+      - name: Create venv
+        run: python -m venv venv
+      - name: Install python dependencies
+        run: |
+          source venv/bin/activate
+          python -m pip install -U setuptools wheel pip coveralls PyYAML
+          python -m pip install -r packages.txt
+          python -m pip install -r packages-invenio.txt
+          sed -E 's/\/code\///g' requirements-weko-modules.txt | xargs python -m pip install
+          python -m pip install 'coverage>=4.5.3,<5.0.0' 'pytest>=4.6.4,<5.0.0' 'mock==3.0.5'
+      - name: Run tests
+        run: |
+          source venv/bin/activate
+          cd modules/${{ matrix.module }}
+          python setup.py test
+      - name: Coveralls
+        if: ${{ success() || failure() }}
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        run: |
+          source venv/bin/activate
+          cp modules/${{ matrix.module }}/.coverage ./
+          coveralls
+
+  coveralls:
+    name: Coveralls webhook
+    needs: test
+    if: ${{ success() || failure() }}
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Send webhook
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        run: curl -k https://coveralls.io/webhook?repo_token=${COVERALLS_REPO_TOKEN} -d "payload[build_num]=${GITHUB_SHA}$([[ $(echo ${GITHUB_REF} | cut -d / -f 2) == 'pull' ]] && echo -PR-$(echo ${GITHUB_REF} | cut -d / -f 3))&payload[status]=done"

@@ -19,14 +19,18 @@
 # MA 02111-1307, USA.
 
 """Item API."""
-
+import re
 from collections import OrderedDict
 
 import pytz
 from flask import current_app
 from flask_security import current_user
+from invenio_i18n.ext import current_i18n
 from invenio_pidstore import current_pidstore
+from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.ext import pid_exists
+from invenio_pidstore.models import PersistentIdentifier
+from weko_admin.models import AdminSettings
 from weko_schema_ui.schema import SchemaTree
 
 from .api import ItemTypes, Mapping
@@ -59,67 +63,69 @@ def json_loader(data, pid):
     ojson = ItemTypes.get_record(item_type_id)
     mjson = Mapping.get_record(item_type_id)
 
-    if ojson and mjson:
-        mp = mjson.dumps()
-        data.get("$schema")
-        for k, v in data.items():
-            if k != "pubdate":
-                if k == "$schema" or mp.get(k) is None:
-                    continue
+    if not (ojson and mjson):
+        raise RuntimeError('Item Type {} does not exist.'.format(item_type_id))
 
-            item.clear()
-            try:
-                item["attribute_name"] = ojson["properties"][k]["title"] \
-                    if ojson["properties"][k].get("title") is not None else k
-            except Exception:
-                pub_date_setting = {
-                    "type": "string",
-                    "title": "Publish Date",
-                    "format": "datetime"
-                }
-                ojson["properties"]["pubdate"] = pub_date_setting
-                item["attribute_name"] = 'Publish Date'
-            # set a identifier to add a link on detail page when is a creator field
-            # creator = mp.get(k, {}).get('jpcoar_mapping', {})
-            # creator = creator.get('creator') if isinstance(
-            #     creator, dict) else None
-            iscreator = False
-            creator = ojson["properties"][k]
-            if 'object' == creator["type"]:
-                creator = creator["properties"]
-                if 'iscreator' in creator:
-                    iscreator = True
-            elif 'array' == creator["type"]:
-                creator = creator['items']["properties"]
-                if 'iscreator' in creator:
-                    iscreator = True
-            if iscreator:
-                item["attribute_type"] = 'creator'
+    mp = mjson.dumps()
+    data.get("$schema")
+    for k, v in data.items():
+        if k != "pubdate":
+            if k == "$schema" or mp.get(k) is None:
+                continue
 
-            item_data = ojson["properties"][k]
-            if 'array' == item_data.get('type'):
-                properties_data = item_data['items']['properties']
-                if 'filename' in properties_data:
-                    item["attribute_type"] = 'file'
+        item.clear()
+        try:
+            item["attribute_name"] = ojson["properties"][k]["title"] \
+                if ojson["properties"][k].get("title") is not None else k
+        except Exception:
+            pub_date_setting = {
+                "type": "string",
+                "title": "Publish Date",
+                "format": "datetime"
+            }
+            ojson["properties"]["pubdate"] = pub_date_setting
+            item["attribute_name"] = 'Publish Date'
+        # set a identifier to add a link on detail page when is a creator field
+        # creator = mp.get(k, {}).get('jpcoar_mapping', {})
+        # creator = creator.get('creator') if isinstance(
+        #     creator, dict) else None
+        iscreator = False
+        creator = ojson["properties"][k]
+        if 'object' == creator["type"]:
+            creator = creator["properties"]
+            if 'iscreator' in creator:
+                iscreator = True
+        elif 'array' == creator["type"]:
+            creator = creator['items']["properties"]
+            if 'iscreator' in creator:
+                iscreator = True
+        if iscreator:
+            item["attribute_type"] = 'creator'
 
-            if isinstance(v, list):
-                if len(v) > 0 and isinstance(v[0], dict):
-                    item["attribute_value_mlt"] = v
-                else:
-                    item["attribute_value"] = v
-            elif isinstance(v, dict):
-                ar.append(v)
-                item["attribute_value_mlt"] = ar
-                ar = []
+        item_data = ojson["properties"][k]
+        if 'array' == item_data.get('type'):
+            properties_data = item_data['items']['properties']
+            if 'filename' in properties_data:
+                item["attribute_type"] = 'file'
+
+        if isinstance(v, list):
+            if len(v) > 0 and isinstance(v[0], dict):
+                item["attribute_value_mlt"] = v
             else:
                 item["attribute_value"] = v
+        elif isinstance(v, dict):
+            ar.append(v)
+            item["attribute_value_mlt"] = ar
+            ar = []
+        else:
+            item["attribute_value"] = v
 
-            dc[k] = item.copy()
-            if k != "pubdate":
-                item.update(mp.get(k))
-            else:
-                pubdate = v
-            jpcoar[k] = item.copy()
+        dc[k] = item.copy()
+        if k != "pubdate":
+            item.update(mp.get(k))
+        else:
+            pubdate = v
+        jpcoar[k] = item.copy()
 
     # convert to es jpcoar mapping data
     jrc = SchemaTree.get_jpcoar_json(jpcoar)
@@ -141,9 +147,18 @@ def json_loader(data, pid):
         dc.update(dict(item_type_id=item_type_id))
         dc.update(dict(control_number=pid))
 
-        oai_value = current_app.config.get(
-            'OAISERVER_ID_PREFIX', '') + str(pid)
-        is_edit = pid_exists(oai_value, 'oai')
+        # check oai id value
+        is_edit = False
+        try:
+            oai_value = PersistentIdentifier.get_by_object(
+                pid_type='oai',
+                object_type='rec',
+                object_uuid=PersistentIdentifier.get('recid', pid).object_uuid
+            ).pid_value
+            is_edit = pid_exists(oai_value, 'oai')
+        except PIDDoesNotExistError:
+            pass
+
         if not is_edit:
             oaid = current_pidstore.minters['oaiid'](item_id, dc)
             oai_value = oaid.pid_value
@@ -207,51 +222,6 @@ def set_timestamp(jrc, created, updated):
             .isoformat() if updated else None})
 
 
-def make_itemlist_desc(es_record):
-    """Make itemlist description."""
-    rlt = ""
-    src = es_record
-    op = src.pop("_options", {})
-    ignore_meta = ('title', 'alternative', 'fullTextURL')
-    if isinstance(op, dict):
-        src["_comment"] = []
-        for k, v in sorted(op.items(),
-                           key=lambda x: x[1]['index'] if x[1].get(
-                               'index') else x[0]):
-            if k in ignore_meta:
-                continue
-            # item value
-            vals = src.get(k)
-            if isinstance(vals, list):
-                # index, options
-                v.pop('index', "")
-                for k1, v1 in sorted(v.items()):
-                    i = int(k1)
-                    if i < len(vals):
-                        crtf = v1.get("crtf")
-                        showlist = v1.get("showlist")
-                        hidden = v1.get("hidden")
-                        is_show = False if hidden else showlist
-                        # list index value
-                        if is_show:
-                            rlt = rlt + ((vals[i] + ",") if not crtf
-                                         else vals[i] + "\n")
-            elif isinstance(vals, str):
-                crtf = v.get("crtf")
-                showlist = v.get("showlist")
-                hidden = v.get("hidden")
-                is_show = False if hidden else showlist
-                if is_show:
-                    rlt = rlt + ((vals + ",") if not crtf
-                                 else vals + "\n")
-        if len(rlt) > 0:
-            if rlt[-1] == ',':
-                rlt = rlt[:-1]
-            src['_comment'] = rlt.split('\n')
-            if len(src['_comment'][-1]) == 0:
-                src['_comment'].pop()
-
-
 def sort_records(records, form):
     """Sort records.
 
@@ -311,11 +281,23 @@ def find_items(form):
     def find_key(node):
         if isinstance(node, dict):
             key = node.get('key')
-            title = node.get('title')
-            # type = node.get('type')
+            title = node.get('title', '')
+            try:
+                # Try catch for case this function is called from celery app
+                current_lang = current_i18n.language
+            except Exception:
+                current_lang = 'en'
+            title_i18n = node.get('title_i18n', {})\
+                .get(current_lang, title)
+            option = {
+                'required': node.get('required', False),
+                'show_list': node.get('isShowList', False),
+                'specify_newline': node.get('isSpecifyNewline', False),
+                'hide': node.get('isHide', False),
+            }
+            val = ''
             if key:
-                # title = title[title.rfind('.')+1:]
-                yield [key, title or ""]
+                yield [key, title, title_i18n, option, val]
             for v in node.values():
                 if isinstance(v, list):
                     for k in find_key(v):
@@ -431,7 +413,7 @@ def to_orderdict(alst, klst):
                 if val:
                     if isinstance(val, dict):
                         val = OrderedDict(val)
-                    nlst.append({key: val})
+                    nlst.append({lst[0]: val})
                 if not alst:
                     break
 
@@ -461,6 +443,8 @@ def sort_meta_data_by_options(record_hit):
 
     :param record_hit:
     """
+    from weko_records_ui.permissions import check_file_download_permission
+
     def get_meta_values(v):
         """Get values from metadata."""
         data_list = []
@@ -479,56 +463,146 @@ def sort_meta_data_by_options(record_hit):
         get_values(v)
         return data_list
 
-    try:
+    def convert_data_to_dict(solst):
+        """Convert solst to dict."""
+        solst_dict_array = []
+        for lst in solst:
+            key = lst[0]
+            option = meta_options.get(key, {}).get('option')
+            temp = {
+                'key': key,
+                'title': lst[1],
+                'title_ja': lst[2],
+                'option': lst[3],
+                'parent_option': option,
+                'value': ''
+            }
+            solst_dict_array.append(temp)
+        return solst_dict_array
 
+    def get_comment(solst_dict_array, hide_email_flag):
+        """Check and get info."""
+        result = []
+        _ignore_items = list()
+        _license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
+        if _license_dict:
+            _ignore_items.append(_license_dict[0].get('value'))
+
+        for s in solst_dict_array:
+            value = s['value']
+            option = s['option']
+            if value and value not in _ignore_items:
+                parent_option = s['parent_option']
+                is_show_list = parent_option.get(
+                    'show_list') if parent_option.get(
+                    'show_list') else option.get('show_list')
+                is_specify_newline = parent_option.get(
+                    'specify_newline') if parent_option.get(
+                    'specify_newline') else option.get('specify_newline')
+                is_hide = parent_option.get('hide') if parent_option.get(
+                    'hide') else option.get('hide')
+                if 'creatorMails[].creatorMail' in s['key'] \
+                        or 'contributorMails[].contributorMail' in s['key'] \
+                        or 'mails[].mail' in s['key']:
+                    is_hide = is_hide | hide_email_flag
+                if not is_hide and is_show_list:
+                    if is_specify_newline or len(result) == 0:
+                        result.append(value)
+                    else:
+                        result[-1] += "," + value
+        return result
+
+    def get_file_comments(record, files):
+        """Check and get file info."""
+        result = []
+        for f in files:
+            if check_file_download_permission(record, f, False):
+                extention = ''
+                label = f.get('url', {}).get('label')
+                filename = f.get('filename', '')
+                if not label and not f.get('version_id'):
+                    label = f.get('url', {}).get('url', '')
+                elif not label:
+                    label = filename
+
+                if f.get('version_id'):
+                    idx = filename.find('.') + 1
+                    extention = filename[idx:] if idx > 0 else 'unknown'
+
+                if label:
+                    result.append({
+                        'label': label,
+                        'extention': extention,
+                        'url': f.get('url', {}).get('url', '')
+                    })
+        return result
+
+    def get_file_thumbnail(thumbnails):
+        """Get file thumbnail."""
+        thumbnail = {}
+        if thumbnails and len(thumbnails) > 0:
+            subitem_thumbnails = thumbnails[0].get('subitem_thumbnail')
+            if subitem_thumbnails and len(subitem_thumbnails) > 0:
+                thumbnail = {
+                    'thumbnail_label': subitem_thumbnails[0].get('thumbnail_label', ''),
+                    'thumbnail_width': current_app.config['WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL']
+                }
+        return thumbnail
+
+    try:
         src = record_hit['_source'].pop('_item_metadata')
         item_type_id = record_hit['_source'].get('item_type_id') \
             or src.get('item_type_id')
         if not item_type_id:
             return
-
-        items = []
         solst, meta_options = get_options_and_order_list(item_type_id)
-
-        newline = True
+        solst_dict_array = convert_data_to_dict(solst)
+        files_info = []
+        thumbnail = None
+        # Set value and parent option
         for lst in solst:
             key = lst[0]
-
             val = src.get(key)
             option = meta_options.get(key, {}).get('option')
             if not val or not option:
                 continue
-
-            hidden = option.get("hidden")
-            multiple = option.get('multiple')
-            crtf = option.get("crtf")
-            showlist = option.get("showlist")
-            is_show = False if hidden else showlist
-
-            if not is_show:
-                continue
-
-            mlt = val.get('attribute_value_mlt')
+            mlt = val.get('attribute_value_mlt', [])
             if mlt:
-                meta_data = get_all_items(mlt, solst)
-                data = get_meta_values(meta_data)
-            else:
-                data = val.get('attribute_value')
-
-            if data:
-                if isinstance(data, list):
-                    data = ",".join(data) if multiple else \
-                        (data[0] if len(data) > 0 else "")
-
-                if newline:
-                    items.append(data)
-                else:
-                    items[-1] += "," + data
-
-            newline = crtf
-
+                if val.get('attribute_type', '') == 'file' \
+                        and not option.get("hidden") \
+                        and option.get("showlist"):
+                    files_info = get_file_comments(src, mlt)
+                    continue
+                is_thumbnail = any('subitem_thumbnail' in data for data in mlt)
+                if is_thumbnail and not option.get("hidden") \
+                        and option.get("showlist"):
+                    thumbnail = get_file_thumbnail(mlt)
+                    continue
+                meta_data = get_all_items2(mlt, solst)
+                for m in meta_data:
+                    for s in solst_dict_array:
+                        s_key = s.get('key')
+                        if m.get(s_key):
+                            s['value'] = m.get(s_key) if not s['value'] else \
+                                '{}, {}'.format(s['value'], m.get(s_key))
+                            s['parent_option'] = {
+                                'required': option.get("required"),
+                                'show_list': option.get("showlist"),
+                                'specify_newline': option.get("crtf"),
+                                'hide': option.get("hidden")
+                            }
+                            break
+        settings = AdminSettings.get('items_display_settings')
+        items = get_comment(solst_dict_array, not settings.items_display_email)
         if items:
-            record_hit['_source']['_comment'] = items
+            if record_hit['_source'].get('_comment'):
+                record_hit['_source']['_comment'].extend(items)
+            else:
+                record_hit['_source']['_comment'] = items
+        if files_info:
+            record_hit['_source']['_files_info'] = files_info
+        if thumbnail:
+            record_hit['_source']['_thumbnail'] = thumbnail
     except Exception:
         current_app.logger.exception(
             u'Record serialization failed {}.'.format(
@@ -591,13 +665,20 @@ def check_has_attribute_value(node):
                         return check_has_attribute_value(val)
         return False
     except BaseException as e:
-        current_app.logger.error('Function check_has_attribute_value error:', e)
+        current_app.logger.error(
+            'Function check_has_attribute_value error:', e)
         return False
 
 
-def get_attribute_value_all_items(nlst, klst, is_author=False):
+def get_attribute_value_all_items(
+        root_key,
+        nlst,
+        klst,
+        is_author=False,
+        hide_email_flag=True):
     """Convert and sort item list.
 
+    :param root_key:
     :param nlst:
     :param klst:
     :param is_author:
@@ -605,8 +686,10 @@ def get_attribute_value_all_items(nlst, klst, is_author=False):
     """
     def get_name(key):
         for lst in klst:
-            if key == lst[0].split('.')[-1]:
-                return lst[1] if not is_author else '{}.{}'. format(key, lst[1])
+            keys = lst[0].replace("[]", "").split('.')
+            if keys[0].startswith(root_key) and key == keys[-1]:
+                return lst[2] if not is_author else '{}.{}'. format(
+                    key, lst[2])
 
     def to_sort_dict(alst, klst):
         """Sort item list.
@@ -621,21 +704,29 @@ def get_attribute_value_all_items(nlst, klst, is_author=False):
                     for a in alst:
                         result.append(to_sort_dict(a, klst))
                 else:
+                    temp = []
                     for lst in klst:
                         key = lst[0].split('.')[-1]
                         val = alst.pop(key, {})
+                        hide = lst[3].get('hide')
+                        if key in ('creatorMail', 'contributorMail', 'mail'):
+                            hide = hide | hide_email_flag
                         if val and (isinstance(val, str)
                                     or (key == 'nameIdentifier')):
-                            result.append({key: val})
+                            if not hide:
+                                temp.append({key: val})
                         elif isinstance(val, list) and len(
                                 val) > 0 and isinstance(val[0], str):
-                            result.append({key: val})
+                            if not hide:
+                                temp.append({key: val})
                         else:
                             if check_has_attribute_value(val):
-                                res = to_sort_dict(val, klst)
-                                result.append({key: res})
+                                if not hide:
+                                    res = to_sort_dict(val, klst)
+                                    temp.append({key: res})
                         if not alst:
                             break
+                    result.append(temp)
                 return result
             except BaseException as e:
                 current_app.logger.error('Function to_sort_dict error: ', e)
@@ -706,6 +797,23 @@ def remove_key(removed_key, item_val):
         remove_key(removed_key, v)
 
 
+def remove_keys(excluded_keys, item_val):
+    """Remove removed_key out of item_val.
+
+    @param removed_key:
+    @param item_val:
+    @return:
+    """
+    if not isinstance(item_val, dict):
+        return
+    key_list = item_val.keys()
+    for excluded_key in excluded_keys:
+        if excluded_key in key_list:
+            del item_val[excluded_key]
+    for k, v in item_val.items():
+        remove_keys(excluded_keys, v)
+
+
 def remove_multiple(schema):
     """Remove multiple of schema.
 
@@ -738,14 +846,34 @@ def check_to_upgrade_version(old_render, new_render):
     old_schema = old_render.get('table_row_map').get('schema')
     new_schema = new_render.get('table_row_map').get('schema')
 
-    remove_key('required', old_schema)
-    remove_key('required', new_schema)
-
-    remove_key('title', old_schema['properties'])
-    remove_key('title', new_schema['properties'])
+    excluded_keys = \
+        current_app.config['WEKO_ITEMTYPE_EXCLUDED_KEYS']
+    remove_keys(excluded_keys, old_schema)
+    remove_keys(excluded_keys, new_schema)
 
     remove_multiple(old_schema)
     remove_multiple(new_schema)
     if old_schema != new_schema:
         return True
     return False
+
+
+def remove_weko2_special_character(s: str):
+    """Remove special character of WEKO2.
+
+    :param s:
+    """
+    def __remove_special_character(_s_str: str):
+        pattern = r"(^(&EMPTY&,|,&EMPTY&)|(&EMPTY&,|,&EMPTY&)$|&EMPTY&)"
+        _s_str = re.sub(pattern, '', _s_str)
+        if _s_str == ',':
+            return ''
+        return _s_str.strip() if _s_str != ',' else ''
+
+    s = s.strip()
+    esc_str = ""
+    for i in s:
+        if ord(i) in [9, 10, 13] or (31 < ord(i) != 127):
+            esc_str += i
+    esc_str = __remove_special_character(esc_str)
+    return esc_str

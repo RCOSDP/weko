@@ -34,59 +34,6 @@ from .permissions import index_tree_permission
 from .utils import get_admin_coverpage_setting
 
 
-class IndexSettingView(BaseView):
-    """Index setting view."""
-
-    @expose('/', methods=['GET', 'POST'])
-    def index(self):
-        """Index."""
-        try:
-            # Get record
-            style = IndexStyle.get(
-                current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
-            width = style.width if style else '3'
-            height = style.height if style else None
-
-            # Post
-            if request.method == 'POST':
-                # Get form
-                form = request.form.get('submit', None)
-                if form == 'index_form':
-                    width = request.form.get('width', '3')
-                    height = request.form.get('height', None)
-
-                    if style:
-                        IndexStyle.update(
-                            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS'][
-                                'id'
-                            ],
-                            width=width,
-                            height=height)
-                    else:
-                        IndexStyle.create(
-                            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS'][
-                                'id'
-                            ],
-                            width=width,
-                            height=height)
-
-                    flash(
-                        _('The information was updated.'),
-                        category='success')
-
-            return self.render(
-                current_app.config['WEKO_INDEX_TREE_ADMIN_TEMPLATE'],
-                widths=current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS'][
-                    'widths'
-                ],
-                width_selected=width,
-                height=height)
-
-        except BaseException:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-        return abort(400)
-
-
 class IndexLinkSettingView(BaseView):
     """Index link setting view."""
 
@@ -150,22 +97,16 @@ class IndexEditSettingView(BaseView):
             return abort(400)
 
         filename = os.path.join(
-            current_app.static_folder, 'indextree', fp.filename)
-        file_uri = url_for('static', filename='indextree/' + fp.filename)
+            current_app.instance_path,
+            current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
+            'indextree',
+            fp.filename)
+        file_uri = '/data/' + 'indextree/' + fp.filename
         fp.save(filename)
         return jsonify({'code': 0,
                         'msg': 'file upload success',
                         'data': {'path': file_uri}})
 
-
-index_adminview = {
-    'view_class': IndexSettingView,
-    'kwargs': {
-        'category': _('Setting'),
-        'name': _('Index Tree'),
-        'endpoint': 'indextree'
-    }
-}
 
 index_link_adminview = {
     'view_class': IndexLinkSettingView,
@@ -179,15 +120,13 @@ index_link_adminview = {
 index_edit_adminview = {
     'view_class': IndexEditSettingView,
     'kwargs': {
-        'category': _('Setting'),
+        'category': _('Index Tree'),
         'name': _('Edit Tree'),
         'endpoint': 'indexedit'
     }
 }
 
 __all__ = (
-    'index_adminview',
-    'IndexSettingView',
     'index_link_adminview',
     'IndexLinkSettingView',
     'index_edit_adminview',

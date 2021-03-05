@@ -1,22 +1,18 @@
 const import_label = document.getElementById("import").value;
 const list = document.getElementById("list").value;
-const import_file = document.getElementById("import_file").value;
-const import_index = document.getElementById("import_index").value;
-const work_flow = document.getElementById("work_flow").value;
 const select_file = document.getElementById("select_file").value;
-const select_index = document.getElementById("select_index").value;
-const select_work_flow = document.getElementById("select_work_flow").value;
 const selected_file_name = document.getElementById("selected_file_name").value;
-const selected_index = document.getElementById("selected_index").value;
-const selected_work_flow = document.getElementById("selected_work_flow").value;
 const index_tree = document.getElementById("index_tree").value;
 const designate_index = document.getElementById("designate_index").value;
-const work_flow_2 = document.getElementById("work_flow_2").value;
 const item_type = document.getElementById("item_type").value;
+const item_type_templates = document.getElementById("item_type_templates").value;
 const flow = document.getElementById("flow").value;
 const select = document.getElementById("select").value;
 const cancel = document.getElementById("cancel").value;
 const check = document.getElementById("check").value;
+const change_identifier_mode = document.getElementById("change_identifier_mode").value;
+const change_doi_mode = document.getElementById("change_doi_mode").value;
+const i_agree = document.getElementById("i_agree").value;
 // label check
 const summary = document.getElementById("summary").value;
 const total_label = document.getElementById("total").value;
@@ -29,9 +25,12 @@ const item_id = document.getElementById("item_id").value;
 const title = document.getElementById("title").value;
 const check_result = document.getElementById("check_result").value;
 const error = document.getElementById("error").value;
-const update = document.getElementById("update").value;
+const warning = document.getElementById("warning").value;
 const not_match = document.getElementById("not_match").value;
 const register = document.getElementById("register").value;
+const keep = document.getElementById("keep").value;
+const upgrade = document.getElementById("upgrade").value;
+const register_with = document.getElementById("register_with").value;
 
 //label result
 const start_date = document.getElementById("start_date").value;
@@ -43,21 +42,66 @@ const done = document.getElementById("done").value;
 const to_do = document.getElementById("to_do").value;
 const result_label = document.getElementById("result").value;
 const next = document.getElementById("next").value;
-
-
+const error_download = document.getElementById("error_download").value;
+const error_get_lstItemType = document.getElementById("error_get_lstItemType").value;
+const internal_server_error = document.getElementById("internal_server_error").value;
+const not_available_error_another = document.getElementById("not_available_error_another").value;
+const not_available_error = document.getElementById("not_available_error").value;
+const is_duplicated_doi = document.getElementById("is_duplicated_doi").value;
+const is_withdraw_doi = document.getElementById("is_withdraw_doi").value;
+const item_is_deleted = document.getElementById("item_is_deleted").value;
+const item_is_being_edit = document.getElementById("item_is_being_edit").value;
 
 const workflows = JSON.parse($("#workflows").text() ? $("#workflows").text() : "");
 const urlTree = window.location.origin + '/api/tree'
 const urlCheck = window.location.origin + '/admin/items/import/check'
+const urlGetChangeIdentifierMode = window.location.origin + '/admin/items/import/get_disclaimer_text'
 const urlCheckStatus = window.location.origin + '/admin/items/import/check_status'
 const urlDownloadCheck = window.location.origin + '/admin/items/import/download_check'
 const urlDownloadImport = window.location.origin + '/admin/items/import/export_import'
+const urlDownloadTemplate = window.location.origin + '/admin/items/import/export_template'
 const urlImport = window.location.origin + '/admin/items/import/import'
+const urlCheckImportAvailable = window.location.origin + '/admin/items/import/check_import_is_available'
 const step = {
   "SELECT_STEP": 0,
   "IMPORT_STEP": 1,
   "RESULT_STEP": 2,
 }
+
+function closeError() {
+  $('#errors').empty();
+}
+
+function showErrorMsg(msg) {
+  $('#errors').append(
+    '<div class="alert alert-danger alert-dismissable">' +
+    '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
+    '&times;</button>' + msg + '</div>');
+}
+
+function getResultErrorMsg(error_id) {
+  let msg = '';
+  switch (error_id) {
+    case 'is_duplicated_doi':
+      msg = is_duplicated_doi;
+      break;
+    case 'is_withdraw_doi':
+      msg = is_withdraw_doi;
+      break;
+    case 'item_is_deleted':
+      msg = item_is_deleted;
+      break;
+    case 'item_is_being_edit':
+      msg = item_is_being_edit;
+      break;
+  }
+  if (msg === '') {
+    return 'Error';
+  } else {
+    return 'Error: ' + msg;
+  }
+}
+
 class MainLayout extends React.Component {
 
   constructor() {
@@ -68,29 +112,36 @@ class MainLayout extends React.Component {
       tabs: [
         {
           tab_key: 'select',
-          tab_name: import_label,
+          tab_name: select,
           step: step.SELECT_STEP
         },
         {
           tab_key: 'import',
-          tab_name: check,
+          tab_name: import_label,
           step: step.IMPORT_STEP
         },
         {
           tab_key: 'result',
-          tab_name: list,
+          tab_name: result_label,
           step: step.RESULT_STEP
         }
       ],
       list_record: [],
       tasks: [],
       is_import: true,
-      import_status: false
+      import_status: false,
+      isShowMessage: false,
     }
     this.handleChangeTab = this.handleChangeTab.bind(this)
     this.handleCheck = this.handleCheck.bind(this)
     this.handleImport = this.handleImport.bind(this)
     this.getStatus = this.getStatus.bind(this)
+    this.updateShowMessage = this.updateShowMessage.bind(this)
+    this.handleCheckImportAvailable = this.handleCheckImportAvailable.bind(this)
+  }
+
+  updateShowMessage(state) {
+    this.setState({isShowMessage: state})
   }
 
   handleChangeTab(tab) {
@@ -109,10 +160,18 @@ class MainLayout extends React.Component {
   }
 
   componentDidMount() {
+    const header = document.getElementsByClassName('content-header')[0];
+    if (header) {
+      const errorElement = document.createElement('div');
+      errorElement.setAttribute('id', 'errors');
+      header.insertBefore(errorElement, header.firstChild);
+    }
+    this.handleCheckImportAvailable();
   }
 
   handleCheck(data) {
     const that = this
+    closeError();
     $.ajax({
       url: urlCheck,
       type: 'POST',
@@ -121,31 +180,59 @@ class MainLayout extends React.Component {
       dataType: "json",
       success: function (response) {
         if (response.code) {
+          const is_import = response.list_record.filter(item => {
+            return !item.errors || item.errors.length === 0;
+          }).length <= 0;
           that.setState(() => {
             return {
               list_record: response.list_record,
               root_path: response.data_path,
-              is_import: false,
+              is_import,
               step: step.IMPORT_STEP
             }
           }, () => {
             that.handleChangeTab('import');
           })
         } else {
-          alert(response.error || '')
+          showErrorMsg(response.error);
         }
       },
       error: function (error) {
         console.log(error);
+        showErrorMsg(internal_server_error);
       }
     });
   }
 
+  handleCheckImportAvailable() {
+    closeError();
+    const import_start_time = localStorage.getItem('import_start_time');
+    let result = false;
+    $.ajax({
+      url: urlCheckImportAvailable,
+      type: 'GET',
+      dataType: "json",
+      async: false,
+      success: function (response) {
+        if (!response.is_available) {
+          showErrorMsg(import_start_time === response.start_time ? not_available_error : not_available_error_another);
+        } else {
+          result = true;
+        }
+      },
+      error: function (error) {
+        console.log(error);
+        showErrorMsg(internal_server_error);
+      }
+    });
+    return result;
+  }
+
   handleImport() {
-    const { list_record, root_path, is_import } = this.state
-    const that = this
-    if (is_import) {
-      return
+    const { list_record, root_path, is_import } = this.state;
+    const that = this;
+    if (is_import || !this.handleCheckImportAvailable()) {
+      return;
     }
     this.setState({
       is_import: true
@@ -160,6 +247,10 @@ class MainLayout extends React.Component {
       contentType: "application/json; charset=utf-8",
       dataType: "json",
       success: function (response) {
+        const import_start_time = response.data.import_start_time;
+        if (import_start_time !== '') {
+          localStorage.setItem('import_start_time', import_start_time);
+        }
         that.setState(() => {
           return {
             step: step.RESULT_STEP,
@@ -209,7 +300,7 @@ class MainLayout extends React.Component {
   }
 
   render() {
-    const { tab, tabs, list_record, is_import, tasks, import_status } = this.state
+    const { tab, tabs, list_record, is_import, tasks, import_status, isShowMessage} = this.state
     return (
       <div>
         <ul className="nav nav-tabs">
@@ -224,14 +315,16 @@ class MainLayout extends React.Component {
         <div className={`${tab === tabs[0].tab_key ? '' : 'hide'}`}>
           <ImportComponent
             handleCheck={this.handleCheck}
-          ></ImportComponent>
+            updateShowMessage={this.updateShowMessage}
+          />
         </div>
         <div className={`${tab === tabs[1].tab_key ? '' : 'hide'}`}>
           <CheckComponent
+            isShowMessage={isShowMessage}
             list_record={list_record || []}
             handleImport={this.handleImport}
             is_import={is_import}
-          ></CheckComponent>
+          />
         </div>
         <div className={`${tab === tabs[2].tab_key ? '' : 'hide'}`}>
           {
@@ -239,7 +332,7 @@ class MainLayout extends React.Component {
               tasks={tasks || []}
               getStatus={this.getStatus}
               import_status={import_status}
-            ></ResultComponent>
+            />
           }
 
         </div>
@@ -262,7 +355,12 @@ class ImportComponent extends React.Component {
       list_index: [],
       term_select_index_list: [],
       select_index_list: [],
-      isShowModalImport: false
+      isShowModalImport: false,
+      show: false,
+      is_agree_doi: false,
+      is_change_identifier: false,
+      change_identifier_mode_content:[],
+      disabled_checkbox:false
     }
     this.handleChangefile = this.handleChangefile.bind(this)
     this.handleClickFile = this.handleClickFile.bind(this)
@@ -272,7 +370,11 @@ class ImportComponent extends React.Component {
     this.handleShowModalIndex = this.handleShowModalIndex.bind(this)
     this.handleSelectIndex = this.handleSelectIndex.bind(this)
     this.handleSubmit = this.handleSubmit.bind(this)
-
+    this.handleInputChange = this.handleInputChange.bind(this);
+    this.handleAgreeChange = this.handleAgreeChange.bind(this);
+    this.handleClose = this.handleClose.bind(this);
+    this.handleConfirm = this.handleConfirm.bind(this);
+    this.getDisclaimerContent = this.getDisclaimerContent.bind(this);
   }
 
   componentDidMount() {
@@ -287,9 +389,10 @@ class ImportComponent extends React.Component {
       },
       error: function (error) {
         console.log(error);
-        // alert();
       }
     });
+
+    this.getDisclaimerContent();
   }
 
   handleChangefile(e) {
@@ -302,6 +405,7 @@ class ImportComponent extends React.Component {
 
     this.setState({
       file_name: file_name,
+      disabled_checkbox: false
     });
 
     reader.onload = (e) => {
@@ -375,29 +479,92 @@ class ImportComponent extends React.Component {
   }
 
   handleSubmit() {
-    const { isShowModalImport, file, file_name, work_flow_data, select_index_list } = this.state
-    const { handleCheck } = this.props
+    const { file, file_name, is_change_identifier } = this.state
+    const { handleCheck, updateShowMessage } = this.props
     const data = {
       file,
       file_name,
-      // work_flow: work_flow_data,
-      // index: select_index_list
+      is_change_identifier,
     }
+    if (is_change_identifier) {
+      this.setState({
+        disabled_checkbox: true,
+        show: true
+      });
+    } else {
+      updateShowMessage(false);
+      handleCheck(data)
+    }
+
+  }
+
+  getDisclaimerContent() {
+    const that = this
+    $.ajax({
+      url: urlGetChangeIdentifierMode,
+      type: 'GET',
+      success: function (result) {
+
+        that.setState({
+          change_identifier_mode_content: result.data
+        })
+      },
+      error: function (error) {
+        console.log(error);
+      }
+    });
+  }
+
+  handleInputChange(event) {
+    const target = event.target;
+    const value = target.name === 'is_change_identifier' ? target.checked : target.value;
+    const name = target.name;
+
+    this.setState({
+      [name]: value
+    });
+  }
+  handleAgreeChange(event) {
+    const target = event.target;
+    const value = target.name === 'is_agree_doi' ? target.checked : target.value;
+    const name = target.name;
+
+    this.setState({
+      [name]: value
+    });
+  }
+
+
+  handleClose() {
+    this.setState({
+      show: false,
+      is_agree_doi: false
+    });
+  }
+  handleConfirm() {
+    const {file, file_name, is_change_identifier} = this.state
+    const { handleCheck, updateShowMessage } = this.props
+    const data = {
+      file,
+      file_name,
+      is_change_identifier,
+    }
+    this.setState({
+      show: false,
+      is_agree_doi: false
+    });
+    updateShowMessage(true);
     handleCheck(data)
   }
 
   render() {
     const {
       file_name,
-      isShowModalWF,
-      wl_key,
-      work_flow_data,
-      isShowModalIndex,
-      list_index,
-      term_select_index_list,
-      select_index_list,
-      isShowModalImport,
-      file
+      file,
+      is_agree_doi,
+      is_change_identifier,
+      change_identifier_mode_content,
+      disabled_checkbox
     } = this.state
     return (
       <div className="import_component">
@@ -409,7 +576,7 @@ class ImportComponent extends React.Component {
               </div>
               <div className="col-md-8">
                 <div>
-                  <button className="btn btn-primary" onClick={this.handleClickFile}>{import_file}</button>
+                  <button className="btn btn-primary" onClick={this.handleClickFile}>{select_file}</button>
                   <input
                     type="file"
                     className="input-file"
@@ -426,238 +593,71 @@ class ImportComponent extends React.Component {
               </div>
             </div>
           </div>
-          {/*
-            <div className="col-md-12">
-              <div className="row">
-                <div className="col-md-2 col-cd">
-                  <label>{import_index}</label>
-                </div>
-                <div className="col-md-8 ">
-                  <div>
-                    <button className="btn btn-primary" onClick={()=>this.handleShowModalIndex(false)}>{select_index}</button>
-                  </div>
-                  <div className="block-placeholder">
-                    {
-                      select_index_list.length ? select_index_list.map((item,key) => {
-                        return(
-                          <div className="panel_bread" key={key}>
-                            <ol className="breadcrumb breadcrumb-custorm">
-                              {
-                                item.name.map((item_name, key_item)=>{
-                                  return(
-                                    <li
-                                      style={{listStylePosition: "inside",
-                                      }}>{item_name}</li>
-                                  )
-                                })
-                              }
-                            </ol>
-                          </div>
-                        )
-                      }) : <p>{selected_index}</p>
-                    }
-                  </div>
+          <div className="col-md-12">
+            <div className="row">
+              <div className="col-md-4">
+                <div class="form-check">
+                  <input
+                    id="is_change_identifier"
+                    name="is_change_identifier"
+                    type="checkbox"
+                    disabled={disabled_checkbox}
+                    checked={is_change_identifier}
+                    onChange={this.handleInputChange} />
+                  <label class="form-check-label margin_left" for="is_change_identifier">{change_identifier_mode}</label>
                 </div>
               </div>
             </div>
-            <div className="col-md-12">
-              <div className="row">
-                <div className="col-md-2 col-cd">
-                  <label>{work_flow}</label>
-                </div>
-                <div className="col-md-8">
-                  <div>
-                    <button className="btn btn-primary" onClick={this.handleShowModalWorkFlow}>{select_work_flow}</button>
-                  </div>
-                  <div className="block-placeholder">
-                    {
-                      work_flow_data ? <p className="active">{work_flow_data.flows_name}</p> : <p>{selected_work_flow}</p>
-                    }
-                  </div>
-                </div>
-              </div>
-            </div>
-             */}
+          </div>
           <div className="col-md-12">
             <div className="row">
               <div className="col-md-2">
                 <button
                   className="btn btn-primary"
                   disabled={!file}
-
-                  onClick={() => { file && this.handleSubmit() }}
-                >
-                  <span className="glyphicon glyphicon-download-alt icon"></span>{import_label}
+                  onClick={() => {
+                    file && this.handleSubmit()
+                  }}>
+                  <span className="glyphicon glyphicon-download-alt icon"></span>{next}
                 </button>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Work Flow */}
-        {/*
-          <div className={`modal ${isShowModalWF ? "active" : ''}`}>
-            <div className="modal-mark" onClick={()=>this.handleShowModalWorkFlow()}></div>
-            <div className="modal-content">
-              <div class="row">
-                <div class="col-sm-12 header">
-                  <h3>{work_flow}</h3>
-                </div>
-                <div class="col-sm-12 table-scroll-400">
-                  <table class="table table-striped table-bordered">
-                    <thead>
-                      <tr>
-                        <th></th>
-                        <th>{work_flow}</th>
-                        <th>{item_type}</th>
-                        <th>{flow}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {
-                        workflows.map((item, key) => {
-                          return (
-                            <tr key={key}>
-                              <td style={{textAlign: 'center'}}>
-                                <input
-                                  type='radio'
-                                  name='workflow'
-                                  value={key}
-                                  checked={wl_key == key}
-                                  onChange={this.handleChangeWF}
-                                  ></input>
-                              </td>
-                              <td>{item.flows_name}</td>
-                              <td>{item.item_type_name}</td>
-                              <td>{item.flow_name}</td>
-                            </tr>
-                          )
-                        })
-                      }
-                    </tbody>
-                  </table>
-                </div>
-                <div class="col-sm-12 footer text-align-right">
-                  <button
-                    className="btn btn-primary"
-                    disabled={wl_key === null}
-                    onClick={()=>{wl_key!== null && this.handleShowModalWorkFlow(workflows[wl_key])}}
-                  >
-                    <span className="glyphicon glyphicon-download-alt icon"></span>{select}
-                  </button>
-                  <button className="btn btn-danger m-l-15" onClick={()=>this.handleShowModalWorkFlow()}>{cancel}</button>
+        <hr />
+        <ItemTypeComponent />
+        <ReactBootstrap.Modal show={this.state.show} onHide={this.handleClose} dialogClassName="w-725">
+          <ReactBootstrap.Modal.Header closeButton>
+            <h4 className="modal-title in_line">{change_identifier_mode}</h4>
+          </ReactBootstrap.Modal.Header>
+          <ReactBootstrap.Modal.Body>
+          {change_identifier_mode_content.map((item, index) => (
+            <div className="row">{item} </div>
+          ))}
+          </ReactBootstrap.Modal.Body>
+          <ReactBootstrap.Modal.Footer>
+            <br/>
+            <div className="col-12">
+              <div className="row">
+                <div className="form-check pull-left">
+                  <input
+                    id="is_agree_doi"
+                    name="is_agree_doi"
+                    type="checkbox"
+                    checked={is_agree_doi}
+                    onChange={this.handleAgreeChange} />
+                  <label className="form-check-label margin_left" htmlFor="is_agree_doi">{i_agree}</label>
                 </div>
               </div>
-            </div>
-          </div>
-           */}
-        {/* Index */}
-        {/*
-          <div className={`modal ${isShowModalIndex ? "active" : ''}`}>
-            <div className="modal-mark" onClick={()=>this.handleShowModalIndex(false)}></div>
-            <div className="modal-index">
-              <div class="row">
-                <div class="col-sm-12 header">
-                  <h3>{import_index}</h3>
-                </div>
-                <div class="col-sm-12">
-                  <div className="row">
-                    <div className="col-md-4">
-                      <div className="panel panel-default">
-                        <div className="panel-heading">
-                          <h3 className="panel-title">{index_tree}</h3>
-                        </div>
-                        <div className="panel-body tree_list">
-                          {
-                            isShowModalIndex && <TreeList
-                            children={list_index}
-                            handleSelectIndex={this.handleSelectIndex}
-                            tree_name={[]}
-                            select_index_list={[...select_index_list]}
-                            ></TreeList>
-                          }
-
-                        </div>
-                      </div>
-                    </div>
-                    <div className="col-md-8">
-                      <div className="panel panel-default">
-                        <div className="panel-heading">
-                          <h3 className="panel-title">{designate_index}</h3>
-                        </div>
-                        <div className="panel-body index_list">
-                        <ul className="list-group">
-                          {term_select_index_list.map((item,key)=>{
-                            return (
-                              <li className="list-group-item" key={key}>
-                                {item.name[item.name.length-1]}
-                              </li>
-                            )
-                          })}
-                        </ul>
-
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-sm-12 footer text-align-right">
-                  <button
-                    className="btn btn-primary"
-                    disabled={!term_select_index_list.length}
-                    onClick={()=>{term_select_index_list.length && this.handleShowModalIndex(true)}}
-                  >
-                    <span className="glyphicon glyphicon-download-alt icon"></span>{select}</button>
-                  <button className="btn btn-danger m-l-15" onClick={()=>this.handleShowModalIndex(false)}>{cancel}</button>
-                </div>
+              <br/>
+              <br/>
+              <div className="row text-center">
+                <button variant="primary" type="button" className="btn btn-default" disabled={!is_agree_doi} onClick={this.handleConfirm}>OK</button>
+                <button variant="secondary" type="button" className="btn btn-default" onClick={this.handleClose}>{cancel}</button>
               </div>
             </div>
-          </div>
-           */}
-        {/* import */}
-        {/*
-          <div className={`modal ${isShowModalImport ? "active" : ''}`}>
-            <div className="modal-mark" onClick={()=>this.handleSubmit(false)}></div>
-            <div className="modal-index">
-              <div class="row">
-                <div class="col-sm-12 header">
-                  <h3>Import Items</h3>
-                </div>
-                <div class="col-sm-12">
-                  <table class="table table-striped table-bordered">
-                    <thead>
-                      <tr>
-                        <th>No</th>
-                        <th>Item ID</th>
-                        <th>Title</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {
-                        workflows.slice(0,5).map((item, key) => {
-                          return (
-                            <tr key={key}>
-                              <td>
-                               {key}
-                              </td>
-                              <td>{item.flows_name}</td>
-                              <td>{item.item_type_name}</td>
-                            </tr>
-                          )
-                        })
-                      }
-                    </tbody>
-                  </table>
-                </div>
-                <div class="col-sm-12 footer footer-import text-center">
-                  <button className="btn btn-primary" onClick={()=>{this.handleSubmit(true)}}><span className="glyphicon glyphicon-download-alt icon"></span>{import_label}</button>
-                  <button className="btn btn-danger m-l-15" onClick={()=>this.handleSubmit(false)}>{cancel}</button>
-                  <button className="btn btn-success m-l-15" onClick={()=>this.handleSubmit(false)}>Download</button>
-                </div>
-              </div>
-            </div>
-          </div> */}
-
+          </ReactBootstrap.Modal.Footer>
+        </ReactBootstrap.Modal>
       </div>
     )
   }
@@ -770,8 +770,8 @@ class TreeNode extends React.Component {
 
 class CheckComponent extends React.Component {
 
-  constructor() {
-    super()
+  constructor(props) {
+    super(props)
     this.state = {
       total: 0,
       new_item: 0,
@@ -796,7 +796,7 @@ class CheckComponent extends React.Component {
       return item.status && item.status === 'new'
     }).length
     const update_item = list_record.filter((item) => {
-      return item.status && item.status === 'update'
+      return item.status && (item.status === 'keep' || item.status === 'upgrade')
     }).length
 
     this.setState({
@@ -818,48 +818,62 @@ class CheckComponent extends React.Component {
 
   handleDownload() {
     const { list_record } = this.state
-    const result = Array.from(list_record, (item, key) => {
+    const result = list_record.map((item, key) => {
       return {
-        'No': key+1,
+        'No': key + 1,
         'Item Type': item.item_type_name,
         'Item Id': item.id,
-        'Title': (item['Title'] && item['Title'][0] && item['Title'][0]['Title']) ? item['Title'][0]['Title'] : item['Title'] && item['Title']['Title'] ? item['Title']['Title'] : '',
-        'Check result': item['errors'] ? 'ERRORS' + (item['errors'][0] ? ': ' + item['errors'][0] : '') : item.status === 'new' ? 'Register' : item.status === 'update' ? 'Update' : ''
+        'Title': item['item_title'] ? item['item_title'] : '',
+        'Check result': item['errors'] ? 'ERRORS' + (item['errors'][0] ? ': ' + item['errors'][0] : '') : item.status === 'new' ? 'Register' : item.status === 'keep' ? 'Keep' : item.status === 'upgrade' ? 'Upgrade' : ''
       }
     })
     const data = {
       list_result: result
     }
-    fetch(urlDownloadCheck, {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json'
+
+    $.ajax({
+      url: urlDownloadCheck,
+      type: 'POST',
+      data: JSON.stringify(data),
+      contentType: "application/json; charset=utf-8",
+      success: function (response) {
+        const date = moment()
+        const fileName = 'check_' + date.format("YYYY-DD-MM") + '.tsv';
+
+        const blob = new Blob([response], { type: 'text/tsv' });
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+          window.navigator.msSaveOrOpenBlob(blob, fileName);
+        } else {
+          const url = window.URL.createObjectURL(blob);
+          const tempLink = document.createElement('a');
+          tempLink.style.display = 'none';
+          tempLink.href = url;
+          tempLink.download = fileName;
+          document.body.appendChild(tempLink);
+          tempLink.click();
+
+          setTimeout(function() {
+            document.body.removeChild(tempLink);
+            window.URL.revokeObjectURL(url);
+        }, 200)
+        }
       },
-    })
-      .then(resp => resp.blob())
-      .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        // the filename you want
-        const today = new Date();
-        const date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
-        a.download = 'check_' + date + '.tsv';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-      })
-      .catch(() => alert('Error in download'));
+      error: function (error) {
+        console.log(error);
+        alert(error_download);
+      }
+    });
   }
 
   render() {
     const { total, list_record, update_item, new_item, check_error } = this.state
-    const { is_import } = this.props
+    const { is_import, isShowMessage } = this.props
     return (
       <div className="check-component">
         <div className="row">
+          { isShowMessage && (<div className="col-md-12 text-center"><div className="message">{register_with}</div></div>)}
+          <br/>
+          <br/>
           <div className="col-md-12 text-center">
             <button
               className="btn btn-primary"
@@ -925,16 +939,22 @@ class CheckComponent extends React.Component {
                         </td>
                         <td>
                           <p className="title_item">
-                            {(item['Title'] && item['Title'][0] && item['Title'][0]['Title'])
-                              ? item['Title'][0]['Title'] : item['Title'] && item['Title']['Title']
-                                ? item['Title']['Title'] : ''}
+                            {item['item_title'] ? item['item_title'] : ''}
                           </p>
 
                         </td>
-                        <td>{item['errors'] ? item['errors'][0] && (error + ': ' + item['errors'][0]) || error : item.status === 'new' ?
-                          register :
-                          item.status === 'update' ?
-                            update : ''}</td>
+                        <td>
+                          {
+                            item['errors'] ? item['errors'].map(e => {
+                              return <div>{error + ': ' + e}</div>
+                            }) : item.status === 'new' ? register : item.status === 'keep' ? keep : item.status === 'upgrade' ? upgrade : ''
+                          }
+                          {
+                            item['warnings'] && item['warnings'].map(e => {
+                              return <div>{warning + ': ' + e}</div>
+                            })
+                          }
+                        </td>
                       </tr>
                     )
                   })
@@ -962,40 +982,52 @@ class ResultComponent extends React.Component {
 
   handleDownload() {
     const { tasks } = this.props
-    const result = Array.from(tasks, (item, key) => {
+    const result = tasks.map((item, key) => {
       return {
         'No': key + 1,
         'Start Date': item.start_date ? item.start_date : '',
         'End Date': item.end_date ? item.end_date : '',
         'Item Id': item.item_id || '',
-        'Action': item.task_result ? item.task_result.success ? "End" : item.task_result.error ? "Error" : "" : "Start",
+        'Action': item.task_result ? item.task_result.success ? "End" : item.task_result.error_id ? getResultErrorMsg(item.task_result.error_id) : "" : "Start",
         'Work Flow Status': item.task_status ? item.task_status === "PENDING" ? "To Do" : item.task_status === "SUCCESS" ? "Done" : item.task_status === "FAILURE" ? "FAILURE" : '' : ''
       }
     })
     const data = {
       list_result: result
     }
-    fetch(urlDownloadImport, {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json'
-      },
-    })
-      .then(resp => resp.blob())
-      .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        // the filename you want
+
+    $.ajax({
+      url: urlDownloadImport,
+      type: 'POST',
+      data: JSON.stringify(data),
+      contentType: "application/json; charset=utf-8",
+      success: function (response) {
         const date = moment()
-        a.download = 'List_Download ' + date.format("YYYY-DD-MM") + '.tsv';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-      })
-      .catch(() => alert('Error in download'));
+        const fileName = 'List_Download_' + date.format("YYYY-DD-MM") + '.tsv';
+
+        const blob = new Blob([response], { type: 'text/tsv' });
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+          window.navigator.msSaveOrOpenBlob(blob, fileName);
+        } else {
+          const url = window.URL.createObjectURL(blob);
+          const tempLink = document.createElement('a');
+          tempLink.style.display = 'none';
+          tempLink.href = url;
+          tempLink.download = fileName;
+          document.body.appendChild(tempLink);
+          tempLink.click();
+
+          setTimeout(function () {
+            document.body.removeChild(tempLink);
+            window.URL.revokeObjectURL(url);
+          }, 200)
+        }
+      },
+      error: function (error) {
+        console.log(error);
+        alert(error_download);
+      }
+    });
   }
 
   render() {
@@ -1034,7 +1066,7 @@ class ResultComponent extends React.Component {
                       <td>{item.start_date ? item.start_date : ''}</td>
                       <td>{item.end_date ? item.end_date : ''}</td>
                       <td>{item.item_id || ''}</td>
-                      <td>{item.task_result ? item.task_result.success ? end : item.task_result.error ? "Error" : "" : "Start"}</td>
+                      <td>{item.task_result ? item.task_result.success ? end : item.task_result.error_id ? getResultErrorMsg(item.task_result.error_id) : "" : "Start"}</td>
                       <td>
                         {item.task_status && item.task_status === "PENDING" ? to_do : ''}
                         {item.task_status && item.task_status === "SUCCESS" ? done : ''}
@@ -1049,6 +1081,122 @@ class ResultComponent extends React.Component {
         </div>
       </div>
     )
+  }
+}
+
+class ItemTypeComponent extends React.Component {
+
+  constructor() {
+    super();
+    this.state = {
+      item_types: null,
+      selected_item_type: '-1'
+    };
+    this.getListItemType = this.getListItemType.bind(this);
+    this.onCbxItemTypeChange = this.onCbxItemTypeChange.bind(this);
+    this.onBtnDownloadClick = this.onBtnDownloadClick.bind(this);
+  }
+
+  componentDidMount() {
+    this.getListItemType();
+  }
+
+  getListItemType() {
+    const that = this;
+    $.ajax({
+      url: "/api/itemtypes/lastest?type=normal_type",
+      type: 'GET',
+      dataType: "json",
+      success: function (data) {
+        data = [
+          null,
+          ...data
+        ];
+        that.setState({ item_types: data });
+      },
+      error: function (error) {
+        console.log(error);
+        alert(error_get_lstItemType);
+      }
+    });
+  }
+
+  onCbxItemTypeChange(event) {
+    this.setState({ selected_item_type: event.target.value });
+  }
+
+  onBtnDownloadClick() {
+    const { selected_item_type } = this.state;
+    $.ajax({
+      url: urlDownloadTemplate,
+      type: 'POST',
+      data: JSON.stringify({item_type_id: selected_item_type}),
+      contentType: "application/json; charset=utf-8",
+      success: function (response, status, xhr) {
+        var fileName = "";
+        var disposition = xhr.getResponseHeader('Content-Disposition');
+        if (disposition && disposition.indexOf('attachment') !== -1) {
+          var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+          var matches = filenameRegex.exec(disposition);
+          if (matches != null && matches[1]) {
+            fileName = matches[1].replace(/['"]/g, '');
+          }
+        }
+
+        fileName = decodeURIComponent(fileName.replace(/\+/g, '%20'));
+        const blob = new Blob([response], { type: 'text/tsv' });
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+          window.navigator.msSaveOrOpenBlob(blob, fileName);
+        } else {
+          const url = window.URL.createObjectURL(blob);
+          const tempLink = document.createElement('a');
+          tempLink.style.display = 'none';
+          tempLink.href = url;
+          tempLink.download = fileName;
+          document.body.appendChild(tempLink);
+          tempLink.click();
+
+          setTimeout(function () {
+            document.body.removeChild(tempLink);
+            window.URL.revokeObjectURL(url);
+          }, 200)
+        }
+      },
+      error: function (error) {
+        console.log(error);
+        alert(error_download);
+      }
+    });
+  }
+
+  render() {
+    const { item_types, selected_item_type } = this.state;
+    const select_options = item_types && item_types.map(item => {
+      if (item === null) {
+        return <option value={'-1'} selected={true}></option>;
+      } else {
+        return <option value={item.id} selected={item.id === selected_item_type}>{item.name} ({item.id})</option>
+      }
+    });
+
+    return (
+      <div class="item_type_compoment">
+        <h4>{item_type_templates}</h4>
+        <div class="row">
+          <div class="col-md-12 form-inline">
+            <div class="form-group">
+              <label style={{ marginRight: ".5rem" }}>{item_type}:</label>
+              <select class="form-control" style={{ marginRight: ".5rem" }} onChange={this.onCbxItemTypeChange}>
+                {select_options}
+              </select>
+            </div>
+            <button class="btn btn-primary" disabled={selected_item_type === '-1'} onClick={this.onBtnDownloadClick}>
+              <span class="glyphicon glyphicon-cloud-download icon"></span>{download}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 }
 

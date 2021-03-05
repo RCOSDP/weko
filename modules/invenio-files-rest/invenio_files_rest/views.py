@@ -542,12 +542,15 @@ class ObjectResource(ContentNegotiatedMethodView):
     # ObjectVersion helpers
     #
     @staticmethod
-    def check_object_permission(obj):
+    def check_object_permission(obj, file_access_permission=False):
         """Retrieve object and abort if it doesn't exists."""
-        check_permission(current_permission_factory(
-            obj,
-            'object-read'
-        ))
+        # Check for guest user (not login)
+        # If not login => has permission
+        if not file_access_permission:
+            check_permission(current_permission_factory(
+                obj,
+                'object-read'
+            ))
         if not obj.is_head:
             check_permission(
                 current_permission_factory(obj, 'object-read-version'),
@@ -566,12 +569,33 @@ class ObjectResource(ContentNegotiatedMethodView):
         :param version_id: The version ID.
         :returns: A :class:`invenio_files_rest.models.ObjectVersion` instance.
         """
+        from weko_records_ui.permissions import check_file_download_permission
+        from invenio_files_rest.models import as_bucket_id
+        # Get record metadata (table records_metadata) from bucket_id.
+        bucket_id = as_bucket_id(bucket)
+        rb = RecordsBuckets.query.filter_by(bucket_id=bucket_id).first()
+        rm = RecordMetadata.query.filter_by(id=rb.record_id).first()
+        # Check and file_access_permission of file in this record metadata.
+        file_access_permission = False
+        flag = False
+        for k, v in rm.json.items():
+            if isinstance(v, dict) and v.get('attribute_type') == 'file':
+                for item in v.get('attribute_value_mlt', []):
+                    is_this_version = item.get('version_id') == version_id
+                    is_preview = item.get('displaytype') == 'preview'
+                    if is_this_version and is_preview:
+                        file_access_permission = \
+                            check_file_download_permission(rm.json, item)
+                        flag = True
+                        break
+            if flag:
+                break
+        # Get and check exists of current bucket info.
         obj = ObjectVersion.get(bucket, key, version_id=version_id)
         if not obj:
             abort(404, 'Object does not exists.')
-
-        cls.check_object_permission(obj)
-
+        # Check permission. if it is not permission, return None.
+        cls.check_object_permission(obj, file_access_permission)
         return obj
 
     def create_object(self, bucket, key, is_thumbnail):
@@ -934,15 +958,15 @@ class LocationUsageAmountInfo(ContentNegotiatedMethodView):
         result = []
 
         locations = Location.query.order_by(Location.name.asc()).all()
-        for l in locations:
+        for location in locations:
             data = {}
-            data['name'] = l.name
-            data['default'] = l.default
-            data['size'] = l.size
-            data['quota_size'] = l.quota_size
+            data['name'] = location.name
+            data['default'] = location.default
+            data['size'] = location.size
+            data['quota_size'] = location.quota_size
             # number of registered files
             buckets = Bucket.query.with_entities(
-                Bucket.id).filter_by(location=l)
+                Bucket.id).filter_by(location=location)
             data['files'] = ObjectVersion.query.filter(
                 ObjectVersion.bucket_id.in_(buckets.subquery())).count()
 
