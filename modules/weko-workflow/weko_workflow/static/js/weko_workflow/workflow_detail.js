@@ -212,6 +212,41 @@ require([
       commond: $('#input-comment').val(),
       action_version: act_ver
     };
+    uri_apo = uri_apo + "/rejectOrReturn/0";
+    $.ajax({
+      url: uri_apo,
+      method: 'POST',
+      async: true,
+      contentType: 'application/json',
+      data: JSON.stringify(post_data),
+      success: function (data, status) {
+        if (0 == data.code) {
+          if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
+            document.location.href = data.data.redirect;
+          } else {
+            document.location.reload(true);
+          }
+        } else {
+          endLoading(_this);
+          alert(data.msg);
+        }
+      },
+      error: function (jqXHE, status) {
+        endLoading(_this);
+        alert('server error');
+      }
+    });
+  });
+
+  $('#btn-return').on('click', function () {
+    let _this = $(this);
+    startLoading(_this);
+    let uri_apo = $('.cur_step').data('next-uri');
+    let act_ver = $('.cur_step').data('action-version');
+    let post_data = {
+      commond: $('#input-comment').val(),
+      action_version: act_ver
+    };
     uri_apo = uri_apo + "/rejectOrReturn/1";
     $.ajax({
       url: uri_apo,
