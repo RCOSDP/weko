@@ -182,13 +182,13 @@ msgstr "指定された{}は登録している{}と異なっています。"
 
 #: weko_search_ui/utils.py:1527
 msgid "You cannot keep an item private because it has a DOI."
-msgstr ""
+msgstr "アイテムにDOIが付与されているため、アイテムを非公開にすることはできません。"
 
 #: weko_search_ui/utils.py:1532
 msgid ""
 "Since the item has a DOI, it must be associated with an index whose index"
 " status is \"Public\" and whose Harvest Publishing is \"Public\"."
-msgstr ""
+msgstr "アイテムにDOIが付与されているため、インデックス状態が「公開」かつハーベスト公開が「公開」のインデックスに関連付けが必要です。"
 
 #: weko_search_ui/utils.py:1573
 msgid "DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC."
@@ -482,59 +482,59 @@ msgstr "キャンセル"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:42
 msgid "List"
-msgstr ""
+msgstr "一覧"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:43
 msgid "Import File"
-msgstr ""
+msgstr "ファイルインポート"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:44
 msgid "Import Index"
-msgstr ""
+msgstr "インデックスインポート"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:45
 msgid "WorkFlow"
-msgstr ""
+msgstr "ワークフロー"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:46
 msgid "Select File"
-msgstr ""
+msgstr "ファイル選択"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:47
 msgid "Select Index"
-msgstr ""
+msgstr "インデックス選択"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:48
 msgid "Select WorkFlow"
-msgstr ""
+msgstr "ワークフロー選択"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:49
 msgid "Selected file name"
-msgstr ""
+msgstr "選択したファイル名"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:50
 msgid "Selected index"
-msgstr ""
+msgstr "選択したインデックス"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:51
 msgid "Selected workflow"
-msgstr ""
+msgstr "選択したワークフロー"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:53
 msgid "Designate Index"
-msgstr ""
+msgstr "インデックスを指定"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:54
 msgid "Workflow"
-msgstr ""
+msgstr "ワークフロー"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:55
 msgid "Item Type"
-msgstr ""
+msgstr "アイテムタイプ"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:56
 msgid "Flow"
-msgstr ""
+msgstr "フロー"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:57
 msgid "Select"
@@ -542,7 +542,7 @@ msgstr "削除"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:59
 msgid "Check"
-msgstr ""
+msgstr "確認"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:60
 msgid "Change Identifier Mode."
@@ -577,7 +577,7 @@ msgid "Check Error"
 msgstr "チェックエラー"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:69
-msgid "Download"
+msgid "import_btn_download"
 msgstr "ダウンロード"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:70
@@ -654,7 +654,7 @@ msgstr "検索結果"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:90
 msgid "Next"
-msgstr ""
+msgstr "次へ"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:91
 msgid "Item Type Template"
@@ -702,3 +702,20 @@ msgstr "入力内容を破棄してもよろしいですか？"
 #~ msgid "\"<\" and \">\" are cannot be used for searching"
 #~ msgstr ""
 
+msgid "Import is in progress on another device."
+msgstr "他の端末でインポートを実行中です。"
+
+msgid "Import is in progress."
+msgstr "インポートを実行中です。"
+
+msgid "Cannot update because the corresponding item is being edited."
+msgstr "該当アイテムが編集中のため更新できません。"
+
+msgid "The corresponding item has been deleted."
+msgstr "該当アイテムは削除済です。"
+
+msgid "This DOI has been already grant for another item. Please specify another DOI."
+msgstr "このDOIは既に別のアイテムに付与されています。別のDOIを指定してください。"
+
+msgid "import_error_msg_is_withdraw_doi"
+msgstr "このDOIは取り下げられました。別のDOIを指定してください。"
