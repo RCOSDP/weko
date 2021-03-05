@@ -429,7 +429,7 @@ def check_import_items(file_name: str, file_content: str,
     result = {}
     file_content_decoded = base64.b64decode(file_content)
     temp_path = tempfile.TemporaryDirectory()
-    save_path = "/tmp"
+    save_path = tempfile.gettempdir()
 
     try:
         # Create temp dir for import data
