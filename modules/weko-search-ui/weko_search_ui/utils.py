@@ -976,7 +976,8 @@ def register_item_metadata(item):
 
     def clean_file_bucket(deposit):
         # clean bucket
-        file_names = [file['filename'] for file in deposit.get_file_data()]
+        file_names = [file.get('filename', '')
+                      for file in deposit.get_file_data()]
         lastest_files_version = []
         # remove lastest version
         for file in deposit.files:
