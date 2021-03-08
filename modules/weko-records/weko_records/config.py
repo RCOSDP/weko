@@ -67,15 +67,18 @@ WEKO_RECORDS_AUTHOR_KEYS = ['nameIdentifierScheme', 'nameIdentifier',
                             'affiliationNameIdentifierScheme',
                             'affiliationNameIdentifierURI',
                             'affiliationName']
-"""Sub-item keys of Email."""
+"""List author key."""
 
 WEKO_RECORDS_AUTHOR_NONE_LANG_KEYS = ['nameIdentifierScheme', 'nameIdentifier',
                                       'nameIdentifierURI',
                                       'affiliationNameIdentifier',
                                       'affiliationNameIdentifierScheme',
                                       'affiliationNameIdentifierURI']
+"""List author none language keys."""
 
 WEKO_RECORDS_ALTERNATIVE_NAME_KEYS = ['creatorAlternative',
                                       'creatorAlternativeLang']
+"""List alternative name key."""
 
 WEKO_RECORDS_AFFILIATION_NAME_KEYS = ['affiliationName', 'affiliationNameLang']
+"""List affiliation name key."""
