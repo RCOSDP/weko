@@ -559,7 +559,6 @@ def sort_meta_data_by_options(record_hit):
                     solst):
         """Check and get info."""
         result = []
-        flag = False
         data_result = {}
         stt_key = []
         _ignore_items = list()
@@ -604,18 +603,19 @@ def sort_meta_data_by_options(record_hit):
                                                    hide_email_flag, author_key,
                                                    mlt)
             elif bibliographic_key is None \
-                    and sys_bibliographic.is_bibliographic():
+                and sys_bibliographic.is_bibliographic() and \
+                    parent_option and parent_option["showlist"]:
                 bibliographic_key = s['key']
                 stt_key, data_result, is_specify_newline_array = add_biographic(
                     sys_bibliographic, bibliographic_key, s, stt_key,
                     data_result, is_specify_newline_array)
             elif not (bibliographic_key is not None and bibliographic_key in s[
-                    'key']) and value and value not in _ignore_items:
-                if not is_hide and is_show_list and s['key']:
-                    data_result, stt_key = get_value_and_lang_by_key(
-                        s['key'], solst_dict_array, data_result, stt_key)
-                    is_specify_newline_array.append(
-                        {s['key']: is_specify_newline})
+                'key']) and value and value not in _ignore_items and \
+                    not is_hide and is_show_list and s['key']:
+                data_result, stt_key = get_value_and_lang_by_key(
+                    s['key'], solst_dict_array, data_result, stt_key)
+                is_specify_newline_array.append(
+                    {s['key']: is_specify_newline})
 
         if len(data_result) > 0:
             result = data_comment(result, data_result, stt_key,
@@ -958,7 +958,7 @@ def remove_key(removed_key, item_val):
 def remove_keys(excluded_keys, item_val):
     """Remove removed_key out of item_val.
 
-    @param removed_key:
+    @param excluded_keys:
     @param item_val:
     @return:
     """
@@ -1045,6 +1045,9 @@ def selected_value_by_language(lang_array, value_array, lang_id, val_id,
     @param lang_array:
     @param value_array:
     @param lang_selected:
+    @param lang_id:
+    @param val_id:
+    @param _item_metadata:
     @return:
     """
     if (lang_array is not None) and (value_array is not None) \
@@ -1128,6 +1131,7 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
     @param key:
     @param data_json:
     @param data_result:
+    @param stt_key:
     @return:
     """
     if (key is not None) and isinstance(key, str) and (data_json is not None) \
