@@ -229,10 +229,6 @@ msgstr "アイテムのログインに失敗"
 msgid "Save"
 msgstr "保存"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:335
-msgid "SaveQO"
-msgstr "保存 (※1)"
-
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:242
 # msgid "Quit"
 # msgstr "終了"
