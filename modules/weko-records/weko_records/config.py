@@ -56,3 +56,26 @@ WEKO_ITEMTYPE_EXCLUDED_KEYS = ['required', 'isRequired', 'title', 'uniqueKey',
                                'title_i18n', 'isShowList', 'isSpecifyNewline',
                                'isHide', 'enum', 'titleMap', 'title_i18n_temp',
                                'currentEnum']
+
+WEKO_RECORDS_AUTHOR_KEYS = ['nameIdentifierScheme', 'nameIdentifier',
+                            'nameIdentifierURI',
+                            'creatorName',
+                            'familyName',
+                            'givenName',
+                            'creatorAlternative',
+                            'affiliationNameIdentifier',
+                            'affiliationNameIdentifierScheme',
+                            'affiliationNameIdentifierURI',
+                            'affiliationName']
+"""Sub-item keys of Email."""
+
+WEKO_RECORDS_AUTHOR_NONE_LANG_KEYS = ['nameIdentifierScheme', 'nameIdentifier',
+                                      'nameIdentifierURI',
+                                      'affiliationNameIdentifier',
+                                      'affiliationNameIdentifierScheme',
+                                      'affiliationNameIdentifierURI']
+
+WEKO_RECORDS_ALTERNATIVE_NAME_KEYS = ['creatorAlternative',
+                                      'creatorAlternativeLang']
+
+WEKO_RECORDS_AFFILIATION_NAME_KEYS = ['affiliationName', 'affiliationNameLang']

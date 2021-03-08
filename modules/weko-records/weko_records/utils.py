@@ -488,60 +488,71 @@ def sort_meta_data_by_options(record_hit):
             solst_dict_array.append(temp)
         return solst_dict_array
 
-    def convert_bibliographic(data_sys_bibliographic):
-        list_data = []
-        for bibliographic_value in data_sys_bibliographic:
-            if bibliographic_value.get('title_attribute_name'):
-                list_data.append(
-                    bibliographic_value.get('title_attribute_name'))
-            for magazine in bibliographic_value.get('magazine_attribute_name'):
-                for key in magazine:
-                    list_data.append(key + ' ' + magazine[key])
-        return ", ".join(list_data)
+    def get_author_comment(data_result, key, result, is_specify_newline_array):
+        value = data_result[key].get(key, {}).get('value', [])
+        value = [x for x in value if x]
+        if value is not None and len(value) > 0:
+            is_specify_newline = False
+            for specify_newline in is_specify_newline_array:
+                if key in specify_newline:
+                    is_specify_newline = specify_newline[key]
+            if is_specify_newline:
+                result.append(",".join(value))
+            else:
+                if len(result) == 0:
+                    result.append(",".join(value))
+                else:
+                    result[-1] += "," + ",".join(value)
+        return result
 
     def data_comment(result, data_result, stt_key, is_specify_newline_array):
+        list_author_key = current_app.config['WEKO_RECORDS_AUTHOR_KEYS']
         for idx, key in enumerate(stt_key):
             lang_id = ''
             if key in data_result and data_result[key] is not None:
-                if 'lang_id' in data_result[key]:
-                    lang_id = data_result[key].get('lang_id') if "[]" not in \
-                                                                 data_result[
-                                                                     key].get(
-                                                                     'lang_id') \
-                        else data_result[key].get('lang_id').replace("[]", '')
-                data = ''
-                if "stt" in data_result[key] and data_result[key].get(
-                        "stt") is not None:
-                    data = data_result[key].get("stt")
+                if key in list_author_key:
+                    result = get_author_comment(data_result, key, result,
+                                                is_specify_newline_array)
                 else:
-                    data = data_result.get(key)
-                for idx2, d in enumerate(data):
-                    if d not in "lang" and d not in "lang_id":
-                        lang_arr = []
-                        value_arr = []
-                        if ('lang' in data_result[key]):
-                            lang_arr = data_result[key].get('lang')
-                        if (key in data_result) and (
-                            d in data_result[key]) and (
-                                'value' in data_result[key][d]):
-                            value_arr = data_result[key][d]['value']
-                            value = selected_value_by_language(lang_arr,
-                                                               value_arr,
-                                                               lang_id,
-                                                               d.replace("[]",
-                                                                         ''),
-                                                               web_screen_lang[
-                                                                   'selected'],
-                                                               _item_metadata)
-                            if value is not None and len(value) > 0:
-                                for index, n in enumerate(
-                                        is_specify_newline_array):
-                                    if d in n:
-                                        if n[d] or len(result) == 0:
-                                            result.append(value)
-                                        else:
-                                            result[-1] += "," + value
-                                        break
+                    if 'lang_id' in data_result[key]:
+                        lang_id = data_result[key].get('lang_id') if "[]" not in \
+                                                                     data_result[
+                                                                         key].get(
+                                                                         'lang_id') \
+                            else data_result[key].get('lang_id').replace("[]", '')
+                    data = ''
+                    if "stt" in data_result[key] and data_result[key].get(
+                            "stt") is not None:
+                        data = data_result[key].get("stt")
+                    else:
+                        data = data_result.get(key)
+                    for idx2, d in enumerate(data):
+                        if d not in "lang" and d not in "lang_id":
+                            lang_arr = []
+                            value_arr = []
+                            if ('lang' in data_result[key]):
+                                lang_arr = data_result[key].get('lang')
+                            if (key in data_result) and (
+                                d in data_result[key]) and (
+                                    'value' in data_result[key][d]):
+                                value_arr = data_result[key][d]['value']
+                                value = selected_value_by_language(lang_arr,
+                                                                   value_arr,
+                                                                   lang_id,
+                                                                   d.replace("[]",
+                                                                             ''),
+                                                                   web_screen_lang[
+                                                                       'selected'],
+                                                                   _item_metadata)
+                                if value is not None and len(value) > 0:
+                                    for index, n in enumerate(
+                                            is_specify_newline_array):
+                                        if d in n:
+                                            if n[d] or len(result) == 0:
+                                                result.append(value)
+                                            else:
+                                                result[-1] += "," + value
+                                            break
         return result
 
     def get_comment(solst_dict_array, hide_email_flag, _item_metadata, src,
@@ -556,11 +567,25 @@ def sort_meta_data_by_options(record_hit):
         is_specify_newline_array = []
         bibliographic_key = None
         author_key = None
+        author_data = {}
         if _license_dict:
             _ignore_items.append(_license_dict[0].get('value'))
         for i, s in enumerate(solst_dict_array):
             value = s['value']
             option = s['option']
+            parent_option = s['parent_option']
+            is_show_list = parent_option.get(
+                'show_list') if parent_option and parent_option.get(
+                'show_list') else option.get('show_list')
+            is_specify_newline = parent_option.get(
+                'specify_newline') if parent_option and parent_option.get(
+                'specify_newline') else option.get('specify_newline')
+            is_hide = parent_option.get('hide') if parent_option and \
+                parent_option.get('hide') else option.get('hide')
+            if 'creatorMails[].creatorMail' in s['key'] \
+                or 'contributorMails[].contributorMail' in s['key'] \
+                    or 'mails[].mail' in s['key']:
+                is_hide = is_hide | hide_email_flag
             mlt = src.get(s['key'], {}).get('attribute_value_mlt', {})
             is_author = src.get(s['key'], {}).get('attribute_type',
                                                   {}) == 'creator'
@@ -568,60 +593,33 @@ def sort_meta_data_by_options(record_hit):
                 copy.deepcopy(mlt),
                 copy.deepcopy(solst)
             )
-            if i == (len(solst_dict_array) - 1):
-                flag = True
-            if is_author:
+
+            if author_key and author_key in s['key']:
+                stt_key, data_result, is_specify_newline_array = add_author(
+                    author_data, stt_key, is_specify_newline_array, s, value,
+                    data_result, is_specify_newline, is_hide, is_show_list)
+            elif is_author:
                 author_key = s['key']
-                creator_result = ''
-                for author in format_creates(mlt):
-                    if isinstance(author, str):
-                        creator_result += author + ", "
-                    elif isinstance(author, list):
-                        creator_result += ", ".join(
-                            filter(lambda x: x != '', author)) + ", "
-                stt_key.append(author_key)
-                is_specify_newline_array.append({author_key: True})
-                data_result.update({
-                    author_key: {
-                        s['key']: {"value": [creator_result.strip()[:-1]]}}})
+                author_data = get_show_list_author(solst_dict_array,
+                                                   hide_email_flag, author_key,
+                                                   mlt)
             elif bibliographic_key is None \
                     and sys_bibliographic.is_bibliographic():
                 bibliographic_key = s['key']
-                bibliographic = convert_bibliographic(
-                    sys_bibliographic.get_bibliographic_list(True))
-                stt_key.append(bibliographic_key)
-                is_specify_newline_array.append({s['key']: True})
-                data_result.update({
-                    bibliographic_key: {s['key']: {"value": [bibliographic]}}})
+                stt_key, data_result, is_specify_newline_array = add_biographic(
+                    sys_bibliographic, bibliographic_key, s, stt_key,
+                    data_result, is_specify_newline_array)
             elif not (bibliographic_key is not None and bibliographic_key in s[
-                'key']) and not (author_key is not None and author_key in s[
-                    'key']) and value and value not in _ignore_items or flag:
-                is_specify_newline = ''
-                is_hide = ''
-                is_show_list = ''
-                if not flag:
-                    parent_option = s['parent_option']
-                    is_show_list = parent_option.get(
-                        'show_list') if parent_option.get(
-                        'show_list') else option.get('show_list')
-                    is_specify_newline = parent_option.get(
-                        'specify_newline') if parent_option.get(
-                        'specify_newline') else option.get('specify_newline')
-                    is_hide = parent_option.get('hide') if parent_option.get(
-                        'hide') else option.get('hide')
-                    if 'creatorMails[].creatorMail' in s['key'] \
-                        or 'contributorMails[].contributorMail' in s['key'] \
-                            or 'mails[].mail' in s['key']:
-                        is_hide = is_hide | hide_email_flag
-                if not is_hide and is_show_list and s['key'] or flag:
-                    if not flag:
-                        data_result, stt_key = get_value_and_lang_by_key(
-                            s['key'], solst_dict_array, data_result, stt_key)
-                        is_specify_newline_array.append(
-                            {s['key']: is_specify_newline})
-                    if flag and len(data_result) > 0:
-                        result = data_comment(result, data_result, stt_key,
-                                              is_specify_newline_array)
+                    'key']) and value and value not in _ignore_items:
+                if not is_hide and is_show_list and s['key']:
+                    data_result, stt_key = get_value_and_lang_by_key(
+                        s['key'], solst_dict_array, data_result, stt_key)
+                    is_specify_newline_array.append(
+                        {s['key']: is_specify_newline})
+
+        if len(data_result) > 0:
+            result = data_comment(result, data_result, stt_key,
+                                  is_specify_newline_array)
         return result
 
     def get_file_comments(record, files):
@@ -1170,38 +1168,6 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
         return None
 
 
-def get_result_rule_create(source_titles, current_lang):
-    """Get source title in show list.
-
-    :param current_lang:
-    :param source_titles:
-    :return:
-    """
-    result = []
-    for source_title in source_titles:
-        temp = None
-        temp5 = ''
-        if 'nameIdentifiers' in source_title:
-            temp = source_title.pop('nameIdentifiers')
-        if 'affiliations' in source_title:
-            temp2 = source_title.pop('affiliations')
-            for affiliation in temp2:
-                temp4 = None
-                if 'affilation' in affiliation:
-                    temp4 = affiliation.pop('affilation')
-                temp3 = result_rule_create_show_list(affiliation, current_lang)
-                if temp4 is not None:
-                    temp3.insert(0, temp4)
-                temp5 += ", ".join(temp3) + ', '
-        temp1 = result_rule_create_show_list(source_title, current_lang)
-        if temp is not None:
-            temp1.insert(0, temp)
-        if temp5 != '':
-            temp1.insert(len(temp1), temp5.strip()[:-1])
-        result.append(temp1)
-    return result
-
-
 def result_rule_create_show_list(source_title, current_lang):
     """Result rules create show list.
 
@@ -1210,6 +1176,7 @@ def result_rule_create_show_list(source_title, current_lang):
     @return:
     """
     title_data_langs = []
+    title_data_langs_none = []
     for key, value in source_title.items():
         title = {}
         if not value:
@@ -1217,7 +1184,10 @@ def result_rule_create_show_list(source_title, current_lang):
         elif current_lang == key:
             return value
         else:
-            if key:
+            if key == 'None Language':
+                title[key] = value
+                title_data_langs_none.append(title)
+            elif key:
                 title[key] = value
                 title_data_langs.append(title)
 
@@ -1228,88 +1198,255 @@ def result_rule_create_show_list(source_title, current_lang):
     if len(title_data_langs) > 0:
         return list(title_data_langs[0].values())[0]
 
+    if len(title_data_langs_none) > 0:
+        return list(title_data_langs_none[0].values())[0]
 
-def format_creates(creates):
-    """Format creates.
 
+def get_show_list_author(solst_dict_array, hide_email_flag, author_key,
+                         creates):
+    """Get show list author.
+
+    @param solst_dict_array:
+    @param hide_email_flag:
+    @param author_key:
     @param creates:
     @return:
     """
-    from collections import OrderedDict
-    current_lang = current_i18n.language
-    creates_key = OrderedDict(
-        [('creatorNames', ['creatorName', 'creatorNameLang']),
-         ('familyNames', ['familyName', 'familyNameLang']),
-         ('givenNames', ['givenName', 'givenNameLang']),
-         ('creatorAlternatives',
-          ['creatorAlternative', 'creatorAlternativeLang'])
-         ])
-    name_identifiers_key = ['nameIdentifierScheme', 'nameIdentifier',
-                            'nameIdentifierURI']
-    affiliation_key = ['affiliationNameIdentifier',
-                       'affiliationNameIdentifierScheme',
-                       'affiliationNameIdentifierURI']
-    affiliation_name_key = ['affiliationName', 'affiliationNameLang']
-    list_result = []
-    for create in creates:
-        result = {}
-        if 'nameIdentifiers' in create:
-            name_identifier_result = ''
-            for name_identifier in create.get('nameIdentifiers'):
-                for key in name_identifiers_key:
-                    if name_identifier.get(key, '') != '':
-                        name_identifier_result += ', ' + name_identifier.get(
-                            key)
-            result['nameIdentifiers'] = name_identifier_result[2:]
-        for key, value in creates_key.items():
-            if key in create:
-                is_added = []
-                for val in create[key]:
-                    key_data = val.get(value[1], 'None Language')
-                    value_data = val.get(value[0])
-                    if not value:
-                        continue
-                    if key_data not in is_added:
-                        if key_data not in result:
-                            result[key_data] = []
-                            result[key_data].append(value_data)
-                            is_added.append(key_data)
-                        else:
-                            result[key_data].append(value_data)
-                            is_added.append(key_data)
+    remove_show_list_create = []
+    for s in solst_dict_array:
+        option = s['option']
+        parent_option = s['parent_option']
+        is_show_list = parent_option.get(
+            'show_list') if parent_option and parent_option.get(
+            'show_list') else option.get('show_list')
+        is_hide = parent_option.get(
+            'hide') if parent_option and parent_option.get(
+            'hide') else option.get('hide')
+        if 'creatorMails[].creatorMail' in s['key'] \
+            or 'contributorMails[].contributorMail' in s['key'] \
+                or 'mails[].mail' in s['key']:
+            is_hide = is_hide | hide_email_flag
 
-        affiliation_list = []
+        if author_key != s['key'] and author_key in s['key']:
+            sub_author_key = s['key'].split('.')[-1]
+            key_creator = ['creatorName', 'familyName', 'givenName']
+            if sub_author_key in key_creator and (is_hide or not is_show_list):
+                remove_show_list_create.append(sub_author_key + 's')
+
+    return format_creates(creates, remove_show_list_create)
+
+
+def format_creates(creates, hide_creator_keys):
+    """Format creates.
+
+    @param creates:
+    @param hide_creator_keys:
+    @return:
+    """
+    current_lang = current_i18n.language
+    result_end = {}
+    for create in creates:
+        # get creator comments
+        result_end = get_creator(create, result_end, hide_creator_keys,
+                                 current_lang)
+        # get alternatives comments
+        if 'creatorAlternatives' in create:
+            alternatives_key = current_app.config[
+                'WEKO_RECORDS_ALTERNATIVE_NAME_KEYS']
+            result_end = get_author_has_language(create['creatorAlternatives'],
+                                                 result_end, current_lang,
+                                                 alternatives_key)
+        # get affiliations comments
         if 'creatorAffiliations' in create:
-            for name_affiliation in create.get('creatorAffiliations'):
-                result_2 = {}
-                for key, value in name_affiliation.items():
-                    if key == 'affiliationNameIdentifiers':
-                        for identity in value:
-                            affilation_result = ''
-                            for key in affiliation_key:
-                                if identity.get(key, '') != '':
-                                    affilation_result += ', ' + identity.get(
-                                        key)
-                            result_2['affilation'] = affilation_result[2:]
-                    if key == 'affiliationNames':
-                        for affiliation in value:
-                            is_added = []
-                            key_data = affiliation.get(affiliation_name_key[1],
-                                                       'None Language')
-                            value_data = affiliation.get(
-                                affiliation_name_key[0])
-                            if not value_data:
-                                continue
-                            if key_data not in is_added:
-                                if key_data not in result_2:
-                                    result_2[key_data] = []
-                                    result_2[key_data].append(value_data)
-                                    is_added.append(key_data)
-                                else:
-                                    result_2[key_data].append(value_data)
-                                    is_added.append(key_data)
-                affiliation_list.append(result_2)
-        if len(affiliation_list) > 0:
-            result['affiliations'] = affiliation_list
-        list_result.append(result)
-    return get_result_rule_create(list_result, current_lang)
+            affiliation_key = current_app.config[
+                'WEKO_RECORDS_AFFILIATION_NAME_KEYS']
+            result_end = get_affiliation(create['creatorAffiliations'],
+                                         result_end, current_lang,
+                                         affiliation_key)
+    return result_end
+
+
+def get_creator(create, result_end, hide_creator_keys, current_lang):
+    """Get creator, family name, given name.
+
+    @param create:
+    @param result_end:
+    @param hide_creator_keys:
+    @param current_lang:
+    @return:
+    """
+    creates_key = {
+        'creatorNames': ['creatorName', 'creatorNameLang'],
+        'familyNames': ['familyName', 'familyNameLang'],
+        'givenNames': ['givenName', 'givenNameLang']
+    }
+    if hide_creator_keys:
+        for key in hide_creator_keys:
+            if creates_key:
+                del creates_key[key]
+    result = get_creator_by_languages(creates_key, create)
+    creator = result_rule_create_show_list(result, current_lang)
+    if creator:
+        for key, value in creates_key.items():
+            if key in creator:
+                if value[0] not in result_end:
+                    result_end[value[0]] = []
+                if isinstance(creator, dict):
+                    result_end[value[0]].append(creator[key])
+    return result_end
+
+
+def get_creator_by_languages(creates_key, create):
+    """Get creator data by languages.
+
+    @param creates_key:
+    @param create:
+    @return:
+    """
+    result = {}
+    for key, value in creates_key.items():
+        if key in create:
+            is_added = []
+            for val in create[key]:
+                key_data = val.get(value[1], 'None Language')
+                value_data = val.get(value[0])
+                if not value_data:
+                    continue
+                if key_data not in is_added:
+                    if key_data not in result:
+                        result[key_data] = {}
+                        result[key_data][key] = value_data
+                        is_added.append(key_data)
+                    else:
+                        result[key_data][key] = value_data
+                        is_added.append(key_data)
+    return result
+
+
+def get_affiliation(affiliations, result_end, current_lang, affiliation_key):
+    """Get affiliation show list.
+
+    @param affiliations:
+    @param result_end:
+    @param current_lang:
+    @param affiliation_key:
+    @return:
+    """
+    for name_affiliation in affiliations:
+        for key, value in name_affiliation.items():
+            if key == 'affiliationNames':
+                result_end = get_author_has_language(value, result_end,
+                                                     current_lang,
+                                                     affiliation_key)
+    return result_end
+
+
+def get_author_has_language(creator, result_end, current_lang, map_keys):
+    """Get author has language.
+
+    @param creator:
+    @param result_end:
+    @param current_lang:
+    @param map_keys:
+    @return:
+    """
+    result = {}
+    is_added = []
+    for val in creator:
+        key_data = val.get(map_keys[1], 'None Language')
+        value_data = val.get(map_keys[0])
+        if not value_data:
+            continue
+        if key_data not in is_added:
+            if key_data not in result:
+                result[key_data] = []
+                result[key_data].append(value_data)
+                is_added.append(key_data)
+            else:
+                result[key_data].append(value_data)
+                is_added.append(key_data)
+    alternative = result_rule_create_show_list(result, current_lang)
+    if map_keys[0] not in result_end:
+        result_end[map_keys[0]] = []
+    if isinstance(alternative, str):
+        result_end[map_keys[0]].append(alternative)
+    elif isinstance(alternative, list):
+        result_end[map_keys[0]] += alternative
+
+    return result_end
+
+
+def add_author(author_data, stt_key, is_specify_newline_array, s, value,
+               data_result, is_specify_newline, is_hide, is_show_list):
+    """Add author in show list result.
+
+    @param author_data:
+    @param stt_key:
+    @param is_specify_newline_array:
+    @param s:
+    @param value:
+    @param data_result:
+    @param is_specify_newline:
+    @param is_hide:
+    @param is_show_list:
+    @return:
+    """
+    list_author_key = current_app.config[
+        'WEKO_RECORDS_AUTHOR_KEYS']
+    sub_author_key = s['key'].split('.')[-1]
+    if sub_author_key in current_app.config[
+            'WEKO_RECORDS_AUTHOR_NONE_LANG_KEYS']:
+        stt_key.append(sub_author_key)
+        is_specify_newline_array.append(
+            {sub_author_key: is_specify_newline})
+        data_result.update({
+            sub_author_key: {sub_author_key: {
+                "value": [value]}}})
+    elif sub_author_key in list_author_key and sub_author_key in \
+            author_data and not is_hide and is_show_list:
+        stt_key.append(sub_author_key)
+        is_specify_newline_array.append(
+            {sub_author_key: is_specify_newline})
+        data_result.update({
+            sub_author_key: {sub_author_key: {
+                "value": author_data[sub_author_key]}}})
+    return stt_key, data_result, is_specify_newline_array
+
+
+def convert_bibliographic(data_sys_bibliographic):
+    """Add author in show list result.
+
+    @param data_sys_bibliographic:
+    @return:
+    """
+    list_data = []
+    for bibliographic_value in data_sys_bibliographic:
+        if bibliographic_value.get('title_attribute_name'):
+            list_data.append(
+                bibliographic_value.get('title_attribute_name'))
+        for magazine in bibliographic_value.get('magazine_attribute_name'):
+            for key in magazine:
+                list_data.append(key + ' ' + magazine[key])
+    return ", ".join(list_data)
+
+
+def add_biographic(sys_bibliographic, bibliographic_key, s, stt_key,
+                   data_result, is_specify_newline_array):
+    """Add author in show list result.
+
+    @param sys_bibliographic:
+    @param bibliographic_key:
+    @param is_specify_newline_array:
+    @param s:
+    @param stt_key:
+    @param data_result:
+    @return:
+    """
+    bibliographic = convert_bibliographic(
+        sys_bibliographic.get_bibliographic_list(True))
+    stt_key.append(bibliographic_key)
+    is_specify_newline_array.append({s['key']: True})
+    data_result.update({
+        bibliographic_key: {s['key']: {"value": [bibliographic]}}})
+
+    return stt_key, data_result, is_specify_newline_array
