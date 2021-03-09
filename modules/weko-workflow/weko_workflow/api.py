@@ -192,7 +192,7 @@ class Flow(object):
         with db.session.begin_nested():
             for order, action in enumerate(actions):
                 flowaction_filter = _FlowAction.query.filter_by(
-                    flow_id=flow_id, action_id=action.get('id'))
+                    id=action.get('workflow_flow_action_id', -1))
                 if action.get('action', None) == 'DEL':
                     flowaction_id = flowaction_filter.one_or_none().id
                     _FlowActionRole.query.filter_by(

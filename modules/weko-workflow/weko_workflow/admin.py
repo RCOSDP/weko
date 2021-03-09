@@ -79,6 +79,7 @@ class FlowSettingView(BaseView):
             abort(404)
         workflow = Flow()
         flow = workflow.get_flow_detail(flow_id)
+        specifed_properties = self.get_specifed_properties()
         return self.render(
             'weko_workflow/admin/flow_detail.html',
             flow_id=flow_id,
@@ -87,8 +88,28 @@ class FlowSettingView(BaseView):
             users=users,
             roles=roles,
             actions=flow.flow_actions,
-            action_list=actions
+            action_list=actions,
+            specifed_properties=specifed_properties
         )
+
+    @staticmethod
+    def get_specifed_properties():
+        from weko_records.api import ItemTypeProps
+        lang = current_i18n.language
+        properties_id = {
+            54: 'Advisor',
+            55: 'Guarantor'
+        }
+        specifed_properties = []
+        for x, y in properties_id.items():
+            prop = ItemTypeProps.get_record(x)
+            for item in prop.form.get('items', []):
+                if item.get('title') == "Mail Address":
+                    title_i18n = item.get('title_i18n')
+                    txt = title_i18n.get(lang)
+                    specifed_properties.append({'value': y, 'text': txt})
+                    break
+        return specifed_properties
 
     @staticmethod
     def update_flow(flow_id):

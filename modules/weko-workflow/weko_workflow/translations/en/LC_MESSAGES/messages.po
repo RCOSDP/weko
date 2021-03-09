@@ -483,3 +483,9 @@ msgstr ""
 
 msgid "Your session has timed out. Please login again."
 msgstr ""
+
+msgid "Specify property"
+msgstr "Specify property"
+
+msgid "Specify Property"
+msgstr "Specify Property"

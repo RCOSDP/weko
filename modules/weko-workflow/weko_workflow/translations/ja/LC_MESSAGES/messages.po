@@ -524,3 +524,9 @@ msgstr "このアクティビティのロックを解除してよろしいでし
 
 msgid "Your session has timed out. Please login again."
 msgstr "セッションが切れました。再度ログインしてください。"
+
+msgid "Specify property"
+msgstr "プロパティを指定"
+
+msgid "Specify Property"
+msgstr "プロパティを指定する"
