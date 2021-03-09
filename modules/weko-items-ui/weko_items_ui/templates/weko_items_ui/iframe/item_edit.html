@@ -356,7 +356,8 @@
     <div class="modal-dialog modal-xlg" role="document">
       <div class="modal-content">
         <div class="modal-body">
-          <app-author-search></app-author-search>
+          <app-author-search style="display: none;"></app-author-search>
+          {% include 'weko_workflow/record_detail.html' %}
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" id="btnModalClose">

@@ -27,6 +27,7 @@
   {% assets "weko_items_ui_indextree_css" %}
   <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   <link href="/static/css/weko_workflow/style.css" rel="stylesheet">
+  {% assets "workflow_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -36,6 +37,7 @@
   {% assets "workflow_lock_activity_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_records_ui_preview_carousel_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "workflow_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
@@ -54,6 +56,8 @@
     {{ super() }}
   {%- endif%}
 {%- endblock page_footer %}
+
+{%- set items_show_list = record.items_show_list -%}
 
 {%- block page_body_main %}
 <div class="row" style="height:100%">
@@ -154,7 +158,7 @@
                   <label>{{_('Item')}}</label>
                </div>
                <div class="col-xs-11 col-md-11 col-lg-11">
-                   <a href="#" id="lnk_item_detail">{{item.get('title_ja') if item}}</a>
+                   <a href="#" id="lnk_item_detail">{{item.get('title') if item}}</a>
                </div>
           </div>
         </div>
