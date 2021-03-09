@@ -103,3 +103,6 @@ WEKO_GRIDLAYOUT_BUCKET_UUID = "517f7d98-ab2c-4736-91ea-54ba34e7905d"
 
 WEKO_GRIDLAYOUT_FILE_MAX_SIZE = 1024 * 1024 * 16  # 16 MB
 """Allowed file size for the widget static files."""
+
+WEKO_GRIDLAYOUT_WIDGET_ITEM_LOCK_KEY = "locked_widget_key_{}"
+"""Widget item lock key."""

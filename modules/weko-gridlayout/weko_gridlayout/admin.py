@@ -23,6 +23,7 @@
 import copy
 import json
 from collections import namedtuple
+from datetime import datetime
 from math import ceil
 
 from flask import current_app, flash, redirect, request
@@ -251,7 +252,19 @@ class WidgetSettingView(ModelView):
 
         id_list = helpers.get_mdict_item_or_list(request.args, 'id')
 
-        widget_data = convert_widget_data_to_dict(self.get_one(id_list))
+        # Check Edit widget is locked by other user.
+        locked_widget = WidgetItemServices.get_locked_widget_info(
+            id_list)
+        if isinstance(locked_widget, WidgetItem):
+            locked, locked_time = locked_widget.locked, \
+                locked_widget.updated
+            return self.render(
+                config.WEKO_GRIDLAYOUT_ADMIN_EDIT_WIDGET_SETTINGS,
+                model={},
+                return_url=return_url, locked=locked)
+
+        widget_data_from_db = self.get_one(id_list)
+        widget_data = convert_widget_data_to_dict(widget_data_from_db)
         multi_lang_data = WidgetMultiLangData.get_by_widget_id(id_list)
         converted_data = convert_data_to_design_pack(
             widget_data,
@@ -261,9 +274,20 @@ class WidgetSettingView(ModelView):
             flash(gettext('Record does not exist.'), 'error')
             return redirect(return_url)
 
+        if isinstance(locked_widget, str):
+            locked_value = locked_widget
+            locked = True
+        else:
+            locked = False
+            locked_value = str(datetime.utcnow().timestamp())
+            WidgetItemServices.lock_widget(widget_id=id_list,
+                                           locked_value=locked_value)
         return self.render(config.WEKO_GRIDLAYOUT_ADMIN_EDIT_WIDGET_SETTINGS,
                            model=json.dumps(model),
-                           return_url=return_url)
+                           return_url=return_url,
+                           locked_value=locked_value,
+                           locked=locked
+                           )
 
     @contextfunction
     def get_detail_value(self, context, model, name):
@@ -411,7 +435,7 @@ class WidgetSettingView(ModelView):
             [true] -- [it isn't being used in widget design]
 
         """
-        if WidgetDesignServices.validate_admin_widget_item_setting(
+        if WidgetDesignServices.is_used_in_widget_design(
                 model.widget_id):
             return False
         return True

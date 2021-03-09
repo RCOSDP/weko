@@ -176,33 +176,6 @@ def update_new_arrivals_item(item, data_result):
     item['rss_feed'] = data_result.get('rss_feed')
 
 
-def validate_admin_widget_item_setting(widget_id):
-    """Validate widget item.
-
-    :param: widget id
-    :return: true if widget item is used in widget design else return false
-    """
-    try:
-        if (type(widget_id)) is dict:
-            repository_id = widget_id.get('repository')
-            widget_item_id = widget_id.get('id')
-        else:
-            repository_id = widget_id.repository_id
-            widget_item_id = widget_id.id
-        data = WidgetDesignSetting.select_by_repository_id(
-            repository_id)
-        if data.get('settings'):
-            json_data = json.loads(data.get('settings')) if isinstance(
-                data.get('settings'), str) else data.get('settings')
-            for item in json_data:
-                if str(item.get('widget_id')) == str(widget_item_id):
-                    return True
-        return False
-    except Exception as e:
-        current_app.logger.error('Failed to validate record: ', e)
-        return True
-
-
 def get_default_language():
     """Get default Language.
 
@@ -271,6 +244,8 @@ def build_data(data):
     result['multiLangSetting'] = multi_lang_data
 
     result['is_deleted'] = False
+    result['locked'] = False
+    result['locked_by_user'] = None
     return result
 
 
@@ -411,6 +386,7 @@ def convert_widget_data_to_dict(widget_data):
     result['settings'] = settings
     result['is_enabled'] = widget_data.is_enabled
     result['is_deleted'] = widget_data.is_deleted
+    result['updated'] = widget_data.updated.timestamp()
     return result
 
 
@@ -456,6 +432,7 @@ def convert_data_to_design_pack(widget_data, list_multi_lang_data):
     result['widget_type'] = widget_data.get('widget_type')
     result['is_enabled'] = widget_data.get('is_enabled')
     result['is_deleted'] = widget_data.get('is_deleted')
+    result['updated'] = widget_data.get('updated')
 
     multi_lang_setting = dict()
     for data in list_multi_lang_data:
@@ -493,6 +470,7 @@ def convert_data_to_edit_pack(data):
     result['multiLangSetting'] = settings.get('multiLangSetting')
     result['repository_id'] = data.get('repository_id')
     result['widget_type'] = data.get('widget_type')
+    result['updated'] = data.get('updated')
     if (str(data.get('widget_type'))
             == config.WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE):
         result_settings['access_counter'] = settings.get('access_counter')
@@ -935,10 +913,10 @@ def delete_widget_cache(repository_id, page_id=None):
         current_app.config['CACHE_REDIS_URL']))
     if page_id:
         cache_key = ("*" + config.WEKO_GRIDLAYOUT_WIDGET_PAGE_CACHE_KEY
-                     + repository_id + "_" + page_id + "_*")
+                     + str(repository_id) + "_" + str(page_id) + "_*")
     else:
         cache_key = ("*" + config.WEKO_GRIDLAYOUT_WIDGET_CACHE_KEY
-                     + repository_id + "_*")
+                     + str(repository_id) + "_*")
 
     for key in cache_store.redis.scan_iter(cache_key):
         cache_store.redis.delete(key)
@@ -1019,9 +997,12 @@ class WidgetBucket:
             "duplicated": False,
             "url": "",
             "msg": "OK",
+            "mimetype": mimetype,
+            "file_name": file_name,
         }
         file_bucket = Bucket.query.get(self.bucket_id)
         key = "{0}_{1}".format(community_id, file_name)
+        root_url = request.host_url
         try:
             file_stream.seek(SEEK_SET, SEEK_END)  # Seek from beginning to end
             file_size = file_stream.tell()
@@ -1033,9 +1014,8 @@ class WidgetBucket:
                         mimetype=mimetype
                     )
                 db.session.commit()
-                rtn["url"] = "/widget/uploaded/{}/{}".format(
-                    file_name,
-                    community_id
+                rtn["url"] = "{}widget/uploaded/{}/{}".format(
+                    root_url, file_name, community_id
                 )
                 return rtn
         except UnexpectedFileSizeError as error:
@@ -1048,9 +1028,8 @@ class WidgetBucket:
             rtn['status'] = False
             rtn['duplicated'] = True
             rtn['msg'] = str(error.errors)
-            rtn["url"] = "/widget/uploaded/{}/{}".format(
-                file_name,
-                community_id
+            rtn["url"] = "{}widget/uploaded/{}/{}".format(
+                root_url, file_name, community_id
             )
             return rtn
 
@@ -1066,3 +1045,20 @@ class WidgetBucket:
         if not obj:
             abort(404, '{} does not exists.'.format(file_name))
         return obj.send_file(trusted=True)
+
+
+def validate_upload_file(community_id: str):
+    """Validate upload file.
+
+    @param community_id:
+    @return:
+    """
+    if 'file' not in request.files:
+        return _("No file part")
+    file = request.files['file']
+    if file.filename == '':
+        return _("No selected file")
+    community_id = community_id.split("@")
+    if len(community_id) > 1 and community_id[0] == '0':
+        return _("Repository is required!")
+    return ""
