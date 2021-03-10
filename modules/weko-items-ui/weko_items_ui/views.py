@@ -46,7 +46,8 @@ from weko_records.api import ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
 from weko_workflow.api import GetCommunity, WorkActivity
-from weko_workflow.utils import check_an_item_is_locked, prepare_edit_workflow
+from weko_workflow.utils import check_an_item_is_locked, prepare_edit_workflow, \
+    get_record_by_root_ver
 from werkzeug.utils import import_string
 
 from .permissions import item_permission
@@ -354,7 +355,6 @@ def items_index(pid_value='0'):
         # Get the design for widget rendering
         page, render_widgets = get_design_layout(
             current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
-
         if request.method == 'GET':
             return render_template(
                 current_app.config['WEKO_ITEMS_UI_INDEX_TEMPLATE'],
@@ -436,6 +436,9 @@ def iframe_items_index(pid_value='0'):
             page, render_widgets = get_design_layout(
                 community_id
                 or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+            root_record = None
+            if pid_value is not None:
+                root_record = get_record_by_root_ver(pid_value)
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
                 page=page,
@@ -447,7 +450,7 @@ def iframe_items_index(pid_value='0'):
                 steps=session['itemlogin_steps'],
                 action_id=session['itemlogin_action_id'],
                 cur_step=session['itemlogin_cur_step'],
-                record=session['itemlogin_record'],
+                record=root_record,
                 histories=session['itemlogin_histories'],
                 res_check=session['itemlogin_res_check'],
                 pid=session['itemlogin_pid'],

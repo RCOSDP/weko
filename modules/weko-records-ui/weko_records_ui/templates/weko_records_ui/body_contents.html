@@ -241,7 +241,7 @@
                             {%- if not 'simple' in file.displaytype -%}
                             {%- if 'license_free' == file.licensetype -%}
                               {% autoescape false %}
-                              <div id="square" style="width: 1px; height: 1px; border-style: groove;"></div>
+                              <div id="square" style="width: 1px; height: 1px; border-style: groove; border-color: transparent;"></div>
                               <span class="break-word">{{ file.licensefree | escape_str }}</span>
                               {% endautoescape %}
                             {%- else %}
