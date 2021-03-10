@@ -55,6 +55,7 @@ from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.utils import get_list_licence
 from werkzeug.utils import import_string
+from weko_workflow.utils import get_record_by_root_ver
 
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
@@ -147,10 +148,12 @@ def iframe_success():
     steps = session['itemlogin_steps']
     action_id = session['itemlogin_action_id']
     cur_step = session['itemlogin_cur_step']
-    record = session['itemlogin_record']
     res_check = session['itemlogin_res_check']
     pid = session['itemlogin_pid']
     community_id = session.get('itemlogin_community_id')
+    record = None
+    if item is not None and "pid" in item and "value" in item["pid"]:
+        record = get_record_by_root_ver(item['pid']['value'])
 
     ctx = {'community': None}
     if community_id:
@@ -371,6 +374,7 @@ def display_activity(activity_id=0):
     show_autofill_metadata = True
     is_hidden_pubdate_value = False
     item_type_name = get_item_type_name(workflow_detail.itemtype_id)
+    itemLink_record = None
 
     if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
         activity_session = dict(
@@ -468,6 +472,10 @@ def display_activity(activity_id=0):
         item_link = ItemLink.get_item_link_info(pid_without_ver)
         ctx['item_link'] = item_link
 
+    if item is not None and 'pid' in item and 'value' in item['pid']:
+        itemLink_record = get_record_by_root_ver(item['pid']['value'])
+        item["title"] = itemLink_record["title"][0]
+
     return render_template(
         'weko_workflow/activity_detail.html',
         page=page,
@@ -484,7 +492,8 @@ def display_activity(activity_id=0):
         idf_grant_data=identifier_setting,
         idf_grant_input=IDENTIFIER_GRANT_LIST,
         idf_grant_method=IDENTIFIER_GRANT_SUFFIX_METHOD,
-        record=approval_record,
+        record=itemLink_record,
+        record_after_update=approval_record,
         records=record,
         step_item_login_url=step_item_login_url,
         need_file=need_file,

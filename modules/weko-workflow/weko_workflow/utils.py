@@ -1630,3 +1630,12 @@ def check_existed_doi(doi_link):
             respon['msg'] = _('success')
         respon['code'] = 0
     return respon
+
+
+def get_record_by_root_ver(pid_value):
+    from weko_deposit.api import WekoRecord
+    if pid_value is not None:
+        if '.' in pid_value:
+            pid_value = pid_value.split('.')[0]
+        record = WekoRecord.get_record_by_pid(pid_value)
+    return record
