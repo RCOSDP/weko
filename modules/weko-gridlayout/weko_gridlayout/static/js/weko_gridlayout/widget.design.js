@@ -1157,6 +1157,7 @@ function addWidget() {
         disableFooterButton(true);
       }
       removeWidget();
+      editWidget();
     });
   });
 

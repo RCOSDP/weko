@@ -746,10 +746,6 @@ const ComponentFieldEditor = function (props) {
     image: {
       dropdown: ["insertImage", "upload"],
       ico: "insertImage"
-    },
-    align: {
-      dropdown: ['justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull'],
-      ico: 'justifyLeft'
     }
   };
 
@@ -1490,7 +1486,7 @@ class ComponentButtonLayout extends React.Component {
           if (isModalMode()) {
             window.close();
           } else if (_this.props.is_edit) {
-            window.location = this.props.return_url;
+            window.location = _this.props.return_url;
           }
         } else {
           let errorMessage = result.message;
@@ -2285,10 +2281,6 @@ $(function () {
     unlockEditPage();
   }
 
-  // Collapse sidebar when open Edit page in window mode.
-  if (isModalMode()) {
-    $("body").addClass("sidebar-collapse");
-  }
 });
 
 /**
