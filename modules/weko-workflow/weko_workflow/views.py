@@ -67,16 +67,10 @@ from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
 from .models import ActionStatusPolicy, Activity, ActivityAction
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import IdentifierHandle, check_existed_doi, delete_cache_data, \
-    filter_condition, get_account_info, get_actionid, \
-    get_activity_id_of_record_without_version, get_cache_data, \
-    get_identifier_setting, handle_finish_workflow, is_hidden_pubdate, \
-    is_show_autofill_metadata, item_metadata_validation, register_hdl, \
-    saving_doi_pidstore, update_cache_data
 from .utils import IdentifierHandle, auto_fill_title, check_continue, \
-    delete_cache_data, delete_guest_activity, filter_all_condition, \
-    get_account_info, get_actionid, get_activity_display_info, \
-    get_activity_id_of_record_without_version, \
+    check_existed_doi, delete_cache_data, delete_guest_activity, \
+    filter_all_condition, get_account_info, get_actionid, \
+    get_activity_display_info, get_activity_id_of_record_without_version, \
     get_application_and_approved_date, get_cache_data, \
     get_identifier_setting, get_term_and_condition_content, \
     get_workflow_item_type_names, handle_finish_workflow, \
