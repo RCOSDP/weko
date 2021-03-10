@@ -582,3 +582,9 @@ msgstr "メールアドレス（確認用）"
 
 msgid "Token is invalid."
 msgstr "トークンが無効です。"
+
+msgid "The expiration date for download has been exceeded."
+msgstr "ダウンロード有効期限を超過しています。"
+
+msgid "The download limit has been exceeded."
+msgstr "ダウンロード制限回数を超過しています。"

@@ -45,7 +45,7 @@ from .utils import FeedbackMail, StatisticMail, format_site_info_data, \
     get_current_api_certification, get_init_display_index, \
     get_initial_stats_report, get_search_setting, get_selected_language, \
     get_unit_stats_report, save_api_certification, update_admin_lang_setting, \
-    validate_certification, validation_site_info
+    update_restricted_access, validate_certification, validation_site_info
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -570,3 +570,20 @@ def get_search_init_display_index(selected_index=None):
     """
     indexes = get_init_display_index(selected_index)
     return jsonify(indexes=indexes)
+
+
+@blueprint_api.route("/restricted_access/save", methods=['POST'])
+def save_restricted_access():
+    """Save registered access settings.
+
+    :return:
+    """
+    result = {
+        "status": True,
+        "msg": _("Update successfully.")
+    }
+    restricted_access = request.get_json()
+    if not update_restricted_access(restricted_access):
+        result['status'] = False
+        result['msg'] = _("Could not save data.")
+    return jsonify(result), 200

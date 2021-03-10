@@ -1182,3 +1182,19 @@ msgstr "初期表示インデックス"
 #: weko_admin/template/weko_admin/admin/search_management_setting.html
 msgid "An index which is not open in public cannot be selected"
 msgstr "非公開インデックス以下は選択できません"
+
+#: weko_admin/templates/weko_admin/admin/rest_settings.html:52
+msgid "Content File Download"
+msgstr "コンテンツファイルのダウンロード"
+
+#: weko_admin/templates/weko_admin/admin/rest_settings.html:53
+msgid "Expiration Date"
+msgstr "有効期限日数"
+
+#: weko_admin/templates/weko_admin/admin/rest_settings.html:64
+msgid "Download Limit"
+msgstr "ダウンロード回数"
+
+#: weko_admin/templates/weko_admin/admin/rest_settings.html:65
+msgid "Unlimited"
+msgstr "無制限にする"

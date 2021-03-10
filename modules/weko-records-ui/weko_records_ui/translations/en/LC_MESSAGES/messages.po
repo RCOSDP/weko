@@ -1356,3 +1356,9 @@ msgstr ""
 
 msgid "Token is invalid."
 msgstr ""
+
+msgid "The expiration date for download has been exceeded."
+msgstr ""
+
+msgid "The download limit has been exceeded."
+msgstr ""
