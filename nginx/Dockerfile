@@ -59,6 +59,7 @@ ADD ./keys/server.key /etc/nginx/server.key
 ADD ./idp-metadata.xml /etc/shibboleth/idp-metadata.xml
 ADD ./htpasswd /etc/nginx/.htpasswd
 ADD ./htdigest /etc/nginx/.htdigest
+ADD redirect_list.map /etc/nginx/redirect_list.map
 
 RUN chmod 400 /etc/nginx/server.key
 
