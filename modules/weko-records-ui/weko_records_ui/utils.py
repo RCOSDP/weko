@@ -30,6 +30,7 @@ from flask import current_app, request
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role
+from invenio_cache import current_cache
 from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -39,7 +40,6 @@ from weko_admin.models import AdminSettings
 from weko_deposit.api import WekoDeposit
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
-from weko_workflow.utils import check_an_item_is_locked
 from weko_workflow.api import WorkFlow
 
 from .models import FileOnetimeDownload, FilePermission
@@ -177,6 +177,26 @@ def is_billing_item(item_type_id):
 
 def soft_delete(recid):
     """Soft delete item."""
+    def get_cache_data(key: str):
+        """Get cache data.
+
+        :param key: Cache key.
+
+        :return: Cache value.
+        """
+        return current_cache.get(key) or str()
+
+    def check_an_item_is_locked(item_id=None):
+        """Check if an item is locked.
+
+        :param item_id: Item id.
+
+        :return
+        """
+        locked_data = get_cache_data('item_ids_locked') or dict()
+        ids = locked_data.get('ids', set())
+        return item_id in ids
+
     try:
         pid = PersistentIdentifier.query.filter_by(
             pid_type='recid', pid_value=recid).first()
