@@ -20,36 +20,86 @@
 
 """Module of weko-workflow utils."""
 
+import base64
+import os
 from copy import deepcopy
-from datetime import datetime
+from datetime import date, datetime, timedelta
+from typing import NoReturn, Tuple, Union
 
-from flask import current_app, request
+from flask import current_app, request, session
 from flask_babelex import gettext as _
+from flask_security import current_user
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
+from invenio_i18n.ext import current_i18n
+from invenio_mail.admin import MailSettingView
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
 from invenio_records.models import RecordMetadata
 from invenio_records_files.models import RecordsBuckets
+from passlib.handlers.oracle import oracle10
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm.exc import NoResultFound
 from weko_admin.models import Identifier
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
 from weko_index_tree.models import Index
-from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypes, \
-    Mapping
-from weko_records.serializers.utils import get_mapping
+from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
+    ItemTypes, Mapping
+from weko_records.serializers.utils import get_item_type_name, get_mapping
+from weko_records_ui.utils import get_list_licence
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
+from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+    WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
 
-from weko_workflow.config import IDENTIFIER_GRANT_LIST
+from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
+    IDENTIFIER_GRANT_SUFFIX_METHOD
 
-from .api import UpdateItem, WorkActivity
+from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
+    WorkFlow
 from .config import IDENTIFIER_GRANT_SELECT_DICT, WEKO_SERVER_CNRI_HOST_LINK
 from .models import Action as _Action
+from .models import ActionStatusPolicy, ActivityStatusPolicy, GuestActivity
+
+
+def get_current_language():
+    """Get current language.
+
+    :return:
+    """
+    current_lang = current_i18n.language
+    # In case current_lang is not English
+    # neither Japanese set default to English
+    languages = current_app.config[
+        'WEKO_WORKFLOW_TERM_AND_CONDITION_FILE_LANGUAGES']
+    if current_lang not in languages:
+        current_lang = 'en'
+    return current_lang
+
+
+def get_term_and_condition_content(item_type_name):
+    """Read data of term and condition base on language and item_type_name.
+
+    :param item_type_name:
+    :return:
+    """
+    file_extension = current_app.config[
+        'WEKO_WORKFLOW_TERM_AND_CONDITION_FILE_EXTENSION']
+    folder_path = current_app.config[
+        'WEKO_WORKFLOW_TERM_AND_CONDITION_FILE_LOCATION']
+    current_lang = get_current_language()
+    file_name = item_type_name + "_" + current_lang + file_extension
+    data = ""
+    try:
+        with open(folder_path + file_name) as file:
+            data = file.read().splitlines()
+    except FileNotFoundError as ex:
+        current_app.logger.error(str(ex))
+    return data
 
 
 def get_identifier_setting(community_id):
@@ -664,7 +714,7 @@ def get_activity_id_of_record_without_version(pid_object=None):
 
 
 def check_suffix_identifier(idt_regis_value, idt_list, idt_type_list):
-    """Check prefix/suffiex in Identifier Registration contain in Identifier.
+    """Check prefix/suffix in Identifier Registration contain in Identifier.
 
     Arguments:
         idt_regis_value -- {string array} Identifier Registration value
@@ -763,7 +813,7 @@ class IdentifierHandle(object):
     metadata_mapping = None
 
     def __init__(self, item_id):
-        """Initilize IdentifierHandle."""
+        """Initialize IdentifierHandle."""
         self.item_uuid = item_id
         self.metadata_mapping = MappingData(item_id)
         self.item_type_id = self.metadata_mapping.get_data_item_type().id
@@ -917,8 +967,6 @@ class IdentifierHandle(object):
 
     def get_idt_registration_data(self):
         """Get Identifier Registration data.
-
-        Arguments:
 
         Returns:
             doi_value -- {string} Identifier
@@ -1137,6 +1185,23 @@ def get_parent_pid_with_type(pid_type, object_uuid):
     except PIDDoesNotExistError as pid_not_exist:
         current_app.logger.error(pid_not_exist)
         return None
+
+
+def filter_all_condition(all_args):
+    """
+    Filter conditions.
+
+    :param all_args:
+    :return:
+    """
+    conditions = {}
+    list_key_condition = current_app.config.get('WEKO_WORKFLOW_FILTER_PARAMS',
+                                                [])
+    for args in all_args:
+        for key in list_key_condition:
+            if key in args:
+                filter_condition(conditions, key, request.args.get(args))
+    return conditions
 
 
 def filter_condition(json, name, condition):
@@ -1562,3 +1627,1270 @@ def get_url_root():
     """
     site_url = current_app.config['THEME_SITEURL'] + '/'
     return request.url_root if request else site_url
+
+
+def is_usage_application_item_type(activity_detail):
+    """Check whether item type is in Usage Application item types.
+
+    :param activity_detail:
+    :return:
+    """
+    workflow = WorkFlow()
+    workflow_detail = workflow.get_workflow_by_id(
+        activity_detail.workflow_id)
+    item_type = get_item_type_name(workflow_detail.itemtype_id)
+    item_type_list = current_app.config[
+        'WEKO_ITEMS_UI_APPLICATION_ITEM_TYPES_LIST']
+    if item_type in item_type_list:
+        return True
+    else:
+        return False
+
+
+def is_usage_application(activity_detail):
+    """Check whether item type is in Usage Application item types.
+
+    :param activity_detail:
+    :return:
+    """
+    workflow = WorkFlow()
+    workflow_detail = workflow.get_workflow_by_id(
+        activity_detail.workflow_id)
+
+    item_type = get_item_type_name(workflow_detail.itemtype_id)
+    item_type_list = current_app.config[
+        'WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPES_LIST']
+    if item_type in item_type_list:
+        return True
+    else:
+        return False
+
+
+def send_mail_reminder(mail_info):
+    """Send mail reminder.
+
+    :mail_info: object
+    """
+    subject, body = get_mail_data(mail_info.get('template'))
+    if not body:
+        raise ValueError('Cannot get email template')
+    body = replace_characters(mail_info, body)
+    if not send_mail(subject, mail_info.get('mail_address'), body):
+        raise ValueError('Cannot send mail')
+
+
+def send_mail_approval_done(mail_info):
+    """Send mail approval done.
+
+    :mail_info: object
+    """
+    subject, body = email_pattern_approval_done(
+        mail_info.get('item_type_name'))
+    if body and subject:
+        body = replace_characters(mail_info, body)
+        send_mail(subject, mail_info.get('register_user_mail'), body)
+
+
+def send_mail_registration_done(mail_info):
+    """Send mail registration done.
+
+    :mail_info: object
+    """
+    from weko_items_ui.utils import get_current_user_role
+    role = get_current_user_role()
+    item_type_name = mail_info.get('item_type_name')
+    subject, body = email_pattern_registration_done(role, item_type_name)
+    if body and subject:
+        body = replace_characters(mail_info, body)
+        send_mail(subject, mail_info.get('register_user_mail'), body)
+
+
+def send_mail_request_approval(mail_info):
+    """Send mail request approval.
+
+    :mail_info: object
+    """
+    if mail_info:
+        approver_mail = subject = body = None
+        next_step = mail_info.get('next_step')
+        if next_step == 'approval_advisor':
+            approver_mail = mail_info.get('advisor_mail')
+        elif next_step == 'approval_guarantor':
+            approver_mail = mail_info.get('guarantor_mail')
+        if approver_mail:
+            subject, body = email_pattern_request_approval(
+                mail_info.get('item_type_name'), next_step)
+        if body and subject:
+            subject = replace_characters(mail_info, subject)
+            body = replace_characters(mail_info, body)
+            send_mail(subject, approver_mail, body)
+
+
+def send_mail(subject, recipient, body):
+    """Send an email via the Flask-Mail extension.
+
+    :subject: Email subject
+    :recipient: Email recipient
+    :body: content of email
+    """
+    if recipient:
+        rf = {
+            'subject': subject,
+            'body': body,
+            'recipient': recipient
+        }
+        return MailSettingView.send_statistic_mail(rf)
+
+
+def email_pattern_registration_done(user_role, item_type_name):
+    """Email pattern registration done.
+
+    :user_role: object
+    :item_type_name: object
+    """
+    current_config = current_app.config
+    perfectures_item_type = current_config.get(
+        "WEKO_ITEMS_UI_APPLICATION_FOR_PERFECTURES")
+    location_information_item_type = current_config.get(
+        "WEKO_ITEMS_UI_APPLICATION_FOR_LOCATION_INFORMATION")
+    output_registration_item_type = current_config.get(
+        "WEKO_ITEMS_UI_OUTPUT_REPORT")
+    usage_report_item_type = current_config.get(
+        "WEKO_ITEMS_UI_USAGE_REPORT")
+    item_type_list = current_config.get(
+        "WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPES_LIST")
+    general_role = current_config.get("WEKO_USERPROFILES_GENERAL_ROLE")
+    student_role = current_config.get("WEKO_USERPROFILES_STUDENT_ROLE")
+    graduated_student_role = current_config.get(
+        "WEKO_USERPROFILES_GRADUATED_STUDENT_ROLE")
+
+    group = [perfectures_item_type, location_information_item_type]
+    """Check itemtype name"""
+    if item_type_name not in item_type_list:
+        if item_type_name == output_registration_item_type:
+            return get_mail_data(
+                current_config.get("WEKO_WORKFLOW_RECEIVE_OUTPUT_REGISTRATION"))
+        elif item_type_name == usage_report_item_type:
+            return get_mail_data(
+                current_config.get("WEKO_WORKFLOW_RECEIVE_USAGE_REPORT"))
+        return None, None
+    if user_role and user_role == general_role:
+        if item_type_name not in group:
+            return get_mail_data(
+                current_config.get("WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE"
+                                   "_PERFECTURE_AND_LOCATION_DATA_OF"
+                                   "_GENERAL_USER"))
+        elif item_type_name in group:
+            return get_mail_data(
+                current_config.get("WEKO_WORKFLOW_PERFECTURE_OR_LOCATION_DATA"
+                                   "_OF_GENERAL_USER"))
+    elif user_role and user_role in [graduated_student_role, student_role]:
+        if item_type_name not in group:
+            return get_mail_data(
+                current_config.get("WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE"
+                                   "_PERFECTURE_AND_LOCATION_DATA_OF_STUDENT_OR"
+                                   "_GRADUATED_STUDENT"))
+        elif item_type_name in group:
+            return get_mail_data(
+                current_config.get("WEKO_WORKFLOW_PERFECTURE_OR_LOCATION_DATA"
+                                   "_OF_STUDENT_OR_GRADUATED_STUDENT"))
+    return None, None
+
+
+def email_pattern_request_approval(item_type_name, next_action):
+    """Get mail pattern when request approval.
+
+    :item_type_name: object
+    :next_action: object
+    """
+    config = current_app.config
+    if item_type_name not in config.get(
+            'WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPES_LIST'):
+        return None, None
+    if next_action == 'approval_guarantor':
+        return get_mail_data(config.get(
+            "WEKO_WORKFLOW_REQUEST_APPROVAL_TO_GUARANTOR_OF_USAGE_APP"))
+    if next_action == 'approval_advisor':
+        return get_mail_data(config.get(
+            "WEKO_WORKFLOW_REQUEST_APPROVAL_TO_ADVISOR_OF_USAGE_APP"))
+
+
+def email_pattern_approval_done(item_type_name):
+    """Get mail pattern when approval done.
+
+    :item_type_name: item type name
+    """
+    config = current_app.config
+    if item_type_name not in config.get(
+            'WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPES_LIST'):
+        if item_type_name == config.get("WEKO_ITEMS_UI_OUTPUT_REPORT"):
+            return get_mail_data(
+                config.get("WEKO_WORKFLOW_APPROVE_OUTPUT_REGISTRATION"))
+        elif item_type_name == config.get("WEKO_ITEMS_UI_USAGE_REPORT"):
+            return get_mail_data(
+                config.get("WEKO_WORKFLOW_APPROVE_USAGE_REPORT"))
+        return None, None
+    if item_type_name != config.get(
+            'WEKO_ITEMS_UI_APPLICATION_FOR_LOCATION_INFORMATION'):
+        return get_mail_data(config.get(
+            "WEKO_WORKFLOW_APPROVE_USAGE_APP_BESIDE_LOCATION_DATA"))
+    else:
+        return get_mail_data(config.get(
+            "WEKO_WORKFLOW_APPROVE_LOCATION_DATA"))
+
+
+def get_mail_data(file_name):
+    """Get data of a email.
+
+    :file_name: file name template
+    """
+    file_path = get_file_path(file_name)
+    return get_subject_and_content(file_path)
+
+
+def get_subject_and_content(file_path):
+    """Get mail subject and content from template file.
+
+    :file_path: this is a full path
+    """
+    import os
+    if not os.path.exists(file_path):
+        return None, None
+    file = open(file_path, 'r')
+    subject = body = ''
+    index = 0
+    """ Get subject and content body from template file """
+    """ The first line is mail subject """
+    """ Exclude the first line is mail content """
+    for line in file:
+        if index == 0:
+            subject = line
+        else:
+            body += line
+        index += 1
+    """ Custom subject (remove 'Subject：' from subject) """
+    subject = subject.replace('Subject：', '')
+    subject = subject.replace('\n', '')
+    return subject, body
+
+
+def get_file_path(file_name):
+    """Get file path from file name.
+
+    :file_name: file name
+    """
+    config = current_app.config
+    template_folder_path = \
+        config.get("WEKO_WORKFLOW_MAIL_TEMPLATE_FOLDER_PATH")
+
+    # Get file path (template path + file name)
+    if template_folder_path is not None and file_name is not None:
+        return os.path.join(template_folder_path, file_name)
+    else:
+        return ""
+
+
+def replace_characters(data, content):
+    """Replace character for content.
+
+    :data:
+    :content data:
+    """
+    replace_list = {
+        '[1]': 'university_institution',
+        '[2]': 'fullname',
+        '[3]': 'activity_id',
+        '[4]': 'mail_address',
+        '[5]': 'research_title',
+        '[6]': 'dataset_requested',
+        '[7]': 'register_date',
+        '[8]': 'advisor_name',
+        '[9]': 'guarantor_name',
+        '[10]': 'url',
+        '[11]': 'advisor_affilication',
+        '[12]': 'guarantor_affilication',
+        '[13]': 'approval_date',
+        '[14]': 'approval_date_after_7_days',
+        '[15]': '31_march_corresponding_year',
+        '[16]': 'report_number',
+        '[17]': 'registration_number',
+        '[18]': 'output_registration_title',
+        '[19]': 'url_guest_user'
+    }
+    for key in replace_list:
+        value = replace_list.get(key)
+        if data.get(value):
+            content = content.replace(key, data.get(value))
+        else:
+            content = content.replace(key, '')
+    return content
+
+
+def get_register_info(activity_id):
+    """Get register info.
+
+    :activity_id: object
+    """
+    history = WorkActivityHistory()
+    histories = history.get_activity_history_list(activity_id)
+    date_format_str = current_app.config['WEKO_WORKFLOW_DATE_FORMAT']
+    for activity_history in histories:
+        if 'Item Registration' in activity_history.ActionName[0] and \
+                activity_history.StatusDesc == 'action_done':
+            return activity_history.user.email, \
+                activity_history.action_date.strftime(date_format_str)
+
+    return current_user.email, datetime.today().strftime(date_format_str)
+
+
+def get_approval_dates(mail_info):
+    """Get approval date.
+
+    :mail_info: object
+    """
+    today = datetime.today()
+    date_format_str = current_app.config['WEKO_WORKFLOW_DATE_FORMAT']
+    mail_info['approval_date'] = today.strftime(date_format_str)
+    mail_info['approval_date_after_7_days'] = \
+        (today + timedelta(days=7)).strftime(date_format_str)
+    year = today.year
+    if today.month >= 1 and today.day >= 4:
+        year = today.year + 1
+    mail_info['31_march_corresponding_year'] = str(year) + '-03-31'
+
+
+def get_item_info(item_id):
+    """Get item info.
+
+    :item_id: item id
+    """
+    try:
+        item = ItemsMetadata.get_record(id_=item_id)
+    except Exception as ex:
+        current_app.logger.exception('Cannot get item data:', ex)
+        temp = dict()
+        return temp
+    item_info = dict()
+    for k, v in item.items():
+        if isinstance(v, dict):
+            item_info.update(v)
+    return item_info
+
+
+def set_mail_info(item_info, activity_detail):
+    """Set main mail info.
+
+    :item_info: object
+    :activity_detail: object
+    """
+    register_user, register_date = \
+        get_register_info(activity_detail.activity_id)
+    mail_info = dict(
+        university_institution=item_info.get('subitem_university/institution'),
+        fullname=item_info.get('subitem_fullname'),
+        activity_id=activity_detail.activity_id,
+        mail_address=item_info.get('subitem_mail_address'),
+        research_title=item_info.get('subitem_research_title'),
+        dataset_requested=item_info.get('subitem_dataset_usage'),
+        register_date=register_date,
+        advisor_name=item_info.get('subitem_advisor_fullname'),
+        guarantor_name=item_info.get('subitem_guarantor_fullname'),
+        url=request.url_root,
+        advisor_affilication=item_info.get('subitem_advisor_affiliation'),
+        guarantor_affilication=item_info.get('subitem_guarantor_affiliation'),
+        advisor_mail=item_info.get('subitem_advisor_mail_address'),
+        guarantor_mail=item_info.get('subitem_guarantor_mail_address'),
+        register_user_mail=register_user,
+        report_number=activity_detail.activity_id,
+        registration_number=activity_detail.activity_id,
+        output_registration_title=item_info.get('subitem_title')
+    )
+    return mail_info
+
+
+def process_send_reminder_mail(activity_detail, mail_template):
+    """Process send reminder mail.
+
+    :activity_detail: object
+    :mail_template: string
+    """
+    item_info = get_item_info(activity_detail.item_id)
+    mail_info = set_mail_info(item_info, activity_detail)
+
+    from weko_items_ui.utils import get_user_information
+    update_user = get_user_information(activity_detail.activity_login_user)
+    if update_user.get('email') != '':
+        mail_info['mail_address'] = update_user.get('email')
+    else:
+        raise ValueError('Cannot get receiver mail address')
+
+    if update_user.get('fullname') != '':
+        mail_info['fullname'] = update_user.get('fullname')
+    mail_info['template'] = mail_template
+    try:
+        send_mail_reminder(mail_info)
+    except ValueError as val:
+        raise ValueError(val)
+
+
+def process_send_notification_mail(
+        activity_detail, action_endpoint, next_action_endpoint):
+    """Process send notification mail.
+
+    :activity_detail: object
+    :action_endpoint: object
+    :next_action_endpoint: object
+    """
+    item_info = get_item_info(activity_detail.item_id)
+    mail_info = set_mail_info(item_info, activity_detail)
+
+    workflow = WorkFlow()
+    workflow_detail = workflow.get_workflow_by_id(
+        activity_detail.workflow_id)
+    item_type_name = get_item_type_name(workflow_detail.itemtype_id)
+    mail_info['item_type_name'] = item_type_name
+    mail_info['next_step'] = next_action_endpoint
+    """ Set registration date to 'mail_info' """
+    get_approval_dates(mail_info)
+    if 'item_login' in action_endpoint:
+        """ Send mail for register to notify that registration is done"""
+        send_mail_registration_done(mail_info)
+    if 'approval_' in next_action_endpoint \
+            and 'administrator' not in next_action_endpoint:
+        """ Send mail for approver to request approval"""
+        send_mail_request_approval(mail_info)
+    if 'approval_administrator' in action_endpoint:
+        """ Send mail to register to notify
+            that registration is approved by admin """
+        send_mail_approval_done(mail_info)
+
+
+def get_application_and_approved_date(activities, columns):
+    """Get application and approved date.
+
+    @param activities:
+    @param columns:
+    """
+    if 'application_date' in columns or 'approved_date' in columns:
+        activities_id_list = []
+        for activity_data in activities:
+            activities_id_list.append(activity_data.activity_id)
+        application_date_dc = {}
+        approved_date_dc = {}
+        if activities_id_list:
+            activity_history = WorkActivityHistory()
+            application_dates = activity_history.get_application_date(
+                activities_id_list)
+            for data in application_dates:
+                application_date_dc[data.activity_id] = data.action_date
+
+            approved_date_list = activity_history.get_approved_date(
+                activities_id_list)
+            for data in approved_date_list:
+                approved_date_dc[data.get("activity_id")] = data.get(
+                    "action_date")
+
+        for item_activity in activities:
+            application_date = application_date_dc.get(
+                item_activity.activity_id)
+            approved_date = approved_date_dc.get(item_activity.activity_id)
+            item_activity.application_date = application_date
+            item_activity.approved_date = approved_date
+
+
+def get_workflow_item_type_names(activities: list):
+    """Get workflow item type names.
+
+    @param activities: Activity list.
+    """
+    workflow_id_lst = []
+    for activity in activities:
+        workflow_id_lst.append(activity.workflow_id)
+
+    if workflow_id_lst:
+        # Get Workflow list
+        workflows = WorkFlow().get_workflow_by_ids(workflow_id_lst)
+        item_type_id_lst = []
+        temp_workflow_item_type_id = {}
+        for data in workflows:
+            item_type_id_lst.append(data.itemtype_id)
+            temp_workflow_item_type_id[data.itemtype_id] = data.id
+
+        # Get item type list
+        item_type_name_list = ItemTypeNames.get_all_by_id(item_type_id_lst)
+        workflow_item_type_names = {}
+        for item_type_name in item_type_name_list:
+            for data in workflows:
+                if data.itemtype_id == item_type_name.id:
+                    workflow_item_type_names[data.id] = item_type_name.name
+
+        for activity in activities:
+            item_type_name = workflow_item_type_names.get(activity.workflow_id)
+            if item_type_name:
+                activity.item_type_name = item_type_name
+
+
+def create_usage_report(activity_id):
+    """Auto create usage report.
+
+    @param activity_id:
+    @return:
+    """
+    # Get activity
+    activity_detail = WorkActivity().get_activity_detail(activity_id)
+
+    _workflow = WorkFlow()
+    # Get WF detail
+    _workflow_detail = _workflow.get_workflow_by_id(activity_detail.workflow_id)
+    # Get usage report WF
+    usage_report_workflow = _workflow.find_workflow_by_name(
+        current_app.config['WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME'])
+    if not usage_report_workflow:
+        return None
+    else:
+        activity = dict(
+            workflow_id=usage_report_workflow.id,
+            flow_id=usage_report_workflow.flow_id
+        )
+        usage_report_activity_id = create_record_metadata(
+            activity, activity_detail.item_id, activity_id,
+            usage_report_workflow,
+            activity_detail.extra_info.get("related_title")
+        )
+        return usage_report_activity_id
+
+
+def create_record_metadata(
+    activity,
+    item_id,
+    activity_id,
+    usage_report_workflow,
+    related_title
+):
+    """Create record metadata for usage report.
+
+    @param activity:
+    @param item_id:
+    @param activity_id:
+    @param usage_report_workflow:
+    @param related_title:
+    @return:
+    """
+    rec = RecordMetadata.query.filter_by(id=item_id).first()
+    item_metadata = ItemsMetadata.get_record(id_=item_id).dumps()
+    item_metadata.pop('id', None)
+    record_metadata = rec.json
+    attribute_value_key = 'attribute_value_mlt'
+
+    # Usage reports approval by administrator only.
+    # Remove other approver from metadata.
+    item_metadata.pop('approval1', None)
+    item_metadata.pop('approval2', None)
+
+    data_dict = dict()
+    for item in record_metadata:
+        values = record_metadata.get(item)
+        if isinstance(values, dict) and attribute_value_key in values:
+            attribute = values.get(attribute_value_key)
+            if isinstance(attribute, list):
+                for data in attribute:
+                    for key in data:
+                        if key.startswith("subitem") and \
+                                key not in ['subitem_advisor_mail_address',
+                                            'subitem_guarantor_mail_address']:
+                            data_dict[key] = data.get(key)
+
+    item_type_id = usage_report_workflow.itemtype_id
+
+    schema = ItemTypes.get_by_id(item_type_id).schema
+    owner_id = current_user.get_id()
+    new_usage_report_activity = WorkActivity().init_activity(activity)
+    modify_item_metadata(
+        item_metadata,
+        item_type_id,
+        new_usage_report_activity.activity_id,
+        activity_id,
+        data_dict,
+        schema,
+        owner_id,
+        related_title
+    )
+
+    activity.update({'activity_id': new_usage_report_activity.activity_id})
+    activity['activity_login_user'] = owner_id
+    activity['activity_update_user'] = owner_id
+    activity['title'] = item_metadata['title']
+
+    WorkActivity().update_activity_action_handler(
+        new_usage_report_activity.activity_id, owner_id)
+
+    create_deposit(new_usage_report_activity.id)
+    pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid',
+        pid_value=str(new_usage_report_activity.id)
+    ).first()
+
+    record = WekoDeposit.get_record(pid.object_uuid)
+    deposit = WekoDeposit(record, record.model)
+    item_metadata['id'] = deposit['_deposit']['id']
+    item_metadata['pid']['value'] = deposit['_deposit']['id']
+
+    item_status = {
+        'index': [usage_report_workflow.index_tree_id],
+        'actions': 'publish',
+    }
+
+    deposit.update(item_status, item_metadata)
+
+    deposit.commit()
+    deposit.publish()
+
+    activity['item_id'] = deposit.id
+
+    first_ver = deposit.newversion(pid)
+    if first_ver:
+        first_ver.publish()
+
+    update_activity_action(activity.get('activity_id'), owner_id)
+
+    WorkActivity().update_activity(activity.get('activity_id'), activity)
+    db.session.commit()
+    return new_usage_report_activity.activity_id
+
+
+def modify_item_metadata(
+    item,
+    item_type_id,
+    activity_id,
+    usage_application_activity_id,
+    data_dict,
+    schema, owner_id,
+    related_title
+):
+    """Mapping usage application data to usage report."""
+    if not item:
+        return None
+
+    item['$schema'] = 'items/jsonschema/' + str(item_type_id)
+    from weko_user_profiles.utils import get_user_profile_info
+    user_profile = get_user_profile_info(int(owner_id))
+    user_name = user_profile['subitem_displayname']
+    record_title = {
+        "en": '{} - {} - {} - {}'.format(
+            related_title,
+            current_app.config.get(
+                'WEKO_ITEMS_UI_USAGE_REPORT_TITLE').get('en'),
+            usage_application_activity_id, user_name
+        ),
+        "ja": '{} - {} - {} - {}'.format(
+            related_title,
+            current_app.config.get(
+                'WEKO_ITEMS_UI_USAGE_REPORT_TITLE').get('ja'),
+            usage_application_activity_id, user_name
+        ),
+    }
+
+    # Set title to JP only
+    item['title'] = record_title["ja"]
+    properties = schema['properties']
+    schema_dict = get_shema_dict(properties, data_dict)
+
+    item_approval1 = ''
+    item_approval2 = ''
+    for data in item:
+        cur_data = item[data]
+        if isinstance(cur_data, dict) and \
+                'subitem_advisor_mail_address' in cur_data:
+            item_approval1 = data
+        if isinstance(cur_data, dict) and \
+                'subitem_guarantor_mail_address' in cur_data:
+            item_approval2 = data
+        for key in schema_dict:
+            if isinstance(cur_data, dict) and key in cur_data:
+                new_key = schema_dict[key]
+                if new_key not in item:
+                    item[new_key] = item.pop(data)
+
+            if isinstance(cur_data, list):
+                for item_data in cur_data:
+                    if isinstance(item_data, dict) and key in item_data and \
+                            schema_dict[key] not in item:
+                        sub_data = item.get(data)
+                        if isinstance(sub_data, list):
+                            for title in sub_data:
+                                if title.get('subitem_item_title') and \
+                                    title.get(
+                                        'subitem_item_title_language'):
+                                    title['subitem_item_title'] = \
+                                        record_title.get(
+                                            title.get(
+                                                'subitem_item_title_language'))
+                        item[schema_dict[key]] = item.pop(data)
+                        break
+    item.pop(item_approval1, None)
+    item.pop(item_approval2, None)
+
+    return item
+
+
+def replace_title_subitem(subitem_title, subitem_item_title_language):
+    """Create deposit."""
+    subitem_title = subitem_title.replace(
+        current_app.config.get('WEKO_ITEMS_UI_USAGE_APPLICATION_TITLE').
+        get(subitem_item_title_language),
+        current_app.config.get('WEKO_ITEMS_UI_USAGE_REPORT_TITLE').
+        get(subitem_item_title_language)
+    )
+    return subitem_title
+
+
+def get_shema_dict(properties, data_dict):
+    """Get schemadict from properties and datadict.
+
+    @param properties:
+    @param data_dict:
+    @return:
+    """
+    schema_dict = dict()
+    if properties:
+        for item_property in properties:
+            schema_key = properties.get(item_property)
+            if 'items' in schema_key:
+                items = schema_key['items']
+                if 'properties' in items:
+                    for data_key in data_dict:
+                        if data_key in items['properties']:
+                            schema_dict[data_key] = item_property
+            if 'properties' in schema_key:
+                for data_key in data_dict:
+                    if data_key in schema_key['properties']:
+                        schema_dict[data_key] = item_property
+
+    return schema_dict
+
+
+def create_deposit(item_id):
+    """Create deposit."""
+    try:
+        deposit = WekoDeposit.create({}, recid=int(item_id))
+        db.session.commit()
+        return deposit
+    except Exception:
+        db.session.rollback()
+
+
+def update_activity_action(activity_id, owner_id):
+    """Update activity action.
+
+    @param activity_id:
+    @param owner_id:
+    """
+    usage_application = current_app.config['WEKO_WORKFLOW_ACTION_ITEM_'
+                                           'REGISTRATION_USAGE_APPLICATION']
+    if usage_application:
+        action = _Action.query.filter_by(
+            action_name=usage_application).one_or_none()
+        if action:
+            WorkActivity().upt_activity_action_status(
+                activity_id=activity_id, action_id=action.id,
+                action_status=ActionStatusPolicy.ACTION_DOING
+            )
+            WorkActivityHistory().upd_activity_history_detail(activity_id,
+                                                              action.id)
+            WorkActivityHistory().update_activity_history_owner(activity_id,
+                                                                owner_id)
+
+
+def check_continue(response, activity_id):
+    """Check continue value.
+
+    :param response:
+    :param activity_id:
+    :return:
+    """
+    if current_app.config.get('WEKO_WORKFLOW_CONTINUE_APPROVAL'):
+        response['check_handle'] = 1
+        activity = WorkActivity()
+        item_id = activity.get_activity_detail(activity_id).item_id
+        if item_id:
+            record = RecordMetadata.query.filter_by(id=item_id).first()
+            record = record.json
+            attribute_value_key = 'attribute_value_mlt'
+            data_type_key = 'subitem_stop/continue'
+            for item in record:
+                values = record.get(item)
+                if isinstance(values,
+                              dict) and attribute_value_key in values:
+                    attribute = values.get(attribute_value_key)
+                    if isinstance(attribute, list):
+                        for data in attribute:
+                            if data_type_key in data and data.get(
+                                    data_type_key) == 'Continue':
+                                response['check_continue'] = 1
+                                return response
+            response['check_continue'] = 0
+            return response
+    else:
+        return response
+
+
+def auto_fill_title(item_type_name):
+    """Autofill title.
+
+    @param item_type_name:
+    @return:
+    """
+    def _get_title(title_key):
+        title_value = ''
+        if auto_fill_title_value.get(title_key):
+            title_value = auto_fill_title_value.get(title_key)
+        return title_value
+
+    title = ""
+    current_config = current_app.config
+    autofill_title_setting = current_config.get(
+        'WEKO_ITEMS_UI_AUTO_FILL_TITLE_SETTING')
+    auto_fill_title_value = current_config.get(
+        'WEKO_ITEMS_UI_AUTO_FILL_TITLE')
+    if item_type_name is not None and isinstance(autofill_title_setting, dict):
+        usage_application_key = current_config.get(
+            'WEKO_ITEMS_UI_USAGE_APPLICATION_TITLE_KEY')
+        usage_report_key = current_config.get(
+            'WEKO_ITEMS_UI_USAGE_REPORT_TITLE_KEY')
+        output_registration_key = current_config.get(
+            'WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE_KEY')
+
+        usage_application_list = autofill_title_setting.get(
+            usage_application_key, [])
+        usage_report_list = autofill_title_setting.get(usage_report_key, [])
+        output_registration_list = autofill_title_setting.get(
+            output_registration_key, [])
+        if item_type_name in usage_application_list:
+            title = _get_title(usage_application_key)
+        elif item_type_name in usage_report_list:
+            title = _get_title(usage_report_key)
+        elif item_type_name in output_registration_list:
+            title = _get_title(output_registration_key)
+    return title
+
+
+def exclude_admin_workflow(workflow_list):
+    """Exclude a list of workflow form workflow_list base on current user role.
+
+    :param workflow_list:
+    :return:
+    """
+    from weko_items_ui.utils import get_current_user_role
+    if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] and \
+        not get_current_user_role() == \
+            current_app.config['WEKO_USERPROFILES_ADMINISTRATOR_ROLE']:
+        for workflow in workflow_list:
+            for flow_action in workflow.flow_define.flow_actions:
+                if flow_action.action.action_name == current_app.\
+                        config['WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION']:
+                    workflow_list.remove(workflow)
+    return workflow_list
+
+
+def is_enable_item_name_link(action_endpoint, item_type_name):
+    """Check enable item name link.
+
+    :param action_endpoint:
+    :param item_type_name:
+    :return:
+    """
+    if "item_login_application" == action_endpoint \
+        and item_type_name == current_app.config.get(
+            'WEKO_ITEMS_UI_USAGE_REPORT'):
+        return False
+    return True
+
+
+def save_activity_data(data: dict) -> NoReturn:
+    """Save activity data.
+
+    @param data: activity data.
+    """
+    activity_id = data.get("activity_id")
+    activity_data = {
+        "title": data.get("title"),
+        "shared_user_id": data.get("shared_user_id"),
+        "approval1": data.get("approval1"),
+        "approval2": data.get("approval2"),
+    }
+    if activity_id:
+        WorkActivity().update_activity(activity_id, activity_data)
+
+
+def send_mail_url_guest_user(mail_info: dict) -> bool:
+    """Send mail url guest_user.
+
+    :mail_info: object
+    """
+    subject, body = get_mail_data(mail_info.get('template'))
+    if not body:
+        return False
+    body = replace_characters(mail_info, body)
+    if not send_mail(subject, mail_info.get('mail_address'), body):
+        return False
+    else:
+        return True
+
+
+def init_activity_for_guest_user(data: dict) -> bool:
+    """Init activity for guest user.
+
+    @param data:
+    @return:
+    """
+    def _get_guest_activity():
+        _guest_activity = {
+            "user_mail": guest_mail,
+            "record_id": record_id,
+            "file_name": file_name,
+        }
+        return GuestActivity.find(**_guest_activity)
+
+    def _generate_token_value():
+        token_pattern = "activity={} file_name={} date={} email={}"
+        hash_value = token_pattern.format(activity_id, file_name, activity_date,
+                                          guest_mail)
+        secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
+        token = oracle10.hash(secret_key, hash_value)
+        _token_value = "{} {} {} {}".format(activity_id, activity_date,
+                                            guest_mail, token)
+        _token_value = base64.b64encode(_token_value.encode()).decode()
+        return _token_value
+
+    # Get data to generated key
+    activity_date = date.today().strftime("%y-%m-%d")
+    guest_mail = data.get("extra_info").get("guest_mail")
+    file_name = data.get("extra_info").get("file_name")
+    record_id = data.get("extra_info").get("record_id")
+
+    guest_activity = _get_guest_activity()
+    if not guest_activity:
+        # Init activity for guest user.
+        activity = WorkActivity().init_activity(data)
+        activity_id = activity.activity_id
+
+        # Generate token value
+        token_value = _generate_token_value()
+
+        # Save create guest activity
+        guest_activity = {
+            "user_mail": guest_mail,
+            "record_id": record_id,
+            "file_name": file_name,
+            "activity_id": activity_id,
+            "token": token_value
+        }
+        GuestActivity.create(**guest_activity)
+    else:
+        token_value = guest_activity[0].token
+        activity_id = guest_activity[0].activity_id
+
+    # Generate URL
+    url_pattern = "{}workflow/activity/guest-user/{}?token={}"
+    url = url_pattern.format(request.url_root, file_name, token_value)
+
+    # Mail information
+    mail_info = {
+        'template': current_app.config.get("WEKO_WORKFLOW_ACCESS_ACTIVITY_URL"),
+        'mail_address': guest_mail,
+        'url_guest_user': url
+    }
+    return send_mail_url_guest_user(mail_info)
+
+
+def validate_guest_activity(
+    token: str, file_name: str
+) -> Union[Tuple[bool, None, None], Tuple[bool, str, str]]:
+    """Validate guest activity.
+
+    @param token:
+    @param file_name:
+    @return:
+    """
+    try:
+        secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
+        decode_param = base64.b64decode(token.encode()).decode()
+        params = decode_param.split(" ")
+        if len(params) != 4:
+            return False, None, None
+        pattern = "activity={} file_name={} date={} email={}"
+        key_value = pattern.format(params[0], file_name, params[1], params[2])
+        return oracle10.verify(
+            secret_key, params[3], key_value), params[0], params[2]
+    except Exception as err:
+        current_app.logger.debug(err)
+        return False, None, None
+
+
+def send_onetime_download_url_to_guest(activity_id: str,
+                                       extra_info: dict) -> bool:
+    """Send onetime download URL to guest.
+
+    @param activity_id:
+    @param extra_info:
+    @return:
+    """
+    file_name = extra_info.get('file_name')
+    record_id = extra_info.get('record_id')
+    guest_mail = extra_info.get('guest_mail')
+    if file_name and record_id and guest_mail:
+        from weko_records_ui.utils import generate_one_time_download_url
+        onetime_file_url = generate_one_time_download_url(
+            file_name, record_id, guest_mail)
+
+        # Delete guest activity.
+        delete_guest_activity(activity_id)
+
+        # Mail information
+        mail_info = {
+            'template': current_app.config.get(
+                "WEKO_WORKFLOW_ACCESS_DOWNLOAD_URL"),
+            'mail_address': guest_mail,
+            'url_guest_user': onetime_file_url
+        }
+        return send_mail_url_guest_user(mail_info)
+
+
+def delete_guest_activity(activity_id: str) -> bool:
+    """Delete guest activity for guest user.
+
+    @param activity_id:
+    @return:
+    """
+    guest_activity = GuestActivity.find_by_activity_id(activity_id)
+    if guest_activity:
+        return GuestActivity.delete(guest_activity[0])
+    return False
+
+
+def get_activity_display_info(activity_id: str):
+    """Get activity.
+
+    @param activity_id:
+    @return:
+    """
+    activity = WorkActivity()
+    activity_detail = activity.get_activity_detail(activity_id)
+    item = None
+    if activity_detail and activity_detail.item_id:
+        try:
+            item = ItemsMetadata.get_record(id_=activity_detail.item_id)
+        except NoResultFound as ex:
+            current_app.logger.exception(str(ex))
+            item = None
+    steps = activity.get_activity_steps(activity_id)
+    history = WorkActivityHistory()
+    histories = history.get_activity_history_list(activity_id)
+    workflow = WorkFlow()
+    workflow_detail = workflow.get_workflow_by_id(
+        activity_detail.workflow_id)
+    if activity_detail.activity_status == \
+            ActivityStatusPolicy.ACTIVITY_FINALLY \
+            or activity_detail.activity_status == \
+            ActivityStatusPolicy.ACTIVITY_CANCEL:
+        activity_detail.activity_status_str = _('End')
+    else:
+        activity_detail.activity_status_str = \
+            request.args.get('status', 'ToDo')
+    cur_action = activity_detail.action
+    action_endpoint = cur_action.action_endpoint
+    action_id = cur_action.id
+    temporary_comment = activity.get_activity_action_comment(
+        activity_id=activity_id, action_id=action_id)
+    return action_endpoint, action_id, activity_detail, cur_action, histories, \
+        item, steps, temporary_comment, workflow_detail
+
+
+def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
+    """Init activity data for guest user.
+
+    @param activity_id:
+    @param community_id:
+    @return:
+    """
+    action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+        steps, temporary_comment, workflow_detail = \
+        get_activity_display_info(activity_id)
+    item_type_name = get_item_type_name(workflow_detail.itemtype_id)
+    # Check auto set index
+    is_auto_set_index_action = False
+    for step in steps:
+        if step.get('ActionEndpoint') == 'item_login_application' \
+            and current_app.config[
+                'WEKO_WORKFLOW_ENABLE_AUTO_SET_INDEX_FOR_ITEM_TYPE']:
+            is_auto_set_index_action = True
+
+    # Get the design for widget rendering
+    from weko_theme.utils import get_design_layout
+    page, render_widgets = get_design_layout(
+        community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+
+    # Update session for steps get item_login
+    session['activity_info'] = dict(
+        activity_id=activity_id,
+        action_id=activity_detail.action_id,
+        action_version=cur_action.action_version,
+        action_status=ActionStatusPolicy.ACTION_DOING,
+        commond=''
+    )
+    session['itemlogin_id'] = activity_id
+    session['itemlogin_activity'] = activity_detail
+    # get item login info.
+    from weko_items_ui.api import item_login
+    step_item_login_url, need_file, need_billing_file, \
+        record, json_schema, schema_form, \
+        item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
+        allow_multi_thumbnail \
+        = item_login(item_type_id=workflow_detail.itemtype_id)
+    if not record and item:
+        record = item
+
+    # Get guest user profile
+    guest_email = session['guest_email']
+    user_name = guest_email.split('@')[0]
+    profile = {
+        'subitem_user_name': user_name,
+        'subitem_fullname': user_name,
+        'subitem_mail_address': guest_email,
+        'subitem_displayname': user_name,
+        'subitem_university/institution': '',
+        'subitem_affiliated_division/department': '',
+        'subitem_position': '',
+        'subitem_phone_number': '',
+        'subitem_position(other)': '',
+        'subitem_affiliated_institution': [],
+    }
+    user_profile = {"results": profile}
+
+    return dict(
+        page=page,
+        render_widgets=render_widgets,
+        community_id=community_id,
+        temporary_journal='',
+        temporary_idf_grant='',
+        temporary_idf_grant_suffix='',
+        idf_grant_data='',
+        idf_grant_input=IDENTIFIER_GRANT_LIST,
+        idf_grant_method=IDENTIFIER_GRANT_SUFFIX_METHOD,
+        error_type='item_login_error',
+        cur_step=action_endpoint,
+        approval_record=[],
+        recid=None,
+        links=None,
+        term_and_condition_content='',
+        is_auto_set_index_action=is_auto_set_index_action,
+        application_item_type=False,
+        auto_fill_title=auto_fill_title(item_type_name),
+        auto_fill_data_type=activity_detail.extra_info.get(
+            "related_title") if activity_detail.extra_info else None,
+        is_show_autofill_metadata=is_show_autofill_metadata(
+            item_type_name),
+        is_hidden_pubdate=is_hidden_pubdate(item_type_name),
+        position_list=WEKO_USERPROFILES_POSITION_LIST,
+        institute_position_list=WEKO_USERPROFILES_INSTITUTE_POSITION_LIST,
+        item_type_name=item_type_name,
+        res_check=1,
+        action_id=action_id,
+        activity=activity_detail,
+        histories=histories,
+        item=item,
+        steps=steps,
+        temporary_comment=temporary_comment,
+        workflow_detail=workflow_detail,
+        user_profile=user_profile,
+        list_license=get_list_licence(),
+        cur_action=cur_action,
+        activity_id=activity_detail.activity_id,
+        is_enable_item_name_link=is_enable_item_name_link(
+            action_endpoint, item_type_name),
+        enable_feedback_maillist=current_app.config[
+            'WEKO_WORKFLOW_ENABLE_FEEDBACK_MAIL'],
+        enable_contributor=current_app.config[
+            'WEKO_WORKFLOW_ENABLE_CONTRIBUTOR'],
+        out_put_report_title=current_app.config[
+            "WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE"],
+        action_endpoint_key=current_app.config.get(
+            'WEKO_ITEMS_UI_ACTION_ENDPOINT_KEY'),
+        approval_email_key=current_app.config.get(
+            'WEKO_ITEMS_UI_APPROVAL_MAIL_SUBITEM_KEY'),
+        step_item_login_url=step_item_login_url,
+        need_file=need_file,
+        need_billing_file=need_billing_file,
+        records=record,
+        record=[],
+        jsonschema=json_schema,
+        schemaform=schema_form,
+        item_save_uri=item_save_uri,
+        files=files,
+        endpoints=endpoints,
+        need_thumbnail=need_thumbnail,
+        files_thumbnail=files_thumbnail,
+        allow_multi_thumbnail=allow_multi_thumbnail,
+        id=workflow_detail.itemtype_id,
+    )
+
+
+def prepare_data_for_guest_activity(activity_id: str) -> dict:
+    """Prepare for guest activity.
+
+    @param activity_id:
+    @return:
+    """
+    ctx = {'community': None}
+    getargs = request.args
+    community_id = ""
+    if 'community' in getargs:
+        comm = GetCommunity.get_community_by_id(getargs.get('community'))
+        ctx = {'community': comm}
+        community_id = comm.id
+
+    init_data = __init_activity_detail_data_for_guest(activity_id, community_id)
+    ctx.update(init_data)
+    action_endpoint = ctx['cur_step']
+    activity_detail = ctx['activity']
+    cur_action = ctx['cur_action']
+
+    if 'item_login' == action_endpoint or \
+        'item_login_application' == action_endpoint or \
+            'file_upload' == action_endpoint:
+        ctx['res_check'] = 0
+        if request.method == 'POST':
+            is_user_agreed = request.form.get('checked')
+            if is_user_agreed == "on":
+                # update user agreement when user check the checkbox
+                WorkActivity().upt_activity_agreement_step(
+                    activity_id=activity_id, is_agree=True)
+
+        ctx['application_item_type'] = is_usage_application_item_type(
+            activity_detail)
+        item_type_name = ctx['item_type_name']
+
+        if current_app.config['WEKO_WORKFLOW_ENABLE_SHOWING_TERM_OF_USE'] and \
+                cur_action.action_is_need_agree:
+            # if this is Item Registration step and the user have not agreed
+            # term and condition yet, set to that page
+            from weko_items_ui.utils import is_need_to_show_agreement_page
+            if is_need_to_show_agreement_page(item_type_name) and \
+                    not activity_detail.activity_confirm_term_of_use:
+                ctx['step_item_login_url'] = 'weko_workflow/' \
+                                             'term_and_condition.html'
+                ctx['term_and_condition_content'] = \
+                    get_term_and_condition_content(item_type_name)
+
+        # be use for index tree and comment page.
+        session['itemlogin_item'] = ctx['item']
+        session['itemlogin_steps'] = ctx['steps']
+        session['itemlogin_action_id'] = ctx['action_id']
+        session['itemlogin_cur_step'] = ctx['cur_step']
+        session['itemlogin_record'] = ctx['approval_record']
+        session['itemlogin_histories'] = ctx['histories']
+        session['itemlogin_res_check'] = ctx['res_check']
+        session['itemlogin_pid'] = ctx['recid']
+        session['itemlogin_community_id'] = community_id
+
+    return ctx

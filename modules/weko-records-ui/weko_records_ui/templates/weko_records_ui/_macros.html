@@ -18,45 +18,63 @@
 # MA 02111-1307, USA.
 #}
 
-{% macro check_download_file(record, file, permission, community, url_for_security, is_file_name_url) %}
+{% macro check_download_file(record, file, permission, community, url_for_security, is_file_name_url, file_label) %}
   {%- if not session['user_id'] -%}
     {%- set href_url = url_for_security('login', next=request.path) -%}
     {%- if is_file_name_url -%}
-      <a class="forcewrap"
-         href={{ href_url }}>{{ file.filename }}
-        ({{ file.size|filesizeformat }})</a>
+      <a class="forcewrap" href={{ href_url }}>{{ file_label }} ({{ file.size|filesizeformat }})</a>
       <br>
     {%- else -%}
-      <a class="action-anchor" href="{{ href_url }}">
-        <button class="img-rounded action-button button-sm">
+      {% set access_role = file.accessrole %}
+      {% set workflow_id = file | get_usage_workflow %}
+      {% set start_guest_wf = workflow_id is not none and access_role == "open_restricted" %}
+      {% if start_guest_wf %}
+        {% set workflow_detail = workflow_id | get_workflow_detail() %}
+        {% set item_type_id = workflow_detail.itemtype_id %}
+        {% set flow_id = workflow_detail.flow_id %}
+        <input id="guest_filename_data" type="hidden"
+               value="{{ file.filename }}">
+        <input id="guest_workflow_id" type="hidden" value="{{ workflow_id }}">
+        <input id="guest_itemtype_id" type="hidden" value="{{ item_type_id }}">
+        <input id="guest_flow_id" type="hidden" value="{{ flow_id }}">
+        <input id="guest_data_type_title" type="hidden"
+               value='{{ record.item_title }}'>
+        <input id="guest_record_id" type="hidden"
+               value='{{ record.recid }}'>
+      {% endif %}
+      <a class="action-anchor" {% if not start_guest_wf %}href="{{ href_url }}"{% endif %}>
+        <button class="img-rounded action-button button-sm"
+                {% if start_guest_wf %}id="non-login-role-btn"{% endif %}>
           <i class="action-icon fa fa-download"></i>
-          {{ _('Download') }}
+          {{ _('Apply JGSS') }}
         </button>
       </a>
     {%- endif -%}
   {%- elif not permission -%}
     {%- set workflow_id = '' -%}
-    {%- set usage_workflow = record | get_usage_workflow -%}
-    {%- if not usage_workflow -%}
+    {%- set usage_workflow_id = file | get_usage_workflow -%}
+    {%- if not usage_workflow_id -%}
       {%- set clickable = false -%}
       {%- if is_file_name_url -%}
-        <a class="forcewrap">{{ file.filename }}
-          ({{ file.size|filesizeformat }})</a>
+        <a class="forcewrap">{{ file_label }} ({{ file.size|filesizeformat }})</a>
         <br>
       {%- else -%}
+        <input id="non-role-msg" type="hidden"
+               value="{{ _("This data is not available for undergraduate students or those who do not register their positions.") }}"/>
         <a class="action-anchor">
-          <button class="img-rounded action-button button-sm">
+          <button class="img-rounded action-button button-sm" id="non-role-btn">
             <i class="action-icon fa fa-download"></i>
-            {{ _('Download') }}
+            {{ _('Apply JGSS') }}
           </button>
         </a>
       {%- endif -%}
-    {%- elif usage_workflow -%}
-      {%- set workflow_id = usage_workflow.id -%}
+    {%- elif usage_workflow_id -%}
+      {%- set workflow_id = usage_workflow_id -%}
       {%- set workflow_detail = workflow_id | get_workflow_detail() -%}
       {%- set data_item_type_id = workflow_detail.itemtype_id -%}
       {%- set data_flow_id = workflow_detail.flow_id -%}
       {%- set itemtitle = record.item_title -%}
+      <input type="hidden" id="data_type_title" name="data_type_title" value='{{itemtitle}}'>
       <div class="hide"
            id="post_uri">{{ url_for('weko_workflow.init_activity') }}</div>
       <div class="hide" id="item_type_{{ workflow_id }}"
@@ -73,9 +91,8 @@
            data-community="{{ community.id }}"
                 {%- endif -%}
            data-workflow-id="{{ workflow_id }}"
-           data-itemtitle="{{ itemtitle|urlencode }}"
            href="{{ href_url }}">
-          {{ file.filename }} ({{ file.size|filesizeformat }})</a>
+          {{ file_label }} ({{ file.size|filesizeformat }})</a>
       {%- else -%}
         <a class="action-anchor" href="{{ href_url }}">
           <button id="btn-begin-{{ workflow_id }}"
@@ -86,25 +103,22 @@
             data-itemtitle="{{ itemtitle|urlencode }}"
             class="btn-start-workflow img-rounded action-button button-sm">
               <i class="action-icon fa fa-download"></i>
-              {{ _('Download') }}
+            {{ _('Apply JGSS') }}
           </button>
         </a>
       {%- endif -%}
     {%- endif -%}
   {%- elif permission.status == -1 -%}
     {%- set href_url = url_for('weko_workflow.display_activity', activity_id=permission.usage_application_activity_id) -%}
-    {%- set itemtitle = record.item_title -%}
-    {%- set href_url_item_title = href_url + "?itemtitle=" + itemtitle|urlencode -%}
+    {%- set href_url_item_title = href_url-%}
     {%- if is_file_name_url -%}
-      <a class="forcewrap"
-         href="{{ href_url_item_title }}">{{ file.filename }}
-        ({{ file.size|filesizeformat }})</a>
+      <a class="forcewrap" href="{{ href_url_item_title }}">{{ file_label }} ({{ file.size|filesizeformat }})</a>
       <br>
     {%- else -%}
       <a class="action-anchor" href="{{ href_url_item_title }}">
         <button class="img-rounded action-button button-sm">
           <i class="action-icon fa fa-download"></i>
-          {{ _('Download') }}
+          {{ _('Apply JGSS') }}
         </button>
       </a>
     {%- endif -%}
@@ -116,16 +130,13 @@
       {%- set href_url = file_url -%}
 
       {%- if is_file_name_url -%}
-        <a class="forcewrap"
-           href={{ href_url }}>{{ file.filename }}
-          ({{ file.size|filesizeformat }})
-        </a>
+        <a class="forcewrap" href={{ href_url }}>{{ file_label }} ({{ file.size|filesizeformat }}) </a>
         <br>
       {%- else -%}
         <a class="action-anchor" href="{{ href_url }}">
           <button class="img-rounded action-button button-sm">
             <i class="action-icon fa fa-download"></i>
-            {{ _('Download') }}
+            {{ _('Apply JGSS') }}
           </button>
         </a>
       {%- endif -%}

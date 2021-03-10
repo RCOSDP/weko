@@ -31,14 +31,14 @@ from flask import Blueprint, abort, current_app, flash, json, jsonify, \
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
-from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.resolver import Resolver
 from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
+from weko_accounts.utils import login_required_customize
 from weko_admin.models import AdminSettings, RankingSettings
-from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import check_restrict_doi_with_indexes, \
     get_index_id, get_user_roles
@@ -59,8 +59,7 @@ from .utils import _get_max_export_items, check_item_is_being_edit, \
     set_multi_language_name, to_files_js, translate_schema_form, \
     translate_validation_message, update_index_tree_for_record, \
     update_json_schema_by_activity_id, update_schema_form_by_activity_id, \
-    update_sub_items_by_user_role, validate_form_input_data, \
-    validate_save_title_and_share_user_id, validate_user, \
+    update_sub_items_by_user_role, validate_form_input_data, validate_user, \
     validate_user_mail_and_index
 
 blueprint = Blueprint(
@@ -181,8 +180,7 @@ def iframe_index(item_type_id=0):
 
 
 @blueprint.route('/iframe/model/save', methods=['POST'])
-@login_required
-@item_permission.require(http_exception=403)
+@login_required_customize
 def iframe_save_model():
     """Renders an item register view.
 
@@ -226,8 +224,7 @@ def iframe_error():
 @blueprint.route('/jsonschema/<int:item_type_id>', methods=['GET'])
 @blueprint.route('/jsonschema/<int:item_type_id>/<string:activity_id>',
                  methods=['GET'])
-@login_required
-@item_permission.require(http_exception=403)
+@login_required_customize
 def get_json_schema(item_type_id=0, activity_id=""):
     """Get json schema.
 
@@ -271,8 +268,7 @@ def get_json_schema(item_type_id=0, activity_id=""):
 @blueprint.route('/schemaform/<int:item_type_id>', methods=['GET'])
 @blueprint.route('/schemaform/<int:item_type_id>/<string:activity_id>',
                  methods=['GET'])
-@login_required
-@item_permission.require(http_exception=403)
+@login_required_customize
 def get_schema_form(item_type_id=0, activity_id=''):
     """Get schema form.
 
@@ -386,8 +382,7 @@ def items_index(pid_value='0'):
 
 @blueprint.route('/iframe/index/<string:pid_value>',
                  methods=['GET', 'PUT', 'POST'])
-@login_required
-@item_permission.require(http_exception=403)
+@login_required_customize
 def iframe_items_index(pid_value='0'):
     """Iframe items index."""
     try:
@@ -988,7 +983,7 @@ def export():
 
 
 @blueprint_api.route('/validate', methods=['POST'])
-@login_required
+@login_required_customize
 def validate():
     """Validate input data.
 
@@ -1006,8 +1001,7 @@ def validate():
 
 @blueprint_api.route('/check_validation_error_msg/<string:activity_id>',
                      methods=['GET'])
-@login_required
-@item_permission.require(http_exception=403)
+@login_required_customize
 def check_validation_error_msg(activity_id):
     """Check whether sessionstore('updated_json_schema_') is exist.
 
@@ -1066,22 +1060,6 @@ def corresponding_activity_list():
             get_corresponding_usage_activities(current_user.get_id())
         result = {'usage_application': usage_application_list,
                   'output_report': output_report_list}
-    return jsonify(result)
-
-
-@blueprint_api.route('/save_title_and_share_user_id', methods=['POST'])
-@login_required
-def save_title_and_share_user_id():
-    """Validate input title and shared user id for activity.
-
-    :return:
-    """
-    result = {
-        "is_valid": True,
-        "error": ""
-    }
-    data = request.get_json()
-    validate_save_title_and_share_user_id(result, data)
     return jsonify(result)
 
 

@@ -20,24 +20,32 @@
 
 """Module of weko-records-ui utils."""
 
+import base64
 from datetime import datetime as dt
+from datetime import timedelta
 from decimal import Decimal
+from typing import NoReturn, Tuple
 
 from flask import current_app, request
 from flask_babelex import gettext as _
 from flask_login import current_user
+from invenio_accounts.models import Role
 from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
+from passlib.handlers.oracle import oracle10
 from weko_admin.models import AdminSettings
 from weko_deposit.api import WekoDeposit
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_workflow.utils import check_an_item_is_locked
+from weko_workflow.api import WorkFlow
 
-from .permissions import check_file_download_permission, \
-    check_user_group_permission, is_open_restricted
+from .models import FileOnetimeDownload, FilePermission
+from .permissions import check_create_usage_report, \
+    check_file_download_permission, check_user_group_permission, \
+    is_open_restricted
 
 
 def check_items_settings():
@@ -274,21 +282,6 @@ def get_list_licence():
         list_license_result.append({'value': license_obj.get('value', ''),
                                     'name': license_obj.get('name', '')})
     return list_license_result
-
-
-def get_registration_data_type(record):
-    """Get registration data type."""
-    attribute_value_key = 'attribute_value_mlt'
-    data_type_key = 'subitem_data_type'
-
-    for item in record:
-        values = record.get(item)
-        if isinstance(values, dict) and values.get(attribute_value_key):
-            attribute = values.get(attribute_value_key)
-            if isinstance(attribute, list):
-                for data in attribute:
-                    if data_type_key in data:
-                        return data.get(data_type_key)
 
 
 def get_license_pdf(license, item_metadata_json, pdf, file_item_id, footer_w,
@@ -580,6 +573,15 @@ def get_file_info_list(record):
                     p_file['download_preview_message'] = _(message).format(
                         pdt.year, pdt.month, pdt.day)
 
+    def get_data_by_key_array_json(key, array_json, get_key):
+        for item in array_json:
+            if str(item.get('id')) == str(key):
+                return item.get(get_key)
+
+    workflows = get_workflows()
+    roles = get_roles()
+    terms = get_terms()
+
     is_display_file_preview = False
     files = []
     for key in record:
@@ -610,5 +612,206 @@ def get_file_info_list(record):
                     f['size'] = get_file_size(f)
                     f['mimetype'] = f.get('format', '')
                     f['filename'] = f.get('filename', '')
+                    term = f.get("terms")
+                    if term:
+                        f["terms"] = get_data_by_key_array_json(
+                            term, terms, 'name')
+                    provide = f.get("provide")
+                    if provide:
+                        for p in provide:
+                            workflow = p.get('workflow')
+                            if workflow:
+                                p['workflow_id'] = workflow
+                                p['workflow'] = get_data_by_key_array_json(
+                                    workflow, workflows, 'flows_name')
+                            role = p.get('role')
+                            if role:
+                                p['role_id'] = role
+                                p['role'] = get_data_by_key_array_json(
+                                    role, roles, 'name')
                     files.append(f)
     return is_display_file_preview, files
+
+
+def check_and_create_usage_report(record, file_object):
+    """Check and create usage report.
+
+    :param file_object:
+    :param record:
+    :return:
+    """
+    access_role = file_object.get('accessrole', '')
+    if 'open_restricted' in access_role:
+        permission = check_create_usage_report(record, file_object)
+        if permission is not None:
+            from weko_workflow.utils import create_usage_report
+            activity_id = create_usage_report(
+                permission.usage_application_activity_id)
+            if activity_id is not None:
+                FilePermission.update_usage_report_activity_id(permission,
+                                                               activity_id)
+
+
+def generate_one_time_download_url(
+    file_name: str, record_id: str, guest_mail: str
+) -> str:
+    """Generate one time download URL.
+
+    :param file_name: File name
+    :param record_id: File Version ID
+    :param guest_mail: guest email
+    :return:
+    """
+    secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
+    download_pattern = current_app.config[
+        'WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN']
+    current_date = dt.now().strftime("%Y-%m-%d")
+    hash_value = download_pattern.format(file_name, record_id, guest_mail,
+                                         current_date)
+    secret_token = oracle10.hash(secret_key, hash_value)
+
+    token_pattern = "{} {} {} {}"
+    token = token_pattern.format(record_id, guest_mail, current_date,
+                                 secret_token)
+    token_value = base64.b64encode(token.encode()).decode()
+    host_name = request.host_url
+    url = "{}record/{}/file/onetime/{}?token={}" \
+        .format(host_name, record_id, file_name, token_value)
+    return url
+
+
+def parse_one_time_download_token(token: str) -> Tuple[str, Tuple]:
+    """Parse onetime download token
+
+    @param token:
+    @return:
+    """
+    error = _("Token is invalid.")
+    if token is None:
+        return error, ()
+    try:
+        decode_token = base64.b64decode(token.encode()).decode()
+        param = decode_token.split(" ")
+        if not param or len(param) != 4:
+            return error, ()
+
+        return "", (param[0], param[1], param[2], param[3])
+    except Exception as err:
+        current_app.logger.error(err)
+        return error, ()
+
+
+def validate_onetime_download_token(
+    file_name: str, record_id: str, guest_mail: str, date: str, token: str
+) -> Tuple[bool, str]:
+    """Validate onetime download token.
+
+    @param file_name:
+    @param record_id:
+    @param guest_mail:
+    @param date:
+    @param token:
+    @return:
+    """
+    token_invalid = _("Token is invalid.")
+    secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
+    download_deadline = current_app.config['WEKO_RECORDS_UI_DOWNLOAD_DEADLINE']
+    downloads_max = current_app.config['WEKO_RECORDS_UI_DOWNLOADS_MAX']
+    download_pattern = current_app.config[
+        'WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN']
+    hash_value = download_pattern.format(file_name, record_id, guest_mail, date)
+    if not oracle10.verify(secret_key, token, hash_value):
+        current_app.logger.debug('Validate token error: {}'.format(hash_value))
+        return False, token_invalid
+    try:
+        download_date = dt.strptime(date, "%Y-%m-%d").date() + timedelta(
+            download_deadline)
+        current_date = dt.now().date()
+        if current_date > download_date:
+            return False, _("The download expiration date has expired.")
+
+        download_count = get_onetime_download_count(
+            file_name=file_name, record_id=record_id, user_mail=guest_mail
+        )
+        if download_count >= downloads_max:
+            return False, _(
+                "The maximum number of downloads has been exceeded.")
+        return True, ""
+    except Exception as err:
+        current_app.logger.error('Validate onetime download token error:')
+        current_app.logger.error(err)
+        return False, token_invalid
+
+
+def get_onetime_download_count(file_name: str, record_id: str,
+                               user_mail: str) -> int:
+    """Get onetime download count.
+
+    @param file_name:
+    @param record_id:
+    @param user_mail:
+    @return:
+    """
+    file_downloads = FileOnetimeDownload.find(
+        file_name=file_name, record_id=record_id, user_mail=user_mail
+    )
+    if file_downloads and len(file_downloads) > 0:
+        return file_downloads[0].count
+    else:
+        return 0
+
+
+def update_onetime_download_count(file_name: str, record_id: str,
+                                  user_mail: str) -> NoReturn:
+    """Update onetime download count.
+
+    @param file_name:
+    @param record_id:
+    @param user_mail:
+    @return:
+    """
+    return FileOnetimeDownload.update_download_count(
+        file_name=file_name, record_id=record_id, user_mail=user_mail
+    )
+
+
+def get_workflows():
+    """Get workflow.
+
+    @return:
+    """
+    workflow = WorkFlow()
+    workflows = workflow.get_workflow_list()
+    init_workflows = []
+    for workflow in workflows:
+        if workflow.open_restricted:
+            init_workflows.append(
+                {'id': workflow.id, 'flows_name': workflow.flows_name})
+    return init_workflows
+
+
+def get_roles():
+    """Get roles.
+
+    @return:
+    """
+    roles = Role.query.all()
+    init_roles = []
+    init_roles.append({'id': 'none_loggin', 'name': _('Guest')})
+    for role in roles:
+        init_roles.append({'id': role.id, 'name': role.name})
+    return init_roles
+
+
+def get_terms():
+    """Get terms.
+
+    @return:
+    """
+    init_terms = []
+    init_terms.append({'id': 'term_free', 'name': _('Free Input')})
+    # TODO
+    roles = Role.query.all()
+    for role in roles:
+        init_terms.append({'id': role.id, 'name': 'Term ' + str(role.id)})
+    return init_terms

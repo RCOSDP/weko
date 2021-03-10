@@ -453,3 +453,9 @@ msgstr "インポートを実行中のためアイテムの編集はできませ
 
 msgid "Item cannot be deleted because the import is in progress."
 msgstr "インポートを実行中のためアイテムの削除はできません。"
+
+msgid "Guest"
+msgstr "非ログインユーザ"
+
+msgid "Free Input"
+msgstr "自由入力"

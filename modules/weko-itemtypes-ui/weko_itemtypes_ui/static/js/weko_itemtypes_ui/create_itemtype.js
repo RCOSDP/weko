@@ -1582,6 +1582,7 @@ $(document).ready(function () {
   }
 
   function setTitleI18nForSubPropertiesByCondition1(schemaProperties, subForms, prefixKey) {
+    if(!subForms) return;
     let properties = getPropertiesOrItems(schemaProperties);
     Object.keys(properties).map(function (propKey) {
       let propertyKey = prefixKey + '.' + propKey;
@@ -1600,6 +1601,7 @@ $(document).ready(function () {
   }
 
   function setTitleI18nForSubPropertiesByCondition2(schemaProperties, subForms, prefixKey) {
+    if(!subForms) return;
     let properties = getPropertiesOrItems(schemaProperties);
     Object.keys(properties).map(function (propKey) {
       $.each(subForms, function (ind, form) {
@@ -1841,7 +1843,7 @@ $(document).ready(function () {
       delete property.enum
     } else if (property.format == 'select') {
       property.type = ["null", "string"];
-      form.type = "select";
+      form.type = form['templateUrl'] ? "template" : "select";
     }
     //Delete info not use.
     if(property.hasOwnProperty('uniqueKey')) delete property['uniqueKey'];
