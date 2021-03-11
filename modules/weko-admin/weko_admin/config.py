@@ -681,6 +681,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'itemtypesmapping',
     'itemtypes/mapping',
     'items/import',
+    'items/bulk-export',
     'feedbackmail',
     'sitelicensesendmail',
     'sessionactivity',
