@@ -27,13 +27,13 @@ from datetime import datetime, timedelta
 from flask import abort, current_app, request, session, url_for
 from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
-from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from sqlalchemy import and_, asc, desc, or_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
-from weko_records.serializers.utils import get_item_type_name
 
+from invenio_db import db
+from weko_records.serializers.utils import get_item_type_name
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
 from .models import Action as _Action
@@ -464,6 +464,7 @@ class WorkFlow(object):
                     _workflow.itemtype_id = workflow.get('itemtype_id')
                     _workflow.flow_id = workflow.get('flow_id')
                     _workflow.index_tree_id = workflow.get('index_tree_id')
+                    _workflow.open_restricted = workflow.get('open_restricted')
                     db.session.merge(_workflow)
             db.session.commit()
             return _workflow

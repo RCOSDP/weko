@@ -33,7 +33,6 @@ from flask import Blueprint, abort, current_app, jsonify, render_template, \
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, User, userrole
-from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -42,6 +41,9 @@ from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
 from sqlalchemy.sql.expression import cast
+from werkzeug.utils import import_string
+
+from invenio_db import db
 from weko_accounts.api import ShibUser
 from weko_accounts.utils import login_required_customize
 from weko_authors.models import Authors
@@ -59,8 +61,6 @@ from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
     get_workflows
 from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
-from werkzeug.utils import import_string
-
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
@@ -449,7 +449,7 @@ def display_activity(activity_id="0"):
     files_thumbnail = []
     allow_multi_thumbnail = False
     term_and_condition_content = ''
-    is_auto_set_index_action = False
+    is_auto_set_index_action = True
     application_item_type = False
     title = ""
     data_type = activity_detail.extra_info.get(
@@ -508,11 +508,6 @@ def display_activity(activity_id="0"):
         title = auto_fill_title(item_type_name)
         show_autofill_metadata = is_show_autofill_metadata(item_type_name)
         is_hidden_pubdate_value = is_hidden_pubdate(item_type_name)
-    for step in steps:
-        if step.get('ActionEndpoint') == 'item_login_application' \
-                and current_app.config[
-                'WEKO_WORKFLOW_ENABLE_AUTO_SET_INDEX_FOR_ITEM_TYPE']:
-            is_auto_set_index_action = True
 
     # if 'approval' == action_endpoint:
     if item:

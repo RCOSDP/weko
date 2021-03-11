@@ -30,19 +30,20 @@ from flask import current_app, request, session
 from flask_babelex import gettext as _
 from flask_security import current_user
 from invenio_cache import current_cache
-from invenio_db import db
-from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_i18n.ext import current_i18n
-from invenio_mail.admin import MailSettingView
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
-from invenio_records.models import RecordMetadata
 from invenio_records_files.models import RecordsBuckets
 from passlib.handlers.oracle import oracle10
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
+
+from invenio_db import db
+from invenio_files_rest.models import Bucket, ObjectVersion
+from invenio_mail.admin import MailSettingView
+from invenio_records.models import RecordMetadata
 from weko_admin.models import Identifier
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
@@ -55,10 +56,8 @@ from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
-
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD
-
 from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
     WorkFlow
 from .config import IDENTIFIER_GRANT_SELECT_DICT, WEKO_SERVER_CNRI_HOST_LINK
@@ -2718,12 +2717,7 @@ def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
         get_activity_display_info(activity_id)
     item_type_name = get_item_type_name(workflow_detail.itemtype_id)
     # Check auto set index
-    is_auto_set_index_action = False
-    for step in steps:
-        if step.get('ActionEndpoint') == 'item_login_application' \
-            and current_app.config[
-                'WEKO_WORKFLOW_ENABLE_AUTO_SET_INDEX_FOR_ITEM_TYPE']:
-            is_auto_set_index_action = True
+    is_auto_set_index_action = True
 
     # Get the design for widget rendering
     from weko_theme.utils import get_design_layout
