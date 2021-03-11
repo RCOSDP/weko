@@ -154,7 +154,8 @@ def iframe_success():
     record = None
     if item is not None and "pid" in item and "value" in item["pid"]:
         record = get_record_by_root_ver(item['pid']['value'])
-
+    else:
+        record = session['itemlogin_record']
     ctx = {'community': None}
     if community_id:
         comm = GetCommunity.get_community_by_id(community_id)
@@ -472,10 +473,12 @@ def display_activity(activity_id=0):
         item_link = ItemLink.get_item_link_info(pid_without_ver)
         ctx['item_link'] = item_link
 
-    if item is not None and 'pid' in item and 'value' in item['pid']:
+    if activity_detail.item_id is not None and item is not None \
+     and 'pid' in item and 'value' in item['pid']:
         itemLink_record = get_record_by_root_ver(item['pid']['value'])
         item["title"] = itemLink_record["title"][0]
-
+    else:
+        itemLink_record = approval_record
     return render_template(
         'weko_workflow/activity_detail.html',
         page=page,
