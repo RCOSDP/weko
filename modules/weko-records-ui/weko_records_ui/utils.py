@@ -612,11 +612,8 @@ def get_file_info_list(record):
             for f in file_metadata:
                 if check_file_download_permission(record, f, True)\
                         or is_open_restricted(f):
-                    # Set default version_id.
                     f["version_id"] = f.get('version_id', '')
-                    # Set is_thumbnail flag.
                     f["is_thumbnail"] = f.get('is_thumbnail', False)
-                    # Check Opendate is future date.
                     set_message_for_file(f)
                     # Check show preview area.
                     # If f is uploaded in this system => show 'Preview' area.
