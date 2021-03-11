@@ -412,7 +412,7 @@ def parse_to_json_form(data: list, item_path_not_existed: list) -> dict:
         if key in item_path_not_existed:
             continue
         key_path = handle_generate_key_path(key)
-        if value:
+        if value or key_path[0] in ['file_path', 'thumbnail_path']:
             set_nested_item(result, key_path, value)
 
     convert_data(result)
@@ -455,9 +455,9 @@ def check_import_items(file_name: str, file_content: str,
                     if os.sep != "/" and os.sep in info.filename:
                         info.filename = info.filename.replace(os.sep, "/")
                 except Exception:
-                    current_app.logger.error('-' * 60)
+                    current_app.logger.warn('-' * 60)
                     traceback.print_exc(file=sys.stdout)
-                    current_app.logger.error('-' * 60)
+                    current_app.logger.warn('-' * 60)
                 z.extract(info, path=data_path)
 
         data_path += '/data'
@@ -480,7 +480,7 @@ def check_import_items(file_name: str, file_content: str,
         handle_check_doi_ra(list_record)
         handle_check_doi(list_record)
         handle_check_date(list_record)
-        handle_check_thumbnail_file_type(list_record)
+        handle_check_file_metadata(list_record, data_path)
         result = {
             'list_record': list_record,
             'data_path': data_path
@@ -877,16 +877,22 @@ def create_deposit(item_id):
     return dep['recid']
 
 
-def clean_thumbnail_file(bucket):
+def clean_thumbnail_file(bucket, root_path, thumbnail_path):
     """Remove all thumbnail in bucket.
 
     :argument
         bucket         -- {object} bucket.
+        root_path      -- {str} location of temp folder.
+        thumbnail_path -- {list} thumbnails path.
     """
+    list_not_remove = list(filter(
+        lambda path: not os.path.isfile(root_path + '/' + path),
+        thumbnail_path))
+    list_not_remove = [get_file_name(path) for path in list_not_remove]
     all_file_version = ObjectVersion.get_by_bucket(
         bucket, True, True).all()
     for file in all_file_version:
-        if file.is_thumbnail is True:
+        if file.is_thumbnail is True and file.key not in list_not_remove:
             file.remove()
 
 
@@ -898,10 +904,12 @@ def up_load_file(record, root_path):
         root_path      -- {str} root_path.
 
     """
-    file_path = record.get('file_path', [])
+    file_path = list(filter(lambda path: path, record.get('file_path', [])))
     thumbnail_path = record.get('thumbnail_path', [])
     if isinstance(thumbnail_path, str):
         thumbnail_path = [thumbnail_path]
+    else:
+        thumbnail_path = list(filter(lambda path: path, thumbnail_path))
     if file_path or thumbnail_path:
         pid = PersistentIdentifier.query.filter_by(
             pid_type='recid',
@@ -909,14 +917,16 @@ def up_load_file(record, root_path):
         rec = RecordMetadata.query.filter_by(
             id=pid.object_uuid).first()
         bucket = rec.json['_buckets']['deposit']
-        clean_thumbnail_file(bucket)
-        for file_name in [*file_path, *thumbnail_path]:
-            with open(root_path + '/' + file_name, 'rb') as file:
+        clean_thumbnail_file(bucket, root_path, thumbnail_path)
+        for path in [*file_path, *thumbnail_path]:
+            if not os.path.isfile(root_path + '/' + path):
+                continue
+            with open(root_path + '/' + path, 'rb') as file:
                 obj = ObjectVersion.create(
                     bucket,
-                    get_file_name(file_name)
+                    get_file_name(path)
                 )
-                if file_name in thumbnail_path:
+                if path in thumbnail_path:
                     obj.is_thumbnail = True
                 obj.set_contents(file)
 
@@ -997,10 +1007,7 @@ def register_item_metadata(item):
         all_file_version = ObjectVersion.get_by_bucket(
             deposit.files.bucket, True, True).all()
         for file in all_file_version:
-            if file.is_thumbnail is False \
-                    and file.key not in file_names:
-                file.remove()
-            elif file.version_id not in lastest_files_version:
+            if file.version_id not in lastest_files_version:
                 file.remove()
 
     def clean_all_file_in_bucket(deposit):
@@ -1043,7 +1050,7 @@ def register_item_metadata(item):
     new_data = autofill_thumbnail_metadata(item['item_type_id'], new_data)
     new_data = clean_file_metadata(item['item_type_id'], new_data)
     deposit.update(item_status, new_data)
-    if item.get('file_path'):
+    if list(filter(lambda path: path, item.get('file_path', []))):
         # update
         clean_file_bucket(deposit)
     else:
@@ -1904,8 +1911,8 @@ def get_data_by_property(record, item_map, item_property):
     key = item_map.get(item_property)
     data = []
     if not key:
-        current_app.logger.error(str(item_property) + ' jpcoar:mapping '
-                                                      'is not correct')
+        current_app.logger.warn(str(item_property) +
+                                ' jpcoar:mapping is not correct')
         return None, None
     attribute = record['metadata'].get(key.split('.')[0])
     if not attribute:
@@ -2251,25 +2258,22 @@ def get_thumbnail_key(item_type_id=0):
                 return key
 
 
-def handle_check_thumbnail_file_type(list_record):
+def handle_check_thumbnail_file_type(thumbnail_paths):
     """Check thumbnail file type.
 
     :argument
-        list_record -- {list} list record import.
+        thumbnail_paths -- {list} thumbnails path.
     :return
-
+        error -- {str} error message.
     """
     error = _('Please specify the image file(gif, jpg, jpe, jpeg,'
               + ' png, bmp, tiff, tif) for the thumbnail.')
-    for record in list_record:
-        thumbnail_path = record.get('thumbnail_path', [])
-        if isinstance(thumbnail_path, str):
-            thumbnail_path = [thumbnail_path]
-        for path in thumbnail_path:
-            file_extend = path.split('.')[-1]
-            if file_extend not in WEKO_IMPORT_THUMBNAIL_FILE_TYPE:
-                record['errors'] = record['errors'] + [error] \
-                    if record.get('errors') else [error]
+    for path in thumbnail_paths:
+        if not path:
+            continue
+        file_extend = path.split('.')[-1]
+        if file_extend not in WEKO_IMPORT_THUMBNAIL_FILE_TYPE:
+            return error
 
 
 def handle_check_metadata_not_existed(str_keys, item_type_id=0):
@@ -2422,7 +2426,8 @@ def export_all(root_url):
         post_data is the data items
         :return: JSON, BIBTEX
     """
-    from weko_items_ui.utils import make_stats_tsv_with_permission, package_export_file
+    from weko_items_ui.utils import make_stats_tsv_with_permission, \
+        package_export_file
 
     def _itemtype_name(name):
         """Check a list of allowed characters in filenames."""
@@ -2458,8 +2463,9 @@ def export_all(root_url):
                 item_types_data[item_type_id]['data'] = records
                 item_type_data = item_types_data[item_type_id]
 
-                with open('{}/{}.tsv'.format(export_path,
-                                             item_type_data.get('name')), 'w') as file:
+                tsv_full_path = '{}/{}.tsv'.format(export_path,
+                                                   item_type_data.get('name'))
+                with open(tsv_full_path, 'w') as file:
                     tsv_output = package_export_file(item_type_data)
                     file.write(tsv_output.getvalue())
             except Exception as ex:
@@ -2477,7 +2483,8 @@ def export_all(root_url):
             pid_type='recid',
             status=PIDStatus.REGISTERED).all()
 
-        record_ids = [recid.pid_value for recid in recids if recid.pid_value.isdigit()]
+        record_ids = [
+            recid.pid_value for recid in recids if recid.pid_value.isdigit()]
         item_types_data = {}
 
         for recid in record_ids:
@@ -2539,7 +2546,8 @@ def delete_exported(uri, cache_key):
         with db.session.begin_nested():
             file_instance = FileInstance.get_by_uri(uri)
             file_instance.delete()
-        datastore = RedisStore(redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
+        datastore = RedisStore(redis.StrictRedis.from_url(
+            current_app.config['CACHE_REDIS_URL']))
         if datastore.redis.exists(cache_key):
             datastore.delete(cache_key)
         db.session.commit()
@@ -2583,8 +2591,9 @@ def get_export_status():
         download_uri = get_redis_cache(cache_uri)
         if (task_id):
             task = AsyncResult(task_id)
-            export_status = True if not (task.successful() or task.failed() or task.state == 'REVOKED') \
-                else False
+            status_cond = (task.successful() or task.failed()
+                           or task.state == 'REVOKED')
+            export_status = True if not status_cond else False
     except Exception as ex:
         current_app.logger.error(ex)
         export_status = False
@@ -2637,3 +2646,132 @@ def handle_remove_es_metadata(item):
         deposit.indexer.delete(deposit)
     except Exception as ex:
         current_app.logger.error(ex)
+
+
+def handle_check_file_metadata(list_record, data_path):
+    """Check file contents, thumbnails metadata.
+
+    :argument
+        list_record -- {list} list record import.
+        data_path   -- {str} paths of file content.
+    :return
+
+    """
+    for record in list_record:
+        errors, warnings = handle_check_file_content(record, data_path)
+        _errors, _warnings = handle_check_thumbnail(record, data_path)
+        errors += _errors
+        warnings += _warnings
+
+        if errors:
+            record['errors'] = record['errors'] + errors \
+                if record.get('errors') else errors
+        if warnings:
+            record['warnings'] = record['warnings'] + warnings \
+                if record.get('warnings') else warnings
+
+
+def handle_check_file_path(paths, data_path, is_new=False,
+                           is_thumbnail=False, is_single_thumbnail=False):
+    """Check file path.
+
+    :argument
+        record -- {dict} record import.
+        data_path   -- {str} paths of file content.
+        is_new   -- {bool} Is new?
+        is_thumbnail   -- {bool} Is thumbnail?
+        is_single_thumbnail   -- {bool} Is single thumbnail?
+    :return
+        error -- {str} Error.
+        warning -- {str} Warning.
+    """
+    def prepare_idx_msg(idxs, msg_path_idx_type):
+        if is_single_thumbnail:
+            return msg_path_idx_type
+        else:
+            return ', '.join(
+                [(msg_path_idx_type + '[{}]').format(idx) for idx in idxs])
+
+    error = None
+    warning = None
+    idx_errors = []
+    idx_warnings = []
+    for idx, path in enumerate(paths):
+        if not path:
+            continue
+        if not os.path.isfile(data_path + '/' + path):
+            if is_new:
+                idx_errors.append(str(idx))
+            else:
+                idx_warnings.append(str(idx))
+
+    msg_path_idx_type = '.thumbnail_path' if is_thumbnail else '.file_path'
+    if idx_errors:
+        error = _('The file specified in ({}) does not exist.') \
+            .format(prepare_idx_msg(idx_errors, msg_path_idx_type))
+    if idx_warnings:
+        warning = _('The file specified in ({}) does not exist.<br/>'
+                    'The file will not be updated. '
+                    'Update only the metadata with tsv contents.') \
+            .format(prepare_idx_msg(idx_warnings, msg_path_idx_type))
+
+    return error, warning
+
+
+def handle_check_file_content(record, data_path):
+    """Check file contents metadata.
+
+    :argument
+        record -- {dict} record import.
+        data_path   -- {str} paths of file content.
+    :return
+        errors -- {list} List errors.
+        warnings -- {list} List warnings.
+    """
+    errors = []
+    warnings = []
+
+    error, warning = handle_check_file_path(
+        record.get('file_path', []),
+        data_path,
+        record['status'] == 'new')
+    if error:
+        errors.append(error)
+    if warning:
+        warnings.append(warning)
+
+    return errors, warnings
+
+
+def handle_check_thumbnail(record, data_path):
+    """Check thumbnails metadata.
+
+    :argument
+        record -- {dict} record import.
+        data_path   -- {str} paths of file content.
+    :return
+        errors -- {list} List errors.
+        warnings -- {list} List warnings.
+    """
+    errors = []
+    warnings = []
+    is_single = False
+    thumbnail_paths = record.get('thumbnail_path', [])
+    if isinstance(thumbnail_paths, str):
+        thumbnail_paths = [thumbnail_paths]
+        is_single = True
+
+    # check file type
+    error = handle_check_thumbnail_file_type(thumbnail_paths)
+    if error:
+        errors.append(error)
+
+    # check thumbnails path
+    error, warning = handle_check_file_path(
+        thumbnail_paths, data_path, record['status'] == 'new', True, is_single)
+    if error:
+        errors.append(error)
+    if warning:
+        warnings.append(warning)
+
+    return errors, warnings
