@@ -439,6 +439,8 @@ def iframe_items_index(pid_value='0'):
             root_record = None
             if pid_value is not None:
                 root_record = get_record_by_root_ver(pid_value)
+            else:
+               root_record = session['itemlogin_record']
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
                 page=page,
