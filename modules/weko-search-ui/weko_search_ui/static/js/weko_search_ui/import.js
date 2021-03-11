@@ -951,12 +951,12 @@ class CheckComponent extends React.Component {
                         <td>
                           {
                             item['errors'] ? item['errors'].map(e => {
-                              return <div>{error + ': ' + e}</div>
+                              return <div dangerouslySetInnerHTML={{__html: error + ': ' + e}}></div>
                             }) : item.status === 'new' ? register : item.status === 'keep' ? keep : item.status === 'upgrade' ? upgrade : ''
                           }
                           {
                             item['warnings'] && item['warnings'].map(e => {
-                              return <div>{warning + ': ' + e}</div>
+                              return <div dangerouslySetInnerHTML={{__html: warning + ': ' + e}}></div>
                             })
                           }
                         </td>

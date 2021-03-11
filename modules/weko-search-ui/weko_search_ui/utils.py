@@ -37,19 +37,24 @@ from functools import partial, reduce
 from io import StringIO
 from operator import getitem
 
+import bagit
+import redis
+from celery.result import AsyncResult
+from celery.task.control import revoke
 from flask import abort, current_app, request
 from flask_babelex import gettext as _
 from invenio_db import db
-from invenio_files_rest.models import ObjectVersion
+from invenio_files_rest.models import FileInstance, Location, ObjectVersion
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
-from invenio_pidstore.models import PersistentIdentifier
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch
 from jsonschema import Draft4Validator
 from weko_admin.models import SessionLifetime
+from weko_admin.utils import get_redis_cache
 from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
@@ -79,7 +84,8 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, \
     WEKO_IMPORT_SUFFIX_PATTERN, WEKO_IMPORT_SYSTEM_ITEMS, \
     WEKO_IMPORT_THUMBNAIL_FILE_TYPE, WEKO_IMPORT_VALIDATE_MESSAGE, \
-    WEKO_REPO_USER, WEKO_SYS_USER
+    WEKO_REPO_USER, WEKO_SEARCH_UI_BULK_EXPORT_TASK, \
+    WEKO_SEARCH_UI_BULK_EXPORT_URI, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
 err_msg_suffix = 'Suffix of {} can only be used with half-width' \
@@ -406,7 +412,7 @@ def parse_to_json_form(data: list, item_path_not_existed: list) -> dict:
         if key in item_path_not_existed:
             continue
         key_path = handle_generate_key_path(key)
-        if value:
+        if value or key_path[0] in ['file_path', 'thumbnail_path']:
             set_nested_item(result, key_path, value)
 
     convert_data(result)
@@ -449,9 +455,9 @@ def check_import_items(file_name: str, file_content: str,
                     if os.sep != "/" and os.sep in info.filename:
                         info.filename = info.filename.replace(os.sep, "/")
                 except Exception:
-                    current_app.logger.error('-' * 60)
+                    current_app.logger.warn('-' * 60)
                     traceback.print_exc(file=sys.stdout)
-                    current_app.logger.error('-' * 60)
+                    current_app.logger.warn('-' * 60)
                 z.extract(info, path=data_path)
 
         data_path += '/data'
@@ -474,7 +480,7 @@ def check_import_items(file_name: str, file_content: str,
         handle_check_doi_ra(list_record)
         handle_check_doi(list_record)
         handle_check_date(list_record)
-        handle_check_thumbnail_file_type(list_record)
+        handle_check_file_metadata(list_record, data_path)
         result = {
             'list_record': list_record,
             'data_path': data_path
@@ -871,16 +877,22 @@ def create_deposit(item_id):
     return dep['recid']
 
 
-def clean_thumbnail_file(bucket):
+def clean_thumbnail_file(bucket, root_path, thumbnail_path):
     """Remove all thumbnail in bucket.
 
     :argument
         bucket         -- {object} bucket.
+        root_path      -- {str} location of temp folder.
+        thumbnail_path -- {list} thumbnails path.
     """
+    list_not_remove = list(filter(
+        lambda path: not os.path.isfile(root_path + '/' + path),
+        thumbnail_path))
+    list_not_remove = [get_file_name(path) for path in list_not_remove]
     all_file_version = ObjectVersion.get_by_bucket(
         bucket, True, True).all()
     for file in all_file_version:
-        if file.is_thumbnail is True:
+        if file.is_thumbnail is True and file.key not in list_not_remove:
             file.remove()
 
 
@@ -892,10 +904,12 @@ def up_load_file(record, root_path):
         root_path      -- {str} root_path.
 
     """
-    file_path = record.get('file_path', [])
+    file_path = list(filter(lambda path: path, record.get('file_path', [])))
     thumbnail_path = record.get('thumbnail_path', [])
     if isinstance(thumbnail_path, str):
         thumbnail_path = [thumbnail_path]
+    else:
+        thumbnail_path = list(filter(lambda path: path, thumbnail_path))
     if file_path or thumbnail_path:
         pid = PersistentIdentifier.query.filter_by(
             pid_type='recid',
@@ -903,14 +917,16 @@ def up_load_file(record, root_path):
         rec = RecordMetadata.query.filter_by(
             id=pid.object_uuid).first()
         bucket = rec.json['_buckets']['deposit']
-        clean_thumbnail_file(bucket)
-        for file_name in [*file_path, *thumbnail_path]:
-            with open(root_path + '/' + file_name, 'rb') as file:
+        clean_thumbnail_file(bucket, root_path, thumbnail_path)
+        for path in [*file_path, *thumbnail_path]:
+            if not os.path.isfile(root_path + '/' + path):
+                continue
+            with open(root_path + '/' + path, 'rb') as file:
                 obj = ObjectVersion.create(
                     bucket,
-                    get_file_name(file_name)
+                    get_file_name(path)
                 )
-                if file_name in thumbnail_path:
+                if path in thumbnail_path:
                     obj.is_thumbnail = True
                 obj.set_contents(file)
 
@@ -991,10 +1007,7 @@ def register_item_metadata(item):
         all_file_version = ObjectVersion.get_by_bucket(
             deposit.files.bucket, True, True).all()
         for file in all_file_version:
-            if file.is_thumbnail is False \
-                    and file.key not in file_names:
-                file.remove()
-            elif file.version_id not in lastest_files_version:
+            if file.version_id not in lastest_files_version:
                 file.remove()
 
     def clean_all_file_in_bucket(deposit):
@@ -1037,7 +1050,7 @@ def register_item_metadata(item):
     new_data = autofill_thumbnail_metadata(item['item_type_id'], new_data)
     new_data = clean_file_metadata(item['item_type_id'], new_data)
     deposit.update(item_status, new_data)
-    if item.get('file_path'):
+    if list(filter(lambda path: path, item.get('file_path', []))):
         # update
         clean_file_bucket(deposit)
     else:
@@ -1898,8 +1911,8 @@ def get_data_by_property(record, item_map, item_property):
     key = item_map.get(item_property)
     data = []
     if not key:
-        current_app.logger.error(str(item_property) + ' jpcoar:mapping '
-                                                      'is not correct')
+        current_app.logger.warn(str(item_property) +
+                                ' jpcoar:mapping is not correct')
         return None, None
     attribute = record['metadata'].get(key.split('.')[0])
     if not attribute:
@@ -2245,25 +2258,22 @@ def get_thumbnail_key(item_type_id=0):
                 return key
 
 
-def handle_check_thumbnail_file_type(list_record):
+def handle_check_thumbnail_file_type(thumbnail_paths):
     """Check thumbnail file type.
 
     :argument
-        list_record -- {list} list record import.
+        thumbnail_paths -- {list} thumbnails path.
     :return
-
+        error -- {str} error message.
     """
     error = _('Please specify the image file(gif, jpg, jpe, jpeg,'
               + ' png, bmp, tiff, tif) for the thumbnail.')
-    for record in list_record:
-        thumbnail_path = record.get('thumbnail_path', [])
-        if isinstance(thumbnail_path, str):
-            thumbnail_path = [thumbnail_path]
-        for path in thumbnail_path:
-            file_extend = path.split('.')[-1]
-            if file_extend not in WEKO_IMPORT_THUMBNAIL_FILE_TYPE:
-                record['errors'] = record['errors'] + [error] \
-                    if record.get('errors') else [error]
+    for path in thumbnail_paths:
+        if not path:
+            continue
+        file_extend = path.split('.')[-1]
+        if file_extend not in WEKO_IMPORT_THUMBNAIL_FILE_TYPE:
+            return error
 
 
 def handle_check_metadata_not_existed(str_keys, item_type_id=0):
@@ -2409,6 +2419,187 @@ def handle_check_duplication_item_id(ids: list):
     return list(set(result))
 
 
+def export_all(root_url):
+    """Gather all the item data and export and return as a JSON or BIBTEX.
+        Parameter
+        path is the path if file temparory
+        post_data is the data items
+        :return: JSON, BIBTEX
+    """
+    from weko_items_ui.utils import make_stats_tsv_with_permission, \
+        package_export_file
+
+    def _itemtype_name(name):
+        """Check a list of allowed characters in filenames."""
+        return re.sub(r'[\/:*"<>|\s]', '_', name)
+
+    def _write_tsv_files(item_types_data, export_path):
+        """Write TSV data to files.
+
+        @param item_types_data:
+        @param export_path:
+        @param list_item_role:
+        @return:
+        """
+        permissions = dict(
+            permission_show_hide=lambda a: True,
+            check_created_id=lambda a: True,
+            hide_meta_data_for_role=lambda a: True,
+            current_language=lambda: True
+        )
+        for item_type_id in item_types_data:
+            try:
+                headers, records = make_stats_tsv_with_permission(
+                    item_type_id,
+                    item_types_data[item_type_id]['recids'],
+                    item_types_data[item_type_id]['data'],
+                    permissions)
+                keys, labels, is_systems, options = headers
+                item_types_data[item_type_id]['recids'].sort()
+                item_types_data[item_type_id]['keys'] = keys
+                item_types_data[item_type_id]['labels'] = labels
+                item_types_data[item_type_id]['is_systems'] = is_systems
+                item_types_data[item_type_id]['options'] = options
+                item_types_data[item_type_id]['data'] = records
+                item_type_data = item_types_data[item_type_id]
+
+                tsv_full_path = '{}/{}.tsv'.format(export_path,
+                                                   item_type_data.get('name'))
+                with open(tsv_full_path, 'w') as file:
+                    tsv_output = package_export_file(item_type_data)
+                    file.write(tsv_output.getvalue())
+            except Exception as ex:
+                current_app.logger.error(ex)
+                continue
+
+    temp_path = tempfile.TemporaryDirectory()
+    try:
+        export_path = temp_path.name + '/' + \
+            datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        os.makedirs(export_path, exist_ok=True)
+
+        # get all record id
+        recids = PersistentIdentifier.query.filter_by(
+            pid_type='recid',
+            status=PIDStatus.REGISTERED).all()
+
+        record_ids = [
+            recid.pid_value for recid in recids if recid.pid_value.isdigit()]
+        item_types_data = {}
+
+        for recid in record_ids:
+            record = WekoRecord.get_record_by_pid(recid)
+            item_type = ItemTypes.get_by_id(record.get('item_type_id'))
+            item_type_id = str(record.get('item_type_id'))
+
+            if not item_type:
+                current_app.logger.error('Corrupted Item: {}'.format(recid))
+                continue
+            elif not item_types_data.get(item_type_id):
+                item_type_name = _itemtype_name(
+                    item_type.item_type_name.name)
+                item_types_data[item_type_id] = {
+                    'item_type_id': item_type_id,
+                    'name': '{}({})'.format(
+                        item_type_name,
+                        item_type_id),
+                    'root_url': root_url,
+                    'jsonschema': 'items/jsonschema/' + item_type_id,
+                    'keys': [],
+                    'labels': [],
+                    'recids': [],
+                    'data': {},
+                }
+
+            item_types_data[item_type_id]['recids'].append(recid)
+            item_types_data[item_type_id]['data'][recid] = record
+
+        # Create export info file
+        _write_tsv_files(item_types_data, export_path)
+
+        # Create bag
+        bagit.make_bag(export_path)
+        shutil.make_archive(export_path, 'zip', export_path)
+        with open(export_path + '.zip', 'rb') as file:
+            src = FileInstance.create()
+            src.set_contents(
+                file, default_location=Location.get_default().uri)
+        db.session.commit()
+
+        # Delete old file
+        _task_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_URI']
+        _cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+            format(name=_task_config)
+        prev_uri = get_redis_cache(_cache_key)
+        if (prev_uri):
+            delete_exported(prev_uri, _cache_key)
+        return src.uri if src else None
+    except Exception as ex:
+        db.session.rollback()
+        current_app.logger.error(ex)
+
+
+def delete_exported(uri, cache_key):
+    from simplekv.memory.redisstore import RedisStore
+    """Delete File instance after time in file config"""
+    try:
+        with db.session.begin_nested():
+            file_instance = FileInstance.get_by_uri(uri)
+            file_instance.delete()
+        datastore = RedisStore(redis.StrictRedis.from_url(
+            current_app.config['CACHE_REDIS_URL']))
+        if datastore.redis.exists(cache_key):
+            datastore.delete(cache_key)
+        db.session.commit()
+    except Exception as ex:
+        current_app.logger.error(ex)
+
+
+def cancel_export_all():
+    """Cancel Process Share_task Export ALL with revoke
+       Return:     True:   Cancel Successful.
+                    No:     Error
+    """
+    cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+        format(name=WEKO_SEARCH_UI_BULK_EXPORT_TASK)
+    try:
+        task_id = get_redis_cache(cache_key)
+        task_status = get_export_status()
+
+        if task_status:
+            revoke(task_id, terminate=True)
+
+        return True
+    except Exception as ex:
+        current_app.logger.error(ex)
+        return False
+
+
+def get_export_status():
+    """Get Share_task Export ALL status
+       Return:     True:   Otthers
+                   False:  Success / Failed / Revoked
+    """
+    cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+        format(name=WEKO_SEARCH_UI_BULK_EXPORT_TASK)
+    cache_uri = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+        format(name=WEKO_SEARCH_UI_BULK_EXPORT_URI)
+    export_status = False
+    download_uri = None
+    try:
+        task_id = get_redis_cache(cache_key)
+        download_uri = get_redis_cache(cache_uri)
+        if (task_id):
+            task = AsyncResult(task_id)
+            status_cond = (task.successful() or task.failed()
+                           or task.state == 'REVOKED')
+            export_status = True if not status_cond else False
+    except Exception as ex:
+        current_app.logger.error(ex)
+        export_status = False
+    return export_status, download_uri
+
+
 def handle_check_item_is_locked(item):
     """Check an item is being edit or deleted.
 
@@ -2455,8 +2646,6 @@ def handle_remove_es_metadata(item):
         deposit.indexer.delete(deposit)
     except Exception as ex:
         current_app.logger.error(ex)
-<<<<<<< HEAD
-=======
 
 
 def handle_check_file_metadata(list_record, data_path):
@@ -2542,14 +2731,10 @@ def handle_check_file_content(record, data_path):
     errors = []
     warnings = []
 
-    file_paths = record.get('file_path', [])
-    # check consistence between file_path and filename
-    filenames = get_filenames_from_metadata(record['metadata'])
-    errors.extend(handle_check_filename_consistence(file_paths, filenames))
-
-    # check if file_path exists
     error, warning = handle_check_file_path(
-        file_paths, data_path, record['status'] == 'new')
+        record.get('file_path', []),
+        data_path,
+        record['status'] == 'new')
     if error:
         errors.append(error)
     if warning:
@@ -2590,62 +2775,3 @@ def handle_check_thumbnail(record, data_path):
         warnings.append(warning)
 
     return errors, warnings
-
-
-def get_filenames_from_metadata(metadata):
-    """Check thumbnails metadata.
-
-    :argument
-        metadata -- {dict} record metadata.
-    :return
-        filenames -- {list} List filename data.
-    """
-    filenames = []
-    file_meta_ids = []
-    for key, val in metadata.items():
-        if isinstance(val, list):
-            for item in val:
-                if isinstance(item, dict) and 'filename' in item:
-                    file_meta_ids.append(key)
-                    break
-
-    count = 0
-    for _id in file_meta_ids:
-        for file in metadata[_id]:
-            data = {
-                'id': '.metadata.{}[{}].filename'.format(_id, count),
-                'filename': file.get('filename', '')
-            }
-            if not file.get('filename'):
-                del file['filename']
-            filenames.append(data)
-            count += 1
-
-        new_file_metadata = list(filter(lambda x: x, metadata[_id]))
-        if new_file_metadata:
-            metadata[_id] = new_file_metadata
-        else:
-            del metadata[_id]
-
-    return filenames
-
-
-def handle_check_filename_consistence(file_paths, meta_filenames):
-    """Check thumbnails metadata.
-
-    :argument
-        file_paths -- {list} List file_path.
-        meta_filenames   -- {list} List filename from metadata.
-    :return
-        errors -- {list} List errors.
-    """
-    errors = []
-    msg = _('The file name specified in {} and {} do not match.')
-    for idx, path in enumerate(file_paths):
-        meta_filename = meta_filenames[idx]
-        if path and path.split('/')[-1] != meta_filename['filename']:
-            errors.append(msg.format(
-                'file_path[{}]'.format(idx), meta_filename['id']))
-
-    return errors
->>>>>>> c954f7f1c... weko#24923 - fixbug impact

@@ -719,3 +719,9 @@ msgstr "このDOIは既に別のアイテムに付与されています。別の
 
 msgid "import_error_msg_is_withdraw_doi"
 msgstr "このDOIは取り下げられました。別のDOIを指定してください。"
+
+msgid "The file specified in ({}) does not exist."
+msgstr "（{}）に指定したファイルが存在しません。"
+
+msgid "The file specified in ({}) does not exist.<br/>The file will not be updated. Update only the metadata with tsv contents."
+msgstr "（{}）に指定したファイルが存在しません。<br/>ファイルの更新はしません。tsv内容でメタデータのみ更新します。"
