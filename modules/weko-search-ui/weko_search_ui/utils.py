@@ -2417,10 +2417,11 @@ def handle_check_duplication_item_id(ids: list):
 
 def export_all(root_url):
     """Gather all the item data and export and return as a JSON or BIBTEX.
-        Parameter
+
+    Parameter
         path is the path if file temparory
         post_data is the data items
-        :return: JSON, BIBTEX
+    :return: JSON, BIBTEX
     """
     from weko_items_ui.utils import make_stats_tsv_with_permission, package_export_file
 
@@ -2533,8 +2534,8 @@ def export_all(root_url):
 
 
 def delete_exported(uri, cache_key):
+    """Delete File instance after time in file config."""
     from simplekv.memory.redisstore import RedisStore
-    """Delete File instance after time in file config"""
     try:
         with db.session.begin_nested():
             file_instance = FileInstance.get_by_uri(uri)
@@ -2548,9 +2549,10 @@ def delete_exported(uri, cache_key):
 
 
 def cancel_export_all():
-    """Cancel Process Share_task Export ALL with revoke
-       Return:     True:   Cancel Successful.
-                    No:     Error
+    """Cancel Process Share_task Export ALL with revoke.
+
+    Return:     True:   Cancel Successful.
+                  No:     Error
     """
     cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
         format(name=WEKO_SEARCH_UI_BULK_EXPORT_TASK)
@@ -2568,9 +2570,10 @@ def cancel_export_all():
 
 
 def get_export_status():
-    """Get Share_task Export ALL status
-       Return:     True:   Otthers
-                   False:  Success / Failed / Revoked
+    """Get Share_task Export ALL status.
+
+    Return:     True:   Otthers
+               False:  Success / Failed / Revoked
     """
     cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
         format(name=WEKO_SEARCH_UI_BULK_EXPORT_TASK)
