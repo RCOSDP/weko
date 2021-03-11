@@ -1896,24 +1896,27 @@ class ComponentLanguage extends React.Component {
 class MainLayout extends React.Component {
   constructor(props) {
     super(props);
+    let dataLoader = this.props.data_load;
     this.state = {
-      repository: this.props.data_load.repository_id,
-      widget_type: this.props.data_load.widget_type,
+      repository: dataLoader.repository_id,
+      widget_type: dataLoader.widget_type,
       label: '',
-      theme: this.props.data_load.theme,
-      label_color: this.props.data_load.label_color,
-      label_text_color: this.props.data_load.label_text_color,
-      border_style: this.props.data_load.border_style,
-      label_enable: this.props.data_load.label_enable,
-      frame_border_color: this.props.data_load.frame_border_color,
-      background_color: this.props.data_load.background_color,
-      enable: this.props.data_load.is_enabled,
-      settings: this.props.data_load.settings,
-      language: this.props.data_load.language,
-      multiLangSetting: this.props.data_load.multiLangSetting,
+      theme: dataLoader.theme,
+      label_color: dataLoader.label_color,
+      label_text_color: dataLoader.label_text_color,
+      border_style: dataLoader.border_style,
+      label_enable: dataLoader.label_enable,
+      frame_border_color: dataLoader.frame_border_color,
+      background_color: dataLoader.background_color,
+      enable: dataLoader.is_enabled,
+      settings: dataLoader.settings,
+      language: dataLoader.language,
+      multiLangSetting: dataLoader.multiLangSetting,
       multiLanguageChange: false,
       accessInitValue: 0,
       isDisableSaveBtn: false,
+      fixedHeaderBackgroundColor: dataLoader.settings.fixedHeaderBackgroundColor || DEFAULT_BG_COLOR,
+      fixedHeaderTextColor: dataLoader.settings.fixedHeaderTextColor || '#808080',
     };
     this.getValueOfField = this.getValueOfField.bind(this);
     this.storeMultiLangSetting = this.storeMultiLangSetting.bind(this);
@@ -1988,6 +1991,12 @@ class MainLayout extends React.Component {
         break;
       case 'isDisableSaveBtn':
         this.setState({isDisableSaveBtn: value});
+        break;
+      case 'fixedHeaderBackgroundColor':
+        this.setState({fixedHeaderBackgroundColor: value});
+        break;
+      case 'fixedHeaderTextColor':
+        this.setState({fixedHeaderTextColor: value});
         break;
     }
   }
@@ -2200,6 +2209,20 @@ class MainLayout extends React.Component {
                                      type={this.state.widget_type}
                                      is_edit={this.props.is_edit}/>
         </div>
+        {this.state.widget_type === HEADER_TYPE ?
+          <div className="row">
+            <ComponentSelectColorFiled name="Fixed Header Background Color"
+                                       getValueOfField={this.getValueOfField}
+                                       key_binding="fixedHeaderBackgroundColor"
+                                       data_load={this.state.fixedHeaderBackgroundColor}/>
+          </div> : null}
+        {this.state.widget_type === HEADER_TYPE ?
+          <div className="row">
+            <ComponentSelectColorFiled name="Fixed Header Text Color"
+                                       getValueOfField={this.getValueOfField}
+                                       key_binding="fixedHeaderTextColor"
+                                       data_load={this.state.fixedHeaderTextColor}/>
+          </div> : null}
         <div className="row">
           <ComponentCheckboxField name="Enable"
                                   getValueOfField={this.getValueOfField}
@@ -2291,10 +2314,14 @@ $(function () {
 function isWidgetLockEdit(lockedValueEl) {
   let locked = false;
   let checkLockedEl = document.getElementById('check_locked');
-  if (checkLockedEl !== null && lockedValueEl != null) {
-    let browserLockedLVal = window.sessionStorage.getItem("locked_value");
-    if (lockedValueEl.value !== browserLockedLVal) {
+  if (checkLockedEl !== null) {
+    if (lockedValueEl == null) {
       locked = true;
+    } else {
+      let browserLockedLVal = window.sessionStorage.getItem("locked_value");
+      if (lockedValueEl.value !== browserLockedLVal) {
+        locked = true;
+      }
     }
   }
   return locked
@@ -2347,10 +2374,10 @@ function sendUnlockedRequest(successHandler) {
   if (!successHandler) {
     successHandler = defaultSuccess;
   }
-  let curURL = new URL(window.location.href);
-  let widgetId = curURL.searchParams.get("id");
+  let urlParams = getUrlParam();
+
   let data = {
-    widget_id: widgetId
+    widget_id: urlParams["id"],
   };
 
   $.ajax({
@@ -2369,4 +2396,16 @@ function sendUnlockedRequest(successHandler) {
  */
 function isModalMode() {
   return document.location.search.indexOf("modal=true") > -1;
+}
+
+/**
+ * Get URL Parameter
+ * @returns {{}}
+ */
+function getUrlParam() {
+  let vars = {};
+  decodeURI(window.location.href).replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
+    vars[key] = value;
+  });
+  return vars;
 }

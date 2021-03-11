@@ -80,6 +80,9 @@ WEKO_RDF_SCHEMA = \
 WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE = 'Menu'
 """Menu widget type name."""
 
+WEKO_GRIDLAYOUT_HEADER_WIDGET_TYPE = 'Header'
+"""Header widget type name."""
+
 WEKO_GRIDLAYOUT_WIDGET_DEFAULT_COLOR = '#4169E1'
 """Default HTML color for widget components."""
 

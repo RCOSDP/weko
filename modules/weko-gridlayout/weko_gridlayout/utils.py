@@ -125,12 +125,15 @@ def update_general_item(item, data_result):
     item['type'] = data_result.get('widget_type')
     item['multiLangSetting'] = data_result.get('multiLangSetting')
     settings = data_result.get('settings')
-    if str(data_result.get('widget_type')) == "Access counter":
+    widget_type = data_result.get('widget_type')
+    if widget_type == config.WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE:
         update_access_counter_item(item, settings)
-    elif str(data_result.get('widget_type')) == "New arrivals":
+    elif widget_type == config.WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE:
         update_new_arrivals_item(item, settings)
-    elif str(data_result.get('widget_type')) == "Menu":
+    elif widget_type == config.WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE:
         update_menu_item(item, settings)
+    elif widget_type == config.WEKO_GRIDLAYOUT_HEADER_WIDGET_TYPE:
+        _build_header_setting_data(item, data_result)
 
 
 def update_menu_item(item, data_result):
@@ -184,7 +187,7 @@ def get_default_language():
     result = get_register_language()
     if isinstance(result, list):
         return result[0]
-    return
+    return ""
 
 
 def get_unregister_language():
@@ -275,17 +278,14 @@ def build_data_setting(data):
     result = dict()
     convert_popular_data(data, result)
     setting = data['settings']
-    if (str(data.get('widget_type'))
-            == config.WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE):
+    widget_type = data.get('widget_type')
+    if widget_type == config.WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE:
         _build_access_counter_setting_data(result, setting)
-    elif (str(data.get('widget_type'))
-            == config.WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE):
+    elif widget_type == config.WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE:
         _build_new_arrivals_setting_data(result, setting)
-    elif (str(data.get('widget_type'))
-            == config.WEKO_GRIDLAYOUT_NOTICE_TYPE):
+    elif widget_type == config.WEKO_GRIDLAYOUT_NOTICE_TYPE:
         _build_notice_setting_data(result, setting)
-    elif str(
-            data.get('widget_type')) == config.WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE:
+    elif widget_type == config.WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE:
         color = config.WEKO_GRIDLAYOUT_WIDGET_DEFAULT_COLOR
         result['menu_orientation'] = data['settings'].get(
             'menu_orientation') or 'horizontal'
@@ -299,6 +299,8 @@ def build_data_setting(data):
             'menu_active_color') or color
         result['menu_show_pages'] = data['settings'].get(
             'menu_show_pages') or []
+    elif widget_type == config.WEKO_GRIDLAYOUT_HEADER_WIDGET_TYPE:
+        _build_header_setting_data(result, data)
     return result
 
 
@@ -339,6 +341,17 @@ def _build_notice_setting_data(result, setting):
     """
     result['hide_the_rest'] = Markup.escape(setting.get('setting'))
     result['read_more'] = Markup.escape(setting.get('read_more'))
+
+
+def _build_header_setting_data(result, setting):
+    """Build header setting data.
+
+    @param result:
+    @param setting:
+    """
+    result['fixedHeaderBackgroundColor'] = setting.get(
+        'fixedHeaderBackgroundColor')
+    result['fixedHeaderTextColor'] = setting.get('fixedHeaderTextColor')
 
 
 def build_multi_lang_data(widget_id, multi_lang_json):
@@ -471,20 +484,22 @@ def convert_data_to_edit_pack(data):
     result['repository_id'] = data.get('repository_id')
     result['widget_type'] = data.get('widget_type')
     result['updated'] = data.get('updated')
-    if (str(data.get('widget_type'))
-            == config.WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE):
+    widget_type = data.get('widget_type')
+    if widget_type == config.WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE:
         result_settings['access_counter'] = settings.get('access_counter')
         result_settings['preceding_message'] = settings.get(
             'preceding_message')
         result_settings['following_message'] = settings.get(
             'following_message')
         result_settings['other_message'] = settings.get('other_message')
-    if str(data.get('widget_type')) == config.WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE:
+    if widget_type == config.WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE:
         result_settings['new_dates'] = settings.get('new_dates')
         result_settings['display_result'] = settings.get('display_result')
         result_settings['rss_feed'] = settings.get('rss_feed')
-    if str(data.get('widget_type')) == config.WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE:
+    if widget_type == config.WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE:
         update_menu_item(result_settings, settings)
+    if widget_type == config.WEKO_GRIDLAYOUT_HEADER_WIDGET_TYPE:
+        _build_header_setting_data(result_settings, settings)
     result['settings'] = result_settings
     return result
 
@@ -947,7 +962,7 @@ class WidgetBucket:
             db.session.add(bucket)
             db.session.commit()
 
-    def __validate(self, file_stream, file_name, community_id=0, file_size=0):
+    def __validate(self, file_stream, file_name, community_id="0", file_size=0):
         """Validate upload file.
 
         :param file_stream: file stream.
@@ -983,7 +998,7 @@ class WidgetBucket:
             )
 
     def save_file(self, file_stream, file_name: str, mimetype: str,
-                  community_id=0):
+                  community_id="0"):
         """Save widget static file.
 
         :param file_stream: file stream.
@@ -1001,6 +1016,7 @@ class WidgetBucket:
             "file_name": file_name,
         }
         file_bucket = Bucket.query.get(self.bucket_id)
+        community_id = community_id.split("@")[0]
         key = "{0}_{1}".format(community_id, file_name)
         root_url = request.host_url
         try:
@@ -1044,7 +1060,8 @@ class WidgetBucket:
         obj = ObjectVersion.get(self.bucket_id, key)
         if not obj:
             abort(404, '{} does not exists.'.format(file_name))
-        return obj.send_file(trusted=True)
+        obj.key = file_name
+        return obj.send_file()
 
 
 def validate_upload_file(community_id: str):
