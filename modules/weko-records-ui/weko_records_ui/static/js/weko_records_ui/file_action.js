@@ -95,9 +95,7 @@ $(document).ready(function () {
     showMessage(errorMessage);
   });
 
-  $('#non-login-role-btn').click(function () {
-    $("#email_modal").modal("show");
-  });
+
 
   function validateUserEmail(email, confirmEmail) {
     let regex = /^([a-zA-Z0-9_.+-])+@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
@@ -110,21 +108,22 @@ $(document).ready(function () {
     let user_mail = userMailElement.val();
     let user_mail_confirm = userMailConfirmElement.val();
     if (validateUserEmail(user_mail, user_mail_confirm)) {
-      let fileName = $('#guest_filename_data').val();
-      let dataType = $('#guest_data_type_title').val();
-      let recordID = $('#guest_record_id').val();
-      let itemTypeId = $('#guest_itemtype_id').val();
-      let workflowId = $('#guest_workflow_id').val();
-      let flowId = $('#guest_flow_id').val();
+      let fileName = $(this).data("guest_filename_data");
+      let dataType = $(this).data("guest_data_type_title");
+      let recordID = $(this).data("guest_record_id");
+      let itemTypeId = $(this).data("guest_itemtype_id");
+      let workflowId = $(this).data("guest_workflow_id");
+      let flowId = $(this).data("guest_flow_id");
+      console.log(fileName, dataType, recordID, itemTypeId, workflowId, flowId)
       const post_uri = '/workflow/activity/init-guest';
       let post_data = {
         guest_mail: user_mail,
         file_name: fileName,
         guest_item_title: dataType,
-        record_id: recordID,
-        item_type_id: itemTypeId,
-        workflow_id: workflowId,
-        flow_id: flowId,
+        record_id: recordID.toString(),
+        item_type_id: itemTypeId.toString(),
+        workflow_id: workflowId.toString(),
+        flow_id: flowId.toString(),
       }
       $.ajax({
         url: post_uri,

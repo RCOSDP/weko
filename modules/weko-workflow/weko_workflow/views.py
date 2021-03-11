@@ -33,6 +33,7 @@ from flask import Blueprint, abort, current_app, jsonify, render_template, \
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, User, userrole
+from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -57,8 +58,8 @@ from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
-from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
-    get_workflows
+from weko_records_ui.utils import get_list_licence, get_roles, \
+    get_terms_title, get_workflows
 from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from .api import Action, Flow, GetCommunity, WorkActivity, \
@@ -1534,7 +1535,7 @@ def get_data_init():
     """Init data."""
     init_workflows = get_workflows()
     init_roles = get_roles()
-    init_terms = get_terms()
+    init_terms = get_terms_title()
     return jsonify(
         init_workflows=init_workflows,
         init_roles=init_roles,
