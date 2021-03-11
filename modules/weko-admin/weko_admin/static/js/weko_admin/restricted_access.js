@@ -118,6 +118,8 @@ function RestrictedAccessLayout({content_file_download}) {
       success: function (result) {
         if (result.status) {
           addAlert(result.msg);
+        } else {
+          addAlert(result.msg);
         }
       },
       error: function (error) {

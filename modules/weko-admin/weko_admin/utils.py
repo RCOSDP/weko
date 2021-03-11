@@ -1684,6 +1684,7 @@ def update_restricted_access(restricted_access: dict):
         if content_file_download['expiration_date'] and int(content_file_download['expiration_date']) < 1 or \
                 content_file_download['download_limit'] and int(content_file_download['download_limit']) < 1:
             return False
+        return True
 
     # Content file download.
     if 'content_file_download' in restricted_access:

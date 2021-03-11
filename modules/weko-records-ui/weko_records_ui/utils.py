@@ -717,6 +717,8 @@ def validate_onetime_download_token(
         onetime_download = get_onetime_download(
             file_name=file_name, record_id=record_id, user_mail=guest_mail
         )
+        if not onetime_download:
+            return False, token_invalid
         download_date = dt.strptime(date, "%Y-%m-%d").date() + timedelta(
             onetime_download.expiration_date)
         current_date = dt.now().date()
