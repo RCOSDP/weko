@@ -821,6 +821,8 @@ const ComponentFieldEditor = function (props) {
         }
         trumbowyg.range.deleteContents();
         trumbowyg.range.insertNode(link[0]);
+        trumbowyg.syncCode();
+        trumbowyg.$c.trigger('tbwchange');
         // Close upload modal.
         closeUploadModal(trumbowyg, data, url)
       }
