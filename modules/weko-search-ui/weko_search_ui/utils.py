@@ -2809,8 +2809,16 @@ def get_filenames_from_metadata(metadata):
                 'id': '.metadata.{}[{}].filename'.format(_id, count),
                 'filename': file.get('filename', '')
             }
+            if not file.get('filename'):
+                del file['filename']
             filenames.append(data)
             count += 1
+
+        new_file_metadata = list(filter(lambda x: x, metadata[_id]))
+        if new_file_metadata:
+            metadata[_id] = new_file_metadata
+        else:
+            del metadata[_id]
 
     return filenames
 
