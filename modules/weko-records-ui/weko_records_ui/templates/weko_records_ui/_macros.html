@@ -71,14 +71,12 @@
             {% endif %}
             <a class="action-anchor" {% if not start_guest_wf %}href="{{ href_url }}"{% endif %}>
               <button class="{{btn_class}}"
-                      {% if start_guest_wf %}
                         data-guest_filename_data= "{{ file.filename }}"
                         data-guest_workflow_id="{{ workflow_id }}"
                         data-guest_itemtype_id="{{ item_type_id }}"
                         data-guest_flow_id="{{ flow_id }}"
                         data-guest_data_type_title="{{ record.item_title }}"
                         data-guest_record_id="{{ record.recid }}">
-                      {% endif %}
                 <i class="action-icon fa fa-download"></i>
                 {{ _('Apply JGSS') }}
               </button>
@@ -97,7 +95,7 @@
         <input id="non-role-msg" type="hidden"
                value="{{ _("This data is not available for undergraduate students or those who do not register their positions.") }}"/>
         <a class="action-anchor">
-          <button class="img-rounded action-button button-sm" id="non-role-btn">
+          <button class="img-rounded action-button button-sm non-role-btn">
             <i class="action-icon fa fa-download"></i>
             {{ _('Apply JGSS') }}
           </button>
@@ -215,11 +213,8 @@
             <div class="modal-body">
                 <div class="panel panel-default panel-body" style="overflow-y: auto; max-height:400px;">
                     <div class="form-check">
-                        <span class="action-name">
-                        </span>
-                        <br>
-                        file.terms_content
-                        <br>
+                        <span class="action-name" style="white-space: pre-wrap;">{{file.terms_content}}</span>
+
                         <div style="position: relative;">
                             <input type="checkbox" class="pointer term_checked" data-file-version-id="{{ file.version_id }}" id="term_checked_{{ file.version_id }}" name="term_check_{{ file.version_id }}">
                             <input type="hidden" name="title" value="{{ itemTitle }}">
@@ -230,7 +225,6 @@
                         </div>
                     </div>
                 </div>
-
             </div>
             <div class="modal-footer">
                 <button id="term_next_{{ file.version_id }}" data-guest={{is_guest}} data-file-version-id="{{ file.version_id }}" type="button" class="term_next btn btn-primary disabled" disabled>Save changes</button>

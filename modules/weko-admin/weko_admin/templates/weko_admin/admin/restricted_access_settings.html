@@ -1,30 +1,33 @@
 {#
-# This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
-#
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#}
+  # This file is part of WEKO3.
+  # Copyright (C) 2017 National Institute of Informatics.
+  #
+  # WEKO3 is free software; you can redistribute it
+  # and/or modify it under the terms of the GNU General Public License as
+  # published by the Free Software Foundation; either version 2 of the
+  # License, or (at your option) any later version.
+  #
+  # WEKO3 is distributed in the hope that it will be
+  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  # General Public License for more details.
+  #
+  # You should have received a copy of the GNU General Public License
+  # along with WEKO3; if not, write to the
+  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+  # MA 02111-1307, USA.
+  #}
 
-{%- extends admin_base_template %}
+  {%- extends admin_base_template %}
 
-{% block css %}
-{{ super() }}
-{% assets "weko_theme_css_buttons" %}
+  {% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}
+      <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {% assets "weko_admin_css" %}
     <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-{% endblock %}
+
+  {% endblock %}
 
 {%- block javascript %}
 {{ super() }}
@@ -35,15 +38,23 @@
           src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 {%- endblock javascript %}
 
-{%- block body %}
- {% from "weko_theme/macros/modal_page.html" import all_modal %}
-<input id="init_data" type="hidden" value='{{data}}' />
-<input id="content_file_download_label" type="hidden" value='{{_("Content File Download")}}' />
-<input id="download_limit_label" type="hidden" value='{{_("Download Limit")}}' />
-<input id="expiration_date_label" type="hidden" value='{{_("Expiration Date")}}' />
-<input id="unlimited_label" type="hidden" value='{{_("Unlimited")}}' />
-<input id="save_label" type="hidden" value='{{_("Save")}}' />
-<div id="alerts"></div>
-<div id="root" class="col-xs-12"></div>
-{{ all_modal() }}
-{%- endblock body %}
+  {%- block body %}
+   {% from "weko_theme/macros/modal_page.html" import all_modal %}
+  <input id="init_data" type="hidden" value='{{data}}' />
+  <input id="content_file_download_label" type="hidden" value='{{_("Content File Download")}}' />
+  <input id="download_limit_label" type="hidden" value='{{_("Download Limit")}}' />
+  <input id="expiration_date_label" type="hidden" value='{{_("Expiration Date")}}' />
+  <input id="unlimited_label" type="hidden" value='{{_("Unlimited")}}' />
+  <input id="save_label" type="hidden" value='{{_("Save")}}' />
+  <input id="message" type="hidden" value='{{_("Message")}}' />
+ <input id="message_empty" type="hidden" value='{{_("Message Empty")}}' />
+
+  <input type="hidden" id="english" value='{{_("English")}}'/>
+  <input type="hidden" id="japanese" value='{{_("Japanese")}}'/>
+  <input type="hidden" id="terms_and_conditions" value='{{_("Terms and Conditions")}}'/>
+  <input type="hidden" id="new" value='{{_("New")}}'/>
+
+  <div id="alerts"></div>
+  <div id="root" class="col-xs-12"></div>
+  {{ all_modal() }}
+  {%- endblock body %}

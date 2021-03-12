@@ -90,7 +90,7 @@ $(document).ready(function () {
     $("#allModal").modal("show");
   }
 
-  $('#non-role-btn').click(function () {
+  $('.non-role-btn').click(function () {
     let errorMessage = $('#non-role-msg').val()
     showMessage(errorMessage);
   });
