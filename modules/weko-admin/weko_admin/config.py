@@ -765,13 +765,13 @@ WEKO_INDEX_TREE_STYLE_OPTIONS = {
     'widths': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
 }
 
-
 WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
     "content_file_download": {
         "expiration_date": 30,
         "expiration_date_unlimited_chk": False,
         "download_limit": 10,
         "download_limit_unlimited_chk": False,
-    }
+    },
+    "terms_and_conditions": []
 }
 """Default restricted access settings."""
