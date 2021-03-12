@@ -514,25 +514,35 @@ def sort_meta_data_by_options(record_hit):
 
     def get_file_comments(record, files):
         """Check and get file info."""
+
+        def __get_label_extension():
+            _label = f.get('url', {}).get('label')
+            _filename = f.get('filename', '')
+            _extension = ''
+            if not _label and not f.get('version_id'):
+                _label = f.get('url', {}).get('url', '')
+            elif not _label:
+                _label = _filename
+            if f.get('version_id'):
+                _idx = _filename.find('.') + 1
+                _extension = _filename[_idx:] if _idx > 0 else 'unknown'
+            return _label, _extension
         result = []
         for f in files:
-            if check_file_download_permission(record, f, False):
-                extention = ''
-                label = f.get('url', {}).get('label')
-                filename = f.get('filename', '')
-                if not label and not f.get('version_id'):
-                    label = f.get('url', {}).get('url', '')
-                elif not label:
-                    label = filename
-
-                if f.get('version_id'):
-                    idx = filename.find('.') + 1
-                    extention = filename[idx:] if idx > 0 else 'unknown'
-
+            if 'open_restricted' == f.get('accessrole', ''):
+                label, extension = __get_label_extension()
                 if label:
                     result.append({
                         'label': label,
-                        'extention': extention,
+                        'extention': extension,
+                        'url': ""
+                    })
+            elif check_file_download_permission(record, f, False):
+                label, extension = __get_label_extension()
+                if label:
+                    result.append({
+                        'label': label,
+                        'extention': extension,
                         'url': f.get('url', {}).get('url', '')
                     })
         return result
