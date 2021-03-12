@@ -1201,11 +1201,11 @@ msgstr "無制限にする"
 
 #: weko_admin/templates/weko_admin/admin/rest_settings.html:46
 msgid "Must set a positive integer for %(name)s"
-msgstr "{}は1以上の整数を設定する必要があります。"
+msgstr "%(name)sは1以上の整数を設定する必要があります。"
 
 #: weko_admin/templates/weko_admin/admin/rest_settings.html:49
 msgid "Please set %(name)s"
-msgstr "{}を設定してください。"
+msgstr "%(name)sを設定してください。"
 
 msgid "Restricted Access was successfully updated."
 msgstr "制限公開の設定を変更しました。"
