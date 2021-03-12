@@ -657,7 +657,7 @@ def generate_one_time_download_url(
     secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
     download_pattern = current_app.config[
         'WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN']
-    current_date = dt.now().strftime("%Y-%m-%d")
+    current_date = dt.utcnow().strftime("%Y-%m-%d")
     hash_value = download_pattern.format(file_name, record_id, guest_mail,
                                          current_date)
     secret_token = oracle10.hash(secret_key, hash_value)
@@ -719,9 +719,9 @@ def validate_onetime_download_token(
         )
         if not onetime_download:
             return False, token_invalid
-        download_date = dt.strptime(date, "%Y-%m-%d").date() + timedelta(
+        download_date = onetime_download.created.date() + timedelta(
             onetime_download.expiration_date)
-        current_date = dt.now().date()
+        current_date = dt.utcnow().date()
         if current_date > download_date:
             return False, _("The expiration date for download has been exceeded.")
 
