@@ -1616,7 +1616,7 @@ class ComponentButtonLayout extends React.Component {
         if (isModalMode()) {
           window.close();
         } else {
-          window.location.href = returnUrl
+          window.location.href = returnUrl;
         }
       } else {
         $("#inputModal").html(result.msg);
@@ -1624,7 +1624,11 @@ class ComponentButtonLayout extends React.Component {
       }
     }
 
-    sendUnlockedRequest(successHandler);
+    if (this.props.is_edit) {
+      sendUnlockedRequest(successHandler);
+    } else {
+      window.location.href = returnUrl;
+    }
   }
 
   render() {
