@@ -266,9 +266,6 @@ msgstr ""
 msgid "Publish"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/tombstone.html:13
-msgid "This item has been deleted."
-msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:25
 msgid "Fields For Update"

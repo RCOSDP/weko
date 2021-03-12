@@ -164,7 +164,7 @@ function TermsList({termList, setTermList, currentTerm, setCurrentTerm}) {
                     onClick={handleOnTermClick}
                     id={term.key}>{term.content.en.title}
                   </a>
-                  <a className="glyphicon glyphicon-remove pull-right"
+                  <a className="glyphicon glyphicon-remove glyphicon-remove-term pull-right"
                      id={term.key}
                      key={term.key} onClick={handleRemoveTerm}/>
                 </li>
@@ -197,39 +197,36 @@ function TermDetail({currentTerm, setCurrentTerm}) {
   }
 
   return (
-    <div>
+    <div style={{paddingRight: '15px'}}>
       <div className="form-group row margin-top">
         <label htmlFor="staticEmail"
-               className="col-sm-1 col-form-label" style={{textAlign: 'right'}}>{LABEL_JAPANESE}</label>
+          className="col-sm-2 col-form-label" style={{textAlign: 'right'}}>{LABEL_JAPANESE}</label>
         <div className="col-sm-10">
           <input type="text" className="form-control"
-                 disabled={currentTerm.existed !== true} name="title"
-                 value={ja.title}
-                 onChange={e => handleOnInputChanged(e, "ja")}/>
+            disabled={currentTerm.existed !== true} name="title"
+            value={ja.title}
+            onChange={e => handleOnInputChanged(e, "ja")}/>
         </div>
-
-        <div className="col-sm-11 margin-top">
-                <textarea className="form-control textarea_height"
-                          disabled={currentTerm.existed !== true} name="content"
-                          value={ja.content}
-                          onChange={e => handleOnInputChanged(e, "ja")}/>
+        <div className="col-sm-12 margin-top">
+          <textarea className="form-control textarea_height"
+            disabled={currentTerm.existed !== true} name="content"
+            value={ja.content}
+            onChange={e => handleOnInputChanged(e, "ja")}/>
         </div>
       </div>
       <div className="form-group row margin-top">
         <label htmlFor="staticEmail"
-               className="col-sm-1 col-form-label field-required" style={{textAlign: 'right'}}>{LABEL_ENGLISH}</label>
+          className="col-sm-2 col-form-label field-required" style={{textAlign: 'right'}}>{LABEL_ENGLISH}</label>
         <div className="col-sm-10">
-
           <input type="text" disabled={currentTerm.existed !== true}
-                 className="form-control" name="title" value={en.title}
-                 onChange={e => handleOnInputChanged(e, "en")}/>
+            className="form-control" name="title" value={en.title}
+            onChange={e => handleOnInputChanged(e, "en")}/>
         </div>
-        <div className="col-sm-11 margin-top">
-
-                <textarea className="form-control textarea_height"
-                          disabled={currentTerm.existed !== true} name="content"
-                          value={en.content}
-                          onChange={e => handleOnInputChanged(e, "en")}/>
+        <div className="col-sm-12 margin-top">
+          <textarea className="form-control textarea_height"
+            disabled={currentTerm.existed !== true} name="content"
+            value={en.content}
+            onChange={e => handleOnInputChanged(e, "en")}/>
         </div>
       </div>
     </div>

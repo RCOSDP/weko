@@ -462,12 +462,6 @@ def display_activity(activity_id="0"):
     if 'item_login' == action_endpoint or \
             'item_login_application' == action_endpoint or \
             'file_upload' == action_endpoint:
-        if request.method == 'POST':
-            is_user_agreed = request.form.get('checked')
-            if is_user_agreed == "on":
-                # update user agreement when user check the checkbox
-                activity.upt_activity_agreement_step(activity_id=activity_id,
-                                                     is_agree=True)
         activity_session = dict(
             activity_id=activity_id,
             action_id=activity_detail.action_id,
@@ -483,15 +477,6 @@ def display_activity(activity_id="0"):
             allow_multi_thumbnail \
             = item_login(item_type_id=workflow_detail.itemtype_id)
         application_item_type = is_usage_application_item_type(activity_detail)
-        if current_app.config['WEKO_WORKFLOW_ENABLE_SHOWING_TERM_OF_USE']:
-            # if this is Item Registration step and the user have not agreed
-            # term and condition yet, set to that page
-            if (cur_action.action_is_need_agree
-                    and is_need_to_show_agreement_page(item_type_name)
-                    and not activity_detail.activity_confirm_term_of_use):
-                step_item_login_url = 'weko_workflow/term_and_condition.html'
-                term_and_condition_content = get_term_and_condition_content(
-                    item_type_name)
         if not record and item:
             record = item
 

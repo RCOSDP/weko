@@ -128,8 +128,8 @@ require([
   }
 
   $('.btn-start-workflow').on('click', function () {
-    let workflow_id = $(this).data('workflow-id');
-    let community = $(this).data('community');
+    let workflowId = $(this).data('workflow-id');
+    let communityId = $(this).data('community');
     startWorkflow(workflowId, communityId)
   });
 

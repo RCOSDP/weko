@@ -831,12 +831,15 @@ class WekoDeposit(Deposit):
                         filename = lst.get('filename')
                         if file.obj.key == filename:
                             lst.update({'mimetype': file.obj.mimetype})
-                            lst.update({'version_id': str(file.obj.version_id)})
+                            lst.update(
+                                {'version_id': str(file.obj.version_id)})
 
                             # update file url
-                            file_url = '{}record/{}/files/{}'.format(
-                                get_url_root(), self['recid'], filename)
-                            lst.update({'url': {'url': file_url}})
+                            url_metadata = lst.get('url', {})
+                            url_metadata['url'] = '{}record/{}/files/{}' \
+                                .format(get_url_root(),
+                                        self['recid'], filename)
+                            lst.update({'url': url_metadata})
 
                             # update file_files's json
                             file.obj.file.update_json(lst)
