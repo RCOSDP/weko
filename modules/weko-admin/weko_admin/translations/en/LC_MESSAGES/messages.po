@@ -703,3 +703,5 @@ msgstr "Please set %(name)s"
 msgid "Restricted Access was successfully updated."
 msgstr ""
 
+msgid "Please input the Terms and Conditions in English."
+msgstr ""

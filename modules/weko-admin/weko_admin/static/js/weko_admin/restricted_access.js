@@ -11,6 +11,26 @@ const EMPTY_EXPIRATION_DATE = document.getElementById('empty_expiration_date').v
 const MAX_DOWNLOAD_LIMIT = 2147483647;
 const MAX_EXPIRATION_DATE = 999999999;
 
+const MESSAGE_MISSING_DATA = document.getElementById('message_miss_data').value;
+const LABEL_ENGLISH = document.getElementById("english").value;
+const LABEL_JAPANESE = document.getElementById("japanese").value;
+const LABEL_NEW = document.getElementById("new").value;
+const LABEL_TERMS_AND_CONDITIONS = document.getElementById("terms_and_conditions").value;
+
+const EMPTY_TERM = {
+  key: '',
+  content:
+    {
+      "en": {
+        "title": "",
+        "content": ""
+      },
+      "ja": {
+        "title": "",
+        "content": ""
+      }
+    }
+};
 (function () {
   let initValue = document.getElementById('init_data').value;
   initValue = JSON.parse(initValue);
@@ -54,7 +74,7 @@ function ContentFileDownloadLayout({value, setValue}) {
               <h5><strong>{CONTENT_FILE_DOWNLOAD_LABEL}</strong></h5>
             </div>
             <div className="panel-body">
-              <div className="form-group">
+              <div className="form-inline">
                 <label
                   className="col-sm-2 text-right">{EXPIRATION_DATE_LABEL}</label>
                 <input type="text" id="expiration_date" className="col-sm-2"
@@ -66,12 +86,13 @@ function ContentFileDownloadLayout({value, setValue}) {
                 />
                 <label htmlFor="expiration_date_unlimited_chk"
                        className="text-left">
-                  <input type="checkbox" style={style}
+                  <input type="checkbox"
+                         style={{marginRight: "5px", marginLeft: "15px"}}
                          id="expiration_date_unlimited_chk"
                          key={Math.random()}
                          checked={expiration_date_unlimited_chk}
                          onChange={handleChange}/>
-                  &nbsp; {UNLIMITED_LABEL}
+                  {UNLIMITED_LABEL}
                 </label>
               </div>
               <div className="form-inline">
@@ -83,7 +104,8 @@ function ContentFileDownloadLayout({value, setValue}) {
                        value={download_limit}/>
                 <label htmlFor="download_limit_unlimited_chk"
                        className="text-left">
-                  <input type="checkbox" style={style}
+                  <input type="checkbox"
+                         style={{marginRight: "5px", marginLeft: "15px"}}
                          id="download_limit_unlimited_chk"
                          key={Math.random()}
                          checked={download_limit_unlimited_chk}
@@ -97,11 +119,192 @@ function ContentFileDownloadLayout({value, setValue}) {
       </div>
     </div>
   )
-
 }
 
-function RestrictedAccessLayout({content_file_download}) {
+function TermsList({termList, setTermList, currentTerm, setCurrentTerm}) {
+
+  function handleOnTermClick(e) {
+    e.preventDefault();
+    // Set current term whenever an element is clicked
+    if (currentTerm === undefined || e.target.id !== currentTerm['key']) {
+      let newCurrentTerm;
+      newCurrentTerm = JSON.parse(JSON.stringify(termList.find(term => term['key'] === e.target.id)));
+      newCurrentTerm.existed = true;
+      setCurrentTerm(newCurrentTerm);
+    }
+  }
+
+  function handleCreateNewTerm(event) {
+    console.log("handleCreateNewTerm");
+    event.preventDefault();
+    let newTerm = JSON.parse(JSON.stringify(EMPTY_TERM));
+    newTerm['existed'] = true;
+    setCurrentTerm(newTerm);
+  }
+
+  function handleRemoveTerm(event) {
+    event.preventDefault();
+    setTermList(termList.filter(t => t.key !== event.target.id));
+    let newTerm = JSON.parse(JSON.stringify(EMPTY_TERM));
+    setCurrentTerm(newTerm)
+  }
+
+  return (
+    <div className='row'>
+      <div className="col col-md-12">
+        <div className="panel-default">
+          <div className="col col-md-12 both scrollbar margin-top padding-top"
+               id="sltBoxListEmail">
+            {
+              termList.map((term) => (
+                <li className="tree-list" key={term.key}>
+                  <a
+                    className={`list-group-item list-group-item-action ${currentTerm !== undefined && currentTerm.key === term.key ? 'active' : ''}`}
+                    onClick={handleOnTermClick}
+                    id={term.key}>{term.content.en.title}
+                  </a>
+                  <a className="glyphicon glyphicon-remove pull-right"
+                     id={term.key}
+                     key={term.key} onClick={handleRemoveTerm}/>
+                </li>
+              ))
+            }
+
+            <button className="btn btn-light add-button btn-add"  style={{marginTop: "10px"}} id="new_term"
+              onClick={handleCreateNewTerm}>
+              <span class="glyphicon glyphicon-plus">
+              </span>{LABEL_NEW}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TermDetail({currentTerm, setCurrentTerm}) {
+  const {en, ja} = currentTerm.content;
+
+  function handleOnInputChanged(event, key) {
+    event.preventDefault();
+    let oldContent;
+    let content;
+
+    oldContent = currentTerm.content[key];
+    oldContent[event.target.name] = event.target.value;
+    content = {...currentTerm.content, ...{[key]: oldContent}};
+    setCurrentTerm({...currentTerm, content: content})
+  }
+
+  const required = {"color": " red"};
+
+  return (
+    <div>
+      <form>
+        <div className="form-group row margin-top">
+          <label htmlFor="staticEmail"
+                 className="col-sm-1 col-form-label" style={{textAlign: 'right'}}>{LABEL_JAPANESE}</label>
+          <div className="col-sm-10">
+            <input type="text" className="form-control"
+                   disabled={currentTerm.existed !== true} name="title"
+                   value={ja.title}
+                   onChange={e => handleOnInputChanged(e, "ja")}/>
+          </div>
+
+          <div className="col-sm-11 margin-top">
+                <textarea className="form-control textarea_height"
+                          disabled={currentTerm.existed !== true} name="content"
+                          value={ja.content}
+                          onChange={e => handleOnInputChanged(e, "ja")}/>
+          </div>
+        </div>
+        <div className="form-group row margin-top">
+          <label htmlFor="staticEmail"
+                 className="col-sm-1 col-form-label field-required" style={{textAlign: 'right'}}>{LABEL_ENGLISH}</label>
+          <div className="col-sm-10">
+
+            <input type="text" disabled={currentTerm.existed !== true}
+                   className="form-control" name="title" value={en.title}
+                   onChange={e => handleOnInputChanged(e, "en")}/>
+          </div>
+          <div className="col-sm-11 margin-top">
+
+                <textarea className="form-control textarea_height"
+                          disabled={currentTerm.existed !== true} name="content"
+                          value={en.content}
+                          onChange={e => handleOnInputChanged(e, "en")}/>
+          </div>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+function TermsConditions({termList, setTermList, currentTerm, setCurrentTerm}) {
+  return (
+    <div>
+      <div className="panel panel-default">
+        <div className="panel-heading">
+          <h5>
+            <strong>
+              <p>{LABEL_TERMS_AND_CONDITIONS} </p>
+            </strong>
+          </h5>
+        </div>
+        <div className="row">
+          <div className="col col-md-4">
+            <TermsList termList={termList} setTermList={setTermList}
+                       currentTerm={currentTerm}
+                       setCurrentTerm={setCurrentTerm}/>
+          </div>
+          <div className="col col-md-8">
+            <TermDetail currentTerm={currentTerm}
+                        setCurrentTerm={setCurrentTerm}/>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
+function RestrictedAccessLayout({content_file_download, terms_and_conditions}) {
   const [contentFileDownload, setContentFileDownload] = useState(content_file_download);
+  const [termList, setTermList] = useState(terms_and_conditions);
+  const [currentTerm, setCurrentTerm] = useState(EMPTY_TERM);
+
+  function handleApply() {
+    let termListClone = [...termList];
+    if (!currentTerm.existed) {
+      return { "valid": true, "data": [...JSON.parse(JSON.stringify(termListClone))] }
+    }
+
+    if (currentTerm.content.en.title.trim() === '' || currentTerm.content.en.content.trim() === '') {
+      return {
+        "valid": false,
+        "data": [...JSON.parse(JSON.stringify(termListClone))]
+      }
+    }
+
+    if (currentTerm['key'] === '') {
+      currentTerm['key'] = (Math.floor(Date.now() / 10)).toString();
+      setTermList([...termList, JSON.parse(JSON.stringify(currentTerm))])
+      return {
+        "valid": true,
+        "data": [...termList, JSON.parse(JSON.stringify(currentTerm))]
+      }
+    } else {
+      // for existed term
+      termListClone.map((term) => {
+        if (term.key === currentTerm.key)
+          term["content"] = JSON.parse(JSON.stringify(currentTerm)).content
+      });
+      setTermList(termListClone)
+      return {
+        "valid": true,
+        "data": [...JSON.parse(JSON.stringify(termListClone))]
+      }
+    }
+  }
 
   function handleSave() {
     const URL = "/api/admin/restricted_access/save";
@@ -110,10 +313,16 @@ function RestrictedAccessLayout({content_file_download}) {
       showErrorMessage(errorMessage);
       return false;
     }
+    let terms_data = handleApply();
+    if (terms_data["valid"] === false) {
+        showErrorMessage(MESSAGE_MISSING_DATA);
+        }
 
     let data = {
       content_file_download: contentFileDownload,
+      terms_and_conditions: terms_data["data"]
     }
+
     $.ajax({
       url: URL,
       method: 'POST',
@@ -162,6 +371,9 @@ function RestrictedAccessLayout({content_file_download}) {
     <div>
       <ContentFileDownloadLayout value={contentFileDownload}
                                  setValue={setContentFileDownload}/>
+      <TermsConditions termList={termList} setTermList={setTermList}
+                       currentTerm={currentTerm}
+                       setCurrentTerm={setCurrentTerm}/>
       <div className="form-group">
         <button id="save-btn" className="btn btn-primary pull-right"
                 onClick={handleSave}>
