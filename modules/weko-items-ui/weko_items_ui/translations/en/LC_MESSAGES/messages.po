@@ -331,12 +331,8 @@ msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:426
 msgid "Thumbnail file type error message"
-msgstr "You cannot upload files other than image files (gif, jpg, jpe, jpeg, png, bmp)."
+msgstr "Files other than image files (gif, jpg, jpe, jpeg, png, bmp) cannot be uploaded."
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:428
-msgid "The number of Thumbnails is less than minItems."
-msgstr ""
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:426
-msgid "The number of Thumbnails is greater than maxItems."
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:427
+msgid "is too long."
 msgstr ""

@@ -458,10 +458,6 @@ msgstr "インポートを実行中のためアイテムの削除はできませ
 msgid "Thumbnail file type error message"
 msgstr "画像ファイル（gif, jpg, jpe, jpeg, png, bmp）以外のファイルはアップロードできません。"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:428
-msgid "The number of Thumbnails is less than minItems."
-msgstr "サムネイルの数がminItems未満です。"
-
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:426
-msgid "The number of Thumbnails is greater than maxItems."
-msgstr "サムネイルの数がmaxItemsを超えています。"
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:427
+msgid "is too long."
+msgstr "の数が上限数を超えています。"

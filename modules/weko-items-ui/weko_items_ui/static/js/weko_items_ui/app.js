@@ -531,19 +531,13 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
     errorMessages: []
   },
     thumbnailsVM = rootScope.filesVM.files.filter(file => file.is_thumbnail),
-    inValidThumbnails = [],
-    duplicateThumbnails = [];
+    inValidThumbnails = [];
 
   // Check for duplicate files & file type
   if (files && files.length > 0) {
     Array.prototype.forEach.call(files, function (file) {
       if (scope.model.allowedType.indexOf(file.type) >= 0) {
-        if (thumbnailsVM.some((thumbnail) => thumbnail.key === file.name)) {
-          duplicateThumbnails.push(file.name);
-        }
-        else {
-          result.validThumbnails.push(file);
-        }
+        result.validThumbnails.push(file);
       }
       else {
         inValidThumbnails.push(file.name);
@@ -556,25 +550,17 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
     result.isValid = false;
     result.errorMessages.push($("#invalid_files_type").val() + '<br/>' + inValidThumbnails.join(', '));
   }
-  if (duplicateThumbnails.length > 0) {
-    result.isValid = false;
-    result.errorMessages.push($("#duplicate_files_error").val() + '<br/>' + duplicateThumbnails.join(', '));
-  }
 
   if (thumbnailsVM.length > 0 && itemSizeCheckFlg) {
-    let thumbnailItemKey = scope.searchThumbnailForm(),
+    let thumbnailItemKey = scope.searchThumbnailForm && scope.searchThumbnailForm(),
       recordSchema = rootScope.recordsVM.invenioRecordsSchema,
       thumbnailMetaData = recordSchema.properties[thumbnailItemKey],
-      maxItems = thumbnailMetaData ? thumbnailMetaData.maxItems : 0,
-      minItems = thumbnailMetaData ? thumbnailMetaData.minItems : 0;
-
-    if (minItems > 1 && thumbnailsVM.length < minItems) {
+      thumbnailJson = rootScope.recordsVM.invenioRecordsModel[thumbnailItemKey],
+      maxItems = thumbnailMetaData ? thumbnailMetaData.maxItems : 0;
+    
+    if (maxItems > 0 && thumbnailsVM.length > maxItems) {
       result.isValid = false;
-      result.errorMessages.push($("#min_files_thumnbnail_error").val());
-    }
-    if (thumbnailsVM.length > maxItems) {
-      result.isValid = false;
-      result.errorMessages.push($("#max_files_thumnbnail_error").val());
+      result.errorMessages.push(JSON.stringify(thumbnailJson[0]) + ' ' + $("#max_files_thumnbnail_error").val());
     }
   }
 
@@ -2992,8 +2978,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         } else if (!$scope.validateEmailsAndIndexAndUpdateApprovalActions(activityId, steps, isAutoSetIndexAction)) {
           return false;
         } else {
-          // Validate minItems & maxItems for thumbnails
-          debugger;
+          // Validate maxItems for thumbnails          
           let validateResult = validateThumbnails($rootScope, $scope, true);
           if (!validateResult.isValid) {
             let message = validateResult.errorMessages.join('<br/><br/>');
@@ -3980,11 +3965,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           * @memberof WekoRecordsCtrl
           * @function directedUpload
           */
-        $scope.directedUpload = function (files) {
+        $scope.directedUpload = function (thumbnails) {
+          let validateResult = validateThumbnails($rootScope, $scope, false, thumbnails),
+            files = validateResult.validThumbnails;
+          
           Array.prototype.forEach.call(files, function (f) {
-            if ($scope.model.allowedType.indexOf(f.type) < 0) {
-              return;
-            }
             var reader = new FileReader();
             f.is_thumbnail = true;
             reader.readAsDataURL(f);
@@ -4003,6 +3988,13 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             $rootScope.filesVM.invenioFilesEndpoints.bucket = bucket_url;
 
             $scope.uploadingThumbnails = [];
+          }
+
+          // Show error messse
+          if (!validateResult.isValid) {
+            let message = validateResult.errorMessages.join('<br/><br/>');
+            $("#inputModal").html(message);
+            $("#allModal").modal("show");
           }
         };
 
@@ -4028,17 +4020,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 } else {
                   $scope.directedUpload(files);
                 }
-              } else {                
-                let validateResult = validateThumbnails($rootScope, $scope, false, files);
-                if (validateResult.validThumbnails.length > 0) {
-                  $scope.directedUpload(validateResult.validThumbnails);
-                }
-                // Show error messse
-                if (!validateResult.isValid) {
-                  let message = validateResult.errorMessages.join('<br/><br/>');
-                  $("#inputModal").html(message);
-                  $("#allModal").modal("show");
-                }
+              } else {       
+                $scope.directedUpload(files);
               }
             }
           });
