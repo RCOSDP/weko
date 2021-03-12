@@ -49,6 +49,7 @@ from weko_workflow.api import GetCommunity, WorkActivity
 from weko_workflow.utils import check_an_item_is_locked, prepare_edit_workflow, \
     get_record_by_root_ver
 from werkzeug.utils import import_string
+from weko_records_ui.utils import get_file_info_list
 
 from .permissions import item_permission
 from .utils import _get_max_export_items, check_item_is_being_edit, \
@@ -428,10 +429,12 @@ def iframe_items_index(pid_value='0'):
                 community_id
                 or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
             root_record = None
-            if pid_value is not None:
-                root_record = get_record_by_root_ver(pid_value)
+            files = []
+            if pid_value is not None and ".0" in pid_value:
+                root_record, files = get_record_by_root_ver(pid_value)
+                session['itemlogin_item']["title"] = root_record["title"][0]
             else:
-               root_record = session['itemlogin_record']
+                root_record = session['itemlogin_record']
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
                 page=page,
@@ -448,6 +451,7 @@ def iframe_items_index(pid_value='0'):
                 res_check=session['itemlogin_res_check'],
                 pid=session['itemlogin_pid'],
                 community_id=community_id,
+                files=files,
                 **ctx
             )
 

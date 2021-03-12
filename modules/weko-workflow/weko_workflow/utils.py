@@ -1556,12 +1556,25 @@ def check_existed_doi(doi_link):
 
 
 def get_record_by_root_ver(pid_value):
-    from weko_deposit.api import WekoRecord
-    if pid_value is not None:
+    from weko_deposit.api import WekoDeposit, WekoRecord
+    from invenio_pidstore.models import PersistentIdentifier
+    from weko_items_ui.utils import to_files_js
+    files = []
+    record = []
+    if pid_value is not None and pid_value not in '':
         if '.' in pid_value:
             pid_value = pid_value.split('.')[0]
+        # Get Record by pid_value
         record = WekoRecord.get_record_by_pid(pid_value)
-    return record
+        # Get files by pid_value
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid',
+            pid_value=pid_value
+        ).one_or_none()
+        files = to_files_js(WekoDeposit.get_record(pid.object_uuid))
+    else:
+        return None
+    return record, files
 
 
 def get_url_root():

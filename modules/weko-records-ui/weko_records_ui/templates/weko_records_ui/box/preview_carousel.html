@@ -96,7 +96,7 @@
                       {%- else -%}
                         {%- if file | preview_able -%}
                           <iframe class="preview-iframe" id="preview-iframe" width="100%" height="400"
-                            src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.filename) }}">
+                            src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.filename or file.key) }}">
                           </iframe>
                         {%- else -%}
                           <div class="embed-responsive embed-responsive-16by9 text-center">
@@ -112,7 +112,7 @@
                   <div class="item {{ 'active' if loop.index == 1 else '' }}" id="carousel_pdf_item_{{ loop.index }}">
                     <div class="embed-responsive embed-responsive-16by9">
                       <iframe class="preview-iframe" id="preview-iframe_de" width="100%" height="400"
-                        src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.filename) }}">
+                        src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.filename or file.key) }}">
                       </iframe>
                     </div>
                   </div>

@@ -23,6 +23,7 @@
 import json
 import os
 import sys
+import copy
 from collections import OrderedDict
 from functools import wraps
 
@@ -152,8 +153,9 @@ def iframe_success():
     pid = session['itemlogin_pid']
     community_id = session.get('itemlogin_community_id')
     record = None
+    files = []
     if item is not None and "pid" in item and "value" in item["pid"]:
-        record = get_record_by_root_ver(item['pid']['value'])
+        record, files = get_record_by_root_ver(item['pid']['value'])
     else:
         record = session['itemlogin_record']
     ctx = {'community': None}
@@ -183,6 +185,7 @@ def iframe_success():
                            histories=histories,
                            res_check=res_check,
                            pid=pid,
+                           files=files,
                            community_id=community_id,
                            action_comment=action_comment,
                            **ctx)
@@ -377,7 +380,8 @@ def display_activity(activity_id=0):
     show_autofill_metadata = True
     is_hidden_pubdate_value = False
     item_type_name = get_item_type_name(workflow_detail.itemtype_id)
-    itemLink_record = None
+    itemLink_record = []
+    newFiles = []
 
     if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
         activity_session = dict(
@@ -469,13 +473,14 @@ def display_activity(activity_id=0):
     if action_endpoint == 'item_link' and recid:
         item_link = ItemLink.get_item_link_info(recid.pid_value)
         ctx['item_link'] = item_link
-
-    if activity_detail.item_id is not None and item is not None \
-     and 'pid' in item and 'value' in item['pid']:
-        itemLink_record = get_record_by_root_ver(item['pid']['value'])
+    if activity_detail.item_id and item and 'pid' in item \
+        and 'value' in item['pid'] and "item_login" not in action_endpoint:
+        if not newFiles:
+            newFiles = copy.deepcopy(files)
+        itemLink_record, files = get_record_by_root_ver(item['pid']['value'])
         item["title"] = itemLink_record["title"][0]
-    else:
-        itemLink_record = approval_record
+        if "end_action" in action_endpoint:
+            files = newFiles
     return render_template(
         'weko_workflow/activity_detail.html',
         page=page,
@@ -492,8 +497,8 @@ def display_activity(activity_id=0):
         idf_grant_data=identifier_setting,
         idf_grant_input=IDENTIFIER_GRANT_LIST,
         idf_grant_method=IDENTIFIER_GRANT_SUFFIX_METHOD,
-        record=itemLink_record,
-        record_after_update=approval_record,
+        record=approval_record,
+        record_after_update=itemLink_record,
         records=record,
         step_item_login_url=step_item_login_url,
         need_file=need_file,
@@ -502,6 +507,7 @@ def display_activity(activity_id=0):
         schemaform=schema_form,
         id=workflow_detail.itemtype_id,
         item_save_uri=item_save_uri,
+        newFiles=newFiles,
         files=files,
         endpoints=endpoints,
         error_type='item_login_error',
