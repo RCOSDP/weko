@@ -72,19 +72,18 @@ require([
     );
   });
 
-  $('.btn-start-workflow').on('click', function () {
+
+  function startWorkflow(workflowId, communityId) {
     let post_uri = $('#post_uri').text();
-    let workflow_id = $(this).data('workflow-id');
-    let community = $(this).data('community');
     let dataType = $("#data_type_title").val();
     let post_data = {
-      workflow_id: workflow_id,
-      flow_id: $('#flow_' + workflow_id).data('flow-id'),
-      itemtype_id: $('#item_type_' + workflow_id).data('itemtype-id'),
-      related_title : dataType
+      workflow_id: workflowId,
+      flow_id: $('#flow_' + workflowId).data('flow-id'),
+      itemtype_id: $('#item_type_' + workflowId).data('itemtype-id'),
+      related_title: dataType
     };
-    if (typeof community !== 'undefined' && community !== "") {
-      post_uri = post_uri + "?community=" + community;
+    if (typeof communityId !== 'undefined' && communityId !== "") {
+      post_uri = post_uri + "?community=" + communityId;
     }
     let record_id = $('#recid').text();
     let file_name = $('#file_name').text();
@@ -106,27 +105,86 @@ require([
       error: function (jqXHE, status) {
       }
     });
+  }
 
-    function init_permission(record_id, file_name, activity_id) {
-      let init_permission_uri = '/records/permission/';
+  function init_permission(record_id, file_name, activity_id) {
+    let init_permission_uri = '/records/permission/';
 
-      init_permission_uri = init_permission_uri + record_id;
-      let post_data_permission = {
-        file_name: file_name,
-        activity_id: activity_id
-      };
-      $.ajax({
-        url: init_permission_uri,
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify(post_data_permission),
-        success: function (data, status) {
-        },
-        error: function (jqXHE, status) {
-        }
-      });
+    init_permission_uri = init_permission_uri + record_id;
+    let post_data_permission = {
+      file_name: file_name,
+      activity_id: activity_id
+    };
+    $.ajax({
+      url: init_permission_uri,
+      method: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(post_data_permission),
+      success: function (data, status) {
+      },
+      error: function (jqXHE, status) {
+      }
+    });
+  }
+
+  $('.btn-start-workflow').on('click', function () {
+    let workflow_id = $(this).data('workflow-id');
+    let community = $(this).data('community');
+    startWorkflow(workflowId, communityId)
+  });
+
+ const btnMailConfirm = "#confirm_email_btn"
+  $('.term_checked').on('click', function () {
+    var file_version_id = $('#' + this.id).data('file-version-id');
+    let $nextAction = $("#term_next_" + file_version_id);
+    if ($('#term_checked_' + file_version_id).prop("checked") == true) {
+      $nextAction.removeClass("disabled");
+      $(this).attr("checked");
+      $nextAction.attr("disabled", false);
+    } else {
+      $nextAction.addClass("disabled");
+      $nextAction.attr("disabled", true);
     }
   });
+
+  $('.btn-start-guest-wf').on('click',function(){
+    $(btnMailConfirm).data("guest_filename_data", $(this).data("guest_filename_data"));
+    $(btnMailConfirm).data("guest_data_type_title", $(this).data("guest_data_type_title"));
+    $(btnMailConfirm).data("guest_record_id", $(this).data("guest_record_id"));
+    $(btnMailConfirm).data("guest_itemtype_id", $(this).data("guest_itemtype_id"));
+    $(btnMailConfirm).data("guest_workflow_id", $(this).data("guest_workflow_id"));
+    $("#email_modal").modal("show");
+  });
+
+  $('.term_next').on('click', function () {
+    var file_version_id = $("#" + this.id).data('file-version-id')
+    let isGuest = $("#term_next_" + file_version_id).data("guest");
+    if (isGuest == "True") {
+      var btnSender = $("#btn-start-guest-wf-" + file_version_id)
+      $(btnMailConfirm).attr("data-guest_filename_data", btnSender.data("guest_filename_data"));
+      $(btnMailConfirm).attr("data-guest_data_type_title", btnSender.data("guest_data_type_title"));
+      $(btnMailConfirm).attr("data-guest_record_id", btnSender.data("guest_record_id"));
+      $(btnMailConfirm).attr("data-guest_itemtype_id", btnSender.data("guest_itemtype_id"));
+      $(btnMailConfirm).attr("data-guest_workflow_id", btnSender.data("guest_workflow_id"));
+      $(btnMailConfirm).attr("data-guest_flow_id", btnSender.data("guest_flow_id"));
+      $("#term_and_condtion_modal_"+file_version_id).modal('toggle');
+      setTimeout(function () {
+        $("#email_modal").modal("show")
+      },0);
+
+    } else {
+      var file_version_id = $('#' + this.id).data('file-version-id');
+      let workflowId = $("#btn-start-workflow-" + file_version_id).data('workflow-id');
+      let communityId = $("#btn-start-workflow-" + file_version_id).data('community');
+      startWorkflow(workflowId, communityId)
+    }
+  });
+
+  $(".term-condtion-modal").on("click", function(){
+    let modalId = $(this).data("modalId");
+    $(modalId).modal("show");
+  });
+
 
   var current_cite = '';
   $('body').on('DOMSubtreeModified', '#citationResult', function (e) {
