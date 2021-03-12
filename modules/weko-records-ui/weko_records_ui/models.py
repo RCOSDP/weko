@@ -267,7 +267,10 @@ class FileOnetimeDownload(db.Model, Timestamp):
     download_count = db.Column(db.Integer, nullable=False, default=0)
     """Download count"""
 
-    def __init__(self, file_name, user_mail, record_id, download_count=1):
+    expiration_date = db.Column(db.Integer, nullable=False, default=0)
+    """Download count"""
+
+    def __init__(self, file_name, user_mail, record_id, download_count=0, expiration_date=0):
         """Init.
 
         :param file_name: File name
@@ -279,10 +282,11 @@ class FileOnetimeDownload(db.Model, Timestamp):
         self.user_mail = user_mail
         self.record_id = record_id
         self.download_count = download_count
+        self.expiration_date = expiration_date
 
     @classmethod
     def create(cls, **data):
-        """Create data"""
+        """Create data."""
         try:
             file_download = cls(**data)
             db.session.add(file_download)
@@ -308,7 +312,7 @@ class FileOnetimeDownload(db.Model, Timestamp):
                                        record_id=record_id)
             if file_permission and len(file_permission) > 0:
                 for file in file_permission:
-                    file.download_count = file.download_count + 1
+                    file.download_count = file.download_count - 1
                     db.session.merge(file)
                 db.session.commit()
                 return True

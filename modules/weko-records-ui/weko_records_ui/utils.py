@@ -26,13 +26,11 @@ from datetime import timedelta
 from decimal import Decimal
 from typing import NoReturn, Tuple
 
-from flask import current_app, request
+from flask import abort, current_app, request
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role
-from invenio_cache import current_cache
 from invenio_db import db
-from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
@@ -178,26 +176,6 @@ def is_billing_item(item_type_id):
 
 def soft_delete(recid):
     """Soft delete item."""
-    def get_cache_data(key: str):
-        """Get cache data.
-
-        :param key: Cache key.
-
-        :return: Cache value.
-        """
-        return current_cache.get(key) or str()
-
-    def check_an_item_is_locked(item_id=None):
-        """Check if an item is locked.
-
-        :param item_id: Item id.
-
-        :return
-        """
-        locked_data = get_cache_data('item_ids_locked') or dict()
-        ids = locked_data.get('ids', set())
-        return item_id in ids
-
     try:
         pid = PersistentIdentifier.query.filter_by(
             pid_type='recid', pid_value=recid).first()
@@ -206,14 +184,6 @@ def soft_delete(recid):
                 pid_type='recid', object_uuid=recid).first()
         if pid.status == PIDStatus.DELETED:
             return
-
-        # Check Record is in import progress
-        if check_an_item_is_locked(int(pid.pid_value.split(".")[0])):
-            raise Exception({
-                'is_locked': True,
-                'msg': _('Item cannot be deleted because '
-                         'the import is in progress.')
-            })
 
         versioning = PIDVersioning(child=pid)
         if not versioning.exists:
@@ -601,7 +571,7 @@ def get_file_info_list(record):
 
     workflows = get_workflows()
     roles = get_roles()
-    terms = get_terms_title()
+    terms = get_terms()
 
     is_display_file_preview = False
     files = []
@@ -614,9 +584,11 @@ def get_file_info_list(record):
                 if check_file_download_permission(record, f, True)\
                         or is_open_restricted(f):
                     # Set default version_id.
-                    f["version_id"] = f.get('version_id', '')
+                    if f.get("version_id") is None:
+                        f["version_id"] = ''
                     # Set is_thumbnail flag.
-                    f["is_thumbnail"] = f.get('is_thumbnail', False)
+                    if f.get("is_thumbnail") is None:
+                        f["is_thumbnail"] = False
                     # Check Opendate is future date.
                     set_message_for_file(f)
                     # Check show preview area.
@@ -632,16 +604,10 @@ def get_file_info_list(record):
                     # Get file size and convert to byte.
                     f['size'] = get_file_size(f)
                     f['mimetype'] = f.get('format', '')
-                    f['filename'] = f.get('filename', '')
                     term = f.get("terms")
-                    if term and term == 'term_free':
-                        f["terms"] = 'term_free'
-                        f["terms_content"] = f.get("termsDescription", '')
-                    elif term:
+                    if term:
                         f["terms"] = get_data_by_key_array_json(
                             term, terms, 'name')
-                        f["terms_content"] = \
-                            get_data_by_key_array_json(term, terms, 'content')
                     provide = f.get("provide")
                     if provide:
                         for p in provide:
@@ -707,7 +673,7 @@ def generate_one_time_download_url(
 
 
 def parse_one_time_download_token(token: str) -> Tuple[str, Tuple]:
-    """Parse onetime download token
+    """Parse onetime download token.
 
     @param token:
     @return:
@@ -741,8 +707,6 @@ def validate_onetime_download_token(
     """
     token_invalid = _("Token is invalid.")
     secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
-    download_deadline = current_app.config['WEKO_RECORDS_UI_DOWNLOAD_DEADLINE']
-    downloads_max = current_app.config['WEKO_RECORDS_UI_DOWNLOADS_MAX']
     download_pattern = current_app.config[
         'WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN']
     hash_value = download_pattern.format(file_name, record_id, guest_mail, date)
@@ -750,18 +714,19 @@ def validate_onetime_download_token(
         current_app.logger.debug('Validate token error: {}'.format(hash_value))
         return False, token_invalid
     try:
-        download_date = dt.strptime(date, "%Y-%m-%d").date() + timedelta(
-            download_deadline)
-        current_date = dt.now().date()
-        if current_date > download_date:
-            return False, _("The download expiration date has expired.")
-
-        download_count = get_onetime_download_count(
+        onetime_download = get_onetime_download(
             file_name=file_name, record_id=record_id, user_mail=guest_mail
         )
-        if download_count >= downloads_max:
-            return False, _(
-                "The maximum number of downloads has been exceeded.")
+        if not onetime_download:
+            return False, token_invalid
+        download_date = dt.strptime(date, "%Y-%m-%d").date() + timedelta(
+            onetime_download.expiration_date)
+        current_date = dt.now().date()
+        if current_date > download_date:
+            return False, _("The expiration date for download has been exceeded.")
+
+        if onetime_download.download_count <= 0:
+            return False, _("The download limit has been exceeded.")
         return True, ""
     except Exception as err:
         current_app.logger.error('Validate onetime download token error:')
@@ -769,8 +734,46 @@ def validate_onetime_download_token(
         return False, token_invalid
 
 
-def get_onetime_download_count(file_name: str, record_id: str,
-                               user_mail: str) -> int:
+def is_private_index(record):
+    """Check index of workflow is private.
+
+    :param record:Record data.
+    :return:
+    """
+    from weko_index_tree.api import Indexes
+    list_index = record.get("path")
+    index_lst = []
+    if list_index:
+        index_id_lst = []
+        for index in list_index:
+            indexes = str(index).split('/')
+            index_id_lst.append(indexes[-1])
+        index_lst = index_id_lst
+    indexes = Indexes.get_path_list(index_lst)
+    publish_state = 6
+    for index in indexes:
+        if len(indexes) == 1:
+            if not index[publish_state]:
+                return True
+        else:
+            if index[publish_state]:
+                return False
+    return False
+
+
+def validate_download_record(record: dict):
+    """Validate record.
+
+    :param record:
+    """
+    if record['publish_status'] != "0":
+        abort(403)
+    if is_private_index(record):
+        abort(403)
+
+
+def get_onetime_download(file_name: str, record_id: str,
+                         user_mail: str):
     """Get onetime download count.
 
     @param file_name:
@@ -782,9 +785,35 @@ def get_onetime_download_count(file_name: str, record_id: str,
         file_name=file_name, record_id=record_id, user_mail=user_mail
     )
     if file_downloads and len(file_downloads) > 0:
-        return file_downloads[0].count
+        return file_downloads[0]
     else:
-        return 0
+        return None
+
+
+def create_onetime_download_url(file_name: str, record_id: str,
+                                user_mail: str):
+    """Create onetime download.
+
+    :param file_name:
+    :param record_id:
+    :param user_mail:
+    :return:
+    """
+    from weko_admin.utils import get_restricted_access
+    content_file_download = get_restricted_access('content_file_download')
+    if isinstance(content_file_download, dict):
+        expiration_date = content_file_download.get("expiration_date", 30)
+        download_limit = content_file_download.get("download_limit", 30)
+        file_onetime = FileOnetimeDownload.create(**{
+            "file_name": file_name,
+            "record_id": record_id,
+            "user_mail": user_mail,
+            "expiration_date": expiration_date,
+            "download_count": download_limit
+        })
+        if file_onetime:
+            return True
+    return False
 
 
 def update_onetime_download_count(file_name: str, record_id: str,
@@ -822,27 +851,20 @@ def get_roles():
     @return:
     """
     roles = Role.query.all()
-    init_roles = []
-    init_roles.append({'id': 'none_loggin', 'name': _('Guest')})
+    init_roles = [{'id': 'none_loggin', 'name': _('Guest')}]
     for role in roles:
         init_roles.append({'id': role.id, 'name': role.name})
     return init_roles
 
 
-def get_terms_title():
-    """Get all terms and conditions title.
+def get_terms():
+    """Get terms.
 
     @return:
     """
-    terms_result = []
-    terms_list = AdminSettings.get('restricted_access', False).\
-        get("terms_and_conditions", [])
-    current_lang = current_i18n.language
-    for term in terms_list:
-        terms_result.append(
-            {'id': term.key, "name": term.get("content", {}).
-                get(current_lang, "en").get("title", ""),
-                "content": term.get("content", {}).
-                get(current_lang, "en").get("content", "")}
-        )
-    return terms_result
+    init_terms = [{'id': 'term_free', 'name': _('Free Input')}]
+    # TODO
+    roles = Role.query.all()
+    for role in roles:
+        init_terms.append({'id': role.id, 'name': 'Term ' + str(role.id)})
+    return init_terms
