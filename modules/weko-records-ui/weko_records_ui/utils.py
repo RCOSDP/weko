@@ -896,7 +896,7 @@ def get_terms():
 
     @return:
     """
-    terms_result = []
+    terms_result = [{'id': 'term_free', 'name': _('Free Input')}]
     terms_list = AdminSettings.get('restricted_access', False).\
         get("terms_and_conditions", [])
     current_lang = current_i18n.language
