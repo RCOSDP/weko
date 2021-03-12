@@ -4004,8 +4004,13 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           * @function upload
           * @param {Object} files - The dragged files.
           */
-        $scope.dragoverThumbnail = function (files) {
-          $scope.getEndpoints(function () {
+        $scope.dragoverThumbnail = function (thumbnails) {
+          // Prevent getEndpoints from changing URL
+          // If there is no valid file
+          let validateResult = validateThumbnails($rootScope, $scope, false, thumbnails),
+            files = validateResult.validThumbnails;
+                   
+          files.length > 0 && $scope.getEndpoints(function () {
             if (!angular.isUndefined(files) && files.length > 0) {
               if ($scope.model.allowMultiple != 'True') {
                 files = Array.prototype.slice.call(files, 0, 1);
@@ -4025,6 +4030,13 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               }
             }
           });
+
+          // Show error messse
+          if (!validateResult.isValid) {
+            let message = validateResult.errorMessages.join('<br/><br/>');
+            $("#inputModal").html(message);
+            $("#allModal").modal("show");
+          }
         };
     }).$inject = [
       '$scope',
