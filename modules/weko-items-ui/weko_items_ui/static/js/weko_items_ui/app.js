@@ -4025,7 +4025,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 } else {
                   $scope.directedUpload(files);
                 }
-              } else {       
+              } else {
                 $scope.directedUpload(files);
               }
             }
