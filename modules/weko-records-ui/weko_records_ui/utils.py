@@ -31,6 +31,7 @@ from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role
 from invenio_db import db
+from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
@@ -584,11 +585,9 @@ def get_file_info_list(record):
                 if check_file_download_permission(record, f, True)\
                         or is_open_restricted(f):
                     # Set default version_id.
-                    if f.get("version_id") is None:
-                        f["version_id"] = ''
+                    f["version_id"] = f.get('version_id', '')
                     # Set is_thumbnail flag.
-                    if f.get("is_thumbnail") is None:
-                        f["is_thumbnail"] = False
+                    f["is_thumbnail"] = f.get('is_thumbnail', False)
                     # Check Opendate is future date.
                     set_message_for_file(f)
                     # Check show preview area.
@@ -604,10 +603,16 @@ def get_file_info_list(record):
                     # Get file size and convert to byte.
                     f['size'] = get_file_size(f)
                     f['mimetype'] = f.get('format', '')
+                    f['filename'] = f.get('filename', '')
                     term = f.get("terms")
-                    if term:
+                    if term and term == 'term_free':
+                        f["terms"] = 'term_free'
+                        f["terms_content"] = f.get("termsDescription", '')
+                    elif term:
                         f["terms"] = get_data_by_key_array_json(
                             term, terms, 'name')
+                        f["terms_content"] = \
+                            get_data_by_key_array_json(term, terms, 'content')
                     provide = f.get("provide")
                     if provide:
                         for p in provide:
@@ -858,13 +863,19 @@ def get_roles():
 
 
 def get_terms():
-    """Get terms.
+    """Get all terms and conditions.
 
     @return:
     """
-    init_terms = [{'id': 'term_free', 'name': _('Free Input')}]
-    # TODO
-    roles = Role.query.all()
-    for role in roles:
-        init_terms.append({'id': role.id, 'name': 'Term ' + str(role.id)})
-    return init_terms
+    terms_result = []
+    terms_list = AdminSettings.get('restricted_access', False).\
+        get("terms_and_conditions", [])
+    current_lang = current_i18n.language
+    for term in terms_list:
+        terms_result.append(
+            {'id': term.get("key"), "name": term.get("content", {}).
+                get(current_lang, "en").get("title", ""),
+                "content": term.get("content", {}).
+                get(current_lang, "en").get("content", "")}
+        )
+    return terms_result
