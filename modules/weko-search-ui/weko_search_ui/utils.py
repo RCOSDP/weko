@@ -2455,3 +2455,197 @@ def handle_remove_es_metadata(item):
         deposit.indexer.delete(deposit)
     except Exception as ex:
         current_app.logger.error(ex)
+<<<<<<< HEAD
+=======
+
+
+def handle_check_file_metadata(list_record, data_path):
+    """Check file contents, thumbnails metadata.
+
+    :argument
+        list_record -- {list} list record import.
+        data_path   -- {str} paths of file content.
+    :return
+
+    """
+    for record in list_record:
+        errors, warnings = handle_check_file_content(record, data_path)
+        _errors, _warnings = handle_check_thumbnail(record, data_path)
+        errors += _errors
+        warnings += _warnings
+
+        if errors:
+            record['errors'] = record['errors'] + errors \
+                if record.get('errors') else errors
+        if warnings:
+            record['warnings'] = record['warnings'] + warnings \
+                if record.get('warnings') else warnings
+
+
+def handle_check_file_path(paths, data_path, is_new=False,
+                           is_thumbnail=False, is_single_thumbnail=False):
+    """Check file path.
+
+    :argument
+        record -- {dict} record import.
+        data_path   -- {str} paths of file content.
+        is_new   -- {bool} Is new?
+        is_thumbnail   -- {bool} Is thumbnail?
+        is_single_thumbnail   -- {bool} Is single thumbnail?
+    :return
+        error -- {str} Error.
+        warning -- {str} Warning.
+    """
+    def prepare_idx_msg(idxs, msg_path_idx_type):
+        if is_single_thumbnail:
+            return msg_path_idx_type
+        else:
+            return ', '.join(
+                [(msg_path_idx_type + '[{}]').format(idx) for idx in idxs])
+
+    error = None
+    warning = None
+    idx_errors = []
+    idx_warnings = []
+    for idx, path in enumerate(paths):
+        if not path:
+            continue
+        if not os.path.isfile(data_path + '/' + path):
+            if is_new:
+                idx_errors.append(str(idx))
+            else:
+                idx_warnings.append(str(idx))
+
+    msg_path_idx_type = '.thumbnail_path' if is_thumbnail else '.file_path'
+    if idx_errors:
+        error = _('The file specified in ({}) does not exist.') \
+            .format(prepare_idx_msg(idx_errors, msg_path_idx_type))
+    if idx_warnings:
+        warning = _('The file specified in ({}) does not exist.<br/>'
+                    'The file will not be updated. '
+                    'Update only the metadata with tsv contents.') \
+            .format(prepare_idx_msg(idx_warnings, msg_path_idx_type))
+
+    return error, warning
+
+
+def handle_check_file_content(record, data_path):
+    """Check file contents metadata.
+
+    :argument
+        record -- {dict} record import.
+        data_path   -- {str} paths of file content.
+    :return
+        errors -- {list} List errors.
+        warnings -- {list} List warnings.
+    """
+    errors = []
+    warnings = []
+
+    file_paths = record.get('file_path', [])
+    # check consistence between file_path and filename
+    filenames = get_filenames_from_metadata(record['metadata'])
+    errors.extend(handle_check_filename_consistence(file_paths, filenames))
+
+    # check if file_path exists
+    error, warning = handle_check_file_path(
+        file_paths, data_path, record['status'] == 'new')
+    if error:
+        errors.append(error)
+    if warning:
+        warnings.append(warning)
+
+    return errors, warnings
+
+
+def handle_check_thumbnail(record, data_path):
+    """Check thumbnails metadata.
+
+    :argument
+        record -- {dict} record import.
+        data_path   -- {str} paths of file content.
+    :return
+        errors -- {list} List errors.
+        warnings -- {list} List warnings.
+    """
+    errors = []
+    warnings = []
+    is_single = False
+    thumbnail_paths = record.get('thumbnail_path', [])
+    if isinstance(thumbnail_paths, str):
+        thumbnail_paths = [thumbnail_paths]
+        is_single = True
+
+    # check file type
+    error = handle_check_thumbnail_file_type(thumbnail_paths)
+    if error:
+        errors.append(error)
+
+    # check thumbnails path
+    error, warning = handle_check_file_path(
+        thumbnail_paths, data_path, record['status'] == 'new', True, is_single)
+    if error:
+        errors.append(error)
+    if warning:
+        warnings.append(warning)
+
+    return errors, warnings
+
+
+def get_filenames_from_metadata(metadata):
+    """Check thumbnails metadata.
+
+    :argument
+        metadata -- {dict} record metadata.
+    :return
+        filenames -- {list} List filename data.
+    """
+    filenames = []
+    file_meta_ids = []
+    for key, val in metadata.items():
+        if isinstance(val, list):
+            for item in val:
+                if isinstance(item, dict) and 'filename' in item:
+                    file_meta_ids.append(key)
+                    break
+
+    count = 0
+    for _id in file_meta_ids:
+        for file in metadata[_id]:
+            data = {
+                'id': '.metadata.{}[{}].filename'.format(_id, count),
+                'filename': file.get('filename', '')
+            }
+            if not file.get('filename'):
+                del file['filename']
+            filenames.append(data)
+            count += 1
+
+        new_file_metadata = list(filter(lambda x: x, metadata[_id]))
+        if new_file_metadata:
+            metadata[_id] = new_file_metadata
+        else:
+            del metadata[_id]
+
+    return filenames
+
+
+def handle_check_filename_consistence(file_paths, meta_filenames):
+    """Check thumbnails metadata.
+
+    :argument
+        file_paths -- {list} List file_path.
+        meta_filenames   -- {list} List filename from metadata.
+    :return
+        errors -- {list} List errors.
+    """
+    errors = []
+    msg = _('The file name specified in {} and {} do not match.')
+    for idx, path in enumerate(file_paths):
+        meta_filename = meta_filenames[idx]
+        if path and path.split('/')[-1] != meta_filename['filename']:
+            errors.append(msg.format(
+                'file_path[{}]'.format(idx), meta_filename['id']))
+
+    return errors
+>>>>>>> c954f7f1c... weko#24923 - fixbug impact

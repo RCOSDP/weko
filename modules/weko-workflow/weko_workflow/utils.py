@@ -1519,4 +1519,4 @@ def get_url_root():
     :return: url root.
     """
     site_url = current_app.config['THEME_SITEURL'] + '/'
-    return request.url_root if request else site_url
+    return request.host_url if request else site_url
