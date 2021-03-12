@@ -1911,8 +1911,8 @@ def get_data_by_property(record, item_map, item_property):
     key = item_map.get(item_property)
     data = []
     if not key:
-        current_app.logger.warn(str(item_property) +
-                                ' jpcoar:mapping is not correct')
+        current_app.logger.warn(str(item_property)
+                                + ' jpcoar:mapping is not correct')
         return None, None
     attribute = record['metadata'].get(key.split('.')[0])
     if not attribute:
