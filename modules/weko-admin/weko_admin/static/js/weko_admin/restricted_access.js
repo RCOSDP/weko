@@ -101,6 +101,7 @@ function ContentFileDownloadLayout({value, setValue}) {
                 <input type="text" id="download_limit" className="col-sm-2"
                        onChange={handleChange}
                        disabled={download_limit_unlimited_chk}
+                       pattern="[0-9]*"
                        value={download_limit}/>
                 <label htmlFor="download_limit_unlimited_chk"
                        className="text-left">
@@ -170,8 +171,8 @@ function TermsList({termList, setTermList, currentTerm, setCurrentTerm}) {
               ))
             }
 
-            <button className="btn btn-light add-button btn-add"  style={{marginTop: "10px"}} id="new_term"
-              onClick={handleCreateNewTerm}>
+            <button className="btn btn-light add-button btn-add" style={{marginTop: "10px"}} id="new_term"
+                    onClick={handleCreateNewTerm}>
               <span class="glyphicon glyphicon-plus">
               </span>{LABEL_NEW}</button>
           </div>
@@ -195,46 +196,42 @@ function TermDetail({currentTerm, setCurrentTerm}) {
     setCurrentTerm({...currentTerm, content: content})
   }
 
-  const required = {"color": " red"};
-
   return (
     <div>
-      <form>
-        <div className="form-group row margin-top">
-          <label htmlFor="staticEmail"
-                 className="col-sm-1 col-form-label" style={{textAlign: 'right'}}>{LABEL_JAPANESE}</label>
-          <div className="col-sm-10">
-            <input type="text" className="form-control"
-                   disabled={currentTerm.existed !== true} name="title"
-                   value={ja.title}
-                   onChange={e => handleOnInputChanged(e, "ja")}/>
-          </div>
+      <div className="form-group row margin-top">
+        <label htmlFor="staticEmail"
+               className="col-sm-1 col-form-label" style={{textAlign: 'right'}}>{LABEL_JAPANESE}</label>
+        <div className="col-sm-10">
+          <input type="text" className="form-control"
+                 disabled={currentTerm.existed !== true} name="title"
+                 value={ja.title}
+                 onChange={e => handleOnInputChanged(e, "ja")}/>
+        </div>
 
-          <div className="col-sm-11 margin-top">
+        <div className="col-sm-11 margin-top">
                 <textarea className="form-control textarea_height"
                           disabled={currentTerm.existed !== true} name="content"
                           value={ja.content}
                           onChange={e => handleOnInputChanged(e, "ja")}/>
-          </div>
         </div>
-        <div className="form-group row margin-top">
-          <label htmlFor="staticEmail"
-                 className="col-sm-1 col-form-label field-required" style={{textAlign: 'right'}}>{LABEL_ENGLISH}</label>
-          <div className="col-sm-10">
+      </div>
+      <div className="form-group row margin-top">
+        <label htmlFor="staticEmail"
+               className="col-sm-1 col-form-label field-required" style={{textAlign: 'right'}}>{LABEL_ENGLISH}</label>
+        <div className="col-sm-10">
 
-            <input type="text" disabled={currentTerm.existed !== true}
-                   className="form-control" name="title" value={en.title}
-                   onChange={e => handleOnInputChanged(e, "en")}/>
-          </div>
-          <div className="col-sm-11 margin-top">
+          <input type="text" disabled={currentTerm.existed !== true}
+                 className="form-control" name="title" value={en.title}
+                 onChange={e => handleOnInputChanged(e, "en")}/>
+        </div>
+        <div className="col-sm-11 margin-top">
 
                 <textarea className="form-control textarea_height"
                           disabled={currentTerm.existed !== true} name="content"
                           value={en.content}
                           onChange={e => handleOnInputChanged(e, "en")}/>
-          </div>
         </div>
-      </form>
+      </div>
     </div>
   )
 }
@@ -275,7 +272,7 @@ function RestrictedAccessLayout({content_file_download, terms_and_conditions}) {
   function handleApply() {
     let termListClone = [...termList];
     if (!currentTerm.existed) {
-      return { "valid": true, "data": [...JSON.parse(JSON.stringify(termListClone))] }
+      return {"valid": true, "data": [...JSON.parse(JSON.stringify(termListClone))]}
     }
 
     if (currentTerm.content.en.title.trim() === '' || currentTerm.content.en.content.trim() === '') {
@@ -315,9 +312,9 @@ function RestrictedAccessLayout({content_file_download, terms_and_conditions}) {
     }
     let terms_data = handleApply();
     if (terms_data["valid"] === false) {
-        showErrorMessage(MESSAGE_MISSING_DATA);
-        return false;
-        }
+      showErrorMessage(MESSAGE_MISSING_DATA);
+      return false;
+    }
 
     let data = {
       content_file_download: contentFileDownload,

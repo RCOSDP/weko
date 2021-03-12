@@ -693,12 +693,12 @@ msgid "Unlimited"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/rest_settings.html:46
-msgid "Must set a positive integer for %(name)s"
-msgstr "Must set a positive integer for %(name)s"
+msgid "Must set a positive integer for %(name)s."
+msgstr "Must set a positive integer for %(name)s."
 
 #: weko_admin/templates/weko_admin/admin/rest_settings.html:49
-msgid "Please set %(name)s"
-msgstr "Please set %(name)s"
+msgid "Please set %(name)s."
+msgstr "Please set %(name)s."
 
 msgid "Restricted Access was successfully updated."
 msgstr ""
