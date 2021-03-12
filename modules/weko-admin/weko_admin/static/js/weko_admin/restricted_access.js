@@ -316,6 +316,7 @@ function RestrictedAccessLayout({content_file_download, terms_and_conditions}) {
     let terms_data = handleApply();
     if (terms_data["valid"] === false) {
         showErrorMessage(MESSAGE_MISSING_DATA);
+        return false;
         }
 
     let data = {
