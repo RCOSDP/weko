@@ -4,21 +4,26 @@ const DOWNLOAD_LIMIT_LABEL = document.getElementById('download_limit_label').val
 const EXPIRATION_DATE_LABEL = document.getElementById('expiration_date_label').value;
 const UNLIMITED_LABEL = document.getElementById('unlimited_label').value;
 const SAVE_LABEL = document.getElementById('save_label').value;
-const MAX_INPUT_VAL = 2147483647;
+const CHECK_INPUT_DOWNLOAD = document.getElementById('check_input_download').value;
+const CHECK_INPUT_EXPIRATION_DATE = document.getElementById('check_input_expiration_date').value;
+const EMPTY_DOWNLOAD = document.getElementById('empty_download').value;
+const EMPTY_EXPIRATION_DATE = document.getElementById('empty_expiration_date').value;
+const MAX_DOWNLOAD_LIMIT = 2147483647;
+const MAX_EXPIRATION_DATE = 999999999;
 
 (function () {
   let initValue = document.getElementById('init_data').value;
   initValue = JSON.parse(initValue);
 
   ReactDOM.render(
-    <RestrictedAccessLayout {...initValue}/>,
+    <RestrictedAccessLayout {...initValue} />,
     document.getElementById('root')
   )
 
 })();
 
-
 function ContentFileDownloadLayout({value, setValue}) {
+  const style = {marginRight: "5px", marginLeft: "15px"}
   const {
     download_limit,
     download_limit_unlimited_chk,
@@ -37,8 +42,7 @@ function ContentFileDownloadLayout({value, setValue}) {
         updateValue = value[key];
       }
     }
-
-    setValue({ ...value, ...{ [key]: updateValue } });
+    setValue({...value, ...{[key]: updateValue}});
   }
 
   return (
@@ -50,7 +54,7 @@ function ContentFileDownloadLayout({value, setValue}) {
               <h5><strong>{CONTENT_FILE_DOWNLOAD_LABEL}</strong></h5>
             </div>
             <div className="panel-body">
-              <div className="form-inline">
+              <div className="form-group">
                 <label
                   className="col-sm-2 text-right">{EXPIRATION_DATE_LABEL}</label>
                 <input type="text" id="expiration_date" className="col-sm-2"
@@ -61,12 +65,13 @@ function ContentFileDownloadLayout({value, setValue}) {
                        disabled={expiration_date_unlimited_chk}
                 />
                 <label htmlFor="expiration_date_unlimited_chk"
-                       className="col-sm-8 text-left">
-                  <input type="checkbox" id="expiration_date_unlimited_chk"
+                       className="text-left">
+                  <input type="checkbox" style={style}
+                         id="expiration_date_unlimited_chk"
                          key={Math.random()}
                          checked={expiration_date_unlimited_chk}
                          onChange={handleChange}/>
-                  {UNLIMITED_LABEL}
+                  &nbsp; {UNLIMITED_LABEL}
                 </label>
               </div>
               <div className="form-inline">
@@ -74,13 +79,12 @@ function ContentFileDownloadLayout({value, setValue}) {
                   className="col-sm-2 text-right">{DOWNLOAD_LIMIT_LABEL}</label>
                 <input type="text" id="download_limit" className="col-sm-2"
                        onChange={handleChange}
-                       pattern="[0-9]*"
-                       maxLength={10}
                        disabled={download_limit_unlimited_chk}
                        value={download_limit}/>
                 <label htmlFor="download_limit_unlimited_chk"
-                       className="col-sm-8 text-left">
-                  <input type="checkbox" id="download_limit_unlimited_chk"
+                       className="text-left">
+                  <input type="checkbox" style={style}
+                         id="download_limit_unlimited_chk"
                          key={Math.random()}
                          checked={download_limit_unlimited_chk}
                          onClick={handleChange}/>
@@ -101,8 +105,9 @@ function RestrictedAccessLayout({content_file_download}) {
 
   function handleSave() {
     const URL = "/api/admin/restricted_access/save";
-    if (!validateContentFileDownload()) {
-      showErrorMessage("Data is invalid!");
+    let errorMessage = validateContentFileDownload();
+    if (errorMessage) {
+      showErrorMessage(errorMessage);
       return false;
     }
 
@@ -129,7 +134,6 @@ function RestrictedAccessLayout({content_file_download}) {
   }
 
   function validateContentFileDownload() {
-    let isValid = true;
     const {
       download_limit,
       download_limit_unlimited_chk,
@@ -137,12 +141,21 @@ function RestrictedAccessLayout({content_file_download}) {
       expiration_date_unlimited_chk
     } = contentFileDownload;
 
-    if (download_limit === "" && download_limit_unlimited_chk === false ||
-      expiration_date === "" && expiration_date_unlimited_chk === false) {
-      isValid = false;
+    let errorMessage;
+
+    if (expiration_date === "" && !expiration_date_unlimited_chk) {
+      errorMessage = EMPTY_EXPIRATION_DATE;
+    } else if (download_limit === "" && !download_limit_unlimited_chk) {
+      errorMessage = EMPTY_DOWNLOAD;
+    } else if ((expiration_date < 1 && !expiration_date_unlimited_chk)
+      || expiration_date > MAX_EXPIRATION_DATE) {
+      errorMessage = CHECK_INPUT_EXPIRATION_DATE;
+    } else if ((download_limit < 1 && !download_limit_unlimited_chk)
+      || download_limit > MAX_DOWNLOAD_LIMIT) {
+      errorMessage = CHECK_INPUT_DOWNLOAD;
     }
 
-    return isValid;
+    return errorMessage;
   }
 
   return (

@@ -580,7 +580,7 @@ def save_restricted_access():
     """
     result = {
         "status": True,
-        "msg": _("Update successfully.")
+        "msg": _("Restricted Access was successfully updated.")
     }
     restricted_access = request.get_json()
     if not update_restricted_access(restricted_access):

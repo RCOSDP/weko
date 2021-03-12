@@ -21,29 +21,36 @@
 {%- extends admin_base_template %}
 
 {% block css %}
-{{ super() }}
-{% assets "weko_theme_css_buttons" %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}
     <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {% endblock %}
 
 {%- block javascript %}
-{{ super() }}
-  {% assets "weko_admin_restricted_access" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_admin_statistics_reactjs_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ super() }}
+  {% assets "weko_admin_restricted_access" %}
+    <script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_admin_statistics_reactjs_lib" %}
+    <script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_admin_react_bootstrap_js" %}
+    <script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
   <script type="text/javascript"
           src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 {%- endblock javascript %}
 
 {%- block body %}
- {% from "weko_theme/macros/modal_page.html" import all_modal %}
-<input id="init_data" type="hidden" value='{{data}}' />
-<input id="content_file_download_label" type="hidden" value='{{_("Content File Download")}}' />
-<input id="download_limit_label" type="hidden" value='{{_("Download Limit")}}' />
-<input id="expiration_date_label" type="hidden" value='{{_("Expiration Date")}}' />
-<input id="unlimited_label" type="hidden" value='{{_("Unlimited")}}' />
-<input id="save_label" type="hidden" value='{{_("Save")}}' />
-<div id="alerts"></div>
-<div id="root" class="col-xs-12"></div>
-{{ all_modal() }}
+  {% from "weko_theme/macros/modal_page.html" import all_modal %}
+  <input id="init_data" type="hidden" value='{{ data }}'/>
+  <input id="content_file_download_label" type="hidden" value='{{ _("Content File Download") }}'/>
+  <input id="download_limit_label" type="hidden" value='{{ _("Download Limit") }}'/>
+  <input id="expiration_date_label" type="hidden" value='{{ _("Expiration Date") }}'/>
+  <input id="unlimited_label" type="hidden" value='{{ _("Unlimited") }}'/>
+  <input id="save_label" type="hidden" value='{{ _("Save") }}'/>
+  <input id="check_input_download" type="hidden" value='{{ _("Must set a positive integer for %(name)s", _("Download Limit")) }}'/>
+  <input id="check_input_expiration_date" type="hidden" value='{{ _("Must set a positive integer for %(name)s", _("Expiration Date")) }}'/>
+  <input id="empty_download" type="hidden" value='{{ _("Please set %(name)s", _("Download Limit")) }}'/>
+  <input id="empty_expiration_date" type="hidden" value='{{ _("Please set %(name)s", _("Expiration Date")) }}'/>
+  <div id="alerts"></div>
+  <div id="root" class="col-xs-12"></div>
+  {{ all_modal() }}
 {%- endblock body %}
