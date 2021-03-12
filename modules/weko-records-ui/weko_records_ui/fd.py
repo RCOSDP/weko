@@ -44,7 +44,7 @@ from .utils import check_and_create_usage_report, \
     get_billing_file_download_permission, get_groups_price, \
     get_min_price_billing_file_download, is_billing_item, \
     parse_one_time_download_token, update_onetime_download_count, \
-    validate_onetime_download_token
+    validate_download_record, validate_onetime_download_token
 
 
 def weko_view_method(pid, record, template=None, **kwargs):
@@ -398,6 +398,9 @@ def file_download_onetime(pid, record, _record_file_factory=None, **kwargs):
         filename, record_id, user_mail, date, secret_token)
     if not is_valid:
         return render_template(error_template, error=error)
+
+    # Validate record status
+    validate_download_record(record)
 
     _record_file_factory = _record_file_factory or record_file_factory
 
