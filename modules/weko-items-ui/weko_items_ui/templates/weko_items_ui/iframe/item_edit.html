@@ -148,7 +148,7 @@
                             <p class="text-center">
                               <button class="btn btn-primary" ng-click="uploadThumbnail()">{{_('Click to select')}}</button>
                             </p>
-                            <p class="text-center">{{_('Registerable file: 「gif, jpg, jpe, jpeg, png, bmp, tiff, tif」')}}</p>
+                            <p class="text-center">{{_('Registerable file: 「gif, jpg, jpe, jpeg, png, bmp」')}}</p>
                             <form name="uploadThumbnailForm" class="collapse"
                               sf-schema="schema"
                               sf-form="form"
@@ -422,6 +422,12 @@
               value="{{_('The specified number has been exceeded. You can only select up to two fields.')}}">
           <input type="hidden" id="duplicate_files_error" name="duplicate_files_error"
               value="{{_('The same file name cannot be registered.')}}">
+          <input type="hidden" id="invalid_files_type" name="invalid_files_type"
+              value="{{_('Thumbnail file type error message')}}">
+          <input type="hidden" id="min_files_thumnbnail_error" name="min_files_thumnbnail_error"
+              value="{{_('The number of Thumbnails is less than minItems.')}}">
+          <input type="hidden" id="max_files_thumnbnail_error" name="max_files_thumnbnail_error"
+              value="{{_('The number of Thumbnails is greater than maxItems.')}}">
 
           <input type="hidden" id="item_registration_workflow" value="true">
         </div>

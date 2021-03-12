@@ -523,6 +523,63 @@ function toObject(arr) {
       '<button type="button" class="close" data-dismiss="alert">' +
       '&times;</button>' + message + '</div>');
   }
+
+function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
+  let result = {
+    isValid: true,
+    validThumbnails: [],
+    errorMessages: []
+  },
+    thumbnailsVM = rootScope.filesVM.files.filter(file => file.is_thumbnail),
+    inValidThumbnails = [],
+    duplicateThumbnails = [];
+
+  // Check for duplicate files & file type
+  if (files && files.length > 0) {
+    Array.prototype.forEach.call(files, function (file) {
+      if (scope.model.allowedType.indexOf(file.type) >= 0) {
+        if (thumbnailsVM.some((thumbnail) => thumbnail.key === file.name)) {
+          duplicateThumbnails.push(file.name);
+        }
+        else {
+          result.validThumbnails.push(file);
+        }
+      }
+      else {
+        inValidThumbnails.push(file.name);
+      }
+    });
+  }
+
+  // Generate error message
+  if (inValidThumbnails.length > 0) {
+    result.isValid = false;
+    result.errorMessages.push($("#invalid_files_type").val() + '<br/>' + inValidThumbnails.join(', '));
+  }
+  if (duplicateThumbnails.length > 0) {
+    result.isValid = false;
+    result.errorMessages.push($("#duplicate_files_error").val() + '<br/>' + duplicateThumbnails.join(', '));
+  }
+
+  if (thumbnailsVM.length > 0 && itemSizeCheckFlg) {
+    let thumbnailItemKey = scope.searchThumbnailForm(),
+      recordSchema = rootScope.recordsVM.invenioRecordsSchema,
+      thumbnailMetaData = recordSchema.properties[thumbnailItemKey],
+      maxItems = thumbnailMetaData ? thumbnailMetaData.maxItems : 0,
+      minItems = thumbnailMetaData ? thumbnailMetaData.minItems : 0;
+
+    if (minItems > 1 && thumbnailsVM.length < minItems) {
+      result.isValid = false;
+      result.errorMessages.push($("#min_files_thumnbnail_error").val());
+    }
+    if (thumbnailsVM.length > maxItems) {
+      result.isValid = false;
+      result.errorMessages.push($("#max_files_thumnbnail_error").val());
+    }
+  }
+
+  return result;
+}
   // Bootstrap it!
   angular.element(document).ready(function () {
     function WekoRecordsCtrl($scope, $rootScope, InvenioRecordsAPI) {
@@ -585,7 +642,7 @@ function toObject(arr) {
               let duplicateFile = [];
               if ($rootScope.filesVM.files.length > 0) {
                 duplicateFile = $rootScope.filesVM.files.filter(function (f) {
-                  return f.key === file.name;
+                  return !f.is_thumbnail && f.key === file.name;
                 });
               }
               if (duplicateFile.length === 0) {
@@ -2934,7 +2991,16 @@ function toObject(arr) {
           return false;
         } else if (!$scope.validateEmailsAndIndexAndUpdateApprovalActions(activityId, steps, isAutoSetIndexAction)) {
           return false;
-       }else{
+        } else {
+          // Validate minItems & maxItems for thumbnails
+          debugger;
+          let validateResult = validateThumbnails($rootScope, $scope, true);
+          if (!validateResult.isValid) {
+            let message = validateResult.errorMessages.join('<br/><br/>');
+            $("#inputModal").html(message);
+            $("#allModal").modal("show");
+            return false;
+          }
           // Call API to validate input data base on json schema define
           let validateURL = '/api/items/validate';
           let isValid = false;
@@ -3802,7 +3868,7 @@ function toObject(arr) {
         ];
         $scope.model = {
             thumbnailsInfor: [],
-            allowedType: ['image/gif', 'image/jpg', 'image/jpe', 'image/jpeg', 'image/png', 'image/bmp', 'image/tiff', 'image/tif'],
+            allowedType: ['image/gif', 'image/jpg', 'image/jpe', 'image/jpeg', 'image/png', 'image/bmp'],
             allowMultiple: $("#allow-thumbnail-flg").val(),
         };
         $scope.uploadingThumbnails = [];
@@ -3962,8 +4028,17 @@ function toObject(arr) {
                 } else {
                   $scope.directedUpload(files);
                 }
-              } else {
-                $scope.directedUpload(files);
+              } else {                
+                let validateResult = validateThumbnails($rootScope, $scope, false, files);
+                if (validateResult.validThumbnails.length > 0) {
+                  $scope.directedUpload(validateResult.validThumbnails);
+                }
+                // Show error messse
+                if (!validateResult.isValid) {
+                  let message = validateResult.errorMessages.join('<br/><br/>');
+                  $("#inputModal").html(message);
+                  $("#allModal").modal("show");
+                }
               }
             }
           });
