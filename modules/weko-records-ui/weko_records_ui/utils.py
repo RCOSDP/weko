@@ -26,7 +26,7 @@ from datetime import timedelta
 from decimal import Decimal
 from typing import NoReturn, Tuple
 
-from flask import current_app, request
+from flask import abort, current_app, request
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role
@@ -682,7 +682,7 @@ def generate_one_time_download_url(
     secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
     download_pattern = current_app.config[
         'WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN']
-    current_date = dt.now().strftime("%Y-%m-%d")
+    current_date = dt.utcnow().strftime("%Y-%m-%d")
     hash_value = download_pattern.format(file_name, record_id, guest_mail,
                                          current_date)
     secret_token = oracle10.hash(secret_key, hash_value)
@@ -698,7 +698,7 @@ def generate_one_time_download_url(
 
 
 def parse_one_time_download_token(token: str) -> Tuple[str, Tuple]:
-    """Parse onetime download token
+    """Parse onetime download token.
 
     @param token:
     @return:
@@ -732,8 +732,6 @@ def validate_onetime_download_token(
     """
     token_invalid = _("Token is invalid.")
     secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
-    download_deadline = current_app.config['WEKO_RECORDS_UI_DOWNLOAD_DEADLINE']
-    downloads_max = current_app.config['WEKO_RECORDS_UI_DOWNLOADS_MAX']
     download_pattern = current_app.config[
         'WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN']
     hash_value = download_pattern.format(file_name, record_id, guest_mail, date)
@@ -741,18 +739,19 @@ def validate_onetime_download_token(
         current_app.logger.debug('Validate token error: {}'.format(hash_value))
         return False, token_invalid
     try:
-        download_date = dt.strptime(date, "%Y-%m-%d").date() + timedelta(
-            download_deadline)
-        current_date = dt.now().date()
-        if current_date > download_date:
-            return False, _("The download expiration date has expired.")
-
-        download_count = get_onetime_download_count(
+        onetime_download = get_onetime_download(
             file_name=file_name, record_id=record_id, user_mail=guest_mail
         )
-        if download_count >= downloads_max:
-            return False, _(
-                "The maximum number of downloads has been exceeded.")
+        if not onetime_download:
+            return False, token_invalid
+        download_date = onetime_download.created.date() + timedelta(
+            onetime_download.expiration_date)
+        current_date = dt.utcnow().date()
+        if current_date > download_date:
+            return False, _("The expiration date for download has been exceeded.")
+
+        if onetime_download.download_count <= 0:
+            return False, _("The download limit has been exceeded.")
         return True, ""
     except Exception as err:
         current_app.logger.error('Validate onetime download token error:')
@@ -760,8 +759,46 @@ def validate_onetime_download_token(
         return False, token_invalid
 
 
-def get_onetime_download_count(file_name: str, record_id: str,
-                               user_mail: str) -> int:
+def is_private_index(record):
+    """Check index of workflow is private.
+
+    :param record:Record data.
+    :return:
+    """
+    from weko_index_tree.api import Indexes
+    list_index = record.get("path")
+    index_lst = []
+    if list_index:
+        index_id_lst = []
+        for index in list_index:
+            indexes = str(index).split('/')
+            index_id_lst.append(indexes[-1])
+        index_lst = index_id_lst
+    indexes = Indexes.get_path_list(index_lst)
+    publish_state = 6
+    for index in indexes:
+        if len(indexes) == 1:
+            if not index[publish_state]:
+                return True
+        else:
+            if index[publish_state]:
+                return False
+    return False
+
+
+def validate_download_record(record: dict):
+    """Validate record.
+
+    :param record:
+    """
+    if record['publish_status'] != "0":
+        abort(403)
+    if is_private_index(record):
+        abort(403)
+
+
+def get_onetime_download(file_name: str, record_id: str,
+                         user_mail: str):
     """Get onetime download count.
 
     @param file_name:
@@ -773,9 +810,35 @@ def get_onetime_download_count(file_name: str, record_id: str,
         file_name=file_name, record_id=record_id, user_mail=user_mail
     )
     if file_downloads and len(file_downloads) > 0:
-        return file_downloads[0].count
+        return file_downloads[0]
     else:
-        return 0
+        return None
+
+
+def create_onetime_download_url(file_name: str, record_id: str,
+                                user_mail: str):
+    """Create onetime download.
+
+    :param file_name:
+    :param record_id:
+    :param user_mail:
+    :return:
+    """
+    from weko_admin.utils import get_restricted_access
+    content_file_download = get_restricted_access('content_file_download')
+    if isinstance(content_file_download, dict):
+        expiration_date = content_file_download.get("expiration_date", 30)
+        download_limit = content_file_download.get("download_limit", 30)
+        file_onetime = FileOnetimeDownload.create(**{
+            "file_name": file_name,
+            "record_id": record_id,
+            "user_mail": user_mail,
+            "expiration_date": expiration_date,
+            "download_count": download_limit
+        })
+        if file_onetime:
+            return True
+    return False
 
 
 def update_onetime_download_count(file_name: str, record_id: str,
@@ -813,8 +876,7 @@ def get_roles():
     @return:
     """
     roles = Role.query.all()
-    init_roles = []
-    init_roles.append({'id': 'none_loggin', 'name': _('Guest')})
+    init_roles = [{'id': 'none_loggin', 'name': _('Guest')}]
     for role in roles:
         init_roles.append({'id': role.id, 'name': role.name})
     return init_roles
@@ -825,8 +887,7 @@ def get_terms():
 
     @return:
     """
-    init_terms = []
-    init_terms.append({'id': 'term_free', 'name': _('Free Input')})
+    init_terms = [{'id': 'term_free', 'name': _('Free Input')}]
     # TODO
     roles = Role.query.all()
     for role in roles:
