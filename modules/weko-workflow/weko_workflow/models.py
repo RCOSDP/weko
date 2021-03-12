@@ -26,12 +26,13 @@ from datetime import datetime
 from flask import current_app
 from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
-from invenio_db import db
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.expression import desc
 from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import JSONType, UUIDType
 from sqlalchemy_utils.types.choice import ChoiceType
+
+from invenio_db import db
 from weko_groups.widgets import RadioGroupWidget
 from weko_records.models import ItemType
 
@@ -589,6 +590,10 @@ class FlowActionRole(db.Model, TimestampMixin):
         nullable=False, default=False, server_default='0')
     """If set to True, deny the action, otherwise allow it."""
 
+    specify_property = db.Column(
+        db.String(255), nullable=True)
+    """the name of flows."""
+
 
 class WorkFlow(db.Model, TimestampMixin):
     """Define WorkFlow."""
@@ -788,6 +793,8 @@ class Activity(db.Model, TimestampMixin):
         nullable=True
     )
 
+    action_order = db.Column(db.Integer(), nullable=False, unique=False)
+    """the order of action."""
 
 class ActivityAction(db.Model, TimestampMixin):
     """Define Activety."""
@@ -818,6 +825,8 @@ class ActivityAction(db.Model, TimestampMixin):
     action_handler = db.Column(db.Integer, nullable=True)
     """action handler"""
 
+    action_order = db.Column(db.Integer(), nullable=False, unique=False)
+    """the order of action."""
 
 class ActivityHistory(db.Model, TimestampMixin):
     """Define ActivityHistory."""
@@ -858,6 +867,9 @@ class ActivityHistory(db.Model, TimestampMixin):
     user = db.relationship(User, backref=db.backref(
         'activity_history'))
     """User relaionship."""
+
+    action_order = db.Column(db.Integer(), nullable=False, unique=False)
+    """the order of action."""
 
 
 class ActionJournal(db.Model, TimestampMixin):

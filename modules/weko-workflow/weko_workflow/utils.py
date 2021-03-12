@@ -30,19 +30,20 @@ from flask import current_app, request, session
 from flask_babelex import gettext as _
 from flask_security import current_user
 from invenio_cache import current_cache
-from invenio_db import db
-from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_i18n.ext import current_i18n
-from invenio_mail.admin import MailSettingView
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
-from invenio_records.models import RecordMetadata
 from invenio_records_files.models import RecordsBuckets
 from passlib.handlers.oracle import oracle10
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
+
+from invenio_db import db
+from invenio_files_rest.models import Bucket, ObjectVersion
+from invenio_mail.admin import MailSettingView
+from invenio_records.models import RecordMetadata
 from weko_admin.models import Identifier
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
@@ -55,10 +56,8 @@ from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
-
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD
-
 from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
     WorkFlow
 from .config import IDENTIFIER_GRANT_SELECT_DICT, WEKO_SERVER_CNRI_HOST_LINK
@@ -2391,9 +2390,12 @@ def update_activity_action(activity_id, owner_id):
         action = _Action.query.filter_by(
             action_name=usage_application).one_or_none()
         if action:
+            activity = WorkActivity()
+            activity_detail = activity.get_activity_detail(activity_id)
             WorkActivity().upt_activity_action_status(
                 activity_id=activity_id, action_id=action.id,
-                action_status=ActionStatusPolicy.ACTION_DOING
+                action_status=ActionStatusPolicy.ACTION_DOING,
+                action_order=activity_detail.action_order
             )
             WorkActivityHistory().upd_activity_history_detail(activity_id,
                                                               action.id)
@@ -2701,7 +2703,7 @@ def get_activity_display_info(activity_id: str):
     action_endpoint = cur_action.action_endpoint
     action_id = cur_action.id
     temporary_comment = activity.get_activity_action_comment(
-        activity_id=activity_id, action_id=action_id)
+        activity_id, action_id, activity_detail.action_order)
     return action_endpoint, action_id, activity_detail, cur_action, histories, \
         item, steps, temporary_comment, workflow_detail
 
@@ -2894,3 +2896,28 @@ def prepare_data_for_guest_activity(activity_id: str) -> dict:
         session['itemlogin_community_id'] = community_id
 
     return ctx
+
+def recursive_get_specifed_properties(properties):
+    if not properties:
+        return None
+    if "items" in properties:
+        for item in properties["items"]:
+            if item.get("approval"):
+                return item.get("key")
+            else:
+                result = recursive_get_specifed_properties(item)
+                if result:
+                    return result
+
+
+def get_approval_keys():
+    from weko_records.models import ItemTypeProperty
+    result = ItemTypeProperty.query.filter_by(delflg=False).all()
+    approval_keys = []
+    for value in result:
+        propertys = value.form
+        if propertys:
+            result = recursive_get_specifed_properties(propertys)
+            if result:
+                approval_keys.append(result)
+    return approval_keys
