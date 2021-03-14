@@ -211,10 +211,12 @@
                       <span class="glyphicon glyphicon-saved"></span>
                       {{_('Save')}}
                     </button>
-                    <button type="button" class="btn btn-info done-button" id="btn-finish">{{_('Done')}}</button>
+                    <button type="button" class="btn btn-info next-button" id="btn-finish">{{_('Next')}}
+                    <span class="glyphicon glyphicon-chevron-right"></span>
+                    </button>
                     <button class="btn btn-danger done-button pull-right" id="btn_quit">
                         <i class="fa fa-sign-out"></i>
-                        {{_('Quit')}}</button>
+                        {{_('QuitQO')}}</button>
                   </div>
                   {% include "weko_workflow/modal_quit_confirmation.html" %}
                 </div>
@@ -267,7 +269,9 @@
     <a class="btn btn-default pull-right"
       href="{{url_for('weko_workflow.index',community=community.id)}}">{{_('Back')}}</a>
     {%-else%}
-    <a class="btn btn-default pull-right" href="{{url_for('weko_workflow.index')}}">{{_('Back')}}</a>
+    <a class="btn btn-info pull-left back-button" href="{{url_for('weko_workflow.index')}}">
+            <span class="glyphicon glyphicon-chevron-left"></span>
+            {{_('Back')}}</a>
     {%-endif%}
   </div>
 </div>

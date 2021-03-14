@@ -730,6 +730,32 @@ class WorkActivity(object):
             db.session.merge(activity)
         db.session.commit()
 
+    def upt_activity_metadata(self, activity_id, metadata):
+        """Update metadata to activity table.
+
+        :param activity_id:
+        :param metadata:
+        :return:
+        """
+        with db.session.begin_nested():
+            activity = _Activity.query.filter_by(
+                activity_id=activity_id).one_or_none()
+            activity.temp_data = metadata
+            db.session.merge(activity)
+        db.session.commit()
+
+    def get_activity_metadata(self, activity_id):
+        """Get metadata from activity table.
+
+        :param activity_id:
+        :return metadata:
+        """
+        with db.session.no_autoflush:
+            activity = _Activity.query.filter_by(
+                activity_id=activity_id,).one_or_none()
+            metadata = activity.temp_data
+            return metadata
+
     def upt_activity_action_status(
             self,
             activity_id,
@@ -994,6 +1020,7 @@ class WorkActivity(object):
                     db_activity.action_id = activity.get('action_id')
                     db_activity.action_status = activity.get('action_status')
                     db_activity.activity_end = datetime.utcnow()
+                    db_activity.temp_data = None
                     if activity.get('item_id') is not None:
                         db_activity.item_id = activity.get('item_id')
                     db.session.merge(db_activity)
@@ -1040,6 +1067,7 @@ class WorkActivity(object):
                     db_activity.activity_status = \
                         ActivityStatusPolicy.ACTIVITY_CANCEL
                     db_activity.activity_end = datetime.utcnow()
+                    db_activity.temp_data = None
                     if 'item_id' in activity:
                         db_activity.item_id = activity.get('item_id')
                     db.session.merge(db_activity)
@@ -1258,9 +1286,9 @@ class WorkActivity(object):
         self_group_ids = [role.id for role in current_user.roles]
         query = query \
             .filter((_Activity.activity_status
-                    == ActivityStatusPolicy.ACTIVITY_BEGIN)
+                     == ActivityStatusPolicy.ACTIVITY_BEGIN)
                     | (_Activity.activity_status
-                    == ActivityStatusPolicy.ACTIVITY_MAKING)) \
+                       == ActivityStatusPolicy.ACTIVITY_MAKING)) \
             .filter(
                 ((_FlowActionRole.action_user == self_user_id)
                  & (_FlowActionRole.action_user_exclude == '0'))

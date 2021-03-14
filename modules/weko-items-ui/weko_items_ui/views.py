@@ -145,25 +145,22 @@ def iframe_index(item_type_id=0):
                                    error_type='no_itemtype')
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
-        sessionstore = RedisStore(redis.StrictRedis.from_url(
-            'redis://{host}:{port}/1'.format(
-                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
         record = {}
         files = []
         endpoints = {}
         activity_session = session['activity_info']
         activity_id = activity_session.get('activity_id', None)
-        if activity_id and sessionstore.redis.exists(
-                'activity_item_' + activity_id):
-            item_str = sessionstore.get('activity_item_' + activity_id)
-            item_json = json.loads(item_str)
-            if 'metainfo' in item_json:
-                record = item_json.get('metainfo')
-            if 'files' in item_json:
-                files = item_json.get('files')
-            if 'endpoints' in item_json:
-                endpoints = item_json.get('endpoints')
+        if activity_id:
+            activity = WorkActivity()
+            metadata = activity.get_activity_metadata(activity_id)
+            if metadata:
+                item_json = json.loads(metadata)
+                if 'metainfo' in item_json:
+                    record = item_json.get('metainfo')
+                if 'files' in item_json:
+                    files = item_json.get('files')
+                if 'endpoints' in item_json:
+                    endpoints = item_json.get('endpoints')
         need_file, need_billing_file = is_schema_include_key(item_type.schema)
 
         return render_template(
@@ -198,14 +195,8 @@ def iframe_save_model():
         if activity_id:
             sanitize_input_data(data)
             save_title(activity_id, data)
-            sessionstore = RedisStore(redis.StrictRedis.from_url(
-                'redis://{host}:{port}/1'.format(
-                    host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                    port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
-            sessionstore.put(
-                'activity_item_' + activity_id,
-                json.dumps(data).encode('utf-8'),
-                ttl_secs=60 * 60 * 24 * 7)
+            activity = WorkActivity()
+            activity.upt_activity_metadata(activity_id, json.dumps(data))
     except Exception as ex:
         current_app.logger.exception(str(ex))
         return jsonify(code=1, msg='Model save error')
@@ -521,25 +512,22 @@ def default_view_method(pid, record, template=None):
             url_for('.index', item_type_id=lists[0].item_type[0].id))
     json_schema = '/items/jsonschema/{}'.format(item_type_id)
     schema_form = '/items/schemaform/{}'.format(item_type_id)
-    sessionstore = RedisStore(redis.StrictRedis.from_url(
-        'redis://{host}:{port}/1'.format(
-            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
     files = to_files_js(record)
     record = record.item_metadata
     endpoints = {}
     activity_session = session['activity_info']
     activity_id = activity_session.get('activity_id', None)
-    if activity_id and sessionstore.redis.exists(
-            'activity_item_' + activity_id):
-        item_str = sessionstore.get('activity_item_' + activity_id)
-        item_json = json.loads(item_str)
-        if 'metainfo' in item_json:
-            record = item_json.get('metainfo')
-        if 'files' in item_json:
-            files = item_json.get('files')
-        if 'endpoints' in item_json:
-            endpoints = item_json.get('endpoints')
+    if activity_id:
+        activity = WorkActivity()
+        metadata = activity.get_activity_metadata(activity_id)
+        if metadata:
+            item_json = json.loads(metadata)
+            if 'metainfo' in item_json:
+                record = item_json.get('metainfo')
+            if 'files' in item_json:
+                files = item_json.get('files')
+            if 'endpoints' in item_json:
+                endpoints = item_json.get('endpoints')
     need_file, need_billing_file = is_schema_include_key(item_type.schema)
 
     return render_template(
