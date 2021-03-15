@@ -188,7 +188,17 @@ class FlowSettingView(BaseView):
         actions = request.get_json()
         workflow = Flow()
         workflow.upt_flow_action(flow_id, actions)
-        return jsonify(code=0, msg=_('Updated flow action successfully'))
+        flow = workflow.get_flow_detail(flow_id)
+        actions = []
+        for action in flow.flow_actions:
+            actions.append({
+                'id': action.id,
+                'action_order': action.action_order,
+            })
+        return jsonify(
+            code=0,
+            msg=_('Updated flow action successfully'),
+            actions=actions)
 
 
 class WorkFlowSettingView(BaseView):

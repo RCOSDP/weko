@@ -137,6 +137,7 @@ $(document).ready(function () {
       success: function (data, status) {
         uptOrderInfo(false);
         addAlert(data.msg);
+        updateDataWorkflowFlowActionId(data.actions);
       },
       error: function (jqXHR, status) {
         var modalcontent = "Update failed";
@@ -328,6 +329,20 @@ $(document).ready(function () {
       }
     }
     localStorage.setItem('apply_action_list', JSON.stringify(action_list));
+  }
+
+  function updateDataWorkflowFlowActionId(actions){
+    // Update data-workflow-flow-action-id
+    $('#tb_action_list .action_ids').each(function (i) {
+      let row = $(this).parents('tr');
+      let order = $(row).find('.action_order').text();
+      let action = actions.find(function(elm){
+        if(elm.action_order == order){
+          return elm;
+        }
+      });
+      $(this).data('workflow-flow-action-id', action.id);
+    });
   }
 
   function addAlert(message) {
