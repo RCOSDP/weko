@@ -36,6 +36,8 @@ from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.resolver import Resolver
 from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
+from werkzeug.utils import import_string
+
 from weko_accounts.utils import login_required_customize
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoRecord
@@ -45,10 +47,8 @@ from weko_index_tree.utils import check_restrict_doi_with_indexes, \
 from weko_records.api import ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
-from weko_workflow.api import GetCommunity, WorkActivity
+from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow
 from weko_workflow.utils import check_an_item_is_locked, prepare_edit_workflow
-from werkzeug.utils import import_string
-
 from .permissions import item_permission
 from .utils import _get_max_export_items, check_item_is_being_edit, \
     export_items, get_current_user, get_data_authors_prefix_settings, \
@@ -401,17 +401,11 @@ def iframe_items_index(pid_value='0'):
 
         if request.method == 'GET':
             cur_activity = session['itemlogin_activity']
-            # If enable auto set index feature
-            # and activity is usage application item type
-            steps = session['itemlogin_steps']
-            contain_application_endpoint = False
-            for step in steps:
-                if step.get('ActionEndpoint') == 'item_login_application':
-                    contain_application_endpoint = True
-            enable_auto_set_index = current_app.config.get(
-                'WEKO_WORKFLOW_ENABLE_AUTO_SET_INDEX_FOR_ITEM_TYPE')
 
-            if enable_auto_set_index and contain_application_endpoint:
+            workflow = WorkFlow()
+            workflow_detail = workflow.get_workflow_by_id(
+                cur_activity.workflow_id)
+            if workflow_detail and workflow_detail.index_tree_id:
                 index_id = get_index_id(cur_activity.activity_id)
                 update_index_tree_for_record(pid_value, index_id)
                 return redirect(url_for('weko_workflow.iframe_success'))

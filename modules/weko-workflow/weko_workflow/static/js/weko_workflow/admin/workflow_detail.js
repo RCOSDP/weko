@@ -1,6 +1,5 @@
 $(document).ready(function () {
   checkWorkflowName();
-  displayIndexTreeSelection();
 });
 
 const select_show = $('#select_show');
@@ -52,8 +51,7 @@ $("#btn_delete").on("click", function () {
       }
     },
     error: function (jqXHE, status) {
-      var modalcontent = "Delete Failed";
-      $("#inputModal").html(modalcontent);
+      $("#inputModal").html("Delete Failed");
       $("#allModal").modal("show");
     },
   });
@@ -61,14 +59,8 @@ $("#btn_delete").on("click", function () {
 
 $("#btn_create").on("click", function () {
   const post_uri = $("#post_uri").text();
-  let selected = $('#txt_flow_name option:selected').text();
-  let index_id = null;
-  if (check_show_indexes(selected)) {
-    index_id = $('#txt_index').val()
-  }
   var list_hide = [];
   $("#select_hide option").each(function() {
-    console.log(this.value);
     list_hide.push(this.value);
   });
   let post_data = {
@@ -76,9 +68,11 @@ $("#btn_create").on("click", function () {
     flows_name: $("#txt_workflow_name").val(),
     itemtype_id: $("#txt_itemtype").val(),
     flow_id: $("#txt_flow_name").val(),
-    list_hide: list_hide
+    list_hide: list_hide,
+    open_restricted: $('#restricted_access_flag').is(":checked")
   };
-  if (index_id !== null) {
+  index_id = $('#txt_index').val()
+  if (index_id !== '') {
     post_data['index_id'] = index_id;
   }
   $.ajax({
@@ -94,38 +88,10 @@ $("#btn_create").on("click", function () {
       }
     },
     error: function (jqXHE, status) {
-      var modalcontent = "Something went wrong.";
-      $("#inputModal").html(modalcontent);
+      $("#inputModal").html("Something went wrong.");
       $("#allModal").modal("show");
     },
   });
-});
-
-function check_show_indexes(selected) {
-  let show_items_lit = $("#special_itemtype_list").val();
-  if (typeof show_items_lit === "string") {
-    show_items_lit = JSON.parse(show_items_lit);
-  }
-  for (const show_items of show_items_lit) {
-    if (selected === show_items) {
-      return true;
-    }
-  }
-  return false
-}
-
-function displayIndexTreeSelection() {
-  let selected = $('#txt_flow_name option:selected').text();
-  let is_show_selection_index = $('#enable_showing_index_tree_selection_value').val();
-  if (is_show_selection_index === 'True' && check_show_indexes(selected)) {
-    $('#index-tree').removeAttr('hidden');
-  } else {
-    $('#index-tree').attr("hidden", true);
-  }
-}
-
-$("#txt_flow_name").on("change", function () {
-  displayIndexTreeSelection();
 });
 
 $('#setShow').on('click', function () {

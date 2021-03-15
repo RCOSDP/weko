@@ -582,3 +582,27 @@ msgstr "このアクティビティのロックを解除してよろしいでし
 
 msgid "Your session has timed out. Please login again."
 msgstr "セッションが切れました。再度ログインしてください。"
+
+msgid "Restricted Access Flag"
+msgstr "制限公開フラグ"
+
+msgid "Enable Full"
+msgstr "有効にする"
+
+msgid "Disable Full"
+msgstr "無効にする"
+
+msgid "Enable"
+msgstr "有効"
+
+msgid "Disable"
+msgstr "無効"
+
+msgid "Registration Destination Index Designation"
+msgstr "登録先インデックスの指定"
+
+msgid "Undesignated"
+msgstr "指定なし"
+
+msgid "Registration Destination Index"
+msgstr "登録先インデックス"

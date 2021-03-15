@@ -449,7 +449,7 @@ def display_activity(activity_id="0"):
     files_thumbnail = []
     allow_multi_thumbnail = False
     term_and_condition_content = ''
-    is_auto_set_index_action = False
+    is_auto_set_index_action = True
     application_item_type = False
     title = ""
     data_type = activity_detail.extra_info.get(
@@ -462,12 +462,6 @@ def display_activity(activity_id="0"):
     if 'item_login' == action_endpoint or \
             'item_login_application' == action_endpoint or \
             'file_upload' == action_endpoint:
-        if request.method == 'POST':
-            is_user_agreed = request.form.get('checked')
-            if is_user_agreed == "on":
-                # update user agreement when user check the checkbox
-                activity.upt_activity_agreement_step(activity_id=activity_id,
-                                                     is_agree=True)
         activity_session = dict(
             activity_id=activity_id,
             action_id=activity_detail.action_id,
@@ -483,15 +477,6 @@ def display_activity(activity_id="0"):
             allow_multi_thumbnail \
             = item_login(item_type_id=workflow_detail.itemtype_id)
         application_item_type = is_usage_application_item_type(activity_detail)
-        if current_app.config['WEKO_WORKFLOW_ENABLE_SHOWING_TERM_OF_USE']:
-            # if this is Item Registration step and the user have not agreed
-            # term and condition yet, set to that page
-            if (cur_action.action_is_need_agree
-                    and is_need_to_show_agreement_page(item_type_name)
-                    and not activity_detail.activity_confirm_term_of_use):
-                step_item_login_url = 'weko_workflow/term_and_condition.html'
-                term_and_condition_content = get_term_and_condition_content(
-                    item_type_name)
         if not record and item:
             record = item
 
@@ -508,11 +493,6 @@ def display_activity(activity_id="0"):
         title = auto_fill_title(item_type_name)
         show_autofill_metadata = is_show_autofill_metadata(item_type_name)
         is_hidden_pubdate_value = is_hidden_pubdate(item_type_name)
-    for step in steps:
-        if step.get('ActionEndpoint') == 'item_login_application' \
-                and current_app.config[
-                'WEKO_WORKFLOW_ENABLE_AUTO_SET_INDEX_FOR_ITEM_TYPE']:
-            is_auto_set_index_action = True
 
     # if 'approval' == action_endpoint:
     if item:
@@ -1015,13 +995,12 @@ def next_action(activity_id='0', action_id=0):
                     return jsonify(code=-1, msg=_('error'))
 
             # Set permission to Approved
-            if is_usage_application(activity_detail):
-                open_date = datetime.now()
-                permission = FilePermission.find_by_activity(activity_id)
-                if permission:
-                    status_done = 1
-                    FilePermission.update_status(permission, status_done)
-                    FilePermission.update_open_date(permission, open_date)
+            open_date = datetime.now()
+            permission = FilePermission.find_by_activity(activity_id)
+            if permission:
+                status_done = 1
+                FilePermission.update_status(permission, status_done)
+                FilePermission.update_open_date(permission, open_date)
 
             activity.update(
                 action_id=next_action_id,

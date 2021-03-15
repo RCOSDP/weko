@@ -266,9 +266,6 @@ msgstr ""
 msgid "Publish"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/tombstone.html:13
-msgid "This item has been deleted."
-msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/admin/bulk_update_display.html:25
 msgid "Fields For Update"
@@ -582,3 +579,9 @@ msgstr "メールアドレス（確認用）"
 
 msgid "Token is invalid."
 msgstr "トークンが無効です。"
+
+msgid "The expiration date for download has been exceeded."
+msgstr "ダウンロード有効期限を超過しています。"
+
+msgid "The download limit has been exceeded."
+msgstr "ダウンロード制限回数を超過しています。"

@@ -493,3 +493,27 @@ msgstr ""
 
 msgid "Your session has timed out. Please login again."
 msgstr ""
+
+msgid "Restricted Access Flag"
+msgstr ""
+
+msgid "Enable Full"
+msgstr ""
+
+msgid "Disable Full"
+msgstr ""
+
+msgid "Enable"
+msgstr ""
+
+msgid "Disable"
+msgstr ""
+
+msgid "Registration Destination Index Designation"
+msgstr ""
+
+msgid "Undesignated"
+msgstr ""
+
+msgid "Registration Destination Index"
+msgstr ""

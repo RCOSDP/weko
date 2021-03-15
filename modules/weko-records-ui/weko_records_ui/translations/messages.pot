@@ -1164,8 +1164,6 @@ msgstr ""
 msgid "Summary DDI"
 msgstr ""
 
-msgid "This item has been deleted."
-msgstr ""
 
 msgid "Apply JGSS"
 msgstr "Apply"
@@ -1183,4 +1181,10 @@ msgid "Email address(reconfirmation)"
 msgstr ""
 
 msgid "Token is invalid."
+msgstr ""
+
+msgid "The expiration date for download has been exceeded."
+msgstr ""
+
+msgid "The download limit has been exceeded."
 msgstr ""

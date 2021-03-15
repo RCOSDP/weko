@@ -51,9 +51,11 @@ from weko_index_tree.models import Index
 from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
     ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name, get_mapping
-from weko_records_ui.utils import get_list_licence
+from weko_records_ui.utils import create_onetime_download_url, \
+    generate_one_time_download_url, get_list_licence
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
@@ -2641,7 +2643,6 @@ def send_onetime_download_url_to_guest(activity_id: str,
     record_id = extra_info.get('record_id')
     guest_mail = extra_info.get('guest_mail')
     if file_name and record_id and guest_mail:
-        from weko_records_ui.utils import generate_one_time_download_url
         onetime_file_url = generate_one_time_download_url(
             file_name, record_id, guest_mail)
 
@@ -2655,7 +2656,13 @@ def send_onetime_download_url_to_guest(activity_id: str,
             'mail_address': guest_mail,
             'url_guest_user': onetime_file_url
         }
-        return send_mail_url_guest_user(mail_info)
+
+        # Save onetime to Database.
+        if create_onetime_download_url(file_name, record_id, guest_mail):
+            return send_mail_url_guest_user(mail_info)
+        else:
+            current_app.logger.error("Can not create onetime download.")
+            return False
 
 
 def delete_guest_activity(activity_id: str) -> bool:
@@ -2720,12 +2727,7 @@ def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
         get_activity_display_info(activity_id)
     item_type_name = get_item_type_name(workflow_detail.itemtype_id)
     # Check auto set index
-    is_auto_set_index_action = False
-    for step in steps:
-        if step.get('ActionEndpoint') == 'item_login_application' \
-            and current_app.config[
-                'WEKO_WORKFLOW_ENABLE_AUTO_SET_INDEX_FOR_ITEM_TYPE']:
-            is_auto_set_index_action = True
+    is_auto_set_index_action = True
 
     # Get the design for widget rendering
     from weko_theme.utils import get_design_layout

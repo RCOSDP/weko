@@ -173,10 +173,7 @@ RECORDS_UI_ENDPOINTS = dict(
 
 WEKO_RECORDS_UI_SECRET_KEY = "secret"
 """Secret key"""
-WEKO_RECORDS_UI_DOWNLOAD_DEADLINE = 7
-"""Download deadline."""
-WEKO_RECORDS_UI_DOWNLOADS_MAX = 5
-"""Maximum download number."""
+
 WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN = \
     "filename={} record_id={} user_mail={} date={}"
 """Onetime download pattern."""
