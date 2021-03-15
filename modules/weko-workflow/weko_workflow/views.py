@@ -739,10 +739,11 @@ def check_authority_action(activity_id='0', action_id=0,
             return 0
     # Check current user is action handler of activity
     activity_action_obj = ActivityAction.query.filter_by(
-        activity_id=activity_id, action_id=action_id).first()
+        activity_id=activity_id, action_id=action_id,
+        action_order=action_order).first()
     if (activity_action_obj.action_handler
-            and int(activity_action_obj.action_handler) == int(cur_user)
-            and contain_login_item_application):
+        and int(activity_action_obj.action_handler) == int(cur_user)
+        and contain_login_item_application):
         return 0
 
     # Otherwise, user has no permission

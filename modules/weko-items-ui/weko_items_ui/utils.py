@@ -1671,45 +1671,55 @@ def update_index_tree_for_record(pid_value, index_tree_id):
     db.session.commit()
 
 
-def validate_user_mail(email):
+def validate_user_mail(users, activity_id, request_data):
     """Validate user mail.
 
-    @param email:
+    @param users:
+    @param activity_id:
+    @param request_data:
     @return:
     """
     result = {}
     try:
-        if email != '':
-            result = {'results': '',
-                      'validation': '',
-                      'error': ''
-                      }
-            user_info = get_user_info_by_email(
-                email)
-            if user_info and user_info.get(
-                    'user_id') is not None:
-                if current_user.is_authenticated and int(
-                        user_info.get('user_id')) == int(current_user.get_id()):
-                    result['validation'] = False
-                    result['error'] = _(
-                        "You cannot specify "
-                        "yourself in approval lists setting.")
-                else:
-                    result['results'] = user_info
-                    result['validation'] = True
-            else:
-                result['validation'] = False
+        from weko_workflow.api import WorkActivity
+        from weko_workflow.models import ActivityAction, FlowDefine, FlowAction, \
+            FlowActionRole
+        activity = WorkActivity()
+        activity_detail = activity.get_activity_detail(activity_id)
+        flow_define = FlowDefine.query.filter_by(
+            id=activity_detail.flow_id).one_or_none()
+        for user in users:
+            if flow_define:
+                for action in flow_define.flow_actions:
+                    action_roles = FlowActionRole.query.filter_by(
+                        flow_action_id=action.id).all()
+                    for action_role in action_roles:
+                        if user in action_role.specify_property:
+                            email = request_data.get(user)
+                            user_info = get_user_info_by_email(email)
+                            if user_info and user_info.get(
+                                    'user_id') is not None:
+                                update_action_handler(activity_id,
+                                                      action.action_order,
+                                                      user_info.get('user_id'))
+                                result['validation'] = True
+                                continue
+        else:
+            result['validation'] = False
+            result['error'] = _(
+                "You cannot specify "
+                "yourself in approval lists setting.")
     except Exception as ex:
         result['error'] = str(ex)
 
     return result
 
 
-def update_action_handler(activity_id, action_id, user_id):
+def update_action_handler(activity_id, action_order, user_id):
     """Update action handler for each action of activity.
 
     :param activity_id:
-    :param action_id:
+    :param action_order:
     :param user_id:
     :return:
     """
@@ -1717,7 +1727,7 @@ def update_action_handler(activity_id, action_id, user_id):
     with db.session.begin_nested():
         activity_action = ActivityAction.query.filter_by(
             activity_id=activity_id,
-            action_id=action_id, ).one_or_none()
+            action_order=action_order).one_or_none()
         if activity_action:
             activity_action.action_handler = user_id
             db.session.merge(activity_action)
@@ -1737,15 +1747,8 @@ def validate_user_mail_and_index(request_data):
         "index": True
     }
     try:
-        for user in users:
-            user_obj = request_data.get(user)
-            email = user_obj.get('mail')
-            validation_result = validate_user_mail(email)
-            if validation_result.get('validation') is True:
-                update_action_handler(activity_id, user_obj.get('action_id'),
-                                      validation_result.get('results').get(
-                                          'user_id'))
-            result[user] = validation_result
+        validation_result = validate_user_mail(users, activity_id, request_data)
+        result['email'] = validation_result
         if auto_set_index_action is True:
             is_existed_valid_index_tree_id = True if \
                 get_index_id(activity_id) else False

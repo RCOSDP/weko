@@ -3197,39 +3197,28 @@ function toObject(arr) {
       // -Validate index existence(if any)
       $scope.validateEmailsAndIndexAndUpdateApprovalActions = function (activityId, steps, isAutoSetIndexAction) {
         let emailsToValidate = [];
-        let actionEndpointKey = $("#action_endpoint_key").val();
         let approvalMailSubKey = $("#approval_email_key").val();
-        if (actionEndpointKey === "" || approvalMailSubKey === "") {
+        if (approvalMailSubKey === "") {
           return true;
         }
-        actionEndpointKey = JSON.parse(actionEndpointKey);
         approvalMailSubKey = JSON.parse(approvalMailSubKey);
         let param = {};
-        steps.forEach(function (step) {
-          if (step.ActionEndpoint == actionEndpointKey.approval1 && approvalMailSubKey.approval1) {
-            emailsToValidate.push('email_approval1');
-            let subitemApprovalMailAddress = $scope.depositionForm[approvalMailSubKey.approval1];
-            let mail_adress = '';
-            if (subitemApprovalMailAddress) {
-              mail_adress = subitemApprovalMailAddress.$modelValue;
+
+        Object.keys($scope.depositionForm).forEach(function (key) {
+          approvalMailSubKey.forEach(function (item) {
+            item = item.split('.').pop();
+            if (key.indexOf(item) !== -1) {
+              let subitemApprovalMailAddress = $scope.depositionForm[key];
+              let mail_adress = '';
+              if (subitemApprovalMailAddress) {
+                mail_adress = subitemApprovalMailAddress.$modelValue;
+              }
+              param[item] = mail_adress
+              emailsToValidate.push(item);
             }
-            param['email_approval1'] = {
-              'mail': mail_adress,
-              'action_id': step.ActionId
-            }
-          } else if (step.ActionEndpoint == actionEndpointKey.approval2 && approvalMailSubKey.approval2) {
-            emailsToValidate.push('email_approval2');
-            let subitemApproval2MailAddress = $scope.depositionForm[approvalMailSubKey.approval2];
-            let mail_adress = '';
-            if (subitemApproval2MailAddress) {
-              mail_adress = subitemApproval2MailAddress.$modelValue;
-            }
-            param['email_approval2'] = {
-              'mail': mail_adress,
-              'action_id': step.ActionId
-            }
-          }
+          });
         });
+
         param['activity_id'] = activityId;
         param['user_to_check'] = emailsToValidate;
         param['auto_set_index_action'] = isAutoSetIndexAction;
@@ -3255,17 +3244,8 @@ function toObject(arr) {
           dataType: "json",
           success: function (data, status) {
             let listEmailErrors = [];
-            if (param.email_approval1 && param.email_approval2) {
-              result = this.processResponseEmailValidation(itemsDict, data.email_approval1, approvalMailSubKey.approval1, listEmailErrors) + this.processResponseEmailValidation(itemsDict, data.email_approval2, approvalMailSubKey.approval2, listEmailErrors);
-            }
-            else{
-              if (param.email_approval1){
-                result = this.processResponseEmailValidation(itemsDict, data.email_approval1, approvalMailSubKey.approval1, listEmailErrors)
-              }
-              if (param.email_approval2) {
-                result = this.processResponseEmailValidation(itemsDict, data.email_approval2, approvalMailSubKey.approval2, listEmailErrors);
-              }
-            }
+            //// Wait error modal handle
+
             if (listEmailErrors.length > 0) {
               let message = $("#validate_email_register").val() + '<br/><br/>';
               message += listEmailErrors[0];
