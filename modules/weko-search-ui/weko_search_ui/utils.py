@@ -1522,6 +1522,12 @@ def handle_check_doi_indexes(list_record):
     :return
 
     """
+    err_msg_register_doi = _('When assigning a DOI to an item, it must be'
+                             ' associated with an index whose index status is'
+                             ' "Public" and Harvest Publishing is "Public".')
+    err_msg_update_doi = _('Since the item has a DOI, it must be associated'
+                           ' with an index whose index status is "Public"'
+                           ' and whose Harvest Publishing is "Public".')
     for item in list_record:
         errors = []
         doi_ra = item.get('doi_ra')
@@ -1532,11 +1538,13 @@ def handle_check_doi_indexes(list_record):
                 _('You cannot keep an item private because it has a DOI.'))
         # Check restrict DOI with Indexes:
         index_ids = [str(idx) for idx in item['metadata']['path']]
-        if check_restrict_doi_with_indexes(index_ids):
-            errors.append(
-                _('Since the item has a DOI, it must be associated with an'
-                  ' index whose index status is "Public" and whose'
-                  ' Harvest Publishing is "Public".'))
+        if doi_ra and check_restrict_doi_with_indexes(index_ids):
+            if item.get('status') == 'new':
+                errors.append(err_msg_register_doi)
+            else:
+                pid_doi = WekoRecord.get_record_by_pid(item.get('id')).pid_doi
+                errors.append(
+                    err_msg_update_doi if pid_doi else err_msg_register_doi)
         if errors:
             item['errors'] = item['errors'] + errors \
                 if item.get('errors') else errors
