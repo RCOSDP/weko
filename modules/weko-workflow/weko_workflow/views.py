@@ -1194,16 +1194,18 @@ def cancel_action(activity_id='0', action_id=0):
     """Next action."""
     post_json = request.get_json()
     work_activity = WorkActivity()
+    # Clear deposit
+    activity_detail = work_activity.get_activity_detail(activity_id)
 
     activity = dict(
         activity_id=activity_id,
         action_id=action_id,
         action_version=post_json.get('action_version'),
         action_status=ActionStatusPolicy.ACTION_CANCELED,
-        commond=post_json.get('commond'))
+        commond=post_json.get('commond'),
+        action_order=activity_detail.action_order
+    )
 
-    # Clear deposit
-    activity_detail = work_activity.get_activity_detail(activity_id)
     if activity_detail:
         cancel_item_id = activity_detail.item_id
         if not cancel_item_id:

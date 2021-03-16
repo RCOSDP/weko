@@ -1172,7 +1172,9 @@ class WorkActivity(object):
                         action_status=activity.get('action_status'),
                         action_user=current_user.get_id(),
                         action_date=datetime.utcnow(),
-                        action_comment=activity.get('commond'))
+                        action_comment=activity.get('commond'),
+                        action_order=activity.get('action_order')
+                    )
                     db.session.add(db_history)
 
                     db_history = ActivityHistory(
@@ -1183,7 +1185,9 @@ class WorkActivity(object):
                         action_user=current_user.get_id(),
                         action_date=datetime.utcnow(),
                         action_comment=ActionCommentPolicy.
-                            FINALLY_ACTION_COMMENT)
+                            FINALLY_ACTION_COMMENT,
+                        action_order=last_flow_action.action_order
+                    )
                     db.session.add(db_history)
             db.session.commit()
             return True
