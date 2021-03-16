@@ -102,9 +102,9 @@ class FlowSettingView(BaseView):
         result = ItemTypeProperty.query.filter_by(delflg=False).all()
         specifed_properties = []
         for value in result:
-            propertys = value.form
-            if propertys:
-                result = recursive_get_specifed_properties(propertys)
+            property = value.form
+            if property:
+                result = recursive_get_specifed_properties(property)
                 if result:
                     title_i18n = value.form.get('title_i18n', {}).get(
                         current_lang, '')

@@ -2917,9 +2917,9 @@ def get_approval_keys():
     result = ItemTypeProperty.query.filter_by(delflg=False).all()
     approval_keys = []
     for value in result:
-        propertys = value.form
-        if propertys:
-            result = recursive_get_specifed_properties(propertys)
+        property = value.form
+        if property:
+            result = recursive_get_specifed_properties(property)
             if result:
                 approval_keys.append(result)
     return approval_keys
