@@ -30,20 +30,19 @@ from flask import current_app, request, session
 from flask_babelex import gettext as _
 from flask_security import current_user
 from invenio_cache import current_cache
+from invenio_db import db
+from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_i18n.ext import current_i18n
+from invenio_mail.admin import MailSettingView
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
+from invenio_records.models import RecordMetadata
 from invenio_records_files.models import RecordsBuckets
 from passlib.handlers.oracle import oracle10
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
-
-from invenio_db import db
-from invenio_files_rest.models import Bucket, ObjectVersion
-from invenio_mail.admin import MailSettingView
-from invenio_records.models import RecordMetadata
 from weko_admin.models import Identifier
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
@@ -58,8 +57,10 @@ from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
+
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD
+
 from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
     WorkFlow
 from .config import IDENTIFIER_GRANT_SELECT_DICT, WEKO_SERVER_CNRI_HOST_LINK
@@ -1770,7 +1771,8 @@ def email_pattern_registration_done(user_role, item_type_name):
     if item_type_name not in item_type_list:
         if item_type_name == output_registration_item_type:
             return get_mail_data(
-                current_config.get("WEKO_WORKFLOW_RECEIVE_OUTPUT_REGISTRATION"))
+                current_config.get(
+                    "WEKO_WORKFLOW_RECEIVE_OUTPUT_REGISTRATION"))
         elif item_type_name == usage_report_item_type:
             return get_mail_data(
                 current_config.get("WEKO_WORKFLOW_RECEIVE_USAGE_REPORT"))
@@ -1788,9 +1790,10 @@ def email_pattern_registration_done(user_role, item_type_name):
     elif user_role and user_role in [graduated_student_role, student_role]:
         if item_type_name not in group:
             return get_mail_data(
-                current_config.get("WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE"
-                                   "_PERFECTURE_AND_LOCATION_DATA_OF_STUDENT_OR"
-                                   "_GRADUATED_STUDENT"))
+                current_config.get(
+                    "WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE"
+                    "_PERFECTURE_AND_LOCATION_DATA_OF_STUDENT_OR"
+                    "_GRADUATED_STUDENT"))
         elif item_type_name in group:
             return get_mail_data(
                 current_config.get("WEKO_WORKFLOW_PERFECTURE_OR_LOCATION_DATA"
@@ -2142,7 +2145,8 @@ def create_usage_report(activity_id):
 
     _workflow = WorkFlow()
     # Get WF detail
-    _workflow_detail = _workflow.get_workflow_by_id(activity_detail.workflow_id)
+    _workflow_detail = _workflow.get_workflow_by_id(
+        activity_detail.workflow_id)
     # Get usage report WF
     usage_report_workflow = _workflow.find_workflow_by_name(
         current_app.config['WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME'])
@@ -2557,8 +2561,8 @@ def init_activity_for_guest_user(data: dict) -> bool:
 
     def _generate_token_value():
         token_pattern = "activity={} file_name={} date={} email={}"
-        hash_value = token_pattern.format(activity_id, file_name, activity_date,
-                                          guest_mail)
+        hash_value = token_pattern.format(
+            activity_id, file_name, activity_date, guest_mail)
         secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
         token = oracle10.hash(secret_key, hash_value)
         _token_value = "{} {} {} {}".format(activity_id, activity_date,
@@ -2600,7 +2604,8 @@ def init_activity_for_guest_user(data: dict) -> bool:
 
     # Mail information
     mail_info = {
-        'template': current_app.config.get("WEKO_WORKFLOW_ACCESS_ACTIVITY_URL"),
+        'template': current_app.config.get(
+            "WEKO_WORKFLOW_ACCESS_ACTIVITY_URL"),
         'mail_address': guest_mail,
         'url_guest_user': url
     }
@@ -2711,8 +2716,8 @@ def get_activity_display_info(activity_id: str):
     action_id = cur_action.id
     temporary_comment = activity.get_activity_action_comment(
         activity_id, action_id, activity_detail.action_order)
-    return action_endpoint, action_id, activity_detail, cur_action, histories, \
-        item, steps, temporary_comment, workflow_detail
+    return action_endpoint, action_id, activity_detail, cur_action, \
+        histories, item, steps, temporary_comment, workflow_detail
 
 
 def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
@@ -2853,7 +2858,8 @@ def prepare_data_for_guest_activity(activity_id: str) -> dict:
         ctx = {'community': comm}
         community_id = comm.id
 
-    init_data = __init_activity_detail_data_for_guest(activity_id, community_id)
+    init_data = __init_activity_detail_data_for_guest(
+        activity_id, community_id)
     ctx.update(init_data)
     action_endpoint = ctx['cur_step']
     activity_detail = ctx['activity']
@@ -2898,6 +2904,7 @@ def prepare_data_for_guest_activity(activity_id: str) -> dict:
         session['itemlogin_community_id'] = community_id
 
     return ctx
+
 
 def recursive_get_specifed_properties(properties):
     if not properties:

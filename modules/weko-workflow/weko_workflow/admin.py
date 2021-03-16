@@ -27,11 +27,11 @@ from flask import abort, current_app, jsonify, request, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
-from invenio_i18n.ext import current_i18n
-
 from invenio_db import db
+from invenio_i18n.ext import current_i18n
 from weko_index_tree.models import Index
 from weko_records.api import ItemTypes
+
 from .api import Action, Flow, WorkActivity, WorkFlow
 from .config import WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS
 from .models import WorkflowRole
@@ -363,7 +363,8 @@ class WorkFlowSettingView(BaseView):
         workflow_detail = workflow.get_workflow_by_flows_id(workflow_id)
         if workflow_detail:
             activity = WorkActivity()
-            activitys = activity.get_activity_by_workflow_id(workflow_detail.id)
+            activitys = activity.get_activity_by_workflow_id(
+                workflow_detail.id)
             if activitys and len(activitys) > 0:
                 for i in activitys:
                     if i.activity_status not in ['F', 'C']:

@@ -33,6 +33,7 @@ from flask import Blueprint, abort, current_app, jsonify, render_template, \
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, User, userrole
+from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -41,9 +42,6 @@ from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
 from sqlalchemy.sql.expression import cast
-from werkzeug.utils import import_string
-
-from invenio_db import db
 from weko_accounts.api import ShibUser
 from weko_accounts.utils import login_required_customize
 from weko_authors.models import Authors
@@ -52,16 +50,19 @@ from weko_deposit.links import base_factory
 from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
 from weko_items_ui.api import item_login
-from weko_items_ui.utils import is_need_to_show_agreement_page, to_files_js, \
-    get_user_information
+from weko_items_ui.utils import get_user_information, \
+    is_need_to_show_agreement_page, to_files_js
 from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
 from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
     get_workflows
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
+from werkzeug.utils import import_string
+
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
@@ -72,7 +73,7 @@ from .utils import IdentifierHandle, auto_fill_title, check_continue, \
     check_existed_doi, delete_cache_data, delete_guest_activity, \
     filter_all_condition, get_account_info, get_actionid, \
     get_activity_display_info, get_activity_id_of_record_without_version, \
-    get_application_and_approved_date, get_cache_data, \
+    get_application_and_approved_date, get_approval_keys, get_cache_data, \
     get_identifier_setting, get_term_and_condition_content, \
     get_workflow_item_type_names, handle_finish_workflow, \
     init_activity_for_guest_user, is_enable_item_name_link, \
@@ -80,9 +81,10 @@ from .utils import IdentifierHandle, auto_fill_title, check_continue, \
     is_usage_application_item_type, item_metadata_validation, \
     prepare_data_for_guest_activity, process_send_notification_mail, \
     process_send_reminder_mail, register_hdl, save_activity_data, \
-    saving_doi_pidstore, send_onetime_download_url_to_guest, \
-    update_cache_data, validate_guest_activity, get_approval_keys, \
-    send_mail as send_mail_for_approval
+    saving_doi_pidstore
+from .utils import send_mail as send_mail_for_approval
+from .utils import send_onetime_download_url_to_guest, update_cache_data, \
+    validate_guest_activity
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -669,7 +671,8 @@ def check_authority(func):
 
 
 def check_authority_action(activity_id='0', action_id=0,
-                           contain_login_item_application=False, action_order=0):
+                           contain_login_item_application=False,
+                           action_order=0):
     """Check authority."""
     if not current_user.is_authenticated:
         return 1
@@ -744,8 +747,8 @@ def check_authority_action(activity_id='0', action_id=0,
         activity_id=activity_id, action_id=action_id,
         action_order=action_order).first()
     if (activity_action_obj.action_handler
-        and int(activity_action_obj.action_handler) == int(cur_user)
-        and contain_login_item_application):
+            and int(activity_action_obj.action_handler) == int(cur_user)
+            and contain_login_item_application):
         return 0
 
     # Otherwise, user has no permission
@@ -762,7 +765,7 @@ def next_action(activity_id='0', action_id=0):
     work_activity = WorkActivity()
     history = WorkActivityHistory()
     activity_detail = work_activity.get_activity_detail(activity_id)
-    action_order=activity_detail.action_order
+    action_order = activity_detail.action_order
     post_json = request.get_json()
     activity = dict(
         activity_id=activity_id,
@@ -782,8 +785,6 @@ def next_action(activity_id='0', action_id=0):
     if action_endpoint == 'end_action':
         work_activity.end_activity(activity)
         return jsonify(code=0, msg=_('success'))
-
-
     item_id = None
     recid = None
     deposit = None
@@ -882,8 +883,9 @@ def next_action(activity_id='0', action_id=0):
         if deposit:
             deposit.update_feedback_mail()
             deposit.update_jpcoar_identifier()
-        # Send mail
+
         def send_mail_approval():
+            """Send mail."""
             def get_next_approval_email():
                 cur_workflow_activity_action = ActivityAction.query.filter_by(
                     activity_id=activity_id,
@@ -1077,7 +1079,7 @@ def previous_action(activity_id='0', action_id=0, req=0):
     history = WorkActivityHistory()
     # next action
     activity_detail = work_activity.get_activity_detail(activity_id)
-    action_order=activity_detail.action_order
+    action_order = activity_detail.action_order
     flow = Flow()
     rtn = history.create_activity_history(activity, action_order)
     if rtn is None:
@@ -1250,7 +1252,8 @@ def cancel_action(activity_id='0', action_id=0):
     if session.get("guest_url"):
         url = session.get("guest_url")
     else:
-        url = url_for('weko_workflow.display_activity', activity_id=activity_id)
+        url = url_for(
+            'weko_workflow.display_activity', activity_id=activity_id)
 
     if activity_detail.extra_info and \
             activity_detail.extra_info.get('guest_mail'):
