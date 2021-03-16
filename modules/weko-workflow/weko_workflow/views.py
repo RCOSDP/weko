@@ -20,10 +20,10 @@
 
 """Blueprint for weko-workflow."""
 
+import copy
 import json
 import os
 import sys
-import copy
 from collections import OrderedDict
 from functools import wraps
 
@@ -56,7 +56,6 @@ from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.utils import get_list_licence
 from werkzeug.utils import import_string
-from weko_workflow.utils import get_record_by_root_ver
 
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
@@ -69,7 +68,8 @@ from .utils import IdentifierHandle, check_existed_doi, delete_cache_data, \
     get_activity_id_of_record_without_version, get_cache_data, \
     get_identifier_setting, handle_finish_workflow, is_hidden_pubdate, \
     is_show_autofill_metadata, item_metadata_validation, register_hdl, \
-    saving_doi_pidstore, update_cache_data
+    saving_doi_pidstore, update_cache_data, get_disptype_and_ver_in_metainfo, \
+    get_record_by_root_ver
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -473,14 +473,39 @@ def display_activity(activity_id=0):
     if action_endpoint == 'item_link' and recid:
         item_link = ItemLink.get_item_link_info(recid.pid_value)
         ctx['item_link'] = item_link
+    if item and 'pid' not in item:
+        itemLink_record = approval_record
+        newFiles = files
+
     if activity_detail.item_id and item and 'pid' in item \
-        and 'value' in item['pid'] and "item_login" not in action_endpoint:
+       and 'value' in item['pid'] and "item_login" not in action_endpoint:
         if not newFiles:
             newFiles = copy.deepcopy(files)
+        newRecord = copy.deepcopy(approval_record)
         itemLink_record, files = get_record_by_root_ver(item['pid']['value'])
         item["title"] = itemLink_record["title"][0]
+        approval_record = itemLink_record
+        itemLink_record = newRecord
         if "end_action" in action_endpoint:
             files = newFiles
+        if approval_record is not None and files is not None and len(approval_record) > 0 and \
+           len(files) > 0 and (isinstance(approval_record, list) or isinstance(approval_record, dict)):
+            for k, v in enumerate(files):
+                data = get_disptype_and_ver_in_metainfo(approval_record)
+                if data is not None:
+                    for d, v1 in enumerate(data):
+                        key, value = list(data[d].items())[0]
+                        if len(data) > 0 and key in files[k]["version_id"]:
+                            files[k]["displaytype"] = value
+    if itemLink_record is not None and newFiles is not None and len(itemLink_record) > 0 and len(newFiles) > 0 \
+       and (isinstance(itemLink_record, list) or isinstance(itemLink_record, dict)):
+        for k, v in enumerate(newFiles):
+            data = get_disptype_and_ver_in_metainfo(itemLink_record)
+            if data is not None:
+                for d, v1 in enumerate(data):
+                    key, value = list(data[d].items())[0]
+                    if len(data) > 0 and key in newFiles[k]["version_id"]:
+                        newFiles[k]["displaytype"] = value
     return render_template(
         'weko_workflow/activity_detail.html',
         page=page,

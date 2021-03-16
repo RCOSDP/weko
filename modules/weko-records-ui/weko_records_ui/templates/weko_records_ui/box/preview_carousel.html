@@ -21,6 +21,13 @@
 
 {% macro preview_carousel(record=None, files=[], pid=None, filename=None, nav=True, el_id='preview_carousel', edit_page_prev=False) %}
   <!-- Preview Carousel -->
+  {% set list_preview_carousel = [] %}
+  {%- for file in files -%}
+    {%- if 'preview' in file.displaytype -%}
+      <div style="display: none;">{{ list_preview_carousel.append( file ) }}</div>
+    {% endif %}
+  {%- endfor -%}
+  {%- if list_preview_carousel |length > 0-%}
   <div class="panel panel-default" id="{{ el_id }}_panel">
     <div class="panel-heading">
       <a class="preview-panel-toggle">
@@ -33,7 +40,7 @@
       </a>
     </div>
     <div class="preview-panel-body">
-      {%- if nav and (files | length > 1) %}
+      {%- if nav and (list_preview_carousel | length > 1) %}
         <div class="weko-carousel-navbar text-center">
           <a class="pull-left carousel-control" href="#{{ el_id }}" role="button" data-slide-to="0">
             <span class="glyphicon glyphicon-step-backward" aria-hidden="true"></span>
@@ -59,7 +66,7 @@
         <div class="carousel-inner">
           <!-- TODO: Check if both previews below can ever both show at the same time. -->
           {% set firstPreviewFileIndex = {'value': 0} %}
-          {%- for file in files | selectattr('is_thumbnail', 'equalto', False) | sort(attribute='filename') if filename and file.filename == filename or not filename -%}
+          {%- for file in list_preview_carousel | selectattr('is_thumbnail', 'equalto', False) | sort(attribute='filename') if filename and file.filename == filename or not filename -%}
             {% if file.version_id %}
               {% if file.is_thumbnail == False %}
                 {% if firstPreviewFileIndex.value == 0 %}
@@ -148,4 +155,5 @@
       </div>
     </div>
   </div>
+  {% endif %}
 {% endmacro %}

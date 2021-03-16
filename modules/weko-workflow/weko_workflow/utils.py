@@ -1584,3 +1584,40 @@ def get_url_root():
     """
     site_url = current_app.config['THEME_SITEURL'] + '/'
     return request.url_root if request else site_url
+
+
+def get_record_by_root_ver(pid_value):
+    from weko_deposit.api import WekoDeposit, WekoRecord
+    from invenio_pidstore.models import PersistentIdentifier
+    from weko_items_ui.utils import to_files_js
+    files = []
+    record = []
+    if pid_value is not None and pid_value not in '':
+        if '.' in pid_value:
+            pid_value = pid_value.split('.')[0]
+        # Get Record by pid_value
+        record = WekoRecord.get_record_by_pid(pid_value)
+        # Get files by pid_value
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid',
+            pid_value=pid_value
+        ).one_or_none()
+        files = to_files_js(WekoDeposit.get_record(pid.object_uuid))
+    else:
+        return None
+    return record, files
+
+
+def get_disptype_and_ver_in_metainfo(metainfo):
+    array = []
+    if metainfo is not None and len(metainfo) > 0:
+        for k, v in enumerate(metainfo):
+            if "attribute_value_mlt" in str(metainfo[v]):
+                if len(metainfo[v]["attribute_value_mlt"]) > 0:
+                    for k, m in enumerate(metainfo[v]["attribute_value_mlt"]):
+                        if "version_id" in metainfo[v]["attribute_value_mlt"][k] and \
+                           "displaytype" in metainfo[v]["attribute_value_mlt"][k]:
+                            versionId = metainfo[v]["attribute_value_mlt"][k]['version_id']
+                            distype = metainfo[v]["attribute_value_mlt"][k]['displaytype']
+                            array.append({versionId: distype})
+    return array
