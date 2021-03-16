@@ -52,7 +52,8 @@ from weko_deposit.links import base_factory
 from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
 from weko_items_ui.api import item_login
-from weko_items_ui.utils import is_need_to_show_agreement_page, to_files_js
+from weko_items_ui.utils import is_need_to_show_agreement_page, to_files_js, \
+    get_user_information
 from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
@@ -80,7 +81,8 @@ from .utils import IdentifierHandle, auto_fill_title, check_continue, \
     prepare_data_for_guest_activity, process_send_notification_mail, \
     process_send_reminder_mail, register_hdl, save_activity_data, \
     saving_doi_pidstore, send_onetime_download_url_to_guest, \
-    update_cache_data, validate_guest_activity, get_approval_keys
+    update_cache_data, validate_guest_activity, get_approval_keys, \
+    send_mail as send_mail_for_approval
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -880,6 +882,25 @@ def next_action(activity_id='0', action_id=0):
         if deposit:
             deposit.update_feedback_mail()
             deposit.update_jpcoar_identifier()
+        # Send mail
+        def send_mail_approval():
+            def get_next_approval_email():
+                cur_workflow_activity_action = ActivityAction.query.filter_by(
+                    activity_id=activity_id,
+                    action_status=ActionStatusPolicy.ACTION_DOING
+                ).one_or_none()
+                next_workflow_activity_action = ActivityAction.query.filter_by(
+                    activity_id=activity_id,
+                    action_order=cur_workflow_activity_action.action_order + 1
+                ).one_or_none()
+                user_id = next_workflow_activity_action.action_handler
+                user_info = get_user_information(user_id)
+                return user_info.get('email')
+            subject = "Approved notify"
+            body = "Approved by " + current_user.email
+            recipient_list = get_next_approval_email()
+            send_mail_for_approval(subject, recipient_list, body)
+        send_mail_approval()
 
     if action_endpoint == 'item_link' and item_id:
         current_pid = PersistentIdentifier.get_by_object(
@@ -1394,14 +1415,23 @@ def get_feedback_maillist(activity_id='0'):
 @login_required
 def lock_activity(activity_id=0):
     """Lock activity."""
+    def is_approval_user(activity_id):
+        workflow_activity_action = ActivityAction.query.filter_by(
+            activity_id=activity_id,
+            action_status=ActionStatusPolicy.ACTION_DOING
+        ).one_or_none()
+        if workflow_activity_action:
+            action_handler = workflow_activity_action.action_handler
+            return int(current_user.get_id()) == int(action_handler)
+        return False
+
     cache_key = 'workflow_locked_activity_{}'.format(activity_id)
     timeout = current_app.permanent_session_lifetime.seconds
     data = request.form.to_dict()
     locked_value = data.get('locked_value')
     cur_locked_val = str(get_cache_data(cache_key)) or str()
     err = ''
-
-    if cur_locked_val:
+    if cur_locked_val and not is_approval_user(activity_id):
         if locked_value != cur_locked_val:
             locked_value = cur_locked_val
             err = _('Locked')
