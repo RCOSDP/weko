@@ -230,8 +230,12 @@ msgid "Save"
 msgstr "保存"
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:242
-msgid "Quit"
-msgstr "終了"
+# msgid "Quit"
+# msgstr "終了"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:306
+msgid "QuitQO"
+msgstr "強制終了"
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:72
 msgid "Flow"

@@ -559,9 +559,8 @@ def display_activity(activity_id="0"):
         community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
     list_license = get_list_licence()
 
-    if action_endpoint == 'item_link' and item and item.get('pid'):
-        pid_without_ver = item['pid']['value'].split('.')[0]
-        item_link = ItemLink.get_item_link_info(pid_without_ver)
+    if action_endpoint == 'item_link' and recid:
+        item_link = ItemLink.get_item_link_info(recid.pid_value)
         ctx['item_link'] = item_link
 
     # Send onetime download URL to guest user.
@@ -887,6 +886,11 @@ def next_action(activity_id='0', action_id=0):
             if err:
                 return jsonify(code=-1, msg=_(err))
         if post_json.get('temporary_save') == 1:
+            work_activity.upt_activity_action_comment(
+                activity_id=activity_id,
+                action_id=action_id,
+                comment=post_json.get('commond')
+            )
             return jsonify(code=0, msg=_('success'))
 
     # save pidstore_identifier to ItemsMetadata

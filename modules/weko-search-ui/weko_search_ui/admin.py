@@ -568,8 +568,8 @@ class ItemBulkExport(BaseView):
 
     @expose('/download', methods=['GET'])
     def download(self):
-        """
-        Funtion send file to Client
+        """Funtion send file to Client.
+
         path: it was load from FileInstance
         """
         export_status, download_uri = get_export_status()

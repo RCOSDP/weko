@@ -572,3 +572,23 @@ msgstr ""
 
 msgid "Registration Destination Index"
 msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_detail.html:266
+msgid "Quit_Approval"
+msgstr "Quit"
+
+#: weko_workflow/templates/weko_workflow/item_link.html:153
+msgid "Quit_item"
+msgstr "Quit"
+
+#: weko_workflow/templates/weko_workflow/item_link.html:150
+msgid "Next_item"
+msgstr "Next"
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:114
+msgid "Quit_identifier_grand"
+msgstr "Quit"
+
+#: weko_workflow/templates/weko_workflow/item_login_sucess.html:288
+msgid "Back"
+msgstr "Back"

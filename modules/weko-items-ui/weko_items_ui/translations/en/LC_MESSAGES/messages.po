@@ -197,6 +197,10 @@ msgstr "Save"
 msgid "Quit"
 msgstr ""
 
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:371
+msgid "QuitQO"
+msgstr "Quit"
+
 msgid "Are you sure you want to quit the activity?"
 msgstr ""
 

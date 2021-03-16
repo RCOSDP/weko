@@ -2706,8 +2706,11 @@ def get_activity_display_info(activity_id: str):
     cur_action = activity_detail.action
     action_endpoint = cur_action.action_endpoint
     action_id = cur_action.id
-    temporary_comment = activity.get_activity_action_comment(
+    temporary_comment = ""
+    action_data = activity.get_activity_action_comment(
         activity_id=activity_id, action_id=action_id)
+    if action_data:
+        temporary_comment = action_data.action_comment
     return action_endpoint, action_id, activity_detail, cur_action, histories, \
         item, steps, temporary_comment, workflow_detail
 

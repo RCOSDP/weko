@@ -276,8 +276,12 @@ msgstr "次へ"
 
 #: weko_workflow/templates/weko_workflow/identifier_grant.html:106
 #: weko_workflow/templates/weko_workflow/item_link.html:130
-msgid "Quit"
-msgstr "終了"
+# msgid "Quit"
+# msgstr "終了"
+
+#: weko_workflow/templates/weko_workflow/Activity_detail.html:306
+msgid "QuitQO"
+msgstr "強制終了"
 
 #: weko_workflow/templates/weko_workflow/index.html:29
 #, python-format
@@ -606,3 +610,31 @@ msgstr "指定なし"
 
 msgid "Registration Destination Index"
 msgstr "登録先インデックス"
+
+#: weko_workflow/templates/weko_workflow/activity_detail.html:260
+msgid "Reject"
+msgstr "却下"
+
+#: weko_workflow/templates/weko_workflow/activity_detail.html:263
+msgid "Approval"
+msgstr "承認"
+
+#: weko_workflow/templates/weko_workflow/activity_detail.html:266
+msgid "Quit_Approval"
+msgstr "強制終了"
+
+#: weko_workflow/templates/weko_workflow/item_link.html:153
+msgid "Quit_item"
+msgstr "強制終了"
+
+#: weko_workflow/templates/weko_workflow/item_link.html:150
+msgid "Next_item"
+msgstr "次へ"
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:114
+msgid "Quit_identifier_grand"
+msgstr "強制終了"
+
+#: weko_workflow/templates/weko_workflow/item_login_sucess.html:288
+msgid "Back"
+msgstr "戻る"
