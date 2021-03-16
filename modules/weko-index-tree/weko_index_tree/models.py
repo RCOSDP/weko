@@ -224,23 +224,6 @@ class Index(db.Model, Timestamp):
                 result.append(data)
         return [] if (result is None or len(result) == 0) else result
 
-# class IndexItems(db.Model):
-#     """"""
-#     __tablename__ = 'index_item'
-#
-#     id = db.Column(db.BigInteger,
-#                    db.ForeignKey(Index.id),
-#                    primary_key=True, nullable=False)
-#     """Identifier of the index."""
-#
-#     rid = db.Column(UUIDType,
-#                     db.ForeignKey(RecordMetadata.id,
-#                                   ondelete='RESTRICT'),
-#                     primary_key=True, nullable=False)
-#     """Record identifier."""
-#
-#     index = db.relationship(Index, back_populates='index_item')
-
 
 class IndexStyle(db.Model, Timestamp):
     """Index style."""

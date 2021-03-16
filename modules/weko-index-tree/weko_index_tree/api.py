@@ -1424,3 +1424,12 @@ class Indexes(object):
         """Get all indexes."""
         query = Index.query.all()
         return query
+
+    @classmethod
+    def get_unharvested_indexes(cls):
+        """Get child id list without recursive."""
+        query = Index.query.filter(
+            (Index.public_state.is_(False)) |
+            (Index.harvest_public_state.is_(False))).order_by(
+            Index.id.asc())
+        return query.all()
