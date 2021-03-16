@@ -59,7 +59,7 @@
         <div class="carousel-inner">
           <!-- TODO: Check if both previews below can ever both show at the same time. -->
           {% set firstPreviewFileIndex = {'value': 0} %}
-          {%- for file in files | sort(attribute='filename') if filename and file.filename == filename or not filename -%}
+          {%- for file in files | selectattr('is_thumbnail', 'equalto', False) | sort(attribute='filename') if filename and file.filename == filename or not filename -%}
             {% if file.version_id %}
               {% if file.is_thumbnail == False %}
                 {% if firstPreviewFileIndex.value == 0 %}

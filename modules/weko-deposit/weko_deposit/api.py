@@ -821,15 +821,25 @@ class WekoDeposit(Deposit):
 
     def get_content_files(self):
         """Get content file metadata."""
+        from weko_workflow.utils import get_url_root
         contents = []
         fmd = self.get_file_data()
         if fmd:
             for file in self.files:
                 if isinstance(fmd, list):
                     for lst in fmd:
-                        if file.obj.key == lst.get('filename'):
+                        filename = lst.get('filename')
+                        if file.obj.key == filename:
                             lst.update({'mimetype': file.obj.mimetype})
-                            lst.update({'version_id': str(file.obj.version_id)})
+                            lst.update(
+                                {'version_id': str(file.obj.version_id)})
+
+                            # update file url
+                            url_metadata = lst.get('url', {})
+                            url_metadata['url'] = '{}record/{}/files/{}' \
+                                .format(get_url_root(),
+                                        self['recid'], filename)
+                            lst.update({'url': url_metadata})
 
                             # update file_files's json
                             file.obj.file.update_json(lst)
@@ -1213,6 +1223,27 @@ class WekoRecord(Record):
         return obj
 
     @property
+    def hide_file(self):
+        """Whether the file property is hidden.
+
+        Note: This function just works fine if file property has value.
+        """
+        hide_file = False
+        item_type_id = self.get('item_type_id')
+        solst, meta_options = get_options_and_order_list(item_type_id)
+        for lst in solst:
+            key = lst[0]
+            val = self.get(key)
+            option = meta_options.get(key, {}).get('option')
+            # Just get 'File'
+            if not (val and option) or val.get('attribute_type') != "file":
+                continue
+            if option.get("hidden"):
+                hide_file = True
+            break
+        return hide_file
+
+    @property
     def navi(self):
         """Return the path name."""
         navs = Indexes.get_path_name(self.get('path', []))
@@ -1340,8 +1371,9 @@ class WekoRecord(Record):
                 exclude_attr = [
                     'displaytype', 'accessrole', 'licensetype', 'licensefree']
                 filename = request.args.get("filename", None)
-                for f in file_metadata:
-                    if f.get('filename', None) == filename:
+                file_order = int(request.args.get("file_order", -1))
+                for idx, f in enumerate(file_metadata):
+                    if file_order == idx or f.get('filename') == filename:
                         # Exclude attributes which is not use.
                         for ea in exclude_attr:
                             if f.get(ea, None):
