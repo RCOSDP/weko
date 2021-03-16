@@ -517,3 +517,9 @@ msgstr ""
 
 msgid "Registration Destination Index"
 msgstr ""
+
+msgid "Specify Property"
+msgstr ""
+
+msgid "Specify property"
+msgstr ""
