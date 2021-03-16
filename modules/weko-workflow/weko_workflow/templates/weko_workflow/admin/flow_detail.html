@@ -1,258 +1,267 @@
 {#
-# This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
-#
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#}
+  # This file is part of WEKO3.
+  # Copyright (C) 2017 National Institute of Informatics.
+  #
+  # WEKO3 is free software; you can redistribute it
+  # and/or modify it under the terms of the GNU General Public License as
+  # published by the Free Software Foundation; either version 2 of the
+  # License, or (at your option) any later version.
+  #
+  # WEKO3 is distributed in the hope that it will be
+  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  # General Public License for more details.
+  #
+  # You should have received a copy of the GNU General Public License
+  # along with WEKO3; if not, write to the
+  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+  # MA 02111-1307, USA.
+  #}
 
-{%- extends admin_base_template %}
+  {%- extends admin_base_template %}
 
-{% block css %}
-  {{ super() }}
-  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-{% endblock %}
+  {% block css %}
+    {{ super() }}
+    {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% endblock %}
 
-{%- block javascript %}
-  {%- include config.WEKO_WORKFLOW_POP_PAGE -%}
-  {{ super() }}
-  {% assets "flow_detail_admin_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{%- endblock javascript %}
+  {%- block javascript %}
+    {%- include config.WEKO_WORKFLOW_POP_PAGE -%}
+    {{ super() }}
+    {% assets "flow_detail_admin_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {%- endblock javascript %}
 
-{%- block body %}
-{% from "weko_theme/macros/modal_page.html" import all_modal %}
-{{ all_modal() }}
-<div id="alerts"></div>
-<div class="row">
-  <div class="col-sm-offset-2">
-    <div class="col-sm-4">
-      <div class="form-horizontal">
-        <div class="form-group" id="div_flow_name">
-          <label for="txt_flow_name" class="col-sm-4 control-label">{{_('Flow Name')}}</label>
-          <div class="col-sm-8">
-            <input type="text" class="form-control" id="txt_flow_name"
-                                                    name="flow_name"
-                                                    placeholder="{{_('Ener the Flow name')}}"  value="{{flow.flow_name if flow}}">
+  {%- block body %}
+  {% from "weko_theme/macros/modal_page.html" import all_modal %}
+  {{ all_modal() }}
+  <div id="alerts"></div>
+  <div class="row">
+    <div class="col-sm-offset-2">
+      <div class="col-sm-4">
+        <div class="form-horizontal">
+          <div class="form-group" id="div_flow_name">
+            <label for="txt_flow_name" class="col-sm-4 control-label">{{_('Flow Name')}}</label>
+            <div class="col-sm-8">
+              <input type="text" class="form-control" id="txt_flow_name"
+                                                      name="flow_name"
+                                                      placeholder="{{_('Ener the Flow name')}}"  value="{{flow.flow_name if flow}}">
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <div class="col-sm-4">
-      <div class="form-horizontal">
-        <div class="form-group">
-          <label class="col-sm-3 control-label">{{_('Flow Update')}}</label>
-          <div class="col-sm-9">
-            <p class="form-control-static">{{flow.updated.date() if flow}}</p>
+      <div class="col-sm-4">
+        <div class="form-horizontal">
+          <div class="form-group">
+            <label class="col-sm-3 control-label">{{_('Flow Update')}}</label>
+            <div class="col-sm-9">
+              <p class="form-control-static">{{flow.updated.date() if flow}}</p>
+            </div>
           </div>
-        </div>
-        <div class="form-group">
-          <label class="col-sm-3 control-label">{{_('Flow Author')}}</label>
-          <div class="col-sm-9">
-            {%- set username = current_userprofile.username|default(current_user.email) if current_userprofile else None %}
-            {%- if flow %}
-            <p class="form-control-static">{{flow.user_profile.email if flow}}</p>
-            {% else %}
-            <p class="form-control-static">{{ username or current_user.email }}</p>
-            {% endif %}
+          <div class="form-group">
+            <label class="col-sm-3 control-label">{{_('Flow Author')}}</label>
+            <div class="col-sm-9">
+              {%- set username = current_userprofile.username|default(current_user.email) if current_userprofile else None %}
+              {%- if flow %}
+              <p class="form-control-static">{{flow.user_profile.email if flow}}</p>
+              {% else %}
+              <p class="form-control-static">{{ username or current_user.email }}</p>
+              {% endif %}
+            </div>
           </div>
-        </div>
-        <div class="form-group">
-          <label class="col-sm-3 control-label">{{_('Flow Status')}}</label>
-          <div class="col-sm-9">
-            <p class="form-control-static">{{_(flow.flow_status.value if flow)}}</p>
+          <div class="form-group">
+            <label class="col-sm-3 control-label">{{_('Flow Status')}}</label>
+            <div class="col-sm-9">
+              <p class="form-control-static">{{_(flow.flow_status.value if flow)}}</p>
+            </div>
           </div>
-        </div>
-        <div class="form-group">
-          <div class="col-sm-offset-3 col-sm-9">
-            {%- if flow_id == '0' %}
-            <button type="button" class="btn btn-primary" id="btn-new-flow">
-              <span class="glyphicon glyphicon-save" aria-hidden="true"></span>&nbsp
-                  {{_('Save')}}
-            </button>
-            {%- else %}
-            <button type="button" class="btn btn-primary" id="btn-upt-flow">
-              <span class="glyphicon glyphicon-save" aria-hidden="true"></span>&nbsp
-                     {{_('Save')}}
-            </button>
-            {% endif %}
-            <button type="button" class="btn btn-danger" id="btn-del-flow" {%- if flow_id == '0' %} disabled {% endif %}>
-              <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>&nbsp
-                   {{_('Delete')}}
-            </button>
+          <div class="form-group">
+            <div class="col-sm-offset-3 col-sm-9">
+              {%- if flow_id == '0' %}
+              <button type="button" class="btn btn-primary" id="btn-new-flow">
+                <span class="glyphicon glyphicon-save" aria-hidden="true"></span>&nbsp
+                    {{_('Save')}}
+              </button>
+              {%- else %}
+              <button type="button" class="btn btn-primary" id="btn-upt-flow">
+                <span class="glyphicon glyphicon-save" aria-hidden="true"></span>&nbsp
+                       {{_('Save')}}
+              </button>
+              {% endif %}
+              <button type="button" class="btn btn-danger" id="btn-del-flow" {%- if flow_id == '0' %} disabled {% endif %}>
+                <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>&nbsp
+                     {{_('Delete')}}
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>
-<div class="row">
-  <div class="col-sm-offset-2 col-sm-8"><hr></div>
-</div>
-<div class="row">
-  <div class="col-sm-offset-2 col-sm-8">
-    <label>{{_('Action List')}}</label><br>
-    <button class="btn btn-success pull-right" id="btn_pop_action" {%- if flow_id == '0' %} disabled {% endif %}>
-      <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp
-      {{_('More Action')}}
-    </button><br/><br/><br/>
-    <div class="table-responsive">
-      <table class="table table-striped table-bordered table-hover">
-        <thead>
-          <tr>
-            <th>{{_('Order')}}</th>
-            <th class="hide">{{_('Action ID')}}</th>
-            <th>{{_('Action Name')}}</th>
-            <th>{{_('Action Role')}}</th>
-            <th>{{_('Action User')}}</th>
-            <th class="hide">{{_('Action Status')}}</th>
-            <th class="hide">{{_('Action Update')}}</th>
-            <th class="hide">{{_('Action Version')}}</th>
-            <th>{{_('Change Order')}}</th>
-          </tr>
-        </thead>
-        <tbody id="tb_action_list">
-        {%- if actions %}
-          {%- for action in actions|sort(attribute='action_order') %}
-            <tr id="row_{{action.action_id}}" class="row_{{action.action_id}}">
-              <td class="hide action_ids" data-workflow-flow-action-id="{{action.id}}">{{action.action_id}}</td>
-              <th scope="row"><span class="action_order">{{loop.index}}</span></th>
-              <td><span id="td_action_name_{{action.action_id}}">{{action.action.action_name}}</span></td>
-              <td>
-                <div class="form-inline">
-                  <div class="hide">{{action.action_role.action_role}}</div>
-                  <div class="hide">{{action.action_role.action_role_exclude}}</div>
-                  <select class="form-control td_action_role" id="td_action_role_{{action.action_id}}" data-action-id="{{action.action_id}}" data-row-order-role="{{loop.index}}">
-                    <option value="0"></option>
-                    {%- for role in roles if role %}
-                    <option value="{{role.id}}" {% if role.id == action.action_role.action_role%}selected{% endif %}>{{role.name}}</option>
-                    {%- endfor %}
-                  </select>
-                  <div class="checkbox">
-                    <label>
-                        <input type="checkbox" class="td_action_role_deny" id="td_action_role_deny_{{action.action_id}}" data-action-id="{{action.action_id}}" data-row-order-role-deny="{{loop.index}}"
-                               {% if action.action_role.action_role_exclude %}checked{% endif %}>
-                        {{_('Deny')}}
-                    </label>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <div class="form-inline" id="form_{{action.action_order}}">
-				          <select class="form-control td_action_user" id="td_action_user_{{action.action_id}}"  data-action-id="{{action.action_id}}" data-row-order="{{loop.index}}">
-                    <option value="0"></option>
-                    {%- for user in users if user -%}
-                    <option value="{{user.id}}" {% if user.id == action.action_role.action_user%}selected{% endif %}>{{user.email}}</option>
-                    {%- endfor -%}
-                    <option class="{%- if action.action.action_name == 'Approval' %}specify-property-option{%- else %}hide{%- endif %}" value="-1">{{_('Specify property')}}</option>
-                    {%- if action.action_role.specify_property %}
-                      {%- for specifed in specifed_properties if specifed %}
-                        {%- if action.action_role.specify_property == specifed["value"] %}
-                          <option value="{{action.action_role.specify_property}}" selected>{{specifed["text"]}}</option>
-                        {%- endif %}
-                      {%- endfor %}
-                    {%- endif %}
-                  </select>
-                  <div class="checkbox">
-                    <label>
-                        <input type="checkbox" class="td_action_user_deny" id="td_action_user_deny_{{action.action_id}}" data-action-id="{{action.action_id}}" data-row-order-user-deny="{{loop.index}}"
-                               {% if action.action_role.action_user_exclude %}checked{% endif %}>
-                        {{_('Deny')}}
-                    </label>
-                  </div>
-                </div>
-              </td>
-              <td class="hide">{{_(action.action_status.value)}}</td>
-              <td class="hide"><span id="td_action_date_{{action.action_id}}">{{action.action_date.date()}}</span></td>
-              <td class="hide"><span id="td_action_ver_{{action.action_id}}">{{action.action_version|default(action.action.action_version)}}</span></td>
-              <td>
-                <div class="btn-group" role="group" aria-label="Swap">
-                 <button type="button" class="btn btn-default btn-sm sortable sortable_up" {%- if loop.first %}disabled{%- endif %}>
-                        <i class="fa fa-angle-up"></i>
-                 </button><br/><br/>
-                 <button type="button" class="btn btn-default btn-sm sortable sortable_down" {%- if loop.last %}disabled{%- endif %}>
-                        <i class="fa fa-angle-down"></i>
-                 </button>
-                </div>
-              </td>
+  <div class="row">
+    <div class="col-sm-offset-2 col-sm-8"><hr></div>
+  </div>
+  <div class="row">
+    <div class="col-sm-offset-2 col-sm-8">
+      <label>{{_('Action List')}}</label><br>
+      <button class="btn btn-success pull-right" id="btn_pop_action" {%- if flow_id == '0' %} disabled {% endif %}>
+        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp
+        {{_('More Action')}}
+      </button><br/><br/><br/>
+      <div class="table-responsive">
+        <table class="table table-striped table-bordered table-hover">
+          <thead>
+            <tr>
+              <th>{{_('Order')}}</th>
+              <th class="hide">{{_('Action ID')}}</th>
+              <th>{{_('Action Name')}}</th>
+              <th>{{_('Action Role')}}</th>
+              <th>{{_('Action User')}}</th>
+              <th class="hide">{{_('Action Status')}}</th>
+              <th class="hide">{{_('Action Update')}}</th>
+              <th class="hide">{{_('Action Version')}}</th>
+              <th>{{_('Change Order')}}</th>
             </tr>
-          {%- endfor %}
-        {%- endif %}
-        </tbody>
-      </table>
+          </thead>
+          <tbody id="tb_action_list">
+          {%- if actions %}
+            {%- for action in actions|sort(attribute='action_order') %}
+              <tr id="row_{{action.action_id}}" class="row_{{action.action_id}}">
+                <td class="hide action_ids" data-workflow-flow-action-id="{{action.id}}">{{action.action_id}}</td>
+                <th scope="row"><span class="action_order">{{loop.index}}</span></th>
+                <td>
+                  <span id="td_action_name_{{action.action_id}}">{{action.action.action_name}}</span>
+                  {%- if action.action.action_name == "Approval" %}
+                    <span class="approval-order"></span>
+                  {%- endif %}
+                </td>
+                <td>
+                  <div class="form-inline">
+                    <div class="hide">{{action.action_role.action_role}}</div>
+                    <div class="hide">{{action.action_role.action_role_exclude}}</div>
+                    <select class="form-control td_action_role" id="td_action_role_{{action.action_id}}" data-action-id="{{action.action_id}}" data-row-order-role="{{loop.index}}">
+                      <option value="0"></option>
+                      {%- for role in roles if role %}
+                      <option value="{{role.id}}" {% if role.id == action.action_role.action_role%}selected{% endif %}>{{role.name}}</option>
+                      {%- endfor %}
+                    </select>
+                    <div class="checkbox">
+                      <label>
+                          <input type="checkbox" class="td_action_role_deny" id="td_action_role_deny_{{action.action_id}}" data-action-id="{{action.action_id}}" data-row-order-role-deny="{{loop.index}}"
+                                 {% if action.action_role.action_role_exclude %}checked{% endif %}>
+                          {{_('Deny')}}
+                      </label>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="form-inline" id="form_{{action.action_order}}">
+                    <select class="form-control td_action_user" id="td_action_user_{{action.action_id}}"  data-action-id="{{action.action_id}}" data-row-order="{{loop.index}}">
+                      <option value="0"></option>
+                      {%- for user in users if user -%}
+                      <option value="{{user.id}}" {% if user.id == action.action_role.action_user%}selected{% endif %}>{{user.email}}</option>
+                      {%- endfor -%}
+                      <option class="{%- if action.action.action_name == 'Approval' %}specify-property-option{%- else %}hide{%- endif %}" value="-1">{{_('Specify property')}}</option>
+                      {%- if action.action_role.specify_property %}
+                        {%- for specifed in specifed_properties if specifed %}
+                          {%- if action.action_role.specify_property == specifed["value"] %}
+                            <option value="{{action.action_role.specify_property}}" selected>{{specifed["text"]}}</option>
+                          {%- endif %}
+                        {%- endfor %}
+                      {%- endif %}
+                    </select>
+                    <div class="checkbox">
+                      <label>
+                          <input type="checkbox" class="td_action_user_deny" id="td_action_user_deny_{{action.action_id}}" data-action-id="{{action.action_id}}" data-row-order-user-deny="{{loop.index}}"
+                                 {% if action.action_role.action_user_exclude %}checked{% endif %}>
+                          {{_('Deny')}}
+                      </label>
+                    </div>
+                  </div>
+                </td>
+                <td class="hide">{{_(action.action_status.value)}}</td>
+                <td class="hide"><span id="td_action_date_{{action.action_id}}">{{action.action_date.date()}}</span></td>
+                <td class="hide"><span id="td_action_ver_{{action.action_id}}">{{action.action_version|default(action.action.action_version)}}</span></td>
+                <td>
+                  <div class="btn-group" role="group" aria-label="Swap">
+                   <button type="button" class="btn btn-default btn-sm sortable sortable_up" {%- if loop.first %}disabled{%- endif %}>
+                          <i class="fa fa-angle-up"></i>
+                   </button><br/><br/>
+                   <button type="button" class="btn btn-default btn-sm sortable sortable_down" {%- if loop.last %}disabled{%- endif %}>
+                          <i class="fa fa-angle-down"></i>
+                   </button>
+                  </div>
+                </td>
+              </tr>
+            {%- endfor %}
+          {%- endif %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
-</div>
-<div class="row">
-  <div class="col-sm-offset-2 col-sm-8">
-    <button type="button" class="btn btn-default" onclick="window.location.href='{{url_for('flowsetting.index')}}';">
-      <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>&nbsp
-      {{_('Back')}}
-   </button>
-  <button type="button" class="btn btn-primary pull-right" id="btn_submit"
-      data-uri="{{url_for('flowsetting.upt_flow_action', flow_id=flow_id)}}" {%- if flow_id == '0' %} disabled {% endif %}>
-      <span class="glyphicon glyphicon-save" aria-hidden="true"></span>&nbsp
-       {{_('Save')}}
-  </button>
+  <div class="row">
+    <div class="col-sm-offset-2 col-sm-8">
+      <button type="button" class="btn btn-default" onclick="window.location.href='{{url_for('flowsetting.index')}}';">
+        <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>&nbsp
+        {{_('Back')}}
+     </button>
+    <button type="button" class="btn btn-primary pull-right" id="btn_submit"
+        data-uri="{{url_for('flowsetting.upt_flow_action', flow_id=flow_id)}}" {%- if flow_id == '0' %} disabled {% endif %}>
+        <span class="glyphicon glyphicon-save" aria-hidden="true"></span>&nbsp
+         {{_('Save')}}
+    </button>
+    </div>
   </div>
-</div>
 
-<table class="table table-striped table-bordered table-hover flow-row-template hide">
-  <tbody>
-    <tr id="row_apply_action.id">
-      <th scope="row"><span class="action_order"></span></th>
-      <td class="hide action_ids" data-workflow-flow-action-id="action.id">apply_action.id</td>
-      <td><span id="td_action_name_apply_action.id">apply_action.name</span></td>
-      <td>
-        <div class="form-inline">
-          <select class="form-control td_action_role" id="td_action_role_apply_action.id" data-action-id="apply_action.id">
-            <option value="0" selected></option>
-            {%- for role in roles if role %}
-              <option value="{{role.id}}">{{role.name}}</option>
-            {%- endfor %}
-          </select>
-          <div class="checkbox">
-            <input type="checkbox" class="td_action_role_deny" id="td_action_role_deny_apply_action.id" data-action-id="apply_action.id">
-            {{_("Deny")}}
+  <table class="table table-striped table-bordered table-hover flow-row-template hide">
+    <tbody>
+      <tr id="row_apply_action.id">
+        <th scope="row"><span class="action_order"></span></th>
+        <td class="hide action_ids" data-workflow-flow-action-id="action.id">apply_action.id</td>
+        <td>
+          <span id="td_action_name_apply_action.id">apply_action.name</span>
+          <span class="approval-order"></span>
+        </td>
+        <td>
+          <div class="form-inline">
+            <select class="form-control td_action_role" id="td_action_role_apply_action.id" data-action-id="apply_action.id">
+              <option value="0" selected></option>
+              {%- for role in roles if role %}
+                <option value="{{role.id}}">{{role.name}}</option>
+              {%- endfor %}
+            </select>
+            <div class="checkbox">
+              <input type="checkbox" class="td_action_role_deny" id="td_action_role_deny_apply_action.id" data-action-id="apply_action.id">
+              {{_("Deny")}}
+            </div>
           </div>
-        </div>
-      </td>
-      <td>
-        <div class="form-inline">
-          <select class="form-control td_action_user" id="td_action_user_apply_action.id" data-action-id="apply_action.id">
-            <option value="0" selected></option>
-            {%- for user in users if user -%}
-              <option value="{{user.id}}">{{user.email}}</option>
-            {%- endfor -%}
-            <option class="specify-property-option" value="-1">{{_('Specify property')}}</option>
-          </select>
-          <div class="checkbox">
-            <input type="checkbox" class="td_action_user_deny" id="td_action_user_deny_apply_action.id" data-action-id="apply_action.id">
-            {{_("Deny")}}
+        </td>
+        <td>
+          <div class="form-inline">
+            <select class="form-control td_action_user" id="td_action_user_apply_action.id" data-action-id="apply_action.id">
+              <option value="0" selected></option>
+              {%- for user in users if user -%}
+                <option value="{{user.id}}">{{user.email}}</option>
+              {%- endfor -%}
+              <option class="specify-property-option" value="-1">{{_('Specify property')}}</option>
+            </select>
+            <div class="checkbox">
+              <input type="checkbox" class="td_action_user_deny" id="td_action_user_deny_apply_action.id" data-action-id="apply_action.id">
+              {{_("Deny")}}
+            </div>
           </div>
-        </div>
-      </td>
-      <td class="hide">{{_("Usable")}}</td>
-      <td class="hide"><span id="td_action_date_apply_action.id">apply_action.action_date</span></td>
-      <td class="hide"><span id="td_action_ver_apply_action.id">apply_action.action_version</span></td>
-      <td>
-        <div class="btn-group" role="group" aria-label="Swap">
-          <button type="button" class="btn btn-default btn-sm sortable sortable_up"><i class="fa fa-angle-up"></i></button><br/><br/>
-          <button type="button" class="btn btn-default btn-sm sortable sortable_down"><i class="fa fa-angle-down"></i></button>
-        </div>
-      </td>
-    </tr>
-  </tbody>
-</table>
-{%- endblock %}
+        </td>
+        <td class="hide">{{_("Usable")}}</td>
+        <td class="hide"><span id="td_action_date_apply_action.id">apply_action.action_date</span></td>
+        <td class="hide"><span id="td_action_ver_apply_action.id">apply_action.action_version</span></td>
+        <td>
+          <div class="btn-group" role="group" aria-label="Swap">
+            <button type="button" class="btn btn-default btn-sm sortable sortable_up"><i class="fa fa-angle-up"></i></button><br/><br/>
+            <button type="button" class="btn btn-default btn-sm sortable sortable_down"><i class="fa fa-angle-down"></i></button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  {%- endblock %}
+

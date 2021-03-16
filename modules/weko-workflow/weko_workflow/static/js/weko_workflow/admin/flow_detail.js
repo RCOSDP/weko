@@ -228,6 +228,7 @@ $(document).ready(function () {
 
   action_list = [];
   $('#txt_flow_name').focus();
+  setOrderApproval();
   $('#tb_action_list .action_ids').each(function (index) {
     let $tr = $(this).parents('tr');
     let actionId = $(this).text();
@@ -265,7 +266,7 @@ $(document).ready(function () {
       $('#tb_action_list .action_ids').each(function (index) {
         if ($(this).parents('tr').prop('id') === 'row_' + apply_action.id) {
           $tr = $(this).parents('tr');
-        } 
+        }
       });
       $tr.remove();
     } else {
@@ -280,6 +281,7 @@ $(document).ready(function () {
       new_row = new_row.replaceAll('apply_action.action_version', apply_action.version);
       if(!isApproval(apply_action)){
         new_row = new_row.replaceAll('specify-property-option', 'hide');
+        new_row = new_row.replaceAll('<span class="approval-order"></span>', '');
       }
       $('#tb_action_list').append(new_row);
     }
@@ -291,6 +293,7 @@ $(document).ready(function () {
     $('.sortable_down:last').prop('disabled', true);
     initOrderNum();
     uptOrderInfo();
+    setOrderApproval();
   }
   function initOrderNum() {
     $('#tb_action_list .action_order').each(function (index) {
@@ -329,6 +332,12 @@ $(document).ready(function () {
       }
     }
     localStorage.setItem('apply_action_list', JSON.stringify(action_list));
+  }
+
+  function setOrderApproval(){
+    $('#tb_action_list .approval-order').each(function (i) {
+      $(this).text(' ('+(i+1)+')');
+    });
   }
 
   function updateDataWorkflowFlowActionId(actions){
