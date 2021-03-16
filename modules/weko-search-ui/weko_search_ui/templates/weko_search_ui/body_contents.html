@@ -18,8 +18,10 @@
 # MA 02111-1307, USA.
 #}
 {%- set is_permission = is_permission or False -%}
+<label for="is_permission" hidden>is_permission</label>
 <input type="text" value="{{is_permission}}" id="is_permission" style="display: none;">
 {%- set is_login = is_login or False -%}
+<label for="is_login" hidden>is_login</label>
 <input type="text" value="{{is_login}}" id="is_login" style="display: none;">
 {%- if journal_info%}
   <div id="journal_info" class="panel panel-default" style="display: none;">
@@ -114,6 +116,7 @@
           </invenio-search-results>
         {%- endif %}
         <div class="form-inline flow-root">
+          <label for="goExportORPrint" hidden>goExportORPrint</label>
           <select class="form-control hide" id="goExportORPrint">
             <option value="check_Export">{{_('Export Checked Items')}}</option>
             <option value="view_Export">{{_('Export All Displayed Items')}}</option>

@@ -52,9 +52,11 @@ USA. #}
                     <div ng-if="sub_data.key_value.inputType=='dateRange'"
                         class="col-xs-3">
                       <div class="row input-daterange input-group">
+                        <label for="[[sub_data.key_value.id]]_from" hidden>開始日</label>
                         <input type="text" class="input-sm form-control" name="[[sub_data.key_value.id]]_from" data-provide="datepicker"
                                id="[[sub_data.key_value.id]]_from" placeholder="yyyymmdd" data-date-format="yyyymmdd" ng-model="sub_data.key_value.inputVal_from"/>
                         <span class="input-group-addon">To</span>
+                        <label for="[[sub_data.key_value.id]]_to" hidden>終了日</label>
                         <input type="text" class="input-sm form-control" name="[[sub_data.key_value.id]]_to" data-provide="datepicker"
                                id="[[sub_data.key_value.id]]_to" placeholder="yyyymmdd" data-date-format="yyyymmdd" ng-model="sub_data.key_value.inputVal_to"/>
                       </div>
