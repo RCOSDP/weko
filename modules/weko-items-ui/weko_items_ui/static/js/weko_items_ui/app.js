@@ -523,6 +523,49 @@ function toObject(arr) {
       '<button type="button" class="close" data-dismiss="alert">' +
       '&times;</button>' + message + '</div>');
   }
+
+function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
+  let result = {
+    isValid: true,
+    validThumbnails: [],
+    errorMessages: []
+  },
+    thumbnailsVM = rootScope.filesVM.files.filter(file => file.is_thumbnail),
+    inValidThumbnails = [];
+
+  // Check for duplicate files & file type
+  if (files && files.length > 0) {
+    Array.prototype.forEach.call(files, function (file) {
+      if (scope.model.allowedType.indexOf(file.type) >= 0) {
+        result.validThumbnails.push(file);
+      }
+      else {
+        inValidThumbnails.push(file.name);
+      }
+    });
+  }
+
+  // Generate error message
+  if (inValidThumbnails.length > 0) {
+    result.isValid = false;
+    result.errorMessages.push($("#invalid_files_type").val() + '<br/>' + inValidThumbnails.join(', '));
+  }
+
+  if (thumbnailsVM.length > 0 && itemSizeCheckFlg) {
+    let thumbnailItemKey = scope.searchThumbnailForm && scope.searchThumbnailForm(),
+      recordSchema = rootScope.recordsVM.invenioRecordsSchema,
+      thumbnailMetaData = recordSchema.properties[thumbnailItemKey],
+      thumbnailJson = rootScope.recordsVM.invenioRecordsModel[thumbnailItemKey],
+      maxItems = thumbnailMetaData ? thumbnailMetaData.maxItems : 0;
+    
+    if (maxItems > 0 && thumbnailsVM.length > maxItems) {
+      result.isValid = false;
+      result.errorMessages.push(JSON.stringify(thumbnailJson[0]) + ' ' + $("#max_files_thumnbnail_error").val());
+    }
+  }
+
+  return result;
+}
   // Bootstrap it!
   angular.element(document).ready(function () {
     function WekoRecordsCtrl($scope, $rootScope, InvenioRecordsAPI) {
@@ -585,7 +628,7 @@ function toObject(arr) {
               let duplicateFile = [];
               if ($rootScope.filesVM.files.length > 0) {
                 duplicateFile = $rootScope.filesVM.files.filter(function (f) {
-                  return f.key === file.name;
+                  return !f.is_thumbnail && f.key === file.name;
                 });
               }
               if (duplicateFile.length === 0) {
@@ -2934,7 +2977,15 @@ function toObject(arr) {
           return false;
         } else if (!$scope.validateEmailsAndIndexAndUpdateApprovalActions(activityId, steps, isAutoSetIndexAction)) {
           return false;
-       }else{
+        } else {
+          // Validate maxItems for thumbnails          
+          let validateResult = validateThumbnails($rootScope, $scope, true);
+          if (!validateResult.isValid) {
+            let message = validateResult.errorMessages.join('<br/><br/>');
+            $("#inputModal").html(message);
+            $("#allModal").modal("show");
+            return false;
+          }
           // Call API to validate input data base on json schema define
           let validateURL = '/api/items/validate';
           let isValid = false;
@@ -3802,7 +3853,7 @@ function toObject(arr) {
         ];
         $scope.model = {
             thumbnailsInfor: [],
-            allowedType: ['image/gif', 'image/jpg', 'image/jpe', 'image/jpeg', 'image/png', 'image/bmp', 'image/tiff', 'image/tif'],
+            allowedType: ['image/gif', 'image/jpg', 'image/jpe', 'image/jpeg', 'image/png', 'image/bmp'],
             allowMultiple: $("#allow-thumbnail-flg").val(),
         };
         $scope.uploadingThumbnails = [];
@@ -3914,11 +3965,11 @@ function toObject(arr) {
           * @memberof WekoRecordsCtrl
           * @function directedUpload
           */
-        $scope.directedUpload = function (files) {
+        $scope.directedUpload = function (thumbnails) {
+          let validateResult = validateThumbnails($rootScope, $scope, false, thumbnails),
+            files = validateResult.validThumbnails;
+          
           Array.prototype.forEach.call(files, function (f) {
-            if ($scope.model.allowedType.indexOf(f.type) < 0) {
-              return;
-            }
             var reader = new FileReader();
             f.is_thumbnail = true;
             reader.readAsDataURL(f);
@@ -3938,6 +3989,13 @@ function toObject(arr) {
 
             $scope.uploadingThumbnails = [];
           }
+
+          // Show error messse
+          if (!validateResult.isValid) {
+            let message = validateResult.errorMessages.join('<br/><br/>');
+            $("#inputModal").html(message);
+            $("#allModal").modal("show");
+          }
         };
 
         /**
@@ -3946,8 +4004,13 @@ function toObject(arr) {
           * @function upload
           * @param {Object} files - The dragged files.
           */
-        $scope.dragoverThumbnail = function (files) {
-          $scope.getEndpoints(function () {
+        $scope.dragoverThumbnail = function (thumbnails) {
+          // Prevent getEndpoints from changing URL
+          // If there is no valid file
+          let validateResult = validateThumbnails($rootScope, $scope, false, thumbnails),
+            files = validateResult.validThumbnails;
+                   
+          files.length > 0 && $scope.getEndpoints(function () {
             if (!angular.isUndefined(files) && files.length > 0) {
               if ($scope.model.allowMultiple != 'True') {
                 files = Array.prototype.slice.call(files, 0, 1);
@@ -3967,6 +4030,13 @@ function toObject(arr) {
               }
             }
           });
+
+          // Show error messse
+          if (!validateResult.isValid) {
+            let message = validateResult.errorMessages.join('<br/><br/>');
+            $("#inputModal").html(message);
+            $("#allModal").modal("show");
+          }
         };
     }).$inject = [
       '$scope',
