@@ -253,7 +253,11 @@
                 <td>{{history.action_date.strftime('%Y-%m-%d %H:%M')}}</td>
                 <td>{{ history.user.email if history.user.email else guest_email }}</td>
                 <td>{{_(history.StatusDesc)}}</td>
-                <td>{{history.CommentDesc}}</td>
+                <td>
+                  {%- if history.CommentDesc %}
+                  {{history.CommentDesc}}
+                  {% endif %}
+                </td>
               </tr>
               {% endfor %}
               {% else %}

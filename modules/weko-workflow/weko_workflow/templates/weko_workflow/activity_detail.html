@@ -335,9 +335,11 @@
                   <td>{{history.action_date.strftime('%Y-%m-%d %H:%M')}}</td>
                   <td>{{mail}}</td>
                   <td>{{_(history.StatusDesc)}}</td>
-                  {%- if history.CommentDesc %}
-                    <td>{{history.CommentDesc}}</td>
-                  {% endif %}
+                  <td>
+                    {%- if history.CommentDesc %}
+                      {{history.CommentDesc}}
+                    {% endif %}
+                  </td>
                 </tr>
               {% endfor %}
               {% else %}

@@ -33,7 +33,6 @@ from flask import Blueprint, abort, current_app, jsonify, render_template, \
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, User, userrole
-from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -42,6 +41,9 @@ from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
 from sqlalchemy.sql.expression import cast
+from werkzeug.utils import import_string
+
+from invenio_db import db
 from weko_accounts.api import ShibUser
 from weko_accounts.utils import login_required_customize
 from weko_authors.models import Authors
@@ -51,7 +53,7 @@ from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
 from weko_items_ui.api import item_login
 from weko_items_ui.utils import get_user_information, \
-    is_need_to_show_agreement_page, to_files_js
+    to_files_js
 from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
@@ -61,8 +63,6 @@ from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
-from werkzeug.utils import import_string
-
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
@@ -74,10 +74,10 @@ from .utils import IdentifierHandle, auto_fill_title, check_continue, \
     filter_all_condition, get_account_info, get_actionid, \
     get_activity_display_info, get_activity_id_of_record_without_version, \
     get_application_and_approved_date, get_approval_keys, get_cache_data, \
-    get_identifier_setting, get_term_and_condition_content, \
-    get_workflow_item_type_names, handle_finish_workflow, \
+    get_identifier_setting, get_workflow_item_type_names, \
+    handle_finish_workflow, \
     init_activity_for_guest_user, is_enable_item_name_link, \
-    is_hidden_pubdate, is_show_autofill_metadata, is_usage_application, \
+    is_hidden_pubdate, is_show_autofill_metadata, \
     is_usage_application_item_type, item_metadata_validation, \
     prepare_data_for_guest_activity, process_send_notification_mail, \
     process_send_reminder_mail, register_hdl, save_activity_data, \
@@ -1108,6 +1108,7 @@ def previous_action(activity_id='0', action_id=0, req=0):
 
     if pre_action and len(pre_action) > 0:
         previous_action_id = pre_action[0].action_id
+        previous_action_order = pre_action[0].action_order
         if req == 0:
             work_activity.upt_activity_action_status(
                 activity_id=activity_id,
@@ -1122,10 +1123,11 @@ def previous_action(activity_id='0', action_id=0, req=0):
         work_activity.upt_activity_action_status(
             activity_id=activity_id, action_id=previous_action_id,
             action_status=ActionStatusPolicy.ACTION_DOING,
-            action_order=action_order)
+            action_order=previous_action_order)
         work_activity.upt_activity_action(
             activity_id=activity_id, action_id=previous_action_id,
-            action_status=ActionStatusPolicy.ACTION_DOING)
+            action_status=ActionStatusPolicy.ACTION_DOING,
+            action_order=previous_action_order)
     return jsonify(code=0, msg=_('success'))
 
 
