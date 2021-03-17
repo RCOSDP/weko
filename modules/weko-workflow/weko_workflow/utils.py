@@ -23,6 +23,7 @@
 from copy import deepcopy
 from datetime import datetime
 
+from celery.task.control import inspect
 from flask import current_app, request
 from flask_babelex import gettext as _
 from invenio_cache import current_cache
@@ -1423,48 +1424,6 @@ def get_cache_data(key: str):
     return current_cache.get(key) or str()
 
 
-def save_cache_item_lock_info(item_id=None):
-    """Save item lock information.
-
-    :param item_id: Item id.
-    """
-    locked_data = get_cache_data('item_ids_locked') or dict()
-    if not locked_data:
-        locked_data['start_time'] = datetime.now().strftime(
-            '%Y-%m-%dT%H:%M:%S%z')
-        locked_data['count_new_items'] = 0
-    ids = locked_data.get('ids', set())
-    if item_id:
-        ids.add(item_id)
-    else:
-        locked_data['count_new_items'] += 1
-
-    locked_data['ids'] = ids
-    current_cache.set('item_ids_locked', locked_data, timeout=0)
-
-
-def delete_cache_item_lock_info(item_id=None):
-    """Delete item lock information.
-
-    :param item_id: Item id.
-    """
-    locked_data = get_cache_data('item_ids_locked') or dict()
-    if not locked_data:
-        return
-
-    ids = locked_data.get('ids', set())
-    if item_id and item_id in ids:
-        ids.remove(item_id)
-    elif not item_id:
-        locked_data['count_new_items'] -= 1
-
-    if ids or locked_data['count_new_items']:
-        locked_data['ids'] = ids
-        current_cache.set('item_ids_locked', locked_data, timeout=0)
-    else:
-        delete_cache_data('item_ids_locked')
-
-
 def check_an_item_is_locked(item_id=None):
     """Check if an item is locked.
 
@@ -1472,19 +1431,18 @@ def check_an_item_is_locked(item_id=None):
 
     :return
     """
-    locked_data = get_cache_data('item_ids_locked') or dict()
-    ids = locked_data.get('ids', set())
-    return item_id in ids
+    def check(workers):
+        for worker in workers:
+            for task in workers[worker]:
+                if task['name'] == 'weko_search_ui.tasks.import_item' \
+                        and task['args'][0].get('id') == str(item_id):
+                    return True
+        return False
 
+    if not item_id or not inspect().stats():
+        return False
 
-def check_another_import_is_running():
-    """Check if any items are locked by import feature.
-
-    :return
-    """
-    locked_data = get_cache_data('item_ids_locked') or dict()
-    is_running = True if locked_data else False
-    return is_running, locked_data.get('start_time')
+    return check(inspect().active()) or check(inspect().reserved())
 
 
 def get_account_info(user_id):
@@ -1561,4 +1519,4 @@ def get_url_root():
     :return: url root.
     """
     site_url = current_app.config['THEME_SITEURL'] + '/'
-    return request.url_root if request else site_url
+    return request.host_url if request else site_url
