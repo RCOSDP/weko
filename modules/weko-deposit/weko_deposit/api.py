@@ -34,6 +34,11 @@ from elasticsearch.helpers import bulk
 from flask import abort, current_app, has_request_context, json, request, \
     session
 from flask_security import current_user
+from invenio_db import db
+from invenio_deposit.api import Deposit, index, preserve
+from invenio_deposit.errors import MergeConflict
+from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
+    Part
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.records import RecordDraft
@@ -42,19 +47,13 @@ from invenio_pidrelations.models import PIDRelation
 from invenio_pidrelations.serializers.utils import serialize_relations
 from invenio_pidstore.errors import PIDDoesNotExistError, PIDInvalidAction
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_records.models import RecordMetadata
 from invenio_records_files.api import FileObject, Record
 from invenio_records_files.models import RecordsBuckets
+from invenio_records_rest.errors import PIDResolveRESTError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
-
-from invenio_db import db
-from invenio_deposit.api import Deposit, index, preserve
-from invenio_deposit.errors import MergeConflict
-from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
-    Part
-from invenio_records.models import RecordMetadata
-from invenio_records_rest.errors import PIDResolveRESTError
 from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
 from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, \
@@ -64,6 +63,7 @@ from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, remove_weko2_special_character, \
     set_timestamp
 from weko_user_profiles.models import UserProfile
+
 from .config import WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_KEY, \
     WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY, WEKO_DEPOSIT_SYS_CREATOR_KEY
 from .pidstore import get_latest_version_id, get_record_without_version, \
@@ -2194,7 +2194,7 @@ class _FormatSysBibliographicInformation:
 
         if len(title_data_lang) > 0:
             return list(title_data_lang[0].values())[0], \
-                   'en'
+                'en'
         return (title_data_none_lang[0], 'ja') if len(
             title_data_none_lang) > 0 else (None, 'ja')
 

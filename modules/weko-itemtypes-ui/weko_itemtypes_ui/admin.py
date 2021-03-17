@@ -27,9 +27,8 @@ from flask import abort, current_app, flash, json, jsonify, redirect, \
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
-from invenio_i18n.ext import current_i18n
-
 from invenio_db import db
+from invenio_i18n.ext import current_i18n
 from weko_admin.models import AdminSettings, BillingPermission
 from weko_records.api import ItemsMetadata, ItemTypeEditHistory, \
     ItemTypeNames, ItemTypeProps, ItemTypes, Mapping
@@ -37,6 +36,7 @@ from weko_records.serializers.utils import get_mapping_inactive_show_list
 from weko_schema_ui.api import WekoSchema
 from weko_search_ui.utils import get_key_by_property
 from weko_workflow.api import WorkFlow
+
 from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ATT, \
     WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT
 from .permissions import item_type_permission

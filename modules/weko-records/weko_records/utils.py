@@ -31,9 +31,9 @@ from invenio_pidstore import current_pidstore
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.ext import pid_exists
 from invenio_pidstore.models import PersistentIdentifier
-
 from weko_admin.models import AdminSettings
 from weko_schema_ui.schema import SchemaTree
+
 from .api import ItemTypes, Mapping
 
 
@@ -322,7 +322,6 @@ def get_all_items(nlst, klst, is_get_name=False):
     :param is_get_name:
     :return: alst
     """
-
     def get_name(key):
         for lst in klst:
             key_arr = lst[0].split('.')
@@ -827,12 +826,7 @@ def check_has_attribute_value(node):
         return False
 
 
-def get_attribute_value_all_items(
-    root_key,
-    nlst,
-    klst,
-    is_author=False,
-        hide_email_flag=True):
+def get_attribute_value_all_items(root_key, nlst, klst, is_author=False, hide_email_flag=True):
     """Convert and sort item list.
 
     :param root_key:
@@ -841,7 +835,6 @@ def get_attribute_value_all_items(
     :param is_author:
     :return: alst
     """
-
     def get_name(key):
         for lst in klst:
             keys = lst[0].replace("[]", "").split('.')
@@ -1021,7 +1014,6 @@ def remove_weko2_special_character(s: str):
 
     :param s:
     """
-
     def __remove_special_character(_s_str: str):
         pattern = r"(^(&EMPTY&,|,&EMPTY&)|(&EMPTY&,|,&EMPTY&)$|&EMPTY&)"
         _s_str = re.sub(pattern, '', _s_str)
