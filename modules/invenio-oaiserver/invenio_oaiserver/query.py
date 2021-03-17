@@ -79,13 +79,15 @@ def get_records(**kwargs):
     scroll = current_app.config['OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME']
     scroll_id = kwargs.get('resumptionToken', {}).get('scroll_id')
 
-    if scroll_id is None:
+    if not scroll_id:
         search = OAIServerSearch(
             index=current_app.config['INDEXER_DEFAULT_INDEX'],
         ).params(
             scroll='{0}s'.format(scroll),
         ).extra(
             version='true',
+        ).sort(
+            {'control_number': {'order': 'asc'}}
         )[(page_ - 1) * size_:page_ * size_]
 
         if 'set' in kwargs:
@@ -99,8 +101,7 @@ def get_records(**kwargs):
         if time_range:
             search = search.filter('range', **{'_updated': time_range})
 
-        search = search.query('match', **{'relation_version_is_last': 'true'})
-        search = search.query('exists', **{'field': 'path'})
+        search = search.query('match', **{'relation_version_is_last':'true'})
 
         indexes = Indexes.get_unharvested_indexes()
         for index in indexes:
@@ -111,15 +112,7 @@ def get_records(**kwargs):
             search = search.query(
                 'bool',
                 **{'must_not': [
-                    {'wildcard': {'path': str(index.id) + '/*'}}]})
-            search = search.query(
-                'bool',
-                **{'must_not': [
                     {'wildcard': {'path': '*/' + str(index.id)}}]})
-            search = search.query(
-                'bool',
-                **{'must_not': [
-                    {'wildcard': {'path': '*/' + str(index.id) + '/*'}}]})
 
         response = search.execute().to_dict()
     else:
