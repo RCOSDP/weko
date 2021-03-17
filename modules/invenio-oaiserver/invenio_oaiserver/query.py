@@ -101,8 +101,7 @@ def get_records(**kwargs):
         if time_range:
             search = search.filter('range', **{'_updated': time_range})
 
-        search = search.query('match', **{'relation_version_is_last':'true'})
-
+        search = search.query('match', **{'relation_version_is_last': 'true'})
         indexes = Indexes.get_unharvested_indexes()
         for index in indexes:
             search = search.query(

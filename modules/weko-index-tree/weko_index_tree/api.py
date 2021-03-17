@@ -1429,7 +1429,6 @@ class Indexes(object):
     def get_unharvested_indexes(cls):
         """Get child id list without recursive."""
         query = Index.query.filter(
-            (Index.public_state.is_(False)) |
-            (Index.harvest_public_state.is_(False))).order_by(
+            Index.harvest_public_state.is_(False)).order_by(
             Index.id.asc())
         return query.all()

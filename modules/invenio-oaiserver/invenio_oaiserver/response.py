@@ -17,6 +17,7 @@ from invenio_records.models import RecordMetadata
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
 from weko_deposit.api import WekoRecord
+from weko_index_tree.api import Indexes
 from weko_schema_ui.schema import get_oai_metadata_formats
 
 from .api import OaiIdentify
@@ -458,8 +459,6 @@ def listrecords(**kwargs):
 
     resumption_token(e_listrecords, result, **kwargs)
     return e_tree
-
-from weko_index_tree.api import Indexes
 
 
 def get_error_code_msg(code='noRecordsMatch'):
