@@ -412,7 +412,8 @@ def parse_to_json_form(data: list, item_path_not_existed: list) -> dict:
         if key in item_path_not_existed:
             continue
         key_path = handle_generate_key_path(key)
-        if value or key_path[0] in ['file_path', 'thumbnail_path']:
+        if value or key_path[0] in ['file_path', 'thumbnail_path'] \
+                or key_path[-1] == 'filename':
             set_nested_item(result, key_path, value)
 
     convert_data(result)
@@ -2734,10 +2735,14 @@ def handle_check_file_content(record, data_path):
     errors = []
     warnings = []
 
+    file_paths = record.get('file_path', [])
+    # check consistence between file_path and filename
+    filenames = get_filenames_from_metadata(record['metadata'])
+    errors.extend(handle_check_filename_consistence(file_paths, filenames))
+
+    # check if file_path exists
     error, warning = handle_check_file_path(
-        record.get('file_path', []),
-        data_path,
-        record['status'] == 'new')
+        file_paths, data_path, record['status'] == 'new')
     if error:
         errors.append(error)
     if warning:
@@ -2781,8 +2786,8 @@ def handle_check_thumbnail(record, data_path):
 
 
 def get_key_by_property(record, item_map, item_property):
-    """
-    Get data by property text.
+    """Get data by property text.
+
     :param item_map:
     :param record:
     :param item_property: property value in item_map
@@ -2798,8 +2803,8 @@ def get_key_by_property(record, item_map, item_property):
 
 
 def get_data_by_propertys(record, item_map, item_property):
-    """
-    Get data by property text.
+    """Get data by property text.
+
     :param item_map:
     :param record:
     :param item_property: property value in item_map
@@ -2821,3 +2826,61 @@ def get_data_by_propertys(record, item_map, item_property):
             for value in data_result:
                 data.append(value)
     return data, key
+
+
+def get_filenames_from_metadata(metadata):
+    """Check thumbnails metadata.
+
+    :argument
+        metadata -- {dict} record metadata.
+    :return
+        filenames -- {list} List filename data.
+    """
+    filenames = []
+    file_meta_ids = []
+    for key, val in metadata.items():
+        if isinstance(val, list):
+            for item in val:
+                if isinstance(item, dict) and 'filename' in item:
+                    file_meta_ids.append(key)
+                    break
+
+    count = 0
+    for _id in file_meta_ids:
+        for file in metadata[_id]:
+            data = {
+                'id': '.metadata.{}[{}].filename'.format(_id, count),
+                'filename': file.get('filename', '')
+            }
+            if not file.get('filename'):
+                del file['filename']
+            filenames.append(data)
+            count += 1
+
+        new_file_metadata = list(filter(lambda x: x, metadata[_id]))
+        if new_file_metadata:
+            metadata[_id] = new_file_metadata
+        else:
+            del metadata[_id]
+
+    return filenames
+
+
+def handle_check_filename_consistence(file_paths, meta_filenames):
+    """Check thumbnails metadata.
+
+    :argument
+        file_paths -- {list} List file_path.
+        meta_filenames   -- {list} List filename from metadata.
+    :return
+        errors -- {list} List errors.
+    """
+    errors = []
+    msg = _('The file name specified in {} and {} do not match.')
+    for idx, path in enumerate(file_paths):
+        meta_filename = meta_filenames[idx]
+        if path and path.split('/')[-1] != meta_filename['filename']:
+            errors.append(msg.format(
+                'file_path[{}]'.format(idx), meta_filename['id']))
+
+    return errors
