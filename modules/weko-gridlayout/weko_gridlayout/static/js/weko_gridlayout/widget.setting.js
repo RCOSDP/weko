@@ -35,6 +35,9 @@ const MESSAGE = {
   }
 }
 
+const IMAGE_MIME_TYPE = ["image/apng", "image/avif", "image/gif", "image/jpeg",
+  "image/png", "image/svg+xml", "image/webp"]
+
 function userSelectedInput(initialValue, getValueOfField, key_binding, componentHandle) {
   if (key_binding === "border_style" && !initialValue) {
     initialValue = DEFAULT_BORDER_STYLE;
@@ -738,12 +741,14 @@ const TrumbowygWrapper = props => {
 
 const ComponentFieldEditor = function (props) {
   const [value, setValue] = useState(props.data_load || "");
+  const serverPath = '/widget/uploads/' + props.repositoryId + "@widget";
   const btnsDef = {
     image: {
-      dropdown: ["insertImage", "base64"],
+      dropdown: ["insertImage", "upload"],
       ico: "insertImage"
     }
   };
+
   const buttons = [
     ["viewHTML"],
     ["undo", "redo"], // Only supported in Blink browsers
@@ -765,7 +770,14 @@ const ComponentFieldEditor = function (props) {
     'div': 'div'
   }
 
-  const plugins = {};
+
+  const plugins = {
+    upload: {
+      serverPath: serverPath,
+      fileFieldName: 'file',
+      success: uploadSuccess,
+    }
+  };
 
   useEffect(() => {
     if (props.data_change) {
@@ -779,6 +791,54 @@ const ComponentFieldEditor = function (props) {
     props.handleChange(props.key_binding, data);
   };
 
+  function isImage(mimeType) {
+    return IMAGE_MIME_TYPE.indexOf(mimeType) > -1;
+  }
+
+  function closeUploadModal(trumbowyg, data, url) {
+    setTimeout(function () {
+      trumbowyg.closeModal();
+    }, 250);
+    trumbowyg.$c.trigger('tbwuploadsuccess', [trumbowyg, data, url]);
+  }
+
+  function uploadSuccess(data, trumbowyg, $modal, values) {
+    if (data["url"]) {
+      let url = data["url"];
+      let fileName = data['file_name'];
+      if (isImage(data['mimetype'])) {
+        // Create image tag
+        trumbowyg.execCmd('insertImage', url, false, true);
+        let $img = $('img[src="' + url + '"]:not([alt])', trumbowyg.$box);
+        $img.attr('alt', values.alt || fileName);
+        // Close upload modal.
+        closeUploadModal(trumbowyg, data, url)
+      } else {
+        // Create link tag
+        let link = $(['<a href="', url, '">', fileName, '</a>'].join(''), trumbowyg.$box);
+        if (trumbowyg.o.defaultLinkTarget) {
+          link.attr('target', trumbowyg.o.defaultLinkTarget);
+        }
+        trumbowyg.range.deleteContents();
+        trumbowyg.range.insertNode(link[0]);
+        trumbowyg.syncCode();
+        trumbowyg.$c.trigger('tbwchange');
+        // Close upload modal.
+        closeUploadModal(trumbowyg, data, url)
+      }
+    } else {
+      if (data["msg"]) {
+        $("#inputModal").html(data["msg"]);
+        $("#allModal").modal("show");
+      }
+      trumbowyg.addErrorOnModalField(
+        $('input[type=file]', $modal),
+        trumbowyg.lang.uploadError
+      );
+      trumbowyg.$c.trigger('tbwuploaderror', [trumbowyg]);
+    }
+  }
+
   return (
     <div className="form-group row">
       <label htmlFor="input_type" className="control-label col-xs-2 text-right">
@@ -786,7 +846,7 @@ const ComponentFieldEditor = function (props) {
       </label>
       <div className="controls col-xs-9">
         <TrumbowygWrapper
-          key={props.language}
+          key={props.language + props.repositoryId}
           id={props.key_binding}
           onChange={handleChange}
           value={value}
@@ -1053,6 +1113,7 @@ class ExtendComponent extends React.Component {
             key_binding="description"
             data_load={description}
             data_change={this.props.data_change}
+            repositoryId={this.props.repositoryId}
             getValueOfField={this.props.getValueOfField}/>
         </div>
       )
@@ -1068,6 +1129,7 @@ class ExtendComponent extends React.Component {
             key_binding="description"
             data_load={description}
             data_change={this.props.data_change}
+            repositoryId={this.props.repositoryId}
             getValueOfField={this.props.getValueOfField}/>
         </div>
       )
@@ -1083,6 +1145,7 @@ class ExtendComponent extends React.Component {
                 name="Notice description" key_binding="description"
                 data_load={description}
                 data_change={this.props.data_change}
+                repositoryId={this.props.repositoryId}
                 getValueOfField={this.props.getValueOfField}/>
             </div>
             <div className="row">
@@ -1106,6 +1169,7 @@ class ExtendComponent extends React.Component {
                 name="Notice description" key_binding="description"
                 data_load={description}
                 data_change={this.props.data_change}
+                repositoryId={this.props.repositoryId}
                 getValueOfField={this.props.getValueOfField}/>
             </div>
             <div className="row">
@@ -1134,6 +1198,7 @@ class ExtendComponent extends React.Component {
                 name="" key_binding="more_description"
                 data_load={more_description}
                 data_change={this.props.data_change}
+                repositoryId={this.props.repositoryId}
                 getValueOfField={this.props.getValueOfField}/>
             </div>
             <div className="row">
@@ -1291,6 +1356,7 @@ class ComponentButtonLayout extends React.Component {
     this.validateCustomCSS = this.validateCustomCSS.bind(this);
     this.addAlert = this.addAlert.bind(this);
     this.sendRequest = this.sendRequest.bind(this);
+    this.handleCancel = this.handleCancel.bind(this);
   }
 
   validateData(request) {
@@ -1398,6 +1464,8 @@ class ComponentButtonLayout extends React.Component {
       flag_edit: this.props.is_edit,
       data: data,
       data_id: '',
+      locked_value: window.sessionStorage.getItem('locked_value'),
+      updated: this.props.updated,
     };
     request.data_id = this.props.data_id;
 
@@ -1417,6 +1485,11 @@ class ComponentButtonLayout extends React.Component {
       success: function (result) {
         if (result.success) {
           _this.addAlert(result.message);
+          if (isModalMode()) {
+            window.close();
+          } else if (_this.props.is_edit) {
+            window.location = _this.props.return_url;
+          }
         } else {
           let errorMessage = result.message;
           _this.showErrorMessage(errorMessage);
@@ -1509,7 +1582,7 @@ class ComponentButtonLayout extends React.Component {
       data_id: this.props.data_id
     };
     let _this = this;
-    if (confirm("Are you sure to delete this widget Item ?")) {
+    if (confirm("Are you sure to delete this widget Item?")) {
       return $.ajax({
         url: '/api/admin/delete_widget_item',
         method: 'POST',
@@ -1519,13 +1592,42 @@ class ComponentButtonLayout extends React.Component {
         success: function (result) {
           if (result.success) {
             addAlert(result.message);
-            window.location = this.props.return_url;
+            if (isModalMode()) {
+              window.close();
+            } else {
+              window.location = this.props.return_url;
+            }
           } else {
             let errorMessage = result.message;
             _this.showErrorMessage(errorMessage);
           }
         }
       })
+    }
+  }
+
+  handleCancel(event) {
+    event.preventDefault();
+    let returnUrl = this.props.return_url;
+
+    function successHandler(result) {
+      if (result.success) {
+        window.sessionStorage.removeItem("locked_value");
+        if (isModalMode()) {
+          window.close();
+        } else {
+          window.location.href = returnUrl;
+        }
+      } else {
+        $("#inputModal").html(result.msg);
+        $("#allModal").modal("show");
+      }
+    }
+
+    if (this.props.is_edit) {
+      sendUnlockedRequest(successHandler);
+    } else {
+      window.location.href = returnUrl;
     }
   }
 
@@ -1541,11 +1643,11 @@ class ComponentButtonLayout extends React.Component {
                     aria-hidden="true"/>
               &nbsp;Save
             </button>
-            <a href={this.props.return_url}
-               className="form-group btn btn-info cancel-button style-my-button">
+            <button onClick={this.handleCancel}
+               className="btn btn-info cancel-button style-my-button">
               <span className="glyphicon glyphicon-remove" aria-hidden="true"/>
               &nbsp;Cancel
-            </a>
+            </button>
             <button className="btn btn-danger delete-button style-my-button"
                     onClick={this.deleteCommand}>
               <span className="glyphicon glyphicon-trash" aria-hidden="true"/>
@@ -1565,11 +1667,11 @@ class ComponentButtonLayout extends React.Component {
                     aria-hidden="true"/>
               &nbsp;Save
             </button>
-            <a href={this.props.return_url}
-               className="form-group btn btn-info cancel-button style-my-button">
+            <button onClick={this.handleCancel}
+               className="btn btn-info cancel-button style-my-button">
               <span className="glyphicon glyphicon-remove" aria-hidden="true"/>
               &nbsp;Cancel
-            </a>
+            </button>
           </div>
         </div>
       )
@@ -1800,24 +1902,27 @@ class ComponentLanguage extends React.Component {
 class MainLayout extends React.Component {
   constructor(props) {
     super(props);
+    let dataLoader = this.props.data_load;
     this.state = {
-      repository: this.props.data_load.repository_id,
-      widget_type: this.props.data_load.widget_type,
+      repository: dataLoader.repository_id,
+      widget_type: dataLoader.widget_type,
       label: '',
-      theme: this.props.data_load.theme,
-      label_color: this.props.data_load.label_color,
-      label_text_color: this.props.data_load.label_text_color,
-      border_style: this.props.data_load.border_style,
-      label_enable: this.props.data_load.label_enable,
-      frame_border_color: this.props.data_load.frame_border_color,
-      background_color: this.props.data_load.background_color,
-      enable: this.props.data_load.is_enabled,
-      settings: this.props.data_load.settings,
-      language: this.props.data_load.language,
-      multiLangSetting: this.props.data_load.multiLangSetting,
+      theme: dataLoader.theme,
+      label_color: dataLoader.label_color,
+      label_text_color: dataLoader.label_text_color,
+      border_style: dataLoader.border_style,
+      label_enable: dataLoader.label_enable,
+      frame_border_color: dataLoader.frame_border_color,
+      background_color: dataLoader.background_color,
+      enable: dataLoader.is_enabled,
+      settings: dataLoader.settings,
+      language: dataLoader.language,
+      multiLangSetting: dataLoader.multiLangSetting,
       multiLanguageChange: false,
       accessInitValue: 0,
       isDisableSaveBtn: false,
+      fixedHeaderBackgroundColor: dataLoader.settings.fixedHeaderBackgroundColor || DEFAULT_BG_COLOR,
+      fixedHeaderTextColor: dataLoader.settings.fixedHeaderTextColor || '#808080',
     };
     this.getValueOfField = this.getValueOfField.bind(this);
     this.storeMultiLangSetting = this.storeMultiLangSetting.bind(this);
@@ -1892,6 +1997,12 @@ class MainLayout extends React.Component {
         break;
       case 'isDisableSaveBtn':
         this.setState({isDisableSaveBtn: value});
+        break;
+      case 'fixedHeaderBackgroundColor':
+        this.setState({fixedHeaderBackgroundColor: value});
+        break;
+      case 'fixedHeaderTextColor':
+        this.setState({fixedHeaderTextColor: value});
         break;
     }
   }
@@ -2104,6 +2215,20 @@ class MainLayout extends React.Component {
                                      type={this.state.widget_type}
                                      is_edit={this.props.is_edit}/>
         </div>
+        {this.state.widget_type === HEADER_TYPE ?
+          <div className="row">
+            <ComponentSelectColorFiled name="Fixed Header Background Color"
+                                       getValueOfField={this.getValueOfField}
+                                       key_binding="fixedHeaderBackgroundColor"
+                                       data_load={this.state.fixedHeaderBackgroundColor}/>
+          </div> : null}
+        {this.state.widget_type === HEADER_TYPE ?
+          <div className="row">
+            <ComponentSelectColorFiled name="Fixed Header Text Color"
+                                       getValueOfField={this.getValueOfField}
+                                       key_binding="fixedHeaderTextColor"
+                                       data_load={this.state.fixedHeaderTextColor}/>
+          </div> : null}
         <div className="row">
           <ComponentCheckboxField name="Enable"
                                   getValueOfField={this.getValueOfField}
@@ -2129,6 +2254,7 @@ class MainLayout extends React.Component {
                                  url_request="/api/admin/save_widget_item"
                                  is_edit={this.props.is_edit}
                                  return_url={this.props.return_url}
+                                 updated={this.props.data_load.updated}
                                  data_id={this.props.data_id}/>
         </div>
       </div>
@@ -2162,13 +2288,56 @@ $(function () {
     }
   }
   let returnURL = $("#return_url").val();
-  ReactDOM.render(
-    <MainLayout data_load={editData} is_edit={isEdit} return_url={returnURL}
-                data_id={data_id}/>,
-    document.getElementById('root')
-  )
+  let rootEl = document.getElementById('root');
+  let lockedValueEl = document.getElementById('locked_value');
+  let unlockEditPageModal = $("#unlock-edit-page");
+  let isLocked = isWidgetLockEdit(lockedValueEl);
+  // Render edit page if not locked by other user.
+  if (rootEl && !isLocked) {
+    // Set locked value to session storage.
+    if (lockedValueEl) {
+      window.sessionStorage.setItem("locked_value", lockedValueEl.value);
+    }
+    ReactDOM.render(
+      <MainLayout data_load={editData} is_edit={isEdit} return_url={returnURL}
+                  data_id={data_id}/>, rootEl
+    )
+  }
+
+  // Open Warning popup if Edit page is locked by other user.
+  if (unlockEditPageModal.length && isLocked) {
+    unlockEditPageModal.modal("show");
+    unlockEditPage();
+  }
+
 });
 
+/**
+ * Check if the Edit page is locked.
+ * @param lockedValueEl
+ * @returns {boolean}
+ */
+function isWidgetLockEdit(lockedValueEl) {
+  let locked = false;
+  let checkLockedEl = document.getElementById('check_locked');
+  if (checkLockedEl !== null) {
+    if (lockedValueEl == null) {
+      locked = true;
+    } else {
+      let browserLockedLVal = window.sessionStorage.getItem("locked_value");
+      if (lockedValueEl.value !== browserLockedLVal) {
+        locked = true;
+      }
+    }
+  }
+  return locked
+}
+
+/**
+ * Get message is translated.
+ * @param messageCode
+ * @returns {string|*}
+ */
 function getMessage(messageCode) {
   const defaultLanguage = "en";
   let currentLanguage = document.getElementById("current_language").value;
@@ -2182,4 +2351,67 @@ function getMessage(messageCode) {
   } else {
     return "";
   }
+}
+
+/**
+ * Unlock the Edit page.
+ */
+function unlockEditPage() {
+  $("#unlock-page-button").click(function () {
+    sendUnlockedRequest();
+  })
+}
+
+/**
+ * Send a request to server to unlock Edit page.
+ * @param successHandler
+ */
+function sendUnlockedRequest(successHandler) {
+  function defaultSuccess(result) {
+    if (result.success) {
+      window.sessionStorage.removeItem("locked_value");
+      document.location.reload();
+    } else {
+      $("#inputModal").html(result.msg);
+      $("#allModal").modal("show");
+    }
+  }
+
+  if (!successHandler) {
+    successHandler = defaultSuccess;
+  }
+  let urlParams = getUrlParam();
+
+  let data = {
+    widget_id: urlParams["id"],
+  };
+
+  $.ajax({
+    url: "/api/admin/widget/unlock",
+    method: "POST",
+    contentType: 'application/json',
+    dataType: 'json',
+    data: JSON.stringify(data),
+    success: successHandler
+  })
+}
+
+/**
+ * Check if the Edit page is opened as a window modal
+ * @returns {boolean}
+ */
+function isModalMode() {
+  return document.location.search.indexOf("modal=true") > -1;
+}
+
+/**
+ * Get URL Parameter
+ * @returns {{}}
+ */
+function getUrlParam() {
+  let vars = {};
+  decodeURI(window.location.href).replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
+    vars[key] = value;
+  });
+  return vars;
 }

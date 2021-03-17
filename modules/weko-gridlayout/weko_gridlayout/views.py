@@ -28,7 +28,7 @@ from .services import WidgetDataLoaderServices, WidgetDesignPageServices, \
     WidgetDesignServices, WidgetItemServices
 from .utils import WidgetBucket, get_default_language, \
     get_elasticsearch_result_by_date, get_system_language, \
-    get_widget_design_setting, get_widget_type_list
+    get_widget_design_setting, get_widget_type_list, validate_upload_file
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -496,7 +496,7 @@ def get_access_counter_record(repository_id, current_language):
 
 
 @blueprint.route('/widget/uploads/',
-                 defaults={"community_id": 0},
+                 defaults={"community_id": 'Root Index'},
                  methods=["POST"]
                  )
 @blueprint.route('/widget/uploads/<string:community_id>', methods=["POST"])
@@ -506,11 +506,10 @@ def upload_file(community_id):
     :param community_id: community identifier.
     :return:
     """
-    if 'file' not in request.files:
-        return jsonify(msg=_("No file part")), 400
+    error_msg = validate_upload_file(community_id)
     file = request.files['file']
-    if file.filename == '':
-        return jsonify(msg=_("No selected file")), 400
+    if error_msg:
+        return jsonify(msg=error_msg), 200
     return jsonify(
         WidgetBucket().save_file(file, file.filename, file.content_type,
                                  community_id)
@@ -531,3 +530,17 @@ def uploaded_file(filename, community_id=0):
     :return:
     """
     return WidgetBucket().get_file(filename, community_id)
+
+
+@blueprint_api.route('/widget/unlock', methods=["POST"])
+def unlocked_widget():
+    """Get widget static file.
+
+    :return:
+    """
+    data = request.get_json()
+    widget_id = data.get('widget_id')
+    if WidgetItemServices.unlock_widget(widget_id):
+        return jsonify(success=True), 200
+    else:
+        return jsonify(success=False, msg=_("Can't unlock widget.")), 200
