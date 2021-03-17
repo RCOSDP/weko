@@ -1320,6 +1320,21 @@ $(document).ready(function () {
               properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["hideDisable"] = true
             }
           }
+          // Get item id of sub-property is language.
+          data.key_subproperty_languague.forEach(function (itemkey) {
+            let listSubItem = itemkey.split(".");
+            var temp_prop = properties_obj[data.meta_list[listSubItem[0]].input_type.substr(4)].schema.properties;
+            for (var idx = 1; idx < listSubItem.length; idx++) {
+              let _item = temp_prop[listSubItem[idx]]
+              if (_item.items) {
+                temp_prop = _item.items.properties;
+              } else if (_item.properties) {
+                temp_prop = _item.properties;
+              } else if (idx === listSubItem.length - 1) {
+                _item['isSubLanguage'] = true;
+              }
+            }
+          });
           render_object('schema_'+row_id, properties_obj[data.meta_list[row_id].input_type.substr(4)].schema);
           if (isFile) {
             multipleCheckbox.attr('disabled', true);

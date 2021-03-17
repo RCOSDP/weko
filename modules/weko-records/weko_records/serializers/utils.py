@@ -25,12 +25,11 @@ from datetime import datetime
 
 import pytz
 from flask import request
+
 from invenio_db import db
 from weko_index_tree.api import Index
-
 from weko_records.api import Mapping
 from weko_records.models import ItemType, ItemTypeName, ItemTypeProperty
-
 from .dc import DcWekoBaseExtension, DcWekoEntryExtension
 from .feed import WekoFeedGenerator
 from .opensearch import OpensearchEntryExtension, OpensearchExtension
@@ -64,6 +63,41 @@ def get_mapping(item_type_mapping, mapping_type):
             for k, v in item_schema.items():
                 item_schema[k] = item_id + '.' + v if v else item_id
             schema.update(item_schema)
+
+    return schema
+
+
+def get_mapping_inactive_show_list(item_type_mapping, mapping_type):
+    """Format itemtype mapping data.
+
+    [Key:Schema, Value:ItemId]
+    :param item_type_mapping:
+    :param mapping_type:
+    :return:
+    """
+    def get_schema_key_info(schema, parent_key, schema_json={}):
+
+        for k, v in schema.items():
+            key = parent_key + '.' + k if parent_key else k
+            if isinstance(v, dict):
+                child_key = copy.deepcopy(key)
+                get_schema_key_info(v, child_key, schema_json)
+            else:
+                schema_json[key] = v
+
+        return schema_json
+
+    schema = {}
+    for item_id, maps in item_type_mapping.items():
+        if mapping_type in maps.keys() and isinstance(maps[mapping_type], dict):
+            item_schema = get_schema_key_info(maps[mapping_type], '', {})
+            temp_schema = {}
+            for k, v in item_schema.items():
+                tempId = item_id + '.' + v if v else item_id
+                if k in schema:
+                    k = tempId + k
+                temp_schema[k] = tempId
+            schema.update(temp_schema)
 
     return schema
 

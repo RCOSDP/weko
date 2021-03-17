@@ -27,14 +27,16 @@ from flask import abort, current_app, flash, json, jsonify, redirect, \
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
-from invenio_db import db
 from invenio_i18n.ext import current_i18n
+
+from invenio_db import db
 from weko_admin.models import AdminSettings, BillingPermission
 from weko_records.api import ItemsMetadata, ItemTypeEditHistory, \
     ItemTypeNames, ItemTypeProps, ItemTypes, Mapping
+from weko_records.serializers.utils import get_mapping_inactive_show_list
 from weko_schema_ui.api import WekoSchema
+from weko_search_ui.utils import get_key_by_property
 from weko_workflow.api import WorkFlow
-
 from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ATT, \
     WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT
 from .permissions import item_type_permission
@@ -72,6 +74,19 @@ class ItemTypeMetaDataView(BaseView):
         result = None
         if item_type_id > 0:
             result = ItemTypes.get_by_id(id_=item_type_id, with_deleted=True)
+            # Get sub-property has language
+            languageVsValue = []
+            item_type_mapping = Mapping.get_record(item_type_id)
+            item_map = get_mapping_inactive_show_list(item_type_mapping,
+                                                      'jpcoar_mapping')
+            suffixes = '.@attributes.xml:lang'
+            for key in item_map:
+                # Get sub-property by format "parrent.sub
+                # Property.@attributes.xml:lang" and key.count(".") > 1
+                if key.find(suffixes) != -1:
+                    # get language
+                    _title_key = get_key_by_property(result, item_map, key)
+                    languageVsValue.append(_title_key)
         if result is None:
             result = {
                 'table_row': [],
@@ -86,7 +101,7 @@ class ItemTypeMetaDataView(BaseView):
             edit_notes = result.latest_edit_history
             result = result.render
             result['edit_notes'] = edit_notes
-
+        result['key_subproperty_languague'] = languageVsValue
         return jsonify(result)
 
     @expose('/delete', methods=['POST'])
@@ -280,7 +295,8 @@ class ItemTypeMetaDataView(BaseView):
                 lists[k.id] = tmp
 
         settings = AdminSettings.get('default_properties_settings')
-        default_properties = current_app.config['WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES']
+        default_properties = current_app.config[
+            'WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES']
         if settings:
             if settings.show_flag:
                 lists['defaults'] = default_properties
@@ -311,7 +327,9 @@ class ItemTypePropertiesView(BaseView):
         lists = ItemTypeProps.get_records([])
         properties = lists.copy()
         defaults_property_ids = [prop.id for prop in lists if
-                                 prop.schema.get(WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT, None)]
+                                 prop.schema.get(
+                                     WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT,
+                                     None)]
         for item in lists:
             if item.id in defaults_property_ids:
                 properties.remove(item)
@@ -375,7 +393,7 @@ class ItemTypeMappingView(BaseView):
         :return: The rendered template.
         """
         try:
-            lists = ItemTypes.get_latest()    # ItemTypes.get_all()
+            lists = ItemTypes.get_latest()  # ItemTypes.get_all()
             if lists is None or len(lists) == 0:
                 return self.render(
                     current_app.config['WEKO_ITEMTYPE'
