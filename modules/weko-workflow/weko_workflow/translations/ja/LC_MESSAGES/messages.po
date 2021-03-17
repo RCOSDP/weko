@@ -608,7 +608,7 @@ msgid "Registration Destination Index"
 msgstr "登録先インデックス"
 
 msgid "Specify Property"
-msgstr "プロパティを指定"
+msgstr "プロパティを指定する"
 
 msgid "Specify property"
-msgstr "プロパティを指定する"
+msgstr "プロパティを指定"
