@@ -168,7 +168,7 @@
                 <lable>{{_('Item')}}</lable>
             </div>
             <div class="col-xs-11 col-md-11 col-lg-11">
-                <a href="#" id="lnk_item_detail">{{item.get('title') if item}}</a>
+                <a href="#" id="lnk_item_detail">{{item.get('title') or item.get('title_ja') if item}}</a>
             </div>
           </div>
         </div>

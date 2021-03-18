@@ -66,10 +66,10 @@ from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import IdentifierHandle, check_existed_doi, delete_cache_data, \
     filter_condition, get_account_info, get_actionid, \
     get_activity_id_of_record_without_version, get_cache_data, \
-    get_disptype_and_ver_in_metainfo, get_identifier_setting, \
-    get_record_by_root_ver, handle_finish_workflow, is_hidden_pubdate, \
-    is_show_autofill_metadata, item_metadata_validation, register_hdl, \
-    saving_doi_pidstore, update_cache_data
+    get_identifier_setting, get_record_by_root_ver, handle_finish_workflow, \
+    is_hidden_pubdate, is_show_autofill_metadata, item_metadata_validation, \
+    register_hdl, saving_doi_pidstore, setDisplayTypeForFile, \
+    update_cache_data
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -473,10 +473,19 @@ def display_activity(activity_id=0):
     if action_endpoint == 'item_link' and recid:
         item_link = ItemLink.get_item_link_info(recid.pid_value)
         ctx['item_link'] = item_link
+
+    # case when edit item and step is item_login
+    if action_endpoint and action_endpoint == 'item_login' and item and item.get('pid') and \
+       item['pid'].get('value'):
+        itemLink_record, newFiles = get_record_by_root_ver(item['pid']['value'])
+        newFiles = setDisplayTypeForFile(itemLink_record, newFiles)
+
+    # case create item
     if item and 'pid' not in item:
         itemLink_record = approval_record
         newFiles = files
 
+    # case when edit item and step # item_login
     if activity_detail.item_id and item and 'pid' in item \
        and 'value' in item['pid'] and 'item_login' not in action_endpoint:
         if not newFiles:
@@ -490,22 +499,11 @@ def display_activity(activity_id=0):
             files = newFiles
         if approval_record and files and len(approval_record) > 0 and \
            len(files) > 0 and (isinstance(approval_record, list) or isinstance(approval_record, dict)):
-            for k, v in enumerate(files):
-                data = get_disptype_and_ver_in_metainfo(approval_record)
-                if data and len(data) > 0:
-                    for d, v1 in enumerate(data):
-                        key, value = list(data[d].items())[0]
-                        if len(data) > 0 and key in files[k]['version_id']:
-                            files[k]['displaytype'] = value
+            files = setDisplayTypeForFile(approval_record, files)
+
     if itemLink_record and newFiles and len(itemLink_record) > 0 and len(newFiles) > 0 \
        and (isinstance(itemLink_record, list) or isinstance(itemLink_record, dict)):
-        for k, v in enumerate(newFiles):
-            data = get_disptype_and_ver_in_metainfo(itemLink_record)
-            if data and len(data) > 0:
-                for d, v1 in enumerate(data):
-                    key, value = list(data[d].items())[0]
-                    if len(data) > 0 and key in newFiles[k]['version_id']:
-                        newFiles[k]['displaytype'] = value
+        newFiles = setDisplayTypeForFile(itemLink_record, newFiles)
     return render_template(
         'weko_workflow/activity_detail.html',
         page=page,

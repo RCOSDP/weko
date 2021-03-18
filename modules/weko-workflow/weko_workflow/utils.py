@@ -1595,14 +1595,29 @@ def get_disptype_and_ver_in_metainfo(metainfo):
     :return: array.
     """
     array = []
-    if metainfo and len(metainfo) > 0:
-        for k, v in enumerate(metainfo):
-            if 'attribute_value_mlt' in str(metainfo[v]):
-                if len(metainfo[v]['attribute_value_mlt']) > 0:
-                    for k, m in enumerate(metainfo[v]['attribute_value_mlt']):
-                        if 'version_id' in metainfo[v]['attribute_value_mlt'][k] and \
-                           'displaytype' in metainfo[v]['attribute_value_mlt'][k]:
-                            versionId = metainfo[v]['attribute_value_mlt'][k]['version_id']
-                            distype = metainfo[v]['attribute_value_mlt'][k]['displaytype']
-                            array.append({versionId: distype})
+    for v in metainfo:
+        if (isinstance(metainfo.get(v), dict)):
+            if 'attribute_type' in metainfo[v] and metainfo[v]['attribute_type'] in \
+               'file' and 'attribute_value_mlt' in metainfo[v]:
+                for n in metainfo[v]['attribute_value_mlt']:
+                    if 'displaytype' in n and n.get('displaytype') in 'preview' and \
+                       'version_id' in n and n.get('version_id'):
+                        array.append({n.get('version_id'): n.get('displaytype')})
     return array
+
+
+def setDisplayTypeForFile(itemLink_record, newFiles):
+    """Get displayType in records and set into files
+
+    :return: Files.
+    """
+    data = []
+    data = get_disptype_and_ver_in_metainfo(itemLink_record)
+    for k, v in enumerate(newFiles):
+        if data and len(data) > 0:
+            for d, v1 in enumerate(data):
+                key, value = list(data[d].items())[0]
+                if len(data) > 0 and 'version_id' in newFiles[k] and \
+                   key in newFiles[k]['version_id']:
+                    newFiles[k]['displaytype'] = value
+    return newFiles

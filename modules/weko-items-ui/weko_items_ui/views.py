@@ -48,8 +48,7 @@ from weko_records_ui.permissions import check_file_download_permission
 from weko_records_ui.utils import get_file_info_list
 from weko_workflow.api import GetCommunity, WorkActivity
 from weko_workflow.utils import check_an_item_is_locked, \
-    get_disptype_and_ver_in_metainfo, get_record_by_root_ver, \
-    prepare_edit_workflow
+    get_record_by_root_ver, prepare_edit_workflow, setDisplayTypeForFile
 from werkzeug.utils import import_string
 
 from .permissions import item_permission
@@ -431,7 +430,7 @@ def iframe_items_index(pid_value='0'):
                 or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
             root_record = None
             files = []
-            if pid_value and '.0' in pid_value:
+            if pid_value and '.' in pid_value:
                 root_record, files = get_record_by_root_ver(pid_value)
                 if root_record and root_record.get('title'):
                     session['itemlogin_item']['title'] = root_record['title'][0]
@@ -439,13 +438,7 @@ def iframe_items_index(pid_value='0'):
                 root_record = session['itemlogin_record']
             if root_record and files and len(root_record) > 0 and len(files) > 0 \
                and (isinstance(root_record, list) or isinstance(root_record, dict)):
-                for k, v in enumerate(files):
-                    data = get_disptype_and_ver_in_metainfo(root_record)
-                    if data and len(data) > 0:
-                        for d, v1 in enumerate(data):
-                            key, value = list(data[d].items())[0]
-                            if len(data) > 0 and key in files[k]['version_id']:
-                                files[k]['displaytype'] = value
+                files = setDisplayTypeForFile(root_record, files)
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
                 page=page,

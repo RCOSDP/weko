@@ -20,7 +20,7 @@
 
  {% from "weko_records_ui/box/preview_carousel.html" import preview_carousel %}
  {% from "weko_records_ui/item_detail.html" import output_item_detail %}
- 
+
  {%- if record_after_update !=[] -%}
  {%- set items_show_list = record_after_update.items_show_list -%}
  <div class="panel panel-default">
@@ -36,7 +36,7 @@
              {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
              {%- if newFiles | selectattr('is_thumbnail', 'equalto', False)| list | length > 0-%}
              <!-- Preview Carousel -->
-             {{ preview_carousel(record=record_after_update, files=newFiles, pid=pid, el_id=preview_carousel_id, edit_page_prev=True) }}
+             {{ preview_carousel(record=record_after_update, files=newFiles, pid=pid, el_id=preview_carousel_id, edit_page_prev=True, cur_step=cur_step) }}
              <hr />
              <table class="table table-bordered table-striped">
                <thead>
