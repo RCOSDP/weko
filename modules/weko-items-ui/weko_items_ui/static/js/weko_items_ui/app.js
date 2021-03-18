@@ -3197,6 +3197,8 @@ function toObject(arr) {
       // -Validate index existence(if any)
       $scope.validateEmailsAndIndexAndUpdateApprovalActions = function (activityId, steps, isAutoSetIndexAction) {
         let emailsToValidate = [];
+        let listEmailErrors = [];
+        let listEmailKeys = [];
         let approvalMailSubKey = $("#approval_email_key").val();
         if (approvalMailSubKey === "") {
           return true;
@@ -3208,19 +3210,29 @@ function toObject(arr) {
           approvalMailSubKey.forEach(function (item) {
             item = item.split('.').pop();
             if (key.indexOf(item) !== -1) {
-              let subitemApprovalMailAddress = $scope.depositionForm[key];
-              let mail_adress = '';
-              if (subitemApprovalMailAddress) {
-                mail_adress = subitemApprovalMailAddress.$modelValue;
+              let subItemApprovalMailAddress = $scope.depositionForm[key];
+              let mail_address = '';
+              if (subItemApprovalMailAddress) {
+                mail_address = subItemApprovalMailAddress.$modelValue;
               }
-              param[item] = mail_adress
-              emailsToValidate.push(item);
+              if (mail_address == '') {
+                listEmailErrors.push(key);
+              }else{
+                param[item] = mail_address;
+                emailsToValidate.push(item);
+                listEmailKeys.push(key);
+              }
             }
           });
         });
+        if (listEmailErrors.length > 0) {
+          return this.processShowRequiredEmail(listEmailErrors);
+        }
+
 
         param['activity_id'] = activityId;
         param['user_to_check'] = emailsToValidate;
+        param['user_key_to_check'] = listEmailKeys;
         param['auto_set_index_action'] = isAutoSetIndexAction;
         var itemsDict = {};
         let recordsForm = $rootScope.recordsVM.invenioRecordsForm;
@@ -3243,10 +3255,10 @@ function toObject(arr) {
           data: JSON.stringify(param),
           dataType: "json",
           success: function (data, status) {
-            let listEmailErrors = [];
+            let listEmailErrors = data.keys;
             //// Wait error modal handle
 
-            if (listEmailErrors.length > 0) {
+            if (!data.keys && listEmailErrors.length > 0) {
               let message = $("#validate_email_register").val() + '<br/><br/>';
               message += listEmailErrors[0];
               for (let k = 1; k < listEmailErrors.length; k++) {
@@ -3293,6 +3305,18 @@ function toObject(arr) {
           }
         }
         return validationResult;
+      }
+
+      $scope.processShowRequiredEmail = function (listEmailErrors) {
+        let message = $("#validate_email_required").val() + '<br/><br/>';
+        message += listEmailErrors[0];
+        for (let k = 1; k < listEmailErrors.length; k++) {
+          let subMessage = ', ' + listEmailErrors[k];
+          message += subMessage;
+        }
+        $("#inputModal").html(message);
+        $("#allModal").modal("show");
+        return false;
       }
 
       $scope.priceValidator = function () {

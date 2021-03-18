@@ -40,19 +40,20 @@ from flask import abort, current_app, flash, redirect, request, send_file, \
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role, userrole
-from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from invenio_records.api import RecordBase
 from invenio_search import RecordsSearch
-from invenio_stats.utils import QueryItemRegReportHelper, \
-    QueryRecordViewReportHelper, QuerySearchReportHelper
 from jsonschema import SchemaError, ValidationError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
+
+from invenio_db import db
+from invenio_records.api import RecordBase
+from invenio_stats.utils import QueryItemRegReportHelper, \
+    QueryRecordViewReportHelper, QuerySearchReportHelper
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import filter_index_list_by_role, get_index_id, \
@@ -1671,48 +1672,55 @@ def update_index_tree_for_record(pid_value, index_tree_id):
     db.session.commit()
 
 
-def validate_user_mail(users, activity_id, request_data):
+def validate_user_mail(users, activity_id, request_data, keys):
     """Validate user mail.
 
+    @param keys:
     @param users:
     @param activity_id:
     @param request_data:
     @return:
     """
-    result = {}
+    key_email_list = []
+    validation = True
     try:
         from weko_workflow.api import WorkActivity
-        from weko_workflow.models import ActivityAction, FlowDefine, FlowAction, \
-            FlowActionRole
+        from weko_workflow.models import FlowDefine
         activity = WorkActivity()
         activity_detail = activity.get_activity_detail(activity_id)
         flow_define = FlowDefine.query.filter_by(
             id=activity_detail.flow_id).one_or_none()
-        for user in users:
-            if flow_define:
-                for action in flow_define.flow_actions:
-                    action_roles = FlowActionRole.query.filter_by(
-                        flow_action_id=action.id).all()
-                    for action_role in action_roles:
-                        if user in action_role.specify_property:
-                            email = request_data.get(user)
-                            user_info = get_user_info_by_email(email)
-                            if user_info and user_info.get(
-                                    'user_id') is not None:
-                                update_action_handler(activity_id,
-                                                      action.action_order,
-                                                      user_info.get('user_id'))
-                                result['validation'] = True
-                                continue
-        else:
-            result['validation'] = False
-            result['error'] = _(
-                "You cannot specify "
-                "yourself in approval lists setting.")
-    except Exception as ex:
-        result['error'] = str(ex)
 
-    return result
+        for index, user in enumerate(users):
+            email = request_data.get(user)
+            user_info = get_user_info_by_email(email)
+            action_order = check_approval_email(flow_define, user)
+            if flow_define and email and user_info and user_info.get(
+                    'user_id') is not None and action_order:
+                update_action_handler(activity_id,
+                                      action_order,
+                                      user_info.get('user_id'))
+                keys = True
+                continue
+            else:
+                validation = False
+                key_email_list.append(keys[index])
+
+    except Exception as ex:
+        validation = False
+
+    return validation, key_email_list
+
+
+def check_approval_email(flow_define, user):
+    from weko_workflow.models import FlowActionRole
+    for action in flow_define.flow_actions:
+        action_roles = FlowActionRole.query.filter_by(
+            flow_action_id=action.id).all()
+        for action_role in action_roles:
+            if user in action_role.specify_property:
+                return action.action_order
+    return None
 
 
 def update_action_handler(activity_id, action_order, user_id):
@@ -1741,14 +1749,17 @@ def validate_user_mail_and_index(request_data):
     :return:
     """
     users = request_data.get('user_to_check', [])
+    keys = request_data.get('user_key_to_check', [])
     auto_set_index_action = request_data.get('auto_set_index_action', False)
     activity_id = request_data.get('activity_id')
     result = {
         "index": True
     }
     try:
-        validation_result = validate_user_mail(users, activity_id, request_data)
-        result['email'] = validation_result
+        result['email'], result['keys'] = validate_user_mail(users,
+                                                              activity_id,
+                                                              request_data,
+                                                              keys)
         if auto_set_index_action is True:
             is_existed_valid_index_tree_id = True if \
                 get_index_id(activity_id) else False
