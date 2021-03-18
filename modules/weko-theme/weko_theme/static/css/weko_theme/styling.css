@@ -68,7 +68,8 @@
 }
 
 .cancel-button, .close-button {
-  width: 100px;
+  width: auto;
+  min-width: 100px;
   height: 40px;
   font-size:15px;
 }

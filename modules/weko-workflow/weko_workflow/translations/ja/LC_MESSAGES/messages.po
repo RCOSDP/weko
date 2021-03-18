@@ -321,7 +321,7 @@ msgstr "キャンセル"
 
 #: weko_workflow/templates/weko_workflow/modal_withdraw_confirmation.html:44
 msgid "Are you sure you want to withdraw DOI?"
-msgstr "DOIを取り下げ手もよろしいですか？"
+msgstr "DOIを取り下げてもよろしいですか？"
 
 #: weko_workflow/templates/weko_workflow/oapolicy_search.html:3
 msgid "Journal"
