@@ -27,11 +27,11 @@ from flask import abort, current_app, jsonify, request, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
-from invenio_i18n.ext import current_i18n
-
 from invenio_db import db
+from invenio_i18n.ext import current_i18n
 from weko_index_tree.models import Index
 from weko_records.api import ItemTypes
+
 from .api import Action, Flow, WorkActivity, WorkFlow
 from .config import WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS
 from .models import WorkflowRole

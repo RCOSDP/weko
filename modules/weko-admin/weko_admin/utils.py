@@ -1667,7 +1667,6 @@ def update_restricted_access(restricted_access: dict):
 
     :param restricted_access:
     """
-
     def parse_content_file_download(content_file_download):
         if content_file_download.get('expiration_date_unlimited_chk'):
             content_file_download['expiration_date'] = 9999999

@@ -623,7 +623,6 @@ def sort_meta_data_by_options(record_hit):
 
     def get_file_comments(record, files):
         """Check and get file info."""
-
         def __get_label_extension():
             _label = f.get('url', {}).get('label')
             _filename = f.get('filename', '')

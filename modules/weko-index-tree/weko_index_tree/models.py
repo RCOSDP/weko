@@ -23,12 +23,10 @@
 from datetime import datetime
 
 from flask import current_app
+from invenio_db import db
 from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy_utils.types import JSONType
-
-from invenio_db import db
 from weko_records.models import Timestamp
-
 
 # from sqlalchemy_utils.types import UUIDType
 # from invenio_records.models import RecordMetadata

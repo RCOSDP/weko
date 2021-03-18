@@ -36,8 +36,6 @@ from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.resolver import Resolver
 from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
-from werkzeug.utils import import_string
-
 from weko_accounts.utils import login_required_customize
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoRecord
@@ -49,6 +47,8 @@ from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
 from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow
 from weko_workflow.utils import check_an_item_is_locked, prepare_edit_workflow
+from werkzeug.utils import import_string
+
 from .permissions import item_permission
 from .utils import _get_max_export_items, check_item_is_being_edit, \
     export_items, get_current_user, get_data_authors_prefix_settings, \

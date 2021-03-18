@@ -33,6 +33,7 @@ from flask import Blueprint, abort, current_app, jsonify, render_template, \
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, User, userrole
+from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -41,9 +42,6 @@ from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
 from sqlalchemy.sql.expression import cast
-from werkzeug.utils import import_string
-
-from invenio_db import db
 from weko_accounts.api import ShibUser
 from weko_accounts.utils import login_required_customize
 from weko_authors.models import Authors
@@ -61,6 +59,8 @@ from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
     get_workflows
 from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
+from werkzeug.utils import import_string
+
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
