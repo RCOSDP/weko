@@ -174,36 +174,71 @@ def get():
         body=body
     )
 
-    author_id_list = []
-    for es_hit in result['hits']['hits']:
-        author_id_info = es_hit['_source']['authorIdInfo']
-        if author_id_info:
-            author_id_list.append(author_id_info[0]['authorId'])
-
-    name_id = '_item_metadata.item_creator.attribute_value_mlt.nameIdentifiers'
-    name_id += '.nameIdentifier.keyword'
     query_item = {
-        'size': 0,
-        'query': {
-            'terms': {
-                name_id: author_id_list
-            }
-        }, 'aggs': {
-            'item_count': {
-                'terms': {
-                    'size': size,
-                    'field': name_id,
-                    'include': author_id_list
-                }
+        "size": 0,
+        "query": {
+            "bool": {
+                "must_not": [{
+                    "wildcard": {
+                        "_oai.id": {
+                            "value": "*.*"
+                        }
+                    }
+                }],
+                "must": [
+                    {
+                        "term": {
+                            "publish_status": 0
+                        }
+                    },
+                    {
+                        "bool": {
+                            "should": [
+                                {
+                                    "term": {
+                                        "creator.nameIdentifier":
+                                        "@author_id"
+                                    }
+                                },
+                                {
+                                    "term": {
+                                        "contributor.nameIdentifier":
+                                        "@author_id"
+                                    }
+                                },
+                                {
+                                    "term": {
+                                        "rightsHolder.nameIdentifier":
+                                        "@author_id"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
             }
         }
     }
-    result_itemCnt = indexer.client.search(
-        index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
-        body=query_item
-    )
+    item_cnt_list = []
+    for es_hit in result['hits']['hits']:
+        author_id_info = es_hit['_source']['authorIdInfo']
+        if author_id_info:
+            author_id = author_id_info[0]['authorId']
+            temp_str = json.dumps(query_item).replace(
+                "@author_id", author_id)
+            result_itemCnt = indexer.client.search(
+                index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
+                body=json.loads(temp_str)
+            )
+            if result_itemCnt \
+                    and result_itemCnt['hits'] \
+                    and result_itemCnt['hits']['total']:
+                item_cnt_list.append(
+                    {'key': author_id,
+                     'doc_count': result_itemCnt['hits']['total']})
 
-    result['item_cnt'] = result_itemCnt
+    result['item_cnt'] = {'aggregations':
+                          {'item_count': {'buckets': item_cnt_list}}}
 
     return jsonify(result)
 
