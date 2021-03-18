@@ -3196,51 +3196,42 @@ function toObject(arr) {
       // -Set approval user for each action corresponding
       // -Validate index existence(if any)
       $scope.validateEmailsAndIndexAndUpdateApprovalActions = function (activityId, steps, isAutoSetIndexAction) {
-        let emailsToValidate = [];
-        let listEmailErrors = [];
-        let listEmailKeys = [];
-        let approvalMailSubKey = $("#approval_email_key").val();
-        if (approvalMailSubKey === "") {
-          return true;
-        }
-        approvalMailSubKey = JSON.parse(approvalMailSubKey);
-        let param = {};
-
-        Object.keys($scope.depositionForm).forEach(function (key) {
-          approvalMailSubKey.forEach(function (item) {
-            item = item.split('.').pop();
-            if (key.indexOf(item) !== -1) {
-              let subItemApprovalMailAddress = $scope.depositionForm[key];
-              let mail_address = '';
-              if (subItemApprovalMailAddress) {
-                mail_address = subItemApprovalMailAddress.$modelValue;
+              let emailsToValidate = [];
+              let listEmailKeys = [];
+              let approvalMailSubKey = $("#approval_email_key").val();
+              if (approvalMailSubKey === "") {
+                return true;
               }
-              if (mail_address == '') {
-                listEmailErrors.push(key);
-              }else{
-                param[item] = mail_address;
-                emailsToValidate.push(item);
-                listEmailKeys.push(key);
+              var itemsDict = {};
+              let recordsForm = $rootScope.recordsVM.invenioRecordsForm;
+              for (let i = 0; i < recordsForm.length; i++) {
+                itemsDict = Object.assign($scope.getItemsDictionary(recordsForm[i]), itemsDict);
               }
-            }
-          });
-        });
-        if (listEmailErrors.length > 0) {
-          return this.processShowRequiredEmail(listEmailErrors);
-        }
+              approvalMailSubKey = JSON.parse(approvalMailSubKey);
+              let param = {};
 
+              Object.keys($scope.depositionForm).forEach(function (key) {
+                approvalMailSubKey.forEach(function (item) {
+                  item_keys = item.split('.').pop();
+                  if (key.indexOf(item_keys) !== -1) {
+                    let subItemApprovalMailAddress = $scope.depositionForm[key];
+                    let mail_address = '';
+                    if (subItemApprovalMailAddress) {
+                      mail_address = subItemApprovalMailAddress.$modelValue;
+                    }
+                    param[item] = mail_address.trim();
+                    emailsToValidate.push(item);
+                    listEmailKeys.push(key);
+                  }
+                });
+              });
+              param['activity_id'] = activityId;
+              param['user_to_check'] = emailsToValidate;
+              param['user_key_to_check'] = listEmailKeys;
+              param['auto_set_index_action'] = isAutoSetIndexAction;
 
-        param['activity_id'] = activityId;
-        param['user_to_check'] = emailsToValidate;
-        param['user_key_to_check'] = listEmailKeys;
-        param['auto_set_index_action'] = isAutoSetIndexAction;
-        var itemsDict = {};
-        let recordsForm = $rootScope.recordsVM.invenioRecordsForm;
-        for (let i = 0; i < recordsForm.length; i++) {
-          itemsDict = Object.assign($scope.getItemsDictionary(recordsForm[i]), itemsDict);
-        }
-        return this.sendValidationRequest(param, itemsDict, isAutoSetIndexAction, approvalMailSubKey);
-      };
+              return this.sendValidationRequest(param, itemsDict, isAutoSetIndexAction, approvalMailSubKey);
+            };
 
       $scope.sendValidationRequest = function (param, itemsDict, isAutoSetIndexAction, approvalMailSubKey) {
         let result = true;
@@ -3258,15 +3249,8 @@ function toObject(arr) {
             let listEmailErrors = data.keys;
             //// Wait error modal handle
 
-            if (!data.keys && listEmailErrors.length > 0) {
-              let message = $("#validate_email_register").val() + '<br/><br/>';
-              message += listEmailErrors[0];
-              for (let k = 1; k < listEmailErrors.length; k++) {
-                let subMessage = ', ' + listEmailErrors[k];
-                message += subMessage;
-              }
-              $("#inputModal").html(message);
-              $("#allModal").modal("show");
+            if (listEmailErrors && listEmailErrors.length > 0) {
+              this.processShowRequiredEmail(listEmailErrors, itemsDict, "#validate_email_register");
               result = false;
             }
             if (isAutoSetIndexAction && !data.index) {
@@ -3307,13 +3291,21 @@ function toObject(arr) {
         return validationResult;
       }
 
-      $scope.processShowRequiredEmail = function (listEmailErrors) {
-        let message = $("#validate_email_required").val() + '<br/><br/>';
-        message += listEmailErrors[0];
-        for (let k = 1; k < listEmailErrors.length; k++) {
-          let subMessage = ', ' + listEmailErrors[k];
-          message += subMessage;
+      $scope.processShowRequiredEmail = function (listEmailErrors, itemsDict, id_message) {
+        let message = $(id_message).val() + '<br/><br/>';
+        for (let index = 0; index < listEmailErrors.length; index++) {
+          let subKey = listEmailErrors[index];
+          let mailAddressItem = $scope.depositionForm[subKey];
+          if (mailAddressItem) {
+            let name = mailAddressItem.$name.split('.').pop();
+            if (itemsDict.hasOwnProperty(name)) {
+              name = itemsDict[name];
+            }
+            listEmailErrors[index] = name;
+          }
         }
+
+        message += listEmailErrors.join(", ");
         $("#inputModal").html(message);
         $("#allModal").modal("show");
         return false;

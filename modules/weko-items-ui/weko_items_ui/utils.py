@@ -1695,16 +1695,16 @@ def validate_user_mail(users, activity_id, request_data, keys):
             email = request_data.get(user)
             user_info = get_user_info_by_email(email)
             action_order = check_approval_email(flow_define, user)
-            if flow_define and email and user_info and user_info.get(
-                    'user_id') is not None and action_order:
-                update_action_handler(activity_id,
-                                      action_order,
-                                      user_info.get('user_id'))
-                keys = True
-                continue
-            else:
-                validation = False
-                key_email_list.append(keys[index])
+            if flow_define and email and action_order:
+                if user_info and user_info.get('user_id') is not None:
+                    update_action_handler(activity_id,
+                                          action_order,
+                                          user_info.get('user_id'))
+                    keys = True
+                    continue
+                else:
+                    validation = False
+                    key_email_list.append(keys[index])
 
     except Exception as ex:
         validation = False
@@ -1718,7 +1718,7 @@ def check_approval_email(flow_define, user):
         action_roles = FlowActionRole.query.filter_by(
             flow_action_id=action.id).all()
         for action_role in action_roles:
-            if user in action_role.specify_property:
+            if user == action_role.specify_property:
                 return action.action_order
     return None
 

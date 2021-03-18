@@ -755,8 +755,7 @@ class WorkActivity(object):
                         action = action_instance.get_action_detail(
                             flow_action.action_id)
                         action_handler = current_user.get_id() \
-                            if not action.action_endpoint.startswith(
-                            'approval_') else -1
+                            if not action.action_endpoint == 'approval' else -1
                         db_activity_action = ActivityAction(
                             activity_id=db_activity.activity_id,
                             action_id=flow_action.action_id,
