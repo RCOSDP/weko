@@ -465,3 +465,9 @@ msgstr "画像ファイル（gif, jpg, jpe, jpeg, png, bmp）以外のファイ�
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:427
 msgid "is too long."
 msgstr "の数が上限数を超えています。"
+
+msgid "Guest"
+msgstr "非ログインユーザ"
+
+msgid "Free Input"
+msgstr "自由入力"
