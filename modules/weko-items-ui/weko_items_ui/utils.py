@@ -487,7 +487,7 @@ def is_consistency_flow_and_item_type(json_form, activity_id):
 
 
 def validate_form_input_data(
-    result: dict, item_id: str, data: dict, activity_id: ''):
+    result: dict, item_id: str, data: dict, activity_id= ''):
     """Validate input data.
 
     :param result: result dictionary.
