@@ -57,6 +57,10 @@
 {%- endif%}
 {%- endblock page_footer %}
 
+{% set guest_email = None %}
+{% if activity and activity.extra_info and 'guest_mail' in activity.extra_info %}
+  {% set guest_email = activity.extra_info.guest_mail %}
+{% endif %}
 {%- block page_body_main %}
 <div class="row">
   {%- if community %}
@@ -104,7 +108,7 @@
                   <label class="col-sm-4 control-label">{{_('Creater')}}</label>
                   <div class="col-sm-8">
                     <p class="form-control-static">
-                      {{activity.login_user if activity.login_user else activity.activity_login_user}}</p>
+                      {{ activity.login_user if activity.login_user else (activity.activity_login_user if activity.activity_login_user else guest_email) }}</p>
                   </div>
                 </div>
               </div>
@@ -121,7 +125,7 @@
                   <label class="col-sm-4 control-label">{{_('Updater')}}</label>
                   <div class="col-sm-8">
                     <p class="form-control-static">
-                      {{activity.update_user if activity.update_user else activity.activity_update_user}}</p>
+                      {{ activity.update_user if activity.update_user else (activity.activity_update_user if activity.activity_update_user else guest_email) }}</p>
                   </div>
                 </div>
               </div>
@@ -138,7 +142,10 @@
                   <label class="col-sm-4 control-label">{{_('Item')}}</label>
                   <div class="col-sm-8">
                     <p class="form-control-static">
-                      <a href="#" id="lnk_item_detail">{{item.get('title') or item.get('title_ja') if item}}</a>
+                      {%- if is_enable_item_name_link -%}
+                        <a href="#"
+                           id="lnk_item_detail">{{ item.get('title_ja', item.get('title')) if item }}</a>
+                      {%- endif -%}
                     </p>
                   </div>
                 </div>
@@ -250,7 +257,7 @@
               <tr>
                 <td>{{history.ActionName[0]}}</td>
                 <td>{{history.action_date.strftime('%Y-%m-%d %H:%M')}}</td>
-                <td>{{history.user.email}}</td>
+                <td>{{ history.user.email if history.user.email else guest_email }}</td>
                 <td>{{_(history.StatusDesc)}}</td>
                 <td>{{history.CommentDesc}}</td>
               </tr>

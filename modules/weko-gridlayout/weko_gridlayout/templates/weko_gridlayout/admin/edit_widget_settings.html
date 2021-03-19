@@ -36,7 +36,20 @@
   <div id="alerts"></div>
   <input id="model_data" type="hidden" data-editdata='{{ model }}' value=''/>
   <input id="return_url" type="hidden" value='{{ return_url }}'/>
-  <div id="root" class="col-xs-12"></div>
+  {% if locked_value %}
+    <div id="root" class="col-xs-12"></div>
+    <input id="locked_value" type="hidden" value='{{ locked_value }}'/>
+  {% endif %}
+  {% if locked or (locked_value and locked) %}
+    <input id="check_locked" type="hidden" value='{{ locked }}'/>
+    {% from "weko_theme/macros/modal_page.html" import confirm_modal %}
+    {% set message = _("Do you wan to unlock this widget?") %}
+    {{ confirm_modal(modal_id="unlock-edit-page",
+                 button_id="unlock-page-button",
+                 button_text="OK",
+                 title=_('Confirmation'),
+                 body=message) }}
+  {% endif %}
   <input type="hidden" id="current_language"
          value="{{ current_i18n.language }}"/>
   {% from "weko_theme/macros/modal_page.html" import all_modal %}

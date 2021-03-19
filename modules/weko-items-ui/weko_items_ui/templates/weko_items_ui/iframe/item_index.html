@@ -61,6 +61,10 @@
 
 {%- set items_show_list = record.items_show_list -%}
 
+{% set guest_email = None %}
+{% if activity and activity.extra_info and 'guest_mail' in activity.extra_info %}
+  {% set guest_email = activity.extra_info.guest_mail %}
+{% endif %}
 {%- block page_body_main %}
 <div class="row" style="height:100%">
   {%- if page %}
@@ -144,7 +148,7 @@
                   </div>
                   <div class="col-xs-12 col-md-8 col-lg-8">
                     <p class="form-control-static">
-                      {{activity.update_user if activity.update_user else activity.activity_update_user}}</p>
+                      {{activity.update_user if activity.update_user else (activity.activity_update_user if activity.activity_update_user else guest_email)}}</p>
                   </div>
                 </div>
                 <div class="col-sm-1"></div>
@@ -160,7 +164,7 @@
                   <label>{{_('Item')}}</label>
                </div>
                <div class="col-xs-11 col-md-11 col-lg-11">
-                   <a href="#" id="lnk_item_detail">{{item.get('title') or item.get('title_ja') if item}}</a>
+                   <a href="#" id="lnk_item_detail">{{ item.get('title_ja', item.get('title')) if item }}</a>
                </div>
           </div>
         </div>
@@ -251,7 +255,7 @@
               <tr>
                 <td>{{history.ActionName[0]}}</td>
                 <td>{{history.action_date.strftime('%Y-%m-%d %H:%M')}}</td>
-                <td>{{history.user.email}}</td>
+                <td>{{ history.user.email if history.user.email else guest_email }}</td>
                 <td>{{_(history.StatusDesc)}}</td>
                 <td>{{history.CommentDesc}}</td>
               </tr>
