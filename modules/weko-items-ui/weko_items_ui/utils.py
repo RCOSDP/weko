@@ -68,7 +68,7 @@ from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
     get_root_item_option, get_sub_item_option
 from weko_user_profiles import UserProfile
-from weko_workflow.api import WorkActivity, WorkFlow
+from weko_workflow.api import WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     WEKO_SERVER_CNRI_HOST_LINK
 from weko_workflow.models import ActionStatusPolicy as ASP
@@ -264,11 +264,13 @@ def get_user_information(user_id):
     """
     result = {
         'username': '',
-        'email': ''
+        'email': '',
+        'fullname': '',
     }
     user_info = UserProfile.get_by_userid(user_id)
     if user_info is not None:
         result['username'] = user_info.get_username
+        result['fullname'] = user_info.fullname
 
     metadata = MetaData()
     metadata.reflect(bind=db.engine)
@@ -1687,7 +1689,8 @@ def validate_user_mail(email):
                 email)
             if user_info and user_info.get(
                     'user_id') is not None:
-                if int(user_info.get('user_id')) == int(current_user.get_id()):
+                if current_user.is_authenticated and int(
+                        user_info.get('user_id')) == int(current_user.get_id()):
                     result['validation'] = False
                     result['error'] = _(
                         "You cannot specify "
@@ -1794,27 +1797,6 @@ def set_multi_language_name(item, cur_lang):
             if 'name_i18n' in value \
                     and len(value['name_i18n'][cur_lang]) > 0:
                 value['name'] = value['name_i18n'][cur_lang]
-
-
-def validate_save_title_and_share_user_id(result, data):
-    """Save title and shared user id for activity.
-
-    :param result: json object
-    :param data: json object
-    :return: The result.
-    """
-    try:
-        if data and isinstance(data, dict):
-            activity_id = data['activity_id']
-            title = data['title']
-            shared_user_id = data['shared_user_id']
-            activity = WorkActivity()
-            activity.update_title_and_shared_user_id(activity_id, title,
-                                                     shared_user_id)
-    except Exception as ex:
-        result['is_valid'] = False
-        result['error'] = str(ex)
-    return result
 
 
 def get_data_authors_prefix_settings():
