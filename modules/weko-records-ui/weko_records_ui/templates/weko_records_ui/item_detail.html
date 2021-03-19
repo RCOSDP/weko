@@ -21,7 +21,7 @@
 {% from "weko_records_ui/output_detail_data.html" import output_detail_data, output_attribute_value %}
 {% from "weko_records_ui/creator_detail_template.html" import output_creator_data %}
 {% from "weko_records_ui/output_bibliographic_information_detail.html" import output_bibliographic_information %}
-{% macro output_item_detail(record, files, files_thumbnail, pid, items_show_list, is_top_page=false, is_logged_in=false, open_day_display_flg=true, , cur_step=None, allow_multi_thumbnail=None) %}
+{% macro output_item_detail(record, files, files_thumbnail, pid, items_show_list, is_top_page=false, is_logged_in=false, open_day_display_flg=true, cur_step=None, allow_multi_thumbnail=None) %}
 {% autoescape false %}
   <table class="table table-bordered table-striped detail-table">
       {% if record.item_type_info %}
