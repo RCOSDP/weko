@@ -2930,3 +2930,13 @@ def prepare_data_for_guest_activity(activity_id: str) -> dict:
         session['itemlogin_community_id'] = community_id
 
     return ctx
+
+
+def get_allow_multi_thumbnail(item_type_id):
+    from weko_items_ui.api import item_login
+    step_item_login_url, need_file, need_billing_file, \
+        record, json_schema, schema_form,\
+        item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
+        allow_multi_thumbnail \
+        = item_login(item_type_id=item_type_id)
+    return allow_multi_thumbnail

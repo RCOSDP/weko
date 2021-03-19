@@ -73,8 +73,8 @@ from .utils import IdentifierHandle, auto_fill_title, check_continue, \
     check_existed_doi, delete_cache_data, delete_guest_activity, \
     filter_all_condition, filter_condition, get_account_info, get_actionid, \
     get_activity_display_info, get_activity_id_of_record_without_version, \
-    get_application_and_approved_date, get_cache_data, \
-    get_identifier_setting, get_record_by_root_ver, \
+    get_allow_multi_thumbnail, get_application_and_approved_date, \
+    get_cache_data, get_identifier_setting, get_record_by_root_ver, \
     get_term_and_condition_content, get_workflow_item_type_names, \
     getThumbnail, handle_finish_workflow, init_activity_for_guest_user, \
     is_enable_item_name_link, is_hidden_pubdate, is_show_autofill_metadata, \
@@ -599,12 +599,17 @@ def display_activity(activity_id="0"):
     if action_endpoint and action_endpoint == 'item_login' and item and item.get('pid') and \
        item['pid'].get('value'):
         itemLink_record, newFiles = get_record_by_root_ver(item['pid']['value'])
+        allow_multi_thumbnail = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'))
         new_thumbnail = getThumbnail(newFiles, allow_multi_thumbnail)
 
     # case create item
     if item and 'pid' not in item:
         itemLink_record = approval_record
         newFiles = files
+        allow_multi_thumbnail = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'))
+        new_thumbnail = getThumbnail(newFiles, allow_multi_thumbnail)
+        if new_thumbnail:
+            new_thumbnail = files_thumbnail
 
     # case when edit item and step # item_login
     if activity_detail.item_id and item and 'pid' in item \
@@ -621,13 +626,12 @@ def display_activity(activity_id="0"):
 
         if 'end_action' in action_endpoint:
             files = newFiles
-        files_thumbnail = [i for i in files
-                               if 'is_thumbnail' in i.keys()
-                               and i['is_thumbnail']]
+        allow_multi_thumbnail = get_allow_multi_thumbnail(approval_record.get('item_type_id'))
+        files_thumbnail = getThumbnail(files, allow_multi_thumbnail)
         if 'approval' == action_endpoint:
+            allow_multi_thumbnail = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'))
             new_thumbnail = getThumbnail(newFiles, allow_multi_thumbnail)
-            if new_thumbnail and len(new_thumbnail) < 1:
-                new_thumbnail = files_thumbnail
+
         if approval_record and files and len(approval_record) > 0 and \
            len(files) > 0 and (isinstance(approval_record, list) or isinstance(approval_record, dict)):
             files = setDisplayTypeForFile(approval_record, files)

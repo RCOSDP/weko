@@ -57,9 +57,10 @@
 {%- endblock page_footer %}
 
 {% set guest_email = None %}
-{% if activity and activity.extra_info and 'guest_mail' in activity.extra_info %}
-  {% set guest_email = activity.extra_info.guest_mail %}
+  {% if activity and activity.extra_info and 'guest_mail' in activity.extra_info %}
+    {% set guest_email = activity.extra_info.guest_mail %}
 {% endif %}
+
 {%- block page_body_main %}
 <div class="row">
   {%- if community %}
