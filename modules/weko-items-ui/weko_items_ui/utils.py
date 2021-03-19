@@ -73,7 +73,8 @@ from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     WEKO_SERVER_CNRI_HOST_LINK
 from weko_workflow.models import ActionStatusPolicy as ASP, Activity, \
     FlowAction, FlowActionRole, FlowDefine
-from weko_workflow.utils import IdentifierHandle
+from weko_workflow.utils import IdentifierHandle, \
+    recursive_get_specified_properties
 
 def get_list_username():
     """Get list username.
@@ -475,11 +476,10 @@ def is_consistency_flow_and_item_type(json_form, activity_id):
         array_split_key.pop(0)
         return ".".join(array_split_key)
 
-    from weko_workflow.utils import recursive_get_specifed_properties
     specify_properties = get_specify_property_by_activity_id(activity_id)
     count = 0
     for form in json_form:
-        approval_key = recursive_get_specifed_properties(form)
+        approval_key = recursive_get_specified_properties(form)
         fixed_key = remove_parent_key(approval_key)
         if fixed_key in specify_properties:
             count = count + 1
