@@ -3218,10 +3218,13 @@ function toObject(arr) {
                     let mail_address = '';
                     if (subItemApprovalMailAddress) {
                       mail_address = subItemApprovalMailAddress.$modelValue;
+                      if (mail_address) {
+                        mail_address = mail_address.trim()
+                      }
+                      param[item] = mail_address;
+                      emailsToValidate.push(item);
+                      listEmailKeys.push(key);
                     }
-                    param[item] = mail_address.trim();
-                    emailsToValidate.push(item);
-                    listEmailKeys.push(key);
                   }
                 });
               });
@@ -3230,10 +3233,10 @@ function toObject(arr) {
               param['user_key_to_check'] = listEmailKeys;
               param['auto_set_index_action'] = isAutoSetIndexAction;
 
-              return this.sendValidationRequest(param, itemsDict, isAutoSetIndexAction, approvalMailSubKey);
+        return this.sendValidationRequest(param, itemsDict, isAutoSetIndexAction);
             };
 
-      $scope.sendValidationRequest = function (param, itemsDict, isAutoSetIndexAction, approvalMailSubKey) {
+      $scope.sendValidationRequest = function (param, itemsDict, isAutoSetIndexAction) {
         let result = true;
         $.ajax({
           context: this,
@@ -3246,12 +3249,14 @@ function toObject(arr) {
           data: JSON.stringify(param),
           dataType: "json",
           success: function (data, status) {
-            let listEmailErrors = data.keys;
-            //// Wait error modal handle
-
-            if (listEmailErrors && listEmailErrors.length > 0) {
-              this.processShowRequiredEmail(listEmailErrors, itemsDict, "#validate_email_register");
+            if (data.validate_required_email && data.validate_required_email.length > 0) {
+              this.processShowModelValidation(data.validate_required_email, itemsDict, "#validate_email_required");
               result = false;
+            } else {
+              if (data.validate_register_in_system && data.validate_register_in_system.length > 0) {
+                this.processShowModelValidation(data.validate_register_in_system, itemsDict, "#validate_email_register");
+                result = false;
+              }
             }
             if (isAutoSetIndexAction && !data.index) {
               let error_message = $("#not_existed_index_tree_err").val() + '<br/><br/>';
@@ -3269,29 +3274,7 @@ function toObject(arr) {
         return result;
       };
 
-      $scope.processResponseEmailValidation = function (itemsDict, emailData, subKey, errorList) {
-        let validationResult = true;
-        if (emailData) {
-          if (emailData.error && typeof emailData.validation !== 'undefined') {
-            $("#inputModal").html(emailData.error);
-            $("#allModal").modal("show");
-            validationResult = false;
-          } else if (!emailData.validation) {
-            validationResult = false;
-            let mailAddressItem = $scope.depositionForm[subKey];
-            if (mailAddressItem) {
-              let name = mailAddressItem.$name;
-              if (itemsDict.hasOwnProperty(name)) {
-                name = itemsDict[name];
-              }
-              errorList.push(name);
-            }
-          }
-        }
-        return validationResult;
-      }
-
-      $scope.processShowRequiredEmail = function (listEmailErrors, itemsDict, id_message) {
+      $scope.processShowModelValidation = function (listEmailErrors, itemsDict, id_message) {
         let message = $(id_message).val() + '<br/><br/>';
         for (let index = 0; index < listEmailErrors.length; index++) {
           let subKey = listEmailErrors[index];

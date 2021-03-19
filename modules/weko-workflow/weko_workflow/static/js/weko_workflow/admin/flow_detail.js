@@ -38,7 +38,6 @@ $(document).ready(function () {
     localStorage.setItem('apply_action_list', JSON.stringify(apply_action_list));
     if(!isApproval(apply_action)){
       $(this).removeClass('btn-primary');
-      $(this).addClass('btn-default');
       $(this).prop('disabled', true);
     }
     $('#btn_unusable_' + actionId).addClass('btn-primary');
@@ -61,7 +60,6 @@ $(document).ready(function () {
     localStorage.setItem('apply_action_list', JSON.stringify(apply_action_list));
     if(!isApproval(apply_action)){
       $(this).removeClass('btn-primary');
-      $(this).addClass('btn-default');
       $(this).prop('disabled', true);
       $('#btn_apply_' + actionId).addClass('btn-primary');
       $('#btn_apply_' + actionId).removeProp('disabled');
@@ -69,7 +67,6 @@ $(document).ready(function () {
     else{
       if (count == 1) {
         $(this).removeClass('btn-primary');
-        $(this).addClass('btn-default');
         $(this).prop('disabled', true);
       }
     }
