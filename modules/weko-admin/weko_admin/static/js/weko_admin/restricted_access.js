@@ -8,6 +8,7 @@ const CHECK_INPUT_DOWNLOAD = document.getElementById('check_input_download').val
 const CHECK_INPUT_EXPIRATION_DATE = document.getElementById('check_input_expiration_date').value;
 const EMPTY_DOWNLOAD = document.getElementById('empty_download').value;
 const EMPTY_EXPIRATION_DATE = document.getElementById('empty_expiration_date').value;
+const USAGE_REPORT_WORKFLOW_ACCESS_LABEL = document.getElementById('usage_report_workflow_access_label').value
 const MAX_DOWNLOAD_LIMIT = 2147483647;
 const MAX_EXPIRATION_DATE = 999999999;
 
@@ -42,14 +43,16 @@ const EMPTY_TERM = {
 
 })();
 
-function ContentFileDownloadLayout({value, setValue}) {
+function InputComponent({
+                          label,
+                          currentValue,
+                          checkboxValue,
+                          value,
+                          setValue,
+                          inputId,
+                          checkboxId
+                        }) {
   const style = {marginRight: "5px", marginLeft: "15px"}
-  const {
-    download_limit,
-    download_limit_unlimited_chk,
-    expiration_date,
-    expiration_date_unlimited_chk
-  } = value;
 
   function handleChange(event) {
     event.preventDefault();
@@ -61,9 +64,48 @@ function ContentFileDownloadLayout({value, setValue}) {
       if (!event.target.validity.valid) {
         updateValue = value[key];
       }
+      if (isNaN(updateValue)) {
+        try {
+          updateValue = parseInt(updateValue);
+        } catch (e) {
+          console.log(e);
+        }
+      }
     }
     setValue({...value, ...{[key]: updateValue}});
   }
+
+  return (
+    <div className="form-inline">
+      <label htmlFor={inputId} className="col-sm-2 text-right">{label}</label>
+      <input type="text" id={inputId} className="col-sm-2"
+             value={currentValue}
+             onChange={handleChange}
+             pattern="[0-9]*"
+             maxLength={10}
+             disabled={checkboxValue}
+      />
+      <label htmlFor={checkboxId}
+             className="text-left">
+        <input type="checkbox"
+               style={style}
+               id={checkboxId}
+               key={Math.random()}
+               checked={checkboxValue}
+               onChange={handleChange}/>
+        {UNLIMITED_LABEL}
+      </label>
+    </div>
+  )
+}
+
+function ContentFileDownloadLayout({value, setValue}) {
+  const {
+    download_limit,
+    download_limit_unlimited_chk,
+    expiration_date,
+    expiration_date_unlimited_chk
+  } = value;
 
   return (
     <div>
@@ -74,46 +116,52 @@ function ContentFileDownloadLayout({value, setValue}) {
               <h5><strong>{CONTENT_FILE_DOWNLOAD_LABEL}</strong></h5>
             </div>
             <div className="panel-body">
-              <div className="form-inline">
-                <label
-                  className="col-sm-2 text-right">{EXPIRATION_DATE_LABEL}</label>
-                <input type="text" id="expiration_date" className="col-sm-2"
-                       value={expiration_date}
-                       onChange={handleChange}
-                       pattern="[0-9]*"
-                       maxLength={10}
-                       disabled={expiration_date_unlimited_chk}
-                />
-                <label htmlFor="expiration_date_unlimited_chk"
-                       className="text-left">
-                  <input type="checkbox"
-                         style={{marginRight: "5px", marginLeft: "15px"}}
-                         id="expiration_date_unlimited_chk"
-                         key={Math.random()}
-                         checked={expiration_date_unlimited_chk}
-                         onChange={handleChange}/>
-                  {UNLIMITED_LABEL}
-                </label>
-              </div>
-              <div className="form-inline">
-                <label
-                  className="col-sm-2 text-right">{DOWNLOAD_LIMIT_LABEL}</label>
-                <input type="text" id="download_limit" className="col-sm-2"
-                       onChange={handleChange}
-                       disabled={download_limit_unlimited_chk}
-                       pattern="[0-9]*"
-                       value={download_limit}/>
-                <label htmlFor="download_limit_unlimited_chk"
-                       className="text-left">
-                  <input type="checkbox"
-                         style={{marginRight: "5px", marginLeft: "15px"}}
-                         id="download_limit_unlimited_chk"
-                         key={Math.random()}
-                         checked={download_limit_unlimited_chk}
-                         onClick={handleChange}/>
-                  {UNLIMITED_LABEL}
-                </label>
-              </div>
+              <InputComponent
+                label={EXPIRATION_DATE_LABEL}
+                currentValue={expiration_date}
+                checkboxValue={expiration_date_unlimited_chk}
+                inputId="expiration_date"
+                checkboxId="expiration_date_unlimited_chk"
+                value={value}
+                setValue={setValue}
+              />
+              <InputComponent
+                label={DOWNLOAD_LIMIT_LABEL}
+                currentValue={download_limit}
+                checkboxValue={download_limit_unlimited_chk}
+                inputId="download_limit"
+                checkboxId="download_limit_unlimited_chk"
+                value={value}
+                setValue={setValue}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function UsageReportWorkflowAccessLayout({value, setValue}) {
+  const {expiration_date_access, expiration_date_access_unlimited_chk} = value
+  return (
+    <div>
+      <div className="row">
+        <div className="col-sm-12 col-md-12 col-md-12">
+          <div className="panel panel-default">
+            <div className="panel-heading">
+              <h5><strong>{USAGE_REPORT_WORKFLOW_ACCESS_LABEL}</strong></h5>
+            </div>
+            <div className="panel-body">
+              <InputComponent
+                label={EXPIRATION_DATE_LABEL}
+                currentValue={expiration_date_access}
+                checkboxValue={expiration_date_access_unlimited_chk}
+                inputId="expiration_date_access"
+                checkboxId="expiration_date_access_unlimited_chk"
+                value={value}
+                setValue={setValue}
+              />
             </div>
           </div>
         </div>
@@ -164,14 +212,16 @@ function TermsList({termList, setTermList, currentTerm, setCurrentTerm}) {
                     onClick={handleOnTermClick}
                     id={term.key}>{term.content.en.title}
                   </a>
-                  <a className="glyphicon glyphicon-remove glyphicon-remove-term pull-right"
-                     id={term.key}
-                     key={term.key} onClick={handleRemoveTerm}/>
+                  <a
+                    className="glyphicon glyphicon-remove glyphicon-remove-term pull-right"
+                    id={term.key}
+                    key={term.key} onClick={handleRemoveTerm}/>
                 </li>
               ))
             }
 
-            <button className="btn btn-light add-button btn-add" style={{marginTop: "10px"}} id="new_term"
+            <button className="btn btn-light add-button btn-add"
+                    style={{marginTop: "10px"}} id="new_term"
                     onClick={handleCreateNewTerm}>
               <span class="glyphicon glyphicon-plus">
               </span>{LABEL_NEW}</button>
@@ -200,33 +250,35 @@ function TermDetail({currentTerm, setCurrentTerm}) {
     <div style={{paddingRight: '15px'}}>
       <div className="form-group row margin-top">
         <label htmlFor="staticEmail"
-          className="col-sm-2 col-form-label" style={{textAlign: 'right'}}>{LABEL_JAPANESE}</label>
+               className="col-sm-2 col-form-label"
+               style={{textAlign: 'right'}}>{LABEL_JAPANESE}</label>
         <div className="col-sm-10">
           <input type="text" className="form-control"
-            disabled={currentTerm.existed !== true} name="title"
-            value={ja.title}
-            onChange={e => handleOnInputChanged(e, "ja")}/>
+                 disabled={currentTerm.existed !== true} name="title"
+                 value={ja.title}
+                 onChange={e => handleOnInputChanged(e, "ja")}/>
         </div>
         <div className="col-sm-12 margin-top">
           <textarea className="form-control textarea_height"
-            disabled={currentTerm.existed !== true} name="content"
-            value={ja.content}
-            onChange={e => handleOnInputChanged(e, "ja")}/>
+                    disabled={currentTerm.existed !== true} name="content"
+                    value={ja.content}
+                    onChange={e => handleOnInputChanged(e, "ja")}/>
         </div>
       </div>
       <div className="form-group row margin-top">
         <label htmlFor="staticEmail"
-          className="col-sm-2 col-form-label field-required" style={{textAlign: 'right'}}>{LABEL_ENGLISH}</label>
+               className="col-sm-2 col-form-label field-required"
+               style={{textAlign: 'right'}}>{LABEL_ENGLISH}</label>
         <div className="col-sm-10">
           <input type="text" disabled={currentTerm.existed !== true}
-            className="form-control" name="title" value={en.title}
-            onChange={e => handleOnInputChanged(e, "en")}/>
+                 className="form-control" name="title" value={en.title}
+                 onChange={e => handleOnInputChanged(e, "en")}/>
         </div>
         <div className="col-sm-12 margin-top">
           <textarea className="form-control textarea_height"
-            disabled={currentTerm.existed !== true} name="content"
-            value={en.content}
-            onChange={e => handleOnInputChanged(e, "en")}/>
+                    disabled={currentTerm.existed !== true} name="content"
+                    value={en.content}
+                    onChange={e => handleOnInputChanged(e, "en")}/>
         </div>
       </div>
     </div>
@@ -261,15 +313,23 @@ function TermsConditions({termList, setTermList, currentTerm, setCurrentTerm}) {
 }
 
 
-function RestrictedAccessLayout({content_file_download, terms_and_conditions}) {
+function RestrictedAccessLayout({
+                                  content_file_download,
+                                  terms_and_conditions,
+                                  usage_report_workflow_access
+                                }) {
   const [contentFileDownload, setContentFileDownload] = useState(content_file_download);
+  const [usageReportWorkflowAccess, setUsageReportWorkflowAccess] = useState(usage_report_workflow_access);
   const [termList, setTermList] = useState(terms_and_conditions);
   const [currentTerm, setCurrentTerm] = useState(EMPTY_TERM);
 
   function handleApply() {
     let termListClone = [...termList];
     if (!currentTerm.existed) {
-      return {"valid": true, "data": [...JSON.parse(JSON.stringify(termListClone))]}
+      return {
+        "valid": true,
+        "data": [...JSON.parse(JSON.stringify(termListClone))]
+      }
     }
 
     if (currentTerm.content.en.title.trim() === '' || currentTerm.content.en.content.trim() === '') {
@@ -302,11 +362,19 @@ function RestrictedAccessLayout({content_file_download, terms_and_conditions}) {
 
   function handleSave() {
     const URL = "/api/admin/restricted_access/save";
+    // Validate Content file download.
     let errorMessage = validateContentFileDownload();
     if (errorMessage) {
       showErrorMessage(errorMessage);
       return false;
     }
+    // Validate Usage report workflow access.
+    errorMessage = validateUsageReportWorkflowAccess();
+    if (errorMessage) {
+      showErrorMessage(errorMessage);
+      return false;
+    }
+    // Validate Term and condition
     let terms_data = handleApply();
     if (terms_data["valid"] === false) {
       showErrorMessage(MESSAGE_MISSING_DATA);
@@ -315,6 +383,7 @@ function RestrictedAccessLayout({content_file_download, terms_and_conditions}) {
 
     let data = {
       content_file_download: contentFileDownload,
+      usage_report_workflow_access: usageReportWorkflowAccess,
       terms_and_conditions: terms_data["data"]
     }
 
@@ -326,9 +395,9 @@ function RestrictedAccessLayout({content_file_download, terms_and_conditions}) {
       data: JSON.stringify(data),
       success: function (result) {
         if (result.status) {
-          addAlert(result.msg);
+          addAlert(result.msg, 2);
         } else {
-          addAlert(result.msg);
+          addAlert(result.msg, 1);
         }
       },
       error: function (error) {
@@ -362,10 +431,30 @@ function RestrictedAccessLayout({content_file_download, terms_and_conditions}) {
     return errorMessage;
   }
 
+  function validateUsageReportWorkflowAccess() {
+    const {
+      expiration_date_access,
+      expiration_date_access_unlimited_chk,
+    } = usageReportWorkflowAccess;
+
+    let errorMessage;
+
+    if (expiration_date_access === "" && !expiration_date_access_unlimited_chk) {
+      errorMessage = EMPTY_EXPIRATION_DATE;
+    } else if ((expiration_date_access < 1 && !expiration_date_access_unlimited_chk)
+      || expiration_date_access > MAX_EXPIRATION_DATE) {
+      errorMessage = CHECK_INPUT_EXPIRATION_DATE;
+    }
+
+    return errorMessage;
+  }
+
   return (
     <div>
       <ContentFileDownloadLayout value={contentFileDownload}
                                  setValue={setContentFileDownload}/>
+      <UsageReportWorkflowAccessLayout value={usageReportWorkflowAccess}
+                                       setValue={setUsageReportWorkflowAccess}/>
       <TermsConditions termList={termList} setTermList={setTermList}
                        currentTerm={currentTerm}
                        setCurrentTerm={setCurrentTerm}/>
@@ -384,9 +473,16 @@ function showErrorMessage(errorMessage) {
   $("#allModal").modal("show");
 }
 
-function addAlert(message) {
+function addAlert(message, type) {
+  let className = "alert alert-success alert-boder";
+  let closeButton = '<button type="button" class="close" data-dismiss="alert">&times;</button>'
+  if (type === 1) {
+    className = "alert alert-danger alert-dismissable alert-boder";
+  }
+  if (type === 2) {
+    className = "alert alert-info alert-dismissable alert-boder";
+  }
   $('#alerts').append(
-    '<div class="alert alert-light" id="alert-style">' +
-    '<button type="button" class="close" data-dismiss="alert">' +
-    '&times;</button>' + message + '</div>');
+    '<div class="' + className + '">'
+    + closeButton + message + '</div>');
 }
