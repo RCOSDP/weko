@@ -1621,3 +1621,18 @@ def setDisplayTypeForFile(itemLink_record, newFiles):
                    key in newFiles[k]['version_id']:
                     newFiles[k]['displaytype'] = value
     return newFiles
+
+
+def getThumbnail(files, allow_multi_thumbnail):
+    """Get Thumbnail from file
+
+    :return: thumbnail.
+    """
+    thumbnail = []
+    if files:
+        thumbnail = [i for i in files
+                            if 'is_thumbnail' in i.keys()
+                            and i['is_thumbnail']]
+        if not allow_multi_thumbnail and len(thumbnail) > 1:
+            thumbnail = [thumbnail[len(thumbnail) - 1]]
+    return thumbnail

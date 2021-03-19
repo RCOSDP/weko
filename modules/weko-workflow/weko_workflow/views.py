@@ -68,7 +68,7 @@ from .utils import IdentifierHandle, check_existed_doi, delete_cache_data, \
     get_activity_id_of_record_without_version, get_cache_data, \
     get_identifier_setting, get_record_by_root_ver, handle_finish_workflow, \
     is_hidden_pubdate, is_show_autofill_metadata, item_metadata_validation, \
-    register_hdl, saving_doi_pidstore, setDisplayTypeForFile, \
+    register_hdl, saving_doi_pidstore, setDisplayTypeForFile, getThumbnail, \
     update_cache_data
 
 blueprint = Blueprint(
@@ -141,6 +141,9 @@ def iframe_success():
 
     :return: The rendered template.
     """
+    need_thumbnail = None
+    files_thumbnail = None
+    allow_multi_thumbnail = None
     # get session value
     history = WorkActivityHistory()
     histories = history.get_activity_history_list(session['itemlogin_id'])
@@ -156,6 +159,13 @@ def iframe_success():
     files = []
     if item and item.get('pid') and 'value' in item['pid']:
         record, files = get_record_by_root_ver(item['pid']['value'])
+        item_type_id = record.get('item_type_id')
+        if item_type_id:
+            step_item_login_url, need_file, need_billing_file, \
+            r, json_schema, schema_form,\
+            item_save_uri, f, endpoints, need_thumbnail, files_thumbnail, \
+            allow_multi_thumbnail = item_login(item_type_id=item_type_id)
+            files_thumbnail = getThumbnail(files, allow_multi_thumbnail)
     else:
         record = session['itemlogin_record']
     ctx = {'community': None}
@@ -188,6 +198,9 @@ def iframe_success():
                            files=files,
                            community_id=community_id,
                            action_comment=action_comment,
+                           need_thumbnail=need_thumbnail,
+                           files_thumbnail=files_thumbnail,
+                           allow_multi_thumbnail=allow_multi_thumbnail,
                            **ctx)
 
 
@@ -382,6 +395,7 @@ def display_activity(activity_id=0):
     item_type_name = get_item_type_name(workflow_detail.itemtype_id)
     itemLink_record = []
     newFiles = []
+    new_thumbnail = None
 
     if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
         activity_session = dict(
@@ -400,6 +414,10 @@ def display_activity(activity_id=0):
             item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
             allow_multi_thumbnail \
             = item_login(item_type_id=workflow_detail.itemtype_id)
+        print(workflow_detail.itemtype_id)
+        print(need_thumbnail)
+        print(files_thumbnail)
+        print(allow_multi_thumbnail)
         if item:
             record = item
 
@@ -478,7 +496,7 @@ def display_activity(activity_id=0):
     if action_endpoint and action_endpoint == 'item_login' and item and item.get('pid') and \
        item['pid'].get('value'):
         itemLink_record, newFiles = get_record_by_root_ver(item['pid']['value'])
-        newFiles = setDisplayTypeForFile(itemLink_record, newFiles)
+        new_thumbnail = getThumbnail(newFiles, allow_multi_thumbnail)
 
     # case create item
     if item and 'pid' not in item:
@@ -491,12 +509,22 @@ def display_activity(activity_id=0):
         if not newFiles:
             newFiles = copy.deepcopy(files)
         newRecord = copy.deepcopy(approval_record)
+    
         itemLink_record, files = get_record_by_root_ver(item['pid']['value'])
         item['title'] = itemLink_record['title'][0]
+
         approval_record = itemLink_record
         itemLink_record = newRecord
+
         if 'end_action' in action_endpoint:
             files = newFiles
+        files_thumbnail = [i for i in files
+                               if 'is_thumbnail' in i.keys()
+                               and i['is_thumbnail']]
+        if 'approval' == action_endpoint:
+            new_thumbnail = getThumbnail(newFiles, allow_multi_thumbnail)
+            if new_thumbnail and len(new_thumbnail) < 1:
+                new_thumbnail = files_thumbnail
         if approval_record and files and len(approval_record) > 0 and \
            len(files) > 0 and (isinstance(approval_record, list) or isinstance(approval_record, dict)):
             files = setDisplayTypeForFile(approval_record, files)
@@ -539,6 +567,7 @@ def display_activity(activity_id=0):
         res_check=res_check,
         pid=recid,
         community_id=community_id,
+        new_thumbnail=new_thumbnail,
         need_thumbnail=need_thumbnail,
         files_thumbnail=files_thumbnail,
         allow_multi_thumbnail=allow_multi_thumbnail,
