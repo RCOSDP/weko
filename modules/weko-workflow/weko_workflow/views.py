@@ -72,17 +72,17 @@ from .utils import IdentifierHandle, auto_fill_title, check_continue, \
     check_existed_doi, delete_cache_data, delete_guest_activity, \
     filter_all_condition, get_account_info, get_actionid, \
     get_activity_display_info, get_activity_id_of_record_without_version, \
-    get_application_and_approved_date, get_cache_data, \
-    get_identifier_setting, get_term_and_condition_content, \
-    get_workflow_item_type_names, handle_finish_workflow, \
-    init_activity_for_guest_user, is_enable_item_name_link, \
-    is_hidden_pubdate, is_show_autofill_metadata, is_usage_application, \
-    is_usage_application_item_type, item_metadata_validation, \
-    prepare_data_for_guest_activity, process_send_notification_mail, \
-    process_send_reminder_mail, register_hdl, save_activity_data, \
-    saving_doi_pidstore, send_onetime_download_url_to_guest, \
-    update_cache_data, validate_guest_activity, get_record_by_root_ver, \
-    setDisplayTypeForFile, getThumbnail, get_allow_multi_thumbnail
+    get_allow_multi_thumbnail, get_application_and_approved_date, \
+    get_cache_data, get_identifier_setting, get_record_by_root_ver, \
+    get_term_and_condition_content, get_workflow_item_type_names, \
+    getThumbnail, handle_finish_workflow, init_activity_for_guest_user, \
+    is_enable_item_name_link, is_hidden_pubdate, is_show_autofill_metadata, \
+    is_usage_application, is_usage_application_item_type, \
+    item_metadata_validation, prepare_data_for_guest_activity, \
+    process_send_notification_mail, process_send_reminder_mail, register_hdl, \
+    save_activity_data, saving_doi_pidstore, \
+    send_onetime_download_url_to_guest, setDisplayTypeForFile, \
+    update_cache_data, validate_guest_activity
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -184,9 +184,7 @@ def iframe_success():
 
     :return: The rendered template.
     """
-    need_thumbnail = None
     files_thumbnail = None
-    allow_multi_thumbnail = None
     # get session value
     history = WorkActivityHistory()
     histories = history.get_activity_history_list(session['itemlogin_id'])
@@ -202,13 +200,7 @@ def iframe_success():
     files = []
     if item and item.get('pid') and 'value' in item['pid']:
         record, files = get_record_by_root_ver(item['pid']['value'])
-        item_type_id = record.get('item_type_id')
-        if item_type_id:
-            step_item_login_url, need_file, need_billing_file, \
-            r, json_schema, schema_form,\
-            item_save_uri, f, endpoints, need_thumbnail, files_thumbnail, \
-            allow_multi_thumbnail = item_login(item_type_id=item_type_id)
-            files_thumbnail = getThumbnail(files, allow_multi_thumbnail)
+        files_thumbnail = getThumbnail(files, None)
     else:
         record = session['itemlogin_record']
     ctx = {'community': None}
@@ -249,9 +241,7 @@ def iframe_success():
                            files=files,
                            community_id=community_id,
                            action_comment=action_comment,
-                           need_thumbnail=need_thumbnail,
                            files_thumbnail=files_thumbnail,
-                           allow_multi_thumbnail=allow_multi_thumbnail,
                            is_enable_item_name_link=is_enable_item_name_link(
                                action_endpoint, item_type_name),
                            **ctx)
@@ -470,7 +460,11 @@ def display_activity(activity_id="0"):
     allow_multi_thumbnail = False
     term_and_condition_content = ''
     is_auto_set_index_action = True
+    itemLink_record = []
+    newFiles = []
+    new_thumbnail = None
     application_item_type = False
+    allow_multi_thumbnails = False
     title = ""
     data_type = activity_detail.extra_info.get(
         "related_title") if activity_detail.extra_info else None
@@ -479,6 +473,7 @@ def display_activity(activity_id="0"):
     position_list = WEKO_USERPROFILES_POSITION_LIST
     institute_position_list = WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
     item_type_name = get_item_type_name(workflow_detail.itemtype_id)
+
     if 'item_login' == action_endpoint or \
             'item_login_application' == action_endpoint or \
             'file_upload' == action_endpoint:
@@ -585,17 +580,17 @@ def display_activity(activity_id="0"):
 
     # case when edit item and step is item_login
     if action_endpoint and action_endpoint == 'item_login' and item and item.get('pid') and \
-       item['pid'].get('value'):
+            item['pid'].get('value'):
         itemLink_record, newFiles = get_record_by_root_ver(item['pid']['value'])
-        allow_multi_thumbnail = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'), activity_id)
-        new_thumbnail = getThumbnail(newFiles, allow_multi_thumbnail)
+        allow_multi_thumbnails = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'), None)
+        new_thumbnail = getThumbnail(newFiles, allow_multi_thumbnails)
 
     # case create item
     if item and 'pid' not in item:
         itemLink_record = approval_record
         newFiles = files
-        allow_multi_thumbnail = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'), activity_id)
-        new_thumbnail = getThumbnail(newFiles, allow_multi_thumbnail)
+        allow_multi_thumbnails = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'), activity_id)
+        new_thumbnail = getThumbnail(newFiles, allow_multi_thumbnails)
         if new_thumbnail:
             new_thumbnail = files_thumbnail
 
@@ -605,7 +600,7 @@ def display_activity(activity_id="0"):
         if not newFiles:
             newFiles = copy.deepcopy(files)
         newRecord = copy.deepcopy(approval_record)
-    
+
         itemLink_record, files = get_record_by_root_ver(item['pid']['value'])
         item['title'] = itemLink_record['title'][0]
 
@@ -614,12 +609,12 @@ def display_activity(activity_id="0"):
 
         if 'end_action' in action_endpoint:
             files = newFiles
-        allow_multi_thumbnail = get_allow_multi_thumbnail(approval_record.get('item_type_id'), activity_id)
-        files_thumbnail = getThumbnail(files, allow_multi_thumbnail)
+        allow_multi_thumbnails = get_allow_multi_thumbnail(approval_record.get('item_type_id'), None)
+        files_thumbnail = getThumbnail(files, allow_multi_thumbnails)
 
         if 'approval' == action_endpoint:
-            allow_multi_thumbnail = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'), activity_id)
-            new_thumbnail = getThumbnail(newFiles, allow_multi_thumbnail)
+            allow_multi_thumbnails = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'), activity_id)
+            new_thumbnail = getThumbnail(newFiles, allow_multi_thumbnails)
 
         if approval_record and files and len(approval_record) > 0 and \
            len(files) > 0 and (isinstance(approval_record, list) or isinstance(approval_record, dict)):

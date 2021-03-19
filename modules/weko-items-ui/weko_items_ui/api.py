@@ -19,6 +19,7 @@ import os
 
 import redis
 from flask import current_app, json, session, url_for
+from flask_login import login_required
 from simplekv.memory.redisstore import RedisStore
 from weko_accounts.utils import login_required_customize
 from weko_records.api import ItemTypes
@@ -26,7 +27,7 @@ from weko_records.utils import find_items
 from weko_workflow.api import WorkActivity
 
 from .utils import is_schema_include_key
-
+from .permissions import item_permission
 
 @login_required
 @item_permission.require(http_exception=403)
