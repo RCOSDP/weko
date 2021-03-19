@@ -537,3 +537,9 @@ msgstr ""
 #: weko_workflow/templates/weko_workflow/item_login_sucess.html:288
 msgid "Back"
 msgstr ""
+
+msgid "Specify Property"
+msgstr ""
+
+msgid "Specify property"
+msgstr ""

@@ -589,6 +589,10 @@ class FlowActionRole(db.Model, TimestampMixin):
         nullable=False, default=False, server_default='0')
     """If set to True, deny the action, otherwise allow it."""
 
+    specify_property = db.Column(
+        db.String(255), nullable=True)
+    """the name of flows."""
+
 
 class WorkFlow(db.Model, TimestampMixin):
     """Define WorkFlow."""
@@ -788,6 +792,9 @@ class Activity(db.Model, TimestampMixin):
         nullable=True
     )
 
+    action_order = db.Column(db.Integer(), nullable=False, unique=False)
+    """the order of action."""
+
 
 class ActivityAction(db.Model, TimestampMixin):
     """Define Activety."""
@@ -817,6 +824,9 @@ class ActivityAction(db.Model, TimestampMixin):
 
     action_handler = db.Column(db.Integer, nullable=True)
     """action handler"""
+
+    action_order = db.Column(db.Integer(), nullable=False, unique=False)
+    """the order of action."""
 
 
 class ActivityHistory(db.Model, TimestampMixin):
@@ -858,6 +868,9 @@ class ActivityHistory(db.Model, TimestampMixin):
     user = db.relationship(User, backref=db.backref(
         'activity_history'))
     """User relaionship."""
+
+    action_order = db.Column(db.Integer(), nullable=False, unique=False)
+    """the order of action."""
 
 
 class ActionJournal(db.Model, TimestampMixin):

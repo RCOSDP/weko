@@ -343,7 +343,7 @@
                   <td>{{history.action_date.strftime('%Y-%m-%d %H:%M')}}</td>
                   <td>{{mail}}</td>
                   <td>{{_(history.StatusDesc)}}</td>
-                  <td>{{history.CommentDesc}}</td>
+                  <td>{% if history.CommentDesc %} {{history.CommentDesc}{% endif %}</td>
                 </tr>
               {% endfor %}
               {% else %}
@@ -409,7 +409,7 @@
 {%- endblock page_body %}
 
 {% macro style_including(inStyle, step) -%}
-  {% if activity.activity_status_str != 'End' and cur_step == step.ActionEndpoint %}
+  {% if activity.activity_status_str != 'End' and cur_step == step.ActionEndpoint and step.ActionOrder == activity.action_order %}
     {{ inStyle }}
   {% elif activity.activity_status_str == 'End' and step.ActionName == 'End' %}
     {{ inStyle }}

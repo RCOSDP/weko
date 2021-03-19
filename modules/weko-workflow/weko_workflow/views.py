@@ -50,7 +50,8 @@ from weko_deposit.links import base_factory
 from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
 from weko_items_ui.api import item_login
-from weko_items_ui.utils import is_need_to_show_agreement_page, to_files_js
+from weko_items_ui.utils import is_need_to_show_agreement_page, to_files_js, \
+    get_user_information
 from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
@@ -80,7 +81,7 @@ from .utils import IdentifierHandle, auto_fill_title, check_continue, \
     prepare_data_for_guest_activity, process_send_notification_mail, \
     process_send_reminder_mail, register_hdl, save_activity_data, \
     saving_doi_pidstore, send_onetime_download_url_to_guest, \
-    update_cache_data, validate_guest_activity
+    update_cache_data, validate_guest_activity, get_approval_keys
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -208,7 +209,7 @@ def iframe_success():
 
     work_activity = WorkActivity()
     activity_action = work_activity.get_activity_action_comment(
-        activity.activity_id, action_id)
+        activity.activity_id, action_id, activity.action_order)
     action_comment = activity_action.action_comment \
         if activity_action and activity_action.action_comment else ''
 
@@ -523,7 +524,8 @@ def display_activity(activity_id="0"):
         links = base_factory(recid)
 
     res_check = check_authority_action(str(activity_id), int(action_id),
-                                       is_auto_set_index_action)
+                                       is_auto_set_index_action,
+                                       activity_detail.action_order)
     getargs = request.args
     ctx = {'community': None}
     community_id = ""
@@ -568,6 +570,8 @@ def display_activity(activity_id="0"):
             activity_detail.extra_info.get('guest_mail'):
         send_onetime_download_url_to_guest(activity_detail.activity_id,
                                            activity_detail.extra_info)
+
+    approval_email_key = get_approval_keys()
 
     return render_template(
         'weko_workflow/activity_detail.html',
@@ -622,8 +626,7 @@ def display_activity(activity_id="0"):
         is_hidden_pubdate=is_hidden_pubdate_value,
         action_endpoint_key=current_app.config.get(
             'WEKO_ITEMS_UI_ACTION_ENDPOINT_KEY'),
-        approval_email_key=current_app.config.get(
-            'WEKO_ITEMS_UI_APPROVAL_MAIL_SUBITEM_KEY'),
+        approval_email_key=approval_email_key,
         position_list=position_list,
         institute_position_list=institute_position_list,
         is_enable_item_name_link=is_enable_item_name_link(
@@ -638,9 +641,13 @@ def check_authority(func):
     @wraps(func)
     def decorated_function(*args, **kwargs):
         work = WorkActivity()
+        activity_id = kwargs.get('activity_id')
+        activity_detail = work.get_activity_by_id(activity_id)
         roles, users = work.get_activity_action_role(
             activity_id=kwargs.get('activity_id'),
-            action_id=kwargs.get('action_id'))
+            action_id=kwargs.get('action_id'),
+            action_order=activity_detail.action_order
+        )
         cur_user = current_user.get_id()
         cur_role = db.session.query(Role).join(userrole).filter_by(
             user_id=cur_user).all()
@@ -660,13 +667,15 @@ def check_authority(func):
 
 
 def check_authority_action(activity_id='0', action_id=0,
-                           contain_login_item_application=False):
+                           contain_login_item_application=False,
+                           action_order=0):
     """Check authority."""
     if not current_user.is_authenticated:
         return 1
 
     work = WorkActivity()
-    roles, users = work.get_activity_action_role(activity_id, action_id)
+    roles, users = work.get_activity_action_role(activity_id, action_id,
+                                                 action_order)
     cur_user = current_user.get_id()
     cur_role = db.session.query(Role).join(userrole).filter_by(
         user_id=cur_user).all()
@@ -731,7 +740,8 @@ def check_authority_action(activity_id='0', action_id=0,
             return 0
     # Check current user is action handler of activity
     activity_action_obj = ActivityAction.query.filter_by(
-        activity_id=activity_id, action_id=action_id).first()
+        activity_id=activity_id, action_id=action_id,
+        action_order=action_order).first()
     if (activity_action_obj.action_handler
             and int(activity_action_obj.action_handler) == int(cur_user)
             and contain_login_item_application):
@@ -750,14 +760,16 @@ def next_action(activity_id='0', action_id=0):
     """Next action."""
     work_activity = WorkActivity()
     history = WorkActivityHistory()
-
+    activity_detail = work_activity.get_activity_detail(activity_id)
+    action_order = activity_detail.action_order
     post_json = request.get_json()
     activity = dict(
         activity_id=activity_id,
         action_id=action_id,
         action_version=post_json.get('action_version'),
         action_status=ActionStatusPolicy.ACTION_DONE,
-        commond=post_json.get('commond')
+        commond=post_json.get('commond'),
+        action_order=action_order
     )
 
     action = Action().get_action_detail(action_id)
@@ -769,8 +781,6 @@ def next_action(activity_id='0', action_id=0):
     if action_endpoint == 'end_action':
         work_activity.end_activity(activity)
         return jsonify(code=0, msg=_('success'))
-
-    activity_detail = work_activity.get_activity_detail(activity_id)
     item_id = None
     recid = None
     deposit = None
@@ -799,7 +809,7 @@ def next_action(activity_id='0', action_id=0):
                 activity_detail.extra_info.get('guest_mail')):
         flow = Flow()
         next_flow_action = flow.get_next_flow_action(
-            activity_detail.flow_define.flow_id, action_id)
+            activity_detail.flow_define.flow_id, action_id, action_order)
         next_action_endpoint = next_flow_action[0].action.action_endpoint
         process_send_notification_mail(activity_detail,
                                        action_endpoint, next_action_endpoint)
@@ -816,7 +826,8 @@ def next_action(activity_id='0', action_id=0):
             work_activity.upt_activity_action_comment(
                 activity_id=activity_id,
                 action_id=action_id,
-                comment=post_json.get('commond')
+                comment=post_json.get('commond'),
+                action_order=action_order
             )
         return jsonify(code=0, msg=_('success'))
     elif post_json.get('journal'):
@@ -889,7 +900,8 @@ def next_action(activity_id='0', action_id=0):
             work_activity.upt_activity_action_comment(
                 activity_id=activity_id,
                 action_id=action_id,
-                comment=post_json.get('commond')
+                comment=post_json.get('commond'),
+                action_order=action_order
             )
             return jsonify(code=0, msg=_('success'))
 
@@ -956,22 +968,27 @@ def next_action(activity_id='0', action_id=0):
             saving_doi_pidstore(item_id, record_without_version, post_json,
                                 int(identifier_select))
 
-    rtn = history.create_activity_history(activity)
+    rtn = history.create_activity_history(activity, action_order)
     if not rtn:
         return jsonify(code=-1, msg=_('error'))
     # next action
     work_activity.upt_activity_action_status(
         activity_id=activity_id, action_id=action_id,
-        action_status=ActionStatusPolicy.ACTION_DONE)
+        action_status=ActionStatusPolicy.ACTION_DONE,
+        action_order=action_order
+    )
     work_activity.upt_activity_action_comment(
         activity_id=activity_id,
         action_id=action_id,
-        comment=''
+        comment='',
+        action_order=action_order
     )
     flow = Flow()
     next_flow_action = flow.get_next_flow_action(
-        activity_detail.flow_define.flow_id, action_id)
+        activity_detail.flow_define.flow_id, action_id, action_order)
     if next_flow_action and len(next_flow_action) > 0:
+        next_action_id = next_flow_action[0].action_id
+        next_action_order = next_flow_action[0].action_order
         next_action_endpoint = next_flow_action[0].action.action_endpoint
         if 'end_action' == next_action_endpoint:
             new_activity_id = None
@@ -991,19 +1008,21 @@ def next_action(activity_id='0', action_id=0):
                 FilePermission.update_open_date(permission, open_date)
 
             activity.update(
-                action_id=next_flow_action[0].action_id,
+                action_id=next_action_id,
                 action_version=next_flow_action[0].action_version,
                 item_id=new_activity_id,
+                action_order=next_action_order
             )
             work_activity.end_activity(activity)
         else:
-            next_action_id = next_flow_action[0].action_id
             work_activity.upt_activity_action(
                 activity_id=activity_id, action_id=next_action_id,
-                action_status=ActionStatusPolicy.ACTION_DOING)
+                action_status=ActionStatusPolicy.ACTION_DOING,
+                action_order=next_action_order)
             work_activity.upt_activity_action_status(
                 activity_id=activity_id, action_id=next_action_id,
-                action_status=ActionStatusPolicy.ACTION_DOING)
+                action_status=ActionStatusPolicy.ACTION_DOING,
+                action_order=next_action_order)
     # delete session value
     if session.get('itemlogin_id'):
         del session['itemlogin_id']
@@ -1038,13 +1057,13 @@ def previous_action(activity_id='0', action_id=0, req=0):
     )
     work_activity = WorkActivity()
     history = WorkActivityHistory()
-    rtn = history.create_activity_history(activity)
+    # next action
+    activity_detail = work_activity.get_activity_by_id(activity_id)
+    action_order = activity_detail.action_order
+    flow = Flow()
+    rtn = history.create_activity_history(activity, action_order)
     if rtn is None:
         return jsonify(code=-1, msg=_('error'))
-
-    # next action
-    activity_detail = work_activity.get_activity_detail(activity_id)
-    flow = Flow()
 
     try:
         pid_identifier = PersistentIdentifier.get_by_object(
@@ -1061,28 +1080,34 @@ def previous_action(activity_id='0', action_id=0, req=0):
             activity_detail.flow_define.flow_id)
     elif req == 0:
         pre_action = flow.get_previous_flow_action(
-            activity_detail.flow_define.flow_id, action_id)
+            activity_detail.flow_define.flow_id, action_id,
+            action_order)
     else:
         pre_action = flow.get_next_flow_action(
-            activity_detail.flow_define.flow_id, 1)
+            activity_detail.flow_define.flow_id, 1, 1)
 
     if pre_action and len(pre_action) > 0:
         previous_action_id = pre_action[0].action_id
+        previous_action_order = pre_action[0].action_order
         if req == 0:
             work_activity.upt_activity_action_status(
                 activity_id=activity_id,
                 action_id=action_id,
-                action_status=ActionStatusPolicy.ACTION_THROWN_OUT)
+                action_status=ActionStatusPolicy.ACTION_THROWN_OUT,
+                action_order=action_order)
         else:
             work_activity.upt_activity_action_status(
                 activity_id=activity_id, action_id=action_id,
-                action_status=ActionStatusPolicy.ACTION_RETRY)
+                action_status=ActionStatusPolicy.ACTION_RETRY,
+                action_order=action_order)
         work_activity.upt_activity_action_status(
             activity_id=activity_id, action_id=previous_action_id,
-            action_status=ActionStatusPolicy.ACTION_DOING)
+            action_status=ActionStatusPolicy.ACTION_DOING,
+            action_order=previous_action_order)
         work_activity.upt_activity_action(
             activity_id=activity_id, action_id=previous_action_id,
-            action_status=ActionStatusPolicy.ACTION_DOING)
+            action_status=ActionStatusPolicy.ACTION_DOING,
+            action_order=previous_action_order)
     return jsonify(code=0, msg=_('success'))
 
 
@@ -1151,16 +1176,19 @@ def cancel_action(activity_id='0', action_id=0):
     """Next action."""
     post_json = request.get_json()
     work_activity = WorkActivity()
+    # Clear deposit
+    activity_detail = work_activity.get_activity_by_id(activity_id)
 
     activity = dict(
         activity_id=activity_id,
         action_id=action_id,
         action_version=post_json.get('action_version'),
         action_status=ActionStatusPolicy.ACTION_CANCELED,
-        commond=post_json.get('commond'))
+        commond=post_json.get('commond'),
+        action_order=activity_detail.action_order
+    )
 
     # Clear deposit
-    activity_detail = work_activity.get_activity_detail(activity_id)
     if activity_detail:
         cancel_item_id = activity_detail.item_id
         if not cancel_item_id:
@@ -1194,14 +1222,16 @@ def cancel_action(activity_id='0', action_id=0):
 
     work_activity.upt_activity_action_status(
         activity_id=activity_id, action_id=action_id,
-        action_status=ActionStatusPolicy.ACTION_CANCELED)
+        action_status=ActionStatusPolicy.ACTION_CANCELED,
+        action_order=activity_detail.action_order)
 
     rtn = work_activity.quit_activity(activity)
 
     if not rtn:
         work_activity.upt_activity_action_status(
             activity_id=activity_id, action_id=action_id,
-            action_status=ActionStatusPolicy.ACTION_DOING)
+            action_status=ActionStatusPolicy.ACTION_DOING,
+            action_order=activity_detail.action_order)
         return jsonify(code=-1, msg=_('Error! Cannot process quit activity!'))
 
     if session.get("guest_url"):
@@ -1372,14 +1402,22 @@ def get_feedback_maillist(activity_id='0'):
 @login_required
 def lock_activity(activity_id=0):
     """Lock activity."""
+    def is_approval_user(activity_id):
+        workflow_activity_action = ActivityAction.query.filter_by(
+            activity_id=activity_id,
+            action_status=ActionStatusPolicy.ACTION_DOING
+        ).one_or_none()
+        if workflow_activity_action:
+            action_handler = workflow_activity_action.action_handler
+            return int(current_user.get_id()) == int(action_handler)
+        return False
     cache_key = 'workflow_locked_activity_{}'.format(activity_id)
     timeout = current_app.permanent_session_lifetime.seconds
     data = request.form.to_dict()
     locked_value = data.get('locked_value')
     cur_locked_val = str(get_cache_data(cache_key)) or str()
     err = ''
-
-    if cur_locked_val:
+    if cur_locked_val and not is_approval_user(activity_id):
         if locked_value != cur_locked_val:
             locked_value = cur_locked_val
             err = _('Locked')
