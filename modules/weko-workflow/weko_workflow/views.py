@@ -628,6 +628,7 @@ def display_activity(activity_id="0"):
             files = newFiles
         allow_multi_thumbnail = get_allow_multi_thumbnail(approval_record.get('item_type_id'))
         files_thumbnail = getThumbnail(files, allow_multi_thumbnail)
+
         if 'approval' == action_endpoint:
             allow_multi_thumbnail = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'))
             new_thumbnail = getThumbnail(newFiles, allow_multi_thumbnail)
