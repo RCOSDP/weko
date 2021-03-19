@@ -1621,3 +1621,28 @@ def setDisplayTypeForFile(itemLink_record, newFiles):
                    key in newFiles[k]['version_id']:
                     newFiles[k]['displaytype'] = value
     return newFiles
+
+
+def getThumbnail(files, allow_multi_thumbnail):
+    """Get Thumbnail from file
+
+    :return: thumbnail.
+    """
+    thumbnail = []
+    if files:
+        thumbnail = [i for i in files
+                            if 'is_thumbnail' in i.keys()
+                            and i['is_thumbnail']]
+        if not allow_multi_thumbnail and len(thumbnail) > 1:
+            thumbnail = [thumbnail[len(thumbnail) - 1]]
+    return thumbnail
+
+
+def get_allow_multi_thumbnail(item_type_id):
+    from weko_items_ui.api import item_login
+    step_item_login_url, need_file, need_billing_file, \
+        record, json_schema, schema_form,\
+        item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
+        allow_multi_thumbnail \
+        = item_login(item_type_id=item_type_id)
+    return allow_multi_thumbnail
