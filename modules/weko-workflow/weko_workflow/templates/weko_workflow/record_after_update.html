@@ -100,7 +100,7 @@
                </tbody>
              </table>
              {%- endif %}
-               {{ output_item_detail(record_after_update, newFiles, new_thumbnail, pid, items_show_list, cur_step=cur_step, allow_multi_thumbnail=allow_multi_thumbnail ) }}
+               {{ output_item_detail(record_after_update, newFiles, new_thumbnail, pid, items_show_list, cur_step=cur_step ) }}
              {%- if 'main_entry_personal_name' in record_after_update %}
              <p class="record_authors">
                <i>{{ record_after_update['main_entry_personal_name']['personal_name'] }}</i>

@@ -389,10 +389,7 @@ def items_index(pid_value='0'):
 def iframe_items_index(pid_value='0'):
     """Iframe items index."""
     try:
-        from weko_items_ui.api import item_login
-        need_thumbnail = None
         files_thumbnail = None
-        allow_multi_thumbnail = None
         if pid_value == '0' or pid_value == 0:
             return redirect(url_for('.iframe_index'))
 
@@ -429,13 +426,7 @@ def iframe_items_index(pid_value='0'):
                 root_record, files = get_record_by_root_ver(pid_value)
                 if root_record and root_record.get('title'):
                     session['itemlogin_item']['title'] = root_record['title'][0]
-                    item_type_id = root_record.get('item_type_id')
-                    if item_type_id:
-                        step_item_login_url, need_file, need_billing_file, \
-                        r, json_schema, schema_form,\
-                        item_save_uri, f, endpoints, need_thumbnail, files_thumbnail, \
-                        allow_multi_thumbnail = item_login(item_type_id=item_type_id)
-                        files_thumbnail = getThumbnail(files, allow_multi_thumbnail)
+                    files_thumbnail = getThumbnail(files, None)
             else:
                 root_record = session['itemlogin_record']
             if root_record and files and len(root_record) > 0 and len(files) > 0 \
@@ -458,9 +449,7 @@ def iframe_items_index(pid_value='0'):
                 pid=session['itemlogin_pid'],
                 community_id=community_id,
                 files=files,
-                need_thumbnail=need_thumbnail,
                 files_thumbnail=files_thumbnail,
-                allow_multi_thumbnail=allow_multi_thumbnail,
                 **ctx
             )
 

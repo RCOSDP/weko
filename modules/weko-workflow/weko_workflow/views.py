@@ -184,9 +184,7 @@ def iframe_success():
 
     :return: The rendered template.
     """
-    need_thumbnail = None
     files_thumbnail = None
-    allow_multi_thumbnail = None
     # get session value
     history = WorkActivityHistory()
     histories = history.get_activity_history_list(session['itemlogin_id'])
@@ -202,13 +200,7 @@ def iframe_success():
     files = []
     if item and item.get('pid') and 'value' in item['pid']:
         record, files = get_record_by_root_ver(item['pid']['value'])
-        item_type_id = record.get('item_type_id')
-        if item_type_id:
-            step_item_login_url, need_file, need_billing_file, \
-            r, json_schema, schema_form,\
-            item_save_uri, f, endpoints, need_thumbnail, files_thumbnail, \
-            allow_multi_thumbnail = item_login(item_type_id=item_type_id)
-            files_thumbnail = getThumbnail(files, allow_multi_thumbnail)
+        files_thumbnail = getThumbnail(files, None)
     else:
         record = session['itemlogin_record']
     ctx = {'community': None}
@@ -249,9 +241,7 @@ def iframe_success():
                            files=files,
                            community_id=community_id,
                            action_comment=action_comment,
-                           need_thumbnail=need_thumbnail,
                            files_thumbnail=files_thumbnail,
-                           allow_multi_thumbnail=allow_multi_thumbnail,
                            is_enable_item_name_link=is_enable_item_name_link(
                                action_endpoint, item_type_name),
                            **ctx)
@@ -470,6 +460,9 @@ def display_activity(activity_id="0"):
     allow_multi_thumbnail = False
     term_and_condition_content = ''
     is_auto_set_index_action = True
+    itemLink_record = []
+    newFiles = []
+    new_thumbnail = None
     application_item_type = False
     title = ""
     data_type = activity_detail.extra_info.get(
@@ -587,7 +580,7 @@ def display_activity(activity_id="0"):
     if action_endpoint and action_endpoint == 'item_login' and item and item.get('pid') and \
        item['pid'].get('value'):
         itemLink_record, newFiles = get_record_by_root_ver(item['pid']['value'])
-        allow_multi_thumbnail = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'), activity_id)
+        allow_multi_thumbnail = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'), None)
         new_thumbnail = getThumbnail(newFiles, allow_multi_thumbnail)
 
     # case create item
@@ -614,7 +607,7 @@ def display_activity(activity_id="0"):
 
         if 'end_action' in action_endpoint:
             files = newFiles
-        allow_multi_thumbnail = get_allow_multi_thumbnail(approval_record.get('item_type_id'), activity_id)
+        allow_multi_thumbnail = get_allow_multi_thumbnail(approval_record.get('item_type_id'), None)
         files_thumbnail = getThumbnail(files, allow_multi_thumbnail)
 
         if 'approval' == action_endpoint:
