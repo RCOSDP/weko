@@ -26,6 +26,7 @@ from datetime import datetime
 from urllib.parse import urlencode
 
 from blinker import Namespace
+from celery import chord
 from flask import Response, abort, current_app, jsonify, make_response, \
     request, send_file
 from flask_admin import BaseView, expose
@@ -257,8 +258,6 @@ class ItemImportView(BaseView):
                 else:
                     list_record = result.get('list_record', [])
                     data_path = result.get('data_path', '')
-        remove_temp_dir_task.apply_async(
-            (data_path,), countdown=get_lifetime())
         return jsonify(code=1, list_record=list_record, data_path=data_path)
 
     @expose('/download_check', methods=['POST'])
@@ -299,18 +298,25 @@ class ItemImportView(BaseView):
             'errors')]
         import_start_time = ''
         if list_record:
+            group_tasks = []
             for item in list_record:
-                item_id = item.get('id')
                 item['root_path'] = data.get('root_path')
                 create_flow_define()
                 handle_workflow(item)
-                task = import_item.delay(item)
+                group_tasks.append(import_item.s(item))
+
+            # handle import tasks
+            import_task = chord(group_tasks)(
+                remove_temp_dir_task.si(data.get('root_path')))
+            for idx, task in enumerate(import_task.parent.results):
                 tasks.append({
                     'task_id': task.task_id,
-                    'item_id': item_id,
+                    'item_id': list_record[idx].get('id'),
                 })
+            # save start time of import progress into cache
             import_start_time = datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z')
             update_cache_data('import_start_time', import_start_time, 0)
+
         response_object = {
             "status": "success",
             "data": {
