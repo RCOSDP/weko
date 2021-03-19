@@ -493,14 +493,14 @@ def display_activity(activity_id=0):
     if action_endpoint and action_endpoint == 'item_login' and item and item.get('pid') and \
        item['pid'].get('value'):
         itemLink_record, newFiles = get_record_by_root_ver(item['pid']['value'])
-        allow_multi_thumbnail = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'))
+        allow_multi_thumbnail = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'), activity_id)
         new_thumbnail = getThumbnail(newFiles, allow_multi_thumbnail)
 
     # case create item
     if item and 'pid' not in item:
         itemLink_record = approval_record
         newFiles = files
-        allow_multi_thumbnail = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'))
+        allow_multi_thumbnail = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'), activity_id)
         new_thumbnail = getThumbnail(newFiles, allow_multi_thumbnail)
         if new_thumbnail:
             new_thumbnail = files_thumbnail
@@ -520,11 +520,11 @@ def display_activity(activity_id=0):
 
         if 'end_action' in action_endpoint:
             files = newFiles
-        allow_multi_thumbnail = get_allow_multi_thumbnail(approval_record.get('item_type_id'))
+        allow_multi_thumbnail = get_allow_multi_thumbnail(approval_record.get('item_type_id'), activity_id)
         files_thumbnail = getThumbnail(files, allow_multi_thumbnail)
 
         if 'approval' == action_endpoint:
-            allow_multi_thumbnail = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'))
+            allow_multi_thumbnail = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'), activity_id)
             new_thumbnail = getThumbnail(newFiles, allow_multi_thumbnail)
 
         if approval_record and files and len(approval_record) > 0 and \
