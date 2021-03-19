@@ -845,8 +845,7 @@ def create_onetime_download_url(file_name: str, record_id: str,
             "expiration_date": expiration_date,
             "download_count": download_limit
         })
-        if file_onetime:
-            return True
+        return file_onetime
     return False
 
 

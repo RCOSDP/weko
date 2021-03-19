@@ -72,16 +72,17 @@ from .utils import IdentifierHandle, auto_fill_title, check_continue, \
     check_existed_doi, delete_cache_data, delete_guest_activity, \
     filter_all_condition, get_account_info, get_actionid, \
     get_activity_display_info, get_activity_id_of_record_without_version, \
-    get_application_and_approved_date, get_cache_data, \
-    get_identifier_setting, get_term_and_condition_content, \
-    get_workflow_item_type_names, handle_finish_workflow, \
+    get_approval_keys, get_cache_data, \
+    get_identifier_setting, get_workflow_item_type_names, \
+    handle_finish_workflow, \
     init_activity_for_guest_user, is_enable_item_name_link, \
-    is_hidden_pubdate, is_show_autofill_metadata, is_usage_application, \
-    is_usage_application_item_type, item_metadata_validation, \
+    is_hidden_pubdate, is_show_autofill_metadata, is_usage_application_item_type, item_metadata_validation, \
     prepare_data_for_guest_activity, process_send_notification_mail, \
     process_send_reminder_mail, register_hdl, save_activity_data, \
-    saving_doi_pidstore, send_onetime_download_url_to_guest, \
-    update_cache_data, validate_guest_activity, get_approval_keys
+    saving_doi_pidstore, process_send_approval_mails
+from .utils import send_mail as send_mail_for_approval
+from .utils import create_onetime_download_url_to_guest, update_cache_data, \
+    validate_guest_activity
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -139,9 +140,6 @@ def index():
     enable_show_activity = current_app.config[
         'WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']
 
-    if enable_show_activity:
-        get_application_and_approved_date(activities, columns)
-        get_workflow_item_type_names(activities)
 
     from weko_user_profiles.config import WEKO_USERPROFILES_ADMINISTRATOR_ROLE
     admin_role = WEKO_USERPROFILES_ADMINISTRATOR_ROLE
@@ -802,18 +800,36 @@ def next_action(activity_id='0', action_id=0):
             current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
         register_hdl(activity_id)
 
+    work_activity = WorkActivity()
+    flow = Flow()
+    next_flow_action = flow.get_next_flow_action(
+        activity_detail.flow_define.flow_id, action_id, action_order)
+    next_action_endpoint = next_flow_action[0].action.action_endpoint
+    current_flow_action = flow.get_flow_action_detail(activity_detail.flow_define.flow_id, action_id, action_order)
+
+    next_action = work_activity.get_activity_action_comment(activity_id, next_flow_action[0].action_id, next_flow_action[0].action_order)
+    last_approval_step = action_endpoint == 'approval' and action_endpoint != next_action_endpoint
+
+    url_and_expired_date = url_and_expired_date = {"file_url": '', "expiration_date": ''}
+    if last_approval_step:
+        if activity_detail.extra_info and activity_detail.extra_info.get("guest_mail"):
+            url_and_expired_date = create_onetime_download_url_to_guest(activity_detail.activity_id,
+                                                                         activity_detail.extra_info)
+        else:
+            # TODO create link download for login user here
+            url_and_expired_date = {"file_url": '', "expiration_date": ''}
+
     if current_app.config.get(
             'WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL') and \
             current_user.is_authenticated and \
             (not activity_detail.extra_info or not
                 activity_detail.extra_info.get('guest_mail')):
-        flow = Flow()
-        next_flow_action = flow.get_next_flow_action(
-            activity_detail.flow_define.flow_id, action_id, action_order)
-        next_action_endpoint = next_flow_action[0].action.action_endpoint
         process_send_notification_mail(activity_detail,
                                        action_endpoint, next_action_endpoint)
 
+    process_send_approval_mails(activity_detail, current_flow_action.send_mail_setting,
+                                next_flow_action[0].send_mail_setting, next_action.action_handler,
+                                url_and_expired_date)
     if post_json.get('temporary_save') == 1 \
             and action_endpoint not in ['identifier_grant', 'item_link']:
         if 'journal' in post_json:
@@ -879,6 +895,26 @@ def next_action(activity_id='0', action_id=0):
         if deposit:
             deposit.update_feedback_mail()
             deposit.update_jpcoar_identifier()
+
+        def send_mail_approval():
+            """Send mail."""
+            def get_next_approval_email():
+                cur_workflow_activity_action = ActivityAction.query.filter_by(
+                    activity_id=activity_id,
+                    action_status=ActionStatusPolicy.ACTION_DOING
+                ).one_or_none()
+                next_workflow_activity_action = ActivityAction.query.filter_by(
+                    activity_id=activity_id,
+                    action_order=cur_workflow_activity_action.action_order + 1
+                ).one_or_none()
+                user_id = next_workflow_activity_action.action_handler
+                user_info = get_user_information(user_id)
+                return user_info.get('email')
+            subject = "Approved notify"
+            body = "Approved by " + current_user.email
+            recipient_list = get_next_approval_email()
+            send_mail_for_approval(subject, recipient_list, body)
+        send_mail_approval()
 
     if action_endpoint == 'item_link' and item_id:
         current_pid = PersistentIdentifier.get_by_object(

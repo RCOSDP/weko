@@ -39,12 +39,14 @@ from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
+
+from invenio_mail.models import MailConfig
 from invenio_records.models import RecordMetadata
 from invenio_records_files.models import RecordsBuckets
 from passlib.handlers.oracle import oracle10
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
-from weko_admin.models import Identifier
+from weko_admin.models import Identifier, SiteInfo
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
 from weko_index_tree.models import Index
@@ -54,7 +56,9 @@ from weko_records.serializers.utils import get_item_type_name, get_mapping
 from weko_records_ui.utils import create_onetime_download_url, \
     generate_one_time_download_url, get_list_licence
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles import UserProfile
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
 
@@ -63,7 +67,7 @@ from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
 
 from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
     WorkFlow
-from .config import IDENTIFIER_GRANT_SELECT_DICT, WEKO_SERVER_CNRI_HOST_LINK
+from .config import IDENTIFIER_GRANT_SELECT_DICT, WEKO_SERVER_CNRI_HOST_LINK, WEKO_WORKFLOW_APPROVE_DONE, WEKO_WORKFLOW_APPROVE_REJECTED, WEKO_WORKFLOW_REQUEST_APPROVAL
 from .models import Action as _Action
 from .models import ActionStatusPolicy, ActivityStatusPolicy, GuestActivity
 
@@ -1874,7 +1878,26 @@ def replace_characters(data, content):
         '[16]': 'report_number',
         '[17]': 'registration_number',
         '[18]': 'output_registration_title',
-        '[19]': 'url_guest_user'
+        '[19]': 'url_guest_user',
+
+
+        '[restricted_fullname]': 'restricted_fullname',
+        '[restricted_university_institution]': 'restricted_university_institution',
+        '[restricted_activity_id]': 'restricted_activity_id',
+        '[restricted_research_title]': 'restricted_research_title',
+        '[restricted_data_name]': 'restricted_data_name',
+        '[restricted_application_date]': 'restricted_application_date',
+        '[restricted_mail_address]': 'restricted_mail_address',
+        '[restricted_download_link]': 'restricted_download_link',
+        '[restricted_expiration_date]': 'restricted_expiration_date',
+        '[restricted_approver_name]': 'restricted_approver_name',  # Wait to confirm, get from user profiles
+        '[restricted_site_name_ja]': 'restricted_site_name_ja',  # Get from Site Info
+        '[restricted_site_name_en]': 'restricted_site_name_en',  # Get from Site Info
+        '[restricted_site_mail]': 'restricted_site_mail',  # Wait to confirm, get from user profiles
+        '[restricted_site_url]': 'restricted_site_url',
+        '[restricted_approver_affiliation]': 'restricted_approver_affiliation',
+        '[restricted_supervisor]':'',
+        '[restricted_reference]' :''
     }
     for key in replace_list:
         value = replace_list.get(key)
@@ -1942,6 +1965,31 @@ def set_mail_info(item_info, activity_detail):
     :item_info: object
     :activity_detail: object
     """
+
+    def get_default_mail_sender():
+        mail_config = MailConfig.get_config()
+        return mail_config.get('mail_default_sender', '')
+
+    def get_site_info():
+        """
+        Get site name
+        @return:
+        """
+        site_name_en = site_name_ja = ''
+        site_info = SiteInfo.get()
+        if site_info.site_name:
+            if len(site_info.site_name) == 1:
+                site_name_en = site_name_ja = site_info.site_name[0]['name']
+            elif len(site_info.site_name) == 2:
+                for site in site_info.site_name:
+                    site_name_ja = site['name'] if site['language'] == 'ja' else site_name_ja
+                    site_name_en = site['name'] if site['language'] == 'en' else site_name_en
+        return site_name_en, site_name_ja
+
+    site_en, site_ja = get_site_info()
+    site_mail = get_default_mail_sender()
+
+
     register_user, register_date = \
         get_register_info(activity_detail.activity_id)
     mail_info = dict(
@@ -1962,7 +2010,26 @@ def set_mail_info(item_info, activity_detail):
         register_user_mail=register_user,
         report_number=activity_detail.activity_id,
         registration_number=activity_detail.activity_id,
-        output_registration_title=item_info.get('subitem_title')
+        output_registration_title=item_info.get('subitem_title'),
+
+        restricted_fullname=item_info.get('subitem_restricted_access_name'),
+        restricted_university_institution=item_info.get('subitem_restricted_access_university/institution'),
+        restricted_activity_id=activity_detail.activity_id,
+        restricted_research_title=item_info.get('subitem_restricted_access_research_title'),
+        restricted_data_name=item_info.get('subitem_restricted_access_data_name'),
+        restricted_application_date=item_info.get('subitem_restricted_access_application_date'),
+        restricted_mail_address=item_info.get('subitem_restricted_access_mail_address'),
+        restricted_download_link='',
+        restricted_expiration_date='',
+        restricted_approver_name='',
+        restricted_approver_affiliation='',
+        restricted_site_name_ja=site_ja,
+        restricted_site_name_en=site_en,
+        restricted_site_mail=site_mail,
+        restricted_site_url=request.url_root,
+        mail_recipient=item_info.get('subitem_restricted_access_mail_address'),
+        restricted_supervisor='',
+        restricted_reference=''
     )
     return mail_info
 
@@ -2024,7 +2091,7 @@ def process_send_notification_mail(
         send_mail_approval_done(mail_info)
 
 
-def get_application_and_approved_date(activities, columns):
+def get_application_and_approv_date(activities, columns):
     """Get application and approved date.
 
     @param activities:
@@ -2589,7 +2656,7 @@ def validate_guest_activity(
         return False, None, None
 
 
-def send_onetime_download_url_to_guest(activity_id: str,
+def create_onetime_download_url_to_guest(activity_id: str,
                                        extra_info: dict) -> bool:
     """Send onetime download URL to guest.
 
@@ -2607,17 +2674,13 @@ def send_onetime_download_url_to_guest(activity_id: str,
         # Delete guest activity.
         delete_guest_activity(activity_id)
 
-        # Mail information
-        mail_info = {
-            'template': current_app.config.get(
-                "WEKO_WORKFLOW_ACCESS_DOWNLOAD_URL"),
-            'mail_address': guest_mail,
-            'url_guest_user': onetime_file_url
-        }
-
+        # WEKO_WORKFLOW_ACCESS_DOWNLOAD_URL
         # Save onetime to Database.
-        if create_onetime_download_url(file_name, record_id, guest_mail):
-            return send_mail_url_guest_user(mail_info)
+        one_time_obj = create_onetime_download_url(file_name, record_id, guest_mail)
+        if one_time_obj:
+            from datetime import datetime, timedelta
+            expiration_date = datetime.today() + timedelta(days=one_time_obj.expiration_date)
+            return {"file_url": onetime_file_url, "expiration_date": expiration_date.strftime("%m/%d/%Y")}
         else:
             current_app.logger.error("Can not create onetime download.")
             return False
@@ -2895,3 +2958,45 @@ def get_approval_keys():
             if result:
                 approval_keys.append(result)
     return approval_keys
+
+
+def process_send_mail(mail_info, mail_pattern_name):
+    """Send mail approval rejected.
+
+    :mail_info: object
+    """
+    if not mail_info.get("mail_recipient"):
+        current_app.logger.error('Mail address is not defined')
+        return
+
+    subject, body = get_mail_data(mail_pattern_name)
+    if body and subject:
+        body = replace_characters(mail_info, body)
+        send_mail(subject, mail_info['mail_recipient'], body)
+
+
+def process_send_approval_mails(activity_detail, previous_action_settings, next_action_settings, next_step_appover_id,
+                                file_data):
+    item_info = get_item_info(activity_detail.item_id)
+    mail_info = set_mail_info(item_info, activity_detail)
+    mail_info['restricted_download_link'] = file_data['file_url']
+    mail_info['restricted_expiration_date'] = file_data['expiration_date']
+
+    # Override guest mail if any
+    if activity_detail.extra_info.get('guest_mail'):
+        mail_info['mail_address'] = activity_detail.extra_info.get('guest_mail')
+
+    if next_action_settings.get("request_approval", False):
+        approval_user = UserProfile.get_by_userid(int(next_step_appover_id))
+        if approval_user:
+            mail_info['mail_recipient'] = approval_user.user.email
+            process_send_mail(mail_info, WEKO_WORKFLOW_REQUEST_APPROVAL)
+        else:
+            current_app.logger.error("Can not get approver's info ")
+            return False
+
+    if previous_action_settings.get("inform_approval", False):
+        process_send_mail(mail_info, WEKO_WORKFLOW_APPROVE_DONE)
+
+    if previous_action_settings.get("inform_reject", False):
+        process_send_mail(mail_info, WEKO_WORKFLOW_APPROVE_REJECTED)
