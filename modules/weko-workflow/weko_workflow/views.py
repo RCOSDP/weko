@@ -629,6 +629,18 @@ def display_activity(activity_id="0"):
         is_enable_item_name_link=is_enable_item_name_link(
             action_endpoint, item_type_name),
         list_license=list_license,
+        auto_fill_subitem_restricted_access_data_name_value='TEST_auto_fill_subitem_restricted_access_data_name_value',
+        auto_fill_subitem_restricted_access_name_value='TEST_auto_fill_subitem_restricted_access_name_value',
+        auto_fill_subitem_restricted_access_mail_address_value='TEST_auto_fill_subitem_restricted_access_mail_address_value',
+        auto_fill_subitem_restricted_access_university_institution_value='TEST_auto_fill_subitem_restricted_access_university_institution_value',
+        auto_fill_subitem_restricted_access_affiliated_division_department_value='TEST_auto_fill_subitem_restricted_access_affiliated_division_department_value',
+        auto_fill_subitem_restricted_access_position_value='Master Course (Master Program)',
+        auto_fill_subitem_restricted_access_phone_number_value='TEST_auto_fill_subitem_restricted_access_phone_number_value',
+        auto_fill_subitem_restricted_access_usage_report_id_value='TEST_auto_fill_subitem_restricted_access_usage_report_id_value',
+        auto_fill_subitem_restricted_access_wf_issued_date_value='2021-03-19',
+        auto_fill_subitem_restricted_access_application_date_value='2021-03-19',
+        auto_fill_subitem_restricted_access_approval_date_value='2021-03-19',
+        auto_fill_subitem_restricted_access_item_title_value='TEST_auto_fill_subitem_restricted_access_item_title_value',
         **ctx
     )
 
