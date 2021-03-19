@@ -37,8 +37,8 @@ from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
-from weko_workflow.utils import check_another_import_is_running, \
-    save_cache_item_lock_info
+from weko_workflow.utils import delete_cache_data, get_cache_data, \
+    update_cache_data
 
 from weko_search_ui.api import get_search_detail_keyword
 
@@ -47,7 +47,8 @@ from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
     WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
     WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE, \
     WEKO_SEARCH_UI_BULK_EXPORT_TASK, WEKO_SEARCH_UI_BULK_EXPORT_URI
-from .tasks import export_all_task, import_item, remove_temp_dir_task
+from .tasks import export_all_task, import_item, is_import_running, \
+    remove_temp_dir_task
 from .utils import cancel_export_all, check_import_items, \
     check_sub_item_is_system, create_flow_define, delete_records, \
     get_change_identifier_mode_content, get_content_workflow, \
@@ -296,23 +297,25 @@ class ItemImportView(BaseView):
         list_record = [item for item in data.get(
             'list_record', []) if not item.get(
             'errors')]
-        for item in list_record:
-            item_id = item.get('id')
-            item['root_path'] = data.get('root_path')
-            create_flow_define()
-            handle_workflow(item)
-            save_cache_item_lock_info(int(item_id) if item_id else None)
-            task = import_item.delay(item)
-            tasks.append({
-                'task_id': task.task_id,
-                'item_id': item_id,
-            })
-        _, import_start_time = check_another_import_is_running()
+        import_start_time = ''
+        if list_record:
+            for item in list_record:
+                item_id = item.get('id')
+                item['root_path'] = data.get('root_path')
+                create_flow_define()
+                handle_workflow(item)
+                task = import_item.delay(item)
+                tasks.append({
+                    'task_id': task.task_id,
+                    'item_id': item_id,
+                })
+            import_start_time = datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z')
+            update_cache_data('import_start_time', import_start_time, 0)
         response_object = {
             "status": "success",
             "data": {
                 "tasks": tasks,
-                "import_start_time": import_start_time or ''
+                "import_start_time": import_start_time
             }
         }
         return jsonify(response_object)
@@ -512,11 +515,16 @@ class ItemImportView(BaseView):
 
     @expose('/check_import_is_available', methods=['GET'])
     def check_import_available(self):
-        is_running, start_time = check_another_import_is_running()
-        return jsonify({
-            'is_available': not is_running,
-            'start_time': start_time or ''
-        })
+        check = is_import_running()
+        if not check:
+            delete_cache_data('import_start_time')
+            return jsonify({'is_available': True})
+        else:
+            return jsonify({
+                'is_available': False,
+                'start_time': get_cache_data('import_start_time'),
+                'error_id': check
+            })
 
 
 class ItemBulkExport(BaseView):

@@ -40,7 +40,7 @@
 
 .workflow-span {
  display: block;
- width:200px;
+ word-break: break-word;
 }
 
 .workflow-ul {

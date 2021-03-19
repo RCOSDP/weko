@@ -22,10 +22,10 @@
 
 from datetime import datetime
 
-from flask import current_app, flash
+from flask import current_app
 from invenio_db import db
 from sqlalchemy.dialects import mysql, postgresql
-from sqlalchemy_utils.types import JSONType, UUIDType
+from sqlalchemy_utils.types import JSONType
 from weko_records.models import Timestamp
 
 # from sqlalchemy_utils.types import UUIDType
@@ -223,6 +223,12 @@ class Index(db.Model, Timestamp):
                 }
                 result.append(data)
         return [] if (result is None or len(result) == 0) else result
+
+    @classmethod
+    def get_index_by_id(cls, index):
+        """Get all Indexes."""
+        query_result = cls.query.filter_by(id=index).one_or_none()
+        return query_result
 
 # class IndexItems(db.Model):
 #     """"""

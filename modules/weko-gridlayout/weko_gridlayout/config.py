@@ -80,6 +80,9 @@ WEKO_RDF_SCHEMA = \
 WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE = 'Menu'
 """Menu widget type name."""
 
+WEKO_GRIDLAYOUT_HEADER_WIDGET_TYPE = 'Header'
+"""Header widget type name."""
+
 WEKO_GRIDLAYOUT_WIDGET_DEFAULT_COLOR = '#4169E1'
 """Default HTML color for widget components."""
 
@@ -103,3 +106,6 @@ WEKO_GRIDLAYOUT_BUCKET_UUID = "517f7d98-ab2c-4736-91ea-54ba34e7905d"
 
 WEKO_GRIDLAYOUT_FILE_MAX_SIZE = 1024 * 1024 * 16  # 16 MB
 """Allowed file size for the widget static files."""
+
+WEKO_GRIDLAYOUT_WIDGET_ITEM_LOCK_KEY = "locked_widget_key_{}"
+"""Widget item lock key."""

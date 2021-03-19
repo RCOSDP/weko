@@ -19,6 +19,12 @@
 #}
 {%- if config.ACCOUNTS %}
 {%- if not current_user.is_authenticated %}
+  {% if session['guest_email'] %}
+    <input id="current_guest_email" type="hidden"
+           value="{{ session['guest_email'] }}"/>
+    <input id="current_guest_url" type="hidden"
+           value="{{ session['guest_url'] }}"/>
+  {% endif %}
 <form class="navbar-form navbar-right">
   <a href="{{url_for_security('login', next=request.path)}}" class="btn
       btn-default btn-primary bg-transparent login-button"><i class="fa fa-sign-in"></i> {{_('Log in')}}</a>
