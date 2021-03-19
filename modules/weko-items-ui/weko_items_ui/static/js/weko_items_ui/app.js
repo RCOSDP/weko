@@ -3145,7 +3145,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           );
           let requestData = {
             'item_id': $("#autofill_item_type_id").val(),
-            'data': request.data
+            'data': request.data,
+            'activity_id': $('#activity_id').text()
           }
           $.ajax({
             url: validateURL,

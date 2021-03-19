@@ -444,7 +444,50 @@ def parse_ranking_new_items(result_data):
     return data_list
 
 
-def validate_form_input_data(result: dict, item_id: str, data: dict):
+def is_consistency_flow_and_item_type(json_form, activity_id):
+    """Check consistency flow and item type."""
+    def get_specify_property_by_activity_id(activity_id):
+        """Get all specify properties in flow."""
+        wf_activity = WorkActivity()
+        activity = wf_activity.get_activity_by_id(activity_id)
+        flow_define = FlowDefine.query.filter_by(
+            id=activity.flow_id).one_or_none()
+        flow_actions = FlowAction.query.filter_by(
+            flow_id=flow_define.flow_id).all()
+        key_in_flow = []
+        for flow_action in flow_actions:
+            flow_action_role = FlowActionRole.query.filter_by(
+                flow_action_id=flow_action.id).one_or_none()
+            if flow_action_role and flow_action_role.specify_property:
+                key = flow_action_role.specify_property
+                fixed_key = remove_parent_key(key)
+                key_in_flow.append(fixed_key)
+        return key_in_flow
+
+    def remove_parent_key(full_key):
+        """
+        full_key: parentkey.subitem_xxxxxxxxxxx
+        full_key: item_xxxxxxxxxxx.subitem_xxxxxxxxxxx
+        """
+        if not full_key:
+            return None
+        array_split_key = full_key.split('.')
+        array_split_key.pop(0)
+        return ".".join(array_split_key)
+
+    from weko_workflow.utils import recursive_get_specifed_properties
+    specify_properties = get_specify_property_by_activity_id(activity_id)
+    count = 0
+    for form in json_form:
+        approval_key = recursive_get_specifed_properties(form)
+        fixed_key = remove_parent_key(approval_key)
+        if fixed_key in specify_properties:
+            count = count + 1
+    return count == len(specify_properties)
+
+
+def validate_form_input_data(
+    result: dict, item_id: str, data: dict, activity_id: ''):
     """Validate input data.
 
     :param result: result dictionary.
@@ -453,6 +496,7 @@ def validate_form_input_data(result: dict, item_id: str, data: dict):
     """
     item_type = ItemTypes.get_by_id(item_id)
     json_schema = item_type.schema.copy()
+    json_form = item_type.form.copy()
 
     # Remove excluded item in json_schema
     remove_excluded_items_in_json_schema(item_id, json_schema)
@@ -461,6 +505,11 @@ def validate_form_input_data(result: dict, item_id: str, data: dict):
     validation_data = RecordBase(data)
     try:
         validation_data.validate()
+        is_consistency = is_consistency_flow_and_item_type(
+            json_form, activity_id)
+        if not is_consistency:
+            result["is_valid"] = False
+            result['error'] = _("Can not found the email address of approval.")
     except ValidationError as error:
         current_app.logger.error(error)
         result["is_valid"] = False
