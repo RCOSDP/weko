@@ -205,3 +205,24 @@ tree-internal .rootless {
     border-radius: 25%;
     color: white;
 }
+
+@media print {
+  @page {
+    size: auto;
+    margin: 0;
+  }
+  body {
+    padding: 72px;
+  }
+  a,
+  a:link:after,
+  a:visited {
+    text-decoration: underline;
+  }
+  a[href]:after {
+    content: none !important;
+  }
+  abbr[title]:after {
+    content: none !important;
+  }
+}
