@@ -274,3 +274,9 @@ WEKO_WORKFLOW_APPROVE_REJECTED = 'email_pattern_approval_rejected.tpl'
 
 WEKO_WORKFLOW_REQUEST_APPROVAL = 'email_pattern_request_approval.tpl'
 """Mail template for Requested Approval"""
+
+WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST = [2]
+
+WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST = [1, 3]
+
+WEKO_WORKFLOW_USAGE_ITEM_TITLE_PREFIX = '利用申請'

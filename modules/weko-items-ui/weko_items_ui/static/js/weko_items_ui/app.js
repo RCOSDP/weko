@@ -16,6 +16,8 @@ require([
   });
 });
 
+var item_title_key = '';
+
 /**
  * Custom bs-datepicker.
  * Default bs-datepicker: just support one pattern for input.
@@ -1901,6 +1903,108 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
       };
 
+      // Auto fill for Usage Application
+      $scope.autoFillUsageApplication = function () {
+        let properties = [
+          'subitem_restricted_access_data_name',
+          'subitem_restricted_access_mail_address',
+          'subitem_restricted_access_usage_report_id',
+          'subitem_restricted_access_wf_issued_date',
+          'subitem_restricted_access_application_date',
+          'subitem_restricted_access_approval_date',
+          'subitem_restricted_access_item_title'
+        ]
+        $scope.AutoFillData(properties);
+      }
+
+      // Auto fill for Usage Report
+      $scope.autoFillUsageReport = function () {
+        let properties = [
+          'subitem_restricted_access_data_name',
+          'subitem_restricted_access_name',
+          'subitem_restricted_access_mail_address',
+          'subitem_restricted_access_university/institution',
+          'subitem_restricted_access_affiliated_division/department',
+          'subitem_restricted_access_position',
+          'subitem_restricted_access_phone_number',
+          'subitem_restricted_access_usage_report_id',
+          'subitem_restricted_access_wf_issued_date',
+          'subitem_restricted_access_application_date',
+          'subitem_restricted_access_approval_date',
+          'subitem_restricted_access_item_title'
+        ]
+        $scope.AutoFillData(properties);
+      }
+
+      $scope.AutoFillData = function (properties) {
+        debugger;
+        let recordsVM = $rootScope["recordsVM"];
+        thuan_test = recordsVM.invenioRecordsModel;
+        for (let i = 0; i < properties.length; i++) {
+          let property = properties[i];
+          if (!$scope.isDataExisting(property)) {
+            let autoFillElement = $('#auto_fill_' + property.replace('/', '\\/'));
+            if (autoFillElement && autoFillElement.val()) {
+              for (let key in recordsVM["invenioRecordsSchema"].properties) {
+                let value = recordsVM["invenioRecordsSchema"].properties[key];
+                if (value && value.properties) {
+                  if (value.properties.hasOwnProperty(property)) {
+                    if (!recordsVM.invenioRecordsModel[key]) {
+                      recordsVM.invenioRecordsModel[key] = {};
+                    }
+                    recordsVM.invenioRecordsModel[key][property] = autoFillElement.val();
+                    if (property == 'subitem_restricted_access_item_title') {
+                      item_title_key = key
+                    }
+                    $scope.disableElement(key, property)
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      $scope.disableElement = function (key, property) {
+        let recordsVM = $rootScope["recordsVM"];
+        recordsVM["invenioRecordsForm"].forEach(function (item) {
+          if (item.key === key) {
+            item.items.forEach(function (subItem) {
+              if (subItem.key.includes(property)) {
+                subItem["readonly"] = true;
+              }
+            })
+          }
+        });
+      }
+
+      // Check if data is exist
+      $scope.isDataExisting = function (property) {
+        let model = $rootScope.recordsVM.invenioRecordsModel;
+        if (Object.keys(model).length === 0 && model.constructor === Object) {
+          return false;
+        } else {
+          let isExisted = false;
+          for (let key in model) {
+            if (model.hasOwnProperty(key)) {
+              let itemValue = model[key][property];
+              if (itemValue && $('#auto_fill_' + property).val() !== '') {
+                if ($scope.checkKeyIsExistInForm(key)) {
+                  $scope.setFormReadOnly(key);
+                  setTimeout(function () {
+                    $('input[name="' + property + '"]').attr("disabled", "disabled");
+                  }, 3000);
+                }
+                isExisted = true;
+                break;
+              }
+            }
+          }
+          return isExisted;
+        }
+      };
+
       $scope.setDataForLicenseType = function () {
         var list_license = $("#list_license_data").val();
         if (!list_license) {
@@ -2176,6 +2280,21 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         $scope.getDataAuthors();
         $scope.updateNumFiles();
         $scope.editModeHandle();
+        let usage_type = $("#auto_fill_usage_data_usage_type").val();
+        // Auto fill for Usage Application & Usage Report
+        if (usage_type === 'Report') {
+          $scope.autoFillUsageReport();
+        }
+        else if (usage_type === 'Application') {
+          $scope.autoFillUsageApplication();
+          setTimeout(function () {
+            $("#subitem_restricted_access_name").on('keyup', function () {
+              let item_title = $("#auto_fill_subitem_restricted_access_item_title").val() +
+                $("#subitem_restricted_access_name").val()
+              $rootScope["recordsVM"].invenioRecordsModel[item_title_key]['subitem_restricted_access_item_title'] = item_title;
+            });
+          }, 3000);
+        }
 
         //In case save activity
         hide_endpoints = $('#hide_endpoints').text()
