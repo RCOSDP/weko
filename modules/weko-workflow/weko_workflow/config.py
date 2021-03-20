@@ -181,6 +181,7 @@ WEKO_WORKFLOW_CONTINUE_APPROVAL = False
 
 WEKO_WORKFLOW_ENGLISH_MAIL_TEMPLATE_FOLDER_PATH = ''
 WEKO_WORKFLOW_JAPANESE_MAIL_TEMPLATE_FOLDER_PATH = ''
+WEKO_WORKFLOW_MAIL_TEMPLATE_FOLDER_PATH = ''
 """Email template path"""
 
 WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE_PERFECTURE_AND_LOCATION_DATA_OF_GENERAL_USER = ''
@@ -262,7 +263,9 @@ WEKO_WORKFLOW_FILTER_PARAMS = [
     'sizewait', 'sizetodo', 'sizeall', 'pagesall', 'pagestodo', 'pageswait'
 ]
 
-
 WEKO_WORKFLOW_APPROVE_DONE = 'email_pattern_approval_done.tpl'
+"""Mail template for Done Approval"""
 WEKO_WORKFLOW_APPROVE_REJECTED = 'email_pattern_approval_rejected.tpl'
+"""Mail template for Rejected Approval"""
 WEKO_WORKFLOW_REQUEST_APPROVAL = 'email_pattern_request_approval.tpl'
+"""Mail template for Requested Approval"""

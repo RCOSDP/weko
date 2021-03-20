@@ -14,8 +14,8 @@ $(document).ready(function () {
     let actionId = $(this).data('action-id');
     let actionName = $('#action_name_' + actionId).text();
     let actionVer = $('#action_ver_' + actionId).text();
-    apply_action_list = JSON.parse(localStorage.getItem('apply_action_list'));
-    apply_action = apply_action_list.find(function (element) {
+    let apply_action_list = JSON.parse(localStorage.getItem('apply_action_list'));
+    let apply_action = apply_action_list.find(function (element) {
       return element.id == actionId;
     });
     if (!apply_action || isApproval(apply_action)) {
@@ -39,7 +39,6 @@ $(document).ready(function () {
     localStorage.setItem('apply_action_list', JSON.stringify(apply_action_list));
     if(!isApproval(apply_action)){
       $(this).removeClass('btn-primary');
-      $(this).addClass('btn-default');
       $(this).prop('disabled', true);
     }
     $('#btn_unusable_' + actionId).addClass('btn-primary');
@@ -62,7 +61,6 @@ $(document).ready(function () {
     localStorage.setItem('apply_action_list', JSON.stringify(apply_action_list));
     if(!isApproval(apply_action)){
       $(this).removeClass('btn-primary');
-      $(this).addClass('btn-default');
       $(this).prop('disabled', true);
       $('#btn_apply_' + actionId).addClass('btn-primary');
       $('#btn_apply_' + actionId).removeProp('disabled');
@@ -70,7 +68,6 @@ $(document).ready(function () {
     else{
       if (count == 1) {
         $(this).removeClass('btn-primary');
-        $(this).addClass('btn-default');
         $(this).prop('disabled', true);
       }
     }
@@ -78,7 +75,7 @@ $(document).ready(function () {
     $('#myModal').modal('hide');
   });
   $('#tb_action_list').on('click', '.sortable_up', function () {
-    cur_row = $(this).parents('tr');
+    let cur_row = $(this).parents('tr');
     cur_row.after(cur_row.prev());
     initSortedBtn();
   });
@@ -227,8 +224,9 @@ $(document).ready(function () {
     });
   });
 
-  action_list = [];
+  let action_list = [];
   $('#txt_flow_name').focus();
+  setOrderApproval();
   $('#tb_action_list .action_ids').each(function (index) {
     let $tr = $(this).parents('tr');
     let actionId = $(this).text();
@@ -246,7 +244,7 @@ $(document).ready(function () {
     }
     $('#flow_action_ver_' + actionId).text($('#td_action_ver_' + actionId).text());
     $('#flow_action_date_' + actionId).text($('#td_action_date_' + actionId).text());
-    let temp = {
+    action_list.push({
       id: actionId,
       name: $tr.find('#td_action_name_' + actionId).text(),
       date: $tr.find('#td_action_date_' + actionId).text(),
@@ -257,14 +255,12 @@ $(document).ready(function () {
       role_deny: $tr.find('#td_action_role_deny_' + actionId).is(':checked'),
       workflow_flow_action_id: $(this).data('workflow-flow-action-id'),
       send_mail_setting: {
-        "request_approval":  $tr.find('#td_action_request_approval_'  + actionId).is(':checked'),
-        "inform_approval":  $tr.find('#td_action_approval_done_'  + actionId).is(':checked'),
-        "inform_reject":  $tr.find('#td_action_approval_reject_' + actionId).is(':checked')
+        "request_approval": $tr.find('#td_action_request_approval_' + actionId).is(':checked'),
+        "inform_approval": $tr.find('#td_action_approval_done_' + actionId).is(':checked'),
+        "inform_reject": $tr.find('#td_action_approval_reject_' + actionId).is(':checked')
       },
       action: 'ADD'
-    }
-    console.log(temp)
-    action_list.push(temp);
+    });
   });
   localStorage.setItem('apply_action_list', JSON.stringify(action_list));
   function init_action_list(apply_action) {
@@ -277,7 +273,7 @@ $(document).ready(function () {
       });
       $tr.remove();
     } else {
-      new_row = $('table.flow-row-template').clone();
+      let new_row = $('table.flow-row-template').clone();
       new_row = new_row.html();
       new_row = new_row.replaceAll('<tbody>', '');
       new_row = new_row.replaceAll('</tbody>', '');
@@ -288,8 +284,8 @@ $(document).ready(function () {
       new_row = new_row.replaceAll('apply_action.action_version', apply_action.version);
       if(!isApproval(apply_action)){
         new_row = new_row.replaceAll('specify-property-option', 'hide');
+        new_row = new_row.replaceAll('<span class="approval-order"></span>', '');
         new_row = new_row.replaceAll('mail_setting_options', 'hide');
-
       }
       $('#tb_action_list').append(new_row);
     }
@@ -301,6 +297,7 @@ $(document).ready(function () {
     $('.sortable_down:last').prop('disabled', true);
     initOrderNum();
     uptOrderInfo();
+    setOrderApproval();
   }
   function initOrderNum() {
     $('#tb_action_list .action_order').each(function (index) {
@@ -313,10 +310,10 @@ $(document).ready(function () {
     action_list = [];
     $('#tb_action_list .action_ids').each(function (index) {
 
-      let $tr = $(this).parents('tr')
+      let $tr = $(this).parents('tr');
 
       let actionId = $(this).text();
-      let temp = {
+      action_list.push({
         id: actionId,
         name: $tr.find('#td_action_name_' + actionId).text(),
         date: $tr.find('#td_action_date_' + actionId).text(),
@@ -332,9 +329,7 @@ $(document).ready(function () {
             "inform_reject":  $tr.find('#td_action_approval_reject_' + actionId).is(':checked')
         },
         action: 'ADD'
-      }
-      console.log(temp)
-      action_list.push(temp);
+      });
     });
     if (with_delete) {
       apply_action_list = JSON.parse(localStorage.getItem('apply_action_list'));
@@ -346,6 +341,12 @@ $(document).ready(function () {
       }
     }
     localStorage.setItem('apply_action_list', JSON.stringify(action_list));
+  }
+
+  function setOrderApproval(){
+    $('#tb_action_list .approval-order').each(function (i) {
+      $(this).text(' ('+(i+1)+')');
+    });
   }
 
   function updateDataWorkflowFlowActionId(actions){

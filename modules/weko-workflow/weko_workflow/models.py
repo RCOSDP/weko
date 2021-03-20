@@ -26,13 +26,12 @@ from datetime import datetime
 from flask import current_app
 from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
+from invenio_db import db
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.expression import desc
 from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import JSONType, UUIDType
 from sqlalchemy_utils.types.choice import ChoiceType
-
-from invenio_db import db
 from weko_groups.widgets import RadioGroupWidget
 from weko_records.models import ItemType
 
@@ -557,19 +556,19 @@ class FlowAction(db.Model, TimestampMixin):
     """flow action relationship."""
 
     send_mail_setting = db.Column(
-    db.JSON().with_variant(
-        postgresql.JSONB(none_as_null=True),
-        'postgresql',
-    ).with_variant(
-        JSONType(),
-        'sqlite',
-    ).with_variant(
-        JSONType(),
-        'mysql',
-    ),
-    default=lambda: dict(),
-    nullable=True
-)
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
 
 
 class FlowActionRole(db.Model, TimestampMixin):
@@ -607,22 +606,6 @@ class FlowActionRole(db.Model, TimestampMixin):
 
     specify_property = db.Column(
         db.String(255), nullable=True)
-    """the name of flows."""
-
-    send_mail_setting = db.Column(
-        db.JSON().with_variant(
-            postgresql.JSONB(none_as_null=True),
-            'postgresql',
-        ).with_variant(
-            JSONType(),
-            'sqlite',
-        ).with_variant(
-            JSONType(),
-            'mysql',
-        ),
-        default=lambda: dict(),
-        nullable=True
-    )
     """the name of flows."""
 
 
@@ -827,6 +810,7 @@ class Activity(db.Model, TimestampMixin):
     action_order = db.Column(db.Integer(), nullable=False, unique=False)
     """the order of action."""
 
+
 class ActivityAction(db.Model, TimestampMixin):
     """Define Activety."""
 
@@ -858,6 +842,7 @@ class ActivityAction(db.Model, TimestampMixin):
 
     action_order = db.Column(db.Integer(), nullable=False, unique=False)
     """the order of action."""
+
 
 class ActivityHistory(db.Model, TimestampMixin):
     """Define ActivityHistory."""

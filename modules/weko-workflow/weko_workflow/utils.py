@@ -27,6 +27,7 @@ from datetime import date, datetime, timedelta
 from typing import NoReturn, Tuple, Union
 
 from celery.task.control import inspect
+from datetime import datetime, timedelta
 from flask import current_app, request, session
 from flask_babelex import gettext as _
 from flask_security import current_user
@@ -39,7 +40,6 @@ from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
-
 from invenio_mail.models import MailConfig
 from invenio_records.models import RecordMetadata
 from invenio_records_files.models import RecordsBuckets
@@ -67,7 +67,7 @@ from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
 
 from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
     WorkFlow
-from .config import IDENTIFIER_GRANT_SELECT_DICT, WEKO_SERVER_CNRI_HOST_LINK, WEKO_WORKFLOW_APPROVE_DONE, WEKO_WORKFLOW_APPROVE_REJECTED, WEKO_WORKFLOW_REQUEST_APPROVAL
+from .config import IDENTIFIER_GRANT_SELECT_DICT, WEKO_SERVER_CNRI_HOST_LINK
 from .models import Action as _Action
 from .models import ActionStatusPolicy, ActivityStatusPolicy, GuestActivity
 
@@ -1879,8 +1879,6 @@ def replace_characters(data, content):
         '[17]': 'registration_number',
         '[18]': 'output_registration_title',
         '[19]': 'url_guest_user',
-
-
         '[restricted_fullname]': 'restricted_fullname',
         '[restricted_university_institution]': 'restricted_university_institution',
         '[restricted_activity_id]': 'restricted_activity_id',
@@ -1890,14 +1888,14 @@ def replace_characters(data, content):
         '[restricted_mail_address]': 'restricted_mail_address',
         '[restricted_download_link]': 'restricted_download_link',
         '[restricted_expiration_date]': 'restricted_expiration_date',
-        '[restricted_approver_name]': 'restricted_approver_name',  # Wait to confirm, get from user profiles
-        '[restricted_site_name_ja]': 'restricted_site_name_ja',  # Get from Site Info
-        '[restricted_site_name_en]': 'restricted_site_name_en',  # Get from Site Info
-        '[restricted_site_mail]': 'restricted_site_mail',  # Wait to confirm, get from user profiles
+        '[restricted_approver_name]': 'restricted_approver_name',
+        '[restricted_site_name_ja]': 'restricted_site_name_ja',
+        '[restricted_site_name_en]': 'restricted_site_name_en',
+        '[restricted_site_mail]': 'restricted_site_mail',
         '[restricted_site_url]': 'restricted_site_url',
         '[restricted_approver_affiliation]': 'restricted_approver_affiliation',
-        '[restricted_supervisor]':'',
-        '[restricted_reference]' :''
+        '[restricted_supervisor]': '',
+        '[restricted_reference]': ''
     }
     for key in replace_list:
         value = replace_list.get(key)
@@ -1967,17 +1965,21 @@ def set_mail_info(item_info, activity_detail):
     """
 
     def get_default_mail_sender():
+        """Get default mail sender.
+        :return:
+        """
+
         mail_config = MailConfig.get_config()
         return mail_config.get('mail_default_sender', '')
 
     def get_site_info():
-        """
-        Get site name
+        """Get site name.
+
         @return:
         """
         site_name_en = site_name_ja = ''
         site_info = SiteInfo.get()
-        if site_info.site_name:
+        if site_info:
             if len(site_info.site_name) == 1:
                 site_name_en = site_name_ja = site_info.site_name[0]['name']
             elif len(site_info.site_name) == 2:
@@ -1989,9 +1991,9 @@ def set_mail_info(item_info, activity_detail):
     site_en, site_ja = get_site_info()
     site_mail = get_default_mail_sender()
 
-
     register_user, register_date = \
         get_register_info(activity_detail.activity_id)
+
     mail_info = dict(
         university_institution=item_info.get('subitem_university/institution'),
         fullname=item_info.get('subitem_fullname'),
@@ -2011,7 +2013,7 @@ def set_mail_info(item_info, activity_detail):
         report_number=activity_detail.activity_id,
         registration_number=activity_detail.activity_id,
         output_registration_title=item_info.get('subitem_title'),
-
+        # Restricted data newly supported
         restricted_fullname=item_info.get('subitem_restricted_access_name'),
         restricted_university_institution=item_info.get('subitem_restricted_access_university/institution'),
         restricted_activity_id=activity_detail.activity_id,
@@ -2091,7 +2093,7 @@ def process_send_notification_mail(
         send_mail_approval_done(mail_info)
 
 
-def get_application_and_approv_date(activities, columns):
+def get_application_and_approved_date(activities, columns):
     """Get application and approved date.
 
     @param activities:
@@ -2657,7 +2659,7 @@ def validate_guest_activity(
 
 
 def create_onetime_download_url_to_guest(activity_id: str,
-                                       extra_info: dict) -> bool:
+                                        extra_info: dict) -> bool:
     """Send onetime download URL to guest.
 
     @param activity_id:
@@ -2674,13 +2676,12 @@ def create_onetime_download_url_to_guest(activity_id: str,
         # Delete guest activity.
         delete_guest_activity(activity_id)
 
-        # WEKO_WORKFLOW_ACCESS_DOWNLOAD_URL
         # Save onetime to Database.
         one_time_obj = create_onetime_download_url(file_name, record_id, guest_mail)
         if one_time_obj:
-            from datetime import datetime, timedelta
             expiration_date = datetime.today() + timedelta(days=one_time_obj.expiration_date)
-            return {"file_url": onetime_file_url, "expiration_date": expiration_date.strftime("%m/%d/%Y")}
+            return {"file_url": onetime_file_url,
+                    "expiration_date": expiration_date.strftime("%m/%d/%Y")}
         else:
             current_app.logger.error("Can not create onetime download.")
             return False
@@ -2975,28 +2976,31 @@ def process_send_mail(mail_info, mail_pattern_name):
         send_mail(subject, mail_info['mail_recipient'], body)
 
 
-def process_send_approval_mails(activity_detail, previous_action_settings, next_action_settings, next_step_appover_id,
-                                file_data):
+def process_send_approval_mails(activity_detail, actions_mail_setting, next_step_appover_id, file_data):
+    """Process send mail for approval steps.
+
+    :param activity_detail:
+    :param actions_mail_setting:
+    :param next_step_appover_id:
+    :param file_data:
+    :return:
+    """
     item_info = get_item_info(activity_detail.item_id)
     mail_info = set_mail_info(item_info, activity_detail)
-    mail_info['restricted_download_link'] = file_data['file_url']
-    mail_info['restricted_expiration_date'] = file_data['expiration_date']
+    mail_info['restricted_download_link'] = file_data.get("file_url", '')
+    mail_info['restricted_expiration_date'] = file_data.get("expiration_date", '')
 
     # Override guest mail if any
     if activity_detail.extra_info.get('guest_mail'):
-        mail_info['mail_address'] = activity_detail.extra_info.get('guest_mail')
+        mail_info['mail_recipient'] = activity_detail.extra_info.get('guest_mail')
 
-    if next_action_settings.get("request_approval", False):
+    if actions_mail_setting["next"].get("request_approval", False):
         approval_user = UserProfile.get_by_userid(int(next_step_appover_id))
-        if approval_user:
-            mail_info['mail_recipient'] = approval_user.user.email
-            process_send_mail(mail_info, WEKO_WORKFLOW_REQUEST_APPROVAL)
-        else:
-            current_app.logger.error("Can not get approver's info ")
-            return False
+        mail_info['mail_recipient'] = approval_user.user.email
+        process_send_mail(mail_info, current_app.config("WEKO_WORKFLOW_REQUEST_APPROVAL"))
 
-    if previous_action_settings.get("inform_approval", False):
-        process_send_mail(mail_info, WEKO_WORKFLOW_APPROVE_DONE)
+    if actions_mail_setting["previous"].get("inform_approval", False):
+        process_send_mail(mail_info, current_app.config("WEKO_WORKFLOW_APPROVE_DONE"))
 
-    if previous_action_settings.get("inform_reject", False):
-        process_send_mail(mail_info, WEKO_WORKFLOW_APPROVE_REJECTED)
+    if actions_mail_setting["previous"].get("inform_reject", False):
+        process_send_mail(mail_info, current_app.config("WEKO_WORKFLOW_APPROVE_REJECTED"))
