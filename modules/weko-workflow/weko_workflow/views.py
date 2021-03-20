@@ -69,17 +69,18 @@ from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
 from .models import ActionStatusPolicy, Activity, ActivityAction
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import IdentifierHandle, auto_fill_title, check_continue, \
-    check_existed_doi, delete_cache_data, delete_guest_activity, \
-    filter_all_condition, get_account_info, get_actionid, \
-    get_activity_display_info, get_activity_id_of_record_without_version, \
+    check_existed_doi, create_onetime_download_url_to_guest, \
+    delete_cache_data, delete_guest_activity, filter_all_condition, \
+    get_account_info, get_actionid, get_activity_display_info, \
+    get_activity_id_of_record_without_version, \
     get_application_and_approved_date, get_approval_keys, get_cache_data, \
     get_identifier_setting, get_workflow_item_type_names, \
     handle_finish_workflow, init_activity_for_guest_user, \
     is_enable_item_name_link, is_hidden_pubdate, is_show_autofill_metadata, \
     is_usage_application_item_type, item_metadata_validation, \
-    prepare_data_for_guest_activity, process_send_notification_mail, \
-    process_send_reminder_mail, register_hdl, save_activity_data, \
-    saving_doi_pidstore, send_onetime_download_url_to_guest, \
+    prepare_data_for_guest_activity, process_send_approval_mails, \
+    process_send_notification_mail, process_send_reminder_mail, register_hdl, \
+    save_activity_data, saving_doi_pidstore, \
     send_usage_application_mail_for_guest_user, update_cache_data, \
     validate_guest_activity_expired, validate_guest_activity_token
 
@@ -813,16 +814,38 @@ def next_action(activity_id='0', action_id=0):
         current_pid is pid_without_ver and \
             current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
         register_hdl(activity_id)
+    flow = Flow()
+    next_flow_action = flow.get_next_flow_action(
+        activity_detail.flow_define.flow_id, action_id, action_order)
+    next_action_endpoint = next_flow_action[0].action.action_endpoint
 
-    if current_app.config.get(
-            'WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL') and \
-            current_user.is_authenticated and \
-            (not activity_detail.extra_info or not
-                activity_detail.extra_info.get('guest_mail')):
-        flow = Flow()
-        next_flow_action = flow.get_next_flow_action(
+    # Start to send mail
+    if 'approval' in [action_endpoint, next_action_endpoint]:
+        current_flow_action = flow.get_flow_action_detail(
             activity_detail.flow_define.flow_id, action_id, action_order)
-        next_action_endpoint = next_flow_action[0].action.action_endpoint
+        next_action_detail = work_activity.get_activity_action_comment(
+            activity_id, next_flow_action[0].action_id,
+            next_flow_action[0].action_order)
+        is_last_approval_step = work_activity.is_last_approval_step(activity_id,
+                                                                    action_id,
+                                                                    action_order)
+        # Only gen url file link at last approval step
+        url_and_expired_date = {}
+        if is_last_approval_step:
+            url_and_expired_date = create_onetime_download_url_to_guest(
+                activity_detail.activity_id,
+                activity_detail.extra_info)
+        action_mails_setting = {
+            "previous": current_flow_action.send_mail_setting,
+            "next": next_flow_action[0].send_mail_setting}
+        process_send_approval_mails(activity_detail, action_mails_setting,
+                                    next_action_detail.action_handler,
+                                    url_and_expired_date)
+    if current_app.config.get(
+        'WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL') and \
+        current_user.is_authenticated and \
+        (not activity_detail.extra_info or not
+            activity_detail.extra_info.get('guest_mail')):
         process_send_notification_mail(activity_detail,
                                        action_endpoint, next_action_endpoint)
 

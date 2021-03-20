@@ -265,3 +265,12 @@ WEKO_WORKFLOW_FILTER_PARAMS = [
 
 WEKO_WORKFLOW_ACTIVITY_TOKEN_PATTERN = "activity={} file_name={} date={} email={}"
 """Token pattern."""
+
+WEKO_WORKFLOW_APPROVE_DONE = 'email_pattern_approval_done.tpl'
+"""Mail template for Done Approval"""
+
+WEKO_WORKFLOW_APPROVE_REJECTED = 'email_pattern_approval_rejected.tpl'
+"""Mail template for Rejected Approval"""
+
+WEKO_WORKFLOW_REQUEST_APPROVAL = 'email_pattern_request_approval.tpl'
+"""Mail template for Requested Approval"""

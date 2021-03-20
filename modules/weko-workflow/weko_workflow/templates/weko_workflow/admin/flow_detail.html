@@ -174,7 +174,26 @@
                       <input type="checkbox" class="td_action_user_deny" id="td_action_user_deny_{{action.action_id}}" data-action-id="{{action.action_id}}" data-row-order-user-deny="{{loop.index}}" {% if action.action_role.action_user_exclude %}checked{% endif %}> {{_('Deny')}}
                     </label>
                   </div>
-                </div>
+                  <br>
+                  {% if action.action.action_name == 'Approval'%}
+                    <div class="mail_setting_options">
+                      <div class="form-inline">
+                        <label>
+                          <input type="checkbox" class="pointer" id="td_action_request_approval_{{action.action_id}}" {% if action.send_mail_setting.request_approval %}checked{% endif %} >
+                          {{_('Approval Request Notification Email')}}</label>
+                      </div>
+                      <div class="form-inline">
+                        <label>
+                          <input type="checkbox" class="pointer" id="td_action_approval_reject_{{action.action_id}}" {% if action.send_mail_setting.inform_reject %}checked{% endif %}>
+                          {{_('Approval Rejection Notification Email')}}</label>
+                      </div>
+                      <div class="form-inline">
+                        <label>
+                          <input type="checkbox" class="pointer" id="td_action_approval_done_{{action.action_id}}" {% if action.send_mail_setting.inform_approval %}checked{% endif %}>
+                          {{_('Approval Notification Email')}}</label>
+                      </div>
+                    </div>
+                {% endif %}
               </td>
               <td class="hide">{{_(action.action_status.value)}}</td>
               <td class="hide"><span id="td_action_date_{{action.action_id}}">{{action.action_date.date()}}</span></td>
@@ -216,10 +235,7 @@
   <tr id="row_apply_action.id">
     <th scope="row"><span class="action_order"></span></th>
     <td class="hide action_ids" data-workflow-flow-action-id="action.id">apply_action.id</td>
-    <td>
-      <span id="td_action_name_apply_action.id">apply_action.name</span>
-      <span class="approval-order"></span>
-    </td>
+    <td><span id="td_action_name_apply_action.id">apply_action.name</span></td>
     <td>
       <div class="form-inline">
         <select class="form-control td_action_role" id="td_action_role_apply_action.id" data-action-id="apply_action.id">
@@ -247,6 +263,26 @@
           <input type="checkbox" class="td_action_user_deny" id="td_action_user_deny_apply_action.id" data-action-id="apply_action.id">
           {{_("Deny")}}
         </div>
+        <div class="mail_setting_options">
+          <div class="form-inline">
+            <label>
+              <input type="checkbox" class="pointer" id="td_action_request_approval_apply_action.id">
+              {{_('Approval Request Notification Email')}}</label>
+            </label>
+          </div>
+          <div class="form-inline">
+            <label>
+              <input type="checkbox" class="pointer" id="td_action_approval_reject_apply_action.id">
+              {{_('Approval Rejection Notification Email')}}</label>
+            </label>
+          </div>
+          <div class="form-inline">
+            <label>
+              <input type="checkbox" class="pointer" id="td_action_approval_done_apply_action.id">
+              {{_('Approval Notification Email')}}</label>
+            </label>
+          </div>
+        </div>
       </div>
     </td>
     <td class="hide">{{_("Usable")}}</td>
@@ -262,4 +298,3 @@
 </tbody>
 </table>
 {%- endblock %}
-

@@ -556,6 +556,21 @@ class FlowAction(db.Model, TimestampMixin):
         backref=db.backref('flow_action'))
     """flow action relationship."""
 
+    send_mail_setting = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+
 
 class FlowActionRole(db.Model, TimestampMixin):
     """FlowActionRole list belong to FlowAction.

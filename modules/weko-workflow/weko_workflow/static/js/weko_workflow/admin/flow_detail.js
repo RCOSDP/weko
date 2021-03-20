@@ -29,6 +29,7 @@ $(document).ready(function () {
         role: 0,
         role_deny: false,
         workflow_flow_action_id: -1,
+        send_mail_setting : {"inform_reject": false, "inform_approval": false, "request_approval": false},
         action: 'ADD'
       };
       apply_action_list.push(apply_action);
@@ -253,6 +254,11 @@ $(document).ready(function () {
       role: $tr.find('#td_action_role_' + actionId).val(),
       role_deny: $tr.find('#td_action_role_deny_' + actionId).is(':checked'),
       workflow_flow_action_id: $(this).data('workflow-flow-action-id'),
+      send_mail_setting: {
+        "request_approval": $tr.find('#td_action_request_approval_' + actionId).is(':checked'),
+        "inform_approval": $tr.find('#td_action_approval_done_' + actionId).is(':checked'),
+        "inform_reject": $tr.find('#td_action_approval_reject_' + actionId).is(':checked')
+      },
       action: 'ADD'
     });
   });
@@ -279,6 +285,7 @@ $(document).ready(function () {
       if(!isApproval(apply_action)){
         new_row = new_row.replaceAll('specify-property-option', 'hide');
         new_row = new_row.replaceAll('<span class="approval-order"></span>', '');
+        new_row = new_row.replaceAll('mail_setting_options', 'hide');
       }
       $('#tb_action_list').append(new_row);
     }
@@ -316,6 +323,11 @@ $(document).ready(function () {
         role: $tr.find('#td_action_role_' + actionId).val(),
         role_deny: $tr.find('#td_action_role_deny_' + actionId).is(':checked'),
         workflow_flow_action_id: $(this).data('workflow-flow-action-id'),
+        send_mail_setting: {
+            "request_approval": $tr.find('#td_action_request_approval_' + actionId).is(':checked'),
+            "inform_approval":  $tr.find('#td_action_approval_done_' + actionId).is(':checked'),
+            "inform_reject":  $tr.find('#td_action_approval_reject_' + actionId).is(':checked')
+        },
         action: 'ADD'
       });
     });

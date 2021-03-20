@@ -29,7 +29,7 @@ from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from sqlalchemy import and_, asc, desc, or_
+from sqlalchemy import and_, asc, desc, or_, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from weko_records.serializers.utils import get_item_type_name
@@ -206,7 +206,8 @@ class Flow(object):
                         flow_id=flow_id,
                         action_id=action.get('id'),
                         action_order=order + 1,
-                        action_version=action.get('version')
+                        action_version=action.get('version'),
+                        send_mail_setting=action.get('send_mail_setting')
                     )
                     _flow = _Flow.query.filter_by(
                         flow_id=flow_id).one_or_none()
@@ -215,6 +216,7 @@ class Flow(object):
                 else:
                     """Update"""
                     flowaction.action_order = order + 1
+                    flowaction.send_mail_setting = action.get('send_mail_setting')
                     db.session.merge(flowaction)
                 _FlowActionRole.query.filter_by(
                     flow_action_id=flowaction.id).delete()
@@ -292,6 +294,22 @@ class Flow(object):
                     action_order=previous_action_order).all()
                 return previous_action
             return None
+
+
+    def get_flow_action_detail(self, flow_id, action_id, action_order):
+        """Get fow action detail.
+
+        :param flow_id:
+        :param action_id:
+        :param action_order:
+        :return:
+        """
+        with db.session.no_autoflush:
+            cur_action = _FlowAction.query.filter_by(
+                    flow_id=flow_id).filter_by(
+                    action_id=action_id,
+                    action_order=action_order).one_or_none()
+            return cur_action
 
     def get_last_flow_action(self, flow_id):
         """Return last action info.
@@ -894,6 +912,19 @@ class WorkActivity(object):
                 action_id=action_id,
                 action_order=action_order).one_or_none()
             return activity_action
+
+    def is_last_approval_step(self, activity_id, action_id, action_order):
+        """Check whether current approval step is the last one.
+
+        :param activity_id:
+        :param action_id:
+        :param action_order:
+        :return:
+        """
+        with db.session.no_autoflush:
+            activity_action = db.session.query(func.max(ActivityAction.action_order)).filter_by(activity_id=activity_id,
+                                                                                                action_id=action_id)[0]
+            return activity_action.action_order == action_order
 
     def create_or_update_action_journal(self, activity_id, action_id, journal):
         """Create or update action journal info.

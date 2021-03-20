@@ -945,8 +945,7 @@ def create_onetime_download_url(
             "download_count": download_limit,
             "extra_info": extra_info,
         })
-        if file_onetime:
-            return True
+        return file_onetime
     return False
 
 
