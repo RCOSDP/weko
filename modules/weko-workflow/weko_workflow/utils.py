@@ -3042,10 +3042,10 @@ def process_send_approval_mails(activity_detail, actions_mail_setting, next_step
     if actions_mail_setting["next"].get("request_approval", False):
         approval_user = UserProfile.get_by_userid(int(next_step_appover_id))
         mail_info['mail_recipient'] = approval_user.user.email
-        process_send_mail(mail_info, current_app.config("WEKO_WORKFLOW_REQUEST_APPROVAL"))
+        process_send_mail(mail_info, current_app.config["WEKO_WORKFLOW_REQUEST_APPROVAL"])
 
     if actions_mail_setting["previous"].get("inform_approval", False):
-        process_send_mail(mail_info, current_app.config("WEKO_WORKFLOW_APPROVE_DONE"))
+        process_send_mail(mail_info, current_app.config["WEKO_WORKFLOW_APPROVE_DONE"])
 
     if actions_mail_setting["previous"].get("inform_reject", False):
-        process_send_mail(mail_info, current_app.config("WEKO_WORKFLOW_APPROVE_REJECTED"))
+        process_send_mail(mail_info, current_app.config["WEKO_WORKFLOW_APPROVE_REJECTED"])

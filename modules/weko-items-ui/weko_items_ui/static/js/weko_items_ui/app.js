@@ -530,8 +530,9 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
     validThumbnails: [],
     errorMessages: []
   },
-    thumbnailsVM = rootScope.filesVM.files.filter(file => file.is_thumbnail),
-    inValidThumbnails = [];
+  inValidThumbnails = [];
+
+
 
   // Check for duplicate files & file type
   if (files && files.length > 0) {
@@ -550,17 +551,19 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
     result.isValid = false;
     result.errorMessages.push($("#invalid_files_type").val() + '<br/>' + inValidThumbnails.join(', '));
   }
+  if(rootScope.filesVM){
+    thumbnailsVM = rootScope.filesVM.files.filter(file => file.is_thumbnail);
+    if (thumbnailsVM.length > 0 && itemSizeCheckFlg) {
+      let thumbnailItemKey = scope.searchThumbnailForm && scope.searchThumbnailForm(),
+        recordSchema = rootScope.recordsVM.invenioRecordsSchema,
+        thumbnailMetaData = recordSchema.properties[thumbnailItemKey],
+        thumbnailJson = rootScope.recordsVM.invenioRecordsModel[thumbnailItemKey],
+        maxItems = thumbnailMetaData ? thumbnailMetaData.maxItems : 0;
 
-  if (thumbnailsVM.length > 0 && itemSizeCheckFlg) {
-    let thumbnailItemKey = scope.searchThumbnailForm && scope.searchThumbnailForm(),
-      recordSchema = rootScope.recordsVM.invenioRecordsSchema,
-      thumbnailMetaData = recordSchema.properties[thumbnailItemKey],
-      thumbnailJson = rootScope.recordsVM.invenioRecordsModel[thumbnailItemKey],
-      maxItems = thumbnailMetaData ? thumbnailMetaData.maxItems : 0;
-
-    if (maxItems > 0 && thumbnailsVM.length > maxItems) {
-      result.isValid = false;
-      result.errorMessages.push(JSON.stringify(thumbnailJson[0]) + ' ' + $("#max_files_thumnbnail_error").val());
+      if (maxItems > 0 && thumbnailsVM.length > maxItems) {
+        result.isValid = false;
+        result.errorMessages.push(JSON.stringify(thumbnailJson[0]) + ' ' + $("#max_files_thumnbnail_error").val());
+      }
     }
   }
 

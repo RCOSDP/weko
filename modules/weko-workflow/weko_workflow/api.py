@@ -922,9 +922,10 @@ class WorkActivity(object):
         :return:
         """
         with db.session.no_autoflush:
-            activity_action = db.session.query(func.max(ActivityAction.action_order)).filter_by(activity_id=activity_id,
-                                                                                                action_id=action_id)[0]
-            return activity_action.action_order == action_order
+            max_approval_order = \
+                db.session.query(func.max(ActivityAction.action_order)).filter_by(activity_id=activity_id,
+                                                                                  action_id=action_id).first()[0]
+            return max_approval_order == action_order
 
     def create_or_update_action_journal(self, activity_id, action_id, journal):
         """Create or update action journal info.

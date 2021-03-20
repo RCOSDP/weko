@@ -823,12 +823,11 @@ def next_action(activity_id='0', action_id=0):
     if 'approval' in [action_endpoint, next_action_endpoint]:
         current_flow_action = flow.get_flow_action_detail(
             activity_detail.flow_define.flow_id, action_id, action_order)
-        next_action_detail = work_activity.get_activity_action_comment(
+        next_action_detail = work_activivalidateThumbnailsty.get_activity_action_comment(
             activity_id, next_flow_action[0].action_id,
             next_flow_action[0].action_order)
-        is_last_approval_step = work_activity.is_last_approval_step(activity_id,
-                                                                    action_id,
-                                                                    action_order)
+        is_last_approval_step = work_activity.is_last_approval_step(activity_id, action_id, action_order) \
+            if action_endpoint == "approval" else False
         # Only gen url file link at last approval step
         url_and_expired_date = {}
         if is_last_approval_step:
