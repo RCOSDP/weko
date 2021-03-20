@@ -262,3 +262,9 @@ WEKO_WORKFLOW_FILTER_PARAMS = [
     'createdfrom', 'createdto', 'workflow', 'user', 'item', 'status', 'tab',
     'sizewait', 'sizetodo', 'sizeall', 'pagesall', 'pagestodo', 'pageswait'
 ]
+
+WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST = [2]
+
+WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST = [1, 3]
+
+WEKO_WORKFLOW_USAGE_ITEM_TITLE_PREFIX = '利用申請'

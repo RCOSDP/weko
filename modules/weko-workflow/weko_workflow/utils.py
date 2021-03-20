@@ -2856,3 +2856,39 @@ def prepare_data_for_guest_activity(activity_id: str) -> dict:
         session['itemlogin_community_id'] = community_id
 
     return ctx
+
+
+def get_usage_data(item_type_id, activity_detail, user_profile):
+    """
+    @param item_type_id:
+    @return:
+    """
+    result = None
+    mail_address = ''
+    extra_info = activity_detail.extra_info
+
+    if not extra_info or extra_info == {}:
+        return result
+
+    if user_profile != {}:
+        mail_address = user_profile.get('results').get('subitem_mail_address')
+    else:
+        mail_address = extra_info.get('guest_mail')
+
+    if item_type_id in current_app.config.get('WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST'):
+        related_title = extra_info.get('related_title')
+        wf_issued_date = activity_detail.created.strftime("%Y-%m-%d")
+        item_title = current_app.config.get('WEKO_WORKFLOW_USAGE_ITEM_TITLE_PREFIX') \
+            + '_' + wf_issued_date + '_' + related_title + '_'
+
+        result = dict(
+            usage_type='Application',
+            dataset_usage=related_title,
+            mail_address=mail_address,
+            wf_issued_date=wf_issued_date,
+            item_title=item_title
+        )
+    elif item_type_id in current_app.config.get('WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST'):
+        result = None
+
+    return result

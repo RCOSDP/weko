@@ -72,7 +72,7 @@ from .utils import IdentifierHandle, auto_fill_title, check_continue, \
     filter_all_condition, get_account_info, get_actionid, \
     get_activity_display_info, get_activity_id_of_record_without_version, \
     get_application_and_approved_date, get_cache_data, \
-    get_identifier_setting, get_term_and_condition_content, \
+    get_identifier_setting, get_term_and_condition_content, get_usage_data, \
     get_workflow_item_type_names, handle_finish_workflow, \
     init_activity_for_guest_user, is_enable_item_name_link, \
     is_hidden_pubdate, is_show_autofill_metadata, is_usage_application, \
@@ -569,6 +569,9 @@ def display_activity(activity_id="0"):
         send_onetime_download_url_to_guest(activity_detail.activity_id,
                                            activity_detail.extra_info)
 
+    usage_data = get_usage_data(workflow_detail.itemtype_id,
+                                activity_detail,
+                                user_profile)
     return render_template(
         'weko_workflow/activity_detail.html',
         page=page,
@@ -629,18 +632,16 @@ def display_activity(activity_id="0"):
         is_enable_item_name_link=is_enable_item_name_link(
             action_endpoint, item_type_name),
         list_license=list_license,
-        auto_fill_subitem_restricted_access_data_name_value='TEST_auto_fill_subitem_restricted_access_data_name_value',
-        auto_fill_subitem_restricted_access_name_value='TEST_auto_fill_subitem_restricted_access_name_value',
-        auto_fill_subitem_restricted_access_mail_address_value='TEST_auto_fill_subitem_restricted_access_mail_address_value',
-        auto_fill_subitem_restricted_access_university_institution_value='TEST_auto_fill_subitem_restricted_access_university_institution_value',
-        auto_fill_subitem_restricted_access_affiliated_division_department_value='TEST_auto_fill_subitem_restricted_access_affiliated_division_department_value',
-        auto_fill_subitem_restricted_access_position_value='Master Course (Master Program)',
-        auto_fill_subitem_restricted_access_phone_number_value='TEST_auto_fill_subitem_restricted_access_phone_number_value',
-        auto_fill_subitem_restricted_access_usage_report_id_value='TEST_auto_fill_subitem_restricted_access_usage_report_id_value',
-        auto_fill_subitem_restricted_access_wf_issued_date_value='2021-03-19',
-        auto_fill_subitem_restricted_access_application_date_value='2021-03-19',
-        auto_fill_subitem_restricted_access_approval_date_value='2021-03-19',
-        auto_fill_subitem_restricted_access_item_title_value='TEST_auto_fill_subitem_restricted_access_item_title_value',
+        auto_fill_usage_data_usage_type=usage_data.get('usage_type') if usage_data else '',
+        auto_fill_usage_data_data_name=usage_data.get('dataset_usage') if usage_data else '',
+        auto_fill_usage_data_name='TEST_auto_fill_usage_data_name',
+        auto_fill_usage_data_mail_address=usage_data.get('mail_address') if usage_data else '',
+        auto_fill_usage_data_university_institution='TEST_auto_fill_usage_data_university_institution',
+        auto_fill_usage_data_affiliated_division_department='TEST_auto_fill_usage_data_affiliated_division_department',
+        auto_fill_usage_data_position='Master Course (Master Program)',
+        auto_fill_usage_data_phone_number='TEST_auto_fill_usage_data_phone_number',
+        auto_fill_usage_data_wf_issued_date=usage_data.get('wf_issued_date') if usage_data else '',
+        auto_fill_usage_data_item_title=usage_data.get('item_title') if usage_data else '',
         **ctx
     )
 

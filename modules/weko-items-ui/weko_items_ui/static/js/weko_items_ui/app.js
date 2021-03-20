@@ -16,6 +16,8 @@ require([
   });
 });
 
+var item_title_key = '';
+
 /**
  * Custom bs-datepicker.
  * Default bs-datepicker: just support one pattern for input.
@@ -1934,6 +1936,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.AutoFillData = function (properties) {
         debugger;
         let recordsVM = $rootScope["recordsVM"];
+        thuan_test = recordsVM.invenioRecordsModel;
         for (let i = 0; i < properties.length; i++) {
           let property = properties[i];
           if (!$scope.isDataExisting(property)) {
@@ -1947,6 +1950,9 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                       recordsVM.invenioRecordsModel[key] = {};
                     }
                     recordsVM.invenioRecordsModel[key][property] = autoFillElement.val();
+                    if (property == 'subitem_restricted_access_item_title') {
+                      item_title_key = key
+                    }
                     $scope.disableElement(key, property)
                     break;
                   }
@@ -2271,13 +2277,20 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         $scope.getDataAuthors();
         $scope.updateNumFiles();
         $scope.editModeHandle();
-
+        let usage_type = $("#auto_fill_usage_data_usage_type").val();
         // Auto fill for Usage Application & Usage Report
-        if (['1', '3'].includes($("#autofill_item_type_id").val())) {
+        if (usage_type === 'Report') {
           $scope.autoFillUsageReport();
         }
-        else if (['2'].includes($("#autofill_item_type_id").val())) {
+        else if (usage_type === 'Application') {
           $scope.autoFillUsageApplication();
+          setTimeout(function () {
+            $("#subitem_restricted_access_name").on('keyup', function () {
+              let item_title = $("#auto_fill_subitem_restricted_access_item_title").val() +
+                $("#subitem_restricted_access_name").val()
+              $rootScope["recordsVM"].invenioRecordsModel[item_title_key]['subitem_restricted_access_item_title'] = item_title;
+            });
+          }, 3000);
         }
 
         //In case save activity
