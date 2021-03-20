@@ -1032,13 +1032,10 @@ def next_action(activity_id='0', action_id=0):
                 if not new_activity_id:
                     return jsonify(code=-1, msg=_('error'))
 
-            # Set permission to Approved
-            open_date = datetime.now()
+            # Remove to permission
             permission = FilePermission.find_by_activity(activity_id)
             if permission:
-                status_done = 1
-                FilePermission.update_status(permission, status_done)
-                FilePermission.update_open_date(permission, open_date)
+                FilePermission.delete_object(permission)
 
             activity.update(
                 action_id=next_action_id,

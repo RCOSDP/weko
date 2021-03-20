@@ -248,6 +248,15 @@ class FilePermission(db.Model):
         db.session.commit()
         return permission
 
+    @classmethod
+    def delete_object(cls, permission):
+        """Delete permission object.
+
+        @rtype: object
+        """
+        db.session.delete(permission)
+        db.session.commit()
+
 
 class FileOnetimeDownload(db.Model, Timestamp):
     """File onetime download."""
