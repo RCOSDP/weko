@@ -836,8 +836,12 @@ def next_action(activity_id='0', action_id=0):
                 activity_detail.activity_id,
                 activity_detail.extra_info)
         action_mails_setting = {
-            "previous": current_flow_action.send_mail_setting,
-            "next": next_flow_action[0].send_mail_setting}
+            "previous":
+                current_flow_action.send_mail_setting
+                if current_flow_action.send_mail_setting else {},
+            "next": next_flow_action[0].send_mail_setting if next_flow_action[
+                0].send_mail_setting else {}
+        }
         process_send_approval_mails(activity_detail, action_mails_setting,
                                     next_action_detail.action_handler,
                                     url_and_expired_date)
