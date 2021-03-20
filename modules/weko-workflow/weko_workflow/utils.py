@@ -3023,6 +3023,14 @@ def process_send_mail(mail_info, mail_pattern_name):
         send_mail(subject, mail_info['mail_recipient'], body)
 
 
+def cancel_expired_usage_reports():
+    """Cancel expired usage reports."""
+    expired_activities = GuestActivity.get_expired_activities()
+    if expired_activities:
+        WorkActivity.cancel_usage_report_activities(
+            expired_activities)
+
+
 def process_send_approval_mails(activity_detail, actions_mail_setting,
                                 next_step_appover_id, file_data):
     """Process send mail for approval steps.

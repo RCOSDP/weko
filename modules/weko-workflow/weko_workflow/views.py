@@ -1044,7 +1044,7 @@ def next_action(activity_id='0', action_id=0):
                 if not new_activity_id:
                     return jsonify(code=-1, msg=_('error'))
 
-            # Remove to permission
+            # Remove to file permission
             permission = FilePermission.find_by_activity(activity_id)
             if permission:
                 FilePermission.delete_object(permission)
@@ -1291,6 +1291,11 @@ def cancel_action(activity_id='0', action_id=0):
     if activity_detail.extra_info and \
             activity_detail.extra_info.get('guest_mail'):
         delete_guest_activity(activity_id)
+
+    # Remove to file permission
+    permission = FilePermission.find_by_activity(activity_id)
+    if permission:
+        FilePermission.delete_object(permission)
 
     return jsonify(code=0,
                    msg=_('success'),

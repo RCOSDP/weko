@@ -1133,7 +1133,7 @@ class GuestActivity(db.Model, Timestamp):
             return False
 
     @classmethod
-    def get_expired_activities(cls):
+    def get_expired_activities(cls) -> list:
         """Get expired activities.
 
         @rtype: object
@@ -1147,6 +1147,5 @@ class GuestActivity(db.Model, Timestamp):
         ).filter(
             cls.is_usage_report.is_(True)
         )
-        print(query)
-        data = query.all()
-        print(data)
+
+        return query.all()

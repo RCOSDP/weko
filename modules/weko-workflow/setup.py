@@ -86,6 +86,9 @@ setup(
         'flask.commands': [
             'workflow = weko_workflow.cli:workflow',
         ],
+        'invenio_celery.tasks': [
+            'weko_workflow = weko_workflow.tasks',
+        ],
         'invenio_base.apps': [
             'weko_workflow = weko_workflow:WekoWorkflow',
         ],

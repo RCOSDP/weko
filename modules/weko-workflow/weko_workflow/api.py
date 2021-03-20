@@ -27,13 +27,14 @@ from datetime import datetime, timedelta
 from flask import abort, current_app, request, session, url_for
 from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
+from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from sqlalchemy import and_, asc, desc, or_, func
+from sqlalchemy import and_, asc, desc, func, or_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
-
-from invenio_db import db
+from weko_deposit.api import WekoDeposit
 from weko_records.serializers.utils import get_item_type_name
+
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
 from .models import Action as _Action
@@ -2250,6 +2251,41 @@ class WorkActivity(object):
         except Exception as ex:
             current_app.logger.exception(str(ex))
             db.session.rollback()
+
+    @staticmethod
+    def cancel_usage_report_activities(activities_id: list):
+        """Cancel usage report activities are excepted.
+
+        @param activities_id:
+        @return:
+        """
+        activities = _Activity.query.filter(
+            _Activity.activity_id.in_(activities_id)) \
+            .filter(
+            or_(_Activity.activity_status
+                == ActivityStatusPolicy.ACTIVITY_BEGIN,
+                _Activity.activity_status
+                == ActivityStatusPolicy.ACTIVITY_MAKING)
+        ).all()
+        item_id_lst = []
+        if not activities:
+            return item_id_lst
+        try:
+            for activity in activities:
+                activity.activity_status = ActivityStatusPolicy.ACTIVITY_CANCEL
+                if activity.item_id:
+                    item_id_lst.append(activity.item_id)
+                db.session.merge(activity)
+            if len(item_id_lst) > 0:
+                cancel_records = WekoDeposit.get_records(item_id_lst)
+                for record in cancel_records:
+                    cancel_deposit = WekoDeposit(record, record.model)
+                    cancel_deposit.clear()
+            db.session.commit()
+        except Exception as ex:
+            current_app.logger.exception(str(ex))
+            db.session.rollback()
+            return False
 
 
 class WorkActivityHistory(object):
