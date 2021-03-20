@@ -24,7 +24,6 @@ import json
 import os
 import sys
 from collections import OrderedDict
-from datetime import datetime
 from functools import wraps
 
 import redis
@@ -33,7 +32,6 @@ from flask import Blueprint, abort, current_app, jsonify, render_template, \
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, User, userrole
-from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -42,6 +40,9 @@ from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
 from sqlalchemy.sql.expression import cast
+from werkzeug.utils import import_string
+
+from invenio_db import db
 from weko_accounts.api import ShibUser
 from weko_accounts.utils import login_required_customize
 from weko_authors.models import Authors
@@ -60,8 +61,6 @@ from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
-from werkzeug.utils import import_string
-
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
@@ -813,14 +812,16 @@ def next_action(activity_id='0', action_id=0):
     next_flow_action = flow.get_next_flow_action(
         activity_detail.flow_define.flow_id, action_id, action_order)
     next_action_endpoint = next_flow_action[0].action.action_endpoint
-
+    next_action_id = next_flow_action[0].action_id
+    next_action_order = next_flow_action[
+        0].action_order if action_order else None
     # Start to send mail
     if 'approval' in [action_endpoint, next_action_endpoint]:
         current_flow_action = flow.get_flow_action_detail(
             activity_detail.flow_define.flow_id, action_id, action_order)
         next_action_detail = work_activity.get_activity_action_comment(
-            activity_id, next_flow_action[0].action_id,
-            next_flow_action[0].action_order)
+            activity_id, next_action_id,
+            next_action_order)
         is_last_approval_step = work_activity \
             .is_last_approval_step(activity_id, action_id, action_order) \
             if action_endpoint == "approval" else False
@@ -1020,8 +1021,6 @@ def next_action(activity_id='0', action_id=0):
     next_flow_action = flow.get_next_flow_action(
         activity_detail.flow_define.flow_id, action_id, action_order)
     if next_flow_action and len(next_flow_action) > 0:
-        next_action_id = next_flow_action[0].action_id
-        next_action_order = next_flow_action[0].action_order
         next_action_endpoint = next_flow_action[0].action.action_endpoint
         if 'end_action' == next_action_endpoint:
             new_activity_id = None
@@ -1124,7 +1123,8 @@ def previous_action(activity_id='0', action_id=0, req=0):
 
     if pre_action and len(pre_action) > 0:
         previous_action_id = pre_action[0].action_id
-        previous_action_order = pre_action[0].action_order
+        previous_action_order = pre_action[
+            0].action_order if action_order else None
         if req == 0:
             work_activity.upt_activity_action_status(
                 activity_id=activity_id,
@@ -1445,7 +1445,8 @@ def lock_activity(activity_id=0):
         ).one_or_none()
         if workflow_activity_action:
             action_handler = workflow_activity_action.action_handler
-            return int(current_user.get_id()) == int(action_handler)
+            if action_handler:
+                return int(current_user.get_id()) == int(action_handler)
         return False
     cache_key = 'workflow_locked_activity_{}'.format(activity_id)
     timeout = current_app.permanent_session_lifetime.seconds

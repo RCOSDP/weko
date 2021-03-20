@@ -19,6 +19,8 @@
 #}
 
 {% macro check_download_file(record, file, permission, community, url_for_security, is_file_name_url, file_label) %}
+<input id="non-role-msg" type="hidden"
+       value="{{ _("This data is not available for undergraduate students or those who do not register their positions.") }}"/>
 {% set is_guest = False %}
 {%- if not session['user_id'] -%}
   {% set is_guest = True %}
@@ -42,7 +44,8 @@
                 {{ _('Apply JGSS') }}
               </button>
             </a>
-          <a class="action-anchor hide" {% if not start_guest_wf %}href="{{ href_url }}"{% endif %}>
+
+          <a class="action-anchor hide">
             <button class="btn-start-guest-wf img-rounded action-button button-sm"
                     id="btn-start-guest-wf-{{ file.version_id }}"
                     data-guest_filename_data= "{{ file.filename }}"
@@ -60,18 +63,27 @@
             {% if start_guest_wf %}
               {% set btn_class = btn_class + " btn-start-guest-wf"%}
             {% endif %}
-            <a class="action-anchor" {% if not start_guest_wf %}href="{{ href_url }}"{% endif %}>
-              <button class="{{btn_class}}"
+            {% if not start_guest_wf %}
+              <a class="action-anchor">
+                <button class="img-rounded action-button button-sm non-role-btn">
+                  <i class="action-icon fa fa-download"></i>
+                  {{ _('Apply JGSS') }}
+                </button>
+              </a>
+            {% else %}
+              <a class="action-anchor" href="{{ href_url }}"{% endif %}>
+                <button class="{{btn_class}}"
                         data-guest_filename_data= "{{ file.filename }}"
                         data-guest_workflow_id="{{ workflow_id }}"
                         data-guest_itemtype_id="{{ item_type_id }}"
                         data-guest_flow_id="{{ flow_id }}"
                         data-guest_data_type_title="{{ record.item_title }}"
                         data-guest_record_id="{{ record.recid }}">
-                <i class="action-icon fa fa-download"></i>
-                {{ _('Apply JGSS') }}
-              </button>
-            </a>
+                  <i class="action-icon fa fa-download"></i>
+                  {{ _('Apply JGSS') }}
+                </button>
+              </a>
+            {% endif %}
           {% endif %}
     {%- endif -%}
   {%- elif not permission -%}
@@ -83,8 +95,6 @@
         <a class="forcewrap">{{ file_label }} ({{ file.size|filesizeformat }})</a>
         <br>
       {%- else -%}
-        <input id="non-role-msg" type="hidden"
-               value="{{ _("This data is not available for undergraduate students or those who do not register their positions.") }}"/>
         <a class="action-anchor">
           <button class="img-rounded action-button button-sm non-role-btn">
             <i class="action-icon fa fa-download"></i>

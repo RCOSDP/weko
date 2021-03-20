@@ -27,13 +27,13 @@ from datetime import datetime, timedelta
 from flask import abort, current_app, request, session, url_for
 from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
-from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from sqlalchemy import and_, asc, desc, or_, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
-from weko_records.serializers.utils import get_item_type_name
 
+from invenio_db import db
+from weko_records.serializers.utils import get_item_type_name
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
 from .models import Action as _Action
@@ -262,10 +262,11 @@ class Flow(object):
         :return:
         """
         with db.session.no_autoflush:
-            cur_action = _FlowAction.query.filter_by(
-                flow_id=flow_id).filter_by(
-                action_id=cur_action_id,
-                action_order=action_order).one_or_none()
+            query = _FlowAction.query.filter_by(flow_id=flow_id,
+                                                action_id=cur_action_id)
+            if action_order:
+                query = query.filter_by(action_order=action_order)
+            cur_action = query.first()
             if cur_action:
                 next_action_order = cur_action.action_order + 1
                 next_action = _FlowAction.query.filter_by(
@@ -283,10 +284,11 @@ class Flow(object):
         :return:
         """
         with db.session.no_autoflush:
-            cur_action = _FlowAction.query.filter_by(
-                flow_id=flow_id,
-                action_id=cur_action_id,
-                action_order=action_order).one_or_none()
+            query = _FlowAction.query.filter_by(flow_id=flow_id,
+                                                action_id=cur_action_id)
+            if action_order:
+                query = query.filter_by(action_order=action_order)
+            cur_action = query.first()
             if cur_action and cur_action.action_order > 1:
                 previous_action_order = cur_action.action_order - 1
                 previous_action = _FlowAction.query.filter_by(
@@ -305,10 +307,11 @@ class Flow(object):
         :return:
         """
         with db.session.no_autoflush:
-            cur_action = _FlowAction.query.filter_by(
-                    flow_id=flow_id).filter_by(
-                    action_id=action_id,
-                    action_order=action_order).one_or_none()
+            query = _FlowAction.query.filter_by(flow_id=flow_id,
+                                                action_id=action_id)
+            if action_order:
+                query = query.filter_by(action_order=action_order)
+            cur_action = query.first()
             return cur_action
 
     def get_last_flow_action(self, flow_id):
@@ -824,7 +827,8 @@ class WorkActivity(object):
             activity = self.get_activity_by_id(activity_id)
             activity.action_id = action_id
             activity.action_status = action_status
-            activity.action_order = action_order
+            if action_order:
+                activity.action_order = action_order
             db.session.merge(activity)
         db.session.commit()
 
@@ -869,10 +873,12 @@ class WorkActivity(object):
         :return:
         """
         with db.session.begin_nested():
-            activity_action = ActivityAction.query.filter_by(
+            query = ActivityAction.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id,
-                action_order=action_order).one_or_none()
+                action_id=action_id)
+            if action_order:
+                query = query.filter_by(action_order=action_order)
+            activity_action = query.first()
             activity_action.action_status = action_status
             db.session.merge(activity_action)
         db.session.commit()
@@ -888,11 +894,12 @@ class WorkActivity(object):
         :return:
         """
         with db.session.begin_nested():
-            activity_action = ActivityAction.query.filter_by(
+            query = ActivityAction.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id,
-                action_order=action_order
-            ).one_or_none()
+                action_id=action_id)
+            if action_order:
+                query = query.filter_by(action_order=action_order)
+            activity_action = query.first()
             if activity_action:
                 activity_action.action_comment = comment
                 db.session.merge(activity_action)
@@ -907,10 +914,12 @@ class WorkActivity(object):
         :return:
         """
         with db.session.no_autoflush:
-            activity_action = ActivityAction.query.filter_by(
+            query = ActivityAction.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id,
-                action_order=action_order).one_or_none()
+                action_id=action_id)
+            if action_order:
+                query = query.filter_by(action_order=action_order)
+            activity_action = query.first()
             return activity_action
 
     def is_last_approval_step(self, activity_id, action_id, action_order):
@@ -923,9 +932,11 @@ class WorkActivity(object):
         """
         with db.session.no_autoflush:
             max_approval_order = \
-                db.session.query(func.max(ActivityAction.action_order)).filter_by(activity_id=activity_id,
-                                                                                  action_id=action_id).first()[0]
-            return max_approval_order == action_order
+                db.session.query(
+                    func.max(ActivityAction.action_order)).filter_by(
+                    activity_id=activity_id,
+                    action_id=action_id).first()[0]
+            return max_approval_order == action_order if action_order else True
 
     def create_or_update_action_journal(self, activity_id, action_id, journal):
         """Create or update action journal info.
@@ -1089,11 +1100,11 @@ class WorkActivity(object):
     def get_activity_action_status(self, activity_id, action_id, action_order):
         """Get activity action status."""
         with db.session.no_autoflush:
-            activity_ac = ActivityAction.query.filter_by(
-                activity_id=activity_id,
-                action_id=action_id,
-                action_order=action_order
-            ).one()
+            query = ActivityAction.query.filter_by(activity_id=activity_id,
+                                                   action_id=action_id)
+            if action_order:
+                query = query.filter_by(action_order=action_order)
+            activity_ac = query.first()
             action_stus = activity_ac.action_status
             return action_stus
 
@@ -1136,7 +1147,6 @@ class WorkActivity(object):
         """End activity."""
         try:
             with db.session.begin_nested():
-                self.get_activity_by_id(activity.get('activity_id'))
                 db_activity = self.get_activity_by_id(
                     activity.get('activity_id'))
                 if db_activity:
@@ -1210,7 +1220,8 @@ class WorkActivity(object):
                         action_order=activity.get('action_order')
                     )
                     db.session.add(db_history)
-
+                    last_action_order = last_flow_action.action_order if \
+                        activity_detail.action_order else None
                     db_history = ActivityHistory(
                         activity_id=activity.get('activity_id'),
                         action_id=last_flow_action.action_id,
@@ -1220,7 +1231,7 @@ class WorkActivity(object):
                         action_date=datetime.utcnow(),
                         action_comment=ActionCommentPolicy.
                         FINALLY_ACTION_COMMENT,
-                        action_order=last_flow_action.action_order
+                        action_order=last_action_order
                     )
                     db.session.add(db_history)
             db.session.commit()
@@ -1813,11 +1824,14 @@ class WorkActivity(object):
         history_dict = {}
         activity = WorkActivity()
         activity_detail = activity.get_activity_detail(histories[0].activity_id)
+        is_action_order = True if histories[0].action_order else False
         for history in histories:
             update_user_mail = history.user.email \
                 if history.user else \
                 activity_detail.extra_info.get('guest_mail')
-            history_dict[history.action_order] = {
+            keys = history.action_order if history.action_order else \
+                history.action_id
+            history_dict[keys] = {
                 'Updater': update_user_mail,
                 'Result': ActionStatusPolicy.describe(
                     self.get_activity_action_status(
@@ -1837,9 +1851,11 @@ class WorkActivity(object):
                 doing_index_id = -1
                 retry_index_id = -1
                 for flow_action in flow_actions:
+                    keys = flow_action.action_order if is_action_order else \
+                        flow_action.action_id
                     action_status = \
-                        history_dict[flow_action.action_order].get('Result') \
-                        if flow_action.action_order in history_dict else ' '
+                        history_dict[keys].get('Result') \
+                            if keys in history_dict else ' '
                     if action_status == \
                             ActionStatusPolicy.describe(
                                 ActionStatusPolicy.ACTION_DOING):
@@ -1898,10 +1914,12 @@ class WorkActivity(object):
         with db.session.no_autoflush:
             activity = _Activity.query.filter_by(
                 activity_id=activity_id).first()
-            flow_action = _FlowAction.query.filter_by(
+            query = _FlowAction.query.filter_by(
                 flow_id=activity.flow_define.flow_id,
-                action_id=int(action_id),
-                action_order=action_order).one_or_none()
+                action_id=int(action_id))
+            if action_order:
+                query = query.filter_by(action_order=action_order)
+            flow_action = query.first()
             for action_role in flow_action.action_roles:
                 if action_role.action_role_exclude:
                     roles['deny'].append(action_role.action_role)
@@ -2065,7 +2083,7 @@ class WorkActivity(object):
                 db_activity.activity_status =\
                     ActivityStatusPolicy.ACTIVITY_FINALLY,
             with db.session.begin_nested():
-                db_history = ActivityHistory(
+                activity_history_data = dict(
                     activity_id=db_activity.activity_id,
                     action_id=action.id,
                     action_version=action.action_version,
@@ -2074,6 +2092,11 @@ class WorkActivity(object):
                     action_date=db_activity.activity_start,
                     action_comment=ActionCommentPolicy.FINALLY_ACTION_COMMENT
                 )
+                if db_activity.action_order:
+                    activity_history_data[
+                        'action_order'] = db_activity.action_order
+                db_history = ActivityHistory(**activity_history_data)
+
                 db.session.merge(db_activity)
                 db.session.add(db_history)
             db.session.commit()
