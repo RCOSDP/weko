@@ -835,6 +835,8 @@ def next_action(activity_id='0', action_id=0):
             url_and_expired_date = create_onetime_download_url_to_guest(
                 activity_detail.activity_id,
                 activity_detail.extra_info)
+            if not url_and_expired_date:
+                url_and_expired_date = {}
         action_mails_setting = {
             "previous":
                 current_flow_action.send_mail_setting
