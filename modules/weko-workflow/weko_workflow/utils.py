@@ -32,20 +32,21 @@ from flask_babelex import gettext as _
 from flask_security import current_user
 from invenio_accounts.models import User
 from invenio_cache import current_cache
-from invenio_db import db
-from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_i18n.ext import current_i18n
-from invenio_mail.admin import MailSettingView
-from invenio_mail.models import MailConfig
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
-from invenio_records.models import RecordMetadata
 from invenio_records_files.models import RecordsBuckets
 from passlib.handlers.oracle import oracle10
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
+
+from invenio_db import db
+from invenio_files_rest.models import Bucket, ObjectVersion
+from invenio_mail.admin import MailSettingView
+from invenio_mail.models import MailConfig
+from invenio_records.models import RecordMetadata
 from weko_admin.models import Identifier, SiteInfo
 from weko_admin.utils import get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
@@ -57,15 +58,12 @@ from weko_records.serializers.utils import get_item_type_name, get_mapping
 from weko_records_ui.utils import create_onetime_download_url, \
     generate_one_time_download_url, get_list_licence
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
-from weko_user_profiles import UserProfile
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
-
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD
-
 from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
     WorkFlow
 from .config import IDENTIFIER_GRANT_SELECT_DICT, WEKO_SERVER_CNRI_HOST_LINK
@@ -2689,6 +2687,8 @@ def validate_guest_activity_expired(activity_id: str) -> str:
     guest_activity = GuestActivity.find_by_activity_id(activity_id)
     if guest_activity:
         guest_activity = guest_activity[0]
+    else:
+        return ""
     expiration_access_date = guest_activity.created.date() + timedelta(
         guest_activity.expiration_date)
     current_date = datetime.utcnow().date()
