@@ -543,3 +543,12 @@ msgstr ""
 
 msgid "Specify property"
 msgstr ""
+
+msgid "Approval Request Notification Email"
+msgstr ""
+
+msgid "Approval Notification Email"
+msgstr ""
+
+msgid "Approval Rejection Notification Email"
+msgstr ""

@@ -598,3 +598,12 @@ msgstr "Specify Property"
 
 msgid "Specify property"
 msgstr "Specify Property"
+
+msgid "Approval Request Notification Email"
+msgstr ""
+
+msgid "Approval Notification Email"
+msgstr ""
+
+msgid "Approval Rejection Notification Email"
+msgstr ""
