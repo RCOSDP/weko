@@ -50,14 +50,15 @@ from weko_deposit.links import base_factory
 from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
 from weko_items_ui.api import item_login
-from weko_items_ui.utils import is_need_to_show_agreement_page, to_files_js
+from weko_items_ui.utils import to_files_js
 from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
 from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
     get_workflows
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from werkzeug.utils import import_string
 
@@ -72,15 +73,15 @@ from .utils import IdentifierHandle, auto_fill_title, check_continue, \
     filter_all_condition, get_account_info, get_actionid, \
     get_activity_display_info, get_activity_id_of_record_without_version, \
     get_application_and_approved_date, get_cache_data, \
-    get_identifier_setting, get_term_and_condition_content, \
-    get_workflow_item_type_names, handle_finish_workflow, \
-    init_activity_for_guest_user, is_enable_item_name_link, \
-    is_hidden_pubdate, is_show_autofill_metadata, is_usage_application, \
+    get_identifier_setting, get_workflow_item_type_names, \
+    handle_finish_workflow, init_activity_for_guest_user, \
+    is_enable_item_name_link, is_hidden_pubdate, is_show_autofill_metadata, \
     is_usage_application_item_type, item_metadata_validation, \
     prepare_data_for_guest_activity, process_send_notification_mail, \
     process_send_reminder_mail, register_hdl, save_activity_data, \
     saving_doi_pidstore, send_onetime_download_url_to_guest, \
-    update_cache_data, validate_guest_activity
+    send_usage_application_mail_for_guest_user, update_cache_data, \
+    validate_guest_activity_token, validate_guest_activity_expired
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -333,21 +334,26 @@ def init_activity_guest():
     """
     post_data = request.get_json()
 
-    data = {
-        'itemtype_id': post_data.get('item_type_id'),
-        'workflow_id': post_data.get('workflow_id'),
-        'flow_id': post_data.get('flow_id'),
-        'activity_confirm_term_of_use': True,
-        'extra_info': {
-            "guest_mail": post_data.get('guest_mail'),
-            "record_id": post_data.get('record_id'),
-            "related_title": post_data.get('guest_item_title'),
-            "file_name": post_data.get('file_name'),
+    if post_data.get('guest_mail'):
+        # Prepare activity data.
+        data = {
+            'itemtype_id': post_data.get('item_type_id'),
+            'workflow_id': post_data.get('workflow_id'),
+            'flow_id': post_data.get('flow_id'),
+            'activity_confirm_term_of_use': True,
+            'extra_info': {
+                "guest_mail": post_data.get('guest_mail'),
+                "record_id": post_data.get('record_id'),
+                "related_title": post_data.get('guest_item_title'),
+                "file_name": post_data.get('file_name'),
+                "is_restricted_access": True,
+            }
         }
-    }
+        tmp_url = init_activity_for_guest_user(data)
 
-    if not post_data.get('guest_mail') or init_activity_for_guest_user(data):
-        return jsonify(msg=_('Email is sent successfully.'))
+        if send_usage_application_mail_for_guest_user(
+                post_data.get('guest_mail'), tmp_url):
+            return jsonify(msg=_('Email is sent successfully.'))
     return jsonify(msg='Cannot send mail')
 
 
@@ -359,13 +365,20 @@ def display_guest_activity(file_name=""):
     @return:
     """
     # Get token
+    from weko_workflow.models import GuestActivity
+    GuestActivity.get_expired_activities()
     token = request.args.get('token')
     # Validate token
-    is_valid, activity_id, guest_email = validate_guest_activity(token,
-                                                                 file_name)
+    is_valid, activity_id, guest_email = validate_guest_activity_token(
+        token, file_name)
     if not is_valid:
         return render_template("weko_theme/error.html",
                                error=_("Token is invalid"))
+
+    error_msg = validate_guest_activity_expired(activity_id)
+    if error_msg:
+        return render_template("weko_theme/error.html",
+                               error=error_msg)
 
     session['guest_token'] = token
     session['guest_email'] = guest_email
@@ -565,7 +578,7 @@ def display_activity(activity_id="0"):
 
     # Send onetime download URL to guest user.
     if action_endpoint == 'end_action' and activity_detail.extra_info and \
-            activity_detail.extra_info.get('guest_mail'):
+            activity_detail.extra_info.get('is_restricted_access'):
         send_onetime_download_url_to_guest(activity_detail.activity_id,
                                            activity_detail.extra_info)
 

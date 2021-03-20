@@ -638,3 +638,6 @@ msgstr "強制終了"
 #: weko_workflow/templates/weko_workflow/item_login_sucess.html:288
 msgid "Back"
 msgstr "戻る"
+
+msgid "The specified link has expired."
+msgstr "指定したリンクはアクセス有効期限を超過しています。"

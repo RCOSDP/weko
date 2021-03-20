@@ -27,6 +27,7 @@ from flask import current_app
 from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
 from invenio_db import db
+from sqlalchemy import func
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.expression import desc
 from sqlalchemy_utils.models import Timestamp
@@ -1024,6 +1025,12 @@ class GuestActivity(db.Model, Timestamp):
     token = db.Column(db.String(255), nullable=False)
     """Token."""
 
+    expiration_date = db.Column(db.Integer, nullable=False, default=0)
+    """Expiration Date."""
+
+    is_usage_report = db.Column(db.Boolean(), nullable=False, default=False)
+    """Is Usage Report."""
+
     def __init__(self, **kwargs):
         """Initial guest activity.
 
@@ -1096,3 +1103,22 @@ class GuestActivity(db.Model, Timestamp):
             db.session.rollback()
             current_app.logger.error(ex)
             return False
+
+    @classmethod
+    def get_expired_activities(cls):
+        """Get expired activities.
+
+        @rtype: object
+        """
+        query = db.session.query(cls).with_entities(cls.activity_id)
+        current_date = datetime.utcnow().date()
+        query = query.filter(
+            db.cast(
+                cls.created + func.make_interval(0, 0, 0, cls.expiration_date),
+                db.DATE) < current_date
+        ).filter(
+            cls.is_usage_report.is_(True)
+        )
+        print(query)
+        data = query.all()
+        print(data)

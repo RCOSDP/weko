@@ -23,7 +23,7 @@
 import base64
 import os
 from copy import deepcopy
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from typing import NoReturn, Tuple, Union
 
 from celery.task.control import inspect
@@ -45,6 +45,7 @@ from passlib.handlers.oracle import oracle10
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from weko_admin.models import Identifier
+from weko_admin.utils import get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
 from weko_index_tree.models import Index
@@ -54,7 +55,8 @@ from weko_records.serializers.utils import get_item_type_name, get_mapping
 from weko_records_ui.utils import create_onetime_download_url, \
     generate_one_time_download_url, get_list_licence
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
 
@@ -2099,8 +2101,6 @@ def create_usage_report(activity_id):
     activity_detail = WorkActivity().get_activity_detail(activity_id)
 
     _workflow = WorkFlow()
-    # Get WF detail
-    _workflow_detail = _workflow.get_workflow_by_id(activity_detail.workflow_id)
     # Get usage report WF
     usage_report_workflow = _workflow.find_workflow_by_name(
         current_app.config['WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME'])
@@ -2496,10 +2496,12 @@ def send_mail_url_guest_user(mail_info: dict) -> bool:
         return True
 
 
-def init_activity_for_guest_user(data: dict) -> bool:
+def init_activity_for_guest_user(data: dict,
+                                 is_usage_report: bool = False) -> str:
     """Init activity for guest user.
 
     @param data:
+    @param is_usage_report:
     @return:
     """
     def _get_guest_activity():
@@ -2511,7 +2513,6 @@ def init_activity_for_guest_user(data: dict) -> bool:
         return GuestActivity.find(**_guest_activity)
 
     def _generate_token_value():
-        token_pattern = "activity={} file_name={} date={} email={}"
         hash_value = token_pattern.format(activity_id, file_name, activity_date,
                                           guest_mail)
         secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
@@ -2521,8 +2522,10 @@ def init_activity_for_guest_user(data: dict) -> bool:
         _token_value = base64.b64encode(_token_value.encode()).decode()
         return _token_value
 
+    date_form_str = current_app.config['WEKO_WORKFLOW_DATE_FORMAT']
+    token_pattern = current_app.config['WEKO_WORKFLOW_ACTIVITY_TOKEN_PATTERN']
     # Get data to generated key
-    activity_date = date.today().strftime("%y-%m-%d")
+    activity_date = datetime.utcnow().strftime(date_form_str)
     guest_mail = data.get("extra_info").get("guest_mail")
     file_name = data.get("extra_info").get("file_name")
     record_id = data.get("extra_info").get("record_id")
@@ -2544,6 +2547,16 @@ def init_activity_for_guest_user(data: dict) -> bool:
             "activity_id": activity_id,
             "token": token_value
         }
+
+        # In case create usage report,
+        # update expiration date from Admin settings
+        if is_usage_report:
+            guest_activity['is_usage_report'] = is_usage_report
+            usage_report_access = get_restricted_access(
+                'usage_report_workflow_access')
+            guest_activity['expiration_date'] = int(usage_report_access.get(
+                'expiration_date_access', 500))
+
         GuestActivity.create(**guest_activity)
     else:
         token_value = guest_activity[0].token
@@ -2551,21 +2564,31 @@ def init_activity_for_guest_user(data: dict) -> bool:
 
     # Generate URL
     url_pattern = "{}workflow/activity/guest-user/{}?token={}"
-    url = url_pattern.format(request.url_root, file_name, token_value)
+    tmp_url = url_pattern.format(request.url_root, file_name, token_value)
 
+    return tmp_url
+
+
+def send_usage_application_mail_for_guest_user(guest_mail: str, temp_url: str):
+    """Send usage application mail for guest user.
+
+    @param guest_mail:
+    @param temp_url:
+    @return:
+    """
     # Mail information
     mail_info = {
         'template': current_app.config.get("WEKO_WORKFLOW_ACCESS_ACTIVITY_URL"),
         'mail_address': guest_mail,
-        'url_guest_user': url
+        'url_guest_user': temp_url
     }
     return send_mail_url_guest_user(mail_info)
 
 
-def validate_guest_activity(
+def validate_guest_activity_token(
     token: str, file_name: str
 ) -> Union[Tuple[bool, None, None], Tuple[bool, str, str]]:
-    """Validate guest activity.
+    """Validate guest activity token.
 
     @param token:
     @param file_name:
@@ -2586,6 +2609,23 @@ def validate_guest_activity(
         return False, None, None
 
 
+def validate_guest_activity_expired(activity_id: str) -> str:
+    """Validate guest activity expired.
+
+    @param activity_id:
+    @return:
+    """
+    guest_activity = GuestActivity.find_by_activity_id(activity_id)
+    if guest_activity:
+        guest_activity = guest_activity[0]
+    expiration_access_date = guest_activity.created.date() + timedelta(
+        guest_activity.expiration_date)
+    current_date = datetime.utcnow().date()
+    if current_date > expiration_access_date:
+        return _("The specified link has expired.")
+    return ""
+
+
 def send_onetime_download_url_to_guest(activity_id: str,
                                        extra_info: dict) -> bool:
     """Send onetime download URL to guest.
@@ -2596,10 +2636,14 @@ def send_onetime_download_url_to_guest(activity_id: str,
     """
     file_name = extra_info.get('file_name')
     record_id = extra_info.get('record_id')
-    guest_mail = extra_info.get('guest_mail')
-    if file_name and record_id and guest_mail:
+    user_mail = extra_info.get('user_mail')
+    is_guest_user = False
+    if not user_mail:
+        user_mail = extra_info.get('guest_mail')
+        is_guest_user = True
+    if file_name and record_id and user_mail:
         onetime_file_url = generate_one_time_download_url(
-            file_name, record_id, guest_mail)
+            file_name, record_id, user_mail)
 
         # Delete guest activity.
         delete_guest_activity(activity_id)
@@ -2608,12 +2652,13 @@ def send_onetime_download_url_to_guest(activity_id: str,
         mail_info = {
             'template': current_app.config.get(
                 "WEKO_WORKFLOW_ACCESS_DOWNLOAD_URL"),
-            'mail_address': guest_mail,
+            'mail_address': user_mail,
             'url_guest_user': onetime_file_url
         }
 
         # Save onetime to Database.
-        if create_onetime_download_url(file_name, record_id, guest_mail):
+        if create_onetime_download_url(activity_id, file_name, record_id,
+                                       user_mail, is_guest_user):
             return send_mail_url_guest_user(mail_info)
         else:
             current_app.logger.error("Can not create onetime download.")

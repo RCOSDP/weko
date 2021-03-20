@@ -261,3 +261,6 @@ WEKO_WORKFLOW_FILTER_PARAMS = [
     'createdfrom', 'createdto', 'workflow', 'user', 'item', 'status', 'tab',
     'sizewait', 'sizetodo', 'sizeall', 'pagesall', 'pagestodo', 'pageswait'
 ]
+
+WEKO_WORKFLOW_ACTIVITY_TOKEN_PATTERN = "activity={} file_name={} date={} email={}"
+"""Token pattern."""
