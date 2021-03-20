@@ -837,13 +837,10 @@ def next_action(activity_id='0', action_id=0):
                 activity_detail.extra_info)
             if not url_and_expired_date:
                 url_and_expired_date = {}
-        action_mails_setting = {
-            "previous":
-                current_flow_action.send_mail_setting
-                if current_flow_action.send_mail_setting else {},
-            "next": next_flow_action[0].send_mail_setting if next_flow_action[
-                0].send_mail_setting else {}
-        }
+        action_mails_setting = {"previous": current_flow_action.send_mail_setting,
+                                "next": next_flow_action[0].send_mail_setting,
+                                "approval": True,
+                                "reject": False}
         process_send_approval_mails(activity_detail, action_mails_setting,
                                     next_action_detail.action_handler,
                                     url_and_expired_date)
@@ -1105,7 +1102,13 @@ def previous_action(activity_id='0', action_id=0, req=0):
     rtn = history.create_activity_history(activity, action_order)
     if rtn is None:
         return jsonify(code=-1, msg=_('error'))
-
+    current_flow_action = flow.get_flow_action_detail(activity_detail.flow_define.flow_id,
+                                                      action_id, action_order)
+    action_mails_setting = {"previous": current_flow_action.send_mail_setting,
+                            "next": {},
+                            "approval": False,
+                            "reject": True}
+    process_send_approval_mails(activity_detail, action_mails_setting, -1, {})
     try:
         pid_identifier = PersistentIdentifier.get_by_object(
             pid_type='doi', object_type='rec',
