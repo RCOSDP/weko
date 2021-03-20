@@ -578,12 +578,7 @@ def display_activity(activity_id="0"):
         item_link = ItemLink.get_item_link_info(recid.pid_value)
         ctx['item_link'] = item_link
 
-    # Send onetime download URL to guest user.
-    if action_endpoint == 'end_action' and activity_detail.extra_info and \
-            activity_detail.extra_info.get('is_restricted_access'):
-        send_onetime_download_url_to_guest(activity_detail.activity_id,
-                                           activity_detail.extra_info)
-
+    # Get email approval key
     approval_email_key = get_approval_keys()
 
     return render_template(
