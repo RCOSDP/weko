@@ -38,6 +38,7 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from passlib.handlers.oracle import oracle10
 from weko_admin.models import AdminSettings
+from weko_admin.utils import get_restricted_access
 from weko_deposit.api import WekoDeposit
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
@@ -927,7 +928,6 @@ def create_onetime_download_url(
     :param is_guest:
     :return:
     """
-    from weko_admin.utils import get_restricted_access
     content_file_download = get_restricted_access('content_file_download')
     if isinstance(content_file_download, dict):
         expiration_date = content_file_download.get("expiration_date", 30)
@@ -992,8 +992,7 @@ def get_terms():
     @return:
     """
     terms_result = [{'id': 'term_free', 'name': _('Free Input')}]
-    terms_list = AdminSettings.get('restricted_access', False).\
-        get("terms_and_conditions", [])
+    terms_list = get_restricted_access('terms_and_conditions')
     current_lang = current_i18n.language
     for term in terms_list:
         terms_result.append(
