@@ -71,8 +71,9 @@ from weko_user_profiles import UserProfile
 from weko_workflow.api import WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     WEKO_SERVER_CNRI_HOST_LINK
-from weko_workflow.models import ActionStatusPolicy as ASP, Activity, \
-    FlowAction, FlowActionRole, FlowDefine
+from weko_workflow.models import ActionStatusPolicy as ASP
+from weko_workflow.models import Activity, FlowAction, FlowActionRole, \
+    FlowDefine
 from weko_workflow.utils import IdentifierHandle, \
     recursive_get_specified_properties
 
