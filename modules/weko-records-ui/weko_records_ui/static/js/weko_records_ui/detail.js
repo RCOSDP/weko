@@ -75,7 +75,7 @@ require([
   });
 
 
-  function startWorkflow(workflowId, communityId, recordId, fileName) {
+  function startWorkflow(workflowId, communityId, recordId, fileName, itemTitle) {
     let post_uri = $('#post_uri').text();
     let dataType = $("#data_type_title").val();
     let post_data = {
@@ -87,7 +87,8 @@ require([
         file_name: fileName,
         record_id: recordId,
         is_restricted_access: true,
-        user_mail: $("#current_user_email").val()
+        user_mail: $("#current_user_email").val(),
+        related_title : itemTitle
       }
     };
     if (typeof communityId !== 'undefined' && communityId !== "") {
@@ -138,7 +139,8 @@ require([
     let communityId = $(this).data('community');
     let recordId = $(this).data('record-id');
     let fileName = $(this).data('filename');
-    startWorkflow(workflowId, communityId, recordId, fileName);
+    let itemTitle = $(this).data('itemtitle');
+    startWorkflow(workflowId, communityId, recordId, fileName, itemTitle);
   });
 
   $('.term_checked').on('click', function () {
@@ -188,7 +190,8 @@ require([
       let communityId = $btnStartWorkflow.data('community');
       let recordId = $btnStartWorkflow.data('record-id');
       let fileName = $btnStartWorkflow.data('filename');
-      startWorkflow(workflowId, communityId, recordId, fileName)
+      let itemTitle = $(this).data('itemtitle');
+      startWorkflow(workflowId, communityId, recordId, fileName, itemTitle);
     }
   });
 
