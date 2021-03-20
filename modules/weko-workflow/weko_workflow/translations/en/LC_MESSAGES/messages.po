@@ -595,3 +595,9 @@ msgstr "Back"
 
 msgid "The specified link has expired."
 msgstr ""
+
+msgid "Specify Property"
+msgstr "Specify Property"
+
+msgid "Specify property"
+msgstr "Specify Property"

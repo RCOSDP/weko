@@ -2350,9 +2350,12 @@ def update_activity_action(activity_id, owner_id):
         action = _Action.query.filter_by(
             action_name=usage_application).one_or_none()
         if action:
+            activity = WorkActivity()
+            activity_detail = activity.get_activity_by_id(activity_id)
             WorkActivity().upt_activity_action_status(
                 activity_id=activity_id, action_id=action.id,
-                action_status=ActionStatusPolicy.ACTION_DOING
+                action_status=ActionStatusPolicy.ACTION_DOING,
+                action_order=activity_detail.action_order
             )
             WorkActivityHistory().upd_activity_history_detail(activity_id,
                                                               action.id)
@@ -2711,7 +2714,8 @@ def get_activity_display_info(activity_id: str):
     action_id = cur_action.id
     temporary_comment = ""
     action_data = activity.get_activity_action_comment(
-        activity_id=activity_id, action_id=action_id)
+        activity_id=activity_id, action_id=action_id,
+        action_order=activity_detail.action_order)
     if action_data:
         temporary_comment = action_data.action_comment
     return action_endpoint, action_id, activity_detail, cur_action, histories, \
@@ -2901,3 +2905,38 @@ def prepare_data_for_guest_activity(activity_id: str) -> dict:
         session['itemlogin_community_id'] = community_id
 
     return ctx
+
+
+def recursive_get_specified_properties(properties):
+    """Recursive get specified properties.
+
+    :param properties:
+    :return:
+    """
+    if not properties:
+        return None
+    if "items" in properties:
+        for item in properties["items"]:
+            if item.get("approval"):
+                return item.get("key")
+            else:
+                result = recursive_get_specified_properties(item)
+                if result:
+                    return result
+
+
+def get_approval_keys():
+    """Get approval keys.
+
+    :return:
+    """
+    from weko_records.models import ItemTypeProperty
+    result = ItemTypeProperty.query.filter_by(delflg=False).all()
+    approval_keys = []
+    for value in result:
+        properties = value.form
+        if properties:
+            result = recursive_get_specified_properties(properties)
+            if result:
+                approval_keys.append(result)
+    return approval_keys

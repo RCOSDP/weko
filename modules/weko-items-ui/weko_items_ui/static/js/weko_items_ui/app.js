@@ -557,7 +557,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       thumbnailMetaData = recordSchema.properties[thumbnailItemKey],
       thumbnailJson = rootScope.recordsVM.invenioRecordsModel[thumbnailItemKey],
       maxItems = thumbnailMetaData ? thumbnailMetaData.maxItems : 0;
-    
+
     if (maxItems > 0 && thumbnailsVM.length > maxItems) {
       result.isValid = false;
       result.errorMessages.push(JSON.stringify(thumbnailJson[0]) + ' ' + $("#max_files_thumnbnail_error").val());
@@ -3111,7 +3111,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         } else if (!$scope.validateEmailsAndIndexAndUpdateApprovalActions(activityId, steps, isAutoSetIndexAction)) {
           return false;
         } else {
-          // Validate maxItems for thumbnails          
+          // Validate maxItems for thumbnails
           let validateResult = validateThumbnails($rootScope, $scope, true);
           if (!validateResult.isValid) {
             let message = validateResult.errorMessages.join('<br/><br/>');
@@ -3145,7 +3145,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           );
           let requestData = {
             'item_id': $("#autofill_item_type_id").val(),
-            'data': request.data
+            'data': request.data,
+            'activity_id': $('#activity_id').text()
           }
           $.ajax({
             url: validateURL,
@@ -3248,51 +3249,44 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       // -Validate index existence(if any)
       $scope.validateEmailsAndIndexAndUpdateApprovalActions = function (activityId, steps, isAutoSetIndexAction) {
         let emailsToValidate = [];
-        let actionEndpointKey = $("#action_endpoint_key").val();
+        let listEmailKeys = [];
         let approvalMailSubKey = $("#approval_email_key").val();
-        if (actionEndpointKey === "" || approvalMailSubKey === "") {
+        if (approvalMailSubKey === "") {
           return true;
         }
-        actionEndpointKey = JSON.parse(actionEndpointKey);
-        approvalMailSubKey = JSON.parse(approvalMailSubKey);
-        let param = {};
-        steps.forEach(function (step) {
-          if (step.ActionEndpoint == actionEndpointKey.approval1 && approvalMailSubKey.approval1) {
-            emailsToValidate.push('email_approval1');
-            let subitemApprovalMailAddress = $scope.depositionForm[approvalMailSubKey.approval1];
-            let mail_adress = '';
-            if (subitemApprovalMailAddress) {
-              mail_adress = subitemApprovalMailAddress.$modelValue;
-            }
-            param['email_approval1'] = {
-              'mail': mail_adress,
-              'action_id': step.ActionId
-            }
-          } else if (step.ActionEndpoint == actionEndpointKey.approval2 && approvalMailSubKey.approval2) {
-            emailsToValidate.push('email_approval2');
-            let subitemApproval2MailAddress = $scope.depositionForm[approvalMailSubKey.approval2];
-            let mail_adress = '';
-            if (subitemApproval2MailAddress) {
-              mail_adress = subitemApproval2MailAddress.$modelValue;
-            }
-            param['email_approval2'] = {
-              'mail': mail_adress,
-              'action_id': step.ActionId
-            }
-          }
-        });
-        param['activity_id'] = activityId;
-        param['user_to_check'] = emailsToValidate;
-        param['auto_set_index_action'] = isAutoSetIndexAction;
         var itemsDict = {};
         let recordsForm = $rootScope.recordsVM.invenioRecordsForm;
         for (let i = 0; i < recordsForm.length; i++) {
           itemsDict = Object.assign($scope.getItemsDictionary(recordsForm[i]), itemsDict);
         }
-        return this.sendValidationRequest(param, itemsDict, isAutoSetIndexAction, approvalMailSubKey);
+        approvalMailSubKey = JSON.parse(approvalMailSubKey);
+        let param = {};
+        Object.keys($scope.depositionForm).forEach(function (key) {
+          approvalMailSubKey.forEach(function (item) {
+            let item_keys = item.split('.').pop();
+            if (key.indexOf(item_keys) !== -1) {
+              let subItemApprovalMailAddress = $scope.depositionForm[key];
+              let mail_address = '';
+              if (subItemApprovalMailAddress) {
+                mail_address = subItemApprovalMailAddress.$modelValue;
+                if (mail_address) {
+                  mail_address = mail_address.trim()
+                }
+                param[item] = mail_address;
+                emailsToValidate.push(item);
+                listEmailKeys.push(key);
+              }
+            }
+          });
+        });
+        param['activity_id'] = activityId;
+        param['user_to_check'] = emailsToValidate;
+        param['user_key_to_check'] = listEmailKeys;
+        param['auto_set_index_action'] = isAutoSetIndexAction;
+        return this.sendValidationRequest(param, itemsDict, isAutoSetIndexAction);
       };
 
-      $scope.sendValidationRequest = function (param, itemsDict, isAutoSetIndexAction, approvalMailSubKey) {
+      $scope.sendValidationRequest = function (param, itemsDict, isAutoSetIndexAction) {
         let result = true;
         $.ajax({
           context: this,
@@ -3305,28 +3299,14 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           data: JSON.stringify(param),
           dataType: "json",
           success: function (data, status) {
-            let listEmailErrors = [];
-            if (param.email_approval1 && param.email_approval2) {
-              result = this.processResponseEmailValidation(itemsDict, data.email_approval1, approvalMailSubKey.approval1, listEmailErrors) + this.processResponseEmailValidation(itemsDict, data.email_approval2, approvalMailSubKey.approval2, listEmailErrors);
-            }
-            else{
-              if (param.email_approval1){
-                result = this.processResponseEmailValidation(itemsDict, data.email_approval1, approvalMailSubKey.approval1, listEmailErrors)
-              }
-              if (param.email_approval2) {
-                result = this.processResponseEmailValidation(itemsDict, data.email_approval2, approvalMailSubKey.approval2, listEmailErrors);
-              }
-            }
-            if (listEmailErrors.length > 0) {
-              let message = $("#validate_email_register").val() + '<br/><br/>';
-              message += listEmailErrors[0];
-              for (let k = 1; k < listEmailErrors.length; k++) {
-                let subMessage = ', ' + listEmailErrors[k];
-                message += subMessage;
-              }
-              $("#inputModal").html(message);
-              $("#allModal").modal("show");
+            if (data.validate_required_email && data.validate_required_email.length > 0) {
+              this.processShowModelValidation(data.validate_required_email, itemsDict, "#validate_email_required");
               result = false;
+            } else {
+              if (data.validate_register_in_system && data.validate_register_in_system.length > 0) {
+                this.processShowModelValidation(data.validate_register_in_system, itemsDict, "#validate_email_register");
+                result = false;
+              }
             }
             if (isAutoSetIndexAction && !data.index) {
               let error_message = $("#not_existed_index_tree_err").val() + '<br/><br/>';
@@ -3344,26 +3324,23 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         return result;
       };
 
-      $scope.processResponseEmailValidation = function (itemsDict, emailData, subKey, errorList) {
-        let validationResult = true;
-        if (emailData) {
-          if (emailData.error && typeof emailData.validation !== 'undefined') {
-            $("#inputModal").html(emailData.error);
-            $("#allModal").modal("show");
-            validationResult = false;
-          } else if (!emailData.validation) {
-            validationResult = false;
-            let mailAddressItem = $scope.depositionForm[subKey];
-            if (mailAddressItem) {
-              let name = mailAddressItem.$name;
-              if (itemsDict.hasOwnProperty(name)) {
-                name = itemsDict[name];
-              }
-              errorList.push(name);
+      $scope.processShowModelValidation = function (listEmailErrors, itemsDict, id_message) {
+        let message = $(id_message).val() + '<br/><br/>';
+        for (let index = 0; index < listEmailErrors.length; index++) {
+          let subKey = listEmailErrors[index];
+          let mailAddressItem = $scope.depositionForm[subKey];
+          if (mailAddressItem) {
+            let name = mailAddressItem.$name.split('.').pop();
+            if (itemsDict.hasOwnProperty(name)) {
+              name = itemsDict[name];
             }
+            listEmailErrors[index] = name;
           }
         }
-        return validationResult;
+        message += listEmailErrors.join(", ");
+        $("#inputModal").html(message);
+        $("#allModal").modal("show");
+        return false;
       }
 
       $scope.priceValidator = function () {
@@ -4193,7 +4170,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         $scope.directedUpload = function (thumbnails) {
           let validateResult = validateThumbnails($rootScope, $scope, false, thumbnails),
             files = validateResult.validThumbnails;
-          
+
           Array.prototype.forEach.call(files, function (f) {
             var reader = new FileReader();
             f.is_thumbnail = true;
@@ -4234,7 +4211,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           // If there is no valid file
           let validateResult = validateThumbnails($rootScope, $scope, false, thumbnails),
             files = validateResult.validThumbnails;
-                   
+
           files.length > 0 && $scope.getEndpoints(function () {
             if (!angular.isUndefined(files) && files.length > 0) {
               if ($scope.model.allowMultiple != 'True') {

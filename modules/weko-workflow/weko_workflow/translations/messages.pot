@@ -540,3 +540,9 @@ msgstr ""
 
 msgid "The specified link has expired."
 msgstr ""
+
+msgid "Specify Property"
+msgstr ""
+
+msgid "Specify property"
+msgstr ""

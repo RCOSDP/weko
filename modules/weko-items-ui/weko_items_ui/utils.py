@@ -71,9 +71,10 @@ from weko_user_profiles import UserProfile
 from weko_workflow.api import WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     WEKO_SERVER_CNRI_HOST_LINK
-from weko_workflow.models import ActionStatusPolicy as ASP
-from weko_workflow.utils import IdentifierHandle
-
+from weko_workflow.models import ActionStatusPolicy as ASP, Activity, \
+    FlowAction, FlowActionRole, FlowDefine
+from weko_workflow.utils import IdentifierHandle, \
+    recursive_get_specified_properties
 
 def get_list_username():
     """Get list username.
@@ -444,7 +445,49 @@ def parse_ranking_new_items(result_data):
     return data_list
 
 
-def validate_form_input_data(result: dict, item_id: str, data: dict):
+def is_consistency_flow_and_item_type(json_form, activity_id):
+    """Check consistency flow and item type."""
+    def get_specify_property_by_activity_id(activity_id):
+        """Get all specify properties in flow."""
+        wf_activity = WorkActivity()
+        activity = wf_activity.get_activity_by_id(activity_id)
+        flow_define = FlowDefine.query.filter_by(
+            id=activity.flow_id).one_or_none()
+        flow_actions = FlowAction.query.filter_by(
+            flow_id=flow_define.flow_id).all()
+        key_in_flow = []
+        for flow_action in flow_actions:
+            flow_action_role = FlowActionRole.query.filter_by(
+                flow_action_id=flow_action.id).one_or_none()
+            if flow_action_role and flow_action_role.specify_property:
+                key = flow_action_role.specify_property
+                fixed_key = remove_parent_key(key)
+                key_in_flow.append(fixed_key)
+        return key_in_flow
+
+    def remove_parent_key(full_key):
+        """
+        full_key: parentkey.subitem_xxxxxxxxxxx
+        full_key: item_xxxxxxxxxxx.subitem_xxxxxxxxxxx
+        """
+        if not full_key:
+            return None
+        array_split_key = full_key.split('.')
+        array_split_key.pop(0)
+        return ".".join(array_split_key)
+
+    specify_properties = get_specify_property_by_activity_id(activity_id)
+    count = 0
+    for form in json_form:
+        approval_key = recursive_get_specified_properties(form)
+        fixed_key = remove_parent_key(approval_key)
+        if fixed_key in specify_properties:
+            count = count + 1
+    return count == len(specify_properties)
+
+
+def validate_form_input_data(
+    result: dict, item_id: str, data: dict, activity_id= ''):
     """Validate input data.
 
     :param result: result dictionary.
@@ -453,6 +496,7 @@ def validate_form_input_data(result: dict, item_id: str, data: dict):
     """
     item_type = ItemTypes.get_by_id(item_id)
     json_schema = item_type.schema.copy()
+    json_form = item_type.form.copy()
 
     # Remove excluded item in json_schema
     remove_excluded_items_in_json_schema(item_id, json_schema)
@@ -461,6 +505,11 @@ def validate_form_input_data(result: dict, item_id: str, data: dict):
     validation_data = RecordBase(data)
     try:
         validation_data.validate()
+        is_consistency = is_consistency_flow_and_item_type(
+            json_form, activity_id)
+        if not is_consistency:
+            result["is_valid"] = False
+            result['error'] = _("Can not found the email address of approval.")
     except ValidationError as error:
         current_app.logger.error(error)
         result["is_valid"] = False
@@ -1671,45 +1720,61 @@ def update_index_tree_for_record(pid_value, index_tree_id):
     db.session.commit()
 
 
-def validate_user_mail(email):
+def validate_user_mail(users, activity_id, request_data, keys, result):
     """Validate user mail.
 
-    @param email:
+    @param keys:
+    @param users:
+    @param activity_id:
+    @param request_data:
     @return:
     """
-    result = {}
+    result['validate_required_email'] = []
+    result['validate_register_in_system'] = []
+    result['validate_map_flow_and_item_type'] = []
     try:
-        if email != '':
-            result = {'results': '',
-                      'validation': '',
-                      'error': ''
-                      }
-            user_info = get_user_info_by_email(
-                email)
-            if user_info and user_info.get(
-                    'user_id') is not None:
-                if current_user.is_authenticated and int(
-                        user_info.get('user_id')) == int(current_user.get_id()):
-                    result['validation'] = False
-                    result['error'] = _(
-                        "You cannot specify "
-                        "yourself in approval lists setting.")
-                else:
-                    result['results'] = user_info
-                    result['validation'] = True
-            else:
-                result['validation'] = False
+        for index, user in enumerate(users):
+            email = request_data.get(user)
+            user_info = get_user_info_by_email(email)
+            action_order = check_approval_email(activity_id, user)
+            if action_order:
+                if not email:
+                    result['validate_required_email'].append(keys[index])
+                elif not (user_info and user_info.get('user_id') is not None):
+                    result['validate_register_in_system'].append(keys[index])
+                if email and user_info and user_info.get('user_id') is not None:
+                    update_action_handler(activity_id,
+                                          action_order,
+                                          user_info.get('user_id'))
+                    keys = True
+                    continue
     except Exception as ex:
-        result['error'] = str(ex)
+        result['validation'] = False
 
     return result
 
 
-def update_action_handler(activity_id, action_id, user_id):
+def check_approval_email(activity_id, user):
+    """Check approval email.
+
+    @param user:
+    @param activity_id:
+    @return:
+    """
+    action_order = db.session.query(FlowAction.action_order) \
+        .outerjoin(FlowActionRole).outerjoin(FlowDefine) \
+        .outerjoin(Activity) \
+        .filter(Activity.activity_id == activity_id) \
+        .filter(FlowActionRole.specify_property == user) \
+        .first()
+    return action_order if action_order else None
+
+
+def update_action_handler(activity_id, action_order, user_id):
     """Update action handler for each action of activity.
 
     :param activity_id:
-    :param action_id:
+    :param action_order:
     :param user_id:
     :return:
     """
@@ -1717,7 +1782,7 @@ def update_action_handler(activity_id, action_id, user_id):
     with db.session.begin_nested():
         activity_action = ActivityAction.query.filter_by(
             activity_id=activity_id,
-            action_id=action_id, ).one_or_none()
+            action_order=action_order).one_or_none()
         if activity_action:
             activity_action.action_handler = user_id
             db.session.merge(activity_action)
@@ -1731,21 +1796,15 @@ def validate_user_mail_and_index(request_data):
     :return:
     """
     users = request_data.get('user_to_check', [])
+    keys = request_data.get('user_key_to_check', [])
     auto_set_index_action = request_data.get('auto_set_index_action', False)
     activity_id = request_data.get('activity_id')
     result = {
         "index": True
     }
     try:
-        for user in users:
-            user_obj = request_data.get(user)
-            email = user_obj.get('mail')
-            validation_result = validate_user_mail(email)
-            if validation_result.get('validation') is True:
-                update_action_handler(activity_id, user_obj.get('action_id'),
-                                      validation_result.get('results').get(
-                                          'user_id'))
-            result[user] = validation_result
+        result = validate_user_mail(users, activity_id, request_data, keys,
+                                    result)
         if auto_set_index_action is True:
             is_existed_valid_index_tree_id = True if \
                 get_index_id(activity_id) else False
