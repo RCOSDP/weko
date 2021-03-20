@@ -20,7 +20,7 @@
 
 {% macro check_download_file(record, file, permission, community, url_for_security, is_file_name_url, file_label) %}
 <input id="non-role-msg" type="hidden"
-       value="{{ _("This data is not available for undergraduate students or those who do not register their positions.") }}"/>
+       value="{{ _("This data is not available for this user.") }}"/>
 {% set is_guest = False %}
 {%- if not session['user_id'] -%}
   {% set is_guest = True %}
@@ -44,7 +44,6 @@
                 {{ _('Apply JGSS') }}
               </button>
             </a>
-
           <a class="action-anchor hide">
             <button class="btn-start-guest-wf img-rounded action-button button-sm"
                     id="btn-start-guest-wf-{{ file.version_id }}"
@@ -71,7 +70,7 @@
                 </button>
               </a>
             {% else %}
-              <a class="action-anchor" href="{{ href_url }}"{% endif %}>
+              <a class="action-anchor" href="{{ href_url }}">
                 <button class="{{btn_class}}"
                         data-guest_filename_data= "{{ file.filename }}"
                         data-guest_workflow_id="{{ workflow_id }}"
