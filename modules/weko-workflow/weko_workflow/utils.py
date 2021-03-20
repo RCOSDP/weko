@@ -30,6 +30,7 @@ from celery.task.control import inspect
 from flask import current_app, request, session
 from flask_babelex import gettext as _
 from flask_security import current_user
+from invenio_accounts.models import User
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
@@ -3047,11 +3048,11 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
             process_send_mail(mail_info, current_app.config["WEKO_WORKFLOW_APPROVE_DONE"])
 
         if actions_mail_setting["next"].get("request_approval", False):
-            approval_user = UserProfile.get_by_userid(int(next_step_appover_id))
+            approval_user = db.session.query(User).filter_by(id=int(next_step_appover_id)).first()
             if not approval_user:
                 current_app.logger.error("Does not have approval data")
             else:
-                mail_info['mail_recipient'] = approval_user.user.email
+                mail_info['mail_recipient'] = approval_user.email
                 process_send_mail(mail_info, current_app.config["WEKO_WORKFLOW_REQUEST_APPROVAL"])
 
     if actions_mail_setting["reject"]:
