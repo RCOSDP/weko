@@ -733,6 +733,7 @@ def create_usage_report_for_user(onetime_download_extra_info: dict):
         activity = WorkActivity().init_activity(activity_data)
         usage_report_url = url_for('weko_workflow.display_activity',
                                    activity_id=activity.activity_id)
+        usage_report_url = "{}{}".format(request.host_url, usage_report_url)
     return usage_report_url
 
 
