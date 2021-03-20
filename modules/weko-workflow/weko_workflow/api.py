@@ -217,7 +217,8 @@ class Flow(object):
                 else:
                     """Update"""
                     flowaction.action_order = order + 1
-                    flowaction.send_mail_setting = action.get('send_mail_setting')
+                    flowaction.send_mail_setting = \
+                        action.get('send_mail_setting')
                     db.session.merge(flowaction)
                 _FlowActionRole.query.filter_by(
                     flow_action_id=flowaction.id).delete()
@@ -297,7 +298,6 @@ class Flow(object):
                     action_order=previous_action_order).all()
                 return previous_action
             return None
-
 
     def get_flow_action_detail(self, flow_id, action_id, action_order):
         """Get fow action detail.
@@ -1623,7 +1623,8 @@ class WorkActivity(object):
         @param activities:
         @param action_activities:
         """
-        for activity_data, last_update_user, flow_name, action_name, role_name \
+        for activity_data, last_update_user, \
+            flow_name, action_name, role_name \
                 in action_activities:
             if activity_data.activity_status == \
                     ActivityStatusPolicy.ACTIVITY_FINALLY:
@@ -1824,7 +1825,8 @@ class WorkActivity(object):
         histories = his.get_activity_history_list(activity_id)
         history_dict = {}
         activity = WorkActivity()
-        activity_detail = activity.get_activity_detail(histories[0].activity_id)
+        activity_detail = activity.\
+            get_activity_detail(histories[0].activity_id)
         is_action_order = True if histories[0].action_order else False
         for history in histories:
             update_user_mail = history.user.email \
@@ -1856,7 +1858,7 @@ class WorkActivity(object):
                         flow_action.action_id
                     action_status = \
                         history_dict[keys].get('Result') \
-                            if keys in history_dict else ' '
+                        if keys in history_dict else ' '
                     if action_status == \
                             ActionStatusPolicy.describe(
                                 ActionStatusPolicy.ACTION_DOING):

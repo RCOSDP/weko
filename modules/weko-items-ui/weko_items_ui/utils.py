@@ -76,6 +76,7 @@ from weko_workflow.models import ActionStatusPolicy as ASP, Activity, \
 from weko_workflow.utils import IdentifierHandle, \
     recursive_get_specified_properties
 
+
 def get_list_username():
     """Get list username.
 
@@ -466,9 +467,9 @@ def is_consistency_flow_and_item_type(json_form, activity_id):
         return key_in_flow
 
     def remove_parent_key(full_key):
-        """
-        full_key: parentkey.subitem_xxxxxxxxxxx
-        full_key: item_xxxxxxxxxxx.subitem_xxxxxxxxxxx
+        """Remove parent key.
+
+        full_key: item_xxxxxxxxxxx.subitem_xxxxxxxxxxx.
         """
         if not full_key:
             return None
@@ -487,12 +488,13 @@ def is_consistency_flow_and_item_type(json_form, activity_id):
 
 
 def validate_form_input_data(
-    result: dict, item_id: str, data: dict, activity_id= ''):
+        result: dict, item_id: str, data: dict, activity_id=''):
     """Validate input data.
 
     :param result: result dictionary.
     :param item_id: item type identifier.
     :param data: form input data
+    :param activity_id: activity id
     """
     item_type = ItemTypes.get_by_id(item_id)
     json_schema = item_type.schema.copy()
@@ -1742,7 +1744,8 @@ def validate_user_mail(users, activity_id, request_data, keys, result):
                     result['validate_required_email'].append(keys[index])
                 elif not (user_info and user_info.get('user_id') is not None):
                     result['validate_register_in_system'].append(keys[index])
-                if email and user_info and user_info.get('user_id') is not None:
+                if email and user_info and \
+                        user_info.get('user_id') is not None:
                     update_action_handler(activity_id,
                                           action_order,
                                           user_info.get('user_id'))
@@ -2473,7 +2476,8 @@ def check_item_has_doi(list_uuid):
     return True if filter_list_item_uuid_has_doi(list_uuid) else False
 
 
-def make_stats_tsv_with_permission(item_type_id, recids, records_metadata, permissions):
+def make_stats_tsv_with_permission(item_type_id, recids,
+                                   records_metadata, permissions):
     """Prepare TSV data for each Item Types.
 
     Arguments:
@@ -2792,7 +2796,8 @@ def make_stats_tsv_with_permission(item_type_id, recids, records_metadata, permi
     ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
     ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
     ret.append('.metadata.pubdate')
-    ret_label.append('公開日' if permissions['current_language']() == 'ja' else 'PubDate')
+    ret_label.append('公開日' if
+                     permissions['current_language']() == 'ja' else 'PubDate')
 
     for recid in recids:
         record = records.records[recid]

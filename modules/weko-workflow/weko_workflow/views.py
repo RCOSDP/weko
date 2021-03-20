@@ -32,6 +32,7 @@ from flask import Blueprint, abort, current_app, jsonify, render_template, \
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, User, userrole
+from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -40,9 +41,6 @@ from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
 from sqlalchemy.sql.expression import cast
-from werkzeug.utils import import_string
-
-from invenio_db import db
 from weko_accounts.api import ShibUser
 from weko_accounts.utils import login_required_customize
 from weko_authors.models import Authors
@@ -58,9 +56,10 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
 from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
     get_workflows
-from weko_user_profiles.config import \
-    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
+from werkzeug.utils import import_string
+
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
@@ -583,6 +582,18 @@ def display_activity(activity_id="0"):
     usage_data = get_usage_data(workflow_detail.itemtype_id,
                                 activity_detail,
                                 user_profile)
+    ctx.update(dict(
+        auto_fill_usage_data_usage_type=usage_data.get('usage_type') if usage_data else '',
+        auto_fill_usage_data_data_name=usage_data.get('dataset_usage') if usage_data else '',
+        auto_fill_usage_data_name='TEST_auto_fill_usage_data_name',
+        auto_fill_usage_data_mail_address=usage_data.get('mail_address') if usage_data else '',
+        auto_fill_usage_data_university_institution='TEST_auto_fill_usage_data_university_institution',
+        auto_fill_usage_data_affiliated_division_department='TEST_auto_fill_usage_data_affiliated_division_department',
+        auto_fill_usage_data_position='Master Course (Master Program)',
+        auto_fill_usage_data_phone_number='TEST_auto_fill_usage_data_phone_number',
+        auto_fill_usage_data_wf_issued_date=usage_data.get('wf_issued_date') if usage_data else '',
+        auto_fill_usage_data_item_title=usage_data.get('item_title') if usage_data else '',
+    ))
     return render_template(
         'weko_workflow/activity_detail.html',
         page=page,
@@ -642,16 +653,6 @@ def display_activity(activity_id="0"):
         is_enable_item_name_link=is_enable_item_name_link(
             action_endpoint, item_type_name),
         list_license=list_license,
-        auto_fill_usage_data_usage_type=usage_data.get('usage_type') if usage_data else '',
-        auto_fill_usage_data_data_name=usage_data.get('dataset_usage') if usage_data else '',
-        auto_fill_usage_data_name='TEST_auto_fill_usage_data_name',
-        auto_fill_usage_data_mail_address=usage_data.get('mail_address') if usage_data else '',
-        auto_fill_usage_data_university_institution='TEST_auto_fill_usage_data_university_institution',
-        auto_fill_usage_data_affiliated_division_department='TEST_auto_fill_usage_data_affiliated_division_department',
-        auto_fill_usage_data_position='Master Course (Master Program)',
-        auto_fill_usage_data_phone_number='TEST_auto_fill_usage_data_phone_number',
-        auto_fill_usage_data_wf_issued_date=usage_data.get('wf_issued_date') if usage_data else '',
-        auto_fill_usage_data_item_title=usage_data.get('item_title') if usage_data else '',
         **ctx
     )
 
@@ -846,7 +847,8 @@ def next_action(activity_id='0', action_id=0):
                 activity_detail.extra_info)
             if not url_and_expired_date:
                 url_and_expired_date = {}
-        action_mails_setting = {"previous": current_flow_action.send_mail_setting,
+        action_mails_setting = {"previous":
+                                current_flow_action.send_mail_setting,
                                 "next": next_flow_action[0].send_mail_setting,
                                 "approval": True,
                                 "reject": False}
@@ -1106,8 +1108,9 @@ def previous_action(activity_id='0', action_id=0, req=0):
     rtn = history.create_activity_history(activity, action_order)
     if rtn is None:
         return jsonify(code=-1, msg=_('error'))
-    current_flow_action = flow.get_flow_action_detail(activity_detail.flow_define.flow_id,
-                                                      action_id, action_order)
+    current_flow_action = flow.\
+        get_flow_action_detail(
+            activity_detail.flow_define.flow_id, action_id, action_order)
     action_mails_setting = {"previous": current_flow_action.send_mail_setting,
                             "next": {},
                             "approval": False,
@@ -1286,7 +1289,8 @@ def cancel_action(activity_id='0', action_id=0):
     if session.get("guest_url"):
         url = session.get("guest_url")
     else:
-        url = url_for('weko_workflow.display_activity', activity_id=activity_id)
+        url = url_for('weko_workflow.display_activity',
+                      activity_id=activity_id)
 
     if activity_detail.extra_info and \
             activity_detail.extra_info.get('guest_mail'):
