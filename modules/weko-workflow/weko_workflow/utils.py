@@ -3048,8 +3048,11 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
 
         if actions_mail_setting["next"].get("request_approval", False):
             approval_user = UserProfile.get_by_userid(int(next_step_appover_id))
-            mail_info['mail_recipient'] = approval_user.user.email
-            process_send_mail(mail_info, current_app.config["WEKO_WORKFLOW_REQUEST_APPROVAL"])
+            if not approval_user:
+                current_app.logger.error("Does not have approval data")
+            else:
+                mail_info['mail_recipient'] = approval_user.user.email
+                process_send_mail(mail_info, current_app.config["WEKO_WORKFLOW_REQUEST_APPROVAL"])
 
     if actions_mail_setting["reject"]:
         if actions_mail_setting["previous"].get("inform_reject", False):
