@@ -1957,11 +1957,12 @@ def get_item_info(item_id):
     return item_info
 
 
-def set_mail_info(item_info, activity_detail):
+def set_mail_info(item_info, activity_detail, guest_user=False):
     """Set main mail info.
 
     :item_info: object
     :activity_detail: object
+    :guest_user: object
     """
     def get_default_mail_sender():
         """Get default mail sender.
@@ -1989,9 +1990,9 @@ def set_mail_info(item_info, activity_detail):
 
     site_en, site_ja = get_site_info()
     site_mail = get_default_mail_sender()
-
-    register_user, register_date = \
-        get_register_info(activity_detail.activity_id)
+    register_user = register_date = ''
+    if not guest_user:
+        register_user, register_date = get_register_info(activity_detail.activity_id)
 
     mail_info = dict(
         university_institution=item_info.get('subitem_university/institution'),
@@ -3031,13 +3032,14 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
     :param file_data:
     :return:
     """
+    is_guest_user = True if activity_detail.extra_info.get('guest_mail') else False
     item_info = get_item_info(activity_detail.item_id)
-    mail_info = set_mail_info(item_info, activity_detail)
+    mail_info = set_mail_info(item_info, activity_detail, is_guest_user)
     mail_info['restricted_download_link'] = file_data.get("file_url", '')
     mail_info['restricted_expiration_date'] = file_data.get("expiration_date", '')
 
     # Override guest mail if any
-    if activity_detail.extra_info.get('guest_mail'):
+    if is_guest_user:
         mail_info['mail_recipient'] = activity_detail.extra_info.get('guest_mail')
 
     if actions_mail_setting["next"].get("request_approval", False):
