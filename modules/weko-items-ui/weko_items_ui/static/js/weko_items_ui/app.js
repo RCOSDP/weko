@@ -3267,8 +3267,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           );
           let requestData = {
             'item_id': $("#autofill_item_type_id").val(),
-            'data': request.data,
-            'activity_id': $('#activity_id').text()
+            'data': request.data
           }
           $.ajax({
             url: validateURL,
@@ -3427,6 +3426,9 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             } else {
               if (data.validate_register_in_system && data.validate_register_in_system.length > 0) {
                 this.processShowModelValidation(data.validate_register_in_system, itemsDict, "#validate_email_register");
+                result = false;
+              } else if (!data.validate_map_flow_and_item_type){
+                this.processShowModelValidation([], itemsDict, "#validate_email_map");
                 result = false;
               }
             }
