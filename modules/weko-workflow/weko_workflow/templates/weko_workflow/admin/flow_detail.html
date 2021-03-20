@@ -178,17 +178,17 @@
                   {% if action.action.action_name == 'Approval'%}
                     <div class="mail_setting_options">
                       <div class="form-inline">
-                        <label>
+                        <label style="font-weight: unset;">
                           <input type="checkbox" class="pointer" id="td_action_request_approval_{{action.action_id}}" {% if action.send_mail_setting.request_approval %}checked{% endif %} >
                           {{_('Approval Request Notification Email')}}</label>
                       </div>
                       <div class="form-inline">
-                        <label>
+                        <label style="font-weight: unset;">
                           <input type="checkbox" class="pointer" id="td_action_approval_reject_{{action.action_id}}" {% if action.send_mail_setting.inform_reject %}checked{% endif %}>
                           {{_('Approval Rejection Notification Email')}}</label>
                       </div>
                       <div class="form-inline">
-                        <label>
+                        <label style="font-weight: unset;">
                           <input type="checkbox" class="pointer" id="td_action_approval_done_{{action.action_id}}" {% if action.send_mail_setting.inform_approval %}checked{% endif %}>
                           {{_('Approval Notification Email')}}</label>
                       </div>
@@ -265,19 +265,19 @@
         </div>
         <div class="mail_setting_options">
           <div class="form-inline">
-            <label>
+            <label style="font-weight: unset;">
               <input type="checkbox" class="pointer" id="td_action_request_approval_apply_action.id">
               {{_('Approval Request Notification Email')}}</label>
             </label>
           </div>
           <div class="form-inline">
-            <label>
+            <label style="font-weight: unset;">
               <input type="checkbox" class="pointer" id="td_action_approval_reject_apply_action.id">
               {{_('Approval Rejection Notification Email')}}</label>
             </label>
           </div>
           <div class="form-inline">
-            <label>
+            <label style="font-weight: unset;">
               <input type="checkbox" class="pointer" id="td_action_approval_done_apply_action.id">
               {{_('Approval Notification Email')}}</label>
             </label>

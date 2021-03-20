@@ -14,8 +14,8 @@ Subject：　利用申請の承認のお願い／Request for Approval of Applica
 申請データ：[restricted_data_name]
 申請年月日：[restricted_application_date]
 
-　指導教員名：【指導教員名】　    ＊あれば出力
-　保証人名：【保証人名】        ＊あれば出力
+　指導教員名：【指導教員名】
+　保証人名：【保証人名】
 
 [restricted_site_name_ja]（[restricted_site_url]）にアクセスしていただき、画面左上からログインしていただけますと、「ワークフロー」タブが現れます。ここから上記の申請内容をご確認ください。「承認」または「却下」のボタンをクリックしてください。
 
