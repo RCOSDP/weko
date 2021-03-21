@@ -1906,7 +1906,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       // Auto fill for Usage Application
       $scope.autoFillUsageApplication = function () {
         let properties = [
-          'subitem_restricted_access_data_name',
+          'subitem_restricted_access_dataset_usage',
           'subitem_restricted_access_mail_address',
           'subitem_restricted_access_usage_report_id',
           'subitem_restricted_access_wf_issued_date',
@@ -1920,7 +1920,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       // Auto fill for Usage Report
       $scope.autoFillUsageReport = function () {
         let properties = [
-          'subitem_restricted_access_data_name',
+          'subitem_restricted_access_dataset_usage',
           'subitem_restricted_access_name',
           'subitem_restricted_access_mail_address',
           'subitem_restricted_access_university/institution',
@@ -1937,14 +1937,12 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       }
 
       $scope.AutoFillData = function (properties) {
-        debugger;
         let recordsVM = $rootScope["recordsVM"];
-        thuan_test = recordsVM.invenioRecordsModel;
         for (let i = 0; i < properties.length; i++) {
           let property = properties[i];
           if (!$scope.isDataExisting(property)) {
             let autoFillElement = $('#auto_fill_' + property.replace('/', '\\/'));
-            if (autoFillElement && autoFillElement.val()) {
+            if (autoFillElement) {
               for (let key in recordsVM["invenioRecordsSchema"].properties) {
                 let value = recordsVM["invenioRecordsSchema"].properties[key];
                 if (value && value.properties) {
@@ -1989,13 +1987,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           for (let key in model) {
             if (model.hasOwnProperty(key)) {
               let itemValue = model[key][property];
-              if (itemValue && $('#auto_fill_' + property).val() !== '') {
-                if ($scope.checkKeyIsExistInForm(key)) {
-                  $scope.setFormReadOnly(key);
-                  setTimeout(function () {
-                    $('input[name="' + property + '"]').attr("disabled", "disabled");
-                  }, 3000);
-                }
+              if (itemValue) {                
                 isExisted = true;
                 break;
               }
