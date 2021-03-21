@@ -1738,15 +1738,16 @@ def check_approval_email_in_flow(activity_id, users):
     @param activity_id:
     @return:
     """
-    flow_actions = FlowAction.query \
-        .outerjoin(FlowActionRole).outerjoin(FlowDefine) \
+    flow_action_role = FlowActionRole.query \
+        .outerjoin(FlowAction).outerjoin(FlowDefine) \
         .outerjoin(Activity) \
         .filter(Activity.activity_id == activity_id) \
         .filter(FlowActionRole.specify_property.isnot(None)) \
         .all()
-    map_list = [y for x in flow_actions for y in users if
+
+    map_list = [y for x in flow_action_role for y in users if
                 x.specify_property == y]
-    return True if len(map_list) == len(flow_actions) else False
+    return True if len(map_list) == len(flow_action_role) else False
 
 
 def update_action_handler(activity_id, action_order, user_id):
