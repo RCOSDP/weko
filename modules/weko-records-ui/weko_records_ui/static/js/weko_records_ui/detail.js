@@ -190,7 +190,7 @@ require([
       let communityId = $btnStartWorkflow.data('community');
       let recordId = $btnStartWorkflow.data('record-id');
       let fileName = $btnStartWorkflow.data('filename');
-      let itemTitle = $(this).data('itemtitle');
+      let itemTitle =$btnStartWorkflow.data('itemtitle');
       startWorkflow(workflowId, communityId, recordId, fileName, itemTitle);
     }
   });
