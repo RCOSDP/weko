@@ -2731,7 +2731,7 @@ def create_onetime_download_url_to_guest(activity_id: str,
             try:
                 expiration_date = timedelta(days=one_time_obj.expiration_date)
                 expiration_date = datetime.today() + expiration_date
-                expiration_date.strftime("%Y-%m-%d")
+                expiration_date = expiration_date.strftime("%Y-%m-%d")
             except OverflowError:
                 expiration_date = ""
             return {
