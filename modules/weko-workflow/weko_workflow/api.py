@@ -28,14 +28,14 @@ from datetime import datetime, timedelta
 from flask import abort, current_app, request, session, url_for
 from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
-from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from sqlalchemy import and_, asc, desc, func, or_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
+
+from invenio_db import db
 from weko_deposit.api import WekoDeposit
 from weko_records.serializers.utils import get_item_type_name
-
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
 from .models import Action as _Action
@@ -1407,7 +1407,7 @@ class WorkActivity(object):
             )
 
         if not current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] or \
-               not current_app.config['WEKO_ITEMS_UI_MULTIPLE_APPROVALS']:
+                not current_app.config['WEKO_ITEMS_UI_MULTIPLE_APPROVALS']:
             query = query.filter(
 
                 or_(
