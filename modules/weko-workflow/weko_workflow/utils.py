@@ -2691,9 +2691,9 @@ def validate_guest_activity_expired(activity_id: str) -> str:
         return ""
     try:
         expiration_date = timedelta(guest_activity.expiration_date)
+        expiration_access_date = guest_activity.created.date() + expiration_date
     except OverflowError:
         return ""
-    expiration_access_date = guest_activity.created.date() + expiration_date
     current_date = datetime.utcnow().date()
     if current_date > expiration_access_date:
         return _("The specified link has expired.")
