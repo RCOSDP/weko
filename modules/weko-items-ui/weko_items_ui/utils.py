@@ -1688,7 +1688,6 @@ def validate_user_mail(users, activity_id, request_data, keys, result):
     """
     result['validate_required_email'] = []
     result['validate_register_in_system'] = []
-    result['validate_map_flow_and_item_type'] = True
     try:
         for index, user in enumerate(users):
             email = request_data.get(user)
@@ -1706,9 +1705,9 @@ def validate_user_mail(users, activity_id, request_data, keys, result):
                                           user_info.get('user_id'))
                     keys = True
                     continue
-        count = count_approval_email(activity_id)
-        if len(users) != count:
-            result['validate_map_flow_and_item_type'] = False
+        result[
+            'validate_map_flow_and_item_type'] = check_approval_email_in_flow(
+            activity_id, users)
 
     except Exception as ex:
         result['validation'] = False
@@ -1732,19 +1731,22 @@ def check_approval_email(activity_id, user):
     return action_order if action_order else None
 
 
-def count_approval_email(activity_id):
+def check_approval_email_in_flow(activity_id, users):
     """Count approval email.
 
+    @param users:
     @param activity_id:
     @return:
     """
-    count = FlowAction.query \
+    flow_actions = FlowAction.query \
         .outerjoin(FlowActionRole).outerjoin(FlowDefine) \
         .outerjoin(Activity) \
         .filter(Activity.activity_id == activity_id) \
         .filter(FlowActionRole.specify_property.isnot(None)) \
-        .count()
-    return count
+        .all()
+    map_list = [y for x in flow_actions for y in users if
+                x.specify_property == y]
+    return True if len(map_list) == len(flow_actions) else False
 
 
 def update_action_handler(activity_id, action_order, user_id):

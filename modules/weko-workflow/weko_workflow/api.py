@@ -1405,7 +1405,8 @@ class WorkActivity(object):
                 )
             )
 
-        if not current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']:
+        if not current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] and \
+                current_app.config['WEKO_ITEMS_UI_MULTIPLE_APPROVALS']:
             query = query.filter(
 
                 or_(
@@ -1447,7 +1448,8 @@ class WorkActivity(object):
             query = query \
                 .filter(_Activity.activity_login_user.in_(community_user_ids))
         else:
-            if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']:
+            if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] and \
+                    current_app.config['WEKO_ITEMS_UI_MULTIPLE_APPROVALS']:
                 if is_todo_tabs:
                     query = query.filter(
                         or_(
@@ -1459,7 +1461,8 @@ class WorkActivity(object):
                             ActivityAction.action_handler == self_user_id,
                             _Activity.approval1 == current_user.email,
                             _Activity.approval2 == current_user.email,
-                        )
+                        ),
+                        _Activity.shared_user_id == self_user_id
                     )
                 else:
                     query = query.filter(
@@ -1482,7 +1485,8 @@ class WorkActivity(object):
                                 ActivityAction.action_handler == self_user_id,
                                 _Activity.approval2 == current_user.email,
                             )
-                        )
+                        ),
+                        _Activity.shared_user_id == self_user_id
                     )
             else:
                 query = query.filter(
@@ -1550,7 +1554,8 @@ class WorkActivity(object):
             )\
             .filter(_FlowAction.action_id == _Activity.action_id)
 
-        if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']:
+        if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] and \
+                current_app.config['WEKO_ITEMS_UI_MULTIPLE_APPROVALS']:
             if is_admin:
                 query = query.filter(
                     ActivityAction.action_handler.in_([-1, self_user_id])
@@ -1594,7 +1599,8 @@ class WorkActivity(object):
                 )
             )
 
-        if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']:
+        if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] and \
+                current_app.config['WEKO_ITEMS_UI_MULTIPLE_APPROVALS']:
             common_query = common_query \
                 .outerjoin(
                     User,
