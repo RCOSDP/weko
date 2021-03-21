@@ -38,6 +38,7 @@ from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.resolver import Resolver
+from invenio_records.models import RecordMetadata
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
 from sqlalchemy.sql.expression import cast
@@ -392,12 +393,13 @@ def display_guest_activity(file_name=""):
     guest_activity.update(dict(
         auto_fill_usage_data_usage_type=usage_data.get('usage_type') if usage_data else '',
         auto_fill_usage_data_dataset_usage=usage_data.get('dataset_usage') if usage_data else '',
-        auto_fill_usage_data_name='TEST_auto_fill_usage_data_name',
+        auto_fill_usage_data_name=usage_data.get('name') if usage_data else '',
         auto_fill_usage_data_mail_address=usage_data.get('mail_address') if usage_data else '',
-        auto_fill_usage_data_university_institution='TEST_auto_fill_usage_data_university_institution',
-        auto_fill_usage_data_affiliated_division_department='TEST_auto_fill_usage_data_affiliated_division_department',
-        auto_fill_usage_data_position='Master Course (Master Program)',
-        auto_fill_usage_data_phone_number='TEST_auto_fill_usage_data_phone_number',
+        auto_fill_usage_data_university_institution=usage_data.get('university_institution') if usage_data else '',
+        auto_fill_usage_data_affiliated_division_department=usage_data.get('affiliated_division_department') if usage_data else '',
+        auto_fill_usage_data_position=usage_data.get('position') if usage_data else '',
+        auto_fill_usage_data_phone_number=usage_data.get('phone_number') if usage_data else '',
+        auto_fill_usage_data_usage_report_id=usage_data.get('usage_report_id') if usage_data else '',
         auto_fill_usage_data_wf_issued_date=usage_data.get('wf_issued_date') if usage_data else '',
         auto_fill_usage_data_item_title=usage_data.get('item_title') if usage_data else ''
     ))
@@ -602,12 +604,13 @@ def display_activity(activity_id="0"):
     ctx.update(dict(
         auto_fill_usage_data_usage_type=usage_data.get('usage_type') if usage_data else '',
         auto_fill_usage_data_dataset_usage=usage_data.get('dataset_usage') if usage_data else '',
-        auto_fill_usage_data_name='TEST_auto_fill_usage_data_name',
+        auto_fill_usage_data_name=usage_data.get('name') if usage_data else '',
         auto_fill_usage_data_mail_address=usage_data.get('mail_address') if usage_data else '',
-        auto_fill_usage_data_university_institution='TEST_auto_fill_usage_data_university_institution',
-        auto_fill_usage_data_affiliated_division_department='TEST_auto_fill_usage_data_affiliated_division_department',
-        auto_fill_usage_data_position='Master Course (Master Program)',
-        auto_fill_usage_data_phone_number='TEST_auto_fill_usage_data_phone_number',
+        auto_fill_usage_data_university_institution=usage_data.get('university_institution') if usage_data else '',
+        auto_fill_usage_data_affiliated_division_department=usage_data.get('affiliated_division_department') if usage_data else '',
+        auto_fill_usage_data_position=usage_data.get('position') if usage_data else '',
+        auto_fill_usage_data_phone_number=usage_data.get('phone_number') if usage_data else '',
+        auto_fill_usage_data_usage_report_id=usage_data.get('usage_report_id') if usage_data else '',
         auto_fill_usage_data_wf_issued_date=usage_data.get('wf_issued_date') if usage_data else '',
         auto_fill_usage_data_item_title=usage_data.get('item_title') if usage_data else ''
     ))
@@ -669,7 +672,7 @@ def display_activity(activity_id="0"):
         institute_position_list=institute_position_list,
         is_enable_item_name_link=is_enable_item_name_link(
             action_endpoint, item_type_name),
-        list_license=list_license,        
+        list_license=list_license,
         **ctx
     )
 

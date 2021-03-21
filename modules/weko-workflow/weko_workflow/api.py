@@ -21,20 +21,21 @@
 """WEKO3 module docstring."""
 
 import math
+import urllib.parse
 import uuid
 from datetime import datetime, timedelta
 
 from flask import abort, current_app, request, session, url_for
 from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
+from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from sqlalchemy import and_, asc, desc, func, or_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
-
-from invenio_db import db
 from weko_deposit.api import WekoDeposit
 from weko_records.serializers.utils import get_item_type_name
+
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
 from .models import Action as _Action
@@ -676,10 +677,10 @@ class WorkActivity(object):
                             if item_type_name in application_item_types:
                                 action_has_term_of_use = True
             extra_info = dict()
-            if activity.get('related_title'):
-                extra_info["related_title"] = activity["related_title"]
             if activity.get('extra_info'):
                 extra_info = activity["extra_info"]
+            if activity.get('related_title'):
+                extra_info["related_title"] = urllib.parse.unquote(activity["related_title"])
             if activity.get('activity_confirm_term_of_use') is True:
                 activity_confirm_term_of_use = True
             else:
