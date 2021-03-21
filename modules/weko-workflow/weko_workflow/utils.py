@@ -3109,19 +3109,46 @@ def get_usage_data(item_type_id, activity_detail, user_profile):
     elif item_type_id in current_app.config.get('WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST'):
         usage_record_id = extra_info.get('usage_record_id') or ''
         rm = RecordMetadata.query.filter_by(id=usage_record_id).first()
-        item_title = usage_record_id + current_app.config.get('WEKO_WORKFLOW_USAGE_REPORT_ITEM_TITLE') \
+        related_title = rm.json.get('item_title')
+        item_title = activity_detail.activity_id + current_app.config.get('WEKO_WORKFLOW_USAGE_REPORT_ITEM_TITLE') \
             + related_title
+        name = ''
+        mail_address = ''
+        university_institution = ''
+        affiliated_division_department = ''
+        position = ''
+        phone_number = ''
+
+        for key in rm.json:
+            value = rm.json.get(key)
+            if (type(value) is dict):
+                mlt = value.get('attribute_value_mlt')
+                if mlt and type(mlt) is list:
+                    for sub_key in mlt[0]:
+                        sub_value = mlt[0].get(sub_key)
+                        if sub_key == 'subitem_restricted_access_name':
+                            name = sub_value
+                        elif sub_key == 'subitem_restricted_access_mail_address':
+                            mail_address = sub_value
+                        elif sub_key == 'subitem_restricted_access_university/institution':
+                            university_institution = sub_value
+                        elif sub_key == 'subitem_restricted_access_affiliated_division/department':
+                            affiliated_division_department = sub_value
+                        elif sub_key == 'subitem_restricted_access_position':
+                            position = sub_value
+                        elif sub_key == 'subitem_restricted_access_phone_number':
+                            phone_number = sub_value
 
         result = dict(
             usage_type='Report',
-            dataset_usage='related_title',
-            name='name',
-            mail_address='mail_address',
-            university_institution='university_institution',
-            affiliated_division_department='affiliated_division_department',
-            position='',
-            phone_number='0000000000',
-            usage_report_id='xxxxxxxxxx',
+            dataset_usage=related_title,
+            name=name,
+            mail_address=mail_address,
+            university_institution=university_institution,
+            affiliated_division_department=affiliated_division_department,
+            position=position,
+            phone_number=phone_number,
+            usage_report_id=activity_detail.activity_id,
             wf_issued_date=wf_issued_date,
             item_title=item_title
         )
