@@ -26,13 +26,14 @@ from datetime import datetime
 from flask import current_app
 from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
-from invenio_db import db
 from sqlalchemy import func
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.expression import desc
 from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import JSONType, UUIDType
 from sqlalchemy_utils.types.choice import ChoiceType
+
+from invenio_db import db
 from weko_groups.widgets import RadioGroupWidget
 from weko_records.models import ItemType
 
@@ -808,7 +809,7 @@ class Activity(db.Model, TimestampMixin):
         nullable=True
     )
 
-    action_order = db.Column(db.Integer(), nullable=False, unique=False)
+    action_order = db.Column(db.Integer(), nullable=True, unique=False)
     """the order of action."""
 
 
@@ -841,7 +842,7 @@ class ActivityAction(db.Model, TimestampMixin):
     action_handler = db.Column(db.Integer, nullable=True)
     """action handler"""
 
-    action_order = db.Column(db.Integer(), nullable=False, unique=False)
+    action_order = db.Column(db.Integer(), nullable=True, unique=False)
     """the order of action."""
 
 
@@ -885,7 +886,7 @@ class ActivityHistory(db.Model, TimestampMixin):
         'activity_history'))
     """User relaionship."""
 
-    action_order = db.Column(db.Integer(), nullable=False, unique=False)
+    action_order = db.Column(db.Integer(), nullable=True, unique=False)
     """the order of action."""
 
 
