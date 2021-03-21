@@ -1742,7 +1742,7 @@ def count_approval_email(activity_id):
         .outerjoin(FlowActionRole).outerjoin(FlowDefine) \
         .outerjoin(Activity) \
         .filter(Activity.activity_id == activity_id) \
-        .filter(FlowActionRole.specify_property is not None) \
+        .filter(FlowActionRole.specify_property.isnot(None)) \
         .count()
     return count
 

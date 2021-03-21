@@ -33,6 +33,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 
 from invenio_db import db
+from weko_deposit.api import WekoDeposit
 from weko_records.serializers.utils import get_item_type_name
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
