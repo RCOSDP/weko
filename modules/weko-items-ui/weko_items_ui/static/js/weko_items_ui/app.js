@@ -1903,6 +1903,80 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
       };
 
+      $scope.setEnumForSchemaByKey = function (key, schemaProperties, enumData) {
+        for (let parentKey in schemaProperties) {
+          let val = schemaProperties[parentKey];
+          $scope.updateEnum(key, val, enumData);
+        }
+      }
+
+      $scope.setTitleMapForFormByKey = function (key, formProperties, enumData) {
+        for (let parentKey in formProperties) {
+          let val = formProperties[parentKey];
+          $scope.updateTitleMap(key, val, enumData);
+        }
+      }
+
+      $scope.updateEnum = function (key, val, enumData){
+        var hasItem = val.hasOwnProperty("items");
+        var subProperties = hasItem ? val.items.properties : val.properties;
+        for (let subKey in subProperties) {
+          if(subKey == key){
+            subProperties[subKey]['enum'] = [null];
+            for(let item in enumData){
+              if(enumData[item][0].length > 0){
+                subProperties[subKey]['enum'].push(enumData[item][0]);
+              }
+            }
+            return;
+          }
+          let subVal = subProperties[subKey];
+          hasItem = val.hasOwnProperty("items");
+          subProperties = hasItem ? val.items.properties : val.properties;
+          if(subProperties){
+            result = $scope.updateEnum(key, subVal, enumData);
+          }
+        }
+      }
+
+      $scope.updateTitleMap = function (key, val, enumData){
+        var hasItem = val.hasOwnProperty("items");
+        var subProperties = hasItem ? val.items : [];
+        for (let subKey in subProperties) {
+          if(subProperties[subKey].key && subProperties[subKey].key.indexOf(key) != -1){
+            subProperties[subKey]['titleMap'] = [];
+            for(let item in enumData){
+              if(enumData[item][0].length > 0){
+                let item1 = { value: enumData[item][0], name: enumData[item][1] };
+                subProperties[subKey]['titleMap'].push(item1);
+              }
+            }
+            return;
+          }
+          let subVal = subProperties[subKey];
+          hasItem = val.hasOwnProperty("items");
+          subProperties = hasItem ? val.items : [];
+          if(subProperties){
+            result = $scope.updateTitleMap(key, subVal, enumData);
+          }
+        }
+      }
+
+      $scope.autoFillInstitutionPosition = function () {
+        let key = 'subitem_restricted_access_institution_position';
+        let schemaProperties = $rootScope.recordsVM.invenioRecordsSchema.properties;
+        let formProperties = $rootScope.recordsVM.invenioRecordsForm;
+        //Get "Institution Position" from select html.
+        var enumData = [];
+        var options = document.getElementById('institute_position_list').options;
+        for (i=0; i< options.length; i++){
+          enumData.push([options[i].value, options[i].text]);
+        }
+        $scope.setEnumForSchemaByKey(key, schemaProperties, enumData);
+        $scope.setTitleMapForFormByKey(key, formProperties, enumData);
+        return true;
+      }
+
       // Auto fill for Usage Application
       $scope.autoFillUsageApplication = function () {
         let properties = [
@@ -2250,6 +2324,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         $scope.getDataAuthors();
         $scope.updateNumFiles();
         $scope.editModeHandle();
+        $scope.autoFillInstitutionPosition();
         let usage_type = $("#auto_fill_usage_data_usage_type").val();
         // Auto fill for Usage Application & Usage Report
         if (usage_type === 'Report') {
@@ -3284,7 +3359,35 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         return isValid;
       };
 
+      $scope.validatePositionByClassName = function () {
+        // Position class: cls-position
+        // Position(Others) class: cls-position-others
+        let defPositionOtherVal = 'Others (Input Detail)';
+        var result = true;
+        $('.cls-position').each(function(i) {
+          let positionVal = $(this).val().split("string:").pop();
+          let parent = $(this).parents('bootstrap-decorator');
+          let positionOthers = parent.find('.cls-position-others');
+          let positionOthersVal = $(positionOthers).val();
+          if(positionVal == defPositionOtherVal){
+            if(positionOthersVal.length == 0){
+              result = false;
+              return false; //Break loop.
+            }
+          }
+        });
+        if(!result){
+          let message = $("#err_input_other_position").val();
+          $("#inputModal").html(message);
+          $("#allModal").modal("show");
+        }
+        return result;
+      }
+
       $scope.validatePosition = function () {
+        if(!$scope.validatePositionByClassName()){
+          return false;
+        }
         var result = true;
         var subItemPosition = '';
         var subItemPositionOther = '';
