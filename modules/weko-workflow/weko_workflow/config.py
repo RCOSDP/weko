@@ -238,8 +238,8 @@ WEKO_WORKFLOW_APPROVE_OUTPUT_REGISTRATION = ""
 WEKO_WORKFLOW_ACCESS_ACTIVITY_URL = ""
 """Template access the URL"""
 
-WEKO_WORKFLOW_ACCESS_DOWNLOAD_URL = ""
-"""Template access the link to download the content file"""
+WEKO_WORKFLOW_USAGE_REPORT_ACTIVITY_URL = ""
+"""Template access the URL"""
 
 WEKO_WORKFLOW_DATE_FORMAT = "%Y-%m-%d"
 """Date format string."""
