@@ -1,7 +1,7 @@
 Subject：　利用申請の審査結果について／The results of the review of your application
 
-[restricted_approver_affiliation]
-[restricted_approver_name]様
+[restricted_university_institution]
+[restricted_fullname]様
 
 
 [restricted_site_name_ja]です。
@@ -17,13 +17,13 @@ Subject：　利用申請の審査結果について／The results of the review
 申請年月日：[restricted_application_date]
 
 このメールは自動送信されているので返信しないでください。
-お問い合わせは下記までお願いします。また、このメールに心当たりのない方は、[restricted_site_name_ja] までご連絡ください。 
+お問い合わせは下記までお願いします。また、このメールに心当たりのない方は、[restricted_site_name_ja] までご連絡ください。
 
 [restricted_site_name_ja]：[restricted_site_url]
 問い合わせ窓口：[restricted_site_mail]
 
 ----------------------------------------------------------------------------------
-Dear [restricted_approver_name]
+Dear [restricted_fullname]
 
 This is a message from [restricted_site_name_en].
 Your application below has been rejected.
@@ -37,7 +37,7 @@ Dataset requested ：[restricted_data_name]
 Application date：[restricted_application_date]
 
 Please do not reply to this email as it has been sent automatically.
-Please direct all inquiries to the following address. 
+Please direct all inquiries to the following address.
 Also, if you received this message in error, please notify [restricted_site_name_en].
 
 [restricted_site_name_en]：[restricted_site_url]
