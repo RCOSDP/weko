@@ -2893,8 +2893,7 @@ def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
             "WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE"],
         action_endpoint_key=current_app.config.get(
             'WEKO_ITEMS_UI_ACTION_ENDPOINT_KEY'),
-        approval_email_key=current_app.config.get(
-            'WEKO_ITEMS_UI_APPROVAL_MAIL_SUBITEM_KEY'),
+        approval_email_key=get_approval_keys(),
         step_item_login_url=step_item_login_url,
         need_file=need_file,
         need_billing_file=need_billing_file,
