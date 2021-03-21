@@ -3108,10 +3108,9 @@ def get_usage_data(item_type_id, activity_detail, user_profile):
         )
     elif item_type_id in current_app.config.get('WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST'):
         usage_record_id = extra_info.get('usage_record_id') or ''
+        related_activity_id = extra_info.get('usage_activity_id') or ''
         rm = RecordMetadata.query.filter_by(id=usage_record_id).first()
         related_title = rm.json.get('item_title')
-        item_title = activity_detail.activity_id + current_app.config.get('WEKO_WORKFLOW_USAGE_REPORT_ITEM_TITLE') \
-            + related_title
         name = ''
         mail_address = ''
         university_institution = ''
@@ -3138,7 +3137,8 @@ def get_usage_data(item_type_id, activity_detail, user_profile):
                             position = sub_value
                         elif sub_key == 'subitem_restricted_access_phone_number':
                             phone_number = sub_value
-
+        item_title = related_activity_id + current_app.config.get('WEKO_WORKFLOW_USAGE_REPORT_ITEM_TITLE') \
+            + name
         result = dict(
             usage_type='Report',
             dataset_usage=related_title,
