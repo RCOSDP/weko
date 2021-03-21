@@ -712,7 +712,8 @@ def create_usage_report_for_user(onetime_download_extra_info: dict):
             "record_id": extra_info_application.get('record_id'),
             "related_title": extra_info_application.get('related_title'),
             "file_name": extra_info_application.get('file_name'),
-            "usage_record_id": str(usage_application_activity.item_id)
+            "usage_record_id": str(usage_application_activity.item_id),
+            "usage_activity_id": str(activity_id),
         }
     }
 
