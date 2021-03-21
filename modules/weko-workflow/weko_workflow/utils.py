@@ -3079,7 +3079,7 @@ def get_usage_data(item_type_id, activity_detail, user_profile):
     if not extra_info or extra_info == {}:
         return result
 
-    wf_issued_date = activity_detail.created.strftime("%Y%m%d")
+    wf_issued_date = activity_detail.created.strftime("%Y-%m-%d")
 
     if item_type_id in current_app.config.get('WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST'):
         mail_address = ''
@@ -3091,7 +3091,7 @@ def get_usage_data(item_type_id, activity_detail, user_profile):
 
         related_title = extra_info.get('related_title') or ''
         item_title = current_app.config.get('WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TITLE') \
-            + wf_issued_date + related_title + '_'
+            + activity_detail.created.strftime("%Y%m%d") + related_title + '_'
 
         result = dict(
             usage_type='Application',
