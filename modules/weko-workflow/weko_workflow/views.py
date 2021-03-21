@@ -80,8 +80,9 @@ from .utils import IdentifierHandle, auto_fill_title, check_continue, \
     prepare_data_for_guest_activity, process_send_approval_mails, \
     process_send_notification_mail, process_send_reminder_mail, register_hdl, \
     save_activity_data, saving_doi_pidstore, \
-    send_usage_application_mail_for_guest_user, update_cache_data, \
-    validate_guest_activity_expired, validate_guest_activity_token
+    send_usage_application_mail_for_guest_user, update_approval_date, \
+    update_cache_data, validate_guest_activity_expired, \
+    validate_guest_activity_token
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -851,6 +852,8 @@ def next_action(activity_id='0', action_id=0):
         0].action_order if action_order else None
     # Start to send mail
     if 'approval' in [action_endpoint, next_action_endpoint]:
+        if 'approval' == next_action_endpoint:
+            update_approval_date(activity_detail)
         current_flow_action = flow.get_flow_action_detail(
             activity_detail.flow_define.flow_id, action_id, action_order)
         next_action_detail = work_activity.get_activity_action_comment(

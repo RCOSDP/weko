@@ -21,6 +21,7 @@
 """Module of weko-workflow utils."""
 
 import base64
+import json
 import os
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -53,6 +54,7 @@ from weko_handle.api import Handle
 from weko_index_tree.models import Index
 from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
     ItemTypes, Mapping
+from weko_records.models import ItemType
 from weko_records.serializers.utils import get_item_type_name, get_mapping
 from weko_records_ui.utils import create_onetime_download_url, \
     generate_one_time_download_url, get_list_licence
@@ -3153,3 +3155,47 @@ def get_usage_data(item_type_id, activity_detail, user_profile):
         )
 
     return result
+
+
+def update_approval_date(activity):
+    """Update approval date.
+
+    @param activity:
+    @return:
+    """
+    from weko_deposit.api import WekoDeposit, WekoRecord
+    from datetime import datetime
+    try:
+        with db.session.begin_nested():
+            work_activity = WorkActivity()
+            activity_update = work_activity.get_activity_detail(activity.activity_id)
+            record = WekoRecord.get_record(activity.item_id)
+            deposit = WekoDeposit(record, record.model)
+            item_meta = ItemsMetadata.get_record(id_=activity.item_id)
+            item_type_id = deposit["item_type_id"]
+            item_type = ItemType.query.filter_by(id=item_type_id).one_or_none()
+
+            sub_key = ''
+            if not item_type:
+                return
+            for k, v in item_type.schema['properties'].items():
+                if isinstance(v, dict) and 'properties' in v:
+                    if 'subitem_restricted_access_approval_date' in v['properties']:
+                        sub_key = k
+                        break
+            if sub_key:
+                deposit[sub_key] = {'attribute_name': "Approval Date"}
+                deposit[sub_key]["attribute_value_mlt"] = [
+                    {"subitem_restricted_access_approval_date": datetime.today().strftime('%Y-%m-%d')}]
+                deposit.item_metadata[sub_key] = dict(subitem_restricted_access_approval_date='2021-10-10')
+                item_meta[sub_key] = dict(subitem_restricted_access_approval_date=datetime.today().strftime('%Y-%m-%d'))
+                temp = json.loads(activity_update.temp_data)
+                temp['metainfo'][sub_key] = dict(
+                    subitem_restricted_access_approval_date=datetime.today().strftime('%Y-%m-%d'))
+                activity_update.temp_data = json.dumps(temp)
+                item_meta.commit()
+                deposit.commit()
+                db.session.merge(activity_update)
+        db.session.commit()
+    except Exception as ex:
+        current_app.logger.error(ex)

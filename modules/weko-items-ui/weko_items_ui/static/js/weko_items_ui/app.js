@@ -3586,7 +3586,19 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
         return true;
       }
-
+      $scope.UpdateApplicationDate = function () {
+        var applicationDateKey = 'subitem_restricted_access_application_date';
+        for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
+          var currentInvenioRecordsSchema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
+          if (currentInvenioRecordsSchema.properties && currentInvenioRecordsSchema.properties.hasOwnProperty(applicationDateKey)) {
+            currentInvenioRecordsModel = $rootScope.recordsVM.invenioRecordsModel;
+            let today = new Date().toISOString().slice(0, 10)
+            $rootScope.recordsVM.invenioRecordsModel[key] = {}
+            $rootScope.recordsVM.invenioRecordsModel[key][applicationDateKey] = today;
+            break;
+          }
+        }
+      }
       $scope.updateDataJson = function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
           if (!validateSession()) {
           return;
@@ -3596,6 +3608,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         if (!$scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail, true)) {
           return;
         }
+        $scope.UpdateApplicationDate();
         if (!$scope.priceValidator()) {
           var modalcontent = "Billing price is required half-width numbers.";
           $("#inputModal").html(modalcontent);
