@@ -40,20 +40,19 @@ from flask import abort, current_app, flash, redirect, request, send_file, \
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role, userrole
+from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_records.api import RecordBase
 from invenio_search import RecordsSearch
+from invenio_stats.utils import QueryItemRegReportHelper, \
+    QueryRecordViewReportHelper, QuerySearchReportHelper
 from jsonschema import SchemaError, ValidationError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
-
-from invenio_db import db
-from invenio_records.api import RecordBase
-from invenio_stats.utils import QueryItemRegReportHelper, \
-    QueryRecordViewReportHelper, QuerySearchReportHelper
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import filter_index_list_by_role, get_index_id, \

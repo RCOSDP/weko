@@ -1939,24 +1939,22 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.AutoFillData = function (properties) {
         let recordsVM = $rootScope["recordsVM"];
         for (let i = 0; i < properties.length; i++) {
-          let property = properties[i];
-          if (!$scope.isDataExisting(property)) {
-            let autoFillElement = $('#auto_fill_' + property.replace('/', '\\/'));
-            if (autoFillElement) {
-              for (let key in recordsVM["invenioRecordsSchema"].properties) {
-                let value = recordsVM["invenioRecordsSchema"].properties[key];
-                if (value && value.properties) {
-                  if (value.properties.hasOwnProperty(property)) {
-                    if (!recordsVM.invenioRecordsModel[key]) {
-                      recordsVM.invenioRecordsModel[key] = {};
-                    }
-                    recordsVM.invenioRecordsModel[key][property] = autoFillElement.val();
-                    if (property == 'subitem_restricted_access_item_title') {
-                      item_title_key = key
-                    }
-                    $scope.disableElement(key, property)
-                    break;
+          let property = properties[i],
+            autoFillElement = $('#auto_fill_' + property.replace('/', '\\/'));
+          if (autoFillElement) {
+            for (let key in recordsVM["invenioRecordsSchema"].properties) {
+              let value = recordsVM["invenioRecordsSchema"].properties[key];
+              if (value && value.properties) {
+                if (value.properties.hasOwnProperty(property)) {
+                  if (!recordsVM.invenioRecordsModel[key]) {
+                    recordsVM.invenioRecordsModel[key] = {};
                   }
+                  recordsVM.invenioRecordsModel[key][property] = autoFillElement.val();
+                  if (property == 'subitem_restricted_access_item_title') {
+                    item_title_key = key
+                  }
+                  $scope.disableElement(key, property)
+                  break;
                 }
               }
             }
@@ -1976,26 +1974,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           }
         });
       }
-
-      // Check if data is exist
-      $scope.isDataExisting = function (property) {
-        let model = $rootScope.recordsVM.invenioRecordsModel;
-        if (Object.keys(model).length === 0 && model.constructor === Object) {
-          return false;
-        } else {
-          let isExisted = false;
-          for (let key in model) {
-            if (model.hasOwnProperty(key)) {
-              let itemValue = model[key][property];
-              if (itemValue) {                
-                isExisted = true;
-                break;
-              }
-            }
-          }
-          return isExisted;
-        }
-      };
 
       $scope.setDataForLicenseType = function () {
         var list_license = $("#list_license_data").val();

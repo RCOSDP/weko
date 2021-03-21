@@ -3074,31 +3074,56 @@ def get_usage_data(item_type_id, activity_detail, user_profile):
     @return:
     """
     result = None
-    mail_address = ''
     extra_info = activity_detail.extra_info
 
     if not extra_info or extra_info == {}:
         return result
 
-    if user_profile != {}:
-        mail_address = user_profile.get('results').get('subitem_mail_address')
-    else:
-        mail_address = extra_info.get('guest_mail') or ''
+    wf_issued_date = activity_detail.created.strftime("%Y%m%d")
 
     if item_type_id in current_app.config.get('WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST'):
+        mail_address = ''
+
+        if user_profile != {}:
+            mail_address = user_profile.get('results').get('subitem_mail_address')
+        else:
+            mail_address = extra_info.get('guest_mail') or ''
+
         related_title = extra_info.get('related_title') or ''
-        wf_issued_date = activity_detail.created.strftime("%Y-%m-%d")
-        item_title = current_app.config.get('WEKO_WORKFLOW_USAGE_ITEM_TITLE_PREFIX') \
-            + '_' + wf_issued_date + '_' + related_title + '_'
+        item_title = current_app.config.get('WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TITLE') \
+            + wf_issued_date + related_title + '_'
 
         result = dict(
             usage_type='Application',
             dataset_usage=related_title,
+            name='',
             mail_address=mail_address,
+            university_institution='',
+            affiliated_division_department='',
+            position='',
+            phone_number='',
+            usage_report_id='',
             wf_issued_date=wf_issued_date,
             item_title=item_title
         )
     elif item_type_id in current_app.config.get('WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST'):
-        result = None
+        usage_record_id = extra_info.get('usage_record_id') or ''
+        rm = RecordMetadata.query.filter_by(id=usage_record_id).first()
+        item_title = usage_record_id + current_app.config.get('WEKO_WORKFLOW_USAGE_REPORT_ITEM_TITLE') \
+            + related_title
+
+        result = dict(
+            usage_type='Report',
+            dataset_usage='related_title',
+            name='name',
+            mail_address='mail_address',
+            university_institution='university_institution',
+            affiliated_division_department='affiliated_division_department',
+            position='',
+            phone_number='0000000000',
+            usage_report_id='xxxxxxxxxx',
+            wf_issued_date=wf_issued_date,
+            item_title=item_title
+        )
 
     return result
