@@ -3083,10 +3083,10 @@ def get_usage_data(item_type_id, activity_detail, user_profile):
     if user_profile != {}:
         mail_address = user_profile.get('results').get('subitem_mail_address')
     else:
-        mail_address = extra_info.get('guest_mail')
+        mail_address = extra_info.get('guest_mail') or ''
 
     if item_type_id in current_app.config.get('WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST'):
-        related_title = extra_info.get('related_title')
+        related_title = extra_info.get('related_title') or ''
         wf_issued_date = activity_detail.created.strftime("%Y-%m-%d")
         item_title = current_app.config.get('WEKO_WORKFLOW_USAGE_ITEM_TITLE_PREFIX') \
             + '_' + wf_issued_date + '_' + related_title + '_'

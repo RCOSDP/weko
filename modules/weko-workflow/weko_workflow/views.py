@@ -384,9 +384,23 @@ def display_guest_activity(file_name=""):
     session['guest_url'] = request.full_path
 
     guest_activity = prepare_data_for_guest_activity(activity_id)
+    # activity_detail = WorkActivity().get_activity_detail(activity_id)
+    # workflow_detail = WorkFlow().get_workflow_by_id(activity_detail.workflow_id)
+    # usage_data = get_usage_data(workflow_detail.itemtype_id,
+    #                             guest_activity, {})
 
     return render_template(
         'weko_workflow/activity_detail.html',
+        # auto_fill_usage_data_usage_type=usage_data.get('usage_type') if usage_data else '',
+        # auto_fill_usage_data_dataset_usage=usage_data.get('dataset_usage') if usage_data else '',
+        # auto_fill_usage_data_name='TEST_auto_fill_usage_data_name',
+        # auto_fill_usage_data_mail_address=usage_data.get('mail_address') if usage_data else '',
+        # auto_fill_usage_data_university_institution='TEST_auto_fill_usage_data_university_institution',
+        # auto_fill_usage_data_affiliated_division_department='TEST_auto_fill_usage_data_affiliated_division_department',
+        # auto_fill_usage_data_position='Master Course (Master Program)',
+        # auto_fill_usage_data_phone_number='TEST_auto_fill_usage_data_phone_number',
+        # auto_fill_usage_data_wf_issued_date=usage_data.get('wf_issued_date') if usage_data else '',
+        # auto_fill_usage_data_item_title=usage_data.get('item_title') if usage_data else '',
         **guest_activity
     )
 
@@ -584,7 +598,7 @@ def display_activity(activity_id="0"):
                                 user_profile)
     ctx.update(dict(
         auto_fill_usage_data_usage_type=usage_data.get('usage_type') if usage_data else '',
-        auto_fill_usage_data_data_name=usage_data.get('dataset_usage') if usage_data else '',
+        auto_fill_usage_data_dataset_usage=usage_data.get('dataset_usage') if usage_data else '',
         auto_fill_usage_data_name='TEST_auto_fill_usage_data_name',
         auto_fill_usage_data_mail_address=usage_data.get('mail_address') if usage_data else '',
         auto_fill_usage_data_university_institution='TEST_auto_fill_usage_data_university_institution',
@@ -592,7 +606,7 @@ def display_activity(activity_id="0"):
         auto_fill_usage_data_position='Master Course (Master Program)',
         auto_fill_usage_data_phone_number='TEST_auto_fill_usage_data_phone_number',
         auto_fill_usage_data_wf_issued_date=usage_data.get('wf_issued_date') if usage_data else '',
-        auto_fill_usage_data_item_title=usage_data.get('item_title') if usage_data else '',
+        auto_fill_usage_data_item_title=usage_data.get('item_title') if usage_data else ''
     ))
     return render_template(
         'weko_workflow/activity_detail.html',
@@ -652,7 +666,7 @@ def display_activity(activity_id="0"):
         institute_position_list=institute_position_list,
         is_enable_item_name_link=is_enable_item_name_link(
             action_endpoint, item_type_name),
-        list_license=list_license,
+        list_license=list_license,        
         **ctx
     )
 
