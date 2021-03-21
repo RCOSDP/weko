@@ -1727,7 +1727,7 @@ def check_approval_email(activity_id, user):
         .filter(Activity.activity_id == activity_id) \
         .filter(FlowActionRole.specify_property == user) \
         .first()
-    return action_order if action_order else None
+    return action_order[0] if action_order and action_order[0] else None
 
 
 def check_approval_email_in_flow(activity_id, users):
