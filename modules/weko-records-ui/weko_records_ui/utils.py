@@ -746,7 +746,8 @@ def send_usage_report_mail_for_guest_user(guest_mail: str, temp_url: str):
     """
     # Mail information
     mail_info = {
-        'template': current_app.config.get("WEKO_WORKFLOW_ACCESS_ACTIVITY_URL"),
+        'template': current_app.config.get(
+            "WEKO_WORKFLOW_USAGE_REPORT_ACTIVITY_URL"),
         'mail_address': guest_mail,
         'url_guest_user': temp_url
     }

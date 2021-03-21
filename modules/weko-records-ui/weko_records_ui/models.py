@@ -343,9 +343,9 @@ class FileOnetimeDownload(db.Model, Timestamp):
                                        record_id=record_id)
             if file_permission and len(file_permission) > 0:
                 for file in file_permission:
-                    if data.get("download_count"):
+                    if data.get("download_count") is not None:
                         file.download_count = data.get("download_count")
-                    if data.get("expiration_date"):
+                    if data.get("expiration_date") is not None:
                         file.expiration_date = data.get("expiration_date")
                     if data.get("extra_info"):
                         file.extra_info = data.get("extra_info")
