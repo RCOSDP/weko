@@ -2689,8 +2689,11 @@ def validate_guest_activity_expired(activity_id: str) -> str:
         guest_activity = guest_activity[0]
     else:
         return ""
-    expiration_access_date = guest_activity.created.date() + timedelta(
-        guest_activity.expiration_date)
+    try:
+        expiration_date = timedelta(guest_activity.expiration_date)
+    except OverflowError:
+        return ""
+    expiration_access_date = guest_activity.created.date() + expiration_date
     current_date = datetime.utcnow().date()
     if current_date > expiration_access_date:
         return _("The specified link has expired.")
@@ -2723,11 +2726,15 @@ def create_onetime_download_url_to_guest(activity_id: str,
         one_time_obj = create_onetime_download_url(
             activity_id, file_name, record_id, user_mail, is_guest_user)
         if one_time_obj:
-            expiration_date = datetime.today() + timedelta(
-                days=one_time_obj.expiration_date)
+            try:
+                expiration_date = timedelta(days=one_time_obj.expiration_date)
+                expiration_date = datetime.today() + expiration_date
+                expiration_date.strftime("%Y-%m-%d")
+            except OverflowError:
+                expiration_date = ""
             return {
                 "file_url": onetime_file_url,
-                "expiration_date": expiration_date.strftime("%Y-%m-%d")
+                "expiration_date": expiration_date
             }
         else:
             current_app.logger.error("Can not create onetime download.")
