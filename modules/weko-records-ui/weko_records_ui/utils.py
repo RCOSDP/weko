@@ -846,12 +846,16 @@ def validate_onetime_download_token(
     try:
         if not onetime_download:
             return False, token_invalid
-        download_date = onetime_download.created.date() + timedelta(
-            onetime_download.expiration_date)
-        current_date = dt.utcnow().date()
-        if current_date > download_date:
-            return False, _(
-                "The expiration date for download has been exceeded.")
+        try:
+            expiration_date = timedelta(onetime_download.expiration_date)
+            download_date = onetime_download.created.date() + expiration_date
+            current_date = dt.utcnow().date()
+            if current_date > download_date:
+                return False, _(
+                    "The expiration date for download has been exceeded.")
+        except OverflowError:
+            current_app.logger.error('date value out of range:',
+                                     onetime_download.expiration_date)
 
         if onetime_download.download_count <= 0:
             return False, _("The download limit has been exceeded.")
