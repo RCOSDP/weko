@@ -174,5 +174,13 @@
     "Display": [
         null,
         "表示する"
+    ],
+    "Del_Success": [
+        null,
+        "正常にインデックスを削除しました。"
+    ],
+    "Add_Update_Success": [
+        null,
+        "正常にインデックスを更新しました。"
     ]
 }

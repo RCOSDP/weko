@@ -174,5 +174,13 @@
     "Display": [
         null,
         "Display"
+    ],
+    "Del_Success": [
+        null,
+        "Index deleted successfully."
+    ],
+    "Add_Update_Success": [
+        null,
+        "Index updated successfully."
     ]
 }
