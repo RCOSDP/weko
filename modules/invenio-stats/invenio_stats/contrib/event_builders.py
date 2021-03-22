@@ -121,15 +121,31 @@ def build_celery_task_unique_id(doc):
 
 def build_file_unique_id(doc):
     """Build file unique identifier."""
-    doc['unique_id'] = '{0}_{1}'.format(doc['bucket_id'], doc['file_id'])
+    doc['unique_id'] = '{0}_{1}_{2}_{3}_{4}'.format(
+        doc['bucket_id'],
+        doc['file_id'],
+        doc['remote_addr'],
+        doc['unique_session_id'],
+        doc['visitor_id'])
     doc['hostname'] = '{}'.format(resolve_address(doc['remote_addr']))
+    print ('*' * 60)
+    print ('build_file_unique_id')
+    print (doc)
     return doc
 
 
 def build_record_unique_id(doc):
     """Build record unique identifier."""
-    doc['unique_id'] = '{0}_{1}'.format(doc['pid_type'], doc['pid_value'])
+    doc['unique_id'] = '{0}_{1}_{2}_{3}_{4}'.format(
+        doc['pid_type'],
+        doc['pid_value'],
+        doc['remote_addr'],
+        doc['unique_session_id'],
+        doc['visitor_id'])
     doc['hostname'] = '{}'.format(resolve_address(doc['remote_addr']))
+    print ('*' * 60)
+    print ('build_record_unique_id')
+    print (doc)
     return doc
 
 
@@ -226,9 +242,11 @@ def top_view_event_builder(event, sender_app, info=None, **kwargs):
 
 def build_top_unique_id(doc):
     """Build top unique identifier."""
-    doc['unique_id'] = '{0}_{1}_{2}_{3}'.format("top", "view",
-                                                doc['site_license_name'],
-                                                doc['remote_addr'])
+    doc['unique_id'] = '{0}_{1}_{2}_{3}'.format(
+        doc['site_license_name'],
+        doc['remote_addr'],
+        doc['unique_session_id'],
+        doc['visitor_id'])
     doc['hostname'] = '{}'.format(resolve_address(doc['remote_addr']))
     return doc
 
@@ -273,10 +291,13 @@ def search_event_builder(event, sender_app, search_args=None,
 
 def build_search_unique_id(doc):
     """Build search unique identifier."""
-    key = '{0}_{1}_{2}'.format(
+    key = '{0}_{1}_{2}_{3}_{4}_{5}'.format(
         doc['search_detail']['search_key'],
         doc['search_detail']['search_type'],
-        doc['site_license_name']
+        doc['site_license_name'],
+        doc['remote_addr'],
+        doc['unique_session_id'],
+        doc['visitor_id']
     )
     doc['unique_id'] = str(uuid.uuid3(uuid.NAMESPACE_DNS, key))
     return doc
