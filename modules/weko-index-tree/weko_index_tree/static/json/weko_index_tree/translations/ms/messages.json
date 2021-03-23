@@ -177,10 +177,10 @@
     ],
     "Del_Success": [
         null,
-        "Index deleted successfully."
+        "Index is deleted successfully."
     ],
     "Add_Update_Success": [
         null,
-        "Index updated successfully."
+        "Index is updated successfully."
     ]
 }
