@@ -3109,6 +3109,7 @@ def get_usage_data(item_type_id, activity_detail, user_profile):
             university_institution='',
             affiliated_division_department='',
             position='',
+            position_other='',
             phone_number='',
             usage_report_id='',
             wf_issued_date=wf_issued_date,
@@ -3124,6 +3125,7 @@ def get_usage_data(item_type_id, activity_detail, user_profile):
         university_institution = ''
         affiliated_division_department = ''
         position = ''
+        position_other = ''
         phone_number = ''
 
         for key in rm.json:
@@ -3143,6 +3145,8 @@ def get_usage_data(item_type_id, activity_detail, user_profile):
                             affiliated_division_department = sub_value
                         elif sub_key == 'subitem_restricted_access_position':
                             position = sub_value
+                        elif sub_key == 'subitem_restricted_access_position(others)':
+                            position_other = sub_value
                         elif sub_key == 'subitem_restricted_access_phone_number':
                             phone_number = sub_value
         item_title = related_activity_id + current_app.config.get('WEKO_WORKFLOW_USAGE_REPORT_ITEM_TITLE') \
@@ -3155,6 +3159,7 @@ def get_usage_data(item_type_id, activity_detail, user_profile):
             university_institution=university_institution,
             affiliated_division_department=affiliated_division_department,
             position=position,
+            position_other=position_other,
             phone_number=phone_number,
             usage_report_id=activity_detail.activity_id,
             wf_issued_date=wf_issued_date,
