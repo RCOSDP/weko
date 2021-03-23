@@ -2000,6 +2000,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           'subitem_restricted_access_university/institution',
           'subitem_restricted_access_affiliated_division/department',
           'subitem_restricted_access_position',
+          'subitem_restricted_access_position(others)',
           'subitem_restricted_access_phone_number',
           'subitem_restricted_access_usage_report_id',
           'subitem_restricted_access_wf_issued_date',
@@ -2014,7 +2015,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let recordsVM = $rootScope["recordsVM"];
         for (let i = 0; i < properties.length; i++) {
           let property = properties[i],
-            autoFillElement = $('#auto_fill_' + property.replace('/', '\\/'));
+            autoFillElement = $('#auto_fill_' + property.replace(/(?=[()/])/g, '\\'));
           if (autoFillElement) {
             for (let key in recordsVM["invenioRecordsSchema"].properties) {
               let value = recordsVM["invenioRecordsSchema"].properties[key];
@@ -2333,11 +2334,18 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         else if (usage_type === 'Application') {
           $scope.autoFillUsageApplication();
           setTimeout(function () {
-            $("#subitem_restricted_access_name").on('keyup', function () {
+            function updateItemTitle() {
               let item_title = $("#auto_fill_subitem_restricted_access_item_title").val() +
                 $("#subitem_restricted_access_name").val()
               $rootScope["recordsVM"].invenioRecordsModel[item_title_key]['subitem_restricted_access_item_title'] = item_title;
+            }
+            $("#subitem_restricted_access_name").on('input', function () {
+              updateItemTitle();
             });
+
+            if ($("#subitem_restricted_access_name").val()) {
+              updateItemTitle();
+            }
           }, 3000);
         }
 
