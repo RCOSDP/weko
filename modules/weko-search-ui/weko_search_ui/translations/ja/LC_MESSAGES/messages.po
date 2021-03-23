@@ -747,3 +747,6 @@ msgstr "（{}）に指定したファイルが存在しません。"
 
 msgid "The file specified in ({}) does not exist.<br/>The file will not be updated. Update only the metadata with tsv contents."
 msgstr "（{}）に指定したファイルが存在しません。<br/>ファイルの更新はしません。tsv内容でメタデータのみ更新します。"
+
+msgid "The file name specified in {} and {} do not match."
+msgstr "{}に指定されたファイル名と{}が一致しません。"

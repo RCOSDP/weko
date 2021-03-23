@@ -102,6 +102,7 @@ trumbowyg_js_plugin = Bundle(
     'js/weko_gridlayout/trumbowyg_plugin/fontsize/trumbowyg.fontsize.min.js',
     'js/weko_gridlayout/trumbowyg_plugin/colors/trumbowyg.colors.min.js',
     'js/weko_gridlayout/trumbowyg_plugin/table/trumbowyg.table.min.js',
+    'js/weko_gridlayout/trumbowyg_plugin/upload/trumbowyg.upload.min.js',
     output="gen/trumbowyg_js_plugin.%(version)s.js",
 )
 

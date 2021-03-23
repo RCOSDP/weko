@@ -18,7 +18,9 @@
 {{ all_modal() }}
         <h3>{{_('Terms and Conditions')}}</h3>
 <div class="panel panel-default panel-body" style="overflow-y: auto; max-height:400px;" >
-<form id="term-and-condition-form" action='/workflow/activity/detail/{{activity.activity_id}}' method="POST">
+  <form id="term-and-condition-form"
+        action="/workflow/activity/detail/{{ activity.activity_id }}"
+        method="POST">
   <div class="form-check">
                 {%- for content in term_and_condition_content %}
       <span class="action-name">{{content}}</span>
@@ -27,6 +29,7 @@
     <br>
     <div style="position: relative;">
       <input type="checkbox" class="form-check-input pointer" id="checked" name="checked">
+      <input type="hidden" name="title" value="{{ itemTitle }}">
       <label class="form-check-label pointer" for="checked" style="position: absolute;top: 1px;left: 20px;">
         {{_('I have read and agreed to the Terms and Conditions')}}
       </label>

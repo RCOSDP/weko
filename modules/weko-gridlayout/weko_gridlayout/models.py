@@ -21,10 +21,12 @@
 """Database models for weko-gridlayout."""
 
 from flask import current_app
+from invenio_accounts.models import User
 from invenio_db import db
 from sqlalchemy import Sequence
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm.collections import attribute_mapped_collection
+from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import JSONType
 
 
@@ -49,7 +51,7 @@ class WidgetType(db.Model):
             db.session.commit()
         except BaseException as ex:
             db.session.rollback()
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
             raise
         return cls
 
@@ -73,18 +75,20 @@ class WidgetType(db.Model):
         return widget_types
 
 
-class WidgetItem(db.Model):
+class WidgetItem(db.Model, Timestamp):
     """Database for WidgetItem."""
 
     __tablename__ = 'widget_items'
 
-    widget_id = db.Column(db.Integer,
-                          primary_key=True,
-                          nullable=False)
-    repository_id = db.Column(db.String(100),
-                              nullable=False)
-    widget_type = db.Column(db.String(100),
-                            nullable=False)
+    widget_id = db.Column(db.Integer, primary_key=True, nullable=False)
+    """Widget identifier."""
+
+    repository_id = db.Column(db.String(100), nullable=False)
+    """Community identifier."""
+
+    widget_type = db.Column(db.String(100), nullable=False)
+    """Widget type."""
+
     settings = db.Column(db.JSON().with_variant(
         postgresql.JSONB(
             none_as_null=True
@@ -96,14 +100,21 @@ class WidgetItem(db.Model):
                       'mysql',),
         default=lambda: dict(),
         nullable=True)
-    is_enabled = db.Column(db.Boolean(name='enable'),
-                           default=True)
-    is_deleted = db.Column(db.Boolean(name='deleted'),
-                           default=False)
+    """Widget settings"""
 
-    #
-    # Query Operation
-    #
+    is_enabled = db.Column(db.Boolean(name='enable'), default=True)
+    """Enable widget"""
+
+    is_deleted = db.Column(db.Boolean(name='deleted'), default=False)
+    """Delete flag."""
+
+    locked = db.Column(db.Boolean(), default=False)
+    """Edit locked"""
+
+    locked_by_user = db.Column(db.Integer(), db.ForeignKey(User.id),
+                               nullable=True, default=None)
+    """Locked by user"""
+
     @classmethod
     def get_by_id(cls, widget_item_id):
         """Get a widget item by id."""
@@ -169,7 +180,9 @@ class WidgetItem(db.Model):
             widget -- if success
 
         """
+        is_commit = False
         if not session:
+            is_commit = True
             session = db.session
         widget = cls.get_by_id(widget_item_id)
         if not widget:
@@ -177,7 +190,19 @@ class WidgetItem(db.Model):
         for k, v in widget_data.items():
             setattr(widget, k, v)
         session.merge(widget)
-        return widget
+        if is_commit:
+            try:
+                with session.begin_nested():
+                    session.merge(widget)
+                session.commit()
+                return widget
+            except Exception as ex:
+                session.rollback()
+                current_app.logger.error(ex)
+                return False
+        else:
+            session.merge(widget)
+            return widget
 
     @classmethod
     def update_setting_by_id(cls, widget_id, settings):
@@ -196,7 +221,7 @@ class WidgetItem(db.Model):
             return True
         except Exception as ex:
             db.session.rollback()
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
             return False
 
     @classmethod
@@ -282,13 +307,13 @@ class WidgetMultiLangData(db.Model):
 
     @classmethod
     def get_by_widget_id(cls, widget_id):
-        """Get list widget multilanguage data by widget ID.
+        """Get list widget multi language data by widget ID.
 
         Arguments:
             widget_id {Integer} -- The widget id
 
         Returns:
-            data -- List widget multilanguage data
+            data -- List widget multi language data
 
         """
         list_data = cls.query.filter_by(
@@ -297,11 +322,11 @@ class WidgetMultiLangData(db.Model):
 
     @classmethod
     def update_by_id(cls, widget_item_id, data):
-        """Update widget multilanguage data by id.
+        """Update widget multi language data by id.
 
         Arguments:
             id {Integer} -- The id
-            data {WidgetMultiLangData} -- The Widget multilanguage data
+            data {WidgetMultiLangData} -- The Widget multi language data
 
         Returns:
             True -- If deleted
@@ -333,7 +358,6 @@ class WidgetMultiLangData(db.Model):
         return True
 
 
-# FIXME: Shouldn't repository_id be a foreignkey?
 class WidgetDesignSetting(db.Model):
     """Database for admin WidgetDesignSetting."""
 
@@ -408,7 +432,7 @@ class WidgetDesignSetting(db.Model):
                 db.session.commit()
                 return True
             except Exception as ex:
-                current_app.logger.debug(ex)
+                current_app.logger.error(ex)
                 db.session.rollback()
                 return False
 
@@ -431,7 +455,7 @@ class WidgetDesignSetting(db.Model):
             return True
         except Exception as ex:
             db.session.rollback()
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
             return False
 
 
@@ -530,7 +554,7 @@ class WidgetDesignPage(db.Model):
             db.session.commit()
         except Exception as ex:
             db.session.rollback()
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
             raise ex
 
     @classmethod
@@ -548,7 +572,7 @@ class WidgetDesignPage(db.Model):
                 return True
             except BaseException as ex:
                 db.session.rollback()
-                current_app.logger.debug(ex)
+                current_app.logger.error(ex)
                 raise ex
         return False
 
@@ -570,7 +594,7 @@ class WidgetDesignPage(db.Model):
                 return True
         except Exception as ex:
             db.session.rollback()
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
             raise ex
         return False
 
@@ -594,7 +618,7 @@ class WidgetDesignPage(db.Model):
             return True
         except Exception as ex:
             db.session.rollback()
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
             return False
 
     @classmethod
@@ -667,7 +691,6 @@ class WidgetDesignPageMultiLangData(db.Model):
         nullable=False
     )
 
-    # FIXME: Shouldn't this be a foreign key
     lang_code = db.Column(db.String(3), nullable=False)
 
     title = db.Column(db.String(100))
