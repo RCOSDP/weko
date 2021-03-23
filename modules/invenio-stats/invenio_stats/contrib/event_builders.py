@@ -128,9 +128,6 @@ def build_file_unique_id(doc):
         doc['unique_session_id'],
         doc['visitor_id'])
     doc['hostname'] = '{}'.format(resolve_address(doc['remote_addr']))
-    print ('*' * 60)
-    print ('build_file_unique_id')
-    print (doc)
     return doc
 
 
@@ -143,9 +140,6 @@ def build_record_unique_id(doc):
         doc['unique_session_id'],
         doc['visitor_id'])
     doc['hostname'] = '{}'.format(resolve_address(doc['remote_addr']))
-    print ('*' * 60)
-    print ('build_record_unique_id')
-    print (doc)
     return doc
 
 
@@ -291,11 +285,10 @@ def search_event_builder(event, sender_app, search_args=None,
 
 def build_search_unique_id(doc):
     """Build search unique identifier."""
-    key = '{0}_{1}_{2}_{3}_{4}_{5}'.format(
+    key = '{0}_{1}_{2}_{3}_{4}'.format(
         doc['search_detail']['search_key'],
         doc['search_detail']['search_type'],
         doc['site_license_name'],
-        doc['remote_addr'],
         doc['unique_session_id'],
         doc['visitor_id']
     )
@@ -323,8 +316,6 @@ def build_search_detail_condition(doc):
 def item_create_event_builder(event, sender_app, user_id=None,
                               item_id=None, item_title=None, **kwargs):
     """Build a item-create event."""
-    print(get_user())
-
     if is_valid_access():
         event.update(dict(
             # When:
