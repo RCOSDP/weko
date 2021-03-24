@@ -281,6 +281,12 @@ def is_private_workflow(record):
 
 def is_private_index(record):
     """Check index of workflow is private."""
+    def is_future_date(public_date):
+        """Check public date (Index Tree) is future date."""
+        cur_date = datetime.now()
+        return public_date and public_date > cur_date
+
+    # Get current and parent indexes of this record.
     list_index = record.get("path")
     index_lst = []
     if list_index:
@@ -289,15 +295,40 @@ def is_private_index(record):
             indexes = str(index).split('/')
             index_id_lst.append(indexes[-1])
         index_lst = index_id_lst
+    # check private and future date of all(current and parent) indexes.
     indexes = Indexes.get_path_list(index_lst)
     publish_state = 6
     for index in indexes:
-        if len(indexes) == 1:
-            if not index[publish_state]:
-                return True
-        else:
-            if index[publish_state]:
-                return False
+        is_future_date = is_future_date(index[7])
+        if not index[publish_state] or is_future_date:
+            return True
+    return False
+
+
+def set_identifier(param_record, param_rec):
+    """Set identifier (doi, cnri, url) for this record."""
+    # Set default value for system_identifier_doi.
+    if not param_record.get('json') or \
+            not param_record['json']['_source'] or \
+            not param_record['json']['_source']['_item_metadata']:
+        param_record['json'] = \
+            {'_source': {'_item_metadata': {'system_identifier_doi': None}}}
+    # Set default identifier for system_identifier_doi.
+    if not param_record['json']['_source']['_item_metadata']\
+            .get('system_identifier_doi'):
+        param_record['json']['_source']['_item_metadata'][
+            'system_identifier_doi'] = get_identifier(param_rec)
+
+
+def is_exists_doi(param_record):
+    """Check identifier doi exists in this record."""
+    item_metadata = param_record['json']['_source']['_item_metadata']
+    system_identifier_doi = item_metadata.get('system_identifier_doi', {})
+    attribute_value_mlt = system_identifier_doi.get('attribute_value_mlt', {})
+    for mlt in attribute_value_mlt:
+        identifier_type = mlt.get('subitem_systemidt_identifier_type')
+        if identifier_type == 'DOI':
+            return True
     return False
 
 
@@ -318,10 +349,12 @@ def getrecord(**kwargs):
 
     e_tree, e_getrecord = verb(**kwargs)
     e_record = SubElement(e_getrecord, etree.QName(NS_OAIPMH, 'record'))
-
+    set_identifier(record, record)
     # Harvest is private
-    if not harvest_public_state or \
-            (identify and not identify.outPutSetting):
+    if not harvest_public_state or\
+            (identify and not identify.outPutSetting) or \
+            (is_private_index(record) and
+                harvest_public_state and is_exists_doi(record)):
         return error(get_error_code_msg(), **kwargs)
     # Item is deleted
     # or Harvest is public & Item is private
@@ -391,6 +424,7 @@ def listrecords(**kwargs):
         return [(code, msg)]
 
     def append_deleted_record(e_listrecords, pid_object, rec):
+        """Append attribute [status="deleted] for 'header' tag."""
         e_record = SubElement(e_listrecords, etree.QName(NS_OAIPMH, 'record'))
         header(
             e_record,
@@ -401,32 +435,33 @@ def listrecords(**kwargs):
         )
 
     record_dumper = serializer(kwargs['metadataPrefix'])
-
     e_tree, e_listrecords = verb(**kwargs)
     result = get_records(**kwargs)
-
     identify = OaiIdentify.get_all()
-
-    if not any([result.total, identify, identify.outPutSetting]):
+    if not result.total or not identify or \
+            (identify and not identify.outPutSetting):
         return error(get_error_code_msg(), **kwargs)
-
     for record in result.items:
         try:
             pid = oaiid_fetcher(record['id'], record['json']['_source'])
             pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
             rec = WekoRecord.get_record(record['id'])
-
-            # Check output delete, noRecordsMatch
-            if not is_private_index(rec):
-                if is_deleted_workflow(pid_object) or \
-                        is_private_workflow(rec):
-                    append_deleted_record(
-                        e_listrecords, pid_object, rec)
-                    continue
-            else:
-                append_deleted_record(e_listrecords, pid_object, rec)
+            harvest_public_state, r = \
+                WekoRecord.get_record_with_hps(pid_object.object_uuid)
+            set_identifier(record, rec)
+            if is_private_index(rec) and \
+                    harvest_public_state and is_exists_doi(record):
                 continue
-
+            else:
+                # Check output delete, noRecordsMatch
+                if not is_private_index(rec):
+                    if is_deleted_workflow(pid_object) or \
+                            is_private_workflow(rec):
+                        append_deleted_record(e_listrecords, pid_object, rec)
+                        continue
+                else:
+                    append_deleted_record(e_listrecords, pid_object, rec)
+                    continue
             e_record = SubElement(
                 e_listrecords, etree.QName(NS_OAIPMH, 'record'))
             header(
@@ -435,28 +470,19 @@ def listrecords(**kwargs):
                 datestamp=record['updated'],
                 sets=record['json']['_source'].get('_oai', {}).get('sets', []),
             )
-
-            if not record['json']['_source']['_item_metadata']\
-                    .get('system_identifier_doi'):
-                record['json']['_source']['_item_metadata'][
-                    'system_identifier_doi'] = get_identifier(rec)
             e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
                                                           'metadata'))
             etree_record = copy.deepcopy(record['json'])
-
             # Merge licensetype and licensefree
             handle_license_free(etree_record['_source']['_item_metadata'])
-
             e_metadata.append(record_dumper(pid, etree_record))
         except Exception:
             current_app.logger.error(traceback.print_exc())
             current_app.logger.error('Error when exporting item id'
                                      + str(record['id']))
-
     # Check <record> tag not exist.
     if len(e_listrecords) == 0:
         return error(get_error_code_msg(), **kwargs)
-
     resumption_token(e_listrecords, result, **kwargs)
     return e_tree
 
