@@ -32,7 +32,6 @@ from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.ext import pid_exists
 from invenio_pidstore.models import PersistentIdentifier
 from weko_admin.models import AdminSettings
-from weko_records_ui.utils import hide_item_metadata
 from weko_schema_ui.schema import SchemaTree
 
 from .api import ItemTypes, Mapping
@@ -446,6 +445,7 @@ def sort_meta_data_by_options(record_hit):
     :param record_hit:
     """
     from weko_records_ui.permissions import check_file_download_permission
+    from weko_records_ui.utils import hide_item_metadata
     from weko_records.api import Mapping
     from weko_records.serializers.utils import get_mapping
     from weko_search_ui.utils import get_data_by_propertys
