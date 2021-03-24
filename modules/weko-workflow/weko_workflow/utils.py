@@ -54,7 +54,8 @@ from weko_records.serializers.utils import get_item_type_name, get_mapping
 from weko_records_ui.utils import create_onetime_download_url, \
     generate_one_time_download_url, get_list_licence
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
 
@@ -1593,8 +1594,8 @@ def get_record_by_root_ver(pid_value):
 
     :return: record, files.
     """
-    from weko_deposit.api import WekoDeposit, WekoRecord
     from invenio_pidstore.models import PersistentIdentifier
+    from weko_deposit.api import WekoDeposit, WekoRecord
     from weko_items_ui.utils import to_files_js
     files = []
     record = None
