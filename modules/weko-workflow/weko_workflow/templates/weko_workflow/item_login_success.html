@@ -37,6 +37,7 @@
   {% assets "workflow_lock_activity_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_records_ui_preview_carousel_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_records_ui_bootstrap_popover_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
@@ -143,7 +144,7 @@
                     <p class="form-control-static">
                       {%- if is_enable_item_name_link -%}
                         <a href="#"
-                           id="lnk_item_detail">{{ item.get('title') or item.get('title_ja') if item }}</a>
+                           id="lnk_item_detail">{{ item.get('title_ja', item.get('title')) if item }}</a>
                       {%- endif -%}
                     </p>
                   </div>
