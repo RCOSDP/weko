@@ -389,6 +389,8 @@ def hide_item_metadata(record):
         if not current_app.config['EMAIL_DISPLAY_FLG']:
             record = hide_by_email(record)
 
+        record = hide_by_file(record)
+
         return True
 
     record.pop('weko_creator_id')
@@ -416,6 +418,26 @@ def hide_item_metadata_email_only(record):
 
     record.pop('weko_creator_id')
     return False
+
+
+def hide_by_file(item_metadata):
+    """Hiding file info.
+
+    :param item_metadata:
+    :return:
+    """
+    for key, value in item_metadata.items():
+        if isinstance(value, dict) \
+                and 'attribute_type' in value \
+                and value['attribute_type'] == 'file' \
+                and 'attribute_value_mlt' in value \
+                and len(value['attribute_value_mlt']) > 0:
+            for v in value['attribute_value_mlt'].copy():
+                if 'accessrole' in v \
+                        and v['accessrole'] == 'open_no':
+                    value['attribute_value_mlt'].remove(v)
+
+    return item_metadata
 
 
 def hide_by_email(item_metadata):
