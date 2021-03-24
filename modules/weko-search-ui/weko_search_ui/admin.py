@@ -27,6 +27,7 @@ from urllib.parse import urlencode
 
 from blinker import Namespace
 from celery import chord
+from celery.task.control import revoke
 from flask import Response, abort, current_app, jsonify, make_response, \
     request, send_file
 from flask_admin import BaseView, expose
@@ -245,6 +246,7 @@ class ItemImportView(BaseView):
         data = request.get_json()
         list_record = []
         data_path = ''
+        remove_temp_dir_task_id = None
 
         if data:
             result = check_import_items(
@@ -253,12 +255,23 @@ class ItemImportView(BaseView):
                 data.get('is_change_identifier')
             )
             if isinstance(result, dict):
+                data_path = result.get('data_path', '')
                 if result.get('error'):
+                    remove_temp_dir_task.apply_async((data_path,))
                     return jsonify(code=0, error=result.get('error'))
                 else:
                     list_record = result.get('list_record', [])
-                    data_path = result.get('data_path', '')
-        return jsonify(code=1, list_record=list_record, data_path=data_path)
+                    num_record_err = len(
+                        [i for i in list_record if i.get('errors')])
+                    if len(list_record) == num_record_err:
+                        remove_temp_dir_task.apply_async((data_path,))
+                    else:
+                        remove_temp_dir_task_id = remove_temp_dir_task. \
+                            apply_async(
+                                (data_path,), countdown=get_lifetime()).task_id
+        return jsonify(
+            code=1, list_record=list_record, data_path=data_path,
+            remove_temp_dir_task_id=remove_temp_dir_task_id)
 
     @expose('/download_check', methods=['POST'])
     def download_check(self):
@@ -292,6 +305,12 @@ class ItemImportView(BaseView):
     def import_items(self) -> jsonify:
         """Import item into System."""
         data = request.get_json() or {}
+
+        # terminate remove_temp_dir_task in schedule
+        remove_temp_dir_task_id = data.get('remove_temp_dir_task_id')
+        if remove_temp_dir_task_id:
+            revoke(remove_temp_dir_task_id, terminate=True)
+
         tasks = []
         list_record = [item for item in data.get(
             'list_record', []) if not item.get(
