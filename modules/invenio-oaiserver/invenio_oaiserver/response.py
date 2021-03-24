@@ -298,9 +298,9 @@ def is_private_index(record):
     # check private and future date of all(current and parent) indexes.
     indexes = Indexes.get_path_list(index_lst)
     publish_state = 6
+    publish_date = 7
     for index in indexes:
-        is_future_date = is_future_date(index[7])
-        if not index[publish_state] or is_future_date:
+        if not index[publish_state] or is_future_date(index[publish_date]):
             return True
     return False
 
