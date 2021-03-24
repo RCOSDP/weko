@@ -274,7 +274,7 @@ def item_metadata_validation(
                          'working paper', 'interactive resource',
                          'musical notation', 'research proposal',
                          'technical documentation', 'workflow',
-                         'その他（その他）', 'sound', 'patent',
+                         'other', 'sound', 'patent',
                          'cartographic material', 'map', 'lecture', 'image',
                          'still image', 'moving image', 'video',
                          'conference object', 'conference proceedings',
@@ -491,20 +491,22 @@ def validattion_item_property_required(
 
         data = []
         idt_data = []
-        creators = mapping_data.record.get(key.split('.')[0])
         if key:
-            creator_data = get_sub_item_value(
-                creators.get("attribute_value_mlt"),
-                key.split('.')[-1])
-            if creator_data:
-                for value in creator_data:
-                    data.append(value)
-        if idt_key:
-            creator_name_identifier = get_sub_item_value(
-                creators.get("attribute_value_mlt"), idt_key.split('.')[-1])
-            if creator_name_identifier:
-                for value in creator_name_identifier:
-                    idt_data.append(value)
+            creators = mapping_data.record.get(key.split('.')[0])
+            if creators:
+                creator_data = get_sub_item_value(
+                    creators.get("attribute_value_mlt"),
+                    key.split('.')[-1])
+                if creator_data:
+                    for value in creator_data:
+                        data.append(value)
+                if idt_key:
+                    creator_name_identifier = get_sub_item_value(
+                        creators.get("attribute_value_mlt"),
+                        idt_key.split('.')[-1])
+                    if creator_name_identifier:
+                        for value in creator_name_identifier:
+                            idt_data.append(value)
 
         repeatable = True
         requirements = check_required_data(data, key, repeatable)
