@@ -13,7 +13,7 @@
     "is_output": {
       "type": "boolean",
       "title": " ",
-      "default": true
+      "default": false
     },
     "publication_title": {
       "type": "string",

@@ -136,3 +136,5 @@ msgstr ""
 msgid "Welcome to %(module_name)s"
 msgstr ""
 
+msgid "Do you wan to unlock this widget?"
+msgstr "このウイジェットのロックを解除してよろしいでしょうか。"

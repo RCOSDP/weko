@@ -72,6 +72,9 @@ require([
 });
 function validateSession() {
   var isValid = true;
+  if ($('#current_guest_email').val()) {
+    return isValid;
+  }
   $.ajax({
     url: '/items/sessionvalidate',
     method: 'POST',
@@ -82,8 +85,9 @@ function validateSession() {
         alert(data.msg)
         window.location.assign("/login/?next=" + window.location.pathname);
         isValid = false;
-      } else
+      } else {
         isValid = true;
+      }
     },
     error: function (data, status) {
       var modalcontent = data;

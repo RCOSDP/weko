@@ -44,9 +44,9 @@ from weko_authors.models import Authors
 from weko_records.api import ItemsMetadata
 
 from . import config
-from .models import AdminLangSettings, ApiCertificate, FeedbackMailFailed, \
-    FeedbackMailHistory, FeedbackMailSetting, SearchManagement, \
-    StatisticTarget, StatisticUnit
+from .models import AdminLangSettings, AdminSettings, ApiCertificate, \
+    FeedbackMailFailed, FeedbackMailHistory, FeedbackMailSetting, \
+    SearchManagement, StatisticTarget, StatisticUnit
 
 
 def get_response_json(result_list, n_lst):
@@ -1644,3 +1644,54 @@ def get_init_display_index(init_disp_index: str) -> list:
                                init_disp_index)
 
     return init_display_indexes
+
+
+def get_restricted_access(key: str = None):
+    """Get registered access settings.
+
+    :param key:setting key.
+    :return:
+    """
+    restricted_access = AdminSettings.get('restricted_access', False)
+    if not restricted_access:
+        restricted_access = current_app.config['WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
+    if not key:
+        return restricted_access
+    elif key in restricted_access:
+        return restricted_access[key]
+    return None
+
+
+def update_restricted_access(restricted_access: dict):
+    """Update the restricted access.
+
+    :param restricted_access:
+    """
+    def parse_content_file_download(content_file_download):
+        if content_file_download.get('expiration_date_unlimited_chk'):
+            content_file_download['expiration_date'] = 9999999
+        if content_file_download.get('download_limit_unlimited_chk'):
+            content_file_download['download_limit'] = 9999999
+
+        content_file_download['expiration_date'] = int(content_file_download['expiration_date'])
+        content_file_download['download_limit'] = int(content_file_download['download_limit'])
+
+    def validate_content_file_download(content_file_download):
+        if not content_file_download.get('expiration_date_unlimited_chk') and not content_file_download[
+            'expiration_date'] or not content_file_download.get('download_limit_unlimited_chk') and not \
+                content_file_download['download_limit']:
+            return False
+        if content_file_download['expiration_date'] and int(content_file_download['expiration_date']) < 1 or \
+                content_file_download['download_limit'] and int(content_file_download['download_limit']) < 1:
+            return False
+        return True
+
+    # Content file download.
+    if 'content_file_download' in restricted_access:
+        if not validate_content_file_download(restricted_access['content_file_download']):
+            return False
+        parse_content_file_download(restricted_access['content_file_download'])
+
+    AdminSettings.update('restricted_access', restricted_access)
+
+    return True

@@ -150,7 +150,7 @@
                             <p class="text-center">
                               <button class="btn btn-primary" ng-click="uploadThumbnail()">{{_('Click to select')}}</button>
                             </p>
-                            <p class="text-center">{{_('Registerable file: 「gif, jpg, jpe, jpeg, png, bmp, tiff, tif」')}}</p>
+                            <p class="text-center">{{_('Registerable file: 「gif, jpg, jpe, jpeg, png, bmp」')}}</p>
                             <form name="uploadThumbnailForm" class="collapse"
                               sf-schema="schema"
                               sf-form="form"
@@ -386,6 +386,13 @@
           {% if auto_fill_title %}
             {% set title = auto_fill_title|tojson %}
           {% endif %}
+          {% if out_put_report_title %}
+            {% set out_put_report = out_put_report_title|tojson %}
+          {% endif %}
+          {% set data_type = "" %}
+          {% if auto_fill_data_type %}
+            {% set data_type = auto_fill_data_type %}
+          {% endif %}
           {% set endpoint_key = "" %}
           {% if action_endpoint_key %}
             {% set endpoint_key = action_endpoint_key|tojson %}
@@ -403,6 +410,8 @@
             {% set list_license_data = list_license|tojson %}
           {% endif %}
           <input type="hidden" id="auto_fill_title" name="auto_fill_title" value='{{title}}'>
+          <input type="hidden" id="data_type_title" name="data_type_title" value='{{data_type}}'>
+          <input type="hidden" id="out_put_report_title" name="out_put_report_title" value='{{out_put_report}}'>
           <input type="hidden" id="is_hidden_pubdate" name="is_hidden_pubdate" value='{{is_hidden_pubdate}}'>
           <input type="hidden" id="action_endpoint_key" name="action_endpoint_key" value='{{endpoint_key}}'>
           <input type="hidden" id="approval_email_key" name="approval_email_key" value='{{approval_email}}'>
@@ -431,6 +440,10 @@
               value="{{_('The specified number has been exceeded. You can only select up to two fields.')}}">
           <input type="hidden" id="duplicate_files_error" name="duplicate_files_error"
               value="{{_('The same file name cannot be registered.')}}">
+          <input type="hidden" id="invalid_files_type" name="invalid_files_type"
+              value="{{_('Thumbnail file type error message')}}">          
+          <input type="hidden" id="max_files_thumnbnail_error" name="max_files_thumnbnail_error"
+              value="{{_('is too long.')}}">
 
           <input type="hidden" id="item_registration_workflow" value="true">
         </div>

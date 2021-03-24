@@ -56,3 +56,29 @@ WEKO_ITEMTYPE_EXCLUDED_KEYS = ['required', 'isRequired', 'title', 'uniqueKey',
                                'title_i18n', 'isShowList', 'isSpecifyNewline',
                                'isHide', 'enum', 'titleMap', 'title_i18n_temp',
                                'currentEnum']
+
+WEKO_RECORDS_AUTHOR_KEYS = ['nameIdentifierScheme', 'nameIdentifier',
+                            'nameIdentifierURI',
+                            'creatorName',
+                            'familyName',
+                            'givenName',
+                            'creatorAlternative',
+                            'affiliationNameIdentifier',
+                            'affiliationNameIdentifierScheme',
+                            'affiliationNameIdentifierURI',
+                            'affiliationName']
+"""List author key."""
+
+WEKO_RECORDS_AUTHOR_NONE_LANG_KEYS = ['nameIdentifierScheme', 'nameIdentifier',
+                                      'nameIdentifierURI',
+                                      'affiliationNameIdentifier',
+                                      'affiliationNameIdentifierScheme',
+                                      'affiliationNameIdentifierURI']
+"""List author none language keys."""
+
+WEKO_RECORDS_ALTERNATIVE_NAME_KEYS = ['creatorAlternative',
+                                      'creatorAlternativeLang']
+"""List alternative name key."""
+
+WEKO_RECORDS_AFFILIATION_NAME_KEYS = ['affiliationName', 'affiliationNameLang']
+"""List affiliation name key."""

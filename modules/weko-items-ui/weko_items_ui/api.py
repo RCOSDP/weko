@@ -19,18 +19,16 @@ import os
 
 import redis
 from flask import current_app, json, session, url_for
-from flask_login import login_required
 from simplekv.memory.redisstore import RedisStore
+from weko_accounts.utils import login_required_customize
 from weko_records.api import ItemTypes
 from weko_records.utils import find_items
 from weko_workflow.api import WorkActivity
 
-from .permissions import item_permission
 from .utils import is_schema_include_key
 
 
-@login_required
-@item_permission.require(http_exception=403)
+@login_required_customize
 def item_login(item_type_id=0):
     """Return information that item register need.
 
