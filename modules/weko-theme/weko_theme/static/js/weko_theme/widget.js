@@ -811,11 +811,50 @@ function getWidgetDesignSetting() {
     // Display page loading.
     $(".lds-ring-background").removeClass("hidden");
 
-    request
-      .fail(function() {
+  request
+    .done(function(data) {
+      if (data.error) {
         console.log(data.error);
         toggleWidgetUI();
-      });
+        return;
+      } else {
+        widgetList = data["widget-settings"];
+        if (Array.isArray(widgetList) && widgetList.length) {
+          $("#page_body").removeClass("hidden");
+          $("#" + MAIN_CONTENTS).addClass("grid-stack-item");
+          $("#header").addClass("grid-stack-item no-scroll-bar");
+          $("#footer").addClass("grid-stack-item no-scroll-bar");
+
+          // Check browser/tab is active
+          if (!document.hidden) {
+            buildWidget();
+          } else {
+            // In case browser/tab is inactive,
+            // create an event build widget when browser/tab active
+            window.addEventListener("focus", buildWidget);
+          }
+        } else {
+          // Pages are able to not have main content, so hide if widget is not present
+          if (is_page) {
+            $("#" + MAIN_CONTENTS).hide();
+          }
+          if (community_id !== DEFAULT_REPOSITORY) {
+            $("#community_header").removeAttr("hidden");
+            $("footer > #community_footer").removeAttr("hidden");
+            $("#page_body").removeClass("hidden");
+          }
+        }
+      }
+      if (!document.hidden) {
+        toggleWidgetUI();
+      } else {
+        window.addEventListener("focus", toggleWidgetUI);
+      }
+    })
+    .fail(function() {
+      console.log(data.error);
+      toggleWidgetUI();
+    });
 }
 
 /**
