@@ -1197,7 +1197,7 @@ msgstr "ダウンロード回数"
 
 #: weko_admin/templates/weko_admin/admin/rest_settings.html:65
 msgid "Unlimited"
-msgstr "無制限method: 'POST',にする"
+msgstr "無制限"
 
 #: weko_admin/templates/weko_admin/admin/rest_settings.html:46
 msgid "Must set a positive integer for %(name)s."

@@ -28,6 +28,7 @@ const LABEL_CONFIRM = document.getElementById("label_confirm").value;
 const LABEL_CLOSE = document.getElementById("label_close").value;
 const LABEL_SEND = document.getElementById("label_send_mail").value;
 const LABEL_USAGE_REPORT_REMINDER_MAIL = document.getElementById("label_usage_report_reminder_mail").value;
+const LABEL_ACTION_DOING = document.getElementById("label_action_doing").value;
 const MSG_SEND_MAIL_SUCCESSFUL = document.getElementById("msg_sent_success").value;
 const MSG_SEND_MAIL_FAILED = document.getElementById("msg_sent_failed").value;
 
@@ -591,7 +592,7 @@ function ModalBodyConfirm ({selectedActivityIds}) {
                   <td>{activity.activity_id}</td>
                   <td>{activity.item_name}</td>
                   <td>{activity.workflow_name}</td>
-                  <td>{activity.action_status}</td>
+                  <td>{LABEL_ACTION_DOING}</td>
                   <td>{activity.user_mail}</td>
                 </tr>
               ))
@@ -795,7 +796,7 @@ function UsageReportList() {
                       </td>
                       <td>{activity.item_name}</td>
                       <td>{activity.workflow_name}</td>
-                      <td>{activity.action_status}</td>
+                      <td>{LABEL_ACTION_DOING}</td>
                       <td>{activity.user_mail}</td>
                     </tr>
                   ))
