@@ -1757,6 +1757,10 @@ class UsageReport:
             "subitem_restricted_access_university/institution":
                 "restricted_university_institution",
             "subitem_restricted_access_dataset_usage": "restricted_data_name",
+            "subitem_restricted_access_application_date":
+                "restricted_application_date",
+            "subitem_restricted_access_research_title":
+                "restricted_research_title"
         }
         self.__mail_info_lst = []
 

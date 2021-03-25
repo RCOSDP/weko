@@ -756,8 +756,8 @@ def get_data_usage_application_data(record_metadata, data_result: dict):
     """
     if isinstance(record_metadata, dict):
         for k, v in record_metadata.items():
-            if isinstance(v, str) and k.startswith("subitem_") and \
-                    k.endswith("_date") and "_guarantor_" not in k:
+            if isinstance(v, str) and k.startswith("subitem_") \
+                    and "_guarantor_" not in k:
                 data_result[k] = v
             else:
                 get_data_usage_application_data(v, data_result)

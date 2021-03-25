@@ -1961,6 +1961,34 @@ def get_item_info(item_id):
     return item_info
 
 
+def get_site_info_name():
+    """Get site name.
+
+    @return:
+    """
+    site_name_en = site_name_ja = ''
+    site_info = SiteInfo.get()
+    if site_info:
+        if len(site_info.site_name) == 1:
+            site_name_en = site_name_ja = site_info.site_name[0]['name']
+        elif len(site_info.site_name) == 2:
+            for site in site_info.site_name:
+                site_name_ja = site['name'] \
+                    if site['language'] == 'ja' else site_name_ja
+                site_name_en = site['name'] \
+                    if site['language'] == 'en' else site_name_en
+    return site_name_en, site_name_ja
+
+
+def get_default_mail_sender():
+    """Get default mail sender.
+
+    :return:
+    """
+    mail_config = MailConfig.get_config()
+    return mail_config.get('mail_default_sender', '')
+
+
 def set_mail_info(item_info, activity_detail, guest_user=False):
     """Set main mail info.
 
@@ -1968,31 +1996,7 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
     :activity_detail: object
     :guest_user: object
     """
-    def get_default_mail_sender():
-        """Get default mail sender.
-
-        :return:
-        """
-        mail_config = MailConfig.get_config()
-        return mail_config.get('mail_default_sender', '')
-
-    def get_site_info():
-        """Get site name.
-
-        @return:
-        """
-        site_name_en = site_name_ja = ''
-        site_info = SiteInfo.get()
-        if site_info:
-            if len(site_info.site_name) == 1:
-                site_name_en = site_name_ja = site_info.site_name[0]['name']
-            elif len(site_info.site_name) == 2:
-                for site in site_info.site_name:
-                    site_name_ja = site['name'] if site['language'] == 'ja' else site_name_ja
-                    site_name_en = site['name'] if site['language'] == 'en' else site_name_en
-        return site_name_en, site_name_ja
-
-    site_en, site_ja = get_site_info()
+    site_en, site_ja = get_site_info_name()
     site_mail = get_default_mail_sender()
     register_user = register_date = ''
     if not guest_user:
@@ -2668,10 +2672,15 @@ def send_usage_application_mail_for_guest_user(guest_mail: str, temp_url: str):
     @return:
     """
     # Mail information
+    site_name_en, site_name_ja = get_site_info_name()
+    site_mail = get_default_mail_sender()
     mail_info = {
         'template': current_app.config.get("WEKO_WORKFLOW_ACCESS_ACTIVITY_URL"),
         'mail_address': guest_mail,
-        'url_guest_user': temp_url
+        'url_guest_user': temp_url,
+        "restricted_site_name_ja": site_name_ja,
+        "restricted_site_name_en": site_name_en,
+        "restricted_site_mail": site_mail,
     }
     return send_mail_url_guest_user(mail_info)
 
