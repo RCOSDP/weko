@@ -8,11 +8,15 @@
 
 """Query parser."""
 
+from datetime import datetime
+
 import six
 from elasticsearch_dsl import Q
 from flask import current_app
 from invenio_pidstore.models import PersistentIdentifier
+from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch, current_search_client
+from weko_index_tree.models import Index
 from werkzeug.utils import cached_property, import_string
 
 from . import current_oaiserver
@@ -73,8 +77,47 @@ def get_affected_records(spec=None, search_pattern=None):
 
 def get_records(**kwargs):
     """Get records paginated."""
-    from weko_index_tree.api import Indexes
+    def index_ids_has_future_date():
+        """Get indexes."""
+        query = Index.query.filter(
+            Index.public_state.is_(True),
+            Index.public_date > datetime.now(),
+            Index.harvest_public_state.is_(True)
+        )
+        indexes = query.all() or []
+        index_ids = [index.id for index in indexes]
+        return index_ids
 
+    def get_records_has_doi():
+        """Get object_uuid of PersistentIdentifier."""
+        # Get object_uuid of PersistentIdentifier
+        query = PersistentIdentifier.query.filter(
+            PersistentIdentifier.pid_type == 'doi'
+        )
+        pids = query.all() or []
+        object_uuids = [pid.object_uuid for pid in pids]
+        # Get RecordMetadata
+        query = RecordMetadata.query.filter(
+            RecordMetadata.id.in_(object_uuids)
+        )
+        records = query.all() or []
+        return records
+
+    def add_condition_doi_and_future_date(query):
+        """Add condition which do not get DOI."""
+        index_ids = index_ids_has_future_date()
+        records = get_records_has_doi()
+        for record in records:
+            paths = record.json.get('path', [])
+            for path in paths:
+                if path in index_ids:
+                    query = query.post_filter(
+                        'bool',
+                        **{'must_not': [
+                            {'term': {'_id': str(record.id)}}]})
+                    continue
+
+    from weko_index_tree.api import Indexes
     page_ = kwargs.get('resumptionToken', {}).get('page', 1)
     size_ = current_app.config['OAISERVER_PAGE_SIZE']
     scroll = current_app.config['OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME']
@@ -113,14 +156,7 @@ def get_records(**kwargs):
                 'bool',
                 **{'must_not': [
                     {'wildcard': {'path': '*/' + str(index.id)}}]})
-        # Add condition which do not get DOI.
-        records = PersistentIdentifier.query.filter_by(pid_type='doi').all()
-        ids = [rec.object_uuid for rec in records]
-        for _id in ids:
-            search = search.post_filter(
-                'bool',
-                **{'must_not': [
-                    {'term': {'_id': str(_id)}}]})
+        add_condition_doi_and_future_date(search)
         response = search.execute().to_dict()
     else:
         response = current_search_client.scroll(
