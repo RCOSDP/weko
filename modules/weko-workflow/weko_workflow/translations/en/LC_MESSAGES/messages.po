@@ -592,3 +592,7 @@ msgstr "Quit"
 #: weko_workflow/templates/weko_workflow/item_login_sucess.html:288
 msgid "Back"
 msgstr "Back"
+
+#: weko_workflow/templates/weko_workflow/modal_withdraw_confirmation.html:44
+msgid "Are you sure you want to withdraw DOI?"
+msgstr ""
