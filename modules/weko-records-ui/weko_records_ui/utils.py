@@ -715,23 +715,26 @@ def create_usage_report_for_user(onetime_download_extra_info: dict):
             "file_name": extra_info_application.get('file_name'),
             "usage_record_id": str(usage_application_activity.item_id),
             "usage_activity_id": str(activity_id),
+            "is_guest": is_guest,
         }
     }
 
-    # Setting user mail.
     if is_guest:
+        # Setting user mail.
         activity_data['extra_info']['guest_mail'] = extra_info_application.get(
             'guest_mail')
-    else:
-        activity_data['extra_info']['user_mail'] = extra_info_application.get(
-            'user_mail')
-
-    if is_guest:
         # Create activity and URL for guest user.
         from weko_workflow.utils import init_activity_for_guest_user
         activity, usage_report_url = init_activity_for_guest_user(
             activity_data, True)
     else:
+        # Setting user mail.
+        activity_data['extra_info']['user_mail'] = extra_info_application.get(
+            'user_mail')
+        activity_data['activity_login_user'] = usage_application_activity \
+            .activity_login_user
+        activity_data['activity_update_user'] = usage_application_activity \
+            .activity_login_user
         # Create activity and URL for registered user.
         activity = WorkActivity().init_activity(activity_data)
         usage_report_url = url_for('weko_workflow.display_activity',

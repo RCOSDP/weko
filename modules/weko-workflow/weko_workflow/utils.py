@@ -59,7 +59,8 @@ from weko_records.serializers.utils import get_item_type_name, get_mapping
 from weko_records_ui.utils import create_onetime_download_url, \
     generate_one_time_download_url, get_list_licence
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
 
@@ -1896,7 +1897,9 @@ def replace_characters(data, content):
         '[restricted_site_url]': 'restricted_site_url',
         '[restricted_approver_affiliation]': 'restricted_approver_affiliation',
         '[restricted_supervisor]': '',
-        '[restricted_reference]': ''
+        '[restricted_reference]': '',
+        '[data_download_date]': 'data_download_date',
+        '[usage_report_url]': 'usage_report_url',
     }
     for key in replace_list:
         value = replace_list.get(key)
@@ -2567,6 +2570,33 @@ def send_mail_url_guest_user(mail_info: dict) -> bool:
         return True
 
 
+def generate_guest_activity_token_value(
+    activity_id: str, file_name: str, activity_date: datetime, guest_mail: str
+) -> str:
+    """Generate guest activity token value.
+
+    Args:
+        activity_id (str):
+        file_name (str):
+        activity_date (datetime):
+        guest_mail (str):
+
+    Returns:
+        [str]: token value string.
+    """
+    date_form_str = current_app.config['WEKO_WORKFLOW_DATE_FORMAT']
+    token_pattern = current_app.config['WEKO_WORKFLOW_ACTIVITY_TOKEN_PATTERN']
+    activity_date = activity_date.strftime(date_form_str)
+    hash_value = token_pattern.format(activity_id, file_name, activity_date,
+                                      guest_mail)
+    secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
+    token = oracle10.hash(secret_key, hash_value)
+    token_value = "{} {} {} {}".format(activity_id, activity_date,
+                                       guest_mail, token)
+    token_value = base64.b64encode(token_value.encode()).decode()
+    return token_value
+
+
 def init_activity_for_guest_user(data: dict,
                                  is_usage_report: bool = False) -> str:
     """Init activity for guest user.
@@ -2583,20 +2613,7 @@ def init_activity_for_guest_user(data: dict,
         }
         return GuestActivity.find(**_guest_activity)
 
-    def _generate_token_value():
-        hash_value = token_pattern.format(activity_id, file_name, activity_date,
-                                          guest_mail)
-        secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
-        token = oracle10.hash(secret_key, hash_value)
-        _token_value = "{} {} {} {}".format(activity_id, activity_date,
-                                            guest_mail, token)
-        _token_value = base64.b64encode(_token_value.encode()).decode()
-        return _token_value
-
-    date_form_str = current_app.config['WEKO_WORKFLOW_DATE_FORMAT']
-    token_pattern = current_app.config['WEKO_WORKFLOW_ACTIVITY_TOKEN_PATTERN']
     # Get data to generated key
-    activity_date = datetime.utcnow().strftime(date_form_str)
     guest_mail = data.get("extra_info").get("guest_mail")
     file_name = data.get("extra_info").get("file_name")
     record_id = data.get("extra_info").get("record_id")
@@ -2609,7 +2626,9 @@ def init_activity_for_guest_user(data: dict,
         activity_id = activity.activity_id
 
         # Generate token value
-        token_value = _generate_token_value()
+        token_value = generate_guest_activity_token_value(
+            activity_id, file_name, activity.created, guest_mail
+        )
 
         # Save create guest activity
         guest_activity = {
@@ -2632,7 +2651,6 @@ def init_activity_for_guest_user(data: dict,
         GuestActivity.create(**guest_activity)
     else:
         token_value = guest_activity[0].token
-        activity_id = guest_activity[0].activity_id
 
     # Generate URL
     url_pattern = "{}workflow/activity/guest-user/{}?token={}"
@@ -3029,15 +3047,14 @@ def process_send_mail(mail_info, mail_pattern_name):
     subject, body = get_mail_data(mail_pattern_name)
     if body and subject:
         body = replace_characters(mail_info, body)
-        send_mail(subject, mail_info['mail_recipient'], body)
+        return send_mail(subject, mail_info['mail_recipient'], body)
 
 
 def cancel_expired_usage_reports():
     """Cancel expired usage reports."""
     expired_activities = GuestActivity.get_expired_activities()
     if expired_activities:
-        WorkActivity.cancel_usage_report_activities(
-            expired_activities)
+        WorkActivity().cancel_usage_report_activities(expired_activities)
 
 
 def process_send_approval_mails(activity_detail, actions_mail_setting,
@@ -3177,8 +3194,9 @@ def update_approval_date(activity):
     @param activity:
     @return:
     """
-    from weko_deposit.api import WekoDeposit, WekoRecord
     from datetime import datetime
+
+    from weko_deposit.api import WekoDeposit, WekoRecord
     try:
         with db.session.begin_nested():
             work_activity = WorkActivity()

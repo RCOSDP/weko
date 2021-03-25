@@ -677,15 +677,31 @@ class WorkActivity(object):
                             if item_type_name in application_item_types:
                                 action_has_term_of_use = True
             extra_info = dict()
+            # Get extra info
             if activity.get('extra_info'):
                 extra_info = activity["extra_info"]
+            # Get related title.
             if activity.get('related_title'):
-                extra_info["related_title"] = urllib.parse.unquote(activity["related_title"])
+                extra_info["related_title"] = urllib.parse.unquote(
+                    activity["related_title"])
+            # Get confirm term of use.
             if activity.get('activity_confirm_term_of_use') is True:
                 activity_confirm_term_of_use = True
             else:
                 activity_confirm_term_of_use = False if\
                     action_has_term_of_use else True
+
+            # Get created user
+            if activity.get("activity_login_user") is not None:
+                activity_login_user = activity.get("activity_login_user")
+            else:
+                activity_login_user = current_user.get_id()
+            # Get the updated user of activity
+            if activity.get("activity_update_user") is not None:
+                activity_update_user = activity.get("activity_update_user")
+            else:
+                activity_update_user = current_user.get_id()
+
             db_activity = _Activity(
                 # Dummy activity ID, the real one will be updated
                 #   after this activity is created
@@ -696,8 +712,8 @@ class WorkActivity(object):
                 flow_id=activity.get('flow_id'),
                 action_id=next_action_id,
                 action_status=ActionStatusPolicy.ACTION_BEGIN,
-                activity_login_user=current_user.get_id(),
-                activity_update_user=current_user.get_id(),
+                activity_login_user=activity_login_user,
+                activity_update_user=activity_update_user,
                 activity_status=ActivityStatusPolicy.ACTIVITY_MAKING,
                 activity_start=datetime.utcnow(),
                 activity_community_id=community_id,
@@ -2259,21 +2275,13 @@ class WorkActivity(object):
             current_app.logger.exception(str(ex))
             db.session.rollback()
 
-    @staticmethod
-    def cancel_usage_report_activities(activities_id: list):
+    def cancel_usage_report_activities(self, activities_id: list):
         """Cancel usage report activities are excepted.
 
         @param activities_id:
         @return:
         """
-        activities = _Activity.query.filter(
-            _Activity.activity_id.in_(activities_id)) \
-            .filter(
-            or_(_Activity.activity_status
-                == ActivityStatusPolicy.ACTIVITY_BEGIN,
-                _Activity.activity_status
-                == ActivityStatusPolicy.ACTIVITY_MAKING)
-        ).all()
+        activities = self.get_usage_report_activities(activities_id)
         item_id_lst = []
         if not activities:
             return item_id_lst
@@ -2293,6 +2301,54 @@ class WorkActivity(object):
             current_app.logger.exception(str(ex))
             db.session.rollback()
             return False
+
+    @staticmethod
+    def get_usage_report_activities(
+            activities_id: list, size: int = None, page: int = None) -> list:
+        """Get usage report activities.
+
+        Args:
+            activities_id ([list]): Activity identifier list
+            size ([int], optional): the number of activities. Defaults to None.
+            page ([int], optional): page. Defaults to None.
+
+        Returns:
+            [list]: Activities list.
+        """
+        query = _Activity.query.filter(
+            _Activity.activity_id.in_(activities_id)) \
+            .filter(
+            or_(_Activity.activity_status
+                == ActivityStatusPolicy.ACTIVITY_BEGIN,
+                _Activity.activity_status
+                == ActivityStatusPolicy.ACTIVITY_MAKING)
+        ).order_by(asc(_Activity.id))
+        if page is not None and size is not None:
+            offset = int(size) * (int(page) - 1)
+            query = query.limit(size).offset(offset)
+        activities = query.all()
+        return activities
+
+    @staticmethod
+    def count_all_usage_report_activities(activities_id: list) -> int:
+        """Count all usage report activities.
+
+        Args:
+            activities_id ([list]): The activities list.
+
+        Returns:
+            [int]: The number of usage report activities.
+        """
+        activities_number = _Activity.query.filter(
+            _Activity.activity_id.in_(activities_id)
+        ).filter(
+            or_(_Activity.activity_status
+                == ActivityStatusPolicy.ACTIVITY_BEGIN,
+                _Activity.activity_status
+                == ActivityStatusPolicy.ACTIVITY_MAKING)
+        ).count()
+
+        return activities_number
 
 
 class WorkActivityHistory(object):
