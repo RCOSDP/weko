@@ -54,7 +54,7 @@ class LocationModelView(ModelView):
     """ModelView for the locations."""
 
     filter_converter = FilterConverter()
-        @property
+    @property
     def can_create(self):
         return 'System Administrator' in [role.name for role in current_user.roles]
 
