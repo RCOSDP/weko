@@ -1745,7 +1745,6 @@ class UsageReport:
         self.__activities_id = []
         self.__activities_number = 0
         self.__work_activity = WorkActivity()
-        self.__guest_activity = GuestActivity()
         self.__action_status_policy = ActionStatusPolicy()
         self.__activity_token_value = generate_guest_activity_token_value
         self.__process_send_mail = process_send_mail
@@ -1925,9 +1924,7 @@ class UsageReport:
             url = url_pattern.format(root_url, file_name, token_value)
         else:
             email = activity.extra_info.get('user_mail')
-            url = url_for('weko_workflow.display_activity',
-                          activity_id=activity.activity_id)
-            url = "{}{}".format(root_url, url)
+            url = "{}workflow/activity/detail/{}".format(root_url, activity_id)
         return url, email
 
     def __build_user_info(self, record_data: Union[RecordMetadata, list],
