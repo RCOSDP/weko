@@ -2315,9 +2315,16 @@ class WorkActivity(object):
         Returns:
             [list]: Activities list.
         """
-        query = _Activity.query.filter(
-            _Activity.activity_id.in_(activities_id)) \
-            .filter(
+        query = _Activity.query
+        if activities_id:
+            query = query.filter(
+                _Activity.activity_id.in_(activities_id)
+            )
+        else:
+            query = query.filter(
+                _Activity.workflow_id == 31001
+            )
+        query = query.filter(
             or_(_Activity.activity_status
                 == ActivityStatusPolicy.ACTIVITY_BEGIN,
                 _Activity.activity_status
@@ -2339,9 +2346,16 @@ class WorkActivity(object):
         Returns:
             [int]: The number of usage report activities.
         """
-        activities_number = _Activity.query.filter(
-            _Activity.activity_id.in_(activities_id)
-        ).filter(
+        query = _Activity.query
+        if activities_id:
+            query = query.filter(
+                _Activity.activity_id.in_(activities_id)
+            )
+        else:
+            query = query.filter(
+                _Activity.workflow_id == 31001
+            )
+        activities_number = query.filter(
             or_(_Activity.activity_status
                 == ActivityStatusPolicy.ACTIVITY_BEGIN,
                 _Activity.activity_status
