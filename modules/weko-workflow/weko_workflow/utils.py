@@ -25,7 +25,7 @@ import json
 import os
 from copy import deepcopy
 from datetime import datetime, timedelta
-from typing import NoReturn, Tuple, Union
+from typing import NoReturn, Optional, Tuple, Union
 
 from celery.task.control import inspect
 from flask import current_app, request, session
@@ -2597,8 +2597,9 @@ def generate_guest_activity_token_value(
     return token_value
 
 
-def init_activity_for_guest_user(data: dict,
-                                 is_usage_report: bool = False) -> str:
+def init_activity_for_guest_user(
+    data: dict, is_usage_report: bool = False
+) -> Tuple[Optional[object], str]:
     """Init activity for guest user.
 
     @param data:
@@ -3231,18 +3232,3 @@ def update_approval_date(activity):
         db.session.commit()
     except Exception as ex:
         current_app.logger.error(ex)
-
-
-def create_record_metadata_for_user(item_id, usage_report):
-    """Update metadata usage application for usage report.
-
-    @param usage_report:
-    @param item_id:
-    @return:
-    """
-    if item_id:
-        item_metadata = ItemsMetadata.get_record(id_=item_id).dumps()
-        item_metadata.pop('id', None)
-        usage_report.temp_data = item_metadata
-        db.session.merge(usage_report)
-        db.session.commit()
