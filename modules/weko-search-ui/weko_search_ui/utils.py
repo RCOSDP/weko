@@ -433,17 +433,17 @@ def check_import_items(file_name: str, file_content: str,
         return       -- PID object if exist.
 
     """
-    result = {}
     file_content_decoded = base64.b64decode(file_content)
     temp_path = tempfile.TemporaryDirectory()
     save_path = tempfile.gettempdir()
+    import_path = temp_path.name + '/' + \
+        datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
+    data_path = save_path + '/' + \
+        datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
+    result = {'data_path': data_path}
 
     try:
         # Create temp dir for import data
-        import_path = temp_path.name + '/' + \
-            datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
-        data_path = save_path + '/' + \
-            datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
         os.mkdir(data_path)
 
         with open(import_path + '.zip', 'wb+') as f:
@@ -482,10 +482,7 @@ def check_import_items(file_name: str, file_content: str,
         handle_check_doi(list_record)
         handle_check_date(list_record)
         handle_check_file_metadata(list_record, data_path)
-        result = {
-            'list_record': list_record,
-            'data_path': data_path
-        }
+        result['list_record'] = list_record
     except Exception as ex:
         error = _('Internal server error')
         if isinstance(ex, zipfile.BadZipFile):
@@ -1538,7 +1535,7 @@ def handle_check_doi_indexes(list_record):
             errors.append(
                 _('You cannot keep an item private because it has a DOI.'))
         # Check restrict DOI with Indexes:
-        index_ids = [str(idx) for idx in item['metadata']['path']]
+        index_ids = [str(idx) for idx in item['metadata'].get('path', [])]
         if doi_ra and check_restrict_doi_with_indexes(index_ids):
             if item.get('status') == 'new':
                 errors.append(err_msg_register_doi)
