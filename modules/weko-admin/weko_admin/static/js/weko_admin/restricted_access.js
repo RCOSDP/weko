@@ -592,7 +592,7 @@ function ModalBodyConfirm () {
                   <td>{activity.item_name}</td>
                   <td>{activity.workflow_name}</td>
                   <td>{activity.action_status}</td>
-                  <td>{activity.user_email}</td>
+                  <td>{activity.user_mail}</td>
                 </tr>
               ))
             }
@@ -631,9 +631,9 @@ function ModalBodyConfirm () {
 
 function ModalFooterConfirm({setShowConfirm, selectedActivityIds}) {
   function sendMailReminder() {
-    const URL = "api/admin/restricted_access/send_mail_reminder";
+    const URL = "/api/admin/restricted_access/send_mail_reminder";
     const data = {
-      list_activity_ids: selectedActivityIds
+      activity_ids: selectedActivityIds
     }
     $.ajax({
       url: URL,
@@ -796,7 +796,7 @@ function UsageReportList() {
                       <td>{activity.item_name}</td>
                       <td>{activity.workflow_name}</td>
                       <td>{activity.action_status}</td>
-                      <td>{activity.user_email}</td>
+                      <td>{activity.user_mail}</td>
                     </tr>
                   ))
                 }
