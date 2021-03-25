@@ -26,7 +26,7 @@
         method="POST">
     <div class="form-group">
       <span for="lang-code">{{ _('Language:') }}</span>
-      <label for="lang-code" hidden>言語</label>
+      <label for="lang-code" hidden>{{_('Language:')}}</label>
       <select class="form-control" id="lang-code" name="lang_code">
       {% for l in current_i18n.get_locales() %}
            <option {% if current_i18n.language == l.language %}selected {% endif %}value="{{ l.language }}"></option>
