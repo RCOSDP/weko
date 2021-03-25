@@ -854,7 +854,7 @@ def next_action(activity_id='0', action_id=0):
         0].action_order if action_order else None
     # Start to send mail
     if 'approval' in [action_endpoint, next_action_endpoint]:
-        if 'approval' == next_action_endpoint:
+        if 'approval' == action_endpoint:
             update_approval_date(activity_detail)
         current_flow_action = flow.get_flow_action_detail(
             activity_detail.flow_define.flow_id, action_id, action_order)
