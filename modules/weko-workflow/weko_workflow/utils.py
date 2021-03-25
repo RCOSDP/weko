@@ -3343,26 +3343,3 @@ def update_system_data_for_activity(activity, sub_system_data_key,
         activity.temp_data = json.dumps(temp)
         db.session.merge(activity)
         db.session.commit()
-
-
-def update_system_data_for_records_metadata(
-    item_id, sub_system_data_key, dict_system_data, attribute_name
-):
-    """Update system data for records metadata.
-
-   @param item_id:
-   @param sub_system_data_key:
-   @param dict_system_data:
-   @param attribute_name:
-   @return:
-   """
-    record = RecordMetadata.query.filter_by(id=item_id).first()
-    record_metadata = record.json
-    system_date_data = {
-        'attribute_name': attribute_name,
-        "attribute_value_mlt": [dict_system_data]
-    }
-    record_metadata[sub_system_data_key] = system_date_data
-    record.json = record_metadata
-    record.commit()
-    db.session.commit()
