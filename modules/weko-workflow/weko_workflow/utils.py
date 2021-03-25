@@ -25,7 +25,7 @@ import json
 import os
 from copy import deepcopy
 from datetime import datetime, timedelta
-from typing import NoReturn, Tuple, Union
+from typing import NoReturn, Optional, Tuple, Union
 
 from celery.task.control import inspect
 from flask import current_app, request, session
@@ -1961,6 +1961,34 @@ def get_item_info(item_id):
     return item_info
 
 
+def get_site_info_name():
+    """Get site name.
+
+    @return:
+    """
+    site_name_en = site_name_ja = ''
+    site_info = SiteInfo.get()
+    if site_info:
+        if len(site_info.site_name) == 1:
+            site_name_en = site_name_ja = site_info.site_name[0]['name']
+        elif len(site_info.site_name) == 2:
+            for site in site_info.site_name:
+                site_name_ja = site['name'] \
+                    if site['language'] == 'ja' else site_name_ja
+                site_name_en = site['name'] \
+                    if site['language'] == 'en' else site_name_en
+    return site_name_en, site_name_ja
+
+
+def get_default_mail_sender():
+    """Get default mail sender.
+
+    :return:
+    """
+    mail_config = MailConfig.get_config()
+    return mail_config.get('mail_default_sender', '')
+
+
 def set_mail_info(item_info, activity_detail, guest_user=False):
     """Set main mail info.
 
@@ -1968,31 +1996,7 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
     :activity_detail: object
     :guest_user: object
     """
-    def get_default_mail_sender():
-        """Get default mail sender.
-
-        :return:
-        """
-        mail_config = MailConfig.get_config()
-        return mail_config.get('mail_default_sender', '')
-
-    def get_site_info():
-        """Get site name.
-
-        @return:
-        """
-        site_name_en = site_name_ja = ''
-        site_info = SiteInfo.get()
-        if site_info:
-            if len(site_info.site_name) == 1:
-                site_name_en = site_name_ja = site_info.site_name[0]['name']
-            elif len(site_info.site_name) == 2:
-                for site in site_info.site_name:
-                    site_name_ja = site['name'] if site['language'] == 'ja' else site_name_ja
-                    site_name_en = site['name'] if site['language'] == 'en' else site_name_en
-        return site_name_en, site_name_ja
-
-    site_en, site_ja = get_site_info()
+    site_en, site_ja = get_site_info_name()
     site_mail = get_default_mail_sender()
     register_user = register_date = ''
     if not guest_user:
@@ -2597,8 +2601,9 @@ def generate_guest_activity_token_value(
     return token_value
 
 
-def init_activity_for_guest_user(data: dict,
-                                 is_usage_report: bool = False) -> str:
+def init_activity_for_guest_user(
+    data: dict, is_usage_report: bool = False
+) -> Tuple[Optional[object], str]:
     """Init activity for guest user.
 
     @param data:
@@ -2667,10 +2672,17 @@ def send_usage_application_mail_for_guest_user(guest_mail: str, temp_url: str):
     @return:
     """
     # Mail information
+    site_name_en, site_name_ja = get_site_info_name()
+    site_mail = get_default_mail_sender()
+    site_url = current_app.config['THEME_SITEURL']
     mail_info = {
         'template': current_app.config.get("WEKO_WORKFLOW_ACCESS_ACTIVITY_URL"),
         'mail_address': guest_mail,
-        'url_guest_user': temp_url
+        'url_guest_user': temp_url,
+        "restricted_site_name_ja": site_name_ja,
+        "restricted_site_name_en": site_name_en,
+        "restricted_site_mail": site_mail,
+        "restricted_site_url": site_url,
     }
     return send_mail_url_guest_user(mail_info)
 
@@ -3231,18 +3243,3 @@ def update_approval_date(activity):
         db.session.commit()
     except Exception as ex:
         current_app.logger.error(ex)
-
-
-def create_record_metadata_for_user(item_id, usage_report):
-    """Update metadata usage application for usage report.
-
-    @param usage_report:
-    @param item_id:
-    @return:
-    """
-    if item_id:
-        item_metadata = ItemsMetadata.get_record(id_=item_id).dumps()
-        item_metadata.pop('id', None)
-        usage_report.temp_data = item_metadata
-        db.session.merge(usage_report)
-        db.session.commit()

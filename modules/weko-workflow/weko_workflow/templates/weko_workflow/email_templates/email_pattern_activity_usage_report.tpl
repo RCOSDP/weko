@@ -13,7 +13,7 @@ Subject: 利用報告の登録のお願い／Request for register Data Usage Rep
 
 ダウンロードしたデータについて、下記のリンクから利用報告の登録をお願いします。
 
-[19]
+[usage_report_url]
 
 このメールは自動送信されているので返信しないでください。
 お問い合わせは下記までお願いします。また、このメールに心当たりのない方は、[restricted_site_name_ja]までご連絡ください。
@@ -36,7 +36,7 @@ Application date：[restricted_application_date]
 
 For the downloaded data, please register the Data Usage Report by the link below.
 
-[19]
+[usage_report_url]
 
 Please do not reply to this email as it has been sent automatically.
 Please direct all inquiries to the following address.

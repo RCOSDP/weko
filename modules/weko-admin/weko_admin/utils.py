@@ -1757,6 +1757,10 @@ class UsageReport:
             "subitem_restricted_access_university/institution":
                 "restricted_university_institution",
             "subitem_restricted_access_dataset_usage": "restricted_data_name",
+            "subitem_restricted_access_application_date":
+                "restricted_application_date",
+            "subitem_restricted_access_research_title":
+                "restricted_research_title"
         }
         self.__mail_info_lst = []
 
@@ -1832,15 +1836,17 @@ class UsageReport:
         return activities
 
     def send_reminder_mail(self, activities_id: list,
-                           mail_template: str = None):
+                           mail_template: str = None, activities: list = None):
         """Send reminder email to user.
 
         Args:
-            activities_id (list): Activity list.
+            activities_id (list): Activity identifier list.
             mail_template (str, optional): Mail template.
+            activities (list, optional): Activities list.
         """
-        activities = self.__work_activity.get_usage_report_activities(
-            activities_id)
+        if not activities:
+            activities = self.__work_activity.get_usage_report_activities(
+                activities_id)
         records_id = []
         site_url = current_app.config['THEME_SITEURL']
         site_name_en, site_name_ja = self.__get_site_info()
@@ -1867,9 +1873,11 @@ class UsageReport:
                     "restricted_site_mail": site_mail,
                 }
             )
-            if activity.temp_data:
-                self.__build_user_info(activity.temp_data,
-                                       self.__mail_info_lst[-1])
+            if activity.extra_info:
+                self.__build_user_info(
+                    activity.extra_info.get('usage_application_record_data'),
+                    self.__mail_info_lst[-1]
+                )
             self.__mail_info_lst[-1]['mail_recipient'] = \
                 self.__mail_info_lst[-1]['restricted_mail_address']
         is_sendmail_success = True
