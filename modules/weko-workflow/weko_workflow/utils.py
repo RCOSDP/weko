@@ -2674,6 +2674,7 @@ def send_usage_application_mail_for_guest_user(guest_mail: str, temp_url: str):
     # Mail information
     site_name_en, site_name_ja = get_site_info_name()
     site_mail = get_default_mail_sender()
+    site_url = current_app.config['THEME_SITEURL']
     mail_info = {
         'template': current_app.config.get("WEKO_WORKFLOW_ACCESS_ACTIVITY_URL"),
         'mail_address': guest_mail,
@@ -2681,6 +2682,7 @@ def send_usage_application_mail_for_guest_user(guest_mail: str, temp_url: str):
         "restricted_site_name_ja": site_name_ja,
         "restricted_site_name_en": site_name_en,
         "restricted_site_mail": site_mail,
+        "restricted_site_url": site_url,
     }
     return send_mail_url_guest_user(mail_info)
 
