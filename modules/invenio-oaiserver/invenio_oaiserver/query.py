@@ -11,6 +11,7 @@
 import six
 from elasticsearch_dsl import Q
 from flask import current_app
+from invenio_pidstore.models import PersistentIdentifier
 from invenio_search import RecordsSearch, current_search_client
 from werkzeug.utils import cached_property, import_string
 
@@ -112,7 +113,14 @@ def get_records(**kwargs):
                 'bool',
                 **{'must_not': [
                     {'wildcard': {'path': '*/' + str(index.id)}}]})
-
+        # Add condition which do not get DOI.
+        records = PersistentIdentifier.query.filter_by(pid_type='doi').all()
+        ids = [rec.object_uuid for rec in records]
+        for _id in ids:
+            search = search.post_filter(
+                'bool',
+                **{'must_not': [
+                    {'term': {'_id': str(_id)}}]})
         response = search.execute().to_dict()
     else:
         response = current_search_client.scroll(
