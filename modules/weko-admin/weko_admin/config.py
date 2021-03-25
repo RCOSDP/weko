@@ -779,3 +779,6 @@ WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
     "terms_and_conditions": []
 }
 """Default restricted access settings."""
+
+WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER = 25
+"""Default number of usage report activities results that display in one page."""

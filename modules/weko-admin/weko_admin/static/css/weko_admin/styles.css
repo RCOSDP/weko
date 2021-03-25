@@ -114,3 +114,7 @@ label.field-required::after {
   content: "*";
   color: red;
 }
+
+.popup-mail-modal {
+  width: 70%;
+}

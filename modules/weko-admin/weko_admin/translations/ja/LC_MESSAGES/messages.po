@@ -1197,7 +1197,7 @@ msgstr "ダウンロード回数"
 
 #: weko_admin/templates/weko_admin/admin/rest_settings.html:65
 msgid "Unlimited"
-msgstr "無制限にする"
+msgstr "無制限method: 'POST',にする"
 
 #: weko_admin/templates/weko_admin/admin/rest_settings.html:46
 msgid "Must set a positive integer for %(name)s."
@@ -1216,3 +1216,6 @@ msgstr "英語の利用規約を入力してください。"
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:65
 msgid "Usage Report Workflow Access"
 msgstr "利用報告ワークフローへのアクセス"
+
+msgid "Usage Report Reminder Email"
+msgstr "利用報告督促メール"

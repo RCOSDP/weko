@@ -18,6 +18,19 @@ const LABEL_JAPANESE = document.getElementById("japanese").value;
 const LABEL_NEW = document.getElementById("new").value;
 const LABEL_TERMS_AND_CONDITIONS = document.getElementById("terms_and_conditions").value;
 
+const CONST_DEFAULT_ITEMS_PER_PAGE =parseInt(document.getElementById('const_items_per_page').value);
+const LABEL_ACTIVITY = document.getElementById('label_activity').value;
+const LABEL_ITEMS = document.getElementById("label_items").value;
+const LABEL_WORKFLOW = document.getElementById("label_workflow").value;
+const LABEL_STATUS = document.getElementById("label_status").value;
+const LABEL_USER = document.getElementById("label_user").value;
+const LABEL_CONFIRM = document.getElementById("label_confirm").value;
+const LABEL_CLOSE = document.getElementById("label_close").value;
+const LABEL_SEND = document.getElementById("label_send_mail").value;
+const LABEL_USAGE_REPORT_REMINDER_MAIL = document.getElementById("label_usage_report_reminder_mail").value;
+const MSG_SEND_MAIL_SUCCESSFUL = document.getElementById("msg_sent_success").value;
+const MSG_SEND_MAIL_FAILED = document.getElementById("msg_sent_failed").value;
+
 const EMPTY_TERM = {
   key: '',
   content:
@@ -464,6 +477,9 @@ function RestrictedAccessLayout({
           <span className="glyphicon glyphicon-save"></span>&nbsp;{SAVE_LABEL}
         </button>
       </div>
+      <div>
+        <UsageReportList/>
+      </div>
     </div>
   )
 }
@@ -485,4 +501,349 @@ function addAlert(message, type) {
   $('#alerts').append(
     '<div class="' + className + '">'
     + closeButton + message + '</div>');
+}
+
+function isSuperset (set, subset){
+  for (let elem of subset) {
+    if (!set.has(elem)) {
+      return false
+    }
+  }
+  return true
+}
+
+const queryUsageReportList = (method, data, setActivities, setTotalPage, extraParams) => {
+    const URL = "/api/admin/restricted_access/get_usage_report_activities";
+    let request;
+    if (method === 'GET') {
+        request = $.ajax({
+            url: URL + extraParams,
+            type: "GET",
+        });
+    } else {
+        request = $.ajax({
+            url: URL,
+            method: 'POST',
+            contentType: 'application/json',
+            dataType: 'json',
+            data: JSON.stringify(data)
+        });
+    }
+    request.success(
+        function (result) {
+            setActivities(result.activities)
+            setTotalPage(result.number_of_pages)
+        }
+    )
+        .error(function (error) {
+            console.log(error);
+        })
+}
+
+function ModalBodyConfirm () {
+  const [activities, setActivities] = useState([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPage, setTotalPage] = useState(1)
+
+  let startIndex = (currentPage - 1) * CONST_DEFAULT_ITEMS_PER_PAGE;
+
+    useEffect(() => {
+        let data = {
+            activity_ids: activities,
+            page: currentPage,
+            size: CONST_DEFAULT_ITEMS_PER_PAGE
+        }
+        queryUsageReportList('POST', data, setActivities, setTotalPage, '')
+        startIndex = (currentPage - 1) * CONST_DEFAULT_ITEMS_PER_PAGE;
+    }, [currentPage])
+
+  const onPageChanged = (e) => {
+    if (parseInt(e.target.text) !== currentPage) {
+      setCurrentPage(parseInt(e.target.text))
+    }
+  }
+
+  return (
+    <div>
+      <div className="form-inline flow-root">
+        <div className="col-sm-12">
+          <h3> {LABEL_USAGE_REPORT_REMINDER_MAIL} </h3>
+        </div>
+      </div>
+      <div className="col-sm-12">
+        <div className="table-responsive">
+          <table className="table table-striped table-bordered table-responsive">
+            <thead>
+            <tr className="success">
+              <th className="thWidth style-column">No.</th>
+              <th className="thWidth style-column">{LABEL_ACTIVITY}</th>
+              <th className="thWidth style-column">{LABEL_ITEMS}</th>
+              <th className="thWidth style-column">{LABEL_WORKFLOW}</th>
+              <th className="thWidth style-column">{LABEL_STATUS}</th>
+              <th className="alignCenter">{LABEL_USER}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {
+              activities.map((activity, index) => (
+                <tr>
+                  <th scope="row">{startIndex + index + 1}</th>
+                  <td>{activity.activity_id}</td>
+                  <td>{activity.item_name}</td>
+                  <td>{activity.workflow_name}</td>
+                  <td>{activity.action_status}</td>
+                  <td>{activity.user_email}</td>
+                </tr>
+              ))
+            }
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div className="row">
+        <div className="text-center">
+          <ul className="pagination">
+            <li className={currentPage === 1 ? 'disabled' : ''} cursor={currentPage === 1 ? 'not-allowed' : ''}
+                onClick={() => {
+                  if (currentPage > 1) setCurrentPage(currentPage - 1)
+                }}>
+              <a>&lt;</a>
+            </li>
+            {Array.from(Array(totalPage), (e, i) => {
+              return (
+                <li className={(i + 1 === currentPage) ? `active` : ''} onClick={onPageChanged}>
+                  <a>{i + 1}</a>
+                </li>
+              )
+            })}
+            <li className={currentPage >= totalPage ? `disabled` : ''} cursor={currentPage >= totalPage ?
+              'not-allowed' : ''} onClick={() => {
+              if (currentPage < totalPage) setCurrentPage(currentPage + 1)
+            }}>
+              <a>&gt;</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ModalFooterConfirm({setShowConfirm, selectedActivityIds}) {
+  function sendMailReminder() {
+    const URL = "api/admin/restricted_access/send_mail_reminder";
+    const data = {
+      list_activity_ids: selectedActivityIds
+    }
+    $.ajax({
+      url: URL,
+      method: 'POST',
+      contentType: 'application/json',
+      dataType: 'json',
+      data: JSON.stringify(data),
+      success: function (result) {
+        if (result.status) {
+          addAlert(MSG_SEND_MAIL_SUCCESSFUL, 2)
+        } else {
+          addAlert(MSG_SEND_MAIL_FAILED, 1)
+        }
+      },
+      error: function (error) {
+        console.log(error);
+      }
+    });
+  }
+
+  return (
+    <div>
+      <button type="button" className="btn btn-primary save-button" onClick={() => {
+        sendMailReminder();
+        setShowConfirm(false)
+      }}>
+        <span className="glyphicon glyphicon-send"></span>&nbsp; {LABEL_SEND}
+      </button>
+      <button type="button" className="btn btn-info close-button" onClick={() =>
+        setShowConfirm(false)}>
+        <span className="glyphicon glyphicon-remove"></span>&nbsp; {LABEL_CLOSE}
+      </button>
+    </div>
+  )
+}
+
+function ConfirmModal({selectedActivityIds, show, setShowConfirm}) {
+  return (
+    <ReactBootstrap.Modal show={show} dialogClassName="popup-mail-modal">
+      <ReactBootstrap.Modal.Body>
+        <ModalBodyConfirm selectedActivityIds={selectedActivityIds}/>
+      </ReactBootstrap.Modal.Body>
+      <ReactBootstrap.Modal.Footer>
+        <ModalFooterConfirm setShowConfirm={setShowConfirm} selectedActivityIds={selectedActivityIds}/>
+      </ReactBootstrap.Modal.Footer>
+    </ReactBootstrap.Modal>
+  )
+}
+
+function UsageReportList() {
+  const [listActivities, setListActivities] = useState([]);
+  const [selectedActivityIds, setSelectedActivityIds] = useState(new Set())
+  const [isCheckedAll, setIsCheckedAll] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [enableBtnConfirm, setEnableBtnConfirm] = useState(true)
+  const [totalPage, setTotalPage] = useState(1)
+  const [currentPage, setCurrentPage] = useState(1)
+
+  let startIndex = (currentPage - 1) * CONST_DEFAULT_ITEMS_PER_PAGE;
+  let allCurrentPageIds = listActivities.map((activity) => {
+    return activity.activity_id
+  })
+
+  useEffect(() => {
+    updateCheckedAllState()
+    setEnableBtnConfirm(selectedActivityIds.size <= 0)
+  }, [selectedActivityIds]);
+
+  useEffect(() => {
+    let extraParams = `?page=${currentPage}&size=${CONST_DEFAULT_ITEMS_PER_PAGE}`
+    queryUsageReportList('GET', {},setListActivities, setTotalPage, extraParams);
+    startIndex = (currentPage - 1) * CONST_DEFAULT_ITEMS_PER_PAGE;
+  }, [currentPage])
+
+  useEffect(() => {
+    allCurrentPageIds = listActivities.map((activity) => {
+      return activity.activity_id
+    })
+  }, [listActivities])
+
+  function updateCheckedAllState(){
+    if (allCurrentPageIds.length > 0) {
+      if (isSuperset(selectedActivityIds, new Set(allCurrentPageIds))) {
+        setIsCheckedAll(true)
+      } else {
+        setIsCheckedAll(false)
+      }
+    }
+  }
+
+  function onCheckedAll(e) {
+    let tempSelectedIds = new Set(selectedActivityIds);
+    if (e.target.checked) {
+      allCurrentPageIds.forEach(ids => tempSelectedIds.add(ids))
+      setSelectedActivityIds(tempSelectedIds)
+      setIsCheckedAll(true)
+    } else {
+      allCurrentPageIds.forEach(ids => tempSelectedIds.delete(ids))
+      setSelectedActivityIds(tempSelectedIds)
+      setIsCheckedAll(false)
+    }
+  }
+
+  function onChecked(e) {
+    let tempSelectedIds = new Set(selectedActivityIds);
+    if (e.target.checked) {
+      tempSelectedIds.add(e.target.id)
+      setSelectedActivityIds(tempSelectedIds)
+    } else {
+      tempSelectedIds.delete(e.target.id)
+      setSelectedActivityIds(tempSelectedIds)
+    }
+  }
+
+  function onChangePage(e) {
+    if (parseInt(e.target.text) !== currentPage) {
+      setCurrentPage(parseInt(e.target.text))
+    }
+  }
+
+  return (
+    <div className="row">
+      <div className="col-sm-12 col-md-12 col-md-12">
+        <div className="panel panel-default">
+          <div className="panel-heading">
+            <h5>
+              <strong>
+                <p>{LABEL_USAGE_REPORT_REMINDER_MAIL}</p>
+              </strong>
+            </h5>
+          </div>
+          <div className="panel-body">
+            <div className="table-responsive">
+              <table className="table table-striped table-bordered table-responsive">
+                <thead>
+                <tr className="success">
+                  <th className="thWidth style-column"><input type="checkbox" id="isCheckedAll" checked={isCheckedAll}
+                                                              onChange={onCheckedAll}/></th>
+                  <th className="thWidth style-column">No.</th>
+                  <th className="thWidth style-column">{LABEL_ACTIVITY}</th>
+                  <th className="thWidth style-column">{LABEL_ITEMS}</th>
+                  <th className="thWidth style-column">{LABEL_WORKFLOW}</th>
+                  <th className="thWidth style-column">{LABEL_STATUS}</th>
+                  <th className="alignCenter">{LABEL_USER}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {
+                  listActivities.map((activity, index) => (
+                    <tr>
+                      <td>
+                        <input key={activity.activity_id} type="checkbox"
+                               checked={selectedActivityIds.has(activity.activity_id)}
+                               id={activity.activity_id} onChange={onChecked}/>
+                      </td>
+                      <th scope="row">{startIndex + index + 1}</th>
+                      <td><a
+                        href={`${window.location.origin}/workflow/activity/detail/${activity.activity_id}`}>{activity.activity_id}</a>
+                      </td>
+                      <td>{activity.item_name}</td>
+                      <td>{activity.workflow_name}</td>
+                      <td>{activity.action_status}</td>
+                      <td>{activity.user_email}</td>
+                    </tr>
+                  ))
+                }
+                </tbody>
+              </table>
+            </div>
+
+            <div className="row">
+              <div className="text-center">
+                <ul className="pagination">
+                  <li className={currentPage === 1 ? 'disabled' : ''}
+                      onClick={() => {
+                        if (currentPage > 1) setCurrentPage(currentPage - 1)
+                      }}>
+                    <a>&lt;</a>
+                  </li>
+                  {
+                    Array.from(Array(totalPage), (e, i) => {
+                      return (
+                        <li className={(i + 1 === currentPage) ? `active` : ''} onClick={onChangePage}>
+                          <a>{i + 1}</a>
+                        </li>)
+                    })
+                  }
+                  <li className={currentPage >= totalPage ? `disabled` : ''} cursor={currentPage >= totalPage ?
+                    'not-allowed' : ''} onClick={() => {
+                    if (currentPage < totalPage)
+                      setCurrentPage(currentPage + 1)
+                  }}>
+                    <a>&gt;</a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div className="pull-right">
+              <button type="submit" id="filter_form_submit" className="btn btn-primary" disabled={enableBtnConfirm}
+                      onClick={() =>
+                        setShowConfirm(true)}>{LABEL_CONFIRM}
+              </button>
+            </div>
+          </div>
+          <div>
+            <ConfirmModal selectedActivityIds={selectedActivityIds} show={showConfirm}
+                          setShowConfirm={setShowConfirm}/>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
