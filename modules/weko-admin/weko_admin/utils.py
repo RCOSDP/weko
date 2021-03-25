@@ -1783,9 +1783,6 @@ class UsageReport:
         # Get usage report activities identifier.
         if activities_id:
             self.__activities_id = activities_id
-        else:
-            self.__activities_id = self.__guest_activity\
-                .get_usage_report_activities()
         # Get the number of usage report is not completed.
         self.__count_activities()
         # Maximum page number
