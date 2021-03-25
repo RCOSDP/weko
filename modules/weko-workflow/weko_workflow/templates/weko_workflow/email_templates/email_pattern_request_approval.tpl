@@ -1,10 +1,6 @@
 Subject：　利用申請の承認のお願い／Request for Approval of Application for Use
 
-[restricted_approver_affiliation]
-[restricted_approver_name]様
-
-[restricted_site_name_ja]です。
-[restricted_approver_affiliation][restricted_approver_name] 様に、下記の方から利用申請がありました。
+[restricted_site_name_ja]です。下記の方から利用申請がありました。
 
 申請番号： [restricted_activity_id]
 登録者名： [restricted_fullname]
@@ -22,7 +18,6 @@ Subject：　利用申請の承認のお願い／Request for Approval of Applica
 問い合わせ窓口：[restricted_site_mail]
 
 ----------------------------------------------------------------------------------
-Dear [restricted_approver_name]
 
 This is a message from [restricted_site_name_en].
 We received the below application.

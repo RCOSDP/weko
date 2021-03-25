@@ -1,9 +1,5 @@
 Subject：　利用申請の審査結果について／The results of the review of your application
 
-[restricted_university_institution]
-[restricted_fullname]様
-
-
 [restricted_site_name_ja]です。
 
 下記の利用申請を却下しました。
@@ -23,7 +19,6 @@ Subject：　利用申請の審査結果について／The results of the review
 問い合わせ窓口：[restricted_site_mail]
 
 ----------------------------------------------------------------------------------
-Dear [restricted_fullname]
 
 This is a message from [restricted_site_name_en].
 Your application below has been rejected.
