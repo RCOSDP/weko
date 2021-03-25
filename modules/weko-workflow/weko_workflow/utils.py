@@ -3161,7 +3161,7 @@ def get_usage_data(item_type_id, activity_detail, user_profile):
 
         for key in rm.json:
             value = rm.json.get(key)
-            if (type(value) is dict):
+            if type(value) is dict:
                 mlt = value.get('attribute_value_mlt')
                 if mlt and type(mlt) is list:
                     for sub_key in mlt[0]:
@@ -3180,8 +3180,8 @@ def get_usage_data(item_type_id, activity_detail, user_profile):
                             position_other = sub_value
                         elif sub_key == 'subitem_restricted_access_phone_number':
                             phone_number = sub_value
-        item_title = related_activity_id + current_app.config.get('WEKO_WORKFLOW_USAGE_REPORT_ITEM_TITLE') \
-            + name
+        item_title = related_activity_id + current_app.config.get(
+            'WEKO_WORKFLOW_USAGE_REPORT_ITEM_TITLE') + name
         result = dict(
             usage_type='Report',
             dataset_usage=related_title,
@@ -3206,40 +3206,163 @@ def update_approval_date(activity):
     @param activity:
     @return:
     """
-    from datetime import datetime
+    item_id = activity.item_id
+    record = WekoRecord.get_record(item_id)
+    deposit = WekoDeposit(record, record.model)
+    approval_date_key = current_app.config[
+        'WEKO_WORKFLOW_RESTRICTED_ACCESS_APPROVAL_DATE']
+    sub_approval_date_key, attribute_name = \
+        get_sub_key_by_system_property_key(approval_date_key,
+                                           deposit.get("item_type_id"))
+    if sub_approval_date_key:
+        current_date = get_current_date()
+        dict_approval_date = {approval_date_key: current_date}
+        update_approval_date_for_deposit(deposit, sub_approval_date_key,
+                                         dict_approval_date,
+                                         attribute_name)
+        update_system_data_for_item_metadata(item_id,
+                                             sub_approval_date_key,
+                                             dict_approval_date)
+        update_system_data_for_activity(activity,
+                                        sub_approval_date_key,
+                                        dict_approval_date)
 
-    from weko_deposit.api import WekoDeposit, WekoRecord
-    try:
-        with db.session.begin_nested():
-            work_activity = WorkActivity()
-            activity_update = work_activity.get_activity_detail(activity.activity_id)
-            record = WekoRecord.get_record(activity.item_id)
-            deposit = WekoDeposit(record, record.model)
-            item_meta = ItemsMetadata.get_record(id_=activity.item_id)
-            item_type_id = deposit["item_type_id"]
-            item_type = ItemType.query.filter_by(id=item_type_id).one_or_none()
 
-            sub_key = ''
-            if not item_type:
-                return
-            for k, v in item_type.schema['properties'].items():
-                if isinstance(v, dict) and 'properties' in v:
-                    if 'subitem_restricted_access_approval_date' in v['properties']:
-                        sub_key = k
-                        break
-            if sub_key:
-                deposit[sub_key] = {'attribute_name': "Approval Date"}
-                deposit[sub_key]["attribute_value_mlt"] = [
-                    {"subitem_restricted_access_approval_date": datetime.today().strftime('%Y-%m-%d')}]
-                deposit.item_metadata[sub_key] = dict(subitem_restricted_access_approval_date='2021-10-10')
-                item_meta[sub_key] = dict(subitem_restricted_access_approval_date=datetime.today().strftime('%Y-%m-%d'))
-                temp = json.loads(activity_update.temp_data)
-                temp['metainfo'][sub_key] = dict(
-                    subitem_restricted_access_approval_date=datetime.today().strftime('%Y-%m-%d'))
-                activity_update.temp_data = json.dumps(temp)
-                item_meta.commit()
-                deposit.commit()
-                db.session.merge(activity_update)
+def create_record_metadata_for_user(usage_application_activity, usage_report):
+    """Update metadata usage application for usage report.
+
+    @param usage_report:
+    @param usage_application_activity:
+    @return:
+    """
+    item_id = usage_application_activity.item_id
+    if item_id and usage_report:
+        record = WekoRecord.get_record(item_id)
+        item_metadata = ItemsMetadata.get_record(id_=item_id).dumps()
+        deposit = WekoDeposit(record, record.model)
+        item_metadata.pop('id', None)
+        usage_report_id_key = current_app.config[
+            'WEKO_WORKFLOW_RESTRICTED_ACCESS_USAGE_REPORT_ID']
+        sub_system_data_key, attribute_name = \
+            get_sub_key_by_system_property_key(usage_report_id_key,
+                                               deposit.get("item_type_id"))
+        if sub_system_data_key:
+            dict_system_data = {usage_report_id_key: usage_report.activity_id}
+            update_system_data_for_item_metadata(item_id,
+                                                 sub_system_data_key,
+                                                 dict_system_data)
+            update_approval_date_for_deposit(deposit,
+                                             sub_system_data_key,
+                                             dict_system_data,
+                                             attribute_name)
+            update_system_data_for_activity(usage_application_activity,
+                                            sub_system_data_key,
+                                            dict_system_data)
         db.session.commit()
-    except Exception as ex:
-        current_app.logger.error(ex)
+
+
+def get_current_date():
+    """Get current date.
+
+    @return:
+    """
+    return datetime.today().strftime('%Y-%m-%d')
+
+
+def get_sub_key_by_system_property_key(system_property_key, item_type_id):
+    """Get sub key by system property key.
+
+   @param system_property_key:
+   @param item_type_id:
+   @return:
+   """
+    if not item_type_id:
+        return None, None
+    item_type = ItemType.query.filter_by(id=item_type_id).one_or_none()
+    sub_key = ''
+    attribute_name = ''
+    if not item_type:
+        return sub_key, attribute_name
+    for k, v in item_type.schema['properties'].items():
+        if isinstance(v, dict) and 'properties' in v and system_property_key \
+                in v['properties']:
+            sub_key = k
+            if 'tile' in v:
+                attribute_name = v['tile']
+            break
+    return sub_key, attribute_name
+
+
+def update_system_data_for_item_metadata(item_id, sub_system_data_key,
+                                         dict_system_data):
+    """Update approval date for item metadata.
+
+   @param item_id:
+   @param sub_system_data_key:
+   @param dict_system_data:
+   @return:
+   """
+    item_meta = ItemsMetadata.get_record(id_=item_id)
+    item_meta[sub_system_data_key] = dict_system_data
+    item_meta.commit()
+
+
+def update_approval_date_for_deposit(deposit, sub_approval_date_key,
+                                     dict_approval_date, attribute_name):
+    """Update approval date for deposit.
+
+   @param deposit:
+   @param sub_approval_date_key:
+   @param dict_approval_date:
+   @param attribute_name:
+   @return:
+   """
+    approval_date_data = {'attribute_name': attribute_name,
+                          "attribute_value_mlt": [dict_approval_date]}
+    deposit[sub_approval_date_key] = approval_date_data
+    deposit.item_metadata[sub_approval_date_key] = dict_approval_date
+    deposit.commit()
+    db.session.commit()
+
+
+def update_system_data_for_activity(activity, sub_system_data_key,
+                                    dict_system_data):
+    """Update approval date for activity.
+
+   @param activity:
+   @param sub_system_data_key:
+   @param dict_system_data:
+   @return:
+   """
+    if activity:
+        if activity.temp_data:
+            temp = json.loads(activity.temp_data)
+        else:
+            temp = {'metainfo': {}}
+        temp['metainfo'][sub_system_data_key] = dict_system_data
+        activity.temp_data = json.dumps(temp)
+        db.session.merge(activity)
+        db.session.commit()
+
+
+def update_system_data_for_records_metadata(
+    item_id, sub_system_data_key, dict_system_data, attribute_name
+):
+    """Update system data for records metadata.
+
+   @param item_id:
+   @param sub_system_data_key:
+   @param dict_system_data:
+   @param attribute_name:
+   @return:
+   """
+    record = RecordMetadata.query.filter_by(id=item_id).first()
+    record_metadata = record.json
+    system_date_data = {
+        'attribute_name': attribute_name,
+        "attribute_value_mlt": [dict_system_data]
+    }
+    record_metadata[sub_system_data_key] = system_date_data
+    record.json = record_metadata
+    record.commit()
+    db.session.commit()

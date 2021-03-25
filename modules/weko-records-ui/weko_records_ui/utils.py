@@ -42,7 +42,7 @@ from weko_admin.utils import get_restricted_access, UsageReport
 from weko_deposit.api import WekoDeposit
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
-from weko_workflow.api import WorkFlow
+from weko_workflow.api import WorkFlow, WorkActivity
 
 from .models import FileOnetimeDownload, FilePermission
 from .permissions import check_create_usage_report, \
@@ -690,7 +690,7 @@ def create_usage_report_for_user(onetime_download_extra_info: dict):
     is_guest = onetime_download_extra_info.get('is_guest', False)
 
     # Get Usage Application Activity.
-    from weko_workflow.api import WorkActivity
+    from weko_workflow.utils import create_record_metadata_for_user
     usage_application_activity = WorkActivity().get_activity_by_id(
         activity_id)
 
@@ -743,7 +743,7 @@ def create_usage_report_for_user(onetime_download_extra_info: dict):
             .activity_login_user
         # Create activity and URL for registered user.
         activity = WorkActivity().init_activity(activity_data)
-
+    create_record_metadata_for_user(usage_application_activity, activity)
     return activity
 
 
