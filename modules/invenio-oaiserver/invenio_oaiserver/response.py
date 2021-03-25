@@ -449,19 +449,15 @@ def listrecords(**kwargs):
             harvest_public_state, r = \
                 WekoRecord.get_record_with_hps(pid_object.object_uuid)
             set_identifier(record, rec)
-            if is_private_index(rec) and \
-                    harvest_public_state and is_exists_doi(record):
-                continue
-            else:
-                # Check output delete, noRecordsMatch
-                if not is_private_index(rec):
-                    if is_deleted_workflow(pid_object) or \
-                            is_private_workflow(rec):
-                        append_deleted_record(e_listrecords, pid_object, rec)
-                        continue
-                else:
+            # Check output delete, noRecordsMatch
+            if not is_private_index(rec):
+                if is_deleted_workflow(pid_object) or \
+                        is_private_workflow(rec):
                     append_deleted_record(e_listrecords, pid_object, rec)
                     continue
+            else:
+                append_deleted_record(e_listrecords, pid_object, rec)
+                continue
             e_record = SubElement(
                 e_listrecords, etree.QName(NS_OAIPMH, 'record'))
             header(
