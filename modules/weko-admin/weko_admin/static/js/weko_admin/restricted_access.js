@@ -540,7 +540,7 @@ const queryUsageReportList = (method, data, setActivities, setTotalPage, extraPa
         })
 }
 
-function ModalBodyConfirm () {
+function ModalBodyConfirm ({selectedActivityIds}) {
   const [activities, setActivities] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPage, setTotalPage] = useState(1)
@@ -549,7 +549,7 @@ function ModalBodyConfirm () {
 
     useEffect(() => {
         let data = {
-            activity_ids: activities,
+            activity_ids: Array.from(selectedActivityIds),
             page: currentPage,
             size: CONST_DEFAULT_ITEMS_PER_PAGE
         }
@@ -633,7 +633,7 @@ function ModalFooterConfirm({setShowConfirm, selectedActivityIds}) {
   function sendMailReminder() {
     const URL = "/api/admin/restricted_access/send_mail_reminder";
     const data = {
-      activity_ids: selectedActivityIds
+      activity_ids: Array.from(selectedActivityIds)
     }
     $.ajax({
       url: URL,
