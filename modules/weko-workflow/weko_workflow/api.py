@@ -778,7 +778,7 @@ class WorkActivity(object):
                     action_id=action_id,
                     action_version=action.action_version,
                     action_status=ActionStatusPolicy.ACTION_DONE,
-                    action_user=current_user.get_id(),
+                    action_user=activity_login_user,
                     action_date=db_activity.activity_start,
                     action_comment=ActionCommentPolicy.BEGIN_ACTION_COMMENT,
                     action_order=1
@@ -792,7 +792,7 @@ class WorkActivity(object):
                         action_instance = Action()
                         action = action_instance.get_action_detail(
                             flow_action.action_id)
-                        action_handler = current_user.get_id() \
+                        action_handler = activity_login_user \
                             if not action.action_endpoint == 'approval' else -1
                         db_activity_action = ActivityAction(
                             activity_id=db_activity.activity_id,
