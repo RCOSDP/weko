@@ -472,7 +472,7 @@ function RestrictedAccessLayout({
                        currentTerm={currentTerm}
                        setCurrentTerm={setCurrentTerm}/>
       <div className="form-group">
-        <button id="save-btn" className="btn btn-primary pull-right"
+        <button id="save-btn" className="btn btn-primary pull-right" style={{marginBottom: "15px"}}
                 onClick={handleSave}>
           <span className="glyphicon glyphicon-save"></span>&nbsp;{SAVE_LABEL}
         </button>
@@ -834,7 +834,9 @@ function UsageReportList() {
             <div className="pull-right">
               <button type="submit" id="filter_form_submit" className="btn btn-primary" disabled={enableBtnConfirm}
                       onClick={() =>
-                        setShowConfirm(true)}>{LABEL_CONFIRM}
+                        setShowConfirm(true)}>
+                          <span className="glyphicon glyphicon-check"></span>
+                          &nbsp;{LABEL_CONFIRM}
               </button>
             </div>
           </div>

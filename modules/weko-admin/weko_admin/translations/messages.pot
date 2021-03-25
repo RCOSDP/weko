@@ -1113,3 +1113,6 @@ msgstr ""
 
 msgid "Usage Report Reminder Email"
 msgstr ""
+
+msgid "Confirm Usage Mail"
+msgstr ""

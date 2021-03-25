@@ -1219,3 +1219,6 @@ msgstr "利用報告ワークフローへのアクセス"
 
 msgid "Usage Report Reminder Email"
 msgstr "利用報告督促メール"
+
+msgid "Confirm Usage Mail"
+msgstr "確認"

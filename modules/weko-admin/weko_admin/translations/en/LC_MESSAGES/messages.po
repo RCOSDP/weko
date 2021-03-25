@@ -712,3 +712,6 @@ msgstr "Usage Report Workflow Access"
 
 msgid "Usage Report Reminder Email"
 msgstr "Usage Report Reminder Email"
+
+msgid "Confirm Usage Mail"
+msgstr "Confirm"
