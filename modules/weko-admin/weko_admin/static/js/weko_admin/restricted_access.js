@@ -713,6 +713,7 @@ function UsageReportList() {
     allCurrentPageIds = listActivities.map((activity) => {
       return activity.activity_id
     })
+    updateCheckedAllState()
   }, [listActivities])
 
   function updateCheckedAllState(){
