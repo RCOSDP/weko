@@ -23,6 +23,7 @@ from markupsafe import Markup
 from wtforms.fields import PasswordField
 from wtforms.validators import ValidationError
 from wtforms.widgets import PasswordInput
+from flask_security import current_user
 
 from .models import Bucket, FileInstance, Location, MultipartObject, \
     ObjectVersion, slug_pattern
@@ -53,9 +54,18 @@ class LocationModelView(ModelView):
     """ModelView for the locations."""
 
     filter_converter = FilterConverter()
-    can_create = True
-    can_edit = True
-    can_delete = True
+        @property
+    def can_create(self):
+        return 'System Administrator' in [role.name for role in current_user.roles]
+
+    @property
+    def can_edit(self):
+        return 'System Administrator' in [role.name for role in current_user.roles]
+
+    @property
+    def can_delete(self):
+        return 'System Administrator' in [role.name for role in current_user.roles]
+        
     can_view_details = True
     column_formatters = dict(
         buckets=link('Buckets', lambda o: url_for(

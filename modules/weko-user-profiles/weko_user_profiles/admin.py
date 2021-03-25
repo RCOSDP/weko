@@ -41,6 +41,7 @@ from .config import USERPROFILES_LANGUAGE_LIST, USERPROFILES_TIMEZONE_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from .models import UserProfile
 from .utils import get_role_by_position
+from flask_security import current_user
 
 
 def _(x):
@@ -53,7 +54,14 @@ class UserProfileView(ModelView):
 
     can_view_details = True
     can_create = False
-    can_delete = True
+    
+    @property
+    def can_delete(self):
+        return 'System Administrator' in [role.name for role in current_user.roles]
+
+    @property
+    def can_edit(self):
+        return 'System Administrator' in [role.name for role in current_user.roles]
 
     column_list = (
         'user_id',
