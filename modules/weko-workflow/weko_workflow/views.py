@@ -350,7 +350,7 @@ def init_activity_guest():
                 "is_restricted_access": True,
             }
         }
-        tmp_url = init_activity_for_guest_user(data)
+        _, tmp_url = init_activity_for_guest_user(data)
 
         if send_usage_application_mail_for_guest_user(
                 post_data.get('guest_mail'), tmp_url):

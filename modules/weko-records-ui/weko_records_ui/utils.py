@@ -691,6 +691,7 @@ def create_usage_report_for_user(onetime_download_extra_info: dict):
 
     # Get Usage Application Activity.
     from weko_workflow.api import WorkActivity
+    from weko_workflow.utils import create_record_metadata_for_user
     usage_application_activity = WorkActivity().get_activity_by_id(
         activity_id)
 
@@ -728,13 +729,17 @@ def create_usage_report_for_user(onetime_download_extra_info: dict):
     if is_guest:
         # Create activity and URL for guest user.
         from weko_workflow.utils import init_activity_for_guest_user
-        usage_report_url = init_activity_for_guest_user(activity_data, True)
+        activity, usage_report_url = init_activity_for_guest_user(
+            activity_data, True)
     else:
         # Create activity and URL for registered user.
         activity = WorkActivity().init_activity(activity_data)
         usage_report_url = url_for('weko_workflow.display_activity',
                                    activity_id=activity.activity_id)
         usage_report_url = "{}{}".format(request.host_url, usage_report_url)
+    item_id = usage_application_activity.item_id if usage_application_activity \
+        and usage_application_activity.item_id else None
+    create_record_metadata_for_user(item_id, activity)
     return usage_report_url
 
 

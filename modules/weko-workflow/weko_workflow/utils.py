@@ -2602,6 +2602,7 @@ def init_activity_for_guest_user(data: dict,
     record_id = data.get("extra_info").get("record_id")
 
     guest_activity = _get_guest_activity()
+    activity = None
     if not guest_activity:
         # Init activity for guest user.
         activity = WorkActivity().init_activity(data)
@@ -2637,7 +2638,7 @@ def init_activity_for_guest_user(data: dict,
     url_pattern = "{}workflow/activity/guest-user/{}?token={}"
     tmp_url = url_pattern.format(request.url_root, file_name, token_value)
 
-    return tmp_url
+    return activity, tmp_url
 
 
 def send_usage_application_mail_for_guest_user(guest_mail: str, temp_url: str):
@@ -3077,7 +3078,8 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
 
 
 def get_usage_data(item_type_id, activity_detail, user_profile):
-    """
+    """Get usage data.
+
     @param item_type_id:
     @return:
     """
@@ -3211,3 +3213,18 @@ def update_approval_date(activity):
         db.session.commit()
     except Exception as ex:
         current_app.logger.error(ex)
+
+
+def create_record_metadata_for_user(item_id, usage_report):
+    """Update metadata usage application for usage report.
+
+    @param usage_report:
+    @param item_id:
+    @return:
+    """
+    if item_id:
+        item_metadata = ItemsMetadata.get_record(id_=item_id).dumps()
+        item_metadata.pop('id', None)
+        usage_report.temp_data = item_metadata
+        db.session.merge(usage_report)
+        db.session.commit()
