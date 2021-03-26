@@ -659,7 +659,8 @@ function ModalFooterConfirm({setShowConfirm, selectedActivityIds}) {
     <div>
       <button type="button" className="btn btn-primary save-button" onClick={() => {
         sendMailReminder();
-        setShowConfirm(false)
+        setShowConfirm(false);
+        selectedActivityIds(new Set());
       }}>
         <span className="glyphicon glyphicon-send"></span>&nbsp; {LABEL_SEND}
       </button>
@@ -671,14 +672,15 @@ function ModalFooterConfirm({setShowConfirm, selectedActivityIds}) {
   )
 }
 
-function ConfirmModal({selectedActivityIds, show, setShowConfirm}) {
+function ConfirmModal({selectedActivityIds, setSelectedActivityIds, show, setShowConfirm}) {
   return (
     <ReactBootstrap.Modal show={show} dialogClassName="popup-mail-modal">
       <ReactBootstrap.Modal.Body>
         <ModalBodyConfirm selectedActivityIds={selectedActivityIds}/>
       </ReactBootstrap.Modal.Body>
       <ReactBootstrap.Modal.Footer>
-        <ModalFooterConfirm setShowConfirm={setShowConfirm} selectedActivityIds={selectedActivityIds}/>
+        <ModalFooterConfirm setShowConfirm={setShowConfirm} setSelectedActivityIds={setSelectedActivityIds}
+                            selectedActivityIds={selectedActivityIds}/>
       </ReactBootstrap.Modal.Footer>
     </ReactBootstrap.Modal>
   )
@@ -843,7 +845,8 @@ function UsageReportList() {
             </div>
           </div>
           <div>
-            <ConfirmModal selectedActivityIds={selectedActivityIds} show={showConfirm}
+            <ConfirmModal selectedActivityIds={selectedActivityIds} setSelectedActivityIds={setSelectedActivityIds}
+                          show={showConfirm}
                           setShowConfirm={setShowConfirm}/>
           </div>
         </div>
