@@ -529,8 +529,6 @@ def display_activity(activity_id="0"):
         is_hidden_pubdate_value = is_hidden_pubdate(item_type_name)
 
     # if 'approval' == action_endpoint:
-    if 'approval' == action_endpoint:
-        update_approval_date(activity_detail)
     if item:
         # get record data for the first time access to editing item screen
         recid = PersistentIdentifier.get_by_object(
@@ -813,6 +811,8 @@ def next_action(activity_id='0', action_id=0):
     if action_endpoint == 'end_action':
         work_activity.end_activity(activity)
         return jsonify(code=0, msg=_('success'))
+    if 'approval' == action_endpoint:
+        update_approval_date(activity_detail)
     item_id = None
     recid = None
     deposit = None
