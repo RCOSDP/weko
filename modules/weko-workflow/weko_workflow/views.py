@@ -82,7 +82,7 @@ from .utils import IdentifierHandle, auto_fill_title, check_continue, \
     save_activity_data, saving_doi_pidstore, \
     send_usage_application_mail_for_guest_user, update_approval_date, \
     update_cache_data, validate_guest_activity_expired, \
-    validate_guest_activity_token
+    validate_guest_activity_token, check_authority_by_admin
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -687,6 +687,11 @@ def check_authority(func):
         work = WorkActivity()
         activity_id = kwargs.get('activity_id')
         activity_detail = work.get_activity_by_id(activity_id)
+
+        # If user has admin role
+        if check_authority_by_admin(activity_detail):
+            return decorated_function
+
         roles, users = work.get_activity_action_role(
             activity_id=kwargs.get('activity_id'),
             action_id=kwargs.get('action_id'),
@@ -718,6 +723,11 @@ def check_authority_action(activity_id='0', action_id=0,
         return 1
 
     work = WorkActivity()
+    activity = Activity.query.filter_by(activity_id=activity_id).first()
+    # If user has admin role
+    if check_authority_by_admin(activity):
+        return 0
+
     roles, users = work.get_activity_action_role(activity_id, action_id,
                                                  action_order)
     cur_user = current_user.get_id()
@@ -742,35 +752,10 @@ def check_authority_action(activity_id='0', action_id=0,
     # If action_roles is not set
     # or action roles does not contain any role of current_user:
     # Gather information
-    activity = Activity.query.filter_by(
-        activity_id=activity_id).first()
     # If user is the author of activity
     if int(cur_user) == activity.activity_login_user and \
             not contain_login_item_application:
         return 0
-    # If user has admin role
-    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
-    for role in list(current_user.roles or []):
-        if role.name in supers:
-            return 0
-    # If user has community role
-    # and the user who created activity is member of community
-    # role -> has permission:
-    community_role_name = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-    # Get the list of users who has the community role
-    community_users = User.query.outerjoin(userrole).outerjoin(Role) \
-        .filter(community_role_name == Role.name) \
-        .filter(userrole.c.role_id == Role.id) \
-        .filter(User.id == userrole.c.user_id) \
-        .all()
-    community_user_ids = [
-        community_user.id for community_user in community_users]
-    for role in list(current_user.roles or []):
-        if role.name in community_role_name:
-            # User has community role
-            if activity.activity_login_user in community_user_ids:
-                return 0
-            break
 
     if current_app.config['WEKO_WORKFLOW_ENABLE_CONTRIBUTOR']:
         # Check if this activity has contributor equaling to current user

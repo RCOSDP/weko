@@ -31,7 +31,7 @@ from celery.task.control import inspect
 from flask import current_app, request, session
 from flask_babelex import gettext as _
 from flask_security import current_user
-from invenio_accounts.models import User
+from invenio_accounts.models import Role, User, userrole
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
@@ -1900,6 +1900,7 @@ def replace_characters(data, content):
         '[restricted_reference]': '',
         '[data_download_date]': 'data_download_date',
         '[usage_report_url]': 'usage_report_url',
+        '[restricted_usage_activity_id]': 'restricted_usage_activity_id',
     }
     for key in replace_list:
         value = replace_list.get(key)
@@ -3238,9 +3239,7 @@ def create_record_metadata_for_user(usage_application_activity, usage_report):
     item_id = usage_application_activity.item_id
     if item_id and usage_report:
         record = WekoRecord.get_record(item_id)
-        item_metadata = ItemsMetadata.get_record(id_=item_id).dumps()
         deposit = WekoDeposit(record, record.model)
-        item_metadata.pop('id', None)
         usage_report_id_key = current_app.config[
             'WEKO_WORKFLOW_RESTRICTED_ACCESS_USAGE_REPORT_ID']
         sub_system_data_key, attribute_name = \
@@ -3258,7 +3257,6 @@ def create_record_metadata_for_user(usage_application_activity, usage_report):
             update_system_data_for_activity(usage_application_activity,
                                             sub_system_data_key,
                                             dict_system_data)
-        db.session.commit()
 
 
 def get_current_date():
@@ -3287,8 +3285,8 @@ def get_sub_key_by_system_property_key(system_property_key, item_type_id):
         if isinstance(v, dict) and 'properties' in v and system_property_key \
                 in v['properties']:
             sub_key = k
-            if 'tile' in v:
-                attribute_name = v['tile']
+            if 'title' in v:
+                attribute_name = v['title']
             break
     return sub_key, attribute_name
 
@@ -3343,3 +3341,35 @@ def update_system_data_for_activity(activity, sub_system_data_key,
         activity.temp_data = json.dumps(temp)
         db.session.merge(activity)
         db.session.commit()
+
+
+def check_authority_by_admin(activity):
+    """Check authority by admin.
+
+    :param activity:
+    :return:
+    """
+    # If user has admin role
+    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+    for role in list(current_user.roles or []):
+        if role.name in supers:
+            return True
+    # If user has community role
+    # and the user who created activity is member of community
+    # role -> has permission:
+    community_role_name = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+    # Get the list of users who has the community role
+    community_users = User.query.outerjoin(userrole).outerjoin(Role) \
+        .filter(community_role_name == Role.name) \
+        .filter(userrole.c.role_id == Role.id) \
+        .filter(User.id == userrole.c.user_id) \
+        .all()
+    community_user_ids = [
+        community_user.id for community_user in community_users]
+    for role in list(current_user.roles or []):
+        if role.name in community_role_name:
+            # User has community role
+            if activity.activity_login_user in community_user_ids:
+                return True
+            break
+    return False

@@ -3,7 +3,7 @@ Subject: 利用報告の登録のお願い／Request for register Data Usage Rep
 [restricted_site_name_ja]です。
 下記で申請いただいデータについてダウンロードされたことを確認しました。
 
-申請番号： [restricted_activity_id]
+申請番号： [restricted_usage_activity_id]
 登録者名： [restricted_fullname]
 メールアドレス： [restricted_mail_address]
 所属機関：[restricted_university_institution]
@@ -26,7 +26,7 @@ Subject: 利用報告の登録のお願い／Request for register Data Usage Rep
 This is a message from [restricted_site_name_en].
 We have confirmed that the dataset which you registered at below has been downloaded.
 
-Application No.：[restricted_activity_id]
+Application No.：[restricted_usage_activity_id]
 Name：[restricted_fullname]
 E-mail：[restricted_mail_address]
 Affiliation：[restricted_university_institution]
