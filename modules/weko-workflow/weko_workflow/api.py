@@ -1509,14 +1509,6 @@ class WorkActivity(object):
                             and_(
                                 ActivityAction.action_handler == self_user_id,
                                 _Activity.approval2 == current_user.email,
-                            ),
-                            and_(
-                                _FlowActionRole.action_user == self_user_id,
-                                _FlowActionRole.action_user_exclude == '0'
-                            ),
-                            and_(
-                                _FlowActionRole.action_role.in_(self_group_ids),
-                                _FlowActionRole.action_role_exclude == '0'
                             )
                         ),
                     )
@@ -1584,7 +1576,8 @@ class WorkActivity(object):
                     )
                 )
             )\
-            .filter(_FlowAction.action_id == _Activity.action_id)
+            .filter(_FlowAction.action_id == _Activity.action_id) \
+            .filter(_FlowAction.action_order == _Activity.action_order)
 
         if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] or \
                 current_app.config['WEKO_ITEMS_UI_MULTIPLE_APPROVALS']:
@@ -1594,7 +1587,17 @@ class WorkActivity(object):
                 )
             else:
                 query = query.filter(
-                    ActivityAction.action_handler == self_user_id,
+                    or_(
+                        ActivityAction.action_handler == self_user_id,
+                        and_(
+                            _FlowActionRole.action_user == self_user_id,
+                            _FlowActionRole.action_user_exclude == '0'
+                        ),
+                        and_(
+                            _FlowActionRole.action_role.in_(self_group_ids),
+                            _FlowActionRole.action_role_exclude == '0'
+                        )
+                    )
                 )
 
         return query
