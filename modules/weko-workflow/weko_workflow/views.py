@@ -870,11 +870,15 @@ def next_action(activity_id='0', action_id=0):
 
         next_action_handler = next_action_detail.action_handler
         # in case of current action has action user
-        current_flow_action = FlowAction.query.filter_by(
-            flow_id=activity_detail.flow_define.flow_id,
-            action_id=next_action_id, action_order=next_action_order).one_or_none()
-        if current_flow_action and current_flow_action.action_roles:
-            next_action_handler = current_flow_action.action_roles[0].action_user
+        if is_last_approval_step == -1:
+            current_flow_action = FlowAction.query.filter_by(
+                flow_id=activity_detail.flow_define.flow_id,
+                action_id=next_action_id,
+                action_order=next_action_order).one_or_none()
+            if current_flow_action and current_flow_action.action_roles and \
+                current_flow_action.action_roles[0].action_user:
+                next_action_handler = current_flow_action.action_roles[
+                    0].action_user
         process_send_approval_mails(activity_detail, action_mails_setting,
                                     next_action_handler,
                                     url_and_expired_date)
