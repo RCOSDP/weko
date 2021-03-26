@@ -1867,7 +1867,8 @@ class UsageReport:
                     "restricted_site_name_ja": site_name_ja,
                     "restricted_site_name_en": site_name_en,
                     "restricted_site_mail": site_mail,
-                    "restricted_usage_activity_id": activity.extra_info.usage_activity_id,
+                    "restricted_usage_activity_id": activity.extra_info.get(
+                        'usage_activity_id'),
                 }
             )
             if activity.extra_info:
