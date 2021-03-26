@@ -67,10 +67,11 @@ from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
 from .models import ActionStatusPolicy, Activity, ActivityAction, FlowAction
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import IdentifierHandle, auto_fill_title, check_continue, \
-    check_existed_doi, create_onetime_download_url_to_guest, \
-    delete_cache_data, delete_guest_activity, filter_all_condition, \
-    get_account_info, get_actionid, get_activity_display_info, \
+from .utils import IdentifierHandle, auto_fill_title, \
+    check_authority_by_admin, check_continue, check_existed_doi, \
+    create_onetime_download_url_to_guest, delete_cache_data, \
+    delete_guest_activity, filter_all_condition, get_account_info, \
+    get_actionid, get_activity_display_info, \
     get_activity_id_of_record_without_version, \
     get_application_and_approved_date, get_approval_keys, get_cache_data, \
     get_identifier_setting, get_usage_data, get_workflow_item_type_names, \
@@ -82,7 +83,7 @@ from .utils import IdentifierHandle, auto_fill_title, check_continue, \
     save_activity_data, saving_doi_pidstore, \
     send_usage_application_mail_for_guest_user, update_approval_date, \
     update_cache_data, validate_guest_activity_expired, \
-    validate_guest_activity_token, check_authority_by_admin
+    validate_guest_activity_token
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -1132,7 +1133,7 @@ def previous_action(activity_id='0', action_id=0, req=0):
         return jsonify(code=-1, msg=_('error'))
     current_flow_action = flow.\
         get_flow_action_detail(
-        activity_detail.flow_define.flow_id, action_id, action_order)
+            activity_detail.flow_define.flow_id, action_id, action_order)
     action_mails_setting = {
         "previous": current_flow_action.send_mail_setting
         if current_flow_action.send_mail_setting else {},
