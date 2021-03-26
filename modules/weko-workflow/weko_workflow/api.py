@@ -1461,6 +1461,7 @@ class WorkActivity(object):
         :return:
         """
         self_user_id = int(current_user.get_id())
+        self_group_ids = [role.id for role in current_user.roles]
         if is_community_admin:
             query = query \
                 .filter(_Activity.activity_login_user.in_(community_user_ids))
@@ -1478,6 +1479,7 @@ class WorkActivity(object):
                             ActivityAction.action_handler == self_user_id,
                             _Activity.approval1 == current_user.email,
                             _Activity.approval2 == current_user.email,
+                            _FlowActionRole.action_role.in_(self_group_ids)
                         )
                     )
                 else:
