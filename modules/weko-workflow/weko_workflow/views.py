@@ -690,7 +690,7 @@ def check_authority(func):
 
         # If user has admin role
         if check_authority_by_admin(activity_detail):
-            return decorated_function
+            return func(*args, **kwargs)
 
         roles, users = work.get_activity_action_role(
             activity_id=kwargs.get('activity_id'),
