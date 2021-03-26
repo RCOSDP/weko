@@ -38,11 +38,11 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from passlib.handlers.oracle import oracle10
 from weko_admin.models import AdminSettings
-from weko_admin.utils import get_restricted_access, UsageReport
+from weko_admin.utils import UsageReport, get_restricted_access
 from weko_deposit.api import WekoDeposit
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
-from weko_workflow.api import WorkFlow, WorkActivity
+from weko_workflow.api import WorkActivity, WorkFlow
 
 from .models import FileOnetimeDownload, FilePermission
 from .permissions import check_create_usage_report, \

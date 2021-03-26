@@ -597,8 +597,7 @@ def save_restricted_access():
 def get_usage_report_activities():
     """Get usage report activities.
 
-    Returns:
-        [json, int]: Usage report activity.
+    :return: [json, int]: Usage report activity.
     """
     if request.method == "POST":
         json_data = request.get_json()
@@ -621,8 +620,7 @@ def get_usage_report_activities():
 def send_mail_reminder_usage_report():
     """Send email to request user for register usage report.
 
-    Returns:
-        [json, int]: Send mail status.
+    :return: [json, int]: Send mail status.
     """
     json_data = request.get_json()
     result = False
