@@ -59,8 +59,7 @@ from weko_records.serializers.utils import get_item_type_name, get_mapping
 from weko_records_ui.utils import create_onetime_download_url, \
     generate_one_time_download_url, get_list_licence
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
-from weko_user_profiles.config import \
-    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
 
@@ -1890,6 +1889,8 @@ def replace_characters(data, content):
         '[restricted_mail_address]': 'restricted_mail_address',
         '[restricted_download_link]': 'restricted_download_link',
         '[restricted_expiration_date]': 'restricted_expiration_date',
+        '[restricted_expiration_date_ja]': 'restricted_expiration_date_ja',
+        '[restricted_expiration_date_en]': 'restricted_expiration_date_en',
         '[restricted_approver_name]': 'restricted_approver_name',
         '[restricted_site_name_ja]': 'restricted_site_name_ja',
         '[restricted_site_name_en]': 'restricted_site_name_en',
@@ -2759,16 +2760,23 @@ def create_onetime_download_url_to_guest(activity_id: str,
         # Save onetime to Database.
         one_time_obj = create_onetime_download_url(
             activity_id, file_name, record_id, user_mail, is_guest_user)
+        expiration_tmp = {
+            "expiration_date": "",
+            "expiration_date_ja": "",
+            "expiration_date_en": "",
+        }
         if one_time_obj:
             try:
                 expiration_date = timedelta(days=one_time_obj.expiration_date)
                 expiration_date = datetime.today() + expiration_date
                 expiration_date = expiration_date.strftime("%Y-%m-%d")
+                expiration_tmp['expiration_date'] = expiration_date
             except OverflowError:
-                expiration_date = ""
+                expiration_tmp["expiration_date_ja"] = "無制限"
+                expiration_tmp["expiration_date_en"] = "Unlimited"
             return {
                 "file_url": onetime_file_url,
-                "expiration_date": expiration_date
+                **expiration_tmp,
             }
         else:
             current_app.logger.error("Can not create onetime download.")
@@ -3085,6 +3093,8 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
     mail_info = set_mail_info(item_info, activity_detail, is_guest_user)
     mail_info['restricted_download_link'] = file_data.get("file_url", '')
     mail_info['restricted_expiration_date'] = file_data.get("expiration_date", '')
+    mail_info['restricted_expiration_date_ja'] = file_data.get("expiration_date_ja", '')
+    mail_info['restricted_expiration_date_en'] = file_data.get("expiration_date_en", '')
 
     # Override guest mail if any
     if is_guest_user:
@@ -3247,6 +3257,16 @@ def create_record_metadata_for_user(usage_application_activity, usage_report):
                                                deposit.get("item_type_id"))
         if sub_system_data_key:
             dict_system_data = {usage_report_id_key: usage_report.activity_id}
+            deposit_without_ver,item_id_without_ver = get_record_first_version(deposit)
+            if item_id_without_ver:
+                update_system_data_for_item_metadata(
+                    item_id_without_ver,
+                    sub_system_data_key,
+                    dict_system_data)
+                update_approval_date_for_deposit(deposit_without_ver,
+                                                 sub_system_data_key,
+                                                 dict_system_data,
+                                                 attribute_name)
             update_system_data_for_item_metadata(item_id,
                                                  sub_system_data_key,
                                                  dict_system_data)
@@ -3303,6 +3323,7 @@ def update_system_data_for_item_metadata(item_id, sub_system_data_key,
     item_meta = ItemsMetadata.get_record(id_=item_id)
     item_meta[sub_system_data_key] = dict_system_data
     item_meta.commit()
+    db.session.commit()
 
 
 def update_approval_date_for_deposit(deposit, sub_approval_date_key,
@@ -3373,3 +3394,13 @@ def check_authority_by_admin(activity):
                 return True
             break
     return False
+
+
+def get_record_first_version(deposit):
+    """Get PID of record first version ID."""
+    pid_value = str(int(float(deposit['_deposit']['id'])))
+    pid = PersistentIdentifier.query.filter_by(
+        pid_value=pid_value, pid_type='recid').first()
+    record = WekoRecord.get_record(pid.object_uuid)
+    deposit = WekoDeposit(record, record.model)
+    return deposit, pid.object_uuid
