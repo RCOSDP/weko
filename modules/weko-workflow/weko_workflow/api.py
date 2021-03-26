@@ -1479,7 +1479,14 @@ class WorkActivity(object):
                             ActivityAction.action_handler == self_user_id,
                             _Activity.approval1 == current_user.email,
                             _Activity.approval2 == current_user.email,
-                            _FlowActionRole.action_role.in_(self_group_ids)
+                            and_(
+                                _FlowActionRole.action_user == self_user_id,
+                                _FlowActionRole.action_user_exclude == '0'
+                            ),
+                            and_(
+                                _FlowActionRole.action_role.in_(self_group_ids),
+                                _FlowActionRole.action_role_exclude == '0'
+                            )
                         )
                     )
                 else:
@@ -1502,6 +1509,14 @@ class WorkActivity(object):
                             and_(
                                 ActivityAction.action_handler == self_user_id,
                                 _Activity.approval2 == current_user.email,
+                            ),
+                            and_(
+                                _FlowActionRole.action_user == self_user_id,
+                                _FlowActionRole.action_user_exclude == '0'
+                            ),
+                            and_(
+                                _FlowActionRole.action_role.in_(self_group_ids),
+                                _FlowActionRole.action_role_exclude == '0'
                             )
                         ),
                     )
