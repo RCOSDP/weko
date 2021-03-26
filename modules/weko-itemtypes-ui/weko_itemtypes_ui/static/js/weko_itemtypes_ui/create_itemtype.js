@@ -1518,7 +1518,7 @@ $(document).ready(function () {
         arrEnumList.push(titleMapList[titleMap].value);
         isTitleMap = true;
       });
-      if (isTitleMap && itpSchema.enum && itpSchema.enum[0] == null) {
+      if (isTitleMap && Array.isArray(arrEnumList) && itpSchema.format == 'select' && (arrEnumList != undefined || arrEnumList != "")) {
         arrEnumList.unshift(null);
       }
       itpSchema.enum = arrEnumList;
@@ -1863,6 +1863,9 @@ $(document).ready(function () {
       delete property.enum
     } else if (property.format == 'select') {
       property.type = ["null", "string"];
+      if (Array.isArray(property.enum) && (property.enum[0] != undefined || property.enum[0] != "")) {
+        property.enum.unshift(null)
+      }
       form.type = form['templateUrl'] ? "template" : "select";
     }
     //Delete info not use.
