@@ -3247,6 +3247,16 @@ def create_record_metadata_for_user(usage_application_activity, usage_report):
                                                deposit.get("item_type_id"))
         if sub_system_data_key:
             dict_system_data = {usage_report_id_key: usage_report.activity_id}
+            deposit_without_ver,item_id_without_ver = get_record_first_version(deposit)
+            if item_id_without_ver:
+                update_system_data_for_item_metadata(
+                    item_id_without_ver,
+                    sub_system_data_key,
+                    dict_system_data)
+                update_approval_date_for_deposit(deposit_without_ver,
+                                                 sub_system_data_key,
+                                                 dict_system_data,
+                                                 attribute_name)
             update_system_data_for_item_metadata(item_id,
                                                  sub_system_data_key,
                                                  dict_system_data)
@@ -3303,6 +3313,7 @@ def update_system_data_for_item_metadata(item_id, sub_system_data_key,
     item_meta = ItemsMetadata.get_record(id_=item_id)
     item_meta[sub_system_data_key] = dict_system_data
     item_meta.commit()
+    db.session.commit()
 
 
 def update_approval_date_for_deposit(deposit, sub_approval_date_key,
@@ -3373,3 +3384,13 @@ def check_authority_by_admin(activity):
                 return True
             break
     return False
+
+
+def get_record_first_version(deposit):
+    """Get PID of record first version ID."""
+    pid_value = str(int(float(deposit['_deposit']['id'])))
+    pid = PersistentIdentifier.query.filter_by(
+        pid_value = pid_value, pid_type = 'recid').first()
+    record = WekoRecord.get_record(pid.object_uuid)
+    deposit = WekoDeposit(record, record.model)
+    return deposit, pid.object_uuid
