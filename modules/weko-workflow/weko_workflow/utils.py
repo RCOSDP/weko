@@ -64,7 +64,8 @@ from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST,
 from weko_user_profiles.utils import get_user_profile_info
 
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
-    IDENTIFIER_GRANT_SUFFIX_METHOD
+    IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST, \
+    WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST
 
 from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
     WorkFlow
@@ -3220,6 +3221,9 @@ def update_approval_date(activity):
     item_id = activity.item_id
     record = WekoRecord.get_record(item_id)
     deposit = WekoDeposit(record, record.model)
+    if deposit.get("item_type_id") not in \
+        WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST + WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST:
+        return
     approval_date_key = current_app.config[
         'WEKO_WORKFLOW_RESTRICTED_ACCESS_APPROVAL_DATE']
     sub_approval_date_key, attribute_name = \

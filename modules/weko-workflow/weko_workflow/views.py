@@ -529,6 +529,8 @@ def display_activity(activity_id="0"):
         is_hidden_pubdate_value = is_hidden_pubdate(item_type_name)
 
     # if 'approval' == action_endpoint:
+    if 'approval' == action_endpoint:
+        update_approval_date(activity_detail)
     if item:
         # get record data for the first time access to editing item screen
         recid = PersistentIdentifier.get_by_object(
@@ -840,8 +842,6 @@ def next_action(activity_id='0', action_id=0):
         0].action_order if action_order else None
     # Start to send mail
     if 'approval' in [action_endpoint, next_action_endpoint]:
-        if 'approval' == action_endpoint:
-            update_approval_date(activity_detail)
         current_flow_action = flow.get_flow_action_detail(
             activity_detail.flow_define.flow_id, action_id, action_order)
         next_action_detail = work_activity.get_activity_action_comment(
