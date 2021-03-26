@@ -142,14 +142,14 @@
                                 {%- set file_label = file.url.label -%}
                               {%- elif file.url.url -%}
                                 {%- set file_label = file.url.url -%}
+                              {%- else -%}
+                                {%- set file_label = file.filename -%}
                               {%- endif -%}
-                            {%- else -%}
-                              {%- set file_label = file.filename -%}
-                            {%- endif -%}
-                            {%- if file.url and if file.url.url -%}
-                              {%- set text_url = file.url.url -%}
-                            {%- else -%}
-                              {%- set text_url = '' -%}
+                              {%- if file.url.url -%}
+                                {%- set text_url = file.url.url -%}
+                              {%- else -%}
+                                {%- set text_url = '' -%}
+                              {%- endif -%}
                             {%- endif -%}
                           {%- else -%}
                             {%- set text_url = file_url -%}
