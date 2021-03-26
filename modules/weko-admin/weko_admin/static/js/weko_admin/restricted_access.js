@@ -630,7 +630,7 @@ function ModalBodyConfirm ({selectedActivityIds}) {
   )
 }
 
-function ModalFooterConfirm({setShowConfirm, selectedActivityIds}) {
+function ModalFooterConfirm({setShowConfirm,setSelectedActivityIds, selectedActivityIds}) {
   function sendMailReminder() {
     const URL = "/api/admin/restricted_access/send_mail_reminder";
     const data = {
@@ -660,7 +660,7 @@ function ModalFooterConfirm({setShowConfirm, selectedActivityIds}) {
       <button type="button" className="btn btn-primary save-button" onClick={() => {
         sendMailReminder();
         setShowConfirm(false);
-        selectedActivityIds(new Set());
+        setSelectedActivityIds(new Set());
       }}>
         <span className="glyphicon glyphicon-send"></span>&nbsp; {LABEL_SEND}
       </button>
