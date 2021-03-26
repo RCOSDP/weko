@@ -65,7 +65,7 @@ from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
-from .models import ActionStatusPolicy, Activity, ActivityAction
+from .models import ActionStatusPolicy, Activity, ActivityAction, FlowAction
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import IdentifierHandle, auto_fill_title, check_continue, \
     check_existed_doi, create_onetime_download_url_to_guest, \
@@ -866,8 +866,16 @@ def next_action(activity_id='0', action_id=0):
                                 else {},
                                 "approval": True,
                                 "reject": False}
+
+        next_action_handler = next_action_detail.action_handler
+        # in case of current action has action user
+        current_flow_action = FlowAction.query.filter_by(
+            flow_id=activity_detail.flow_define.flow_id,
+            action_id=next_action_id, action_order=next_action_order).one_or_none()
+        if current_flow_action and current_flow_action.action_roles:
+            next_action_handler = current_flow_action.action_roles[0].action_user
         process_send_approval_mails(activity_detail, action_mails_setting,
-                                    next_action_detail.action_handler,
+                                    next_action_handler,
                                     url_and_expired_date)
     if current_app.config.get(
         'WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL') and \
