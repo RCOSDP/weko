@@ -3227,7 +3227,10 @@ def update_approval_date(activity):
                                            deposit.get("item_type_id"))
     if sub_approval_date_key:
         current_date = get_current_date()
-        dict_approval_date = {approval_date_key: current_date}
+        dict_approval_date = {
+            approval_date_key: current_date,
+            'subitem_restricted_access_approval_date_type': "Accepted"
+        }
         update_approval_date_for_deposit(deposit, sub_approval_date_key,
                                          dict_approval_date,
                                          attribute_name)
