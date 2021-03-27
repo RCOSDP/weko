@@ -530,7 +530,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
     validThumbnails: [],
     errorMessages: []
   },
-    thumbnailsVM = rootScope.filesVM.files.filter(file => file.is_thumbnail),
+    thumbnailsVM = rootScope.filesVM && rootScope.filesVM.files.filter(file => file.is_thumbnail),
     inValidThumbnails = [];
 
   // Check for duplicate files & file type
@@ -549,6 +549,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
   if (inValidThumbnails.length > 0) {
     result.isValid = false;
     result.errorMessages.push($("#invalid_files_type").val() + '<br/>' + inValidThumbnails.join(', '));
+  }
+
+  if (!thumbnailsVM || thumbnailsVM.length == 0){
+    return result;
   }
 
   if (thumbnailsVM.length > 0 && itemSizeCheckFlg) {
