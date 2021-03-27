@@ -787,7 +787,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                 record = WekoRecord.get_record_by_pid(record_id)
 
                 # Custom Record Metadata for export
-                hide_item_metadata_email_only(record)
+                hide_item_metadata(record)
                 replace_license_free(record, False)
 
                 self.records[record_id] = record
