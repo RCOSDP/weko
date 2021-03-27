@@ -11,6 +11,7 @@
 from __future__ import absolute_import, print_function
 
 import datetime
+import hashlib
 from collections import OrderedDict
 from copy import deepcopy
 from functools import wraps
@@ -53,6 +54,13 @@ def format_range_dt(dt, interval):
     if not isinstance(dt, six.string_types):
         dt = dt.replace(microsecond=0).isoformat()
     return '{0}||/{1}'.format(dt, dt_rounding_map[interval])
+
+
+def hash_id(iso_timestamp, msg):
+    """Generate event id, optimized for ES."""
+    return '{0}-{1}'.format(
+        iso_timestamp,
+        hashlib.sha1(str(msg).encode('utf-8')).hexdigest())
 
 
 class BookmarkAPI:
@@ -350,11 +358,11 @@ class StatAggregator(object):
                                     interval_date.strftime(
                                         self.index_name_suffix))
                 self.indices.add(index_name)
+
                 rtn_data = dict(
-                    _id='{0}-{1}'.
-                        format(aggregation['key'],
-                               interval_date.strftime(
-                                   self.doc_id_suffix)),
+                    _id=hash_id(
+                        interval_date.strftime(self.doc_id_suffix),
+                        aggregation['key']),
                     _index=index_name,
                     _type=self.aggregation_doc_type,
                     _source=aggregation_data
