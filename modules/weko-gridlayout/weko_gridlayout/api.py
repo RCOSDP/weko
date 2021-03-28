@@ -239,7 +239,7 @@ class WidgetItems(object):
         try:
             with db.session.no_autoflush:
                 role = Role.query.all()
-            return list(map(_get_dict, role)) + [{"id": 99, "name": "Guest"}]
+            return list(map(_get_dict, role)) + [{"id": -99, "name": "Guest"}]
         except SQLAlchemyError:
             return
 

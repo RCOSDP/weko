@@ -24,10 +24,11 @@
 import time
 
 from blinker import Namespace
-from flask import Blueprint, current_app, render_template, request
+from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import SiteInfo
+from weko_admin.utils import get_search_setting
 from weko_records_ui.ipaddr import check_site_license_permission
 
 from .utils import MainScreenInitDisplaySetting, get_design_layout, \
@@ -78,6 +79,19 @@ def edit():
     return render_template(
         current_app.config['BASE_EDIT_TEMPLATE'],
     )
+
+
+@blueprint.route('/get_search_setting', methods=['GET'])
+def get_default_search_setting():
+    """Site license setting page."""
+    data = get_search_setting()
+    data = {
+        "dlt_dis_num_selected": data.get('dlt_dis_num_selected'),
+        "dlt_index_sort_selected": data.get('dlt_index_sort_selected'),
+        "dlt_keyword_sort_selected": data.get('dlt_keyword_sort_selected'),
+        "init_disp_setting": data.get('init_disp_setting')
+    }
+    return jsonify({'status': 1, "data": data})
 
 
 @blueprint.app_template_filter('get_site_info')

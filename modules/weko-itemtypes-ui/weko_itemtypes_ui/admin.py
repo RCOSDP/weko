@@ -29,7 +29,7 @@ from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
-from weko_admin.models import BillingPermission
+from weko_admin.models import AdminSettings, BillingPermission
 from weko_records.api import ItemsMetadata, ItemTypeEditHistory, \
     ItemTypeNames, ItemTypeProps, ItemTypes, Mapping
 from weko_schema_ui.api import WekoSchema
@@ -39,7 +39,8 @@ from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ATT, \
     WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES_ATT
 from .permissions import item_type_permission
 from .utils import check_duplicate_mapping, fix_json_schema, \
-    has_system_admin_access, remove_xsd_prefix
+    has_system_admin_access, remove_xsd_prefix, \
+    update_required_schema_not_exist_in_form
 
 
 class ItemTypeMetaDataView(BaseView):
@@ -157,6 +158,10 @@ class ItemTypeMetaDataView(BaseView):
             json_schema = fix_json_schema(
                 table_row_map.get(
                     'schema'))
+            json_form = table_row_map.get('form')
+            json_schema = update_required_schema_not_exist_in_form(
+                json_schema, json_form)
+
             if not json_schema:
                 raise ValueError('Schema is in wrong format.')
 
@@ -192,10 +197,12 @@ class ItemTypeMetaDataView(BaseView):
             )
 
             db.session.commit()
-        except BaseException:
-            raise
+        except Exception as ex:
             db.session.rollback()
-            return jsonify(msg=_('Failed to register Item type.'))
+            default_msg = _('Failed to register Item type.')
+            response = jsonify(msg='{} {}'.format(default_msg, str(ex)))
+            response.status_code = 400
+            return response
         current_app.logger.debug('itemtype register: {}'.format(item_type_id))
         flash(_('Successfuly registered Item type.'))
         redirect_url = url_for('.index', item_type_id=record.model.id)
@@ -254,7 +261,7 @@ class ItemTypeMetaDataView(BaseView):
                 if prop.schema.get(WEKO_BILLING_FILE_PROP_ATT, None):
                     props.remove(prop)
 
-        lists = {}
+        lists = {'system': {}}
         for k in props:
             name = k.name
             if lang and 'title_i18n' in k.form and \
@@ -267,10 +274,29 @@ class ItemTypeMetaDataView(BaseView):
                 is_file = True
             tmp = {'name': name, 'schema': k.schema, 'form': k.form,
                    'forms': k.forms, 'sort': k.sort, 'is_file': is_file}
-            lists[k.id] = tmp
+            if name and name[:2] == 'S_':
+                lists['system'][k.id] = tmp
+            else:
+                lists[k.id] = tmp
 
-        lists['defaults'] = current_app.config[
-            'WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES']
+        settings = AdminSettings.get('default_properties_settings')
+        default_properties = current_app.config['WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES']
+        if settings:
+            if settings.show_flag:
+                lists['defaults'] = default_properties
+            else:
+                lists['defaults'] = {
+                    '0': {
+                        'name': _('Date (Type-less）'),
+                        'value': 'datetime'}}
+        else:
+            if current_app.config['WEKO_ITEMTYPES_UI_SHOW_DEFAULT_PROPERTIES']:
+                lists['defaults'] = default_properties
+            else:
+                lists['defaults'] = {
+                    '0': {
+                        'name': _('Date (Type-less）'),
+                        'value': 'datetime'}}
 
         return jsonify(lists)
 
@@ -417,7 +443,7 @@ class ItemTypeMappingView(BaseView):
                                             elem_str = elem['title_i18n'][
                                                 cur_lang]
                                 else:
-                                    elem_str = elem['title']
+                                    elem_str = elem.get('title', '')
                             for sub_elem in elem['items']:
                                 if 'key' in sub_elem and \
                                         sub_elem['key'] == key:

@@ -1073,7 +1073,7 @@ class BaseMapper:
 
     def identifier(self):
         """Get identifier."""
-        return self.json['record']['header'].get('identifier').split(".")[0]
+        return self.json['record']['header'].get('identifier')
 
     def datestamp(self):
         """Get datestamp."""

@@ -24,7 +24,7 @@ from .models import OAISet
 from .provider import OAIIDProvider
 from .query import get_records
 from .resumption_token import serialize
-from .utils import datetime_to_datestamp, serializer
+from .utils import datetime_to_datestamp, handle_license_free, serializer
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
 NS_OAIPMH_XSD = 'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
@@ -122,15 +122,6 @@ def identify(**kwargs):
     e_protocolVersion = SubElement(e_identify,
                                    etree.QName(NS_OAIPMH, 'protocolVersion'))
     e_protocolVersion.text = cfg['OAISERVER_PROTOCOL_VERSION']
-
-    # add by Mr ryuu. at 2018/06/06 start
-    if oaiObj is not None:
-        cfg['OAISERVER_ADMIN_EMAILS'][0] = oaiObj.emails
-    # add by Mr ryuu. at 2018/06/06 end
-
-    for adminEmail in cfg['OAISERVER_ADMIN_EMAILS']:
-        e = SubElement(e_identify, etree.QName(NS_OAIPMH, 'adminEmail'))
-        e.text = adminEmail
 
     e_earliestDatestamp = SubElement(
         e_identify, etree.QName(
@@ -319,7 +310,6 @@ def getrecord(**kwargs):
 
     record_dumper = serializer(kwargs['metadataPrefix'])
     pid = OAIIDProvider.get(pid_value=kwargs['identifier']).pid
-    # record = Record.get_record(pid.object_uuid)
 
     identify = OaiIdentify.get_all()
     harvest_public_state, record = WekoRecord.get_record_with_hps(
@@ -357,8 +347,12 @@ def getrecord(**kwargs):
                             etree.QName(NS_OAIPMH, 'metadata'))
 
     etree_record = copy.deepcopy(record)
+
     if not etree_record.get('system_identifier_doi', None):
         etree_record['system_identifier_doi'] = get_identifier(record)
+
+    # Merge licensetype and licensefree
+    etree_record = handle_license_free(etree_record)
 
     root = record_dumper(pid, {'_source': etree_record})
 
@@ -452,6 +446,9 @@ def listrecords(**kwargs):
             e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
                                                           'metadata'))
             etree_record = copy.deepcopy(record['json'])
+
+            # Merge licensetype and licensefree
+            handle_license_free(etree_record['_source']['_item_metadata'])
 
             e_metadata.append(record_dumper(pid, etree_record))
         except Exception:
@@ -595,24 +592,24 @@ def get_identifier(record):
     result = {
         "attribute_name": "Identifier",
         "attribute_value_mlt": [
-            {
-                "subitem_systemidt_identifier": "",
-                "subitem_systemidt_identifier_type": ""
-            }
         ]
     }
+
     if record.pid_doi:
-        identifier = record.pid_doi.pid_value
-        identifier_type = record.pid_doi.pid_type.upper()
-    elif record.pid_cnri:
-        identifier = record.pid_cnri.pid_value
-        identifier_type = record.pid_cnri.pid_type.upper()
-    else:
-        identifier = current_app.config['WEKO_SCHEMA_RECORD_URL'].format(
-            request.url_root, record['_deposit']['id'].split('.')[0])
-        identifier_type = 'URI'
-    result['attribute_value_mlt'][0][
-        'subitem_systemidt_identifier'] = identifier
-    result['attribute_value_mlt'][0][
-        'subitem_systemidt_identifier_type'] = identifier_type
+        result["attribute_value_mlt"].append(dict(
+            subitem_systemidt_identifier=record.pid_doi.pid_value,
+            subitem_systemidt_identifier_type=record.pid_doi.pid_type.upper(),
+        ))
+    if record.pid_cnri:
+        result["attribute_value_mlt"].append(dict(
+            subitem_systemidt_identifier=record.pid_cnri.pid_value,
+            subitem_systemidt_identifier_type=record.pid_cnri.pid_type.upper(),
+        ))
+    if current_app.config.get('WEKO_SCHEMA_RECORD_URL'):
+        result["attribute_value_mlt"].append(dict(
+            subitem_systemidt_identifier=current_app.config[
+                'WEKO_SCHEMA_RECORD_URL'].format(
+                request.url_root, record['_deposit']['id'].split('.')[0]),
+            subitem_systemidt_identifier_type='URI',
+        ))
     return result

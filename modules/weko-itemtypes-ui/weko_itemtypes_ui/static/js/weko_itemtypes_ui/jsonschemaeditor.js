@@ -172,9 +172,9 @@
 		},
 		handleChange: function handleChange(event) {
 			this.state.enum = event.target.value;
-      if (!this.state.editor) {
-        this.props.currentEnum = this.state.enum ? this.state.enum.split('|') : [];
-      }
+			if (!this.state.editor) {
+			  this.props.currentEnum = this.state.enum ? this.state.enum.split('|') : [];
+			}
 			this.setState(this.state);
 		},
 		exportTitleMap: function exportTitleMap() {
@@ -242,9 +242,9 @@
 		},
 		handleChange: function handleChange(event) {
 			this.state.enum = event.target.value;
-      if (!this.state.editor) {
-        this.props.currentEnum = this.state.enum ? this.state.enum.split('|') : [];
-      }
+			if (!this.state.editor) {
+				this.props.currentEnum = this.state.enum ? this.state.enum.split('|') : [];
+			}
 			this.setState(this.state);
 		},
 		exportTitleMap: function exportTitleMap() {
@@ -299,7 +299,7 @@
 			var data = props.data;
 			if (data.hasOwnProperty('enum') && data.enum.length > 0) {
 				data.enum_original = typeof(data.enum) == 'object' ? data.enum : data.enum.split('|');
-				data.enum = typeof(data.enum) == 'object' ? data.enum.join('|') : data.enum;
+				data.enum = typeof(data.enum) == 'object' ? data.enum.filter(function(value){return value !== null}).join('|') : data.enum;
 			} else {
 				data.enum = '';
 			}
@@ -310,12 +310,10 @@
 		},
 		handleChange: function handleChange(event) {
 			this.state.enum = event.target.value;
-			if(!this.state.editor){
+			if (!this.state.editor) {
 				this.props.currentEnum = this.state.enum ? this.state.enum.split('|') : [];
 			}
-			this.setState({
-				enum: event.target.value
-			});
+			this.setState(this.state);
 		},
 		exportTitleMap: function exportTitleMap() {
 			var titleMap = [];
@@ -414,12 +412,11 @@
 			return this.propsToState(this.props);
 		},
 		handleOptionDisable :  function handleOptionDisable(item, disable, option) {
-			if (item.hasOwnProperty("items")) {
+			if (item.hasOwnProperty("items") && item.format != "checkboxes") {
 				for (var key in item.items.properties) {
 					if (disable == true) {
 						item.items.properties[key][option.disableKey] = true;
-						item.items.properties[key][option.optionKey] = true;
-						this.handleOptionDisable(item.items.properties[key], true,option)
+						this.handleOptionDisable(item.items.properties[key], true, option)
 					}
 					else {
 						if((option == this.defaultDict.showList || option == this.defaultDict.specifyNewline) && item.items.properties[key][this.defaultDict.hide.optionKey] == true){
@@ -427,15 +424,14 @@
 						}else{
 							item.items.properties[key][option.disableKey] = false;
 						}
-						this.handleOptionDisable(item.items.properties[key], item.items.properties[key].isShowList || false,option)
+						this.handleOptionDisable(item.items.properties[key], item.items.properties[key][option.disableKey], option)
 					}
 				}
 			}else if(item.hasOwnProperty("properties")) {
 				for (var key in item.properties) {
 					if (disable == true) {
 						item.properties[key][option.disableKey] = true;
-						item.properties[key][option.optionKey] = true;
-						this.handleOptionDisable(item.properties[key], true,option)
+						this.handleOptionDisable(item.properties[key], true, option)
 					}
 					else {
 						if((option == this.defaultDict.showList || option == this.defaultDict.specifyNewline) && item.properties[key][this.defaultDict.hide.optionKey] == true){
@@ -443,13 +439,13 @@
 						}else{
 							item.properties[key][option.disableKey] = false;
 						}
-						this.handleOptionDisable(item.properties[key], item.properties[key].isShowList || false,option)
+						this.handleOptionDisable(item.properties[key], item.properties[key][option.disableKey], option)
 					}
 				}
 			}
 		},
 		setChildShowAndNewline: function setChildShowAndNewline(item, checking_key, parent_key, option) {
-			if (item.hasOwnProperty("items")) {
+			if (item.hasOwnProperty("items") && item.format != "checkboxes") {
 				for (var key in item.items.properties) {
 					item.items.properties[key][parent_key] = option
 					this.setChildShowAndNewline(item.items.properties[key], checking_key, parent_key, item.items.properties[key][checking_key])
@@ -481,10 +477,10 @@
 			}
 			if(data.editor === false){
 				for (var key in data.properties) {
-					this.setChildShowAndNewline(data.properties[key],"isShowList","parent_isShowList",data.properties[key]["isShowList"] == true || false)
-					this.setChildShowAndNewline(data.properties[key],"isSpecifyNewline","parent_isSpecifyNewline",data.properties[key]["isSpecifyNewline"] == true || false)
+					this.setChildShowAndNewline(data.properties[key], "isShowList", "parent_isShowList", data.properties[key]["isShowList"] == true || false)
+					this.setChildShowAndNewline(data.properties[key], "isSpecifyNewline", "parent_isSpecifyNewline", data.properties[key]["isSpecifyNewline"] == true || false)
 					for (var option in this.defaultDict) {
-						this.handleOptionDisable(data.properties[key], data.properties[key][this.defaultDict[option].optionKey] || false, this.defaultDict[option])
+						this.handleOptionDisable(data.properties[key], data.properties[key][this.defaultDict[option].disableKey], this.defaultDict[option])
 					}
 				}
 			}
@@ -563,7 +559,7 @@
 				for(var key in item.items.properties){
 					this.setRequiredListForChild(item.items.properties[key])
 				}
-			}else if(item.hasOwnProperty("items")){
+			}else if(item.hasOwnProperty("properties")){
 				item.properties.required = item.items.propertyItems
 				for(var key in item.properties){
 					this.setRequiredListForChild(item.properties[key])
@@ -580,9 +576,9 @@
 
 			let index = event.target.dataset.index;
 			let propertyItem = this.state.propertyItems[index];
-			// this.state.propertyNames[index].isRequired = event.target.checked;
 			this.state.properties[propertyItem].isRequired = event.target.checked;
-			if(this.state.editor === false){
+			if(this.state.editor === false && this.state.propertyNames[index].format != "checkboxes"){
+				// Format is checkboxes does not contain subs even though it has property'items'
 				if (event.target.checked == true){
 					if(this.state.propertyNames[index].hasOwnProperty("items")){
 						this.state.propertyNames[index].items.required = this.state.propertyNames[index].items.propertyItems
@@ -618,61 +614,65 @@
 			let index = event.target.dataset.index;
 			let propertyItem = this.state.propertyItems[index];
 			this.state.propertyNames[index].isShowList = event.target.checked;
-			if (this.state.propertyNames[index].hasOwnProperty("items")) {
-				if (event.target.checked == true) {
-					for (let key in this.state.propertyNames[index].items.properties) {
-						this.state.propertyNames[index].items.properties[key]["parent_isShowList"] = true
-						this.handleOptionChange(this.state.propertyNames[index].items.properties[key], this.defaultDict.showList)
+			if (this.state.propertyNames[index].format != "checkboxes") {
+				if (this.state.propertyNames[index].hasOwnProperty("items")) {
+					if (event.target.checked == true) {
+						for (let key in this.state.propertyNames[index].items.properties) {
+							this.state.propertyNames[index].items.properties[key]["parent_isShowList"] = true
+							this.handleOptionChange(this.state.propertyNames[index].items.properties[key], this.defaultDict.showList)
+						}
+					} else {
+						for (let key in this.state.propertyNames[index].items.properties) {
+							this.state.propertyNames[index].items.properties[key]["parent_isShowList"] = false
+						}
 					}
-				} else {
-					for (let key in this.state.propertyNames[index].items.properties) {
-						this.state.propertyNames[index].items.properties[key]["parent_isShowList"] = false
+				} else if (this.state.propertyNames[index].hasOwnProperty("properties")) {
+					if (event.target.checked == true) {
+						for (let key in this.state.propertyNames[index].properties) {
+							this.state.propertyNames[index].properties[key]["parent_isShowList"] = true
+							this.handleOptionChange(this.state.propertyNames[index].properties[key], this.defaultDict.showList)
+						}
+					} else {
+						for (let key in this.state.propertyNames[index].properties) {
+							this.state.propertyNames[index].properties[key]["parent_isShowList"] = false
+						}
 					}
 				}
-			} else if (this.state.propertyNames[index].hasOwnProperty("properties")) {
-				if (event.target.checked == true) {
-					for (let key in this.state.propertyNames[index].properties) {
-						this.state.propertyNames[index].properties[key]["parent_isShowList"] = true
-						this.handleOptionChange(this.state.propertyNames[index].properties[key], this.defaultDict.showList)
-					}
-				} else {
-					for (let key in this.state.propertyNames[index].properties) {
-						this.state.propertyNames[index].properties[key]["parent_isShowList"] = false
-					}
-				}
+				this.handleOptionDisable(this.state.properties[propertyItem], this.state.propertyNames[index].isShowList || false, this.defaultDict.showList)
 			}
-			this.handleOptionDisable(this.state.properties[propertyItem], this.state.propertyNames[index].isShowList || false, this.defaultDict.showList)
 			this.setState(this.state);
 		},
 		changeSpecifyNewline: function changeSpecifyNewline(event) {
 			let index = event.target.dataset.index;
 			this.state.propertyNames[index].isSpecifyNewline = event.target.checked;
 			let propertyItem = this.state.propertyItems[index];
-			if (this.state.propertyNames[index].hasOwnProperty("items")) {
-				if (event.target.checked === true) {
-					for (let key in this.state.propertyNames[index].items.properties) {
-						this.state.propertyNames[index].items.properties[key]["parent_isSpecifyNewline"] = true
-						this.handleOptionChange(this.state.propertyNames[index].items.properties[key], this.defaultDict.specifyNewline)
+			if (this.state.propertyNames[index].format != "checkboxes") {
+				if (this.state.propertyNames[index].hasOwnProperty("items")) {
+					if (event.target.checked === true) {
+						for (let key in this.state.propertyNames[index].items.properties) {
+							this.state.propertyNames[index].items.properties[key]["parent_isSpecifyNewline"] = true
+							this.handleOptionChange(this.state.propertyNames[index].items.properties[key], this.defaultDict.specifyNewline)
+						}
+					}
+					else {
+						for (let key in this.state.propertyNames[index].items.properties) {
+							this.state.propertyNames[index].items.properties[key]["parent_isSpecifyNewline"] = false
+						}
+					}
+				} else if (this.state.propertyNames[index].hasOwnProperty("properties")) {
+					if (event.target.checked === true) {
+						for (let key in this.state.propertyNames[index].properties) {
+							this.state.propertyNames[index].properties[key]["parent_isSpecifyNewline"] = true
+							this.handleOptionChange(this.state.propertyNames[index].properties[key], this.defaultDict.specifyNewline)
+						}
+					} else {
+						for (let key in this.state.propertyNames[index].properties) {
+							this.state.propertyNames[index].properties[key]["parent_isSpecifyNewline"] = false
+						}
 					}
 				}
-				else {
-					for (let key in this.state.propertyNames[index].items.properties) {
-						this.state.propertyNames[index].items.properties[key]["parent_isSpecifyNewline"] = false
-					}
-				}
-			} else if (this.state.propertyNames[index].hasOwnProperty("properties")) {
-				if (event.target.checked === true) {
-					for (let key in this.state.propertyNames[index].properties) {
-						this.state.propertyNames[index].properties[key]["parent_isSpecifyNewline"] = true
-						this.handleOptionChange(this.state.propertyNames[index].properties[key], this.defaultDict.specifyNewline)
-					}
-				} else {
-					for (let key in this.state.propertyNames[index].properties) {
-						this.state.propertyNames[index].properties[key]["parent_isSpecifyNewline"] = false
-					}
-				}
+				this.handleOptionDisable(this.state.properties[propertyItem], this.state.propertyNames[index].isSpecifyNewline || false, this.defaultDict.specifyNewline)
 			}
-			this.handleOptionDisable(this.state.properties[propertyItem], this.state.propertyNames[index].isSpecifyNewline || false, this.defaultDict.specifyNewline)
 			this.setState(this.state);
 		},
 		handleHideChangedEffect: function handleHideChangedEffect(item) {
@@ -698,25 +698,27 @@
 					this.state.properties[propertyItem][this.defaultDict.showList.disableKey] = true
 				}
 			}
-			if (this.state.propertyNames[index].hasOwnProperty("items")) {
-				if (event.target.checked == true) {
+			if (this.state.propertyNames[index].format != "checkboxes") {
+				if (this.state.propertyNames[index].hasOwnProperty("items")) {
+					if (event.target.checked == true) {
+						for (var key in this.state.propertyNames[index].items.properties) {
+							this.handleOptionChange(this.state.propertyNames[index].items.properties[key], this.defaultDict.hide)
+						}
+					}
+					this.handleOptionDisable(this.state.properties[propertyItem], this.state.propertyNames[index].isHide || false, this.defaultDict.hide)
 					for (var key in this.state.propertyNames[index].items.properties) {
-						this.handleOptionChange(this.state.propertyNames[index].items.properties[key], this.defaultDict.hide)
+						this.handleHideChangedEffect(this.state.propertyNames[index].items.properties[key])
 					}
-				}
-				this.handleOptionDisable(this.state.properties[propertyItem], this.state.propertyNames[index].isHide || false, this.defaultDict.hide)
-				for (var key in this.state.propertyNames[index].items.properties) {
-					this.handleHideChangedEffect(this.state.propertyNames[index].items.properties[key])
-				}
-			} else if (this.state.propertyNames[index].hasOwnProperty("properties")) {
-				if (event.target.checked == true) {
+				} else if (this.state.propertyNames[index].hasOwnProperty("properties")) {
+					if (event.target.checked == true) {
+						for (var key in this.state.propertyNames[index].properties) {
+							this.handleOptionChange(this.state.propertyNames[index].properties[key], this.defaultDict.hide)
+						}
+					}
+					this.handleOptionDisable(this.state.properties[propertyItem], this.state.propertyNames[index].isHide || false, this.defaultDict.hide)
 					for (var key in this.state.propertyNames[index].properties) {
-						this.handleOptionChange(this.state.propertyNames[index].properties[key], this.defaultDict.hide)
+						this.handleHideChangedEffect(this.state.propertyNames[index].properties[key])
 					}
-				}
-				this.handleOptionDisable(this.state.properties[propertyItem], this.state.propertyNames[index].isHide || false, this.defaultDict.hide)
-				for (var key in this.state.propertyNames[index].properties) {
-					this.handleHideChangedEffect(this.state.propertyNames[index].properties[key])
 				}
 			}
 			//this.state = this.propsToState(this.export());
@@ -821,7 +823,9 @@
 				}
 			}
 			if(item.hasOwnProperty("items")){
-				this.removeRedundantAtt(item.items.properties)
+				if(item.items.hasOwnProperty("properties")){
+					this.removeRedundantAtt(item.items.properties)
+				}
 			}
 		},
 		export: function _export() {
@@ -917,13 +921,13 @@
 					var itemKey = self.state.propertyItems[index];
 					//Hide item on Properties & Meta.
 					let hideItems = ['iscreator'];
-					let isHideItems = hideItems.includes(itemKey);
+					let isHideItems = hideItems.indexOf(itemKey) !== -1;
 					if(isHideItems) return;
 
 					var copiedState = self.state.properties[name]; // JSON.parse(JSON.stringify(self.state.properties[index]));
 					var optionForm = mapping('subitem' + index, copiedState, self.state.editor, self.onChange);
 					let allowedChangeArray = ['checkboxes', 'radios', 'select'];
-					let isDisabledFormat = !allowedChangeArray.includes(value.format);
+					let isDisabledFormat = allowedChangeArray.indexOf(value.format) === -1;
 					let disabledFormatSelect = isDisabledFormat && !self.state.editor;
 					let isEditor = self.state.editor ? ' hide' : '';
 					//Get unique key of Localization Settings.
@@ -979,7 +983,7 @@
 											onChange: self.changeItem,
 											style: {width: "305px !important"}
 										}
-									),
+									)
 								),
 								React.createElement('p', {className: isEditor},
 									React.createElement('button', {

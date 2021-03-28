@@ -18,7 +18,14 @@
  # MA 02111-1307, USA.
  #}
 {%- from "weko_workflow/helpers.html" import render_identifier_link with context -%}
-
+<input type="hidden" id="item_id" value="{{record['_deposit']['id']}}" />
+<!-- Confirm Modal -->
+{% from "weko_theme/macros/modal_page.html" import approval_modal %}
+{{ approval_modal(modal_id="restrict_doi_modal",
+                 button_id="restrict_doi_button",
+                 button_text="OK",
+                 title=_('Confirmation'),
+                 body=_('When assigning a DOI to an item, it must be associated with an index whose index status is "Public" and Harvest Publishing is "Public".'))}}
 <div class="panel panel-default">
   <div class="panel-heading">
     <span>{{_('Identifier Grant')}}</span>

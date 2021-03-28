@@ -10,7 +10,7 @@
 
 import json
 
-from flask import flash, redirect, url_for
+from flask import abort, current_app, flash, jsonify, redirect, url_for
 from flask_admin import expose
 from flask_admin.contrib.sqla import ModelView
 from flask_babelex import gettext as _
@@ -31,8 +31,19 @@ class RecordMetadataModelView(ModelView):
     @expose('/soft_delete/<string:id>')
     def soft_delete(self, id):
         """Soft delete."""
-        soft_delete_imp(id)
-        return redirect(url_for('recordmetadata.details_view') + '?id=' + id)
+        try:
+            soft_delete_imp(id)
+            return jsonify(code=1, msg='PID: ' + str(id) + ' DELETED')
+        except Exception as ex:
+            current_app.logger.error(ex)
+            if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                    and ex.args[0].get('is_locked'):
+                return jsonify(
+                    code=-1,
+                    is_locked=True,
+                    msg=str(ex.args[0].get('msg', ''))
+                )
+            abort(500)
 
     @expose('/restore/<string:id>')
     def restore(self, id):
@@ -46,7 +57,8 @@ class RecordMetadataModelView(ModelView):
     can_delete = True
     can_view_details = True
     column_list = ('id', 'status', 'version_id', 'updated', 'created')
-    column_details_list = ('id', 'status', 'version_id', 'updated', 'created', 'json')
+    column_details_list = ('id', 'status', 'version_id',
+                           'updated', 'created', 'json')
     column_sortable_list = ('status', 'version_id', 'updated', 'created')
     column_labels = dict(
         id=_('UUID'),

@@ -23,7 +23,7 @@
 import uuid
 from datetime import datetime, timedelta
 
-from flask import current_app, request, session, url_for
+from flask import abort, current_app, request, session, url_for
 from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
@@ -46,6 +46,7 @@ from .models import FlowActionRole as _FlowActionRole
 from .models import FlowDefine as _Flow
 from .models import FlowStatusPolicy
 from .models import WorkFlow as _WorkFlow
+from .models import WorkflowRole
 
 
 class Flow(object):
@@ -59,14 +60,25 @@ class Flow(object):
         :return:
         """
         try:
+            flow_name = flow.get('flow_name')
+            if not flow_name:
+                raise ValueError('Flow name cannot be empty.')
+
             with db.session.no_autoflush:
+                cur_names = map(
+                    lambda flow: flow.flow_name,
+                    _Flow.query.add_columns(_Flow.flow_name).all()
+                )
+                if flow_name in cur_names:
+                    raise ValueError('Flow name is already in use.')
+
                 action_start = _Action.query.filter_by(
                     action_endpoint='begin_action').one_or_none()
                 action_end = _Action.query.filter_by(
                     action_endpoint='end_action').one_or_none()
             _flow = _Flow(
                 flow_id=uuid.uuid4(),
-                flow_name=flow.get('flow_name'),
+                flow_name=flow_name,
                 flow_user=current_user.get_id()
             )
             _flowaction_start = _FlowAction(
@@ -90,7 +102,7 @@ class Flow(object):
         except Exception as ex:
             current_app.logger.exception(str(ex))
             db.session.rollback()
-            return None
+            raise
 
     def upt_flow(self, flow_id, flow):
         """Update flow info.
@@ -100,11 +112,24 @@ class Flow(object):
         :return:
         """
         try:
+            flow_name = flow.get('flow_name')
+            if not flow_name:
+                raise ValueError('Flow name cannot be empty.')
+
             with db.session.begin_nested():
+                # Get all names but the one being updated
+                cur_names = map(
+                    lambda flow: flow.flow_name,
+                    _Flow.query.add_columns(_Flow.flow_name)
+                    .filter(_Flow.flow_id != flow_id).all()
+                )
+                if flow_name in cur_names:
+                    raise ValueError('Flow name is already in use.')
+
                 _flow = _Flow.query.filter_by(
                     flow_id=flow_id).one_or_none()
                 if _flow:
-                    _flow.flow_name = flow.get('flow_name')
+                    _flow.flow_name = flow_name
                     _flow.flow_user = current_user.get_id()
                     db.session.merge(_flow)
             db.session.commit()
@@ -112,7 +137,7 @@ class Flow(object):
         except Exception as ex:
             current_app.logger.exception(str(ex))
             db.session.rollback()
-            return None
+            raise
 
     def get_flow_list(self):
         """Get flow list info.
@@ -134,6 +159,8 @@ class Flow(object):
             query = _Flow.query.filter_by(
                 flow_id=flow_id)
             flow_detail = query.one_or_none()
+            if not flow_detail:
+                abort(500)
             for action in flow_detail.flow_actions:
                 action_roles = _FlowActionRole.query.filter_by(
                     flow_action_id=action.id).first()
@@ -430,6 +457,35 @@ class WorkFlow(object):
                 itemtype_id=item_type_id, is_deleted=False)
             return query.all()
 
+    def get_workflows_by_roles(self, workflows):
+        """Get list workflow.
+
+        :param workflows.
+
+        :return: wfs.
+        """
+        def get_display_role(list_hide, role):
+            displays = []
+            if isinstance(role, list):
+                for tmp in role:
+                    if not any(x.id == tmp.id for x in list_hide):
+                        displays.append(tmp)
+            return displays
+        wfs = []
+        current_user_roles = [role.id for role in current_user.roles]
+        if isinstance(workflows, list):
+            role = Role.query.all()
+            while workflows:
+                tmp = workflows.pop(0)
+                list_hide = Role.query.outerjoin(WorkflowRole) \
+                    .filter(WorkflowRole.workflow_id == tmp.id) \
+                    .filter(WorkflowRole.role_id == Role.id) \
+                    .all()
+                displays = get_display_role(list_hide, role)
+                if any(x.id in current_user_roles for x in displays):
+                    wfs.append(tmp)
+        return wfs
+
 
 class Action(object):
     """Operated on the Action."""
@@ -673,6 +729,32 @@ class WorkActivity(object):
             activity.action_status = action_status
             db.session.merge(activity)
         db.session.commit()
+
+    def upt_activity_metadata(self, activity_id, metadata):
+        """Update metadata to activity table.
+
+        :param activity_id:
+        :param metadata:
+        :return:
+        """
+        with db.session.begin_nested():
+            activity = _Activity.query.filter_by(
+                activity_id=activity_id).one_or_none()
+            activity.temp_data = metadata
+            db.session.merge(activity)
+        db.session.commit()
+
+    def get_activity_metadata(self, activity_id):
+        """Get metadata from activity table.
+
+        :param activity_id:
+        :return metadata:
+        """
+        with db.session.no_autoflush:
+            activity = _Activity.query.filter_by(
+                activity_id=activity_id,).one_or_none()
+            metadata = activity.temp_data
+            return metadata
 
     def upt_activity_action_status(
             self,
@@ -938,6 +1020,7 @@ class WorkActivity(object):
                     db_activity.action_id = activity.get('action_id')
                     db_activity.action_status = activity.get('action_status')
                     db_activity.activity_end = datetime.utcnow()
+                    db_activity.temp_data = None
                     if activity.get('item_id') is not None:
                         db_activity.item_id = activity.get('item_id')
                     db.session.merge(db_activity)
@@ -984,6 +1067,7 @@ class WorkActivity(object):
                     db_activity.activity_status = \
                         ActivityStatusPolicy.ACTIVITY_CANCEL
                     db_activity.activity_end = datetime.utcnow()
+                    db_activity.temp_data = None
                     if 'item_id' in activity:
                         db_activity.item_id = activity.get('item_id')
                     db.session.merge(db_activity)
@@ -1202,9 +1286,9 @@ class WorkActivity(object):
         self_group_ids = [role.id for role in current_user.roles]
         query = query \
             .filter((_Activity.activity_status
-                    == ActivityStatusPolicy.ACTIVITY_BEGIN)
+                     == ActivityStatusPolicy.ACTIVITY_BEGIN)
                     | (_Activity.activity_status
-                    == ActivityStatusPolicy.ACTIVITY_MAKING)) \
+                       == ActivityStatusPolicy.ACTIVITY_MAKING)) \
             .filter(
                 ((_FlowActionRole.action_user == self_user_id)
                  & (_FlowActionRole.action_user_exclude == '0'))

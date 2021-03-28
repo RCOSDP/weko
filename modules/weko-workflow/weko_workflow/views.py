@@ -27,8 +27,8 @@ from collections import OrderedDict
 from functools import wraps
 
 import redis
-from flask import Blueprint, current_app, jsonify, render_template, request, \
-    session, url_for
+from flask import Blueprint, abort, current_app, jsonify, render_template, \
+    request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
@@ -60,10 +60,10 @@ from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
-from .models import ActionStatusPolicy, ActivityStatusPolicy
+from .models import ActionStatusPolicy, ActivityStatusPolicy, WorkflowRole
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import IdentifierHandle, delete_cache_data, filter_condition, \
-    get_account_info, get_actionid, \
+from .utils import IdentifierHandle, check_existed_doi, delete_cache_data, \
+    filter_condition, get_account_info, get_actionid, \
     get_activity_id_of_record_without_version, get_cache_data, \
     get_identifier_setting, handle_finish_workflow, is_hidden_pubdate, \
     is_show_autofill_metadata, item_metadata_validation, register_hdl, \
@@ -82,6 +82,9 @@ blueprint = Blueprint(
 @login_required
 def index():
     """Render a basic view."""
+    if not current_user or not current_user.roles:
+        return abort(403)
+
     activity = WorkActivity()
     getargs = request.args
 
@@ -159,6 +162,11 @@ def iframe_success():
     page, render_widgets = get_design_layout(
         community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
 
+    work_activity = WorkActivity()
+    activity_action = work_activity.get_activity_action_comment(
+        activity.activity_id, action_id)
+    action_comment = activity_action.action_comment \
+        if activity_action and activity_action.action_comment else ''
     return render_template('weko_workflow/item_login_success.html',
                            page=page,
                            render_widgets=render_widgets,
@@ -172,6 +180,7 @@ def iframe_success():
                            res_check=res_check,
                            pid=pid,
                            community_id=community_id,
+                           action_comment=action_comment,
                            **ctx)
 
 
@@ -181,6 +190,7 @@ def new_activity():
     """New activity."""
     workflow = WorkFlow()
     workflows = workflow.get_workflow_list()
+    workflows = workflow.get_workflows_by_roles(workflows)
     getargs = request.args
     ctx = {'community': None}
     community_id = ""
@@ -405,14 +415,10 @@ def display_activity(activity_id=0):
         deposit = WekoDeposit.get_record(item.id)
 
         # get files data after click Save btn
-        sessionstore = RedisStore(redis.StrictRedis.from_url(
-            'redis://{host}:{port}/1'.format(
-                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
-
-        if sessionstore.redis.exists('activity_item_' + str(activity_id)):
-            item_str = sessionstore.get('activity_item_' + str(activity_id))
-            item_json = json.loads(item_str.decode('utf-8'))
+        activity = WorkActivity()
+        metadata = activity.get_activity_metadata(activity_id)
+        if metadata:
+            item_json = json.loads(metadata)
             if 'files' in item_json:
                 files = item_json.get('files')
         if deposit and not files:
@@ -1117,31 +1123,10 @@ def withdraw_confirm(activity_id='0', action_id='0'):
 
 @blueprint.route('/findDOI', methods=['POST'])
 @login_required
-def check_existed_doi():
+def find_doi():
     """Next action."""
-    doi_link = request.get_json()
-    respon = dict()
-    respon['isExistDOI'] = False
-    respon['isWithdrawnDoi'] = False
-    respon['code'] = 1
-    respon['msg'] = 'error'
-    if doi_link:
-        identifier = IdentifierHandle(None)
-        doi_pidstore = identifier.check_pidstore_exist(
-            'doi',
-            doi_link['doi_link'])
-        if doi_pidstore:
-            respon['isExistDOI'] = True
-            respon['msg'] = _('This DOI has been used already for another '
-                              'item. Please input another DOI.')
-            if doi_pidstore.status == PIDStatus.DELETED:
-                respon['isWithdrawnDoi'] = True
-                respon['msg'] = _(
-                    'This DOI was withdrawn. Please input another DOI.')
-        else:
-            respon['msg'] = _('success')
-        respon['code'] = 0
-    return jsonify(respon)
+    doi_link = request.get_json() or {}
+    return jsonify(check_existed_doi(doi_link.get('doi_link')))
 
 
 @blueprint.route(

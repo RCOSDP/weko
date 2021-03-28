@@ -43,6 +43,9 @@ from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
+from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidrelations.models import PIDRelation
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.api import RecordBase
 from invenio_search import RecordsSearch
 from invenio_stats.utils import QueryItemRegReportHelper, \
@@ -59,13 +62,16 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission, check_publish_status
 from weko_records_ui.utils import hide_item_metadata, \
-    hide_item_metadata_email_only
+    hide_item_metadata_email_only, replace_license_free
+from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
     get_root_item_option, get_sub_item_option
 from weko_user_profiles import UserProfile
 from weko_workflow.api import WorkActivity, WorkFlow
-from weko_workflow.config import WEKO_SERVER_CNRI_HOST_LINK
+from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
+    WEKO_SERVER_CNRI_HOST_LINK
+from weko_workflow.models import ActionStatusPolicy as ASP
 from weko_workflow.utils import IdentifierHandle
 
 
@@ -743,6 +749,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
         records.attr_output -- Record data
 
     """
+    from weko_records_ui.views import escape_str
+
     item_type = ItemTypes.get_by_id(item_type_id).render
     list_hide = get_item_from_option(item_type_id)
     no_permission_show_hide = hide_meta_data_for_role(
@@ -771,7 +779,11 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
             self.first_recid = record_ids[0]
             for record_id in record_ids:
                 record = WekoRecord.get_record_by_pid(record_id)
+
+                # Custom Record Metadata for export
                 hide_item_metadata_email_only(record)
+                replace_license_free(record, False)
+
                 self.records[record_id] = record
                 self.attr_output[record_id] = []
 
@@ -899,7 +911,21 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                         new_label = '{}.{}'.format(
                             item_label, properties[key].get('title'))
 
-                    if properties[key]['type'] in ['array', 'object']:
+                    if properties[key].get('format', '') == 'checkboxes':
+                        new_key += '[{}]'
+                        new_label += '[{}]'
+                        if isinstance(data, dict):
+                            data = [data]
+                        if data and data[idx].get(key):
+                            for idx_c in range(len(data[idx][key])):
+                                key_list.append(new_key.format(idx_c))
+                                key_label.append(new_label.format(idx_c))
+                                key_data.append(data[idx][key][idx_c])
+                        else:
+                            key_list.append(new_key.format('0'))
+                            key_label.append(new_label.format('0'))
+                            key_data.append('')
+                    elif properties[key]['type'] in ['array', 'object']:
                         if data and idx < len(data) and data[idx].get(key):
                             m_data = data[idx][key]
                         else:
@@ -927,12 +953,13 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                         key_list.append(new_key)
                         key_label.append(new_label)
                         if data and idx < len(data) and data[idx].get(key):
-                            key_data.append(data[idx][key])
+                            key_data.append(escape_str(data[idx][key]))
                         else:
                             key_data.append('')
 
                 key_list_len = len(key_list)
                 for key_index in range(key_list_len):
+                    item_key_split = item_key.split('.')
                     if 'filename' in key_list[key_index]:
                         key_list.insert(0, '.file_path[{}]'.format(
                             str(idx)))
@@ -945,11 +972,15 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                             key_data.insert(0, '')
                         break
                     elif 'thumbnail_label' in key_list[key_index] \
-                            and len(item_key.split('.')) == 2:
-                        key_list.insert(0, '.thumbnail_path[{}]'.format(
-                            str(idx)))
-                        key_label.insert(0, '.サムネイルパス[{}]'.format(
-                            str(idx)))
+                            and len(item_key_split) == 2:
+                        if '[' in item_key_split[0]:
+                            key_list.insert(0, '.thumbnail_path[{}]'.format(
+                                str(idx)))
+                            key_label.insert(0, '.サムネイルパス[{}]'.format(
+                                str(idx)))
+                        else:
+                            key_list.insert(0, '.thumbnail_path')
+                            key_label.insert(0, '.サムネイルパス')
                         if key_data[key_index]:
                             key_data.insert(0, 'recid_{}/{}'.format(str(
                                 self.cur_recid), key_data[key_index]))
@@ -996,8 +1027,12 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
             index_ids = path.split('/')
             pos_index = []
             for index_id in index_ids:
-                index = Indexes.get_index(index_id)
-                pos_index.append(index.index_name_english if index else '')
+                index_tree = Indexes.get_index(index_id)
+                index_name = ''
+                if index_tree:
+                    index_name = index_tree.index_name_english.replace(
+                        '/', r'\/')
+                pos_index.append(index_name)
             records.attr_output[recid].append('/'.join(pos_index))
         records.attr_output[recid].extend(
             [''] * (max_path * 2 - len(records.attr_output[recid]))
@@ -1020,9 +1055,23 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
 
         identifier = IdentifierHandle(record.pid_recid.object_uuid)
         doi_value, doi_type = identifier.get_idt_registration_data()
+        doi_type_str = doi_type[0] if doi_type and doi_type[0] else ''
+        doi_str = doi_value[0] if doi_value and doi_value[0] else ''
+        if doi_type_str and doi_str:
+            doi_domain = ''
+            if doi_type_str == WEKO_IMPORT_DOI_TYPE[0]:
+                doi_domain = IDENTIFIER_GRANT_LIST[1][2]
+            elif doi_type_str == WEKO_IMPORT_DOI_TYPE[1]:
+                doi_domain = IDENTIFIER_GRANT_LIST[2][2]
+            elif doi_type_str == WEKO_IMPORT_DOI_TYPE[2]:
+                doi_domain = IDENTIFIER_GRANT_LIST[3][2]
+            elif doi_type_str == WEKO_IMPORT_DOI_TYPE[3]:
+                doi_domain = IDENTIFIER_GRANT_LIST[4][2]
+            if doi_domain and doi_str.startswith(doi_domain):
+                doi_str = doi_str.replace(doi_domain + '/', '', 1)
         records.attr_output[recid].extend([
-            doi_type[0] if doi_type and doi_type[0] else '',
-            doi_value[0] if doi_value and doi_value[0] else ''
+            doi_type_str,
+            doi_str
         ])
 
         records.attr_output[recid].append('')
@@ -1067,7 +1116,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                 if not labels:
                     labels = [item.get('title')]
                 data = records.attr_data[item_key].get(recid) or ['']
-                records.attr_output[recid].extend(data)
+                records.attr_output[recid].extend(
+                    data.get("attribute_value", ""))
 
         new_keys = []
         for key in keys:
@@ -1119,7 +1169,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
         elif key == '.edit_mode' or key == '.publish_status':
             ret_system.append('')
             ret_option.append('Required')
-        elif _id.split('[')[0] in multiple_option:
+        elif '[' in _id and _id.split('[')[0] in multiple_option:
             ret_system.append('')
             ret_option.append('Allow Multiple')
         else:
@@ -1307,67 +1357,6 @@ def export_items(post_data):
     )
 
 
-def export_item_custorm(post_data):
-    """Gather all the item data and export and return as a JSON or BIBTEX.
-
-    :return: JSON, BIBTEX
-    """
-    include_contents = True
-    record_id = post_data['record_id']
-
-    result = {'items': []}
-    temp_path = tempfile.TemporaryDirectory()
-    item_types_data = {}
-
-    try:
-        # Set export folder
-        export_path = temp_path.name + '/' + datetime.utcnow().strftime(
-            "%Y%m%d%H%M%S")
-        # Double check for limits
-        record_path = export_path + '/recid_' + str(record_id)
-        os.makedirs(record_path, exist_ok=True)
-        exported_item, list_item_role = _export_item(
-            record_id,
-            None,
-            include_contents,
-            record_path,
-        )
-
-        result['items'].append(exported_item)
-
-        item_type_id = exported_item.get('item_type_id')
-        item_type = ItemTypes.get_by_id(item_type_id)
-        if not item_types_data.get(item_type_id):
-            item_types_data[item_type_id] = {}
-
-            item_types_data[item_type_id] = {
-                'item_type_id': item_type_id,
-                'name': '{}({})'.format(
-                    item_type.item_type_name.name,
-                    item_type_id),
-                'root_url': request.url_root,
-                'jsonschema': 'items/jsonschema/' + item_type_id,
-                'keys': [],
-                'labels': [],
-                'recids': [],
-                'data': {},
-            }
-        item_types_data[item_type_id]['recids'].append(record_id)
-
-        # Create export info file
-        write_tsv_files(item_types_data, export_path, list_item_role)
-
-        # Create bag
-        bagit.make_bag(export_path)
-        # Create download file
-        shutil.make_archive(export_path, 'zip', export_path)
-    except Exception:
-        current_app.logger.error('-' * 60)
-        traceback.print_exc(file=sys.stdout)
-        current_app.logger.error('-' * 60)
-    return send_file(export_path + '.zip')
-
-
 def _get_max_export_items():
     """Get max amount of items to export."""
     max_table = current_app.config['WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE']
@@ -1513,17 +1502,41 @@ def update_schema_remove_hidden_item(schema, render, items_name):
     return schema
 
 
+def get_files_from_metadata(record):
+    """
+    Get files from record meta_data.
+
+    @param record:
+    @return:
+    """
+    files = {}
+    for key in record:
+        meta_data = record.get(key)
+        if type(meta_data) == dict and \
+                meta_data.get('attribute_type', '') == "file":
+            file_metadata = meta_data.get("attribute_value_mlt", [])
+            for f in file_metadata:
+                if f.get("version_id"):
+                    files[f["version_id"]] = f
+            break
+    return files
+
+
 def to_files_js(record):
     """List files in a deposit."""
     res = []
     files = record.files
+    # Get files form meta_data, so that you can append any extra info to files
+    # (which not contained by file_bucket) such as license below
+    files_from_meta = get_files_from_metadata(record)
     if files is not None:
         for f in files:
             res.append({
                 'displaytype': f.get('displaytype', ''),
                 'filename': f.get('filename', ''),
                 'mimetype': f.mimetype,
-                'licensetype': f.get('licensetype', ''),
+                'licensetype': files_from_meta.get(str(f.version_id),
+                                                   {}).get("licensetype", ''),
                 'key': f.key,
                 'version_id': str(f.version_id),
                 'checksum': f.file.checksum,
@@ -2096,7 +2109,9 @@ def make_bibtex_data(record_ids):
     for record_id in record_ids:
         record = WekoRecord.get_record_by_pid(record_id)
         pid = record.pid_recid
+
         hide_item_metadata(record)
+
         serializer = WekoBibTexSerializer()
         output = serializer.serialize(pid, record)
         result += output if output != err_msg else ''
@@ -2117,6 +2132,12 @@ def translate_schema_form(form_element, cur_lang):
         and len(form_element[title_i18n_key][cur_lang]) > 0
     ):
         form_element['title'] = form_element[title_i18n_key][cur_lang]
+
+    des_i18n_key = "description_i18n"
+    if (form_element.get(des_i18n_key)
+        and cur_lang in form_element[des_i18n_key]
+            and len(form_element[des_i18n_key][cur_lang]) > 0):
+        form_element['description'] = form_element[des_i18n_key][cur_lang]
 
     if (
         form_element.get(msg_i18n_key)
@@ -2332,7 +2353,7 @@ def hide_form_items(item_type, schema_form):
         hidden_items = [
             schema_form.index(form) for form in schema_form
             if form.get('items') and form[
-                'items'][0]['key'].split('.')[1] in i]
+                'items'][0]['key'].split('.')[1] == i]
         if hidden_items and i in json.dumps(schema_form):
             schema_form = update_schema_remove_hidden_item(
                 schema_form,
@@ -2380,3 +2401,93 @@ def get_ignore_item(_item_type_id):
         key = [_id.replace('[]', '') for _id in sub_id.split('.')]
         ignore_list.append(key)
     return ignore_list
+
+
+def filter_list_item_uuid_has_doi(list_uuid):
+    """Filter list item_uuid has doi.
+
+    @param list_uuid:
+    @return: list_uuid
+    """
+    if not list_uuid:
+        return []
+    with db.session.no_autoflush:
+        p = PersistentIdentifier
+        uuid_cond = p.object_uuid == list_uuid[0] \
+            if len(list_uuid) == 1 else p.object_uuid.in_(list_uuid)
+        query = db.session.query(p).filter(
+            uuid_cond,
+            p.status == PIDStatus.REGISTERED,
+            p.pid_type == 'doi')
+
+        return [str(record.object_uuid) for record in query.all()]
+
+
+def check_item_has_doi(list_uuid):
+    """Check list item_uuid has doi.
+
+    @param list_uuid:
+    @return:
+    """
+    return True if filter_list_item_uuid_has_doi(list_uuid) else False
+
+
+def check_item_is_being_edit(
+        recid: PersistentIdentifier,
+        post_workflow=None,
+        activity=None):
+    """Check an item is being edit.
+
+    @param recid:
+    @param post_workflow:
+    @param activity:
+    @return: True: editing, False: available
+    """
+    if not activity:
+        activity = WorkActivity()
+    if not post_workflow:
+        latest_pid = PIDVersioning(child=recid).last_child
+        item_uuid = latest_pid.object_uuid
+        post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
+    if post_workflow and post_workflow.action_status \
+            in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]:
+        return True
+
+    draft_pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid',
+        pid_value="{}.0".format(recid.pid_value)
+    ).one_or_none()
+    if draft_pid:
+        draft_workflow = activity.get_workflow_activity_by_item_id(
+            draft_pid.object_uuid)
+        if draft_workflow and \
+            draft_workflow.action_status in [ASP.ACTION_BEGIN,
+                                             ASP.ACTION_DOING]:
+            return True
+
+        pv = PIDVersioning(child=recid)
+        latest_pid = PIDVersioning(parent=pv.parent).get_children(
+            pid_status=PIDStatus.REGISTERED
+        ).filter(PIDRelation.relation_type == 2).order_by(
+            PIDRelation.index.desc()).first()
+        latest_workflow = activity.get_workflow_activity_by_item_id(
+            latest_pid.object_uuid)
+        if latest_workflow and \
+            latest_workflow.action_status in [ASP.ACTION_BEGIN,
+                                              ASP.ACTION_DOING]:
+            return True
+    return False
+
+
+def check_item_is_deleted(recid):
+    """Check an item is deleted.
+
+    @param recid:
+    @return: True: deleted, False: available
+    """
+    pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid', pid_value=recid).first()
+    if not pid:
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', object_uuid=recid).first()
+    return pid and pid.status == PIDStatus.DELETED

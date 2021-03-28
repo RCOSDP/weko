@@ -19,6 +19,7 @@
 # MA 02111-1307, USA.
 
 """Module of weko-index-tree utils."""
+import json
 from datetime import date, datetime
 from functools import wraps
 from operator import itemgetter
@@ -30,7 +31,7 @@ from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_search import RecordsSearch
-from sqlalchemy import MetaData, Table
+from sqlalchemy import MetaData, Table, text
 from weko_groups.models import Group
 
 from .config import WEKO_INDEX_TREE_STATE_PREFIX
@@ -232,11 +233,11 @@ def check_roles(user_role, roles):
         roles = roles.split(',')
     if not user_role[0]:
         if current_user.is_authenticated:
-            role = [x for x in (user_role[1] or ['98'])
+            role = [x for x in (user_role[1] or ['-98'])
                     if str(x) in (roles or [])]
-            if not role and (user_role[1] or "98" not in roles):
+            if not role and (user_role[1] or "-98" not in roles):
                 is_can = False
-        elif "99" not in roles:
+        elif "-99" not in roles:
             is_can = False
     return is_can
 
@@ -348,7 +349,7 @@ def get_index_id_list(indexes, id_list=None):
                     continue
 
                 parent = index.get('parent', '')
-                if parent is not '' and parent is not '0':
+                if parent != '' and parent != '0':
                     id_list.append(parent + '/' + index.get('id', ''))
                 else:
                     id_list.append(index.get('id', ''))
@@ -371,7 +372,7 @@ def get_publish_index_id_list(indexes, id_list=None):
 
                 parent = index.get('parent', '')
                 if index.get('public_state'):
-                    if parent is not '' and parent is not '0':
+                    if parent != '' and parent != '0':
                         id_list.append(parent + '/' + index.get('id', ''))
                     else:
                         id_list.append(index.get('id', ''))
@@ -511,7 +512,7 @@ def sanitize(s):
     s = s.strip()
     esc_str = ""
     for i in s:
-        if ord(i) in [9, 10, 13] or (31 < ord(i) and ord(i) != 127):
+        if ord(i) in [9, 10, 13] or (31 < ord(i) != 127):
             esc_str += i
     return esc_str
 
@@ -596,3 +597,113 @@ def recorrect_private_items_count(agp):
         for bk in bkt:
             if bk.get("from"):
                 agg["no_available"]["doc_count"] += bk.get("doc_count")
+
+
+def check_doi_in_index(index_id):
+    """Check doi in index.
+
+    @param index_id:
+    @return:
+    """
+    try:
+        if check_doi_in_list_record_es(index_id):
+            return True
+        return False
+    except Exception as e:
+        return True
+
+
+def get_record_in_es_of_index(index_id):
+    """Check doi in index.
+
+    @param index_id:
+    @return:
+    """
+    from .api import Indexes
+    query_q = {
+        "_source": {
+            "excludes": [
+                "content"
+            ]
+        },
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "prefix": {
+                            "path.tree": "@index"
+                        }
+                    },
+                    {
+                        "match": {
+                            "relation_version_is_last": "true"
+                        }
+                    }
+                ]
+            }
+        }
+    }
+    fp = Indexes.get_self_path(index_id)
+    query_q = json.dumps(query_q).replace("@index", fp.path)
+    query_q = json.loads(query_q)
+    result = []
+    search = RecordsSearch(index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
+    search = search.update_from_dict(query_q)
+    search_result = search.execute().to_dict()
+    result = search_result.get('hits', {}).get('hits', [])
+    return result
+
+
+def check_doi_in_list_record_es(index_id):
+    """Check doi in index.
+
+    @param index_id:
+    @return:
+    """
+    list_records_in_es = get_record_in_es_of_index(index_id)
+    list_uuid = []
+    list_path = []
+    for record in list_records_in_es:
+        list_uuid.append(record.get('_id'))
+        list_path.append(list(
+            filter(lambda x: not x.endswith(str(index_id)),
+                   record.get('_source', {}).get('path'))
+        ))
+    from weko_items_ui.utils import check_item_has_doi
+    if check_item_has_doi(list_uuid):
+        if not list_path:
+            return True
+        for path in list_path:
+            if check_restrict_doi_with_indexes(path):
+                return True
+    return False
+
+
+def check_restrict_doi_with_indexes(other_index_ids):
+    """Check doi in index.
+
+    @param index_id:
+    @return:
+    """
+    from .api import Indexes
+    for index_id in other_index_ids:
+        idx = Indexes.get_index(index_id.split('/')[-1])
+        if not idx or (idx.public_state and idx.harvest_public_state):
+            return False
+    return True
+
+
+def check_has_any_item_in_index_is_locked(index_id):
+    """Check if any item in the index is locked by import process.
+
+    @param index_id:
+    @return:
+    """
+    list_records_in_es = get_record_in_es_of_index(index_id)
+    for record in list_records_in_es:
+        from weko_workflow.utils import check_an_item_is_locked
+        item_id = record.get('_source', {}).get(
+            '_item_metadata', {}).get('control_number')
+        if check_an_item_is_locked(int(item_id)):
+            return True
+    return False

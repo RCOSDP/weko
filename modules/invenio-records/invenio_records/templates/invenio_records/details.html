@@ -31,6 +31,7 @@ is free software; you can redistribute it
     <span class="glyphicon glyphicon-repeat"> {{_('Restore')}}</span>
   </a>
 </div>
+<input id="internal_server_error" type="hidden" value="{{_('Internal server error')}}" />
 <script>
 function getElementByXpath(path) {
     return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
@@ -40,8 +41,6 @@ function setBtn()
 {
     delBtn = document.getElementById('del-btn');
     rstBtn = document.getElementById('rst-btn');
-    delBtn.href =
-        window.location.href.replace('details', 'soft_delete').replace('?id=', '');
     rstBtn.href =
         window.location.href.replace('details', 'restore').replace('?id=', '');
     status =
@@ -53,6 +52,25 @@ function setBtn()
         rstBtn.className += ' disabled';
         rstBtn.setAttribute('aria-disable', 'true');
     }
+
+    $('#del-btn').click(function () {
+        $.ajax({
+            url: window.location.href.replace('details', 'soft_delete').replace('?id=', ''),
+            type: 'GET',
+            dataType: "json",
+            success: function (response) {
+                if (response.is_locked) {
+                    alert(response.msg);
+                } else {
+                    location.reload();
+                }
+            },
+            error: function (error) {
+                console.log(error);
+                alert($('#internal_server_error').val());
+            }
+        });
+    });
 }
 
 document.addEventListener("DOMContentLoaded", setBtn);

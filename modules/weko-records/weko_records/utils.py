@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 """Item API."""
-
+import re
 from collections import OrderedDict
 
 import pytz
@@ -220,51 +220,6 @@ def set_timestamp(jrc, created, updated):
     jrc.update(
         {"_updated": pytz.utc.localize(updated)
             .isoformat() if updated else None})
-
-
-def make_itemlist_desc(es_record):
-    """Make itemlist description."""
-    rlt = ""
-    src = es_record
-    op = src.pop("_options", {})
-    ignore_meta = ('title', 'alternative', 'fullTextURL')
-    if isinstance(op, dict):
-        src["_comment"] = []
-        for k, v in sorted(op.items(),
-                           key=lambda x: x[1]['index'] if x[1].get(
-                               'index') else x[0]):
-            if k in ignore_meta:
-                continue
-            # item value
-            vals = src.get(k)
-            if isinstance(vals, list):
-                # index, options
-                v.pop('index', "")
-                for k1, v1 in sorted(v.items()):
-                    i = int(k1)
-                    if i < len(vals):
-                        crtf = v1.get("crtf")
-                        showlist = v1.get("showlist")
-                        hidden = v1.get("hidden")
-                        is_show = False if hidden else showlist
-                        # list index value
-                        if is_show:
-                            rlt = rlt + ((vals[i] + ",") if not crtf
-                                         else vals[i] + "\n")
-            elif isinstance(vals, str):
-                crtf = v.get("crtf")
-                showlist = v.get("showlist")
-                hidden = v.get("hidden")
-                is_show = False if hidden else showlist
-                if is_show:
-                    rlt = rlt + ((vals + ",") if not crtf
-                                 else vals + "\n")
-        if len(rlt) > 0:
-            if rlt[-1] == ',':
-                rlt = rlt[:-1]
-            src['_comment'] = rlt.split('\n')
-            if len(src['_comment'][-1]) == 0:
-                src['_comment'].pop()
 
 
 def sort_records(records, form):
@@ -488,6 +443,8 @@ def sort_meta_data_by_options(record_hit):
 
     :param record_hit:
     """
+    from weko_records_ui.permissions import check_file_download_permission
+
     def get_meta_values(v):
         """Get values from metadata."""
         data_list = []
@@ -526,10 +483,15 @@ def sort_meta_data_by_options(record_hit):
     def get_comment(solst_dict_array, hide_email_flag):
         """Check and get info."""
         result = []
+        _ignore_items = list()
+        _license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
+        if _license_dict:
+            _ignore_items.append(_license_dict[0].get('value'))
+
         for s in solst_dict_array:
             value = s['value']
             option = s['option']
-            if value:
+            if value and value not in _ignore_items:
                 parent_option = s['parent_option']
                 is_show_list = parent_option.get(
                     'show_list') if parent_option.get(
@@ -550,6 +512,43 @@ def sort_meta_data_by_options(record_hit):
                         result[-1] += "," + value
         return result
 
+    def get_file_comments(record, files):
+        """Check and get file info."""
+        result = []
+        for f in files:
+            if check_file_download_permission(record, f, False):
+                extention = ''
+                label = f.get('url', {}).get('label')
+                filename = f.get('filename', '')
+                if not label and not f.get('version_id'):
+                    label = f.get('url', {}).get('url', '')
+                elif not label:
+                    label = filename
+
+                if f.get('version_id'):
+                    idx = filename.find('.') + 1
+                    extention = filename[idx:] if idx > 0 else 'unknown'
+
+                if label:
+                    result.append({
+                        'label': label,
+                        'extention': extention,
+                        'url': f.get('url', {}).get('url', '')
+                    })
+        return result
+
+    def get_file_thumbnail(thumbnails):
+        """Get file thumbnail."""
+        thumbnail = {}
+        if thumbnails and len(thumbnails) > 0:
+            subitem_thumbnails = thumbnails[0].get('subitem_thumbnail')
+            if subitem_thumbnails and len(subitem_thumbnails) > 0:
+                thumbnail = {
+                    'thumbnail_label': subitem_thumbnails[0].get('thumbnail_label', ''),
+                    'thumbnail_width': current_app.config['WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL']
+                }
+        return thumbnail
+
     try:
         src = record_hit['_source'].pop('_item_metadata')
         item_type_id = record_hit['_source'].get('item_type_id') \
@@ -558,6 +557,8 @@ def sort_meta_data_by_options(record_hit):
             return
         solst, meta_options = get_options_and_order_list(item_type_id)
         solst_dict_array = convert_data_to_dict(solst)
+        files_info = []
+        thumbnail = None
         # Set value and parent option
         for lst in solst:
             key = lst[0]
@@ -565,8 +566,18 @@ def sort_meta_data_by_options(record_hit):
             option = meta_options.get(key, {}).get('option')
             if not val or not option:
                 continue
-            mlt = val.get('attribute_value_mlt')
+            mlt = val.get('attribute_value_mlt', [])
             if mlt:
+                if val.get('attribute_type', '') == 'file' \
+                        and not option.get("hidden") \
+                        and option.get("showlist"):
+                    files_info = get_file_comments(src, mlt)
+                    continue
+                is_thumbnail = any('subitem_thumbnail' in data for data in mlt)
+                if is_thumbnail and not option.get("hidden") \
+                        and option.get("showlist"):
+                    thumbnail = get_file_thumbnail(mlt)
+                    continue
                 meta_data = get_all_items2(mlt, solst)
                 for m in meta_data:
                     for s in solst_dict_array:
@@ -584,7 +595,14 @@ def sort_meta_data_by_options(record_hit):
         settings = AdminSettings.get('items_display_settings')
         items = get_comment(solst_dict_array, not settings.items_display_email)
         if items:
-            record_hit['_source']['_comment'] = items
+            if record_hit['_source'].get('_comment'):
+                record_hit['_source']['_comment'].extend(items)
+            else:
+                record_hit['_source']['_comment'] = items
+        if files_info:
+            record_hit['_source']['_files_info'] = files_info
+        if thumbnail:
+            record_hit['_source']['_thumbnail'] = thumbnail
     except Exception:
         current_app.logger.exception(
             u'Record serialization failed {}.'.format(
@@ -652,7 +670,12 @@ def check_has_attribute_value(node):
         return False
 
 
-def get_attribute_value_all_items(root_key, nlst, klst, is_author=False, hide_email_flag=True):
+def get_attribute_value_all_items(
+        root_key,
+        nlst,
+        klst,
+        is_author=False,
+        hide_email_flag=True):
     """Convert and sort item list.
 
     :param root_key:
@@ -833,3 +856,24 @@ def check_to_upgrade_version(old_render, new_render):
     if old_schema != new_schema:
         return True
     return False
+
+
+def remove_weko2_special_character(s: str):
+    """Remove special character of WEKO2.
+
+    :param s:
+    """
+    def __remove_special_character(_s_str: str):
+        pattern = r"(^(&EMPTY&,|,&EMPTY&)|(&EMPTY&,|,&EMPTY&)$|&EMPTY&)"
+        _s_str = re.sub(pattern, '', _s_str)
+        if _s_str == ',':
+            return ''
+        return _s_str.strip() if _s_str != ',' else ''
+
+    s = s.strip()
+    esc_str = ""
+    for i in s:
+        if ord(i) in [9, 10, 13] or (31 < ord(i) != 127):
+            esc_str += i
+    esc_str = __remove_special_character(esc_str)
+    return esc_str

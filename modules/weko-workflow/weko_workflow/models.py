@@ -751,6 +751,22 @@ class Activity(db.Model, TimestampMixin):
 
     shared_user_id = db.Column(db.Integer(), nullable=True)
 
+    temp_data = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """temp metadata"""
+
 
 class ActivityAction(db.Model, TimestampMixin):
     """Define Activety."""
@@ -941,3 +957,22 @@ class ActionFeedbackMail(db.Model, TimestampMixin):
         nullable=True
     )
     """Action journal info."""
+
+
+class WorkflowRole(db.Model, TimestampMixin):
+    """Define action identifier info."""
+
+    __tablename__ = 'workflow_userrole'
+
+    workflow_id = db.Column(
+        db.Integer(),
+        db.ForeignKey(WorkFlow.id, ondelete='CASCADE'), primary_key=True,
+        nullable=True,
+        unique=False)
+
+    role_id = db.Column(
+        db.Integer(),
+        db.ForeignKey(Role.id, ondelete='CASCADE'), primary_key=True,
+        nullable=True, unique=False)
+
+    """Relationship between workflow and roles."""

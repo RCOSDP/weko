@@ -171,8 +171,8 @@
           {%- for activity in activities %}
           <tr class="">
             <th scope="row">{{loop.index + size|int * ( pages|int - 1)}}</th>
-            <td>{{activity.updated.date()}}</td>
             <td>{{activity.created.date()}}</td>
+            <td>{{activity.updated.date()}}</td>
             {%-if community%}
             <td><a
                 href="{{url_for('weko_workflow.display_activity', activity_id=activity.activity_id, status=activity.type, community=community.id)}}">{{activity.activity_id}}</a>
@@ -237,7 +237,7 @@
       </div>
     </div>
     {%- endif%}
-    <div class="row">
+    <div>
       {%-if community%}
         <button class="btn btn-success pull-right" onClick="window.location.href='{{url_for('weko_workflow.new_activity', community=community.id)}}'; $(this).prop('disabled', true)">
           <span class="glyphicon glyphicon-plus"></span>&nbsp

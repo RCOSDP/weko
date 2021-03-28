@@ -77,6 +77,9 @@ SEARCH_UI_JSTEMPLATE_SORT_ORDER = 'templates/weko_search_ui/togglebutton.html'
 WEKO_ITEM_ADMIN_IMPORT_TEMPLATE = 'weko_search_ui/admin/import.html'
 """import template for the import page."""
 
+WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE = 'weko_search_ui/admin/export.html'
+"""Template for the Admin Bulk Export page."""
+
 INDEX_IMG = 'indextree/36466818-image.jpg'
 
 # Opensearch description
@@ -92,7 +95,8 @@ RECORDS_REST_ENDPOINTS['recid']['search_serializers'] = {
                          ':json_v1_search'),
 }
 
-RECORDS_REST_ENDPOINTS['recid']['search_index'] = '{}-weko'.format(index_prefix)
+RECORDS_REST_ENDPOINTS['recid']['search_index'] = '{}-weko'.format(
+    index_prefix)
 RECORDS_REST_ENDPOINTS['recid']['search_type'] = 'item-v1.0.0'
 
 # Opensearch endpoint
@@ -124,6 +128,7 @@ SEARCH_UI_SEARCH_INDEX = '{}-weko'.format(index_prefix)
 
 # set item type aggs
 RECORDS_REST_FACETS = dict()
+RECORDS_REST_FACETS_NO_SEARCH_PERMISSION = dict()
 
 WEKO_FACETED_SEARCH_MAPPING = {
     'accessRights': 'accessRights',
@@ -161,7 +166,74 @@ RECORDS_REST_FACETS[SEARCH_UI_SEARCH_INDEX] = dict(
                             int size = params._source.description.length;
                             for (int i=0; i<size; i++) {
                                 String valueName = params._source.description[i].value;
-                                if(params._source.description[i].descriptionType.equals("Other")) {
+                                if("Other".equals(params._source.description[i].descriptionType)) {
+                                    result.add(valueName);
+                                }
+                            }
+                            return result;''',
+                            lang="painless"
+                        )
+                    )
+                )
+            )
+        )
+    ),
+    post_filters=dict(
+        accessRights=terms_filter(WEKO_FACETED_SEARCH_MAPPING['accessRights']),
+        language=terms_filter(WEKO_FACETED_SEARCH_MAPPING['language']),
+        distributor=terms_filter(WEKO_FACETED_SEARCH_MAPPING['distributor']),
+        dataType=terms_filter(WEKO_FACETED_SEARCH_MAPPING['dataType']),
+    )
+)
+
+RECORDS_REST_FACETS_NO_SEARCH_PERMISSION[SEARCH_UI_SEARCH_INDEX] = dict(
+    aggs=dict(
+        accessRights=dict(
+            filter=dict(term={"publish_status": "0"}),
+            aggs=dict(
+                accessRights=dict(terms=dict(
+                    field=WEKO_FACETED_SEARCH_MAPPING['accessRights'])))),
+        language=dict(
+            filter=dict(term={"publish_status": "0"}),
+            aggs=dict(
+                language=dict(terms=dict(
+                    field=WEKO_FACETED_SEARCH_MAPPING['language'])))),
+        distributor=dict(
+            filter=dict(
+                bool=dict(
+                    must=[
+                        dict(term={"publish_status": "0"}),
+                        dict(
+                            term={
+                                "contributor.@attributes.contributorType": "Distributor"})
+                    ]
+                )
+            ),
+            aggs=dict(
+                distributor=dict(
+                    terms=dict(
+                        field=WEKO_FACETED_SEARCH_MAPPING['distributor']))
+            )
+        ),
+        dataType=dict(
+            filter=dict(
+                bool=dict(
+                    must=[
+                        dict(term={"publish_status": "0"}),
+                        dict(term={"description.descriptionType": "Other"})
+                    ]
+                )
+            ),
+            aggs=dict(
+                dataType=dict(
+                    terms=dict(
+                        script=dict(
+                            source='''
+                            ArrayList result = new ArrayList();
+                            int size = params._source.description.length;
+                            for (int i=0; i<size; i++) {
+                                String valueName = params._source.description[i].value;
+                                if("Other".equals(params._source.description[i].descriptionType)) {
                                     result.add(valueName);
                                 }
                             }
@@ -503,7 +575,15 @@ WEKO_EXPORT_TEMPLATE_BASIC_OPTION = [
 ]
 
 WEKO_IMPORT_SYSTEM_ITEMS = ['resource_type', 'version_type', 'access_right']
-WEKO_IMPORT_THUMBNAIL_FILE_TYPE = ['gif', 'jpg', 'jpe', 'jpeg', 'png', 'bmp', 'tiff', 'tif']
+WEKO_IMPORT_THUMBNAIL_FILE_TYPE = [
+    'gif',
+    'jpg',
+    'jpe',
+    'jpeg',
+    'png',
+    'bmp',
+    'tiff',
+    'tif']
 VERSION_TYPE_URI = {
     'AO': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce',
     'SMUR': 'http://purl.org/coar/version/c_71e4c1898caa6e32',
@@ -575,3 +655,12 @@ WEKO_IMPORT_VALIDATE_MESSAGE = {
     '%r is not one of %r': '%rは次の決めれられた選択肢に含まれていません。%r',
     '%r is a required property': '%rは必須項目です。'
 }
+
+WEKO_SEARCH_UI_BULK_EXPORT_TASK = 'KEY_EXPORT_ALL'
+"""Template for the Admin Bulk Export page."""
+
+WEKO_SEARCH_UI_BULK_EXPORT_URI = 'URI_EXPORT_ALL'
+"""Template for the Admin Bulk Export page."""
+
+WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 3
+"""Template for the Admin Bulk Export page."""

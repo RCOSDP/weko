@@ -33,28 +33,34 @@ import uuid
 import zipfile
 from collections import Callable, OrderedDict
 from datetime import datetime
-from functools import reduce
+from functools import partial, reduce
 from io import StringIO
 from operator import getitem
 
+import bagit
+import redis
+from celery.result import AsyncResult
+from celery.task.control import revoke
 from flask import abort, current_app, request
 from flask_babelex import gettext as _
 from invenio_db import db
-from invenio_files_rest.models import ObjectVersion
+from invenio_files_rest.models import FileInstance, Location, ObjectVersion
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
-from invenio_pidstore.models import PersistentIdentifier
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch
 from jsonschema import Draft4Validator
 from weko_admin.models import SessionLifetime
+from weko_admin.utils import get_redis_cache
 from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
 from weko_handle.api import Handle
 from weko_index_tree.api import Indexes
+from weko_index_tree.utils import check_restrict_doi_with_indexes
 from weko_indextree_journal.api import Journals
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
@@ -62,8 +68,9 @@ from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD
 from weko_workflow.models import FlowDefine, WorkFlow
-from weko_workflow.utils import IdentifierHandle, check_required_data, \
-    get_identifier_setting, get_sub_item_value, register_hdl_by_handle, \
+from weko_workflow.utils import IdentifierHandle, check_existed_doi, \
+    get_identifier_setting, get_sub_item_value, get_url_root, \
+    item_metadata_validation, register_hdl_by_handle, \
     register_hdl_by_item_id, saving_doi_pidstore
 
 from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
@@ -77,7 +84,8 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, \
     WEKO_IMPORT_SUFFIX_PATTERN, WEKO_IMPORT_SYSTEM_ITEMS, \
     WEKO_IMPORT_THUMBNAIL_FILE_TYPE, WEKO_IMPORT_VALIDATE_MESSAGE, \
-    WEKO_REPO_USER, WEKO_SYS_USER
+    WEKO_REPO_USER, WEKO_SEARCH_UI_BULK_EXPORT_TASK, \
+    WEKO_SEARCH_UI_BULK_EXPORT_URI, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
 err_msg_suffix = 'Suffix of {} can only be used with half-width' \
@@ -400,19 +408,13 @@ def parse_to_json_form(data: list, item_path_not_existed: list) -> dict:
         else:
             return
 
-    for key, name, value in data:
+    for key, value in data:
         if key in item_path_not_existed:
             continue
         key_path = handle_generate_key_path(key)
-        name_path = handle_generate_key_path(name)
-        if value:
-            a = handle_check_identifier(name_path)
-            if not a:
-                set_nested_item(result, key_path, value)
-            else:
-                set_nested_item(result, key_path, value)
-                a += ' key'
-                set_nested_item(result, [a], key_path[1])
+        if value or key_path[0] in ['file_path', 'thumbnail_path'] \
+                or key_path[-1] == 'filename':
+            set_nested_item(result, key_path, value)
 
     convert_data(result)
     result = json.loads(json.dumps(result))
@@ -434,7 +436,7 @@ def check_import_items(file_name: str, file_content: str,
     result = {}
     file_content_decoded = base64.b64decode(file_content)
     temp_path = tempfile.TemporaryDirectory()
-    save_path = "/tmp"
+    save_path = tempfile.gettempdir()
 
     try:
         # Create temp dir for import data
@@ -454,9 +456,9 @@ def check_import_items(file_name: str, file_content: str,
                     if os.sep != "/" and os.sep in info.filename:
                         info.filename = info.filename.replace(os.sep, "/")
                 except Exception:
-                    current_app.logger.error('-' * 60)
+                    current_app.logger.warn('-' * 60)
                     traceback.print_exc(file=sys.stdout)
-                    current_app.logger.error('-' * 60)
+                    current_app.logger.warn('-' * 60)
                 z.extract(info, path=data_path)
 
         data_path += '/data'
@@ -475,10 +477,11 @@ def check_import_items(file_name: str, file_content: str,
         handle_set_change_identifier_flag(
             list_record, is_change_identifier)
         handle_check_cnri(list_record)
+        handle_check_doi_indexes(list_record)
         handle_check_doi_ra(list_record)
         handle_check_doi(list_record)
         handle_check_date(list_record)
-        handle_check_thumbnail_file_type(list_record)
+        handle_check_file_metadata(list_record, data_path)
         result = {
             'list_record': list_record,
             'data_path': data_path
@@ -545,7 +548,6 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
     }
     tsv_data = []
     item_path = []
-    item_path_name = []
     check_item_type = {}
     item_path_not_existed = []
     schema = ''
@@ -584,32 +586,41 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                             })
                 elif num == 2:
                     item_path = data_row
+                    duplication_item_ids = \
+                        handle_check_duplication_item_id(item_path)
+                    if duplication_item_ids:
+                        msg = _(
+                            'The following metadata keys are duplicated.'
+                            '<br/>{}')
+                        raise Exception({
+                            'error_msg':
+                                msg.format('<br/>'.join(duplication_item_ids))
+                        })
                     if check_item_type:
-                        if not handle_check_consistence_with_item_type(
+                        not_consistent_list = \
+                            handle_check_consistence_with_item_type(
                                 check_item_type.get('item_type_id'),
-                                item_path):
+                                item_path)
+                        if not_consistent_list:
+                            msg = _('The item does not consistent with the '
+                                    'specified item type.<br/>{}')
                             raise Exception({
-                                'error_msg': _('The item does not consistent '
-                                               'with the specified item type.')
+                                'error_msg':
+                                    msg.format(
+                                        '<br/>'.join(not_consistent_list))
                             })
                         item_path_not_existed = \
                             handle_check_metadata_not_existed(
                                 item_path, check_item_type.get('item_type_id'))
-                elif num == 3:
-                    item_path_name = data_row
                 elif (num == 4 or num == 5) and data_row[0].startswith('#'):
                     continue
-                else:
+                elif num > 5:
                     data_parse_metadata = parse_to_json_form(
-                        zip(item_path, item_path_name, data_row),
-                        item_path_not_existed
-                    )
-                    json_data_parse = parse_to_json_form(
-                        zip(item_path_name, item_path, data_row),
+                        zip(item_path, data_row),
                         item_path_not_existed
                     )
 
-                    if not (data_parse_metadata or json_data_parse):
+                    if not data_parse_metadata:
                         raise Exception({
                             'error_msg': _('Cannot read tsv file correctly.')
                         })
@@ -617,7 +628,6 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                         item_type_name = check_item_type.get('name')
                         item_type_id = check_item_type.get('item_type_id')
                         tsv_item = dict(
-                            **json_data_parse,
                             **data_parse_metadata,
                             **{
                                 'item_type_name': item_type_name or '',
@@ -626,9 +636,7 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                             }
                         )
                     else:
-                        tsv_item = dict(
-                            **json_data_parse,
-                            **data_parse_metadata)
+                        tsv_item = dict(**data_parse_metadata)
                     if item_path_not_existed:
                         str_keys = ', '.join(item_path_not_existed) \
                             .replace('.metadata.', '')
@@ -822,47 +830,10 @@ def handle_check_exist_record(list_record) -> list:
                 'Unexpected error: ',
                 sys.exc_info()[0]
             )
-        if item.get('status') == 'new':
-            handle_remove_identifier(item)
         if errors:
             item['errors'] = errors
         result.append(item)
     return result
-
-
-def handle_check_identifier(name) -> str:
-    """Check data is Identifier of Identifier Registration.
-
-    :argument
-        name_path     -- {list} list name path.
-    :return
-        return       -- Name of key if is Identifier.
-
-    """
-    result = ''
-    if 'Identifier' in name or 'Identifier Registration' in name:
-        result = name[0]
-    return result
-
-
-def handle_remove_identifier(item) -> dict:
-    """Remove Identifier of Identifier Registration.
-
-    :argument
-        item         -- Item.
-    :return
-        return       -- Item had been removed property.
-
-    """
-    if item and item.get('Identifier key'):
-        del item['metadata'][item.get('Identifier key')]
-        del item['Identifier key']
-        del item['Identifier']
-    if item and item.get('Identifier Registration key'):
-        del item['metadata'][item.get('Identifier Registration key')]
-        del item['Identifier Registration key']
-        del item['Identifier Registration']
-    return item
 
 
 def make_tsv_by_line(lines):
@@ -900,28 +871,29 @@ def create_deposit(item_id):
         item_exist     -- {dict} item in system.
 
     """
-    try:
-        if item_id is not None:
-            dep = WekoDeposit.create({}, recid=int(item_id))
-            db.session.commit()
-        else:
-            dep = WekoDeposit.create({})
-            db.session.commit()
-        return dep['recid']
-    except Exception:
-        db.session.rollback()
+    if item_id is not None:
+        dep = WekoDeposit.create({}, recid=int(item_id))
+    else:
+        dep = WekoDeposit.create({})
+    return dep['recid']
 
 
-def clean_thumbnail_file(bucket):
+def clean_thumbnail_file(bucket, root_path, thumbnail_path):
     """Remove all thumbnail in bucket.
 
     :argument
         bucket         -- {object} bucket.
+        root_path      -- {str} location of temp folder.
+        thumbnail_path -- {list} thumbnails path.
     """
+    list_not_remove = list(filter(
+        lambda path: not os.path.isfile(root_path + '/' + path),
+        thumbnail_path))
+    list_not_remove = [get_file_name(path) for path in list_not_remove]
     all_file_version = ObjectVersion.get_by_bucket(
         bucket, True, True).all()
     for file in all_file_version:
-        if file.is_thumbnail is True:
+        if file.is_thumbnail is True and file.key not in list_not_remove:
             file.remove()
 
 
@@ -933,29 +905,31 @@ def up_load_file(record, root_path):
         root_path      -- {str} root_path.
 
     """
-    try:
-        file_path = record.get('file_path', [])
-        thumbnail_path = record.get('thumbnail_path', [])
-        if file_path or thumbnail_path:
-            pid = PersistentIdentifier.query.filter_by(
-                pid_type='recid',
-                pid_value=record.get('id')).first()
-            rec = RecordMetadata.query.filter_by(
-                id=pid.object_uuid).first()
-            bucket = rec.json['_buckets']['deposit']
-            clean_thumbnail_file(bucket)
-            for file_name in [*file_path, *thumbnail_path]:
-                with open(root_path + '/' + file_name, 'rb') as file:
-                    obj = ObjectVersion.create(
-                        bucket,
-                        get_file_name(file_name)
-                    )
-                    if file_name in thumbnail_path:
-                        obj.is_thumbnail = True
-                    obj.set_contents(file)
-                    db.session.commit()
-    except Exception:
-        db.session.rollback()
+    file_path = list(filter(lambda path: path, record.get('file_path', [])))
+    thumbnail_path = record.get('thumbnail_path', [])
+    if isinstance(thumbnail_path, str):
+        thumbnail_path = [thumbnail_path]
+    else:
+        thumbnail_path = list(filter(lambda path: path, thumbnail_path))
+    if file_path or thumbnail_path:
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid',
+            pid_value=record.get('id')).first()
+        rec = RecordMetadata.query.filter_by(
+            id=pid.object_uuid).first()
+        bucket = rec.json['_buckets']['deposit']
+        clean_thumbnail_file(bucket, root_path, thumbnail_path)
+        for path in [*file_path, *thumbnail_path]:
+            if not os.path.isfile(root_path + '/' + path):
+                continue
+            with open(root_path + '/' + path, 'rb') as file:
+                obj = ObjectVersion.create(
+                    bucket,
+                    get_file_name(path)
+                )
+                if path in thumbnail_path:
+                    obj.is_thumbnail = True
+                obj.set_contents(file)
 
 
 def get_file_name(file_path):
@@ -1020,7 +994,8 @@ def register_item_metadata(item):
 
     def clean_file_bucket(deposit):
         # clean bucket
-        file_names = [file['filename'] for file in deposit.get_file_data()]
+        file_names = [file.get('filename', '')
+                      for file in deposit.get_file_data()]
         lastest_files_version = []
         # remove lastest version
         for file in deposit.files:
@@ -1033,10 +1008,7 @@ def register_item_metadata(item):
         all_file_version = ObjectVersion.get_by_bucket(
             deposit.files.bucket, True, True).all()
         for file in all_file_version:
-            if file.is_thumbnail is False \
-                    and file.key not in file_names:
-                file.remove()
-            elif file.version_id not in lastest_files_version:
+            if file.version_id not in lastest_files_version:
                 file.remove()
 
     def clean_all_file_in_bucket(deposit):
@@ -1047,92 +1019,75 @@ def register_item_metadata(item):
                 file.remove()
 
     item_id = str(item.get('id'))
-    try:
-        pid = PersistentIdentifier.query.filter_by(
-            pid_type='recid',
-            pid_value=item_id
-        ).first()
+    pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid',
+        pid_value=item_id
+    ).first()
 
-        record = WekoDeposit.get_record(pid.object_uuid)
+    record = WekoDeposit.get_record(pid.object_uuid)
 
-        _deposit_data = record.dumps().get("_deposit")
-        deposit = WekoDeposit(record, record.model)
-        new_data = dict(
-            **item.get('metadata'),
-            **_deposit_data,
-            **{
-                '$schema': item.get('$schema'),
-                'title': item.get('item_title'),
-            }
-        )
-        item_status = {
-            'index': new_data['path'],
-            'actions': 'publish',
+    _deposit_data = record.dumps().get("_deposit")
+    deposit = WekoDeposit(record, record.model)
+    new_data = dict(
+        **item.get('metadata'),
+        **_deposit_data,
+        **{
+            '$schema': item.get('$schema'),
+            'title': item.get('item_title'),
         }
-        if not new_data.get('pid'):
-            new_data = dict(**new_data, **{
-                'pid': {
-                    'revision_id': 0,
-                    'type': 'recid',
-                    'value': item_id
-                }
-            })
-        new_data = autofill_thumbnail_metadata(item['item_type_id'], new_data)
-        new_data = clean_file_metadata(item['item_type_id'], new_data)
-        deposit.update(item_status, new_data)
-        if item.get('file_path'):
-            # update
-            clean_file_bucket(deposit)
-        else:
-            # delete
-            clean_all_file_in_bucket(deposit)
-        deposit.commit()
-        deposit.publish()
+    )
+    item_status = {
+        'index': new_data['path'],
+        'actions': 'publish',
+    }
+    if not new_data.get('pid'):
+        new_data = dict(**new_data, **{
+            'pid': {
+                'revision_id': 0,
+                'type': 'recid',
+                'value': item_id
+            }
+        })
+    new_data = autofill_thumbnail_metadata(item['item_type_id'], new_data)
+    new_data = clean_file_metadata(item['item_type_id'], new_data)
+    deposit.update(item_status, new_data)
+    if list(filter(lambda path: path, item.get('file_path', []))):
+        # update
+        clean_file_bucket(deposit)
+    else:
+        # delete
+        clean_all_file_in_bucket(deposit)
+    deposit.commit()
+    deposit.publish_without_commit()
 
-        feedback_mail_list = item['metadata'].get('feedback_mail_list')
+    feedback_mail_list = item['metadata'].get('feedback_mail_list')
+    if feedback_mail_list:
+        FeedbackMailList.update(
+            item_id=deposit.id,
+            feedback_maillist=feedback_mail_list
+        )
+        deposit.update_feedback_mail()
+    else:
+        FeedbackMailList.delete_without_commit(deposit.id)
+        deposit.remove_feedback_mail()
+
+    with current_app.test_request_context(get_url_root()):
+        if item['status'] in ['upgrade', 'new']:
+            _deposit = deposit.newversion(pid)
+            _deposit.publish_without_commit()
+        else:
+            _pid = PIDVersioning(child=pid).last_child
+            _record = WekoDeposit.get_record(_pid.object_uuid)
+            _deposit = WekoDeposit(_record, _record.model)
+            _deposit.merge_data_to_record_without_version(pid)
+            _deposit.publish_without_commit()
+
         if feedback_mail_list:
             FeedbackMailList.update(
-                item_id=deposit.id,
+                item_id=_deposit.id,
                 feedback_maillist=feedback_mail_list
             )
-            deposit.update_feedback_mail()
-        else:
-            FeedbackMailList.delete(deposit.id)
-            deposit.remove_feedback_mail()
-
-        with current_app.test_request_context():
-            if item['status'] in ['upgrade', 'new']:
-                _deposit = deposit.newversion(pid)
-                _deposit.publish()
-            else:
-                _pid = PIDVersioning(child=pid).last_child
-                _record = WekoDeposit.get_record(_pid.object_uuid)
-                _deposit = WekoDeposit(_record, _record.model)
-                _deposit.update(item_status, new_data)
-                _deposit.commit()
-                _deposit.merge_data_to_record_without_version(pid)
-                _deposit.publish()
-
-            if feedback_mail_list:
-                FeedbackMailList.update(
-                    item_id=_deposit.id,
-                    feedback_maillist=feedback_mail_list
-                )
-                _deposit.update_feedback_mail()
-
-        db.session.commit()
-
-    except Exception as ex:
-        db.session.rollback()
-        current_app.logger.error('item id: %s update error.' % item_id)
-        current_app.logger.error(ex)
-        return {
-            'success': False,
-            'error': str(ex)
-        }
-    return {
-        'success': True
-    }
+            _deposit.update_feedback_mail()
 
 
 def update_publish_status(item_id, status):
@@ -1147,7 +1102,6 @@ def update_publish_status(item_id, status):
     record = WekoRecord.get_record_by_pid(item_id)
     record['publish_status'] = status
     record.commit()
-    db.session.commit()
     indexer = WekoIndexer()
     indexer.update_publish_status(record)
 
@@ -1219,40 +1173,57 @@ def create_flow_define():
                                      WEKO_FLOW_DEFINE_LIST_ACTION)
 
 
-def import_items_to_system(item: dict, url_root: str):
+def import_items_to_system(item: dict):
     """Validation importing zip file.
 
     :argument
         item        -- Items Metadata.
-        url_root    -- url_root.
     :return
         return      -- PID object if exist.
 
     """
-    response = None
     if not item:
         return None
     else:
-        root_path = item.get('root_path', '')
-        if item.get('status') == 'new':
-            item_id = create_deposit(item.get('id'))
-            item['id'] = item_id
-        up_load_file(item, root_path)
-        response = register_item_metadata(item)
-        if response.get('success') and \
-                current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
-            response = register_item_handle(item, url_root)
-        if response.get('success'):
-            response = register_item_doi(item)
-        if response.get('success'):
+        try:
+            root_path = item.get('root_path', '')
+            if item.get('status') == 'new':
+                item_id = create_deposit(item.get('id'))
+                item['id'] = item_id
+            else:
+                handle_check_item_is_locked(item)
+
+            up_load_file(item, root_path)
+            register_item_metadata(item)
+            if current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
+                register_item_handle(item)
+            register_item_doi(item)
+
             status_number = WEKO_IMPORT_PUBLISH_STATUS.index(
                 item.get('publish_status')
             )
-            response = register_item_update_publish_status(
-                item,
-                str(status_number))
+            register_item_update_publish_status(item, str(status_number))
 
-        return response
+            db.session.commit()
+        except Exception as ex:
+            if item.get('id'):
+                handle_remove_es_metadata(item)
+
+            db.session.rollback()
+            current_app.logger.error('item id: %s update error.' % item['id'])
+            current_app.logger.error(ex)
+            error_id = None
+            if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                    and ex.args[0].get('error_id'):
+                error_id = ex.args[0].get('error_id')
+
+            return {
+                'success': False,
+                'error_id': error_id
+            }
+    return {
+        'success': True
+    }
 
 
 def remove_temp_dir(path):
@@ -1359,8 +1330,7 @@ def handle_check_and_prepare_index_tree(list_record):
         data = {
             'index_id': index.id if index else index_id,
             'index_name': index.index_name_english if index else index_name,
-            'parent_id': parent_id,
-            'existed': index is not None
+            'parent_id': parent_id
         }
 
         if len(index_ids) > 1:
@@ -1375,7 +1345,7 @@ def handle_check_and_prepare_index_tree(list_record):
 
     for item in list_record:
         indexes = []
-        index_ids = item.get('IndexID')
+        index_ids = item.get('metadata', {}).get('path', [])
         pos_index = item.get('pos_index')
 
         if not index_ids and not pos_index:
@@ -1387,7 +1357,10 @@ def handle_check_and_prepare_index_tree(list_record):
                 tree_ids = [i.strip() for i in index_id.split('/')]
                 tree_names = []
                 if pos_index and x <= len(pos_index) - 1:
-                    tree_names = [i.strip() for i in pos_index[x].split('/')]
+                    tree_names = [
+                        i.strip().replace('\\/', '/')
+                        for i in re.split(r'(?<!\\)\/', pos_index[x])
+                    ]
                     if index_id == '':
                         tree_ids = ['' for i in tree_names]
                 else:
@@ -1399,6 +1372,7 @@ def handle_check_and_prepare_index_tree(list_record):
 
         if indexes:
             item['indexes'] = indexes
+            handle_index_tree(item)
 
         if errors:
             errors = list(set(errors))
@@ -1422,24 +1396,6 @@ def handle_index_tree(item):
 
     """
     def check_and_create_index(index):
-        if not index['existed']:
-            exist_index = Indexes.get_index_by_name_english(
-                index['index_name'], index['parent_id'])
-            if exist_index:
-                index['index_id'] = exist_index.id
-            else:
-                now = datetime.now()
-                index_id = index['index_id'] if index['index_id'] \
-                    else int(datetime.timestamp(now) * 10 ** 3)
-                create_index = Indexes.create(
-                    pid=index['parent_id'],
-                    indexes={'id': index_id,
-                             'value': index['index_name']})
-                if create_index:
-                    index['index_id'] = index_id
-                    if index.get('child'):
-                        index['child']['parent_id'] = index_id
-
         if index.get('child'):
             return check_and_create_index(index['child'])
         else:
@@ -1522,6 +1478,7 @@ def handle_check_cnri(list_record):
                     else:
                         prefix = cnri
                         suffix = ''
+                    if not suffix:
                         item['cnri_suffix_not_existed'] = True
 
                     if prefix != Handle().get_prefix():
@@ -1555,6 +1512,35 @@ def handle_check_cnri(list_record):
         if error:
             item['errors'] = item['errors'] + [error] \
                 if item.get('errors') else [error]
+            item['errors'] = list(set(item['errors']))
+
+
+def handle_check_doi_indexes(list_record):
+    """Check restrict DOI with Indexes.
+
+    :argument
+        list_record -- {list} list record import.
+    :return
+
+    """
+    for item in list_record:
+        errors = []
+        doi_ra = item.get('doi_ra')
+        # Check DOI and Publish status:
+        publish_status = item.get('publish_status')
+        if doi_ra and publish_status == WEKO_IMPORT_PUBLISH_STATUS[1]:
+            errors.append(
+                _('You cannot keep an item private because it has a DOI.'))
+        # Check restrict DOI with Indexes:
+        index_ids = [str(idx) for idx in item['metadata']['path']]
+        if check_restrict_doi_with_indexes(index_ids):
+            errors.append(
+                _('Since the item has a DOI, it must be associated with an'
+                  ' index whose index status is "Public" and whose'
+                  ' Harvest Publishing is "Public".'))
+        if errors:
+            item['errors'] = item['errors'] + errors \
+                if item.get('errors') else errors
             item['errors'] = list(set(item['errors']))
 
 
@@ -1644,6 +1630,7 @@ def handle_check_doi(list_record):
                         else:
                             prefix = doi
                             suffix = ''
+                        if not suffix:
                             item['doi_suffix_not_existed'] = True
 
                         if not item.get('ignore_check_doi_prefix') \
@@ -1677,51 +1664,37 @@ def handle_check_doi(list_record):
             item['errors'] = list(set(item['errors']))
 
 
-def register_item_handle(item, url_root):
+def register_item_handle(item):
     """Register item handle (CNRI).
 
     :argument
         item    -- {object} Record item.
-        url_root -- {str} url_root.
     :return
         response -- {object} Process status.
 
     """
     item_id = str(item.get('id'))
-    try:
-        record = WekoRecord.get_record_by_pid(item_id)
-        pid = record.pid_recid
-        pid_hdl = record.pid_cnri
-        cnri = item.get('cnri')
+    record = WekoRecord.get_record_by_pid(item_id)
+    pid = record.pid_recid
+    pid_hdl = record.pid_cnri
+    cnri = item.get('cnri')
 
-        if item.get('is_change_identifier'):
-            if item.get('cnri_suffix_not_existed'):
-                suffix = "{:010d}".format(int(item_id))
-                cnri += '/' + suffix
-            if item.get('status') == 'new':
-                register_hdl_by_handle(cnri, pid.object_uuid)
-            else:
-                if pid_hdl and not pid_hdl.pid_value.endswith(cnri):
-                    pid_hdl.delete()
-                    register_hdl_by_handle(cnri, pid.object_uuid)
-                elif not pid_hdl:
-                    register_hdl_by_handle(cnri, pid.object_uuid)
+    if item.get('is_change_identifier'):
+        if item.get('cnri_suffix_not_existed'):
+            suffix = "{:010d}".format(int(item_id))
+            cnri = cnri[:-1] if cnri[-1] == '/' else cnri
+            cnri += '/' + suffix
+        if item.get('status') == 'new':
+            register_hdl_by_handle(cnri, pid.object_uuid)
         else:
-            if item.get('status') == 'new':
-                register_hdl_by_item_id(item_id, pid.object_uuid, url_root)
-
-        db.session.commit()
-    except Exception as ex:
-        db.session.rollback()
-        current_app.logger.error('item id: %s update error.' % item_id)
-        current_app.logger.error(ex)
-        return {
-            'success': False,
-            'error': str(ex)
-        }
-    return {
-        'success': True
-    }
+            if pid_hdl and not pid_hdl.pid_value.endswith(cnri):
+                pid_hdl.delete()
+                register_hdl_by_handle(cnri, pid.object_uuid)
+            elif not pid_hdl:
+                register_hdl_by_handle(cnri, pid.object_uuid)
+    else:
+        if item.get('status') == 'new':
+            register_hdl_by_item_id(item_id, pid.object_uuid, get_url_root())
 
 
 def prepare_doi_setting():
@@ -1760,6 +1733,18 @@ def get_doi_prefix(doi_ra):
             return identifier_setting.ndl_jalc_doi + suffix
 
 
+def get_doi_link(doi_ra, data):
+    """Get DOI link."""
+    if doi_ra == WEKO_IMPORT_DOI_TYPE[0]:
+        return data.get('identifier_grant_jalc_doi_link')
+    elif doi_ra == WEKO_IMPORT_DOI_TYPE[1]:
+        return data.get('identifier_grant_jalc_cr_doi_link')
+    elif doi_ra == WEKO_IMPORT_DOI_TYPE[2]:
+        return data.get('identifier_grant_jalc_dc_doi_link')
+    elif doi_ra == WEKO_IMPORT_DOI_TYPE[3]:
+        return data.get('identifier_grant_ndl_jalc_doi_link')
+
+
 def prepare_doi_link(item_id):
     """Get DOI link."""
     item_id = '%010d' % int(item_id)
@@ -1795,37 +1780,51 @@ def register_item_doi(item):
         response -- {object} Process status.
 
     """
+    def check_doi_duplicated(doi_ra, data):
+        duplicated_doi = check_existed_doi(get_doi_link(doi_ra, data))
+        if duplicated_doi.get('isWithdrawnDoi'):
+            return 'is_withdraw_doi'
+        if duplicated_doi.get('isExistDOI'):
+            return 'is_duplicated_doi'
+
     item_id = str(item.get('id'))
     is_change_identifier = item.get('is_change_identifier')
     doi_ra = item.get('doi_ra')
     doi = item.get('doi')
-    try:
-        record_without_version = WekoRecord.get_record_by_pid(item_id)
-        pid = record_without_version.pid_recid
-        pid_doi = record_without_version.pid_doi
 
-        lastest_version_id = item_id + '.' + \
-            str(get_latest_version_id(item_id) - 1)
-        pid_lastest = WekoRecord.get_record_by_pid(
-            lastest_version_id).pid_recid
+    record_without_version = WekoRecord.get_record_by_pid(item_id)
+    pid = record_without_version.pid_recid
+    pid_doi = record_without_version.pid_doi
 
-        if is_change_identifier:
-            if item.get('doi_suffix_not_existed'):
-                suffix = "{:010d}".format(int(item_id))
-                doi += '/' + suffix
-            if doi_ra and doi:
-                data = {
-                    'identifier_grant_jalc_doi_link':
-                        IDENTIFIER_GRANT_LIST[1][2] + '/' + doi,
-                    'identifier_grant_jalc_cr_doi_link':
-                        IDENTIFIER_GRANT_LIST[2][2] + '/' + doi,
-                    'identifier_grant_jalc_dc_doi_link':
-                        IDENTIFIER_GRANT_LIST[3][2] + '/' + doi,
-                    'identifier_grant_ndl_jalc_doi_link':
-                        IDENTIFIER_GRANT_LIST[4][2] + '/' + doi
-                }
-                if pid_doi and not pid_doi.pid_value.endswith(doi):
-                    pid_doi.delete()
+    lastest_version_id = item_id + '.' + \
+        str(get_latest_version_id(item_id) - 1)
+    pid_lastest = WekoRecord.get_record_by_pid(
+        lastest_version_id).pid_recid
+
+    data = None
+    if is_change_identifier:
+        if item.get('doi_suffix_not_existed'):
+            suffix = "{:010d}".format(int(item_id))
+            doi = doi[:-1] if doi[-1] == '/' else doi
+            doi += '/' + suffix
+        if doi_ra and doi:
+            data = {
+                'identifier_grant_jalc_doi_link':
+                    IDENTIFIER_GRANT_LIST[1][2] + '/' + doi,
+                'identifier_grant_jalc_cr_doi_link':
+                    IDENTIFIER_GRANT_LIST[2][2] + '/' + doi,
+                'identifier_grant_jalc_dc_doi_link':
+                    IDENTIFIER_GRANT_LIST[3][2] + '/' + doi,
+                'identifier_grant_ndl_jalc_doi_link':
+                    IDENTIFIER_GRANT_LIST[4][2] + '/' + doi
+            }
+            if pid_doi and not pid_doi.pid_value.endswith(doi):
+                pid_doi.delete()
+            if not pid_doi or not pid_doi.pid_value.endswith(doi):
+                doi_duplicated = check_doi_duplicated(doi_ra, data)
+                if doi_duplicated:
+                    raise Exception({'error_id': doi_duplicated})
+
                 saving_doi_pidstore(
                     pid_lastest.object_uuid,
                     pid.object_uuid,
@@ -1833,29 +1832,27 @@ def register_item_doi(item):
                     WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1,
                     is_feature_import=True
                 )
-        else:
-            if doi_ra and not doi:
-                data = prepare_doi_link(item_id)
-                saving_doi_pidstore(
-                    pid_lastest.object_uuid,
-                    pid.object_uuid,
-                    data,
-                    WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1,
-                    is_feature_import=True
-                )
+    else:
+        if doi_ra and not doi:
+            data = prepare_doi_link(item_id)
+            doi_duplicated = check_doi_duplicated(doi_ra, data)
+            if doi_duplicated:
+                raise Exception({'error_id': doi_duplicated})
+            saving_doi_pidstore(
+                pid_lastest.object_uuid,
+                pid.object_uuid,
+                data,
+                WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1,
+                is_feature_import=True
+            )
 
-        db.session.commit()
-    except Exception as ex:
-        db.session.rollback()
-        current_app.logger.error('item id: %s update error.' % item_id)
-        current_app.logger.error(ex)
-        return {
-            'success': False,
-            'error': str(ex)
-        }
-    return {
-        'success': True
-    }
+    if data:
+        deposit = WekoDeposit.get_record(pid.object_uuid)
+        deposit.commit()
+        deposit.publish_without_commit()
+        deposit = WekoDeposit.get_record(pid_lastest.object_uuid)
+        deposit.commit()
+        deposit.publish_without_commit()
 
 
 def register_item_update_publish_status(item, status):
@@ -1868,25 +1865,13 @@ def register_item_update_publish_status(item, status):
         response -- {object} Process status.
 
     """
-    try:
-        item_id = str(item.get('id'))
-        lastest_version_id = item_id + '.' + \
-            str(get_latest_version_id(item_id) - 1)
+    item_id = str(item.get('id'))
+    lastest_version_id = item_id + '.' + \
+        str(get_latest_version_id(item_id) - 1)
 
-        update_publish_status(item_id, status)
-        if lastest_version_id:
-            update_publish_status(lastest_version_id, status)
-    except Exception as ex:
-        db.session.rollback()
-        current_app.logger.error('item id: %s update error.' % item_id)
-        current_app.logger.error(ex)
-        return {
-            'success': False,
-            'error': str(ex)
-        }
-    return {
-        'success': True
-    }
+    update_publish_status(item_id, status)
+    if lastest_version_id:
+        update_publish_status(lastest_version_id, status)
 
 
 def handle_doi_required_check(record):
@@ -1898,111 +1883,22 @@ def handle_doi_required_check(record):
         true/false -- {object} Validation result.
 
     """
-    ddi_item_type_name = 'DDI'
-    journalarticle_type = ['other（プレプリント）', 'conference paper',
-                           'data paper', 'departmental bulletin paper',
-                           'editorial', 'journal article', 'periodical',
-                           'review article', 'article']
-    thesis_types = ['thesis', 'bachelor thesis', 'master thesis',
-                    'doctoral thesis']
-    report_types = ['technical report', 'research report', 'report',
-                    'book', 'book part']
-    elearning_type = ['learning material']
-    dataset_type = ['software', 'dataset']
-    datageneral_types = ['internal report', 'policy report', 'report part',
-                         'working paper', 'interactive resource',
-                         'musical notation', 'research proposal',
-                         'technical documentation', 'workflow',
-                         'その他（その他）', 'sound', 'patent',
-                         'cartographic material', 'map', 'lecture', 'image',
-                         'still image', 'moving image', 'video',
-                         'conference object', 'conference proceedings',
-                         'conference poster']
+    record_data = {'item_type_id': record.get('item_type_id')}
+    for key, value in record.get('metadata', {}).items():
+        record_data[key] = {'attribute_value_mlt': [value]}
 
-    item_type = None
-
-    if 'doi_ra' in record and record['doi_ra'] in ['JaLC',
-                                                   'Crossref',
-                                                   'DataCite',
-                                                   'NDL JaLC']:
-        doi_type = record['doi_ra']
-        item_type_mapping = Mapping.get_record(record['item_type_id'])
-        if item_type_mapping:
-            item_type = ItemTypes.get_by_id(id_=record['item_type_id'])
-            item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
+    if 'doi_ra' in record and record['doi_ra'] in WEKO_IMPORT_DOI_TYPE:
+        error_list = item_metadata_validation(
+            None, str(WEKO_IMPORT_DOI_TYPE.index(record['doi_ra']) + 1),
+            record_data, True)
+        if isinstance(error_list, str):
+            return False
+        if error_list and (error_list.get('required')
+                           or error_list.get('either')
+                           or error_list.get('pattern')):
+            return False
         else:
-            return False
-
-        properties = {}
-        # 必須
-        required_properties = []
-        # いずれか必須
-        either_properties = []
-
-        resource_type, resource_type_key = get_data_by_property(record,
-                                                                item_map,
-                                                                'type.@value')
-        if not resource_type or not item_type \
-                or check_required_data(resource_type, resource_type_key):
-            return False
-
-        resource_type = resource_type.pop()
-        if doi_type == 'JaLC':
-            if resource_type in journalarticle_type \
-                or resource_type in report_types \
-                or (resource_type in elearning_type) \
-                    or resource_type in datageneral_types:
-                required_properties = ['title']
-                if item_type.item_type_name.name != ddi_item_type_name:
-                    required_properties.append('fileURI')
-            elif resource_type in thesis_types:
-                required_properties = ['title',
-                                       'creator']
-                if item_type.item_type_name.name != ddi_item_type_name:
-                    required_properties.append('fileURI')
-            elif resource_type in dataset_type:
-                required_properties = ['title',
-                                       'givenName']
-                if item_type.item_type_name.name != ddi_item_type_name:
-                    required_properties.append('fileURI')
-                either_properties = ['geoLocationPoint',
-                                     'geoLocationBox',
-                                     'geoLocationPlace']
-        elif doi_type == 'Crossref':
-            if resource_type in journalarticle_type:
-                required_properties = ['title',
-                                       'publisher',
-                                       'sourceIdentifier',
-                                       'sourceTitle']
-                if item_type.item_type_name.name != ddi_item_type_name:
-                    required_properties.append('fileURI')
-            elif resource_type in report_types:
-                required_properties = ['title']
-                if item_type.item_type_name.name != ddi_item_type_name:
-                    required_properties.append('fileURI')
-            elif resource_type in thesis_types:
-                required_properties = ['title',
-                                       'creator']
-                if item_type.item_type_name.name != ddi_item_type_name:
-                    required_properties.append('fileURI')
-        # DataCite DOI identifier registration
-        elif doi_type == 'DataCite' \
-                and item_type.item_type_name.name != ddi_item_type_name:
-            required_properties = ['fileURI']
-        # NDL JaLC DOI identifier registration
-        elif doi_type == 'NDL JaLC' \
-                and item_type.item_type_name.name != ddi_item_type_name:
-            required_properties = ['fileURI']
-
-        if required_properties:
-            properties['required'] = required_properties
-        if either_properties:
-            properties['either'] = either_properties
-        if properties:
-            return validation_item_property(record, item_map, properties)
-        else:
-            return False
-
+            return True
     return False
 
 
@@ -2016,8 +1912,8 @@ def get_data_by_property(record, item_map, item_property):
     key = item_map.get(item_property)
     data = []
     if not key:
-        current_app.logger.error(str(item_property) + ' jpcoar:mapping '
-                                                      'is not correct')
+        current_app.logger.warn(str(item_property) +
+                                ' jpcoar:mapping is not correct')
         return None, None
     attribute = record['metadata'].get(key.split('.')[0])
     if not attribute:
@@ -2029,216 +1925,6 @@ def get_data_by_property(record, item_map, item_property):
             for value in data_result:
                 data.append(value)
     return data, key
-
-
-def validation_item_property(record, item_map, properties):
-    """
-    Validate item property.
-
-    :param record: Record object.
-    :param item_map: Mapping Data.
-    :param properties: Property's keywords.
-    :return: True or False
-    """
-    if properties.get('required'):
-        if not validattion_item_property_required(
-                record, item_map, properties['required']):
-            return False
-    if properties.get('either'):
-        if not validattion_item_property_either_required(
-                record, item_map, properties['either']):
-            return False
-    return True
-
-
-def validattion_item_property_required(
-        record, item_map, properties):
-    """
-    Validate item property is required.
-
-    :param mapping_data: Mapping Data contain record and item_map
-    :param properties: Property's keywords
-    :return: error_list or None
-    """
-    # check jpcoar:URI
-    if 'fileURI' in properties:
-        _, key = get_data_by_property(
-            record, item_map, "file.URI.@value")
-        data = []
-        if key:
-            key = key.split('.')[0]
-            item_file = record['metadata'].get(key)
-            if item_file:
-                file_name_data = get_sub_item_value(
-                    item_file, 'filename')
-                if file_name_data:
-                    for value in file_name_data:
-                        data.append(value)
-                data.append(file_name_data)
-
-            if check_required_data(data, key + '.filename', True):
-                return False
-    # check タイトル dc:title
-    if 'title' in properties:
-        title_data, title_key = get_data_by_property(
-            record, item_map, "title.@value")
-        lang_data, lang_key = get_data_by_property(
-            record, item_map, "title.@attributes.xml:lang")
-
-        requirements = check_required_data(title_data, title_key, True)
-        lang_requirements = check_required_data(lang_data,
-                                                lang_key,
-                                                True)
-        if requirements or lang_requirements:
-            return False
-    # check 識別子 jpcoar:givenName
-    if 'givenName' in properties:
-        _, key = get_data_by_property(
-            record, item_map, "creator.givenName.@value")
-        data = []
-        if key:
-            creators = record['metadata'].get(key.split('.')[0])
-            if creators:
-                given_name_data = get_sub_item_value(
-                    creators, key.split('.')[-1])
-                if given_name_data:
-                    for value in given_name_data:
-                        data.append(value)
-                data.append(given_name_data)
-
-        if check_required_data(data, key, True):
-            return False
-    # check 識別子 jpcoar:givenName and jpcoar:nameIdentifier
-    if 'creator' in properties:
-        _, key = get_data_by_property(
-            record, item_map, "creator.givenName.@value")
-        _, idt_key = get_data_by_property(
-            record, item_map, "creator.nameIdentifier.@value")
-
-        data = []
-        idt_data = []
-        creators = record['metadata'].get(key.split('.')[0])
-        if key:
-            creator_data = get_sub_item_value(
-                creators,
-                key.split('.')[-1])
-            if creator_data:
-                for value in creator_data:
-                    data.append(value)
-        if idt_key:
-            creator_name_identifier = get_sub_item_value(
-                creators, idt_key.split('.')[-1])
-            if creator_name_identifier:
-                for value in creator_name_identifier:
-                    idt_data.append(value)
-
-        requirements = check_required_data(data, key, True)
-        idt_requirements = check_required_data(idt_data, idt_key, True)
-        if requirements and idt_requirements:
-            return False
-    # check 収録物識別子 jpcoar:sourceIdentifier
-    if 'sourceIdentifier' in properties:
-        data, key = get_data_by_property(
-            record, item_map, "sourceIdentifier.@value")
-        type_data, type_key = get_data_by_property(
-            record, item_map, "sourceIdentifier.@attributes.identifierType")
-
-        requirements = check_required_data(data, key)
-        type_requirements = check_required_data(type_data, type_key)
-        if requirements or type_requirements:
-            return False
-    # check 収録物名 jpcoar:sourceTitle
-    if 'sourceTitle' in properties:
-        data, key = get_data_by_property("sourceTitle.@value")
-        lang_data, lang_key = get_data_by_property(
-            record, item_map, "sourceTitle.@attributes.xml:lang")
-
-        requirements = check_required_data(data, key)
-        lang_requirements = check_required_data(lang_data, lang_key)
-        if requirements or lang_requirements:
-            return False
-        elif 'en' not in lang_data:
-            return False
-    # check 収録物名 dc:publisher
-    if 'publisher' in properties:
-        data, key = get_data_by_property("publisher.@value")
-        lang_data, lang_key = get_data_by_property(
-            record, item_map, "publisher.@attributes.xml:lang")
-
-        requirements = check_required_data(data, key, True)
-        lang_requirements = check_required_data(lang_data,
-                                                lang_key,
-                                                True)
-        if requirements or lang_requirements:
-            return False
-        elif 'en' not in lang_data:
-            return False
-
-    return True
-
-
-def validattion_item_property_either_required(
-        record, item_map, properties):
-    """
-    Validate item property is either required.
-
-    :param mapping_data: Mapping Data contain record and item_map
-    :param properties: Property's keywords
-    :return: error_list or None
-    """
-    if 'geoLocationPoint' in properties:
-        latitude_data, latitude_key = get_data_by_property(
-            record,
-            item_map,
-            "geoLocation.geoLocationPoint.pointLatitude.@value")
-        longitude_data, longitude_key = get_data_by_property(
-            record,
-            item_map,
-            "geoLocation.geoLocationPoint.pointLongitude.@value")
-
-        latitude_requirement = check_required_data(
-            latitude_data, latitude_key, True)
-        longitude_requirement = check_required_data(
-            longitude_data, longitude_key, True)
-
-        if latitude_requirement and longitude_requirement:
-            return False
-    # check 位置情報（空間） datacite:geoLocationBox
-    if 'geoLocationBox' in properties:
-        east_data, east_key = get_data_by_property(
-            "geoLocation.geoLocationBox.eastBoundLongitude.@value")
-        north_data, north_key = get_data_by_property(
-            "geoLocation.geoLocationBox.northBoundLatitude.@value")
-        south_data, south_key = get_data_by_property(
-            "geoLocation.geoLocationBox.southBoundLatitude.@value")
-        west_data, west_key = get_data_by_property(
-            "geoLocation.geoLocationBox.westBoundLongitude.@value")
-
-        east_requirement = check_required_data(
-            east_data, east_key, True)
-
-        north_requirement = check_required_data(
-            north_data, north_key, True)
-
-        south_requirement = check_required_data(
-            south_data, south_key, True)
-
-        west_requirement = check_required_data(
-            west_data, west_key, True)
-
-        if east_requirement and north_requirement and south_requirement and \
-                west_requirement:
-            return False
-    # check 位置情報（自由記述） datacite:geoLocationPlace
-    if 'geoLocationPlace' in properties:
-        data, key = get_data_by_property(
-            "geoLocation.geoLocationPlace.@value")
-
-        requirements = check_required_data(data, key, True)
-        if requirements:
-            return False
-
-    return True
 
 
 def handle_check_date(list_record):
@@ -2264,7 +1950,7 @@ def handle_check_date(list_record):
             if attribute:
                 data_result = get_sub_item_value(attribute, _keys[-1])
                 for value in data_result:
-                    if not validattion_date_property(value):
+                    if not validation_date_property(value):
                         errors.append(
                             _('Please specify the date with any format of'
                               + ' YYYY-MM-DD, YYYY-MM, YYYY.'))
@@ -2279,13 +1965,76 @@ def handle_check_date(list_record):
                 raise Exception
         except Exception:
             errors.append(_('Please specify PubDate with YYYY-MM-DD.'))
+        # validate file open_date
+        open_date_err_msg = validation_file_open_date(record)
+        if open_date_err_msg:
+            errors.append(open_date_err_msg)
+
         if errors:
             record['errors'] = record['errors'] + errors \
                 if record.get('errors') else errors
             record['errors'] = list(set(record['errors']))
 
 
-def validattion_date_property(date_str):
+def get_data_in_deep_dict(search_key, _dict={}):
+    """
+    Get data of key in a deep dictionary.
+
+    :param search_key: key.
+    :param _dict: Dict.
+    :return: List of result. Ex: [{'tree_key': key, 'value': value}]
+    """
+    def add_parrent_key(parrent_key, idx=None, data={}):
+        if idx is not None:
+            data['tree_key'] = '{}[{}].{}'.format(
+                parrent_key, idx, data.get('tree_key', ''))
+        else:
+            data['tree_key'] = '{}.{}'.format(
+                parrent_key, data.get('tree_key', ''))
+        return data
+    result = []
+    for key in _dict.keys():
+        value = _dict.get(key)
+        if key == search_key:
+            result.append({'tree_key': key, 'value': value})
+            break
+        else:
+            if isinstance(value, dict):
+                data = get_data_in_deep_dict(search_key, value)
+                if data:
+                    result.extend(list(map(
+                        partial(add_parrent_key, key, None), data)))
+            elif isinstance(value, list):
+                for idx, sub in enumerate(value):
+                    if not isinstance(sub, dict):
+                        continue
+                    data = get_data_in_deep_dict(search_key, sub)
+                    if data:
+                        result.extend(list(map(
+                            partial(add_parrent_key, key, idx), data)))
+    return result
+
+
+def validation_file_open_date(record):
+    """
+    Validate file open date.
+
+    :param record: Record
+    :return: error or None
+    """
+    open_date_values = get_data_in_deep_dict('dateValue',
+                                             record.get('metadata', {}))
+    for data in open_date_values:
+        try:
+            value = data.get('value', '')
+            if value and value != datetime.strptime(value, '%Y-%m-%d') \
+                    .strftime('%Y-%m-%d'):
+                raise Exception
+        except Exception:
+            return _('Please specify Open Access Date with YYYY-MM-DD.')
+
+
+def validation_date_property(date_str):
     """
     Validate item property is either required.
 
@@ -2352,7 +2101,7 @@ def get_change_identifier_mode_content():
 def get_root_item_option(item_id, item, sub_form={'title_i18n': {}}):
     """Handle if is root item."""
     _id = '.metadata.{}'.format(item_id)
-    _name = sub_form.get('title_i18n').get(
+    _name = sub_form.get('title_i18n', {}).get(
         current_i18n.language) or item.get('title')
 
     _option = []
@@ -2510,23 +2259,22 @@ def get_thumbnail_key(item_type_id=0):
                 return key
 
 
-def handle_check_thumbnail_file_type(list_record):
+def handle_check_thumbnail_file_type(thumbnail_paths):
     """Check thumbnail file type.
 
     :argument
-        list_record -- {list} list record import.
+        thumbnail_paths -- {list} thumbnails path.
     :return
-
+        error -- {str} error message.
     """
     error = _('Please specify the image file(gif, jpg, jpe, jpeg,'
               + ' png, bmp, tiff, tif) for the thumbnail.')
-    for record in list_record:
-        thumbnail_paths = record.get('thumbnail_path', [])
-        for path in thumbnail_paths:
-            file_extend = path.split('.')[-1]
-            if file_extend not in WEKO_IMPORT_THUMBNAIL_FILE_TYPE:
-                record['errors'] = record['errors'] + [error] \
-                    if record.get('errors') else [error]
+    for path in thumbnail_paths:
+        if not path:
+            continue
+        file_extend = path.split('.')[-1]
+        if file_extend not in WEKO_IMPORT_THUMBNAIL_FILE_TYPE:
+            return error
 
 
 def handle_check_metadata_not_existed(str_keys, item_type_id=0):
@@ -2540,10 +2288,11 @@ def handle_check_metadata_not_existed(str_keys, item_type_id=0):
     """
     result = []
     ids = handle_get_all_id_in_item_type(item_type_id)
+    ids = list(map(lambda x: re.sub(r'\[\d+\]', '', x), ids))
     for str_key in str_keys:
         if str_key.startswith('.metadata.'):
-            pre_key = re.sub(r'\[\d+\]', '[0]', str_key)
-            if pre_key != '.metadata.path[0]' and pre_key not in ids \
+            pre_key = re.sub(r'\[\d+\]', '', str_key)
+            if pre_key != '.metadata.path' and pre_key not in ids \
                     and 'iscreator' not in pre_key:
                 result.append(str_key.replace('.metadata.', ''))
     return result
@@ -2569,7 +2318,7 @@ def handle_get_all_sub_id_and_name(
         sub_form = next(
             (x for x in form if key in x.get('key', '')),
             {'title_i18n': {}})
-        title = sub_form.get('title_i18n').get(
+        title = sub_form.get('title_i18n', {}).get(
             current_i18n.language) or item.get('title')
         if item.get('items') and item.get('items').get('properties'):
             _ids, _names = handle_get_all_sub_id_and_name(
@@ -2584,6 +2333,9 @@ def handle_get_all_sub_id_and_name(
             ids += [key + '.' + _id for _id in _ids]
             names += [title + '.' + _name
                       for _name in _names]
+        elif item.get('format') == 'checkboxes':
+            ids.append(key + '[0]')
+            names.append(title + '[0]')
         else:
             ids.append(key)
             names.append(title)
@@ -2635,10 +2387,454 @@ def handle_check_consistence_with_item_type(item_type_id, keys):
         item_type_id - {str} item type id.
         keys - {list} data from line 2 of tsv file.
     :return
-        status - {bool} status.
+        ids - {list} ids is not consistent.
     """
+    result = []
     ids = handle_get_all_id_in_item_type(item_type_id)
+    clean_ids = list(map(lambda x: re.sub(r'\[\d+\]', '', x), ids))
+    for _key in keys:
+        if re.sub(r'\[\d+\]', '', _key) in clean_ids \
+                and re.sub(r'\[\d+\]', '[0]', _key) not in ids:
+            result.append(_key)
+
+    clean_keys = list(map(lambda x: re.sub(r'\[\d+\]', '', x), keys))
     for _id in ids:
-        if _id not in keys:
-            return False
-    return True
+        if re.sub(r'\[\d+\]', '', _id) not in clean_keys:
+            result.append(_id)
+
+    return list(set(result))
+
+
+def handle_check_duplication_item_id(ids: list):
+    """Check duplication of item id in tsv file.
+
+    :argument
+        ids - {list} data from line 2 of tsv file.
+    :return
+        ids - {list} ids is duplication.
+    """
+    result = []
+    for element in ids:
+        if ids.count(element) > 1:
+            result.append(element)
+    return list(set(result))
+
+
+def export_all(root_url):
+    """Gather all the item data and export and return as a JSON or BIBTEX.
+        Parameter
+        path is the path if file temparory
+        post_data is the data items
+        :return: JSON, BIBTEX
+    """
+    from weko_items_ui.utils import make_stats_tsv_with_permission, \
+        package_export_file
+
+    def _itemtype_name(name):
+        """Check a list of allowed characters in filenames."""
+        return re.sub(r'[\/:*"<>|\s]', '_', name)
+
+    def _write_tsv_files(item_types_data, export_path):
+        """Write TSV data to files.
+
+        @param item_types_data:
+        @param export_path:
+        @param list_item_role:
+        @return:
+        """
+        permissions = dict(
+            permission_show_hide=lambda a: True,
+            check_created_id=lambda a: True,
+            hide_meta_data_for_role=lambda a: True,
+            current_language=lambda: True
+        )
+        for item_type_id in item_types_data:
+            try:
+                headers, records = make_stats_tsv_with_permission(
+                    item_type_id,
+                    item_types_data[item_type_id]['recids'],
+                    item_types_data[item_type_id]['data'],
+                    permissions)
+                keys, labels, is_systems, options = headers
+                item_types_data[item_type_id]['recids'].sort()
+                item_types_data[item_type_id]['keys'] = keys
+                item_types_data[item_type_id]['labels'] = labels
+                item_types_data[item_type_id]['is_systems'] = is_systems
+                item_types_data[item_type_id]['options'] = options
+                item_types_data[item_type_id]['data'] = records
+                item_type_data = item_types_data[item_type_id]
+
+                tsv_full_path = '{}/{}.tsv'.format(export_path,
+                                                   item_type_data.get('name'))
+                with open(tsv_full_path, 'w') as file:
+                    tsv_output = package_export_file(item_type_data)
+                    file.write(tsv_output.getvalue())
+            except Exception as ex:
+                current_app.logger.error(ex)
+                continue
+
+    temp_path = tempfile.TemporaryDirectory()
+    try:
+        export_path = temp_path.name + '/' + \
+            datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        os.makedirs(export_path, exist_ok=True)
+
+        # get all record id
+        recids = PersistentIdentifier.query.filter_by(
+            pid_type='recid',
+            status=PIDStatus.REGISTERED).all()
+
+        record_ids = [
+            recid.pid_value for recid in recids if recid.pid_value.isdigit()]
+        item_types_data = {}
+
+        for recid in record_ids:
+            record = WekoRecord.get_record_by_pid(recid)
+            item_type = ItemTypes.get_by_id(record.get('item_type_id'))
+            item_type_id = str(record.get('item_type_id'))
+
+            if not item_type:
+                current_app.logger.error('Corrupted Item: {}'.format(recid))
+                continue
+            elif not item_types_data.get(item_type_id):
+                item_type_name = _itemtype_name(
+                    item_type.item_type_name.name)
+                item_types_data[item_type_id] = {
+                    'item_type_id': item_type_id,
+                    'name': '{}({})'.format(
+                        item_type_name,
+                        item_type_id),
+                    'root_url': root_url,
+                    'jsonschema': 'items/jsonschema/' + item_type_id,
+                    'keys': [],
+                    'labels': [],
+                    'recids': [],
+                    'data': {},
+                }
+
+            item_types_data[item_type_id]['recids'].append(recid)
+            item_types_data[item_type_id]['data'][recid] = record
+
+        # Create export info file
+        _write_tsv_files(item_types_data, export_path)
+
+        # Create bag
+        bagit.make_bag(export_path)
+        shutil.make_archive(export_path, 'zip', export_path)
+        with open(export_path + '.zip', 'rb') as file:
+            src = FileInstance.create()
+            src.set_contents(
+                file, default_location=Location.get_default().uri)
+        db.session.commit()
+
+        # Delete old file
+        _task_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_URI']
+        _cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+            format(name=_task_config)
+        prev_uri = get_redis_cache(_cache_key)
+        if (prev_uri):
+            delete_exported(prev_uri, _cache_key)
+        return src.uri if src else None
+    except Exception as ex:
+        db.session.rollback()
+        current_app.logger.error(ex)
+
+
+def delete_exported(uri, cache_key):
+    from simplekv.memory.redisstore import RedisStore
+    """Delete File instance after time in file config"""
+    try:
+        with db.session.begin_nested():
+            file_instance = FileInstance.get_by_uri(uri)
+            file_instance.delete()
+        datastore = RedisStore(redis.StrictRedis.from_url(
+            current_app.config['CACHE_REDIS_URL']))
+        if datastore.redis.exists(cache_key):
+            datastore.delete(cache_key)
+        db.session.commit()
+    except Exception as ex:
+        current_app.logger.error(ex)
+
+
+def cancel_export_all():
+    """Cancel Process Share_task Export ALL with revoke
+       Return:     True:   Cancel Successful.
+                    No:     Error
+    """
+    cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+        format(name=WEKO_SEARCH_UI_BULK_EXPORT_TASK)
+    try:
+        task_id = get_redis_cache(cache_key)
+        task_status = get_export_status()
+
+        if task_status:
+            revoke(task_id, terminate=True)
+
+        return True
+    except Exception as ex:
+        current_app.logger.error(ex)
+        return False
+
+
+def get_export_status():
+    """Get Share_task Export ALL status
+       Return:     True:   Otthers
+                   False:  Success / Failed / Revoked
+    """
+    cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+        format(name=WEKO_SEARCH_UI_BULK_EXPORT_TASK)
+    cache_uri = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+        format(name=WEKO_SEARCH_UI_BULK_EXPORT_URI)
+    export_status = False
+    download_uri = None
+    try:
+        task_id = get_redis_cache(cache_key)
+        download_uri = get_redis_cache(cache_uri)
+        if (task_id):
+            task = AsyncResult(task_id)
+            status_cond = (task.successful() or task.failed()
+                           or task.state == 'REVOKED')
+            export_status = True if not status_cond else False
+    except Exception as ex:
+        current_app.logger.error(ex)
+        export_status = False
+    return export_status, download_uri
+
+
+def handle_check_item_is_locked(item):
+    """Check an item is being edit or deleted.
+
+    :argument
+        item - {dict} Item metadata.
+    :return
+        response - {dict} check status.
+    """
+    from weko_items_ui.utils import check_item_is_being_edit, \
+        check_item_is_deleted
+    item_id = str(item.get('id'))
+    error_id = None
+
+    if check_item_is_deleted(item_id):
+        error_id = 'item_is_deleted'
+    else:
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid',
+            pid_value=item_id
+        ).first()
+        if check_item_is_being_edit(pid):
+            error_id = 'item_is_being_edit'
+
+    if error_id:
+        raise Exception({
+            'error_id': error_id
+        })
+
+
+def handle_remove_es_metadata(item):
+    """Remove es metadata.
+
+    :argument
+        item - {dict} Item metadata.
+    """
+    try:
+        item_id = item.get('id')
+        pid = WekoRecord.get_record_by_pid(item_id).pid_recid
+        pid_lastest = WekoRecord.get_record_by_pid(
+            item_id + '.' + str(get_latest_version_id(item_id) - 1)).pid_recid
+        deposit = WekoDeposit.get_record(pid.object_uuid)
+        deposit.indexer.delete(deposit)
+        deposit = WekoDeposit.get_record(pid_lastest.object_uuid)
+        deposit.indexer.delete(deposit)
+    except Exception as ex:
+        current_app.logger.error(ex)
+
+
+def handle_check_file_metadata(list_record, data_path):
+    """Check file contents, thumbnails metadata.
+
+    :argument
+        list_record -- {list} list record import.
+        data_path   -- {str} paths of file content.
+    :return
+
+    """
+    for record in list_record:
+        errors, warnings = handle_check_file_content(record, data_path)
+        _errors, _warnings = handle_check_thumbnail(record, data_path)
+        errors += _errors
+        warnings += _warnings
+
+        if errors:
+            record['errors'] = record['errors'] + errors \
+                if record.get('errors') else errors
+        if warnings:
+            record['warnings'] = record['warnings'] + warnings \
+                if record.get('warnings') else warnings
+
+
+def handle_check_file_path(paths, data_path, is_new=False,
+                           is_thumbnail=False, is_single_thumbnail=False):
+    """Check file path.
+
+    :argument
+        record -- {dict} record import.
+        data_path   -- {str} paths of file content.
+        is_new   -- {bool} Is new?
+        is_thumbnail   -- {bool} Is thumbnail?
+        is_single_thumbnail   -- {bool} Is single thumbnail?
+    :return
+        error -- {str} Error.
+        warning -- {str} Warning.
+    """
+    def prepare_idx_msg(idxs, msg_path_idx_type):
+        if is_single_thumbnail:
+            return msg_path_idx_type
+        else:
+            return ', '.join(
+                [(msg_path_idx_type + '[{}]').format(idx) for idx in idxs])
+
+    error = None
+    warning = None
+    idx_errors = []
+    idx_warnings = []
+    for idx, path in enumerate(paths):
+        if not path:
+            continue
+        if not os.path.isfile(data_path + '/' + path):
+            if is_new:
+                idx_errors.append(str(idx))
+            else:
+                idx_warnings.append(str(idx))
+
+    msg_path_idx_type = '.thumbnail_path' if is_thumbnail else '.file_path'
+    if idx_errors:
+        error = _('The file specified in ({}) does not exist.') \
+            .format(prepare_idx_msg(idx_errors, msg_path_idx_type))
+    if idx_warnings:
+        warning = _('The file specified in ({}) does not exist.<br/>'
+                    'The file will not be updated. '
+                    'Update only the metadata with tsv contents.') \
+            .format(prepare_idx_msg(idx_warnings, msg_path_idx_type))
+
+    return error, warning
+
+
+def handle_check_file_content(record, data_path):
+    """Check file contents metadata.
+
+    :argument
+        record -- {dict} record import.
+        data_path   -- {str} paths of file content.
+    :return
+        errors -- {list} List errors.
+        warnings -- {list} List warnings.
+    """
+    errors = []
+    warnings = []
+
+    file_paths = record.get('file_path', [])
+    # check consistence between file_path and filename
+    filenames = get_filenames_from_metadata(record['metadata'])
+    errors.extend(handle_check_filename_consistence(file_paths, filenames))
+
+    # check if file_path exists
+    error, warning = handle_check_file_path(
+        file_paths, data_path, record['status'] == 'new')
+    if error:
+        errors.append(error)
+    if warning:
+        warnings.append(warning)
+
+    return errors, warnings
+
+
+def handle_check_thumbnail(record, data_path):
+    """Check thumbnails metadata.
+
+    :argument
+        record -- {dict} record import.
+        data_path   -- {str} paths of file content.
+    :return
+        errors -- {list} List errors.
+        warnings -- {list} List warnings.
+    """
+    errors = []
+    warnings = []
+    is_single = False
+    thumbnail_paths = record.get('thumbnail_path', [])
+    if isinstance(thumbnail_paths, str):
+        thumbnail_paths = [thumbnail_paths]
+        is_single = True
+
+    # check file type
+    error = handle_check_thumbnail_file_type(thumbnail_paths)
+    if error:
+        errors.append(error)
+
+    # check thumbnails path
+    error, warning = handle_check_file_path(
+        thumbnail_paths, data_path, record['status'] == 'new', True, is_single)
+    if error:
+        errors.append(error)
+    if warning:
+        warnings.append(warning)
+
+    return errors, warnings
+
+
+def get_filenames_from_metadata(metadata):
+    """Check thumbnails metadata.
+
+    :argument
+        metadata -- {dict} record metadata.
+    :return
+        filenames -- {list} List filename data.
+    """
+    filenames = []
+    file_meta_ids = []
+    for key, val in metadata.items():
+        if isinstance(val, list):
+            for item in val:
+                if isinstance(item, dict) and 'filename' in item:
+                    file_meta_ids.append(key)
+                    break
+
+    count = 0
+    for _id in file_meta_ids:
+        for file in metadata[_id]:
+            data = {
+                'id': '.metadata.{}[{}].filename'.format(_id, count),
+                'filename': file.get('filename', '')
+            }
+            if not file.get('filename'):
+                del file['filename']
+            filenames.append(data)
+            count += 1
+
+        new_file_metadata = list(filter(lambda x: x, metadata[_id]))
+        if new_file_metadata:
+            metadata[_id] = new_file_metadata
+        else:
+            del metadata[_id]
+
+    return filenames
+
+
+def handle_check_filename_consistence(file_paths, meta_filenames):
+    """Check thumbnails metadata.
+
+    :argument
+        file_paths -- {list} List file_path.
+        meta_filenames   -- {list} List filename from metadata.
+    :return
+        errors -- {list} List errors.
+    """
+    errors = []
+    msg = _('The file name specified in {} and {} do not match.')
+    for idx, path in enumerate(file_paths):
+        meta_filename = meta_filenames[idx]
+        if path and path.split('/')[-1] != meta_filename['filename']:
+            errors.append(msg.format(
+                'file_path[{}]'.format(idx), meta_filename['id']))
+
+    return errors
