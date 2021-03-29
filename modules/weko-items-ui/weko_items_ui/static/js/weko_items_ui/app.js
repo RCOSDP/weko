@@ -16,6 +16,8 @@ require([
   });
 });
 
+var item_title_key = '';
+
 /**
  * Custom bs-datepicker.
  * Default bs-datepicker: just support one pattern for input.
@@ -530,8 +532,9 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
     validThumbnails: [],
     errorMessages: []
   },
-    thumbnailsVM = rootScope.filesVM.files.filter(file => file.is_thumbnail),
-    inValidThumbnails = [];
+  inValidThumbnails = [];
+
+
 
   // Check for duplicate files & file type
   if (files && files.length > 0) {
@@ -550,17 +553,19 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
     result.isValid = false;
     result.errorMessages.push($("#invalid_files_type").val() + '<br/>' + inValidThumbnails.join(', '));
   }
+  if(rootScope.filesVM){
+    thumbnailsVM = rootScope.filesVM.files.filter(file => file.is_thumbnail);
+    if (thumbnailsVM.length > 0 && itemSizeCheckFlg) {
+      let thumbnailItemKey = scope.searchThumbnailForm && scope.searchThumbnailForm(),
+        recordSchema = rootScope.recordsVM.invenioRecordsSchema,
+        thumbnailMetaData = recordSchema.properties[thumbnailItemKey],
+        thumbnailJson = rootScope.recordsVM.invenioRecordsModel[thumbnailItemKey],
+        maxItems = thumbnailMetaData ? thumbnailMetaData.maxItems : 0;
 
-  if (thumbnailsVM.length > 0 && itemSizeCheckFlg) {
-    let thumbnailItemKey = scope.searchThumbnailForm && scope.searchThumbnailForm(),
-      recordSchema = rootScope.recordsVM.invenioRecordsSchema,
-      thumbnailMetaData = recordSchema.properties[thumbnailItemKey],
-      thumbnailJson = rootScope.recordsVM.invenioRecordsModel[thumbnailItemKey],
-      maxItems = thumbnailMetaData ? thumbnailMetaData.maxItems : 0;
-    
-    if (maxItems > 0 && thumbnailsVM.length > maxItems) {
-      result.isValid = false;
-      result.errorMessages.push(JSON.stringify(thumbnailJson[0]) + ' ' + $("#max_files_thumnbnail_error").val());
+      if (maxItems > 0 && thumbnailsVM.length > maxItems) {
+        result.isValid = false;
+        result.errorMessages.push(JSON.stringify(thumbnailJson[0]) + ' ' + $("#max_files_thumnbnail_error").val());
+      }
     }
   }
 
@@ -1898,6 +1903,153 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
       };
 
+      $scope.setEnumForSchemaByKey = function (key, schemaProperties, enumData) {
+        for (let parentKey in schemaProperties) {
+          let val = schemaProperties[parentKey];
+          $scope.updateEnum(key, val, enumData);
+        }
+      }
+
+      $scope.setTitleMapForFormByKey = function (key, formProperties, enumData) {
+        for (let parentKey in formProperties) {
+          let val = formProperties[parentKey];
+          $scope.updateTitleMap(key, val, enumData);
+        }
+      }
+
+      $scope.updateEnum = function (key, val, enumData){
+        var hasItem = val.hasOwnProperty("items");
+        var subProperties = hasItem ? val.items.properties : val.properties;
+        for (let subKey in subProperties) {
+          if(subKey == key){
+            subProperties[subKey]['enum'] = [null];
+            for(let item in enumData){
+              if(enumData[item][0].length > 0){
+                subProperties[subKey]['enum'].push(enumData[item][0]);
+              }
+            }
+            return;
+          }
+          let subVal = subProperties[subKey];
+          hasItem = val.hasOwnProperty("items");
+          subProperties = hasItem ? val.items.properties : val.properties;
+          if(subProperties){
+            result = $scope.updateEnum(key, subVal, enumData);
+          }
+        }
+      }
+
+      $scope.updateTitleMap = function (key, val, enumData){
+        var hasItem = val.hasOwnProperty("items");
+        var subProperties = hasItem ? val.items : [];
+        for (let subKey in subProperties) {
+          if(subProperties[subKey].key && subProperties[subKey].key.indexOf(key) != -1){
+            subProperties[subKey]['titleMap'] = [];
+            for(let item in enumData){
+              if(enumData[item][0].length > 0){
+                let item1 = { value: enumData[item][0], name: enumData[item][1] };
+                subProperties[subKey]['titleMap'].push(item1);
+              }
+            }
+            return;
+          }
+          let subVal = subProperties[subKey];
+          hasItem = val.hasOwnProperty("items");
+          subProperties = hasItem ? val.items : [];
+          if(subProperties){
+            result = $scope.updateTitleMap(key, subVal, enumData);
+          }
+        }
+      }
+
+      $scope.autoFillInstitutionPosition = function () {
+        let key = 'subitem_restricted_access_institution_position';
+        let schemaProperties = $rootScope.recordsVM.invenioRecordsSchema.properties;
+        let formProperties = $rootScope.recordsVM.invenioRecordsForm;
+        //Get "Institution Position" from select html.
+        var enumData = [];
+        var options = document.getElementById('institute_position_list').options;
+        for (i=0; i< options.length; i++){
+          enumData.push([options[i].value, options[i].text]);
+        }
+        $scope.setEnumForSchemaByKey(key, schemaProperties, enumData);
+        $scope.setTitleMapForFormByKey(key, formProperties, enumData);
+        return true;
+      }
+
+      // Auto fill for Usage Application
+      $scope.autoFillUsageApplication = function () {
+        let properties = [
+          'subitem_restricted_access_dataset_usage',
+          'subitem_restricted_access_mail_address',
+          'subitem_restricted_access_usage_report_id',
+          'subitem_restricted_access_wf_issued_date',
+          'subitem_restricted_access_application_date',
+          'subitem_restricted_access_approval_date',
+          'subitem_restricted_access_item_title'
+        ]
+        $scope.AutoFillData(properties);
+      }
+
+      // Auto fill for Usage Report
+      $scope.autoFillUsageReport = function () {
+        let properties = [
+          'subitem_restricted_access_dataset_usage',
+          'subitem_restricted_access_name',
+          'subitem_restricted_access_mail_address',
+          'subitem_restricted_access_university/institution',
+          'subitem_restricted_access_affiliated_division/department',
+          'subitem_restricted_access_position',
+          'subitem_restricted_access_position(others)',
+          'subitem_restricted_access_phone_number',
+          'subitem_restricted_access_usage_report_id',
+          'subitem_restricted_access_wf_issued_date',
+          'subitem_restricted_access_application_date',
+          'subitem_restricted_access_approval_date',
+          'subitem_restricted_access_item_title'
+        ]
+        $scope.AutoFillData(properties);
+      }
+
+      $scope.AutoFillData = function (properties) {
+        let recordsVM = $rootScope["recordsVM"];
+        for (let i = 0; i < properties.length; i++) {
+          let property = properties[i],
+            autoFillElement = $('#auto_fill_' + property.replace(/(?=[()/])/g, '\\'));
+          if (autoFillElement) {
+            for (let key in recordsVM["invenioRecordsSchema"].properties) {
+              let value = recordsVM["invenioRecordsSchema"].properties[key];
+              if (value && value.properties) {
+                if (value.properties.hasOwnProperty(property)) {
+                  if (!recordsVM.invenioRecordsModel[key]) {
+                    recordsVM.invenioRecordsModel[key] = {};
+                  }
+                  recordsVM.invenioRecordsModel[key][property] = autoFillElement.val();
+                  if (property == 'subitem_restricted_access_item_title') {
+                    item_title_key = key
+                  }
+                  $scope.disableElement(key, property)
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      $scope.disableElement = function (key, property) {
+        let recordsVM = $rootScope["recordsVM"];
+        recordsVM["invenioRecordsForm"].forEach(function (item) {
+          if (item.key === key) {
+            item.items.forEach(function (subItem) {
+              if (subItem.key.includes(property)) {
+                subItem["readonly"] = true;
+              }
+            })
+          }
+        });
+      }
+
       $scope.setDataForLicenseType = function () {
         var list_license = $("#list_license_data").val();
         if (!list_license) {
@@ -2173,6 +2325,29 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         $scope.getDataAuthors();
         $scope.updateNumFiles();
         $scope.editModeHandle();
+        $scope.autoFillInstitutionPosition();
+        let usage_type = $("#auto_fill_usage_data_usage_type").val();
+        // Auto fill for Usage Application & Usage Report
+        if (usage_type === 'Report') {
+          $scope.autoFillUsageReport();
+        }
+        else if (usage_type === 'Application') {
+          $scope.autoFillUsageApplication();
+          setTimeout(function () {
+            function updateItemTitle() {
+              let item_title = $("#auto_fill_subitem_restricted_access_item_title").val() +
+                $("#subitem_restricted_access_name").val()
+              $rootScope["recordsVM"].invenioRecordsModel[item_title_key]['subitem_restricted_access_item_title'] = item_title;
+            }
+            $("#subitem_restricted_access_name").on('input', function () {
+              updateItemTitle();
+            });
+
+            if ($("#subitem_restricted_access_name").val()) {
+              updateItemTitle();
+            }
+          }, 3000);
+        }
 
         //In case save activity
         hide_endpoints = $('#hide_endpoints').text()
@@ -3111,7 +3286,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         } else if (!$scope.validateEmailsAndIndexAndUpdateApprovalActions(activityId, steps, isAutoSetIndexAction)) {
           return false;
         } else {
-          // Validate maxItems for thumbnails          
+          // Validate maxItems for thumbnails
           let validateResult = validateThumbnails($rootScope, $scope, true);
           if (!validateResult.isValid) {
             let message = validateResult.errorMessages.join('<br/><br/>');
@@ -3192,7 +3367,35 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         return isValid;
       };
 
+      $scope.validatePositionByClassName = function () {
+        // Position class: cls-position
+        // Position(Others) class: cls-position-others
+        let defPositionOtherVal = 'Others (Input Detail)';
+        var result = true;
+        $('.cls-position').each(function(i) {
+          let positionVal = $(this).val().split("string:").pop();
+          let parent = $(this).parents('bootstrap-decorator');
+          let positionOthers = parent.find('.cls-position-others');
+          let positionOthersVal = $(positionOthers).val();
+          if(positionVal == defPositionOtherVal){
+            if(positionOthersVal.length == 0){
+              result = false;
+              return false; //Break loop.
+            }
+          }
+        });
+        if(!result){
+          let message = $("#err_input_other_position").val();
+          $("#inputModal").html(message);
+          $("#allModal").modal("show");
+        }
+        return result;
+      }
+
       $scope.validatePosition = function () {
+        if(!$scope.validatePositionByClassName()){
+          return false;
+        }
         var result = true;
         var subItemPosition = '';
         var subItemPositionOther = '';
@@ -3248,51 +3451,44 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       // -Validate index existence(if any)
       $scope.validateEmailsAndIndexAndUpdateApprovalActions = function (activityId, steps, isAutoSetIndexAction) {
         let emailsToValidate = [];
-        let actionEndpointKey = $("#action_endpoint_key").val();
+        let listEmailKeys = [];
         let approvalMailSubKey = $("#approval_email_key").val();
-        if (actionEndpointKey === "" || approvalMailSubKey === "") {
+        if (approvalMailSubKey === "") {
           return true;
         }
-        actionEndpointKey = JSON.parse(actionEndpointKey);
-        approvalMailSubKey = JSON.parse(approvalMailSubKey);
-        let param = {};
-        steps.forEach(function (step) {
-          if (step.ActionEndpoint == actionEndpointKey.approval1 && approvalMailSubKey.approval1) {
-            emailsToValidate.push('email_approval1');
-            let subitemApprovalMailAddress = $scope.depositionForm[approvalMailSubKey.approval1];
-            let mail_adress = '';
-            if (subitemApprovalMailAddress) {
-              mail_adress = subitemApprovalMailAddress.$modelValue;
-            }
-            param['email_approval1'] = {
-              'mail': mail_adress,
-              'action_id': step.ActionId
-            }
-          } else if (step.ActionEndpoint == actionEndpointKey.approval2 && approvalMailSubKey.approval2) {
-            emailsToValidate.push('email_approval2');
-            let subitemApproval2MailAddress = $scope.depositionForm[approvalMailSubKey.approval2];
-            let mail_adress = '';
-            if (subitemApproval2MailAddress) {
-              mail_adress = subitemApproval2MailAddress.$modelValue;
-            }
-            param['email_approval2'] = {
-              'mail': mail_adress,
-              'action_id': step.ActionId
-            }
-          }
-        });
-        param['activity_id'] = activityId;
-        param['user_to_check'] = emailsToValidate;
-        param['auto_set_index_action'] = isAutoSetIndexAction;
         var itemsDict = {};
         let recordsForm = $rootScope.recordsVM.invenioRecordsForm;
         for (let i = 0; i < recordsForm.length; i++) {
           itemsDict = Object.assign($scope.getItemsDictionary(recordsForm[i]), itemsDict);
         }
-        return this.sendValidationRequest(param, itemsDict, isAutoSetIndexAction, approvalMailSubKey);
+        approvalMailSubKey = JSON.parse(approvalMailSubKey);
+        let param = {};
+        Object.keys($scope.depositionForm).forEach(function (key) {
+          approvalMailSubKey.forEach(function (item) {
+            let item_keys = item.split('.').pop();
+            if (key.indexOf(item_keys) !== -1) {
+              let subItemApprovalMailAddress = $scope.depositionForm[key];
+              let mail_address = '';
+              if (subItemApprovalMailAddress) {
+                mail_address = subItemApprovalMailAddress.$modelValue;
+                if (mail_address) {
+                  mail_address = mail_address.trim()
+                }
+                param[item] = mail_address;
+                emailsToValidate.push(item);
+                listEmailKeys.push(key);
+              }
+            }
+          });
+        });
+        param['activity_id'] = activityId;
+        param['user_to_check'] = emailsToValidate;
+        param['user_key_to_check'] = listEmailKeys;
+        param['auto_set_index_action'] = isAutoSetIndexAction;
+        return this.sendValidationRequest(param, itemsDict, isAutoSetIndexAction);
       };
 
-      $scope.sendValidationRequest = function (param, itemsDict, isAutoSetIndexAction, approvalMailSubKey) {
+      $scope.sendValidationRequest = function (param, itemsDict, isAutoSetIndexAction) {
         let result = true;
         $.ajax({
           context: this,
@@ -3305,28 +3501,17 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           data: JSON.stringify(param),
           dataType: "json",
           success: function (data, status) {
-            let listEmailErrors = [];
-            if (param.email_approval1 && param.email_approval2) {
-              result = this.processResponseEmailValidation(itemsDict, data.email_approval1, approvalMailSubKey.approval1, listEmailErrors) + this.processResponseEmailValidation(itemsDict, data.email_approval2, approvalMailSubKey.approval2, listEmailErrors);
-            }
-            else{
-              if (param.email_approval1){
-                result = this.processResponseEmailValidation(itemsDict, data.email_approval1, approvalMailSubKey.approval1, listEmailErrors)
-              }
-              if (param.email_approval2) {
-                result = this.processResponseEmailValidation(itemsDict, data.email_approval2, approvalMailSubKey.approval2, listEmailErrors);
-              }
-            }
-            if (listEmailErrors.length > 0) {
-              let message = $("#validate_email_register").val() + '<br/><br/>';
-              message += listEmailErrors[0];
-              for (let k = 1; k < listEmailErrors.length; k++) {
-                let subMessage = ', ' + listEmailErrors[k];
-                message += subMessage;
-              }
-              $("#inputModal").html(message);
-              $("#allModal").modal("show");
+            if (data.validate_required_email && data.validate_required_email.length > 0) {
+              this.processShowModelValidation(data.validate_required_email, itemsDict, "#validate_email_required");
               result = false;
+            } else {
+              if (data.validate_register_in_system && data.validate_register_in_system.length > 0) {
+                this.processShowModelValidation(data.validate_register_in_system, itemsDict, "#validate_email_register");
+                result = false;
+              } else if (!data.validate_map_flow_and_item_type){
+                this.processShowModelValidation([], itemsDict, "#validate_email_map");
+                result = false;
+              }
             }
             if (isAutoSetIndexAction && !data.index) {
               let error_message = $("#not_existed_index_tree_err").val() + '<br/><br/>';
@@ -3344,26 +3529,23 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         return result;
       };
 
-      $scope.processResponseEmailValidation = function (itemsDict, emailData, subKey, errorList) {
-        let validationResult = true;
-        if (emailData) {
-          if (emailData.error && typeof emailData.validation !== 'undefined') {
-            $("#inputModal").html(emailData.error);
-            $("#allModal").modal("show");
-            validationResult = false;
-          } else if (!emailData.validation) {
-            validationResult = false;
-            let mailAddressItem = $scope.depositionForm[subKey];
-            if (mailAddressItem) {
-              let name = mailAddressItem.$name;
-              if (itemsDict.hasOwnProperty(name)) {
-                name = itemsDict[name];
-              }
-              errorList.push(name);
+      $scope.processShowModelValidation = function (listEmailErrors, itemsDict, id_message) {
+        let message = $(id_message).val() + '<br/><br/>';
+        for (let index = 0; index < listEmailErrors.length; index++) {
+          let subKey = listEmailErrors[index];
+          let mailAddressItem = $scope.depositionForm[subKey];
+          if (mailAddressItem) {
+            let name = mailAddressItem.$name.split('.').pop();
+            if (itemsDict.hasOwnProperty(name)) {
+              name = itemsDict[name];
             }
+            listEmailErrors[index] = name;
           }
         }
-        return validationResult;
+        message += listEmailErrors.join(", ");
+        $("#inputModal").html(message);
+        $("#allModal").modal("show");
+        return false;
       }
 
       $scope.priceValidator = function () {
@@ -3515,7 +3697,19 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
         return true;
       }
-
+      $scope.UpdateApplicationDate = function () {
+        var applicationDateKey = 'subitem_restricted_access_application_date';
+        for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
+          var currentInvenioRecordsSchema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
+          if (currentInvenioRecordsSchema.properties && currentInvenioRecordsSchema.properties.hasOwnProperty(applicationDateKey)) {
+            currentInvenioRecordsModel = $rootScope.recordsVM.invenioRecordsModel;
+            let today = new Date().toISOString().slice(0, 10)
+            $rootScope.recordsVM.invenioRecordsModel[key] = {}
+            $rootScope.recordsVM.invenioRecordsModel[key][applicationDateKey] = today;
+            break;
+          }
+        }
+      }
       $scope.updateDataJson = function (activityId, steps, item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail) {
           if (!validateSession()) {
           return;
@@ -3525,6 +3719,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         if (!$scope.saveDataJson(item_save_uri, currentActionId, isAutoSetIndexAction, enableContributor, enableFeedbackMail, true)) {
           return;
         }
+        $scope.UpdateApplicationDate();
         if (!$scope.priceValidator()) {
           var modalcontent = "Billing price is required half-width numbers.";
           $("#inputModal").html(modalcontent);
@@ -4193,7 +4388,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         $scope.directedUpload = function (thumbnails) {
           let validateResult = validateThumbnails($rootScope, $scope, false, thumbnails),
             files = validateResult.validThumbnails;
-          
+
           Array.prototype.forEach.call(files, function (f) {
             var reader = new FileReader();
             f.is_thumbnail = true;
@@ -4234,7 +4429,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           // If there is no valid file
           let validateResult = validateThumbnails($rootScope, $scope, false, thumbnails),
             files = validateResult.validThumbnails;
-                   
+
           files.length > 0 && $scope.getEndpoints(function () {
             if (!angular.isUndefined(files) && files.length > 0) {
               if ($scope.model.allowMultiple != 'True') {

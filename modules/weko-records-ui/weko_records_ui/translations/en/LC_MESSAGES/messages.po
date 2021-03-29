@@ -1362,3 +1362,6 @@ msgstr ""
 
 msgid "The download limit has been exceeded."
 msgstr ""
+
+msgid "This data is not available for this user."
+msgstr ""

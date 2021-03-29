@@ -27,6 +27,7 @@ from flask import current_app
 from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
 from invenio_db import db
+from sqlalchemy import func
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.expression import desc
 from sqlalchemy_utils.models import Timestamp
@@ -555,6 +556,21 @@ class FlowAction(db.Model, TimestampMixin):
         backref=db.backref('flow_action'))
     """flow action relationship."""
 
+    send_mail_setting = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+
 
 class FlowActionRole(db.Model, TimestampMixin):
     """FlowActionRole list belong to FlowAction.
@@ -588,6 +604,10 @@ class FlowActionRole(db.Model, TimestampMixin):
         db.Boolean(name='user_exclude'),
         nullable=False, default=False, server_default='0')
     """If set to True, deny the action, otherwise allow it."""
+
+    specify_property = db.Column(
+        db.String(255), nullable=True)
+    """the name of flows."""
 
 
 class WorkFlow(db.Model, TimestampMixin):
@@ -788,6 +808,9 @@ class Activity(db.Model, TimestampMixin):
         nullable=True
     )
 
+    action_order = db.Column(db.Integer(), nullable=True, unique=False)
+    """the order of action."""
+
 
 class ActivityAction(db.Model, TimestampMixin):
     """Define Activety."""
@@ -817,6 +840,9 @@ class ActivityAction(db.Model, TimestampMixin):
 
     action_handler = db.Column(db.Integer, nullable=True)
     """action handler"""
+
+    action_order = db.Column(db.Integer(), nullable=True, unique=False)
+    """the order of action."""
 
 
 class ActivityHistory(db.Model, TimestampMixin):
@@ -858,6 +884,9 @@ class ActivityHistory(db.Model, TimestampMixin):
     user = db.relationship(User, backref=db.backref(
         'activity_history'))
     """User relaionship."""
+
+    action_order = db.Column(db.Integer(), nullable=True, unique=False)
+    """the order of action."""
 
 
 class ActionJournal(db.Model, TimestampMixin):
@@ -1024,6 +1053,12 @@ class GuestActivity(db.Model, Timestamp):
     token = db.Column(db.String(255), nullable=False)
     """Token."""
 
+    expiration_date = db.Column(db.Integer, nullable=False, default=0)
+    """Expiration Date."""
+
+    is_usage_report = db.Column(db.Boolean(), nullable=False, default=False)
+    """Is Usage Report."""
+
     def __init__(self, **kwargs):
         """Initial guest activity.
 
@@ -1096,3 +1131,21 @@ class GuestActivity(db.Model, Timestamp):
             db.session.rollback()
             current_app.logger.error(ex)
             return False
+
+    @classmethod
+    def get_expired_activities(cls) -> list:
+        """Get expired activities.
+
+        @rtype: object
+        """
+        query = db.session.query(cls).with_entities(cls.activity_id)
+        current_date = datetime.utcnow().date()
+        query = query.filter(
+            db.cast(
+                cls.created + func.make_interval(0, 0, 0, cls.expiration_date),
+                db.DATE) < current_date
+        ).filter(
+            cls.is_usage_report.is_(True)
+        )
+
+        return query.all()

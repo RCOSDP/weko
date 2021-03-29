@@ -24,6 +24,7 @@ import mimetypes
 import unicodedata
 
 from flask import abort, current_app, render_template, request
+from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_files_rest import signals
 from invenio_files_rest.models import FileInstance
@@ -41,10 +42,11 @@ from .pdf import make_combined_pdf
 from .permissions import check_original_pdf_download_permission, \
     file_permission_factory
 from .utils import check_and_create_usage_report, \
-    get_billing_file_download_permission, get_groups_price, \
-    get_min_price_billing_file_download, is_billing_item, \
-    parse_one_time_download_token, update_onetime_download_count, \
-    validate_download_record, validate_onetime_download_token
+    check_and_send_usage_report, get_billing_file_download_permission, \
+    get_groups_price, get_min_price_billing_file_download, \
+    get_onetime_download, is_billing_item, parse_one_time_download_token, \
+    update_onetime_download, validate_download_record, \
+    validate_onetime_download_token
 
 
 def weko_view_method(pid, record, template=None, **kwargs):
@@ -392,15 +394,21 @@ def file_download_onetime(pid, record, _record_file_factory=None, **kwargs):
         parse_one_time_download_token(token)
     if error:
         return render_template(error_template, error=error)
-    # Validate token
     record_id, user_mail, date, secret_token = token_data
-    is_valid, error = validate_onetime_download_token(
-        filename, record_id, user_mail, date, secret_token)
-    if not is_valid:
-        return render_template(error_template, error=error)
 
     # Validate record status
     validate_download_record(record)
+
+    # Get one time download record.
+    onetime_download = get_onetime_download(
+        file_name=filename, record_id=record_id, user_mail=user_mail
+    )
+
+    # Validate token
+    is_valid, error = validate_onetime_download_token(
+        onetime_download, filename, record_id, user_mail, date, secret_token)
+    if not is_valid:
+        return render_template(error_template, error=error)
 
     _record_file_factory = _record_file_factory or record_file_factory
 
@@ -410,10 +418,25 @@ def file_download_onetime(pid, record, _record_file_factory=None, **kwargs):
         return render_template(error_template,
                                error="{} does not exist.".format(filename))
 
-    # Update download count
-    if not update_onetime_download_count(filename, record_id, user_mail):
+    # Create updated data
+    update_data = dict(
+        file_name=filename, record_id=record_id, user_mail=user_mail,
+        download_count=onetime_download.download_count - 1,
+    )
+
+    # Check and send usage report for Guest User.
+    if onetime_download.extra_info and 'open_restricted' == file_object.get(
+            'accessrole'):
+        extra_info = onetime_download.extra_info
+        error_msg = check_and_send_usage_report(extra_info, user_mail)
+        if error_msg:
+            return render_template(error_template, error=error_msg)
+        update_data['extra_info'] = extra_info
+
+    # Update download data
+    if not update_onetime_download(**update_data):
         return render_template(error_template,
-                               error="Can not update the download count.")
+                               error=_("Unexpected error occurred."))
 
     return _download_file(file_object, False, 'en', file_object.obj, pid,
                           record)

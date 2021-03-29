@@ -1667,30 +1667,63 @@ def update_restricted_access(restricted_access: dict):
 
     :param restricted_access:
     """
-    def parse_content_file_download(content_file_download):
+
+    def parse_content_file_download():
         if content_file_download.get('expiration_date_unlimited_chk'):
             content_file_download['expiration_date'] = 9999999
         if content_file_download.get('download_limit_unlimited_chk'):
             content_file_download['download_limit'] = 9999999
 
-        content_file_download['expiration_date'] = int(content_file_download['expiration_date'])
-        content_file_download['download_limit'] = int(content_file_download['download_limit'])
+        content_file_download['expiration_date'] = int(
+            content_file_download['expiration_date'])
+        content_file_download['download_limit'] = int(
+            content_file_download['download_limit'])
 
-    def validate_content_file_download(content_file_download):
-        if not content_file_download.get('expiration_date_unlimited_chk') and not content_file_download[
-            'expiration_date'] or not content_file_download.get('download_limit_unlimited_chk') and not \
+    def validate_content_file_download():
+        if not content_file_download.get(
+            'expiration_date_unlimited_chk') and not content_file_download[
+            'expiration_date'] or not content_file_download.get(
+            'download_limit_unlimited_chk') and not \
                 content_file_download['download_limit']:
             return False
-        if content_file_download['expiration_date'] and int(content_file_download['expiration_date']) < 1 or \
-                content_file_download['download_limit'] and int(content_file_download['download_limit']) < 1:
+        if content_file_download['expiration_date'] and int(
+            content_file_download['expiration_date']) < 1 or \
+            content_file_download['download_limit'] and int(
+                content_file_download['download_limit']) < 1:
             return False
         return True
 
+    def validate_usage_report_wf_access():
+        if not usage_report_wf_access.get(
+            'expiration_date_access_unlimited_chk') and not \
+                usage_report_wf_access.get('expiration_date_access'):
+            return False
+        if usage_report_wf_access['expiration_date_access'] and int(
+                usage_report_wf_access['expiration_date_access']) < 1:
+            return False
+        return True
+
+    def parse_usage_report_wf_access():
+        if usage_report_wf_access.get('expiration_date_access_unlimited_chk'):
+            usage_report_wf_access['expiration_date_access'] = 9999999
+
+        usage_report_wf_access['expiration_date_access'] = int(
+            usage_report_wf_access['expiration_date_access'])
+
     # Content file download.
     if 'content_file_download' in restricted_access:
-        if not validate_content_file_download(restricted_access['content_file_download']):
+        content_file_download = restricted_access['content_file_download']
+        if not validate_content_file_download():
             return False
-        parse_content_file_download(restricted_access['content_file_download'])
+        parse_content_file_download()
+
+    # Usage Report Workflow Access
+    if "usage_report_workflow_access" in restricted_access:
+        usage_report_wf_access = restricted_access[
+            'usage_report_workflow_access']
+        if not validate_usage_report_wf_access():
+            return False
+        parse_usage_report_wf_access()
 
     AdminSettings.update('restricted_access', restricted_access)
 

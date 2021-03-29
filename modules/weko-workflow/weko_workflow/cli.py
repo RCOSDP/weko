@@ -181,11 +181,11 @@ def init_workflow_tables(tables):
                 action_lastdate=datetime.date(2019, 3, 15),
                 action_is_need_agree=False
             ))
-        if current_app.config['WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION']:
+        if current_app.config['WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT']:
             # Identifier Grant
             db_action.append(dict(
                 action_name=current_app.config[
-                    'WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION'],
+                    'WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT'],
                 action_desc='Select DOI issuing organization and CNRI.',
                 action_version='1.0.0',
                 action_endpoint='identifier_grant',

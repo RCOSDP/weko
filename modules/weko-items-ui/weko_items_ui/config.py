@@ -184,3 +184,5 @@ WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT = {
     'ms_excel': 10
 }
 """Limit size of preview-able file."""
+
+WEKO_ITEMS_UI_MULTIPLE_APPROVALS = True
