@@ -707,3 +707,74 @@ def check_has_any_item_in_index_is_locked(index_id):
         if check_an_item_is_locked(int(item_id)):
             return True
     return False
+
+
+def check_index_permissions(record) -> bool:
+    """Check indexes of record is private.
+
+    :param record:Record data.
+
+    Returns:
+        [bool]: True if the record has indexes(or parent indexes)
+        which is private.
+    """
+
+    def _check(index_data):
+        """Check index data by role."""
+        can_view = False
+        if roles[0]:
+            can_view = True
+        elif index_data.public_state:
+            check_user_role = check_roles(roles, index_data.browsing_role) or \
+                check_groups(groups, index_data.browsing_group)
+            check_public_date = \
+                isinstance(index_data.public_date, datetime) and \
+                date.today() >= index_data.public_date.date() \
+                if index_data.public_date else True
+            if check_user_role and check_public_date:
+                can_view = True
+        return can_view
+
+    def _check_for_index_groups(_index_groups):
+        """Check for index groups.
+
+        Args:
+            _index_groups (list):Index groups.
+
+        Returns:
+            [bool]: True if the user can access index groups of record.
+        """
+        for _index in _index_groups:
+            if index_roles.get(_index) is False:
+                return False
+        return True
+
+    # Get record's index.
+    list_index = record.get("path")
+    index_lst = []
+    index_groups = []
+    if list_index:
+        index_id_lst = []
+        for index in list_index:
+            indexes = str(index).split('/')
+            index_id_lst.extend(indexes)
+            index_groups.append(indexes)
+        index_lst = index_id_lst
+    # Get all index and parent index of records in DB.
+    from .api import Indexes
+    indexes = Indexes.get_path_list(index_lst)
+
+    roles = get_user_roles()
+    groups = get_user_groups()
+    index_roles = {}
+    # Check index status.
+    for index in indexes:
+        index_roles.update({
+            str(index.cid): _check(index)
+        })
+
+    # Check for index groups.
+    for index in index_groups:
+        if _check_for_index_groups(index):
+            return True
+    return False
