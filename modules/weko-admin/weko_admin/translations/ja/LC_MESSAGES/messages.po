@@ -1212,3 +1212,7 @@ msgstr "制限公開の設定を変更しました。"
 
 msgid "Please input the Terms and Conditions in English."
 msgstr "英語の利用規約を入力してください。"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:65
+msgid "Usage Report Workflow Access"
+msgstr "利用報告ワークフローへのアクセス"

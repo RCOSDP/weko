@@ -337,7 +337,7 @@ msgstr "キャンセル"
 
 #: weko_workflow/templates/weko_workflow/modal_withdraw_confirmation.html:44
 msgid "Are you sure you want to withdraw DOI?"
-msgstr "DOIを取り下げ手もよろしいですか？"
+msgstr "DOIを取り下げてもよろしいですか？"
 
 #: weko_workflow/templates/weko_workflow/oapolicy_search.html:3
 msgid "Journal"
@@ -638,3 +638,21 @@ msgstr "強制終了"
 #: weko_workflow/templates/weko_workflow/item_login_sucess.html:288
 msgid "Back"
 msgstr "戻る"
+
+msgid "The specified link has expired."
+msgstr "指定したリンクはアクセス有効期限を超過しています。"
+
+msgid "Specify Property"
+msgstr "プロパティを指定する"
+
+msgid "Specify property"
+msgstr "プロパティを指定"
+
+msgid "Approval Request Notification Email"
+msgstr "承認依頼通知メール"
+
+msgid "Approval Notification Email"
+msgstr "承認通知メール"
+
+msgid "Approval Rejection Notification Email"
+msgstr "承認却下通知メール"

@@ -585,3 +585,7 @@ msgstr "ダウンロード有効期限を超過しています。"
 
 msgid "The download limit has been exceeded."
 msgstr "ダウンロード制限回数を超過しています。"
+
+msgid "This data is not available for this user."
+msgstr "このデータは利用できません（権限がないため）。"
+

@@ -238,8 +238,8 @@ WEKO_WORKFLOW_APPROVE_OUTPUT_REGISTRATION = ""
 WEKO_WORKFLOW_ACCESS_ACTIVITY_URL = ""
 """Template access the URL"""
 
-WEKO_WORKFLOW_ACCESS_DOWNLOAD_URL = ""
-"""Template access the link to download the content file"""
+WEKO_WORKFLOW_USAGE_REPORT_ACTIVITY_URL = ""
+"""Template access the URL"""
 
 WEKO_WORKFLOW_DATE_FORMAT = "%Y-%m-%d"
 """Date format string."""
@@ -262,3 +262,23 @@ WEKO_WORKFLOW_FILTER_PARAMS = [
     'createdfrom', 'createdto', 'workflow', 'user', 'item', 'status', 'tab',
     'sizewait', 'sizetodo', 'sizeall', 'pagesall', 'pagestodo', 'pageswait'
 ]
+
+WEKO_WORKFLOW_ACTIVITY_TOKEN_PATTERN = "activity={} file_name={} date={} email={}"
+"""Token pattern."""
+
+WEKO_WORKFLOW_APPROVE_DONE = 'email_pattern_approval_done.tpl'
+"""Mail template for Done Approval"""
+
+WEKO_WORKFLOW_APPROVE_REJECTED = 'email_pattern_approval_rejected.tpl'
+"""Mail template for Rejected Approval"""
+
+WEKO_WORKFLOW_REQUEST_APPROVAL = 'email_pattern_request_approval.tpl'
+"""Mail template for Requested Approval"""
+
+WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST = [31001, 31002]
+
+WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST = [31003]
+
+WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TITLE = '利用申請'
+
+WEKO_WORKFLOW_USAGE_REPORT_ITEM_TITLE = '利用報告'

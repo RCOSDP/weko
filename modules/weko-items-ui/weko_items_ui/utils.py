@@ -72,6 +72,8 @@ from weko_workflow.api import WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     WEKO_SERVER_CNRI_HOST_LINK
 from weko_workflow.models import ActionStatusPolicy as ASP
+from weko_workflow.models import Activity, FlowAction, FlowActionRole, \
+    FlowDefine
 from weko_workflow.utils import IdentifierHandle
 
 
@@ -444,12 +446,14 @@ def parse_ranking_new_items(result_data):
     return data_list
 
 
-def validate_form_input_data(result: dict, item_id: str, data: dict):
+def validate_form_input_data(
+        result: dict, item_id: str, data: dict):
     """Validate input data.
 
     :param result: result dictionary.
     :param item_id: item type identifier.
     :param data: form input data
+    :param activity_id: activity id
     """
     item_type = ItemTypes.get_by_id(item_id)
     json_schema = item_type.schema.copy()
@@ -783,7 +787,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                 record = WekoRecord.get_record_by_pid(record_id)
 
                 # Custom Record Metadata for export
-                hide_item_metadata_email_only(record)
+                hide_item_metadata(record)
                 replace_license_free(record, False)
 
                 self.records[record_id] = record
@@ -1671,45 +1675,85 @@ def update_index_tree_for_record(pid_value, index_tree_id):
     db.session.commit()
 
 
-def validate_user_mail(email):
+def validate_user_mail(users, activity_id, request_data, keys, result):
     """Validate user mail.
 
-    @param email:
+    @param result:
+    @param keys:
+    @param users:
+    @param activity_id:
+    @param request_data:
     @return:
     """
-    result = {}
+    result['validate_required_email'] = []
+    result['validate_register_in_system'] = []
     try:
-        if email != '':
-            result = {'results': '',
-                      'validation': '',
-                      'error': ''
-                      }
-            user_info = get_user_info_by_email(
-                email)
-            if user_info and user_info.get(
-                    'user_id') is not None:
-                if current_user.is_authenticated and int(
-                        user_info.get('user_id')) == int(current_user.get_id()):
-                    result['validation'] = False
-                    result['error'] = _(
-                        "You cannot specify "
-                        "yourself in approval lists setting.")
-                else:
-                    result['results'] = user_info
-                    result['validation'] = True
-            else:
-                result['validation'] = False
+        for index, user in enumerate(users):
+            email = request_data.get(user)
+            user_info = get_user_info_by_email(email)
+            action_order = check_approval_email(activity_id, user)
+            if action_order:
+                if not email:
+                    result['validate_required_email'].append(keys[index])
+                elif not (user_info and user_info.get('user_id') is not None):
+                    result['validate_register_in_system'].append(keys[index])
+                if email and user_info and \
+                        user_info.get('user_id') is not None:
+                    update_action_handler(activity_id,
+                                          action_order,
+                                          user_info.get('user_id'))
+                    keys = True
+                    continue
+        result[
+            'validate_map_flow_and_item_type'] = check_approval_email_in_flow(
+            activity_id, users)
+
     except Exception as ex:
-        result['error'] = str(ex)
+        result['validation'] = False
 
     return result
 
 
-def update_action_handler(activity_id, action_id, user_id):
+def check_approval_email(activity_id, user):
+    """Check approval email.
+
+    @param user:
+    @param activity_id:
+    @return:
+    """
+    action_order = db.session.query(FlowAction.action_order) \
+        .outerjoin(FlowActionRole).outerjoin(FlowDefine) \
+        .outerjoin(Activity) \
+        .filter(Activity.activity_id == activity_id) \
+        .filter(FlowActionRole.specify_property == user) \
+        .first()
+    return action_order[0] if action_order and action_order[0] else None
+
+
+def check_approval_email_in_flow(activity_id, users):
+    """Count approval email.
+
+    @param users:
+    @param activity_id:
+    @return:
+    """
+    flow_action_role = FlowActionRole.query \
+        .outerjoin(FlowAction).outerjoin(FlowDefine) \
+        .outerjoin(Activity) \
+        .filter(Activity.activity_id == activity_id) \
+        .filter(FlowActionRole.specify_property.isnot(None)) \
+        .all()
+
+    map_list = [y for x in flow_action_role for y in users if
+                x.specify_property == y]
+    return True if len(map_list) == len(flow_action_role) else False
+
+
+def update_action_handler(activity_id, action_order, user_id):
     """Update action handler for each action of activity.
 
     :param activity_id:
-    :param action_id:
+    :param action_order:
     :param user_id:
     :return:
     """
@@ -1717,7 +1761,7 @@ def update_action_handler(activity_id, action_id, user_id):
     with db.session.begin_nested():
         activity_action = ActivityAction.query.filter_by(
             activity_id=activity_id,
-            action_id=action_id, ).one_or_none()
+            action_order=action_order).one_or_none()
         if activity_action:
             activity_action.action_handler = user_id
             db.session.merge(activity_action)
@@ -1731,21 +1775,15 @@ def validate_user_mail_and_index(request_data):
     :return:
     """
     users = request_data.get('user_to_check', [])
+    keys = request_data.get('user_key_to_check', [])
     auto_set_index_action = request_data.get('auto_set_index_action', False)
     activity_id = request_data.get('activity_id')
     result = {
         "index": True
     }
     try:
-        for user in users:
-            user_obj = request_data.get(user)
-            email = user_obj.get('mail')
-            validation_result = validate_user_mail(email)
-            if validation_result.get('validation') is True:
-                update_action_handler(activity_id, user_obj.get('action_id'),
-                                      validation_result.get('results').get(
-                                          'user_id'))
-            result[user] = validation_result
+        result = validate_user_mail(users, activity_id, request_data, keys,
+                                    result)
         if auto_set_index_action is True:
             is_existed_valid_index_tree_id = True if \
                 get_index_id(activity_id) else False
@@ -2414,7 +2452,8 @@ def check_item_has_doi(list_uuid):
     return True if filter_list_item_uuid_has_doi(list_uuid) else False
 
 
-def make_stats_tsv_with_permission(item_type_id, recids, records_metadata, permissions):
+def make_stats_tsv_with_permission(item_type_id, recids,
+                                   records_metadata, permissions):
     """Prepare TSV data for each Item Types.
 
     Arguments:
@@ -2733,7 +2772,8 @@ def make_stats_tsv_with_permission(item_type_id, recids, records_metadata, permi
     ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
     ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
     ret.append('.metadata.pubdate')
-    ret_label.append('公開日' if permissions['current_language']() == 'ja' else 'PubDate')
+    ret_label.append('公開日' if
+                     permissions['current_language']() == 'ja' else 'PubDate')
 
     for recid in recids:
         record = records.records[recid]

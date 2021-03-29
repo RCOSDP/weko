@@ -31,10 +31,12 @@ from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from weko_index_tree.models import Index
 from weko_records.api import ItemTypes
+from weko_records.models import ItemTypeProperty
 
 from .api import Action, Flow, WorkActivity, WorkFlow
 from .config import WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS
 from .models import WorkflowRole
+from .utils import recursive_get_specified_properties
 
 
 class FlowSettingView(BaseView):
@@ -79,6 +81,7 @@ class FlowSettingView(BaseView):
             abort(404)
         workflow = Flow()
         flow = workflow.get_flow_detail(flow_id)
+        specified_properties = self.get_specified_properties()
         return self.render(
             'weko_workflow/admin/flow_detail.html',
             flow_id=flow_id,
@@ -87,8 +90,28 @@ class FlowSettingView(BaseView):
             users=users,
             roles=roles,
             actions=flow.flow_actions,
-            action_list=actions
+            action_list=actions,
+            specifed_properties=specified_properties
         )
+
+    @staticmethod
+    def get_specified_properties():
+        current_lang = current_i18n.language if current_i18n.language \
+            in ['en', 'ja'] else 'en'
+        result = ItemTypeProperty.query.filter_by(delflg=False).all()
+        specified_properties = []
+        for value in result:
+            properties = value.form
+            if properties:
+                result = recursive_get_specified_properties(properties)
+                if result:
+                    title_i18n = value.form.get('title_i18n', {}).get(
+                        current_lang, '')
+                    specified_properties.append({
+                        'value': result,
+                        'text': title_i18n if title_i18n else value.name
+                    })
+        return specified_properties
 
     @staticmethod
     def update_flow(flow_id):
@@ -163,28 +186,18 @@ class FlowSettingView(BaseView):
         """Update FlowAction Info."""
         actions = request.get_json()
         workflow = Flow()
-        dict_code = workflow.upt_flow_action(flow_id, actions)
-        list_code = dict_code.get('list_code')
-        msg = ''
-        dict_msg = []
-        status = False
-        for code in list_code:
-            if code == 0:
-                msg = _('Updated flow action successfully')
-                status = True
-            if code == 1:
-                msg = _(
-                    'Approval by Administrator action does not exist,'
-                    ' or not in the right order.')
-            elif code == 2:
-                msg = _('Approval by Advisor action is not in the right order.')
-            elif code == 3:
-                msg = _(
-                    'Approval by Guarantor action is not in the right order.')
-            elif code == 4:
-                msg = _('Start or End action is not in the right order.')
-            dict_msg.append(dict(msg=msg))
-        return jsonify(result=dict_msg, status=status)
+        workflow.upt_flow_action(flow_id, actions)
+        flow = workflow.get_flow_detail(flow_id)
+        actions = []
+        for action in flow.flow_actions:
+            actions.append({
+                'id': action.id,
+                'action_order': action.action_order,
+            })
+        return jsonify(
+            code=0,
+            msg=_('Updated flow action successfully'),
+            actions=actions)
 
 
 class WorkFlowSettingView(BaseView):
