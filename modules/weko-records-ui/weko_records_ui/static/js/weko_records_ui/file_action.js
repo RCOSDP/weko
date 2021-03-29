@@ -114,7 +114,7 @@ $(document).ready(function () {
       let itemTypeId = $(this).data("guest_itemtype_id");
       let workflowId = $(this).data("guest_workflow_id");
       let flowId = $(this).data("guest_flow_id");
-      console.log(fileName, dataType, recordID, itemTypeId, workflowId, flowId)
+
       const post_uri = '/workflow/activity/init-guest';
       let post_data = {
         guest_mail: user_mail,

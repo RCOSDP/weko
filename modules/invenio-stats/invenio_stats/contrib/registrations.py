@@ -49,6 +49,7 @@ def register_events():
                     anonymize_user,
                     build_file_unique_id
                 ],
+                double_click_window=30,
                 suffix="%Y",
             )),
         dict(
@@ -62,6 +63,7 @@ def register_events():
                     anonymize_user,
                     build_file_unique_id
                 ],
+                double_click_window=30,
                 suffix="%Y",
             )),
         dict(
@@ -88,6 +90,7 @@ def register_events():
                     anonymize_user,
                     build_record_unique_id
                 ],
+                double_click_window=30,
                 suffix="%Y",
             )),
         dict(
@@ -101,6 +104,7 @@ def register_events():
                     anonymize_user,
                     build_top_unique_id
                 ],
+                double_click_window=30,
                 suffix="%Y",
             )),
         dict(
@@ -115,6 +119,7 @@ def register_events():
                     build_search_detail_condition,
                     build_search_unique_id
                 ],
+                double_click_window=30,
                 suffix="%Y",
             ))
     ]

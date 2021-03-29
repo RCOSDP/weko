@@ -26,7 +26,7 @@ from datetime import timedelta
 from decimal import Decimal
 from typing import NoReturn, Tuple
 
-from flask import abort, current_app, request
+from flask import abort, current_app, request, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role
@@ -389,6 +389,8 @@ def hide_item_metadata(record):
         if not current_app.config['EMAIL_DISPLAY_FLG']:
             record = hide_by_email(record)
 
+        record = hide_by_file(record)
+
         return True
 
     record.pop('weko_creator_id')
@@ -416,6 +418,26 @@ def hide_item_metadata_email_only(record):
 
     record.pop('weko_creator_id')
     return False
+
+
+def hide_by_file(item_metadata):
+    """Hiding file info.
+
+    :param item_metadata:
+    :return:
+    """
+    for key, value in item_metadata.items():
+        if isinstance(value, dict) \
+                and 'attribute_type' in value \
+                and value['attribute_type'] == 'file' \
+                and 'attribute_value_mlt' in value \
+                and len(value['attribute_value_mlt']) > 0:
+            for v in value['attribute_value_mlt'].copy():
+                if 'accessrole' in v \
+                        and v['accessrole'] == 'open_no':
+                    value['attribute_value_mlt'].remove(v)
+
+    return item_metadata
 
 
 def hide_by_email(item_metadata):
@@ -679,6 +701,99 @@ def check_and_create_usage_report(record, file_object):
                                                                activity_id)
 
 
+def create_usage_report_for_user(onetime_download_extra_info: dict):
+    """Create usage report for user.
+
+    @param onetime_download_extra_info:
+    @return:
+    """
+    activity_id = onetime_download_extra_info.get(
+        'usage_application_activity_id')
+    is_guest = onetime_download_extra_info.get('is_guest', False)
+
+    # Get Usage Application Activity.
+    from weko_workflow.api import WorkActivity
+    usage_application_activity = WorkActivity().get_activity_by_id(
+        activity_id)
+
+    extra_info_application = usage_application_activity.extra_info
+
+    # Get usage report WF.
+    usage_report_workflow = WorkFlow().find_workflow_by_name(
+        current_app.config['WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME'])
+
+    if not usage_report_workflow:
+        return ""
+
+    # Prepare data for activity.
+    activity_data = {
+        'workflow_id': usage_report_workflow.id,
+        'flow_id': usage_report_workflow.flow_id,
+        'activity_confirm_term_of_use': True,
+        'extra_info': {
+            "record_id": extra_info_application.get('record_id'),
+            "related_title": extra_info_application.get('related_title'),
+            "file_name": extra_info_application.get('file_name'),
+            "usage_record_id": str(usage_application_activity.item_id),
+            "usage_activity_id": str(activity_id),
+        }
+    }
+
+    # Setting user mail.
+    if is_guest:
+        activity_data['extra_info']['guest_mail'] = extra_info_application.get(
+            'guest_mail')
+    else:
+        activity_data['extra_info']['user_mail'] = extra_info_application.get(
+            'user_mail')
+
+    if is_guest:
+        # Create activity and URL for guest user.
+        from weko_workflow.utils import init_activity_for_guest_user
+        usage_report_url = init_activity_for_guest_user(activity_data, True)
+    else:
+        # Create activity and URL for registered user.
+        activity = WorkActivity().init_activity(activity_data)
+        usage_report_url = url_for('weko_workflow.display_activity',
+                                   activity_id=activity.activity_id)
+        usage_report_url = "{}{}".format(request.host_url, usage_report_url)
+    return usage_report_url
+
+
+def send_usage_report_mail_for_guest_user(guest_mail: str, temp_url: str):
+    """Send usage application mail for guest user.
+
+    @param guest_mail:
+    @param temp_url:
+    @return:
+    """
+    # Mail information
+    mail_info = {
+        'template': current_app.config.get(
+            "WEKO_WORKFLOW_USAGE_REPORT_ACTIVITY_URL"),
+        'mail_address': guest_mail,
+        'url_guest_user': temp_url
+    }
+    from weko_workflow.utils import send_mail_url_guest_user
+    return send_mail_url_guest_user(mail_info)
+
+
+def check_and_send_usage_report(extra_info, user_mail):
+    """Check and send usage report for user.
+
+    @param extra_info:
+    @param user_mail:
+    @return:
+    """
+    if not extra_info.get('send_usage_report'):
+        return
+    tmp_url = create_usage_report_for_user(extra_info)
+    if not tmp_url or not \
+            send_usage_report_mail_for_guest_user(user_mail, tmp_url):
+        return _("Unexpected error occurred.")
+    extra_info['send_usage_report'] = False
+
+
 def generate_one_time_download_url(
     file_name: str, record_id: str, guest_mail: str
 ) -> str:
@@ -729,10 +844,12 @@ def parse_one_time_download_token(token: str) -> Tuple[str, Tuple]:
 
 
 def validate_onetime_download_token(
-    file_name: str, record_id: str, guest_mail: str, date: str, token: str
+    onetime_download: FileOnetimeDownload, file_name: str, record_id: str,
+    guest_mail: str, date: str, token: str
 ) -> Tuple[bool, str]:
     """Validate onetime download token.
 
+    @param onetime_download:
     @param file_name:
     @param record_id:
     @param guest_mail:
@@ -749,16 +866,18 @@ def validate_onetime_download_token(
         current_app.logger.debug('Validate token error: {}'.format(hash_value))
         return False, token_invalid
     try:
-        onetime_download = get_onetime_download(
-            file_name=file_name, record_id=record_id, user_mail=guest_mail
-        )
         if not onetime_download:
             return False, token_invalid
-        download_date = onetime_download.created.date() + timedelta(
-            onetime_download.expiration_date)
-        current_date = dt.utcnow().date()
-        if current_date > download_date:
-            return False, _("The expiration date for download has been exceeded.")
+        try:
+            expiration_date = timedelta(onetime_download.expiration_date)
+            download_date = onetime_download.created.date() + expiration_date
+            current_date = dt.utcnow().date()
+            if current_date > download_date:
+                return False, _(
+                    "The expiration date for download has been exceeded.")
+        except OverflowError:
+            current_app.logger.error('date value out of range:',
+                                     onetime_download.expiration_date)
 
         if onetime_download.download_count <= 0:
             return False, _("The download limit has been exceeded.")
@@ -825,43 +944,47 @@ def get_onetime_download(file_name: str, record_id: str,
         return None
 
 
-def create_onetime_download_url(file_name: str, record_id: str,
-                                user_mail: str):
+def create_onetime_download_url(
+    activity_id: str, file_name: str, record_id: str, user_mail: str,
+    is_guest: bool = False
+):
     """Create onetime download.
 
+    :param activity_id:
     :param file_name:
     :param record_id:
     :param user_mail:
+    :param is_guest:
     :return:
     """
     content_file_download = get_restricted_access('content_file_download')
     if isinstance(content_file_download, dict):
         expiration_date = content_file_download.get("expiration_date", 30)
-        download_limit = content_file_download.get("download_limit", 30)
+        download_limit = content_file_download.get("download_limit", 10)
+        extra_info = dict(
+            usage_application_activity_id=activity_id,
+            send_usage_report=True,
+            is_guest=is_guest
+        )
         file_onetime = FileOnetimeDownload.create(**{
             "file_name": file_name,
             "record_id": record_id,
             "user_mail": user_mail,
             "expiration_date": expiration_date,
-            "download_count": download_limit
+            "download_count": download_limit,
+            "extra_info": extra_info,
         })
-        if file_onetime:
-            return True
+        return file_onetime
     return False
 
 
-def update_onetime_download_count(file_name: str, record_id: str,
-                                  user_mail: str) -> NoReturn:
-    """Update onetime download count.
+def update_onetime_download(**kwargs) -> NoReturn:
+    """Update onetime download.
 
-    @param file_name:
-    @param record_id:
-    @param user_mail:
+    @param kwargs:
     @return:
     """
-    return FileOnetimeDownload.update_download_count(
-        file_name=file_name, record_id=record_id, user_mail=user_mail
-    )
+    return FileOnetimeDownload.update_download(**kwargs)
 
 
 def get_workflows():

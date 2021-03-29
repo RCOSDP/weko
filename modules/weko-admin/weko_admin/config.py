@@ -772,6 +772,10 @@ WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
         "download_limit": 10,
         "download_limit_unlimited_chk": False,
     },
+    "usage_report_workflow_access": {
+        "expiration_date_access": 500,
+        "expiration_date_access_unlimited_chk": False,
+    },
     "terms_and_conditions": []
 }
 """Default restricted access settings."""

@@ -86,6 +86,9 @@ setup(
         'flask.commands': [
             'workflow = weko_workflow.cli:workflow',
         ],
+        'invenio_celery.tasks': [
+            'weko_workflow = weko_workflow.tasks',
+        ],
         'invenio_base.apps': [
             'weko_workflow = weko_workflow:WekoWorkflow',
         ],
@@ -114,6 +117,8 @@ setup(
             'weko_workflow.bundles:js_lock_activity',
             'workflow_detail_admin_js = '
             'weko_workflow.bundles:js_admin_workflow_detail',
+            'flow_detail_admin_js = '
+            'weko_workflow.bundles:js_admin_flow_detail',
         ],
         'invenio_i18n.translations': [
             'messages = weko_workflow',

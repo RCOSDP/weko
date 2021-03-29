@@ -445,6 +445,7 @@ def sort_meta_data_by_options(record_hit):
     :param record_hit:
     """
     from weko_records_ui.permissions import check_file_download_permission
+    from weko_records_ui.utils import hide_item_metadata
     from weko_records.api import Mapping
     from weko_records.serializers.utils import get_mapping
     from weko_search_ui.utils import get_data_by_propertys
@@ -672,7 +673,7 @@ def sort_meta_data_by_options(record_hit):
     try:
         src_default = copy.deepcopy(record_hit['_source'].get('_item_metadata'))
         _item_metadata = copy.deepcopy(record_hit['_source'])
-        src = record_hit['_source'].pop('_item_metadata')
+        src = record_hit['_source']['_item_metadata']
         item_type_id = record_hit['_source'].get('item_type_id') or \
             src.get('item_type_id')
         item_type_mapping = Mapping.get_record(item_type_id)
@@ -722,6 +723,7 @@ def sort_meta_data_by_options(record_hit):
         solst_dict_array = convert_data_to_dict(solst)
         files_info = []
         thumbnail = None
+        hide_item_metadata(src)
         # Set value and parent option
         for lst in solst:
             key = lst[0]
@@ -759,6 +761,8 @@ def sort_meta_data_by_options(record_hit):
         items = get_comment(solst_dict_array, not settings.items_display_email,
                             _item_metadata,
                             src_default, solst)
+        if 'file' in record_hit['_source']:
+            record_hit['_source'].pop('file')
         if items:
             if record_hit['_source'].get('_comment'):
                 record_hit['_source']['_comment'].extend(items)

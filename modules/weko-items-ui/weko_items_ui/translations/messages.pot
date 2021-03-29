@@ -394,3 +394,6 @@ msgstr ""
 
 msgid "Item cannot be deleted because the import is in progress."
 msgstr ""
+
+msgid "Can not found the email address of approval."
+msgstr ""

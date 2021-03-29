@@ -592,3 +592,21 @@ msgstr "Quit"
 #: weko_workflow/templates/weko_workflow/item_login_sucess.html:288
 msgid "Back"
 msgstr "Back"
+
+msgid "The specified link has expired."
+msgstr ""
+
+msgid "Specify Property"
+msgstr "Specify Property"
+
+msgid "Specify property"
+msgstr "Specify Property"
+
+msgid "Approval Request Notification Email"
+msgstr ""
+
+msgid "Approval Notification Email"
+msgstr ""
+
+msgid "Approval Rejection Notification Email"
+msgstr ""
