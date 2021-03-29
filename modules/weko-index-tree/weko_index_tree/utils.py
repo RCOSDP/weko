@@ -715,10 +715,10 @@ def check_index_permissions(record) -> bool:
     :param record:Record data.
 
     Returns:
-        [bool]: True if the record has indexes(or parent indexes)
+        [bool]: False if the record has indexes(or parent indexes)
         which is private.
-    """
 
+    """
     def _check(index_data):
         """Check index data by role."""
         can_view = False
@@ -743,6 +743,7 @@ def check_index_permissions(record) -> bool:
 
         Returns:
             [bool]: True if the user can access index groups of record.
+
         """
         for _index in _index_groups:
             if index_roles.get(_index) is False:
