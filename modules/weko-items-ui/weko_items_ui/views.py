@@ -988,8 +988,11 @@ def validate():
         "error": ""
     }
     request_data = request.get_json()
-    validate_form_input_data(result, request_data.get('item_id'),
-                             request_data.get('data'))
+    validate_form_input_data(
+        result,
+        request_data.get('item_id'),
+        request_data.get('data')
+    )
     return jsonify(result)
 
 

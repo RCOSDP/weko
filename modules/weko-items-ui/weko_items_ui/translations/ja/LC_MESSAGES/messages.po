@@ -471,3 +471,6 @@ msgstr "非ログインユーザ"
 
 msgid "Free Input"
 msgstr "自由入力"
+
+msgid "Can not found the email address of approval."
+msgstr "承認者のメールアドレスを検出できません。"

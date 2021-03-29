@@ -26,7 +26,9 @@ from datetime import datetime
 from flask import current_app
 from invenio_db import db
 from sqlalchemy import desc, or_
+from sqlalchemy.dialects import postgresql
 from sqlalchemy_utils.models import Timestamp
+from sqlalchemy_utils.types import JSONType
 
 """ PDF cover page model"""
 
@@ -246,6 +248,15 @@ class FilePermission(db.Model):
         db.session.commit()
         return permission
 
+    @classmethod
+    def delete_object(cls, permission):
+        """Delete permission object.
+
+        @rtype: object
+        """
+        db.session.delete(permission)
+        db.session.commit()
+
 
 class FileOnetimeDownload(db.Model, Timestamp):
     """File onetime download."""
@@ -268,21 +279,41 @@ class FileOnetimeDownload(db.Model, Timestamp):
     """Download count"""
 
     expiration_date = db.Column(db.Integer, nullable=False, default=0)
-    """Download count"""
+    """Expiration Date"""
 
-    def __init__(self, file_name, user_mail, record_id, download_count=0, expiration_date=0):
+    extra_info = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """Extra info."""
+
+    def __init__(self, file_name, user_mail, record_id, download_count=0,
+                 expiration_date=0, extra_info=None):
         """Init.
 
         :param file_name: File name
         :param user_mail: User mail
         :param record_id: Record identifier
         :param download_count: Download count
+        :param expiration_date: Expiration date
+        :param extra_info: Extra info want to store
         """
         self.file_name = file_name
         self.user_mail = user_mail
         self.record_id = record_id
         self.download_count = download_count
         self.expiration_date = expiration_date
+        self.extra_info = extra_info
 
     @classmethod
     def create(cls, **data):
@@ -298,7 +329,7 @@ class FileOnetimeDownload(db.Model, Timestamp):
             return None
 
     @classmethod
-    def update_download_count(cls, **data) -> bool:
+    def update_download(cls, **data):
         """Update download count.
 
         :param data:
@@ -312,19 +343,20 @@ class FileOnetimeDownload(db.Model, Timestamp):
                                        record_id=record_id)
             if file_permission and len(file_permission) > 0:
                 for file in file_permission:
-                    file.download_count = file.download_count - 1
+                    if data.get("download_count") is not None:
+                        file.download_count = data.get("download_count")
+                    if data.get("expiration_date") is not None:
+                        file.expiration_date = data.get("expiration_date")
+                    if data.get("extra_info"):
+                        file.extra_info = data.get("extra_info")
                     db.session.merge(file)
                 db.session.commit()
-                return True
-            else:
-                if cls.create(**data):
-                    return True
-                else:
-                    return False
+                return file_permission
+            return None
         except Exception as ex:
             db.session.rollback()
             current_app.logger.error(ex)
-            return False
+            return None
 
     @classmethod
     def find(cls, **obj) -> list:

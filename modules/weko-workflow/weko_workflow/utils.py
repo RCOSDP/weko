@@ -21,20 +21,23 @@
 """Module of weko-workflow utils."""
 
 import base64
+import json
 import os
 from copy import deepcopy
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from typing import NoReturn, Tuple, Union
 
 from celery.task.control import inspect
 from flask import current_app, request, session
 from flask_babelex import gettext as _
 from flask_security import current_user
+from invenio_accounts.models import User
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_i18n.ext import current_i18n
 from invenio_mail.admin import MailSettingView
+from invenio_mail.models import MailConfig
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, \
@@ -44,12 +47,14 @@ from invenio_records_files.models import RecordsBuckets
 from passlib.handlers.oracle import oracle10
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
-from weko_admin.models import Identifier
+from weko_admin.models import Identifier, SiteInfo
+from weko_admin.utils import get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
 from weko_index_tree.models import Index
 from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
     ItemTypes, Mapping
+from weko_records.models import ItemType
 from weko_records.serializers.utils import get_item_type_name, get_mapping
 from weko_records_ui.utils import create_onetime_download_url, \
     generate_one_time_download_url, get_list_licence
@@ -1874,7 +1879,24 @@ def replace_characters(data, content):
         '[16]': 'report_number',
         '[17]': 'registration_number',
         '[18]': 'output_registration_title',
-        '[19]': 'url_guest_user'
+        '[19]': 'url_guest_user',
+        '[restricted_fullname]': 'restricted_fullname',
+        '[restricted_university_institution]': 'restricted_university_institution',
+        '[restricted_activity_id]': 'restricted_activity_id',
+        '[restricted_research_title]': 'restricted_research_title',
+        '[restricted_data_name]': 'restricted_data_name',
+        '[restricted_application_date]': 'restricted_application_date',
+        '[restricted_mail_address]': 'restricted_mail_address',
+        '[restricted_download_link]': 'restricted_download_link',
+        '[restricted_expiration_date]': 'restricted_expiration_date',
+        '[restricted_approver_name]': 'restricted_approver_name',
+        '[restricted_site_name_ja]': 'restricted_site_name_ja',
+        '[restricted_site_name_en]': 'restricted_site_name_en',
+        '[restricted_site_mail]': 'restricted_site_mail',
+        '[restricted_site_url]': 'restricted_site_url',
+        '[restricted_approver_affiliation]': 'restricted_approver_affiliation',
+        '[restricted_supervisor]': '',
+        '[restricted_reference]': ''
     }
     for key in replace_list:
         value = replace_list.get(key)
@@ -1936,14 +1958,43 @@ def get_item_info(item_id):
     return item_info
 
 
-def set_mail_info(item_info, activity_detail):
+def set_mail_info(item_info, activity_detail, guest_user=False):
     """Set main mail info.
 
     :item_info: object
     :activity_detail: object
+    :guest_user: object
     """
-    register_user, register_date = \
-        get_register_info(activity_detail.activity_id)
+    def get_default_mail_sender():
+        """Get default mail sender.
+
+        :return:
+        """
+        mail_config = MailConfig.get_config()
+        return mail_config.get('mail_default_sender', '')
+
+    def get_site_info():
+        """Get site name.
+
+        @return:
+        """
+        site_name_en = site_name_ja = ''
+        site_info = SiteInfo.get()
+        if site_info:
+            if len(site_info.site_name) == 1:
+                site_name_en = site_name_ja = site_info.site_name[0]['name']
+            elif len(site_info.site_name) == 2:
+                for site in site_info.site_name:
+                    site_name_ja = site['name'] if site['language'] == 'ja' else site_name_ja
+                    site_name_en = site['name'] if site['language'] == 'en' else site_name_en
+        return site_name_en, site_name_ja
+
+    site_en, site_ja = get_site_info()
+    site_mail = get_default_mail_sender()
+    register_user = register_date = ''
+    if not guest_user:
+        register_user, register_date = get_register_info(activity_detail.activity_id)
+
     mail_info = dict(
         university_institution=item_info.get('subitem_university/institution'),
         fullname=item_info.get('subitem_fullname'),
@@ -1962,7 +2013,26 @@ def set_mail_info(item_info, activity_detail):
         register_user_mail=register_user,
         report_number=activity_detail.activity_id,
         registration_number=activity_detail.activity_id,
-        output_registration_title=item_info.get('subitem_title')
+        output_registration_title=item_info.get('subitem_title'),
+        # Restricted data newly supported
+        restricted_fullname=item_info.get('subitem_restricted_access_name'),
+        restricted_university_institution=item_info.get('subitem_restricted_access_university/institution'),
+        restricted_activity_id=activity_detail.activity_id,
+        restricted_research_title=item_info.get('subitem_restricted_access_research_title'),
+        restricted_data_name=item_info.get('subitem_restricted_access_dataset_usage'),
+        restricted_application_date=item_info.get('subitem_restricted_access_application_date'),
+        restricted_mail_address=item_info.get('subitem_restricted_access_mail_address'),
+        restricted_download_link='',
+        restricted_expiration_date='',
+        restricted_approver_name='',
+        restricted_approver_affiliation='',
+        restricted_site_name_ja=site_ja,
+        restricted_site_name_en=site_en,
+        restricted_site_mail=site_mail,
+        restricted_site_url=request.url_root,
+        mail_recipient=item_info.get('subitem_restricted_access_mail_address'),
+        restricted_supervisor='',
+        restricted_reference=''
     )
     return mail_info
 
@@ -2099,8 +2169,6 @@ def create_usage_report(activity_id):
     activity_detail = WorkActivity().get_activity_detail(activity_id)
 
     _workflow = WorkFlow()
-    # Get WF detail
-    _workflow_detail = _workflow.get_workflow_by_id(activity_detail.workflow_id)
     # Get usage report WF
     usage_report_workflow = _workflow.find_workflow_by_name(
         current_app.config['WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME'])
@@ -2350,9 +2418,12 @@ def update_activity_action(activity_id, owner_id):
         action = _Action.query.filter_by(
             action_name=usage_application).one_or_none()
         if action:
+            activity = WorkActivity()
+            activity_detail = activity.get_activity_by_id(activity_id)
             WorkActivity().upt_activity_action_status(
                 activity_id=activity_id, action_id=action.id,
-                action_status=ActionStatusPolicy.ACTION_DOING
+                action_status=ActionStatusPolicy.ACTION_DOING,
+                action_order=activity_detail.action_order
             )
             WorkActivityHistory().upd_activity_history_detail(activity_id,
                                                               action.id)
@@ -2496,10 +2567,12 @@ def send_mail_url_guest_user(mail_info: dict) -> bool:
         return True
 
 
-def init_activity_for_guest_user(data: dict) -> bool:
+def init_activity_for_guest_user(data: dict,
+                                 is_usage_report: bool = False) -> str:
     """Init activity for guest user.
 
     @param data:
+    @param is_usage_report:
     @return:
     """
     def _get_guest_activity():
@@ -2511,7 +2584,6 @@ def init_activity_for_guest_user(data: dict) -> bool:
         return GuestActivity.find(**_guest_activity)
 
     def _generate_token_value():
-        token_pattern = "activity={} file_name={} date={} email={}"
         hash_value = token_pattern.format(activity_id, file_name, activity_date,
                                           guest_mail)
         secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
@@ -2521,8 +2593,10 @@ def init_activity_for_guest_user(data: dict) -> bool:
         _token_value = base64.b64encode(_token_value.encode()).decode()
         return _token_value
 
+    date_form_str = current_app.config['WEKO_WORKFLOW_DATE_FORMAT']
+    token_pattern = current_app.config['WEKO_WORKFLOW_ACTIVITY_TOKEN_PATTERN']
     # Get data to generated key
-    activity_date = date.today().strftime("%y-%m-%d")
+    activity_date = datetime.utcnow().strftime(date_form_str)
     guest_mail = data.get("extra_info").get("guest_mail")
     file_name = data.get("extra_info").get("file_name")
     record_id = data.get("extra_info").get("record_id")
@@ -2544,6 +2618,16 @@ def init_activity_for_guest_user(data: dict) -> bool:
             "activity_id": activity_id,
             "token": token_value
         }
+
+        # In case create usage report,
+        # update expiration date from Admin settings
+        if is_usage_report:
+            guest_activity['is_usage_report'] = is_usage_report
+            usage_report_access = get_restricted_access(
+                'usage_report_workflow_access')
+            guest_activity['expiration_date'] = int(usage_report_access.get(
+                'expiration_date_access', 500))
+
         GuestActivity.create(**guest_activity)
     else:
         token_value = guest_activity[0].token
@@ -2551,21 +2635,31 @@ def init_activity_for_guest_user(data: dict) -> bool:
 
     # Generate URL
     url_pattern = "{}workflow/activity/guest-user/{}?token={}"
-    url = url_pattern.format(request.url_root, file_name, token_value)
+    tmp_url = url_pattern.format(request.url_root, file_name, token_value)
 
+    return tmp_url
+
+
+def send_usage_application_mail_for_guest_user(guest_mail: str, temp_url: str):
+    """Send usage application mail for guest user.
+
+    @param guest_mail:
+    @param temp_url:
+    @return:
+    """
     # Mail information
     mail_info = {
         'template': current_app.config.get("WEKO_WORKFLOW_ACCESS_ACTIVITY_URL"),
         'mail_address': guest_mail,
-        'url_guest_user': url
+        'url_guest_user': temp_url
     }
     return send_mail_url_guest_user(mail_info)
 
 
-def validate_guest_activity(
+def validate_guest_activity_token(
     token: str, file_name: str
 ) -> Union[Tuple[bool, None, None], Tuple[bool, str, str]]:
-    """Validate guest activity.
+    """Validate guest activity token.
 
     @param token:
     @param file_name:
@@ -2586,9 +2680,31 @@ def validate_guest_activity(
         return False, None, None
 
 
-def send_onetime_download_url_to_guest(activity_id: str,
-                                       extra_info: dict) -> bool:
-    """Send onetime download URL to guest.
+def validate_guest_activity_expired(activity_id: str) -> str:
+    """Validate guest activity expired.
+
+    @param activity_id:
+    @return:
+    """
+    guest_activity = GuestActivity.find_by_activity_id(activity_id)
+    if guest_activity:
+        guest_activity = guest_activity[0]
+    else:
+        return ""
+    try:
+        expiration_date = timedelta(guest_activity.expiration_date)
+        expiration_access_date = guest_activity.created.date() + expiration_date
+    except OverflowError:
+        return ""
+    current_date = datetime.utcnow().date()
+    if current_date > expiration_access_date:
+        return _("The specified link has expired.")
+    return ""
+
+
+def create_onetime_download_url_to_guest(activity_id: str,
+                                         extra_info: dict):
+    """Create onetime download URL to guest.
 
     @param activity_id:
     @param extra_info:
@@ -2596,25 +2712,32 @@ def send_onetime_download_url_to_guest(activity_id: str,
     """
     file_name = extra_info.get('file_name')
     record_id = extra_info.get('record_id')
-    guest_mail = extra_info.get('guest_mail')
-    if file_name and record_id and guest_mail:
+    user_mail = extra_info.get('user_mail')
+    is_guest_user = False
+    if not user_mail:
+        user_mail = extra_info.get('guest_mail')
+        is_guest_user = True
+    if file_name and record_id and user_mail:
         onetime_file_url = generate_one_time_download_url(
-            file_name, record_id, guest_mail)
+            file_name, record_id, user_mail)
 
         # Delete guest activity.
         delete_guest_activity(activity_id)
 
-        # Mail information
-        mail_info = {
-            'template': current_app.config.get(
-                "WEKO_WORKFLOW_ACCESS_DOWNLOAD_URL"),
-            'mail_address': guest_mail,
-            'url_guest_user': onetime_file_url
-        }
-
         # Save onetime to Database.
-        if create_onetime_download_url(file_name, record_id, guest_mail):
-            return send_mail_url_guest_user(mail_info)
+        one_time_obj = create_onetime_download_url(
+            activity_id, file_name, record_id, user_mail, is_guest_user)
+        if one_time_obj:
+            try:
+                expiration_date = timedelta(days=one_time_obj.expiration_date)
+                expiration_date = datetime.today() + expiration_date
+                expiration_date = expiration_date.strftime("%Y-%m-%d")
+            except OverflowError:
+                expiration_date = ""
+            return {
+                "file_url": onetime_file_url,
+                "expiration_date": expiration_date
+            }
         else:
             current_app.logger.error("Can not create onetime download.")
             return False
@@ -2666,7 +2789,8 @@ def get_activity_display_info(activity_id: str):
     action_id = cur_action.id
     temporary_comment = ""
     action_data = activity.get_activity_action_comment(
-        activity_id=activity_id, action_id=action_id)
+        activity_id=activity_id, action_id=action_id,
+        action_order=activity_detail.action_order)
     if action_data:
         temporary_comment = action_data.action_comment
     return action_endpoint, action_id, activity_detail, cur_action, histories, \
@@ -2778,8 +2902,7 @@ def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
             "WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE"],
         action_endpoint_key=current_app.config.get(
             'WEKO_ITEMS_UI_ACTION_ENDPOINT_KEY'),
-        approval_email_key=current_app.config.get(
-            'WEKO_ITEMS_UI_APPROVAL_MAIL_SUBITEM_KEY'),
+        approval_email_key=get_approval_keys(),
         step_item_login_url=step_item_login_url,
         need_file=need_file,
         need_billing_file=need_billing_file,
@@ -2856,3 +2979,235 @@ def prepare_data_for_guest_activity(activity_id: str) -> dict:
         session['itemlogin_community_id'] = community_id
 
     return ctx
+
+
+def recursive_get_specified_properties(properties):
+    """Recursive get specified properties.
+
+    :param properties:
+    :return:
+    """
+    if not properties:
+        return None
+    if "items" in properties:
+        for item in properties["items"]:
+            if item.get("approval"):
+                return item.get("key")
+            else:
+                result = recursive_get_specified_properties(item)
+                if result:
+                    return result
+
+
+def get_approval_keys():
+    """Get approval keys.
+
+    :return:
+    """
+    from weko_records.models import ItemTypeProperty
+    result = ItemTypeProperty.query.filter_by(delflg=False).all()
+    approval_keys = []
+    for value in result:
+        properties = value.form
+        if properties:
+            result = recursive_get_specified_properties(properties)
+            if result:
+                approval_keys.append(result)
+    return approval_keys
+
+
+def process_send_mail(mail_info, mail_pattern_name):
+    """Send mail approval rejected.
+
+    :mail_info: object
+    """
+    if not mail_info.get("mail_recipient"):
+        current_app.logger.error('Mail address is not defined')
+        return
+
+    subject, body = get_mail_data(mail_pattern_name)
+    if body and subject:
+        body = replace_characters(mail_info, body)
+        send_mail(subject, mail_info['mail_recipient'], body)
+
+
+def cancel_expired_usage_reports():
+    """Cancel expired usage reports."""
+    expired_activities = GuestActivity.get_expired_activities()
+    if expired_activities:
+        WorkActivity.cancel_usage_report_activities(
+            expired_activities)
+
+
+def process_send_approval_mails(activity_detail, actions_mail_setting,
+                                next_step_appover_id, file_data):
+    """Process send mail for approval steps.
+
+    :param activity_detail:
+    :param actions_mail_setting:
+    :param next_step_appover_id:
+    :param file_data:
+    :return:
+    """
+    is_guest_user = True if activity_detail.extra_info.get('guest_mail') else False
+    item_info = get_item_info(activity_detail.item_id)
+    mail_info = set_mail_info(item_info, activity_detail, is_guest_user)
+    mail_info['restricted_download_link'] = file_data.get("file_url", '')
+    mail_info['restricted_expiration_date'] = file_data.get("expiration_date", '')
+
+    # Override guest mail if any
+    if is_guest_user:
+        mail_info['mail_recipient'] = activity_detail.extra_info.get('guest_mail')
+
+    if actions_mail_setting["approval"]:
+        if actions_mail_setting["previous"].get("inform_approval", False):
+            process_send_mail(mail_info, current_app.config["WEKO_WORKFLOW_APPROVE_DONE"])
+
+        if actions_mail_setting["next"].get("request_approval", False):
+            approval_user = db.session.query(User).filter_by(id=int(next_step_appover_id)).first()
+            if not approval_user:
+                current_app.logger.error("Does not have approval data")
+            else:
+                mail_info['mail_recipient'] = approval_user.email
+                process_send_mail(mail_info, current_app.config["WEKO_WORKFLOW_REQUEST_APPROVAL"])
+
+    if actions_mail_setting["reject"]:
+        if actions_mail_setting["previous"].get("inform_reject", False):
+            process_send_mail(mail_info, current_app.config["WEKO_WORKFLOW_APPROVE_REJECTED"])
+
+
+def get_usage_data(item_type_id, activity_detail, user_profile):
+    """
+    @param item_type_id:
+    @return:
+    """
+    result = None
+    extra_info = activity_detail.extra_info
+
+    if not extra_info or extra_info == {}:
+        return result
+
+    wf_issued_date = activity_detail.created.strftime("%Y-%m-%d")
+
+    if item_type_id in current_app.config.get('WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST'):
+        mail_address = ''
+
+        if user_profile != {}:
+            mail_address = user_profile.get('results').get('subitem_mail_address')
+        else:
+            mail_address = extra_info.get('guest_mail') or ''
+
+        related_title = extra_info.get('related_title') or ''
+        item_title = current_app.config.get('WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TITLE') \
+            + activity_detail.created.strftime("%Y%m%d") + related_title + '_'
+
+        result = dict(
+            usage_type='Application',
+            dataset_usage=related_title,
+            name='',
+            mail_address=mail_address,
+            university_institution='',
+            affiliated_division_department='',
+            position='',
+            position_other='',
+            phone_number='',
+            usage_report_id='',
+            wf_issued_date=wf_issued_date,
+            item_title=item_title
+        )
+    elif item_type_id in current_app.config.get('WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST'):
+        usage_record_id = extra_info.get('usage_record_id') or ''
+        related_activity_id = extra_info.get('usage_activity_id') or ''
+        rm = RecordMetadata.query.filter_by(id=usage_record_id).first()
+        related_title = rm.json.get('item_title')
+        name = ''
+        mail_address = ''
+        university_institution = ''
+        affiliated_division_department = ''
+        position = ''
+        position_other = ''
+        phone_number = ''
+
+        for key in rm.json:
+            value = rm.json.get(key)
+            if (type(value) is dict):
+                mlt = value.get('attribute_value_mlt')
+                if mlt and type(mlt) is list:
+                    for sub_key in mlt[0]:
+                        sub_value = mlt[0].get(sub_key)
+                        if sub_key == 'subitem_restricted_access_name':
+                            name = sub_value
+                        elif sub_key == 'subitem_restricted_access_mail_address':
+                            mail_address = sub_value
+                        elif sub_key == 'subitem_restricted_access_university/institution':
+                            university_institution = sub_value
+                        elif sub_key == 'subitem_restricted_access_affiliated_division/department':
+                            affiliated_division_department = sub_value
+                        elif sub_key == 'subitem_restricted_access_position':
+                            position = sub_value
+                        elif sub_key == 'subitem_restricted_access_position(others)':
+                            position_other = sub_value
+                        elif sub_key == 'subitem_restricted_access_phone_number':
+                            phone_number = sub_value
+        item_title = related_activity_id + current_app.config.get('WEKO_WORKFLOW_USAGE_REPORT_ITEM_TITLE') \
+            + name
+        result = dict(
+            usage_type='Report',
+            dataset_usage=related_title,
+            name=name,
+            mail_address=mail_address,
+            university_institution=university_institution,
+            affiliated_division_department=affiliated_division_department,
+            position=position,
+            position_other=position_other,
+            phone_number=phone_number,
+            usage_report_id=activity_detail.activity_id,
+            wf_issued_date=wf_issued_date,
+            item_title=item_title
+        )
+
+    return result
+
+
+def update_approval_date(activity):
+    """Update approval date.
+
+    @param activity:
+    @return:
+    """
+    from weko_deposit.api import WekoDeposit, WekoRecord
+    from datetime import datetime
+    try:
+        with db.session.begin_nested():
+            work_activity = WorkActivity()
+            activity_update = work_activity.get_activity_detail(activity.activity_id)
+            record = WekoRecord.get_record(activity.item_id)
+            deposit = WekoDeposit(record, record.model)
+            item_meta = ItemsMetadata.get_record(id_=activity.item_id)
+            item_type_id = deposit["item_type_id"]
+            item_type = ItemType.query.filter_by(id=item_type_id).one_or_none()
+
+            sub_key = ''
+            if not item_type:
+                return
+            for k, v in item_type.schema['properties'].items():
+                if isinstance(v, dict) and 'properties' in v:
+                    if 'subitem_restricted_access_approval_date' in v['properties']:
+                        sub_key = k
+                        break
+            if sub_key:
+                deposit[sub_key] = {'attribute_name': "Approval Date"}
+                deposit[sub_key]["attribute_value_mlt"] = [
+                    {"subitem_restricted_access_approval_date": datetime.today().strftime('%Y-%m-%d')}]
+                deposit.item_metadata[sub_key] = dict(subitem_restricted_access_approval_date='2021-10-10')
+                item_meta[sub_key] = dict(subitem_restricted_access_approval_date=datetime.today().strftime('%Y-%m-%d'))
+                temp = json.loads(activity_update.temp_data)
+                temp['metainfo'][sub_key] = dict(
+                    subitem_restricted_access_approval_date=datetime.today().strftime('%Y-%m-%d'))
+                activity_update.temp_data = json.dumps(temp)
+                item_meta.commit()
+                deposit.commit()
+                db.session.merge(activity_update)
+        db.session.commit()
+    except Exception as ex:
+        current_app.logger.error(ex)

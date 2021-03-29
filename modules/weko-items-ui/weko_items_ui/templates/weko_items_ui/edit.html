@@ -100,8 +100,8 @@
                     </button>
                   </li>
                   <input type="hidden" id="next-frame" value="r">
-                  <!-- 
-                    <input type="hidden" id="next-frame-edit" value="iframe_tree_upgrade"> 
+                  <!--
+                    <input type="hidden" id="next-frame-edit" value="iframe_tree_upgrade">
                   -->
                   {%- if pid %}
                   <li>
@@ -307,6 +307,8 @@
             value="{{_('The following items is required. Please recheck and input.')}}">
           <input type="hidden" id="validate_email_register" name="validate_email_register"
             value="{{_('The following email address is not registered in the system. Please recheck and input.')}}">
+          <input type="hidden" id="validate_email_required" name="validate_email_required"
+            value="{{_('Please input email address.')}}">
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-info close-button" id="meta-search-close" data-dismiss="modal">

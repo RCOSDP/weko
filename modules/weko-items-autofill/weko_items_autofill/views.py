@@ -72,7 +72,7 @@ def get_title_pubdate_id(item_type_id=0):
 
 
 @blueprint_api.route('/get_auto_fill_record_data', methods=['POST'])
-@login_required
+@login_required_customize
 def get_auto_fill_record_data():
     """Get auto fill record data.
 
@@ -113,7 +113,7 @@ def get_auto_fill_record_data():
 
 @blueprint_api.route('/get_auto_fill_journal/<string:activity_id>',
                      methods=['GET'])
-@login_required
+@login_required_customize
 def get_item_auto_fill_journal(activity_id):
     """Get workflow journal data.
 
