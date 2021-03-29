@@ -645,6 +645,9 @@ $(document).ready(function () {
       } else if(tmp.input_type == 'radios' || tmp.input_type == 'select') {
         tmp.input_value = $("#schema_"+row_id).find(".select-value-setting").val();
         enum_tmp = []
+        if (tmp && tmp.input_type == 'select') {
+          enum_tmp.push(null);
+        }
         titleMap_tmp = []
         $.each(tmp.input_value.split('|'), function(i,v){
           enum_tmp.push(v);
@@ -664,7 +667,7 @@ $(document).ready(function () {
                 interim: {                  // [interim]は本当の意味を持たない
                   title: tmp.title,
                   title_i18n: tmp.title_i18n,
-                  type: "string",
+                  type: ["null","string"],
                   enum: enum_tmp
                 }
               }
@@ -693,7 +696,7 @@ $(document).ready(function () {
             properties: {
               "interim": {// [interim]は本当の意味を持たない
                 title: tmp.title,
-                type: "string",
+                type: ["null","string"],
                 enum: enum_tmp,
                 format: tmp.input_type,    // radios|select
               }
@@ -1864,7 +1867,7 @@ $(document).ready(function () {
     } else if (property.format == 'select') {
       property.type = ["null", "string"];
       if (Array.isArray(property.enum) && (property.enum[0] != undefined || property.enum[0] != "")) {
-        property.enum.unshift(null)
+        property.enum.unshift(null);
       }
       form.type = form['templateUrl'] ? "template" : "select";
     }
