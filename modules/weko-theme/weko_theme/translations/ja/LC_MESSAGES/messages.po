@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-theme 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2021-02-16 02:37+0000\n"
+"POT-Creation-Date: 2021-03-25 14:40+0900\n"
 "PO-Revision-Date: 2018-04-12 18:01+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -16,135 +16,135 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.5.1\n"
+"Generated-By: Babel 2.8.0\n"
 
-#: weko_theme/templates/weko_theme/macros/tabs_selector.html:33
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:27
 #: weko_theme/utils.py:210
 msgid "Communities"
 msgstr "コミュニティ"
 
-#: weko_theme/templates/weko_theme/admin_header.html:86
+#: weko_theme/templates/weko_theme/admin_header.html:77
 msgid "Logout"
 msgstr "ログアウト"
 
-#: weko_theme/templates/weko_theme/body_contents.html:35
+#: weko_theme/templates/weko_theme/body_contents.html:33
 msgid "Item list"
 msgstr "アイテムリスト"
 
-#: weko_theme/templates/weko_theme/body_contents.html:48
+#: weko_theme/templates/weko_theme/body_contents.html:44
 msgid "Export Checked Items"
 msgstr "チェックしたアイテムをエクスポート"
 
-#: weko_theme/templates/weko_theme/body_contents.html:49
+#: weko_theme/templates/weko_theme/body_contents.html:45
 msgid "Export All Displayed Items"
 msgstr "表示中のアイテムをエクスポート"
 
-#: weko_theme/templates/weko_theme/body_contents.html:50
+#: weko_theme/templates/weko_theme/body_contents.html:46
 msgid "Export All Items Of This Index"
 msgstr "このインデックス全てのアイテムをエクスポート"
 
-#: weko_theme/templates/weko_theme/body_contents.html:51
+#: weko_theme/templates/weko_theme/body_contents.html:47
 msgid "Print Checked Items"
 msgstr "チェックしたアイテムを印刷"
 
-#: weko_theme/templates/weko_theme/body_contents.html:52
+#: weko_theme/templates/weko_theme/body_contents.html:48
 msgid "Print All Displayed Items"
 msgstr "表示中のアイテムを印刷"
 
-#: weko_theme/templates/weko_theme/body_contents.html:53
+#: weko_theme/templates/weko_theme/body_contents.html:49
 msgid "Print All Items Of This Index"
 msgstr "このインデックス全てのアイテムを印刷"
 
-#: weko_theme/templates/weko_theme/body_contents.html:55
+#: weko_theme/templates/weko_theme/body_contents.html:51
 msgid "Execution"
 msgstr "実行"
 
-#: weko_theme/templates/weko_theme/body_contents.html:58
-#: weko_theme/templates/weko_theme/body_contents.html:85
+#: weko_theme/templates/weko_theme/body_contents.html:54
+#: weko_theme/templates/weko_theme/body_contents.html:77
 msgid "Display order"
 msgstr "表示順"
 
-#: weko_theme/templates/weko_theme/body_contents.html:60
+#: weko_theme/templates/weko_theme/body_contents.html:56
 msgid "Title(Ascending)"
 msgstr "タイトル（昇順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:61
+#: weko_theme/templates/weko_theme/body_contents.html:57
 msgid "Title(Descending)"
 msgstr "タイトル（降順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:62
+#: weko_theme/templates/weko_theme/body_contents.html:58
 msgid "Registrant(Ascending)"
 msgstr "登録者（昇順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:63
+#: weko_theme/templates/weko_theme/body_contents.html:59
 msgid "Registrant(Descending)"
 msgstr "登録者（降順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:64
+#: weko_theme/templates/weko_theme/body_contents.html:60
 msgid "Item Types(Asending)"
 msgstr "アイテムタイプ（昇順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:65
+#: weko_theme/templates/weko_theme/body_contents.html:61
 msgid "Item Types(Descending)"
 msgstr "アイテムタイプ（降順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:66
+#: weko_theme/templates/weko_theme/body_contents.html:62
 msgid "ID(Ascending)"
 msgstr "ID（昇順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:67
+#: weko_theme/templates/weko_theme/body_contents.html:63
 msgid "ID(Descending)"
 msgstr "ID（降順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:68
+#: weko_theme/templates/weko_theme/body_contents.html:64
 msgid "Modified Date and Time(Ascending)"
 msgstr "更新日時（昇順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:69
+#: weko_theme/templates/weko_theme/body_contents.html:65
 msgid "Modified Date and Time(Descending)"
 msgstr "更新日時（降順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:70
+#: weko_theme/templates/weko_theme/body_contents.html:66
 msgid "Created Date and Time(Ascending)"
 msgstr "作成日時（昇順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:71
+#: weko_theme/templates/weko_theme/body_contents.html:67
 msgid "Created Date and Time(Descending)"
 msgstr "作成日時（降順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:72
+#: weko_theme/templates/weko_theme/body_contents.html:68
 msgid "Review Date and Time(Ascending)"
 msgstr "査読日時（昇順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:73
+#: weko_theme/templates/weko_theme/body_contents.html:69
 msgid "Review Date and Time(Descending)"
 msgstr "査読日時（降順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:74
+#: weko_theme/templates/weko_theme/body_contents.html:70
 msgid "Published Year(Ascending)"
 msgstr "出版年（昇順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:75
+#: weko_theme/templates/weko_theme/body_contents.html:71
 msgid "Published Year(Descending)"
 msgstr "出版年（降順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:76
+#: weko_theme/templates/weko_theme/body_contents.html:72
 msgid "Custom(Ascending)"
 msgstr "カスタム（昇順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:77
+#: weko_theme/templates/weko_theme/body_contents.html:73
 msgid "Custom(Descending)"
 msgstr "カスタム（降順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:104
+#: weko_theme/templates/weko_theme/body_contents.html:91
 msgid "The number of display"
 msgstr "表示数"
 
-#: weko_theme/templates/weko_theme/body_contents.html:123
+#: weko_theme/templates/weko_theme/body_contents.html:108
 msgid "Search failed."
 msgstr "検索に失敗しました"
 
-#: weko_theme/templates/weko_theme/body_contents.html:129
+#: weko_theme/templates/weko_theme/body_contents.html:112
 msgid "Loading..."
 msgstr "読み込み中..."
 
@@ -152,33 +152,37 @@ msgstr "読み込み中..."
 msgid "Index Link"
 msgstr "インデックスリンク"
 
-#: weko_theme/templates/weko_theme/body_index.html:52
+#: weko_theme/templates/weko_theme/body_index.html:49
 msgid "Index Tree"
 msgstr "インデックスツリー"
 
 #: weko_theme/templates/weko_theme/body_search.html:27
+msgid "Search Keyword"
+msgstr "検索キーワード"
+
+#: weko_theme/templates/weko_theme/body_search.html:28
 msgid "Type and press enter to search"
 msgstr "入力後、Enterキーを押下し検索してください"
 
-#: weko_theme/templates/weko_theme/body_search.html:33
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:120
+#: weko_theme/templates/weko_theme/body_search.html:34
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:129
 msgid "Search"
 msgstr "検索"
 
-#: weko_theme/templates/weko_theme/body_search.html:41
+#: weko_theme/templates/weko_theme/body_search.html:42
 msgid "Advanced"
 msgstr "詳細検索"
 
-#: weko_theme/templates/weko_theme/body_search.html:43
+#: weko_theme/templates/weko_theme/body_search.html:44
 #: weko_theme/templates/weko_theme/macros/modal_page.html:67
 msgid "Close"
 msgstr "閉じる"
 
-#: weko_theme/templates/weko_theme/body_search.html:53
+#: weko_theme/templates/weko_theme/body_search.html:54
 msgid "Full text"
 msgstr "全文"
 
-#: weko_theme/templates/weko_theme/body_search.html:57
+#: weko_theme/templates/weko_theme/body_search.html:58
 msgid "Keyword"
 msgstr "キーワード"
 
@@ -202,19 +206,31 @@ msgstr ""
 msgid "[[sub_radio.contents]]"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:83
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:63
+msgid "Start Date"
+msgstr "開始日"
+
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:70
+msgid "End Date"
+msgstr "終了日"
+
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:78
+msgid "Field does not validate"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:92
 msgid "[[sub_attr.contents]]"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:108
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:117
 msgid "Add Search Condition"
 msgstr "検索条件追加"
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:126
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:135
 msgid "Clear"
 msgstr "クリア"
 
-#: weko_theme/templates/weko_theme/edit.html:25
+#: weko_theme/templates/weko_theme/edit.html:22
 msgid "Top Page"
 msgstr "トップページ"
 
@@ -229,20 +245,20 @@ msgstr ""
 msgid "Toggle navigation"
 msgstr "ナビゲーションを切り替えます"
 
-#: weko_theme/templates/weko_theme/header_login.html:24
+#: weko_theme/templates/weko_theme/header_login.html:22
 msgid "Log in"
 msgstr "ログイン"
 
-#: weko_theme/templates/weko_theme/header_login.html:27
+#: weko_theme/templates/weko_theme/header_login.html:25
 msgid "Sign up"
 msgstr "サインアップ"
 
-#: weko_theme/templates/weko_theme/header_login.html:45
-#: weko_theme/templates/weko_theme/header_login.html:49
+#: weko_theme/templates/weko_theme/header_login.html:39
+#: weko_theme/templates/weko_theme/header_login.html:42
 msgid "Log out"
 msgstr "ログアウト"
 
-#: weko_theme/templates/weko_theme/page_setting.html:33
+#: weko_theme/templates/weko_theme/page_setting.html:26
 #, fuzzy
 msgid "Settings"
 msgstr "会議発表用資料"
@@ -269,29 +285,30 @@ msgid "Bulk Delete"
 msgstr "一括削除"
 
 #: weko_theme/templates/weko_theme/macros/language_selector.html:28
+#: weko_theme/templates/weko_theme/macros/language_selector.html:29
 msgid "Language:"
-msgstr "言語:"
+msgstr ""
 
 #: weko_theme/templates/weko_theme/macros/modal_page.html:31
 msgid "WEKO"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/macros/modal_page.html:39
-#: weko_theme/templates/weko_theme/macros/modal_page.html:94
+#: weko_theme/templates/weko_theme/macros/modal_page.html:93
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: weko_theme/templates/weko_theme/macros/tabs_selector.html:24
-#: weko_theme/templates/weko_theme/macros/tabs_selector.html:29
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:23
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:25
 msgid "Top"
 msgstr "トップ"
 
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:24
 #: weko_theme/templates/weko_theme/macros/tabs_selector.html:26
-#: weko_theme/templates/weko_theme/macros/tabs_selector.html:31
 msgid "WorkFlow"
 msgstr "ワークフロー"
 
-#: weko_theme/templates/weko_theme/macros/tabs_selector.html:35
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:28
 msgid "Ranking"
 msgstr "ランキング"
 
@@ -639,4 +656,7 @@ msgstr "ランキング"
 
 #~ msgid "ANY"
 #~ msgstr "任意"
+
+#~ msgid "Language:"
+#~ msgstr "言語:"
 

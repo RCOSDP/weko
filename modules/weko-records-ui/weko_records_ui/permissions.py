@@ -29,7 +29,7 @@ from invenio_access import Permission, action_factory
 from invenio_accounts.models import User
 from invenio_db import db
 from weko_groups.api import Group, Membership, MembershipState
-from weko_index_tree.utils import filter_index_list_by_role, get_user_roles
+from weko_index_tree.utils import check_index_permissions, get_user_roles
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkActivity, WorkFlow
 
@@ -60,9 +60,8 @@ def page_permission_factory(record, *args, **kwargs):
             # item publish status check
             is_pub = check_publish_status(record)
             if is_pub:
-                # get the list of authorized indexes
-                index_list = filter_index_list_by_role(record.navi)
-                if len(index_list) > 0:
+                # check the list of authorized indexes
+                if check_index_permissions(record):
                     is_ok = True
 
         return is_ok
