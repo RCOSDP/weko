@@ -1110,3 +1110,9 @@ msgstr ""
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:65
 msgid "Usage Report Workflow Access"
 msgstr ""
+
+msgid "Usage Report Reminder Email"
+msgstr ""
+
+msgid "Confirm Usage Mail"
+msgstr ""

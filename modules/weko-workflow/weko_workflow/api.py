@@ -677,15 +677,31 @@ class WorkActivity(object):
                             if item_type_name in application_item_types:
                                 action_has_term_of_use = True
             extra_info = dict()
+            # Get extra info
             if activity.get('extra_info'):
                 extra_info = activity["extra_info"]
+            # Get related title.
             if activity.get('related_title'):
-                extra_info["related_title"] = urllib.parse.unquote(activity["related_title"])
+                extra_info["related_title"] = urllib.parse.unquote(
+                    activity["related_title"])
+            # Get confirm term of use.
             if activity.get('activity_confirm_term_of_use') is True:
                 activity_confirm_term_of_use = True
             else:
                 activity_confirm_term_of_use = False if\
                     action_has_term_of_use else True
+
+            # Get created user
+            if activity.get("activity_login_user") is not None:
+                activity_login_user = activity.get("activity_login_user")
+            else:
+                activity_login_user = current_user.get_id()
+            # Get the updated user of activity
+            if activity.get("activity_update_user") is not None:
+                activity_update_user = activity.get("activity_update_user")
+            else:
+                activity_update_user = current_user.get_id()
+
             db_activity = _Activity(
                 # Dummy activity ID, the real one will be updated
                 #   after this activity is created
@@ -696,8 +712,8 @@ class WorkActivity(object):
                 flow_id=activity.get('flow_id'),
                 action_id=next_action_id,
                 action_status=ActionStatusPolicy.ACTION_BEGIN,
-                activity_login_user=current_user.get_id(),
-                activity_update_user=current_user.get_id(),
+                activity_login_user=activity_login_user,
+                activity_update_user=activity_update_user,
                 activity_status=ActivityStatusPolicy.ACTIVITY_MAKING,
                 activity_start=datetime.utcnow(),
                 activity_community_id=community_id,
@@ -762,7 +778,7 @@ class WorkActivity(object):
                     action_id=action_id,
                     action_version=action.action_version,
                     action_status=ActionStatusPolicy.ACTION_DONE,
-                    action_user=current_user.get_id(),
+                    action_user=activity_login_user,
                     action_date=db_activity.activity_start,
                     action_comment=ActionCommentPolicy.BEGIN_ACTION_COMMENT,
                     action_order=1
@@ -776,7 +792,7 @@ class WorkActivity(object):
                         action_instance = Action()
                         action = action_instance.get_action_detail(
                             flow_action.action_id)
-                        action_handler = current_user.get_id() \
+                        action_handler = activity_login_user \
                             if not action.action_endpoint == 'approval' else -1
                         db_activity_action = ActivityAction(
                             activity_id=db_activity.activity_id,
@@ -1445,6 +1461,7 @@ class WorkActivity(object):
         :return:
         """
         self_user_id = int(current_user.get_id())
+        self_group_ids = [role.id for role in current_user.roles]
         if is_community_admin:
             query = query \
                 .filter(_Activity.activity_login_user.in_(community_user_ids))
@@ -1462,6 +1479,14 @@ class WorkActivity(object):
                             ActivityAction.action_handler == self_user_id,
                             _Activity.approval1 == current_user.email,
                             _Activity.approval2 == current_user.email,
+                            and_(
+                                _FlowActionRole.action_user == self_user_id,
+                                _FlowActionRole.action_user_exclude == '0'
+                            ),
+                            and_(
+                                _FlowActionRole.action_role.in_(self_group_ids),
+                                _FlowActionRole.action_role_exclude == '0'
+                            )
                         )
                     )
                 else:
@@ -1551,7 +1576,8 @@ class WorkActivity(object):
                     )
                 )
             )\
-            .filter(_FlowAction.action_id == _Activity.action_id)
+            .filter(_FlowAction.action_id == _Activity.action_id) \
+            .filter(_FlowAction.action_order == _Activity.action_order)
 
         if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] or \
                 current_app.config['WEKO_ITEMS_UI_MULTIPLE_APPROVALS']:
@@ -1561,7 +1587,17 @@ class WorkActivity(object):
                 )
             else:
                 query = query.filter(
-                    ActivityAction.action_handler == self_user_id,
+                    or_(
+                        ActivityAction.action_handler == self_user_id,
+                        and_(
+                            _FlowActionRole.action_user == self_user_id,
+                            _FlowActionRole.action_user_exclude == '0'
+                        ),
+                        and_(
+                            _FlowActionRole.action_role.in_(self_group_ids),
+                            _FlowActionRole.action_role_exclude == '0'
+                        )
+                    )
                 )
 
         return query
@@ -2259,21 +2295,13 @@ class WorkActivity(object):
             current_app.logger.exception(str(ex))
             db.session.rollback()
 
-    @staticmethod
-    def cancel_usage_report_activities(activities_id: list):
+    def cancel_usage_report_activities(self, activities_id: list):
         """Cancel usage report activities are excepted.
 
         @param activities_id:
         @return:
         """
-        activities = _Activity.query.filter(
-            _Activity.activity_id.in_(activities_id)) \
-            .filter(
-            or_(_Activity.activity_status
-                == ActivityStatusPolicy.ACTIVITY_BEGIN,
-                _Activity.activity_status
-                == ActivityStatusPolicy.ACTIVITY_MAKING)
-        ).all()
+        activities = self.get_usage_report_activities(activities_id)
         item_id_lst = []
         if not activities:
             return item_id_lst
@@ -2293,6 +2321,68 @@ class WorkActivity(object):
             current_app.logger.exception(str(ex))
             db.session.rollback()
             return False
+
+    @staticmethod
+    def get_usage_report_activities(
+            activities_id: list, size: int = None, page: int = None) -> list:
+        """Get usage report activities.
+
+        Args:
+            activities_id ([list]): Activity identifier list
+            size ([int], optional): the number of activities. Defaults to None.
+            page ([int], optional): page. Defaults to None.
+
+        Returns:
+            [list]: Activities list.
+        """
+        query = _Activity.query
+        if activities_id:
+            query = query.filter(
+                _Activity.activity_id.in_(activities_id)
+            )
+        else:
+            query = query.filter(
+                _Activity.workflow_id == 31001
+            )
+        query = query.filter(
+            or_(_Activity.activity_status
+                == ActivityStatusPolicy.ACTIVITY_BEGIN,
+                _Activity.activity_status
+                == ActivityStatusPolicy.ACTIVITY_MAKING)
+        ).order_by(asc(_Activity.id))
+        if page is not None and size is not None:
+            offset = int(size) * (int(page) - 1)
+            query = query.limit(size).offset(offset)
+        activities = query.all()
+        return activities
+
+    @staticmethod
+    def count_all_usage_report_activities(activities_id: list) -> int:
+        """Count all usage report activities.
+
+        Args:
+            activities_id ([list]): The activities list.
+
+        Returns:
+            [int]: The number of usage report activities.
+        """
+        query = _Activity.query
+        if activities_id:
+            query = query.filter(
+                _Activity.activity_id.in_(activities_id)
+            )
+        else:
+            query = query.filter(
+                _Activity.workflow_id == 31001
+            )
+        activities_number = query.filter(
+            or_(_Activity.activity_status
+                == ActivityStatusPolicy.ACTIVITY_BEGIN,
+                _Activity.activity_status
+                == ActivityStatusPolicy.ACTIVITY_MAKING)
+        ).count()
+
+        return activities_number
 
 
 class WorkActivityHistory(object):

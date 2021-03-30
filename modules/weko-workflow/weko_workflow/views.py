@@ -66,12 +66,13 @@ from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
-from .models import ActionStatusPolicy, Activity, ActivityAction
+from .models import ActionStatusPolicy, Activity, ActivityAction, FlowAction
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import IdentifierHandle, auto_fill_title, check_continue, \
-    check_existed_doi, create_onetime_download_url_to_guest, \
-    delete_cache_data, delete_guest_activity, filter_all_condition, \
-    get_account_info, get_actionid, get_activity_display_info, \
+from .utils import IdentifierHandle, auto_fill_title, \
+    check_authority_by_admin, check_continue, check_existed_doi, \
+    create_onetime_download_url_to_guest, delete_cache_data, \
+    delete_guest_activity, filter_all_condition, get_account_info, \
+    get_actionid, get_activity_display_info, \
     get_activity_id_of_record_without_version, \
     get_application_and_approved_date, get_approval_keys, get_cache_data, \
     get_identifier_setting, get_usage_data, get_workflow_item_type_names, \
@@ -360,7 +361,7 @@ def init_activity_guest():
                 "is_restricted_access": True,
             }
         }
-        tmp_url = init_activity_for_guest_user(data)
+        __, tmp_url = init_activity_for_guest_user(data)
 
         if send_usage_application_mail_for_guest_user(
                 post_data.get('guest_mail'), tmp_url):
@@ -751,6 +752,11 @@ def check_authority(func):
         work = WorkActivity()
         activity_id = kwargs.get('activity_id')
         activity_detail = work.get_activity_by_id(activity_id)
+
+        # If user has admin role
+        if check_authority_by_admin(activity_detail):
+            return func(*args, **kwargs)
+
         roles, users = work.get_activity_action_role(
             activity_id=kwargs.get('activity_id'),
             action_id=kwargs.get('action_id'),
@@ -782,6 +788,11 @@ def check_authority_action(activity_id='0', action_id=0,
         return 1
 
     work = WorkActivity()
+    activity = Activity.query.filter_by(activity_id=activity_id).first()
+    # If user has admin role
+    if check_authority_by_admin(activity):
+        return 0
+
     roles, users = work.get_activity_action_role(activity_id, action_id,
                                                  action_order)
     cur_user = current_user.get_id()
@@ -806,35 +817,10 @@ def check_authority_action(activity_id='0', action_id=0,
     # If action_roles is not set
     # or action roles does not contain any role of current_user:
     # Gather information
-    activity = Activity.query.filter_by(
-        activity_id=activity_id).first()
     # If user is the author of activity
     if int(cur_user) == activity.activity_login_user and \
             not contain_login_item_application:
         return 0
-    # If user has admin role
-    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
-    for role in list(current_user.roles or []):
-        if role.name in supers:
-            return 0
-    # If user has community role
-    # and the user who created activity is member of community
-    # role -> has permission:
-    community_role_name = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-    # Get the list of users who has the community role
-    community_users = User.query.outerjoin(userrole).outerjoin(Role) \
-        .filter(community_role_name == Role.name) \
-        .filter(userrole.c.role_id == Role.id) \
-        .filter(User.id == userrole.c.user_id) \
-        .all()
-    community_user_ids = [
-        community_user.id for community_user in community_users]
-    for role in list(current_user.roles or []):
-        if role.name in community_role_name:
-            # User has community role
-            if activity.activity_login_user in community_user_ids:
-                return 0
-            break
 
     if current_app.config['WEKO_WORKFLOW_ENABLE_CONTRIBUTOR']:
         # Check if this activity has contributor equaling to current user
@@ -889,6 +875,8 @@ def next_action(activity_id='0', action_id=0):
     if action_endpoint == 'end_action':
         work_activity.end_activity(activity)
         return jsonify(code=0, msg=_('success'))
+    if 'approval' == action_endpoint:
+        update_approval_date(activity_detail)
     item_id = None
     recid = None
     deposit = None
@@ -918,8 +906,6 @@ def next_action(activity_id='0', action_id=0):
         0].action_order if action_order else None
     # Start to send mail
     if 'approval' in [action_endpoint, next_action_endpoint]:
-        if 'approval' == next_action_endpoint:
-            update_approval_date(activity_detail)
         current_flow_action = flow.get_flow_action_detail(
             activity_detail.flow_define.flow_id, action_id, action_order)
         next_action_detail = work_activity.get_activity_action_comment(
@@ -937,12 +923,28 @@ def next_action(activity_id='0', action_id=0):
             if not url_and_expired_date:
                 url_and_expired_date = {}
         action_mails_setting = {"previous":
-                                current_flow_action.send_mail_setting,
-                                "next": next_flow_action[0].send_mail_setting,
+                                current_flow_action.send_mail_setting
+                                if current_flow_action.send_mail_setting
+                                else {},
+                                "next": next_flow_action[0].send_mail_setting
+                                if next_flow_action[0].send_mail_setting
+                                else {},
                                 "approval": True,
                                 "reject": False}
+
+        next_action_handler = next_action_detail.action_handler
+        # in case of current action has action user
+        if next_action_handler == -1:
+            current_flow_action = FlowAction.query.filter_by(
+                flow_id=activity_detail.flow_define.flow_id,
+                action_id=next_action_id,
+                action_order=next_action_order).one_or_none()
+            if current_flow_action and current_flow_action.action_roles and \
+                    current_flow_action.action_roles[0].action_user:
+                next_action_handler = current_flow_action.action_roles[
+                    0].action_user
         process_send_approval_mails(activity_detail, action_mails_setting,
-                                    next_action_detail.action_handler,
+                                    next_action_handler,
                                     url_and_expired_date)
     if current_app.config.get(
         'WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL') and \
@@ -958,8 +960,7 @@ def next_action(activity_id='0', action_id=0):
             work_activity.create_or_update_action_journal(
                 activity_id=activity_id,
                 action_id=action_id,
-                journal=post_json.get('journal')
-            )
+                journal=post_json.get('journal'))
         else:
             work_activity.upt_activity_action_comment(
                 activity_id=activity_id,
@@ -1200,10 +1201,12 @@ def previous_action(activity_id='0', action_id=0, req=0):
     current_flow_action = flow.\
         get_flow_action_detail(
             activity_detail.flow_define.flow_id, action_id, action_order)
-    action_mails_setting = {"previous": current_flow_action.send_mail_setting,
-                            "next": {},
-                            "approval": False,
-                            "reject": True}
+    action_mails_setting = {
+        "previous": current_flow_action.send_mail_setting
+        if current_flow_action.send_mail_setting else {},
+        "next": {},
+        "approval": False,
+        "reject": True}
     process_send_approval_mails(activity_detail, action_mails_setting, -1, {})
     try:
         pid_identifier = PersistentIdentifier.get_by_object(
