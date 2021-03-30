@@ -2334,6 +2334,7 @@ class WorkActivity(object):
 
         Returns:
             [list]: Activities list.
+
         """
         query = _Activity.query
         if activities_id:
@@ -2365,6 +2366,7 @@ class WorkActivity(object):
 
         Returns:
             [int]: The number of usage report activities.
+
         """
         query = _Activity.query
         if activities_id:

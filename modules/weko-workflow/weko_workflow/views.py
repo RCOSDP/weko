@@ -73,19 +73,19 @@ from .utils import IdentifierHandle, auto_fill_title, \
     create_onetime_download_url_to_guest, delete_cache_data, \
     delete_guest_activity, filter_all_condition, get_account_info, \
     get_actionid, get_activity_display_info, \
-    get_activity_id_of_record_without_version, \
+    get_activity_id_of_record_without_version, get_allow_multi_thumbnail, \
     get_application_and_approved_date, get_approval_keys, get_cache_data, \
-    get_identifier_setting, get_usage_data, get_workflow_item_type_names, \
-    handle_finish_workflow, init_activity_for_guest_user, \
-    is_enable_item_name_link, is_hidden_pubdate, is_show_autofill_metadata, \
+    get_identifier_setting, get_record_by_root_ver, get_usage_data, \
+    get_workflow_item_type_names, getThumbnail, handle_finish_workflow, \
+    init_activity_for_guest_user, is_enable_item_name_link, \
+    is_hidden_pubdate, is_show_autofill_metadata, \
     is_usage_application_item_type, item_metadata_validation, \
     prepare_data_for_guest_activity, process_send_approval_mails, \
     process_send_notification_mail, process_send_reminder_mail, register_hdl, \
     save_activity_data, saving_doi_pidstore, \
-    send_usage_application_mail_for_guest_user, update_approval_date, \
-    update_cache_data, validate_guest_activity_expired, \
-    validate_guest_activity_token, get_allow_multi_thumbnail, \
-    get_record_by_root_ver, getThumbnail, setDisplayTypeForFile
+    send_usage_application_mail_for_guest_user, setDisplayTypeForFile, \
+    update_approval_date, update_cache_data, validate_guest_activity_expired, \
+    validate_guest_activity_token
 
 blueprint = Blueprint(
     'weko_workflow',

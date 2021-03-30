@@ -64,7 +64,8 @@ from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST,
 from weko_user_profiles.utils import get_user_profile_info
 
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
-    IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST, \
+    IDENTIFIER_GRANT_SUFFIX_METHOD, \
+    WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST, \
     WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST
 
 from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
@@ -1634,12 +1635,13 @@ def get_disptype_and_ver_in_metainfo(metainfo):
                 for n in metainfo[v]['attribute_value_mlt']:
                     if 'displaytype' in n and n.get('displaytype') in 'preview' and \
                        'version_id' in n and n.get('version_id'):
-                        array.append({n.get('version_id'): n.get('displaytype')})
+                        array.append(
+                            {n.get('version_id'): n.get('displaytype')})
     return array
 
 
 def setDisplayTypeForFile(itemLink_record, newFiles):
-    """Get displayType in records and set into files
+    """Get displayType in records and set into files.
 
     :return: Files.
     """
@@ -1656,7 +1658,7 @@ def setDisplayTypeForFile(itemLink_record, newFiles):
 
 
 def getThumbnail(files, allow_multi_thumbnail):
-    """Get Thumbnail from file
+    """Get Thumbnail from file.
 
     :return: thumbnail.
     """
@@ -1665,12 +1667,14 @@ def getThumbnail(files, allow_multi_thumbnail):
         thumbnail = [i for i in files
                      if 'is_thumbnail' in i.keys()
                      and i['is_thumbnail']]
-        if allow_multi_thumbnail is not None and not allow_multi_thumbnail and len(thumbnail) > 1:
+        if allow_multi_thumbnail is not None and not allow_multi_thumbnail and len(
+                thumbnail) > 1:
             thumbnail.pop(0)
     return thumbnail
 
 
 def get_allow_multi_thumbnail(item_type_id, activity_id=None):
+    """Get Multi Thumbnail from file."""
     if activity_id:
         from weko_items_ui.api import item_login
         step_item_login_url, need_file, need_billing_file, \
@@ -2092,7 +2096,8 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
     site_mail = get_default_mail_sender()
     register_user = register_date = ''
     if not guest_user:
-        register_user, register_date = get_register_info(activity_detail.activity_id)
+        register_user, register_date = get_register_info(
+            activity_detail.activity_id)
 
     mail_info = dict(
         university_institution=item_info.get('subitem_university/institution'),
@@ -2115,12 +2120,17 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
         output_registration_title=item_info.get('subitem_title'),
         # Restricted data newly supported
         restricted_fullname=item_info.get('subitem_restricted_access_name'),
-        restricted_university_institution=item_info.get('subitem_restricted_access_university/institution'),
+        restricted_university_institution=item_info.get(
+            'subitem_restricted_access_university/institution'),
         restricted_activity_id=activity_detail.activity_id,
-        restricted_research_title=item_info.get('subitem_restricted_access_research_title'),
-        restricted_data_name=item_info.get('subitem_restricted_access_dataset_usage'),
-        restricted_application_date=item_info.get('subitem_restricted_access_application_date'),
-        restricted_mail_address=item_info.get('subitem_restricted_access_mail_address'),
+        restricted_research_title=item_info.get(
+            'subitem_restricted_access_research_title'),
+        restricted_data_name=item_info.get(
+            'subitem_restricted_access_dataset_usage'),
+        restricted_application_date=item_info.get(
+            'subitem_restricted_access_application_date'),
+        restricted_mail_address=item_info.get(
+            'subitem_restricted_access_mail_address'),
         restricted_download_link='',
         restricted_expiration_date='',
         restricted_approver_name='',
@@ -2679,6 +2689,7 @@ def generate_guest_activity_token_value(
 
     Returns:
         [str]: token value string.
+
     """
     date_form_str = current_app.config['WEKO_WORKFLOW_DATE_FORMAT']
     token_pattern = current_app.config['WEKO_WORKFLOW_ACTIVITY_TOKEN_PATTERN']
@@ -3064,7 +3075,8 @@ def prepare_data_for_guest_activity(activity_id: str) -> dict:
         ctx = {'community': comm}
         community_id = comm.id
 
-    init_data = __init_activity_detail_data_for_guest(activity_id, community_id)
+    init_data = __init_activity_detail_data_for_guest(
+        activity_id, community_id)
     ctx.update(init_data)
     action_endpoint = ctx['cur_step']
     activity_detail = ctx['activity']
@@ -3178,33 +3190,46 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
     :param file_data:
     :return:
     """
-    is_guest_user = True if activity_detail.extra_info.get('guest_mail') else False
+    is_guest_user = True if activity_detail.extra_info.get(
+        'guest_mail') else False
     item_info = get_item_info(activity_detail.item_id)
     mail_info = set_mail_info(item_info, activity_detail, is_guest_user)
     mail_info['restricted_download_link'] = file_data.get("file_url", '')
-    mail_info['restricted_expiration_date'] = file_data.get("expiration_date", '')
-    mail_info['restricted_expiration_date_ja'] = file_data.get("expiration_date_ja", '')
-    mail_info['restricted_expiration_date_en'] = file_data.get("expiration_date_en", '')
+    mail_info['restricted_expiration_date'] = file_data.get(
+        "expiration_date", '')
+    mail_info['restricted_expiration_date_ja'] = file_data.get(
+        "expiration_date_ja", '')
+    mail_info['restricted_expiration_date_en'] = file_data.get(
+        "expiration_date_en", '')
 
     # Override guest mail if any
     if is_guest_user:
-        mail_info['mail_recipient'] = activity_detail.extra_info.get('guest_mail')
+        mail_info['mail_recipient'] = activity_detail.extra_info.get(
+            'guest_mail')
 
     if actions_mail_setting["approval"]:
-        if actions_mail_setting.get("previous", {}).get("inform_approval", False):
-            process_send_mail(mail_info, current_app.config["WEKO_WORKFLOW_APPROVE_DONE"])
+        if actions_mail_setting.get("previous", {}).get(
+                "inform_approval", False):
+            process_send_mail(
+                mail_info,
+                current_app.config["WEKO_WORKFLOW_APPROVE_DONE"])
 
         if actions_mail_setting.get('next', {}).get("request_approval", False):
-            approval_user = db.session.query(User).filter_by(id=int(next_step_appover_id)).first()
+            approval_user = db.session.query(User).filter_by(
+                id=int(next_step_appover_id)).first()
             if not approval_user:
                 current_app.logger.error("Does not have approval data")
             else:
                 mail_info['mail_recipient'] = approval_user.email
-                process_send_mail(mail_info, current_app.config["WEKO_WORKFLOW_REQUEST_APPROVAL"])
+                process_send_mail(
+                    mail_info, current_app.config["WEKO_WORKFLOW_REQUEST_APPROVAL"])
 
     if actions_mail_setting["reject"]:
-        if actions_mail_setting.get("previous", {}).get("inform_reject", False):
-            process_send_mail(mail_info, current_app.config["WEKO_WORKFLOW_APPROVE_REJECTED"])
+        if actions_mail_setting.get(
+                "previous", {}).get("inform_reject", False):
+            process_send_mail(
+                mail_info,
+                current_app.config["WEKO_WORKFLOW_APPROVE_REJECTED"])
 
 
 def get_usage_data(item_type_id, activity_detail, user_profile):
@@ -3221,11 +3246,13 @@ def get_usage_data(item_type_id, activity_detail, user_profile):
 
     wf_issued_date = activity_detail.created.strftime("%Y-%m-%d")
 
-    if item_type_id in current_app.config.get('WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST'):
+    if item_type_id in current_app.config.get(
+            'WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST'):
         mail_address = ''
 
         if user_profile != {}:
-            mail_address = user_profile.get('results').get('subitem_mail_address')
+            mail_address = user_profile.get(
+                'results').get('subitem_mail_address')
         else:
             mail_address = extra_info.get('guest_mail') or ''
 
@@ -3262,9 +3289,9 @@ def get_usage_data(item_type_id, activity_detail, user_profile):
 
         for key in rm.json:
             value = rm.json.get(key)
-            if type(value) is dict:
+            if isinstance(value, dict):
                 mlt = value.get('attribute_value_mlt')
-                if mlt and type(mlt) is list:
+                if mlt and isinstance(mlt, list):
                     for sub_key in mlt[0]:
                         sub_value = mlt[0].get(sub_key)
                         if sub_key == 'subitem_restricted_access_name':
@@ -3311,7 +3338,7 @@ def update_approval_date(activity):
     record = WekoRecord.get_record(item_id)
     deposit = WekoDeposit(record, record.model)
     if deposit.get("item_type_id") not in \
-        WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST + WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST:
+            WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST + WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST:
         return
     approval_date_key = current_app.config[
         'WEKO_WORKFLOW_RESTRICTED_ACCESS_APPROVAL_DATE']
@@ -3353,7 +3380,8 @@ def create_record_metadata_for_user(usage_application_activity, usage_report):
                                                deposit.get("item_type_id"))
         if sub_system_data_key:
             dict_system_data = {usage_report_id_key: usage_report.activity_id}
-            deposit_without_ver,item_id_without_ver = get_record_first_version(deposit)
+            deposit_without_ver, item_id_without_ver = get_record_first_version(
+                deposit)
             if item_id_without_ver:
                 update_system_data_for_item_metadata(
                     item_id_without_ver,
@@ -3386,10 +3414,10 @@ def get_current_date():
 def get_sub_key_by_system_property_key(system_property_key, item_type_id):
     """Get sub key by system property key.
 
-   @param system_property_key:
-   @param item_type_id:
-   @return:
-   """
+    @param system_property_key:
+    @param item_type_id:
+    @return:
+    """
     if not item_type_id:
         return None, None
     item_type = ItemType.query.filter_by(id=item_type_id).one_or_none()
@@ -3411,11 +3439,11 @@ def update_system_data_for_item_metadata(item_id, sub_system_data_key,
                                          dict_system_data):
     """Update approval date for item metadata.
 
-   @param item_id:
-   @param sub_system_data_key:
-   @param dict_system_data:
-   @return:
-   """
+    @param item_id:
+    @param sub_system_data_key:
+    @param dict_system_data:
+    @return:
+    """
     item_meta = ItemsMetadata.get_record(id_=item_id)
     item_meta[sub_system_data_key] = dict_system_data
     item_meta.commit()
@@ -3426,12 +3454,12 @@ def update_approval_date_for_deposit(deposit, sub_approval_date_key,
                                      dict_approval_date, attribute_name):
     """Update approval date for deposit.
 
-   @param deposit:
-   @param sub_approval_date_key:
-   @param dict_approval_date:
-   @param attribute_name:
-   @return:
-   """
+    @param deposit:
+    @param sub_approval_date_key:
+    @param dict_approval_date:
+    @param attribute_name:
+    @return:
+    """
     approval_date_data = {'attribute_name': attribute_name,
                           "attribute_value_mlt": [dict_approval_date]}
     deposit[sub_approval_date_key] = approval_date_data
@@ -3444,11 +3472,11 @@ def update_system_data_for_activity(activity, sub_system_data_key,
                                     dict_system_data):
     """Update approval date for activity.
 
-   @param activity:
-   @param sub_system_data_key:
-   @param dict_system_data:
-   @return:
-   """
+    @param activity:
+    @param sub_system_data_key:
+    @param dict_system_data:
+    @return:
+    """
     if activity:
         if activity.temp_data:
             temp = json.loads(activity.temp_data)

@@ -26,8 +26,9 @@ from weko_records.api import ItemTypes
 from weko_records.utils import find_items
 from weko_workflow.api import WorkActivity
 
-from .utils import is_schema_include_key
 from .permissions import item_permission
+from .utils import is_schema_include_key
+
 
 @login_required
 @item_permission.require(http_exception=403)

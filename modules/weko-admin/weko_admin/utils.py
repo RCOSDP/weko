@@ -1670,7 +1670,6 @@ def update_restricted_access(restricted_access: dict):
 
     :param restricted_access:
     """
-
     def parse_content_file_download():
         if content_file_download.get('expiration_date_unlimited_chk'):
             content_file_download['expiration_date'] = 9999999
@@ -1811,6 +1810,7 @@ class UsageReport:
 
         Returns:
             [list]: Activities is formatted.
+
         """
         activities = []
         action_status = self.__action_status_policy.describe(
@@ -1912,6 +1912,7 @@ class UsageReport:
 
         Returns:
             Tuple[str, str]: Email and Url
+
         """
         extra_info = activity.extra_info
         file_name = extra_info.get('file_name')

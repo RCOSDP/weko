@@ -1156,6 +1156,7 @@ class GuestActivity(db.Model, Timestamp):
 
         Returns:
             list: Activities identifier list.
+
         """
         query = db.session.query(cls).with_entities(cls.activity_id)
         current_date = datetime.utcnow().date()

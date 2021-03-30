@@ -353,8 +353,8 @@ def getrecord(**kwargs):
     # Harvest is private
     if not harvest_public_state or\
             (identify and not identify.outPutSetting) or \
-            (is_private_index(record) and
-                harvest_public_state and is_exists_doi(record)):
+            (is_private_index(record)
+                and harvest_public_state and is_exists_doi(record)):
         return error(get_error_code_msg(), **kwargs)
     # Item is deleted
     # or Harvest is public & Item is private
