@@ -202,7 +202,8 @@ def record_view_event_builder(event, sender_app, pid=None, record=None,
 
         cur_user = get_user()
         cur_user_id = cur_user['user_id'] if cur_user['user_id'] else 'guest'
-        record_name = record.get('item_title', '') if record is not None else ''
+        record_name = record.get(
+            'item_title', '') if record is not None else ''
 
         event.update(dict(
             # When:
@@ -263,8 +264,7 @@ def build_item_create_unique_id(doc):
 
 
 def resolve_address(addr):
-    """Resolve the ip address string addr and return its DNS name. \
-        If no name is found, return None."""
+    """Resolve the ip address string addr and return its DNS name. If no name is found, return None."""
     from socket import gethostbyaddr, herror
     try:
         record = gethostbyaddr(addr)
