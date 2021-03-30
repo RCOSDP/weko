@@ -113,33 +113,40 @@ def file_preview_event_builder(event, sender_app, obj=None, **kwargs):
 def build_celery_task_unique_id(doc):
     """Build celery task unique identifier."""
     key = '{0}_{1}_{2}'.format(
-        doc['task_id'], doc['task_name'], doc['repository_name']
+        doc['task_id'],
+        doc['task_name'],
+        doc['repository_name']
     )
     doc['unique_id'] = str(uuid.uuid3(uuid.NAMESPACE_DNS, key))
+
     return doc
 
 
 def build_file_unique_id(doc):
     """Build file unique identifier."""
-    doc['unique_id'] = '{0}_{1}_{2}_{3}'.format(
+    key = '{0}_{1}_{2}_{3}'.format(
         doc['bucket_id'],
         doc['file_id'],
         doc['remote_addr'],
         doc['unique_session_id']
     )
+    doc['unique_id'] = str(uuid.uuid3(uuid.NAMESPACE_DNS, key))
     doc['hostname'] = '{}'.format(resolve_address(doc['remote_addr']))
+
     return doc
 
 
 def build_record_unique_id(doc):
     """Build record unique identifier."""
-    doc['unique_id'] = '{0}_{1}_{2}_{3}_{4}'.format(
+    key = '{0}_{1}_{2}_{3}_{4}'.format(
         doc['pid_type'],
         doc['pid_value'],
         doc['remote_addr'],
         doc['unique_session_id'],
         doc['visitor_id'])
+    doc['unique_id'] = str(uuid.uuid3(uuid.NAMESPACE_DNS, key))
     doc['hostname'] = '{}'.format(resolve_address(doc['remote_addr']))
+
     return doc
 
 
@@ -236,12 +243,15 @@ def top_view_event_builder(event, sender_app, info=None, **kwargs):
 
 def build_top_unique_id(doc):
     """Build top unique identifier."""
-    doc['unique_id'] = '{0}_{1}_{2}_{3}'.format(
+    key = '{0}_{1}_{2}_{3}'.format(
         doc['site_license_name'],
         doc['remote_addr'],
         doc['unique_session_id'],
         doc['visitor_id'])
+
+    doc['unique_id'] = str(uuid.uuid3(uuid.NAMESPACE_DNS, key))
     doc['hostname'] = '{}'.format(resolve_address(doc['remote_addr']))
+
     return doc
 
 
@@ -253,7 +263,8 @@ def build_item_create_unique_id(doc):
 
 
 def resolve_address(addr):
-    """Resolve the ip address string addr and return its DNS name. If no name is found, return None."""
+    """Resolve the ip address string addr and return its DNS name. \
+        If no name is found, return None."""
     from socket import gethostbyaddr, herror
     try:
         record = gethostbyaddr(addr)
@@ -292,6 +303,7 @@ def build_search_unique_id(doc):
         doc['unique_session_id']
     )
     doc['unique_id'] = str(uuid.uuid3(uuid.NAMESPACE_DNS, key))
+
     return doc
 
 

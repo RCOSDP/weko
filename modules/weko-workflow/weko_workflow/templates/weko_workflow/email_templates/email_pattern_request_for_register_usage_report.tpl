@@ -1,17 +1,16 @@
 Subject: 利用報告の登録のお願い／Request for register Data Usage Report
 
 [restricted_site_name_ja]です。
-下記で申請いただいデータについてダウンロードされたことを確認しました。
+現時点で、下記の利用報告が登録されていません
 
-申請番号： [restricted_usage_activity_id]
-登録者名： [restricted_fullname]
-メールアドレス： [restricted_mail_address]
+報告番号：[restricted_activity_id]
+登録者名：[restricted_fullname]
+メールアドレス：[restricted_mail_address]
 所属機関：[restricted_university_institution]
-研究題目：[restricted_research_title]
-申請データ：[restricted_data_name]
-申請年月日：[restricted_application_date]
+利用データ：[restricted_data_name]
+データダウンロード日：[data_download_date]
 
-ダウンロードしたデータについて、下記のリンクから利用報告の登録をお願いします。
+下記のリンクから利用報告の登録をお願いします。
 
 [usage_report_url]
 
@@ -24,17 +23,16 @@ Subject: 利用報告の登録のお願い／Request for register Data Usage Rep
 ----------------------------------------------------------------------------------
 
 This is a message from [restricted_site_name_en].
-We have confirmed that the dataset which you registered at below has been downloaded.
+At this time, the Data Usage Report below has not been registered.
 
-Application No.：[restricted_usage_activity_id]
+Usage Report No.：[restricted_activity_id]
 Name：[restricted_fullname]
 E-mail：[restricted_mail_address]
 Affiliation：[restricted_university_institution]
-Title of research：[restricted_research_title]
-Dataset requested ：[restricted_data_name]
-Application date：[restricted_application_date]
+Usage Dataset：[restricted_data_name]
+Download date：[data_download_date]
 
-For the downloaded data, please register the Data Usage Report by the link below.
+Please register the Data Usage Report from the link below.
 
 [usage_report_url]
 

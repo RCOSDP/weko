@@ -68,6 +68,9 @@ require([
       }
     });
   });
+  $('#lnk_item_detail').on('click', function () {
+    $('#myModal').modal('show');
+  });
   $('#btn-draft').on('click', function () {
     let _this = $(this);
     startLoading(_this);

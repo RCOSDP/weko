@@ -1026,7 +1026,7 @@ class WekoDeposit(Deposit):
         # if cls.update_pid_by_index_tree_id(cls, path):
         #    from .tasks import delete_items_by_id
         #    delete_items_by_id.delay(path)
-        obj_ids = next(cls.indexer.get_pid_by_es_scroll(path))
+        obj_ids = next((cls.indexer.get_pid_by_es_scroll(path)), [])
         try:
             for obj_uuid in obj_ids:
                 r = RecordMetadata.query.filter_by(id=obj_uuid).first()

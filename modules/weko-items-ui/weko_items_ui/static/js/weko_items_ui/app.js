@@ -3702,9 +3702,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
           var currentInvenioRecordsSchema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
           if (currentInvenioRecordsSchema.properties && currentInvenioRecordsSchema.properties.hasOwnProperty(applicationDateKey)) {
-            currentInvenioRecordsModel = $rootScope.recordsVM.invenioRecordsModel;
-            let today = new Date().toISOString().slice(0, 10)
-            $rootScope.recordsVM.invenioRecordsModel[key] = {}
+            let today = new Date().toISOString().slice(0, 10);
             $rootScope.recordsVM.invenioRecordsModel[key][applicationDateKey] = today;
             break;
           }

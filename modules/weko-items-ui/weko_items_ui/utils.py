@@ -1538,7 +1538,8 @@ def to_files_js(record):
     if files is not None:
         for f in files:
             res.append({
-                'displaytype': f.get('displaytype', ''),
+                'displaytype': files_from_meta.get(str(f.version_id),
+                                                   {}).get("displaytype", ''),
                 'filename': f.get('filename', ''),
                 'mimetype': f.mimetype,
                 'licensetype': files_from_meta.get(str(f.version_id),

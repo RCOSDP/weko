@@ -1149,3 +1149,22 @@ class GuestActivity(db.Model, Timestamp):
         )
 
         return query.all()
+
+    @classmethod
+    def get_usage_report_activities(cls) -> list:
+        """Get usage report activities.
+
+        Returns:
+            list: Activities identifier list.
+        """
+        query = db.session.query(cls).with_entities(cls.activity_id)
+        current_date = datetime.utcnow().date()
+        query = query.filter(
+            db.cast(
+                cls.created + func.make_interval(0, 0, 0, cls.expiration_date),
+                db.DATE) >= current_date
+        ).filter(
+            cls.is_usage_report.is_(True)
+        )
+
+        return query.all()

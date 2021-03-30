@@ -38,11 +38,11 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from passlib.handlers.oracle import oracle10
 from weko_admin.models import AdminSettings
-from weko_admin.utils import get_restricted_access
+from weko_admin.utils import UsageReport, get_restricted_access
 from weko_deposit.api import WekoDeposit
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
-from weko_workflow.api import WorkFlow
+from weko_workflow.api import WorkActivity, WorkFlow
 
 from .models import FileOnetimeDownload, FilePermission
 from .permissions import check_create_usage_report, \
@@ -712,7 +712,7 @@ def create_usage_report_for_user(onetime_download_extra_info: dict):
     is_guest = onetime_download_extra_info.get('is_guest', False)
 
     # Get Usage Application Activity.
-    from weko_workflow.api import WorkActivity
+    from weko_workflow.utils import create_record_metadata_for_user
     usage_application_activity = WorkActivity().get_activity_by_id(
         activity_id)
 
@@ -725,6 +725,12 @@ def create_usage_report_for_user(onetime_download_extra_info: dict):
     if not usage_report_workflow:
         return ""
 
+    # Get usage application record meta data
+    rec = RecordMetadata.query.filter_by(
+        id=usage_application_activity.item_id).first()
+    record_metadata = rec.json
+    data_dict = dict()
+    get_data_usage_application_data(record_metadata, data_dict)
     # Prepare data for activity.
     activity_data = {
         'workflow_id': usage_report_workflow.id,
@@ -736,32 +742,54 @@ def create_usage_report_for_user(onetime_download_extra_info: dict):
             "file_name": extra_info_application.get('file_name'),
             "usage_record_id": str(usage_application_activity.item_id),
             "usage_activity_id": str(activity_id),
+            "is_guest": is_guest,
+            "usage_application_record_data": data_dict,
         }
     }
 
-    # Setting user mail.
     if is_guest:
+        # Setting user mail.
         activity_data['extra_info']['guest_mail'] = extra_info_application.get(
             'guest_mail')
-    else:
-        activity_data['extra_info']['user_mail'] = extra_info_application.get(
-            'user_mail')
-
-    if is_guest:
         # Create activity and URL for guest user.
         from weko_workflow.utils import init_activity_for_guest_user
-        usage_report_url = init_activity_for_guest_user(activity_data, True)
+        activity, __ = init_activity_for_guest_user(
+            activity_data, True)
     else:
+        # Setting user mail.
+        activity_data['extra_info']['user_mail'] = extra_info_application.get(
+            'user_mail')
+        activity_data['activity_login_user'] = usage_application_activity \
+            .activity_login_user
+        activity_data['activity_update_user'] = usage_application_activity \
+            .activity_login_user
         # Create activity and URL for registered user.
         activity = WorkActivity().init_activity(activity_data)
-        usage_report_url = url_for('weko_workflow.display_activity',
-                                   activity_id=activity.activity_id)
-        usage_report_url = "{}{}".format(request.host_url, usage_report_url)
-    return usage_report_url
+    create_record_metadata_for_user(usage_application_activity, activity)
+    return activity
 
 
-def send_usage_report_mail_for_guest_user(guest_mail: str, temp_url: str):
-    """Send usage application mail for guest user.
+def get_data_usage_application_data(record_metadata, data_result: dict):
+    """Get usage application data.
+
+    Args:
+        record_metadata (Union[list, dict]):
+        data_result (dict):
+    """
+    if isinstance(record_metadata, dict):
+        for k, v in record_metadata.items():
+            if isinstance(v, str) and k.startswith("subitem_") \
+                    and "_guarantor_" not in k:
+                data_result[k] = v
+            else:
+                get_data_usage_application_data(v, data_result)
+    elif isinstance(record_metadata, list):
+        for metadata in record_metadata:
+            get_data_usage_application_data(metadata, data_result)
+
+
+def send_usage_report_mail_for_user(guest_mail: str, temp_url: str):
+    """Send usage application mail for user.
 
     @param guest_mail:
     @param temp_url:
@@ -787,10 +815,14 @@ def check_and_send_usage_report(extra_info, user_mail):
     """
     if not extra_info.get('send_usage_report'):
         return
-    tmp_url = create_usage_report_for_user(extra_info)
-    if not tmp_url or not \
-            send_usage_report_mail_for_guest_user(user_mail, tmp_url):
+    activity = create_usage_report_for_user(extra_info)
+    mail_template = current_app.config.get(
+        "WEKO_WORKFLOW_USAGE_REPORT_ACTIVITY_URL")
+    usage_report = UsageReport()
+    if not activity:
         return _("Unexpected error occurred.")
+    if not usage_report.send_reminder_mail([], mail_template, [activity]):
+        return _("Failed to send mail.")
     extra_info['send_usage_report'] = False
 
 

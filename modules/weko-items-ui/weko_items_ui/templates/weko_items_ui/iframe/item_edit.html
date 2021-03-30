@@ -27,6 +27,7 @@
     <link href="{{ url_for('static', filename='css/weko_items_ui/contributor.search.css') }}" rel="stylesheet">
     <link href="/static/css/weko_workflow/style.css" rel="stylesheet">
     {% assets "weko_items_ui_feedback_maillist_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {% assets "weko_records_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {%- endblock css %}
 
   {%- block javascript %}
@@ -356,12 +357,19 @@
     <div class="modal-dialog modal-xlg" role="document">
       <div class="modal-content">
         <div class="modal-body">
-          <app-author-search></app-author-search>
+          <app-author-search style="display: none;"></app-author-search>
+          {%-if cur_step == 'item_login' %}
+            {%- with preview_carousel_id='main_preview_carousel' %}
+              {% include 'weko_workflow/record_after_update.html' %}
+            {%- endwith %}
+          {%-else %}
+            {% include 'weko_workflow/record_detail.html' %}
+          {%- endif %}
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" id="btnModalClose">
-               <span class="glyphicon glyphicon-remove"></span>&nbsp
-                   {{_('Close')}}
+          <button type="button" class="btn btn-info close-button" id="btnModalClose" data-dismiss="modal">
+            <span class="glyphicon glyphicon-remove"></span>
+            {{_('Close')}}
           </button>
         </div>
       </div><!-- /.modal-content -->

@@ -45,8 +45,11 @@ from weko_index_tree.utils import check_restrict_doi_with_indexes, \
 from weko_records.api import ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
+from weko_records_ui.utils import get_file_info_list
 from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow
-from weko_workflow.utils import check_an_item_is_locked, prepare_edit_workflow
+from weko_workflow.utils import check_an_item_is_locked, \
+    get_record_by_root_ver, getThumbnail, prepare_edit_workflow, \
+    setDisplayTypeForFile
 from werkzeug.utils import import_string
 
 from .permissions import item_permission
@@ -341,7 +344,6 @@ def items_index(pid_value='0'):
         # Get the design for widget rendering
         page, render_widgets = get_design_layout(
             current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
-
         if request.method == 'GET':
             return render_template(
                 current_app.config['WEKO_ITEMS_UI_INDEX_TEMPLATE'],
@@ -386,6 +388,7 @@ def items_index(pid_value='0'):
 def iframe_items_index(pid_value='0'):
     """Iframe items index."""
     try:
+        files_thumbnail = None
         if pid_value == '0' or pid_value == 0:
             return redirect(url_for('.iframe_index'))
 
@@ -416,6 +419,18 @@ def iframe_items_index(pid_value='0'):
             page, render_widgets = get_design_layout(
                 community_id
                 or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+            root_record = None
+            files = []
+            if pid_value and '.' in pid_value:
+                root_record, files = get_record_by_root_ver(pid_value)
+                if root_record and root_record.get('title'):
+                    session['itemlogin_item']['title'] = root_record['title'][0]
+                    files_thumbnail = getThumbnail(files, None)
+            else:
+                root_record = session['itemlogin_record']
+            if root_record and files and len(root_record) > 0 and len(files) > 0 \
+               and (isinstance(root_record, list) or isinstance(root_record, dict)):
+                files = setDisplayTypeForFile(root_record, files)
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
                 page=page,
@@ -427,11 +442,13 @@ def iframe_items_index(pid_value='0'):
                 steps=session['itemlogin_steps'],
                 action_id=session['itemlogin_action_id'],
                 cur_step=session['itemlogin_cur_step'],
-                record=session['itemlogin_record'],
+                record=root_record,
                 histories=session['itemlogin_histories'],
                 res_check=session['itemlogin_res_check'],
                 pid=session['itemlogin_pid'],
                 community_id=community_id,
+                files=files,
+                files_thumbnail=files_thumbnail,
                 **ctx
             )
 
