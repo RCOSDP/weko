@@ -51,7 +51,7 @@ class CommunityModelView(ModelView):
     column_list = (
         'id',
         'title',
-        'owner.id',
+        'owner.name',
         'index.index_name',
         'deleted_at',
         'last_record_accepted',
