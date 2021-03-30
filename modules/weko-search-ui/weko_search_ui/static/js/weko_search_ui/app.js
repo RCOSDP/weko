@@ -22,7 +22,7 @@ require([
     page_global.queryObj = query_to_hash();
     if (page_global.queryObj) {
       $('#page_count').val(page_global.queryObj['size'])
-      $('#page_count').on('change', function () {
+      $(document).on('change', '#page_count', function () {
         if (page_global.queryObj['size'] != $('#page_count').val()) {
           page_global.queryObj['size'] = $('#page_count').val();
           queryStr = hash_to_query(page_global.queryObj);
@@ -650,3 +650,24 @@ function format_comment(comment) {
   return result
 }
 // add by ryuu. at 20181129 end
+
+
+// For Item Display Dropdown Fix
+document.addEventListener("DOMContentLoaded", function () {
+  if (GetURLParameter("size") == undefined) {
+    window.location.reload();
+  } else {
+    document.getElementById("page_count_selected_value").innerHTML = GetURLParameter("size");
+  }
+})
+
+function GetURLParameter(sParam) {
+  var sPageURL = window.location.search.substring(1);
+  var sURLVariables = sPageURL.split('&');
+  for (var i = 0; i < sURLVariables.length; i++) {
+    var sParameterName = sURLVariables[i].split('=');
+    if (sParameterName[0] == sParam) {
+      return sParameterName[1];
+    }
+  }
+}
