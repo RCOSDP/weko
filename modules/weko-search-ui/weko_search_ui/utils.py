@@ -1716,7 +1716,9 @@ def prepare_doi_setting():
         if not identifier_setting.ndl_jalc_doi:
             identifier_setting.ndl_jalc_doi = text_empty
         # Semi-automatic suffix
-        if identifier_setting.suffix and IDENTIFIER_GRANT_SUFFIX_METHOD == 1:
+        suffix_method = current_app.config.get(
+            'IDENTIFIER_GRANT_SUFFIX_METHOD', IDENTIFIER_GRANT_SUFFIX_METHOD)
+        if identifier_setting.suffix and suffix_method == 1:
             identifier_setting.suffix = '/' + identifier_setting.suffix
         else:
             identifier_setting.suffix = ''

@@ -694,7 +694,8 @@ def display_activity(activity_id="0"):
         temporary_idf_grant_suffix=temporary_identifier_inputs,
         idf_grant_data=identifier_setting,
         idf_grant_input=IDENTIFIER_GRANT_LIST,
-        idf_grant_method=IDENTIFIER_GRANT_SUFFIX_METHOD,
+        idf_grant_method=current_app.config.get(
+            'IDENTIFIER_GRANT_SUFFIX_METHOD', IDENTIFIER_GRANT_SUFFIX_METHOD),
         record=approval_record,
         record_after_update=itemLink_record,
         records=record,

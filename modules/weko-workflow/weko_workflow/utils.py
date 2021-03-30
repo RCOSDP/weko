@@ -3003,7 +3003,8 @@ def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
         temporary_idf_grant_suffix='',
         idf_grant_data='',
         idf_grant_input=IDENTIFIER_GRANT_LIST,
-        idf_grant_method=IDENTIFIER_GRANT_SUFFIX_METHOD,
+        idf_grant_method=current_app.config.get(
+            'IDENTIFIER_GRANT_SUFFIX_METHOD', IDENTIFIER_GRANT_SUFFIX_METHOD),
         error_type='item_login_error',
         cur_step=action_endpoint,
         approval_record=[],

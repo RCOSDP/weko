@@ -2101,7 +2101,8 @@ class WorkActivity(object):
             ctx['temporary_idf_grant_suffix'] = temporary_idt_inputs
             ctx['idf_grant_data'] = identifier_setting
             ctx['idf_grant_input'] = IDENTIFIER_GRANT_LIST
-            ctx['idf_grant_method'] = IDENTIFIER_GRANT_SUFFIX_METHOD
+            ctx['idf_grant_method'] = current_app.config.get(
+                'IDENTIFIER_GRANT_SUFFIX_METHOD', IDENTIFIER_GRANT_SUFFIX_METHOD)
 
         return activity_detail, item, steps, action_id, cur_step, \
             temporary_comment, approval_record, step_item_login_url,\
