@@ -3,10 +3,14 @@
   $base =  $_SERVER['REQUEST_SCHEME']."://".$_SERVER['SERVER_NAME'];
 
   // ERROR
-  if(!$_SERVER['mail']){
-    header("HTTP/1.1 403 Forbidden");
-    header("Location: ".$base);
-  }
+  if(!$_SERVER['HTTP_WEKOSOCIETYAFFILIATION']){
+       echo "<script type='text/javascript'>
+          window.alert('Permission is invalid');
+          window.location.href='".$base."';</script>";
+
+    //header("HTTP/1.1 403 Forbidden");
+    //header("Location: ".$base);
+  }else{
 
 
   $url = $base."/weko/shib/login?next=%2F";
@@ -54,4 +58,5 @@ if (CURLE_OK !== $errno) {
 header("HTTP/1.1 302 Found");
 header("Location: ".$base.$result);
   //var_dump($app_cookies[0]['value']);
+}
 ?>
