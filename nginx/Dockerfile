@@ -64,8 +64,8 @@ ADD redirect_list.map /etc/nginx/redirect_list.map
 RUN chmod 400 /etc/nginx/server.key
 
 RUN mkdir  /usr/share/nginx/html/secure
-ADD ./phpinfo.php /usr/share/nginx/html/secure/phpinfo.php
-ADD ./index.php /usr/share/nginx/html/secure/index.php
+#ADD ./phpinfo.php /usr/share/nginx/html/secure/phpinfo.php
+#ADD ./index.php /usr/share/nginx/html/secure/index.php
 ADD ./login.php /usr/share/nginx/html/secure/login.php
 
 ADD ./shib_clear_headers /etc/nginx/shib_clear_headers
