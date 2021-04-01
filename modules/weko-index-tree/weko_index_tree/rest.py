@@ -206,6 +206,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
         if not data:
             raise InvalidDataRESTError()
         msg = ''
+        delete_flag = False
         errors = []
         if not (data.get('public_state') and data.get('harvest_public_state'))\
                 and check_doi_in_index(index_id):
@@ -218,13 +219,19 @@ class IndexActionResource(ContentNegotiatedMethodView):
                                 ' there are links from items that have a DOI.'
                                 ))
         else:
+            if('thumbnail_delete_flag' in data):
+                if(data['thumbnail_delete_flag'] == True):
+                    delete_flag = True
+                    data['image_name'] = ""
+
+                del data['thumbnail_delete_flag']
             if not self.record_class.update(index_id, **data):
                 raise IndexUpdatedRESTError()
             status = 200
             msg = 'Index updated successfully.'
 
         return make_response(jsonify(
-            {'status': status, 'message': msg, 'errors': errors}),
+            {'status': status, 'message': msg, 'errors': errors, 'delete_flag': delete_flag}),
             status)
 
     @need_record_permission('delete_permission_factory')
