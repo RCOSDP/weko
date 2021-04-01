@@ -44,7 +44,7 @@ from .errors import CommunitiesError, InclusionRequestExistsError, \
     InclusionRequestExpiryTimeError, InclusionRequestMissingError, \
     InclusionRequestObsoleteError
 from .signals import inclusion_request_created
-from .utils import save_and_validate_logo
+from .utils import get_idRole_currentUser, save_and_validate_logo
 
 
 class InclusionRequest(db.Model, Timestamp):
@@ -180,6 +180,13 @@ class Community(db.Model, Timestamp):
     )
     """Owner of the community."""
 
+    id_user = db.Column(
+        db.Integer,
+        db.ForeignKey(User.id),
+        nullable=False
+    )
+    """Owner of the community."""
+
     title = db.Column(db.String(length=255), nullable=False, default='')
     """Title of the community."""
 
@@ -229,6 +236,11 @@ class Community(db.Model, Timestamp):
     #
     owner = db.relationship(Role, backref='communities',
                             foreign_keys=[id_role])
+
+    """Relation to the owner (User) of the community."""
+
+    owner_user = db.relationship(User, backref='communities',
+                                 foreign_keys=[id_user])
 
     """Relation to the owner (User) of the community."""
 
