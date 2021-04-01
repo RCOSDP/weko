@@ -102,6 +102,10 @@ WEKO_THEME_ADMIN_MENU = [
         'order': 1
     },
     {
+        'name': 'ホーム',
+        'order': 1
+    },
+    {
         'name': 'Author Management',
         'order': 6,
         'submenu': [

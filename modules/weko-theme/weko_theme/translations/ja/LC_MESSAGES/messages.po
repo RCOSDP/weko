@@ -641,59 +641,63 @@ msgstr "ランキング"
 #~ msgstr "任意"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
-msgid "Admin menu Item Types"
+msgid "Admin menu_ホーム"
+msgstr "ホーム"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Item Types"
 msgstr "アイテムタイプ管理"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
-msgid "Admin menu Items"
+msgid "Admin menu_Items"
 msgstr "アイテム管理"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
-msgid "Admin menu Index Tree"
+msgid "Admin menu_Index Tree"
 msgstr "インデックスツリー管理"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
-msgid "Admin menu Web Design"
+msgid "Admin menu_Web Design"
 msgstr "ウェブデザイン管理"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
-msgid "Admin menu Author Management"
+msgid "Admin menu_Author Management"
 msgstr "著者DB管理"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
-msgid "Admin menu Statistics"
+msgid "Admin menu_Statistics"
 msgstr "統計"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
-msgid "Admin menu WorkFlow"
+msgid "Admin menu_WorkFlow"
 msgstr "ワークフロー管理"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
-msgid "Admin menu Communities"
+msgid "Admin menu_Communities"
 msgstr "コミュニティ管理"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
-msgid "Admin menu OAI-PMH"
+msgid "Admin menu_OAI-PMH"
 msgstr "OAI-PMH"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
-msgid "Admin menu Resource Sync"
+msgid "Admin menu_Resource Sync"
 msgstr "Resource Sync"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
-msgid "Admin menu Records"
+msgid "Admin menu_Records"
 msgstr "レコード管理"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
-msgid "Admin menu Files"
+msgid "Admin menu_Files"
 msgstr "ファイル管理"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
-msgid "Admin menu User Management"
+msgid "Admin menu_User Management"
 msgstr "ユーザ管理"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
-msgid "Admin menu Setting"
+msgid "Admin menu_Setting"
 msgstr "設定"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
