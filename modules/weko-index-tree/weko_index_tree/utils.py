@@ -728,7 +728,7 @@ def check_index_permissions(record, index_id=None) -> bool:
             return True
         check_user_role = check_roles(roles, index_data.browsing_role) or \
             check_groups(groups, index_data.browsing_group)
-        if check_user_role and not record:
+        if current_user.is_authenticated and check_user_role and not record:
             can_view = True
         elif index_data.public_state:
             check_public_date = \
