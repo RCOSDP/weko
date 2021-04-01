@@ -47,6 +47,7 @@
         {{ language_selector_dropdown() }}
         {%- endif %}
       </div>
+      <input hidden id ="weko_show_index_for_authenticated_user" value="{{not current_user.is_authenticated and config.WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER}}">
       {%- endblock navbar_header %}
     </div>
   </nav>
