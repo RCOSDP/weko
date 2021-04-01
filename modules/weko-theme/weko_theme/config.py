@@ -95,3 +95,370 @@ COVER_TEMPLATE = 'weko_theme/page_cover.html'
 
 WEKO_THEME_INSTANCE_DATA_DIR = 'data'
 """ユーザデータのィレクトリ."""
+
+WEKO_THEME_ADMIN_MENU = [
+    {
+        'name': 'Home',
+        'order': 1
+    },
+    {
+        'name': 'Author Management',
+        'order': 6,
+        'submenu': [
+            {
+                'name': 'Edit',
+                'order': 1
+            },
+            {
+                'name': 'Export',
+                'order': 2
+            },
+            {
+                'name': 'Import',
+                'order': 3
+            }
+        ]
+    },
+    {
+        'name': 'Communities',
+        'order': 9,
+        'submenu': [
+            {
+                'name': 'Community',
+                'order': 1
+            },
+            {
+                'name': 'Featured Community',
+                'order': 2
+            },
+            {
+                'name': 'Inclusion Request',
+                'order': 3
+            }
+        ]
+    },
+    {
+        'name': 'Files',
+        'order': 13,
+        'submenu': [
+            {
+                'name': 'Bucket',
+                'order': 1
+            },
+            {
+                'name': 'File Instance',
+                'order': 2
+            },
+            {
+                'name': 'Location',
+                'order': 3
+            },
+            {
+                'name': 'Multipart Object',
+                'order': 4
+            },
+            {
+                'name': 'Object Version',
+                'order': 5
+            }
+        ]
+    },
+    {
+        'name': 'Index Tree',
+        'order': 4,
+        'submenu': [
+            {
+                'name': 'Custom Sort',
+                'order': 3
+            },
+            {
+                'name': 'Edit Tree',
+                'order': 1
+            },
+            {
+                'name': 'Location',
+                'order': 4
+            },
+            {
+                'name': 'Journal Information',
+                'order': 2
+            }
+        ]
+    },
+    {
+        'name': 'Item Types',
+        'order': 2,
+        'submenu': [
+            {
+                'name': 'Metadata',
+                'order': 1
+            },
+            {
+                'name': 'OAI Schema',
+                'order': 2
+            },
+            {
+                'name': 'Properties',
+                'order': 3
+            }
+        ]
+    },
+    {
+        'name': 'Items',
+        'order': 3,
+        'submenu': [
+            {
+                'name': 'Bulk Delete',
+                'order': 2
+            },
+            {
+                'name': 'Bulk Export',
+                'order': 4
+            },
+            {
+                'name': 'Bulk Update',
+                'order': 1
+            },
+            {
+                'name': 'Import',
+                'order': 3
+            }
+        ]
+    },
+    {
+        'name': 'OAI-PMH',
+        'order': 10,
+        'submenu': [
+            {
+                'name': 'Harvesting',
+                'order': 1
+            },
+            {
+                'name': 'Identify',
+                'order': 2
+            },
+            {
+                'name': 'Sets',
+                'order': 3
+            }
+        ]
+    },
+    {
+        'name': 'Records',
+        'order': 12,
+        'submenu': [
+            {
+                'name': 'Persistent Identifier',
+                'order': 1
+            },
+            {
+                'name': 'Record Metadata',
+                'order': 2
+            }
+        ]
+    },
+    {
+        'name': 'Resource Sync',
+        'order': 11,
+        'submenu': [
+            {
+                'name': 'Change List',
+                'order': 2
+            },
+            {
+                'name': 'Resource List',
+                'order': 1
+            },
+            {
+                'name': 'Resync',
+                'order': 3
+            }
+        ]
+    },
+    {
+        'name': 'Setting',
+        'order': 15,
+        'submenu': [
+            {
+                'name': 'File Preview',
+                'order': 18
+            },
+            {
+                'name': 'Identifier',
+                'order': 9
+            },
+            {
+                'name': 'Index Link',
+                'order': 2
+            },
+            {
+                'name': 'Item Export',
+                'order': 10
+            },
+            {
+                'name': 'Items',
+                'order': 1
+            },
+            {
+                'name': 'Language',
+                'order': 4
+            },
+            {
+                'name': 'Log Analysis',
+                'order': 11
+            },
+            {
+                'name': 'Mail',
+                'order': 16
+            },
+            {
+                'name': 'Others',
+                'order': 20
+            },
+            {
+                'name': 'PDF Cover Page',
+                'order': 5
+            },
+            {
+                'name': 'Ranking',
+                'order': 6
+            },
+            {
+                'name': 'Restricted Access',
+                'order': 3
+            },
+            {
+                'name': 'Search',
+                'order': 12
+            },
+            {
+                'name': 'Shibboleth',
+                'order': 19
+            },
+            {
+                'name': 'Site Info',
+                'order': 13
+            },
+            {
+                'name': 'Site License',
+                'order': 14
+            },
+            {
+                'name': 'Sitemap',
+                'order': 15
+            },
+            {
+                'name': 'Stats',
+                'order': 7
+            },
+            {
+                'name': 'Style',
+                'order': 8
+            },
+            {
+                'name': 'WebAPI Account',
+                'order': 17
+            }
+        ]
+    },
+    {
+        'name': 'Statistics',
+        'order': 7,
+        'submenu': [
+            {
+                'name': 'Feedback Mail',
+                'order': 2
+            },
+            {
+                'name': 'Report',
+                'order': 1
+            },
+            {
+                'name': 'Site License',
+                'order': 3
+            }
+        ]
+    },
+    {
+        'name': 'User Management',
+        'order': 14,
+        'submenu': [
+            {
+                'name': 'Access: Roles',
+                'order': 1
+            },
+            {
+                'name': 'Access: System Roles',
+                'order': 2
+            },
+            {
+                'name': 'Access: Users',
+                'order': 3
+            },
+            {
+                'name': 'Linked account identities',
+                'order': 4
+            },
+            {
+                'name': 'Linked account tokens',
+                'order': 5
+            },
+            {
+                'name': 'Linked accounts',
+                'order': 6
+            },
+            {
+                'name': 'OAuth Application Tokens',
+                'order': 7
+            },
+            {
+                'name': 'OAuth Applications',
+                'order': 8
+            },
+            {
+                'name': 'Role',
+                'order': 9
+            },
+            {
+                'name': 'Session Activity',
+                'order': 10
+            },
+            {
+                'name': 'User',
+                'order': 11
+            },
+            {
+                'name': 'User Profile',
+                'order': 12
+            }
+        ]
+    },
+    {
+        'name': 'Web Design',
+        'order': 5,
+        'submenu': [
+            {
+                'name': 'Page Layout',
+                'order': 2
+            },
+            {
+                'name': 'Widget',
+                'order': 1
+            }
+        ]
+    },
+    {
+        'name': 'WorkFlow',
+        'order': 8,
+        'submenu': [
+            {
+                'name': 'Flow List',
+                'order': 1
+            },
+            {
+                'name': 'WorkFlow List',
+                'order': 2
+            }
+        ]
+    }
+]
