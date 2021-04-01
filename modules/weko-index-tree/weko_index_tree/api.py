@@ -114,7 +114,6 @@ class Indexes(object):
                     data["harvest_public_state"] = iobj.harvest_public_state
 
                     data["display_format"] = iobj.display_format
-                    data["image_name"] = iobj.image_name
 
                     if iobj.recursive_public_state:
                         data["public_state"] = iobj.public_state
