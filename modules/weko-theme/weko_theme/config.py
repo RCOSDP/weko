@@ -285,11 +285,11 @@ WEKO_THEME_ADMIN_MENU = [
         'submenu': [
             {
                 'name': 'File Preview',
-                'order': 18
+                'order': 17
             },
             {
                 'name': 'Identifier',
-                'order': 9
+                'order': 8
             },
             {
                 'name': 'Index Link',
@@ -297,7 +297,7 @@ WEKO_THEME_ADMIN_MENU = [
             },
             {
                 'name': 'Item Export',
-                'order': 10
+                'order': 9
             },
             {
                 'name': 'Items',
@@ -305,67 +305,63 @@ WEKO_THEME_ADMIN_MENU = [
             },
             {
                 'name': 'Language',
-                'order': 4
+                'order': 3
             },
             {
                 'name': 'Log Analysis',
-                'order': 11
+                'order': 10
             },
             {
                 'name': 'Mail',
-                'order': 16
-            },
-            {
-                'name': 'Others',
-                'order': 20
-            },
-            {
-                'name': 'PDF Cover Page',
-                'order': 5
-            },
-            {
-                'name': 'Ranking',
-                'order': 6
-            },
-            {
-                'name': 'Restricted Access',
-                'order': 21
-            },
-            {
-                'name': 'Search',
-                'order': 12
-            },
-            {
-                'name': 'Shibboleth',
-                'order': 19
-            },
-            {
-                'name': 'Site Info',
-                'order': 13
-            },
-            {
-                'name': 'Site License',
-                'order': 14
-            },
-            {
-                'name': 'Sitemap',
                 'order': 15
             },
             {
+                'name': 'Others',
+                'order': 19
+            },
+            {
+                'name': 'PDF Cover Page',
+                'order': 4
+            },
+            {
+                'name': 'Ranking',
+                'order': 5
+            },
+            {
+                'name': 'Restricted Access',
+                'order': 20
+            },
+            {
+                'name': 'Search',
+                'order': 11
+            },
+            {
+                'name': 'Shibboleth',
+                'order': 18
+            },
+            {
+                'name': 'Site Info',
+                'order': 12
+            },
+            {
+                'name': 'Site License',
+                'order': 13
+            },
+            {
+                'name': 'Sitemap',
+                'order': 14
+            },
+            {
                 'name': 'Stats',
-                'order': 7
+                'order': 6
             },
             {
                 'name': 'Style',
-                'order': 8
+                'order': 7
             },
             {
                 'name': 'WebAPI Account',
-                'order': 17
-            },
-            {
-                'name': 'Index Tree',
-                'order': 3
+                'order': 16
             }
         ]
     },
