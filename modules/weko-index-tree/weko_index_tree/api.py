@@ -1424,3 +1424,26 @@ class Indexes(object):
         """Get all indexes."""
         query = Index.query.all()
         return query
+
+    @classmethod
+    def get_all_parent_indexes(cls, index_id) -> list:
+        """Get all parent indexes.
+
+        Args:
+            index_id ():
+
+        Returns:
+            [list]: parent indexes list.
+
+        """
+        # Define a CTE with recursive=True for the top portion of the query
+        topq = Index.query.filter(Index.id == index_id)
+        topq = topq.cte('cte', recursive=True)
+        # Define the bottom part of the query by joining it with the top part
+        bottomq = Index.query.join(topq, Index.id == topq.c.parent)
+        # applying a union function
+        recursive_q = topq.union(bottomq)
+        # Get index data
+        index_list = db.session.query(recursive_q).order_by(
+            recursive_q.c.id).all()
+        return index_list
