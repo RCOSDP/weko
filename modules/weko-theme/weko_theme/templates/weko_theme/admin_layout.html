@@ -41,7 +41,7 @@
 {%- endmacro %}
 
 {% macro sort_child_menu(item_name, children) -%}    
-  {% set not_lised_child_menu = [] %}    
+  {% set not_lised_child_menu = [] %}
   {% set WEKO_THEME_ADMIN_CHILD_MENU = namespace(value = []) %}
   
   {%- for ordered_item in WEKO_THEME_ADMIN_MENU %}
@@ -50,7 +50,7 @@
       {% endif %}
   {%- endfor %}
 
-  {%- for ordered_child_item in WEKO_THEME_ADMIN_CHILD_MENU.value %}
+  {%- for ordered_child_item in WEKO_THEME_ADMIN_CHILD_MENU.value|sort(attribute='order') %}
       {%- for child in children %}
           {% if ordered_child_item.name == child.name %}
               {% do ordered_child_menu.value.append(child) %}
@@ -110,7 +110,7 @@
             <i class="fa fa-angle-left pull-right"></i>
           </a>
           <ul class="treeview-menu">
-          {% set ordered_child_menu = namespace(value = []) %}
+          {% set ordered_child_menu.value = [] %}
           {% do sort_child_menu(item.name, children) %}
           {%- if ordered_child_menu.value|length == 0 %}
               {% set ordered_child_menu.value = children %}

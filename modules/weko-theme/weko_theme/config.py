@@ -180,10 +180,6 @@ WEKO_THEME_ADMIN_MENU = [
                 'order': 1
             },
             {
-                'name': 'Location',
-                'order': 4
-            },
-            {
                 'name': 'Journal Information',
                 'order': 2
             }
@@ -198,12 +194,16 @@ WEKO_THEME_ADMIN_MENU = [
                 'order': 1
             },
             {
-                'name': 'OAI Schema',
+                'name': 'Mapping',
                 'order': 2
             },
             {
-                'name': 'Properties',
+                'name': 'OAI Schema',
                 'order': 3
+            },
+            {
+                'name': 'Properties',
+                'order': 4
             }
         ]
     },
@@ -217,7 +217,7 @@ WEKO_THEME_ADMIN_MENU = [
             },
             {
                 'name': 'Bulk Export',
-                'order': 4
+                'order': 3
             },
             {
                 'name': 'Bulk Update',
@@ -225,7 +225,7 @@ WEKO_THEME_ADMIN_MENU = [
             },
             {
                 'name': 'Import',
-                'order': 3
+                'order': 4
             }
         ]
     },
@@ -329,7 +329,7 @@ WEKO_THEME_ADMIN_MENU = [
             },
             {
                 'name': 'Restricted Access',
-                'order': 3
+                'order': 21
             },
             {
                 'name': 'Search',
@@ -362,6 +362,10 @@ WEKO_THEME_ADMIN_MENU = [
             {
                 'name': 'WebAPI Account',
                 'order': 17
+            },
+            {
+                'name': 'Index Tree',
+                'order': 3
             }
         ]
     },
