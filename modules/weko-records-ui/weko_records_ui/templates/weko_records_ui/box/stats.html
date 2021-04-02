@@ -7,7 +7,7 @@
   </div>
 -->
   <div class="row">
-    <div id="record_view_num" class="col-sm-6 h3"  style="text-align:center;">
+    <div id="record_view_num" class="col-sm-6 h3" style="text-align:center;">
       0
     </div>
     <div id="record_download_num" class="col-sm-6 h3" style="text-align:center;">
@@ -24,27 +24,29 @@
       downloads
     </div>
   </div>
-  <div class="row" style="text-align:center;">
-    <select id="record_view_period" class="btn btn-default btn-sm" onchange="period_change(this)">
-      <option value="total">total</option>
-    </select>
+</div>
+<div class="row" style="text-align:center;">
+  <label for="record_view_period" hidden>{{_('Choose stats period')}}</label>
+  <select id="record_view_period" class="btn btn-default btn-sm" onchange="period_change(this)">
+    <option value="total">total</option>
+  </select>
+</div>
+<div class="row" style="text-align:center;" ng-init="statsCollapse = false">
+  <div class="col-sm-6 col-sm-offset-3">
+    <a id="views-details" ng-click="statsCollapse = !statsCollapse">{{_('See details')}}</a>
   </div>
-  <div class="row" style="text-align:center;" ng-init="statsCollapse = false">
-    <div class="col-sm-6 col-sm-offset-3">
-      <a id="views-details" ng-click="statsCollapse = !statsCollapse">{{_('See details')}}</a>
-    </div>
-  </div>
-  <div class="row ng-hidden" id="collapse-stats" ng-show="statsCollapse">
-    <table class="table stats-table">
-      <thead>
-        <tr>
-          <th></th>
-          <th>{{_('Views')}}</th>
-          <th>{{_('Downloads')}}</th>
-        </tr>
-      </thead>
-      <tbody id="record_view_country">
-      </tbody>
-    </table>
-  </div>
+</div>
+<div class="row ng-hidden" id="collapse-stats" ng-show="statsCollapse">
+  <table class="table stats-table">
+    <thead>
+      <tr>
+        <th></th>
+        <th>{{_('Views')}}</th>
+        <th>{{_('Downloads')}}</th>
+      </tr>
+    </thead>
+    <tbody id="record_view_country">
+    </tbody>
+  </table>
+</div>
 </div>
