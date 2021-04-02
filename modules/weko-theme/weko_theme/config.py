@@ -95,3 +95,6 @@ COVER_TEMPLATE = 'weko_theme/page_cover.html'
 
 WEKO_THEME_INSTANCE_DATA_DIR = 'data'
 """ユーザデータのィレクトリ."""
+
+WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER  = False
+"""インデックスツリー設定"""
