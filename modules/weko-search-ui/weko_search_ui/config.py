@@ -455,7 +455,8 @@ WEKO_SEARCH_KEYWORDS_DICT = {
         "spatial": "geoLocation.geoLocationPlace",
         "temporal": "temporal",
         "rights": {
-            "rights": ["license_0",
+            "rights": ["license_free",
+                       "license_0",
                        "license_1",
                        "license_2",
                        "license_3",
