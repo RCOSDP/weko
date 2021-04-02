@@ -122,8 +122,10 @@
             {% else %}
             <li>
             {%- endif %}
+            {%- if child.name != '' %}
               {% set child_name = item_name + '_' + child.name %}
               <a href="{{ child.get_url() }}">{{ menu_icon(child) }}{{ _(child_name) }}</a>
+            {%- endif %}
             </li>
           {%- endfor %}
           </ul>
