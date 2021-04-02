@@ -569,13 +569,13 @@ class SchemaTree:
                 if isinstance(v1, str):
                     exp, lk = analysis(v1)
                     if len(lk) == 1:
-                        klst = get_items_value_lst(atr_vm, v1, rlst)
+                        klst = get_items_value_lst(atr_vm, v1, rlst, parse_for_export=self._is_export)
                         if klst:
                             node[k1] = klst
                     elif len(lk) > 1:
                         nlst = []
                         for val in lk:
-                            klst = get_items_value_lst(atr_vm, val, rlst)
+                            klst = get_items_value_lst(atr_vm, val, rlst, parse_for_export=self._is_export)
                             if klst:
                                 nlst.append(klst)
                         node[k1] = analyze_value_with_exp(nlst, exp)
@@ -755,7 +755,7 @@ class SchemaTree:
                         if len(lk) == 1:
                             nlst = get_items_value_lst(
                                 atr_vm.copy(), lk[0].strip(), remain_keys,
-                                node_result, k)
+                                node_result, k, self._is_export)
                             if nlst:
                                 # [['Update PDF 3']]
                                 node_result[self._v] = nlst
@@ -766,7 +766,7 @@ class SchemaTree:
                             for val in lk:
                                 klst = get_items_value_lst(
                                     atr_vm, val.strip(), remain_keys,
-                                    node_result, k)
+                                    node_result, k, self._is_export)
                                 nlst.append(klst)
 
                             if nlst:

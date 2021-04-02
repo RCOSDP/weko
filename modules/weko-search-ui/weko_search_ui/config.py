@@ -468,7 +468,7 @@ WEKO_SEARCH_KEYWORDS_DICT = {
                        "license_9",
                        "license_10",
                        "license_11",
-                       "license_12]"]
+                       "license_12"]
         },
         "version": "versionType",
         "dissno": "dissertationNumber",

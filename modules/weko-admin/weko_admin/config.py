@@ -615,20 +615,20 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': ['CC', 'BY', 'CC', 'BY-SA', 'CC', 'BY-ND', 'CC', 'BY-NC', 'CC',
                      'BY-NC-SA', 'ANY', 'CC0', 'licensefree', 'CC', 'BY-NC-ND'],
          'check_val':[
-             {'id': 'license_free', 'contents': 'licensefree'},
-             {'id': 'license_0', 'contents': 'CC BY 4.0'},
-             {'id': 'license_1', 'contents': 'CC BY-SA 4.0'},
-             {'id': 'license_2', 'contents': 'CC BY-ND 4.0'},
-             {'id': 'license_3', 'contents': 'CC BY-NC 4.0'},
-             {'id': 'license_4', 'contents': 'CC BY-NC-SA 4.0'},
-             {'id': 'license_5', 'contents': 'CC BY-NC-ND 4.0'},
+             {'id': 'license_12', 'contents': 'CC0'},
              {'id': 'license_6', 'contents': 'CC BY 3.0'},
              {'id': 'license_7', 'contents': 'CC BY-SA 3.0'},
              {'id': 'license_8', 'contents': 'CC BY-ND 3.0'},
              {'id': 'license_9', 'contents': 'CC BY-NC 3.0'},
              {'id': 'license_10', 'contents': 'CC BY-NC-SA 3.0'},
              {'id': 'license_11', 'contents': 'CC BY-NC-ND 3.0'},
-             {'id': 'license_12', 'contents': 'CC0'}
+             {'id': 'license_0', 'contents': 'CC BY 4.0'},
+             {'id': 'license_1', 'contents': 'CC BY-SA 4.0'},
+             {'id': 'license_2', 'contents': 'CC BY-ND 4.0'},
+             {'id': 'license_3', 'contents': 'CC BY-NC 4.0'},
+             {'id': 'license_4', 'contents': 'CC BY-NC-SA 4.0'},
+             {'id': 'license_5', 'contents': 'CC BY-NC-ND 4.0'},
+             {'id': 'license_free', 'contents': 'licensefree'},
          ], 'default_display': True, 'inputType': 'checkbox_list', 'inputVal': '', 'mappingFlg': False, 'mappingName': ''}
     ]
 }
