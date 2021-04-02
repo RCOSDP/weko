@@ -47,6 +47,7 @@ const error_get_lstItemType = document.getElementById("error_get_lstItemType").v
 const internal_server_error = document.getElementById("internal_server_error").value;
 const not_available_error_another = document.getElementById("not_available_error_another").value;
 const not_available_error = document.getElementById("not_available_error").value;
+const celery_not_run = document.getElementById("celery_not_run").value;
 const is_duplicated_doi = document.getElementById("is_duplicated_doi").value;
 const is_withdraw_doi = document.getElementById("is_withdraw_doi").value;
 const item_is_deleted = document.getElementById("item_is_deleted").value;
@@ -187,6 +188,7 @@ class MainLayout extends React.Component {
             return {
               list_record: response.list_record,
               root_path: response.data_path,
+              remove_temp_dir_task_id: response.remove_temp_dir_task_id,
               is_import,
               step: step.IMPORT_STEP
             }
@@ -215,7 +217,11 @@ class MainLayout extends React.Component {
       async: false,
       success: function (response) {
         if (!response.is_available) {
-          showErrorMsg(import_start_time === response.start_time ? not_available_error : not_available_error_another);
+          let error_msg = import_start_time === response.start_time ? not_available_error : not_available_error_another;
+          if (response.error_id === 'celery_not_run') {
+            error_msg = celery_not_run;
+          }
+          showErrorMsg(error_msg);
         } else {
           result = true;
         }
@@ -229,7 +235,7 @@ class MainLayout extends React.Component {
   }
 
   handleImport() {
-    const { list_record, root_path, is_import } = this.state;
+    const { list_record, root_path, is_import, remove_temp_dir_task_id } = this.state;
     const that = this;
     if (is_import || !this.handleCheckImportAvailable()) {
       return;
@@ -242,7 +248,8 @@ class MainLayout extends React.Component {
       type: 'POST',
       data: JSON.stringify({
         list_record: list_record.filter(item => !item.errors),
-        root_path
+        root_path,
+        remove_temp_dir_task_id
       }),
       contentType: "application/json; charset=utf-8",
       dataType: "json",
@@ -946,12 +953,12 @@ class CheckComponent extends React.Component {
                         <td>
                           {
                             item['errors'] ? item['errors'].map(e => {
-                              return <div>{error + ': ' + e}</div>
+                              return <div dangerouslySetInnerHTML={{__html: error + ': ' + e}}></div>
                             }) : item.status === 'new' ? register : item.status === 'keep' ? keep : item.status === 'upgrade' ? upgrade : ''
                           }
                           {
                             item['warnings'] && item['warnings'].map(e => {
-                              return <div>{warning + ': ' + e}</div>
+                              return <div dangerouslySetInnerHTML={{__html: warning + ': ' + e}}></div>
                             })
                           }
                         </td>

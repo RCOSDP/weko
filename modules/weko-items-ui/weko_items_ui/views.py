@@ -31,22 +31,25 @@ from flask import Blueprint, abort, current_app, flash, json, jsonify, \
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
-from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.resolver import Resolver
 from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
+from weko_accounts.utils import login_required_customize
 from weko_admin.models import AdminSettings, RankingSettings
-from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import check_restrict_doi_with_indexes, \
     get_index_id, get_user_roles
 from weko_records.api import ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
-from weko_workflow.api import GetCommunity, WorkActivity
-from weko_workflow.utils import check_an_item_is_locked, prepare_edit_workflow
+from weko_records_ui.utils import get_file_info_list
+from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow
+from weko_workflow.utils import check_an_item_is_locked, \
+    get_record_by_root_ver, getThumbnail, prepare_edit_workflow, \
+    setDisplayTypeForFile
 from werkzeug.utils import import_string
 
 from .permissions import item_permission
@@ -59,8 +62,7 @@ from .utils import _get_max_export_items, check_item_is_being_edit, \
     set_multi_language_name, to_files_js, translate_schema_form, \
     translate_validation_message, update_index_tree_for_record, \
     update_json_schema_by_activity_id, update_schema_form_by_activity_id, \
-    update_sub_items_by_user_role, validate_form_input_data, \
-    validate_save_title_and_share_user_id, validate_user, \
+    update_sub_items_by_user_role, validate_form_input_data, validate_user, \
     validate_user_mail_and_index
 
 blueprint = Blueprint(
@@ -181,8 +183,7 @@ def iframe_index(item_type_id=0):
 
 
 @blueprint.route('/iframe/model/save', methods=['POST'])
-@login_required
-@item_permission.require(http_exception=403)
+@login_required_customize
 def iframe_save_model():
     """Renders an item register view.
 
@@ -226,8 +227,7 @@ def iframe_error():
 @blueprint.route('/jsonschema/<int:item_type_id>', methods=['GET'])
 @blueprint.route('/jsonschema/<int:item_type_id>/<string:activity_id>',
                  methods=['GET'])
-@login_required
-@item_permission.require(http_exception=403)
+@login_required_customize
 def get_json_schema(item_type_id=0, activity_id=""):
     """Get json schema.
 
@@ -271,8 +271,7 @@ def get_json_schema(item_type_id=0, activity_id=""):
 @blueprint.route('/schemaform/<int:item_type_id>', methods=['GET'])
 @blueprint.route('/schemaform/<int:item_type_id>/<string:activity_id>',
                  methods=['GET'])
-@login_required
-@item_permission.require(http_exception=403)
+@login_required_customize
 def get_schema_form(item_type_id=0, activity_id=''):
     """Get schema form.
 
@@ -345,7 +344,6 @@ def items_index(pid_value='0'):
         # Get the design for widget rendering
         page, render_widgets = get_design_layout(
             current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
-
         if request.method == 'GET':
             return render_template(
                 current_app.config['WEKO_ITEMS_UI_INDEX_TEMPLATE'],
@@ -386,11 +384,11 @@ def items_index(pid_value='0'):
 
 @blueprint.route('/iframe/index/<string:pid_value>',
                  methods=['GET', 'PUT', 'POST'])
-@login_required
-@item_permission.require(http_exception=403)
+@login_required_customize
 def iframe_items_index(pid_value='0'):
     """Iframe items index."""
     try:
+        files_thumbnail = None
         if pid_value == '0' or pid_value == 0:
             return redirect(url_for('.iframe_index'))
 
@@ -406,17 +404,11 @@ def iframe_items_index(pid_value='0'):
 
         if request.method == 'GET':
             cur_activity = session['itemlogin_activity']
-            # If enable auto set index feature
-            # and activity is usage application item type
-            steps = session['itemlogin_steps']
-            contain_application_endpoint = False
-            for step in steps:
-                if step.get('ActionEndpoint') == 'item_login_application':
-                    contain_application_endpoint = True
-            enable_auto_set_index = current_app.config.get(
-                'WEKO_WORKFLOW_ENABLE_AUTO_SET_INDEX_FOR_ITEM_TYPE')
 
-            if enable_auto_set_index and contain_application_endpoint:
+            workflow = WorkFlow()
+            workflow_detail = workflow.get_workflow_by_id(
+                cur_activity.workflow_id)
+            if workflow_detail and workflow_detail.index_tree_id:
                 index_id = get_index_id(cur_activity.activity_id)
                 update_index_tree_for_record(pid_value, index_id)
                 return redirect(url_for('weko_workflow.iframe_success'))
@@ -427,6 +419,18 @@ def iframe_items_index(pid_value='0'):
             page, render_widgets = get_design_layout(
                 community_id
                 or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+            root_record = None
+            files = []
+            if pid_value and '.' in pid_value:
+                root_record, files = get_record_by_root_ver(pid_value)
+                if root_record and root_record.get('title'):
+                    session['itemlogin_item']['title'] = root_record['title'][0]
+                    files_thumbnail = getThumbnail(files, None)
+            else:
+                root_record = session['itemlogin_record']
+            if root_record and files and len(root_record) > 0 and len(files) > 0 \
+               and (isinstance(root_record, list) or isinstance(root_record, dict)):
+                files = setDisplayTypeForFile(root_record, files)
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
                 page=page,
@@ -438,11 +442,13 @@ def iframe_items_index(pid_value='0'):
                 steps=session['itemlogin_steps'],
                 action_id=session['itemlogin_action_id'],
                 cur_step=session['itemlogin_cur_step'],
-                record=session['itemlogin_record'],
+                record=root_record,
                 histories=session['itemlogin_histories'],
                 res_check=session['itemlogin_res_check'],
                 pid=session['itemlogin_pid'],
                 community_id=community_id,
+                files=files,
+                files_thumbnail=files_thumbnail,
                 **ctx
             )
 
@@ -988,7 +994,7 @@ def export():
 
 
 @blueprint_api.route('/validate', methods=['POST'])
-@login_required
+@login_required_customize
 def validate():
     """Validate input data.
 
@@ -999,15 +1005,17 @@ def validate():
         "error": ""
     }
     request_data = request.get_json()
-    validate_form_input_data(result, request_data.get('item_id'),
-                             request_data.get('data'))
+    validate_form_input_data(
+        result,
+        request_data.get('item_id'),
+        request_data.get('data')
+    )
     return jsonify(result)
 
 
 @blueprint_api.route('/check_validation_error_msg/<string:activity_id>',
                      methods=['GET'])
-@login_required
-@item_permission.require(http_exception=403)
+@login_required_customize
 def check_validation_error_msg(activity_id):
     """Check whether sessionstore('updated_json_schema_') is exist.
 
@@ -1066,22 +1074,6 @@ def corresponding_activity_list():
             get_corresponding_usage_activities(current_user.get_id())
         result = {'usage_application': usage_application_list,
                   'output_report': output_report_list}
-    return jsonify(result)
-
-
-@blueprint_api.route('/save_title_and_share_user_id', methods=['POST'])
-@login_required
-def save_title_and_share_user_id():
-    """Validate input title and shared user id for activity.
-
-    :return:
-    """
-    result = {
-        "is_valid": True,
-        "error": ""
-    }
-    data = request.get_json()
-    validate_save_title_and_share_user_id(result, data)
     return jsonify(result)
 
 

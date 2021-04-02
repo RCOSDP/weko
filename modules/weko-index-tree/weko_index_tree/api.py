@@ -1447,3 +1447,11 @@ class Indexes(object):
         index_list = db.session.query(recursive_q).order_by(
             recursive_q.c.id).all()
         return index_list
+
+    @classmethod
+    def get_unharvested_indexes(cls):
+        """Get child id list without recursive."""
+        query = Index.query.filter(
+            Index.harvest_public_state.is_(False)
+        ).order_by(Index.id.asc())
+        return query.all()

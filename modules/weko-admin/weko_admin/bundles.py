@@ -150,3 +150,9 @@ weko_admin_ng_js_tree_js = NpmBundle(
     filters='jsmin',
     output='gen/weko_admin_ui.ng_js_tree.%(version)s.js',
 )
+
+weko_admin_restricted_access_js = NpmBundle(
+    'js/weko_admin/restricted_access.js',
+    # filters='jsmin',
+    output='gen/restricted_access.%(version)s.js',
+)

@@ -86,21 +86,33 @@
       <a class="btn dropdown-toggle" data-toggle="dropdown" href="javascript:void(0)"
         aria-expanded="false">{{_('Add Filter')}}<strong class="caret"></strong></a>
       <ul class="dropdown-menu">
-        <li>
-          <a href="javascript:void(0)" class="filter_option" id="workflow" data-name="workflow">{{_('WorkFlow')}}</a>
-        </li>
-        <li>
-          <a href="javascript:void(0)" class="filter_option" id="user" data-name="user">{{_('User')}}</a>
-        </li>
-        <li>
-          <a href="javascript:void(0)" class="filter_option" id="item" data-name="item">{{_('Item')}}</a>
-        </li>
-        <li>
-          <a href="javascript:void(0)" class="filter_option" id="status" data-name="status">{{_('Status')}}</a>
-        </li>
+        {%- for filter in filters %}
+          {%- if filter == "workflow" %}
+            <li>
+              <a href="javascript:void(0)" class="filter_option" id="workflow" data-name="workflow">{{_('WorkFlow')}}</a>
+            </li>
+          {%- elif filter == "user" %}
+            <li>
+              <a href="javascript:void(0)" class="filter_option" id="user" data-name="user">{{_('User')}}</a>
+            </li>
+          {%- elif filter == "item" %}
+            <li>
+              <a href="javascript:void(0)" class="filter_option" id="item" data-name="item">{{_('Item')}}</a>
+            </li>
+          {%- elif filter == "status" %}
+            <li>
+              <a href="javascript:void(0)" class="filter_option" id="status" data-name="status">{{_('Status')}}</a>
+            </li>
+          {%- endif %}
+        {%- endfor %}
       </ul>
     </li>
   </ul>
+  {%- if send_mail -%}
+    <button class="btn btn-default style-button pull-right" id="btn_send_mail">
+      <span class="glyphicon glyphicon-send"></span>&nbsp; {{ _('Send Mail') }}
+    </button>
+  {%- endif %}
 </div>
 <br>
 <div class="row">
@@ -158,41 +170,60 @@
           <tr>
             <th>{{ _('No.') }}</th>
             <th>{{ _('Created') }}</th>
-            <th>{{ _('Updated') }}</th>
-            <th>{{ _('Activity') }}</th>
-            <th>{{_('Item')}}</th>
-            <th>{{_('WorkFlow')}}</th>
-            <th>{{_('Action')}}</th>
-            <th>{{_('Status')}}</th>
-            <th>{{_('User')}}</th>
+            {%- for column in columns %}
+              {%- if column == "updated" %}
+                <th>{{ _('Updated') }}</th>
+              {%- elif column == "application_date" %}
+                <th>{{ _('Application Date') }}</th>
+              {%- elif column == "approved_date" %}
+                <th>{{ _('Approved Date') }}</th>
+              {%- elif column == "activity_id" %}
+                <th>{{ _('Activity') }}</th>
+              {%- elif column == "title" %}
+                <th>{{ _('Item') }}</th>
+              {%- elif column == "flows_name" %}
+                <th>{{ _('WorkFlow') }}</th>
+              {%- elif column == "action_name" %}
+                <th>{{ _('Action') }}</th>
+              {%- elif column == "StatusDesc" %}
+                <th>{{ _('Status') }}</th>
+              {%- elif column == "email" %}
+                <th>{{ _('User') }}</th>
+              {%- endif %}
+            {%- endfor %}
           </tr>
         </thead>
         <tbody>
-          {%- for activity in activities %}
+        {%- for activity in activities %}
           <tr class="">
-            <th scope="row">{{loop.index + size|int * ( pages|int - 1)}}</th>
-            <td>{{activity.created.date()}}</td>
-            <td>{{activity.updated.date()}}</td>
-            {%-if community%}
-            <td><a
-                href="{{url_for('weko_workflow.display_activity', activity_id=activity.activity_id, status=activity.type, community=community.id)}}">{{activity.activity_id}}</a>
-            </td>
-            {%-else%}
-            <td><a
-                href="{{url_for('weko_workflow.display_activity', activity_id=activity.activity_id, status=activity.type)}}">{{activity.activity_id}}</a>
-            </td>
-            {%- endif%}
-            {%-if activity.title -%}
-            <td>{{activity.title}}</td>
-            {%- else -%}
-            <td></td>
-            {%- endif-%}
-            <td>{{activity.workflow.flows_name}}</td>
-            <td>{{activity.action.action_name}}</td>
-            <td>{{_(activity.StatusDesc)}}</td>
-            <td>{{activity.User.email}}</td>
+            <th scope="row">{{ loop.index + size|int * ( pages|int - 1) }}</th>
+            <td>{{ activity.created.date() }}</td>
+            {%- for column in columns %}
+              {%-if column == "activity_id" %}
+                {%-if community %}
+                  {% set activity_url =  url_for('weko_workflow.display_activity', activity_id=activity.activity_id, status=activity.type, community=community.id) %}
+                {%-else %}
+                  {% set activity_url =  url_for('weko_workflow.display_activity', activity_id=activity.activity_id, status=activity.type) %}
+                {%- endif %}
+                <td>
+                  <a href="{{ activity_url }}">{{ activity.activity_id }}</a>
+                </td>
+              {%-else %}
+                {%-if activity[column] %}
+                  {%- if column == "approved_date" or column == "application_date" or column == "updated" %}
+                    <td>{{ activity[column].strftime('%Y-%m-%d') }}</td>
+                  {%-elif column == "StatusDesc" %}
+                    <td>{{ _(activity[column]) }}</td>
+                  {%- else %}
+                    <td>{{ activity[column] }}</td>
+                  {%- endif %}
+                {%-else %}
+                  <td></td>
+                {%- endif %}
+              {%- endif %}
+            {%- endfor %}
           </tr>
-          {%- endfor %}
+        {%- endfor %}
         </tbody>
       </table>
     </div>
@@ -250,4 +281,180 @@
     </div>
   </div>
 </div>
+
+<div role="dialog" tabindex="-1" class="fade in modal" id='popup_send'>
+  <div class="send-mail-modal modal-dialog row">
+    <div class="modal-content" role="document">
+      <div class="send-mail-modal-body modal-body">
+        <div class="container-modal">
+          <div class="row">
+            <div class="col-sm-12 col-md-12 col-md-12">
+
+              <button type="button" class="pull-right btn_close" id="btn_close">
+                <span>x</span>
+              </button>
+              <div class="row">
+                <div class="col-sm-12 col-md-12">
+                  <div class="col-sm-2 col-md-2 text-center label_email">{{ _('Email Type') }}</div>
+                  <div class="col-sm-8 col-md-8">
+                    <select class="form-control" id="setTemplate">
+                    {%- for option in options -%}
+                      {%- for key, value in option.items() -%}
+                        <option value="{{key}}">{{value}}</option>
+                      {%- endfor %}
+                    {%- endfor %}
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-sm-12 col-md-12">
+                  <table class="table table-striped style-table-modal table-mt" id="table_data">
+                  <span class="data" data-activities="{{activities}}" hidden></span>
+                    <thead>
+                      <tr class="success">
+                        <th class="thWidth style-column"><input type="checkbox" id="checkAll"/></th>
+                        <th class="thWidth style-column">{{ _('No.') }}</th>
+                        <th class="thWidth style-column">{{ _('Activity') }}</th>
+                        <th class="thWidth style-column">{{_('Item')}}</th>
+                        <th class="thWidth style-column">{{_('WorkFlow')}}</th>
+                        <th class="thWidth style-column">{{_('Status')}}</th>
+                        <th class="alignCenter">{{_('User')}}</th>
+                      </tr>
+                    </thead>
+                    <tbody class="check_table">
+                      {%set mail_user_group = []%}
+                      {%if send_mail_user_group %}
+                        {%set mail_user_group = send_mail_user_group%}
+                      {%endif%}
+                      <span hidden id ="req_per_page">{{req_per_page}}</span>
+                      <span hidden id ="send_mail_user_group">{{mail_user_group|tojson}}</span>
+                      <span hidden id ="pagination_visible_pages">{{pagination_visible_pages}}</span>
+                      <span hidden id ="action_list">{{_(action_status)}}</span>
+                      <span hidden id ="item_type_name">{{_(item_type)}}</span>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="row">
+                  <div class="col-sm-12 col-md-12 text-center">
+                    <div class="pagination table_data"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn-primary text-white btn btn-default" id="btn_Next" disabled>
+                  <span class="glyphicon glyphicon-check"></span>&nbsp;{{_('Confirm')}}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div role="dialog" tabindex="-1" class="fade in modal" id='popup_approve'>
+  <div class="modal-dialog row send-mail-modal">
+    <div class="modal-content" role="document">
+      <div class="modal-body">
+        <div class="container-modal">
+          <div class="row">
+            <div class="col-sm-12 col-md-12 col-md-12">
+
+              <button type="button" class="pull-right btn_close"
+                      id="btn_close_pop2">
+                <span>x</span>
+              </button>
+              <div class="row">
+                <div>
+                  <div class="col-sm-12 col-md-12 text-center"><span
+                          id="label_template"></span> {{ _('email will be sent.') }}
+                  </div>
+                </div>
+              </div>
+              <div class="row" id="apply_spinner">
+                <div class="col-sm-12 col-md-12 scroll_y">
+                  <table class="table table-striped style-table-modal table-mt"
+                         id="table_data">
+                    <thead>
+                    <tr class="success">
+                      <th class="thWidth style-column">{{ _('No.') }}</th>
+                      <th class="thWidth style-column">{{ _('Activity') }}</th>
+                      <th class="thWidth style-column">{{ _('Item') }}</th>
+                      <th class="alignCenter">{{ _('User') }}</th>
+                    </tr>
+                    </thead>
+                    <tbody id="appendHTML"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="modal-footer">
+                <button type="button"
+                        class="btn-info text-white btn btn-default pull-left"
+                        id="btn_back">
+                  <span class="glyphicon glyphicon-chevron-left text-white"></span>&nbsp;{{ _('Back') }}
+                </button>
+                <button type="button"
+                        class="btn-primary text-white btn btn-default"
+                        id="btn_approve">
+                  <span class="glyphicon glyphicon-send"></span>&nbsp;{{ _('Send') }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div role="dialog" tabindex="-1" class="fade in modal" id='popup_success'>
+    <div class="modal-dialog row popup_notice">
+      <div class="modal-content" role="document">
+        <div class="modal-header">
+          <h4 class="modal-title">JGSS</h4>
+        </div>
+        <div class="modal-body">
+          <div class="container-modal">
+            <div class="row">
+              <div class="col-sm-12 col-md-12">{{ _('Email is sent successfully.') }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="col text-center">
+            <button type="button" class="btn-default btn-secondary btn btn_ok">
+              OK
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- 17131 - begin -->
+  <div role="dialog" tabindex="-1" class="fade in modal" id='popup_fail'>
+    <div class="modal-dialog row popup_notice">
+      <div class="modal-content" role="document">
+        <div class="modal-header">
+          <h4 class="modal-title">JGSS</h4>
+        </div>
+        <div class="modal-body">
+          <div class="container-modal">
+            <div class="row">
+              <div class="col-sm-12 col-md-12">{{ _('Please contact your system administrator.') }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="col text-center">
+            <button type="button" class="btn-default btn-secondary btn btn_ok">
+              OK
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 {%- endblock page_body_main %}

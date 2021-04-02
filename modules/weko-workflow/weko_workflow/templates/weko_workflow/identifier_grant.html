@@ -21,11 +21,16 @@
 <input type="hidden" id="item_id" value="{{record['_deposit']['id']}}" />
 <!-- Confirm Modal -->
 {% from "weko_theme/macros/modal_page.html" import approval_modal %}
+{% if temporary_idf_grant >= 0 %}
+  {% set restrict_doi_msg = _('When assigning a DOI to an item, it must be associated with an index whose index status is "Public" and Harvest Publishing is "Public".') %}
+{% else %}
+  {% set restrict_doi_msg = _('Since the item has a DOI, it must be associated with an index whose index status is "Public" and whose Harvest Publishing is "Public".') %}
+{% endif %}
 {{ approval_modal(modal_id="restrict_doi_modal",
                  button_id="restrict_doi_button",
                  button_text="OK",
                  title=_('Confirmation'),
-                 body=_('When assigning a DOI to an item, it must be associated with an index whose index status is "Public" and Harvest Publishing is "Public".'))}}
+                 body=restrict_doi_msg)}}
 <div class="panel panel-default">
   <div class="panel-heading">
     <span>{{_('Identifier Grant')}}</span>
@@ -111,5 +116,5 @@
 </button>
 <button ng-disabled="recordsVM.invenioRecordsLoading"
         class="btn btn-danger done-button pull-right" id="btn_quit">
-  <i class="fa fa-sign-out"></i> {{_('Quit')}}
+  <i class="fa fa-sign-out"></i> {{_('Quit_identifier_grand')}}
 </button>

@@ -23,11 +23,14 @@
 import uuid
 from datetime import datetime
 
+from flask import current_app
 from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
 from invenio_db import db
+from sqlalchemy import func
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.expression import desc
+from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import JSONType, UUIDType
 from sqlalchemy_utils.types.choice import ChoiceType
 from weko_groups.widgets import RadioGroupWidget
@@ -553,6 +556,21 @@ class FlowAction(db.Model, TimestampMixin):
         backref=db.backref('flow_action'))
     """flow action relationship."""
 
+    send_mail_setting = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+
 
 class FlowActionRole(db.Model, TimestampMixin):
     """FlowActionRole list belong to FlowAction.
@@ -586,6 +604,10 @@ class FlowActionRole(db.Model, TimestampMixin):
         db.Boolean(name='user_exclude'),
         nullable=False, default=False, server_default='0')
     """If set to True, deny the action, otherwise allow it."""
+
+    specify_property = db.Column(
+        db.String(255), nullable=True)
+    """the name of flows."""
 
 
 class WorkFlow(db.Model, TimestampMixin):
@@ -636,9 +658,12 @@ class WorkFlow(db.Model, TimestampMixin):
     is_deleted = db.Column(db.Boolean(), nullable=False, default=False)
     """workflow delete flag."""
 
+    open_restricted = db.Column(db.Boolean(), nullable=False, default=True)
+    """Open restricted flag."""
+
 
 class Activity(db.Model, TimestampMixin):
-    """Define Activety."""
+    """Define Activity."""
 
     __tablename__ = 'workflow_activity'
 
@@ -691,10 +716,6 @@ class Activity(db.Model, TimestampMixin):
         Action,
         backref=db.backref('activity', lazy='dynamic')
     )
-
-    # action_version = db.Column(
-    #     db.String(24), nullable=True, unique=False)
-    # """action version."""
 
     action_status = db.Column(
         db.String(1), db.ForeignKey(ActionStatus.action_status_id),
@@ -767,6 +788,29 @@ class Activity(db.Model, TimestampMixin):
     )
     """temp metadata"""
 
+    approval1 = db.Column(db.Text, nullable=True)
+
+    approval2 = db.Column(db.Text, nullable=True)
+
+    # Some extra info want to store
+    extra_info = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+
+    action_order = db.Column(db.Integer(), nullable=True, unique=False)
+    """the order of action."""
+
 
 class ActivityAction(db.Model, TimestampMixin):
     """Define Activety."""
@@ -778,7 +822,8 @@ class ActivityAction(db.Model, TimestampMixin):
     """Activity_Action identifier."""
 
     activity_id = db.Column(
-        db.String(24), nullable=False, unique=False, index=True)
+        db.String(24), db.ForeignKey(Activity.activity_id),
+        nullable=False, unique=False, index=True)
     """activity id of Activity Action."""
 
     action_id = db.Column(
@@ -795,6 +840,9 @@ class ActivityAction(db.Model, TimestampMixin):
 
     action_handler = db.Column(db.Integer, nullable=True)
     """action handler"""
+
+    action_order = db.Column(db.Integer(), nullable=True, unique=False)
+    """the order of action."""
 
 
 class ActivityHistory(db.Model, TimestampMixin):
@@ -836,6 +884,9 @@ class ActivityHistory(db.Model, TimestampMixin):
     user = db.relationship(User, backref=db.backref(
         'activity_history'))
     """User relaionship."""
+
+    action_order = db.Column(db.Integer(), nullable=True, unique=False)
+    """the order of action."""
 
 
 class ActionJournal(db.Model, TimestampMixin):
@@ -976,3 +1027,145 @@ class WorkflowRole(db.Model, TimestampMixin):
         nullable=True, unique=False)
 
     """Relationship between workflow and roles."""
+
+
+class GuestActivity(db.Model, Timestamp):
+    """Guest activity."""
+
+    __tablename__ = "guest_activity"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    """Identifier"""
+
+    user_mail = db.Column(db.String(255), nullable=False)
+    """User mail"""
+
+    record_id = db.Column(db.String(255), nullable=False)
+    """Record identifier."""
+
+    file_name = db.Column(db.String(255), nullable=False)
+    """File name"""
+
+    activity_id = db.Column(
+        db.String(24), nullable=False, unique=True, index=True)
+    """Activity id of Guest Activity."""
+
+    token = db.Column(db.String(255), nullable=False)
+    """Token."""
+
+    expiration_date = db.Column(db.Integer, nullable=False, default=0)
+    """Expiration Date."""
+
+    is_usage_report = db.Column(db.Boolean(), nullable=False, default=False)
+    """Is Usage Report."""
+
+    def __init__(self, **kwargs):
+        """Initial guest activity.
+
+        @param kwargs:
+        """
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+    @classmethod
+    def create(cls, **kwargs):
+        """Create guest activity.
+
+        @param kwargs:
+        @return:
+        """
+        try:
+            guest_activity = cls(**kwargs)
+            db.session.add(guest_activity)
+            db.session.commit()
+            return guest_activity
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            return None
+
+    @classmethod
+    def find_by_activity_id(cls, activity_id):
+        """Find guest activity by activity id.
+
+        @param activity_id:
+        @return:
+        """
+        with db.session.no_autoflush:
+            return db.session.query(cls).filter(
+                cls.activity_id == activity_id).all()
+
+    @classmethod
+    def find(cls, **kwargs):
+        """Find guest activity.
+
+        @param kwargs:
+        @return:
+        """
+        query = db.session.query(cls)
+        if kwargs.get("user_mail"):
+            query = query.filter(cls.user_mail == kwargs.get("user_mail"))
+        if kwargs.get("record_id"):
+            query = query.filter(cls.record_id == kwargs.get("record_id"))
+        if kwargs.get("file_name"):
+            query = query.filter(cls.file_name == kwargs.get("file_name"))
+        if kwargs.get("activity_id"):
+            query = query.filter(cls.activity_id == kwargs.get("activity_id"))
+
+        with db.session.no_autoflush:
+            return query.all()
+
+    @classmethod
+    def delete(cls, guest_activity):
+        """Delete guest activity.
+
+        @param guest_activity:
+        @return:
+        """
+        try:
+            with db.session.begin_nested():
+                db.session.delete(guest_activity)
+            db.session.commit()
+            return True
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            return False
+
+    @classmethod
+    def get_expired_activities(cls) -> list:
+        """Get expired activities.
+
+        @rtype: object
+        """
+        query = db.session.query(cls).with_entities(cls.activity_id)
+        current_date = datetime.utcnow().date()
+        query = query.filter(
+            db.cast(
+                cls.created + func.make_interval(0, 0, 0, cls.expiration_date),
+                db.DATE) < current_date
+        ).filter(
+            cls.is_usage_report.is_(True)
+        )
+
+        return query.all()
+
+    @classmethod
+    def get_usage_report_activities(cls) -> list:
+        """Get usage report activities.
+
+        Returns:
+            list: Activities identifier list.
+
+        """
+        query = db.session.query(cls).with_entities(cls.activity_id)
+        current_date = datetime.utcnow().date()
+        query = query.filter(
+            db.cast(
+                cls.created + func.make_interval(0, 0, 0, cls.expiration_date),
+                db.DATE) >= current_date
+        ).filter(
+            cls.is_usage_report.is_(True)
+        )
+
+        return query.all()

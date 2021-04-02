@@ -26,27 +26,35 @@ from datetime import datetime
 from urllib.parse import urlencode
 
 from blinker import Namespace
-from flask import Response, abort, current_app, jsonify, make_response, request
+from celery import chord
+from celery.task.control import revoke
+from flask import Response, abort, current_app, jsonify, make_response, \
+    request, send_file
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
+from invenio_files_rest.models import FileInstance
 from invenio_i18n.ext import current_i18n
+from weko_admin.utils import reset_redis_cache
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
-from weko_workflow.utils import check_another_import_is_running, \
-    save_cache_item_lock_info
+from weko_workflow.utils import delete_cache_data, get_cache_data, \
+    update_cache_data
 
 from weko_search_ui.api import get_search_detail_keyword
 
 from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
     WEKO_EXPORT_TEMPLATE_BASIC_NAME, WEKO_EXPORT_TEMPLATE_BASIC_OPTION, \
     WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
-    WEKO_ITEM_ADMIN_IMPORT_TEMPLATE
-from .tasks import import_item, remove_temp_dir_task
-from .utils import check_import_items, check_sub_item_is_system, \
-    create_flow_define, delete_records, get_change_identifier_mode_content, \
-    get_content_workflow, get_lifetime, get_root_item_option, \
+    WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE, \
+    WEKO_SEARCH_UI_BULK_EXPORT_TASK, WEKO_SEARCH_UI_BULK_EXPORT_URI
+from .tasks import export_all_task, import_item, is_import_running, \
+    remove_temp_dir_task
+from .utils import cancel_export_all, check_import_items, \
+    check_sub_item_is_system, create_flow_define, delete_records, \
+    get_change_identifier_mode_content, get_content_workflow, \
+    get_export_status, get_lifetime, get_root_item_option, \
     get_sub_item_option, get_tree_items, handle_get_all_sub_id_and_name, \
     handle_workflow, make_stats_tsv, make_tsv_by_line
 
@@ -238,6 +246,7 @@ class ItemImportView(BaseView):
         data = request.get_json()
         list_record = []
         data_path = ''
+        remove_temp_dir_task_id = None
 
         if data:
             result = check_import_items(
@@ -246,14 +255,23 @@ class ItemImportView(BaseView):
                 data.get('is_change_identifier')
             )
             if isinstance(result, dict):
+                data_path = result.get('data_path', '')
                 if result.get('error'):
+                    remove_temp_dir_task.apply_async((data_path,))
                     return jsonify(code=0, error=result.get('error'))
                 else:
                     list_record = result.get('list_record', [])
-                    data_path = result.get('data_path', '')
-        remove_temp_dir_task.apply_async(
-            (data_path,), countdown=get_lifetime())
-        return jsonify(code=1, list_record=list_record, data_path=data_path)
+                    num_record_err = len(
+                        [i for i in list_record if i.get('errors')])
+                    if len(list_record) == num_record_err:
+                        remove_temp_dir_task.apply_async((data_path,))
+                    else:
+                        remove_temp_dir_task_id = remove_temp_dir_task. \
+                            apply_async(
+                                (data_path,), countdown=get_lifetime()).task_id
+        return jsonify(
+            code=1, list_record=list_record, data_path=data_path,
+            remove_temp_dir_task_id=remove_temp_dir_task_id)
 
     @expose('/download_check', methods=['POST'])
     def download_check(self):
@@ -287,27 +305,42 @@ class ItemImportView(BaseView):
     def import_items(self) -> jsonify:
         """Import item into System."""
         data = request.get_json() or {}
+
+        # terminate remove_temp_dir_task in schedule
+        remove_temp_dir_task_id = data.get('remove_temp_dir_task_id')
+        if remove_temp_dir_task_id:
+            revoke(remove_temp_dir_task_id, terminate=True)
+
         tasks = []
         list_record = [item for item in data.get(
             'list_record', []) if not item.get(
             'errors')]
-        for item in list_record:
-            item_id = item.get('id')
-            item['root_path'] = data.get('root_path')
-            create_flow_define()
-            handle_workflow(item)
-            save_cache_item_lock_info(int(item_id) if item_id else None)
-            task = import_item.delay(item)
-            tasks.append({
-                'task_id': task.task_id,
-                'item_id': item_id,
-            })
-        _, import_start_time = check_another_import_is_running()
+        import_start_time = ''
+        if list_record:
+            group_tasks = []
+            for item in list_record:
+                item['root_path'] = data.get('root_path')
+                create_flow_define()
+                handle_workflow(item)
+                group_tasks.append(import_item.s(item))
+
+            # handle import tasks
+            import_task = chord(group_tasks)(
+                remove_temp_dir_task.si(data.get('root_path')))
+            for idx, task in enumerate(import_task.parent.results):
+                tasks.append({
+                    'task_id': task.task_id,
+                    'item_id': list_record[idx].get('id'),
+                })
+            # save start time of import progress into cache
+            import_start_time = datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z')
+            update_cache_data('import_start_time', import_start_time, 0)
+
         response_object = {
             "status": "success",
             "data": {
                 "tasks": tasks,
-                "import_start_time": import_start_time or ''
+                "import_start_time": import_start_time
             }
         }
         return jsonify(response_object)
@@ -507,11 +540,81 @@ class ItemImportView(BaseView):
 
     @expose('/check_import_is_available', methods=['GET'])
     def check_import_available(self):
-        is_running, start_time = check_another_import_is_running()
-        return jsonify({
-            'is_available': not is_running,
-            'start_time': start_time or ''
+        check = is_import_running()
+        if not check:
+            delete_cache_data('import_start_time')
+            return jsonify({'is_available': True})
+        else:
+            return jsonify({
+                'is_available': False,
+                'start_time': get_cache_data('import_start_time'),
+                'error_id': check
+            })
+
+
+class ItemBulkExport(BaseView):
+    """BaseView for Admin Export."""
+
+    @expose('/', methods=['GET'])
+    def index(self):
+        """Renders admin bulk export page.
+
+        :param
+        :return: The rendered template.
+        """
+        return self.render(
+            WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE
+        )
+
+    @expose('/export_all', methods=['GET'])
+    def export_all(self):
+        """Export all items."""
+        _task_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_TASK']
+        _cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+            format(name=_task_config)
+        export_status, download_uri = get_export_status()
+
+        if (not export_status):
+            export_task = export_all_task.apply_async(
+                args=(
+                    request.url_root,
+                ))
+            reset_redis_cache(_cache_key, str(export_task.task_id))
+
+        return Response(status=200)
+
+    @expose('/check_export_status', methods=['GET'])
+    def check_export_status(self):
+        """Check export status."""
+        export_status, download_uri = get_export_status()
+        return jsonify(data={
+            'export_status': export_status,
+            'uri_status': True if download_uri else False
         })
+
+    @expose('/cancel_export', methods=['GET'])
+    def cancel_export(self):
+        """Check export status."""
+        return jsonify(data={
+            'cancel_status': cancel_export_all()
+        })
+
+    @expose('/download', methods=['GET'])
+    def download(self):
+        """Funtion send file to Client.
+
+        path: it was load from FileInstance
+        """
+        export_status, download_uri = get_export_status()
+        if not export_status and download_uri is not None:
+            file_instance = FileInstance.get_by_uri(download_uri)
+            return file_instance.send_file(
+                'export-all.zip',
+                mimetype='application/octet-stream',
+                as_attachment=True
+            )
+        else:
+            return Response(status=200)
 
 
 item_management_bulk_search_adminview = {
@@ -550,9 +653,19 @@ item_management_import_adminview = {
     }
 }
 
+item_management_export_adminview = {
+    'view_class': ItemBulkExport,
+    'kwargs': {
+        'category': _('Items'),
+        'name': _('Bulk Export'),
+        'endpoint': 'items/bulk-export'
+    }
+}
+
 __all__ = (
     'item_management_bulk_delete_adminview',
     'item_management_bulk_search_adminview',
     'item_management_custom_sort_adminview',
-    'item_management_import_adminview'
+    'item_management_import_adminview',
+    'item_management_export_adminview'
 )

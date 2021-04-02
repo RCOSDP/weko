@@ -278,6 +278,10 @@ ${INVENIO_WEB_INSTANCE} access \
        role "${INVENIO_ROLE_REPOSITORY}" \
        role "${INVENIO_ROLE_COMMUNITY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "stats-api-access" \
+       role "${INVENIO_ROLE_REPOSITORY}"
 # sphinxdoc-set-role-access-end
 
 #### sphinxdoc-create-language-data-begin

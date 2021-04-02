@@ -57,7 +57,8 @@ from .models import AdminSettings, Identifier, \
     LogAnalysisRestrictedCrawlerList, LogAnalysisRestrictedIpAddress, \
     RankingSettings, SearchManagement, StatisticsEmail
 from .permissions import admin_permission_factory
-from .utils import get_redis_cache, get_response_json, get_search_setting
+from .utils import get_redis_cache, get_response_json, get_restricted_access, \
+    get_search_setting
 from .utils import get_user_report_data as get_user_report
 from .utils import package_reports, reset_redis_cache, str_to_bool
 
@@ -1063,6 +1064,19 @@ class IdentifierSettingView(ModelView):
         return query_data
 
 
+class RestrictedAccessSettingView(BaseView):
+    """Restricted Access Setting admin view."""
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        return self.render(
+            current_app.config["WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS_TEMPLATE"],
+            data=json.dumps(get_restricted_access()),
+            items_per_page=current_app.config[
+                "WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER"]
+        )
+
+
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
@@ -1189,6 +1203,14 @@ site_info_settings_adminview = {
     }
 }
 
+restricted_access_adminview = {
+    'view_class': RestrictedAccessSettingView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Restricted Access'),
+        'endpoint': 'restricted_access'
+    }
+}
 identifier_adminview = dict(
     modelview=IdentifierSettingView,
     model=Identifier,
@@ -1212,5 +1234,6 @@ __all__ = (
     'file_preview_settings_adminview',
     'item_export_settings_adminview',
     'site_info_settings_adminview',
+    'restricted_access_adminview',
     'identifier_adminview'
 )
