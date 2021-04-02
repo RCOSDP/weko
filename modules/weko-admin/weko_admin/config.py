@@ -620,7 +620,7 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
              {'id': 'license_1', 'contents': 'CC BY-SA 4.0'},
              {'id': 'license_2', 'contents': 'CC BY-ND 4.0'},
              {'id': 'license_3', 'contents': 'CC BY-NC 4.0'},
-             {'id': 'license_4', 'contentfCC0s': 'CC BY-NC-SA 4.0'},
+             {'id': 'license_4', 'contents': 'CC BY-NC-SA 4.0'},
              {'id': 'license_5', 'contents': 'CC BY-NC-ND 4.0'},
              {'id': 'license_6', 'contents': 'CC BY 3.0'},
              {'id': 'license_7', 'contents': 'CC BY-SA 3.0'},
