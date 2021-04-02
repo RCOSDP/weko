@@ -212,7 +212,7 @@ class SchemaConverter:
 class SchemaTree:
     """Schematree."""
 
-    def __init__(self, record=None, schema_name=None):
+    def __init__(self, record=None, schema_name=None, is_export=False):
         """
         Init.
 
@@ -223,6 +223,7 @@ class SchemaTree:
         self._record = record["metadata"] \
             if record and record.get("metadata") else None
         self._schema_name = schema_name if schema_name else None
+        self._is_export = is_export
         if self._record:
             self._root_name, self._ns, self._schema_obj, self._item_type_id = \
                 self.get_mapping_data()
@@ -499,7 +500,7 @@ class SchemaTree:
                     elif isinstance(lst, str):
                         yield lst, atr_list
 
-        def get_items_value_lst(atr_vm, key, rlst, z=None, kn=None):
+        def get_items_value_lst(atr_vm, key, rlst, z=None, kn=None, parse_for_export=False):
             klst = []
             blst = []
             parent_id = 0
@@ -510,7 +511,7 @@ class SchemaTree:
                 list_subitem_key.append(key)
             for value, identify in get_value_from_content_by_mapping_key(
                     atr_vm.copy(), list_subitem_key):
-                if list_subitem_key[-1] == 'licensetype':
+                if parse_for_export and list_subitem_key[-1] == 'licensetype':
                     # Convert license value to license code
                     for lic in current_app.config[
                             'WEKO_RECORDS_UI_LICENSE_DICT']:
