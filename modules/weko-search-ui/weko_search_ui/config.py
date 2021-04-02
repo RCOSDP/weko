@@ -77,6 +77,9 @@ SEARCH_UI_JSTEMPLATE_SORT_ORDER = 'templates/weko_search_ui/togglebutton.html'
 WEKO_ITEM_ADMIN_IMPORT_TEMPLATE = 'weko_search_ui/admin/import.html'
 """import template for the import page."""
 
+WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE = 'weko_search_ui/admin/export.html'
+"""Template for the Admin Bulk Export page."""
+
 INDEX_IMG = 'indextree/36466818-image.jpg'
 
 # Opensearch description
@@ -163,7 +166,7 @@ RECORDS_REST_FACETS[SEARCH_UI_SEARCH_INDEX] = dict(
                             int size = params._source.description.length;
                             for (int i=0; i<size; i++) {
                                 String valueName = params._source.description[i].value;
-                                if(params._source.description[i].descriptionType.equals("Other")) {
+                                if("Other".equals(params._source.description[i].descriptionType)) {
                                     result.add(valueName);
                                 }
                             }
@@ -230,7 +233,7 @@ RECORDS_REST_FACETS_NO_SEARCH_PERMISSION[SEARCH_UI_SEARCH_INDEX] = dict(
                             int size = params._source.description.length;
                             for (int i=0; i<size; i++) {
                                 String valueName = params._source.description[i].value;
-                                if(params._source.description[i].descriptionType.equals("Other")) {
+                                if("Other".equals(params._source.description[i].descriptionType)) {
                                     result.add(valueName);
                                 }
                             }
@@ -652,3 +655,12 @@ WEKO_IMPORT_VALIDATE_MESSAGE = {
     '%r is not one of %r': '%rは次の決めれられた選択肢に含まれていません。%r',
     '%r is a required property': '%rは必須項目です。'
 }
+
+WEKO_SEARCH_UI_BULK_EXPORT_TASK = 'KEY_EXPORT_ALL'
+"""Template for the Admin Bulk Export page."""
+
+WEKO_SEARCH_UI_BULK_EXPORT_URI = 'URI_EXPORT_ALL'
+"""Template for the Admin Bulk Export page."""
+
+WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 3
+"""Template for the Admin Bulk Export page."""

@@ -40,7 +40,7 @@
   var myUV;
   window.addEventListener('uvLoaded', function (e) {
       myUV = createUV('#uv', {
-          iiifResourceUri: '{{ file.uri }}',
+          iiifResourceUri: '{{ file }}',
           root: '../../../static/js/uv',
           configUri: '../../../static/js/iiif_presentation/uv-config.json'
       }, new UV.URLDataProvider());

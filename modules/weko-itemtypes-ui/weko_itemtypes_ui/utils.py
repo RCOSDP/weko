@@ -299,7 +299,8 @@ def check_duplicate_mapping(data_mapping, meta_system, item_type):
                 continue
             item_des_in_sys = item_des_key in meta_system
             item_src_in_sys = item_src_key in meta_system
-            lst_overlap = list(set(lst_values_src).intersection(lst_values_des))
+            lst_overlap = list(
+                set(lst_values_src).intersection(lst_values_des))
             if lst_overlap:
                 item_src_name = item_type.schema.get('properties').get(
                     item_src_key).get('title')
@@ -313,3 +314,48 @@ def check_duplicate_mapping(data_mapping, meta_system, item_type):
                     process_overlap()
 
     return lst_duplicate
+
+
+def update_required_schema_not_exist_in_form(schema, forms):
+    """Update required in schema.
+
+    if item exist in schema but not exist in form,
+    delete required in schema.
+
+    @param schema:
+    @param forms:
+    @return schema:
+    """
+    def get_form_by_key(key, forms):
+        """Get form base on key of schema."""
+        for form in forms:
+            if key == form.get('key'):
+                return form
+        return {'items': []}
+
+    schema_properties = schema.get('properties')
+    for k, v in schema_properties.items():
+        required_list = v.get('items').get(
+            'required') if 'items' in v.keys() else v.get('required')
+        if not required_list:
+            continue
+        form = get_form_by_key(k, forms)
+        items = form.get('items', [])
+        excludes = []
+        for required in required_list:
+            flag = 0
+            for item in items:
+                key = item.get('key', '').split('.')[-1]
+                if required == key:
+                    break
+                flag = flag + 1
+            if flag == len(items):
+                excludes.append(required)
+        for exclude in excludes:
+            required_list.remove(exclude)
+        if len(required_list) == 0:
+            if 'items' in v.keys():
+                del v['items']['required']
+            else:
+                del v['required']
+    return schema

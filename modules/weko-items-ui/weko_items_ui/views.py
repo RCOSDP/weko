@@ -34,8 +34,6 @@ from flask_security import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
-from invenio_pidrelations.models import PIDRelation
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.resolver import Resolver
 from invenio_records_ui.signals import record_viewed
 from invenio_stats.utils import QueryItemRegReportHelper, \
@@ -44,28 +42,28 @@ from simplekv.memory.redisstore import RedisStore
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_groups.api import Group
-from weko_index_tree.utils import get_index_id, get_user_roles
+from weko_index_tree.utils import check_restrict_doi_with_indexes, \
+    get_index_id, get_user_roles
 from weko_records.api import ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
 from weko_workflow.api import GetCommunity, WorkActivity
-from weko_workflow.models import ActionStatusPolicy as ASP
-from weko_workflow.utils import prepare_edit_workflow
+from weko_workflow.utils import check_an_item_is_locked, prepare_edit_workflow
 from werkzeug.utils import import_string
 
 from .permissions import item_permission
-from .utils import _get_max_export_items, export_items, get_current_user, \
-    get_data_authors_prefix_settings, get_list_email, get_list_username, \
-    get_ranking, get_latest_items, get_user_info_by_email, get_user_info_by_username, \
-    get_user_information, get_user_permission, get_workflow_by_item_type_id, \
-    hide_form_items, is_schema_include_key, parse_ranking_results, \
+from .utils import _get_max_export_items, check_item_is_being_edit, \
+    export_items, get_current_user, get_data_authors_prefix_settings, \
+    get_list_email, get_list_username, get_ranking, get_user_info_by_email, \
+    get_user_info_by_username, get_user_information, get_user_permission, \
+    get_workflow_by_item_type_id, hide_form_items, is_schema_include_key, \
     remove_excluded_items_in_json_schema, sanitize_input_data, save_title, \
     set_multi_language_name, to_files_js, translate_schema_form, \
     translate_validation_message, update_index_tree_for_record, \
     update_json_schema_by_activity_id, update_schema_form_by_activity_id, \
     update_sub_items_by_user_role, validate_form_input_data, \
     validate_save_title_and_share_user_id, validate_user, \
-    validate_user_mail_and_index
+    validate_user_mail_and_index, get_latest_items
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -149,25 +147,22 @@ def iframe_index(item_type_id=0):
                                    error_type='no_itemtype')
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
-        sessionstore = RedisStore(redis.StrictRedis.from_url(
-            'redis://{host}:{port}/1'.format(
-                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
         record = {}
         files = []
         endpoints = {}
         activity_session = session['activity_info']
         activity_id = activity_session.get('activity_id', None)
-        if activity_id and sessionstore.redis.exists(
-                'activity_item_' + activity_id):
-            item_str = sessionstore.get('activity_item_' + activity_id)
-            item_json = json.loads(item_str)
-            if 'metainfo' in item_json:
-                record = item_json.get('metainfo')
-            if 'files' in item_json:
-                files = item_json.get('files')
-            if 'endpoints' in item_json:
-                endpoints = item_json.get('endpoints')
+        if activity_id:
+            activity = WorkActivity()
+            metadata = activity.get_activity_metadata(activity_id)
+            if metadata:
+                item_json = json.loads(metadata)
+                if 'metainfo' in item_json:
+                    record = item_json.get('metainfo')
+                if 'files' in item_json:
+                    files = item_json.get('files')
+                if 'endpoints' in item_json:
+                    endpoints = item_json.get('endpoints')
         need_file, need_billing_file = is_schema_include_key(item_type.schema)
 
         return render_template(
@@ -202,14 +197,8 @@ def iframe_save_model():
         if activity_id:
             sanitize_input_data(data)
             save_title(activity_id, data)
-            sessionstore = RedisStore(redis.StrictRedis.from_url(
-                'redis://{host}:{port}/1'.format(
-                    host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                    port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
-            sessionstore.put(
-                'activity_item_' + activity_id,
-                json.dumps(data).encode('utf-8'),
-                ttl_secs=60 * 60 * 24 * 7)
+            activity = WorkActivity()
+            activity.upt_activity_metadata(activity_id, json.dumps(data))
     except Exception as ex:
         current_app.logger.exception(str(ex))
         return jsonify(code=1, msg='Model save error')
@@ -525,25 +514,22 @@ def default_view_method(pid, record, template=None):
             url_for('.index', item_type_id=lists[0].item_type[0].id))
     json_schema = '/items/jsonschema/{}'.format(item_type_id)
     schema_form = '/items/schemaform/{}'.format(item_type_id)
-    sessionstore = RedisStore(redis.StrictRedis.from_url(
-        'redis://{host}:{port}/1'.format(
-            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
     files = to_files_js(record)
     record = record.item_metadata
     endpoints = {}
     activity_session = session['activity_info']
     activity_id = activity_session.get('activity_id', None)
-    if activity_id and sessionstore.redis.exists(
-            'activity_item_' + activity_id):
-        item_str = sessionstore.get('activity_item_' + activity_id)
-        item_json = json.loads(item_str)
-        if 'metainfo' in item_json:
-            record = item_json.get('metainfo')
-        if 'files' in item_json:
-            files = item_json.get('files')
-        if 'endpoints' in item_json:
-            endpoints = item_json.get('endpoints')
+    if activity_id:
+        activity = WorkActivity()
+        metadata = activity.get_activity_metadata(activity_id)
+        if metadata:
+            item_json = json.loads(metadata)
+            if 'metainfo' in item_json:
+                record = item_json.get('metainfo')
+            if 'files' in item_json:
+                files = item_json.get('files')
+            if 'endpoints' in item_json:
+                endpoints = item_json.get('endpoints')
     need_file, need_billing_file = is_schema_include_key(item_type.schema)
 
     return render_template(
@@ -815,47 +801,24 @@ def prepare_edit_item():
                 msg=_('Record does not exist.')
             )
 
+        # Check Record is in import progress
+        if check_an_item_is_locked(pid_value):
+            return jsonify(
+                code=err_code,
+                msg=_('Item cannot be edited because '
+                      'the import is in progress.')
+            )
+
         # ! Check Record is being edit
         item_uuid = latest_pid.object_uuid
         post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
 
         if post_workflow:
-            if post_workflow.action_status in [ASP.ACTION_BEGIN,
-                                               ASP.ACTION_DOING]:
+            if check_item_is_being_edit(recid, post_workflow, activity):
                 return jsonify(
                     code=err_code,
-                    msg=_("This Item is being edited.")
+                    msg=_('This Item is being edited.')
                 )
-            draft_pid = PersistentIdentifier.query.filter_by(
-                pid_type='recid',
-                pid_value="{}.0".format(recid.pid_value)
-            ).one_or_none()
-
-            if draft_pid:
-                draft_workflow = activity.get_workflow_activity_by_item_id(
-                    draft_pid.object_uuid)
-                if draft_workflow and \
-                    draft_workflow.action_status in [ASP.ACTION_BEGIN,
-                                                     ASP.ACTION_DOING]:
-                    return jsonify(
-                        code=err_code,
-                        msg=_("This Item is being edited.")
-                    )
-
-                pv = PIDVersioning(child=recid)
-                latest_pid = PIDVersioning(parent=pv.parent).get_children(
-                    pid_status=PIDStatus.REGISTERED
-                ).filter(PIDRelation.relation_type == 2).order_by(
-                    PIDRelation.index.desc()).first()
-                latest_workflow = activity.get_workflow_activity_by_item_id(
-                    latest_pid.object_uuid)
-                if latest_workflow and \
-                    latest_workflow.action_status in [ASP.ACTION_BEGIN,
-                                                      ASP.ACTION_DOING]:
-                    return jsonify(
-                        code=err_code,
-                        msg=_("This Item is being edited.")
-                    )
 
             post_activity['workflow_id'] = post_workflow.workflow_id
             post_activity['flow_id'] = post_workflow.flow_id
@@ -1167,3 +1130,29 @@ def check_record_doi(pid_value='0'):
     if record.pid_doi:
         return jsonify({'code': 0})
     return jsonify({'code': -1})
+
+
+@blueprint_api.route('/check_record_doi_indexes/<string:pid_value>',
+                     methods=['GET'])
+@login_required
+def check_record_doi_indexes(pid_value='0'):
+    """Check restrict DOI and Indexes.
+
+    :param pid_value: pid_value.
+    :return:
+    """
+    doi = int(request.args.get('doi', '0'))
+    from weko_deposit.api import WekoRecord
+    record = WekoRecord.get_record_by_pid(pid_value)
+    if record.pid_doi or doi > 0:
+        idx_paths = record.get('path', [])
+        index_ids = [path.split('/')[-1] for path in idx_paths]
+        if check_restrict_doi_with_indexes(index_ids):
+            return jsonify({
+                'code': -1,
+                'message': _('When assigning a DOI to an item, it must be '
+                             'associated with an index whose index status is '
+                             '"Public" and Harvest Publishing is "Public".')
+            })
+
+    return jsonify({'code': 0})

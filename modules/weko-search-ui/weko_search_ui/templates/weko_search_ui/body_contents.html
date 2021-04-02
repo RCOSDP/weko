@@ -87,8 +87,8 @@
    template="{{ url_for('static', filename=config.WEKO_SEARCH_UI_JSTEMPLATE_INDEX) }}">
   </invenio-search-results>
   {%- endblock search_index_results %}
-  <div class="panel panel-default">
-    <div class="panel-heading clearfix" >
+  <div class="panel panel-default" ng-if="typeIndexList() != 'root'">
+    <div class="panel-heading clearfix">
       <span class="panel-title">
         {%- if item_export %}
           {{_('Items to Export')}}
@@ -106,14 +106,10 @@
       </div>
       {%- endblock search_count %}
     </div>
+    
     <div id="search-result-body" class="panel-body" >
-        <div id="index_item_list">
-        {%- if index_id %}
-          <invenio-search-results
-           template="{{ url_for('static', filename=config.WEKO_SEARCH_UI_JSTEMPLATE_BREAD) }}">
-          </invenio-search-results>
-        {%- endif %}
-        <div class="form-inline flow-root" >
+        <div id="index_item_list" ng-if="vm.invenioSearchResults.hits.total">
+        <div class="form-inline flow-root">
           <select class="form-control hide" id="goExportORPrint">
             <option value="check_Export">{{_('Export Checked Items')}}</option>
             <option value="view_Export">{{_('Export All Displayed Items')}}</option>
@@ -237,6 +233,7 @@
       {%- endif %}
 
     </div>
+
   </div>
   </div>
   </invenio-search>

@@ -247,6 +247,7 @@ def file_ui(
                      or 'vnd.ms' in fileobj.mimetype
                      or 'vnd.openxmlformats' in fileobj.mimetype):
             convert_to_pdf = True
+
         # if not pdf or cover page disabled: Download directly
         # if pdf and cover page enabled and has original in query param: check
         # permission (user roles)

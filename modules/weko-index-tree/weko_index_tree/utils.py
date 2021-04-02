@@ -30,7 +30,6 @@ from flask_login import current_user
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_search import RecordsSearch
 from sqlalchemy import MetaData, Table, text
 from weko_groups.models import Group
@@ -611,7 +610,7 @@ def check_doi_in_index(index_id):
             return True
         return False
     except Exception as e:
-        return False
+        return True
 
 
 def get_record_in_es_of_index(index_id):
@@ -662,14 +661,49 @@ def check_doi_in_list_record_es(index_id):
     @return:
     """
     list_records_in_es = get_record_in_es_of_index(index_id)
-    list_uuid = [record.get('_id') for record in list_records_in_es]
-    with db.session.no_autoflush:
-        p = PersistentIdentifier
-        query = db.session.query(p) \
-            .filter(p.object_uuid.in_(list_uuid),
-                    p.status == PIDStatus.REGISTERED, p.pid_type == 'doi')
+    list_uuid = []
+    list_path = []
+    for record in list_records_in_es:
+        list_uuid.append(record.get('_id'))
+        list_path.append(list(
+            filter(lambda x: not x.endswith(str(index_id)),
+                   record.get('_source', {}).get('path'))
+        ))
+    from weko_items_ui.utils import check_item_has_doi
+    if check_item_has_doi(list_uuid):
+        if not list_path:
+            return True
+        for path in list_path:
+            if check_restrict_doi_with_indexes(path):
+                return True
+    return False
 
-        db_records = query.all()
-        if len(db_records) > 0:
+
+def check_restrict_doi_with_indexes(other_index_ids):
+    """Check doi in index.
+
+    @param index_id:
+    @return:
+    """
+    from .api import Indexes
+    for index_id in other_index_ids:
+        idx = Indexes.get_index(index_id.split('/')[-1])
+        if not idx or (idx.public_state and idx.harvest_public_state):
+            return False
+    return True
+
+
+def check_has_any_item_in_index_is_locked(index_id):
+    """Check if any item in the index is locked by import process.
+
+    @param index_id:
+    @return:
+    """
+    list_records_in_es = get_record_in_es_of_index(index_id)
+    for record in list_records_in_es:
+        from weko_workflow.utils import check_an_item_is_locked
+        item_id = record.get('_source', {}).get(
+            '_item_metadata', {}).get('control_number')
+        if check_an_item_is_locked(int(item_id)):
             return True
     return False

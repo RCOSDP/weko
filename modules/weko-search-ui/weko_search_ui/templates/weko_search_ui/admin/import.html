@@ -66,7 +66,7 @@
 <input id="new_item" type="hidden" value="{{_('New Item')}}" />
 <input id="update_item" type="hidden" value="{{_('Update Item')}}" />
 <input id="check_error" type="hidden" value="{{_('Check Error')}}" />
-<input id="download" type="hidden" value="{{_('Download')}}" />
+<input id="download" type="hidden" value="{{_('import_btn_download')}}" />
 <input id="no" type="hidden" value="{{_('No.')}}" />
 <input id="item_id" type="hidden" value="{{_('Item Id')}}" />
 <input id="title" type="hidden" value="{{_('Title')}}" />
@@ -92,6 +92,13 @@
 <input id="error_download" type="hidden" value="{{_('Failed to download.')}}" />
 <input id="error_get_lstItemType" type="hidden" value="{{_('Failed to get item type list.')}}" />
 <input id="internal_server_error" type="hidden" value="{{_('Internal server error')}}" />
+<input id="not_available_error_another" type="hidden" value="{{_('Import is in progress on another device.')}}" />
+<input id="not_available_error" type="hidden" value="{{_('Import is in progress.')}}" />
+<input id="celery_not_run" type="hidden" value="{{_('Celery is not running.')}}" />
+<input id="is_duplicated_doi" type="hidden" value="{{_('This DOI has been already grant for another item. Please specify another DOI.')}}" />
+<input id="is_withdraw_doi" type="hidden" value="{{_('import_error_msg_is_withdraw_doi')}}" />
+<input id="item_is_deleted" type="hidden" value="{{_('The corresponding item has been deleted.')}}" />
+<input id="item_is_being_edit" type="hidden" value="{{_('Cannot update because the corresponding item is being edited.')}}" />
 
 <pre class="hide" id="workflows">{{workflows}}</pre>
 {%- endblock body %}

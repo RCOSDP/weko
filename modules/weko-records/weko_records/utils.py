@@ -443,6 +443,8 @@ def sort_meta_data_by_options(record_hit):
 
     :param record_hit:
     """
+    from weko_records_ui.permissions import check_file_download_permission
+
     def get_meta_values(v):
         """Get values from metadata."""
         data_list = []
@@ -510,6 +512,43 @@ def sort_meta_data_by_options(record_hit):
                         result[-1] += "," + value
         return result
 
+    def get_file_comments(record, files):
+        """Check and get file info."""
+        result = []
+        for f in files:
+            if check_file_download_permission(record, f, False):
+                extention = ''
+                label = f.get('url', {}).get('label')
+                filename = f.get('filename', '')
+                if not label and not f.get('version_id'):
+                    label = f.get('url', {}).get('url', '')
+                elif not label:
+                    label = filename
+
+                if f.get('version_id'):
+                    idx = filename.find('.') + 1
+                    extention = filename[idx:] if idx > 0 else 'unknown'
+
+                if label:
+                    result.append({
+                        'label': label,
+                        'extention': extention,
+                        'url': f.get('url', {}).get('url', '')
+                    })
+        return result
+
+    def get_file_thumbnail(thumbnails):
+        """Get file thumbnail."""
+        thumbnail = {}
+        if thumbnails and len(thumbnails) > 0:
+            subitem_thumbnails = thumbnails[0].get('subitem_thumbnail')
+            if subitem_thumbnails and len(subitem_thumbnails) > 0:
+                thumbnail = {
+                    'thumbnail_label': subitem_thumbnails[0].get('thumbnail_label', ''),
+                    'thumbnail_width': current_app.config['WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL']
+                }
+        return thumbnail
+
     try:
         src = record_hit['_source'].pop('_item_metadata')
         item_type_id = record_hit['_source'].get('item_type_id') \
@@ -518,6 +557,8 @@ def sort_meta_data_by_options(record_hit):
             return
         solst, meta_options = get_options_and_order_list(item_type_id)
         solst_dict_array = convert_data_to_dict(solst)
+        files_info = []
+        thumbnail = None
         # Set value and parent option
         for lst in solst:
             key = lst[0]
@@ -525,8 +566,18 @@ def sort_meta_data_by_options(record_hit):
             option = meta_options.get(key, {}).get('option')
             if not val or not option:
                 continue
-            mlt = val.get('attribute_value_mlt')
+            mlt = val.get('attribute_value_mlt', [])
             if mlt:
+                if val.get('attribute_type', '') == 'file' \
+                        and not option.get("hidden") \
+                        and option.get("showlist"):
+                    files_info = get_file_comments(src, mlt)
+                    continue
+                is_thumbnail = any('subitem_thumbnail' in data for data in mlt)
+                if is_thumbnail and not option.get("hidden") \
+                        and option.get("showlist"):
+                    thumbnail = get_file_thumbnail(mlt)
+                    continue
                 meta_data = get_all_items2(mlt, solst)
                 for m in meta_data:
                     for s in solst_dict_array:
@@ -548,6 +599,10 @@ def sort_meta_data_by_options(record_hit):
                 record_hit['_source']['_comment'].extend(items)
             else:
                 record_hit['_source']['_comment'] = items
+        if files_info:
+            record_hit['_source']['_files_info'] = files_info
+        if thumbnail:
+            record_hit['_source']['_thumbnail'] = thumbnail
     except Exception:
         current_app.logger.exception(
             u'Record serialization failed {}.'.format(

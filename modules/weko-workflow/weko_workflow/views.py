@@ -27,8 +27,8 @@ from collections import OrderedDict
 from functools import wraps
 
 import redis
-from flask import Blueprint, current_app, jsonify, render_template, request, \
-    session, url_for
+from flask import Blueprint, abort, current_app, jsonify, render_template, \
+    request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
@@ -62,8 +62,8 @@ from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
 from .models import ActionStatusPolicy, ActivityStatusPolicy, WorkflowRole
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import IdentifierHandle, delete_cache_data, filter_condition, \
-    get_account_info, get_actionid, \
+from .utils import IdentifierHandle, check_existed_doi, delete_cache_data, \
+    filter_condition, get_account_info, get_actionid, \
     get_activity_id_of_record_without_version, get_cache_data, \
     get_identifier_setting, handle_finish_workflow, is_hidden_pubdate, \
     is_show_autofill_metadata, item_metadata_validation, register_hdl, \
@@ -82,6 +82,9 @@ blueprint = Blueprint(
 @login_required
 def index():
     """Render a basic view."""
+    if not current_user or not current_user.roles:
+        return abort(403)
+
     activity = WorkActivity()
     getargs = request.args
 
@@ -412,14 +415,10 @@ def display_activity(activity_id=0):
         deposit = WekoDeposit.get_record(item.id)
 
         # get files data after click Save btn
-        sessionstore = RedisStore(redis.StrictRedis.from_url(
-            'redis://{host}:{port}/1'.format(
-                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
-
-        if sessionstore.redis.exists('activity_item_' + str(activity_id)):
-            item_str = sessionstore.get('activity_item_' + str(activity_id))
-            item_json = json.loads(item_str.decode('utf-8'))
+        activity = WorkActivity()
+        metadata = activity.get_activity_metadata(activity_id)
+        if metadata:
+            item_json = json.loads(metadata)
             if 'files' in item_json:
                 files = item_json.get('files')
         if deposit and not files:
@@ -1124,31 +1123,10 @@ def withdraw_confirm(activity_id='0', action_id='0'):
 
 @blueprint.route('/findDOI', methods=['POST'])
 @login_required
-def check_existed_doi():
+def find_doi():
     """Next action."""
-    doi_link = request.get_json()
-    respon = dict()
-    respon['isExistDOI'] = False
-    respon['isWithdrawnDoi'] = False
-    respon['code'] = 1
-    respon['msg'] = 'error'
-    if doi_link:
-        identifier = IdentifierHandle(None)
-        doi_pidstore = identifier.check_pidstore_exist(
-            'doi',
-            doi_link['doi_link'])
-        if doi_pidstore:
-            respon['isExistDOI'] = True
-            respon['msg'] = _('This DOI has been used already for another '
-                              'item. Please input another DOI.')
-            if doi_pidstore.status == PIDStatus.DELETED:
-                respon['isWithdrawnDoi'] = True
-                respon['msg'] = _(
-                    'This DOI was withdrawn. Please input another DOI.')
-        else:
-            respon['msg'] = _('success')
-        respon['code'] = 0
-    return jsonify(respon)
+    doi_link = request.get_json() or {}
+    return jsonify(check_existed_doi(doi_link.get('doi_link')))
 
 
 @blueprint.route(

@@ -270,6 +270,7 @@
 
             $scope.ok = function() {
                 $scope.modalInstance.hide();
+                $('body').removeClass('modal-open');
                 $http({
                     method: 'GET',
                     url: "/api/items/check_record_doi/" + id,
@@ -280,8 +281,13 @@
                       } else {
                         $http.post(url).then(
                             function(response) {
-                                // success callback
-                                $window.location.href = rdt;
+                                if (response.data.code === -1 && response.data.is_locked) {
+                                    $('[role="alert"]').css('display', 'inline-block');
+                                    $('[role="alert"]').text(response.data.msg);
+                                } else {
+                                    // success callback
+                                    $window.location.href = rdt;
+                                }
                             },
                             function(response) {
                                 // failure call back
@@ -296,6 +302,7 @@
 
             $scope.cancel = function() {
                 $scope.modalInstance.hide();
+                $('body').removeClass('modal-open');
             };
         };
 

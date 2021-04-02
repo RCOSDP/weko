@@ -24,6 +24,7 @@ from functools import wraps
 
 from flask import Blueprint, abort, current_app, jsonify, make_response, \
     request
+from flask_babelex import gettext as _
 from invenio_communities.models import Community
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
@@ -33,7 +34,7 @@ from .errors import IndexAddedRESTError, IndexBaseRESTError, \
     IndexDeletedRESTError, IndexMovedRESTError, IndexNotFoundRESTError, \
     IndexUpdatedRESTError, InvalidDataRESTError
 from .models import Index
-from .utils import check_doi_in_index
+from .utils import check_doi_in_index, check_has_any_item_in_index_is_locked
 
 
 def need_record_permission(factory_name):
@@ -204,17 +205,27 @@ class IndexActionResource(ContentNegotiatedMethodView):
         data = self.loaders[request.mimetype]()
         if not data:
             raise InvalidDataRESTError()
-        if not data.get('public_state') and check_doi_in_index(index_id):
+        msg = ''
+        errors = []
+        if not (data.get('public_state') and data.get('harvest_public_state'))\
+                and check_doi_in_index(index_id):
             status = 200
-            msg = '0'
+            if not data.get('public_state'):
+                errors.append(_('The index cannot be kept private because '
+                                'there are links from items that have a DOI.'))
+            if not data.get('harvest_public_state'):
+                errors.append(_('Index harvests cannot be kept private because'
+                                ' there are links from items that have a DOI.'
+                                ))
         else:
             if not self.record_class.update(index_id, **data):
                 raise IndexUpdatedRESTError()
             status = 200
             msg = 'Index updated successfully.'
 
-        return make_response(
-            jsonify({'status': status, 'message': msg}), status)
+        return make_response(jsonify(
+            {'status': status, 'message': msg, 'errors': errors}),
+            status)
 
     @need_record_permission('delete_permission_factory')
     def delete(self, index_id, **kwargs):
@@ -222,9 +233,15 @@ class IndexActionResource(ContentNegotiatedMethodView):
         if not index_id or index_id <= 0:
             raise IndexNotFoundRESTError()
 
+        msg = ''
+        errors = []
         if check_doi_in_index(index_id):
-            status = 200
-            msg = '0'
+            errors.append(_('The index cannot be deleted because there is'
+                            ' a link from an item that has a DOI.'))
+        elif check_has_any_item_in_index_is_locked(index_id):
+            errors.append(_('This index cannot be deleted because '
+                            'the item belonging to this index is '
+                            'being edited by the import function.'))
         else:
             action = request.values.get('action', 'all')
             res = self.record_class.get_self_path(index_id)
@@ -239,10 +256,9 @@ class IndexActionResource(ContentNegotiatedMethodView):
             else:
                 raise InvalidDataRESTError()
 
-            status = 200
             msg = 'Index deleted successfully.'
-        return make_response(
-            jsonify({'status': status, 'message': msg}), status)
+        return make_response(jsonify(
+            {'status': 200, 'message': msg, 'errors': errors}), 200)
 
 
 class IndexTreeActionResource(ContentNegotiatedMethodView):

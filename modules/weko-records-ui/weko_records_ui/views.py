@@ -509,7 +509,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
                     'attribute_value_mlt'][0][
                     'subitem_systemidt_identifier']
         else:
-            record['permalink_uri'] = request.url
+            record['permalink_uri'] = '{}records/{}'.format(
+                request.url_root, record.get("recid"))
     else:
         record['permalink_uri'] = permalink
 
@@ -547,7 +548,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     files_thumbnail = []
     if record.files:
         files_thumbnail = ObjectVersion.get_by_bucket(
-            record.files.bucket.id).\
+            record.files.bucket.id, asc_sort=True).\
             filter_by(is_thumbnail=True).all()
     is_display_file_preview, files = get_file_info_list(record)
     # Flag: can edit record
@@ -745,7 +746,14 @@ def soft_delete(recid):
         soft_delete_imp(recid)
         return make_response('PID: ' + str(recid) + ' DELETED', 200)
     except Exception as ex:
-        print(str(ex))
+        current_app.logger.error(ex)
+        if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                and ex.args[0].get('is_locked'):
+            return jsonify(
+                code=-1,
+                is_locked=True,
+                msg=str(ex.args[0].get('msg', ''))
+            )
         abort(500)
 
 
@@ -759,7 +767,7 @@ def restore(recid):
         restore_imp(recid)
         return make_response('PID: ' + str(recid) + ' RESTORED', 200)
     except Exception as ex:
-        print(str(ex))
+        current_app.logger.error(ex)
         abort(500)
 
 

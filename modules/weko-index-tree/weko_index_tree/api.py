@@ -1259,9 +1259,9 @@ class Indexes(object):
         """
         item_custom_sort = db.session.query(
             Index.item_custom_sort).filter(
-            Index.id == index_id).one()
+            Index.id == index_id).one_or_none()
 
-        return item_custom_sort[0]
+        return item_custom_sort[0] if item_custom_sort else None
 
     @classmethod
     def have_children(cls, index_id):
