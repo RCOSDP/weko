@@ -725,19 +725,16 @@ def check_index_permissions(record, index_id=None) -> bool:
         can_view = False
         if roles[0]:
             # In case admin role.
-            return True
-        check_user_role = check_roles(roles, index_data.browsing_role) or \
-            check_groups(groups, index_data.browsing_group)
-        if current_user.is_authenticated and check_user_role and not record:
             can_view = True
         elif index_data.public_state:
+            check_user_role = check_roles(roles, index_data.browsing_role) or \
+                check_groups(groups, index_data.browsing_group)
             check_public_date = \
                 isinstance(index_data.public_date, datetime) and \
                 date.today() >= index_data.public_date.date() \
                 if index_data.public_date else True
             if check_user_role and check_public_date:
                 can_view = True
-
         return can_view
 
     def _check_for_index_groups(_index_groups):
