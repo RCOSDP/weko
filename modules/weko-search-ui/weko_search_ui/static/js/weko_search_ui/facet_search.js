@@ -56,7 +56,7 @@ class MainLayout extends React.Component {
                }
                if (data.display_index_tree && !data.display_index_tree.status || weko_show_index_for_authenticated_user === "True") {
                   $("#body_index").hide()
-                  $("#panel_bread").hide()
+                  $("#body_indexlink").hide()
                   $("#body_indexlist").hide()
                }
             }
