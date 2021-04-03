@@ -1392,3 +1392,31 @@ msgstr ""
 #~ msgid "Download / Preview is available from {}/{}/{}."
 #~ msgstr "Download / Preview is available from {}/{}/{}."
 
+msgid "Download / Preview is available from {}/{}/{}."
+msgstr "Download / Preview is available from {}/{}/{}."
+msgid "Apply JGSS"
+msgstr "Apply"
+
+msgid "This data is not available for undergraduate students or those who do not register their positions."
+msgstr ""
+
+msgid "Please input email address."
+msgstr ""
+
+msgid "Email address"
+msgstr ""
+
+msgid "Email address(reconfirmation)"
+msgstr ""
+
+msgid "Token is invalid."
+msgstr ""
+
+msgid "The expiration date for download has been exceeded."
+msgstr ""
+
+msgid "The download limit has been exceeded."
+msgstr ""
+
+msgid "This data is not available for this user."
+msgstr ""

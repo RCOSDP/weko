@@ -65,3 +65,36 @@
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+
+<!-- modal start -->
+<div class="modal fade" tabindex="-1" role="dialog" id="myModalActionUser">
+  <div class="modal-dialog modal-sm" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalHeader">{{_('Specify Property')}}</h4>
+      </div>
+      <div class="modal-body" id="myModalBody">
+        <div class="row">
+          <div class="col-sm-12">
+            <div class="hide my-modal-action-user action-order"></div>
+            <select id="cbxActionUser" class="form-control" size="10">
+              {%- for sp in specifed_properties %}
+                <option value="{{sp.value}}">{{sp.text}}</option>
+              {%- endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="text-align: center;">
+        <button id="btnSettingActionUser" type="button" class="btn btn-default">
+          {{_('Setting')}}
+        </button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">
+          <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>&nbsp
+          {{_('Close')}}
+        </button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

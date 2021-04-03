@@ -4,21 +4,21 @@ window.addEventListener('DOMContentLoaded', function () {
   checkbox.prop('checked', false).change();
 });
 
-$(document).ready(function(){
+$(document).ready(function () {
   // ページ読み込み完了時にリンク先の頭だけ取得しておく
   var link_text = $('#jupyter_multiple').attr('href');
 
-  $('.file-check').change(function() {
+  $('.file-check').change(function () {
     var check_filelist = '';
     var jupyter_link = '';
     // チェック状態のボタンの値を全て取得
-    $('.file-check:checked').each(function() {
+    $('.file-check:checked').each(function () {
       var filechack_val = $(this).val();
       // ファイルリストのカンマ区切り文字列を生成
       if (check_filelist === '') {
-        check_filelist += filechack_val ;
+        check_filelist += filechack_val;
       } else {
-        check_filelist += "," + filechack_val ;
+        check_filelist += "," + filechack_val;
       }
     })
     // 全てのファイルがチェック済みならヘッダのチェックボックスをONにする
@@ -40,18 +40,17 @@ $(document).ready(function(){
   });
 
   // ヘッダーでファイル全選択
-  $('.checkbox-th, .checkbox-th input[type=checkbox]').click(function() {
+  $('.checkbox-th, .checkbox-th input[type=checkbox]').click(function () {
     var all_checked = $('#all_file_checkbox').prop("checked");
-    if (!all_checked) {;
+    if (!all_checked) {
       $('#all_file_checkbox').prop('checked', true).change();
-      $('.file-check').each(function() {
+      $('.file-check').each(function () {
         $(this).prop('checked', true).change();
       })
       $('#jupyter_multiple').removeClass('disabled');
-    }
-    else {
+    } else {
       $('#all_file_checkbox').prop('checked', false).change();
-      $('.file-check').each(function() {
+      $('.file-check').each(function () {
         $(this).prop('checked', false).change();
       })
       $('#jupyter_multiple').addClass('disabled');
@@ -63,26 +62,99 @@ $(document).ready(function(){
   });
 
   // ファイル名の領域をクリックした時チェックON
-  $('.filecheck-td, .filename-td').click(function() {
+  $('.filecheck-td, .filename-td').click(function () {
     var checkbox = $(this).parent('tr').find('.file-check');
-    if (!checkbox.prop('checked')){
+    if (!checkbox.prop('checked')) {
       checkbox.prop('checked', true).change();
     } else {
       checkbox.prop('checked', false).change();
     }
     // チェックボックス自体のイベントは伝播させない
-    $('.filecheck-td input[type=checkbox]').on('click', function(e){
+    $('.filecheck-td input[type=checkbox]').on('click', function (e) {
       e.stopPropagation();
     });
   });
 
   // ファイルごとのプレビューボタンを押した時、プレビュー領域ON
-  $('.preview-button').click(function() {
+  $('.preview-button').click(function () {
     var parentPanel = $('.panel');
-    if(parentPanel.find('.preview-panel-body').hasClass('hidden')) {
+    if (parentPanel.find('.preview-panel-body').hasClass('hidden')) {
       $(this).find('.preview-arrow-right').addClass('hidden');
       parentPanel.find('.preview-panel-body').removeClass('hidden');
       $(this).find('.preview-arrow-down').removeClass('hidden');
+    }
+  });
+
+  function showMessage(message) {
+    $("#inputModal").html(message);
+    $("#allModal").modal("show");
+  }
+
+  $('.non-role-btn').click(function () {
+    let errorMessage = $('#non-role-msg').val()
+    showMessage(errorMessage);
+  });
+
+
+
+  function validateUserEmail(email, confirmEmail) {
+    let regex = /^([a-zA-Z0-9_.+-])+@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+    return (email && confirmEmail && email === confirmEmail && regex.test(email))
+  }
+
+  $('#confirm_email_btn').click(function () {
+    let userMailElement = $('#user_mail');
+    let userMailConfirmElement = $('#user_mail_confirm');
+    let user_mail = userMailElement.val();
+    let user_mail_confirm = userMailConfirmElement.val();
+    if (validateUserEmail(user_mail, user_mail_confirm)) {
+      let fileName = $(this).data("guest_filename_data");
+      let dataType = $(this).data("guest_data_type_title");
+      let recordID = $(this).data("guest_record_id");
+      let itemTypeId = $(this).data("guest_itemtype_id");
+      let workflowId = $(this).data("guest_workflow_id");
+      let flowId = $(this).data("guest_flow_id");
+
+      const post_uri = '/workflow/activity/init-guest';
+      let post_data = {
+        guest_mail: user_mail,
+        file_name: fileName,
+        guest_item_title: dataType,
+        record_id: recordID.toString(),
+        item_type_id: itemTypeId.toString(),
+        workflow_id: workflowId.toString(),
+        flow_id: flowId.toString(),
+      }
+      $.ajax({
+        url: post_uri,
+        method: 'POST',
+        async: true,
+        contentType: 'application/json',
+        data: JSON.stringify(post_data),
+        success: function (res) {
+          userMailElement.val('');
+          userMailConfirmElement.val('');
+          $('#email_modal').modal('hide');
+          $("#modalSendEmailSuccess #inputModal").html(res.msg);
+          $("#modalSendEmailSuccess").modal("show");
+        },
+        error: function (jqXHE, status) {
+        }
+      });
+    }
+  });
+
+  $('#user_mail, #user_mail_confirm').on('input', function () {
+    let user_mail = $('#user_mail').val();
+    let user_mail_confirm = $('#user_mail_confirm').val();
+    if (validateUserEmail(user_mail, user_mail_confirm)) {
+      $('.user-mail').removeClass('has-error');
+      $('.user_mail_confirm').removeClass('has-error');
+      $("#confirm_email_btn").removeAttr("disabled");
+    } else {
+      $("#confirm_email_btn").attr("disabled", true);
+      $('.user-mail').addClass('has-error');
+      $('.user_mail_confirm').addClass('has-error');
     }
   });
 });

@@ -25,15 +25,14 @@ const MIN_WIDTH = 768;
 }());
 
 let widgetList;
-var mainContentSensor;
-var headerSensor;
-var otherSensor;
-var widgetBodyGrid;
-var widgetOtherList = {};
-var resizeWidgetTimeout;
-var isHeaderContent = false;
-var isRegenerate = false;
-var isClickMainContent = false;
+let mainContentSensor;
+let headerSensor;
+let otherSensor;
+let widgetBodyGrid;
+let widgetOtherList = {};
+let isHeaderContent = false;
+let isRegenerate = false;
+let isClickMainContent = false;
 
 const PageBodyGrid = function () {
     this.init = function () {
@@ -179,21 +178,31 @@ const PageBodyGrid = function () {
 
 
     this.updateHeaderPage = function (node) {
-        let headerElement = $("#header");
-        if (headerElement.length) {
-            let headerNav = $("#header_nav");
-            let headerContent = $("#header_content");
-            if (node.background_color) {
-                headerNav.css({"background-color": node.background_color});
-            }
-            if (node.multiLangSetting && node.multiLangSetting.description) {
-              isHeaderContent = true
-              updateWidthOfTheHeaderWidget();
-              headerContent.html(node.multiLangSetting.description.description);
-            }
-            this.grid.update(headerElement, node.x, node.y, node.width, node.height);
-            headerElement.removeClass("hidden");
-          }
+      let headerElement = $("#header");
+      let headerNav = $("#header_nav");
+      let fixedHeader = $("#fixed_header");
+      if (headerElement.length) {
+        // Set Background color and text color for Fixed Header
+        let fixedHeaderBackgroundColor = node.fixedHeaderBackgroundColor || "#ffffff";
+        let fixedHeaderTextColor = node.fixedHeaderTextColor || "#808080";
+        fixedHeader.css({"background-color": fixedHeaderBackgroundColor});
+        $("#language-code-form  span").css({"color": fixedHeaderTextColor});
+        $("#fixed_header a").css({"color": fixedHeaderTextColor});
+        $("#lang-code").css({"color": fixedHeaderTextColor});
+
+        // Update widget setting for Header Widget.
+        let headerContent = $("#header_content");
+        if (node.background_color) {
+          headerNav.css({"background-color": node.background_color});
+        }
+        if (node.multiLangSetting && node.multiLangSetting.description) {
+          isHeaderContent = true
+          headerContent.html(node.multiLangSetting.description.description);
+          headerContent.css({"width": "100%"})
+        }
+        this.grid.update(headerElement, node.x, node.y, node.width, node.height);
+        headerElement.removeClass("hidden");
+      }
     };
 
     this.loadGrid = function (widgetListItems) {
@@ -222,7 +231,7 @@ const PageBodyGrid = function () {
             let community_id = $("#community-id").text();
             if (node.type === HEADER_TYPE && community_id) {
               this.addNewWidget(node, i);
-            } else if ([MAIN_CONTENT_TYPE, HEADER_TYPE].indexOf(node.type) == -1) {
+            } else if ([MAIN_CONTENT_TYPE, HEADER_TYPE].indexOf(node.type) === -1) {
               this.addNewWidget(node, i);
             }
         }
@@ -559,7 +568,7 @@ let WidgetTheme = function () {
                 template.border['border'] = '3px double'; //3px is necessary to display double type
              }
         }
-        let headerBorder = '';
+        let headerBorder;
         if (template === this.TEMPLATE_SIMPLE || template === this.TEMPLATE_SIDE_LINE) {
             headerBorder = 'border-top-right-radius: 0px; border-top-left-radius: 0px; ';
         }else {
@@ -597,16 +606,15 @@ let WidgetTheme = function () {
             noAutoHeight = "no-auto-height";
             overflowY = "";
         }
-        let result = '<div class="grid-stack-item widget-resize">' +
-            '    <div class="' + setClass +'" style="' + borderStyle + '">' +
-            header +
-            '        <div class="'+ panelClasses + ' ' + headerClass + ' ' + noAutoHeight + ' " style="padding-top: 30px; padding-bottom: 0!important;'
-                        + overflowY + overFlowX + this.buildCssText('background-color', backgroundColor) + ' "' + id + '>'
-                        + widget_data.body +
-            '        </div>' +
-            '    </div>' +
-            '</div>';
-        return result;
+      return '<div class="grid-stack-item widget-resize">' +
+          '    <div class="' + setClass + '" style="' + borderStyle + '">' +
+          header +
+          '        <div class="' + panelClasses + ' ' + headerClass + ' ' + noAutoHeight + ' " style="padding-top: 30px; padding-bottom: 0!important;'
+          + overflowY + overFlowX + this.buildCssText('background-color', backgroundColor) + ' "' + id + '>'
+          + widget_data.body +
+          '        </div>' +
+          '    </div>' +
+          '</div>';
     };
 
   this.validateWidgetHeight = function (widgetType, widgetData) {
@@ -803,50 +811,50 @@ function getWidgetDesignSetting() {
     // Display page loading.
     $(".lds-ring-background").removeClass("hidden");
 
-    request
-      .done(function(data) {
-        if (data.error) {
-          console.log(data.error);
-          toggleWidgetUI();
-          return;
-        } else {
-          widgetList = data["widget-settings"];
-          if (Array.isArray(widgetList) && widgetList.length) {
-            $("#page_body").removeClass("hidden");
-            $("#" + MAIN_CONTENTS).addClass("grid-stack-item");
-            $("#header").addClass("grid-stack-item no-scroll-bar");
-            $("#footer").addClass("grid-stack-item no-scroll-bar");
-
-            // Check browser/tab is active
-            if (!document.hidden) {
-              buildWidget();
-            } else {
-              // In case browser/tab is inactive,
-              // create an event build widget when browser/tab active
-              window.addEventListener("focus", buildWidget);
-            }
-          } else {
-            // Pages are able to not have main content, so hide if widget is not present
-            if (is_page) {
-              $("#" + MAIN_CONTENTS).hide();
-            }
-            if (community_id !== DEFAULT_REPOSITORY) {
-              $("#community_header").removeAttr("hidden");
-              $("footer > #community_footer").removeAttr("hidden");
-              $("#page_body").removeClass("hidden");
-            }
-          }
-        }
-        if (!document.hidden) {
-          toggleWidgetUI();
-        } else {
-          window.addEventListener("focus", toggleWidgetUI);
-        }
-      })
-      .fail(function() {
+  request
+    .done(function(data) {
+      if (data.error) {
         console.log(data.error);
         toggleWidgetUI();
-      });
+        return;
+      } else {
+        widgetList = data["widget-settings"];
+        if (Array.isArray(widgetList) && widgetList.length) {
+          $("#page_body").removeClass("hidden");
+          $("#" + MAIN_CONTENTS).addClass("grid-stack-item");
+          $("#header").addClass("grid-stack-item no-scroll-bar");
+          $("#footer").addClass("grid-stack-item no-scroll-bar");
+
+          // Check browser/tab is active
+          if (!document.hidden) {
+            buildWidget();
+          } else {
+            // In case browser/tab is inactive,
+            // create an event build widget when browser/tab active
+            window.addEventListener("focus", buildWidget);
+          }
+        } else {
+          // Pages are able to not have main content, so hide if widget is not present
+          if (is_page) {
+            $("#" + MAIN_CONTENTS).hide();
+          }
+          if (community_id !== DEFAULT_REPOSITORY) {
+            $("#community_header").removeAttr("hidden");
+            $("footer > #community_footer").removeAttr("hidden");
+            $("#page_body").removeClass("hidden");
+          }
+        }
+      }
+      if (!document.hidden) {
+        toggleWidgetUI();
+      } else {
+        window.addEventListener("focus", toggleWidgetUI);
+      }
+    })
+    .fail(function() {
+      console.log(data.error);
+      toggleWidgetUI();
+    });
 }
 
 /**
@@ -922,18 +930,6 @@ function removeSensor(sensor) {
 }
 
 /**
- * Update width of the Header widget when the browser is resized.
- */
-function updateWidthOfTheHeaderWidget() {
-  let headerContent = $("#header_content");
-  if (window.innerWidth < MIN_WIDTH) {
-    headerContent.css({"width": "100%"});
-  } else {
-    headerContent.css({"width": "calc(100vw - 490px)"});
-  }
-}
-
-/**
  * Fix bug layout when the browser is resized.
  */
 function fixBrowserResize() {
@@ -950,10 +946,6 @@ function fixBrowserResize() {
     }
   } else {
     isRegenerate = false;
-  }
-
-  if (isHeaderContent) {
-    updateWidthOfTheHeaderWidget();
   }
 
 }
@@ -1080,6 +1072,11 @@ function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
   }
 }
 
+/**
+ * Escape HTML
+ * @param unsafe
+ * @returns {*}
+ */
 function escapeHtml(unsafe) {
     return unsafe
          .replace(/&/g, "&amp;")

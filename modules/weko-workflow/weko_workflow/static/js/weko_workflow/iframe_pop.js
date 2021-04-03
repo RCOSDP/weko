@@ -43,9 +43,12 @@ require([
           if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
             parent.document.location.href = data.data.redirect;
           } else {
-            let redirectUrl = "/workflow/activity/detail/" + $("#activity_id").text().trim();
-            if (community_id) {
-              redirectUrl += '?community=' + community_id;
+            let redirectUrl = $('#current_guest_url').val();
+            if (!redirectUrl) {
+              redirectUrl = "/workflow/activity/detail/" + $("#activity_id").text().trim();
+              if (community_id) {
+                redirectUrl += '?community=' + community_id;
+              }
             }
             parent.document.location.href = redirectUrl;
           }
@@ -64,6 +67,9 @@ require([
         parent.document.location.href = "/workflow/activity/detail/" + $("#activity_id").text().trim();
       }
     });
+  });
+  $('#lnk_item_detail').on('click', function () {
+    $('#myModal').modal('show');
   });
   $('#btn-draft').on('click', function () {
     let _this = $(this);

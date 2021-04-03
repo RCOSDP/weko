@@ -92,6 +92,7 @@ require([
     jQuery.each(params, function (i, field) {
       if (field.value) {
         field.name += "_" + i;
+        field.value = field.value.trim();
         paramsAfterFilter.push(field);
       }
     });
@@ -221,4 +222,346 @@ require([
     $("#" + name + '_group').append(newRow);
   }
 
+  $('#btn_send_mail').click(function () {
+    if (wf_DataAll.length == 0)
+      getUsageReportData();
+    else
+      startPaging();
+  });
+  $('#btn_close').click(function () {
+    $('#popup_send').removeClass('in').css('display', 'none');
+  });
+  $('#btn_approve').click(function () {
+    $('#apply_spinner').append('<div class="spinner"></div>');
+    mail_template = $("#setTemplate").val();
+    has_error = false;
+    lstSelectCheckboxes.forEach(function (activity_id) {
+      $.ajax({
+        url: '/workflow/send_mail/' + activity_id + '/' + mail_template,
+        method: 'POST',
+        success: function (data) {
+          if (data.msg == "Error") {
+            has_error = true
+          }
+        }
+      });
+    });
+    setTimeout(function () {
+      $('.spinner').remove();
+      if (has_error) {
+        $('#popup_fail').addClass('in').css('display', 'block');
+      } else {
+        $('#popup_success').addClass('in').css('display', 'block');
+      }
+    }, 2000);
+    // 15745
+  });
+
+
+  //Click button OK
+  $('.btn_ok').click(function () {
+    $("#btn_Next").attr('disabled', true);
+    $('#popup_success, #popup_approve, #popup_fail').removeClass('in').css('display', 'none');
+    $(".checkbox-class, #checkAll").prop('checked', false);
+    listCheckbox();
+    lstSelectCheckboxes.clear();
+
+  });
+
+  // Whenever SelectBox is changed, re-update list activities
+  $('#setTemplate').on('change', function () {
+    // Clear all current data
+    lstSelectCheckboxes.clear();
+    $("#checkAll").prop("checked", false);
+    $("#btn_Next").attr('disabled', true);
+    var selectedTemplate = $(this).children("option:selected").val();
+    // Re-paging by selected mail template
+    pagination(pagingOptions, wf_DataFilter[selectedTemplate]);
+  })
+  //Click button Confirm
+  $('#btn_Next').click(function () {
+    $('#appendHTML, #label_template').empty();
+    listCheckbox();
+
+    $('#popup_approve').addClass('in').css('display', 'block');
+    let rows = wf_DataAll.filter(function (activity) {
+      return lstSelectCheckboxes.has(activity.activity_id);
+    });
+    // let rows;
+    let i = 1;
+
+    //render html table
+    $.each(rows, function (key, val) {
+      if (Object.keys(val).length > 0) {
+        const { activity_id, item, email } = val;
+        const td = `<tr><td>${i}</td>
+                    <td>${this.activity_id}</td>
+                    <td>${this.item}</td>
+                    <td>${this.email}</td></tr>`;
+        $('#appendHTML').append(td);
+        i++;
+      }
+    });
+
+    labelTemplate = $("#setTemplate :selected").text();
+    $('#label_template').append(labelTemplate);
+  });
+
+  //Click button close and Back
+  $('#btn_close_pop2, #btn_back').click(function () {
+    $('#popup_approve').removeClass('in').css('display', 'none');
+  });
+
+  //Click button check all
+  $("#checkAll").click(function () {
+    if ($(this).is(":checked")) {
+      $(".checkbox-class:not(:checked)").prop("checked", true);
+      wf_DataFilter[$('#setTemplate').val()].forEach(function (activity) {
+        lstSelectCheckboxes.add(activity.activity_id);
+      });
+      if (lstSelectCheckboxes.size > 0)
+        $("#btn_Next").removeAttr("disabled");
+    } else {
+      $(".checkbox-class").prop("checked", false);
+      lstSelectCheckboxes.clear();
+      $("#btn_Next").attr('disabled', true);
+    }
+  });
+
+  listCheckbox();
 });
+
+
+const mailUserGroup = $("#send_mail_user_group").text() ? $("#send_mail_user_group").text() : [];
+
+var lstMailUserGroup = JSON.parse(mailUserGroup);
+var lstSelectCheckboxes = new Set();
+var wf_DataFilter = {}
+var wf_DataAll = []
+
+
+var req_per_page = parseInt($("#req_per_page").text());
+var status_data = $("#action_list").text();
+var item_type_name = $("#item_type_name").text();
+
+// on page load collect data to load pagination as well as table
+const pagingOptions = { "req_per_page": req_per_page, "page_no": 1 };
+
+// At a time maximum allowed pages to be shown in pagination div
+
+var pagination_visible_pages = parseInt($("#pagination_visible_pages").text());
+
+
+// hide pages from pagination from beginning if more than pagination_visible_pages
+function hide_from_beginning(element) {
+  if (element.style.display === "" || element.style.display === "block") {
+    element.style.display = "none";
+  } else {
+    hide_from_beginning(element.nextSibling);
+  }
+}
+
+// hide pages from pagination ending if more than pagination_visible_pages
+function hide_from_end(element) {
+  if (element.style.display === "" || element.style.display === "block") {
+    element.style.display = "none";
+  } else {
+    hide_from_end(element.previousSibling);
+  }
+}
+
+// load data and style for active page
+function active_page(element, rows, req_per_page) {
+  var current_page = document.getElementsByClassName('active-page');
+  var next_link = document.getElementById('next_link');
+  var prev_link = document.getElementById('prev_link');
+  var next_tab = current_page[0].nextSibling;
+  var prev_tab = current_page[0].previousSibling;
+
+  current_page[0].className = current_page[0].className.replace("active-page", "");
+  if (element === "next") {
+    if (parseInt(next_tab.text).toString() === 'NaN') {
+      next_tab.previousSibling.className += " active-page";
+      next_tab.setAttribute("onclick", "return false");
+    } else {
+      next_tab.className += " active-page"
+      render_table_rows(rows, parseInt(req_per_page), parseInt(next_tab.text));
+      if (prev_link.getAttribute("onclick") === "return false") {
+        prev_link.setAttribute("onclick", `active_page('prev',\"${rows}\",${req_per_page})`);
+      }
+      if (next_tab.style.display === "none") {
+        next_tab.style.display = "block";
+        hide_from_beginning(prev_link.nextSibling)
+      }
+    }
+  } else if (element === "prev") {
+    if (parseInt(prev_tab.text).toString() === 'NaN') {
+      prev_tab.nextSibling.className += " active-page";
+      prev_tab.setAttribute("onclick", "return false");
+    } else {
+      prev_tab.className += " active-page";
+      render_table_rows(rows, parseInt(req_per_page), parseInt(prev_tab.text));
+      if (next_link.getAttribute("onclick") === "return false") {
+        next_link.setAttribute("onclick", `active_page('next',\"${rows}\",${req_per_page})`);
+      }
+      if (prev_tab.style.display === "none") {
+        prev_tab.style.display = "block";
+        hide_from_end(next_link.previousSibling)
+      }
+    }
+  } else {
+    element.className += "active-page";
+    render_table_rows(rows, parseInt(req_per_page), parseInt(element.text));
+    if (prev_link.getAttribute("onclick") === "return false") {
+      prev_link.setAttribute("onclick", `active_page('prev',\"${rows}\",${req_per_page})`);
+    }
+    if (next_link.getAttribute("onclick") === "return false") {
+      next_link.setAttribute("onclick", `active_page('next',\"${rows}\",${req_per_page})`);
+    }
+  }
+}
+
+// Render the table's row in table request-table
+function render_table_rows(rows, req_per_page, page_no) {
+  const response = JSON.parse(decodeURIComponent(escape(window.atob(rows))));
+  const resp = response.slice(req_per_page * (page_no - 1), req_per_page * page_no)
+  $('.check_table').empty()
+  let count = req_per_page * (page_no - 1) + 1;
+  resp.forEach(function (element) {
+    if (Object.keys(element).length > 0) {
+      const { activity_id, item, work_flow, email } = element;
+      let value_checkbox = activity_id;
+      if (lstSelectCheckboxes.has(value_checkbox.toString())) {
+        const td = `<tr id = "${activity_id}"><td scope="row" class="col_empty"><input class="checkbox-class" type="checkbox" checked value="${value_checkbox}"/></td>
+                <td class="col_empty">${count++}</td>
+                <td class="activity_id">${activity_id}</a></td>
+                <td>${item}</td>
+
+                <td class="col_empty">${work_flow}</td>
+                      <td class="col_empty">${status_data}</td>
+                <td>${email}</td></tr>`;
+        $('.check_table').append(td);
+      } else {
+        const td = `<tr id = "${activity_id}"><td scope="row" class="col_empty"><input class="checkbox-class" type="checkbox" value="${value_checkbox}"/></td>
+                <td class="col_empty">${count++}</td>
+                <td class="activity_id">${activity_id}</a></td>
+                <td>${item}</td>
+                <td class="col_empty">${work_flow}</td>
+                      <td class="col_empty">${status_data}</td>
+                <td>${email}</td></tr>`;
+        $('.check_table').append(td)
+      }
+    }
+  });
+  listCheckbox();
+}
+
+// Pagination logic implementation
+function pagination(data, wf_Data) {
+  if (!wf_Data) return;
+  const all_data = window.btoa(unescape(encodeURIComponent(JSON.stringify(wf_Data))));
+  let $pagination = $(".pagination.table_data");
+  $pagination.empty();
+  if (data.req_per_page !== 'ALL') {
+    let pager = `<a href="#" id="prev_link" onclick=active_page('prev',\"${all_data}\",${data.req_per_page})>&lt;</a>` +
+      `<a href="#" class="active-page" onclick=active_page(this,\"${all_data}\",${data.req_per_page})>1</a>`;
+    const total_page = Math.ceil(parseInt(wf_Data.length) / parseInt(data.req_per_page));
+    if (total_page < pagination_visible_pages) {
+      render_table_rows(all_data, data.req_per_page, data.page_no);
+      for (let num = 2; num <= total_page; num++) {
+        pager += `<a href="#" onclick=active_page(this,\"${all_data}\",${data.req_per_page})>${num}</a>`;
+      }
+    } else {
+      render_table_rows(all_data, data.req_per_page, data.page_no);
+      for (let num = 2; num <= pagination_visible_pages; num++) {
+        pager += `<a href="#" onclick=active_page(this,\"${all_data}\",${data.req_per_page})>${num}</a>`;
+      }
+      for (let num = pagination_visible_pages + 1; num <= total_page; num++) {
+        pager += `<a href="#" style="display:none;" onclick=active_page(this,\"${all_data}\",${data.req_per_page})>${num}</a>`;
+      }
+    }
+    pager += `<a href="#" id="next_link" onclick=active_page('next',\"${all_data}\",${data.req_per_page})>&gt;</a>`;
+    $pagination.append(pager);
+  } else {
+    render_table_rows(all_data, wf_Data.length, 1);
+  }
+}
+
+function startPaging() {
+  for (mailGroup in lstMailUserGroup) {
+    wf_DataFilter[mailGroup] = wf_DataAll.filter(function (activity) {
+      return lstMailUserGroup[mailGroup].indexOf(activity.user_role) > -1;
+    });
+  }
+  pagination(pagingOptions, wf_DataFilter[$('#setTemplate').val()]);
+  $('#popup_send').addClass('in').css('display', 'block');
+}
+//Array to hold the checked ids
+
+//Event listener to detect changes
+function listCheckbox() {
+  $('#appendHTML').empty();
+  $('.checkbox-class').change(function () {
+    let id = $(this).parents('tr').attr('id');
+    if ($(this).is(":checked")) {
+      lstSelectCheckboxes.add(id);
+      $("#btn_Next").removeAttr('disabled');
+    } else {
+      lstSelectCheckboxes.delete(id);
+      $("#checkAll").prop("checked", false);
+      if (lstSelectCheckboxes.size === 0) {
+        $("#btn_Next").attr('disabled', true);
+      }
+    }
+  });
+}
+
+function loadingController(isStop) {
+  if (isStop) {
+    $(".lds-ring-background").addClass("hidden");
+  }
+  else {
+    $(".lds-ring-background").removeClass("hidden");
+  }
+}
+
+function getUsageReportData() {
+  loadingController(false);
+  var urlPath = '/workflow/usage-report';
+  var sURL = window.location.search.substring(1);
+  if (!analyzeParams(sURL)) {
+    loadingController(true);
+    $('#popup_send').addClass('in').css('display', 'block');
+    return;
+  }
+  $.ajax({
+    url: urlPath + '?' + sURL,
+    method: 'GET',
+    success: function (res) {
+      wf_DataAll = res.activities;
+      startPaging();
+      loadingController(true);
+    },
+    error: function (error) {
+      console.error(error);
+      loadingController(true);
+    }
+  });
+}
+function analyzeParams(sURL) {
+  var lstParams = sURL.split('&');
+  // In case workflow and status has value but not match target workflow and status, do not exec request
+  var checkingConditions = { 'workflow': item_type_name, 'status': 'doing' }
+  wfLst = [];
+  statusLst = [];
+  for (var i = 0; i < lstParams.length; i++) {
+    var sParamArr = lstParams[i].split('=');
+    if (sParamArr[0].startsWith('workflow')) {
+      wfLst.push(decodeURIComponent(sParamArr[1]))
+    } else if (sParamArr[0].startsWith('status')) {
+      statusLst.push(sParamArr[1])
+    }
+  }
+  return (wfLst.length > 0 ? wfLst.indexOf(checkingConditions.workflow) > -1 : true) &&
+    (statusLst.length > 0 ? statusLst.indexOf(checkingConditions.status.toLowerCase()) > -1 : true);
+}

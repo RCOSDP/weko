@@ -1,0 +1,84 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}
+    <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {% assets "weko_admin_css" %}
+    <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% endblock %}
+
+{%- block javascript %}
+  {{ super() }}
+  {% assets "weko_admin_restricted_access" %}
+    <script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_admin_statistics_reactjs_lib" %}
+    <script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_admin_react_bootstrap_js" %}
+    <script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+  <script type="text/javascript"
+          src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+{%- endblock javascript %}
+
+{%- block body %}
+  {% from "weko_theme/macros/modal_page.html" import all_modal %}
+  {% set download_limit = _("Download Limit") %}
+  {% set expiration_date = _("Expiration Date") %}
+  <input id="init_data" type="hidden" value='{{ data }}'/>
+  <input id="content_file_download_label" type="hidden" value='{{ _("Content File Download") }}'/>
+  <input id="download_limit_label" type="hidden" value='{{ download_limit }}'/>
+  <input id="expiration_date_label" type="hidden" value='{{ expiration_date }}'/>
+  <input id="unlimited_label" type="hidden" value='{{ _("Unlimited") }}'/>
+  <input id="save_label" type="hidden" value='{{ _("Save") }}'/>
+  <input id="usage_report_workflow_access_label" type="hidden" value='{{ _("Usage Report Workflow Access") }}'/>
+  <input id="check_input_download" type="hidden"
+         value='{{ _("Must set a positive integer for %(name)s.", name=download_limit) }}'/>
+  <input id="check_input_expiration_date" type="hidden"
+         value='{{ _("Must set a positive integer for %(name)s.", name=expiration_date) }}'/>
+  <input id="empty_download" type="hidden" value='{{ _("Please set %(name)s.", name=download_limit) }}'/>
+  <input id="empty_expiration_date" type="hidden" value='{{ _("Please set %(name)s.", name=expiration_date) }}'/>
+
+  <input type="hidden" id="english" value='{{_("English")}}'/>
+  <input type="hidden" id="japanese" value='{{_("Japanese")}}'/>
+  <input type="hidden" id="terms_and_conditions" value='{{_("Terms and Conditions")}}'/>
+  <input type="hidden" id="new" value='{{_("Add")}}'/>
+  <input type="hidden" id="message_miss_data" value='{{_("Please input the Terms and Conditions in English.")}}'/>
+
+  <input type="hidden" id="const_items_per_page" value='{{ items_per_page}}'/>
+  <input type="hidden" id="label_activity" value='{{_("Activity")}}'/>
+  <input type="hidden" id="label_items" value='{{_("Item")}}'/>
+  <input type="hidden" id="label_workflow" value='{{_("WorkFlow")}}'/>
+  <input type="hidden" id="label_status" value='{{_("Status")}}'/>
+  <input type="hidden" id="label_user" value='{{_("User")}}'/>
+  <input type="hidden" id="label_usage_report_reminder_mail" value='{{_("Usage Report Reminder Email")}}'/>
+  <input type="hidden" id="label_confirm" value='{{_("Confirm Usage Mail")}}'/>
+  <input type="hidden" id="label_close" value='{{_("Close")}}'/>
+  <input type="hidden" id="label_send_mail" value='{{ _("Send Mail") }}'/>
+  <input type="hidden" id="msg_sent_success" value='{{_("Email is sent successfully.")}}'/>
+  <input type="hidden" id="msg_sent_failed" value='{{_("Failed to send mail.")}}'/>
+  <input type="hidden" id="label_action_doing" value='{{_("action_doing")}}'/>
+
+<div id="alerts"></div>
+  <div id="root" class="col-xs-12"></div>
+  {{ all_modal() }}
+{%- endblock body %}

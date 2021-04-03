@@ -23,17 +23,20 @@
 import re
 import uuid
 
-from flask import abort, jsonify, request, url_for
+from flask import abort, current_app, jsonify, request, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
+from weko_index_tree.models import Index
 from weko_records.api import ItemTypes
+from weko_records.models import ItemTypeProperty
 
 from .api import Action, Flow, WorkActivity, WorkFlow
 from .config import WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS
 from .models import WorkflowRole
+from .utils import recursive_get_specified_properties
 
 
 class FlowSettingView(BaseView):
@@ -59,8 +62,7 @@ class FlowSettingView(BaseView):
         """
         users = User.query.filter_by(active=True).all()
         roles = Role.query.all()
-        action = Action()
-        actions = action.get_action_list()
+        actions = self.get_actions()
         if '0' == flow_id:
             flow = None
             return self.render(
@@ -79,6 +81,7 @@ class FlowSettingView(BaseView):
             abort(404)
         workflow = Flow()
         flow = workflow.get_flow_detail(flow_id)
+        specified_properties = self.get_specified_properties()
         return self.render(
             'weko_workflow/admin/flow_detail.html',
             flow_id=flow_id,
@@ -87,8 +90,28 @@ class FlowSettingView(BaseView):
             users=users,
             roles=roles,
             actions=flow.flow_actions,
-            action_list=actions
+            action_list=actions,
+            specifed_properties=specified_properties
         )
+
+    @staticmethod
+    def get_specified_properties():
+        current_lang = current_i18n.language if current_i18n.language \
+            in ['en', 'ja'] else 'en'
+        result = ItemTypeProperty.query.filter_by(delflg=False).all()
+        specified_properties = []
+        for value in result:
+            properties = value.form
+            if properties:
+                result = recursive_get_specified_properties(properties)
+                if result:
+                    title_i18n = value.form.get('title_i18n', {}).get(
+                        current_lang, '')
+                    specified_properties.append({
+                        'value': result,
+                        'text': title_i18n if title_i18n else value.name
+                    })
+        return specified_properties
 
     @staticmethod
     def update_flow(flow_id):
@@ -147,13 +170,34 @@ class FlowSettingView(BaseView):
         return jsonify(code=code, msg=msg,
                        data={'redirect': url_for('flowsetting.index')})
 
+    @staticmethod
+    def get_actions():
+        """Get Actions info."""
+        actions = Action().get_action_list()
+        action_list = list()
+        for action in actions:
+            if action.action_name in current_app.config[
+                    'WEKO_WORKFLOW_ACTIONS']:
+                action_list.append(action)
+        return action_list
+
     @expose('/action/<string:flow_id>', methods=['POST'])
     def upt_flow_action(self, flow_id=0):
         """Update FlowAction Info."""
         actions = request.get_json()
         workflow = Flow()
         workflow.upt_flow_action(flow_id, actions)
-        return jsonify(code=0, msg=_('Updated flow action successfully'))
+        flow = workflow.get_flow_detail(flow_id)
+        actions = []
+        for action in flow.flow_actions:
+            actions.append({
+                'id': action.id,
+                'action_order': action.action_order,
+            })
+        return jsonify(
+            code=0,
+            msg=_('Updated flow action successfully'),
+            actions=actions)
 
 
 class WorkFlowSettingView(BaseView):
@@ -182,6 +226,8 @@ class WorkFlowSettingView(BaseView):
         workflows = workflow.get_workflow_list()
         role = Role.query.all()
         for wf in workflows:
+            index_tree = Index().get_index_by_id(wf.index_tree_id)
+            wf.index_tree = index_tree
             list_hide = Role.query.outerjoin(WorkflowRole) \
                 .filter(WorkflowRole.workflow_id == wf.id) \
                 .filter(WorkflowRole.role_id == Role.id) \
@@ -193,8 +239,9 @@ class WorkFlowSettingView(BaseView):
                 hides = []
             wf.display = ',<br>'.join(displays)
             wf.hide = ',<br>'.join(hides)
-        cur_lang = current_i18n.language if current_i18n.language else "en"
-        display_label = self.MULTI_LANGUAGE["display"].get(cur_lang, "Display")
+
+        display_label = self.get_language_workflows("display")
+
         return self.render(
             'weko_workflow/admin/workflow_list.html',
             workflows=workflows,
@@ -213,14 +260,13 @@ class WorkFlowSettingView(BaseView):
             itemtype_list = ItemTypes.get_latest_custorm_harvesting()
         flow_api = Flow()
         flow_list = flow_api.get_flow_list()
-        display = []
+        index_list = Index().get_all()
         hide = []
         role = Role.query.all()
-        cur_lang = current_i18n.language if current_i18n.language else "en"
-        display_label = self.MULTI_LANGUAGE["display"].get(cur_lang, "Display")
-        hide_label = self.MULTI_LANGUAGE["hide"].get(cur_lang, "Hide")
-        display_hide = self.MULTI_LANGUAGE["display_hide"].get(cur_lang,
-                                                               "Display/Hide")
+        display_label = self.get_language_workflows("display")
+        hide_label = self.get_language_workflows("hide")
+        display_hide = self.get_language_workflows("display_hide")
+
         if '0' == workflow_id:
             """Create new workflow"""
             return self.render(
@@ -228,12 +274,14 @@ class WorkFlowSettingView(BaseView):
                 workflow=None,
                 itemtype_list=itemtype_list,
                 flow_list=flow_list,
+                index_list=index_list,
                 hide_list=hide,
                 display_list=role,
                 display_label=display_label,
                 hide_label=hide_label,
                 display_hide_label=display_hide,
             )
+
         """Update the workflow info"""
         workflow = WorkFlow()
         workflows = workflow.get_workflow_detail(workflow_id)
@@ -252,6 +300,7 @@ class WorkFlowSettingView(BaseView):
             workflow=workflows,
             itemtype_list=itemtype_list,
             flow_list=flow_list,
+            index_list=index_list,
             hide_list=hide,
             display_list=display,
             display_label=display_label,
@@ -270,7 +319,9 @@ class WorkFlowSettingView(BaseView):
         form_workflow = dict(
             flows_name=json_data.get('flows_name', None),
             itemtype_id=json_data.get('itemtype_id', 0),
-            flow_id=json_data.get('flow_id', 0)
+            flow_id=json_data.get('flow_id', 0),
+            index_tree_id=json_data.get('index_id'),
+            open_restricted=json_data.get('open_restricted')
         )
         workflow = WorkFlow()
         if '0' == workflow_id:
@@ -383,6 +434,16 @@ class WorkFlowSettingView(BaseView):
                     )
                     db.session.execute(WorkflowRole.__table__.insert(), wfrole)
         db.session.commit()
+
+    @classmethod
+    def get_language_workflows(cls, key):
+        """Get language workflows.
+
+        :return:
+        """
+        cur_language = current_i18n.language
+        language = cur_language if cur_language in ['en', 'ja'] else "en"
+        return cls.MULTI_LANGUAGE[key].get(language)
 
 
 workflow_adminview = {
