@@ -12,9 +12,9 @@ from __future__ import absolute_import, print_function
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
 from flask_login import login_required
+from weko_accounts.utils import login_required_customize
 from weko_admin.utils import get_current_api_certification
 
-from .permissions import auto_fill_permission
 from .utils import get_cinii_record_data, get_crossref_record_data, \
     get_title_pubdate_path, get_workflow_journal
 
@@ -44,8 +44,7 @@ def index():
 
 
 @blueprint_api.route('/select_options', methods=['GET'])
-@login_required
-# @auto_fill_permission.require(http_exception=403)
+@login_required_customize
 def get_selection_option():
     """Get metadata  select options.
 
@@ -61,7 +60,7 @@ def get_selection_option():
 
 @blueprint_api.route('/get_title_pubdate_id/<int:item_type_id>',
                      methods=['GET'])
-@login_required
+@login_required_customize
 def get_title_pubdate_id(item_type_id=0):
     """Get title and pubdate id.
 
@@ -73,7 +72,7 @@ def get_title_pubdate_id(item_type_id=0):
 
 
 @blueprint_api.route('/get_auto_fill_record_data', methods=['POST'])
-@login_required
+@login_required_customize
 def get_auto_fill_record_data():
     """Get auto fill record data.
 
@@ -114,7 +113,7 @@ def get_auto_fill_record_data():
 
 @blueprint_api.route('/get_auto_fill_journal/<string:activity_id>',
                      methods=['GET'])
-@login_required
+@login_required_customize
 def get_item_auto_fill_journal(activity_id):
     """Get workflow journal data.
 

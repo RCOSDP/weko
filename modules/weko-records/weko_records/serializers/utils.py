@@ -68,6 +68,41 @@ def get_mapping(item_type_mapping, mapping_type):
     return schema
 
 
+def get_mapping_inactive_show_list(item_type_mapping, mapping_type):
+    """Format itemtype mapping data.
+
+    [Key:Schema, Value:ItemId]
+    :param item_type_mapping:
+    :param mapping_type:
+    :return:
+    """
+    def get_schema_key_info(schema, parent_key, schema_json={}):
+
+        for k, v in schema.items():
+            key = parent_key + '.' + k if parent_key else k
+            if isinstance(v, dict):
+                child_key = copy.deepcopy(key)
+                get_schema_key_info(v, child_key, schema_json)
+            else:
+                schema_json[key] = v
+
+        return schema_json
+
+    schema = {}
+    for item_id, maps in item_type_mapping.items():
+        if mapping_type in maps.keys() and isinstance(maps[mapping_type], dict):
+            item_schema = get_schema_key_info(maps[mapping_type], '', {})
+            temp_schema = {}
+            for k, v in item_schema.items():
+                tempId = item_id + '.' + v if v else item_id
+                if k in schema:
+                    k = tempId + k
+                temp_schema[k] = tempId
+            schema.update(temp_schema)
+
+    return schema
+
+
 def get_metadata_from_map(item_data, item_id):
     """Get item metadata from search result.
 

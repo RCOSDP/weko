@@ -68,10 +68,12 @@ from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
     get_root_item_option, get_sub_item_option
 from weko_user_profiles import UserProfile
-from weko_workflow.api import WorkActivity, WorkFlow
+from weko_workflow.api import WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     WEKO_SERVER_CNRI_HOST_LINK
 from weko_workflow.models import ActionStatusPolicy as ASP
+from weko_workflow.models import Activity, FlowAction, FlowActionRole, \
+    FlowDefine
 from weko_workflow.utils import IdentifierHandle
 
 
@@ -264,11 +266,13 @@ def get_user_information(user_id):
     """
     result = {
         'username': '',
-        'email': ''
+        'email': '',
+        'fullname': '',
     }
     user_info = UserProfile.get_by_userid(user_id)
     if user_info is not None:
         result['username'] = user_info.get_username
+        result['fullname'] = user_info.fullname
 
     metadata = MetaData()
     metadata.reflect(bind=db.engine)
@@ -442,12 +446,14 @@ def parse_ranking_new_items(result_data):
     return data_list
 
 
-def validate_form_input_data(result: dict, item_id: str, data: dict):
+def validate_form_input_data(
+        result: dict, item_id: str, data: dict):
     """Validate input data.
 
     :param result: result dictionary.
     :param item_id: item type identifier.
     :param data: form input data
+    :param activity_id: activity id
     """
     item_type = ItemTypes.get_by_id(item_id)
     json_schema = item_type.schema.copy()
@@ -781,7 +787,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                 record = WekoRecord.get_record_by_pid(record_id)
 
                 # Custom Record Metadata for export
-                hide_item_metadata_email_only(record)
+                hide_item_metadata(record)
                 replace_license_free(record, False)
 
                 self.records[record_id] = record
@@ -1532,7 +1538,8 @@ def to_files_js(record):
     if files is not None:
         for f in files:
             res.append({
-                'displaytype': f.get('displaytype', ''),
+                'displaytype': files_from_meta.get(str(f.version_id),
+                                                   {}).get("displaytype", ''),
                 'filename': f.get('filename', ''),
                 'mimetype': f.mimetype,
                 'licensetype': files_from_meta.get(str(f.version_id),
@@ -1669,44 +1676,85 @@ def update_index_tree_for_record(pid_value, index_tree_id):
     db.session.commit()
 
 
-def validate_user_mail(email):
+def validate_user_mail(users, activity_id, request_data, keys, result):
     """Validate user mail.
 
-    @param email:
+    @param result:
+    @param keys:
+    @param users:
+    @param activity_id:
+    @param request_data:
     @return:
     """
-    result = {}
+    result['validate_required_email'] = []
+    result['validate_register_in_system'] = []
     try:
-        if email != '':
-            result = {'results': '',
-                      'validation': '',
-                      'error': ''
-                      }
-            user_info = get_user_info_by_email(
-                email)
-            if user_info and user_info.get(
-                    'user_id') is not None:
-                if int(user_info.get('user_id')) == int(current_user.get_id()):
-                    result['validation'] = False
-                    result['error'] = _(
-                        "You cannot specify "
-                        "yourself in approval lists setting.")
-                else:
-                    result['results'] = user_info
-                    result['validation'] = True
-            else:
-                result['validation'] = False
+        for index, user in enumerate(users):
+            email = request_data.get(user)
+            user_info = get_user_info_by_email(email)
+            action_order = check_approval_email(activity_id, user)
+            if action_order:
+                if not email:
+                    result['validate_required_email'].append(keys[index])
+                elif not (user_info and user_info.get('user_id') is not None):
+                    result['validate_register_in_system'].append(keys[index])
+                if email and user_info and \
+                        user_info.get('user_id') is not None:
+                    update_action_handler(activity_id,
+                                          action_order,
+                                          user_info.get('user_id'))
+                    keys = True
+                    continue
+        result[
+            'validate_map_flow_and_item_type'] = check_approval_email_in_flow(
+            activity_id, users)
+
     except Exception as ex:
-        result['error'] = str(ex)
+        result['validation'] = False
 
     return result
 
 
-def update_action_handler(activity_id, action_id, user_id):
+def check_approval_email(activity_id, user):
+    """Check approval email.
+
+    @param user:
+    @param activity_id:
+    @return:
+    """
+    action_order = db.session.query(FlowAction.action_order) \
+        .outerjoin(FlowActionRole).outerjoin(FlowDefine) \
+        .outerjoin(Activity) \
+        .filter(Activity.activity_id == activity_id) \
+        .filter(FlowActionRole.specify_property == user) \
+        .first()
+    return action_order[0] if action_order and action_order[0] else None
+
+
+def check_approval_email_in_flow(activity_id, users):
+    """Count approval email.
+
+    @param users:
+    @param activity_id:
+    @return:
+    """
+    flow_action_role = FlowActionRole.query \
+        .outerjoin(FlowAction).outerjoin(FlowDefine) \
+        .outerjoin(Activity) \
+        .filter(Activity.activity_id == activity_id) \
+        .filter(FlowActionRole.specify_property.isnot(None)) \
+        .all()
+
+    map_list = [y for x in flow_action_role for y in users if
+                x.specify_property == y]
+    return True if len(map_list) == len(flow_action_role) else False
+
+
+def update_action_handler(activity_id, action_order, user_id):
     """Update action handler for each action of activity.
 
     :param activity_id:
-    :param action_id:
+    :param action_order:
     :param user_id:
     :return:
     """
@@ -1714,7 +1762,7 @@ def update_action_handler(activity_id, action_id, user_id):
     with db.session.begin_nested():
         activity_action = ActivityAction.query.filter_by(
             activity_id=activity_id,
-            action_id=action_id, ).one_or_none()
+            action_order=action_order).one_or_none()
         if activity_action:
             activity_action.action_handler = user_id
             db.session.merge(activity_action)
@@ -1728,21 +1776,15 @@ def validate_user_mail_and_index(request_data):
     :return:
     """
     users = request_data.get('user_to_check', [])
+    keys = request_data.get('user_key_to_check', [])
     auto_set_index_action = request_data.get('auto_set_index_action', False)
     activity_id = request_data.get('activity_id')
     result = {
         "index": True
     }
     try:
-        for user in users:
-            user_obj = request_data.get(user)
-            email = user_obj.get('mail')
-            validation_result = validate_user_mail(email)
-            if validation_result.get('validation') is True:
-                update_action_handler(activity_id, user_obj.get('action_id'),
-                                      validation_result.get('results').get(
-                                          'user_id'))
-            result[user] = validation_result
+        result = validate_user_mail(users, activity_id, request_data, keys,
+                                    result)
         if auto_set_index_action is True:
             is_existed_valid_index_tree_id = True if \
                 get_index_id(activity_id) else False
@@ -1793,27 +1835,6 @@ def set_multi_language_name(item, cur_lang):
             if 'name_i18n' in value \
                     and len(value['name_i18n'][cur_lang]) > 0:
                 value['name'] = value['name_i18n'][cur_lang]
-
-
-def validate_save_title_and_share_user_id(result, data):
-    """Save title and shared user id for activity.
-
-    :param result: json object
-    :param data: json object
-    :return: The result.
-    """
-    try:
-        if data and isinstance(data, dict):
-            activity_id = data['activity_id']
-            title = data['title']
-            shared_user_id = data['shared_user_id']
-            activity = WorkActivity()
-            activity.update_title_and_shared_user_id(activity_id, title,
-                                                     shared_user_id)
-    except Exception as ex:
-        result['is_valid'] = False
-        result['error'] = str(ex)
-    return result
 
 
 def get_data_authors_prefix_settings():
@@ -2430,6 +2451,489 @@ def check_item_has_doi(list_uuid):
     @return:
     """
     return True if filter_list_item_uuid_has_doi(list_uuid) else False
+
+
+def make_stats_tsv_with_permission(item_type_id, recids,
+                                   records_metadata, permissions):
+    """Prepare TSV data for each Item Types.
+
+    Arguments:
+        item_type_id    -- ItemType ID
+        recids          -- List records ID
+    Returns:
+        ret             -- Key properties
+        ret_label       -- Label properties
+        records.attr_output -- Record data
+
+    """
+    from weko_records_ui.views import escape_str
+    from weko_records_ui.utils import check_items_settings, hide_by_email
+
+    def _get_root_item_option(item_id, item, sub_form={'title_i18n': {}}):
+        """Handle if is root item."""
+        _id = '.metadata.{}'.format(item_id)
+        _name = sub_form.get('title_i18n', {}).get(
+            permissions['current_language']()) or item.get('title')
+
+        _option = []
+        if item.get('option').get('required'):
+            _option.append('Required')
+        if item.get('option').get('hidden'):
+            _option.append('Hide')
+        if item.get('option').get('multiple'):
+            _option.append('Allow Multiple')
+            _id += '[0]'
+            _name += '[0]'
+
+        return _id, _name, _option
+
+    item_type = ItemTypes.get_by_id(item_type_id).render
+    list_hide = get_item_from_option(item_type_id)
+    hide_permission = permissions['permission_show_hide'](item_type_id)
+    if hide_permission and item_type and item_type.get('table_row'):
+        for it in list_hide:
+            if it in item_type.get('table_row'):
+                item_type['table_row'].remove(it)
+
+    table_row_properties = item_type['table_row_map']['schema'].get(
+        'properties')
+
+    class RecordsManager:
+        """Management data for exporting records."""
+
+        first_recid = 0
+        cur_recid = 0
+        recids = []
+        records = {}
+        attr_data = {}
+        attr_output = {}
+
+        def __init__(self, record_ids, records_metadata):
+            """Class initialization."""
+            def hide_metadata_email(record):
+                """Hiding emails only.
+
+                :param name_keys:
+                :param lang_keys:
+                :param datas:
+                :return:
+                """
+                check_items_settings()
+
+                record['weko_creator_id'] = record.get('owner')
+
+                if permissions['hide_meta_data_for_role'](record) and \
+                        not current_app.config['EMAIL_DISPLAY_FLG']:
+                    record = hide_by_email(record)
+
+                    return True
+
+                record.pop('weko_creator_id')
+                return False
+
+            self.recids = record_ids
+            self.first_recid = record_ids[0]
+            for record_id in record_ids:
+                record = records_metadata.get(record_id)
+
+                # Custom Record Metadata for export
+                hide_metadata_email(record)
+                replace_license_free(record, False)
+
+                self.records[record_id] = record
+                self.attr_output[record_id] = []
+
+        def get_max_ins(self, attr):
+            """Get max data each main property in all exporting records."""
+            largest_size = 1
+            self.attr_data[attr] = {'max_size': 0}
+            for record in self.records:
+                if isinstance(self.records[record].get(attr), dict) \
+                    and self.records[record].get(attr).get(
+                        'attribute_value_mlt'):
+                    self.attr_data[attr][record] = self.records[record][attr][
+                        'attribute_value_mlt']
+                else:
+                    if self.records[record].get(attr):
+                        self.attr_data[attr][record] = \
+                            self.records[record].get(attr)
+                    else:
+                        self.attr_data[attr][record] = []
+                rec_size = len(self.attr_data[attr][record])
+                if rec_size > largest_size:
+                    largest_size = rec_size
+            self.attr_data[attr]['max_size'] = largest_size
+
+            return self.attr_data[attr]['max_size']
+
+        def get_max_ins_feedback_mail(self):
+            """Get max data each feedback mail in all exporting records."""
+            largest_size = 1
+            self.attr_data['feedback_mail_list'] = {'max_size': 0}
+            for record_id, record in self.records.items():
+                if permissions['check_created_id'](record):
+                    mail_list = FeedbackMailList.get_mail_list_by_item_id(
+                        record.id)
+                    self.attr_data['feedback_mail_list'][record_id] = [
+                        mail.get('email') for mail in mail_list]
+                    if len(mail_list) > largest_size:
+                        largest_size = len(mail_list)
+            self.attr_data['feedback_mail_list']['max_size'] = largest_size
+
+            return self.attr_data['feedback_mail_list']['max_size']
+
+        def get_max_items(self, item_attrs):
+            """Get max data each sub property in all exporting records."""
+            max_length = 0
+            list_attr = []
+            for attr in item_attrs.split('.'):
+                index_left_racket = attr.find('[')
+                if index_left_racket >= 0:
+                    list_attr.extend(
+                        [attr[:index_left_racket],
+                         attr[index_left_racket:]]
+                    )
+                else:
+                    list_attr.append(attr)
+
+            level = len(list_attr)
+            if level == 1:
+                return self.attr_data[item_attrs]['max_size']
+            elif level > 1:
+                max_length = 1
+                for record in self.records:
+                    _data = self.records[record].get(list_attr[0])
+                    if _data:
+                        _data = _data['attribute_value_mlt']
+                        for attr in list_attr[1:]:
+                            if re.search(r'^\[\d+\]$', attr):
+                                idx = int(attr[1:-1])
+                                if isinstance(_data, list) \
+                                        and len(_data) > idx:
+                                    _data = _data[idx]
+                                else:
+                                    _data = []
+                                    break
+                            elif isinstance(_data, list):
+                                _data = _data[0]
+                                if isinstance(_data, dict) and _data.get(attr):
+                                    _data = _data.get(attr)
+                            elif isinstance(_data, dict) and _data.get(attr):
+                                _data = _data.get(attr)
+                            else:
+                                _data = []
+                                break
+                        if isinstance(_data, list) and len(_data) > max_length:
+                            max_length = len(_data)
+            return max_length
+
+        def get_subs_item(self,
+                          item_key,
+                          item_label,
+                          properties,
+                          data=None,
+                          is_object=False):
+            """Building key, label and data from key properties.
+
+            Arguments:
+                item_key    -- Key properties
+                item_label  -- Label properties
+                properties  -- Data properties
+                data        -- Record data
+                is_object   -- Is objecting property?
+            Returns:
+                o_ret       -- Key properties
+                o_ret_label -- Label properties
+                ret_data    -- Record data
+
+            """
+            o_ret = []
+            o_ret_label = []
+            ret_data = []
+            max_items = self.get_max_items(item_key)
+            max_items = 1 if is_object else max_items
+            for idx in range(max_items):
+                key_list = []
+                key_label = []
+                key_data = []
+                for key in sorted(properties):
+                    if not is_object:
+                        new_key = '{}[{}].{}'.format(
+                            item_key, str(idx), key)
+                        new_label = '{}[{}].{}'.format(
+                            item_label, str(idx), properties[key].get('title'))
+                    else:
+                        new_key = '{}.{}'.format(item_key, key)
+                        new_label = '{}.{}'.format(
+                            item_label, properties[key].get('title'))
+
+                    if properties[key].get('format', '') == 'checkboxes':
+                        new_key += '[{}]'
+                        new_label += '[{}]'
+                        if isinstance(data, dict):
+                            data = [data]
+                        if data and data[idx].get(key):
+                            for idx_c in range(len(data[idx][key])):
+                                key_list.append(new_key.format(idx_c))
+                                key_label.append(new_label.format(idx_c))
+                                key_data.append(data[idx][key][idx_c])
+                        else:
+                            key_list.append(new_key.format('0'))
+                            key_label.append(new_label.format('0'))
+                            key_data.append('')
+                    elif properties[key]['type'] in ['array', 'object']:
+                        if data and idx < len(data) and data[idx].get(key):
+                            m_data = data[idx][key]
+                        else:
+                            m_data = None
+
+                        if properties[key]['type'] == 'object':
+                            new_properties = properties[key]['properties']
+                            new_is_object = True
+                        else:
+                            new_properties = \
+                                properties[key]['items']['properties']
+                            new_is_object = False
+
+                        sub, sublabel, subdata = self.get_subs_item(
+                            new_key, new_label, new_properties,
+                            m_data, new_is_object)
+                        key_list.extend(sub)
+                        key_label.extend(sublabel)
+                        key_data.extend(subdata)
+                    else:
+                        if 'iscreator' in new_key:
+                            continue
+                        if isinstance(data, dict):
+                            data = [data]
+                        key_list.append(new_key)
+                        key_label.append(new_label)
+                        if data and idx < len(data) and data[idx].get(key):
+                            key_data.append(escape_str(data[idx][key]))
+                        else:
+                            key_data.append('')
+
+                key_list_len = len(key_list)
+                for key_index in range(key_list_len):
+                    item_key_split = item_key.split('.')
+                    if 'filename' in key_list[key_index]:
+                        key_list.insert(0, '.file_path[{}]'.format(
+                            str(idx)))
+                        key_label.insert(0, '.ファイルパス[{}]'.format(
+                            str(idx)))
+                        if key_data[key_index]:
+                            key_data.insert(0, 'recid_{}/{}'.format(str(
+                                self.cur_recid), key_data[key_index]))
+                        else:
+                            key_data.insert(0, '')
+                        break
+                    elif 'thumbnail_label' in key_list[key_index] \
+                            and len(item_key_split) == 2:
+                        if '[' in item_key_split[0]:
+                            key_list.insert(0, '.thumbnail_path[{}]'.format(
+                                str(idx)))
+                            key_label.insert(0, '.サムネイルパス[{}]'.format(
+                                str(idx)))
+                        else:
+                            key_list.insert(0, '.thumbnail_path')
+                            key_label.insert(0, '.サムネイルパス')
+                        if key_data[key_index]:
+                            key_data.insert(0, 'recid_{}/{}'.format(str(
+                                self.cur_recid), key_data[key_index]))
+                        else:
+                            key_data.insert(0, '')
+                        break
+
+                o_ret.extend(key_list)
+                o_ret_label.extend(key_label)
+                ret_data.extend(key_data)
+
+            return o_ret, o_ret_label, ret_data
+
+    records = RecordsManager(recids, records_metadata)
+
+    ret = ['#.id', '.uri']
+    ret_label = ['#ID', 'URI']
+
+    max_path = records.get_max_ins('path')
+    for i in range(max_path):
+        ret.append('.metadata.path[{}]'.format(i))
+        ret.append('.pos_index[{}]'.format(i))
+        ret_label.append('.IndexID[{}]'.format(i))
+        ret_label.append('.POS_INDEX[{}]'.format(i))
+
+    ret.append('.publish_status')
+    ret_label.append('.PUBLISH_STATUS')
+
+    max_feedback_mail = records.get_max_ins_feedback_mail()
+    for i in range(max_feedback_mail):
+        ret.append('.feedback_mail[{}]'.format(i))
+        ret_label.append('.FEEDBACK_MAIL[{}]'.format(i))
+
+    ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
+    ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
+    ret.append('.metadata.pubdate')
+    ret_label.append('公開日' if
+                     permissions['current_language']() == 'ja' else 'PubDate')
+
+    for recid in recids:
+        record = records.records[recid]
+        paths = records.attr_data['path'][recid]
+        for path in paths:
+            records.attr_output[recid].append(path)
+            index_ids = path.split('/')
+            pos_index = []
+            for index_id in index_ids:
+                index_tree = Indexes.get_index(index_id)
+                index_name = ''
+                if index_tree:
+                    index_name = index_tree.index_name_english.replace(
+                        '/', r'\/')
+                pos_index.append(index_name)
+            records.attr_output[recid].append('/'.join(pos_index))
+        records.attr_output[recid].extend(
+            [''] * (max_path * 2 - len(records.attr_output[recid]))
+        )
+
+        records.attr_output[recid].append(
+            'public' if record['publish_status'] == '0' else 'private')
+        feedback_mail_list = records.attr_data['feedback_mail_list'] \
+            .get(recid, [])
+        records.attr_output[recid].extend(feedback_mail_list)
+        records.attr_output[recid].extend(
+            [''] * (max_feedback_mail - len(feedback_mail_list))
+        )
+
+        pid_cnri = record.pid_cnri
+        cnri = ''
+        if pid_cnri:
+            cnri = pid_cnri.pid_value.replace(WEKO_SERVER_CNRI_HOST_LINK, '')
+        records.attr_output[recid].append(cnri)
+
+        identifier = IdentifierHandle(record.pid_recid.object_uuid)
+        doi_value, doi_type = identifier.get_idt_registration_data()
+        doi_type_str = doi_type[0] if doi_type and doi_type[0] else ''
+        doi_str = doi_value[0] if doi_value and doi_value[0] else ''
+        if doi_type_str and doi_str:
+            doi_domain = ''
+            if doi_type_str == WEKO_IMPORT_DOI_TYPE[0]:
+                doi_domain = IDENTIFIER_GRANT_LIST[1][2]
+            elif doi_type_str == WEKO_IMPORT_DOI_TYPE[1]:
+                doi_domain = IDENTIFIER_GRANT_LIST[2][2]
+            elif doi_type_str == WEKO_IMPORT_DOI_TYPE[2]:
+                doi_domain = IDENTIFIER_GRANT_LIST[3][2]
+            elif doi_type_str == WEKO_IMPORT_DOI_TYPE[3]:
+                doi_domain = IDENTIFIER_GRANT_LIST[4][2]
+            if doi_domain and doi_str.startswith(doi_domain):
+                doi_str = doi_str.replace(doi_domain + '/', '', 1)
+        records.attr_output[recid].extend([
+            doi_type_str,
+            doi_str
+        ])
+
+        records.attr_output[recid].append('')
+        records.attr_output[recid].append(record[
+            'pubdate']['attribute_value'])
+
+    for item_key in item_type.get('table_row'):
+        item = table_row_properties.get(item_key)
+        records.get_max_ins(item_key)
+        keys = []
+        labels = []
+        for recid in recids:
+            records.cur_recid = recid
+            if item.get('type') == 'array':
+                key, label, data = records.get_subs_item(
+                    item_key,
+                    item.get('title'),
+                    item['items']['properties'],
+                    records.attr_data[item_key][recid]
+                )
+                if not keys:
+                    keys = key
+                if not labels:
+                    labels = label
+                records.attr_output[recid].extend(data)
+            elif item.get('type') == 'object':
+                key, label, data = records.get_subs_item(
+                    item_key,
+                    item.get('title'),
+                    item['properties'],
+                    records.attr_data[item_key][recid],
+                    True
+                )
+                if not keys:
+                    keys = key
+                if not labels:
+                    labels = label
+                records.attr_output[recid].extend(data)
+            else:
+                if not keys:
+                    keys = [item_key]
+                if not labels:
+                    labels = [item.get('title')]
+                data = records.attr_data[item_key].get(recid) or ['']
+                records.attr_output[recid].extend(
+                    data.get("attribute_value", ""))
+
+        new_keys = []
+        for key in keys:
+            if 'file_path' not in key and 'thumbnail_path' not in key:
+                key = '.metadata.{}'.format(key)
+            new_keys.append(key)
+        ret.extend(new_keys)
+        ret_label.extend(labels)
+
+    ret_system = []
+    ret_option = []
+    multiple_option = ['.metadata.path', '.pos_index',
+                       '.feedback_mail', '.file_path', '.thumbnail_path']
+    meta_list = item_type.get('meta_list', {})
+    meta_list.update(item_type.get('meta_fix', {}))
+    form = item_type.get('table_row_map', {}).get('form', {})
+    del_num = 0
+    total_col = len(ret)
+    for index in range(total_col):
+        _id = ret[index - del_num]
+        key = re.sub(r'\[\d+\]', '[]', _id.replace('.metadata.', ''))
+        root_key = key.split('.')[0].replace('[]', '')
+        if root_key in meta_list:
+            is_system = check_sub_item_is_system(key, form)
+            ret_system.append('System' if is_system else '')
+
+            _, _, root_option = _get_root_item_option(
+                root_key,
+                meta_list.get(root_key)
+            )
+            sub_options = get_sub_item_option(key, form)
+            if not sub_options:
+                ret_option.append(', '.join(root_option))
+            else:
+                if hide_permission and 'Hide' in sub_options:
+                    del ret[index - del_num]
+                    del ret_label[index - del_num]
+                    del ret_system[index - del_num]
+                    for recid in recids:
+                        del records.attr_output[recid][index - del_num - 2]
+                    del_num += 1
+                else:
+                    ret_option.append(
+                        ', '.join(list(set(root_option + sub_options)))
+                    )
+        elif key == '#.id':
+            ret_system.append('#')
+            ret_option.append('#')
+        elif key == '.edit_mode' or key == '.publish_status':
+            ret_system.append('')
+            ret_option.append('Required')
+        elif '[' in _id and _id.split('[')[0] in multiple_option:
+            ret_system.append('')
+            ret_option.append('Allow Multiple')
+        else:
+            ret_system.append('')
+            ret_option.append('')
+
+    return [ret, ret_label, ret_system, ret_option], records.attr_output
 
 
 def check_item_is_being_edit(

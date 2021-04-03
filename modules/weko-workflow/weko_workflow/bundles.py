@@ -86,3 +86,8 @@ css_datepicker_workflow = Bundle(
     'css/weko_workflow/bootstrap-datepicker3.standalone.min.css',
     output="gen/bootstrap-datepicker3.css"
 )
+
+js_admin_flow_detail = Bundle(
+    'js/weko_workflow/admin/flow_detail.js',
+    output="gen/weko_flow_detail.%(version)s.js",
+)

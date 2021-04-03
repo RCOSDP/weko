@@ -250,7 +250,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
             if action in ('move', 'all'):
                 result = self.record_class. \
                     delete_by_action(action, index_id, res.path)
-                if not result:
+                if result is None:
                     raise IndexBaseRESTError(
                         description='Could not delete data.')
             else:

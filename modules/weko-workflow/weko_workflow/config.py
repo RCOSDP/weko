@@ -35,7 +35,6 @@ WEKO_WORKFLOW_OAPOLICY_CACHE_TTL = 24 * 60 * 60
 WEKO_WORKFLOW_ACTIVITY_ID_FORMAT = 'A-{}-{}'
 """Activity Id's format (A-YYYYMMDD-NNNNN with NNNNN starts from 00001)."""
 
-
 WEKO_WORKFLOW_ACTION_ENDPOINTS = {
     'item_login': {
         'endpoint': 'weko_items_ui.index',
@@ -86,11 +85,164 @@ WEKO_SERVER_CNRI_HOST_LINK = 'http://hdl.handle.net/'
 WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS = True
 """Toggle display harvesting items in Workflow list."""
 
+WEKO_WORKFLOW_ACTION_START = 'Start'
+"""Start Action"""
+
+WEKO_WORKFLOW_ACTION_END = 'End'
+"""End Action"""
+
+WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION = 'Item Registration'
+"""Item Registration Action"""
+
+WEKO_WORKFLOW_ACTION_APPROVAL = 'Approval'
+"""Approval Action"""
+
+WEKO_WORKFLOW_ACTION_ITEM_LINK = 'Item Link'
+"""Item Link Action"""
+
+WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION = 'OA Policy Confirmation'
+"""OA Policy Confirmation Action"""
+
+WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT = 'Identifier Grant'
+"""Identifier Grant Action"""
+
+WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION = ''
+"""Action Item Registration for Usage Application"""
+
+WEKO_WORKFLOW_ACTION_ADMINISTRATOR = ''
+"""Action Approval by Administrator"""
+
+WEKO_WORKFLOW_ACTION_GUARANTOR = ''
+"""Action Approval by Guarantor"""
+
+WEKO_WORKFLOW_ACTION_ADVISOR = ''
+"""Action Approval by Advisor"""
+
+WEKO_WORKFLOW_ACTIONS = [
+    WEKO_WORKFLOW_ACTION_START,
+    WEKO_WORKFLOW_ACTION_END,
+    WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,
+    WEKO_WORKFLOW_ACTION_APPROVAL,
+    WEKO_WORKFLOW_ACTION_ITEM_LINK,
+    WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,
+    WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT
+]
+"""Action list"""
+
+WEKO_WORKFLOW_COLUMNS = [
+    'updated',
+    'activity_id',
+    'title',
+    'flows_name',
+    'action_name',
+    'StatusDesc',
+    'email'
+]
+"""Work flow activity columns"""
+
+WEKO_WORKFLOW_FILTER_COLUMNS = [
+    'workflow',
+    'user',
+    'item',
+    'status'
+]
+"""Work flow filters"""
+
+WEKO_WORKFLOW_VALIDATION_ENABLE = False
+"""Enable validation on Flow List screen"""
+
+WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL = True
+
+WEKO_WORKFLOW_ENABLE_AUTO_SET_INDEX_FOR_ITEM_TYPE = False
+"""Enable showing index selection for item type"""
+
+WEKO_WORKFLOW_ENABLE_SHOWING_TERM_OF_USE = False
+"""Enable showing term of use"""
+
 WEKO_WORKFLOW_ENABLE_FEEDBACK_MAIL = True
 """Enable showing function feed back mail"""
 
 WEKO_WORKFLOW_ENABLE_CONTRIBUTOR = True
 """Enable Contributor"""
+
+WEKO_WORKFLOW_TERM_AND_CONDITION_FILE_LANGUAGES = []
+"""Term and condition file language list"""
+
+WEKO_WORKFLOW_TERM_AND_CONDITION_FILE_LOCATION = ""
+"""Term and condition file location"""
+
+WEKO_WORKFLOW_TERM_AND_CONDITION_FILE_EXTENSION = ''
+"""Term and condition file extension"""
+
+WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY = False
+""" Show activity to tabs: Todo, Wait, All """
+
+WEKO_WORKFLOW_CONTINUE_APPROVAL = False
+
+WEKO_WORKFLOW_ENGLISH_MAIL_TEMPLATE_FOLDER_PATH = ''
+WEKO_WORKFLOW_JAPANESE_MAIL_TEMPLATE_FOLDER_PATH = ''
+WEKO_WORKFLOW_MAIL_TEMPLATE_FOLDER_PATH = ''
+"""Email template path"""
+
+WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE_PERFECTURE_AND_LOCATION_DATA_OF_GENERAL_USER = ''
+"""Receiving Usage Application <Other than Perfecture Data & Location Data: General user> mail template"""
+WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE_PERFECTURE_AND_LOCATION_DATA_OF_STUDENT_OR_GRADUATED_STUDENT = ''
+"""Receiving Usage Application <Other than Perfecture Data & Location Data: Graduated Student OR Student> mail template"""
+
+WEKO_WORKFLOW_PERFECTURE_OR_LOCATION_DATA_OF_GENERAL_USER = ''
+"""Receiving Usage Application <Other than Perfecture Data & Location Data: Graduated Student OR Student> mail template"""
+WEKO_WORKFLOW_PERFECTURE_OR_LOCATION_DATA_OF_STUDENT_OR_GRADUATED_STUDENT = ''
+"""Receiving Usage Application <Perfecture Data & Location Data: General user> mail template"""
+
+WEKO_WORKFLOW_REQUEST_APPROVAL_TO_ADVISOR_OF_USAGE_APP = ''
+"""Request Approval to the Advisor of Usage Application mail template"""
+WEKO_WORKFLOW_REQUEST_APPROVAL_TO_GUARANTOR_OF_USAGE_APP = ''
+"""Request Approval to the Guarantor of Usage Application mail template"""
+
+WEKO_WORKFLOW_APPROVE_USAGE_APP_BESIDE_LOCATION_DATA = ''
+"""Approve Usage Application <Other than Location> mail template"""
+WEKO_WORKFLOW_APPROVE_LOCATION_DATA = ''
+"""Approve Usage Application  <Location data> mail template"""
+
+WEKO_WORKFLOW_REMIND_SUBMIT_DATA_USAGE_REPORT_FOR_USER_BESIDE_STUDENT = ''
+"""Remind to submit the Data Usage Report <Other than Student> mail template"""
+WEKO_WORKFLOW_REMIND_SUBMIT_DATA_USAGE_REPORT_FOR_STUDENT = ''
+"""Remind to submit the Data Usage Report <Student> mail template"""
+
+WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME = ''
+
+WEKO_WORKFLOW_PER_PAGE = 1
+"""Number of activity per page"""
+
+WEKO_WORKFOW_PAGINATION_VISIBLE_PAGES = 1
+"""Number of pagination visible pages"""
+
+WEKO_WORKFLOW_SELECT_DICT = []
+"""Id and name of mail pattern for reminder mail"""
+
+WEKO_WORKFLOW_ACTION = ""
+"""Action status of activities were specialized to send reminder mail"""
+
+WEKO_WORKFLOW_RECEIVE_USAGE_REPORT = ""
+"""Receiving Usaage Report mail template's filename"""
+
+WEKO_WORKFLOW_RECEIVE_OUTPUT_REGISTRATION = ""
+"""Receiving Output Registration mail template's filename"""
+
+WEKO_WORKFLOW_APPROVE_USAGE_REPORT = ""
+"""Approve Usaage Report mail template's filename"""
+
+WEKO_WORKFLOW_APPROVE_OUTPUT_REGISTRATION = ""
+"""Approve Output Registration mail template's filename"""
+
+WEKO_WORKFLOW_ACCESS_ACTIVITY_URL = ""
+"""Template access the URL"""
+
+WEKO_WORKFLOW_USAGE_REPORT_ACTIVITY_URL = ""
+"""Template access the URL"""
+
+WEKO_WORKFLOW_DATE_FORMAT = "%Y-%m-%d"
+"""Date format string."""
 
 WEKO_WORKFLOW_TODO_TAB = 'todo'
 
@@ -103,3 +255,37 @@ WEKO_WORKFLOW_IDENTIFIER_GRANT_DOI = 0
 
 WEKO_WORKFLOW_IDENTIFIER_GRANT_WITHDRAWN = -3
 """Identifier grant was withdrawn."""
+
+WEKO_WORKFLOW_SEND_MAIL_USER_GROUP = {}
+
+WEKO_WORKFLOW_FILTER_PARAMS = [
+    'createdfrom', 'createdto', 'workflow', 'user', 'item', 'status', 'tab',
+    'sizewait', 'sizetodo', 'sizeall', 'pagesall', 'pagestodo', 'pageswait'
+]
+
+WEKO_WORKFLOW_ACTIVITY_TOKEN_PATTERN = "activity={} file_name={} date={} email={}"
+"""Token pattern."""
+
+WEKO_WORKFLOW_APPROVE_DONE = 'email_pattern_approval_done.tpl'
+"""Mail template for Done Approval"""
+
+WEKO_WORKFLOW_APPROVE_REJECTED = 'email_pattern_approval_rejected.tpl'
+"""Mail template for Rejected Approval"""
+
+WEKO_WORKFLOW_REQUEST_APPROVAL = 'email_pattern_request_approval.tpl'
+"""Mail template for Requested Approval"""
+
+WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT = 'email_pattern_request_for_register_usage_report.tpl'
+"""Mail template for Request for register Data Usage Report"""
+
+WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST = [31001, 31002]
+
+WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST = [31003]
+
+WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TITLE = '利用申請'
+
+WEKO_WORKFLOW_USAGE_REPORT_ITEM_TITLE = '利用報告'
+
+WEKO_WORKFLOW_RESTRICTED_ACCESS_APPROVAL_DATE = 'subitem_restricted_access_approval_date'
+
+WEKO_WORKFLOW_RESTRICTED_ACCESS_USAGE_REPORT_ID = 'subitem_restricted_access_usage_report_id'

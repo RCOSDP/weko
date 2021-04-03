@@ -23,6 +23,9 @@ const SAVE_WIDGET_LAYOUT_SETTING_URL = "/api/admin/save_widget_layout_setting";
 const LOAD_WIDGET_DESIGN_SETTING_URL = "/api/admin/load_widget_design_setting";
 const LOAD_WIDGET_DESIGN_PAGE_SETTING_URL = '/api/admin/load_widget_design_page_setting/';
 
+let windowObjectReference = null;
+let previousUrl; /* global variable that will store the
+                    url currently in the secondary window */
 /**
  * Repository combo box.
  */
@@ -1078,7 +1081,14 @@ var PreviewGrid = new function () {
     }
     let template = '<div data-type="' + node.type + '" data-name="' + node.name + '" data-id="' + node.id + '"'
       + '" data-widget_id="' + node.widget_id + '"' + autoPosition + createdDate + '>'
-      + ' <div class="center-block text-right"><div class="glyphicon glyphicon-remove" style="z-index: 90;"></div></div>'
+      + ' <div class="center-block" style="margin-top: 4px;">'
+      + '   <div class="col-xs-6 text-left" style="z-index: 90;">'
+      + '     <div class="glyphicon glyphicon-cog pointer" data-id="' + node.widget_id + '"></div>'
+      + '   </div>'
+      + '   <div class="col-xs-6 text-right" style="z-index: 90;">'
+      + '      <div class="glyphicon glyphicon-remove pointer"></div>'
+      + '   </div>'
+      + '</div>'
       + ' <div class="grid-stack-item-content">'
       + '     <span class="widget-label">&lt;' + node.type + '&gt;</span>'
       + '     <span class="widget-label">' + node.name + '</span>'
@@ -1147,6 +1157,7 @@ function addWidget() {
         disableFooterButton(true);
       }
       removeWidget();
+      editWidget();
     });
   });
 
@@ -1183,6 +1194,9 @@ function loadWidgetList(widgetListItems) {
     widgetList.addWidget($(
       '<div>'
       + '<div class="grid-stack-item-content">'
+      + ' <div class="text-left" style="z-index: 90;position: absolute;margin: 5px;">'
+      +     '<div class="glyphicon glyphicon-cog pointer" data-id="' + widget.Id +'"></div>'
+      + ' </div>'
       + ' <span class="widget-label" >&lt;' + widgetType + '&gt;</span>'
       + ' <span class="widget-label">' + widget.label + '</span>'
       + ' <button ' + buttonId + ' data-widget-type="' + widgetType
@@ -1197,6 +1211,7 @@ function loadWidgetList(widgetListItems) {
     y++;
   }, this);
   addWidget();
+  editWidget();
 }
 
 /**
@@ -1207,6 +1222,7 @@ function loadWidgetPreview(widgetListItems) {
   PreviewGrid.init();
   PreviewGrid.loadGrid(widgetListItems);
   removeWidget();
+  editWidget();
 }
 
 /**
@@ -1231,6 +1247,34 @@ function removeWidget() {
     }
     return false;
   });
+}
+
+function editWidget() {
+  $('.glyphicon-cog').on("click", function (e) {
+    let widgetId = $(this).data("id");
+    const url = "/admin/widgetitem/edit/?id=" + widgetId + "&modal=true";
+    openRequestedSinglePopup(url, "Edit Widget");
+  });
+}
+
+function openRequestedSinglePopup(url, windowName) {
+  if (windowObjectReference == null || windowObjectReference.closed) {
+    windowObjectReference = window.open(url, windowName,
+      "resizable,scrollbars,status");
+  } else if (previousUrl !== url) {
+    windowObjectReference = window.open(url, windowName,
+      "resizable=yes,scrollbars=yes,status=yes");
+    /* if the resource to load is different,
+       then we load it in the already opened secondary window and then
+       we bring such window back on top/in front of its parent window. */
+    windowObjectReference.focus();
+  } else {
+    windowObjectReference.focus();
+  }
+
+  previousUrl = url;
+  /* explanation: we store the current url in order to compare url
+     in the event of another call of this function. */
 }
 
 $(function () {

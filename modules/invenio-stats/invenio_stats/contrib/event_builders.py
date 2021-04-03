@@ -113,23 +113,40 @@ def file_preview_event_builder(event, sender_app, obj=None, **kwargs):
 def build_celery_task_unique_id(doc):
     """Build celery task unique identifier."""
     key = '{0}_{1}_{2}'.format(
-        doc['task_id'], doc['task_name'], doc['repository_name']
+        doc['task_id'],
+        doc['task_name'],
+        doc['repository_name']
     )
     doc['unique_id'] = str(uuid.uuid3(uuid.NAMESPACE_DNS, key))
+
     return doc
 
 
 def build_file_unique_id(doc):
     """Build file unique identifier."""
-    doc['unique_id'] = '{0}_{1}'.format(doc['bucket_id'], doc['file_id'])
+    key = '{0}_{1}_{2}_{3}'.format(
+        doc['bucket_id'],
+        doc['file_id'],
+        doc['remote_addr'],
+        doc['unique_session_id']
+    )
+    doc['unique_id'] = str(uuid.uuid3(uuid.NAMESPACE_DNS, key))
     doc['hostname'] = '{}'.format(resolve_address(doc['remote_addr']))
+
     return doc
 
 
 def build_record_unique_id(doc):
     """Build record unique identifier."""
-    doc['unique_id'] = '{0}_{1}'.format(doc['pid_type'], doc['pid_value'])
+    key = '{0}_{1}_{2}_{3}_{4}'.format(
+        doc['pid_type'],
+        doc['pid_value'],
+        doc['remote_addr'],
+        doc['unique_session_id'],
+        doc['visitor_id'])
+    doc['unique_id'] = str(uuid.uuid3(uuid.NAMESPACE_DNS, key))
     doc['hostname'] = '{}'.format(resolve_address(doc['remote_addr']))
+
     return doc
 
 
@@ -185,7 +202,8 @@ def record_view_event_builder(event, sender_app, pid=None, record=None,
 
         cur_user = get_user()
         cur_user_id = cur_user['user_id'] if cur_user['user_id'] else 'guest'
-        record_name = record.get('item_title', '') if record is not None else ''
+        record_name = record.get(
+            'item_title', '') if record is not None else ''
 
         event.update(dict(
             # When:
@@ -226,10 +244,15 @@ def top_view_event_builder(event, sender_app, info=None, **kwargs):
 
 def build_top_unique_id(doc):
     """Build top unique identifier."""
-    doc['unique_id'] = '{0}_{1}_{2}_{3}'.format("top", "view",
-                                                doc['site_license_name'],
-                                                doc['remote_addr'])
+    key = '{0}_{1}_{2}_{3}'.format(
+        doc['site_license_name'],
+        doc['remote_addr'],
+        doc['unique_session_id'],
+        doc['visitor_id'])
+
+    doc['unique_id'] = str(uuid.uuid3(uuid.NAMESPACE_DNS, key))
     doc['hostname'] = '{}'.format(resolve_address(doc['remote_addr']))
+
     return doc
 
 
@@ -273,12 +296,14 @@ def search_event_builder(event, sender_app, search_args=None,
 
 def build_search_unique_id(doc):
     """Build search unique identifier."""
-    key = '{0}_{1}_{2}'.format(
+    key = '{0}_{1}_{2}_{3}'.format(
         doc['search_detail']['search_key'],
         doc['search_detail']['search_type'],
-        doc['site_license_name']
+        doc['site_license_name'],
+        doc['unique_session_id']
     )
     doc['unique_id'] = str(uuid.uuid3(uuid.NAMESPACE_DNS, key))
+
     return doc
 
 
@@ -302,8 +327,6 @@ def build_search_detail_condition(doc):
 def item_create_event_builder(event, sender_app, user_id=None,
                               item_id=None, item_title=None, **kwargs):
     """Build a item-create event."""
-    print(get_user())
-
     if is_valid_access():
         event.update(dict(
             # When:
