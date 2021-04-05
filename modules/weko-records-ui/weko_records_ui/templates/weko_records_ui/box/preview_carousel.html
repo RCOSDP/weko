@@ -23,7 +23,7 @@
   <!-- Preview Carousel -->
   {% set list_preview_carousel = [] %}
   {%- for file in files -%}
-    {%- if 'preview' in file.displaytype -%}
+    {%- if 'preview' == file.displaytype -%}
       <div style="display: none;">{{ list_preview_carousel.append( file ) }}</div>
     {% endif %}
   {%- endfor -%}
@@ -86,7 +86,7 @@
               {%- endif %}
 
               {%- if (is_billing_file and billing_file_permission and access_permission) or (not is_billing_file and access_permission) -%}
-                {%- if 'preview' in file.displaytype -%}
+                {%- if 'preview' == file.displaytype -%}
                   {%- set file_preview_url = url_for('invenio_records_ui.recid_file_preview', pid_value=pid.pid_value, filename=file.filename) %}
                   <div class="item {{ 'active' if loop.index == firstPreviewFileIndex.value else '' }}" id="carousel_prev_item_{{ loop.index }}">
                     <div class="embed-responsive embed-responsive-16by9">

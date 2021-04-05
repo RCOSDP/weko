@@ -357,7 +357,6 @@
     <div class="modal-dialog modal-xlg" role="document">
       <div class="modal-content">
         <div class="modal-body">
-          <app-author-search style="display: none;"></app-author-search>
           {%-if cur_step == 'item_login' %}
             {%- with preview_carousel_id='main_preview_carousel' %}
               {% include 'weko_workflow/record_after_update.html' %}
@@ -367,7 +366,7 @@
           {%- endif %}
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-info close-button" id="btnModalClose" data-dismiss="modal">
+          <button type="button" class="btn btn-info close-button" data-dismiss="modal">
             <span class="glyphicon glyphicon-remove"></span>
             {{_('Close')}}
           </button>
@@ -375,6 +374,24 @@
       </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
   </div><!-- /.modal -->
+    {# Author search modal START #}
+    <div class="modal fade" tabindex="-1" role="dialog" id="app-author-search">
+      <div class="modal-dialog modal-xlg" role="document">
+        <div class="modal-content">
+          <div class="modal-body">
+            <app-author-search></app-author-search>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-info close-button"
+                    id="btnModalClose" data-dismiss="modal">
+              <span class="glyphicon glyphicon-remove"></span>
+              {{ _('Close') }}
+            </button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+    {# Author search modal END #}
   <div class="modal fade" tabindex="-1" role="dialog" id="meta-search">
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
