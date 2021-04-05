@@ -17,6 +17,7 @@ from celery.utils.log import get_task_logger
 from flask import current_app
 from invenio_db import db
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import JSONType
@@ -145,18 +146,24 @@ class _StataModelBase(Timestamp):
         :return:
         """
         try:
-            stats_data = cls.__convert_data(data_object)
-            if not stats_data:
+            if data_object.get("_source"):
+                stats_data = {
+                    'id': _generate_id(),
+                    'source_id': data_object.get("_id"),
+                    'index': data_object.get("_index"),
+                    'type': data_object.get("_type"),
+                    'source': json.dumps(data_object.get("_source")),
+                    'date': data_object.get("_source").get("timestamp")
+                }
+            else:
                 return False
-            with db.session.begin_nested():
-                if delete:
-                    if cls.delete_by_source_id(data_object.get("_id"),
-                                               data_object.get("_index")):
-                        db.session.add(stats_data)
-                    else:
-                        return False
-                else:
-                    db.session.add(stats_data)
+            uq_stats_key = cls.get_uq_key()
+            stmt=insert(cls)
+            db.session.execute(
+                 clause=stmt.on_conflict_do_update(
+                     set_={'source':stmt.excluded.source},
+                     constraint=uq_stats_key),
+                 params=stats_data)
             db.session.commit()
             return True
         except SQLAlchemyError as err:
@@ -170,17 +177,38 @@ class StatsEvents(db.Model, _StataModelBase):
 
     __tablename__ = "stats_events"
 
+    __table_args__ = (
+        db.UniqueConstraint('source_id', 'index', name='uq_stats_key_stats_events'),
+    )
+
+    def get_uq_key():
+        return "uq_stats_key_stats_events"
+
 
 class StatsAggregation(db.Model, _StataModelBase):
     """Database for Stats Aggregation."""
 
     __tablename__ = "stats_aggregation"
 
+    __table_args__ = (
+        db.UniqueConstraint('source_id', 'index', name='uq_stats_key_stats_aggregation'),
+    )
+
+    def get_uq_key():
+        return "uq_stats_key_stats_aggregation"
+
 
 class StatsBookmark(db.Model, _StataModelBase):
     """Database for Stats Bookmark."""
 
     __tablename__ = "stats_bookmark"
+
+    __table_args__ = (
+        db.UniqueConstraint('source_id', 'index', name='uq_stats_key_stats_bookmark'),
+    )
+
+    def get_uq_key():
+        return "uq_stats_key_stats_bookmark"
 
 
 def _generate_id():
