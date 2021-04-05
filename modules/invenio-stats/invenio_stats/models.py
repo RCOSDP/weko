@@ -158,10 +158,10 @@ class _StataModelBase(Timestamp):
             else:
                 return False
             uq_stats_key = cls.get_uq_key()
-            stmt=insert(cls)
+            stmt = insert(cls)
             db.session.execute(
                  clause=stmt.on_conflict_do_update(
-                     set_={'source':stmt.excluded.source},
+                     set_={'source': stmt.excluded.source},
                      constraint=uq_stats_key),
                  params=stats_data)
             db.session.commit()
@@ -178,10 +178,12 @@ class StatsEvents(db.Model, _StataModelBase):
     __tablename__ = "stats_events"
 
     __table_args__ = (
-        db.UniqueConstraint('source_id', 'index', name='uq_stats_key_stats_events'),
+        db.UniqueConstraint('source_id', 'index',
+                            name='uq_stats_key_stats_events'),
     )
 
     def get_uq_key():
+        """Get unique constraint name."""
         return "uq_stats_key_stats_events"
 
 
@@ -191,10 +193,12 @@ class StatsAggregation(db.Model, _StataModelBase):
     __tablename__ = "stats_aggregation"
 
     __table_args__ = (
-        db.UniqueConstraint('source_id', 'index', name='uq_stats_key_stats_aggregation'),
+        db.UniqueConstraint('source_id', 'index',
+                            name='uq_stats_key_stats_aggregation'),
     )
 
     def get_uq_key():
+        """Get unique constraint name."""
         return "uq_stats_key_stats_aggregation"
 
 
@@ -204,10 +208,12 @@ class StatsBookmark(db.Model, _StataModelBase):
     __tablename__ = "stats_bookmark"
 
     __table_args__ = (
-        db.UniqueConstraint('source_id', 'index', name='uq_stats_key_stats_bookmark'),
+        db.UniqueConstraint('source_id', 'index',
+                            name='uq_stats_key_stats_bookmark'),
     )
 
     def get_uq_key():
+        """Get unique constraint name."""
         return "uq_stats_key_stats_bookmark"
 
 
