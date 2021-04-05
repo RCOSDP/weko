@@ -26,7 +26,6 @@ from xml.etree import ElementTree
 from blinker import Namespace
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_security import current_user
-from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import AdminSettings
 from weko_gridlayout.utils import get_widget_design_page_with_main, \
@@ -42,8 +41,8 @@ from weko_search_ui.api import get_search_detail_keyword
 
 from .api import SearchSetting
 from .config import WEKO_SEARCH_TYPE_DICT
-from .utils import check_permission, get_feedback_mail_list, \
-    get_journal_info, parse_feedback_mail_data
+from .utils import check_index_access_permissions, check_permission, \
+    get_feedback_mail_list, get_journal_info, parse_feedback_mail_data
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -64,6 +63,7 @@ blueprint_api = Blueprint(
 
 
 @blueprint.route("/search/index")
+@check_index_access_permissions
 def search():
     """Index Search page ui."""
     search_type = request.args.get('search_type', WEKO_SEARCH_TYPE_DICT[
