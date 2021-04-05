@@ -1629,14 +1629,12 @@ def get_disptype_and_ver_in_metainfo(metainfo):
     """
     array = []
     for v in metainfo:
-        if (isinstance(metainfo.get(v), dict)):
-            if 'attribute_type' in metainfo[v] and metainfo[v]['attribute_type'] in \
-               'file' and 'attribute_value_mlt' in metainfo[v]:
-                for n in metainfo[v]['attribute_value_mlt']:
-                    if 'displaytype' in n and n.get('displaytype') in 'preview' and \
-                       'version_id' in n and n.get('version_id'):
-                        array.append(
-                            {n.get('version_id'): n.get('displaytype')})
+        if isinstance(metainfo.get(v), dict) \
+            and 'attribute_type' in metainfo[v] \
+            and metainfo[v]['attribute_type'] in \
+                'file' and 'attribute_value_mlt' in metainfo[v]:
+            for n in metainfo[v]['attribute_value_mlt']:
+                array.append({n.get('version_id'): n.get('displaytype')})
     return array
 
 
