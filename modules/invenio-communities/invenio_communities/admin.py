@@ -28,7 +28,7 @@ from __future__ import absolute_import, print_function
 import re
 
 from flask_admin.contrib.sqla import ModelView
-from sqlalchemy import or_, and_, func
+from sqlalchemy import and_, func, or_
 from wtforms.validators import ValidationError
 
 from .models import Community, FeaturedCommunity, InclusionRequest
@@ -66,16 +66,16 @@ class CommunityModelView(ModelView):
     def on_model_change(self, form, model, is_created):
         """Perform some actions before a model is created or updated.
 
-            Called from create_model and update_model in the same transaction
-            (if it has any meaning for a store backend).
-            By default does nothing.
+        Called from create_model and update_model in the same transaction
+        (if it has any meaning for a store backend).
+        By default does nothing.
 
-            :param form:
-                Form used to create/update model
-            :param model:
-                Model that will be created/updated
-            :param is_created:
-                Will be set to True if model was created and to False if edited
+        :param form:
+            Form used to create/update model
+        :param model:
+            Model that will be created/updated
+        :param is_created:
+            Will be set to True if model was created and to False if edited
         """
         model.id_user = get_idRole_currentUser()
 
@@ -125,32 +125,27 @@ class CommunityModelView(ModelView):
         }
     }
 
-
     def condition_role(self, role_int):
-        """ Condition role. """
+        """Condition role."""
         if role_int == 2:
             return or_(Community.id_role == 2, Community.id_user == 2)
 
-
     def get_query(self):
-        """
-            Return a query for the model type.
+        """Return a query for the model type.
 
-            This method can be used to set a "persistent filter" on an index_view.
+        This method can be used to set a "persistent filter" on an index_view.
 
-            Example::
+        Example::
+            class MyView(ModelView):
+                def get_query(self):
+                    return super(MyView, self).get_query().
+                    filter(User.username == current_user.username)
 
-                class MyView(ModelView):
-                    def get_query(self):
-                        return super(MyView, self).get_query().
-                        filter(User.username == current_user.username)
-
-
-            If you override this method, don't forget to also override 
-            `get_count_query`, 
-            for displaying the correct
-            item count in the list view, and `get_one`, 
-            which is used when retrieving records for the edit view.
+        If you override this method, don't forget to also override
+        `get_count_query`,
+        for displaying the correct
+        item count in the list view, and `get_one`,
+        which is used when retrieving records for the edit view.
         """
         role_id = get_idRole_currentUser()
         # role Repository Administrator
@@ -159,15 +154,13 @@ class CommunityModelView(ModelView):
         # Default role System Administrator
         return self.session.query(self.model).filter()
 
-
     def get_count_query(self):
-        """
-            Return a the count query for the model type.
+        """Return a the count query for the model type.
 
-            A ``query(self.model).count()`` approach produces an excessive
-            subquery, so ``query(func.count('*'))`` should be used instead.
+        A ``query(self.model).count()`` approach produces an excessive
+        subquery, so ``query(func.count('*'))`` should be used instead.
 
-            See commit ``#45a2723`` for details.
+        See commit ``#45a2723`` for details.
         """
         role_id = get_idRole_currentUser()
         # role Repository Administrator
