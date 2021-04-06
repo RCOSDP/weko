@@ -137,8 +137,8 @@
             <label class="sr-only" for="input-comment">{{_('Comment')}}</label>
             <div class="input-group">
               <div class="input-group-addon">{{_('Comment')}}</div>
-              <textarea class="form-control" rows="5" id="input-comment" placeholder=""
-                ng-model="comment_data">{{temporary_comment if temporary_comment else ''}}</textarea>
+              <textarea class="form-control" rows="5" id="input-comment"
+               placeholder="">{{temporary_comment if temporary_comment else ''}}</textarea>
             </div>
           </div>
           <button type="button" class="btn btn-primary save-button" id="item-link-save-btn" ng-click="btn_save()">
@@ -146,11 +146,13 @@
             {{_('Save')}}
           </button>
 
-      <button type="button" class="btn btn-primary done-button"
-       id="item-link-run-btn" ng-click="btn_run()">{{_('Done')}}</button>
+          <button type="button" class="btn btn-info next-button"
+            id="item-link-run-btn" ng-click="btn_run()">{{_('Next_item')}}
+            <span _ngcontent-c1="" class="glyphicon glyphicon-chevron-right"></span>
+          </button>
       <button class="btn btn-danger done-button pull-right" id="btn_quit">
         <i class="fa fa-sign-out"></i>
-        {{_('Quit')}}</button>
+        {{_('Quit_item')}}</button>
       </div>
       </invenio-search>
     </div>

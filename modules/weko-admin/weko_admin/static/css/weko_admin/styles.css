@@ -59,3 +59,62 @@
 .width_250px {
   width: 250px;
 }
+
+.scrollbar {
+  overflow-y: scroll;
+  overflow-x: hidden
+}
+
+.both {
+  border: 1px solid;
+  border-color: #ddd;
+  height: auto;
+  min-height: 504px;
+  max-height: 504px;
+  margin-left: 10px;
+}
+
+.textarea_height {
+  min-height: 200px;
+  height: auto;
+}
+
+.padding-top{
+  padding-top: 10px;
+}
+
+.margin-top {
+  margin-top: 10px;
+}
+
+.glyphicon-remove-term {
+  cursor: pointer;
+  z-index: 999;
+  position: absolute;
+  color: black;
+  right: 25px;
+  top: 15px;
+}
+
+.tree-list {
+  list-style-type: none;
+  position: inherit;
+}
+
+.btn-add {
+  margin: auto;
+  display: block;
+}
+.btn-apply {
+  margin-right: 16px;
+  margin-bottom: 2px;
+}
+
+label.field-required::after {
+  content: "*";
+  color: red;
+}
+
+.popup-mail-modal {
+  width: 70%;
+}

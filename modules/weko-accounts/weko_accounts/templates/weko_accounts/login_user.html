@@ -32,7 +32,7 @@
         {%- block form_header %}
         {%- set site_info = site_info|get_site_info %}
         {% if site_info.get("enable_notify") %}
-        <h3 style="margin-bottom: 0" class="text-center panel-free-title">{{_('Log in to account') }}</h3>
+          <h3 style="margin-bottom: 0" class="text-center panel-free-title">{{_(config.WEKO_ACCOUNTS_LOGIN_LABEL)}}</h3>
         <p class="sign_up"style="white-space: pre-line; text-align: justify; word-break: break-word">
           {{site_info.get("login_instructions")}}
         </p>

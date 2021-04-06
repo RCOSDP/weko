@@ -127,6 +127,7 @@ services:
       - POSTGRES_USER=invenio
       - POSTGRES_DB=invenio
       - POSTGRES_PASSWORD=dbpass123
+#      - POSTGRES_INITDB_ARGS="-c log_statement=all -c log_duration=on"
     volumes:
       - pgsql-data:/var/lib/postgresql/data
       - ./modules/resources/sql:/docker-entrypoint-initdb.d
@@ -199,6 +200,13 @@ services:
       - letsencrypt_data:/etc/letsencrypt
       - letsencrypt_web:/var/www/html
     command: ["--version"]
+
+#  certbot:
+#    image: certbot/certbot:latest
+#    volumes:
+#      - letsencrypt_etc:/etc/letsencrypt
+#      - letsencrypt_html:/var/www/html
+#    command: ["--version"]
 
   flower:
     restart: "always"

@@ -54,8 +54,9 @@ msgstr ""
 msgid "\"<\" and \">\" cannot be used for searching."
 msgstr ""
 
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:83
-#: weko_search_ui/utils.py:490
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:94
+#: weko_search_ui/utils.py:482
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:46
 msgid "Internal server error"
 msgstr ""
 
@@ -298,7 +299,8 @@ msgstr ""
 msgid "Execution"
 msgstr ""
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:111
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:128
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:42
 msgid "Export"
 msgstr ""
 
@@ -500,10 +502,11 @@ msgstr ""
 msgid "Continue"
 msgstr ""
 
-#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:75
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:47
-#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:82
-#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:101
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:84
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:58
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:100
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:120
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:45
 msgid "Cancel"
 msgstr ""
 
@@ -746,3 +749,25 @@ msgstr ""
 #~ msgid "\"<\" and \">\" are cannot be used for searching."
 #~ msgstr ""
 
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:40
+msgid "Export all item"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:41
+msgid "Download URL"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:43
+msgid "Export message"
+msgstr "Are you sure you want to export all items?"
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:43
+msgid "Cancel export message"
+msgstr "Are you sure you want to cancel process of exporting all items?"
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:44
+msgid "Execute"
+msgstr ""
+
+msgid "import_error_msg_is_withdraw_doi"
+msgstr "This DOI was withdrawn. Please input another DOI."

@@ -40,11 +40,12 @@ from werkzeug.local import LocalProxy
 from .api import send_site_license_mail
 from .config import WEKO_HEADER_NO_CACHE
 from .models import SessionLifetime, SiteInfo
-from .utils import FeedbackMail, StatisticMail, format_site_info_data, \
-    get_admin_lang_setting, get_api_certification_type, \
-    get_current_api_certification, get_init_display_index, \
-    get_initial_stats_report, get_search_setting, get_selected_language, \
-    get_unit_stats_report, save_api_certification, update_admin_lang_setting, \
+from .utils import FeedbackMail, StatisticMail, UsageReport, \
+    format_site_info_data, get_admin_lang_setting, \
+    get_api_certification_type, get_current_api_certification, \
+    get_init_display_index, get_initial_stats_report, get_search_setting, \
+    get_selected_language, get_unit_stats_report, save_api_certification, \
+    update_admin_lang_setting, update_restricted_access, \
     validate_certification, validation_site_info
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
@@ -569,3 +570,62 @@ def get_search_init_display_index(selected_index=None):
     """
     indexes = get_init_display_index(selected_index)
     return jsonify(indexes=indexes)
+
+
+@blueprint_api.route("/restricted_access/save", methods=['POST'])
+@login_required
+def save_restricted_access():
+    """Save registered access settings.
+
+    :return:
+    """
+    result = {
+        "status": True,
+        "msg": _("Restricted Access was successfully updated.")
+    }
+    restricted_access = request.get_json()
+    if not update_restricted_access(restricted_access):
+        result['status'] = False
+        result['msg'] = _("Could not save data.")
+    return jsonify(result), 200
+
+
+@blueprint_api.route("/restricted_access/get_usage_report_activities",
+                     methods=["GET", "POST"])
+@login_required
+def get_usage_report_activities():
+    """Get usage report activities.
+
+    :return: [json, int]: Usage report activity.
+    """
+    if request.method == "POST":
+        json_data = request.get_json()
+        activities_id = json_data.get('activity_ids')
+        page = json_data.get('page', 1)
+        size = json_data.get('size', 25)
+    else:
+        data = request.args
+        page = data.get('page', 1)
+        size = data.get('size', 25)
+        activities_id = None
+    usage_report = UsageReport()
+    result = usage_report.get_activities_per_page(activities_id, int(size),
+                                                  int(page))
+    return jsonify(result), 200
+
+
+@blueprint_api.route("/restricted_access/send_mail_reminder", methods=["POST"])
+@login_required
+def send_mail_reminder_usage_report():
+    """Send email to request user for register usage report.
+
+    :return: [json, int]: Send mail status.
+    """
+    json_data = request.get_json()
+    result = False
+    if json_data and json_data.get('activity_ids'):
+        activities_id = json_data.get('activity_ids')
+        usage_report = UsageReport()
+        result = usage_report.send_reminder_mail(activities_id)
+
+    return jsonify(status=result), 200

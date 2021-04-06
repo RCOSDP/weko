@@ -26,6 +26,22 @@ msgstr ""
 msgid "Updated flow action successfully"
 msgstr ""
 
+#: weko_workflow/admin.py:148
+msgid "Approval by Administrator action does not exist, or not in the right order."
+msgstr ""
+
+#: weko_workflow/admin.py:150
+msgid "Approval by Advisor action is not in the right order."
+msgstr ""
+
+#: weko_workflow/admin.py:152
+msgid "Approval by Guarantor action is not in the right order."
+msgstr ""
+
+#: weko_workflow/admin.py:154
+msgid "Start or End action is not in the right order."
+msgstr ""
+
 #: weko_workflow/admin.py:228 weko_workflow/admin.py:237
 msgid "WorkFlow"
 msgstr ""
@@ -417,6 +433,55 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
+msgid "Terms and Conditions"
+msgstr ""
+
+msgid "I have read and agreed to the Terms and Conditions"
+msgstr ""
+
+msgid "Application Date"
+msgstr ""
+
+msgid "Approved Date"
+msgstr ""
+
+msgid "Use of JGSS data is considered as Continue. If you approve, this usage report will end. It is not able to restore an usage report that has ended. Do you want to continue?"
+msgstr ""
+
+msgid "Stop/Continue"
+msgstr ""
+
+msgid "After checking the Terms and Conditions, please check the [I have read and agreed to the Terms and Conditions] at the end of scroll."
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html:186
+msgid "Email Type"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html:82
+msgid "Send Mail"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html:333
+msgid "Please contact your system administrator."
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html:309
+msgid "Email is sent successfully."
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html:
+msgid "Remind to submit the Data Usage Report(Other than Student)"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html
+msgid "Remind to submit the Data Usage Report(Student)"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html:266
+msgid "email will be sent."
+msgstr ""
+
 msgid "Add Filter"
 msgstr ""
 
@@ -427,4 +492,66 @@ msgid "Display Name"
 msgstr ""
 
 msgid "Your session has timed out. Please login again."
+msgstr ""
+
+msgid "Restricted Access Flag"
+msgstr ""
+
+msgid "Enable Full"
+msgstr ""
+
+msgid "Disable Full"
+msgstr ""
+
+msgid "Enable"
+msgstr ""
+
+msgid "Disable"
+msgstr ""
+
+msgid "Registration Destination Index Designation"
+msgstr ""
+
+msgid "Undesignated"
+msgstr ""
+
+msgid "Registration Destination Index"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_detail.html:266
+msgid "Quit_Approval"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/item_link.html:153
+msgid "Quit_item"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/item_link.html:150
+msgid "Next_item"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:114
+msgid "Quit_identifier_grand"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/item_login_sucess.html:288
+msgid "Back"
+msgstr ""
+
+msgid "The specified link has expired."
+msgstr ""
+
+msgid "Specify Property"
+msgstr ""
+
+msgid "Specify property"
+msgstr ""
+
+msgid "Approval Request Notification Email"
+msgstr ""
+
+msgid "Approval Notification Email"
+msgstr ""
+
+msgid "Approval Rejection Notification Email"
 msgstr ""

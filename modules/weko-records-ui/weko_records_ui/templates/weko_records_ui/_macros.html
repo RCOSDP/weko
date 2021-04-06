@@ -18,45 +18,100 @@
 # MA 02111-1307, USA.
 #}
 
-{% macro check_download_file(record, file, permission, community, url_for_security, is_file_name_url) %}
-  {%- if not session['user_id'] -%}
-    {%- set href_url = url_for_security('login', next=request.path) -%}
-    {%- if is_file_name_url -%}
-      <a class="forcewrap"
-         href={{ href_url }}>{{ file.filename }}
+{% macro check_download_file(record, file, permission, community, url_for_security, is_file_name_url, file_label) %}
+  <input id="non-role-msg" type="hidden"
+         value="{{ _("This data is not available for this user.") }}"/>
+  {% set is_guest = False %}
+  {% if not session['user_id'] %}
+    {% set is_guest = True %}
+    {% set href_url = url_for_security('login', next=request.path) %}
+    {% if is_file_name_url %}
+      <a class="forcewrap" href={{ href_url }}>{{ file_label }}
         ({{ file.size|filesizeformat }})</a>
       <br>
-    {%- else -%}
-      <a class="action-anchor" href="{{ href_url }}">
-        <button class="img-rounded action-button button-sm">
-          <i class="action-icon fa fa-download"></i>
-          {{ _('Download') }}
-        </button>
-      </a>
-    {%- endif -%}
-  {%- elif not permission -%}
-    {%- set workflow_id = '' -%}
-    {%- set usage_workflow = record | get_usage_workflow -%}
-    {%- if not usage_workflow -%}
-      {%- set clickable = false -%}
-      {%- if is_file_name_url -%}
-        <a class="forcewrap">{{ file.filename }}
-          ({{ file.size|filesizeformat }})</a>
-        <br>
-      {%- else -%}
-        <a class="action-anchor">
-          <button class="img-rounded action-button button-sm">
+    {% else %}
+      {% set access_role = file.accessrole %}
+      {% set workflow_id = file | get_usage_workflow %}
+      {% set start_guest_wf = workflow_id is not none and access_role == "open_restricted" %}
+      {% if start_guest_wf %}
+        {% set workflow_detail = workflow_id | get_workflow_detail() %}
+        {% set item_type_id = workflow_detail.itemtype_id %}
+        {% set flow_id = workflow_detail.flow_id %}
+      {% endif %}
+      {% if file.terms and start_guest_wf %}
+        <a class="action-anchor" href="">
+          <button class="img-rounded action-button button-sm term-condtion-modal"
+                  data-modal-id="#term_and_condtion_modal_{{ file.version_id }}">
             <i class="action-icon fa fa-download"></i>
-            {{ _('Download') }}
+            {{ _('Apply JGSS') }}
           </button>
         </a>
-      {%- endif -%}
-    {%- elif usage_workflow -%}
-      {%- set workflow_id = usage_workflow.id -%}
-      {%- set workflow_detail = workflow_id | get_workflow_detail() -%}
-      {%- set data_item_type_id = workflow_detail.itemtype_id -%}
-      {%- set data_flow_id = workflow_detail.flow_id -%}
-      {%- set itemtitle = record.item_title -%}
+        <a class="action-anchor hide">
+          <button class="btn-start-guest-wf img-rounded action-button button-sm"
+                  id="btn-start-guest-wf-{{ file.version_id }}"
+                  data-guest_filename_data="{{ file.filename }}"
+                  data-guest_workflow_id="{{ workflow_id }}"
+                  data-guest_itemtype_id="{{ item_type_id }}"
+                  data-guest_flow_id="{{ flow_id }}"
+                  data-guest_data_type_title="{{ record.item_title }}"
+                  data-guest_record_id="{{ record.recid }}">
+            <i class="action-icon fa fa-download"></i>
+            {{ _('Apply JGSS') }}
+          </button>
+        </a>
+      {% else %}
+        {% set btn_class = "img-rounded action-button button-sm" %}
+        {% if start_guest_wf %}
+          {% set btn_class = btn_class + " btn-start-guest-wf" %}
+        {% endif %}
+        {% if not start_guest_wf %}
+          <a class="action-anchor">
+            <button class="img-rounded action-button button-sm non-role-btn">
+              <i class="action-icon fa fa-download"></i>
+              {{ _('Apply JGSS') }}
+            </button>
+          </a>
+        {% else %}
+          <a class="action-anchor">
+            <button class="{{ btn_class }}"
+                    data-guest_filename_data="{{ file.filename }}"
+                    data-guest_workflow_id="{{ workflow_id }}"
+                    data-guest_itemtype_id="{{ item_type_id }}"
+                    data-guest_flow_id="{{ flow_id }}"
+                    data-guest_data_type_title="{{ record.item_title }}"
+                    data-guest_record_id="{{ record.recid }}">
+              <i class="action-icon fa fa-download"></i>
+              {{ _('Apply JGSS') }}
+            </button>
+          </a>
+        {% endif %}
+      {% endif %}
+    {% endif %}
+  {% elif not permission %}
+    {% set workflow_id = '' %}
+    {% set usage_workflow_id = file | get_usage_workflow %}
+    {% if not usage_workflow_id %}
+      {% set clickable = false %}
+      {% if is_file_name_url %}
+        <a class="forcewrap">{{ file_label }}
+          ({{ file.size|filesizeformat }})</a>
+        <br>
+      {% else %}
+        <a class="action-anchor">
+          <button class="img-rounded action-button button-sm non-role-btn">
+            <i class="action-icon fa fa-download"></i>
+            {{ _('Apply JGSS') }}
+          </button>
+        </a>
+      {% endif %}
+    {% elif usage_workflow_id %}
+      {% set workflow_id = usage_workflow_id %}
+      {% set workflow_detail = workflow_id | get_workflow_detail() %}
+      {% set data_item_type_id = workflow_detail.itemtype_id %}
+      {% set data_flow_id = workflow_detail.flow_id %}
+      {% set itemtitle = record.item_title %}
+      <input type="hidden" id="data_type_title" name="data_type_title"
+             value='{{ itemtitle }}'>
       <div class="hide"
            id="post_uri">{{ url_for('weko_workflow.init_activity') }}</div>
       <div class="hide" id="item_type_{{ workflow_id }}"
@@ -66,71 +121,142 @@
       <div class="hide"
            id="file_name">{{ file.filename }}</div>
       <div id="recid" class="hide">{{ record.recid }}</div>
-      {%- if is_file_name_url -%}
+      {% if is_file_name_url %}
         <a id="btn-begin-{{ workflow_id }}"
            class="btn-start-workflow forcewrap"
-                {%- if community -%}
+                {% if community %}
            data-community="{{ community.id }}"
-                {%- endif -%}
+                {% endif %}
            data-workflow-id="{{ workflow_id }}"
+           data-record-id="{{ record.recid }}"
+           data-filename="{{ file.filename }}"
            data-itemtitle="{{ itemtitle|urlencode }}"
            href="{{ href_url }}">
-          {{ file.filename }} ({{ file.size|filesizeformat }})</a>
-      {%- else -%}
-        <a class="action-anchor" href="{{ href_url }}">
-          <button id="btn-begin-{{ workflow_id }}"
-            {%- if community -%}
-            data-community="{{ community.id }}"
-            {%- endif -%}
-            data-workflow-id="{{ workflow_id }}"
-            data-itemtitle="{{ itemtitle|urlencode }}"
-            class="btn-start-workflow img-rounded action-button button-sm">
+          {{ file_label }} ({{ file.size|filesizeformat }})</a>
+      {% else %}
+        {% if file.terms %}
+          <a class="action-anchor" href="">
+            <button class="img-rounded action-button button-sm term-condtion-modal"
+                    data-modal-id="#term_and_condtion_modal_{{ file.version_id }}">
               <i class="action-icon fa fa-download"></i>
-              {{ _('Download') }}
-          </button>
-        </a>
-      {%- endif -%}
-    {%- endif -%}
-  {%- elif permission.status == -1 -%}
-    {%- set href_url = url_for('weko_workflow.display_activity', activity_id=permission.usage_application_activity_id) -%}
-    {%- set itemtitle = record.item_title -%}
-    {%- set href_url_item_title = href_url + "?itemtitle=" + itemtitle|urlencode -%}
-    {%- if is_file_name_url -%}
-      <a class="forcewrap"
-         href="{{ href_url_item_title }}">{{ file.filename }}
+              {{ _('Apply JGSS') }}
+            </button>
+          </a>
+          <a class="action-anchor hide" href="{{ href_url }}">
+            <button id="btn-start-workflow-{{ file.version_id }}"
+                    {% if community %}
+                    data-community="{{ community.id }}"
+                    {% endif %}
+                    data-workflow-id="{{ workflow_id }}"
+                    data-record-id="{{ record.recid }}"
+                    data-filename="{{ file.filename }}"
+                    data-itemtitle="{{ itemtitle|urlencode }}"
+                    class="btn-start-workflow img-rounded action-button button-sm">
+              <i class="action-icon fa fa-download"></i>
+              {{ _('Apply JGSS') }}
+            </button>
+          </a>
+        {% else %}
+          <a class="action-anchor" href="{{ href_url }}">
+            <button id="btn-begin-{{ workflow_id }}"
+                    {% if community %}
+                    data-community="{{ community.id }}"
+                    {% endif %}
+                    data-workflow-id="{{ workflow_id }}"
+                    data-record-id="{{ record.recid }}"
+                    data-filename="{{ file.filename }}"
+                    data-itemtitle="{{ itemtitle|urlencode }}"
+                    class="btn-start-workflow img-rounded action-button button-sm">
+              <i class="action-icon fa fa-download"></i>
+              {{ _('Apply JGSS') }}
+            </button>
+          </a>
+        {% endif %}
+      {% endif %}
+    {% endif %}
+  {% elif permission.status == -1 %}
+    {% set href_url = url_for('weko_workflow.display_activity', activity_id=permission.usage_application_activity_id) %}
+    {% set href_url_item_title = href_url %}
+    {% if is_file_name_url %}
+      <a class="forcewrap" href="{{ href_url_item_title }}">{{ file_label }}
         ({{ file.size|filesizeformat }})</a>
       <br>
-    {%- else -%}
+    {% else %}
       <a class="action-anchor" href="{{ href_url_item_title }}">
         <button class="img-rounded action-button button-sm">
           <i class="action-icon fa fa-download"></i>
-          {{ _('Download') }}
+          {{ _('Apply JGSS') }}
         </button>
       </a>
-    {%- endif -%}
+    {% endif %}
 
-  {%- elif permission.status == 1 -%}
-    {%- set is_permission_in_period = record | check_file_permission_period(file) -%}
+  {% elif permission.status == 1 %}
+    {% set is_permission_in_period = record | check_file_permission_period(file) %}
 
-    {%- if is_permission_in_period -%}
-      {%- set href_url = file_url -%}
+    {% if is_permission_in_period %}
+      {% set href_url = file_url %}
 
-      {%- if is_file_name_url -%}
-        <a class="forcewrap"
-           href={{ href_url }}>{{ file.filename }}
-          ({{ file.size|filesizeformat }})
-        </a>
+      {% if is_file_name_url %}
+        <a class="forcewrap" href={{ href_url }}>{{ file_label }}
+          ({{ file.size|filesizeformat }}) </a>
         <br>
-      {%- else -%}
+      {% else %}
         <a class="action-anchor" href="{{ href_url }}">
           <button class="img-rounded action-button button-sm">
             <i class="action-icon fa fa-download"></i>
-            {{ _('Download') }}
+            {{ _('Apply JGSS') }}
           </button>
         </a>
-      {%- endif -%}
-    {%- else -%}
-      {%- set clickable = false -%}
-    {%- endif -%}
-  {%- endif -%}
+      {% endif %}
+    {% else %}
+      {% set clickable = false %}
+    {% endif %}
+  {% endif %}
+  <!-- Modal -->
+  {% if file.terms != '' and is_file_name_url %}
+    <div class="modal fade" id="term_and_condtion_modal_{{ file.version_id }}"
+         tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 class="modal-title"
+                id="exampleModalLongTitle">{{ _('Terms and Conditions') }}</h3>
+            <button type="button" class="close" data-dismiss="modal"
+                    aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="panel panel-default panel-body"
+                 style="overflow-y: auto; max-height:400px;">
+              <div class="form-check">
+                <span class="action-name"
+                      style="white-space: pre-wrap;">{{ file.terms_content }}</span>
+
+                <div style="position: relative;">
+                  <input type="checkbox" class="pointer term_checked"
+                         data-file-version-id="{{ file.version_id }}"
+                         id="term_checked_{{ file.version_id }}"
+                         name="term_check_{{ file.version_id }}">
+                  <input type="hidden" name="title" value="{{ itemTitle }}">
+                  <label class="form-check-label pointer"
+                         for="term_checked_{{ file.version_id }}"
+                         style="position: absolute;top: 1px;left: 20px;">
+                    {{ _('I have read and agreed to the Terms and Conditions') }}
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button id="term_next_{{ file.version_id }}"
+                    data-guest={{ is_guest }} data-file-version-id="{{ file.version_id }}"
+                    type="button" class="term_next btn btn-primary disabled"
+                    disabled>{{ _('Next') }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
 {% endmacro %}

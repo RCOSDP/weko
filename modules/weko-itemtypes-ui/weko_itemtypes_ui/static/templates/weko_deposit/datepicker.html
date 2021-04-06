@@ -43,6 +43,7 @@
               ng-model-options=" { updateOn: 'blur'}"
               data-date-format="{{form.format}}"
               data-date-type="string"
+              ng-disabled="form.readonly"
               data-autoclose="true"
 	      bs-datepicker />
             <span
@@ -88,6 +89,7 @@
         ng-model-options=" { updateOn: 'blur'}"
         data-date-format="{{form.format}}"
         data-date-type="string"
+        ng-disabled="form.readonly"
         data-autoclose="true"
         bs-datepicker/>
       <span

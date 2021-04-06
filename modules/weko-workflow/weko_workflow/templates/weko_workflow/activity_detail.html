@@ -72,8 +72,34 @@
 {%- endblock page_footer %}
 
 {%- set items_show_list = record.items_show_list -%}
+{% set guest_email = None %}
+{% if activity and activity.extra_info and 'guest_mail' in activity.extra_info %}
+  {% set guest_email = activity.extra_info.guest_mail %}
+{% endif %}
 
 {%- block page_body_main %}
+<!--Approval confirm modal-->
+{% from "weko_theme/macros/modal_page.html" import approval_modal %}
+{{approval_modal('confirm_modal', 'confirm_approval_btn', _('OK'),_('JGSS'),_('Use of JGSS data is considered as Continue. If you approve, this usage report will end. It is not able to restore an usage report that has ended. Do you want to continue?'))}}
+<input type="hidden" id="warning_message" name="warning_message"
+            value="{{_('Use of JGSS data is considered as Continue. If you approve, this usage report will end. It is not able to restore an usage report that has ended. Do you want to continue?')}}">
+<input type="hidden" id="a" name="a" value="{{_('Stop_Continue')}}">
+{%-if position_list %}
+<select style="display:None" autofocus="" class="form-control"
+        id="position_list" name="position_list">
+  {% for item in position_list %}
+  <option value="{{ item[0] }}">{{ item[1] }}</option>
+  {% endfor %}
+</select>
+{%- endif %}
+{%-if institute_position_list %}
+<select style="display:None" autofocus="" class="form-control"
+        id="institute_position_list" name="institute_position_list">
+  {% for item in institute_position_list %}
+  <option value="{{ item[0] }}">{{ item[1] }}</option>
+  {% endfor %}
+</select>
+{%- endif %}
 <div class="row">
   {%-if community%}
     <div id="community_id" class="hide">{{community.id}}</div>
@@ -131,7 +157,7 @@
                   <label>{{_('Creater')}}</label>
                 </div>
                   <div class="col-xs-12 col-md-8 col-lg-8">
-                    <p>{{activity.login_user if activity.login_user else activity.activity_login_user}}</p>
+                    <p>{{ activity.login_user if activity.login_user else (activity.activity_login_user if activity.activity_login_user else guest_email) }}</p>
                   </div>
                 </div>
               </div>
@@ -152,7 +178,7 @@
                   <label>{{_('Updater')}}</label>
                 </div>
                   <div class="col-xs-12 col-md-8 col-lg-8">
-                    <p>{{activity.update_user if activity.update_user else activity.activity_update_user}}</p>
+                    <p>{{ activity.update_user if activity.update_user else (activity.activity_update_user if activity.activity_update_user else guest_email) }}</p>
                   </div>
                 </div>
                 <div class="col-sm-1"></div>
@@ -168,7 +194,9 @@
                 <lable>{{_('Item')}}</lable>
             </div>
             <div class="col-xs-11 col-md-11 col-lg-11">
-                <a href="#" id="lnk_item_detail">{{item.get('title') if item}}</a>
+              {%- if is_enable_item_name_link -%}
+                <a href="#" id="lnk_item_detail">{{ item.get('title_ja', item.get('title')) if item }}</a>
+              {%- endif -%}
             </div>
           </div>
         </div>
@@ -229,7 +257,9 @@
             </div>
             <div class="panel-body" id="step_page">
               <div class="hide" id="hide-actionId">{{action_id}}</div>
-              {%- if 'item_login' == cur_step or 'file_upload' == cur_step %}
+              <div class="hide" id="hide-actionstep_item_login_url">{{step_item_login_url}}</div>
+              <div class="hide" id="hide-actioncur_step">{{cur_step}}</div>
+              {%- if 'item_login' == cur_step or 'item_login_application' == cur_step or 'file_upload' == cur_step %}
                 {% include step_item_login_url %}
               {%- elif 'item_link' == cur_step %}
                 {% include "weko_workflow/item_link.html" %}
@@ -239,9 +269,9 @@
               {%- elif 'identifier_grant' == cur_step %}
                 {%- include 'weko_workflow/identifier_grant.html' %}
                 {%- include "weko_workflow/modal_quit_confirmation.html" %}
-              {%- elif 'approval' == cur_step %}
-                {%- with preview_carousel_id='main_preview_carousel' %}
-                  {% include 'weko_workflow/record_detail.html' %}
+              {%- elif 'approval' == cur_step or 'approval_advisor' == cur_step or 'approval_guarantor' == cur_step or 'approval_administrator' == cur_step %}
+                {%- with preview_carousel_id='preview_carousel' %}
+                  {% include 'weko_workflow/record_after_update.html' %}
                 {%- endwith %}
               {%- else %}
                 <div class="form-group">
@@ -256,15 +286,14 @@
               {%- if 'approval_request' == cur_step %}
                 <button type="button" class="btn btn-primary action-big-button" id="btn-approval-req">{{_('Approval Request')}}</button>
                 <button type="button" class="btn btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
-              {%- elif 'approval' == cur_step %}
-                <button type="button" class="btn btn-danger action-button" id="btn-return">{{_('Return')}}</button>
+              {%- elif 'approval' == cur_step or 'approval_advisor' == cur_step or 'approval_guarantor' == cur_step or 'approval_administrator' == cur_step %}
                 <button type="button" class="btn btn-danger action-button" id="btn-reject">{{_('Reject')}}</button>
                 <button type="button" class="btn btn-primary save-button" id="btn-draft">
                   <span class="glyphicon glyphicon-saved"></span> {{_('Save')}}</button>
                 <button type="button" class="btn btn-info action-button" id="btn-approval">{{_('Approval')}}</button>
                 <button class="btn btn-danger done-button pull-right" id="btn_quit">
                   <i class="fa fa-sign-out"></i>
-                  {{_('Quit')}}</button>
+                  {{_('Quit_Approval')}}</button>
                 {% include "weko_workflow/modal_quit_confirmation.html" %}
               {%- endif %}
               {%- if 'double_check' == cur_step %}
@@ -274,10 +303,12 @@
               {%- elif 'oa_policy' == cur_step %}
                 <button type="button" class="btn btn-primary save-button" id="btn-draft">
                   <span class="glyphicon glyphicon-saved"></span> {{_('Save')}}</button>
-                <button type="button" class="btn btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
+                <button type="button" class="btn btn-info done-button" id="btn-finish">{{_('Next')}}
+                  <span class="glyphicon glyphicon-chevron-right"></span>
+                </button>
                 <button class="btn btn-danger done-button pull-right" id="btn_quit">
                   <i class="fa fa-sign-out"></i>
-                  {{_('Quit')}}</button>
+                  {{_('QuitQO')}}</button>
                 {% include "weko_workflow/modal_quit_confirmation.html" %}
               {%- endif %}
               {%- if 'end_action' == cur_step %}
@@ -307,11 +338,12 @@
               {%- if histories %}
               {%- for history in histories %}
                 <tr>
+                  {% set mail = history.user.email if history.user else guest_email %}
                   <td>{{history.ActionName[0]}}</td>
                   <td>{{history.action_date.strftime('%Y-%m-%d %H:%M')}}</td>
-                  <td>{{history.user.email}}</td>
+                  <td>{{mail}}</td>
                   <td>{{_(history.StatusDesc)}}</td>
-                  <td>{{history.CommentDesc}}</td>
+                  <td>{% if history.CommentDesc %} {{history.CommentDesc}}{% endif %}</td>
                 </tr>
               {% endfor %}
               {% else %}
@@ -377,7 +409,7 @@
 {%- endblock page_body %}
 
 {% macro style_including(inStyle, step) -%}
-  {% if activity.activity_status_str != 'End' and cur_step == step.ActionEndpoint %}
+  {% if activity.activity_status_str != 'End' and cur_step == step.ActionEndpoint and step.ActionOrder == activity.action_order %}
     {{ inStyle }}
   {% elif activity.activity_status_str == 'End' and step.ActionName == 'End' %}
     {{ inStyle }}
