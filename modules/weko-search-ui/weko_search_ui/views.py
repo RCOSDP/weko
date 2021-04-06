@@ -139,6 +139,7 @@ def search():
             allow_item_exporting=export_settings.allow_item_exporting,
             is_permission=check_permission(),
             is_login=bool(current_user.get_id()),
+            is_enable_item_name_link=True,
             **ctx)
     else:
         journal_info = None
