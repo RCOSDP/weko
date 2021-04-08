@@ -20,6 +20,7 @@
 
 """Blueprint for Weko index tree rest."""
 
+import os
 from functools import wraps
 
 from flask import Blueprint, abort, current_app, jsonify, make_response, \
@@ -206,6 +207,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
         if not data:
             raise InvalidDataRESTError()
         msg = ''
+        delete_flag = False
         errors = []
         if not (data.get('public_state') and data.get('harvest_public_state'))\
                 and check_doi_in_index(index_id):
@@ -218,14 +220,27 @@ class IndexActionResource(ContentNegotiatedMethodView):
                                 ' there are links from items that have a DOI.'
                                 ))
         else:
+            if data.get('thumbnail_delete_flag'):
+                delete_flag = True
+                filename = os.path.join(
+                    current_app.instance_path,
+                    current_app.config['WEKO_THEME_INSTANCE_DATA_DIR'],
+                    'indextree',
+                    data.get('image_name').split('/')[-1])
+                if os.path.isfile(filename):
+                    os.remove(filename)
+                data['image_name'] = ""
+
+            if data.get('thumbnail_delete_flag') is not None:
+                del data['thumbnail_delete_flag']
             if not self.record_class.update(index_id, **data):
                 raise IndexUpdatedRESTError()
             status = 200
             msg = 'Index updated successfully.'
 
         return make_response(jsonify(
-            {'status': status, 'message': msg, 'errors': errors}),
-            status)
+            {'status': status, 'message': msg, 'errors': errors,
+            'delete_flag': delete_flag}), status)
 
     @need_record_permission('delete_permission_factory')
     def delete(self, index_id, **kwargs):
