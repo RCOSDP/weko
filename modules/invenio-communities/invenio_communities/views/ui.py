@@ -46,7 +46,8 @@ from invenio_communities.forms import CommunityForm, DeleteCommunityForm, \
     EditCommunityForm, SearchForm
 from invenio_communities.models import Community, FeaturedCommunity
 from invenio_communities.proxies import current_permission_factory
-from invenio_communities.utils import Pagination, render_template_to_string
+from invenio_communities.utils import Pagination, get_idRole_currentUser, \
+    render_template_to_string
 
 blueprint = Blueprint(
     'invenio_communities',
@@ -102,8 +103,9 @@ def format_item(item, template, name='item'):
 @blueprint.app_template_filter('mycommunities_ctx')
 def mycommunities_ctx():
     """Helper method for return ctx used by many views."""
+    role_id = get_idRole_currentUser()
     return {
-        'mycommunities': Community.get_by_user(current_user.get_id()).all()
+        'mycommunities': Community.get_by_user(role_id).all()
     }
 
 
@@ -207,8 +209,9 @@ def generic_item(community, template, **extra_ctx):
     """Index page with uploader and list of existing depositions."""
     # Check existence of community
     ctx = mycommunities_ctx()
+    role_id = get_idRole_currentUser()
     ctx.update({
-        'is_owner': community.id_user == current_user.get_id(),
+        'is_owner': community.id_role == role_id,
         'community': community,
         'detail': True,
     })
@@ -240,8 +243,10 @@ def new():
 
         del data['logo']
 
+        role_id = get_idRole_currentUser()
+
         community = Community.create(
-            community_id, current_user.get_id(), root_index_id, **data)
+            community_id, role_id, get_idRole_currentUser(), root_index_id, **data)
 
         # Default color
         community.color_bg1 = request.form.get('color_bg1', '#ffffff')
