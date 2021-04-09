@@ -37,7 +37,7 @@ from weko_records.api import ItemLink
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_theme.utils import get_design_layout
 from weko_workflow.utils import get_allow_multi_thumbnail, \
-    get_record_by_root_ver, getThumbnail
+    get_record_by_root_ver, get_thumbnails
 
 from weko_search_ui.api import get_search_detail_keyword
 
@@ -122,7 +122,7 @@ def search():
         item_link, files = get_record_by_root_ver(recid)
         is_multi_thumbnails = get_allow_multi_thumbnail(
             approval_record.get('item_type_id'), None)
-        files_thumbnail = getThumbnail(files, is_multi_thumbnails)
+        files_thumbnail = get_thumbnails(files, is_multi_thumbnails)
 
         return render_template(
             'weko_workflow/activity_detail.html',

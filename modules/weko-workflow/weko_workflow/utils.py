@@ -1622,63 +1622,62 @@ def get_record_by_root_ver(pid_value):
     return record, files
 
 
-def get_disptype_and_ver_in_metainfo(metainfo):
-    """Get displayType and vesionID in meta.
+def get_disptype_and_ver_in_metainfo(metadata):
+    """Get displaytype and licenseptype by vesion_id in metadata.
 
     :return: array.
     """
-    array = []
-    for v in metainfo:
-        if isinstance(metainfo.get(v), dict) \
-            and 'attribute_type' in metainfo[v] \
-            and metainfo[v]['attribute_type'] in \
-                'file' and 'attribute_value_mlt' in metainfo[v]:
-            for n in metainfo[v]['attribute_value_mlt']:
-                array.append({n.get('version_id'): n.get('displaytype')})
-    return array
+    ret = dict()
+    for item in metadata:
+        if isinstance(metadata.get(item), dict) \
+            and metadata[item].get('attribute_type') \
+            and metadata[item]['attribute_type'] == 'file' \
+                and metadata[item].get('attribute_value_mlt'):
+            for sub_item in metadata[item]['attribute_value_mlt']:
+                if sub_item.get('version_id'):
+                    ret[sub_item['version_id']] = {
+                            'displaytype': sub_item.get('displaytype', None),
+                            'licensetype': sub_item.get('displaytype', None),
+                    }
+
+    return ret
 
 
-def setDisplayTypeForFile(itemLink_record, newFiles):
+def set_files_display_type(record_metadata, files):
     """Get displayType in records and set into files.
 
     :return: Files.
     """
-    data = []
-    data = get_disptype_and_ver_in_metainfo(itemLink_record)
-    for k, v in enumerate(newFiles):
-        if data and len(data) > 0:
-            for d, v1 in enumerate(data):
-                key, value = list(data[d].items())[0]
-                if len(data) > 0 and 'version_id' in newFiles[k] and \
-                   key in newFiles[k]['version_id']:
-                    newFiles[k]['displaytype'] = value
-    return newFiles
+    data = get_disptype_and_ver_in_metainfo(record_metadata) or []
+    if data:
+        for file in files:
+            if file.get('version_id') in data:
+                file['displaytype'] = data[file.get('version_id')].get('displaytype', '')
+                file['licensetype'] = data[file.get('version_id')].get('licensetype', '')
+
+    return files
 
 
-def getThumbnail(files, allow_multi_thumbnail):
+def get_thumbnails(files, allow_multi_thumbnail=True):
     """Get Thumbnail from file.
 
     :return: thumbnail.
     """
-    thumbnail = []
+    thumbnails = []
     if files:
-        thumbnail = [i for i in files
-                     if 'is_thumbnail' in i.keys()
-                     and i['is_thumbnail']]
-        if allow_multi_thumbnail is not None and not allow_multi_thumbnail and len(
-                thumbnail) > 1:
-            thumbnail.pop(0)
-    return thumbnail
+        thumbnails = [i for i in files
+            if 'is_thumbnail' in i.keys() and i['is_thumbnail']]
+        if not allow_multi_thumbnail:
+            thumbnails = thumbnails.pop(0)
+
+    return thumbnails
 
 
 def get_allow_multi_thumbnail(item_type_id, activity_id=None):
     """Get Multi Thumbnail from file."""
     if activity_id:
         from weko_items_ui.api import item_login
-        step_item_login_url, need_file, need_billing_file, \
-            record, json_schema, schema_form,\
-            item_save_uri, files, endpoints, need_thumbnail, files_thumbnail, \
-            allow_multi_thumbnail \
+        _, _, _, _, _, _, _, _, _, _, _, allow_multi_thumbnail \
             = item_login(item_type_id=item_type_id, activity_id=activity_id)
         return allow_multi_thumbnail
     else:
