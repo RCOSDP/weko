@@ -1670,7 +1670,7 @@ def get_thumbnails(files, allow_multi_thumbnail=True):
         thumbnails = [i for i in files
                       if 'is_thumbnail' in i.keys() and i['is_thumbnail']]
         if not allow_multi_thumbnail and thumbnails:
-            thumbnails = thumbnails.pop(0)
+            thumbnails = [thumbnails.pop(0)]
 
     return thumbnails
 
