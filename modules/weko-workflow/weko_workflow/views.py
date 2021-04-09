@@ -58,7 +58,8 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
 from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
     get_workflows
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from werkzeug.utils import import_string
 
@@ -75,8 +76,8 @@ from .utils import IdentifierHandle, auto_fill_title, \
     get_actionid, get_activity_display_info, \
     get_activity_id_of_record_without_version, get_allow_multi_thumbnail, \
     get_application_and_approved_date, get_approval_keys, get_cache_data, \
-    get_identifier_setting, get_record_by_root_ver, get_usage_data, \
-    get_workflow_item_type_names, get_thumbnails, handle_finish_workflow, \
+    get_identifier_setting, get_record_by_root_ver, get_thumbnails, \
+    get_usage_data, get_workflow_item_type_names, handle_finish_workflow, \
     init_activity_for_guest_user, is_enable_item_name_link, \
     is_hidden_pubdate, is_show_autofill_metadata, \
     is_usage_application_item_type, item_metadata_validation, \
