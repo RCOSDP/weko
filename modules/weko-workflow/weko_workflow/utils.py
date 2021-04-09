@@ -1637,7 +1637,7 @@ def get_disptype_and_ver_in_metainfo(metadata):
                 if sub_item.get('version_id'):
                     ret[sub_item['version_id']] = {
                             'displaytype': sub_item.get('displaytype', None),
-                            'licensetype': sub_item.get('displaytype', None),
+                            'licensetype': sub_item.get('licensetype', None),
                     }
 
     return ret
@@ -1652,8 +1652,10 @@ def set_files_display_type(record_metadata, files):
     if data:
         for file in files:
             if file.get('version_id') in data:
-                file['displaytype'] = data[file.get('version_id')].get('displaytype', '')
-                file['licensetype'] = data[file.get('version_id')].get('licensetype', '')
+                file['displaytype'] = data[file.get(
+                    'version_id')].get('displaytype', '')
+                file['licensetype'] = data[file.get(
+                    'version_id')].get('licensetype', '')
 
     return files
 
@@ -1667,7 +1669,7 @@ def get_thumbnails(files, allow_multi_thumbnail=True):
     if files:
         thumbnails = [i for i in files
             if 'is_thumbnail' in i.keys() and i['is_thumbnail']]
-        if not allow_multi_thumbnail:
+        if not allow_multi_thumbnail and thumbnails:
             thumbnails = thumbnails.pop(0)
 
     return thumbnails
