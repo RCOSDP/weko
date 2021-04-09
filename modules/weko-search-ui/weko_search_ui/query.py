@@ -966,7 +966,8 @@ def item_search_factory(self,
                         search,
                         start_date,
                         end_date,
-                        list_index_id=None):
+                        list_index_id=None,
+                        ignore_publish_status=False):
     """Factory for opensearch.
 
     :param self:
@@ -974,16 +975,18 @@ def item_search_factory(self,
     :param start_date: Start date for search
     :param end_date: End date for search
     :param list_index_id: index tree list or None
+    :param ignore_publish_status: both public and private
     :return:
     """
     def _get_query(start_term, end_term, indexes):
         query_string = "_type:{} AND " \
                        "relation_version_is_last:true AND " \
-                       "publish_status:0 AND " \
                        "publish_date:[{} TO {}]".format(current_app.config[
                            "INDEXER_DEFAULT_DOC_TYPE"],
                            start_term,
                            end_term)
+        if not ignore_publish_status:
+            query_string += " AND publish_status:0 "
         query_filter = []
 
         if indexes:

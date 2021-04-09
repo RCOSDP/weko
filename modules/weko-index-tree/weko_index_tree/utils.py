@@ -453,7 +453,8 @@ def get_elasticsearch_records_data_by_indexes(index_ids, start_date, end_date):
             records_search,
             start_date,
             end_date,
-            index_ids
+            index_ids,
+            True
         )
         search_result = search_instance.execute()
         result = search_result.to_dict()

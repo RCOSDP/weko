@@ -768,7 +768,7 @@ def get_elasticsearch_result_by_date(start_date, end_date):
     result = None
     try:
         search_instance, _qs_kwargs = item_search_factory(
-            None, records_search, start_date, end_date)
+            None, records_search, start_date, end_date, None, True)
         search_result = search_instance.execute()
         result = search_result.to_dict()
     except NotFoundError:
