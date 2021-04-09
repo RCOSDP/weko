@@ -473,10 +473,12 @@ def generate_path(index_ids):
         dictionary -- elastic search data
 
     """
+    from .api import Indexes
     path = dict()
     result = []
     for index in index_ids:
-        parent_path = path.get(str(index.pid)) or ""
+        parent_path = path.get(str(index.pid)) or \
+            (Indexes.get_full_path(index.pid) if index.pid > 0 else "")
         path[str(index.cid)] = (parent_path + "/" + str(index.cid)) \
             if parent_path != "" else "" + str(index.cid)
         result.append(path[str(index.cid)])

@@ -991,7 +991,7 @@ def item_search_factory(self,
             for index in indexes:
                 q_wildcard = {
                     "wildcard": {
-                        "path": "*{}*".format(index)
+                        "path": index
                     }
                 }
                 query_filter.append(q_wildcard)
