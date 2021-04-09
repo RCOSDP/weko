@@ -495,7 +495,7 @@ class Indexes(object):
         indexes = cls.get_public_indexes()
         for index in indexes:
             browsing_info[str(index.id)] = {
-                'parent': index.parent,
+                'parent': str(index.parent),
                 'public_date': index.public_date,
                 'browsing_role': index.browsing_role.split(',')
             }

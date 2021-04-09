@@ -361,12 +361,14 @@ def get_hidden_flag_for_ranking(index_info, index_id):
             return True
         if "-99" not in index_info[index_id]['browsing_role']:
             return True
-        if index_info[index_id]['parent'] != 0:
-            return get_hidden_flag_for_ranking(index_info, index_info[index_id]['parent'])
+        if index_info[index_id]['parent'] != '0':
+            return get_hidden_flag_for_ranking(
+                    index_info, index_info[index_id]['parent'])
         else:
             return False
     else:
         return True
+
 
 def parse_ranking_results(index_info,
                           results,
@@ -397,10 +399,16 @@ def parse_ranking_results(index_info,
         record_id = item.get('record_id')
         if record_id:
             record = WekoRecord.get_record(record_id)
+            if record['publish_status'] != '0' \
+                    or datetime.strptime(record['publish_date'],
+                                         '%Y-%m-%d') > datetime.now():
+                hidden_items.append(str(record.id))
+                continue
             is_hidden = True
             for path in record['path']:
                 index_id = path.split('/')[-1]
-                is_hidden = is_hidden and get_hidden_flag_for_ranking(index_info, index_id)
+                is_hidden = is_hidden \
+                    and get_hidden_flag_for_ranking(index_info, index_id)
             if is_hidden:
                 hidden_items.append(str(record.id))
 
