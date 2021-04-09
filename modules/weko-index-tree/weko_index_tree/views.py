@@ -87,7 +87,7 @@ def get_rss_data():
     hits = records_data.get('hits')
     es_data = hits.get('hits')
     item_id_list = list(map(itemgetter('_id'), es_data))
-    hidden_items = find_hidden_items(item_id_list)
+    hidden_items = find_hidden_items(item_id_list, idx_tree_ids)
 
     rss_data = []
     for es_item in es_data:

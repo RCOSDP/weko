@@ -320,12 +320,13 @@ def get_current_user():
     return current_id
 
 
-def find_hidden_items(item_id_list):
+def find_hidden_items(item_id_list, idx_paths=None):
     """
     Find items that should not be visible by the current user.
 
     parameter:
         item_id_list: list of items ID to be checked.
+        idx_paths: List of index paths.
     return: List of items ID that the user cannot access.
     """
     if not item_id_list:
@@ -346,7 +347,8 @@ def find_hidden_items(item_id_list):
         is_public = check_publish_status(record)
         has_index_permission = False
         for idx in record.navi:
-            if check_index_permissions(None, idx.cid):
+            if check_index_permissions(None, idx.cid) \
+                    and (not idx_paths or idx.path in idx_paths):
                 has_index_permission = True
                 break
         if is_public and has_index_permission:

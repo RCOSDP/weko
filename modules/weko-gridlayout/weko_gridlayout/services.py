@@ -1095,7 +1095,8 @@ class WidgetDataLoaderServices:
             if not hits:
                 result['error'] = 'Cannot search data'
                 return result
-            es_data = hits.get('hits')
+            es_data = [record for record in hits.get(
+                'hits', []) if record.get('_source').get('path')]
 
             item_id_list = list(map(itemgetter('_id'), es_data))
             hidden_items = find_hidden_items(item_id_list)
@@ -1133,7 +1134,8 @@ class WidgetDataLoaderServices:
         if not data or not data.get('hits'):
             return build_rss_xml(data=None, term=term, count=0, lang=lang)
         hits = data.get('hits')
-        es_data = hits.get('hits')
+        es_data = [record for record in hits.get(
+            'hits', []) if record.get('_source').get('path')]
         item_id_list = list(map(itemgetter('_id'), es_data))
         hidden_items = find_hidden_items(item_id_list)
 
