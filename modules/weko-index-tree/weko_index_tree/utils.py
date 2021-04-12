@@ -453,7 +453,8 @@ def get_elasticsearch_records_data_by_indexes(index_ids, start_date, end_date):
             records_search,
             start_date,
             end_date,
-            index_ids
+            index_ids,
+            True
         )
         search_result = search_instance.execute()
         result = search_result.to_dict()
@@ -473,10 +474,12 @@ def generate_path(index_ids):
         dictionary -- elastic search data
 
     """
+    from .api import Indexes
     path = dict()
     result = []
     for index in index_ids:
-        parent_path = path.get(str(index.pid)) or ""
+        parent_path = path.get(str(index.pid)) or \
+            (Indexes.get_full_path(index.pid) if index.pid > 0 else "")
         path[str(index.cid)] = (parent_path + "/" + str(index.cid)) \
             if parent_path != "" else "" + str(index.cid)
         result.append(path[str(index.cid)])
