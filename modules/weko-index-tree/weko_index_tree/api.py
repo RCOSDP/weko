@@ -488,6 +488,19 @@ class Indexes(object):
         return get_tree_json(cls.get_recursive_tree(pid), pid)
 
     @classmethod
+    def get_browsing_info(cls):
+        """Get browsing information of all indexes."""
+        browsing_info = {}
+        indexes = cls.get_public_indexes()
+        for index in indexes:
+            browsing_info[str(index.id)] = {
+                'parent': str(index.parent),
+                'public_date': index.public_date,
+                'browsing_role': index.browsing_role.split(',')
+            }
+        return browsing_info
+
+    @classmethod
     def get_browsing_tree(cls, pid=0):
         """Get browsing tree."""
         tree = cls.get_index_tree(pid)
