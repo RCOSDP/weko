@@ -28,6 +28,7 @@ from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import AdminSettings
+from weko_admin.utils import get_search_setting
 from weko_gridlayout.utils import get_widget_design_page_with_main, \
     main_design_has_main_widget
 from weko_index_tree.api import Indexes
@@ -179,6 +180,14 @@ def search():
             index_link_list = get_index_link_list(current_i18n.language)
         else:
             index_link_list = get_index_link_list()
+
+        # Get Facet search setting.
+        display_facet_search = get_search_setting().get("display_control", {})\
+            .get('display_facet_search', {}).get('status', False)
+        ctx.update({
+            "display_facet_search": display_facet_search,
+        })
+
         return render_template(
             current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
             page=page,

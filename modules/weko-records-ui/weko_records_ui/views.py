@@ -42,6 +42,7 @@ from invenio_records_ui.signals import record_viewed
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from simplekv.memory.redisstore import RedisStore
+from weko_admin.utils import get_search_setting
 from weko_deposit.api import WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
@@ -563,6 +564,14 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         # list_hidden = get_ignore_item(record['item_type_id'])
         # record = hide_by_itemtype(record, list_hidden)
         record = hide_by_email(record)
+
+    # Get Facet search setting.
+    display_facet_search = get_search_setting().get("display_control", {}).get(
+        'display_facet_search', {}).get('status', False)
+    ctx.update({
+        "display_facet_search": display_facet_search
+    })
+
     return render_template(
         template,
         pid=pid,

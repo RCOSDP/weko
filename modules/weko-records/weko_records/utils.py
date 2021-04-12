@@ -31,7 +31,6 @@ from invenio_pidstore import current_pidstore
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.ext import pid_exists
 from invenio_pidstore.models import PersistentIdentifier
-from weko_admin.models import AdminSettings
 from weko_schema_ui.schema import SchemaTree
 
 from .api import ItemTypes, Mapping
@@ -426,50 +425,39 @@ def to_orderdict(alst, klst):
                     to_orderdict(v, klst)
 
 
-def get_options_and_order_list(item_type_id):
+def get_options_and_order_list(item_type_id, ojson=None):
     """Get Options by item type id.
 
     :param item_type_id:
+    :param ojson:
     :return: options dict and sorted list
     """
-    ojson = ItemTypes.get_record(item_type_id)
+    if ojson is None:
+        ojson = ItemTypes.get_record(item_type_id)
     solst = find_items(ojson.model.form)
     meta_options = ojson.model.render.get('meta_fix')
     meta_options.update(ojson.model.render.get('meta_list'))
     return solst, meta_options
 
 
-def sort_meta_data_by_options(record_hit):
+async def sort_meta_data_by_options(
+    record_hit, settings, item_type_mapping, item_type_data,
+):
     """Reset metadata by '_options'.
 
     :param record_hit:
+    :param settings:
+    :param item_type_mapping:
+    :param item_type_data:
     """
+    from weko_deposit.api import _FormatSysBibliographicInformation
     from weko_records_ui.permissions import check_file_download_permission
     from weko_records_ui.utils import hide_item_metadata
-    from weko_records.api import Mapping
-    from weko_records.serializers.utils import get_mapping
     from weko_search_ui.utils import get_data_by_propertys
-    from weko_admin.utils import get_selected_language
-    from weko_deposit.api import _FormatSysBibliographicInformation
-    web_screen_lang = get_selected_language()
 
-    def get_meta_values(v):
-        """Get values from metadata."""
-        data_list = []
+    from weko_records.serializers.utils import get_mapping
 
-        def get_values(v):
-            """Get value by recursive."""
-            if isinstance(v, list):
-                for temp in v:
-                    get_values(temp)
-            elif isinstance(v, dict):
-                for temp in v.values():
-                    data_list.append(temp)
-            elif isinstance(v, str):
-                data_list.append(v)
-
-        get_values(v)
-        return data_list
+    web_screen_lang = current_i18n.language
 
     def convert_data_to_dict(solst):
         """Convert solst to dict."""
@@ -491,7 +479,7 @@ def sort_meta_data_by_options(record_hit):
     def get_author_comment(data_result, key, result, is_specify_newline_array):
         value = data_result[key].get(key, {}).get('value', [])
         value = [x for x in value if x]
-        if value is not None and len(value) > 0:
+        if len(value) > 0:
             is_specify_newline = False
             for specify_newline in is_specify_newline_array:
                 if key in specify_newline:
@@ -515,10 +503,8 @@ def sort_meta_data_by_options(record_hit):
                                                 is_specify_newline_array)
                 else:
                     if 'lang_id' in data_result[key]:
-                        lang_id = data_result[key].get('lang_id') if "[]" not in \
-                                                                     data_result[
-                                                                         key].get(
-                                                                         'lang_id') \
+                        lang_id = data_result[key].get('lang_id') \
+                            if "[]" not in data_result[key].get('lang_id') \
                             else data_result[key].get('lang_id').replace("[]", '')
                     data = ''
                     if "stt" in data_result[key] and data_result[key].get(
@@ -529,21 +515,17 @@ def sort_meta_data_by_options(record_hit):
                     for idx2, d in enumerate(data):
                         if d not in "lang" and d not in "lang_id":
                             lang_arr = []
-                            value_arr = []
-                            if ('lang' in data_result[key]):
+                            if 'lang' in data_result[key]:
                                 lang_arr = data_result[key].get('lang')
                             if (key in data_result) and (
                                 d in data_result[key]) and (
                                     'value' in data_result[key][d]):
                                 value_arr = data_result[key][d]['value']
-                                value = selected_value_by_language(lang_arr,
-                                                                   value_arr,
-                                                                   lang_id,
-                                                                   d.replace("[]",
-                                                                             ''),
-                                                                   web_screen_lang[
-                                                                       'selected'],
-                                                                   _item_metadata)
+                                value = selected_value_by_language(
+                                    lang_arr, value_arr, lang_id,
+                                    d.replace("[]", ''), web_screen_lang,
+                                    _item_metadata
+                                )
                                 if value is not None and len(value) > 0:
                                     for index, n in enumerate(
                                             is_specify_newline_array):
@@ -573,44 +555,55 @@ def sort_meta_data_by_options(record_hit):
             value = s['value']
             option = s['option']
             parent_option = s['parent_option']
+            # Get show list flag.
             is_show_list = parent_option.get(
                 'show_list') if parent_option and parent_option.get(
                 'show_list') else option.get('show_list')
+            # Get specify newline flag.
             is_specify_newline = parent_option.get(
                 'specify_newline') if parent_option and parent_option.get(
                 'specify_newline') else option.get('specify_newline')
+            # Get hide flag.
             is_hide = parent_option.get('hide') if parent_option and \
                 parent_option.get('hide') else option.get('hide')
+            # Get hide email flag
             if 'creatorMails[].creatorMail' in s['key'] \
                 or 'contributorMails[].contributorMail' in s['key'] \
                     or 'mails[].mail' in s['key']:
                 is_hide = is_hide | hide_email_flag
-            mlt = src.get(s['key'], {}).get('attribute_value_mlt', {})
+            # Get creator flag.
             is_author = src.get(s['key'], {}).get('attribute_type',
                                                   {}) == 'creator'
-            sys_bibliographic = _FormatSysBibliographicInformation(
-                copy.deepcopy(mlt),
-                copy.deepcopy(solst)
-            )
 
             if author_key and author_key in s['key']:
                 stt_key, data_result, is_specify_newline_array = add_author(
                     author_data, stt_key, is_specify_newline_array, s, value,
                     data_result, is_specify_newline, is_hide, is_show_list)
             elif is_author:
+                # Format creator data to display on item list
                 author_key = s['key']
-                author_data = get_show_list_author(solst_dict_array,
-                                                   hide_email_flag, author_key,
-                                                   mlt)
-            elif bibliographic_key is None \
-                and sys_bibliographic.is_bibliographic() and \
-                    parent_option and parent_option["showlist"]:
-                bibliographic_key = s['key']
-                stt_key, data_result, is_specify_newline_array = add_biographic(
-                    sys_bibliographic, bibliographic_key, s, stt_key,
-                    data_result, is_specify_newline_array)
-            elif not (bibliographic_key is not None and bibliographic_key in s[
-                'key']) and value and value not in _ignore_items and \
+                attr_mlt = src.get(s['key'], {}).get('attribute_value_mlt', {})
+                author_data = get_show_list_author(
+                    solst_dict_array, hide_email_flag, author_key, attr_mlt
+                )
+            elif bibliographic_key is None and is_show_list and \
+                    'bibliographic_titles' in s['key']:
+                # Format bibliographic data to display on item list
+                bibliographic_key = s['key'].split(".")[0].replace('[]', '')
+                mlt_bibliographic = src.get(bibliographic_key, {}).get(
+                    'attribute_value_mlt')
+                if mlt_bibliographic:
+                    sys_bibliographic = _FormatSysBibliographicInformation(
+                        copy.deepcopy(mlt_bibliographic),
+                        copy.deepcopy(solst)
+                    )
+                    stt_key, data_result, is_specify_newline_array = \
+                        add_biographic(sys_bibliographic, bibliographic_key,
+                                       s, stt_key,
+                                       data_result, is_specify_newline_array
+                                       )
+            elif not (bibliographic_key and bibliographic_key in s['key']) and \
+                    value and value not in _ignore_items and \
                     not is_hide and is_show_list and s['key']:
                 data_result, stt_key = get_value_and_lang_by_key(
                     s['key'], solst_dict_array, data_result, stt_key)
@@ -638,22 +631,22 @@ def sort_meta_data_by_options(record_hit):
             return _label, _extension
         result = []
         for f in files:
+            label, extension = __get_label_extension()
             if 'open_restricted' == f.get('accessrole', ''):
-                label, extension = __get_label_extension()
                 if label:
                     result.append({
                         'label': label,
                         'extention': extension,
                         'url': ""
                     })
-            elif check_file_download_permission(record, f, False):
-                label, extension = __get_label_extension()
-                if label:
-                    result.append({
-                        'label': label,
-                        'extention': extension,
-                        'url': f.get('url', {}).get('url', '')
-                    })
+            elif label and (
+                not extension
+                    or check_file_download_permission(record, f, False)):
+                result.append({
+                    'label': label,
+                    'extention': extension,
+                    'url': f.get('url', {}).get('url', '')
+                })
         return result
 
     def get_file_thumbnail(thumbnails):
@@ -676,7 +669,6 @@ def sort_meta_data_by_options(record_hit):
         src = record_hit['_source']['_item_metadata']
         item_type_id = record_hit['_source'].get('item_type_id') or \
             src.get('item_type_id')
-        item_type_mapping = Mapping.get_record(item_type_id)
         item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
         language_dict = {}
         suffixes = '.@attributes.xml:lang'
@@ -693,18 +685,17 @@ def sort_meta_data_by_options(record_hit):
                     prefix: {'lang': title_languages, 'lang-id': _title_key,
                              'val': title_values, 'val-id': _title_key1}})
         # selected title
-        title_obj = language_dict.get("title", None)
+        title_obj = language_dict.get("title")
         if title_obj is not None:
-            lang_arr = title_obj.get("lang", None)
-            val_arr = title_obj.get("val", None)
-            lang_id = title_obj.get("lang-id", None)
-            val_id = title_obj.get("val-id", None)
-            if lang_arr is not None and len(
-                    lang_arr) > 0 and lang_arr != "null":
-                result = selected_value_by_language(lang_arr, val_arr, lang_id,
-                                                    val_id,
-                                                    web_screen_lang['selected'],
-                                                    _item_metadata)
+            lang_arr = title_obj.get("lang")
+            val_arr = title_obj.get("val")
+            lang_id = title_obj.get("lang-id")
+            val_id = title_obj.get("val-id")
+            if lang_arr and len(lang_arr) > 0 and lang_arr != "null":
+                result = selected_value_by_language(
+                    lang_arr, val_arr, lang_id, val_id,
+                    web_screen_lang, _item_metadata
+                )
                 if result is not None:
                     for idx, val in enumerate(record_hit['_source']['title']):
                         if val == result:
@@ -715,15 +706,15 @@ def sort_meta_data_by_options(record_hit):
                             arr.append(result)
                             record_hit['_source']['_comment'] = arr
                             break
-        item_type_id = record_hit['_source'].get('item_type_id') or src.get(
-            'item_type_id')
+
         if not item_type_id:
             return
-        solst, meta_options = get_options_and_order_list(item_type_id)
+        solst, meta_options = get_options_and_order_list(item_type_id,
+                                                         item_type_data)
         solst_dict_array = convert_data_to_dict(solst)
         files_info = []
         thumbnail = None
-        hide_item_metadata(src)
+        hide_item_metadata(src, settings, item_type_mapping, item_type_data)
         # Set value and parent option
         for lst in solst:
             key = lst[0]
@@ -757,10 +748,11 @@ def sort_meta_data_by_options(record_hit):
                                 'hide': option.get("hidden")
                             }
                             break
-        settings = AdminSettings.get('items_display_settings')
-        items = get_comment(solst_dict_array, not settings.items_display_email,
-                            _item_metadata,
-                            src_default, solst)
+        # Format data to display on item list
+        items = get_comment(
+            solst_dict_array, not settings.items_display_email,
+            _item_metadata, src_default, solst)
+
         if 'file' in record_hit['_source']:
             record_hit['_source'].pop('file')
         if items:
@@ -776,7 +768,6 @@ def sort_meta_data_by_options(record_hit):
         current_app.logger.exception(
             u'Record serialization failed {}.'.format(
                 str(record_hit['_source'].get('control_number'))))
-    return
 
 
 def get_keywords_data_load(str):

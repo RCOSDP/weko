@@ -88,7 +88,9 @@
   <div class="row" style="height: 100%">
     <div class="col-sm-{{ width }} col-md-{{ width }} col-lg-{{ width }}">
       {% include "weko_theme/body_index.html" %}
-      {% include "weko_search_ui/body_facet_search.html" %}
+      {% if display_facet_search %}
+        {% include "weko_search_ui/body_facet_search.html" %}
+      {% endif %}
     </div>
     {%-if not community_id %}
       <div class="col-sm-{{ 12-width|int }} col-md-{{ 12-width|int }} col-lg-{{ 12-width|int }}">
