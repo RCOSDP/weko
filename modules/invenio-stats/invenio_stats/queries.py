@@ -130,7 +130,8 @@ class ESDateHistogramQuery(ESQuery):
             'histogram',
             'date_histogram',
             field=self.time_field,
-            interval=interval
+            interval=interval,
+            time_zone=current_app.config['STATS_WEKO_DEFAULT_TIMEZONE']
         )
 
         for destination, (metric, field, opts) in self.metric_fields.items():
@@ -238,12 +239,14 @@ class ESTermsQuery(ESQuery):
         agg_query = Search(using=self.client,
                            index=self.index,
                            doc_type=self.doc_type)[0:0]
-        if start_date is not None or end_date is not None:
+        if start_date or end_date:
             time_range = {}
-            if start_date is not None:
+            if start_date:
                 time_range['gte'] = start_date.isoformat()
-            if end_date is not None:
+            if end_date:
                 time_range['lte'] = end_date.isoformat()
+            time_range['time_zone'] = current_app.config[
+                'STATS_WEKO_DEFAULT_TIMEZONE']
             agg_query = agg_query.filter(
                 'range',
                 **{self.time_field: time_range})
@@ -339,6 +342,8 @@ class ESWekoTermsQuery(ESTermsQuery):
                 time_range['gte'] = start_date.isoformat()
             if end_date is not None:
                 time_range['lte'] = end_date.isoformat()
+            time_range['time_zone'] = current_app.config[
+                'STATS_WEKO_DEFAULT_TIMEZONE']
             agg_query = agg_query.filter(
                 'range',
                 **{self.time_field: time_range})

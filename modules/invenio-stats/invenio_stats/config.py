@@ -197,3 +197,7 @@ STATS_AGGREGATION_INDEXES = [
     'top-view',
 ]
 """Stats aggregation indexes."""
+
+
+STATS_WEKO_DEFAULT_TIMEZONE = 'Asia/Tokyo'
+"""Bucketing should use a different time zone."""
