@@ -240,7 +240,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
 
         return make_response(jsonify(
             {'status': status, 'message': msg, 'errors': errors,
-            'delete_flag': delete_flag}), status)
+             'delete_flag': delete_flag}), status)
 
     @need_record_permission('delete_permission_factory')
     def delete(self, index_id, **kwargs):

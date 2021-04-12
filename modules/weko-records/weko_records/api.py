@@ -1166,6 +1166,7 @@ class Mapping(RecordBase):
 
         Returns:
             list: Mappings
+
         """
         with db.session.no_autoflush:
             query = ItemTypeMapping.query \

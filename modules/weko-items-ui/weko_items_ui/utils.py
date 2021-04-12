@@ -363,7 +363,7 @@ def get_hidden_flag_for_ranking(index_info, index_id):
             return True
         if index_info[index_id]['parent'] != '0':
             return get_hidden_flag_for_ranking(
-                    index_info, index_info[index_id]['parent'])
+                index_info, index_info[index_id]['parent'])
         else:
             return False
     else:
@@ -1548,7 +1548,7 @@ def get_files_from_metadata(record):
     files = {}
     for key in record:
         meta_data = record.get(key)
-        if type(meta_data) == dict and \
+        if isinstance(meta_data, dict) and \
                 meta_data.get('attribute_type', '') == "file":
             file_metadata = meta_data.get("attribute_value_mlt", [])
             for f in file_metadata:
@@ -2442,7 +2442,8 @@ def hide_thumbnail(schema_form):
             break
 
 
-def get_ignore_item(_item_type_id, item_type_mapping=None, item_type_data=None):
+def get_ignore_item(_item_type_id, item_type_mapping=None,
+                    item_type_data=None):
     """Get ignore item from mapping.
 
     :param _item_type_id:

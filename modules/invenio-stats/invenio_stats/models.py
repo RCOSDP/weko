@@ -160,10 +160,10 @@ class _StataModelBase(Timestamp):
             uq_stats_key = cls.get_uq_key()
             stmt = insert(cls)
             db.session.execute(
-                 clause=stmt.on_conflict_do_update(
-                     set_={'source': stmt.excluded.source},
-                     constraint=uq_stats_key),
-                 params=stats_data)
+                clause=stmt.on_conflict_do_update(
+                    set_={'source': stmt.excluded.source},
+                    constraint=uq_stats_key),
+                params=stats_data)
             db.session.commit()
             return True
         except SQLAlchemyError as err:

@@ -95,9 +95,9 @@ def search_responsify(serializer, mimetype):
 
         Args:
             ids (list): Item Type identifier list.
-
         Returns:
             dict: Item types.
+
         """
         item_types = ItemTypes.get_records(ids)
         item_type_dict = {}
@@ -113,6 +113,7 @@ def search_responsify(serializer, mimetype):
 
         Returns:
             dict: Item Type mappings.
+
         """
         mappings = Mapping.get_mapping_by_item_type_ids(ids)
         mapping_dict = {}
