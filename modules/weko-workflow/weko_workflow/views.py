@@ -58,7 +58,8 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
 from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
     get_workflows
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from werkzeug.utils import import_string
 
@@ -75,15 +76,15 @@ from .utils import IdentifierHandle, auto_fill_title, \
     get_actionid, get_activity_display_info, \
     get_activity_id_of_record_without_version, get_allow_multi_thumbnail, \
     get_application_and_approved_date, get_approval_keys, get_cache_data, \
-    get_identifier_setting, get_record_by_root_ver, get_usage_data, \
-    get_workflow_item_type_names, getThumbnail, handle_finish_workflow, \
+    get_identifier_setting, get_record_by_root_ver, get_thumbnails, \
+    get_usage_data, get_workflow_item_type_names, handle_finish_workflow, \
     init_activity_for_guest_user, is_enable_item_name_link, \
     is_hidden_pubdate, is_show_autofill_metadata, \
     is_usage_application_item_type, item_metadata_validation, \
     prepare_data_for_guest_activity, process_send_approval_mails, \
     process_send_notification_mail, process_send_reminder_mail, register_hdl, \
     save_activity_data, saving_doi_pidstore, \
-    send_usage_application_mail_for_guest_user, setDisplayTypeForFile, \
+    send_usage_application_mail_for_guest_user, set_files_display_type, \
     update_approval_date, update_cache_data, validate_guest_activity_expired, \
     validate_guest_activity_token
 
@@ -203,7 +204,7 @@ def iframe_success():
     files = []
     if item and item.get('pid') and 'value' in item['pid']:
         record, files = get_record_by_root_ver(item['pid']['value'])
-        files_thumbnail = getThumbnail(files, None)
+        files_thumbnail = get_thumbnails(files, None)
     else:
         record = session['itemlogin_record']
     ctx = {'community': None}
@@ -618,14 +619,14 @@ def display_activity(activity_id="0"):
             item['pid'].get('value'):
         itemLink_record, newFiles = get_record_by_root_ver(item['pid']['value'])
         allow_multi_thumbnails = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'), None)
-        new_thumbnail = getThumbnail(newFiles, allow_multi_thumbnails)
+        new_thumbnail = get_thumbnails(newFiles, allow_multi_thumbnails)
 
     # case create item
     if item and 'pid' not in item:
         itemLink_record = approval_record
         newFiles = files
         allow_multi_thumbnails = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'), activity_id)
-        new_thumbnail = getThumbnail(newFiles, allow_multi_thumbnails)
+        new_thumbnail = get_thumbnails(newFiles, allow_multi_thumbnails)
         if new_thumbnail:
             new_thumbnail = files_thumbnail
 
@@ -645,19 +646,19 @@ def display_activity(activity_id="0"):
         if 'end_action' in action_endpoint:
             files = newFiles
         allow_multi_thumbnails = get_allow_multi_thumbnail(approval_record.get('item_type_id'), None)
-        files_thumbnail = getThumbnail(files, allow_multi_thumbnails)
+        files_thumbnail = get_thumbnails(files, allow_multi_thumbnails)
 
         if 'approval' == action_endpoint:
             allow_multi_thumbnails = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'), activity_id)
-            new_thumbnail = getThumbnail(newFiles, allow_multi_thumbnails)
+            new_thumbnail = get_thumbnails(newFiles, allow_multi_thumbnails)
 
         if approval_record and files and len(approval_record) > 0 and \
            len(files) > 0 and (isinstance(approval_record, list) or isinstance(approval_record, dict)):
-            files = setDisplayTypeForFile(approval_record, files)
+            files = set_files_display_type(approval_record, files)
 
     if itemLink_record and newFiles and len(itemLink_record) > 0 and len(newFiles) > 0 \
        and (isinstance(itemLink_record, list) or isinstance(itemLink_record, dict)):
-        newFiles = setDisplayTypeForFile(itemLink_record, newFiles)
+        newFiles = set_files_display_type(itemLink_record, newFiles)
 
     # Get email approval key
     approval_email_key = get_approval_keys()

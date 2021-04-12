@@ -2962,7 +2962,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         // add by ryuu. end 20180410
         //Reset data before show modal 'myModal'.
         window.appAuthorSearch.namespace.resetSearchData();
-        $('#myModal').modal('show');
+        $('#app-author-search').modal('show');
       }
       // add by ryuu. start 20180410
      $scope.setAuthorInfo = function () {
