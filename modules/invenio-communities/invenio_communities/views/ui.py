@@ -247,7 +247,7 @@ def new():
         role_id = min(get_user_role_ids())
 
         community = Community.create(
-            community_id, role_id, get_user_role_ids(), root_index_id, **data)
+            community_id, role_id, current_user.get_id(), root_index_id, **data)
 
         # Default color
         community.color_bg1 = request.form.get('color_bg1', '#ffffff')

@@ -81,7 +81,7 @@ class CommunityModelView(ModelView):
         :param is_created:
             Will be set to True if model was created and to False if edited
         """
-        model.id_user = min(get_user_role_ids())
+        model.id_user = current_user.get_id()
 
     def _validate_input_id(self, field):
         the_patterns = {

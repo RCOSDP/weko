@@ -3502,7 +3502,7 @@ def check_authority_by_admin(activity):
     # If user has community role
     # and the user who created activity is member of community
     # role -> has permission:
-    community_role_name = current_app.config['WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY']
+    community_role_name = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
     # Get the list of users who has the community role
     community_users = User.query.outerjoin(userrole).outerjoin(Role) \
         .filter(community_role_name == Role.name) \

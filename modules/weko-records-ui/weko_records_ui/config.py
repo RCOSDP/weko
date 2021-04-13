@@ -40,7 +40,7 @@ WEKO_PERMISSION_ROLE_USER = ('System Administrator',
 WEKO_PERMISSION_SUPER_ROLE_USER = ('System Administrator',
                                    'Repository Administrator')
 
-WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY = 'Community Administrator'
+WEKO_PERMISSION_ROLE_COMMUNITY = 'Community Administrator'
 
 WEKO_PERMISSION_ROLE_GENERAL = 'General'
 
