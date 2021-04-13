@@ -52,17 +52,61 @@
         <td>{{ record_detail_data['attribute_value_mlt'] }}</td>
       </tr>
     {%- else -%}
-        {%- for attribute_data in record_detail_data['attribute_value_mlt'] -%}
-          {%- if attribute_data -%}
-          <tr>
-            <th scope="row" colspan="6"
-            style="border-bottom: none">{{ record_detail_data['attribute_name_i18n'] }}</th>
-            <td>
-            </td>
-          </tr>
-            {{ output_attribute_value_mlt(attribute_data, 1) }}
-          {%- endif -%}
-        {%- endfor -%}
+        {%- set dispFirstflg = False -%}
+        {%- set dispSndflg = False -%}
+        {%- set nsd = namespace(dispflg = False) -%}
+        {%- set ns = namespace(disp_attribute_data = record_detail_data['attribute_value_mlt'][0]) -%}
+            {%- for attribute_data in record_detail_data['attribute_value_mlt'] -%}
+                {%- if attribute_data -%}
+                    {%- if loop.first -%}
+                        {%- set ns.disp_attribute_data = attribute_data -%}
+                    {%- endif -%}
+                    {%- if attribute_data[0][1] -%}
+                        {%- set attribute_item = attribute_data[0][1] -%}
+                        {%- if attribute_item[0] -%}
+                            {%- set item_lang = attribute_item[0] -%}
+                            {%- if 'en' in item_lang.values() -%}
+                                {%- set ns.disp_attribute_data = attribute_data -%}
+                                {%- set dispSndflg = True -%}
+                            {%- endif -%}
+                            {%- if current_i18n.language in item_lang.values() -%}
+                                {%- set dispFirstflg = True -%}
+                                {%- set dispSndflg = False -%}
+                                {%- set ns.disp_attribute_data = attribute_data -%}
+                            {%- endif -%}
+                        {%- endif -%}
+                    {%- endif -%}
+                    {%- if dispFirstflg and not nsd.dispflg -%}
+                        <tr>
+                            <th scope="row" colspan="6"
+                            style="border-bottom: none">{{ record_detail_data['attribute_name_i18n'] }}</th>
+                            <td>
+                            </td>
+                        </tr>
+                        {{ output_attribute_value_mlt(ns.disp_attribute_data, 1) }}
+                        {%- set nsd.dispflg = True -%}
+                    {%- elif dispSndflg and not nsd.dispflg -%}
+                        <tr>
+                            <th scope="row" colspan="6"
+                            style="border-bottom: none">{{ record_detail_data['attribute_name_i18n'] }}</th>
+                            <td>
+                            </td>
+                        </tr>
+                        {{ output_attribute_value_mlt(ns.disp_attribute_data, 1) }}
+                        {%- set nsd.dispflg = True -%}
+                    {%- elif not nsd.dispflg -%}
+                        {%- if loop.last -%}
+                            <tr>
+                                <th scope="row" colspan="6"
+                                style="border-bottom: none">{{ record_detail_data['attribute_name_i18n'] }}</th>
+                                <td>
+                                </td>
+                            </tr>
+                            {{ output_attribute_value_mlt(ns.disp_attribute_data, 1) }}
+                        {%- endif -%}
+                    {%- endif -%}
+              {%- endif -%}
+            {%- endfor -%}
     {%- endif -%}
 {% endmacro %}
 
