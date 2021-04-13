@@ -223,32 +223,28 @@ def get_image_src(mimetype):
 
 
 @blueprint.app_template_filter('get_license_icon')
-def get_license_icon(type):
+def get_license_icon(license_type):
     """Get License type icon.
 
-    :param type:
+    :param license_type:
     :return:
     """
     list_license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
     license_icon_location = \
         current_app.config['WEKO_RECORDS_UI_LICENSE_ICON_LOCATION']
-    from invenio_i18n.ext import current_i18n
-    current_lang = current_i18n.language
-    # In case of current lang is not JA, set to default
-    if current_lang != 'ja':
-        current_lang = 'default'
-    src = ''
-    lic = ''
-    href = '#'
+    # In case of current lang is not JA, set to default.
+    current_lang = 'default' if current_i18n.language != 'ja' \
+        else current_i18n.language
+    src, lic, href = '', '', '#'
     for item in list_license_dict:
-        if item['value'] != "license_free" and item['value'] in type:
+        if item['value'] != "license_free" and license_type \
+                and item['value'] in license_type:
             src = item['src']
             lic = item['name']
             href = item['href_' + current_lang]
             break
     src = license_icon_location + src if len(src) > 0 else ''
     lst = (src, lic, href)
-
     return lst
 
 
