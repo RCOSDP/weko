@@ -244,7 +244,9 @@ class Community(db.Model, Timestamp):
 
     """Relation to the owner (User) of the community."""
 
-    index = db.relationship(Index, backref='index', foreign_keys=[root_node_id])
+    index = db.relationship(Index,
+                            backref='index',
+                            foreign_keys=[root_node_id])
     """Relation to the owner (Index) of the community."""
 
     def __repr__(self):
@@ -255,7 +257,12 @@ class Community(db.Model, Timestamp):
     def create(cls, community_id, role_id, root_node_id, **data):
         """Get a community."""
         with db.session.begin_nested():
-            obj = cls(id=community_id, id_role=role_id, root_node_id=root_node_id, **data)
+            obj = cls(
+                id=community_id,
+                id_role=role_id,
+                root_node_id=root_node_id,
+                **data
+            )
             db.session.add(obj)
         return obj
 

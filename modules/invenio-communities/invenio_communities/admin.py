@@ -134,7 +134,7 @@ class CommunityModelView(ModelView):
         if role_ids:
             return or_(
                 Community.id_role.in_(role_ids),
-                Community.id_user==current_user.id
+                Community.id_user == current_user.id
             )
 
     def get_query(self):
@@ -183,15 +183,17 @@ class CommunityModelView(ModelView):
         role_ids = get_user_role_ids()
 
         if min(role_ids) <= \
-            current_app.config['COMMUNITIES_LIMITED_ROLE_ACCESS_PERMIT']:
+                current_app.config['COMMUNITIES_LIMITED_ROLE_ACCESS_PERMIT']:
             return super(CommunityModelView, self).edit_form(obj)
         else:
             return self._use_append_repository_edit(
-                super(CommunityModelView, self).edit_form(obj), str(obj.index.id)
+                super(CommunityModelView, self).edit_form(obj),
+                str(obj.index.id)
             )
 
     def _use_append_repository_edit(self, form, index_id: str):
-        """
+        """Modified query_factory of index column.
+
         The query_factory callable passed to the field constructor will be
         called to obtain a query.
         """
@@ -206,7 +208,8 @@ class CommunityModelView(ModelView):
         index_id = str(getattr(self, 'index_id', ''))
 
         with db.session.no_autoflush:
-            _query = list(item.cid for item in Indexes.get_recursive_tree(index_id))
+            _query = list(
+                item.cid for item in Indexes.get_recursive_tree(index_id))
             query = Index.query.filter(
                 Index.id.in_(_query)).order_by(Index.id.asc()).all()
 

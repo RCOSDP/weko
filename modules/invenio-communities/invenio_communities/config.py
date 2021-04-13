@@ -163,4 +163,4 @@ COMMUNITIES_ALLOWED_ATTRS = {
 """List of allowed attributes used to sanitize HTML output for communities."""
 
 COMMUNITIES_LIMITED_ROLE_ACCESS_PERMIT = 2
-"""List of allowed attributes used to sanitize HTML output for communities."""
+"""Allowed Role's id higher than this number full access to list Indexes."""
