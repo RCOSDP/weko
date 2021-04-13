@@ -161,3 +161,6 @@ COMMUNITIES_ALLOWED_ATTRS = {
     'acronym': ['title'],
 }
 """List of allowed attributes used to sanitize HTML output for communities."""
+
+COMMUNITIES_LIMITED_ROLE_ACCESS_PERMIT = 2
+"""List of allowed attributes used to sanitize HTML output for communities."""

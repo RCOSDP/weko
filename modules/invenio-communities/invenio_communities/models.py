@@ -278,7 +278,7 @@ class Community(db.Model, Timestamp):
     @classmethod
     def get_by_user(cls, role_ids, with_deleted=False):
         """Get a community."""
-        query = cls.query.filter_by(
+        query = cls.query.filter(
             Community.id_role.in_(role_ids)
         )
         if not with_deleted:
