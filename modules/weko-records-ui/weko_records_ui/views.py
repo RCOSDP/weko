@@ -363,10 +363,10 @@ def _get_google_scholar_meta(record):
     et = etree.fromstring(recstr)
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     res = []
-    if mtdata:
+    if mtdata is not None:
         for target in target_map:
             found = mtdata.find(target, namespaces=mtdata.nsmap)
-            if found:
+            if found is not None:
                 res.append({'name': target_map[target], 'data': found.text})
         for date in mtdata.findall('datacite:date', namespaces=mtdata.nsmap):
             if date.attrib.get('dateType') == 'Available':
