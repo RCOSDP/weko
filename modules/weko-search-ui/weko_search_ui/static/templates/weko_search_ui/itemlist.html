@@ -14,7 +14,7 @@
     <table cellspacing="0" cellpadding="0" border="0" width="100%">
       <tr>
         <td ng-hide="!record.metadata._thumbnail" class="fitwidth" style="vertical-align: top;">
-          <img src="/record/{{ record.id }}/files/{{record.metadata._thumbnail.thumbnail_label}}"
+          <img ng-if="record.metadata._thumbnail" ng-src="/record/{{ record.id }}/files/{{record.metadata._thumbnail.thumbnail_label}}"
             alt="{{record.metadata._thumbnail.thumbnail_label}}" width="{{record.metadata._thumbnail.thumbnail_width}}">
         </td>
         <td style="vertical-align: top;">

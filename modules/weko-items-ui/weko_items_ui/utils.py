@@ -55,7 +55,7 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.api import Indexes
-from weko_index_tree.utils import filter_index_list_by_role, get_index_id, \
+from weko_index_tree.utils import check_index_permissions, get_index_id, \
     get_user_roles
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name
@@ -320,12 +320,13 @@ def get_current_user():
     return current_id
 
 
-def find_hidden_items(item_id_list):
+def find_hidden_items(item_id_list, idx_paths=None):
     """
     Find items that should not be visible by the current user.
 
     parameter:
         item_id_list: list of items ID to be checked.
+        idx_paths: List of index paths.
     return: List of items ID that the user cannot access.
     """
     if not item_id_list:
@@ -344,7 +345,13 @@ def find_hidden_items(item_id_list):
 
         # Check if item and indices are public
         is_public = check_publish_status(record)
-        if is_public and filter_index_list_by_role(record.navi):
+        has_index_permission = False
+        for idx in record.navi:
+            if check_index_permissions(None, idx.cid) \
+                    and (not idx_paths or idx.path in idx_paths):
+                has_index_permission = True
+                break
+        if is_public and has_index_permission:
             continue
 
         hidden_list.append(str(record.id))
@@ -352,7 +359,26 @@ def find_hidden_items(item_id_list):
     return hidden_list
 
 
-def parse_ranking_results(results,
+def get_hidden_flag_for_ranking(index_info, index_id):
+    """Check if item is hidden in the ranking."""
+    if index_id in index_info:
+        cur_date = datetime.now()
+        if index_info[index_id]['public_date'] \
+                and index_info[index_id]['public_date'] > cur_date:
+            return True
+        if "-99" not in index_info[index_id]['browsing_role']:
+            return True
+        if index_info[index_id]['parent'] != '0':
+            return get_hidden_flag_for_ranking(
+                index_info, index_info[index_id]['parent'])
+        else:
+            return False
+    else:
+        return True
+
+
+def parse_ranking_results(index_info,
+                          results,
                           display_rank,
                           list_name='all',
                           title_key='title',
@@ -375,12 +401,23 @@ def parse_ranking_results(results,
         results = dict()
         results['all'] = data_list
 
-    item_id_list = []
+    hidden_items = []
     for item in results[list_name]:
         record_id = item.get('record_id')
         if record_id:
-            item_id_list.append(record_id)
-    hidden_items = find_hidden_items(item_id_list)
+            record = WekoRecord.get_record(record_id)
+            if record['publish_status'] != '0' \
+                    or datetime.strptime(record['publish_date'],
+                                         '%Y-%m-%d') > datetime.now():
+                hidden_items.append(str(record.id))
+                continue
+            is_hidden = True
+            for path in record['path']:
+                index_id = path.split('/')[-1]
+                is_hidden = is_hidden \
+                    and get_hidden_flag_for_ranking(index_info, index_id)
+            if is_hidden:
+                hidden_items.append(str(record.id))
 
     if results and list_name in results:
         rank = 1
@@ -1518,7 +1555,7 @@ def get_files_from_metadata(record):
     files = {}
     for key in record:
         meta_data = record.get(key)
-        if type(meta_data) == dict and \
+        if isinstance(meta_data, dict) and \
                 meta_data.get('attribute_type', '') == "file":
             file_metadata = meta_data.get("attribute_value_mlt", [])
             for f in file_metadata:
@@ -1975,27 +2012,33 @@ def get_item_from_option(_item_type_id):
     return ignore_list
 
 
-def get_options_list(item_type_id):
+def get_options_list(item_type_id, json_item=None):
     """Get Options by item type id.
 
     :param item_type_id:
+    :param json_item:
     :return: options dict
     """
-    json_item = ItemTypes.get_record(item_type_id)
+    if json_item is None:
+        json_item = ItemTypes.get_record(item_type_id)
     meta_options = json_item.model.render.get('meta_fix')
     meta_options.update(json_item.model.render.get('meta_list'))
     return meta_options
 
 
-def get_options_and_order_list(item_type_id):
+def get_options_and_order_list(item_type_id, item_type_mapping=None,
+                               item_type_data=None):
     """Get Options by item type id.
 
     :param item_type_id:
+    :param item_type_mapping:
+    :param item_type_data:
     :return: options dict and item type mapping
     """
     from weko_records.api import Mapping
-    meta_options = get_options_list(item_type_id)
-    item_type_mapping = Mapping.get_record(item_type_id)
+    meta_options = get_options_list(item_type_id, item_type_data)
+    if item_type_mapping is None:
+        item_type_mapping = Mapping.get_record(item_type_id)
     return meta_options, item_type_mapping
 
 
@@ -2179,6 +2222,7 @@ def get_ranking(settings):
     :param settings: ranking setting.
     :return:
     """
+    index_info = Indexes.get_browsing_info()
     # get statistical period
     end_date_original = date.today()  # - timedelta(days=1)
     start_date_original = end_date_original - timedelta(
@@ -2194,7 +2238,7 @@ def get_ranking(settings):
             agg_size=settings.display_rank,
             agg_sort={'value': 'desc'})
         rankings['most_reviewed_items'] = \
-            parse_ranking_results(result, settings.display_rank,
+            parse_ranking_results(index_info, result, settings.display_rank,
                                   list_name='all',
                                   title_key='record_name',
                                   count_key='total_all', pid_key='pid_value')
@@ -2209,7 +2253,7 @@ def get_ranking(settings):
             agg_size=settings.display_rank,
             agg_sort={'_count': 'desc'})
         rankings['most_downloaded_items'] = \
-            parse_ranking_results(result, settings.display_rank,
+            parse_ranking_results(index_info, result, settings.display_rank,
                                   list_name='data', title_key='col2',
                                   count_key='col3', pid_key='col1')
 
@@ -2223,7 +2267,7 @@ def get_ranking(settings):
             agg_size=settings.display_rank,
             agg_sort={'_count': 'desc'})
         rankings['created_most_items_user'] = \
-            parse_ranking_results(result, settings.display_rank,
+            parse_ranking_results(index_info, result, settings.display_rank,
                                   list_name='data',
                                   title_key='user_id', count_key='count')
 
@@ -2236,7 +2280,7 @@ def get_ranking(settings):
             agg_sort={'value': 'desc'}
         )
         rankings['most_searched_keywords'] = \
-            parse_ranking_results(result, settings.display_rank,
+            parse_ranking_results(index_info, result, settings.display_rank,
                                   list_name='all',
                                   title_key='search_key', count_key='count')
 
@@ -2254,7 +2298,7 @@ def get_ranking(settings):
             new_item_start_date,
             end_date)
         rankings['new_items'] = \
-            parse_ranking_results(result, settings.display_rank,
+            parse_ranking_results(index_info, result, settings.display_rank,
                                   list_name='all', title_key='record_name',
                                   pid_key='pid_value', date_key='create_date')
 
@@ -2405,15 +2449,24 @@ def hide_thumbnail(schema_form):
             break
 
 
-def get_ignore_item(_item_type_id):
+def get_ignore_item(_item_type_id, item_type_mapping=None,
+                    item_type_data=None):
     """Get ignore item from mapping.
 
     :param _item_type_id:
+    :param item_type_mapping:
+    :param item_type_data:
     :return ignore_list:
     """
     ignore_list = []
-    meta_options, _ = get_options_and_order_list(_item_type_id)
-    sub_ids = get_hide_list_by_schema_form(item_type_id=_item_type_id)
+    meta_options, _ = get_options_and_order_list(
+        _item_type_id, item_type_mapping, item_type_data)
+    schema_form = None
+    if item_type_data is not None:
+        schema_form = item_type_data.model.render.get("table_row_map", {}).get(
+            'form')
+    sub_ids = get_hide_list_by_schema_form(
+        item_type_id=_item_type_id, schemaform=schema_form)
     for key, val in meta_options.items():
         hidden = val.get('option').get('hidden')
         if hidden:
@@ -2466,8 +2519,8 @@ def make_stats_tsv_with_permission(item_type_id, recids,
         records.attr_output -- Record data
 
     """
-    from weko_records_ui.views import escape_str
     from weko_records_ui.utils import check_items_settings, hide_by_email
+    from weko_records_ui.views import escape_str
 
     def _get_root_item_option(item_id, item, sub_form={'title_i18n': {}}):
         """Handle if is root item."""

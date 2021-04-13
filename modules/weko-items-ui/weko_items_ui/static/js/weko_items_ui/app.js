@@ -534,8 +534,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
   },
   inValidThumbnails = [];
 
-
-
   // Check for duplicate files & file type
   if (files && files.length > 0) {
     Array.prototype.forEach.call(files, function (file) {
@@ -555,6 +553,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
   }
   if(rootScope.filesVM){
     thumbnailsVM = rootScope.filesVM.files.filter(file => file.is_thumbnail);
+
+    if (!thumbnailsVM || thumbnailsVM.length == 0){
+      return result;
+    }
+
     if (thumbnailsVM.length > 0 && itemSizeCheckFlg) {
       let thumbnailItemKey = scope.searchThumbnailForm && scope.searchThumbnailForm(),
         recordSchema = rootScope.recordsVM.invenioRecordsSchema,
@@ -2959,7 +2962,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         // add by ryuu. end 20180410
         //Reset data before show modal 'myModal'.
         window.appAuthorSearch.namespace.resetSearchData();
-        $('#myModal').modal('show');
+        $('#app-author-search').modal('show');
       }
       // add by ryuu. start 20180410
      $scope.setAuthorInfo = function () {
