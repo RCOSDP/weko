@@ -1863,7 +1863,7 @@ def hide_meta_data_for_role(record):
             break
     # Community users
     community_role_name = current_app.config[
-        'WEKO_PERMISSION_ROLE_COMMUNITY']
+        'WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY']
     for role in list(current_user.roles or []):
         if role.name in community_role_name:
             is_hidden = False

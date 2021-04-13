@@ -32,7 +32,7 @@ from sqlalchemy import and_, func, or_
 from wtforms.validators import ValidationError
 
 from .models import Community, FeaturedCommunity, InclusionRequest
-from .utils import get_idRole_currentUser
+from .utils import get_user_role_ids
 
 
 def _(x):
@@ -77,7 +77,7 @@ class CommunityModelView(ModelView):
         :param is_created:
             Will be set to True if model was created and to False if edited
         """
-        model.id_user = get_idRole_currentUser()
+        model.id_user = min(get_user_role_ids())
 
     def _validate_input_id(self, field):
         the_patterns = {
@@ -125,9 +125,9 @@ class CommunityModelView(ModelView):
         }
     }
 
-    def condition_role(self, role_int):
+    def condition_role(self, role_id):
         """Condition role."""
-        if role_int == 2:
+        if role_id == 2:
             return or_(Community.id_role == 2, Community.id_user == 2)
 
     def get_query(self):
@@ -147,9 +147,9 @@ class CommunityModelView(ModelView):
         item count in the list view, and `get_one`,
         which is used when retrieving records for the edit view.
         """
-        role_id = get_idRole_currentUser()
-        # role Repository Administrator
-        if role_id == 2:
+        role_ids = get_user_role_ids()
+        # Role Repository Administrator
+        if 2 in role_ids:
             return self.session.query(self.model).filter(self.condition_role(2))
         # Default role System Administrator
         return self.session.query(self.model).filter()
@@ -162,9 +162,9 @@ class CommunityModelView(ModelView):
 
         See commit ``#45a2723`` for details.
         """
-        role_id = get_idRole_currentUser()
+        role_ids = get_user_role_ids()
         # role Repository Administrator
-        if role_id == 2:
+        if 2 in role_ids:
             return self.session.query(func.count('*')).select_from(self.model).filter(self.condition_role(2))
         # Default role System Administrator
         return self.session.query(func.count('*')).select_from(self.model)

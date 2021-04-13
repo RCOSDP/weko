@@ -225,13 +225,13 @@ def send_community_request_email(increq):
     send_email.delay(msg.__dict__)
 
 
-def get_idRole_currentUser():
-    """Get id role of current user.
+def get_user_role_ids():
+    """Get role.id of current user.
 
-    :returns: role id.
+    :returns role_ids: List of role.id.
     """
-    role_id = 0
-    if current_user and current_user.roles and len(current_user.roles) > 0 \
-       and current_user.roles[0].id:
-        role_id = current_user.roles[0].id
-    return role_id
+    role_ids = []
+    if current_user and current_user.is_authenticated:
+        role_ids = [role.id for role in current_user.roles]
+
+    return role_ids

@@ -1533,7 +1533,7 @@ class WorkActivity(object):
         supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
         # Community admin roles
         community_role_name = current_app.config[
-            'WEKO_PERMISSION_ROLE_COMMUNITY']
+            'WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY']
         if isinstance(community_role_name, str):
             community_role_name = (community_role_name,)
         for role in list(current_user.roles or []):
@@ -1693,7 +1693,7 @@ class WorkActivity(object):
         @return:
         """
         community_role_name = current_app.config[
-            'WEKO_PERMISSION_ROLE_COMMUNITY']
+            'WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY']
         community_users = User.query.outerjoin(userrole).outerjoin(
             Role) \
             .filter(community_role_name == Role.name) \

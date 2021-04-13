@@ -44,7 +44,7 @@ from .errors import CommunitiesError, InclusionRequestExistsError, \
     InclusionRequestExpiryTimeError, InclusionRequestMissingError, \
     InclusionRequestObsoleteError
 from .signals import inclusion_request_created
-from .utils import get_idRole_currentUser, save_and_validate_logo
+from .utils import save_and_validate_logo
 
 
 class InclusionRequest(db.Model, Timestamp):
@@ -276,10 +276,10 @@ class Community(db.Model, Timestamp):
         return q.one_or_none()
 
     @classmethod
-    def get_by_user(cls, role_id, with_deleted=False):
+    def get_by_user(cls, role_ids, with_deleted=False):
         """Get a community."""
         query = cls.query.filter_by(
-            id_role=role_id
+            Community.id_role.in_(role_ids)
         )
         if not with_deleted:
             query = query.filter(cls.deleted_at.is_(None))
