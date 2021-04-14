@@ -317,7 +317,7 @@ WEKO_THEME_ADMIN_MENU = [
             },
             {
                 'name': 'Others',
-                'order': 19
+                'order': 20
             },
             {
                 'name': 'PDF Cover Page',
@@ -329,7 +329,7 @@ WEKO_THEME_ADMIN_MENU = [
             },
             {
                 'name': 'Restricted Access',
-                'order': 20
+                'order': 19
             },
             {
                 'name': 'Search',
