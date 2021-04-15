@@ -319,7 +319,7 @@ class ItemImportView(BaseView):
         if list_record:
             group_tasks = []
             for item in list_record:
-                item['root_path'] = data.get('root_path')
+                item['root_path'] = data.get('root_path', '') + '/data'
                 create_flow_define()
                 handle_workflow(item)
                 group_tasks.append(import_item.s(item))
