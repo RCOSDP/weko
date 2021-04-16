@@ -332,7 +332,7 @@
           "type": "nested",
           "properties": {
             "value": {
-              "type": "text",
+              "type": "keyword",
               "copy_to": [
                 "search_other"
               ]
@@ -485,7 +485,7 @@
           }
         },
         "temporal": {
-          "type": "text",
+          "type": "keyword",
           "copy_to": [
             "search_other"
           ]
@@ -522,7 +522,7 @@
               }
             },
             "geoLocationPlace": {
-              "type": "text",
+              "type": "keyword",
               "copy_to": [
                 "search_other"
               ]

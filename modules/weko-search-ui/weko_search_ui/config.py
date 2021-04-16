@@ -134,7 +134,10 @@ WEKO_FACETED_SEARCH_MAPPING = {
     'accessRights': 'accessRights',
     'language': 'language',
     'distributor': 'contributor.contributorName',
-    'dataType': 'description.value'
+    'dataType': 'description.value',
+    'topic': 'subject.value',
+    'temporal': 'temporal',
+    'location': 'geoLocationPlace'
 }
 
 RECORDS_REST_FACETS[SEARCH_UI_SEARCH_INDEX] = dict(
@@ -176,7 +179,10 @@ RECORDS_REST_FACETS[SEARCH_UI_SEARCH_INDEX] = dict(
                     )
                 )
             )
-        )
+        ),
+        topic=dict(terms=dict(field=WEKO_FACETED_SEARCH_MAPPING['topic'])),
+        temporal=dict(terms=dict(field=WEKO_FACETED_SEARCH_MAPPING['temporal'])),
+        location=dict(terms=dict(field=WEKO_FACETED_SEARCH_MAPPING['location']))
     ),
     post_filters=dict(
         accessRights=terms_filter(WEKO_FACETED_SEARCH_MAPPING['accessRights']),
@@ -243,13 +249,31 @@ RECORDS_REST_FACETS_NO_SEARCH_PERMISSION[SEARCH_UI_SEARCH_INDEX] = dict(
                     )
                 )
             )
-        )
+        ),
+        topic=dict(
+            filter=dict(term={"publish_status": "0"}),
+            aggs=dict(
+                topic=dict(terms=dict(
+                    field=WEKO_FACETED_SEARCH_MAPPING['topic'])))),
+        temporal=dict(
+            filter=dict(term={"publish_status": "0"}),
+            aggs=dict(
+                temporal=dict(terms=dict(
+                    field=WEKO_FACETED_SEARCH_MAPPING['temporal'])))),
+        location=dict(
+            filter=dict(term={"publish_status": "0"}),
+            aggs=dict(
+                location=dict(terms=dict(
+                    field=WEKO_FACETED_SEARCH_MAPPING['location']))))
     ),
     post_filters=dict(
         accessRights=terms_filter(WEKO_FACETED_SEARCH_MAPPING['accessRights']),
         language=terms_filter(WEKO_FACETED_SEARCH_MAPPING['language']),
         distributor=terms_filter(WEKO_FACETED_SEARCH_MAPPING['distributor']),
         dataType=terms_filter(WEKO_FACETED_SEARCH_MAPPING['dataType']),
+        topic=terms_filter(WEKO_FACETED_SEARCH_MAPPING['dataType']),
+        temporal=terms_filter(WEKO_FACETED_SEARCH_MAPPING['dataType']),
+        location=terms_filter(WEKO_FACETED_SEARCH_MAPPING['dataType'])
     )
 )
 
