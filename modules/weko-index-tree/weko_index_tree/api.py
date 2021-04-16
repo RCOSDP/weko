@@ -270,7 +270,8 @@ class Indexes(object):
                             Index.public_date,
                             Index.comment,
                             Index.browsing_role,
-                            Index.browsing_group
+                            Index.browsing_group,
+                            Index.harvest_public_state
                         ).filter(Index.id == index_id)).all()
 
                 if obj:
@@ -916,7 +917,8 @@ class Indexes(object):
             Index.public_date.label("public_date"),
             Index.comment.label("comment"),
             Index.browsing_role.label("browsing_role"),
-            Index.browsing_group.label("browsing_group")
+            Index.browsing_group.label("browsing_group"),
+            Index.harvest_public_state.label("harvest_public_state")
         ).filter(Index.parent == pid). \
             cte(name="recursive_t", recursive=True)
 
@@ -937,7 +939,8 @@ class Indexes(object):
                 test_alias.public_date,
                 test_alias.comment,
                 test_alias.browsing_role,
-                test_alias.browsing_group
+                test_alias.browsing_group,
+                test_alias.harvest_public_state,
             ).filter(test_alias.parent == rec_alias.c.cid)
         )
 
