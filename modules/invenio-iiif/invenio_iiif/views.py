@@ -54,7 +54,6 @@ def create_blueprint_from_app(app):
                 )
             )
 
-
     return create_blueprint(endpoints)
 
 
@@ -93,6 +92,7 @@ def create_url_rule(
     manifest_class = (
         import_string(manifest_class) if manifest_class else IIIFManifest
     )
+
 
     view_func = partial(
         manifest_view,
