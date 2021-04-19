@@ -54,8 +54,9 @@ msgstr ""
 msgid "\"<\" and \">\" cannot be used for searching."
 msgstr "'<' , '>' は検索に使用できません。"
 
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:83
-#: weko_search_ui/utils.py:490
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:94
+#: weko_search_ui/utils.py:482
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:46
 msgid "Internal server error"
 msgstr "内部サーバーエラー"
 
@@ -298,7 +299,8 @@ msgstr "このインデックス全てのアイテムを印刷"
 msgid "Execution"
 msgstr "実行"
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:111
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:128
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:42
 msgid "Export"
 msgstr ""
 
@@ -500,10 +502,11 @@ msgstr "削除してよろしいですか？"
 msgid "Continue"
 msgstr "継続"
 
-#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:75
-#: weko_search_ui/templates/weko_search_ui/admin/import.html:47
-#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:82
-#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:101
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:84
+#: weko_search_ui/templates/weko_search_ui/admin/import.html:58
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:100
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:120
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:45
 msgid "Cancel"
 msgstr "キャンセル"
 
@@ -758,4 +761,49 @@ msgstr "入力内容を破棄してもよろしいですか？"
 
 #~ msgid "\"<\" and \">\" are cannot be used for searching"
 #~ msgstr ""
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:40
+msgid "Export all item"
+msgstr "全件エクスポート"
 
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:41
+msgid "Download URL"
+msgstr "ダウンロードURL"
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:43
+msgid "Export message"
+msgstr "全体エクスポートを実行してよいですか？"
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:43
+msgid "Cancel export message"
+msgstr "全件エクスポートの処理をキャンセルしてよいですか？"
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:44
+msgid "Execute"
+msgstr "実行"
+
+msgid "Import is in progress on another device."
+msgstr "他の端末でインポートを実行中です。"
+
+msgid "Import is in progress."
+msgstr "インポートを実行中です。"
+
+msgid "Cannot update because the corresponding item is being edited."
+msgstr "該当アイテムが編集中のため更新できません。"
+
+msgid "The corresponding item has been deleted."
+msgstr "該当アイテムは削除済です。"
+
+msgid "This DOI has been already grant for another item. Please specify another DOI."
+msgstr "このDOIは既に別のアイテムに付与されています。別のDOIを指定してください。"
+
+msgid "import_error_msg_is_withdraw_doi"
+msgstr "このDOIは取り下げられました。別のDOIを指定してください。"
+
+msgid "The file specified in ({}) does not exist."
+msgstr "（{}）に指定したファイルが存在しません。"
+
+msgid "The file specified in ({}) does not exist.<br/>The file will not be updated. Update only the metadata with tsv contents."
+msgstr "（{}）に指定したファイルが存在しません。<br/>ファイルの更新はしません。tsv内容でメタデータのみ更新します。"
+
+msgid "The file name specified in {} and {} do not match."
+msgstr "{}に指定されたファイル名と{}が一致しません。"

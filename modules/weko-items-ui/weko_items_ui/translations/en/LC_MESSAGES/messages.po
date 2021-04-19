@@ -197,6 +197,10 @@ msgstr "Save"
 msgid "Quit"
 msgstr ""
 
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:371
+msgid "QuitQO"
+msgstr "Quit"
+
 msgid "Are you sure you want to quit the activity?"
 msgstr ""
 
@@ -268,7 +272,7 @@ msgid "Click to select"
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:
-msgid "Registerable file: 「gif, jpg, jpe, jpeg, png, bmp, tiff, tif」"
+msgid "Registerable file: 「gif, jpg, jpe, jpeg, png, bmp」"
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/iframe/upload_thumbnail_list.html:
@@ -328,3 +332,23 @@ msgstr "Import"
 
 msgid "Cannot preview because the file size is too large."
 msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:426
+msgid "Thumbnail file type error message"
+msgstr "Files other than image files (gif, jpg, jpe, jpeg, png, bmp) cannot be uploaded."
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:427
+msgid "is too long."
+msgstr ""
+
+msgid "The same file name cannot be registered"
+msgstr "The same file name cannot be registered"
+
+msgid "Guest"
+msgstr "Guest"
+
+msgid "Free Input"
+msgstr "Free Input"
+
+msgid "Can not found the email address of approval."
+msgstr "Can not found the email address of approval."

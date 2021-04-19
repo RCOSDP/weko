@@ -1182,3 +1182,43 @@ msgstr "初期表示インデックス"
 #: weko_admin/template/weko_admin/admin/search_management_setting.html
 msgid "An index which is not open in public cannot be selected"
 msgstr "非公開インデックス以下は選択できません"
+
+#: weko_admin/templates/weko_admin/admin/rest_settings.html:52
+msgid "Content File Download"
+msgstr "コンテンツファイルのダウンロード"
+
+#: weko_admin/templates/weko_admin/admin/rest_settings.html:53
+msgid "Expiration Date"
+msgstr "有効期限日数"
+
+#: weko_admin/templates/weko_admin/admin/rest_settings.html:64
+msgid "Download Limit"
+msgstr "ダウンロード回数"
+
+#: weko_admin/templates/weko_admin/admin/rest_settings.html:65
+msgid "Unlimited"
+msgstr "無制限"
+
+#: weko_admin/templates/weko_admin/admin/rest_settings.html:46
+msgid "Must set a positive integer for %(name)s."
+msgstr "%(name)sは1以上の整数を設定する必要があります。"
+
+#: weko_admin/templates/weko_admin/admin/rest_settings.html:49
+msgid "Please set %(name)s."
+msgstr "%(name)sを設定してください。"
+
+msgid "Restricted Access was successfully updated."
+msgstr "制限公開の設定を変更しました。"
+
+msgid "Please input the Terms and Conditions in English."
+msgstr "英語の利用規約を入力してください。"
+
+#: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:65
+msgid "Usage Report Workflow Access"
+msgstr "利用報告ワークフローへのアクセス"
+
+msgid "Usage Report Reminder Email"
+msgstr "利用報告督促メール"
+
+msgid "Confirm Usage Mail"
+msgstr "確認"

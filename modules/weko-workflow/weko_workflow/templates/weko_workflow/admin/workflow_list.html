@@ -40,6 +40,8 @@
             <th>{{_('WorkFlow')}}</th>
             <th>{{_('Item Type')}}</th>
             <th>{{_('Flow')}}</th>
+            <th>{{_('Restricted Access Flag')}}</th>
+            <th>{{_('Registration Destination Index')}}</th>
             <th>{{ display_label }}</th>
             <th>{{_('Hide')}}</th>
             <th class="hide">{{_('Next Flow')}}</th>
@@ -55,6 +57,20 @@
               <td><a href="{{url_for('workflowsetting.workflow_detail', workflow_id=workflow.flows_id)}}">{{workflow.flows_name}}</a></td>
               <td>{{_(workflow.itemtype.item_type_name.name)}}</td>
               <td>{{_(workflow.flow_define.flow_name)}}</td>
+              <td>
+                {%- if workflow.open_restricted %}
+                  {{_('Enable') }}
+                {%- else %}
+                  {{_('Disable')}}
+                {%- endif %}
+              </td>
+              <td>
+                {%- if  workflow.index_tree %}
+                  {{ workflow.index_tree.index_name }}
+                {%- else %}
+                  {{_('Undesignated')}}
+                {%- endif %}
+              </td>
               <td>
                 {%- if workflow.display %}
                   {{ workflow.display }}

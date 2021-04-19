@@ -21,7 +21,7 @@
 {% from "weko_records_ui/output_detail_data.html" import output_detail_data, output_attribute_value %}
 {% from "weko_records_ui/creator_detail_template.html" import output_creator_data %}
 {% from "weko_records_ui/output_bibliographic_information_detail.html" import output_bibliographic_information %}
-{% macro output_item_detail(record, files, files_thumbnail, pid, items_show_list, is_top_page=false, is_logged_in=false, open_day_display_flg=true) %}
+{% macro output_item_detail(record, files, files_thumbnail, pid, items_show_list, is_top_page=false, is_logged_in=false, open_day_display_flg=true, cur_step=None) %}
 {% autoescape false %}
   <table class="table table-bordered table-striped detail-table">
       {% if record.item_type_info %}
@@ -91,8 +91,14 @@
               <td>
                   {%- for thumb in files_thumbnail -%}
                       {%- set thumb_name = thumb.filename or thumb.key -%}
-                      {%- set thumb_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
-                        filename=thumb.key) %}
+                      {% if cur_step and cur_step == 'item_login' or cur_step == 'approval' %}
+                        {%- set thumb_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
+                          filename=thumb.key) %}
+                      {% else %}
+                        {%- set rootVer = pid.pid_value.split('.') -%}
+                        {%- set thumb_url = url_for('invenio_records_ui.recid_files', pid_value=rootVer[0],
+                          filename=thumb.key) %}
+                      {% endif %}
                     <p>
                       <span>{{ thumb_name }}</span><br>
                       <img src="{{ thumb_url }}" alt={{ thumb_name }}

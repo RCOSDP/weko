@@ -133,3 +133,6 @@ msgstr ""
 
 msgid "Back to Top Page"
 msgstr ""
+
+msgid "Create a New Account"
+msgstr ""

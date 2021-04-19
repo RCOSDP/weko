@@ -163,7 +163,20 @@ RECORDS_UI_ENDPOINTS = dict(
                                ':edit_permission_factory',
         methods=['POST'],
     ),
+    recid_guest_file_download=dict(
+        pid_type='recid',
+        route='/record/<pid_value>/file/onetime/<string:filename>',
+        view_imp='weko_records_ui.fd.file_download_onetime',
+        record_class='weko_deposit.api:WekoRecord',
+    ),
 )
+
+WEKO_RECORDS_UI_SECRET_KEY = "secret"
+"""Secret key"""
+
+WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN = \
+    "filename={} record_id={} user_mail={} date={}"
+"""Onetime download pattern."""
 
 RECORDS_UI_EXPORT_FORMATS = {
     'recid': {
