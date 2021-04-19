@@ -622,7 +622,7 @@ class ItemTypes(RecordBase):
             query = ItemType.query.filter(ItemType.id.in_(ids))
             if not with_deleted:
                 query = query.filter(ItemType.is_deleted.is_(False))  # noqa
-            return [cls(obj.json, model=obj) for obj in query.all()]
+            return [cls(obj.schema, model=obj) for obj in query.all()]
 
     @classmethod
     def get_by_id(cls, id_, with_deleted=False):
@@ -1156,6 +1156,28 @@ class Mapping(RecordBase):
             raise MissingModelError()
 
         return RevisionsIterator(self.model)
+
+    @classmethod
+    def get_mapping_by_item_type_ids(cls, item_type_ids: list) -> list:
+        """Get mapping by item type id.
+
+        Args:
+            item_type_ids (list): Item type identifier list.
+
+        Returns:
+            list: Mappings
+
+        """
+        with db.session.no_autoflush:
+            query = ItemTypeMapping.query \
+                .distinct(ItemTypeMapping.item_type_id) \
+                .filter(ItemTypeMapping.item_type_id.in_(item_type_ids)) \
+                .order_by(
+                    ItemTypeMapping.item_type_id.desc(),
+                    ItemTypeMapping.id.desc()
+                )
+
+            return [cls(obj.mapping, model=obj) for obj in query.all()]
 
 
 class ItemTypeProps(RecordBase):

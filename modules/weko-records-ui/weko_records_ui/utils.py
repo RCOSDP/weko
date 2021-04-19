@@ -50,9 +50,10 @@ from .permissions import check_create_usage_report, \
     is_open_restricted
 
 
-def check_items_settings():
+def check_items_settings(settings=None):
     """Check items setting."""
-    settings = AdminSettings.get('items_display_settings')
+    if settings is None:
+        settings = AdminSettings.get('items_display_settings')
     current_app.config['EMAIL_DISPLAY_FLG'] = settings.items_display_email
     current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
     if hasattr(settings, 'item_display_open_date'):
@@ -371,19 +372,25 @@ def get_pair_value(name_keys, lang_keys, datas):
                 yield name, lang
 
 
-def hide_item_metadata(record):
+def hide_item_metadata(record, settings=None, item_type_mapping=None,
+                       item_type_data=None):
     """Hiding emails and hidden item metadata.
 
     :param record:
+    :param settings:
+    :param item_type_mapping:
+    :param item_type_data:
     :return:
     """
     from weko_items_ui.utils import get_ignore_item, hide_meta_data_for_role
-    check_items_settings()
+    check_items_settings(settings)
 
     record['weko_creator_id'] = record.get('owner')
 
     if hide_meta_data_for_role(record):
-        list_hidden = get_ignore_item(record['item_type_id'])
+        list_hidden = get_ignore_item(
+            record['item_type_id'], item_type_mapping, item_type_data
+        )
         record = hide_by_itemtype(record, list_hidden)
 
         if not current_app.config['EMAIL_DISPLAY_FLG']:

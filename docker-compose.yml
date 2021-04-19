@@ -25,6 +25,7 @@ services:
     restart: "always"
     build: .
     command: /bin/bash -c "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO -B -D -f /code/celeryd.log && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
+    #command: /bin/bash -c "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO --logfile=celery.log -B -D && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
     environment:
       - PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       - VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python

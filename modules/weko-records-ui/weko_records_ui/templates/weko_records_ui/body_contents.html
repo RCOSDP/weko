@@ -237,11 +237,11 @@
                               {% endautoescape %}
                             {%- else %}
                               {% set lst = file.licensetype | get_license_icon %}
-                              <a class="creative-commons" target="_blank" href="{{lst[2]}}" alt="Creative Commons Licenses">
-                                <img src="{{lst[0]}}" alt="license.icon" />
-                              </a>
-                              <br>
-                              <!-- {{ lst[1] }} -->
+                              {%- if lst[0] -%}
+                                <a class="creative-commons" target="_blank" href="{{lst[2]}}" alt="Creative Commons Licenses">
+                                  <img src="{{lst[0]}}" alt="license.icon" />
+                                </a><br>
+                              {%- endif -%}
                             {%- endif %}
                           {%- endif -%}
                           </div>

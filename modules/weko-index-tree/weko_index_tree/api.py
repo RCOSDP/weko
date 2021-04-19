@@ -114,7 +114,6 @@ class Indexes(object):
                     data["harvest_public_state"] = iobj.harvest_public_state
 
                     data["display_format"] = iobj.display_format
-                    data["image_name"] = iobj.image_name
 
                     if iobj.recursive_public_state:
                         data["public_state"] = iobj.public_state
@@ -487,6 +486,19 @@ class Indexes(object):
     def get_index_tree(cls, pid=0):
         """Get index tree json."""
         return get_tree_json(cls.get_recursive_tree(pid), pid)
+
+    @classmethod
+    def get_browsing_info(cls):
+        """Get browsing information of all indexes."""
+        browsing_info = {}
+        indexes = cls.get_public_indexes()
+        for index in indexes:
+            browsing_info[str(index.id)] = {
+                'parent': str(index.parent),
+                'public_date': index.public_date,
+                'browsing_role': index.browsing_role.split(',')
+            }
+        return browsing_info
 
     @classmethod
     def get_browsing_tree(cls, pid=0):
@@ -1426,9 +1438,61 @@ class Indexes(object):
         return query
 
     @classmethod
+    def get_all_parent_indexes(cls, index_id) -> list:
+        """Get all parent indexes.
+
+        Args:
+            index_id ():
+
+        Returns:
+            [list]: parent indexes list.
+
+        """
+        # Define a CTE with recursive=True for the top portion of the query
+        topq = Index.query.filter(Index.id == index_id)
+        topq = topq.cte('cte', recursive=True)
+        # Define the bottom part of the query by joining it with the top part
+        bottomq = Index.query.join(topq, Index.id == topq.c.parent)
+        # applying a union function
+        recursive_q = topq.union(bottomq)
+        # Get index data
+        index_list = db.session.query(recursive_q).order_by(
+            recursive_q.c.id).all()
+        return index_list
+
+    @classmethod
     def get_unharvested_indexes(cls):
         """Get child id list without recursive."""
         query = Index.query.filter(
             Index.harvest_public_state.is_(False)
         ).order_by(Index.id.asc())
         return query.all()
+
+    @classmethod
+    def get_full_path(cls, index_id=0):
+        """Get full path of index.
+
+        :param index_id: Identifier of the index.
+        :return: path.
+        """
+        recursive_t = db.session.query(
+            Index.parent.label("pid"),
+            Index.id.label("cid"),
+            func.cast(Index.id, db.Text).label("path")
+        ).filter(Index.id == index_id).cte(name="recursive_t", recursive=True)
+
+        rec_alias = aliased(recursive_t, name="rec")
+        test_alias = aliased(Index, name="t")
+        recursive_t = recursive_t.union_all(
+            db.session.query(
+                test_alias.parent,
+                test_alias.id,
+                func.cast(test_alias.id, db.Text) + '/' + rec_alias.c.path
+            ).filter(test_alias.id == rec_alias.c.pid)
+        )
+
+        with db.session.begin_nested():
+            qlst = [recursive_t.c.path]
+            obj = db.session.query(*qlst). \
+                order_by(recursive_t.c.pid).first()
+            return obj.path if obj else ''
