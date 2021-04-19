@@ -52,7 +52,7 @@ def _verify_date(ctx, param, value):
     """Verify datetime input."""
     if value:
         dateutil_parse(value)
-        return value
+        return dateutil_parse(value).isoformat()
 
 
 def lazy_result(f):
