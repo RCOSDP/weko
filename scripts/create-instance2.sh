@@ -110,9 +110,6 @@ fi
 # shellcheck source=/dev/null
 source "$(which virtualenvwrapper.sh)"
 
-# detect pathname of this script:
-scriptpathname=$(cd "$(dirname "$0")" && pwd)
-
 # sphinxdoc-create-virtual-environment-begin
 mkvirtualenv "${INVENIO_WEB_VENV}"
 cdvirtualenv
@@ -122,15 +119,38 @@ cdvirtualenv
 set -o errexit
 set -o nounset
 
-# fix build error (weko#23031)
-pip install pip==20.2.4
 
-if [[ "$@" != *"--devel"* ]]; then
-# sphinxdoc-install-invenio-full-begin
-    pip install -r "$scriptpathname/../packages.txt"
-    pip install --no-deps -r "$scriptpathname/../packages-invenio.txt"
-    pip install --no-deps -r "$scriptpathname/../requirements-weko-modules.txt"
-# sphinxdoc-install-invenio-full-end
-else
-    pip install -r "$scriptpathname/../requirements-devel.txt"
-fi
+# sphinxdoc-customise-instance-begin
+mkdir -p "var/instance/"
+mkdir -p "var/instance/data"
+mkdir -p "var/instance/conf"
+pip install "jinja2-cli>=0.6.0"
+jinja2 "/code/scripts/instance.cfg" > "var/instance/conf/${INVENIO_WEB_INSTANCE}.cfg"
+ln -s "$(pwd)/var/instance/conf/${INVENIO_WEB_INSTANCE}.cfg" "var/instance/${INVENIO_WEB_INSTANCE}.cfg"
+cp -pf "/code/scripts/uwsgi.ini" "var/instance/conf/"
+cp -pf "/code/modules/weko-theme/weko_theme/static/css/weko_theme/_variables.scss" "var/instance/data/"
+cp -prf "/code/modules/weko-index-tree/weko_index_tree/static/indextree" "var/instance/data/"
+# sphinxdoc-customise-instance-end
+
+# sphinxdoc-run-npm-begin
+${INVENIO_WEB_INSTANCE} npm
+cdvirtualenv "var/instance/static"
+CI=true npm install angular-schema-form@0.8.13
+CI=true npm install
+## for install ckeditor plugins
+cdvirtualenv "var/instance/static/node_modules/ckeditor/plugins"
+CI=true git clone https://github.com/nmmf/base64image.git
+##
+# sphinxdoc-run-npm-end
+
+# sphinxdoc-collect-and-build-assets-begin
+${INVENIO_WEB_INSTANCE} collect -v
+${INVENIO_WEB_INSTANCE} assets build
+# sphinxdoc-collect-and-build-assets-end
+
+# gunicorn uwsgi - begin
+pip install gunicorn
+pip install meinheld
+pip install uwsgi
+pip install uwsgitop
+# gunicorn uwsgi -end
