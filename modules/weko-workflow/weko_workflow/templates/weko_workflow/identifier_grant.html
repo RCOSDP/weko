@@ -18,7 +18,7 @@
  # MA 02111-1307, USA.
  #}
 {%- from "weko_workflow/helpers.html" import render_identifier_link with context -%}
-<input type="hidden" id="item_id" value="{{record['_deposit']['id']}}" />
+<input type="hidden" id="item_id" value="{{pid.pid_value}}" />
 <!-- Confirm Modal -->
 {% from "weko_theme/macros/modal_page.html" import approval_modal %}
 {% if temporary_idf_grant >= 0 %}

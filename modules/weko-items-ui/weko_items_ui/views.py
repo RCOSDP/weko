@@ -1134,10 +1134,7 @@ def check_record_doi_indexes(pid_value='0'):
     if (record.pid_doi or doi > 0) and \
             not check_index_permissions(record=record, is_check_doi=True):
         return jsonify({
-            'code': -1,
-            'message': _('When assigning a DOI to an item, it must be '
-                         'associated with an index whose index status is '
-                         '"Public" and Harvest Publishing is "Public".')
+            'code': -1
         })
 
     return jsonify({'code': 0})
