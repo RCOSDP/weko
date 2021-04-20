@@ -62,7 +62,7 @@ def crawl(event_name, start_date, end_date):
         response = query.execute().to_dict()
         total = 0
         ret = []
-        print('Process: {}'.format(response['hits']['total']))
+        print('Totals : {}'.format(response['hits']['total']))
 
         while total < response['hits']['total']:
             for item in response['hits']['hits']:
@@ -81,23 +81,40 @@ def crawl(event_name, start_date, end_date):
                 scroll='5m',
             )
 
+        source_ids_es = [item.get("_id") for item in ret]
+        with db.session.no_autoflush:
+            source_ids = db.session.query(StatsEvents.source_id).filter(
+                StatsEvents.source_id.in_(source_ids_es)).all()
+
+        source_ids_db = [id[0] for id in source_ids]
+
+        print('Process: {}'.format(
+            len(list(set(source_ids_es) - set(source_ids_db)))))
+
         objects = []
-        try:
-            with db.session.begin_nested():
-                for item in ret:
-                    objects.append(StatsEvents(
-                        id=_generate_id(),
-                        source_id=item.get("_id"),
-                        index=item.get("_index"),
-                        type=item.get("_type"),
-                        source=json.dumps(item.get("_source")),
-                        date=item.get("_source").get("timestamp"),
-                    ))
-                db.session.bulk_save_objects(objects)
-            db.session.commit()
-        except SQLAlchemyError as err:
-            logging.error(err)
-            db.session.rollback()
+        if len(source_ids_es) > len(source_ids_db):
+            inputs = list(set(source_ids_es) - set(source_ids_db))
+            _ret = []
+            for item in ret:
+                if item.get('_id') in inputs:
+                    _ret.append(item)
+
+            try:
+                with db.session.begin_nested():
+                    for item in _ret:
+                        objects.append(StatsEvents(
+                            id=_generate_id(),
+                            source_id=item.get("_id"),
+                            index=item.get("_index"),
+                            type=item.get("_type"),
+                            source=json.dumps(item.get("_source")),
+                            date=item.get("_source").get("timestamp"),
+                        ))
+                    db.session.bulk_save_objects(objects)
+                db.session.commit()
+            except SQLAlchemyError as err:
+                logging.error(err)
+                db.session.rollback()
 
         print('-' * 10)
         print('Results: {}'.format(len(objects)))
