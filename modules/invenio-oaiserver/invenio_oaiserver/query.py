@@ -146,16 +146,19 @@ def get_records(**kwargs):
             search = search.filter('range', **{'_updated': time_range})
 
         search = search.query('match', **{'relation_version_is_last': 'true'})
-        indexes = Indexes.get_unharvested_indexes()
-        for index in indexes:
-            search = search.query(
-                'bool',
-                **{'must_not': [
-                    {'wildcard': {'path': str(index.id)}}]})
-            search = search.query(
-                'bool',
-                **{'must_not': [
-                    {'wildcard': {'path': '*/' + str(index.id)}}]})
+        index_paths = Indexes.get_harverted_index_list()
+        query_filter = [
+            # script get deleted items.
+            {"bool": {"must_not": {"exists": {"field": "path"}}}}
+        ]
+        for index_path in index_paths:
+            query_filter.append({
+                "wildcard": {
+                    "path": index_path
+                }
+            })
+        search = search.query(
+            'bool', **{'must': [{'bool': {'should': query_filter}}]})
         add_condition_doi_and_future_date(search)
         response = search.execute().to_dict()
     else:
