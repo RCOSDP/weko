@@ -121,3 +121,14 @@ prism_css = Bundle(
     output='gen/prism.%(version)s.css'
 )
 """CSS bundle for prism.js syntax highlighter."""
+
+threejs = Bundle(
+    NpmBundle(
+        npm={
+            "three": "0.127.0",
+        },
+    ),
+    "node_modules/three/build/three.min.js",
+    output='gen/threejs.%(version)s.js',
+)
+"""JavaScript bundle for prism.js syntax highlighter."""

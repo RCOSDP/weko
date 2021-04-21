@@ -42,6 +42,7 @@ from invenio_records_ui.signals import record_viewed
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from simplekv.memory.redisstore import RedisStore
+from weko_admin.utils import get_search_setting
 from weko_deposit.api import WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
@@ -222,32 +223,28 @@ def get_image_src(mimetype):
 
 
 @blueprint.app_template_filter('get_license_icon')
-def get_license_icon(type):
+def get_license_icon(license_type):
     """Get License type icon.
 
-    :param type:
+    :param license_type:
     :return:
     """
     list_license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
     license_icon_location = \
         current_app.config['WEKO_RECORDS_UI_LICENSE_ICON_LOCATION']
-    from invenio_i18n.ext import current_i18n
-    current_lang = current_i18n.language
-    # In case of current lang is not JA, set to default
-    if current_lang != 'ja':
-        current_lang = 'default'
-    src = ''
-    lic = ''
-    href = '#'
+    # In case of current lang is not JA, set to default.
+    current_lang = 'default' if current_i18n.language != 'ja' \
+        else current_i18n.language
+    src, lic, href = '', '', '#'
     for item in list_license_dict:
-        if item['value'] != "license_free" and item['value'] in type:
+        if item['value'] != "license_free" and license_type \
+                and item['value'] in license_type:
             src = item['src']
             lic = item['name']
             href = item['href_' + current_lang]
             break
     src = license_icon_location + src if len(src) > 0 else ''
     lst = (src, lic, href)
-
     return lst
 
 
@@ -563,6 +560,14 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         # list_hidden = get_ignore_item(record['item_type_id'])
         # record = hide_by_itemtype(record, list_hidden)
         record = hide_by_email(record)
+
+    # Get Facet search setting.
+    display_facet_search = get_search_setting().get("display_control", {}).get(
+        'display_facet_search', {}).get('status', False)
+    ctx.update({
+        "display_facet_search": display_facet_search
+    })
+
     return render_template(
         template,
         pid=pid,

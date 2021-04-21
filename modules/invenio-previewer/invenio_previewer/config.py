@@ -53,6 +53,7 @@ PREVIEWER_PREFERENCE = [
     'pdfjs',
     'ipynb',
     'zip',
+    'threejs',
 ]
 """Decides which previewers are available and their priority."""
 

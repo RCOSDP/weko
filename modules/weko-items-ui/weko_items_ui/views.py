@@ -48,8 +48,8 @@ from weko_records_ui.permissions import check_file_download_permission
 from weko_records_ui.utils import get_file_info_list
 from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow
 from weko_workflow.utils import check_an_item_is_locked, \
-    get_record_by_root_ver, getThumbnail, prepare_edit_workflow, \
-    setDisplayTypeForFile
+    get_record_by_root_ver, get_thumbnails, prepare_edit_workflow, \
+    set_files_display_type
 from werkzeug.utils import import_string
 
 from .permissions import item_permission
@@ -425,12 +425,12 @@ def iframe_items_index(pid_value='0'):
                 root_record, files = get_record_by_root_ver(pid_value)
                 if root_record and root_record.get('title'):
                     session['itemlogin_item']['title'] = root_record['title'][0]
-                    files_thumbnail = getThumbnail(files, None)
+                    files_thumbnail = get_thumbnails(files, None)
             else:
                 root_record = session['itemlogin_record']
             if root_record and files and len(root_record) > 0 and len(files) > 0 \
                and (isinstance(root_record, list) or isinstance(root_record, dict)):
-                files = setDisplayTypeForFile(root_record, files)
+                files = set_files_display_type(root_record, files)
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
                 page=page,

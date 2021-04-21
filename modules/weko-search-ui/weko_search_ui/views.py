@@ -26,9 +26,9 @@ from xml.etree import ElementTree
 from blinker import Namespace
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_security import current_user
-from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import AdminSettings
+from weko_admin.utils import get_search_setting
 from weko_gridlayout.utils import get_widget_design_page_with_main, \
     main_design_has_main_widget
 from weko_index_tree.api import Indexes
@@ -37,13 +37,15 @@ from weko_index_tree.utils import get_index_link_list
 from weko_records.api import ItemLink
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_theme.utils import get_design_layout
+from weko_workflow.utils import get_allow_multi_thumbnail, \
+    get_record_by_root_ver, get_thumbnails
 
 from weko_search_ui.api import get_search_detail_keyword
 
 from .api import SearchSetting
 from .config import WEKO_SEARCH_TYPE_DICT
-from .utils import check_permission, get_feedback_mail_list, \
-    get_journal_info, parse_feedback_mail_data
+from .utils import check_index_access_permissions, check_permission, \
+    get_feedback_mail_list, get_journal_info, parse_feedback_mail_data
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -64,6 +66,7 @@ blueprint_api = Blueprint(
 
 
 @blueprint.route("/search/index")
+@check_index_access_permissions
 def search():
     """Index Search page ui."""
     search_type = request.args.get('search_type', WEKO_SEARCH_TYPE_DICT[
@@ -116,6 +119,11 @@ def search():
             pid_without_ver = recid.split('.')[0]
             item_link = ItemLink.get_item_link_info(pid_without_ver)
             ctx['item_link'] = item_link
+        # Get files and thumbnail to set and show popup item link.
+        item_link, files = get_record_by_root_ver(recid)
+        is_multi_thumbnails = get_allow_multi_thumbnail(
+            approval_record.get('item_type_id'), None)
+        files_thumbnail = get_thumbnails(files, is_multi_thumbnails)
 
         return render_template(
             'weko_workflow/activity_detail.html',
@@ -139,6 +147,9 @@ def search():
             allow_item_exporting=export_settings.allow_item_exporting,
             is_permission=check_permission(),
             is_login=bool(current_user.get_id()),
+            is_enable_item_name_link=True,
+            files=files,
+            files_thumbnail=files_thumbnail,
             **ctx)
     else:
         journal_info = None
@@ -169,6 +180,14 @@ def search():
             index_link_list = get_index_link_list(current_i18n.language)
         else:
             index_link_list = get_index_link_list()
+
+        # Get Facet search setting.
+        display_facet_search = get_search_setting().get("display_control", {})\
+            .get('display_facet_search', {}).get('status', False)
+        ctx.update({
+            "display_facet_search": display_facet_search,
+        })
+
         return render_template(
             current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
             page=page,

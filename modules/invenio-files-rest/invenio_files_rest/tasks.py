@@ -23,7 +23,7 @@ from celery.states import state
 from celery.utils.log import get_task_logger
 from flask import current_app
 from invenio_db import db
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from weko_admin.models import AdminSettings
 
 from .api import send_alert_mail
@@ -281,8 +281,9 @@ def check_send_alert_mail():
         now = datetime.utcnow()
         locations = Location.all()
         for location in locations:
-            if location.quota_size and location.quota_size > 0 \
-                    and location.size / location.quota_size * 100 >= settings.threshold_rate:
+            if location.quota_size \
+                and location.size / location.quota_size * 100 \
+                    >= settings.threshold_rate:
                 if (settings.cycle == 'daily') or \
                         (settings.cycle == 'weekly'
                          and settings.day == now.weekday()) \
@@ -316,16 +317,23 @@ def check_file_storage_time():
 @shared_task(ignore_result=True)
 def check_location_size():
     """Set default location size by total FileInstances size."""
-    locations = Location.all()
-    files = FileInstance.query.all()
+    try:
+        ret = db.session.query(
+            Location.id,
+            sa.func.sum(FileInstance.size),
+            Location.size
+        ).filter(
+            FileInstance.uri.like(sa.func.concat(Location.uri, '%'))
+        ).group_by(Location.id)
 
-    for loc in locations:
-        all_files_size = 0
-
-        for f in files:
-            if loc.uri + '/' in str(f.uri):
-                all_files_size += f.size
-
-        loc.size = all_files_size
-
-    db.session.commit()
+        for row in ret:
+            if row[1] != row[2]:
+                with db.session.begin_nested():
+                    loc = db.session.query(Location).filter(
+                        Location.id == row[0]).one()
+                    loc.size = row[1]
+        db.session.commit()
+    except SQLAlchemyError:
+        db.session.rollback()
+    finally:
+        db.session.close()
