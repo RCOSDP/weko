@@ -21,10 +21,13 @@
 {%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
 {%- from "invenio_communities/macros.html" import community_header %}
 
+{%- set items_show_list = record.items_show_list -%}
+
 {%- block css %}
 {{ super() }}
 {% assets "weko_records_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {% assets "workflow_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% assets "weko_records_ui_bootstrap_popover_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -34,6 +37,7 @@
   {% assets "workflow_lock_activity_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_records_ui_preview_carousel_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_records_ui_bootstrap_popover_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
@@ -53,6 +57,10 @@
 {%- endif%}
 {%- endblock page_footer %}
 
+{% set guest_email = None %}
+{% if activity and activity.extra_info and 'guest_mail' in activity.extra_info %}
+  {% set guest_email = activity.extra_info.guest_mail %}
+{% endif %}
 {%- block page_body_main %}
 <div class="row">
   {%- if community %}
@@ -100,7 +108,7 @@
                   <label class="col-sm-4 control-label">{{_('Creater')}}</label>
                   <div class="col-sm-8">
                     <p class="form-control-static">
-                      {{activity.login_user if activity.login_user else activity.activity_login_user}}</p>
+                      {{ activity.login_user if activity.login_user else (activity.activity_login_user if activity.activity_login_user else guest_email) }}</p>
                   </div>
                 </div>
               </div>
@@ -117,7 +125,7 @@
                   <label class="col-sm-4 control-label">{{_('Updater')}}</label>
                   <div class="col-sm-8">
                     <p class="form-control-static">
-                      {{activity.update_user if activity.update_user else activity.activity_update_user}}</p>
+                      {{ activity.update_user if activity.update_user else (activity.activity_update_user if activity.activity_update_user else guest_email) }}</p>
                   </div>
                 </div>
               </div>
@@ -134,7 +142,10 @@
                   <label class="col-sm-4 control-label">{{_('Item')}}</label>
                   <div class="col-sm-8">
                     <p class="form-control-static">
-                      <a href="#" id="lnk_item_detail">{{item.get('title_ja') if item}}</a>
+                      {%- if is_enable_item_name_link -%}
+                        <a href="#"
+                           id="lnk_item_detail">{{ item.get('title_ja', item.get('title')) if item }}</a>
+                      {%- endif -%}
                     </p>
                   </div>
                 </div>
@@ -145,31 +156,35 @@
       </div>
       <div class="panel panel-default">
         <span class="indent">{{_('Step')}}</span>
-        <div class="panel-body">
-          <div class="row">
+        <div class="panel-body panel-styling">
+          <div class="col-sm-12 table-responsive table-bordered">
+          <div class="row" style="display: flex;">
             {%- for step in steps %}
-            <div class="col-sm-2">
-              <div class="row">
-                <div class="col-sm-9">
-                  <ul class="list-group">
+            {%- set is_including = cur_step == step.ActionEndpoint and step.ActionOrder == activity.action_order %}
+            <div class="col-xl-3">
+              <div class="row" style="display: flex;">
+                <div class="col-md-8 col-xl-8">
+                  <ul class="list-group workflow-ul">
                     <li
-                      class="list-group-item break-word {% if cur_step == step.ActionEndpoint %} style_li {% endif %}">
-                      <span class="action-name {% if cur_step == step.ActionEndpoint %} cur_step style_a {% endif %}"
+                      class="list-group-item break-word {% if is_including %} style_li {% endif %}">
+                      <span class="action-name {% if is_including %} cur_step style_a {% endif %}
+                                  workflow-span"
                         data-action-version="{{step.ActionVersion}}"
                         data-cancel-uri="{{ url_for('weko_workflow.cancel_action', activity_id=step.ActivityId, action_id=step.ActionId) }}"
                         data-next-uri="{{url_for('weko_workflow.next_action', activity_id=step.ActivityId, action_id=step.ActionId)}}">{{step.ActionName}}</span>
                     </li>
                     <li
-                      class="list-group-item break-word {% if cur_step == step.ActionEndpoint %} style_li {% endif %}">
+                      class="list-group-item break-word {% if is_including %} style_li {% endif %}">
                       <span
-                        class="action-name {% if cur_step == step.ActionEndpoint %} style_a {% endif %}">{{step.Author}}</span>
+                        class="action-name {% if is_including %} style_a {% endif %} workflow-span">{{step.Author}}</span>
                     </li>
-                    <li class="list-group-item {% if cur_step == step.ActionEndpoint %} style_li style_a {% endif %}">
-                      {{_(step.Status)}}</li>
+                    <li class="list-group-item {% if is_including %} style_li style_a {% endif %}">
+                      <span class="workflow-span">{{_(step.Status)}}</span>
+                    </li>
                   </ul>
                 </div>
                 {%- if 'end_action' != step.ActionEndpoint %}
-                <div class="col-sm-3 pull-right">
+                <div class="col-md-4 col-xl-4">
                   <span class="glyphicon glyphicon-arrow-right rightFoward_font" aria-hidden="true"></span>
                 </div>
                 {%- endif %}
@@ -177,6 +192,7 @@
             </div>
             {% endfor %}
           </div>
+        </div>
         </div>
       </div>
       {%- if 'F' != activity.activity_status %}
@@ -211,10 +227,12 @@
                       <span class="glyphicon glyphicon-saved"></span>
                       {{_('Save')}}
                     </button>
-                    <button type="button" class="btn btn-info done-button" id="btn-finish">{{_('Done')}}</button>
+                    <button type="button" class="btn btn-info next-button" id="btn-finish">{{_('Next')}}
+                    <span class="glyphicon glyphicon-chevron-right"></span>
+                    </button>
                     <button class="btn btn-danger done-button pull-right" id="btn_quit">
                         <i class="fa fa-sign-out"></i>
-                        {{_('Quit')}}</button>
+                        {{_('QuitQO')}}</button>
                   </div>
                   {% include "weko_workflow/modal_quit_confirmation.html" %}
                 </div>
@@ -244,9 +262,9 @@
               <tr>
                 <td>{{history.ActionName[0]}}</td>
                 <td>{{history.action_date.strftime('%Y-%m-%d %H:%M')}}</td>
-                <td>{{history.user.email}}</td>
+                <td>{{ history.user.email if history.user.email else guest_email }}</td>
                 <td>{{_(history.StatusDesc)}}</td>
-                <td>{{history.CommentDesc}}</td>
+                <td>{% if history.CommentDesc %} {{history.CommentDesc}} {% endif %}</td>
               </tr>
               {% endfor %}
               {% else %}
@@ -267,7 +285,9 @@
     <a class="btn btn-default pull-right"
       href="{{url_for('weko_workflow.index',community=community.id)}}">{{_('Back')}}</a>
     {%-else%}
-    <a class="btn btn-default pull-right" href="{{url_for('weko_workflow.index')}}">{{_('Back')}}</a>
+    <a class="btn btn-info pull-left back-button" href="{{url_for('weko_workflow.index')}}">
+            <span class="glyphicon glyphicon-chevron-left"></span>
+            {{_('Back')}}</a>
     {%-endif%}
   </div>
 </div>
@@ -286,10 +306,15 @@
       <div class="modal-dialog modelWidth modal-lg" role="document">
         <div class="modal-content">
           <div class="modal-body">
-            {% include 'weko_workflow/record_detail.html' %}
+            {%- with preview_carousel_id='modal_preview_carousel' %}
+              {%- include 'weko_workflow/record_detail.html' %}
+            {%- endwith %}
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-default" id="btnModalClose" data-dismiss="modal">{{_('Close')}}</button>
+            <button type="button" class="btn btn-info close-button" id="btnModalClose" data-dismiss="modal">
+              <span class="glyphicon glyphicon-remove"></span>
+              {{_('Close')}}
+            </button>
           </div>
         </div>
       </div>

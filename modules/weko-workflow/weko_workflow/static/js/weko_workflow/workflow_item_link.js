@@ -279,7 +279,6 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
     { id: "isDerivedFrom", content: "isDerivedFrom" },
     { id: "isSourceOf", content: "isSourceOf" }
   ];
-  $scope.comment_data = "";
 
 //   add button
   $rootScope.add_link = function(data, index) {
@@ -320,9 +319,10 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
     $scope.startLoading(saveButton);
     var post_url = $('.cur_step').data('next-uri');
     var post_data = {
-      commond: $scope.comment_data,
+      commond: $("#input-comment").val(),
       action_version: $('.cur_step').data('action-version'),
-      temporary_save: 1
+      temporary_save: 1,
+      link_data: $scope.link_item_list
     };
     $http({
       method: 'POST',
@@ -352,7 +352,7 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
     $scope.startLoading(runButton);
     var post_url = $('.cur_step').data('next-uri');
     var post_data = {
-      commond: $scope.comment_data,
+      commond: $("#input-comment").val(),
       action_version: $('.cur_step').data('action-version'),
       temporary_save: 0,
       link_data: $scope.link_item_list
@@ -364,9 +364,16 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
         data: post_data,
         headers: {'Content-Type': 'application/json'},
     }).then(function successCallback(response) {
-      if(0 == response.data.code) {
-        if(response.data.hasOwnProperty('data') && response.data.data.hasOwnProperty('redirect')) {
-          document.location.href=response.data.data.redirect;
+      if (0 === response.data.code) {
+        if (response.data.hasOwnProperty('data') && response.data.data.hasOwnProperty('redirect')) {
+          document.location.href = response.data.data.redirect;
+        } else if (window.location.href.indexOf('/workflow/activity/detail') === -1) {
+          let community_id = $('#community_id').text();
+          let redirectUrl = "/workflow/activity/detail/" + $("#activity_id").text().trim();
+          if (community_id) {
+            redirectUrl += '?community=' + community_id;
+          }
+          parent.document.location.href = redirectUrl;
         } else {
           document.location.reload(true);
         }

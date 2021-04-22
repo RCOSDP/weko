@@ -21,6 +21,7 @@
 """Blueprint for weko-index-tree."""
 
 from datetime import date, timedelta
+from operator import itemgetter
 
 from flask import Blueprint, current_app, jsonify, request, session
 from flask_login import current_user
@@ -57,6 +58,7 @@ def get_rss_data():
 
     """
     from weko_gridlayout.utils import build_rss_xml
+    from weko_items_ui.utils import find_hidden_items
 
     data = request.args
 
@@ -83,7 +85,15 @@ def get_rss_data():
                                                              end_date)
 
     hits = records_data.get('hits')
-    rss_data = hits.get('hits')
+    es_data = hits.get('hits')
+    item_id_list = list(map(itemgetter('_id'), es_data))
+    hidden_items = find_hidden_items(item_id_list, idx_tree_ids)
+
+    rss_data = []
+    for es_item in es_data:
+        if es_item['_id'] in hidden_items:
+            continue
+        rss_data.append(es_item)
 
     return build_rss_xml(data=rss_data,
                          index_id=index_id,

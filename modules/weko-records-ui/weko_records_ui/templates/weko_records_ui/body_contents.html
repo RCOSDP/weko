@@ -21,7 +21,8 @@
 
 
 {% from "weko_records_ui/box/preview_carousel.html" import preview_carousel %}
-{% from "weko_theme/macros/modal_page.html" import all_modal %}
+{% from "weko_theme/macros/modal_page.html" import all_modal, email_modal %}
+{{ email_modal('email_modal', 'confirm_email_btn', _('Send'),_('Please input email address.')) }}
 {{ all_modal() }}
 
 {%- block javascript %}
@@ -31,7 +32,7 @@
 {%- set items_show_list = record.items_show_list -%}
 
 {% from "weko_records_ui/item_detail.html" import output_item_detail %}
-{% from "weko_records_ui/_macros.html" import check_download_file %}
+{% from "weko_records_ui/_macros.html" import check_download_file with context %}
 <div class="panel-group">
   <div class="panel panel-default">
     <div class="panel-heading clearfix">
@@ -135,7 +136,7 @@
                             {%- set file_label = file.filename -%}
                           {%- endif -%}
                           <!-- version_id == '' => not upload file, but fill data for 'File Information' -->
-                          {%- if file.version_id == '' -%}
+                          {%- if file.version_id -%}
                             {%- if file.url.label -%}
                               {%- set file_label = file.url.label -%}
                             {%- elif file.url.url -%}
@@ -168,7 +169,7 @@
                             </a>
                             <br>
                           {%- elif clickable -%}
-                            {{ check_download_file(record, file, permission, community, url_for_security, is_file_name_url) }}
+                            {{ check_download_file(record, file, permission, community, url_for_security, is_file_name_url, file_label) }}
                           {%- else -%}
                             {%- set download_param = '?download=download-' + file.version_id %}
                             {%- set path = request.path + download_param %}
@@ -231,16 +232,16 @@
                             {%- if not 'simple' in file.displaytype -%}
                             {%- if 'license_free' == file.licensetype -%}
                               {% autoescape false %}
-                              <div id="square" style="width: 1px; height: 1px; border-style: groove;"></div>
+                              <div id="square" style="width: 1px; height: 1px;"></div>
                               <span class="break-word">{{ file.licensefree | escape_str }}</span>
                               {% endautoescape %}
                             {%- else %}
                               {% set lst = file.licensetype | get_license_icon %}
-                              <a class="creative-commons" target="_blank" href="{{lst[2]}}" alt="Creative Commons Licenses">
-                                <img src="{{lst[0]}}" alt="license.icon" />
-                              </a>
-                              <br>
-                              <!-- {{ lst[1] }} -->
+                              {%- if lst[0] -%}
+                                <a class="creative-commons" target="_blank" href="{{lst[2]}}" alt="Creative Commons Licenses">
+                                  <img src="{{lst[0]}}" alt="license.icon" />
+                                </a><br>
+                              {%- endif -%}
                             {%- endif %}
                           {%- endif -%}
                           </div>
@@ -262,7 +263,7 @@
                               </button>
                             </a>
                           {%- elif clickable -%}
-                            {{ check_download_file(record, file, permission, community, url_for_security, is_file_name_url) }}
+                            {{ check_download_file(record, file, permission, community, url_for_security, is_file_name_url, file_label) }}
                           {%- elif not current_user.is_authenticated -%}
                             <!-- If user not login => redirect to login screen. -->
                             <!-- Auto click 'Download' button when logged in. -->
@@ -357,7 +358,10 @@
                               </a>
                             {%- else -%}
                               <a class="action-anchor preview-button" href="#" data-slide-to="{{ loop.index0 }}">
-                                <button class="img-rounded action-button button-sm" id="{{preview_id}}" onclick="alert('{{file.download_preview_message}}')">
+                                <button class="img-rounded action-button button-sm" id="{{preview_id}}"
+                                  {% if file.download_preview_message %}
+                                    onclick="alert('{{file.download_preview_message}}')"
+                                  {% endif %}>
                                   <i class="action-icon fa fa-play-circle fa-lg"></i>
                                   {{_('Preview')}}
                                 </button>

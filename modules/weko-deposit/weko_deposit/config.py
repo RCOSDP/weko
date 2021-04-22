@@ -159,6 +159,31 @@ WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_KEY = [
 ]
 """Key of Bibliographic information."""
 
+WEKO_DEPOSIT_BIBLIOGRAPHIC_TRANSLATIONS = {
+    'bibliographicVolumeNumber': {
+        "en": "Volume",
+        "ja": "巻"
+    },
+    'bibliographicIssueNumber': {
+        "en": "Issue",
+        "ja": "号"
+    },
+    'p.': {
+        "en": "p.",
+        "ja": "p."
+    },
+    'bibliographicNumberOfPages': {
+        "en": "Number of Pages",
+        "ja": "ページ数"
+    },
+    'bibliographicIssueDates': {
+        "en": "Issued Date",
+        "ja": "発行年"
+    }
+}
+
+"""Translation of Bibliographic information."""
+
 WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY = [
     'bibliographic_titles',
     'bibliographicPageEnd',

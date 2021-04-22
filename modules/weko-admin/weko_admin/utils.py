@@ -20,14 +20,16 @@
 
 """Utilities for convert response json."""
 import csv
+import math
 import os
 import zipfile
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
+from typing import Dict, Tuple, Union
 
 import redis
 import requests
-from flask import current_app
+from flask import current_app, request, url_for
 from flask_babelex import gettext as __
 from flask_babelex import lazy_gettext as _
 from invenio_accounts.models import Role, userrole
@@ -35,6 +37,7 @@ from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 from invenio_mail.admin import MailSettingView
+from invenio_mail.models import MailConfig
 from invenio_records.models import RecordMetadata
 from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
 from jinja2 import Template
@@ -44,9 +47,9 @@ from weko_authors.models import Authors
 from weko_records.api import ItemsMetadata
 
 from . import config
-from .models import AdminLangSettings, ApiCertificate, FeedbackMailFailed, \
-    FeedbackMailHistory, FeedbackMailSetting, SearchManagement, \
-    StatisticTarget, StatisticUnit
+from .models import AdminLangSettings, AdminSettings, ApiCertificate, \
+    FeedbackMailFailed, FeedbackMailHistory, FeedbackMailSetting, \
+    SearchManagement, SiteInfo, StatisticTarget, StatisticUnit
 
 
 def get_response_json(result_list, n_lst):
@@ -484,7 +487,8 @@ def reset_redis_cache(cache_key, value):
     try:
         datastore = RedisStore(redis.StrictRedis.from_url(
             current_app.config['CACHE_REDIS_URL']))
-        datastore.delete(cache_key)
+        if datastore.redis.exists(cache_key):
+            datastore.delete(cache_key)
         datastore.put(cache_key, value.encode('utf-8'))
     except Exception as e:
         current_app.logger.error('Could not reset redis value', e)
@@ -1643,3 +1647,312 @@ def get_init_display_index(init_disp_index: str) -> list:
                                init_disp_index)
 
     return init_display_indexes
+
+
+def get_restricted_access(key: str = None):
+    """Get registered access settings.
+
+    :param key:setting key.
+    :return:
+    """
+    restricted_access = AdminSettings.get('restricted_access', False)
+    if not restricted_access:
+        restricted_access = current_app.config['WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
+    if not key:
+        return restricted_access
+    elif key in restricted_access:
+        return restricted_access[key]
+    return None
+
+
+def update_restricted_access(restricted_access: dict):
+    """Update the restricted access.
+
+    :param restricted_access:
+    """
+    def parse_content_file_download():
+        if content_file_download.get('expiration_date_unlimited_chk'):
+            content_file_download['expiration_date'] = 9999999
+        if content_file_download.get('download_limit_unlimited_chk'):
+            content_file_download['download_limit'] = 9999999
+
+        content_file_download['expiration_date'] = int(
+            content_file_download['expiration_date'])
+        content_file_download['download_limit'] = int(
+            content_file_download['download_limit'])
+
+    def validate_content_file_download():
+        if not content_file_download.get(
+            'expiration_date_unlimited_chk') and not content_file_download[
+            'expiration_date'] or not content_file_download.get(
+            'download_limit_unlimited_chk') and not \
+                content_file_download['download_limit']:
+            return False
+        if content_file_download['expiration_date'] and int(
+            content_file_download['expiration_date']) < 1 or \
+            content_file_download['download_limit'] and int(
+                content_file_download['download_limit']) < 1:
+            return False
+        return True
+
+    def validate_usage_report_wf_access():
+        if not usage_report_wf_access.get(
+            'expiration_date_access_unlimited_chk') and not \
+                usage_report_wf_access.get('expiration_date_access'):
+            return False
+        if usage_report_wf_access['expiration_date_access'] and int(
+                usage_report_wf_access['expiration_date_access']) < 1:
+            return False
+        return True
+
+    def parse_usage_report_wf_access():
+        if usage_report_wf_access.get('expiration_date_access_unlimited_chk'):
+            usage_report_wf_access['expiration_date_access'] = 9999999
+
+        usage_report_wf_access['expiration_date_access'] = int(
+            usage_report_wf_access['expiration_date_access'])
+
+    # Content file download.
+    if 'content_file_download' in restricted_access:
+        content_file_download = restricted_access['content_file_download']
+        if not validate_content_file_download():
+            return False
+        parse_content_file_download()
+
+    # Usage Report Workflow Access
+    if "usage_report_workflow_access" in restricted_access:
+        usage_report_wf_access = restricted_access[
+            'usage_report_workflow_access']
+        if not validate_usage_report_wf_access():
+            return False
+        parse_usage_report_wf_access()
+
+    AdminSettings.update('restricted_access', restricted_access)
+
+    return True
+
+
+class UsageReport:
+    """Usage report."""
+
+    def __init__(self):
+        """Initialize the usage report."""
+        from weko_workflow.api import WorkActivity
+        from weko_workflow.models import ActionStatusPolicy, GuestActivity
+        from weko_workflow.utils import generate_guest_activity_token_value, \
+            process_send_mail
+        self.__activities_id = []
+        self.__activities_number = 0
+        self.__work_activity = WorkActivity()
+        self.__action_status_policy = ActionStatusPolicy()
+        self.__activity_token_value = generate_guest_activity_token_value
+        self.__process_send_mail = process_send_mail
+        self.__page_number = 1
+        self.__usage_report_activities_data = []
+        self.__mail_key = {
+            "subitem_restricted_access_name": "restricted_fullname",
+            "subitem_restricted_access_mail_address": "restricted_mail_address",
+            "subitem_restricted_access_university/institution":
+                "restricted_university_institution",
+            "subitem_restricted_access_dataset_usage": "restricted_data_name",
+            "subitem_restricted_access_application_date":
+                "restricted_application_date",
+            "subitem_restricted_access_research_title":
+                "restricted_research_title"
+        }
+        self.__mail_info_lst = []
+
+    def get_activities_per_page(
+        self, activities_id: list = None, size: int = 25, page: int = 1
+    ) -> Dict[str, Union[int, list, int]]:
+        """Get activities per page.
+
+        Args:
+            activities_id (list, optional): Activities identifier list.
+                                                            Defaults to None.
+            size (int, optional): The number of activity per page.
+                                                                Defaults to 20.
+            page (int, optional): Page number. Defaults to 1.
+
+        Returns:
+            Dict[str, Union[int, list, int]]: activities per page.
+
+        """
+        # Get usage report activities identifier.
+        if activities_id:
+            self.__activities_id = activities_id
+        # Get the number of usage report is not completed.
+        self.__count_activities()
+        # Maximum page number
+        self.__page_number = math.ceil(self.__activities_number / int(size))
+        # Validate page number
+        if page > self.__page_number:
+            page = 1
+        # Perform get usage report activities.
+        self.__usage_report_activities_data = self.__work_activity \
+            .get_usage_report_activities(self.__activities_id, size, page)
+
+        activities = self.__format_usage_report_data()
+        return {
+            "page": page,
+            "size": size,
+            "activities": activities,
+            "number_of_pages": int(self.__page_number),
+        }
+
+    def __count_activities(self):
+        """Get the number of usage report activities."""
+        self.__activities_number = self.__work_activity \
+            .count_all_usage_report_activities(self.__activities_id)
+
+    def __format_usage_report_data(self) -> list:
+        """Format usage report data.
+
+        Returns:
+            [list]: Activities is formatted.
+
+        """
+        activities = []
+        action_status = self.__action_status_policy.describe(
+            self.__action_status_policy.ACTION_DOING)
+        for activity in self.__usage_report_activities_data:
+            user_mail = activity.extra_info.get(
+                'user_mail') if activity.extra_info.get(
+                'user_mail') else activity.extra_info.get('guest_mail')
+            activities.append(
+                dict(
+                    activity_id=activity.activity_id,
+                    item_name=activity.title or activity.temp_data.get("title",
+                                                                       ""),
+                    workflow_name=activity.workflow.flows_name,
+                    action_status=action_status,
+                    user_mail=user_mail
+                )
+            )
+        return activities
+
+    def send_reminder_mail(self, activities_id: list,
+                           mail_template: str = None, activities: list = None):
+        """Send reminder email to user.
+
+        Args:
+            activities_id (list): Activity identifier list.
+            mail_template (str, optional): Mail template.
+            activities (list, optional): Activities list.
+        """
+        if not activities:
+            activities = self.__work_activity.get_usage_report_activities(
+                activities_id)
+        records_id = []
+        site_url = current_app.config['THEME_SITEURL']
+        site_name_en, site_name_ja = self.__get_site_info()
+        site_mail = self.__get_default_mail_sender()
+        if not mail_template:
+            mail_template = current_app.config\
+                .get("WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT")
+
+        for activity in activities:
+            if activity.item_id:
+                records_id.append(activity.item_id)
+
+            url, user_mail = self.__get_usage_report_email_and_url(activity)
+            # Create mail info
+            self.__mail_info_lst.append(
+                {
+                    "restricted_activity_id": activity.activity_id,
+                    "restricted_mail_address": user_mail,
+                    "data_download_date": activity.created.strftime("%Y-%m-%d"),
+                    "usage_report_url": url,
+                    "restricted_site_url": site_url,
+                    "restricted_site_name_ja": site_name_ja,
+                    "restricted_site_name_en": site_name_en,
+                    "restricted_site_mail": site_mail,
+                    "restricted_usage_activity_id": activity.extra_info.get(
+                        'usage_activity_id'),
+                }
+            )
+            if activity.extra_info:
+                self.__build_user_info(
+                    activity.extra_info.get('usage_application_record_data'),
+                    self.__mail_info_lst[-1]
+                )
+            self.__mail_info_lst[-1]['mail_recipient'] = \
+                self.__mail_info_lst[-1]['restricted_mail_address']
+        is_sendmail_success = True
+        for mail_info in self.__mail_info_lst:
+            if not self.__process_send_mail(mail_info, mail_template):
+                is_sendmail_success = False
+                break
+        return is_sendmail_success
+
+    @staticmethod
+    def __get_site_info():
+        """Get site name.
+
+        @return:
+        """
+        site_name_en = site_name_ja = ''
+        site_info = SiteInfo.get()
+        if site_info:
+            if len(site_info.site_name) == 1:
+                site_name_en = site_name_ja = site_info.site_name[0]['name']
+            elif len(site_info.site_name) == 2:
+                for site in site_info.site_name:
+                    site_name_ja = site['name'] \
+                        if site['language'] == 'ja' else site_name_ja
+                    site_name_en = site['name'] \
+                        if site['language'] == 'en' else site_name_en
+        return site_name_en, site_name_ja
+
+    def __get_usage_report_email_and_url(self, activity) -> Tuple[str, str]:
+        """Get usage report email and url from activity.
+
+        Args:
+            activity (Activity): The activity
+
+        Returns:
+            Tuple[str, str]: Email and Url
+
+        """
+        extra_info = activity.extra_info
+        file_name = extra_info.get('file_name')
+        root_url = request.host_url
+        activity_id = activity.activity_id
+        if extra_info.get('is_guest'):
+            url_pattern = "{}workflow/activity/guest-user/{}?token={}"
+            email = activity.extra_info.get('guest_mail')
+            token_value = self.__activity_token_value(
+                activity_id, file_name, activity.created, email
+            )
+            url = url_pattern.format(root_url, file_name, token_value)
+        else:
+            email = activity.extra_info.get('user_mail')
+            url = "{}workflow/activity/detail/{}".format(root_url, activity_id)
+        return url, email
+
+    def __build_user_info(self, record_data: Union[RecordMetadata, list],
+                          mail_info: dict):
+        """Build user info.
+
+        Args:
+            record_data (Union[RecordMetadata, list]):
+            mail_info (dict):
+        """
+        if isinstance(record_data, dict):
+            for k, v in record_data.items():
+                if k in self.__mail_key and isinstance(v, str):
+                    mail_info[self.__mail_key[k]] = v
+                else:
+                    self.__build_user_info(v, mail_info)
+        elif isinstance(record_data, list):
+            for data in record_data:
+                self.__build_user_info(data, mail_info)
+
+    @staticmethod
+    def __get_default_mail_sender():
+        """Get default mail sender.
+
+        :return:
+        """
+        mail_config = MailConfig.get_config()
+        return mail_config.get('mail_default_sender', '')

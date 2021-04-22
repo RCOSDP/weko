@@ -174,5 +174,29 @@
     "Display": [
         null,
         "Display"
+    ],
+    "Del_Success": [
+        null,
+        "Index is deleted successfully."
+    ],
+    "Add_Update_Success": [
+        null,
+        "Index is updated successfully."
+    ],
+    "Thumbnails": [
+        null,
+        "Thumbnails"
+    ],
+    "Choose_File": [
+        null,
+        "Choose File"
+    ],
+    "No_File_Chosen": [
+        null,
+        "No file chosen."
+    ],
+    "Err_File_Ext": [
+        null,
+        "Files other than image files (gif, jpg, jpe, jpeg, png, bmp) cannot be uploaded."
     ]
 }

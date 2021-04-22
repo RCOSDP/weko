@@ -21,41 +21,42 @@
 """Service for widget modules."""
 import copy
 import json
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from operator import itemgetter
 
-from flask import Markup, current_app
+from flask import Markup, current_app, session
 from flask_babelex import gettext as _
+from flask_login import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
+from weko_admin.config import WEKO_ADMIN_DEFAULT_LIFETIME
 
 from .config import WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE, \
     WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
-    WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL, WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE
+    WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL, WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE, \
+    WEKO_GRIDLAYOUT_WIDGET_ITEM_LOCK_KEY
 from .models import WidgetDesignPage, WidgetDesignPageMultiLangData, \
     WidgetDesignSetting, WidgetItem, WidgetMultiLangData
 from .utils import build_data, build_multi_lang_data, build_rss_xml, \
     convert_data_to_design_pack, convert_data_to_edit_pack, \
-    convert_widget_data_to_dict, convert_widget_multi_lang_to_dict, \
-    delete_widget_cache, get_elasticsearch_result_by_date, \
-    update_general_item, validate_main_widget_insertion
+    convert_widget_data_to_dict, delete_widget_cache, \
+    get_elasticsearch_result_by_date, update_general_item, \
+    validate_main_widget_insertion
 
 
 class WidgetItemServices:
     """Services for Widget item setting."""
 
     @classmethod
-    def get_repo_by_id(cls, widget_id):
-        """Get repository of widget item by widget id.
+    def get_widget_by_id(cls, widget_id):
+        """Get widget by identifier.
 
         Arguments:
             widget_id {int} -- id of widget item
 
         """
-        widget_item = WidgetItem.get_by_id(widget_id)
-        return widget_item.repository_id
+        return WidgetItem.get_by_id(widget_id)
 
     @classmethod
     def save_command(cls, data):
@@ -76,41 +77,41 @@ class WidgetItemServices:
             result['message'] = 'No data saved!'
             return result
         widget_data = data.get('data')
-        current_id = None
-        if data.get('data_id'):
-            current_id = data.get('data_id')
 
         if data.get('flag_edit'):
-            old_repo = cls.get_repo_by_id(current_id)
-            if (str(old_repo) != str(widget_data.get('repository'))
-                and WidgetDesignServices.validate_admin_widget_item_setting(
-                    data.get('data_id'))):
-                result['message'] = "Cannot update repository " \
-                    "of this widget because " \
-                    "it's setting in Widget Design."
-                result['success'] = False
-                return result
-
-            respond = cls.update_by_id(
-                data.get('data_id'),
-                build_data(widget_data))
-
-            if WidgetDesignServices.validate_admin_widget_item_setting(
-                    data.get('data_id')):
-                WidgetDesignServices.handle_change_item_in_preview_widget_item(
-                    data.get('data_id'), widget_data)
-            if respond['error']:
-                result['message'] = respond['error']
-            else:
-                result['message'] = 'Widget item updated successfully.'
-                result['success'] = True
+            # Update Widget.
+            result = cls.__edit_widget(data)
         else:
+            # Create Widget.
             respond = cls.create(build_data(widget_data))
             if respond['error']:
                 result['message'] = respond['error']
             else:
                 result['message'] = 'Widget item saved successfully.'
                 result['success'] = True
+        return result
+
+    @classmethod
+    def __edit_widget(cls, data, ):
+        widget_data = data.get('data')
+        services = WidgetDesignServices
+        is_used_in_widget_design = services.is_used_in_widget_design(
+            data.get('data_id'))
+
+        result = cls.__validate(data, is_used_in_widget_design)
+
+        if result['success']:
+            respond = cls.update_by_id(
+                data.get('data_id'),
+                build_data(widget_data))
+            if respond['error']:
+                result['message'] = respond['error']
+            # Update widget design using the widget data.
+            if is_used_in_widget_design:
+                services.handle_change_item_in_preview_widget_item(
+                    data.get('data_id'), widget_data)
+            result['message'] = 'Widget item updated successfully.'
+            result['success'] = True
         return result
 
     @classmethod
@@ -247,7 +248,7 @@ class WidgetItemServices:
             result['message'] = 'Could not found widget item in data base.'
             return result
 
-        if WidgetDesignServices.validate_admin_widget_item_setting(widget_id):
+        if WidgetDesignServices.is_used_in_widget_design(widget_id):
             result['message'] = "Cannot delete this widget because " \
                 "it's setting in Widget Design."
             return result
@@ -317,6 +318,94 @@ class WidgetItemServices:
             widget_data,
             multi_lang_data)
         result = convert_data_to_edit_pack(converted_data)
+        return result
+
+    @classmethod
+    def get_locked_widget_info(cls, widget_id, widget_item=None,
+                               locked_value=None):
+        """Get locked widget info.
+
+        @param widget_id: widget identifier.
+        @param widget_item:Widget Item
+        @param locked_value:locked value
+        @return:
+        """
+        if widget_item is None:
+            widget_item = cls.get_widget_by_id(widget_id)
+        if widget_item.locked:
+            session_timeout = WEKO_ADMIN_DEFAULT_LIFETIME
+            if widget_item.updated + timedelta(
+                    minutes=session_timeout) < datetime.utcnow():
+                return None
+            if int(widget_item.locked_by_user) != int(current_user.get_id()):
+                return widget_item
+            else:
+                lock_key = WEKO_GRIDLAYOUT_WIDGET_ITEM_LOCK_KEY.format(
+                    widget_id)
+                if locked_value and session.get(lock_key) != locked_value:
+                    return widget_item
+                elif session.get(lock_key) and not locked_value:
+                    return session[lock_key]
+
+        return None
+
+    @classmethod
+    def lock_widget(cls, widget_id, locked_value):
+        """Lock widget.
+
+        @param widget_id: widget identifier.
+        @param locked_value:
+        """
+        lock_key = WEKO_GRIDLAYOUT_WIDGET_ITEM_LOCK_KEY.format(widget_id)
+        session[lock_key] = locked_value
+        locked_data = {
+            "locked": True,
+            "locked_by_user": int(current_user.get_id())
+        }
+        WidgetItem.update_by_id(widget_id, locked_data)
+
+    @classmethod
+    def unlock_widget(cls, widget_id):
+        """Unlock widget.
+
+        @param widget_id:
+        """
+        lock_key = WEKO_GRIDLAYOUT_WIDGET_ITEM_LOCK_KEY.format(widget_id)
+        if lock_key in session:
+            del session[lock_key]
+        unlocked_data = {
+            "locked": False,
+            "locked_by_user": None
+        }
+        return WidgetItem.update_by_id(widget_id, unlocked_data)
+
+    @classmethod
+    def __validate(cls, data, is_used_in_widget_design=False):
+        """Validate edit widget.
+
+        @param data: Widget data.
+        @param is_used_in_widget_design: Is used in widget design.
+        @return:
+        """
+        result = {
+            'message': '',
+            'success': False
+        }
+        widget_data = data.get('data')
+        old_widget_data = cls.get_widget_by_id(data.get('data_id'))
+        # Check the widget is used in widget design.
+        if (str(old_widget_data.repository_id) != str(
+                widget_data.get('repository'))
+                and is_used_in_widget_design):
+            result['message'] = _("Cannot update repository "
+                                  "of this widget because "
+                                  "it's setting in Widget Design.")
+        elif cls.get_locked_widget_info(data.get('data_id'), old_widget_data,
+                                        data.get('locked_value')):
+            result['message'] = _("Widget is locked by another user.")
+
+        if not result['message']:
+            result['success'] = True
         return result
 
 
@@ -629,7 +718,8 @@ class WidgetDesignServices:
 
         """
         try:
-            repo_id = WidgetItemServices.get_repo_by_id(widget_id)
+            widget_item = WidgetItemServices.get_widget_by_id(widget_id)
+            repo_id = widget_item.repository_id
             data = [WidgetDesignSetting.select_by_repository_id(repo_id)]
 
             # Must update all pages as well as main layout
@@ -666,33 +756,33 @@ class WidgetDesignServices:
             return False
 
     @classmethod
-    def validate_admin_widget_item_setting(cls, widget_id):
+    def is_used_in_widget_design(cls, widget_id):
         """Validate widget item.
 
         :param: widget id
         :return: true if widget item is used in widget design else return false
         """
         try:
-            if widget_id:
-                widget_item_id = widget_id
-                repo_id = WidgetItemServices.get_repo_by_id(widget_id)
-                data = [WidgetDesignSetting.select_by_repository_id(repo_id)]
+            if not widget_id:
+                return False
+            widget_item = WidgetItemServices.get_widget_by_id(widget_id)
+            repo_id = widget_item.repository_id
+            data = [WidgetDesignSetting.select_by_repository_id(repo_id)]
 
-                # Must check all pages too
-                data += [{'repository_id': page.repository_id,
-                          'settings': page.settings}
-                         for page in
-                         WidgetDesignPage.get_by_repository_id(repo_id)]
+            # Must check all pages too
+            data += [{'repository_id': page.repository_id,
+                      'settings': page.settings}
+                     for page in
+                     WidgetDesignPage.get_by_repository_id(repo_id)]
 
-                for model in data:
-                    if model.get('settings'):
-                        json_data = json.loads(model.get('settings')) \
-                            if isinstance(model.get('settings'), str) \
-                            else model.get('settings')
-                        for item in json_data:
-                            if str(item.get('widget_id')) == \
-                                    str(widget_item_id):
-                                return True
+            for model in data:
+                if model.get('settings'):
+                    json_data = json.loads(model.get('settings')) \
+                        if isinstance(model.get('settings'), str) \
+                        else model.get('settings')
+                    for item in json_data:
+                        if str(item.get('widget_id')) == str(widget_id):
+                            return True
             return False
         except Exception as e:
             current_app.logger.error('Failed to validate record: ', e)
@@ -1005,7 +1095,8 @@ class WidgetDataLoaderServices:
             if not hits:
                 result['error'] = 'Cannot search data'
                 return result
-            es_data = hits.get('hits')
+            es_data = [record for record in hits.get(
+                'hits', []) if record.get('_source').get('path')]
 
             item_id_list = list(map(itemgetter('_id'), es_data))
             hidden_items = find_hidden_items(item_id_list)
@@ -1038,11 +1129,21 @@ class WidgetDataLoaderServices:
         :dictionary: elastic search data
 
         """
+        from weko_items_ui.utils import find_hidden_items
         lang = current_i18n.language
         if not data or not data.get('hits'):
             return build_rss_xml(data=None, term=term, count=0, lang=lang)
         hits = data.get('hits')
-        rss_data = hits.get('hits')
+        es_data = [record for record in hits.get(
+            'hits', []) if record.get('_source').get('path')]
+        item_id_list = list(map(itemgetter('_id'), es_data))
+        hidden_items = find_hidden_items(item_id_list)
+
+        rss_data = []
+        for es_item in es_data:
+            if es_item['_id'] in hidden_items:
+                continue
+            rss_data.append(es_item)
         return build_rss_xml(data=rss_data, term=term, count=count, lang=lang)
 
     @classmethod

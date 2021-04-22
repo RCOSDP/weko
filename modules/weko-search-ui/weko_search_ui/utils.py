@@ -33,7 +33,7 @@ import uuid
 import zipfile
 from collections import Callable, OrderedDict
 from datetime import datetime
-from functools import partial, reduce
+from functools import partial, reduce, wraps
 from io import StringIO
 from operator import getitem
 
@@ -43,6 +43,7 @@ from celery.result import AsyncResult
 from celery.task.control import revoke
 from flask import abort, current_app, request
 from flask_babelex import gettext as _
+from flask_login import current_user
 from invenio_db import db
 from invenio_files_rest.models import FileInstance, Location, ObjectVersion
 from invenio_i18n.ext import current_i18n
@@ -60,7 +61,8 @@ from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
 from weko_handle.api import Handle
 from weko_index_tree.api import Indexes
-from weko_index_tree.utils import check_restrict_doi_with_indexes
+from weko_index_tree.utils import check_index_permissions, \
+    check_restrict_doi_with_indexes
 from weko_indextree_journal.api import Journals
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
@@ -84,7 +86,7 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, \
     WEKO_IMPORT_SUFFIX_PATTERN, WEKO_IMPORT_SYSTEM_ITEMS, \
     WEKO_IMPORT_THUMBNAIL_FILE_TYPE, WEKO_IMPORT_VALIDATE_MESSAGE, \
-    WEKO_REPO_USER, WEKO_SEARCH_UI_BULK_EXPORT_TASK, \
+    WEKO_REPO_USER, WEKO_SEARCH_TYPE_DICT, WEKO_SEARCH_UI_BULK_EXPORT_TASK, \
     WEKO_SEARCH_UI_BULK_EXPORT_URI, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
@@ -433,17 +435,17 @@ def check_import_items(file_name: str, file_content: str,
         return       -- PID object if exist.
 
     """
-    result = {}
     file_content_decoded = base64.b64decode(file_content)
     temp_path = tempfile.TemporaryDirectory()
     save_path = tempfile.gettempdir()
+    import_path = temp_path.name + '/' + \
+        datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
+    data_path = save_path + '/' + \
+        datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
+    result = {'data_path': data_path}
 
     try:
         # Create temp dir for import data
-        import_path = temp_path.name + '/' + \
-            datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
-        data_path = save_path + '/' + \
-            datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
         os.mkdir(data_path)
 
         with open(import_path + '.zip', 'wb+') as f:
@@ -482,10 +484,7 @@ def check_import_items(file_name: str, file_content: str,
         handle_check_doi(list_record)
         handle_check_date(list_record)
         handle_check_file_metadata(list_record, data_path)
-        result = {
-            'list_record': list_record,
-            'data_path': data_path
-        }
+        result['list_record'] = list_record
     except Exception as ex:
         error = _('Internal server error')
         if isinstance(ex, zipfile.BadZipFile):
@@ -1523,6 +1522,12 @@ def handle_check_doi_indexes(list_record):
     :return
 
     """
+    err_msg_register_doi = _('When assigning a DOI to an item, it must be'
+                             ' associated with an index whose index status is'
+                             ' "Public" and Harvest Publishing is "Public".')
+    err_msg_update_doi = _('Since the item has a DOI, it must be associated'
+                           ' with an index whose index status is "Public"'
+                           ' and whose Harvest Publishing is "Public".')
     for item in list_record:
         errors = []
         doi_ra = item.get('doi_ra')
@@ -1532,12 +1537,14 @@ def handle_check_doi_indexes(list_record):
             errors.append(
                 _('You cannot keep an item private because it has a DOI.'))
         # Check restrict DOI with Indexes:
-        index_ids = [str(idx) for idx in item['metadata']['path']]
-        if check_restrict_doi_with_indexes(index_ids):
-            errors.append(
-                _('Since the item has a DOI, it must be associated with an'
-                  ' index whose index status is "Public" and whose'
-                  ' Harvest Publishing is "Public".'))
+        index_ids = [str(idx) for idx in item['metadata'].get('path', [])]
+        if doi_ra and check_restrict_doi_with_indexes(index_ids):
+            if item.get('status') == 'new':
+                errors.append(err_msg_register_doi)
+            else:
+                pid_doi = WekoRecord.get_record_by_pid(item.get('id')).pid_doi
+                errors.append(
+                    err_msg_update_doi if pid_doi else err_msg_register_doi)
         if errors:
             item['errors'] = item['errors'] + errors \
                 if item.get('errors') else errors
@@ -1711,7 +1718,9 @@ def prepare_doi_setting():
         if not identifier_setting.ndl_jalc_doi:
             identifier_setting.ndl_jalc_doi = text_empty
         # Semi-automatic suffix
-        if identifier_setting.suffix and IDENTIFIER_GRANT_SUFFIX_METHOD == 1:
+        suffix_method = current_app.config.get(
+            'IDENTIFIER_GRANT_SUFFIX_METHOD', IDENTIFIER_GRANT_SUFFIX_METHOD)
+        if identifier_setting.suffix and suffix_method == 1:
             identifier_setting.suffix = '/' + identifier_setting.suffix
         else:
             identifier_setting.suffix = ''
@@ -1912,8 +1921,8 @@ def get_data_by_property(record, item_map, item_property):
     key = item_map.get(item_property)
     data = []
     if not key:
-        current_app.logger.warn(str(item_property) +
-                                ' jpcoar:mapping is not correct')
+        current_app.logger.warn(str(item_property)
+                                + ' jpcoar:mapping is not correct')
         return None, None
     attribute = record['metadata'].get(key.split('.')[0])
     if not attribute:
@@ -2422,10 +2431,11 @@ def handle_check_duplication_item_id(ids: list):
 
 def export_all(root_url):
     """Gather all the item data and export and return as a JSON or BIBTEX.
-        Parameter
+
+    Parameter
         path is the path if file temparory
         post_data is the data items
-        :return: JSON, BIBTEX
+    :return: JSON, BIBTEX
     """
     from weko_items_ui.utils import make_stats_tsv_with_permission, \
         package_export_file
@@ -2541,8 +2551,8 @@ def export_all(root_url):
 
 
 def delete_exported(uri, cache_key):
+    """Delete File instance after time in file config."""
     from simplekv.memory.redisstore import RedisStore
-    """Delete File instance after time in file config"""
     try:
         with db.session.begin_nested():
             file_instance = FileInstance.get_by_uri(uri)
@@ -2557,9 +2567,10 @@ def delete_exported(uri, cache_key):
 
 
 def cancel_export_all():
-    """Cancel Process Share_task Export ALL with revoke
-       Return:     True:   Cancel Successful.
-                    No:     Error
+    """Cancel Process Share_task Export ALL with revoke.
+
+    Return:     True:   Cancel Successful.
+                  No:     Error
     """
     cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
         format(name=WEKO_SEARCH_UI_BULK_EXPORT_TASK)
@@ -2577,9 +2588,10 @@ def cancel_export_all():
 
 
 def get_export_status():
-    """Get Share_task Export ALL status
-       Return:     True:   Otthers
-                   False:  Success / Failed / Revoked
+    """Get Share_task Export ALL status.
+
+    Return:     True:   Otthers
+               False:  Success / Failed / Revoked
     """
     cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
         format(name=WEKO_SEARCH_UI_BULK_EXPORT_TASK)
@@ -2647,6 +2659,28 @@ def handle_remove_es_metadata(item):
         deposit.indexer.delete(deposit)
     except Exception as ex:
         current_app.logger.error(ex)
+
+
+def check_index_access_permissions(func):
+    """Check index access permission.
+
+    Args:
+        func (func): Function.
+    """
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+        search_type = request.args.get('search_type', WEKO_SEARCH_TYPE_DICT[
+            'FULL_TEXT'])
+        if search_type == WEKO_SEARCH_TYPE_DICT['INDEX']:
+            cur_index_id = request.args.get('q', '0')
+            if not check_index_permissions(None, cur_index_id):
+                if not current_user.is_authenticated:
+                    return current_app.login_manager.unauthorized()
+                else:
+                    abort(403)
+        return func(*args, **kwargs)
+
+    return decorated_view
 
 
 def handle_check_file_metadata(list_record, data_path):
@@ -2780,6 +2814,49 @@ def handle_check_thumbnail(record, data_path):
         warnings.append(warning)
 
     return errors, warnings
+
+
+def get_key_by_property(record, item_map, item_property):
+    """Get data by property text.
+
+    :param item_map:
+    :param record:
+    :param item_property: property value in item_map
+    :return: error_list or None
+    """
+    key = item_map.get(item_property)
+    data = []
+    if not key:
+        current_app.logger.error(str(item_property) + ' jpcoar:mapping '
+                                                      'is not correct')
+        return None
+    return key
+
+
+def get_data_by_propertys(record, item_map, item_property):
+    """Get data by property text.
+
+    :param item_map:
+    :param record:
+    :param item_property: property value in item_map
+    :return: error_list or None
+    """
+    key = item_map.get(item_property)
+    data = []
+    if not key:
+        current_app.logger.error(str(item_property) + ' jpcoar:mapping '
+                                                      'is not correct')
+        return None, None
+    attribute = record['_item_metadata'].get(key.split('.')[0])
+    if not attribute:
+        return None, key
+    else:
+        data_result = get_sub_item_value(
+            attribute, key.split('.')[-1])
+        if data_result:
+            for value in data_result:
+                data.append(value)
+    return data, key
 
 
 def get_filenames_from_metadata(metadata):

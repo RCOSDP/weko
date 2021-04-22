@@ -123,6 +123,7 @@ setup(
             'weko_admin_item_export_settings = weko_admin.admin:item_export_settings_adminview',
             'weko_admin_site_info = weko_admin.admin:site_info_settings_adminview',
             'weko_admin_identifier = weko_admin.admin:identifier_adminview',
+            'restricted_access_adminview = weko_admin.admin:restricted_access_adminview',
         ],
         'invenio_access.actions': [
             'page_style_access = weko_admin.permissions:action_admin_access',
@@ -151,6 +152,7 @@ setup(
             'weko_admin_site_info = weko_admin.bundles:weko_admin_site_info_js',
             'weko_admin_site_info_css = weko_admin.bundles:weko_admin_site_info_css',
             'weko_admin_ng_js_tree = weko_admin.bundles:weko_admin_ng_js_tree_js',
+            'weko_admin_restricted_access = weko_admin.bundles:weko_admin_restricted_access_js',
         ],
         'invenio_db.models': [
             'weko_admin = weko_admin.models',

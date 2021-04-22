@@ -42,6 +42,7 @@ from invenio_records_ui.signals import record_viewed
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from simplekv.memory.redisstore import RedisStore
+from weko_admin.utils import get_search_setting
 from weko_deposit.api import WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
@@ -60,12 +61,10 @@ from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
 from .permissions import check_content_clickable, check_created_id, \
     check_file_download_permission, check_original_pdf_download_permission, \
-    check_permission_period, get_correct_usage_workflow, get_permission, \
-    is_open_restricted
+    check_permission_period, get_permission
 from .utils import get_billing_file_download_permission, get_groups_price, \
-    get_min_price_billing_file_download, get_record_permalink, \
-    get_registration_data_type, hide_by_email, hide_item_metadata, \
-    is_show_email_of_creator, replace_license_free
+    get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
+    hide_item_metadata, is_show_email_of_creator, replace_license_free
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
@@ -224,32 +223,28 @@ def get_image_src(mimetype):
 
 
 @blueprint.app_template_filter('get_license_icon')
-def get_license_icon(type):
+def get_license_icon(license_type):
     """Get License type icon.
 
-    :param type:
+    :param license_type:
     :return:
     """
     list_license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
     license_icon_location = \
         current_app.config['WEKO_RECORDS_UI_LICENSE_ICON_LOCATION']
-    from invenio_i18n.ext import current_i18n
-    current_lang = current_i18n.language
-    # In case of current lang is not JA, set to default
-    if current_lang != 'ja':
-        current_lang = 'default'
-    src = ''
-    lic = ''
-    href = '#'
+    # In case of current lang is not JA, set to default.
+    current_lang = 'default' if current_i18n.language != 'ja' \
+        else current_i18n.language
+    src, lic, href = '', '', '#'
     for item in list_license_dict:
-        if item['value'] != "license_free" and item['value'] in type:
+        if item['value'] != "license_free" and license_type \
+                and item['value'] in license_type:
             src = item['src']
             lic = item['name']
             href = item['href_' + current_lang]
             break
     src = license_icon_location + src if len(src) > 0 else ''
     lst = (src, lic, href)
-
     return lst
 
 
@@ -308,14 +303,25 @@ def check_content_file_clickable(record, fjson):
 
 
 @blueprint.app_template_filter('get_usage_workflow')
-def get_usage_workflow(record):
+def get_usage_workflow(file_json):
     """Get correct usage workflow to redirect user.
 
-    :param record
+    :param file_json
     :return: result
     """
-    data_type = get_registration_data_type(record)
-    return get_correct_usage_workflow(data_type)
+    if not current_user.is_authenticated:
+        # In case guest user
+        from invenio_accounts.models import Role
+        roles = [Role(id="none_loggin")]
+    else:
+        roles = current_user.roles
+    if file_json and isinstance(file_json.get("provide"), list):
+        provide = file_json.get("provide")
+        for role in roles:
+            for data in provide:
+                if str(role.id) == data.get("role_id"):
+                    return data.get("workflow_id")
+    return None
 
 
 @blueprint.app_template_filter('get_workflow_detail')
@@ -353,10 +359,10 @@ def _get_google_scholar_meta(record):
     et = etree.fromstring(recstr)
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     res = []
-    if mtdata:
+    if mtdata is not None:
         for target in target_map:
             found = mtdata.find(target, namespaces=mtdata.nsmap)
-            if found:
+            if found is not None:
                 res.append({'name': target_map[target], 'data': found.text})
         for date in mtdata.findall('datacite:date', namespaces=mtdata.nsmap):
             if date.attrib.get('dateType') == 'Available':
@@ -554,6 +560,14 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         # list_hidden = get_ignore_item(record['item_type_id'])
         # record = hide_by_itemtype(record, list_hidden)
         record = hide_by_email(record)
+
+    # Get Facet search setting.
+    display_facet_search = get_search_setting().get("display_control", {}).get(
+        'display_facet_search', {}).get('status', False)
+    ctx.update({
+        "display_facet_search": display_facet_search
+    })
+
     return render_template(
         template,
         pid=pid,

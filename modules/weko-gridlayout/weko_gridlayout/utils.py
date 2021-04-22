@@ -125,12 +125,15 @@ def update_general_item(item, data_result):
     item['type'] = data_result.get('widget_type')
     item['multiLangSetting'] = data_result.get('multiLangSetting')
     settings = data_result.get('settings')
-    if str(data_result.get('widget_type')) == "Access counter":
+    widget_type = data_result.get('widget_type')
+    if widget_type == config.WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE:
         update_access_counter_item(item, settings)
-    elif str(data_result.get('widget_type')) == "New arrivals":
+    elif widget_type == config.WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE:
         update_new_arrivals_item(item, settings)
-    elif str(data_result.get('widget_type')) == "Menu":
+    elif widget_type == config.WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE:
         update_menu_item(item, settings)
+    elif widget_type == config.WEKO_GRIDLAYOUT_HEADER_WIDGET_TYPE:
+        _build_header_setting_data(item, data_result)
 
 
 def update_menu_item(item, data_result):
@@ -176,33 +179,6 @@ def update_new_arrivals_item(item, data_result):
     item['rss_feed'] = data_result.get('rss_feed')
 
 
-def validate_admin_widget_item_setting(widget_id):
-    """Validate widget item.
-
-    :param: widget id
-    :return: true if widget item is used in widget design else return false
-    """
-    try:
-        if (type(widget_id)) is dict:
-            repository_id = widget_id.get('repository')
-            widget_item_id = widget_id.get('id')
-        else:
-            repository_id = widget_id.repository_id
-            widget_item_id = widget_id.id
-        data = WidgetDesignSetting.select_by_repository_id(
-            repository_id)
-        if data.get('settings'):
-            json_data = json.loads(data.get('settings')) if isinstance(
-                data.get('settings'), str) else data.get('settings')
-            for item in json_data:
-                if str(item.get('widget_id')) == str(widget_item_id):
-                    return True
-        return False
-    except Exception as e:
-        current_app.logger.error('Failed to validate record: ', e)
-        return True
-
-
 def get_default_language():
     """Get default Language.
 
@@ -211,7 +187,7 @@ def get_default_language():
     result = get_register_language()
     if isinstance(result, list):
         return result[0]
-    return
+    return ""
 
 
 def get_unregister_language():
@@ -271,6 +247,8 @@ def build_data(data):
     result['multiLangSetting'] = multi_lang_data
 
     result['is_deleted'] = False
+    result['locked'] = False
+    result['locked_by_user'] = None
     return result
 
 
@@ -300,17 +278,14 @@ def build_data_setting(data):
     result = dict()
     convert_popular_data(data, result)
     setting = data['settings']
-    if (str(data.get('widget_type'))
-            == config.WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE):
+    widget_type = data.get('widget_type')
+    if widget_type == config.WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE:
         _build_access_counter_setting_data(result, setting)
-    elif (str(data.get('widget_type'))
-            == config.WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE):
+    elif widget_type == config.WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE:
         _build_new_arrivals_setting_data(result, setting)
-    elif (str(data.get('widget_type'))
-            == config.WEKO_GRIDLAYOUT_NOTICE_TYPE):
+    elif widget_type == config.WEKO_GRIDLAYOUT_NOTICE_TYPE:
         _build_notice_setting_data(result, setting)
-    elif str(
-            data.get('widget_type')) == config.WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE:
+    elif widget_type == config.WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE:
         color = config.WEKO_GRIDLAYOUT_WIDGET_DEFAULT_COLOR
         result['menu_orientation'] = data['settings'].get(
             'menu_orientation') or 'horizontal'
@@ -324,6 +299,8 @@ def build_data_setting(data):
             'menu_active_color') or color
         result['menu_show_pages'] = data['settings'].get(
             'menu_show_pages') or []
+    elif widget_type == config.WEKO_GRIDLAYOUT_HEADER_WIDGET_TYPE:
+        _build_header_setting_data(result, data)
     return result
 
 
@@ -364,6 +341,17 @@ def _build_notice_setting_data(result, setting):
     """
     result['hide_the_rest'] = Markup.escape(setting.get('setting'))
     result['read_more'] = Markup.escape(setting.get('read_more'))
+
+
+def _build_header_setting_data(result, setting):
+    """Build header setting data.
+
+    @param result:
+    @param setting:
+    """
+    result['fixedHeaderBackgroundColor'] = setting.get(
+        'fixedHeaderBackgroundColor')
+    result['fixedHeaderTextColor'] = setting.get('fixedHeaderTextColor')
 
 
 def build_multi_lang_data(widget_id, multi_lang_json):
@@ -411,6 +399,7 @@ def convert_widget_data_to_dict(widget_data):
     result['settings'] = settings
     result['is_enabled'] = widget_data.is_enabled
     result['is_deleted'] = widget_data.is_deleted
+    result['updated'] = widget_data.updated.timestamp()
     return result
 
 
@@ -456,6 +445,7 @@ def convert_data_to_design_pack(widget_data, list_multi_lang_data):
     result['widget_type'] = widget_data.get('widget_type')
     result['is_enabled'] = widget_data.get('is_enabled')
     result['is_deleted'] = widget_data.get('is_deleted')
+    result['updated'] = widget_data.get('updated')
 
     multi_lang_setting = dict()
     for data in list_multi_lang_data:
@@ -493,20 +483,23 @@ def convert_data_to_edit_pack(data):
     result['multiLangSetting'] = settings.get('multiLangSetting')
     result['repository_id'] = data.get('repository_id')
     result['widget_type'] = data.get('widget_type')
-    if (str(data.get('widget_type'))
-            == config.WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE):
+    result['updated'] = data.get('updated')
+    widget_type = data.get('widget_type')
+    if widget_type == config.WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE:
         result_settings['access_counter'] = settings.get('access_counter')
         result_settings['preceding_message'] = settings.get(
             'preceding_message')
         result_settings['following_message'] = settings.get(
             'following_message')
         result_settings['other_message'] = settings.get('other_message')
-    if str(data.get('widget_type')) == config.WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE:
+    if widget_type == config.WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE:
         result_settings['new_dates'] = settings.get('new_dates')
         result_settings['display_result'] = settings.get('display_result')
         result_settings['rss_feed'] = settings.get('rss_feed')
-    if str(data.get('widget_type')) == config.WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE:
+    if widget_type == config.WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE:
         update_menu_item(result_settings, settings)
+    if widget_type == config.WEKO_GRIDLAYOUT_HEADER_WIDGET_TYPE:
+        _build_header_setting_data(result_settings, settings)
     result['settings'] = result_settings
     return result
 
@@ -775,7 +768,7 @@ def get_elasticsearch_result_by_date(start_date, end_date):
     result = None
     try:
         search_instance, _qs_kwargs = item_search_factory(
-            None, records_search, start_date, end_date)
+            None, records_search, start_date, end_date, None, True)
         search_result = search_instance.execute()
         result = search_result.to_dict()
     except NotFoundError:
@@ -935,10 +928,10 @@ def delete_widget_cache(repository_id, page_id=None):
         current_app.config['CACHE_REDIS_URL']))
     if page_id:
         cache_key = ("*" + config.WEKO_GRIDLAYOUT_WIDGET_PAGE_CACHE_KEY
-                     + repository_id + "_" + page_id + "_*")
+                     + str(repository_id) + "_" + str(page_id) + "_*")
     else:
         cache_key = ("*" + config.WEKO_GRIDLAYOUT_WIDGET_CACHE_KEY
-                     + repository_id + "_*")
+                     + str(repository_id) + "_*")
 
     for key in cache_store.redis.scan_iter(cache_key):
         cache_store.redis.delete(key)
@@ -969,7 +962,7 @@ class WidgetBucket:
             db.session.add(bucket)
             db.session.commit()
 
-    def __validate(self, file_stream, file_name, community_id=0, file_size=0):
+    def __validate(self, file_stream, file_name, community_id="0", file_size=0):
         """Validate upload file.
 
         :param file_stream: file stream.
@@ -1005,7 +998,7 @@ class WidgetBucket:
             )
 
     def save_file(self, file_stream, file_name: str, mimetype: str,
-                  community_id=0):
+                  community_id="0"):
         """Save widget static file.
 
         :param file_stream: file stream.
@@ -1019,9 +1012,13 @@ class WidgetBucket:
             "duplicated": False,
             "url": "",
             "msg": "OK",
+            "mimetype": mimetype,
+            "file_name": file_name,
         }
         file_bucket = Bucket.query.get(self.bucket_id)
+        community_id = community_id.split("@")[0]
         key = "{0}_{1}".format(community_id, file_name)
+        root_url = request.host_url
         try:
             file_stream.seek(SEEK_SET, SEEK_END)  # Seek from beginning to end
             file_size = file_stream.tell()
@@ -1033,9 +1030,8 @@ class WidgetBucket:
                         mimetype=mimetype
                     )
                 db.session.commit()
-                rtn["url"] = "/widget/uploaded/{}/{}".format(
-                    file_name,
-                    community_id
+                rtn["url"] = "{}widget/uploaded/{}/{}".format(
+                    root_url, file_name, community_id
                 )
                 return rtn
         except UnexpectedFileSizeError as error:
@@ -1048,9 +1044,8 @@ class WidgetBucket:
             rtn['status'] = False
             rtn['duplicated'] = True
             rtn['msg'] = str(error.errors)
-            rtn["url"] = "/widget/uploaded/{}/{}".format(
-                file_name,
-                community_id
+            rtn["url"] = "{}widget/uploaded/{}/{}".format(
+                root_url, file_name, community_id
             )
             return rtn
 
@@ -1065,4 +1060,22 @@ class WidgetBucket:
         obj = ObjectVersion.get(self.bucket_id, key)
         if not obj:
             abort(404, '{} does not exists.'.format(file_name))
-        return obj.send_file(trusted=True)
+        obj.key = file_name
+        return obj.send_file()
+
+
+def validate_upload_file(community_id: str):
+    """Validate upload file.
+
+    @param community_id:
+    @return:
+    """
+    if 'file' not in request.files:
+        return _("No file part")
+    file = request.files['file']
+    if file.filename == '':
+        return _("No selected file")
+    community_id = community_id.split("@")
+    if len(community_id) > 1 and community_id[0] == '0':
+        return _("Repository is required!")
+    return ""

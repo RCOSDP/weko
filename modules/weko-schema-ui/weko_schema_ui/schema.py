@@ -273,7 +273,7 @@ class SchemaTree:
         rec = cache_schema(self._schema_name)
 
         if not rec:
-            return None, None, None
+            return None, None, None, None
 
         def get_mapping():
 

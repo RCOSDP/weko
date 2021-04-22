@@ -174,5 +174,30 @@
     "Display": [
         null,
         "表示する"
+    ],
+    "Del_Success": [
+        null,
+        "正常にインデックスを削除しました。"
+    ],
+    "Add_Update_Success": [
+        null,
+        "正常にインデックスを更新しました。"
+    ]
+    ,
+    "Thumbnails": [
+        null,
+        "サムネイル"
+    ],
+    "Choose_File": [
+        null,
+        "ファイルを選択"
+    ],
+    "No_File_Chosen": [
+        null,
+        "ファイルが選択されていません。"
+    ],
+    "Err_File_Ext": [
+        null,
+        "画像ファイル（gif, jpg, jpe, jpeg, png, bmp）以外のファイルはアップロードできません。"
     ]
 }
