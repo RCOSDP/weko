@@ -31,7 +31,6 @@ from flask.globals import current_app
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user
 from invenio_db import db
-from invenio_i18n.ext import current_i18n
 from sqlalchemy import func, or_
 from weko_index_tree.models import Index
 from wtforms.validators import ValidationError
