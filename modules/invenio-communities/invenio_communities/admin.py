@@ -31,6 +31,7 @@ from flask.globals import current_app
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user
 from invenio_db import db
+from invenio_i18n.ext import current_i18n
 from sqlalchemy import func, or_
 from weko_index_tree.models import Index
 from wtforms.validators import ValidationError
@@ -54,16 +55,18 @@ class CommunityModelView(ModelView):
     column_display_all_relations = True
     form_columns = ('id', 'owner', 'index', 'title', 'description', 'page',
                     'curation_policy', 'ranking', 'fixed_points')
+
     column_list = (
         'id',
         'title',
         'owner.name',
-        'index.index_name',
+        'index',
         'deleted_at',
         'last_record_accepted',
         'ranking',
         'fixed_points',
     )
+
     column_searchable_list = ('id', 'title', 'description')
     edit_template = "invenio_communities/admin/edit.html"
 
