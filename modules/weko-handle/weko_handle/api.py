@@ -26,15 +26,13 @@ from b2handle.handleexceptions import CredentialsFormatError, \
     GenericHandleError, HandleAuthenticationError
 from flask import current_app, jsonify
 
-from .config import WEKO_HANDLE_CREDS_JSON_PATH
-
 
 class Handle(object):
     """Operated on the Flow."""
 
     def __init__(self):
         """Bind to current bucket."""
-        self.credential_path = WEKO_HANDLE_CREDS_JSON_PATH
+        self.credential_path = current_app.config.get('WEKO_HANDLE_CREDS_JSON_PATH')
 
     def retrieve_handle(self, handle):
         """Retrieve a handle."""

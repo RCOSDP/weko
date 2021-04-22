@@ -8,6 +8,7 @@
 
 """OAI-PMH 2.0 response generator."""
 import copy
+import traceback
 from datetime import MINYEAR, datetime, timedelta
 
 from flask import current_app, request, url_for
@@ -16,6 +17,7 @@ from invenio_records.models import RecordMetadata
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
 from weko_deposit.api import WekoRecord
+from weko_index_tree.api import Indexes
 from weko_schema_ui.schema import get_oai_metadata_formats
 
 from .api import OaiIdentify
@@ -279,24 +281,33 @@ def is_private_workflow(record):
 
 def is_private_index(record):
     """Check index of workflow is private."""
-    from weko_index_tree.api import Indexes
-    list_index = record.get("path")
-    index_lst = []
-    if list_index:
-        index_id_lst = []
-        for index in list_index:
-            indexes = str(index).split('/')
-            index_id_lst.append(indexes[-1])
-        index_lst = index_id_lst
-    indexes = Indexes.get_path_list(index_lst)
-    publish_state = 6
-    for index in indexes:
-        if len(indexes) == 1:
-            if not index[publish_state]:
-                return True
-        else:
-            if index[publish_state]:
-                return False
+    return not Indexes.is_public_state(copy.deepcopy(record.get("path")))
+
+
+def set_identifier(param_record, param_rec):
+    """Set identifier (doi, cnri, url) for this record."""
+    # Set default value for system_identifier_doi.
+    if not param_record.get('json') or \
+            not param_record['json']['_source'] or \
+            not param_record['json']['_source']['_item_metadata']:
+        param_record['json'] = \
+            {'_source': {'_item_metadata': {'system_identifier_doi': None}}}
+    # Set default identifier for system_identifier_doi.
+    if not param_record['json']['_source']['_item_metadata']\
+            .get('system_identifier_doi'):
+        param_record['json']['_source']['_item_metadata'][
+            'system_identifier_doi'] = get_identifier(param_rec)
+
+
+def is_exists_doi(param_record):
+    """Check identifier doi exists in this record."""
+    item_metadata = param_record['json']['_source']['_item_metadata']
+    system_identifier_doi = item_metadata.get('system_identifier_doi', {})
+    attribute_value_mlt = system_identifier_doi.get('attribute_value_mlt', {})
+    for mlt in attribute_value_mlt:
+        identifier_type = mlt.get('subitem_systemidt_identifier_type')
+        if identifier_type == 'DOI':
+            return True
     return False
 
 
@@ -317,17 +328,20 @@ def getrecord(**kwargs):
 
     e_tree, e_getrecord = verb(**kwargs)
     e_record = SubElement(e_getrecord, etree.QName(NS_OAIPMH, 'record'))
-
+    set_identifier(record, record)
     # Harvest is private
-    if not harvest_public_state or \
-            (identify and not identify.outPutSetting):
+    _is_private_index = is_private_index(record)
+    if not harvest_public_state or\
+            (identify and not identify.outPutSetting) or \
+            (_is_private_index
+                and harvest_public_state and is_exists_doi(record)):
         return error(get_error_code_msg(), **kwargs)
     # Item is deleted
     # or Harvest is public & Item is private
     # or Harvest is public & Index is private
     elif is_deleted_workflow(pid) or (
         harvest_public_state and is_private_workflow(record)) or (
-            harvest_public_state and is_private_index(record)):
+            harvest_public_state and _is_private_index):
         header(
             e_record,
             identifier=pid.pid_value,
@@ -390,6 +404,7 @@ def listrecords(**kwargs):
         return [(code, msg)]
 
     def append_deleted_record(e_listrecords, pid_object, rec):
+        """Append attribute [status="deleted] for 'header' tag."""
         e_record = SubElement(e_listrecords, etree.QName(NS_OAIPMH, 'record'))
         header(
             e_record,
@@ -400,35 +415,26 @@ def listrecords(**kwargs):
         )
 
     record_dumper = serializer(kwargs['metadataPrefix'])
-
     e_tree, e_listrecords = verb(**kwargs)
     result = get_records(**kwargs)
-
-    if not result.total:
+    identify = OaiIdentify.get_all()
+    if not result.total or not identify or \
+            (identify and not identify.outPutSetting):
         return error(get_error_code_msg(), **kwargs)
-
     for record in result.items:
         try:
             pid = oaiid_fetcher(record['id'], record['json']['_source'])
-            identify = OaiIdentify.get_all()
             pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
-            harvest_public_state, rec = WekoRecord.get_record_with_hps(
-                pid_object.object_uuid)
+            rec = WekoRecord.get_record(record['id'])
+            set_identifier(record, rec)
             # Check output delete, noRecordsMatch
-            if identify and identify.outPutSetting:
-                if harvest_public_state:
-                    if not is_private_index(rec):
-                        if is_deleted_workflow(pid_object) or \
-                                is_private_workflow(rec):
-                            append_deleted_record(
-                                e_listrecords, pid_object, rec)
-                            continue
-                    else:
-                        append_deleted_record(e_listrecords, pid_object, rec)
-                        continue
-                else:
+            if not is_private_index(rec):
+                if is_deleted_workflow(pid_object) or \
+                        is_private_workflow(rec):
+                    append_deleted_record(e_listrecords, pid_object, rec)
                     continue
             else:
+                append_deleted_record(e_listrecords, pid_object, rec)
                 continue
             e_record = SubElement(
                 e_listrecords, etree.QName(NS_OAIPMH, 'record'))
@@ -438,28 +444,19 @@ def listrecords(**kwargs):
                 datestamp=record['updated'],
                 sets=record['json']['_source'].get('_oai', {}).get('sets', []),
             )
-            db_record = WekoRecord.get_record(record['id'])
-            if not record['json']['_source']['_item_metadata']\
-                    .get('system_identifier_doi'):
-                record['json']['_source']['_item_metadata'][
-                    'system_identifier_doi'] = get_identifier(db_record)
             e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
                                                           'metadata'))
             etree_record = copy.deepcopy(record['json'])
-
             # Merge licensetype and licensefree
             handle_license_free(etree_record['_source']['_item_metadata'])
-
             e_metadata.append(record_dumper(pid, etree_record))
         except Exception:
-            import traceback
             current_app.logger.error(traceback.print_exc())
-            current_app.logger.error('Error when exporting item id'
+            current_app.logger.error('Error when exporting item id '
                                      + str(record['id']))
     # Check <record> tag not exist.
     if len(e_listrecords) == 0:
         return error(get_error_code_msg(), **kwargs)
-
     resumption_token(e_listrecords, result, **kwargs)
     return e_tree
 

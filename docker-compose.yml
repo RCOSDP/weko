@@ -24,7 +24,8 @@ services:
   web:
     restart: "always"
     build: .
-    command: /bin/bash -c "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO -B -D && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
+    command: /bin/bash -c "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO -B -D -f /code/celeryd.log && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
+    #command: /bin/bash -c "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO --logfile=celery.log -B -D && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
     environment:
       - PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       - VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
@@ -122,6 +123,7 @@ services:
       - POSTGRES_USER=invenio
       - POSTGRES_DB=invenio
       - POSTGRES_PASSWORD=dbpass123
+#      - POSTGRES_INITDB_ARGS="-c log_statement=all -c log_duration=on"
     volumes:
       - pgsql-data:/var/lib/postgresql/data
     ports:
@@ -162,8 +164,17 @@ services:
     volumes:
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
       - data_data:/home/invenio/.virtualenvs/invenio/var/instance/data
+#      - letsencrypt_etc:/etc/letsencrypt
+#      - letsencrypt_html:/var/www/html
     links:
       - web
+
+#  certbot:
+#    image: certbot/certbot:latest
+#    volumes:
+#      - letsencrypt_etc:/etc/letsencrypt
+#      - letsencrypt_html:/var/www/html
+#    command: ["--version"]
 
   flower:
     restart: "always"
@@ -195,3 +206,6 @@ volumes:
   conf_data:
   pgsql-data:
   es-data:
+#  letsencrypt_etc:
+#  letsencrypt_html:
+

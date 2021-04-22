@@ -1,0 +1,148 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2015-2018 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+
+{% set WEKO_THEME_ADMIN_MENU = config.WEKO_THEME_ADMIN_MENU|sort(attribute='order') %}
+{% set ordered_main_menu = [] %}
+{% set ordered_child_menu = namespace(value = []) %}
+
+{% macro sort_main_menu() -%}
+  {% set main_menu = admin_view.admin.menu() %}
+  {% set not_lised_main_menu = [] %}
+  
+  {%- for ordered_item in WEKO_THEME_ADMIN_MENU %}
+      {%- for item in main_menu %}
+          {% if ordered_item.name == item.name %}
+              {% do ordered_main_menu.append(item) %}
+          {% endif %}
+      {%- endfor %}
+  {%- endfor %}
+  
+  {%- for item in main_menu %}
+      {% set item_found = namespace(value = False) %}
+      {%- for ordered_item in WEKO_THEME_ADMIN_MENU %}
+          {% if ordered_item.name == item.name %}
+              {% set item_found.value = True %}
+          {% endif %}
+      {%- endfor %}
+      {% if item_found.value == False %}
+          {% do not_lised_main_menu.append(item) %}
+      {% endif %}
+  {%- endfor %}
+  
+  {%- for item in not_lised_main_menu %}
+      {% do ordered_main_menu.append(item) %}
+  {%- endfor %}
+{%- endmacro %}
+
+{% macro sort_child_menu(item_name, children) -%}    
+  {% set not_lised_child_menu = [] %}
+  {% set WEKO_THEME_ADMIN_CHILD_MENU = namespace(value = []) %}
+  
+  {%- for ordered_item in WEKO_THEME_ADMIN_MENU %}
+      {% if ordered_item.name == item_name %}
+          {% set WEKO_THEME_ADMIN_CHILD_MENU.value = ordered_item.submenu %}
+      {% endif %}
+  {%- endfor %}
+
+  {%- for ordered_child_item in WEKO_THEME_ADMIN_CHILD_MENU.value|sort(attribute='order') %}
+      {%- for child in children %}
+          {% if ordered_child_item.name == child.name %}
+              {% do ordered_child_menu.value.append(child) %}
+          {% endif %}
+      {%- endfor %}
+  {%- endfor %}
+
+  {%- for child in children %}
+      {% set item_found = namespace(value = False) %}
+      {%- for ordered_child_item in WEKO_THEME_ADMIN_CHILD_MENU.value %}
+          {% if ordered_child_item.name == child.name %}
+              {% set item_found.value = True %}
+          {% endif %}
+      {%- endfor %}
+      {% if item_found.value == False %}
+          {% do not_lised_child_menu.append(child) %}
+      {% endif %}
+  {%- endfor %}
+
+  {%- for item in not_lised_child_menu %}
+      {% do ordered_child_menu.value.append(item) %}
+  {%- endfor %}
+{%- endmacro %}
+
+{% macro menu_icon(item) -%}
+{% set icon_type = item.get_icon_type() %}
+{%- if icon_type %}
+  {% set icon_value = item.get_icon_value() %}
+  {% if icon_type == 'glyph' %}
+    <i class="glyphicon {{ icon_value }}"></i>
+  {% elif icon_type == 'fa' %}
+    <i class="fa {{ icon_value }}"></i>
+  {% elif icon_type == 'image' %}
+    <img src="{{ url_for('static', filename=icon_value) }}" alt="menu image">
+  {% elif icon_type == 'image-url' %}
+    <img src="item.icon_value" alt="menu image">
+  {% endif %}
+{% endif %}
+{%- endmacro %}
+
+{% macro menu_overwrite() %}
+  {% do sort_main_menu() %}
+  {%- for item in ordered_main_menu %}
+    {%- if item.is_category() -%}
+      {% set children = item.get_children() %}
+      {%- if children %}
+        {% set class_name = item.get_class_name() %}
+        {%- if item.is_active(admin_view) %}
+        <li class="treeview active">
+        {% else -%}
+        <li class="treeview">
+        {%- endif %}
+          <a href="#">
+            {% if item.class_name %}<i class="{{ item.class_name }}"></i> {% endif %}
+            {% set item_name = 'Admin menu_' + item.name %}              
+            <span>{{ _(item_name) }}</span>
+            <i class="fa fa-angle-left pull-right"></i>
+          </a>
+          <ul class="treeview-menu">
+          {% set ordered_child_menu.value = [] %}
+          {% do sort_child_menu(item.name, children) %}
+          {%- if ordered_child_menu.value|length == 0 %}
+              {% set ordered_child_menu.value = children %}
+          {%- endif %}
+          {%- for child in ordered_child_menu.value -%}
+            {% set class_name = child.get_class_name() %}
+            {%- if child.is_active(admin_view) %}
+            <li class="active">
+            {% else %}
+            <li>
+            {%- endif %}
+            {%- if child.name != '' %}
+              {% set child_name = item_name + '_' + child.name %}
+              <a href="{{ child.get_url() }}">{{ menu_icon(child) }}{{ _(child_name) }}</a>
+            {%- endif %}
+            </li>
+          {%- endfor %}
+          </ul>
+        </li>
+      {% endif %}
+    {%- else %}
+      {%- if item.is_accessible() and item.is_visible() -%}
+        {% set class_name = item.get_class_name() %}
+        {%- if item.is_active(admin_view) %}
+        <li class="active">
+        {%- else %}
+        <li>
+        {%- endif %}
+          {% set item_name = 'Admin menu_' + item.name %}
+          <a href="{{ item.get_url() }}">{{ menu_icon(item) }}{{ _(item_name) }}</a>
+        </li>
+      {%- endif -%}
+    {% endif -%}
+  {% endfor %}
+{% endmacro %}

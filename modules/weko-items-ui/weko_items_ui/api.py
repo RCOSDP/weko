@@ -21,6 +21,7 @@ import redis
 from flask import current_app, json, session, url_for
 from flask_login import login_required
 from simplekv.memory.redisstore import RedisStore
+from weko_accounts.utils import login_required_customize
 from weko_records.api import ItemTypes
 from weko_records.utils import find_items
 from weko_workflow.api import WorkActivity
@@ -31,7 +32,7 @@ from .utils import is_schema_include_key
 
 @login_required
 @item_permission.require(http_exception=403)
-def item_login(item_type_id=0):
+def item_login(item_type_id=0, activity_id=None):
     """Return information that item register need.
 
     :param item_type_id: Item type ID. (Default: 0)
@@ -55,8 +56,11 @@ def item_login(item_type_id=0):
             template_url = 'weko_items_ui/iframe/error.html'
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
-        activity_session = session['activity_info']
-        activity_id = activity_session.get('activity_id', None)
+        activity_session = None
+        activity_id = None
+        if session.get('activity_info'):
+            activity_session = session['activity_info']
+            activity_id = activity_session.get('activity_id', None)
         if activity_id:
             activity = WorkActivity()
             metadata = activity.get_activity_metadata(activity_id)

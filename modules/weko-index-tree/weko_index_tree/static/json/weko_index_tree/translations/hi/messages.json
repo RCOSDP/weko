@@ -63,6 +63,18 @@
         null,
         "Please turn off the check if you do not want to open the metadata of the belonging items to public"
     ],
+    "Online_Issn": [
+        null,
+        "Online ISSN"
+    ],
+    "Biblio_Flag_Text": [
+        null,
+        "Aggregate usage statistics of items belonging to this index."
+    ],
+    "Biblio_Flag_Warning": [
+        null,
+        "* The configuration is applied to all the child indexes."
+    ],
     "Browsing_Privilege": [
         null,
         "Browsing Privilege"
@@ -162,5 +174,29 @@
     "Display": [
         null,
         "Display"
+    ],
+    "Del_Success": [
+        null,
+        "Index is deleted successfully."
+    ],
+    "Add_Update_Success": [
+        null,
+        "Index is updated successfully."
+    ],
+    "Thumbnails": [
+        null,
+        "Thumbnails"
+    ],
+    "Choose_File": [
+        null,
+        "Choose File"
+    ],
+    "No_File_Chosen": [
+        null,
+        "No file chosen."
+    ],
+    "Err_File_Ext": [
+        null,
+        "Files other than image files (gif, jpg, jpe, jpeg, png, bmp) cannot be uploaded."
     ]
 }

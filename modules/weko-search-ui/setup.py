@@ -108,6 +108,7 @@ setup(
             'weko_search_ui_custom_sort = weko_search_ui.admin:item_management_custom_sort_adminview',
             'weko_search_ui_bulk_search = weko_search_ui.admin:item_management_bulk_search_adminview',
             'weko_search_ui_import = weko_search_ui.admin:item_management_import_adminview',
+            'weko_search_ui_export = weko_search_ui.admin:item_management_export_adminview',
         ],
         'invenio_base.api_blueprints': [
             'weko_search_ui = weko_search_ui.views:blueprint_api',
@@ -125,6 +126,10 @@ setup(
             'weko_search_ui.bundles:weko_admin_item_import_js',
             'weko_admin_item_import_css = '
             'weko_search_ui.bundles:weko_admin_item_import_css',
+            'weko_admin_item_export_js = '
+            'weko_search_ui.bundles:weko_admin_item_export_js',
+            'weko_admin_item_export_css = '
+            'weko_search_ui.bundles:weko_admin_item_export_css',
             'weko_moment_js = '
             'weko_search_ui.bundles:weko_moment_js',
             'weko_facet_search_css = '

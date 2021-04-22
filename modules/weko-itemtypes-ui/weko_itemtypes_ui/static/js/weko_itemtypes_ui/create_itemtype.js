@@ -645,6 +645,9 @@ $(document).ready(function () {
       } else if(tmp.input_type == 'radios' || tmp.input_type == 'select') {
         tmp.input_value = $("#schema_"+row_id).find(".select-value-setting").val();
         enum_tmp = []
+        if (tmp && tmp.input_type == 'select') {
+          enum_tmp.push(null);
+        }
         titleMap_tmp = []
         $.each(tmp.input_value.split('|'), function(i,v){
           enum_tmp.push(v);
@@ -664,7 +667,7 @@ $(document).ready(function () {
                 interim: {                  // [interim]は本当の意味を持たない
                   title: tmp.title,
                   title_i18n: tmp.title_i18n,
-                  type: "string",
+                  type: ["null","string"],
                   enum: enum_tmp
                 }
               }
@@ -693,7 +696,7 @@ $(document).ready(function () {
             properties: {
               "interim": {// [interim]は本当の意味を持たない
                 title: tmp.title,
-                type: "string",
+                type: ["null","string"],
                 enum: enum_tmp,
                 format: tmp.input_type,    // radios|select
               }
@@ -1320,6 +1323,21 @@ $(document).ready(function () {
               properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["hideDisable"] = true
             }
           }
+          // Get item id of sub-property is language.
+          data.key_subproperty_languague.forEach(function (itemkey) {
+            let listSubItem = itemkey.split(".");
+            var temp_prop = properties_obj[data.meta_list[listSubItem[0]].input_type.substr(4)].schema.properties;
+            for (var idx = 1; idx < listSubItem.length; idx++) {
+              let _item = temp_prop[listSubItem[idx]]
+              if (_item && _item.items) {
+                temp_prop = _item.items.properties;
+              } else if (_item && _item.properties) {
+                temp_prop = _item.properties;
+              } else if (_item && idx === listSubItem.length - 1) {
+                _item['isSubLanguage'] = true;
+              }
+            }
+          });
           render_object('schema_'+row_id, properties_obj[data.meta_list[row_id].input_type.substr(4)].schema);
           if (isFile) {
             multipleCheckbox.attr('disabled', true);
@@ -1498,9 +1516,14 @@ $(document).ready(function () {
     if(itForm.hasOwnProperty('titleMap')) {
       let titleMapList = itForm['titleMap'];
       let arrEnumList = [];
+      let isTitleMap = false;
       Object.keys(titleMapList).map(function (titleMap) {
         arrEnumList.push(titleMapList[titleMap].value);
+        isTitleMap = true;
       });
+      if (isTitleMap && Array.isArray(arrEnumList) && itpSchema.format == 'select' && (arrEnumList != undefined || arrEnumList != "")) {
+        arrEnumList.unshift(null);
+      }
       itpSchema.enum = arrEnumList;
     }
   }
@@ -1582,6 +1605,7 @@ $(document).ready(function () {
   }
 
   function setTitleI18nForSubPropertiesByCondition1(schemaProperties, subForms, prefixKey) {
+    if(!subForms) return;
     let properties = getPropertiesOrItems(schemaProperties);
     Object.keys(properties).map(function (propKey) {
       let propertyKey = prefixKey + '.' + propKey;
@@ -1600,6 +1624,7 @@ $(document).ready(function () {
   }
 
   function setTitleI18nForSubPropertiesByCondition2(schemaProperties, subForms, prefixKey) {
+    if(!subForms) return;
     let properties = getPropertiesOrItems(schemaProperties);
     Object.keys(properties).map(function (propKey) {
       $.each(subForms, function (ind, form) {
@@ -1841,7 +1866,10 @@ $(document).ready(function () {
       delete property.enum
     } else if (property.format == 'select') {
       property.type = ["null", "string"];
-      form.type = "select";
+      if (Array.isArray(property.enum) && (property.enum[0] != undefined || property.enum[0] != "")) {
+        property.enum.unshift(null);
+      }
+      form.type = form['templateUrl'] ? "template" : "select";
     }
     //Delete info not use.
     if(property.hasOwnProperty('uniqueKey')) delete property['uniqueKey'];
@@ -1851,7 +1879,7 @@ $(document).ready(function () {
   function removeEnumForCheckboxes(schema) {
     Object.keys(schema).map(function (propKey) {
       if (schema[propKey].format == "radios" || schema[propKey].format == "select") {
-        schema[propKey].type = "string";
+        schema[propKey].type = ["null", "string"];
       } else {
         let properties = getPropertiesOrItems(schema[propKey]);
         if (schema[propKey].format == "checkboxes" && schema[propKey].hasOwnProperty('enum'))

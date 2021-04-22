@@ -51,8 +51,7 @@ $("#btn_delete").on("click", function () {
       }
     },
     error: function (jqXHE, status) {
-      var modalcontent = "Delete Failed";
-      $("#inputModal").html(modalcontent);
+      $("#inputModal").html("Delete Failed");
       $("#allModal").modal("show");
     },
   });
@@ -60,19 +59,22 @@ $("#btn_delete").on("click", function () {
 
 $("#btn_create").on("click", function () {
   const post_uri = $("#post_uri").text();
-  var list_hide = []
-  var list_show = []
+  var list_hide = [];
   $("#select_hide option").each(function() {
-    console.log(this.value);
     list_hide.push(this.value);
   });
-  post_data = {
+  let post_data = {
     id: $("#_id").val(),
     flows_name: $("#txt_workflow_name").val(),
     itemtype_id: $("#txt_itemtype").val(),
     flow_id: $("#txt_flow_name").val(),
-    list_hide: list_hide
+    list_hide: list_hide,
+    open_restricted: $('#restricted_access_flag').is(":checked")
   };
+  index_id = $('#txt_index').val()
+  if (index_id !== '') {
+    post_data['index_id'] = index_id;
+  }
   $.ajax({
     url: post_uri,
     method: "POST",
@@ -86,8 +88,7 @@ $("#btn_create").on("click", function () {
       }
     },
     error: function (jqXHE, status) {
-      var modalcontent = "Something went wrong.";
-      $("#inputModal").html(modalcontent);
+      $("#inputModal").html("Something went wrong.");
       $("#allModal").modal("show");
     },
   });

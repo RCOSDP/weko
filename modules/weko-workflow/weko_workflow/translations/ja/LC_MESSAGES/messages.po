@@ -29,6 +29,22 @@ msgstr "フローを更新しました"
 msgid "Updated flow action successfully"
 msgstr "フローアクションを更新しました。"
 
+#: weko_workflow/admin.py:148
+msgid "Approval by Administrator action does not exist, or not in the right order."
+msgstr "管理者の承認了アクションは存在しないか、正しい順序になっていません。"
+
+#: weko_workflow/admin.py:150
+msgid "Approval by Advisor action is not in the right order."
+msgstr "指導教員の承認アクションは正しい順序になっていません。"
+
+#: weko_workflow/admin.py:152
+msgid "Approval by Guarantor action is not in the right order."
+msgstr "保証人の承認アクションは正しい順序になっていません。"
+
+#: weko_workflow/admin.py:154
+msgid "Start or End action is not in the right order."
+msgstr "開始または終了アクションは存在しないか、正しい順序になっていません。"
+
 #: weko_workflow/admin.py:228 weko_workflow/admin.py:237
 msgid "WorkFlow"
 msgstr "ワークフロー"
@@ -260,8 +276,12 @@ msgstr "次へ"
 
 #: weko_workflow/templates/weko_workflow/identifier_grant.html:106
 #: weko_workflow/templates/weko_workflow/item_link.html:130
-msgid "Quit"
-msgstr "終了"
+# msgid "Quit"
+# msgstr "終了"
+
+#: weko_workflow/templates/weko_workflow/Activity_detail.html:306
+msgid "QuitQO"
+msgstr "強制終了"
 
 #: weko_workflow/templates/weko_workflow/index.html:29
 #, python-format
@@ -317,7 +337,7 @@ msgstr "キャンセル"
 
 #: weko_workflow/templates/weko_workflow/modal_withdraw_confirmation.html:44
 msgid "Are you sure you want to withdraw DOI?"
-msgstr "DOIを取り下げ手もよろしいですか？"
+msgstr "DOIを取り下げてもよろしいですか？"
 
 #: weko_workflow/templates/weko_workflow/oapolicy_search.html:3
 msgid "Journal"
@@ -507,6 +527,48 @@ msgstr "閉じる"
 #~ msgid "Create WorkFlow"
 #~ msgstr "フロー作成"
 
+msgid "Terms and Conditions"
+msgstr "利用規約"
+
+msgid "I have read and agreed to the Terms and Conditions"
+msgstr "利用規約に同意する"
+
+msgid "Application Date"
+msgstr "申請日"
+
+msgid "Approved Date"
+msgstr "承認日"
+
+msgid "Use of JGSS data is considered as Continue. If you approve, this usage report will end. It is not able to restore an usage report that has ended. Do you want to continue?"
+msgstr "JGSSデータの利用は「継続」とされています。承認するとこの利用報告は終了となりますがよろしいでしょうか。終了した利用報告を復活させることはできません。"
+
+msgid "Stop/Continue"
+msgstr "終了／継続"
+
+msgid "After checking the Terms and Conditions, please check the [I have read and agreed to the Terms and Conditions] at the end of scroll."
+msgstr "利用規約を確認の上、スクロール最下部にある「利用規約に同意する」にチェックを入れてください"
+
+msgid "Email Type"
+msgstr "メール種別"
+
+msgid "Send Mail"
+msgstr "メール通知"
+
+msgid "Email is sent successfully."
+msgstr "メールの送付が完了しました。"
+
+msgid "Remind to submit the Data Usage Report(Other than Student)"
+msgstr "JGSSデータ利用報告の手続き＜学部生以外＞"
+
+msgid "Remind to submit the Data Usage Report(Student)"
+msgstr "JGSSデータ利用報告の手続き＜学部生＞"
+
+msgid "email will be sent."
+msgstr "を送付します。"
+
+msgid "Please contact your system administrator."
+msgstr "システム管理者に問い合わせてください。"
+
 msgid "Add Filter"
 msgstr "フィルターを追加"
 
@@ -524,3 +586,73 @@ msgstr "このアクティビティのロックを解除してよろしいでし
 
 msgid "Your session has timed out. Please login again."
 msgstr "セッションが切れました。再度ログインしてください。"
+
+msgid "Restricted Access Flag"
+msgstr "制限公開フラグ"
+
+msgid "Enable Full"
+msgstr "有効にする"
+
+msgid "Disable Full"
+msgstr "無効にする"
+
+msgid "Enable"
+msgstr "有効"
+
+msgid "Disable"
+msgstr "無効"
+
+msgid "Registration Destination Index Designation"
+msgstr "登録先インデックスの指定"
+
+msgid "Undesignated"
+msgstr "指定なし"
+
+msgid "Registration Destination Index"
+msgstr "登録先インデックス"
+
+#: weko_workflow/templates/weko_workflow/activity_detail.html:260
+msgid "Reject"
+msgstr "却下"
+
+#: weko_workflow/templates/weko_workflow/activity_detail.html:263
+msgid "Approval"
+msgstr "承認"
+
+#: weko_workflow/templates/weko_workflow/activity_detail.html:266
+msgid "Quit_Approval"
+msgstr "強制終了"
+
+#: weko_workflow/templates/weko_workflow/item_link.html:153
+msgid "Quit_item"
+msgstr "強制終了"
+
+#: weko_workflow/templates/weko_workflow/item_link.html:150
+msgid "Next_item"
+msgstr "次へ"
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:114
+msgid "Quit_identifier_grand"
+msgstr "強制終了"
+
+#: weko_workflow/templates/weko_workflow/item_login_sucess.html:288
+msgid "Back"
+msgstr "戻る"
+
+msgid "The specified link has expired."
+msgstr "指定したリンクはアクセス有効期限を超過しています。"
+
+msgid "Specify Property"
+msgstr "プロパティを指定する"
+
+msgid "Specify property"
+msgstr "プロパティを指定"
+
+msgid "Approval Request Notification Email"
+msgstr "承認依頼通知メール"
+
+msgid "Approval Notification Email"
+msgstr "承認通知メール"
+
+msgid "Approval Rejection Notification Email"
+msgstr "承認却下通知メール"

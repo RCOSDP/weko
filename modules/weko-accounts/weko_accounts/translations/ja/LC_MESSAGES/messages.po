@@ -137,3 +137,6 @@ msgstr "WEKO3を利用するため、所属機関で認証する必要があり�
 
 msgid "Back to Top Page"
 msgstr "トップページに戻る"
+
+msgid "Create a New Account"
+msgstr "アカウントの登録"

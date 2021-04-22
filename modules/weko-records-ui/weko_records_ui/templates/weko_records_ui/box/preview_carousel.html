@@ -19,8 +19,15 @@
 #}
 
 
-{% macro preview_carousel(record=None, files=[], pid=None, filename=None, nav=True, el_id='preview_carousel', edit_page_prev=False) %}
+{% macro preview_carousel(record=None, files=[], pid=None, filename=None, nav=True, el_id='preview_carousel', edit_page_prev=False, cur_step=None) %}
   <!-- Preview Carousel -->
+  {% set list_preview_carousel = [] %}
+  {%- for file in files -%}
+    {%- if 'preview' == file.displaytype -%}
+      <div style="display: none;">{{ list_preview_carousel.append( file ) }}</div>
+    {% endif %}
+  {%- endfor -%}
+  {%- if list_preview_carousel |length > 0-%}
   <div class="panel panel-default" id="{{ el_id }}_panel">
     <div class="panel-heading">
       <a class="preview-panel-toggle">
@@ -33,7 +40,7 @@
       </a>
     </div>
     <div class="preview-panel-body">
-      {%- if nav and (files | length > 1) %}
+      {%- if nav and (list_preview_carousel | length > 1) %}
         <div class="weko-carousel-navbar text-center">
           <a class="pull-left carousel-control" href="#{{ el_id }}" role="button" data-slide-to="0">
             <span class="glyphicon glyphicon-step-backward" aria-hidden="true"></span>
@@ -59,7 +66,7 @@
         <div class="carousel-inner">
           <!-- TODO: Check if both previews below can ever both show at the same time. -->
           {% set firstPreviewFileIndex = {'value': 0} %}
-          {%- for file in files | selectattr('is_thumbnail', 'equalto', False) | sort(attribute='filename') if filename and file.filename == filename or not filename -%}
+          {%- for file in list_preview_carousel | selectattr('is_thumbnail', 'equalto', False) | sort(attribute='filename') if filename and file.filename == filename or not filename -%}
             {% if file.version_id %}
               {% if file.is_thumbnail == False %}
                 {% if firstPreviewFileIndex.value == 0 %}
@@ -79,7 +86,7 @@
               {%- endif %}
 
               {%- if (is_billing_file and billing_file_permission and access_permission) or (not is_billing_file and access_permission) -%}
-                {%- if 'preview' in file.displaytype -%}
+                {%- if 'preview' == file.displaytype -%}
                   {%- set file_preview_url = url_for('invenio_records_ui.recid_file_preview', pid_value=pid.pid_value, filename=file.filename) %}
                   <div class="item {{ 'active' if loop.index == firstPreviewFileIndex.value else '' }}" id="carousel_prev_item_{{ loop.index }}">
                     <div class="embed-responsive embed-responsive-16by9">
@@ -95,9 +102,16 @@
                         <object data="{{file_preview_url}}" type="{{file.mimetype}}"></object>
                       {%- else -%}
                         {%- if file | preview_able -%}
-                          <iframe class="preview-iframe" id="preview-iframe" width="100%" height="400"
-                            src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.filename) }}">
-                          </iframe>
+                          {%- if cur_step and cur_step == 'approval'-%}
+                            <iframe class="preview-iframe" id="preview-iframe" width="100%" height="400"
+                              src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.filename or file.key) }}">
+                            </iframe>
+                          {%- else -%}
+                            {% set rootVer = pid.pid_value.split('.') %}
+                            <iframe class="preview-iframe" id="preview-iframe" width="100%" height="400"
+                              src="{{ url_for('invenio_records_ui.recid_preview', pid_value=rootVer[0], filename=file.filename or file.key) }}">
+                            </iframe>
+                          {%- endif -%}
                         {%- else -%}
                           <div class="embed-responsive embed-responsive-16by9 text-center">
                             <span class="" style="font-size:18px;font-weight:bold">
@@ -112,7 +126,7 @@
                   <div class="item {{ 'active' if loop.index == 1 else '' }}" id="carousel_pdf_item_{{ loop.index }}">
                     <div class="embed-responsive embed-responsive-16by9">
                       <iframe class="preview-iframe" id="preview-iframe_de" width="100%" height="400"
-                        src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.filename) }}">
+                        src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.filename or file.key) }}">
                       </iframe>
                     </div>
                   </div>
@@ -148,4 +162,5 @@
       </div>
     </div>
   </div>
+  {% endif %}
 {% endmacro %}

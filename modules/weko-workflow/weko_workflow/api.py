@@ -20,6 +20,8 @@
 
 """WEKO3 module docstring."""
 
+import math
+import urllib.parse
 import uuid
 from datetime import datetime, timedelta
 
@@ -28,11 +30,11 @@ from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from sqlalchemy import asc, desc, or_, types
+from sqlalchemy import and_, asc, desc, func, or_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.sql.expression import cast
-from weko_records.models import ItemMetadata
+from weko_deposit.api import WekoDeposit
+from weko_records.serializers.utils import get_item_type_name
 
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     WEKO_WORKFLOW_ALL_TAB, WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB
@@ -192,7 +194,7 @@ class Flow(object):
         with db.session.begin_nested():
             for order, action in enumerate(actions):
                 flowaction_filter = _FlowAction.query.filter_by(
-                    flow_id=flow_id, action_id=action.get('id'))
+                    id=action.get('workflow_flow_action_id', -1))
                 if action.get('action', None) == 'DEL':
                     flowaction_id = flowaction_filter.one_or_none().id
                     _FlowActionRole.query.filter_by(
@@ -206,7 +208,8 @@ class Flow(object):
                         flow_id=flow_id,
                         action_id=action.get('id'),
                         action_order=order + 1,
-                        action_version=action.get('version')
+                        action_version=action.get('version'),
+                        send_mail_setting=action.get('send_mail_setting')
                     )
                     _flow = _Flow.query.filter_by(
                         flow_id=flow_id).one_or_none()
@@ -215,35 +218,58 @@ class Flow(object):
                 else:
                     """Update"""
                     flowaction.action_order = order + 1
+                    flowaction.send_mail_setting = \
+                        action.get('send_mail_setting')
                     db.session.merge(flowaction)
                 _FlowActionRole.query.filter_by(
                     flow_action_id=flowaction.id).delete()
-                flowactionrole = _FlowActionRole(
-                    flow_action_id=flowaction.id,
-                    action_role=action.get(
-                        'role') if '0' != action.get('role') else None,
-                    action_role_exclude=action.get(
-                        'role_deny') if '0' != action.get('role') else False,
-                    action_user=action.get(
-                        'user') if '0' != action.get('user') else None,
-                    action_user_exclude=action.get(
-                        'user_deny') if '0' != action.get('user') else False
-                )
-                if flowactionrole.action_role or flowactionrole.action_user:
+                if str.isdigit(action.get('user')):
+                    flowactionrole = _FlowActionRole(
+                        flow_action_id=flowaction.id,
+                        action_role=action.get(
+                            'role') if '0' != action.get('role') else None,
+                        action_role_exclude=action.get(
+                            'role_deny') if '0' != action.get(
+                            'role') else False,
+                        action_user=action.get(
+                            'user') if '0' != action.get('user') else None,
+                        specify_property=None,
+                        action_user_exclude=action.get(
+                            'user_deny') if '0' != action.get('user') else False
+                    )
+                else:
+                    flowactionrole = _FlowActionRole(
+                        flow_action_id=flowaction.id,
+                        action_role=action.get(
+                            'role') if '0' != action.get('role') else None,
+                        action_role_exclude=action.get(
+                            'role_deny') if '0' != action.get(
+                            'role') else False,
+                        action_user=None,
+                        specify_property=action.get(
+                            'user') if '0' != action.get('user') else None,
+                        action_user_exclude=action.get(
+                            'user_deny') if '0' != action.get('user') else False
+                    )
+                if flowactionrole.action_role or flowactionrole.action_user or \
+                        flowactionrole.specify_property:
                     db.session.add(flowactionrole)
         db.session.commit()
 
-    def get_next_flow_action(self, flow_id, cur_action_id):
+    def get_next_flow_action(self, flow_id, cur_action_id, action_order):
         """Return next action info.
 
         :param flow_id:
         :param cur_action_id:
+        :param action_order:
         :return:
         """
         with db.session.no_autoflush:
-            cur_action = _FlowAction.query.filter_by(
-                flow_id=flow_id).filter_by(
-                action_id=cur_action_id).one_or_none()
+            query = _FlowAction.query.filter_by(flow_id=flow_id,
+                                                action_id=cur_action_id)
+            if action_order:
+                query = query.filter_by(action_order=action_order)
+            cur_action = query.first()
             if cur_action:
                 next_action_order = cur_action.action_order + 1
                 next_action = _FlowAction.query.filter_by(
@@ -252,17 +278,20 @@ class Flow(object):
                 return next_action
         return None
 
-    def get_previous_flow_action(self, flow_id, cur_action_id):
+    def get_previous_flow_action(self, flow_id, cur_action_id, action_order):
         """Return next action info.
 
         :param flow_id:
         :param cur_action_id:
+        :param action_order:
         :return:
         """
         with db.session.no_autoflush:
-            cur_action = _FlowAction.query.filter_by(
-                flow_id=flow_id,
-                action_id=cur_action_id).one_or_none()
+            query = _FlowAction.query.filter_by(flow_id=flow_id,
+                                                action_id=cur_action_id)
+            if action_order:
+                query = query.filter_by(action_order=action_order)
+            cur_action = query.first()
             if cur_action and cur_action.action_order > 1:
                 previous_action_order = cur_action.action_order - 1
                 previous_action = _FlowAction.query.filter_by(
@@ -270,6 +299,22 @@ class Flow(object):
                     action_order=previous_action_order).all()
                 return previous_action
             return None
+
+    def get_flow_action_detail(self, flow_id, action_id, action_order):
+        """Get fow action detail.
+
+        :param flow_id:
+        :param action_id:
+        :param action_order:
+        :return:
+        """
+        with db.session.no_autoflush:
+            query = _FlowAction.query.filter_by(flow_id=flow_id,
+                                                action_id=action_id)
+            if action_order:
+                query = query.filter_by(action_order=action_order)
+            cur_action = query.first()
+            return cur_action
 
     def get_last_flow_action(self, flow_id):
         """Return last action info.
@@ -337,6 +382,8 @@ class WorkFlow(object):
                     _workflow.flows_name = workflow.get('flows_name')
                     _workflow.itemtype_id = workflow.get('itemtype_id')
                     _workflow.flow_id = workflow.get('flow_id')
+                    _workflow.index_tree_id = workflow.get('index_tree_id')
+                    _workflow.open_restricted = workflow.get('open_restricted')
                     db.session.merge(_workflow)
             db.session.commit()
             return _workflow
@@ -376,6 +423,17 @@ class WorkFlow(object):
             query = _WorkFlow.query.filter_by(
                 id=workflow_id)
             return query.one_or_none()
+
+    @staticmethod
+    def get_workflow_by_ids(ids: list):
+        """Get workflow detail info by workflow id.
+
+        :param ids:
+        :return:
+        """
+        with db.session.no_autoflush:
+            query = _WorkFlow.query.filter(_WorkFlow.id.in_(ids))
+            return query.all()
 
     def get_workflow_by_flows_id(self, flows_id):
         """Get workflow detail info by flows id.
@@ -594,6 +652,7 @@ class WorkActivity(object):
         try:
             action_id = 0
             next_action_id = 0
+            action_has_term_of_use = False
             with db.session.no_autoflush:
                 action = _Action.query.filter_by(
                     action_endpoint='begin_action').one_or_none()
@@ -607,6 +666,41 @@ class WorkActivity(object):
                         asc(_FlowAction.action_order)).all()
                     if flow_actions and len(flow_actions) >= 2:
                         next_action_id = flow_actions[1].action_id
+                        next_action_order = flow_actions[1].action_order
+                        enable_show_term_of_use = current_app.config[
+                            'WEKO_WORKFLOW_ENABLE_SHOWING_TERM_OF_USE']
+                        if enable_show_term_of_use:
+                            application_item_types = current_app.config[
+                                'WEKO_ITEMS_UI_SHOW_TERM_AND_CONDITION']
+                            item_type_name = \
+                                get_item_type_name(activity.get('itemtype_id'))
+                            if item_type_name in application_item_types:
+                                action_has_term_of_use = True
+            extra_info = dict()
+            # Get extra info
+            if activity.get('extra_info'):
+                extra_info = activity["extra_info"]
+            # Get related title.
+            if activity.get('related_title'):
+                extra_info["related_title"] = urllib.parse.unquote(
+                    activity["related_title"])
+            # Get confirm term of use.
+            if activity.get('activity_confirm_term_of_use') is True:
+                activity_confirm_term_of_use = True
+            else:
+                activity_confirm_term_of_use = False if\
+                    action_has_term_of_use else True
+
+            # Get created user
+            if activity.get("activity_login_user") is not None:
+                activity_login_user = activity.get("activity_login_user")
+            else:
+                activity_login_user = current_user.get_id()
+            # Get the updated user of activity
+            if activity.get("activity_update_user") is not None:
+                activity_update_user = activity.get("activity_update_user")
+            else:
+                activity_update_user = current_user.get_id()
 
             db_activity = _Activity(
                 # Dummy activity ID, the real one will be updated
@@ -618,11 +712,14 @@ class WorkActivity(object):
                 flow_id=activity.get('flow_id'),
                 action_id=next_action_id,
                 action_status=ActionStatusPolicy.ACTION_BEGIN,
-                activity_login_user=current_user.get_id(),
-                activity_update_user=current_user.get_id(),
+                activity_login_user=activity_login_user,
+                activity_update_user=activity_update_user,
                 activity_status=ActivityStatusPolicy.ACTIVITY_MAKING,
                 activity_start=datetime.utcnow(),
-                activity_community_id=community_id
+                activity_community_id=community_id,
+                activity_confirm_term_of_use=activity_confirm_term_of_use,
+                extra_info=extra_info,
+                action_order=next_action_order
             )
             db.session.add(db_activity)
         except Exception as ex:
@@ -672,7 +769,6 @@ class WorkActivity(object):
                     pid_type='actid',
                     pid_value=str(activity_id),
                     status=PIDStatus.REGISTERED
-                    # object_type='act', #Workflow Activity Object Type
                 )
                 db_activity.activity_id = action_pid.pid_value
 
@@ -682,19 +778,28 @@ class WorkActivity(object):
                     action_id=action_id,
                     action_version=action.action_version,
                     action_status=ActionStatusPolicy.ACTION_DONE,
-                    action_user=current_user.get_id(),
+                    action_user=activity_login_user,
                     action_date=db_activity.activity_start,
-                    action_comment=ActionCommentPolicy.BEGIN_ACTION_COMMENT
+                    action_comment=ActionCommentPolicy.BEGIN_ACTION_COMMENT,
+                    action_order=1
                 )
 
                 with db.session.begin_nested():
                     db.session.add(db_history)
-
+                    # set action handler for all the action except approval
+                    # actions
                     for flow_action in flow_actions:
+                        action_instance = Action()
+                        action = action_instance.get_action_detail(
+                            flow_action.action_id)
+                        action_handler = activity_login_user \
+                            if not action.action_endpoint == 'approval' else -1
                         db_activity_action = ActivityAction(
                             activity_id=db_activity.activity_id,
                             action_id=flow_action.action_id,
                             action_status=ActionStatusPolicy.ACTION_DONE,
+                            action_handler=action_handler,
+                            action_order=flow_action.action_order
                         )
                         db.session.add(db_activity_action)
 
@@ -714,7 +819,21 @@ class WorkActivity(object):
 
                 return db_activity
 
-    def upt_activity_action(self, activity_id, action_id, action_status):
+    def upt_activity_agreement_step(self, activity_id, is_agree):
+        """Update agreement step of activity.
+
+        :param activity_id:
+        :param is_agree:
+        :return:
+        """
+        with db.session.begin_nested():
+            activity = self.get_activity_by_id(activity_id)
+            activity.activity_confirm_term_of_use = is_agree
+            db.session.merge(activity)
+        db.session.commit()
+
+    def upt_activity_action(self, activity_id, action_id, action_status,
+                            action_order):
         """Update activity info.
 
         :param activity_id:
@@ -723,10 +842,11 @@ class WorkActivity(object):
         :return:
         """
         with db.session.begin_nested():
-            activity = _Activity.query.filter_by(
-                activity_id=activity_id).one_or_none()
+            activity = self.get_activity_by_id(activity_id)
             activity.action_id = action_id
             activity.action_status = action_status
+            if action_order:
+                activity.action_order = action_order
             db.session.merge(activity)
         db.session.commit()
 
@@ -757,54 +877,84 @@ class WorkActivity(object):
             return metadata
 
     def upt_activity_action_status(
-            self,
-            activity_id,
-            action_id,
-            action_status):
+        self,
+        activity_id,
+        action_id,
+        action_status,
+            action_order):
         """Update activity info.
 
+        :param action_order:
         :param activity_id:
         :param action_id:
         :param action_status:
         :return:
         """
         with db.session.begin_nested():
-            activity_action = ActivityAction.query.filter_by(
+            query = ActivityAction.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id, ).one_or_none()
+                action_id=action_id)
+            if action_order:
+                query = query.filter_by(action_order=action_order)
+            activity_action = query.first()
             activity_action.action_status = action_status
             db.session.merge(activity_action)
         db.session.commit()
 
-    def upt_activity_action_comment(self, activity_id, action_id, comment):
+    def upt_activity_action_comment(self, activity_id, action_id, comment,
+                                    action_order):
         """Update activity info.
 
+        :param action_order:
         :param activity_id:
         :param action_id:
         :param comment:
         :return:
         """
         with db.session.begin_nested():
-            activity_action = ActivityAction.query.filter_by(
+            query = ActivityAction.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id, ).one_or_none()
+                action_id=action_id)
+            if action_order:
+                query = query.filter_by(action_order=action_order)
+            activity_action = query.first()
             if activity_action:
                 activity_action.action_comment = comment
                 db.session.merge(activity_action)
         db.session.commit()
 
-    def get_activity_action_comment(self, activity_id, action_id):
+    def get_activity_action_comment(self, activity_id, action_id, action_order):
         """Get activity info.
 
+        :param action_order:
         :param activity_id:
         :param action_id:
         :return:
         """
         with db.session.no_autoflush:
-            activity_action = ActivityAction.query.filter_by(
+            query = ActivityAction.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id, ).one_or_none()
+                action_id=action_id)
+            if action_order:
+                query = query.filter_by(action_order=action_order)
+            activity_action = query.first()
             return activity_action
+
+    def is_last_approval_step(self, activity_id, action_id, action_order):
+        """Check whether current approval step is the last one.
+
+        :param activity_id:
+        :param action_id:
+        :param action_order:
+        :return:
+        """
+        with db.session.no_autoflush:
+            max_approval_order = \
+                db.session.query(
+                    func.max(ActivityAction.action_order)).filter_by(
+                    activity_id=activity_id,
+                    action_id=action_id).first()[0]
+            return max_approval_order == action_order if action_order else True
 
     def create_or_update_action_journal(self, activity_id, action_id, journal):
         """Create or update action journal info.
@@ -965,12 +1115,14 @@ class WorkActivity(object):
                 activity_id=activity_id).one_or_none()
             return action_feedbackmail
 
-    def get_activity_action_status(self, activity_id, action_id):
+    def get_activity_action_status(self, activity_id, action_id, action_order):
         """Get activity action status."""
         with db.session.no_autoflush:
-            activity_ac = ActivityAction.query.filter_by(
-                activity_id=activity_id,
-                action_id=action_id).one()
+            query = ActivityAction.query.filter_by(activity_id=activity_id,
+                                                   action_id=action_id)
+            if action_order:
+                query = query.filter_by(action_order=action_order)
+            activity_ac = query.first()
             action_stus = activity_ac.action_status
             return action_stus
 
@@ -994,7 +1146,8 @@ class WorkActivity(object):
                     action_status=activity.get('action_status'),
                     action_user=current_user.get_id(),
                     action_date=datetime.utcnow(),
-                    action_comment=activity.get('commond')
+                    action_comment=activity.get('commond'),
+                    action_order=db_activity.action_order
                 )
                 db.session.merge(db_activity)
                 db.session.add(db_new_history)
@@ -1012,8 +1165,8 @@ class WorkActivity(object):
         """End activity."""
         try:
             with db.session.begin_nested():
-                db_activity = _Activity.query.filter_by(
-                    activity_id=activity.get('activity_id')).one_or_none()
+                db_activity = self.get_activity_by_id(
+                    activity.get('activity_id'))
                 if db_activity:
                     db_activity.activity_status = \
                         ActivityStatusPolicy.ACTIVITY_FINALLY
@@ -1021,6 +1174,7 @@ class WorkActivity(object):
                     db_activity.action_status = activity.get('action_status')
                     db_activity.activity_end = datetime.utcnow()
                     db_activity.temp_data = None
+                    db_activity.action_order = activity.get('action_order')
                     if activity.get('item_id') is not None:
                         db_activity.item_id = activity.get('item_id')
                     db.session.merge(db_activity)
@@ -1032,7 +1186,8 @@ class WorkActivity(object):
                         action_user=current_user.get_id(),
                         action_date=datetime.utcnow(),
                         action_comment=ActionCommentPolicy.
-                        FINALLY_ACTION_COMMENT)
+                        FINALLY_ACTION_COMMENT,
+                        action_order=activity.get('action_order'))
                     db.session.add(db_history)
             db.session.commit()
         except Exception as ex:
@@ -1059,8 +1214,8 @@ class WorkActivity(object):
 
         try:
             with db.session.begin_nested():
-                db_activity = _Activity.query.filter_by(
-                    activity_id=activity.get('activity_id')).one_or_none()
+                db_activity = self.get_activity_by_id(
+                    activity.get('activity_id'))
                 if db_activity:
                     db_activity.action_id = activity.get('action_id')
                     db_activity.action_status = activity.get('action_status')
@@ -1079,9 +1234,12 @@ class WorkActivity(object):
                         action_status=activity.get('action_status'),
                         action_user=current_user.get_id(),
                         action_date=datetime.utcnow(),
-                        action_comment=activity.get('commond'))
+                        action_comment=activity.get('commond'),
+                        action_order=activity.get('action_order')
+                    )
                     db.session.add(db_history)
-
+                    last_action_order = last_flow_action.action_order if \
+                        activity_detail.action_order else None
                     db_history = ActivityHistory(
                         activity_id=activity.get('activity_id'),
                         action_id=last_flow_action.action_id,
@@ -1090,7 +1248,9 @@ class WorkActivity(object):
                         action_user=current_user.get_id(),
                         action_date=datetime.utcnow(),
                         action_comment=ActionCommentPolicy.
-                        FINALLY_ACTION_COMMENT)
+                        FINALLY_ACTION_COMMENT,
+                        action_order=last_action_order
+                    )
                     db.session.add(db_history)
             db.session.commit()
             return True
@@ -1131,30 +1291,90 @@ class WorkActivity(object):
 
         if created_from:
             date_created_from = self.validate_date_to_filter(created_from)
+            if date_created_from:
+                date_created_from = date_created_from + timedelta(
+                    hours=0, minutes=0, seconds=0)
 
         if created_to:
             date_created_to = self.validate_date_to_filter(created_to)
+            if date_created_to:
+                date_created_to = date_created_to + timedelta(
+                    hours=23, minutes=59, seconds=59)
 
         if date_created_from and date_created_to:
             return query.filter(
-                _Activity.created.between(date_created_from, date_created_to
-                                          + timedelta(hours=23,
-                                                      minutes=59,
-                                                      seconds=59)))
+                _Activity.created.between(date_created_from, date_created_to))
         elif date_created_from:
-            return query.filter(
-                _Activity.created >= date_created_from)
+            return query.filter(_Activity.created >= date_created_from)
         elif date_created_to:
-            return query.filter(
-                _Activity.created <= date_created_to + timedelta(hours=23,
-                                                                 minutes=59,
-                                                                 seconds=59))
+            return query.filter(_Activity.created <= date_created_to)
         else:
             return query
 
-    def filter_conditions(self, conditions, query):
+    @staticmethod
+    def __filter_by_title(query, title):
+        """Filter by title.
+
+        @param query:
+        @param title:
+        @return:
         """
-        Filter based on conditions.
+        if title:
+            query = query.filter(or_(
+                _Activity.title.like(i + '%') for i in title))
+        return query
+
+    @staticmethod
+    def __filter_by_user(query, user):
+        """Filter by user.
+
+        @param query:
+        @param user:
+        @return:
+        """
+        if user:
+            query = query.filter(User.email.in_(user))
+        return query
+
+    @staticmethod
+    def __filter_by_workflow(query, workflow):
+        """Filter by workflow name.
+
+        @param query:
+        @param workflow:
+        @return:
+        """
+        if workflow:
+            query = query.filter(
+                or_(_WorkFlow.flows_name.like(i + '%') for i in workflow))
+        return query
+
+    @staticmethod
+    def __filter_by_status(query, status):
+        """Filter by activity status.
+
+        @param query:
+        @param status:
+        @return:
+        """
+        if status:
+            list_status = []
+            for i in status:
+                if i == 'doing':
+                    list_status.append(
+                        ActivityStatusPolicy.ACTIVITY_MAKING)
+                elif i == 'done':
+                    list_status.append(
+                        ActivityStatusPolicy.ACTIVITY_FINALLY)
+                elif i == 'actioncancel':
+                    list_status.append(
+                        ActivityStatusPolicy.ACTIVITY_CANCEL)
+            query = query.filter(
+                _Activity.activity_status.in_(list_status))
+        return query
+
+    def filter_conditions(self, conditions: dict, query):
+        """Filter based on conditions.
 
         :param conditions:
         :param query:
@@ -1167,46 +1387,25 @@ class WorkActivity(object):
             user = conditions.get('user')
             created_from = conditions.get('createdfrom')
             created_to = conditions.get('createdto')
-
-            if title:
-                query = query.filter(or_(
-                    _Activity.title.like(i + '%') for i in title))
-            if user:
-                query = query.join(
-                    User, User.id == _Activity.activity_login_user).filter(
-                    User.email.in_(user))
-            if status:
-                list_status = []
-                for i in status:
-                    if i == 'doing':
-                        list_status.append(
-                            ActivityStatusPolicy.ACTIVITY_MAKING)
-                    elif i == 'done':
-                        list_status.append(
-                            ActivityStatusPolicy.ACTIVITY_FINALLY)
-                    elif i == 'actioncancel':
-                        list_status.append(
-                            ActivityStatusPolicy.ACTIVITY_CANCEL)
-                query = query.filter(
-                    _Activity.activity_status.in_(list_status))
-            if workflow:
-                query = query.join(
-                    _WorkFlow, _WorkFlow.id == _Activity.workflow_id).filter(
-                    or_(_WorkFlow.flows_name.like(i + '%') for i in workflow))
+            # Filter by title
+            query = self.__filter_by_title(query, title)
+            # Filter by users
+            query = self.__filter_by_user(query, user)
+            # Filter by status
+            query = self.__filter_by_status(query, status)
+            # Filter by workflow name
+            query = self.__filter_by_workflow(query, workflow)
+            # Filter by date
             if created_from or created_to:
-                query = self.filter_by_date(created_from,
-                                            created_to,
-                                            query)
+                query = self.filter_by_date(created_from, created_to, query)
         return query
 
-    def query_activites_by_tab_is_wait(self, query, is_admin,
-                                       is_community_admin):
+    @staticmethod
+    def query_activities_by_tab_is_wait(query):
         """
         Query activities by tab is wait.
 
         :param query:
-        :param is_admin:
-        :param is_community_admin:
         :return:
         """
         self_user_id = int(current_user.get_id())
@@ -1214,91 +1413,299 @@ class WorkActivity(object):
         query = query \
             .filter(_Activity.activity_login_user == self_user_id) \
             .filter(_FlowAction.action_id == _Activity.action_id) \
-            .filter(((_FlowActionRole.action_user != self_user_id)
-                     & (_FlowActionRole.action_user_exclude == '0'))
-                    | (_FlowActionRole.action_role.notin_(self_group_ids)
-                       & (_FlowActionRole.action_role_exclude == '0'))) \
-            .filter((_Activity.activity_status
-                     == ActivityStatusPolicy.ACTIVITY_BEGIN)
-                    | (_Activity.activity_status
-                       == ActivityStatusPolicy.ACTIVITY_MAKING))
+            .filter(
+                or_(
+                    _Activity.activity_status
+                    == ActivityStatusPolicy.ACTIVITY_BEGIN,
+                    _Activity.activity_status
+                    == ActivityStatusPolicy.ACTIVITY_MAKING
+                )
+            )
+
+        if not current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] or \
+                not current_app.config['WEKO_ITEMS_UI_MULTIPLE_APPROVALS']:
+            query = query.filter(
+
+                or_(
+                    and_(
+                        _FlowActionRole.action_user != self_user_id,
+                        _FlowActionRole.action_user_exclude == '0'
+                    ),
+                    and_(
+                        _FlowActionRole.action_role.notin_(self_group_ids),
+                        _FlowActionRole.action_role_exclude == '0'
+                    )
+                )
+
+            )
+        else:
+            query = query.filter(
+                ActivityAction.action_handler != self_user_id
+            )
 
         return query
 
-    def query_activites_by_tab_is_all(self,
-                                      query,
-                                      is_admin,
-                                      is_community_admin,
-                                      community_user_ids):
-        """
-        Query activites by tab is all.
+    @staticmethod
+    def query_activities_by_tab_is_all(
+        query,
+        is_community_admin,
+        community_user_ids,
+        is_todo_tabs=False
+    ):
+        """Query activities by tab is all.
 
         :param query:
-        :param is_admin:
         :param is_community_admin:
         :param community_user_ids:
+        :param is_todo_tabs:
         :return:
         """
         self_user_id = int(current_user.get_id())
+        self_group_ids = [role.id for role in current_user.roles]
         if is_community_admin:
             query = query \
                 .filter(_Activity.activity_login_user.in_(community_user_ids))
-
-        if not is_admin and not is_community_admin:
-            query = query \
-                .filter((_Activity.activity_login_user == self_user_id)
-                        | (_Activity.shared_user_id == self_user_id))
+        else:
+            if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] or \
+                    current_app.config['WEKO_ITEMS_UI_MULTIPLE_APPROVALS']:
+                if is_todo_tabs:
+                    query = query.filter(
+                        or_(
+                            and_(
+                                _Activity.activity_login_user == self_user_id,
+                                _Activity.activity_status
+                                == ActivityStatusPolicy.ACTIVITY_FINALLY
+                            ),
+                            ActivityAction.action_handler == self_user_id,
+                            _Activity.approval1 == current_user.email,
+                            _Activity.approval2 == current_user.email,
+                            and_(
+                                _FlowActionRole.action_user == self_user_id,
+                                _FlowActionRole.action_user_exclude == '0'
+                            ),
+                            and_(
+                                _FlowActionRole.action_role.in_(self_group_ids),
+                                _FlowActionRole.action_role_exclude == '0'
+                            )
+                        )
+                    )
+                else:
+                    query = query.filter(
+                        or_(
+                            and_(
+                                _Activity.activity_login_user == self_user_id,
+                                _Activity.activity_status
+                                == ActivityStatusPolicy.ACTIVITY_FINALLY
+                            ),
+                            and_(
+                                _Activity.activity_login_user == self_user_id,
+                                ActivityAction.action_handler == self_user_id
+                            ),
+                            and_(
+                                ActivityAction.action_handler == self_user_id,
+                                _Activity.approval1 == current_user.email,
+                                _Activity.approval2.is_(None)
+                            ),
+                            and_(
+                                ActivityAction.action_handler == self_user_id,
+                                _Activity.approval2 == current_user.email,
+                            )
+                        ),
+                    )
+            else:
+                query = query.filter(
+                    or_(
+                        _Activity.activity_login_user == self_user_id,
+                        _Activity.shared_user_id == self_user_id
+                    )
+                )
         return query
 
-    def check_current_user_role(self):
-        """
-        Check curent user role.
+    @staticmethod
+    def check_current_user_role():
+        """Check current user role.
 
         :return:
         """
         is_admin = False
         is_community_admin = False
+        # Super admin roles
         supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+        # Community admin roles
+        community_role_name = current_app.config[
+            'WEKO_PERMISSION_ROLE_COMMUNITY']
+        if isinstance(community_role_name, str):
+            community_role_name = (community_role_name,)
         for role in list(current_user.roles or []):
             if role.name in supers:
                 is_admin = True
                 break
-        # Community users
-        community_role_name = current_app.config[
-            'WEKO_PERMISSION_ROLE_COMMUNITY']
-        for role in list(current_user.roles or []):
-            if role.name in community_role_name:
+            elif role.name in community_role_name:
                 is_community_admin = True
-                break
+
         return is_admin, is_community_admin
 
-    def query_activites_by_tab_is_todo(self, query, is_admin,
-                                       is_community_admin):
+    @staticmethod
+    def query_activities_by_tab_is_todo(query, is_admin):
         """
-        Query activites by tab is todo.
+        Query activities by tab is todo.
 
         :param query:
         :param is_admin:
-        :param is_community_admin:
         :return:
         """
         self_user_id = int(current_user.get_id())
         self_group_ids = [role.id for role in current_user.roles]
         query = query \
-            .filter((_Activity.activity_status
-                     == ActivityStatusPolicy.ACTIVITY_BEGIN)
-                    | (_Activity.activity_status
-                       == ActivityStatusPolicy.ACTIVITY_MAKING)) \
+            .filter(or_(_Activity.activity_status
+                        == ActivityStatusPolicy.ACTIVITY_BEGIN,
+                        _Activity.activity_status
+                        == ActivityStatusPolicy.ACTIVITY_MAKING)) \
             .filter(
-                ((_FlowActionRole.action_user == self_user_id)
-                 & (_FlowActionRole.action_user_exclude == '0'))
-                | (_FlowActionRole.action_role.in_(self_group_ids)
-                   & (_FlowActionRole.action_role_exclude == '0'))
-                | _FlowActionRole.id.is_(None))\
-            .filter(_FlowAction.action_id == _Activity.action_id)
+                or_(
+                    and_(
+                        _FlowActionRole.action_user == self_user_id,
+                        _FlowActionRole.action_user_exclude == '0'
+                    ),
+                    and_(
+                        _FlowActionRole.action_role.in_(self_group_ids),
+                        _FlowActionRole.action_role_exclude == '0'
+                    ),
+                    and_(
+                        _FlowActionRole.id.is_(None)
+                    )
+                )
+            )\
+            .filter(_FlowAction.action_id == _Activity.action_id) \
+            .filter(_FlowAction.action_order == _Activity.action_order)
+
+        if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] or \
+                current_app.config['WEKO_ITEMS_UI_MULTIPLE_APPROVALS']:
+            if is_admin:
+                query = query.filter(
+                    ActivityAction.action_handler.in_([-1, self_user_id])
+                )
+            else:
+                query = query.filter(
+                    or_(
+                        ActivityAction.action_handler == self_user_id,
+                        and_(
+                            _FlowActionRole.action_user == self_user_id,
+                            _FlowActionRole.action_user_exclude == '0'
+                        ),
+                        and_(
+                            _FlowActionRole.action_role.in_(self_group_ids),
+                            _FlowActionRole.action_role_exclude == '0'
+                        )
+                    )
+                )
+
         return query
 
-    def get_activity_list(self, community_id=None, conditions=None):
+    @staticmethod
+    def __common_query_activity_list():
+        """Common query.
+
+        @return:
+        """
+        # select columns
+        common_query = db.session.query(
+            _Activity,
+            User.email,
+            _WorkFlow.flows_name,
+            _Action.action_name,
+            Role.name
+        )
+
+        # query all activities
+        common_query = common_query \
+            .outerjoin(_Flow).outerjoin(
+                _WorkFlow,
+                and_(
+                    _Activity.workflow_id == _WorkFlow.id,
+                )
+            ).outerjoin(_Action) \
+            .outerjoin(_FlowAction).outerjoin(_FlowActionRole) \
+            .outerjoin(
+                ActivityAction,
+                and_(
+                    ActivityAction.activity_id == _Activity.activity_id,
+                    ActivityAction.action_id == _Activity.action_id,
+                )
+            )
+
+        if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] or \
+                current_app.config['WEKO_ITEMS_UI_MULTIPLE_APPROVALS']:
+            common_query = common_query \
+                .outerjoin(
+                    User,
+                    and_(
+                        _Activity.activity_login_user == User.id,
+                    )
+                ) \
+                .outerjoin(
+                    userrole, and_(User.id == userrole.c.user_id)
+                ).outerjoin(Role, and_(userrole.c.role_id == Role.id))
+        else:
+            common_query = common_query \
+                .outerjoin(
+                    User,
+                    and_(
+                        _Activity.activity_update_user == User.id,
+                    )
+                )
+        return common_query
+
+    @staticmethod
+    def __format_activity_data_to_show_on_workflow(activities,
+                                                   action_activities):
+        """Format activity data to show on Workflow.
+
+        @param activities:
+        @param action_activities:
+        """
+        for activity_data, last_update_user, \
+            flow_name, action_name, role_name \
+                in action_activities:
+            if activity_data.activity_status == \
+                    ActivityStatusPolicy.ACTIVITY_FINALLY:
+                activity_data.StatusDesc = ActionStatusPolicy.describe(
+                    ActionStatusPolicy.ACTION_DONE)
+            elif activity_data.activity_status == \
+                    ActivityStatusPolicy.ACTIVITY_CANCEL:
+                activity_data.StatusDesc = ActionStatusPolicy.describe(
+                    ActionStatusPolicy.ACTION_CANCELED)
+            else:
+                activity_data.StatusDesc = ActionStatusPolicy.describe(
+                    ActionStatusPolicy.ACTION_DOING)
+
+            activity_data.email = last_update_user
+            activity_data.flows_name = flow_name
+            activity_data.action_name = action_name
+            activity_data.role_name = role_name if role_name else ''
+            # Append to do and action activities into the master list
+            activities.append(activity_data)
+
+    @staticmethod
+    def __get_community_user_ids():
+        """Get community user ids.
+
+        @return:
+        """
+        community_role_name = current_app.config[
+            'WEKO_PERMISSION_ROLE_COMMUNITY']
+        community_users = User.query.outerjoin(userrole).outerjoin(
+            Role) \
+            .filter(community_role_name == Role.name) \
+            .filter(userrole.c.role_id == Role.id) \
+            .filter(User.id == userrole.c.user_id) \
+            .all()
+        community_user_ids = [community_user.id for community_user in
+                              community_users]
+        return community_user_ids
+
+    def get_activity_list(self, community_id=None, conditions=None,
+                          is_get_all=False):
         """Get activity list info.
 
         :return:
@@ -1306,8 +1713,6 @@ class WorkActivity(object):
         with db.session.no_autoflush:
             is_admin, is_community_admin = self.check_current_user_role()
 
-            community_role_name = current_app.config[
-                'WEKO_PERMISSION_ROLE_COMMUNITY']
             tab_list = conditions.get('tab')
 
             # Get tab of page
@@ -1316,18 +1721,9 @@ class WorkActivity(object):
             page = 1
 
             activities = []
-            community_users = User.query.outerjoin(userrole).outerjoin(
-                Role) \
-                .filter(community_role_name == Role.name) \
-                .filter(userrole.c.role_id == Role.id) \
-                .filter(User.id == userrole.c.user_id) \
-                .all()
-            community_user_ids = [
-                community_user.id for community_user in community_users]
 
-            # query all activities
-            query_action_activities = _Activity.query.outerjoin(_Flow) \
-                .outerjoin(_FlowAction).outerjoin(_FlowActionRole)
+            # query activities
+            query_action_activities = self.__common_query_activity_list()
 
             # query activities by tab is wait
             if tab == WEKO_WORKFLOW_WAIT_TAB:
@@ -1337,8 +1733,8 @@ class WorkActivity(object):
                     page = page_wait[0]
                 if size_wait and size_wait[0].isnumeric():
                     size = size_wait[0]
-                query_action_activities = self.query_activites_by_tab_is_wait(
-                    query_action_activities, is_admin, is_community_admin)
+                query_action_activities = self.query_activities_by_tab_is_wait(
+                    query_action_activities)
             # query activities by tab is all
             elif tab == WEKO_WORKFLOW_ALL_TAB:
                 page_all = conditions.get('pagesall')
@@ -1347,9 +1743,13 @@ class WorkActivity(object):
                     page = page_all[0]
                 if size_all and size_all[0].isnumeric():
                     size = size_all[0]
-                query_action_activities = self.query_activites_by_tab_is_all(
-                    query_action_activities, is_admin, is_community_admin,
-                    community_user_ids)
+                if not is_admin:
+                    community_user_ids = self.__get_community_user_ids()
+                    query_action_activities = self \
+                        .query_activities_by_tab_is_all(
+                            query_action_activities, is_community_admin,
+                            community_user_ids
+                        )
             # query activities by tab is todo
             elif tab == WEKO_WORKFLOW_TODO_TAB:
                 page_todo = conditions.get('pagestodo')
@@ -1358,12 +1758,17 @@ class WorkActivity(object):
                     page = page_todo[0]
                 if size_todo and size_todo[0].isnumeric():
                     size = size_todo[0]
-                query_action_activities = self.query_activites_by_tab_is_all(
-                    query_action_activities, is_admin, is_community_admin,
-                    community_user_ids)
+                if not is_admin:
+                    community_user_ids = self.__get_community_user_ids()
+                    query_action_activities = self\
+                        .query_activities_by_tab_is_all(
+                            query_action_activities, is_community_admin,
+                            community_user_ids, True
+                        )
 
-                query_action_activities = self.query_activites_by_tab_is_todo(
-                    query_action_activities, is_admin, is_community_admin)
+                query_action_activities = self.query_activities_by_tab_is_todo(
+                    query_action_activities, is_admin
+                )
 
             # Filter conditions
             query_action_activities = self.filter_conditions(
@@ -1371,37 +1776,46 @@ class WorkActivity(object):
 
             # Count all result
             count = query_action_activities.distinct(_Activity.id).count()
-            import math
-            maxpage = math.ceil(count / int(size))
+            max_page = math.ceil(count / int(size))
             name_param = ''
-            if int(page) > maxpage:
-                page = 1
-                name_param = 'pages' + tab
-            offset = int(size) * (int(page) - 1)
-            action_activities = query_action_activities \
-                .distinct(_Activity.id).order_by(asc(_Activity.id)).limit(
-                    size).offset(offset).all()
+            if count > 0:
+                name_param, page = self.__get_activity_list_per_page(
+                    activities, max_page, name_param, page,
+                    query_action_activities, size, tab, is_get_all
+                )
+            return activities, max_page, size, page, name_param
 
-            # Append to do and action activities into the master list
-            activities.extend(action_activities)
+    def __get_activity_list_per_page(
+        self, activities, max_page, name_param,
+        page, query_action_activities, size, tab, is_get_all=False
+    ):
+        """Get activity list per page.
 
-            # Sort the list of activity
-            activities.sort(key=lambda a: a.activity_id)
-            for activi in activities:
-                if activi.activity_status == \
-                        ActivityStatusPolicy.ACTIVITY_FINALLY:
-                    activi.StatusDesc = ActionStatusPolicy.describe(
-                        ActionStatusPolicy.ACTION_DONE)
-                elif activi.activity_status == \
-                        ActivityStatusPolicy.ACTIVITY_CANCEL:
-                    activi.StatusDesc = ActionStatusPolicy.describe(
-                        ActionStatusPolicy.ACTION_CANCELED)
-                else:
-                    activi.StatusDesc = ActionStatusPolicy.describe(
-                        ActionStatusPolicy.ACTION_DOING)
-                activi.User = User.query.filter_by(
-                    id=activi.activity_update_user).first()
-            return activities, maxpage, size, page, name_param
+        @param activities:
+        @param max_page:
+        @param name_param:
+        @param page:
+        @param query_action_activities:
+        @param size:
+        @param tab:
+        @return:
+        """
+        if int(page) > max_page:
+            page = 1
+            name_param = 'pages' + tab
+        offset = int(size) * (int(page) - 1)
+        # Get activities
+        query_action_activities = query_action_activities \
+            .distinct(_Activity.id).order_by(asc(_Activity.id))
+        if not is_get_all:
+            query_action_activities = query_action_activities.limit(
+                size).offset(offset)
+        action_activities = query_action_activities.all()
+        if action_activities:
+            # Format activities
+            self.__format_activity_data_to_show_on_workflow(
+                activities, action_activities)
+        return name_param, page
 
     def get_all_activity_list(self, community_id=None):
         """Get all activity list info.
@@ -1429,9 +1843,9 @@ class WorkActivity(object):
                 _Flow.flow_id.in_(db_flow_define_flow_ids)).all()
             db_flow_define_ids = [db_flow_define.id for
                                   db_flow_define in db_flow_defines]
-            db_activitys = _Activity.query.filter_by().all()
+            db_activities = _Activity.query.filter_by().all()
             db_flow_define_ids.extend(
-                [db_activity.flow_id for db_activity in db_activitys])
+                [db_activity.flow_id for db_activity in db_activities])
             db_flow_define_ids = list(set(db_flow_define_ids))
             if community_id is not None:
                 activities = _Activity.query.filter(
@@ -1451,36 +1865,64 @@ class WorkActivity(object):
         his = WorkActivityHistory()
         histories = his.get_activity_history_list(activity_id)
         history_dict = {}
+        activity = WorkActivity()
+        activity_detail = activity.\
+            get_activity_detail(histories[0].activity_id)
+        is_action_order = True if histories[0].action_order else False
         for history in histories:
-            history_dict[history.action_id] = {
-                'Updater': history.user.email,
+            update_user_mail = history.user.email \
+                if history.user else \
+                activity_detail.extra_info.get('guest_mail')
+            keys = history.action_order if history.action_order else \
+                history.action_id
+            history_dict[keys] = {
+                'Updater': update_user_mail,
                 'Result': ActionStatusPolicy.describe(
                     self.get_activity_action_status(
                         activity_id=activity_id,
-                        action_id=history.action_id)
+                        action_id=history.action_id,
+                        action_order=history.action_order
+                    )
                 )
             }
         with db.session.no_autoflush:
-            activity = _Activity.query.filter_by(
-                activity_id=activity_id).one_or_none()
+            self.get_activity_by_id(activity_id)
+            activity = self.get_activity_by_id(activity_id)
             if activity is not None:
                 flow_actions = _FlowAction.query.filter_by(
                     flow_id=activity.flow_define.flow_id).order_by(asc(
                         _FlowAction.action_order)).all()
+                doing_index_id = -1
+                retry_index_id = -1
                 for flow_action in flow_actions:
+                    keys = flow_action.action_order if is_action_order else \
+                        flow_action.action_id
+                    action_status = \
+                        history_dict[keys].get('Result') \
+                        if keys in history_dict else ' '
+                    if action_status == \
+                            ActionStatusPolicy.describe(
+                                ActionStatusPolicy.ACTION_DOING):
+                        doing_index_id = len(steps)
+                    elif action_status == \
+                            ActionStatusPolicy.describe(
+                                ActionStatusPolicy.ACTION_RETRY):
+                        retry_index_id = len(steps)
                     steps.append({
                         'ActivityId': activity_id,
                         'ActionId': flow_action.action_id,
                         'ActionName': flow_action.action.action_name,
                         'ActionVersion': flow_action.action_version,
                         'ActionEndpoint': flow_action.action.action_endpoint,
-                        'Author': history_dict[flow_action.action_id].get(
+                        'Author': history_dict[flow_action.action_order].get(
                             'Updater')
-                        if flow_action.action_id in history_dict else '',
-                        'Status': history_dict[flow_action.action_id].get(
-                            'Result')
-                        if flow_action.action_id in history_dict else ' '
+                        if flow_action.action_order in history_dict else '',
+                        'Status': action_status,
+                        'ActionOrder': flow_action.action_order
                     })
+                if doing_index_id > 0 and retry_index_id > 0:
+                    for i in range(doing_index_id + 1, retry_index_id):
+                        steps[i]['Status'] = ' '
 
         return steps
 
@@ -1491,8 +1933,7 @@ class WorkActivity(object):
         :return:
         """
         with db.session.no_autoflush:
-            query = _Activity.query.filter_by(activity_id=activity_id)
-            activity = query.one_or_none()
+            activity = self.get_activity_by_id(activity_id)
             if activity:
                 activity_login_user = User.query.filter_by(
                     id=activity.activity_login_user).one_or_none()
@@ -1504,7 +1945,7 @@ class WorkActivity(object):
                     activity.update_user = activity_update_user.email
             return activity
 
-    def get_activity_action_role(self, activity_id, action_id):
+    def get_activity_action_role(self, activity_id, action_id, action_order):
         """Get activity action."""
         roles = {
             'allow': [],
@@ -1517,9 +1958,12 @@ class WorkActivity(object):
         with db.session.no_autoflush:
             activity = _Activity.query.filter_by(
                 activity_id=activity_id).first()
-            flow_action = _FlowAction.query.filter_by(
+            query = _FlowAction.query.filter_by(
                 flow_id=activity.flow_define.flow_id,
-                action_id=int(action_id)).one_or_none()
+                action_id=int(action_id))
+            if action_order:
+                query = query.filter_by(action_order=action_order)
+            flow_action = query.first()
             for action_role in flow_action.action_roles:
                 if action_role.action_role_exclude:
                     roles['deny'].append(action_role.action_role)
@@ -1541,12 +1985,13 @@ class WorkActivity(object):
 
     def get_activity_index_search(self, activity_id):
         """Get page info after item search."""
-        from weko_records.api import ItemsMetadata
         from flask_babelex import gettext as _
-        from werkzeug.utils import import_string
         from invenio_pidstore.resolver import Resolver
-        from .views import check_authority_action
+        from weko_records.api import ItemsMetadata
+        from werkzeug.utils import import_string
+
         from .utils import get_identifier_setting
+        from .views import check_authority_action
         activity = WorkActivity()
         activity_detail = activity.get_activity_detail(activity_id)
         item = None
@@ -1571,15 +2016,18 @@ class WorkActivity(object):
         cur_action = activity_detail.action
         action_endpoint = cur_action.action_endpoint
         action_id = cur_action.id
+        action_order = activity_detail.action_order
         temporary_comment = activity.get_activity_action_comment(
-            activity_id=activity_id, action_id=action_id)
+            activity_id=activity_id, action_id=action_id,
+            action_order=action_order)
         if temporary_comment:
             temporary_comment = temporary_comment.action_comment
         cur_step = action_endpoint
         step_item_login_url = None
         approval_record = []
         pid = None
-        if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
+        if ('item_login' == action_endpoint or 'item_login_application'
+                == action_endpoint or 'file_upload' == action_endpoint):
             activity_session = dict(
                 activity_id=activity_id,
                 action_id=activity_detail.action_id,
@@ -1606,7 +2054,8 @@ class WorkActivity(object):
                                 getter=record_class.get_record)
             pid, approval_record = resolver.resolve(pid_identifier.pid_value)
 
-        res_check = check_authority_action(activity_id, action_id)
+        res_check = check_authority_action(activity_id, action_id,
+                                           activity_detail.action_order)
 
         getargs = request.args
         ctx = {'community': None}
@@ -1652,7 +2101,8 @@ class WorkActivity(object):
             ctx['temporary_idf_grant_suffix'] = temporary_idt_inputs
             ctx['idf_grant_data'] = identifier_setting
             ctx['idf_grant_input'] = IDENTIFIER_GRANT_LIST
-            ctx['idf_grant_method'] = IDENTIFIER_GRANT_SUFFIX_METHOD
+            ctx['idf_grant_method'] = current_app.config.get(
+                'IDENTIFIER_GRANT_SUFFIX_METHOD', IDENTIFIER_GRANT_SUFFIX_METHOD)
 
         return activity_detail, item, steps, action_id, cur_step, \
             temporary_comment, approval_record, step_item_login_url,\
@@ -1678,7 +2128,7 @@ class WorkActivity(object):
                 db_activity.activity_status =\
                     ActivityStatusPolicy.ACTIVITY_FINALLY,
             with db.session.begin_nested():
-                db_history = ActivityHistory(
+                activity_history_data = dict(
                     activity_id=db_activity.activity_id,
                     action_id=action.id,
                     action_version=action.action_version,
@@ -1687,6 +2137,11 @@ class WorkActivity(object):
                     action_date=db_activity.activity_start,
                     action_comment=ActionCommentPolicy.FINALLY_ACTION_COMMENT
                 )
+                if db_activity.action_order:
+                    activity_history_data[
+                        'action_order'] = db_activity.action_order
+                db_history = ActivityHistory(**activity_history_data)
+
                 db.session.merge(db_activity)
                 db.session.add(db_history)
             db.session.commit()
@@ -1714,27 +2169,102 @@ class WorkActivity(object):
             current_app.logger.error(ex)
             return None
 
-    def update_title_and_shared_user_id(self, activity_id, title,
-                                        shared_user_id):
-        """
-        Update title and shared user id to activity.
+    @staticmethod
+    def get_activity_by_id(activity_id):
+        """Get activity by identifier.
 
-        :param activity_id:
-        :param title:
-        :param shared_user_id:
+        @param activity_id: Activity identifier.
+        @return:
+        """
+        return _Activity.query.filter_by(activity_id=activity_id).one_or_none()
+
+    def update_activity(self, activity_id: str, activity_data: dict):
+        """Update activity.
+
+        :param activity_id: Activity Identifier.
+        :param activity_data: Activity data.
         :return:
         """
         try:
             with db.session.begin_nested():
-                activity = self.get_activity_detail(activity_id)
+                activity = self.get_activity_by_id(activity_id)
                 if activity:
-                    activity.title = title
-                    activity.shared_user_id = shared_user_id
-                    db.session.add(activity)
+                    for k, v in activity_data.items():
+                        setattr(activity, k, v)
+                    db.session.merge(activity)
             db.session.commit()
         except Exception as ex:
-            current_app.logger.exception(str(ex))
             db.session.rollback()
+            current_app.logger.error(ex)
+            raise ex
+
+    @staticmethod
+    def update_activity_action_handler(activity_id, action_handler_id):
+        """Update activity action handler.
+
+        :param activity_id:
+        :param action_handler_id:
+        :return:
+        """
+        try:
+            with db.session.begin_nested():
+                # Set all action
+                # handler for current user except approval actions
+                activity_actions = ActivityAction().\
+                    query.filter_by(activity_id=activity_id).all()
+                for activity_action in activity_actions:
+                    action = _Action.query.filter_by(
+                        id=activity_action.action_id).one_or_none()
+                    if action.action_endpoint.startswith('approval_'):
+                        activity_action.action_handler = -1
+                    else:
+                        activity_action.action_handler = action_handler_id
+            db.session.merge(activity_action)
+        except Exception as ex:
+            current_app.logger.error(ex)
+            return None
+
+    @staticmethod
+    def get_corresponding_usage_activities(user_id):
+        """Get corresponding usage activities.
+
+        @param user_id:
+        @return:
+        """
+        with db.session.no_autoflush:
+            activities = _Activity.query.filter_by(
+                activity_login_user=int(user_id)).order_by(asc(_Activity.id))
+            usage_application_list = {
+                "activity_ids": [],
+                "activity_data_type": {}
+            }
+            output_report_list = {
+                "activity_ids": [],
+                "activity_data_type": {}
+            }
+            for activity in activities:
+                activity_detail = WorkActivity().get_activity_detail(
+                    activity.activity_id)
+                workflow_detail = WorkFlow().get_workflow_by_id(
+                    activity_detail.workflow_id)
+                item_type = get_item_type_name(workflow_detail.itemtype_id)
+                item_type_list = current_app.config[
+                    'WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPES_LIST']
+                if item_type in item_type_list:
+                    usage_application_list["activity_ids"].append(
+                        activity.activity_id)
+                    usage_application_list["activity_data_type"][
+                        activity.activity_id] = activity.extra_info.get(
+                        "related_title") if activity.extra_info else None
+                elif item_type == current_app.config[
+                        'WEKO_ITEMS_UI_OUTPUT_REPORT']:
+                    output_report_list["activity_ids"].append(
+                        activity.activity_id)
+                    output_report_list["activity_data_type"][
+                        activity.activity_id] = activity.extra_info.get(
+                        "related_title") if activity.extra_info else None
+
+        return usage_application_list, output_report_list
 
     def get_activity_by_workflow_id(self, workflow_id):
         """Get workflow activity by workflow ID."""
@@ -1766,13 +2296,105 @@ class WorkActivity(object):
             current_app.logger.exception(str(ex))
             db.session.rollback()
 
+    def cancel_usage_report_activities(self, activities_id: list):
+        """Cancel usage report activities are excepted.
+
+        @param activities_id:
+        @return:
+        """
+        activities = self.get_usage_report_activities(activities_id)
+        item_id_lst = []
+        if not activities:
+            return item_id_lst
+        try:
+            for activity in activities:
+                activity.activity_status = ActivityStatusPolicy.ACTIVITY_CANCEL
+                if activity.item_id:
+                    item_id_lst.append(activity.item_id)
+                db.session.merge(activity)
+            if len(item_id_lst) > 0:
+                cancel_records = WekoDeposit.get_records(item_id_lst)
+                for record in cancel_records:
+                    cancel_deposit = WekoDeposit(record, record.model)
+                    cancel_deposit.clear()
+            db.session.commit()
+        except Exception as ex:
+            current_app.logger.exception(str(ex))
+            db.session.rollback()
+            return False
+
+    @staticmethod
+    def get_usage_report_activities(
+            activities_id: list, size: int = None, page: int = None) -> list:
+        """Get usage report activities.
+
+        Args:
+            activities_id ([list]): Activity identifier list
+            size ([int], optional): the number of activities. Defaults to None.
+            page ([int], optional): page. Defaults to None.
+
+        Returns:
+            [list]: Activities list.
+
+        """
+        query = _Activity.query
+        if activities_id:
+            query = query.filter(
+                _Activity.activity_id.in_(activities_id)
+            )
+        else:
+            query = query.filter(
+                _Activity.workflow_id == 31001
+            )
+        query = query.filter(
+            or_(_Activity.activity_status
+                == ActivityStatusPolicy.ACTIVITY_BEGIN,
+                _Activity.activity_status
+                == ActivityStatusPolicy.ACTIVITY_MAKING)
+        ).order_by(asc(_Activity.id))
+        if page is not None and size is not None:
+            offset = int(size) * (int(page) - 1)
+            query = query.limit(size).offset(offset)
+        activities = query.all()
+        return activities
+
+    @staticmethod
+    def count_all_usage_report_activities(activities_id: list) -> int:
+        """Count all usage report activities.
+
+        Args:
+            activities_id ([list]): The activities list.
+
+        Returns:
+            [int]: The number of usage report activities.
+
+        """
+        query = _Activity.query
+        if activities_id:
+            query = query.filter(
+                _Activity.activity_id.in_(activities_id)
+            )
+        else:
+            query = query.filter(
+                _Activity.workflow_id == 31001
+            )
+        activities_number = query.filter(
+            or_(_Activity.activity_status
+                == ActivityStatusPolicy.ACTIVITY_BEGIN,
+                _Activity.activity_status
+                == ActivityStatusPolicy.ACTIVITY_MAKING)
+        ).count()
+
+        return activities_number
+
 
 class WorkActivityHistory(object):
     """Operated on the Activity."""
 
-    def create_activity_history(self, activity):
+    def create_activity_history(self, activity, action_order):
         """Create new activity history.
 
+        :param action_order:
         :param activity:
         :return:
         """
@@ -1784,6 +2406,7 @@ class WorkActivityHistory(object):
             action_user=current_user.get_id(),
             action_date=datetime.utcnow(),
             action_comment=activity.get('commond'),
+            action_order=action_order,
         )
         new_history = False
         activity = WorkActivity()
@@ -1827,13 +2450,102 @@ class WorkActivityHistory(object):
                     history.action_comment)
             return histories
 
-    def get_activity_history_detail(self, activity_id):
-        """Get activity history detail info.
+    @staticmethod
+    def _get_history_based_on_activity_id(activities_id, actions_id=None,
+                                          action_status=None):
+        """Get workflow history based on activities identifier.
 
-        :param activity_id:
-        :return:
+        @param activities_id:Activity identifier list.
+        @param actions_id:Action identifier list.
+        @param action_status:Action status.
+        @return:
         """
-        pass
+        query = ActivityHistory.query.filter(
+            ActivityHistory.activity_id.in_(activities_id)
+        )
+        if actions_id:
+            query = query.filter(
+                ActivityHistory.action_id.in_(actions_id)
+            )
+        if action_status:
+            query = query.filter(
+                ActivityHistory.action_status == action_status
+            )
+        query = query.order_by(asc(ActivityHistory.id))
+        histories = query.all()
+        return histories
+
+    def get_application_date(self, activities_id: list):
+        """Get application date.
+
+        @param activities_id:
+        @return:
+        """
+        with db.session.no_autoflush:
+            actions = _Action.query.filter(
+                _Action.action_endpoint.like('item_login%')).all()
+            histories = []
+            if actions:
+                application_item = [action.id for action in actions]
+                histories = self._get_history_based_on_activity_id(
+                    activities_id, application_item,
+                    ActivityStatusPolicy.ACTIVITY_FINALLY
+                )
+
+            return histories
+
+    def get_approved_date(self, activities_id: list):
+        """Get final approval date.
+
+        @param activities_id:
+        @return:
+        """
+        def _check_is_has_approval(_action_list):
+            for _id in approval_actions_id:
+                if _id in _action_list:
+                    return True
+            return False
+        with db.session.no_autoflush:
+            actions = _Action.query.filter(
+                _Action.action_endpoint.like('approval%')).all()
+            end_action = _Action.query.filter_by(
+                action_endpoint='end_action').first()
+            histories_list = []
+            if actions and end_action:
+                approval_actions_id = [action.id for action in actions]
+                actions_id = [action.id for action in actions]
+                actions_id.append(end_action.id)
+                histories = self._get_history_based_on_activity_id(
+                    activities_id, actions_id,
+                    ActivityStatusPolicy.ACTIVITY_FINALLY)
+                tmp_data = {}
+                for history in histories:
+                    data = tmp_data.get(history.activity_id)
+                    if data:
+                        if data['action']:
+                            tmp = data.get("action")
+                            tmp.append(history.action_id)
+                            data['action'] = tmp
+                        else:
+                            data = {
+                                'action': [history.action_id]
+                            }
+                    else:
+                        data = {
+                            'action': [history.action_id]
+                        }
+                    if history.action_id == end_action.id:
+                        data['action_date'] = history.action_date
+
+                    tmp_data[history.activity_id] = data
+
+                for k, v in tmp_data.items():
+                    if _check_is_has_approval(v.get('action', [])):
+                        histories_list.append({
+                            "activity_id": k,
+                            "action_date": v.get('action_date')
+                        })
+                return histories_list
 
     def upd_activity_history_detail(self, activity_id, action_id):
         """Get activity history detail info.
@@ -1851,6 +2563,27 @@ class WorkActivityHistory(object):
                 if activity:
                     activity.action_status = ActionStatusPolicy.ACTION_DOING
                     db.session.merge(activity)
+            db.session.commit()
+            return True
+        except Exception as ex:
+            current_app.logger.exception(str(ex))
+            db.session.rollback()
+            return None
+
+    def update_activity_history_owner(self, activity_id, owner_id):
+        """Update activity history owner.
+
+        @param activity_id:
+        @param owner_id:
+        @return:
+        """
+        try:
+            with db.session.begin_nested():
+                histories = ActivityHistory.query.filter_by(
+                    activity_id=activity_id).all()
+                for history in histories:
+                    history.action_user = owner_id
+                    db.session.merge(history)
             db.session.commit()
             return True
         except Exception as ex:
@@ -1920,7 +2653,7 @@ class GetCommunity(object):
     """Get Community Info."""
 
     @classmethod
-    def get_community_by_id(self, community_id):
+    def get_community_by_id(cls, community_id):
         """Get Community by ID."""
         from invenio_communities.models import Community
         c = Community.get(community_id)

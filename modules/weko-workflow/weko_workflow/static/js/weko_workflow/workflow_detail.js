@@ -169,11 +169,12 @@ require([
     $('#' + btn_id).click();
   });
 
-  $('#btn-approval').on('click', function () {
+  function nextAction() {
     let _this = $(this);
     startLoading(_this);
-    let uri_apo = $('.cur_step').data('next-uri');
-    let act_ver = $('.cur_step').data('action-version');
+    let $currentStep = $('.cur_step');
+    let uri_apo = $currentStep.data('next-uri');
+    let act_ver = $currentStep.data('action-version');
     let post_data = {
       commond: $('#input-comment').val(),
       action_version: act_ver
@@ -194,6 +195,40 @@ require([
         } else {
           endLoading(_this);
           alert(data.msg);
+        }
+      },
+      error: function (jqXHE, status) {
+        endLoading(_this);
+        alert('server error');
+      }
+    });
+  }
+
+  $('#confirm_approval_btn').click(function () {
+    startLoading($(this));
+    nextAction();
+  });
+
+  $('#btn-approval').on('click', function () {
+    let _this = $(this);
+    startLoading(_this);
+    let origin = new URL(window.location.href).origin;
+    let post_uri = origin + "/workflow/check_approval/" + $('#activity_id').html();
+    $.ajax({
+      url: post_uri,
+      method: "GET",
+      async: true,
+      success: function (data, status) {
+        if (data.error === 1) {
+          if (data['check_handle'] === 1 && data['check_continue'] === 1) {
+            $("#confirm_modal").modal("show");
+            endLoading(_this);
+          } else {
+            nextAction();
+          }
+        } else if (data.error === -1) {
+          endLoading(_this);
+          alert('server error');
         }
       },
       error: function (jqXHE, status) {
@@ -276,21 +311,15 @@ require([
   $('#lnk_item_detail').on('click', function () {
     $('#myModal').modal('show');
   });
-})
 
-/*
-  Hide preview area show photo.
-  Hide html tag <hr> which is next element of preview area show photo.
-*/
-if(Number($('#preview_count').val()) == 0){
-  if($('#main_preview_carousel_panel').length){
-    /* 'Approval' step of registed processing */
-    $('#main_preview_carousel_panel').next('hr').addClass('hide')
-    $('#main_preview_carousel_panel').addClass('hide')
-  }
-  if($('#modal_preview_carousel_panel').length) {
-    /* 'End' step of registed processing */
-    $('#modal_preview_carousel_panel').addClass('hide')
-    $('#modal_preview_carousel_panel').next().addClass('hide')
-  }
-}
+  $('#checked').on('click', function () {
+    let checkButton = $("#button-check");
+    if (this.checked) {
+      checkButton.removeAttr('disabled')
+    } else {
+      checkButton.attr('disabled', 'disabled')
+    }
+  });
+  $('.pointer').css('cursor', 'pointer');
+
+})

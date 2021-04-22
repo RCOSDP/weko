@@ -13,7 +13,7 @@
     "is_output": {
       "type": "boolean",
       "title": " ",
-      "default": true
+      "default": false
     },
     "publication_title": {
       "type": "string",
@@ -23,7 +23,7 @@
       "type": "string",
       "title": "Print-format identifier",
       "maxLength": 20,
-      "pattern": "^[0-9]{4}-?[0-9]{3}[0-9X]$|^[0-9]{9}[0-9X]$|^[0-9]+-[0-9]+-[0-9]+-[0-9X]$|^97[8-9][0-9]{9}[0-9X]$|^97[8-9]-[0-9]+-[0-9]+-[0-9]+-[0-9X]$",
+      "pattern": "^[0-9]{4}-[0-9]{3}[0-9X]$|^[0-9]{13}$|^97[8-9][0-9]{9}[0-9X]$|^97[8-9]-[0-9]+-[0-9]+-[0-9]+-[0-9X]$",
       "validationMessage_i18n": {
         "202": {
           "en": "Print-format identifier format is wrong",
@@ -35,7 +35,7 @@
       "type": "string",
       "title": "Online-format identifier",
       "maxLength": 20,
-      "pattern": "^[0-9]{4}-?[0-9]{3}[0-9X]$|^[0-9]{9}[0-9X]$|^[0-9]+-[0-9]+-[0-9]+-[0-9X]$|^97[8-9][0-9]{9}[0-9X]$|^97[8-9]-[0-9]+-[0-9]+-[0-9]+-[0-9X]$",
+      "pattern": "^[0-9]{4}-[0-9]{3}[0-9X]$|^[0-9]{13}$|^97[8-9][0-9]{9}[0-9X]$|^97[8-9]-[0-9]+-[0-9]+-[0-9]+-[0-9X]$",
       "validationMessage_i18n": {
         "202": {
           "en": "Online-format identifier format is wrong",
