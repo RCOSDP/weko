@@ -211,8 +211,9 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                                     fjson.get('groups'))
                             else:
                                 is_can = True
-                        else:
-                            is_can = check_site_license_permission()
+                        if not is_can:
+                            # site license permission check
+                            is_can = site_license_check()
 
             #  can not access
             elif 'open_no' in acsrole:
