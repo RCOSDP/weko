@@ -270,7 +270,7 @@ def resolve_address(addr):
         record = gethostbyaddr(addr)
 
     except herror as exc:
-        print('an error occurred while resolving ', addr, ': ', exc)
+        # print('an error occurred while resolving ', addr, ': ', exc)
         return None
 
     return record[0]
@@ -296,9 +296,14 @@ def search_event_builder(event, sender_app, search_args=None,
 
 def build_search_unique_id(doc):
     """Build search unique identifier."""
+    search_key = ''
+    search_type = -1
+    if 'search_detail' in doc and doc['search_detail']:
+        search_key = copy_search_keyword(doc)
+        search_type = copy_search_type(doc)
     key = '{0}_{1}_{2}_{3}'.format(
-        doc['search_detail']['search_key'],
-        doc['search_detail']['search_type'],
+        search_key,
+        search_type,
         doc['site_license_name'],
         doc['unique_session_id']
     )
