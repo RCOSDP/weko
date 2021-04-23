@@ -1198,7 +1198,7 @@ class Indexes(object):
                 query(func.every(db.and_(
                     Index.public_state,
                     db.or_(
-                        Index.public_date == None,
+                        Index.public_date is None,
                         Index.public_date <= date.today()
                     ))).label('parent_state')
                 ).filter(Index.id.in_(path))
