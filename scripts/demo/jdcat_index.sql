@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.4 (Debian 12.4-1.pgdg100+1)
--- Dumped by pg_dump version 12.4 (Debian 12.4-1.pgdg100+1)
+-- Dumped from database version 12.3 (Debian 12.3-1.pgdg100+1)
+-- Dumped by pg_dump version 12.3 (Debian 12.3-1.pgdg100+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -16,11 +16,11 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
-ALTER TABLE IF EXISTS ONLY public.index DROP CONSTRAINT IF EXISTS uix_position CASCADE;
-ALTER TABLE IF EXISTS ONLY public.index DROP CONSTRAINT IF EXISTS pk_index CASCADE;
-ALTER TABLE IF EXISTS public.index ALTER COLUMN id DROP DEFAULT;
-DROP SEQUENCE IF EXISTS public.index_id_seq CASCADE;
-DROP TABLE IF EXISTS public.index CASCADE;
+ALTER TABLE ONLY public.index DROP CONSTRAINT uix_position CASCADE;
+ALTER TABLE ONLY public.index DROP CONSTRAINT pk_index CASCADE;
+ALTER TABLE public.index ALTER COLUMN id DROP DEFAULT;
+DROP SEQUENCE public.index_id_seq CASCADE;
+DROP TABLE public.index CASCADE;
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -62,7 +62,9 @@ CREATE TABLE public.index (
     contribute_group text,
     recursive_contribute_group boolean,
     owner_user_id integer,
-    item_custom_sort jsonb
+    item_custom_sort jsonb,
+    biblio_flag boolean DEFAULT false,
+    online_issn text DEFAULT ''::text
 );
 
 
@@ -100,8 +102,8 @@ ALTER TABLE ONLY public.index ALTER COLUMN id SET DEFAULT nextval('public.index_
 -- Data for Name: index; Type: TABLE DATA; Schema: public; Owner: invenio
 --
 
-COPY public.index (created, updated, id, parent, "position", index_name, index_name_english, index_link_name, index_link_name_english, harvest_spec, index_link_enabled, comment, more_check, display_no, harvest_public_state, display_format, image_name, public_state, public_date, recursive_public_state, rss_status, coverpage_state, recursive_coverpage_check, browsing_role, recursive_browsing_role, contribute_role, recursive_contribute_role, browsing_group, recursive_browsing_group, contribute_group, recursive_contribute_group, owner_user_id, item_custom_sort) FROM stdin;
-2020-12-06 13:38:50.703059	2020-12-06 13:52:57.159823	1607261930660	0	0	New Index	New Index		New Index		f		f	5	t	1		t	\N	f	f	f	f	3,98,99	t	1,2,3,4,98,99	t		t		t	1	{}
+COPY public.index (created, updated, id, parent, "position", index_name, index_name_english, index_link_name, index_link_name_english, harvest_spec, index_link_enabled, comment, more_check, display_no, harvest_public_state, display_format, image_name, public_state, public_date, recursive_public_state, rss_status, coverpage_state, recursive_coverpage_check, browsing_role, recursive_browsing_role, contribute_role, recursive_contribute_role, browsing_group, recursive_browsing_group, contribute_group, recursive_contribute_group, owner_user_id, item_custom_sort, biblio_flag, online_issn) FROM stdin;
+2020-12-06 13:38:50.703059	2020-12-06 13:52:57.159823	1607261930660	0	0	New Index	New Index		New Index		f		f	5	t	1		t	\N	f	f	f	f	3,98,99	t	1,2,3,4,98,99	t		t		t	1	{}	f	
 \.
 
 
