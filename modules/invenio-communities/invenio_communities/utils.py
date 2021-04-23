@@ -31,6 +31,7 @@ from math import ceil
 from uuid import UUID
 
 from flask import current_app
+from flask_login import current_user
 from invenio_db import db
 from invenio_files_rest.errors import FilesException
 from invenio_files_rest.models import Bucket, Location, ObjectVersion
@@ -222,3 +223,15 @@ def send_community_request_email(increq):
     )
 
     send_email.delay(msg.__dict__)
+
+
+def get_user_role_ids():
+    """Get role.id of current user.
+
+    :returns role_ids: List of role.id.
+    """
+    role_ids = []
+    if current_user and current_user.is_authenticated:
+        role_ids = [role.id for role in current_user.roles]
+
+    return role_ids
