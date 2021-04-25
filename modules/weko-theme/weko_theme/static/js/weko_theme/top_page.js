@@ -236,8 +236,9 @@ require([
         // 詳細検索からページ遷移した場合、詳細検索のアコーディオンを開いた状態にして、ボタンのテキストを「閉じる」にセット
         var urlParams = new URLSearchParams(window.location.search);
         var isDetailSearch = Array.from(urlParams.keys()).length > 6  // 6は簡易検索の際のクエリの数
+        var SearchType = GetUrlParam('search_type');
 
-        if (isDetailSearch) {
+        if (isDetailSearch && SearchType && SearchType != '2') {  // インデックスの検索に開かない
             $('#search_detail_metadata').collapse('show');
             $('.detail-search-open').hide();
             $('.detail-search-close').show();

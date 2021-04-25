@@ -33,7 +33,7 @@ import uuid
 import zipfile
 from collections import Callable, OrderedDict
 from datetime import datetime
-from functools import partial, reduce
+from functools import partial, reduce, wraps
 from io import StringIO
 from operator import getitem
 
@@ -43,6 +43,7 @@ from celery.result import AsyncResult
 from celery.task.control import revoke
 from flask import abort, current_app, request
 from flask_babelex import gettext as _
+from flask_login import current_user
 from invenio_db import db
 from invenio_files_rest.models import FileInstance, Location, ObjectVersion
 from invenio_i18n.ext import current_i18n
@@ -60,7 +61,8 @@ from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
 from weko_handle.api import Handle
 from weko_index_tree.api import Indexes
-from weko_index_tree.utils import check_restrict_doi_with_indexes
+from weko_index_tree.utils import check_index_permissions, \
+    check_restrict_doi_with_indexes
 from weko_indextree_journal.api import Journals
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
@@ -84,7 +86,7 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, \
     WEKO_IMPORT_SUFFIX_PATTERN, WEKO_IMPORT_SYSTEM_ITEMS, \
     WEKO_IMPORT_THUMBNAIL_FILE_TYPE, WEKO_IMPORT_VALIDATE_MESSAGE, \
-    WEKO_REPO_USER, WEKO_SEARCH_UI_BULK_EXPORT_TASK, \
+    WEKO_REPO_USER, WEKO_SEARCH_TYPE_DICT, WEKO_SEARCH_UI_BULK_EXPORT_TASK, \
     WEKO_SEARCH_UI_BULK_EXPORT_URI, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
@@ -1716,7 +1718,9 @@ def prepare_doi_setting():
         if not identifier_setting.ndl_jalc_doi:
             identifier_setting.ndl_jalc_doi = text_empty
         # Semi-automatic suffix
-        if identifier_setting.suffix and IDENTIFIER_GRANT_SUFFIX_METHOD == 1:
+        suffix_method = current_app.config.get(
+            'IDENTIFIER_GRANT_SUFFIX_METHOD', IDENTIFIER_GRANT_SUFFIX_METHOD)
+        if identifier_setting.suffix and suffix_method == 1:
             identifier_setting.suffix = '/' + identifier_setting.suffix
         else:
             identifier_setting.suffix = ''
@@ -2655,6 +2659,28 @@ def handle_remove_es_metadata(item):
         deposit.indexer.delete(deposit)
     except Exception as ex:
         current_app.logger.error(ex)
+
+
+def check_index_access_permissions(func):
+    """Check index access permission.
+
+    Args:
+        func (func): Function.
+    """
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+        search_type = request.args.get('search_type', WEKO_SEARCH_TYPE_DICT[
+            'FULL_TEXT'])
+        if search_type == WEKO_SEARCH_TYPE_DICT['INDEX']:
+            cur_index_id = request.args.get('q', '0')
+            if not check_index_permissions(None, cur_index_id):
+                if not current_user.is_authenticated:
+                    return current_app.login_manager.unauthorized()
+                else:
+                    abort(403)
+        return func(*args, **kwargs)
+
+    return decorated_view
 
 
 def handle_check_file_metadata(list_record, data_path):

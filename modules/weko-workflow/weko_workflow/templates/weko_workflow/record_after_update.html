@@ -59,19 +59,21 @@
                  <tr >
                    <td >{{file.filename or file.key}}</td>
                    <td rowspan="2">
-                     {%- if not 'simple' in file.displaytype -%}
+                     {%- if not 'simple' == file.displaytype -%}
                        {%- if 'license_free' == file.licensetype -%}
-                         <span class="break-word">{{ file.licensefree }}</span>
+                        <span class="break-word">{{ file.licensefree }}</span>
                        {%- else %}
-                       {% set lst = file.licensetype | get_license_icon %}
-                         <a target="_blank" href="{{lst[2]}}" alt="Creative Commons Licenses">
-                         <img src="{{lst[0]}}" alt="license.icon" /></a><br>
-                         {{ lst[1] }}
-                       {%- endif %}
+                        {% set lst = file.licensetype | get_license_icon %}
+                        {%- if lst[0] -%}
+                          <a target="_blank" href="{{lst[2]}}" alt="Creative Commons Licenses">
+                            <img src="{{lst[0]}}" alt="license.icon" /></a><br>
+                          {{ lst[1] }}
+                        {%- endif -%}
+                       {%- endif -%}
                      {%- endif -%}
                    </td>
                  </tr>
-                 <tr >
+                 <tr>
                    <td>
                        <span class="filename">
                          <img src="{{img}}" alt={{file.filename or file.key}} />
@@ -117,4 +119,3 @@
  </div>
  {% endif %}
  <br>
- 

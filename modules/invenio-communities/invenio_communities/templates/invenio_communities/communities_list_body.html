@@ -18,90 +18,6 @@
 # MA 02111-1307, USA.
 #}
 
-<!--<div class="row">-->
-<!--<div class="col-sm-12">-->
-<!--<table class="table table-striped table-bordered">-->
-<!--<thead>-->
-<!--<tr>-->
-<!--<th>{{ _('No.') }}</th>-->
-<!--<th>{{ _('Title') }}</th>-->
-<!--<th>{{ _('Description') }}</th>-->
-<!--<th></th>-->
-<!--</tr>-->
-<!--</thead>-->
-<!--<tbody>-->
-<!--{%- set args = request.args.copy().to_dict() -%}-->
-<!--<form method="GET" id="search_form" role="form">-->
-<!--{{ form.p(class_="form-control " + form.p.short_name, placeholder='Search communities', type='text') }}-->
-<!--</form>-->
-<!--<br />-->
-<!--<div class="form-inline">-->
-<!--<div class="form-group">-->
-<!--<p class="help-block hidden-xs">-->
-<!--{{ _('Showing %(x_from)d to %(x_to)d out of %(x_total)d communities.', x_from=r_from, x_to=r_to, x_total=r_total) }}-->
-<!--</p>-->
-<!--</div>-->
-<!--<div class="form-group pull-right">-->
-<!--<div class="btn-group">-->
-<!--<a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">-->
-<!--<i class="glyphicon glyphicon-random"></i> {{ _('Sort by') }}-->
-<!--<span class="caret"></span>-->
-<!--</a>-->
-<!--<ul class="dropdown-menu">-->
-<!--{%- for opt in ['title', 'ranking'] -%}-->
-  <!--{%- set new_args = args.copy() -%}-->
-  <!--{%- do new_args.update({'so': opt}) -%}-->
-  <!--<li>-->
-  <!--<a href="{{ url_for('invenio_communities.index', **new_args) }}" class="active">-->
-  <!--<i class="pull-right icon {{ 'glyphicon glyphicon-ok' if args.get('so', 'ranking')==opt }}"></i>-->
-  <!--{{ opt }}-->
-  <!--</a>-->
-  <!--</li>-->
-  <!--{%- endfor -%}-->
-<!--</ul>-->
-<!--</div>-->
-<!--</div>-->
-<!--</div>-->
-<!--<br>-->
-<!--{% if communities %}-->
-  <!--{%- for row in communities|batch(2) %}-->
-    <!--{%- for obj in row %}-->
-      <!--<tr class="">-->
-      <!--<th scope="row">{{loop.index}}</th>-->
-      <!--<td>{{ obj.title }}</td>-->
-      <!--<td>{{ obj.description }}</td>-->
-      <!--<td>-->
-      <!--<div class="">-->
-      <!--<div class="form-group">-->
-      <!--<div class="dropdown">-->
-      <!--<button type="button" class="btn dropdown-toggle" id="dropdownMenu_View" data-toggle="dropdown">{{ _('View') }}-->
-      <!--<span class="caret"></span>-->
-      <!--</button>-->
-      <!--<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu_View">-->
-      <!--<li role="presentation">-->
-      <!--<a role="menuitem" tabindex="-1" href="{{url_for('invenio_communities.view', community_id=obj.id, view='basic')}}">{{ _('Basic') }}</a>-->
-      <!--</li>-->
-      <!--<li role="presentation">-->
-      <!--<a role="menuitem" tabindex="-1" href="{{url_for('invenio_communities.view', community_id=obj.id, view='weko')}}">{{ _('Weko') }}</a>-->
-      <!--</li>-->
-      <!--</ul>-->
-      <!--</div>-->
-      <!--</div>-->
-      <!--</div>-->
-      <!--</td>-->
-      <!--</tr>-->
-      <!--{%- endfor %}-->
-    <!--{%- endfor %}-->
-  <!--{% else %}-->
-  <!--<p class="text-muted text-center">-->
-  <!--<strong>{{ _('Your search did not match any communities. Please try again.') }}</strong>-->
-  <!--</p>-->
-  <!--{% endif %}-->
-<!--</tbody>-->
-<!--</table>-->
-<!--</div>-->
-<!--</div>-->
-
 <div class="communities">
   <div class="row">
     <div class="col-xs-12 col-sm-12 col-md-12">
@@ -112,7 +28,7 @@
       </h1>
 
     </div>
-    <div class="col-sm-8 col-md-8">
+    <div class="col-sm-12 col-md-12">
       {%- set args = request.args.copy().to_dict() -%}
       <form method="GET" id="search_form" role="form">
         {{ form.p(class_="form-control " + form.p.short_name, placeholder='Search communities', type='text') }}
@@ -170,20 +86,10 @@
                 <div class="col-sm-12 col-md-6">
                   <div class="well">
                     <h4>
-                      <div class="pull-right">
-                        <div class="form-group">
-                          <a href="{{ url_for('invenio_communities.view', community_id=obj.id, view='basic') }}"
-                             class="btn btn-info">{{ _('Basic') }}</a>
-                          <a href="{{ url_for('invenio_communities.view', community_id=obj.id, view='weko') }}"
-                             class="btn btn-info">{{ _('Weko') }}</a>
-                        </div>
-                      </div>
-                      {{ obj.title }}
+                      <a href="{{ url_for('invenio_communities.view', community_id=obj.id, view='weko') }}">{{ obj.title }}</a>
                     </h4>
                     <br/>
                     <p>{{ obj.description|striptags|truncate }}</p>
-                    <small class="text-muted">Curated
-                      by: {{ obj.owner.profile.username }}</small>
                   </div>
                 </div>
               {% endif %}
@@ -233,9 +139,6 @@
           <strong>{{ _('Your search did not match any communities. Please try again.') }}</strong>
         </p>
       {% endif %}
-    </div> <!-- /.col-sm-8 col-md-8 -->
-    <div class="col-sm-4 col-md-4">
-      {% include "invenio_communities/mycommunities.html" %}
-    </div>
+    </div> <!-- /.col-sm-12 col-md-12 -->
   </div>
 </div>

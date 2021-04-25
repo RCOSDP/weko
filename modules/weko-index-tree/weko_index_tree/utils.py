@@ -453,7 +453,8 @@ def get_elasticsearch_records_data_by_indexes(index_ids, start_date, end_date):
             records_search,
             start_date,
             end_date,
-            index_ids
+            index_ids,
+            True
         )
         search_result = search_instance.execute()
         result = search_result.to_dict()
@@ -473,10 +474,12 @@ def generate_path(index_ids):
         dictionary -- elastic search data
 
     """
+    from .api import Indexes
     path = dict()
     result = []
     for index in index_ids:
-        parent_path = path.get(str(index.pid)) or ""
+        parent_path = path.get(str(index.pid)) or \
+            (Indexes.get_full_path(index.pid) if index.pid > 0 else "")
         path[str(index.cid)] = (parent_path + "/" + str(index.cid)) \
             if parent_path != "" else "" + str(index.cid)
         result.append(path[str(index.cid)])
@@ -709,10 +712,11 @@ def check_has_any_item_in_index_is_locked(index_id):
     return False
 
 
-def check_index_permissions(record) -> bool:
+def check_index_permissions(record, index_id=None) -> bool:
     """Check indexes of record is private.
 
     :param record:Record data.
+    :param index_id:Index id.
 
     Returns:
         [bool]: False if the record has indexes(or parent indexes)
@@ -723,6 +727,7 @@ def check_index_permissions(record) -> bool:
         """Check index data by role."""
         can_view = False
         if roles[0]:
+            # In case admin role.
             can_view = True
         elif index_data.public_state:
             check_user_role = check_roles(roles, index_data.browsing_role) or \
@@ -746,23 +751,32 @@ def check_index_permissions(record) -> bool:
 
         """
         for _index in _index_groups:
-            if index_roles.get(_index) is False:
+            if _index and index_roles.get(str(_index)) is False:
                 return False
         return True
 
-    # Get record's index.
-    list_index = record.get("path")
+    def _get_record_index_list():
+        """Get index list of record."""
+        list_index = record.get("path")
+        for _index in list_index:
+            _indexes = str(_index).split('/')
+            index_lst.extend(_indexes)
+            index_groups.append(_indexes)
+
+    def _get_parent_lst():
+        """Get parent list of index."""
+        parent_lst = Indexes.get_all_parent_indexes(index_id)
+        for _index in parent_lst:
+            index_lst.append(_index.id)
+        index_groups.append(index_lst)
+
     index_lst = []
     index_groups = []
-    if list_index:
-        index_id_lst = []
-        for index in list_index:
-            indexes = str(index).split('/')
-            index_id_lst.extend(indexes)
-            index_groups.append(indexes)
-        index_lst = index_id_lst
-    # Get all index and parent index of records in DB.
     from .api import Indexes
+    if record and record.get("path"):
+        _get_record_index_list()
+    elif index_id is not None:
+        _get_parent_lst()
     indexes = Indexes.get_path_list(index_lst)
 
     roles = get_user_roles()

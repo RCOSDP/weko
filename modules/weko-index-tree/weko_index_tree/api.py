@@ -21,7 +21,7 @@
 """API for weko-index-tree."""
 
 from copy import deepcopy
-from datetime import datetime
+from datetime import date, datetime
 from functools import partial
 
 from flask import current_app, json
@@ -114,7 +114,6 @@ class Indexes(object):
                     data["harvest_public_state"] = iobj.harvest_public_state
 
                     data["display_format"] = iobj.display_format
-                    data["image_name"] = iobj.image_name
 
                     if iobj.recursive_public_state:
                         data["public_state"] = iobj.public_state
@@ -487,6 +486,19 @@ class Indexes(object):
     def get_index_tree(cls, pid=0):
         """Get index tree json."""
         return get_tree_json(cls.get_recursive_tree(pid), pid)
+
+    @classmethod
+    def get_browsing_info(cls):
+        """Get browsing information of all indexes."""
+        browsing_info = {}
+        indexes = cls.get_public_indexes()
+        for index in indexes:
+            browsing_info[str(index.id)] = {
+                'parent': str(index.parent),
+                'public_date': index.public_date,
+                'browsing_role': index.browsing_role.split(',')
+            }
+        return browsing_info
 
     @classmethod
     def get_browsing_tree(cls, pid=0):
@@ -1176,6 +1188,34 @@ class Indexes(object):
             return False
 
     @classmethod
+    def is_public_state(cls, paths):
+        """Check have public state."""
+        def _query(path):
+            return db.session. \
+                query(func.every(db.and_(
+                    Index.public_state,
+                    db.or_(
+                        Index.public_date == None,
+                        Index.public_date <= date.today()
+                    ))).label('parent_state')
+                ).filter(Index.id.in_(path))
+
+        try:
+            last_path = paths.pop(-1).split('/')
+            qry = _query(last_path)
+            for i in range(len(paths)):
+                paths[i] = paths[i].split('/')
+                paths[i] = _query(paths[i])
+            smt = qry.union_all(*paths).subquery()
+            result = db.session.query(
+                func.bool_or(
+                    smt.c.parent_state).label('parent_state')).one()
+            return result.parent_state
+        except Exception as se:
+            current_app.logger.debug(se)
+            return False
+
+    @classmethod
     def set_item_sort_custom(cls, index_id, sort_json={}):
         """Set custom sort."""
         sort_dict_db = {}
@@ -1426,9 +1466,97 @@ class Indexes(object):
         return query
 
     @classmethod
+    def get_all_parent_indexes(cls, index_id) -> list:
+        """Get all parent indexes.
+
+        Args:
+            index_id ():
+
+        Returns:
+            [list]: parent indexes list.
+
+        """
+        # Define a CTE with recursive=True for the top portion of the query
+        topq = Index.query.filter(Index.id == index_id)
+        topq = topq.cte('cte', recursive=True)
+        # Define the bottom part of the query by joining it with the top part
+        bottomq = Index.query.join(topq, Index.id == topq.c.parent)
+        # applying a union function
+        recursive_q = topq.union(bottomq)
+        # Get index data
+        index_list = db.session.query(recursive_q).order_by(
+            recursive_q.c.id).all()
+        return index_list
+
+    @classmethod
     def get_unharvested_indexes(cls):
         """Get child id list without recursive."""
         query = Index.query.filter(
             Index.harvest_public_state.is_(False)
         ).order_by(Index.id.asc())
         return query.all()
+
+    @classmethod
+    def get_full_path(cls, index_id=0):
+        """Get full path of index.
+
+        :param index_id: Identifier of the index.
+        :return: path.
+        """
+        recursive_t = db.session.query(
+            Index.parent.label("pid"),
+            Index.id.label("cid"),
+            func.cast(Index.id, db.Text).label("path")
+        ).filter(Index.id == index_id).cte(name="recursive_t", recursive=True)
+
+        rec_alias = aliased(recursive_t, name="rec")
+        test_alias = aliased(Index, name="t")
+        recursive_t = recursive_t.union_all(
+            db.session.query(
+                test_alias.parent,
+                test_alias.id,
+                func.cast(test_alias.id, db.Text) + '/' + rec_alias.c.path
+            ).filter(test_alias.id == rec_alias.c.pid)
+        )
+
+        with db.session.begin_nested():
+            qlst = [recursive_t.c.path]
+            obj = db.session.query(*qlst). \
+                order_by(recursive_t.c.pid).first()
+            return obj.path if obj else ''
+
+    @classmethod
+    def get_harverted_index_list(cls):
+        """Get full path of index.
+
+        :return: path.
+        """
+        recursive_t = db.session.query(
+            Index.parent.label("pid"),
+            Index.id.label("cid"),
+            func.cast(Index.id, db.Text).label("path")
+        ).filter(
+            Index.parent == 0,
+            Index.harvest_public_state == True
+        ).cte(name="recursive_t", recursive=True)
+
+        rec_alias = aliased(recursive_t, name="rec")
+        test_alias = aliased(Index, name="t")
+        recursive_t = recursive_t.union_all(
+            db.session.query(
+                test_alias.parent,
+                test_alias.id,
+                rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text)
+            ).filter(
+                test_alias.parent == rec_alias.c.cid,
+                test_alias.harvest_public_state == True)
+        )
+
+        paths = []
+        with db.session.begin_nested():
+            qlst = [recursive_t.c.path]
+            indexes = db.session.query(*qlst). \
+                order_by(recursive_t.c.pid).all()
+            for idx in indexes:
+                paths.append(idx.path)
+        return paths

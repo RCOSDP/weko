@@ -153,10 +153,10 @@ def view(community):
         view_val = request.args.get("view")
     else:
         view_val = None
-    if view_val is not None and 'basic' in view_val:
-        # return redirect(url_for('.detail', community_id=community.id))
-        return generic_item(
-            community, current_app.config['COMMUNITIES_DETAIL_TEMPLATE'])
+#    if view_val is not None and 'basic' in view_val:
+#        # return redirect(url_for('.detail', community_id=community.id))
+#        return generic_item(
+#            community, current_app.config['COMMUNITIES_DETAIL_TEMPLATE'])
 
     ctx = {'community': community}
     community_id = community.id
@@ -179,30 +179,30 @@ def view(community):
     )
 
 
-@blueprint.route('/<string:community_id>/detail/', methods=['GET'])
-@pass_community
-def detail(community):
-    """Index page with uploader and list of existing depositions."""
-    return generic_item(
-        community, current_app.config['COMMUNITIES_DETAIL_TEMPLATE'])
+#@blueprint.route('/<string:community_id>/detail/', methods=['GET'])
+#@pass_community
+#def detail(community):
+#    """Index page with uploader and list of existing depositions."""
+#    return generic_item(
+#        community, current_app.config['COMMUNITIES_DETAIL_TEMPLATE'])
 
 
-@blueprint.route('/<string:community_id>/search', methods=['GET'])
-@pass_community
-def search(community):
-    """Index page with uploader and list of existing depositions."""
-    return generic_item(
-        community,
-        current_app.config['COMMUNITIES_SEARCH_TEMPLATE'],
-        detail=False)
+#@blueprint.route('/<string:community_id>/search', methods=['GET'])
+#@pass_community
+#def search(community):
+#    """Index page with uploader and list of existing depositions."""
+#    return generic_item(
+#        community,
+#        current_app.config['COMMUNITIES_SEARCH_TEMPLATE'],
+#        detail=False)
 
 
-@blueprint.route('/<string:community_id>/about/', methods=['GET'])
-@pass_community
-def about(community):
-    """Index page with uploader and list of existing depositions."""
-    return generic_item(
-        community, current_app.config['COMMUNITIES_ABOUT_TEMPLATE'])
+#@blueprint.route('/<string:community_id>/about/', methods=['GET'])
+#@pass_community
+#def about(community):
+#    """Index page with uploader and list of existing depositions."""
+#    return generic_item(
+#        community, current_app.config['COMMUNITIES_ABOUT_TEMPLATE'])
 
 
 def generic_item(community, template, **extra_ctx):
@@ -219,422 +219,422 @@ def generic_item(community, template, **extra_ctx):
     return render_template(template, **ctx)
 
 
-@blueprint.route('/new/', methods=['GET', 'POST'])
-@login_required
-def new():
-    """Create a new community."""
-    form = CommunityForm(formdata=request.values)
-
-    ctx = mycommunities_ctx()
-    ctx.update({
-        'form': form,
-        'is_new': True,
-        'community': None,
-    })
-
-    if form.validate_on_submit():
-
-        data = copy.deepcopy(form.data)
-
-        community_id = data.pop('identifier')
-
-        root_index_id = data.pop('index_checked_nodeId')
-
-        del data['logo']
-
-        community = Community.create(
-            community_id, current_user.get_id(), root_index_id, **data)
-
-        # Default color
-        community.color_bg1 = request.form.get('color_bg1', '#ffffff')
-        community.color_bg2 = request.form.get('color_bg2', '#ffffff')
-        community.color_frame = request.form.get('color_frame', '#dddddd')
-        community.color_header = request.form.get('color_header', '#0d5f89')
-        community.color_footer = request.form.get('color_footer', '#0d5f89')
-
-        # Create scss
-        fn = community_id + '.scss'
-        scss_file = os.path.join(current_app.static_folder,
-                                 'scss/invenio_communities/communities/' + fn)
-        # Write scss
-        lines = []
-        lines.append(
-            '$'
-            + community_id
-            + '-community-body-bg: '
-            + community.color_bg1
-            + ';')
-        lines.append(
-            '$'
-            + community_id
-            + '-community-panel-bg: '
-            + community.color_bg2
-            + ';')
-        lines.append(
-            '$'
-            + community_id
-            + '-community-panel-border: '
-            + community.color_frame
-            + ';')
-        lines.append(
-            '$'
-            + community_id
-            + '-community-header-bg: '
-            + community.color_header
-            + ';')
-        lines.append(
-            '$'
-            + community_id
-            + '-community-footer-bg: '
-            + community.color_footer
-            + ';')
-
-        lines.append('.communities {.' + community.id
-                     + '-body {background-color: $' + community_id + '-community-body-bg;}}')
-        lines.append('.communities {.' + community.id
-                     + '-panel {background-color: $' + community_id + '-community-panel-bg;}}')
-        lines.append('.communities {.' + community.id
-                     + '-panel {border-color: $' + community_id + '-community-panel-border;}}')
-        lines.append('.communities {.' + community.id
-                     + '-header {background-color: $' + community_id + '-community-header-bg;}}')
-        lines.append('.communities {.' + community.id
-                     + '-footer {background-color: $' + community_id + '-community-footer-bg;}}')
-
-        with open(scss_file, 'w', encoding='utf-8') as fp:
-            fp.writelines('\n'.join(lines))
-
-        # Add to variables
-        var_file = os.path.join(current_app.static_folder,
-                                'scss/invenio_communities/variables.scss')
-        with open(var_file, 'a', encoding='utf-8') as fp:
-            str = '@import "communities/' + community_id + '";'
-            fp.writelines(str + '\n')
-
-        file = request.files.get('logo', None)
-        if file:
-            if not community.save_logo(file.stream, file.filename):
-                form.logo.errors.append(_(
-                    'Cannot add this file as a logo. Supported formats: '
-                    'PNG, JPG and SVG. Max file size: 1.5 MB.'))
-                db.session.rollback()
-                community = None
-
-        if community:
-            db.session.commit()
-            flash("Community was successfully created.", category='success')
-            return redirect(url_for('.edit', community_id=community.id))
-
-    return render_template(
-        current_app.config['COMMUNITIES_NEW_TEMPLATE'],
-        community_form=form,
-        **ctx
-    )
-
-
-@blueprint.route('/<string:community_id>/edit/', methods=['GET', 'POST'])
-@login_required
-@pass_community
-@permission_required('community-edit')
-def edit(community):
-    """Create or edit a community."""
-    def read_color(scss_file, community):
-        # Read
-        if os.path.exists(scss_file):
-            with open(scss_file, 'r', encoding='utf-8') as fp:
-                for line in fp.readlines():
-                    line = line.strip() if line else ''
-                    if line.startswith(
-                            '$' + community.id + '-community-body-bg:'):
-                        community.color_bg1 = line[line.find('#'):-1]
-                    if line.startswith(
-                            '$' + community.id + '-community-panel-bg:'):
-                        community.color_bg2 = line[line.find('#'):-1]
-                    if line.startswith(
-                            '$' + community.id + '-community-panel-border:'):
-                        community.color_frame = line[line.find('#'):-1]
-                    if line.startswith(
-                            '$' + community.id + '-community-header-bg:'):
-                        community.color_header = line[line.find('#'):-1]
-                    if line.startswith(
-                            '$' + community.id + '-community-footer-bg:'):
-                        community.color_footer = line[line.find('#'):-1]
-        # Create
-        else:
-            community.color_bg1 = '#ffffff'
-            community.color_bg2 = '#ffffff'
-            community.color_frame = '#dddddd'
-            community.color_header = '#0d5f89'
-            community.color_footer = '#0d5f89'
-
-            # Write scss
-            lines = []
-            lines.append(
-                '$'
-                + community.id
-                + '-community-body-bg: '
-                + community.color_bg1
-                + ';')
-            lines.append(
-                '$'
-                + community.id
-                + '-community-panel-bg: '
-                + community.color_bg2
-                + ';')
-            lines.append(
-                '$'
-                + community.id
-                + '-community-panel-border: '
-                + community.color_frame
-                + ';')
-            lines.append(
-                '$'
-                + community.id
-                + '-community-header-bg: '
-                + community.color_header
-                + ';')
-            lines.append(
-                '$'
-                + community.id
-                + '-community-footer-bg: '
-                + community.color_footer
-                + ';')
-
-            lines.append('.communities {.'
-                         + community.id
-                         + '-body {background-color: $'
-                         + community.id
-                         + '-community-body-bg;}}')
-            lines.append('.communities {.'
-                         + community.id
-                         + '-panel {background-color: $'
-                         + community.id
-                         + '-community-panel-bg;}}')
-            lines.append('.communities {.'
-                         + community.id
-                         + '-panel {border-color: $'
-                         + community.id
-                         + '-community-panel-border;}}')
-            lines.append('.communities {.'
-                         + community.id
-                         + '-header {background-color: $'
-                         + community.id
-                         + '-community-header-bg;}}')
-            lines.append('.communities {.'
-                         + community.id
-                         + '-footer {background-color: $'
-                         + community.id
-                         + '-community-footer-bg;}}')
-
-            with open(scss_file, 'w', encoding='utf-8') as fp:
-                fp.writelines('\n'.join(lines))
-
-            # Add to variables
-            var_file = os.path.join(current_app.static_folder,
-                                    'scss/invenio_communities/variables.scss')
-            with open(var_file, 'a', encoding='utf-8') as fp:
-                str = '@import "communities/' + community.id + '";'
-                fp.writelines(str + '\n')
-
-        return community
-
-    fn = community.id + '.scss'
-    scss_file = os.path.join(current_app.static_folder,
-                             'scss/invenio_communities/communities/' + fn)
-    read_color(scss_file, community)
-
-    form = EditCommunityForm(formdata=request.values, obj=community)
-    deleteform = DeleteCommunityForm()
-    ctx = mycommunities_ctx()
-    ctx.update({
-        'form': form,
-        'is_new': False,
-        'community': community,
-        'deleteform': deleteform,
-    })
-
-    if form.validate_on_submit():
-        for field, val in form.data.items():
-            setattr(community, field, val)
-
-        # Get color
-        color_bg1 = request.form.get('color_bg1', '#ffffff')
-        color_bg2 = request.form.get('color_bg2', '#ffffff')
-        color_frame = request.form.get('color_frame', '#dddddd')
-        color_header = request.form.get('color_header', community.color_header)
-        color_footer = request.form.get('color_footer', community.color_footer)
-
-        # Write scss
-        lines = []
-        lines.append(
-            '$'
-            + community.id
-            + '-community-body-bg: '
-            + color_bg1
-            + ';')
-        lines.append(
-            '$'
-            + community.id
-            + '-community-panel-bg: '
-            + color_bg2
-            + ';')
-        lines.append(
-            '$'
-            + community.id
-            + '-community-panel-border: '
-            + color_frame
-            + ';')
-        lines.append(
-            '$'
-            + community.id
-            + '-community-header-bg: '
-            + color_header
-            + ';')
-        lines.append(
-            '$'
-            + community.id
-            + '-community-footer-bg: '
-            + color_footer
-            + ';')
-        lines.append('.communities {.'
-                     + community.id
-                     + '-body {background-color: $'
-                     + community.id
-                     + '-community-body-bg;}}')
-        lines.append('.communities {.'
-                     + community.id
-                     + '-panel {background-color: $'
-                     + community.id
-                     + '-community-panel-bg;}}')
-        lines.append('.communities {.'
-                     + community.id
-                     + '-panel {border-color: $'
-                     + community.id
-                     + '-community-panel-border;}}')
-        lines.append('.communities {.'
-                     + community.id
-                     + '-header {background-color: $'
-                     + community.id
-                     + '-community-header-bg;}}')
-        lines.append('.communities {.'
-                     + community.id
-                     + '-footer {background-color: $'
-                     + community.id
-                     + '-community-footer-bg;}}')
-
-        with open(scss_file, 'w', encoding='utf-8') as fp:
-            fp.writelines('\n'.join(lines))
-
-        file = request.files.get('logo', None)
-        if file:
-            if not community.save_logo(file.stream, file.filename):
-                form.logo.errors.append(_(
-                    'Cannot add this file as a logo. Supported formats: '
-                    'PNG, JPG and SVG. Max file size: 1.5 MB.'))
-
-        if not form.logo.errors:
-            db.session.commit()
-            flash("Community successfully edited.", category='success')
-            return redirect(url_for('.edit', community_id=community.id))
-
-    return render_template(
-        current_app.config['COMMUNITIES_EDIT_TEMPLATE'],
-        **ctx
-    )
+#@blueprint.route('/new/', methods=['GET', 'POST'])
+#@login_required
+#def new():
+#    """Create a new community."""
+#    form = CommunityForm(formdata=request.values)
+#
+#    ctx = mycommunities_ctx()
+#    ctx.update({
+#        'form': form,
+#        'is_new': True,
+#        'community': None,
+#    })
+#
+#    if form.validate_on_submit():
+#
+#        data = copy.deepcopy(form.data)
+#
+#        community_id = data.pop('identifier')
+#
+#        root_index_id = data.pop('index_checked_nodeId')
+#
+#        del data['logo']
+#
+#        community = Community.create(
+#            community_id, current_user.get_id(), root_index_id, **data)
+#
+#        # Default color
+#        community.color_bg1 = request.form.get('color_bg1', '#ffffff')
+#        community.color_bg2 = request.form.get('color_bg2', '#ffffff')
+#        community.color_frame = request.form.get('color_frame', '#dddddd')
+#        community.color_header = request.form.get('color_header', '#0d5f89')
+#        community.color_footer = request.form.get('color_footer', '#0d5f89')
+#
+#        # Create scss
+#        fn = community_id + '.scss'
+#        scss_file = os.path.join(current_app.static_folder,
+#                                 'scss/invenio_communities/communities/' + fn)
+#        # Write scss
+#        lines = []
+#        lines.append(
+#            '$'
+#            + community_id
+#            + '-community-body-bg: '
+#            + community.color_bg1
+#            + ';')
+#        lines.append(
+#            '$'
+#            + community_id
+#            + '-community-panel-bg: '
+#            + community.color_bg2
+#            + ';')
+#        lines.append(
+#            '$'
+#            + community_id
+#            + '-community-panel-border: '
+#            + community.color_frame
+#            + ';')
+#        lines.append(
+#            '$'
+#            + community_id
+#            + '-community-header-bg: '
+#            + community.color_header
+#            + ';')
+#        lines.append(
+#            '$'
+#            + community_id
+#            + '-community-footer-bg: '
+#            + community.color_footer
+#            + ';')
+#
+#        lines.append('.communities {.' + community.id
+#                     + '-body {background-color: $' + community_id + '-community-body-bg;}}')
+#        lines.append('.communities {.' + community.id
+#                     + '-panel {background-color: $' + community_id + '-community-panel-bg;}}')
+#        lines.append('.communities {.' + community.id
+#                     + '-panel {border-color: $' + community_id + '-community-panel-border;}}')
+#        lines.append('.communities {.' + community.id
+#                     + '-header {background-color: $' + community_id + '-community-header-bg;}}')
+#        lines.append('.communities {.' + community.id
+#                     + '-footer {background-color: $' + community_id + '-community-footer-bg;}}')
+#
+#        with open(scss_file, 'w', encoding='utf-8') as fp:
+#            fp.writelines('\n'.join(lines))
+#
+#        # Add to variables
+#        var_file = os.path.join(current_app.static_folder,
+#                                'scss/invenio_communities/variables.scss')
+#        with open(var_file, 'a', encoding='utf-8') as fp:
+#            str = '@import "communities/' + community_id + '";'
+#            fp.writelines(str + '\n')
+#
+#        file = request.files.get('logo', None)
+#        if file:
+#            if not community.save_logo(file.stream, file.filename):
+#                form.logo.errors.append(_(
+#                    'Cannot add this file as a logo. Supported formats: '
+#                    'PNG, JPG and SVG. Max file size: 1.5 MB.'))
+#                db.session.rollback()
+#                community = None
+#
+#        if community:
+#            db.session.commit()
+#            flash("Community was successfully created.", category='success')
+#            return redirect(url_for('.edit', community_id=community.id))
+#
+#    return render_template(
+#        current_app.config['COMMUNITIES_NEW_TEMPLATE'],
+#        community_form=form,
+#        **ctx
+#    )
 
 
-@blueprint.route('/<string:community_id>/delete/', methods=['POST'])
-@login_required
-@pass_community
-@permission_required('community-delete')
-def delete(community):
-    """Delete a community."""
-    deleteform = DeleteCommunityForm(formdata=request.values)
-    ctx = mycommunities_ctx()
-    ctx.update({
-        'deleteform': deleteform,
-        'is_new': False,
-        'community': community,
-    })
+#@blueprint.route('/<string:community_id>/edit/', methods=['GET', 'POST'])
+#@login_required
+#@pass_community
+#@permission_required('community-edit')
+#def edit(community):
+#    """Create or edit a community."""
+#    def read_color(scss_file, community):
+#        # Read
+#        if os.path.exists(scss_file):
+#            with open(scss_file, 'r', encoding='utf-8') as fp:
+#                for line in fp.readlines():
+#                    line = line.strip() if line else ''
+#                    if line.startswith(
+#                            '$' + community.id + '-community-body-bg:'):
+#                        community.color_bg1 = line[line.find('#'):-1]
+#                    if line.startswith(
+#                            '$' + community.id + '-community-panel-bg:'):
+#                        community.color_bg2 = line[line.find('#'):-1]
+#                    if line.startswith(
+#                            '$' + community.id + '-community-panel-border:'):
+#                        community.color_frame = line[line.find('#'):-1]
+#                    if line.startswith(
+#                            '$' + community.id + '-community-header-bg:'):
+#                        community.color_header = line[line.find('#'):-1]
+#                    if line.startswith(
+#                            '$' + community.id + '-community-footer-bg:'):
+#                        community.color_footer = line[line.find('#'):-1]
+#        # Create
+#        else:
+#            community.color_bg1 = '#ffffff'
+#            community.color_bg2 = '#ffffff'
+#            community.color_frame = '#dddddd'
+#            community.color_header = '#0d5f89'
+#            community.color_footer = '#0d5f89'
+#
+#            # Write scss
+#            lines = []
+#            lines.append(
+#                '$'
+#                + community.id
+#                + '-community-body-bg: '
+#                + community.color_bg1
+#                + ';')
+#            lines.append(
+#                '$'
+#                + community.id
+#                + '-community-panel-bg: '
+#                + community.color_bg2
+#                + ';')
+#            lines.append(
+#                '$'
+#                + community.id
+#                + '-community-panel-border: '
+#                + community.color_frame
+#                + ';')
+#            lines.append(
+#                '$'
+#                + community.id
+#                + '-community-header-bg: '
+#                + community.color_header
+#                + ';')
+#            lines.append(
+#                '$'
+#                + community.id
+#                + '-community-footer-bg: '
+#                + community.color_footer
+#                + ';')
+#
+#            lines.append('.communities {.'
+#                         + community.id
+#                         + '-body {background-color: $'
+#                         + community.id
+#                         + '-community-body-bg;}}')
+#            lines.append('.communities {.'
+#                         + community.id
+#                         + '-panel {background-color: $'
+#                         + community.id
+#                         + '-community-panel-bg;}}')
+#            lines.append('.communities {.'
+#                         + community.id
+#                         + '-panel {border-color: $'
+#                         + community.id
+#                         + '-community-panel-border;}}')
+#            lines.append('.communities {.'
+#                         + community.id
+#                         + '-header {background-color: $'
+#                         + community.id
+#                         + '-community-header-bg;}}')
+#            lines.append('.communities {.'
+#                         + community.id
+#                         + '-footer {background-color: $'
+#                         + community.id
+#                         + '-community-footer-bg;}}')
+#
+#            with open(scss_file, 'w', encoding='utf-8') as fp:
+#                fp.writelines('\n'.join(lines))
+#
+#            # Add to variables
+#            var_file = os.path.join(current_app.static_folder,
+#                                    'scss/invenio_communities/variables.scss')
+#            with open(var_file, 'a', encoding='utf-8') as fp:
+#                str = '@import "communities/' + community.id + '";'
+#                fp.writelines(str + '\n')
+#
+#        return community
+#
+#    fn = community.id + '.scss'
+#    scss_file = os.path.join(current_app.static_folder,
+#                             'scss/invenio_communities/communities/' + fn)
+#    read_color(scss_file, community)
+#
+#    form = EditCommunityForm(formdata=request.values, obj=community)
+#    deleteform = DeleteCommunityForm()
+#    ctx = mycommunities_ctx()
+#    ctx.update({
+#        'form': form,
+#        'is_new': False,
+#        'community': community,
+#        'deleteform': deleteform,
+#    })
+#
+#    if form.validate_on_submit():
+#        for field, val in form.data.items():
+#            setattr(community, field, val)
+#
+#        # Get color
+#        color_bg1 = request.form.get('color_bg1', '#ffffff')
+#        color_bg2 = request.form.get('color_bg2', '#ffffff')
+#        color_frame = request.form.get('color_frame', '#dddddd')
+#        color_header = request.form.get('color_header', community.color_header)
+#        color_footer = request.form.get('color_footer', community.color_footer)
+#
+#        # Write scss
+#        lines = []
+#        lines.append(
+#            '$'
+#            + community.id
+#            + '-community-body-bg: '
+#            + color_bg1
+#            + ';')
+#        lines.append(
+#            '$'
+#            + community.id
+#            + '-community-panel-bg: '
+#            + color_bg2
+#            + ';')
+#        lines.append(
+#            '$'
+#            + community.id
+#            + '-community-panel-border: '
+#            + color_frame
+#            + ';')
+#        lines.append(
+#            '$'
+#            + community.id
+#            + '-community-header-bg: '
+#            + color_header
+#            + ';')
+#        lines.append(
+#            '$'
+#            + community.id
+#            + '-community-footer-bg: '
+#            + color_footer
+#            + ';')
+#        lines.append('.communities {.'
+#                     + community.id
+#                     + '-body {background-color: $'
+#                     + community.id
+#                     + '-community-body-bg;}}')
+#        lines.append('.communities {.'
+#                     + community.id
+#                     + '-panel {background-color: $'
+#                     + community.id
+#                     + '-community-panel-bg;}}')
+#        lines.append('.communities {.'
+#                     + community.id
+#                     + '-panel {border-color: $'
+#                     + community.id
+#                     + '-community-panel-border;}}')
+#        lines.append('.communities {.'
+#                     + community.id
+#                     + '-header {background-color: $'
+#                     + community.id
+#                     + '-community-header-bg;}}')
+#        lines.append('.communities {.'
+#                     + community.id
+#                     + '-footer {background-color: $'
+#                     + community.id
+#                     + '-community-footer-bg;}}')
+#
+#        with open(scss_file, 'w', encoding='utf-8') as fp:
+#            fp.writelines('\n'.join(lines))
+#
+#        file = request.files.get('logo', None)
+#        if file:
+#            if not community.save_logo(file.stream, file.filename):
+#                form.logo.errors.append(_(
+#                    'Cannot add this file as a logo. Supported formats: '
+#                    'PNG, JPG and SVG. Max file size: 1.5 MB.'))
+#
+#        if not form.logo.errors:
+#            db.session.commit()
+#            flash("Community successfully edited.", category='success')
+#            return redirect(url_for('.edit', community_id=community.id))
+#
+#    return render_template(
+#        current_app.config['COMMUNITIES_EDIT_TEMPLATE'],
+#        **ctx
+#    )
+#
 
-    if deleteform.validate_on_submit():
-        fn = community.id + '.scss'
-        scss_file = os.path.join(current_app.static_folder,
-                                 'scss/invenio_communities/communities/' + fn)
-        os.remove(scss_file)
+#@blueprint.route('/<string:community_id>/delete/', methods=['POST'])
+#@login_required
+#@pass_community
+#@permission_required('community-delete')
+#def delete(community):
+#    """Delete a community."""
+#    deleteform = DeleteCommunityForm(formdata=request.values)
+#    ctx = mycommunities_ctx()
+#    ctx.update({
+#        'deleteform': deleteform,
+#        'is_new': False,
+#        'community': community,
+#    })
+#
+#    if deleteform.validate_on_submit():
+#        fn = community.id + '.scss'
+#        scss_file = os.path.join(current_app.static_folder,
+#                                 'scss/invenio_communities/communities/' + fn)
+#        os.remove(scss_file)
+#
+#        var_file = os.path.join(current_app.static_folder,
+#                                'scss/invenio_communities/variables.scss')
+#
+#        # Delete from variables
+#        key = '@import "communities/' + community.id + '";'
+#        with open(var_file, "r") as vf:
+#            lines = vf.readlines()
+#            lines.remove(key + '\n')
+#            with open(var_file, "w") as new_vf:
+#                for line in lines:
+#                    new_vf.write(line)
+#
+#        community.delete()
+#        db.session.commit()
+#        flash("Community was deleted.", category='success')
+#        return redirect(url_for('.index'))
+#    else:
+#        flash("Community could not be deleted.", category='warning')
+#        return redirect(url_for('.edit', community_id=community.id))
+#
 
-        var_file = os.path.join(current_app.static_folder,
-                                'scss/invenio_communities/variables.scss')
-
-        # Delete from variables
-        key = '@import "communities/' + community.id + '";'
-        with open(var_file, "r") as vf:
-            lines = vf.readlines()
-            lines.remove(key + '\n')
-            with open(var_file, "w") as new_vf:
-                for line in lines:
-                    new_vf.write(line)
-
-        community.delete()
-        db.session.commit()
-        flash("Community was deleted.", category='success')
-        return redirect(url_for('.index'))
-    else:
-        flash("Community could not be deleted.", category='warning')
-        return redirect(url_for('.edit', community_id=community.id))
-
-
-@blueprint.route('/<string:community_id>/curate/', methods=['GET', 'POST'])
-@login_required
-@pass_community
-@permission_required('community-curate')
-def curate(community):
-    """Index page with uploader and list of existing depositions.
-
-    :param community_id: ID of the community to curate.
-    """
-    if request.method == 'POST':
-        action = request.json.get('action')
-        recid = request.json.get('recid')
-
-        # 'recid' is mandatory
-        if not recid:
-            abort(400)
-        if action not in ['accept', 'reject', 'remove']:
-            abort(400)
-
-        # Resolve recid to a Record
-        resolver = Resolver(
-            pid_type='recid', object_type='rec', getter=Record.get_record)
-        pid, record = resolver.resolve(recid)
-
-        # Perform actions
-        if action == "accept":
-            community.accept_record(record)
-        elif action == "reject":
-            community.reject_record(record)
-        elif action == "remove":
-            community.remove_record(record)
-
-        record.commit()
-        db.session.commit()
-        RecordIndexer().index_by_id(record.id)
-        return jsonify({'status': 'success'})
-
-    ctx = {'community': community}
-    community_id = community.id
-    community_flg = "0"
-
-    # Get index style
-    style = IndexStyle.get(
-        current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
-    width = style.width if style else '3'
-    height = style.height if style else None
-
-    sort_options, display_number = SearchSetting.get_results_setting()
-
-    return render_template(
-        current_app.config['COMMUNITIES_CURATE_TEMPLATE'],
-        community_id=community_id, sort_option=sort_options, width=width, height=height, **ctx)
+#@blueprint.route('/<string:community_id>/curate/', methods=['GET', 'POST'])
+#@login_required
+#@pass_community
+#@permission_required('community-curate')
+#def curate(community):
+#    """Index page with uploader and list of existing depositions.
+#
+#    :param community_id: ID of the community to curate.
+#    """
+#    if request.method == 'POST':
+#        action = request.json.get('action')
+#        recid = request.json.get('recid')
+#
+#        # 'recid' is mandatory
+#        if not recid:
+#            abort(400)
+#        if action not in ['accept', 'reject', 'remove']:
+#            abort(400)
+#
+#        # Resolve recid to a Record
+#        resolver = Resolver(
+#            pid_type='recid', object_type='rec', getter=Record.get_record)
+#        pid, record = resolver.resolve(recid)
+#
+#        # Perform actions
+#        if action == "accept":
+#            community.accept_record(record)
+#        elif action == "reject":
+#            community.reject_record(record)
+#        elif action == "remove":
+#            community.remove_record(record)
+#
+#        record.commit()
+#        db.session.commit()
+#        RecordIndexer().index_by_id(record.id)
+#        return jsonify({'status': 'success'})
+#
+#    ctx = {'community': community}
+#    community_id = community.id
+#    community_flg = "0"
+#
+#    # Get index style
+#    style = IndexStyle.get(
+#        current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
+#    width = style.width if style else '3'
+#    height = style.height if style else None
+#
+#    sort_options, display_number = SearchSetting.get_results_setting()
+#
+#    return render_template(
+#        current_app.config['COMMUNITIES_CURATE_TEMPLATE'],
+#        community_id=community_id, sort_option=sort_options, width=width, height=height, **ctx)
 
 
 @blueprint.route('/list/', methods=['GET', ])

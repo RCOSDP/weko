@@ -892,7 +892,7 @@ function buildWidget() {
 function resizeImage() {
   $('.trumbowyg-editor img').each(function () {
     let notAutoHeight = $(this).closest(".no-auto-height");
-    if (!notAutoHeight.length) {
+    if (!notAutoHeight.length && $(this).attr('src')) {
       let currentWidget = $(this).closest(".grid-stack-item");
       let currentTrumbowyg = $(this).closest(".trumbowyg-editor");
       let currentHeight = currentWidget.data("gsHeight");

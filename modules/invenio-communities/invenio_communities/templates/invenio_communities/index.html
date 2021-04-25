@@ -43,7 +43,7 @@
         </h1>
 
     </div>
-    <div class="col-sm-8 col-md-8">
+    <div class="col-sm-12 col-md-12">
       {%- set args = request.args.copy().to_dict() -%}
       <form method="GET" id="search_form" role="form">
         {{ form.p(class_="form-control " + form.p.short_name, placeholder='Search communities', type='text') }}
@@ -170,10 +170,7 @@
           <strong>{{ _('Your search did not match any communities. Please try again.') }}</strong>
         </p>
       {% endif %}
-    </div> <!-- /.col-sm-8 col-md-8 -->
-    <div class="col-sm-4 col-md-4">
-      {% include "invenio_communities/mycommunities.html" %}
-    </div>
+    </div> <!-- /.col-sm-12 col-md-12 -->
   </div>
 </div>
 {% endblock page_body %}
