@@ -49,7 +49,6 @@ def default_search_factory(self, search, query_parser=None):
     search, sortkwargs = default_sorter_factory(search, search_index)
     for key, value in sortkwargs.items():
         urlkwargs.add(key, value)
-
     urlkwargs.add('q', query_string)
     return search, urlkwargs
 

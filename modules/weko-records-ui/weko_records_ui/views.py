@@ -340,6 +340,7 @@ def get_workflow_detail(workflow_id):
     else:
         abort(404)
 
+
 def _get_google_scholar_meta(record):
     target_map = {
         'dc:title': 'citation_title',
@@ -360,10 +361,10 @@ def _get_google_scholar_meta(record):
     et = etree.fromstring(recstr)
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     res = []
-    if mtdata:
+    if mtdata is not None:
         for target in target_map:
             found = mtdata.find(target, namespaces=mtdata.nsmap)
-            if found:
+            if found is not None:
                 res.append({'name': target_map[target], 'data': found.text})
 
         for date in mtdata.findall('datacite:date', namespaces=mtdata.nsmap):
@@ -376,8 +377,8 @@ def _get_google_scholar_meta(record):
                 res.append(
                     {'name': 'citation_publication_date', 'data': date.text})
 
-        for creator in mtdata.findall('jpcoar:creator/jpcoar:creatorName',namespaces=mtdata.nsmap):
-            res.append({'name':'citation_author','data':creator.text })
+        for creator in mtdata.findall('jpcoar:creator/jpcoar:creatorName', namespaces=mtdata.nsmap):
+            res.append({'name': 'citation_author', 'data': creator.text})
 
         for relatedIdentifier in mtdata.findall(
                 'jpcoar:relation/jpcoar:relatedIdentifier',
@@ -413,8 +414,6 @@ def _get_google_scholar_meta(record):
     )
     res.append({'name': 'citation_abstract_html_url', 'data': record_url})
     return res
-
-
 
 
 def default_view_method(pid, record, filename=None, template=None, **kwargs):

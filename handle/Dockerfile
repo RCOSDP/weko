@@ -25,7 +25,7 @@ RUN mkdir -p /opt/handle && tar xf /tmp/handle-9.1.0-distribution.tar.gz -C /opt
 RUN ln -s /usr/share/java/mysql-connector-java.jar /opt/handle/lib/mysql-connector-java.jar
 RUN ln -s /usr/share/java/postgresql.jar /opt/handle/lib/postgresql.jar
 WORKDIR /opt/handle/lib/
-RUN wget https://bitbucket.org/xerial/sqlite-jdbc/downloads/sqlite-jdbc-3.30.1.jar
+RUN wget https://repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.34.0/sqlite-jdbc-3.34.0.jar 
 
 # Copy over the handle base configs and build script
 COPY handle/ /home/handle/

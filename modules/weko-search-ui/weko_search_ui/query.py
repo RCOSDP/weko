@@ -949,7 +949,6 @@ def opensearch_factory(self, search, query_parser=None):
     """
     index_id = request.values.get('index_id')
     search_type = config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']
-
     if index_id:
         return item_path_search_factory(self,
                                         search,

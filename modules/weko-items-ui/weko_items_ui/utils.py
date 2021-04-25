@@ -2228,10 +2228,15 @@ def get_ranking(settings):
             unit='Item',
             agg_size=settings.display_rank,
             agg_sort={'_count': 'desc'})
+        # temp sort
+        l = result['data']
+        result['data']=sorted(l, key=lambda x: x['col3'],reverse=True)
+        # end temp sort
         rankings['most_downloaded_items'] = \
             parse_ranking_results(result, settings.display_rank,
                                   list_name='data', title_key='col2',
                                   count_key='col3', pid_key='col1')
+
 
     # created_most_items_user
     if settings.rankings['created_most_items_user']:

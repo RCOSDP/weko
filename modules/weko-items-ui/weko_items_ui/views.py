@@ -410,6 +410,7 @@ def iframe_items_index(pid_value='0'):
             workflow = WorkFlow()
             workflow_detail = workflow.get_workflow_by_id(
                 cur_activity.workflow_id)
+            
             if workflow_detail and workflow_detail.index_tree_id:
                 index_id = get_index_id(cur_activity.activity_id)
                 update_index_tree_for_record(pid_value, index_id)

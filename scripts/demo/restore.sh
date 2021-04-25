@@ -28,7 +28,7 @@ docker-compose exec web invenio db create -v
 # create-database-end
 
 # postgresql-restore-begin
-docker cp ./scripts/demo/postgresql/weko.sql $(docker-compose ps -q postgresql):/
+docker cp $1/postgresql/weko.sql $(docker-compose ps -q postgresql):/
 docker-compose exec postgresql psql -U invenio -d invenio -f weko.sql
 # postgresql-restore-end
 
@@ -49,7 +49,7 @@ docker-compose exec elasticsearch \
                 "location": "/usr/share/elasticsearch/backups"
             }
         }'
-docker cp ./scripts/demo/elasticsearch/backups $(docker-compose ps -q elasticsearch):/usr/share/elasticsearch/
+docker cp $1/elasticsearch/backups $(docker-compose ps -q elasticsearch):/usr/share/elasticsearch/
 docker-compose exec elasticsearch chown -R elasticsearch:elasticsearch ./backups
 docker-compose exec elasticsearch \
     curl -X POST \
@@ -58,6 +58,6 @@ docker-compose start
 # elasticsearch-restore-end
 
 # contents-restore-begin
-sudo chown -R 1000:1000 ./scripts/demo/contents
-docker-compose exec web cp -r /code/scripts/demo/contents/tmp /var/
+sudo chown -R 1000:1000 $1/contents
+docker cp $1/contents/tmp $(docker-compose ps -q web ):/var/
 # contents-restore-end

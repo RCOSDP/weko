@@ -233,7 +233,6 @@ def create_url_rules(endpoint, list_route=None, item_route=None,
     assert pid_type
     assert search_serializers
     assert record_serializers
-
     read_permission_factory = obj_or_import_string(
         read_permission_factory_imp
     )
@@ -325,7 +324,6 @@ def create_url_rules(endpoint, list_route=None, item_route=None,
         indexer_class=indexer_class,
         links_factory=links_factory,
         default_media_type=default_media_type)
-
     views = [
         dict(rule=list_route, view_func=list_view),
         dict(rule=item_route, view_func=item_view),
