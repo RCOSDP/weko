@@ -42,6 +42,7 @@ from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, \
     PIDDoesNotExistError, PIDStatus
+from invenio_pidstore.resolver import Resolver
 from invenio_records.models import RecordMetadata
 from invenio_records_files.models import RecordsBuckets
 from passlib.handlers.oracle import oracle10
@@ -59,9 +60,11 @@ from weko_records.serializers.utils import get_item_type_name, get_mapping
 from weko_records_ui.utils import create_onetime_download_url, \
     generate_one_time_download_url, get_list_licence
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
+from werkzeug.utils import import_string
 
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, \
@@ -1602,8 +1605,8 @@ def get_record_by_root_ver(pid_value):
 
     :return: record, files.
     """
-    from weko_deposit.api import WekoDeposit, WekoRecord
     from invenio_pidstore.models import PersistentIdentifier
+    from weko_deposit.api import WekoDeposit, WekoRecord
     from weko_items_ui.utils import to_files_js
     files = []
     record = None
@@ -2824,14 +2827,16 @@ def validate_guest_activity_expired(activity_id: str) -> str:
         guest_activity = guest_activity[0]
     else:
         return ""
-    try:
-        expiration_date = timedelta(guest_activity.expiration_date)
-        expiration_access_date = guest_activity.created.date() + expiration_date
-    except OverflowError:
-        return ""
-    current_date = datetime.utcnow().date()
-    if current_date > expiration_access_date:
-        return _("The specified link has expired.")
+    if guest_activity.is_usage_report:
+        try:
+            expiration_date = timedelta(guest_activity.expiration_date)
+            expiration_access_date = guest_activity.created.date() + \
+                expiration_date
+        except OverflowError:
+            return ""
+        current_date = datetime.utcnow().date()
+        if current_date > expiration_access_date:
+            return _("The specified link has expired.")
     return ""
 
 
@@ -3108,13 +3113,17 @@ def prepare_data_for_guest_activity(activity_id: str) -> dict:
                                              'term_and_condition.html'
                 ctx['term_and_condition_content'] = \
                     get_term_and_condition_content(item_type_name)
-
+        # Get approval record
+        item = get_items_metadata_by_activity_detail(activity_detail)
+        approval_record = []
+        if item:
+            _, approval_record = get_pid_and_record(item)
         # be use for index tree and comment page.
         session['itemlogin_item'] = ctx['item']
         session['itemlogin_steps'] = ctx['steps']
         session['itemlogin_action_id'] = ctx['action_id']
         session['itemlogin_cur_step'] = ctx['cur_step']
-        session['itemlogin_record'] = ctx['approval_record']
+        session['itemlogin_record'] = approval_record
         session['itemlogin_histories'] = ctx['histories']
         session['itemlogin_res_check'] = ctx['res_check']
         session['itemlogin_pid'] = ctx['recid']
@@ -3232,38 +3241,50 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
                 current_app.config["WEKO_WORKFLOW_APPROVE_REJECTED"])
 
 
-def get_usage_data(item_type_id, activity_detail, user_profile):
+def get_usage_data(item_type_id, activity_detail, user_profile=None):
     """Get usage data.
 
-    @param item_type_id:
+    @param item_type_id: Item Type identifier.
+    @param activity_detail: Activity detail
+    @param user_profile: User profile.
     @return:
     """
-    result = None
-    extra_info = activity_detail.extra_info
 
-    if not extra_info or extra_info == {}:
+    def __build_metadata_for_usage_report(record_data: Union[dict, list],
+                                          usage_report_data: dict):
+        if isinstance(record_data, dict):
+            for k, v in record_data.items():
+                if k in usage_report_data_key:
+                    usage_report_data[usage_report_data_key[k]] = v
+                else:
+                    __build_metadata_for_usage_report(v, usage_report_data)
+        elif isinstance(record_data, list):
+            for data in record_data:
+                __build_metadata_for_usage_report(data, usage_report_data)
+    result = {}
+    extra_info = activity_detail.extra_info
+    if not extra_info:
         return result
 
+    cfg = current_app.config
     wf_issued_date = activity_detail.created.strftime("%Y-%m-%d")
 
-    if item_type_id in current_app.config.get(
+    if item_type_id in cfg.get(
             'WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST'):
-        mail_address = ''
-
-        if user_profile != {}:
+        if isinstance(user_profile, dict):
             mail_address = user_profile.get(
                 'results').get('subitem_mail_address')
         else:
-            mail_address = extra_info.get('guest_mail') or ''
+            mail_address = extra_info.get('guest_mail', '')
 
-        related_title = extra_info.get('related_title') or ''
-        item_title = current_app.config.get('WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TITLE') \
+        related_title = extra_info.get('related_title', '')
+        item_title = cfg.get('WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TITLE') \
             + activity_detail.created.strftime("%Y%m%d") + related_title + '_'
 
         result = dict(
             usage_type='Application',
             dataset_usage=related_title,
-            name='',
+            usage_data_name='',
             mail_address=mail_address,
             university_institution='',
             affiliated_division_department='',
@@ -3274,56 +3295,44 @@ def get_usage_data(item_type_id, activity_detail, user_profile):
             wf_issued_date=wf_issued_date,
             item_title=item_title
         )
-    elif item_type_id in current_app.config.get('WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST'):
-        usage_record_id = extra_info.get('usage_record_id') or ''
-        related_activity_id = extra_info.get('usage_activity_id') or ''
-        rm = RecordMetadata.query.filter_by(id=usage_record_id).first()
-        related_title = rm.json.get('item_title')
-        name = ''
-        mail_address = ''
-        university_institution = ''
-        affiliated_division_department = ''
-        position = ''
-        position_other = ''
-        phone_number = ''
-
-        for key in rm.json:
-            value = rm.json.get(key)
-            if isinstance(value, dict):
-                mlt = value.get('attribute_value_mlt')
-                if mlt and isinstance(mlt, list):
-                    for sub_key in mlt[0]:
-                        sub_value = mlt[0].get(sub_key)
-                        if sub_key == 'subitem_restricted_access_name':
-                            name = sub_value
-                        elif sub_key == 'subitem_restricted_access_mail_address':
-                            mail_address = sub_value
-                        elif sub_key == 'subitem_restricted_access_university/institution':
-                            university_institution = sub_value
-                        elif sub_key == 'subitem_restricted_access_affiliated_division/department':
-                            affiliated_division_department = sub_value
-                        elif sub_key == 'subitem_restricted_access_position':
-                            position = sub_value
-                        elif sub_key == 'subitem_restricted_access_position(others)':
-                            position_other = sub_value
-                        elif sub_key == 'subitem_restricted_access_phone_number':
-                            phone_number = sub_value
-        item_title = related_activity_id + current_app.config.get(
-            'WEKO_WORKFLOW_USAGE_REPORT_ITEM_TITLE') + name
+    elif item_type_id in cfg.get('WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST'):
+        usage_record_id = extra_info.get('usage_record_id')
+        usage_report_data_key = {
+            "subitem_restricted_access_name": "usage_data_name",
+            "subitem_restricted_access_mail_address": "mail_address",
+            "subitem_restricted_access_university/institution":
+                "university_institution",
+            "subitem_restricted_access_affiliated_division/department":
+                "affiliated_division_department",
+            "subitem_restricted_access_position": "position",
+            "subitem_restricted_access_position(others)": "position_other",
+            "subitem_restricted_access_phone_number": "phone_number",
+        }
         result = dict(
             usage_type='Report',
-            dataset_usage=related_title,
-            name=name,
-            mail_address=mail_address,
-            university_institution=university_institution,
-            affiliated_division_department=affiliated_division_department,
-            position=position,
-            position_other=position_other,
-            phone_number=phone_number,
+            dataset_usage='',
+            usage_data_name='',
+            mail_address='',
+            university_institution='',
+            affiliated_division_department='',
+            position='',
+            position_other='',
+            phone_number='',
             usage_report_id=activity_detail.activity_id,
             wf_issued_date=wf_issued_date,
-            item_title=item_title
+            item_title=''
         )
+        related_activity_id = extra_info.get('usage_activity_id')
+        if not related_activity_id:
+            return result
+
+        rm = RecordMetadata.query.filter_by(id=usage_record_id).first()
+        if not rm:
+            return result
+        __build_metadata_for_usage_report(rm.json, result)
+        result['dataset_usage'] = rm.json.get('item_title')
+        result['item_title'] = related_activity_id + cfg.get(
+            'WEKO_WORKFLOW_USAGE_REPORT_ITEM_TITLE') + result['usage_data_name']
 
     return result
 
@@ -3528,3 +3537,146 @@ def get_record_first_version(deposit):
     record = WekoRecord.get_record(pid.object_uuid)
     deposit = WekoDeposit(record, record.model)
     return deposit, pid.object_uuid
+
+
+def get_files_and_thumbnail(activity_id, item):
+    """Get files and thumbnail from activity id.
+
+    Args:
+        activity_id: The activity identifier.
+        item:  Item metadata.
+    """
+    from weko_items_ui.utils import to_files_js
+    files, files_thumbnail = [], []
+    deposit = WekoDeposit.get_record(item.id)
+    activity = WorkActivity()
+    metadata = activity.get_activity_metadata(activity_id)
+    # Load files from metadata.
+    if metadata:
+        item_json = json.loads(metadata)
+        files = item_json.get('files') if item_json.get('files') else []
+    # Load files from deposit.
+    if deposit and not files:
+        files = to_files_js(deposit)
+    # Load files thumbnail from files.
+    if files and not files_thumbnail:
+        files_thumbnail = [i for i in files
+                           if 'is_thumbnail' in i.keys()
+                           and i['is_thumbnail']]
+    return files, files_thumbnail
+
+
+def get_pid_and_record(item):
+    """Get record data for the first time access to editing item screen.
+
+    Args:
+        item: Item metadata.
+    """
+    recid = PersistentIdentifier.get_by_object(
+        pid_type='recid', object_type='rec', object_uuid=item.id)
+    record_class = import_string('weko_deposit.api:WekoRecord')
+    resolver = Resolver(pid_type='recid', object_type='rec',
+                        getter=record_class.get_record)
+    return resolver.resolve(recid.pid_value)
+
+
+def get_items_metadata_by_activity_detail(activity_detail):
+    """Get item metadata from activity id.
+
+    Args:
+        activity_detail:Activity detail.
+    """
+    item = None
+    if activity_detail and activity_detail.item_id:
+        try:
+            item = ItemsMetadata.get_record(id_=activity_detail.item_id)
+        except NoResultFound as ex:
+            current_app.logger.exception(str(ex))
+            item = None
+    return item
+
+
+def get_item_link_info(activity_id, activity_detail,
+                       action_endpoint=None, item=None, approval_record=None,
+                       files=None, files_thumbnail=None):
+    """Get item link record, files, thumbnail.
+
+    Args:
+        activity_id: Activity identifier.
+        activity_detail: Activity detail.
+        action_endpoint: Action endpoint.
+        item: Item metadata.
+        approval_record: Approval record.
+        files: File content
+        files_thumbnail: Thumbnail file.
+    """
+    def has_pid_value():
+        return item and item.get('pid') and item['pid'].get('value')
+
+    def is_item_login():
+        return action_endpoint and action_endpoint == 'item_login'
+
+    def is_approval():
+        return action_endpoint and action_endpoint == 'approval'
+
+    def check_record(record):
+        return record and len(record) > 0 and isinstance(record, (list, dict))
+
+    if not action_endpoint:
+        action_endpoint = activity_detail.action.action_endpoint
+    if not item:
+        if not activity_detail.item_id:
+            return dict(itemLink_record=[], newFiles=[], new_thumbnail=None)
+        else:
+            item = get_items_metadata_by_activity_detail(activity_detail)
+    if not approval_record:
+        _, approval_record = get_pid_and_record(item)
+    if not files:
+        files, files_thumbnail = get_files_and_thumbnail(activity_id, item)
+
+    item_link_record = []
+    new_files = []
+    new_thumbnail = None
+    item_type_id = approval_record.get('item_type_id')
+
+    # case create item
+    if not has_pid_value():
+        item_link_record = approval_record
+        new_files = files
+        allow_multi_thumbnails = \
+            get_allow_multi_thumbnail(item_type_id, activity_id)
+        new_thumbnail = get_thumbnails(new_files, allow_multi_thumbnails)
+        if not new_thumbnail:
+            new_thumbnail = files_thumbnail
+
+    # case when edit item and step is item_login
+    if is_item_login() and has_pid_value():
+        pid_value = item['pid']['value']
+        item_link_record, new_files = get_record_by_root_ver(pid_value)
+        allow_multi_thumbnails = get_allow_multi_thumbnail(item_type_id, None)
+        new_thumbnail = get_thumbnails(new_files, allow_multi_thumbnails)
+
+    # case when edit item and step # item_login
+    if activity_detail.item_id and has_pid_value() and not is_item_login():
+        new_files = deepcopy(files)
+        new_record = deepcopy(approval_record)
+
+        item_link_record, files = get_record_by_root_ver(item['pid']['value'])
+        item['title'] = item_link_record['title'][0]
+        approval_record = item_link_record
+        item_link_record = new_record
+        activity_id_temp = activity_id if is_approval() else None
+        allow_multi_thumbnails = get_allow_multi_thumbnail(item_type_id,
+                                                           activity_id_temp)
+        files_thumbnail = get_thumbnails(files, allow_multi_thumbnails)
+        new_thumbnail = get_thumbnails(new_files, allow_multi_thumbnails)
+
+        if check_record(approval_record) and files and len(files) > 0:
+            files = set_files_display_type(approval_record, files)
+    if check_record(item_link_record) and new_files and len(new_files) > 0:
+        set_files_display_type(item_link_record, new_files)
+
+    return dict(
+        record=item_link_record,
+        files=new_files,
+        files_thumbnail=new_thumbnail)

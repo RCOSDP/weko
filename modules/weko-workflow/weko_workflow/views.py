@@ -58,7 +58,8 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
 from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
     get_workflows
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from werkzeug.utils import import_string
 
@@ -75,7 +76,8 @@ from .utils import IdentifierHandle, auto_fill_title, \
     get_actionid, get_activity_display_info, \
     get_activity_id_of_record_without_version, get_allow_multi_thumbnail, \
     get_application_and_approved_date, get_approval_keys, get_cache_data, \
-    get_identifier_setting, get_record_by_root_ver, get_thumbnails, \
+    get_files_and_thumbnail, get_identifier_setting, get_item_link_info, \
+    get_pid_and_record, get_record_by_root_ver, get_thumbnails, \
     get_usage_data, get_workflow_item_type_names, handle_finish_workflow, \
     init_activity_for_guest_user, is_enable_item_name_link, \
     is_hidden_pubdate, is_show_autofill_metadata, \
@@ -397,25 +399,25 @@ def display_guest_activity(file_name=""):
     session['guest_url'] = request.full_path
 
     guest_activity = prepare_data_for_guest_activity(activity_id)
-    activity_detail = WorkActivity().get_activity_detail(activity_id)
-    workflow_detail = WorkFlow().get_workflow_by_id(activity_detail.workflow_id)
-    usage_data = get_usage_data(workflow_detail.itemtype_id,
-                                activity_detail, {})
 
-    guest_activity.update(dict(
-        auto_fill_usage_data_usage_type=usage_data.get('usage_type') if usage_data else '',
-        auto_fill_usage_data_dataset_usage=usage_data.get('dataset_usage') if usage_data else '',
-        auto_fill_usage_data_name=usage_data.get('name') if usage_data else '',
-        auto_fill_usage_data_mail_address=usage_data.get('mail_address') if usage_data else '',
-        auto_fill_usage_data_university_institution=usage_data.get('university_institution') if usage_data else '',
-        auto_fill_usage_data_affiliated_division_department=usage_data.get('affiliated_division_department') if usage_data else '',
-        auto_fill_usage_data_position=usage_data.get('position') if usage_data else '',
-        auto_fill_usage_data_position_other=usage_data.get('position_other') if usage_data else '',
-        auto_fill_usage_data_phone_number=usage_data.get('phone_number') if usage_data else '',
-        auto_fill_usage_data_usage_report_id=usage_data.get('usage_report_id') if usage_data else '',
-        auto_fill_usage_data_wf_issued_date=usage_data.get('wf_issued_date') if usage_data else '',
-        auto_fill_usage_data_item_title=usage_data.get('item_title') if usage_data else ''
-    ))
+    # Get Auto fill data for Restricted Access Item Type.
+    usage_data = get_usage_data(
+        guest_activity.get('id'), guest_activity.get('activity'))
+    guest_activity.update(usage_data)
+
+    # Get item link info.
+    item_link_info = get_item_link_info(activity_id,
+                                        guest_activity.get('activity'))
+    guest_activity.update(
+        dict(
+            record_after_update=item_link_info.get('record'),
+            newFiles=item_link_info.get('files'),
+            new_thumbnail=item_link_info.get('files_thumbnail'),
+            record=item_link_info.get('record', []),
+            files=item_link_info.get('files', []),
+            files_thumbnail=item_link_info.get('files_thumbnail', [])
+        )
+    )
 
     return render_template(
         'weko_workflow/activity_detail.html',
@@ -454,7 +456,6 @@ def display_activity(activity_id="0"):
                 identifier_setting.jalc_datacite_doi = text_empty
             if not identifier_setting.ndl_jalc_doi:
                 identifier_setting.ndl_jalc_doi = text_empty
-
     temporary_identifier_select = 0
     temporary_identifier_inputs = []
     last_identifier_setting = activity.get_action_identifier_grant(
@@ -494,11 +495,7 @@ def display_activity(activity_id="0"):
     allow_multi_thumbnail = False
     term_and_condition_content = ''
     is_auto_set_index_action = True
-    itemLink_record = []
-    newFiles = []
-    new_thumbnail = None
     application_item_type = False
-    allow_multi_thumbnails = False
     title = ""
     data_type = activity_detail.extra_info.get(
         "related_title") if activity_detail.extra_info else None
@@ -546,28 +543,8 @@ def display_activity(activity_id="0"):
     # if 'approval' == action_endpoint:
     if item:
         # get record data for the first time access to editing item screen
-        recid = PersistentIdentifier.get_by_object(
-            pid_type='recid', object_type='rec', object_uuid=item.id)
-        record_class = import_string('weko_deposit.api:WekoRecord')
-        resolver = Resolver(pid_type='recid', object_type='rec',
-                            getter=record_class.get_record)
-        recid, approval_record = resolver.resolve(recid.pid_value)
-        deposit = WekoDeposit.get_record(item.id)
-
-        # get files data after click Save btn
-        activity = WorkActivity()
-        metadata = activity.get_activity_metadata(activity_id)
-        if metadata:
-            item_json = json.loads(metadata)
-            if 'files' in item_json:
-                files = item_json.get('files')
-        if deposit and not files:
-            files = to_files_js(deposit)
-
-        if files and not files_thumbnail:
-            files_thumbnail = [i for i in files
-                               if 'is_thumbnail' in i.keys()
-                               and i['is_thumbnail']]
+        recid, approval_record = get_pid_and_record(item)
+        files, files_thumbnail = get_files_and_thumbnail(activity_id, item)
 
         links = base_factory(recid)
 
@@ -613,72 +590,26 @@ def display_activity(activity_id="0"):
         item_link = ItemLink.get_item_link_info(recid.pid_value)
         ctx['item_link'] = item_link
 
-    # case when edit item and step is item_login
-    if action_endpoint and action_endpoint == 'item_login' and item and item.get('pid') and \
-            item['pid'].get('value'):
-        itemLink_record, newFiles = get_record_by_root_ver(item['pid']['value'])
-        allow_multi_thumbnails = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'), None)
-        new_thumbnail = get_thumbnails(newFiles, allow_multi_thumbnails)
-
-    # case create item
-    if item and 'pid' not in item:
-        itemLink_record = approval_record
-        newFiles = files
-        allow_multi_thumbnails = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'), activity_id)
-        new_thumbnail = get_thumbnails(newFiles, allow_multi_thumbnails)
-        if new_thumbnail:
-            new_thumbnail = files_thumbnail
-
-    # case when edit item and step # item_login
-    if activity_detail.item_id and item and 'pid' in item \
-       and 'value' in item['pid'] and 'item_login' not in action_endpoint:
-        if not newFiles:
-            newFiles = copy.deepcopy(files)
-        newRecord = copy.deepcopy(approval_record)
-
-        itemLink_record, files = get_record_by_root_ver(item['pid']['value'])
-        item['title'] = itemLink_record['title'][0]
-
-        approval_record = itemLink_record
-        itemLink_record = newRecord
-
-        if 'end_action' in action_endpoint:
-            files = newFiles
-        allow_multi_thumbnails = get_allow_multi_thumbnail(approval_record.get('item_type_id'), None)
-        files_thumbnail = get_thumbnails(files, allow_multi_thumbnails)
-
-        if 'approval' == action_endpoint:
-            allow_multi_thumbnails = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'), activity_id)
-            new_thumbnail = get_thumbnails(newFiles, allow_multi_thumbnails)
-
-        if approval_record and files and len(approval_record) > 0 and \
-           len(files) > 0 and (isinstance(approval_record, list) or isinstance(approval_record, dict)):
-            files = set_files_display_type(approval_record, files)
-
-    if itemLink_record and newFiles and len(itemLink_record) > 0 and len(newFiles) > 0 \
-       and (isinstance(itemLink_record, list) or isinstance(itemLink_record, dict)):
-        newFiles = set_files_display_type(itemLink_record, newFiles)
+    # Get item link info.
+    item_link_info = get_item_link_info(
+        activity_id, activity_detail, action_endpoint, item,
+        approval_record, files, files_thumbnail)
+    ctx.update(
+        dict(
+            record_after_update=item_link_info.get('record'),
+            newFiles=item_link_info.get('files'),
+            new_thumbnail=item_link_info.get('files_thumbnail'),
+        )
+    )
 
     # Get email approval key
     approval_email_key = get_approval_keys()
 
-    usage_data = get_usage_data(workflow_detail.itemtype_id,
-                                activity_detail,
-                                user_profile)
-    ctx.update(dict(
-        auto_fill_usage_data_usage_type=usage_data.get('usage_type') if usage_data else '',
-        auto_fill_usage_data_dataset_usage=usage_data.get('dataset_usage') if usage_data else '',
-        auto_fill_usage_data_name=usage_data.get('name') if usage_data else '',
-        auto_fill_usage_data_mail_address=usage_data.get('mail_address') if usage_data else '',
-        auto_fill_usage_data_university_institution=usage_data.get('university_institution') if usage_data else '',
-        auto_fill_usage_data_affiliated_division_department=usage_data.get('affiliated_division_department') if usage_data else '',
-        auto_fill_usage_data_position=usage_data.get('position') if usage_data else '',
-        auto_fill_usage_data_position_other=usage_data.get('position_other') if usage_data else '',
-        auto_fill_usage_data_phone_number=usage_data.get('phone_number') if usage_data else '',
-        auto_fill_usage_data_usage_report_id=usage_data.get('usage_report_id') if usage_data else '',
-        auto_fill_usage_data_wf_issued_date=usage_data.get('wf_issued_date') if usage_data else '',
-        auto_fill_usage_data_item_title=usage_data.get('item_title') if usage_data else ''
-    ))
+    # Get Auto fill data for Restricted Access Item Type.
+    usage_data = get_usage_data(
+        workflow_detail.itemtype_id, activity_detail, user_profile)
+    ctx.update(usage_data)
+
     return render_template(
         'weko_workflow/activity_detail.html',
         page=page,
@@ -697,7 +628,6 @@ def display_activity(activity_id="0"):
         idf_grant_method=current_app.config.get(
             'IDENTIFIER_GRANT_SUFFIX_METHOD', IDENTIFIER_GRANT_SUFFIX_METHOD),
         record=approval_record,
-        record_after_update=itemLink_record,
         records=record,
         step_item_login_url=step_item_login_url,
         need_file=need_file,
@@ -706,7 +636,6 @@ def display_activity(activity_id="0"):
         schemaform=schema_form,
         id=workflow_detail.itemtype_id,
         item_save_uri=item_save_uri,
-        newFiles=newFiles,
         files=files,
         endpoints=endpoints,
         error_type='item_login_error',
@@ -715,7 +644,6 @@ def display_activity(activity_id="0"):
         res_check=res_check,
         pid=recid,
         community_id=community_id,
-        new_thumbnail=new_thumbnail,
         need_thumbnail=need_thumbnail,
         files_thumbnail=files_thumbnail,
         allow_multi_thumbnail=allow_multi_thumbnail,
