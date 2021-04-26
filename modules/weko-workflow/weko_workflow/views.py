@@ -57,8 +57,9 @@ from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
 from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
-    get_workflows
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+    get_workflows, quite_delete
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from werkzeug.utils import import_string
 
@@ -437,6 +438,9 @@ def display_activity(activity_id="0"):
 
     # display_activity of Identifier grant
     identifier_setting = None
+    temporary_identifier_select = 0
+    temporary_identifier_inputs = []
+    last_identifier_setting = None
     if action_endpoint == 'identifier_grant' and item:
         community_id = request.args.get('community', None)
         if not community_id:
@@ -455,21 +459,19 @@ def display_activity(activity_id="0"):
             if not identifier_setting.ndl_jalc_doi:
                 identifier_setting.ndl_jalc_doi = text_empty
 
-    temporary_identifier_select = 0
-    temporary_identifier_inputs = []
-    last_identifier_setting = activity.get_action_identifier_grant(
-        activity_id=activity_id, action_id=action_id)
-    if last_identifier_setting:
-        temporary_identifier_select = last_identifier_setting.get(
-            'action_identifier_select')
-        temporary_identifier_inputs.append(
-            last_identifier_setting.get('action_identifier_jalc_doi'))
-        temporary_identifier_inputs.append(
-            last_identifier_setting.get('action_identifier_jalc_cr_doi'))
-        temporary_identifier_inputs.append(
-            last_identifier_setting.get('action_identifier_jalc_dc_doi'))
-        temporary_identifier_inputs.append(
-            last_identifier_setting.get('action_identifier_ndl_jalc_doi'))
+        last_identifier_setting = activity.get_action_identifier_grant(
+            activity_id=activity_id, action_id=action_id)
+        if last_identifier_setting:
+            temporary_identifier_select = last_identifier_setting.get(
+                'action_identifier_select')
+            temporary_identifier_inputs.append(
+                last_identifier_setting.get('action_identifier_jalc_doi'))
+            temporary_identifier_inputs.append(
+                last_identifier_setting.get('action_identifier_jalc_cr_doi'))
+            temporary_identifier_inputs.append(
+                last_identifier_setting.get('action_identifier_jalc_dc_doi'))
+            temporary_identifier_inputs.append(
+                last_identifier_setting.get('action_identifier_ndl_jalc_doi'))
 
     temporary_journal = activity.get_action_journal(
         activity_id=activity_id, action_id=action_id)
@@ -546,12 +548,27 @@ def display_activity(activity_id="0"):
     # if 'approval' == action_endpoint:
     if item:
         # get record data for the first time access to editing item screen
+        recid = None
+        approval_record = None
+        deposit = None
+
         recid = PersistentIdentifier.get_by_object(
-            pid_type='recid', object_type='rec', object_uuid=item.id)
-        record_class = import_string('weko_deposit.api:WekoRecord')
-        resolver = Resolver(pid_type='recid', object_type='rec',
-                            getter=record_class.get_record)
-        recid, approval_record = resolver.resolve(recid.pid_value)
+            pid_type='recid',
+            object_type='rec',
+            object_uuid=item.id)
+
+        if recid and recid.status == PIDStatus.REGISTERED:
+            record_class = import_string('weko_deposit.api:WekoRecord')
+            resolver = Resolver(
+                pid_type='recid',
+                object_type='rec',
+                getter=record_class.get_record)
+
+            recid, approval_record = resolver.resolve(recid.pid_value)
+        else:
+            from weko_deposit.api import WekoRecord
+            approval_record = WekoRecord.get_record(item.id)
+
         deposit = WekoDeposit.get_record(item.id)
 
         # get files data after click Save btn
@@ -568,7 +585,6 @@ def display_activity(activity_id="0"):
             files_thumbnail = [i for i in files
                                if 'is_thumbnail' in i.keys()
                                and i['is_thumbnail']]
-
         links = base_factory(recid)
 
     res_check = check_authority_action(str(activity_id), int(action_id),
@@ -597,7 +613,7 @@ def display_activity(activity_id="0"):
         session['itemlogin_pid'] = recid
         session['itemlogin_community_id'] = community_id
 
-    user_id = current_user.id
+    user_id = current_user.get_id()
     user_profile = {}
     if user_id:
         from weko_user_profiles.views import get_user_profile_info
@@ -621,7 +637,7 @@ def display_activity(activity_id="0"):
         new_thumbnail = get_thumbnails(newFiles, allow_multi_thumbnails)
 
     # case create item
-    if item and 'pid' not in item:
+    if item and approval_record and not item.get('pid'):
         itemLink_record = approval_record
         newFiles = files
         allow_multi_thumbnails = get_allow_multi_thumbnail(itemLink_record.get('item_type_id'), activity_id)
@@ -656,7 +672,7 @@ def display_activity(activity_id="0"):
             files = set_files_display_type(approval_record, files)
 
     if itemLink_record and newFiles and len(itemLink_record) > 0 and len(newFiles) > 0 \
-       and (isinstance(itemLink_record, list) or isinstance(itemLink_record, dict)):
+            and (isinstance(itemLink_record, list) or isinstance(itemLink_record, dict)):
         newFiles = set_files_display_type(itemLink_record, newFiles)
 
     # Get email approval key
@@ -978,13 +994,16 @@ def next_action(activity_id='0', action_id=0):
         )
 
     if action_endpoint == 'approval' and item_id:
-        item = ItemsMetadata.get_record(id_=item_id)
-        pid_identifier = PersistentIdentifier.get_by_object(
-            pid_type='depid', object_type='rec', object_uuid=item.id)
-        record_class = import_string('weko_deposit.api:WekoRecord')
-        resolver = Resolver(pid_type='recid', object_type='rec',
-                            getter=record_class.get_record)
-        _pid, _approval_record = resolver.resolve(pid_identifier.pid_value)
+        # item = ItemsMetadata.get_record(id_=item_id)
+        # pid_identifier = PersistentIdentifier.get_by_object(
+        #     pid_type='depid', object_type='rec', object_uuid=item.id)
+        # record_class = import_string('weko_deposit.api:WekoRecord')
+        # resolver = Resolver(
+        #     pid_type='recid',
+        #     object_type='rec',
+        #     getter=record_class.get_record)
+
+        # _pid, _approval_record = resolver.resolve(pid_identifier.pid_value)
 
         action_feedbackmail = work_activity.get_action_feedbackmail(
             activity_id=activity_id,
@@ -1321,6 +1340,9 @@ def cancel_action(activity_id='0', action_id=0):
     """Next action."""
     post_json = request.get_json()
     work_activity = WorkActivity()
+    pid_value = None
+    pid = None
+
     # Clear deposit
     activity_detail = work_activity.get_activity_by_id(activity_id)
 
@@ -1344,6 +1366,8 @@ def cancel_action(activity_id='0', action_id=0):
         if cancel_item_id:
             cancel_record = WekoDeposit.get_record(cancel_item_id)
             try:
+                quite_delete(str(cancel_item_id))
+
                 with db.session.begin_nested():
                     if cancel_record:
                         cancel_deposit = WekoDeposit(

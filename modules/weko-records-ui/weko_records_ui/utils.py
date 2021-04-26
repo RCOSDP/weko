@@ -178,17 +178,8 @@ def is_billing_item(item_type_id):
         return False
 
 
-def soft_delete(recid):
+def soft_delete(recid: str):
     """Soft delete item."""
-    def get_cache_data(key: str):
-        """Get cache data.
-
-        :param key: Cache key.
-
-        :return: Cache value.
-        """
-        return current_cache.get(key) or str()
-
     def check_an_item_is_locked(item_id=None):
         """Check if an item is locked.
 
@@ -196,16 +187,20 @@ def soft_delete(recid):
 
         :return
         """
+        from weko_workflow.utils import get_cache_data
+
         locked_data = get_cache_data('item_ids_locked') or dict()
         ids = locked_data.get('ids', set())
         return item_id in ids
 
     try:
         pid = PersistentIdentifier.query.filter_by(
-            pid_type='recid', pid_value=recid).first()
+            pid_type='recid',
+            pid_value=recid).first()
         if not pid:
             pid = PersistentIdentifier.query.filter_by(
-                pid_type='recid', object_uuid=recid).first()
+                pid_type='recid',
+                object_uuid=recid).first()
         if pid.status == PIDStatus.DELETED:
             return
 
@@ -217,9 +212,11 @@ def soft_delete(recid):
                          'the import is in progress.')
             })
 
+        all_ver = []
         versioning = PIDVersioning(child=pid)
         if not versioning.exists:
             return
+
         all_ver = versioning.children.all()
         draft_pid = PersistentIdentifier.query.filter_by(
             pid_type='recid',
@@ -245,6 +242,42 @@ def soft_delete(recid):
             for p in pids:
                 p.status = PIDStatus.DELETED
             db.session.commit()
+    except Exception as ex:
+        db.session.rollback()
+        raise ex
+
+
+def quite_delete(record_uuid: str):
+    """Soft delete item."""
+    try:
+        pids = []
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid',
+            object_uuid=record_uuid
+        ).first()
+
+        if pid.status == PIDStatus.DELETED:
+            return
+        pids.append(pid)
+
+        depid = PersistentIdentifier.query.filter_by(
+            pid_type='depid',
+            pid_value=record_uuid
+        ).first()
+
+        if depid:
+            rec = RecordMetadata.query.filter_by(
+                id=record_uuid).first()
+            dep = WekoDeposit(rec.json, rec)
+            dep['path'] = []
+            dep.indexer.update_path(dep, update_revision=False)
+            FeedbackMailList.delete(record_uuid)
+            dep.remove_feedback_mail()
+            pids.append(depid)
+
+        for p in pids:
+            p.status = PIDStatus.DELETED
+        db.session.commit()
     except Exception as ex:
         db.session.rollback()
         raise ex

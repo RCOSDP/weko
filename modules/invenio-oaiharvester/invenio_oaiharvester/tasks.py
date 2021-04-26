@@ -38,7 +38,7 @@ from lxml import etree
 from weko_deposit.api import WekoDeposit
 from weko_index_tree.models import Index
 from weko_records.models import ItemMetadata
-from weko_records_ui.utils import soft_delete
+from weko_records_ui.utils import soft_delete, quite_delete
 
 from .api import get_records, list_records, send_run_status_mail
 from .harvester import DCMapper, DDIMapper, JPCOARMapper
@@ -200,31 +200,34 @@ def process_item(record, harvesting, counter):
         soft_delete(recid.pid_value)
         event = ItemEvents.DELETE
     else:
-        json = mapper.map()
-        json['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
-        dep['_deposit']['status'] = 'draft'
-        dep.update({'actions': 'publish', 'index': indexes}, json)
-        dep.commit()
-        dep.publish()
-        # add item versioning
-        pid = PersistentIdentifier.query.filter_by(
-            pid_type='recid', pid_value=dep.pid.pid_value).first()
+        try:
+            json = mapper.map()
+            json['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
+            dep['_deposit']['status'] = 'draft'
+            dep.update({'actions': 'publish', 'index': indexes}, json)
+            dep.commit()
+            dep.publish()
+            # add item versioning
+            pid = PersistentIdentifier.query.filter_by(
+                pid_type='recid', pid_value=dep.pid.pid_value).first()
 
-        idt_list = mapper.identifiers
-        from weko_workflow.utils import IdentifierHandle
+            idt_list = mapper.identifiers
+            from weko_workflow.utils import IdentifierHandle
 
-        idt = IdentifierHandle(pid.object_uuid)
-        for it in idt_list:
-            if not it.get('type'):
-                continue
-            pid_type = it['type'].lower()
-            pid_obj = idt.get_pidstore(pid_type)
-            if not pid_obj:
-                idt.register_pidstore(pid_type, it['identifier'])
+            idt = IdentifierHandle(pid.object_uuid)
+            for it in idt_list:
+                if not it.get('type'):
+                    continue
+                pid_type = it['type'].lower()
+                pid_obj = idt.get_pidstore(pid_type)
+                if not pid_obj:
+                    idt.register_pidstore(pid_type, it['identifier'])
 
-        with current_app.test_request_context() as ctx:
-            first_ver = dep.newversion(pid)
-            first_ver.publish()
+            with current_app.test_request_context() as _ctx:
+                first_ver = dep.newversion(pid)
+                first_ver.publish()
+        except Exception:
+            quite_delete(dep.pid.object_uuid)
 
     harvesting.item_processed = harvesting.item_processed + 1
     db.session.commit()
