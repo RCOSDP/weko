@@ -38,7 +38,7 @@ from lxml import etree
 from weko_deposit.api import WekoDeposit
 from weko_index_tree.models import Index
 from weko_records.models import ItemMetadata
-from weko_records_ui.utils import soft_delete, quite_delete
+from weko_records_ui.utils import quite_delete, soft_delete
 
 from .api import get_records, list_records, send_run_status_mail
 from .harvester import DCMapper, DDIMapper, JPCOARMapper

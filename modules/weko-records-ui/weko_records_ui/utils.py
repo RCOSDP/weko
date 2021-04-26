@@ -262,7 +262,7 @@ def quite_delete(record_uuid: str):
 
         depid = PersistentIdentifier.query.filter_by(
             pid_type='depid',
-            pid_value=record_uuid
+            object_uuid=record_uuid
         ).first()
 
         if depid:
