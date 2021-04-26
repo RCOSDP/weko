@@ -136,3 +136,6 @@ msgstr "アイテムにDOIを付与する場合、インデックス状態が「
 
 msgid "This index cannot be deleted because the item belonging to this index is being edited by the import function."
 msgstr "このインデクスに所属しているアイテムがインポート機能で編集中のためインデクスが削除できません。"
+
+msgid "The index cannot be kept publication date to a future date because there are links from items that have a DOI."
+msgstr "DOIが付与されているアイテムからのリンクがあるため、インデックスの公開日を未来日に変更することはできません。"

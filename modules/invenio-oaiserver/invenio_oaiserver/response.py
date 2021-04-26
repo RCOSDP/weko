@@ -281,28 +281,7 @@ def is_private_workflow(record):
 
 def is_private_index(record):
     """Check index of workflow is private."""
-    def is_future_date(public_date):
-        """Check public date (Index Tree) is future date."""
-        cur_date = datetime.now()
-        return public_date and public_date > cur_date
-
-    # Get current and parent indexes of this record.
-    list_index = record.get("path")
-    index_lst = []
-    if list_index:
-        index_id_lst = []
-        for index in list_index:
-            indexes = str(index).split('/')
-            index_id_lst.append(indexes[-1])
-        index_lst = index_id_lst
-    # check private and future date of all(current and parent) indexes.
-    indexes = Indexes.get_path_list(index_lst)
-    publish_state = 6
-    publish_date = 7
-    for index in indexes:
-        if not index[publish_state] or is_future_date(index[publish_date]):
-            return True
-    return False
+    return not Indexes.is_public_state(copy.deepcopy(record.get("path")))
 
 
 def set_identifier(param_record, param_rec):
@@ -351,9 +330,10 @@ def getrecord(**kwargs):
     e_record = SubElement(e_getrecord, etree.QName(NS_OAIPMH, 'record'))
     set_identifier(record, record)
     # Harvest is private
+    _is_private_index = is_private_index(record)
     if not harvest_public_state or\
             (identify and not identify.outPutSetting) or \
-            (is_private_index(record)
+            (_is_private_index
                 and harvest_public_state and is_exists_doi(record)):
         return error(get_error_code_msg(), **kwargs)
     # Item is deleted
@@ -361,7 +341,7 @@ def getrecord(**kwargs):
     # or Harvest is public & Index is private
     elif is_deleted_workflow(pid) or (
         harvest_public_state and is_private_workflow(record)) or (
-            harvest_public_state and is_private_index(record)):
+            harvest_public_state and _is_private_index):
         header(
             e_record,
             identifier=pid.pid_value,
@@ -446,8 +426,6 @@ def listrecords(**kwargs):
             pid = oaiid_fetcher(record['id'], record['json']['_source'])
             pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
             rec = WekoRecord.get_record(record['id'])
-            harvest_public_state, r = \
-                WekoRecord.get_record_with_hps(pid_object.object_uuid)
             set_identifier(record, rec)
             # Check output delete, noRecordsMatch
             if not is_private_index(rec):
@@ -474,7 +452,7 @@ def listrecords(**kwargs):
             e_metadata.append(record_dumper(pid, etree_record))
         except Exception:
             current_app.logger.error(traceback.print_exc())
-            current_app.logger.error('Error when exporting item id'
+            current_app.logger.error('Error when exporting item id '
                                      + str(record['id']))
     # Check <record> tag not exist.
     if len(e_listrecords) == 0:

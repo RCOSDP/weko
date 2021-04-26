@@ -42,6 +42,7 @@ from invenio_records_ui.signals import record_viewed
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from simplekv.memory.redisstore import RedisStore
+from weko_accounts.views import _redirect_method
 from weko_admin.utils import get_search_setting
 from weko_deposit.api import WekoRecord
 from weko_deposit.pidstore import get_record_without_version
@@ -61,7 +62,7 @@ from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
 from .permissions import check_content_clickable, check_created_id, \
     check_file_download_permission, check_original_pdf_download_permission, \
-    check_permission_period, get_permission
+    check_permission_period, file_permission_factory, get_permission
 from .utils import get_billing_file_download_permission, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
     hide_item_metadata, is_show_email_of_creator, replace_license_free
@@ -359,10 +360,10 @@ def _get_google_scholar_meta(record):
     et = etree.fromstring(recstr)
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     res = []
-    if mtdata:
+    if mtdata is not None:
         for target in target_map:
             found = mtdata.find(target, namespaces=mtdata.nsmap)
-            if found:
+            if found is not None:
                 res.append({'name': target_map[target], 'data': found.text})
         for date in mtdata.findall('datacite:date', namespaces=mtdata.nsmap):
             if date.attrib.get('dateType') == 'Available':
@@ -417,6 +418,31 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     :param kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
     """
+    # Check file permision if request is File Information page.
+    if filename:
+        check_file = None
+        _files = record.get_file_data()
+        if not _files:
+            abort(404)
+
+        file_order = int(request.args.get("file_order", -1))
+        if filename == '[No FileName]':
+            if file_order == -1 or file_order >= len(_files):
+                abort(404)
+            check_file = _files[file_order]
+        else:
+            find_filenames = [file for file in _files if file.get(
+                'filename', '') == filename]
+            if not find_filenames:
+                abort(404)
+            check_file = find_filenames[0]
+
+        # Check file contents permission
+        if not file_permission_factory(record, fjson=check_file).can():
+            if not current_user.is_authenticated:
+                return _redirect_method(has_next=True)
+            abort(403)
+
     path_name_dict = {'ja': {}, 'en': {}}
     for navi in record.navi:
         path_arr = navi.path.split('/')

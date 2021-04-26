@@ -2477,35 +2477,6 @@ def get_ignore_item(_item_type_id, item_type_mapping=None,
     return ignore_list
 
 
-def filter_list_item_uuid_has_doi(list_uuid):
-    """Filter list item_uuid has doi.
-
-    @param list_uuid:
-    @return: list_uuid
-    """
-    if not list_uuid:
-        return []
-    with db.session.no_autoflush:
-        p = PersistentIdentifier
-        uuid_cond = p.object_uuid == list_uuid[0] \
-            if len(list_uuid) == 1 else p.object_uuid.in_(list_uuid)
-        query = db.session.query(p).filter(
-            uuid_cond,
-            p.status == PIDStatus.REGISTERED,
-            p.pid_type == 'doi')
-
-        return [str(record.object_uuid) for record in query.all()]
-
-
-def check_item_has_doi(list_uuid):
-    """Check list item_uuid has doi.
-
-    @param list_uuid:
-    @return:
-    """
-    return True if filter_list_item_uuid_has_doi(list_uuid) else False
-
-
 def make_stats_tsv_with_permission(item_type_id, recids,
                                    records_metadata, permissions):
     """Prepare TSV data for each Item Types.

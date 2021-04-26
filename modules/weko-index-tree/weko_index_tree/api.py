@@ -21,7 +21,7 @@
 """API for weko-index-tree."""
 
 from copy import deepcopy
-from datetime import datetime
+from datetime import date, datetime
 from functools import partial
 
 from flask import current_app, json
@@ -270,7 +270,8 @@ class Indexes(object):
                             Index.public_date,
                             Index.comment,
                             Index.browsing_role,
-                            Index.browsing_group
+                            Index.browsing_group,
+                            Index.harvest_public_state
                         ).filter(Index.id == index_id)).all()
 
                 if obj:
@@ -916,7 +917,8 @@ class Indexes(object):
             Index.public_date.label("public_date"),
             Index.comment.label("comment"),
             Index.browsing_role.label("browsing_role"),
-            Index.browsing_group.label("browsing_group")
+            Index.browsing_group.label("browsing_group"),
+            Index.harvest_public_state.label("harvest_public_state")
         ).filter(Index.parent == pid). \
             cte(name="recursive_t", recursive=True)
 
@@ -937,7 +939,8 @@ class Indexes(object):
                 test_alias.public_date,
                 test_alias.comment,
                 test_alias.browsing_role,
-                test_alias.browsing_group
+                test_alias.browsing_group,
+                test_alias.harvest_public_state,
             ).filter(test_alias.parent == rec_alias.c.cid)
         )
 
@@ -1179,6 +1182,34 @@ class Indexes(object):
                     query(func.every(Index.harvest_public_state)). \
                     filter(Index.id.in_(path[i]))
             smt = qry.union_all(*path).subquery()
+            result = db.session.query(
+                func.bool_or(
+                    smt.c.parent_state).label('parent_state')).one()
+            return result.parent_state
+        except Exception as se:
+            current_app.logger.debug(se)
+            return False
+
+    @classmethod
+    def is_public_state(cls, paths):
+        """Check have public state."""
+        def _query(path):
+            return db.session. \
+                query(func.every(db.and_(
+                    Index.public_state,
+                    db.or_(
+                        Index.public_date is None,
+                        Index.public_date <= date.today()
+                    ))).label('parent_state')
+                ).filter(Index.id.in_(path))
+
+        try:
+            last_path = paths.pop(-1).split('/')
+            qry = _query(last_path)
+            for i in range(len(paths)):
+                paths[i] = paths[i].split('/')
+                paths[i] = _query(paths[i])
+            smt = qry.union_all(*paths).subquery()
             result = db.session.query(
                 func.bool_or(
                     smt.c.parent_state).label('parent_state')).one()
@@ -1496,3 +1527,39 @@ class Indexes(object):
             obj = db.session.query(*qlst). \
                 order_by(recursive_t.c.pid).first()
             return obj.path if obj else ''
+
+    @classmethod
+    def get_harverted_index_list(cls):
+        """Get full path of index.
+
+        :return: path.
+        """
+        recursive_t = db.session.query(
+            Index.parent.label("pid"),
+            Index.id.label("cid"),
+            func.cast(Index.id, db.Text).label("path")
+        ).filter(
+            Index.parent == 0,
+            Index.harvest_public_state is True
+        ).cte(name="recursive_t", recursive=True)
+
+        rec_alias = aliased(recursive_t, name="rec")
+        test_alias = aliased(Index, name="t")
+        recursive_t = recursive_t.union_all(
+            db.session.query(
+                test_alias.parent,
+                test_alias.id,
+                rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text)
+            ).filter(
+                test_alias.parent == rec_alias.c.cid,
+                test_alias.harvest_public_state is True)
+        )
+
+        paths = []
+        with db.session.begin_nested():
+            qlst = [recursive_t.c.path]
+            indexes = db.session.query(*qlst). \
+                order_by(recursive_t.c.pid).all()
+            for idx in indexes:
+                paths.append(idx.path)
+        return paths

@@ -119,23 +119,51 @@ class PDFCoverPageSettings(db.Model):
 
 
 class InstitutionName(db.Model):
+    """Institution Name model."""
+
     id = db.Column(db.Integer, primary_key=True)
+    """Identifier."""
+
     institution_name = db.Column(db.String(255), default='')
+    """Institution name."""
+
+    def __init__(self, name):
+        """Constructor."""
+        self.institution_name = name
 
     @classmethod
     def get_institution_name(cls):
-        if len(cls.query.all()) < 1:
-            db.session.add(cls())
-            db.session.commit()
-        return cls.query.get(1).institution_name
+        """Get institution name.
+
+        Returns:
+            str: institution name
+
+        """
+        institution = cls.query.first()
+        if institution:
+            return institution.institution_name
+        return ""
 
     @classmethod
     def set_institution_name(cls, new_name):
-        cfg = cls.query.get(1)
-        cfg.institution_name = new_name
-        db.session.commit()
+        """Save institution name.
 
-        """ Record UI models """
+        Args:
+            new_name (str): new institution name.
+
+        """
+        try:
+            with db.session.begin_nested():
+                cfg = cls.query.first()
+                if cfg:
+                    cfg.institution_name = new_name
+                    db.session.merge(cfg)
+                else:
+                    db.session.add(cls(new_name))
+            db.session.commit()
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
 
 
 class FilePermission(db.Model):
