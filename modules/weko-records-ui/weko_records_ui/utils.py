@@ -256,7 +256,7 @@ def quite_delete(record_uuid: str):
             object_uuid=record_uuid
         ).first()
 
-        if pid.status == PIDStatus.DELETED:
+        if pid.status == PIDStatus.DELETED or '.0' in pid.pid_value:
             return
         pids.append(pid)
 
