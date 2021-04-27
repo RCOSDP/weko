@@ -157,9 +157,13 @@
               {%- set display_file_info = record.display_file_info -%}
               <table class="table table-bordered table-striped detail-table">
                 <!-- Output Pubdate -->
+		{%- if display_file_info |length  > 0 %}
                 {{output_attribute_value_mlt(display_file_info[0]['attribute_value_mlt'], 0)}}
+		{%- endif %}
                 <!-- Output File Information -->
+		{%- if display_file_info |length  > 1 %}
                 {{output_attribute_value_mlt(display_file_info[1]['attribute_value_mlt'], 0)}}
+		{%- endif %}
               </table>
             </div>
 
