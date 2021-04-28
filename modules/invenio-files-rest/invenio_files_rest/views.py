@@ -11,9 +11,10 @@
 from __future__ import absolute_import, print_function
 
 import uuid
+from functools import partial, wraps
+
 from flask import Blueprint, abort, current_app, jsonify, request, session
 from flask_login import current_user
-from functools import partial, wraps
 from invenio_db import db
 from invenio_records.models import RecordMetadata
 from invenio_records_files.models import RecordsBuckets

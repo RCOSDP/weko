@@ -60,8 +60,7 @@ from weko_records.serializers.utils import get_item_type_name, get_mapping
 from weko_records_ui.utils import create_onetime_download_url, \
     generate_one_time_download_url, get_list_licence
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
-from weko_user_profiles.config import \
-    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
 from werkzeug.utils import import_string
@@ -3249,7 +3248,6 @@ def get_usage_data(item_type_id, activity_detail, user_profile=None):
     @param user_profile: User profile.
     @return:
     """
-
     def __build_metadata_for_usage_report(record_data: Union[dict, list],
                                           usage_report_data: dict):
         if isinstance(record_data, dict):
