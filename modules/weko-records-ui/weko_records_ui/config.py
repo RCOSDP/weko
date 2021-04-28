@@ -384,3 +384,5 @@ WEKO_RECORDS_UI_EMAIL_ITEM_KEYS = ['creatorMails', 'contributorMails', 'mails']
 
 RECORDS_UI_TOMBSTONE_TEMPLATE = 'weko_records_ui/tombstone.html'
 # Setting the template of showing deleted record
+
+WEKO_RECORDS_UI_LANG_DISP_FLG = False
