@@ -232,7 +232,8 @@ class ShibUser(object):
                     if self.shib_attr['shib_mail']:
                         shib_user.shib_mail = self.shib_attr['shib_mail']
                     if self.shib_attr['shib_user_name']:
-                        shib_user.shib_user_name = self.shib_attr['shib_user_name']
+                        shib_user.shib_user_name = self.shib_attr[
+                            'shib_user_name']
                     if self.shib_attr['shib_role_authority_name']:
                         shib_user.shib_role_authority_name = self.shib_attr[
                             'shib_role_authority_name']
