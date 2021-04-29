@@ -120,14 +120,6 @@ def shib_auto_login():
         else:
             shib_user.new_relation_info()
 
-        error = shib_user.check_in()
-
-        if error:
-            datastore.delete(cache_key)
-            current_app.logger.error(error)
-            flash(error, category='error')
-            return _redirect_method()
-
         if shib_user.shib_user:
             shib_user.shib_user_login()
 
@@ -173,6 +165,8 @@ def confirm_user():
         shib_user = ShibUser(cache_val)
         account = request.form.get('WEKO_ATTR_ACCOUNT', None)
         password = request.form.get('WEKO_ATTR_PWD', None)
+
+        # Link WEKO3 account's passwords error.
         if not shib_user.check_weko_user(account, password):
             flash('check_weko_user', category='error')
             datastore.delete(cache_key)
@@ -181,14 +175,7 @@ def confirm_user():
         if not shib_user.bind_relation_info(account):
             flash('FAILED bind_relation_info!', category='error')
             return _redirect_method()
-
-        error = shib_user.check_in()
-
-        if error:
-            datastore.delete(cache_key)
-            flash(error, category='error')
-            return _redirect_method()
-
+ 
         if shib_user.shib_user:
             shib_user.shib_user_login()
         datastore.delete(cache_key)

@@ -175,29 +175,9 @@ class ShibUser(object):
             self.user,
             **self.shib_attr)
         self.shib_user = shib_user
-        self.new_shib_profile()
+        self.bind_shib_profile()
 
         return shib_user
-
-    def new_shib_profile(self):
-        """
-        Create new profile info for shibboleth user.
-
-        :return: UserProfile instance
-
-        """
-        with db.session.begin_nested():
-            # create profile.
-            userprofile = UserProfile(user_id=self.user.id,
-                                      timezone=current_app.config[
-                                          'USERPROFILES_TIMEZONE_DEFAULT'],
-                                      language=current_app.config[
-                                          'USERPROFILES_LANGUAGE_DEFAULT'])
-            userprofile.username = self.shib_user.shib_user_name
-            db.session.add(userprofile)
-        db.session.commit()
-
-        return userprofile
 
     def bind_shib_profile(self):
         """
@@ -206,8 +186,15 @@ class ShibUser(object):
         :return: UserProfile instance
 
         """
+        userprofile = UserProfile.get_by_userid(self.user.id)
+
         with db.session.begin_nested():
-            userprofile = UserProfile.get_by_userid(self.user.id)
+            if not userprofile:
+                userprofile = UserProfile(user_id=self.user.id,
+                                          timezone=current_app.config[
+                                            'USERPROFILES_TIMEZONE_DEFAULT'],
+                                          language=current_app.config[
+                                            'USERPROFILES_LANGUAGE_DEFAULT'])
             userprofile.username = self.shib_user.shib_user_name
             db.session.add(userprofile)
         db.session.commit()
@@ -237,12 +224,14 @@ class ShibUser(object):
                     if self.shib_attr['shib_role_authority_name']:
                         shib_user.shib_role_authority_name = self.shib_attr[
                             'shib_role_authority_name']
+                    self.user.email = shib_user.shib_mail
                 db.session.commit()
             except Exception as ex:
                 current_app.logger.error(ex)
                 db.session.rollback()
 
         self.bind_shib_profile()
+        self.assign_user_role()
 
     def assign_user_role(self):
         """
