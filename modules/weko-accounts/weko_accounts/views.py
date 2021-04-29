@@ -95,7 +95,7 @@ def shib_auto_login():
         shib_session_id = request.args.get('SHIB_ATTR_SESSION_ID', None)
 
         if not shib_session_id:
-            shib_session_id = session['shib_session_id']
+            shib_session_id = session.get('shib_session_id')
             is_auto_bind = True
 
         if not shib_session_id:

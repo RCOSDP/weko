@@ -30,6 +30,14 @@
       <div class="row navbar-btn"><div class="col-sm-12">
         <form action={{url_for("weko_accounts.shib_sp_login")}} method="POST">
           <div class="form-group form-group-lg has-feedback">
+            <input autofocus="" class="form-control" id="session_id" name="SHIB_ATTR_SESSION_ID" placeholder="SHIB_ATTR_SESSION_ID" type="text" value="">
+            <i class="fa fa-cog form-control-feedback" aria-hidden="true"></i>
+          </div>
+          <div class="form-group form-group-lg has-feedback">
+            <input autofocus="" class="form-control" id="shib_eppn" name="SHIB_ATTR_EPPN" placeholder="SHIB_ATTR_EPPN" type="text" value="">
+            <i class="fa fa-pencil form-control-feedback" aria-hidden="true"></i>
+          </div>
+          <div class="form-group form-group-lg has-feedback">
             <input autofocus="" class="form-control" id="shib_email" name="SHIB_ATTR_MAIL" placeholder="SHIB_ATTR_MAIL" type="text" value="">
             <i class="fa fa-envelope form-control-feedback" aria-hidden="true"></i>
           </div>
@@ -60,10 +68,6 @@
           <div class="form-group form-group-lg has-feedback">
             <input autofocus="" class="form-control" id="ip_range_flag" name="SHIB_ATTR_SITE_USER_WITHIN_IP_RANGE_FLAG" placeholder="SHIB_ATTR_SITE_USER_WITHIN_IP_RANGE_FLAG" type="text" value="">
             <i class="fa fa-pencil form-control-feedback" aria-hidden="true"></i>
-          </div>
-          <div class="form-group form-group-lg has-feedback">
-            <input autofocus="" class="form-control" id="session_id" name="SHIB_ATTR_SESSION_ID" placeholder="SHIB_ATTR_SESSION_ID" type="text" value="">
-            <i class="fa fa-cog form-control-feedback" aria-hidden="true"></i>
           </div>
           <button type="submit" class="btn btn-default btn-lg btn-block"><i class="fa fa-sign-in"></i> Shibboleth User</button>
         </form>
