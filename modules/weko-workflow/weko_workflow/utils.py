@@ -1682,7 +1682,7 @@ def get_allow_multi_thumbnail(item_type_id, activity_id=None):
     if activity_id:
         from weko_items_ui.api import item_login
         _, _, _, _, _, _, _, _, _, _, _, allow_multi_thumbnail \
-            = item_login(item_type_id=item_type_id, activity_id=activity_id)
+            = item_login(item_type_id=item_type_id)
         return allow_multi_thumbnail
     else:
         return None
