@@ -1059,8 +1059,13 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
 
     ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
     ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
-    ret.append('.metadata.pubdate')
-    ret_label.append('公開日' if current_i18n.language == 'ja' else 'PubDate')
+    has_pubdate = len([
+        record for _, record in records.records.items()
+        if record.get('pubdate')
+    ])
+    if has_pubdate:
+        ret.append('.metadata.pubdate')
+        ret_label.append('公開日' if current_i18n.language == 'ja' else 'PubDate')
 
     for recid in recids:
         record = records.records[recid]
@@ -1118,8 +1123,9 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
         ])
 
         records.attr_output[recid].append('')
-        records.attr_output[recid].append(record[
-            'pubdate']['attribute_value'])
+        if has_pubdate:
+            pubdate = record.get('pubdate', {}).get('attribute_value', '')
+            records.attr_output[recid].append(pubdate)
 
     for item_key in item_type.get('table_row'):
         item = table_row_properties.get(item_key)
