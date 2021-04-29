@@ -267,3 +267,7 @@ ng\:form {
         transform: rotate(360deg);
     }
 }
+
+@media print {
+  .no-print{display:none;}
+}
