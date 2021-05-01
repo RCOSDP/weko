@@ -30,16 +30,17 @@ class MainLayout extends React.Component {
     this.state = {
       is_enable: true,
       list_facet: {}
-    }
-    this.get_facet_search_list = this.get_facet_search_list.bind(this)
-    this.handleCheck = this.handleCheck.bind(this)
-    this.convertData = this.convertData.bind(this)
-    this.getUrlVars = this.getUrlVars.bind(this)
-    this.get_display_control = this.get_display_control.bind(this)
+    };
+    this.get_facet_search_list = this.get_facet_search_list.bind(this);
+    this.handleCheck = this.handleCheck.bind(this);
+    this.convertData = this.convertData.bind(this);
+    this.getUrlVars = this.getUrlVars.bind(this);
+    //this.get_display_control = this.get_display_control.bind(this);
   }
 
-  get_display_control() {
-    let url = '/api/admin/search_control/display_control'
+/*   get_display_control() {
+    let url = '/api/admin/search_control/display_control';
+    //let weko_show_index_for_authenticated_user = document.getElementById("weko_show_index_for_authenticated_user").value
     $.ajax({
         context: this,
         url: url,
@@ -47,21 +48,23 @@ class MainLayout extends React.Component {
         contentType: 'application/json; charset=UTF-8',
         success: function (res) {
             if (res) {
-               const data = JSON.parse(res)
+               const data = JSON.parse(res);
                if (data.display_facet_search) {
-                  this.setState({is_enable: data.display_facet_search.status})
+                  this.setState({is_enable: data.display_facet_search.status});
                }
-               if (data.display_index_tree && !data.display_index_tree.status ) {
+
+               if (data.display_index_tree && !data.display_index_tree.status || weko_show_index_for_authenticated_user === "True") {
                   $("#body_index").hide()
+                  $("#body_indexlink").hide()
+                  $("#body_indexlist").hide()
                }
             }
-
         },
         error: function() {
-          console.log("Error in get list")
+          console.log("Error in get list");
         }
     });
-  }
+  } */
 
   get_facet_search_list() {
     let search = window.location.search;

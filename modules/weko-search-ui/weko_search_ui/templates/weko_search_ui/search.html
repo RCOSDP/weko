@@ -104,7 +104,7 @@
   </div>
   <div class="row" style="height: 100%">
     <div class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}}" style="height: 80%">
-      {% if display_index_tree %}
+      {% if display_index_tree or (current_user.is_authenticated and config.WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER) %}
         {% include "weko_theme/body_index.html" %}
       {% endif %}
       {% if display_facet_search %}
