@@ -40,7 +40,6 @@ class MainLayout extends React.Component {
 
   get_display_control() {
     let url = '/api/admin/search_control/display_control'
-    let weko_show_index_for_authenticated_user = document.getElementById("weko_show_index_for_authenticated_user").value
     $.ajax({
         context: this,
         url: url,
@@ -52,10 +51,8 @@ class MainLayout extends React.Component {
                if (data.display_facet_search) {
                   this.setState({is_enable: data.display_facet_search.status})
                }
-               if (data.display_index_tree && !data.display_index_tree.status || weko_show_index_for_authenticated_user === "True") {
+               if (data.display_index_tree && !data.display_index_tree.status ) {
                   $("#body_index").hide()
-                  $("#body_indexlink").hide()
-                  $("#body_indexlist").hide()
                }
             }
 

@@ -568,6 +568,13 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         "display_facet_search": display_facet_search
     })
 
+    # Get index tree setting.
+    display_index_tree = get_search_setting().get("display_control", {}).get(
+        'display_index_tree', {}).get('status', False)
+    ctx.update({
+        "display_index_tree": display_index_tree
+    })
+
     return render_template(
         template,
         pid=pid,

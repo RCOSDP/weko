@@ -188,6 +188,13 @@ def search():
             "display_facet_search": display_facet_search,
         })
 
+        # Get index tree setting.
+        display_index_tree = get_search_setting().get("display_control", {})\
+            .get('display_index_tree', {}).get('status', False)
+        ctx.update({
+            "display_index_tree": display_index_tree,
+        })
+
         return render_template(
             current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
             page=page,
