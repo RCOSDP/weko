@@ -53,6 +53,8 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch
+from elasticsearch_dsl import Q
+from elasticsearch_dsl.query import Exists, Bool, Term
 from jsonschema import Draft4Validator
 from weko_admin.models import SessionLifetime
 from weko_admin.utils import get_redis_cache
@@ -247,34 +249,37 @@ def get_journal_info(index_id=0):
 
 def get_feedback_mail_list():
     """Get tree items."""
-    records_search = RecordsSearch()
-    records_search = records_search.with_preference_param().params(
-        version=False)
-    records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
-    search_instance = feedback_email_search_factory(None, records_search)
-    search_result = search_instance.execute()
-    rd = search_result.to_dict()
-    return rd.get('aggregations').get('feedback_mail_list')\
-        .get('email_list').get('buckets')
+    search = RecordsSearch(
+        index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
+    must_query = [
+        Q("nested", path="feedback_mail_list",
+          query=Exists(field="feedback_mail_list.email")),
+        Term(**{"relation_version_is_last": {"value": "true"}})
+    ]
+    search = search.query(
+        Bool(must=must_query)
+    )
+    search = search.source(fields="feedback_mail_list")
+
+    return search.execute().to_dict().get('hits', {}).get('hits', [])
 
 
 def parse_feedback_mail_data(data):
     """Parse data."""
-    result = {}
-    if data is not None and isinstance(data, list):
-        for author in data:
-            if author.get('doc_count'):
-                email = author.get('key')
-                hits = author.get('top_tag_hits').get('hits').get('hits')
-                result[email] = {
-                    'author_id': '',
-                    'item': []
+    def get_feedback_mail_data(feedback_mail_data, item_id):
+        for mail_data in feedback_mail_data:
+            if mail_data['email'] in result:
+                result[mail_data['email']]['item'].append(item_id)
+            else:
+                result[mail_data['email']] = {
+                    'author_id': mail_data['author_id'],
+                    'item': [item_id]
                 }
-                for index in hits:
-                    if not result[email]['author_id']:
-                        result[email]['author_id'] = index.get(
-                            '_source').get('author_id')
-                    result[email]['item'].append(index.get('_id'))
+    result = {}
+    if isinstance(data, list) and len(data) > 0:
+        for record_data in data:
+            get_feedback_mail_data(record_data.get('_source').get(
+                'feedback_mail_list'), record_data.get('_id'))
     return result
 
 

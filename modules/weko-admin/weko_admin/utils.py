@@ -539,6 +539,7 @@ class StatisticMail:
     def send_mail_to_all(cls, list_mail_data=None, stats_date=None):
         """Send mail to all setting email."""
         # Load setting:
+        from weko_workflow.utils import get_site_info_name
         setting = FeedbackMail.get_feed_back_email_setting()
         if not setting.get('is_sending_feedback') and not stats_date:
             return
@@ -561,7 +562,13 @@ class StatisticMail:
                     return
                 list_mail_data = parse_feedback_mail_data(
                     feedback_mail_data)
-            title = theme_config.THEME_SITENAME
+            site_en, site_ja = get_site_info_name()
+            if get_system_default_language() == 'ja':
+                title = site_ja
+            elif get_system_default_language() == 'en':
+                title = site_en
+            else:
+                title = ''
             for k, v in list_mail_data.items():
                 mail_data = {
                     'user_name': cls.get_author_name(
@@ -870,7 +877,10 @@ class StatisticMail:
             string -- The mail subject
 
         """
-        result = '[' + title + ']' + send_date
+        if title != '' or title == None:
+            result = '[' + title + ']' + send_date
+        else:
+            result = send_date
         if get_system_default_language() == 'ja':
             result += ' 利用統計レポート'
         elif get_system_default_language() == 'en':
