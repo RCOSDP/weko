@@ -1272,6 +1272,8 @@ class WekoRecord(Record):
         hide_email_flag = not settings.items_display_email
         solst, meta_options = get_options_and_order_list(
             self.get('item_type_id'))
+        item_type = ItemTypes.get_by_id(self.get('item_type_id'))
+        meta_list = item_type.render.get('meta_list', []) if item_type else {}
 
         for lst in solst:
             key = lst[0]
@@ -1322,6 +1324,11 @@ class WekoRecord(Record):
                         nval['attribute_value_mlt'] = \
                             sys_bibliographic.get_bibliographic_list(False)
                     else:
+                        if meta_list.get(key, {}).get('input_type') == 'text':
+                            for iter in mlt:
+                                if iter.get('interim'):
+                                    iter['interim'] = iter[
+                                        'interim'].replace("\n", " ")
                         nval['attribute_value_mlt'] = \
                             get_attribute_value_all_items(
                                 key,
@@ -1333,6 +1340,10 @@ class WekoRecord(Record):
             else:
                 val['attribute_name_i18n'] = lst[2] or val.get(
                     'attribute_name')
+
+                if meta_list.get(key, {}).get('input_type') == 'text':
+                    val['attribute_value'] = val[
+                        'attribute_value'].replace("\n", " ")
                 items.append(val)
 
         return items

@@ -18,7 +18,8 @@ $(document).ready(function () {
     edit_notes: {}         // Map of notes for each attribute, keep seperate
   };
   properties_obj = {}     // 作成したメタデータ項目タイプ
-  select_option = '';
+  propertyOptions = '';
+  textPropertyOptions = '';
   page_json_editor = {}   //   一時的editorオブジェクトの保存
   url_update_schema = '/admin/itemtypes/register';
   rename_subitem_config = false;
@@ -813,10 +814,10 @@ $(document).ready(function () {
 
   // add new meta table row
   $('#btn_new_itemtype_meta').on('click', function(){
-    new_meta_row('item_'+$.now());
+    new_meta_row('item_' + $.now(), propertyOptions);
   });
 
-  function new_meta_row(row_id) {
+  function new_meta_row(row_id, option_list) {
     var row_template = '<tr id="tr_' + row_id + '">'
         + '<td><input type="text" class="form-control" id="txt_title_' + row_id + '" value="">'
         + '  <div class="hide" id="text_title_JaEn_' + row_id + '">'
@@ -830,7 +831,7 @@ $(document).ready(function () {
         + '<td><div class="form-inline"><div class="form-group">'
         + '  <label class="sr-only" for="select_input_type_'+row_id+'">select_input_type</label>'
         + '  <select class="form-control change_input_type" id="select_input_type_' + row_id + '" metaid="' + row_id + '">'
-        + select_option
+        + option_list
         + '  </select>'
         + '  </div></div>'
         + '  <div class="hide" id="arr_size_' + row_id + '">'
@@ -1164,7 +1165,8 @@ $(document).ready(function () {
   }
 
   getPropUrl = '/admin/itemtypes/get-all-properties?lang=' + $('#lang-code').val();
-  select_option = '';
+  propertyOptions = '';
+  textPropertyOptions = '';
   // 作成したメタデータ項目タイプの取得
   $.ajax({
     method: 'GET',
@@ -1178,17 +1180,25 @@ $(document).ready(function () {
          property_default[defProps[row_id].value] = defProps[row_id].name
       })
       isSelected = true;
-      Object.keys(defProps).forEach(function(key) {
+      Object.keys(defProps).forEach(function (key) {
         if (isSelected) {
-          select_option = select_option + '<option value="' + defProps[key].value + '" selected>' + defProps[key].name + '</option>';
+          propertyOptions = propertyOptions + '<option value="' + defProps[key].value + '" selected>' + defProps[key].name + '</option>';
           isSelected = false;
         } else {
-          select_option = select_option + '<option value="' + defProps[key].value + '">' + defProps[key].name + '</option>';
+          propertyOptions = propertyOptions + '<option value="' + defProps[key].value + '">' + defProps[key].name + '</option>';
+        }
+
+        if (defProps[key].value == 'text' || defProps[key].value == 'textarea') {
+          textPropertyOptions = textPropertyOptions + '<option value="' + defProps[key].value + '">' + defProps[key].name + '</option>';
+        } else {
+          textPropertyOptions = textPropertyOptions + '<option value="' + defProps[key].value + '" disabled>' + defProps[key].name + '</option>';
         }
       });
 
-      odered = {}
-      others = ''
+      let odered = {}
+      let others = ''
+      let _odered = {}
+      let _others = ''
       for (var key in data) {
         if (key === 'defaults') continue;
 
@@ -1208,20 +1218,24 @@ $(document).ready(function () {
             }
           }
         } else {
-          option = '<option value="cus_' + key + '">' + data[key].name + '</option>';
+          let option = '<option value="cus_' + key + '">' + data[key].name + '</option>';
+          let _option = '<option value="cus_' + key + '" disabled>' + data[key].name + '</option>';
           if (data[key].sort != null) {
             odered[data[key].sort] = option;
+            _odered[data[key].sort] = _option;
           } else {
             others = others + option;
+            _others = _others + _option;
           }
         }
       }
 
-      Object.keys(odered).forEach(function(key) {
-        select_option = select_option + odered[key];
+      Object.keys(odered).forEach(function (item) {
+        propertyOptions = propertyOptions + odered[item];
+        textPropertyOptions = textPropertyOptions + _odered[item];
       });
-      select_option = select_option + others;
-
+      propertyOptions = propertyOptions + others;
+      textPropertyOptions = textPropertyOptions + _others;
     },
     error: function(status, error){
       console.log(error);
@@ -1249,7 +1263,11 @@ $(document).ready(function () {
       // load publish date option
       loadPubdateOptions(data);
       $.each(data.table_row, function(idx, row_id){
-        new_meta_row(row_id);
+        if (data.meta_list[row_id].input_type == 'text' || data.meta_list[row_id].input_type == 'textarea') {
+          new_meta_row(row_id, textPropertyOptions);
+        } else {
+          new_meta_row(row_id, propertyOptions);
+        }
         let requiredCheckbox = $('#chk_'+row_id+'_0');
         let multipleCheckbox = $('#chk_'+row_id+'_1');
         let newLineCheckbox = $('#chk_'+row_id+'_3');
