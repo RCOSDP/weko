@@ -618,6 +618,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         open_day_display_flg=open_day_display_flg,
         path_name_dict=path_name_dict,
         is_display_file_preview=is_display_file_preview,
+        # experimental implementation 20210502
         title_name_dict=title_name_dict,
         **ctx,
         **kwargs

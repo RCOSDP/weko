@@ -537,6 +537,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
         if query:
             urlkwargs['q'] = query
 
+        # current_app.logger.debug(search.to_dict())
         # Execute search
         search_result = search.execute()
 

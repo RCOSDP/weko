@@ -317,8 +317,16 @@ RECORDS_REST_SORT_OPTIONS[SEARCH_UI_SEARCH_INDEX] = dict(
         fields=['itemtype'],
         default_order='asc',
         order=10,
-    )
+    ),
     # add 20181121 end
+    # add 20210505 start
+    relevance=dict(
+        title='Relevance',
+        fields=[],
+        default_order='asc',
+        order=11,
+    )
+    # add 20210505 end
 )
 
 WEKO_SEARCH_REST_ENDPOINTS = dict(
