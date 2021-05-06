@@ -648,9 +648,9 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
 
 WEKO_ADMIN_PERMISSION_ROLE_SYSTEM = "System Administrator"
 
-WEKO_PERMISSION_ROLE_REPO = "Repository Administrator"
+WEKO_ADMIN_PERMISSION_ROLE_REPO = "Repository Administrator"
 
-WEKO_PERMISSION_ROLE_COMMUNITY = "Community Administrator"
+WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY = "Community Administrator"
 
 WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
     'admin',
