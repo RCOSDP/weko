@@ -640,6 +640,8 @@ class WekoDeposit(Deposit):
                     item_title=self.data['title']
                 )
         except BaseException:
+            import traceback
+            current_app.logger.error(traceback.format_exc())
             abort(500, 'MAPPING_ERROR')
 
     @preserve(result=False, fields=PRESERVE_FIELDS)
@@ -859,6 +861,8 @@ class WekoDeposit(Deposit):
                                     contents.append(content)
 
                             except Exception as e:
+                                import traceback
+                                current_app.logger.error(traceback.format_exc())
                                 abort(500, '{}'.format(str(e)))
                             break
             self.jrc.update({'content': contents})
@@ -977,6 +981,8 @@ class WekoDeposit(Deposit):
         except RuntimeError:
             raise
         except BaseException:
+            import traceback
+            current_app.logger.error(traceback.format_exc())
             abort(500, 'MAPPING_ERROR')
 
         # Save Index Path on ES

@@ -312,6 +312,7 @@ def item_metadata_validation(
                       'doi': '', 'url': '', 'either': []}
         error_list['required'].append(type_key)
         return error_list
+
     resource_type = resource_type.pop()
     properties = {}
     # 必須
@@ -378,6 +379,12 @@ def item_metadata_validation(
         properties['required'] = required_properties
     if either_properties:
         properties['either'] = either_properties
+
+    current_app.logger.debug(item_type)
+    current_app.logger.debug(resource_type)
+    current_app.logger.debug(identifier_type)
+    current_app.logger.debug(properties)
+    current_app.logger.debug(metadata_item)
 
     if properties and \
             ((identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI']
