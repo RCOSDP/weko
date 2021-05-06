@@ -503,6 +503,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
                 # print(etree.tostring(e))
                 title_name_dict[e.attrib.get(
                     '{http://www.w3.org/XML/1998/namespace}lang')] = e.text
+        else:
+            # if jpcoar mapping is unavilable
+            title_name_dict['ja'] = record['title'][0]
+            title_name_dict['en'] = record['title'][0]
+
     # end: experimental implementation 20210502
 
     pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
