@@ -496,11 +496,13 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         metadataPrefix='jpcoar',
         verb='getrecord'))
     et = etree.fromstring(recstr)
-    mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
-    for e in mtdata.findall('dc:title', namespaces=mtdata.nsmap):
-        # print(etree.tostring(e))
-        title_name_dict[e.attrib.get(
-            '{http://www.w3.org/XML/1998/namespace}lang')] = e.text
+    if et is not None:
+        mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
+        if mtdata is not None:
+            for e in mtdata.findall('dc:title', namespaces=mtdata.nsmap):
+                # print(etree.tostring(e))
+                title_name_dict[e.attrib.get(
+                    '{http://www.w3.org/XML/1998/namespace}lang')] = e.text
     # end: experimental implementation 20210502
 
     pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
