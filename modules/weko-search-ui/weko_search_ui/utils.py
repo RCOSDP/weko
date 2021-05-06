@@ -247,8 +247,13 @@ def get_journal_info(index_id=0):
     return result
 
 
-def get_feedback_mail_list():
-    """Get tree items."""
+def get_feedback_mail_list() -> list:
+    """Get feedback email list from ES.
+
+    Returns:
+        list: Feedback mail from ES.
+
+    """
     search = RecordsSearch(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
     must_query = [
@@ -258,14 +263,21 @@ def get_feedback_mail_list():
     ]
     search = search.query(
         Bool(must=must_query)
-    )
+    ).extra(from_=0, size=current_app.config['WEKO_MAX_ELASTICSEARCH'])
     search = search.source(fields="feedback_mail_list")
 
     return search.execute().to_dict().get('hits', {}).get('hits', [])
 
 
-def parse_feedback_mail_data(data):
-    """Parse data."""
+def parse_feedback_mail_data(data: list) -> dict:
+    """Parse feedback mail data.
+
+    Args:
+        data (list): Feedback mail data from ES.
+
+    Returns:
+        dict: Feedback mail data is parsed.
+    """
     def get_feedback_mail_data(feedback_mail_data, item_id):
         for mail_data in feedback_mail_data:
             if mail_data['email'] in result:

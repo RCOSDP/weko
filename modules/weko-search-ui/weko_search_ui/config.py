@@ -482,6 +482,7 @@ WEKO_SEARCH_TYPE_KEYWORD = 'keyword'
 WEKO_SEARCH_TYPE_INDEX = 'index'
 
 WEKO_SEARCH_MAX_FEEDBACK_MAIL = 100
+WEKO_MAX_ELASTICSEARCH = 10000
 """Maximum number of feedback mail could be send."""
 
 WEKO_SEARCH_TYPE_DICT = {
