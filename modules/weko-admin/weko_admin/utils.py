@@ -891,10 +891,7 @@ class StatisticMail:
             string -- The mail subject
 
         """
-        if title:
-            result = '[' + title + ']' + send_date
-        else:
-            result = send_date
+        result = '[' + title + ']' + send_date
         if system_default_language == 'ja':
             result += ' 利用統計レポート'
         elif system_default_language == 'en':
