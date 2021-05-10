@@ -718,7 +718,7 @@ $(document).ready(function () {
             type: "fieldset"
           });
         }
-      } else if(tmp.input_type.indexOf('cus_') != -1) {
+      } else if(tmp && tmp.input_type.indexOf('cus_') != -1) {
         editor = page_json_editor['schema_'+row_id];
         page_global.schemaeditor.schema[row_id] = editor.getValue();
         removeEnumForCheckboxes(page_global.schemaeditor.schema[row_id].properties);
@@ -1200,6 +1200,8 @@ $(document).ready(function () {
       let others = ''
       let _odered = {}
       let _others = ''
+      let option = ''
+      let _option = ''
       for (var key in data) {
         if (key === 'defaults') continue;
 
@@ -1219,8 +1221,12 @@ $(document).ready(function () {
             }
           }
         } else {
-          let option = '<option value="cus_' + key + '">' + data[key].name + '</option>';
-          let _option = '<option value="cus_' + key + '" disabled>' + data[key].name + '</option>';
+          option = '<option value="cus_' + key + '">' + data[key].name + '</option>';
+          if (generalTextProps.includes('cus_' + key)) {
+            _option = '<option value="cus_' + key + '">' + data[key].name + '</option>';
+          } else {
+            _option = '<option value="cus_' + key + '" disabled>' + data[key].name + '</option>';
+          }
           if (data[key].sort != null) {
             odered[data[key].sort] = option;
             _odered[data[key].sort] = _option;
@@ -1833,7 +1839,7 @@ $(document).ready(function () {
       let list_enum = isEnumStr ? _enum.split('|') : _enum;
       let enumTemp = [];
       $.each(list_enum, function(ind, val) {
-        if(val.length > 0){
+        if(val && val.length > 0){
           enumTemp.push(val.trim());
         }
       });
