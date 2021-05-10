@@ -786,6 +786,7 @@ def handle_check_exist_record(list_record) -> list:
 
     """
     result = []
+    current_app.logger.debug('handle_check_exist_record')
     for item in list_record:
         item = dict(**item, **{
             'status': 'new'
@@ -793,6 +794,7 @@ def handle_check_exist_record(list_record) -> list:
         errors = item.get('errors') or []
         try:
             item_id = item.get('id')
+            current_app.logger.debug(item_id)
             if item_id:
                 system_url = request.url_root + 'records/' + item_id
                 if item.get('uri') != system_url:
@@ -821,10 +823,10 @@ def handle_check_exist_record(list_record) -> list:
                                     item['status'] = _edit_mode.lower()
             else:
                 item['id'] = None
-                if item.get('uri'):
-                    errors.append(_('Item ID does not match the'
-                                    + ' specified URI information.'))
-                    item['status'] = None
+#                if item.get('uri'):
+#                    errors.append(_('Item ID does not match the'
+#                                    + ' specified URI information.'))
+#                    item['status'] = None
         except PIDDoesNotExistError:
             pass
         except BaseException:
