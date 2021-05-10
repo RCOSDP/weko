@@ -427,8 +427,8 @@ def iframe_items_index(pid_value='0'):
                     files_thumbnail = get_thumbnails(files, None)
             else:
                 root_record = session['itemlogin_record']
-            if root_record and files and len(root_record) > 0 and len(files) > 0 \
-               and (isinstance(root_record, list) or isinstance(root_record, dict)):
+            if root_record and files and len(root_record) > 0 and \
+                    len(files) > 0 and isinstance(root_record, (list, dict)):
                 files = set_files_display_type(root_record, files)
             return render_template(
                 'weko_items_ui/iframe/item_index.html',

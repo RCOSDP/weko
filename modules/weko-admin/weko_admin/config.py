@@ -795,3 +795,6 @@ WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
 
 WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER = 25
 """Default number of usage report activities results that display in one page."""
+
+WEKO_ADMIN_FEEDBACK_MAIL_DEFAULT_SUBJECT = "No Site Name"
+"""Default subject of feedback email."""
