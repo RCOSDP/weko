@@ -98,6 +98,7 @@ $(document).ready(function () {
     }
   };
   property_default = {};
+  generalTextProps = ['text', 'textarea', 'cus_1042', 'cus_1043']
 
   $('#myModal').modal({
     show: false
@@ -1188,7 +1189,7 @@ $(document).ready(function () {
           propertyOptions = propertyOptions + '<option value="' + defProps[key].value + '">' + defProps[key].name + '</option>';
         }
 
-        if (defProps[key].value == 'text' || defProps[key].value == 'textarea') {
+        if (generalTextProps.includes(defProps[key].value)) {
           textPropertyOptions = textPropertyOptions + '<option value="' + defProps[key].value + '">' + defProps[key].name + '</option>';
         } else {
           textPropertyOptions = textPropertyOptions + '<option value="' + defProps[key].value + '" disabled>' + defProps[key].name + '</option>';
@@ -1263,7 +1264,7 @@ $(document).ready(function () {
       // load publish date option
       loadPubdateOptions(data);
       $.each(data.table_row, function(idx, row_id){
-        if (data.meta_list[row_id].input_type == 'text' || data.meta_list[row_id].input_type == 'textarea') {
+        if (generalTextProps.includes(data.meta_list[row_id].input_type)) {
           new_meta_row(row_id, textPropertyOptions);
         } else {
           new_meta_row(row_id, propertyOptions);
