@@ -88,6 +88,13 @@ def get_weko_contents(getargs):
         "display_facet_search": display_facet_search
     })
 
+    # Get display_index_tree setting.
+    display_index_tree = get_search_setting().get("display_control", {}).get(
+        'display_index_tree', {}).get('status', False)
+    ctx.update({
+        "display_index_tree": display_index_tree
+    })
+
     return dict(
         community_id=community_id,
         detail_condition=detail_condition,

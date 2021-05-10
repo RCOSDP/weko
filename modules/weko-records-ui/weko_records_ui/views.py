@@ -489,6 +489,20 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     google_scholar_meta = _get_google_scholar_meta(record)
 
+    # start: experimental implementation 20210502
+    title_name_dict = {'ja': {}, 'en': {}}
+    recstr = etree.tostring(getrecord(
+        identifier=record['_oai'].get('id'),
+        metadataPrefix='jpcoar',
+        verb='getrecord'))
+    et = etree.fromstring(recstr)
+    mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
+    for e in mtdata.findall('dc:title', namespaces=mtdata.nsmap):
+        # print(etree.tostring(e))
+        title_name_dict[e.attrib.get(
+            '{http://www.w3.org/XML/1998/namespace}lang')] = e.text
+    # end: experimental implementation 20210502
+
     pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
     # Check if user has the permission to download original pdf file
     # and the cover page setting is set and its value is enable (not disabled)
@@ -568,6 +582,13 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         "display_facet_search": display_facet_search
     })
 
+    # Get index tree setting.
+    display_index_tree = get_search_setting().get("display_control", {}).get(
+        'display_index_tree', {}).get('status', False)
+    ctx.update({
+        "display_index_tree": display_index_tree
+    })
+
     return render_template(
         template,
         pid=pid,
@@ -597,6 +618,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         open_day_display_flg=open_day_display_flg,
         path_name_dict=path_name_dict,
         is_display_file_preview=is_display_file_preview,
+        title_name_dict=title_name_dict,
         **ctx,
         **kwargs
     )
