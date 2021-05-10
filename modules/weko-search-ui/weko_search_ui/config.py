@@ -317,8 +317,16 @@ RECORDS_REST_SORT_OPTIONS[SEARCH_UI_SEARCH_INDEX] = dict(
         fields=['itemtype'],
         default_order='asc',
         order=10,
-    )
+    ),
     # add 20181121 end
+    # add 20210505 start
+    relevance=dict(
+        title='Relevance',
+        fields=[],
+        default_order='asc',
+        order=11,
+    )
+    # add 20210505 end
 )
 
 WEKO_SEARCH_REST_ENDPOINTS = dict(
@@ -652,7 +660,7 @@ RESOURCE_TYPE_URI = {
 }
 WEKO_IMPORT_VALIDATE_MESSAGE = {
     '%r is too long': '%rの数が上限数を超えています。',
-    '%r is not one of %r': '%rは次の決めれられた選択肢に含まれていません。%r',
+    '%r is not one of %r': '%rは次の決められた選択肢に含まれていません。%r',
     '%r is a required property': '%rは必須項目です。'
 }
 

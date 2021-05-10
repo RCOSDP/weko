@@ -640,6 +640,8 @@ class WekoDeposit(Deposit):
                     item_title=self.data['title']
                 )
         except BaseException:
+            import traceback
+            current_app.logger.error(traceback.format_exc())
             abort(500, 'MAPPING_ERROR')
 
     @preserve(result=False, fields=PRESERVE_FIELDS)
@@ -859,6 +861,8 @@ class WekoDeposit(Deposit):
                                     contents.append(content)
 
                             except Exception as e:
+                                import traceback
+                                current_app.logger.error(traceback.format_exc())
                                 abort(500, '{}'.format(str(e)))
                             break
             self.jrc.update({'content': contents})
@@ -977,6 +981,8 @@ class WekoDeposit(Deposit):
         except RuntimeError:
             raise
         except BaseException:
+            import traceback
+            current_app.logger.error(traceback.format_exc())
             abort(500, 'MAPPING_ERROR')
 
         # Save Index Path on ES
@@ -1362,18 +1368,15 @@ class WekoRecord(Record):
             if mlt is not None:
                 # Processing get files.
                 mlt = copy.deepcopy(mlt)
-                # Check file permission.
-                file_metadata = self.__remove_file_metadata_do_not_publish(mlt)
-                if not file_metadata:
-                    continue
                 # Get file with current version id.
                 file_metadata_temp = []
                 exclude_attr = [
                     'displaytype', 'accessrole', 'licensetype', 'licensefree']
                 filename = request.args.get("filename", None)
                 file_order = int(request.args.get("file_order", -1))
-                for idx, f in enumerate(file_metadata):
-                    if file_order == idx or f.get('filename') == filename:
+                for idx, f in enumerate(mlt):
+                    if (f.get('filename') == filename and file_order == -1) \
+                            or file_order == idx:
                         # Exclude attributes which is not use.
                         for ea in exclude_attr:
                             if f.get(ea, None):
@@ -1599,6 +1602,24 @@ class WekoRecord(Record):
 
         if relation_data:
             item_link.update(relation_data)
+
+    def get_file_data(self):
+        """Get file data."""
+        item_type_id = self.get('item_type_id')
+        solst, _ = get_options_and_order_list(item_type_id)
+        items = []
+        for lst in solst:
+            key = lst[0]
+            val = self.get(key)
+            if not val:
+                continue
+            # Just get data of 'File'.
+            if val.get('attribute_type') != "file":
+                continue
+            mlt = val.get('attribute_value_mlt')
+            if mlt is not None:
+                items.extend(mlt)
+        return items
 
 
 class _FormatSysCreator:

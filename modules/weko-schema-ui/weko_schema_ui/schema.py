@@ -398,7 +398,7 @@ class SchemaTree:
                 for ke, va in nd.items():
                     if ke != self._atr:
                         if isinstance(va, str):
-                            nd[ke] = {self._v: nv}
+                            nd[ke] = nv if ke == self._v else {self._v: nv}
                             return
                         else:
                             if len(va) == 0 or \
@@ -827,8 +827,7 @@ class SchemaTree:
 
         vlst = []
         for key_item_parent, value_item_parent in sorted(self._record.items()):
-            if key_item_parent != 'pubdate' and isinstance(value_item_parent,
-                                                           dict):
+            if isinstance(value_item_parent, dict):
                 # Dict
                 # get value of the combination between record and \
                 # mapping data that is inited at __init__ function

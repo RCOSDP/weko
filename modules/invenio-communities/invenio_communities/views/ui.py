@@ -46,7 +46,8 @@ from invenio_communities.forms import CommunityForm, DeleteCommunityForm, \
     EditCommunityForm, SearchForm
 from invenio_communities.models import Community, FeaturedCommunity
 from invenio_communities.proxies import current_permission_factory
-from invenio_communities.utils import Pagination, render_template_to_string
+from invenio_communities.utils import Pagination, get_user_role_ids, \
+    render_template_to_string
 
 blueprint = Blueprint(
     'invenio_communities',
@@ -102,8 +103,9 @@ def format_item(item, template, name='item'):
 @blueprint.app_template_filter('mycommunities_ctx')
 def mycommunities_ctx():
     """Helper method for return ctx used by many views."""
+    role_ids = get_user_role_ids()
     return {
-        'mycommunities': Community.get_by_user(current_user.get_id()).all()
+        'mycommunities': Community.get_by_user(role_ids).all()
     }
 
 
@@ -177,17 +179,17 @@ def view(community):
     )
 
 
-#@blueprint.route('/<string:community_id>/detail/', methods=['GET'])
-#@pass_community
-#def detail(community):
+# @blueprint.route('/<string:community_id>/detail/', methods=['GET'])
+# @pass_community
+# def detail(community):
 #    """Index page with uploader and list of existing depositions."""
 #    return generic_item(
 #        community, current_app.config['COMMUNITIES_DETAIL_TEMPLATE'])
 
 
-#@blueprint.route('/<string:community_id>/search', methods=['GET'])
-#@pass_community
-#def search(community):
+# @blueprint.route('/<string:community_id>/search', methods=['GET'])
+# @pass_community
+# def search(community):
 #    """Index page with uploader and list of existing depositions."""
 #    return generic_item(
 #        community,
@@ -195,9 +197,9 @@ def view(community):
 #        detail=False)
 
 
-#@blueprint.route('/<string:community_id>/about/', methods=['GET'])
-#@pass_community
-#def about(community):
+# @blueprint.route('/<string:community_id>/about/', methods=['GET'])
+# @pass_community
+# def about(community):
 #    """Index page with uploader and list of existing depositions."""
 #    return generic_item(
 #        community, current_app.config['COMMUNITIES_ABOUT_TEMPLATE'])
@@ -207,8 +209,10 @@ def generic_item(community, template, **extra_ctx):
     """Index page with uploader and list of existing depositions."""
     # Check existence of community
     ctx = mycommunities_ctx()
+    role_id = min(get_user_role_ids())
+
     ctx.update({
-        'is_owner': community.id_user == current_user.get_id(),
+        'is_owner': community.id_role == role_id,
         'community': community,
         'detail': True,
     })
@@ -217,9 +221,9 @@ def generic_item(community, template, **extra_ctx):
     return render_template(template, **ctx)
 
 
-#@blueprint.route('/new/', methods=['GET', 'POST'])
-#@login_required
-#def new():
+# @blueprint.route('/new/', methods=['GET', 'POST'])
+# @login_required
+# def new():
 #    """Create a new community."""
 #    form = CommunityForm(formdata=request.values)
 #
@@ -329,11 +333,11 @@ def generic_item(community, template, **extra_ctx):
 #    )
 
 
-#@blueprint.route('/<string:community_id>/edit/', methods=['GET', 'POST'])
-#@login_required
-#@pass_community
-#@permission_required('community-edit')
-#def edit(community):
+# @blueprint.route('/<string:community_id>/edit/', methods=['GET', 'POST'])
+# @login_required
+# @pass_community
+# @permission_required('community-edit')
+# def edit(community):
 #    """Create or edit a community."""
 #    def read_color(scss_file, community):
 #        # Read
@@ -540,11 +544,11 @@ def generic_item(community, template, **extra_ctx):
 #    )
 #
 
-#@blueprint.route('/<string:community_id>/delete/', methods=['POST'])
-#@login_required
-#@pass_community
-#@permission_required('community-delete')
-#def delete(community):
+# @blueprint.route('/<string:community_id>/delete/', methods=['POST'])
+# @login_required
+# @pass_community
+# @permission_required('community-delete')
+# def delete(community):
 #    """Delete a community."""
 #    deleteform = DeleteCommunityForm(formdata=request.values)
 #    ctx = mycommunities_ctx()
@@ -581,11 +585,11 @@ def generic_item(community, template, **extra_ctx):
 #        return redirect(url_for('.edit', community_id=community.id))
 #
 
-#@blueprint.route('/<string:community_id>/curate/', methods=['GET', 'POST'])
-#@login_required
-#@pass_community
-#@permission_required('community-curate')
-#def curate(community):
+# @blueprint.route('/<string:community_id>/curate/', methods=['GET', 'POST'])
+# @login_required
+# @pass_community
+# @permission_required('community-curate')
+# def curate(community):
 #    """Index page with uploader and list of existing depositions.
 #
 #    :param community_id: ID of the community to curate.

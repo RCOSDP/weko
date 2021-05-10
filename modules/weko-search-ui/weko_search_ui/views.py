@@ -94,6 +94,7 @@ def search():
 
     # add at 1206 for search management
     sort_options, display_number = SearchSetting.get_results_setting()
+
     ts = time.time()
     disply_setting = dict(size=display_number, timestamp=ts)
 

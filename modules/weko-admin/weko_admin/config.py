@@ -244,6 +244,12 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
         {'id': 'custom_sort_desc',
          'contents': 'Custom(desc)',
          'disableFlg': False},
+        {'id': 'relevance_asc',
+         'contents': 'Relevance(asc)',
+         'disableFlg': False},
+        {'id': 'relevance_desc',
+         'contents': 'Relevance(desc)',
+         'disableFlg': False},
     ],
     'dlt_index_sort_selected': 'controlnumber_asc',
     'dlt_keyword_sort_options': [
@@ -285,6 +291,12 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
         {'id': 'custom_sort_desc',
          'contents': 'Custom(desc)',
          'disableFlg': False},
+        {'id': 'relevance_asc',
+         'contents': 'Relevance(asc)',
+         'disableFlg': False},
+        {'id': 'relevance_desc',
+         'contents': 'Relevance(desc)',
+         'disableFlg': False},
     ],
     'dlt_keyword_sort_selected': 'createdate_desc',
     'sort_options': {
@@ -297,7 +309,8 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
             {'id': 'upd_asc', 'contents': 'Update(asc/desc)'},
             {'id': 'createdate_asc', 'contents': 'Create(asc/desc)'},
             {'id': 'pyear_asc', 'contents': 'Date Of Issued(asc/desc)'},
-            {'id': 'custom_sort_asc', 'contents': 'Custom(asc/desc)'}
+            {'id': 'custom_sort_asc', 'contents': 'Custom(asc/desc)'},
+            {'id': 'relevance_asc', 'contents': 'Relevance(asc/desc)'},
         ]
     },
     'display_control': {
@@ -635,9 +648,9 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
 
 WEKO_ADMIN_PERMISSION_ROLE_SYSTEM = "System Administrator"
 
-WEKO_PERMISSION_ROLE_REPO = "Repository Administrator"
+WEKO_ADMIN_PERMISSION_ROLE_REPO = "Repository Administrator"
 
-WEKO_PERMISSION_ROLE_COMMUNITY = "Community Administrator"
+WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY = "Community Administrator"
 
 WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
     'admin',
@@ -782,3 +795,6 @@ WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
 
 WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER = 25
 """Default number of usage report activities results that display in one page."""
+
+WEKO_ADMIN_FEEDBACK_MAIL_DEFAULT_SUBJECT = "No Site Name"
+"""Default subject of feedback email."""

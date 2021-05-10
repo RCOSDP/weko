@@ -27,10 +27,16 @@ from __future__ import absolute_import, print_function
 
 import re
 
+from flask.globals import current_app
 from flask_admin.contrib.sqla import ModelView
+from flask_login import current_user
+from invenio_db import db
+from sqlalchemy import func, or_
+from weko_index_tree.models import Index
 from wtforms.validators import ValidationError
 
 from .models import Community, FeaturedCommunity, InclusionRequest
+from .utils import get_user_role_ids
 
 
 def _(x):
@@ -48,18 +54,36 @@ class CommunityModelView(ModelView):
     column_display_all_relations = True
     form_columns = ('id', 'owner', 'index', 'title', 'description', 'page',
                     'curation_policy', 'ranking', 'fixed_points')
+
     column_list = (
         'id',
         'title',
-        'owner.id',
-        'index.index_name',
+        'owner.name',
+        'index',
         'deleted_at',
         'last_record_accepted',
         'ranking',
         'fixed_points',
     )
+
     column_searchable_list = ('id', 'title', 'description')
     edit_template = "invenio_communities/admin/edit.html"
+
+    def on_model_change(self, form, model, is_created):
+        """Perform some actions before a model is created or updated.
+
+        Called from create_model and update_model in the same transaction
+        (if it has any meaning for a store backend).
+        By default does nothing.
+
+        :param form:
+            Form used to create/update model
+        :param model:
+            Model that will be created/updated
+        :param is_created:
+            Will be set to True if model was created and to False if edited
+        """
+        model.id_user = current_user.get_id()
 
     def _validate_input_id(self, field):
         the_patterns = {
@@ -106,6 +130,92 @@ class CommunityModelView(ModelView):
             'maxlength': 100,
         }
     }
+
+    def role_query_cond(self, role_ids):
+        """Query conditions by role_id and user_id."""
+        if role_ids:
+            return or_(
+                Community.id_role.in_(role_ids),
+                Community.id_user == current_user.id
+            )
+
+    def get_query(self):
+        """Return a query for the model type.
+
+        This method can be used to set a "persistent filter" on an index_view.
+        If you override this method, don't forget to also override
+        `get_count_query`,
+        for displaying the correct
+        item count in the list view, and `get_one`,
+        which is used when retrieving records for the edit view.
+        """
+        role_ids = get_user_role_ids()
+
+        if min(role_ids) <= \
+                current_app.config['COMMUNITIES_LIMITED_ROLE_ACCESS_PERMIT']:
+            return self.session.query(self.model).filter()
+
+        return self.session.query(
+            self.model).filter(self.role_query_cond(role_ids))
+
+    def get_count_query(self):
+        """Return a the count query for the model type.
+
+        A ``query(self.model).count()`` approach produces an excessive
+        subquery, so ``query(func.count('*'))`` should be used instead.
+        """
+        role_ids = get_user_role_ids()
+
+        if min(role_ids) <= \
+                current_app.config['COMMUNITIES_LIMITED_ROLE_ACCESS_PERMIT']:
+            return self.session.query(func.count('*')).select_from(self.model)
+
+        return self.session.query(
+            func.count('*')
+        ).select_from(self.model).filter(self.role_query_cond(role_ids))
+
+    def edit_form(self, obj):
+        """
+        Instantiate model editing form and return it.
+
+        Override to implement custom behavior.
+
+        :param obj: input object
+        """
+        role_ids = get_user_role_ids()
+
+        if min(role_ids) <= \
+                current_app.config['COMMUNITIES_LIMITED_ROLE_ACCESS_PERMIT']:
+            return super(CommunityModelView, self).edit_form(obj)
+        else:
+            return self._use_append_repository_edit(
+                super(CommunityModelView, self).edit_form(obj),
+                str(obj.index.id)
+            )
+
+    def _use_append_repository_edit(self, form, index_id: str):
+        """Modified query_factory of index column.
+
+        The query_factory callable passed to the field constructor will be
+        called to obtain a query.
+        """
+        setattr(self, 'index_id', index_id)
+        form.index.query_factory = self._get_child_index_list
+        setattr(form, 'action', 'edit')
+        return form
+
+    def _get_child_index_list(self):
+        """Query child indexes."""
+        from weko_index_tree.api import Indexes
+        index_id = str(getattr(self, 'index_id', ''))
+
+        with db.session.no_autoflush:
+            _query = list(
+                item.cid for item in Indexes.get_recursive_tree(index_id))
+            query = Index.query.filter(
+                Index.id.in_(_query)).order_by(Index.id.asc()).all()
+
+        return query
 
 
 class FeaturedCommunityModelView(ModelView):

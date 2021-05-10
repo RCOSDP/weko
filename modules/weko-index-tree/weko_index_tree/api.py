@@ -270,7 +270,8 @@ class Indexes(object):
                             Index.public_date,
                             Index.comment,
                             Index.browsing_role,
-                            Index.browsing_group
+                            Index.browsing_group,
+                            Index.harvest_public_state
                         ).filter(Index.id == index_id)).all()
 
                 if obj:
@@ -916,7 +917,8 @@ class Indexes(object):
             Index.public_date.label("public_date"),
             Index.comment.label("comment"),
             Index.browsing_role.label("browsing_role"),
-            Index.browsing_group.label("browsing_group")
+            Index.browsing_group.label("browsing_group"),
+            Index.harvest_public_state.label("harvest_public_state")
         ).filter(Index.parent == pid). \
             cte(name="recursive_t", recursive=True)
 
@@ -937,7 +939,8 @@ class Indexes(object):
                 test_alias.public_date,
                 test_alias.comment,
                 test_alias.browsing_role,
-                test_alias.browsing_group
+                test_alias.browsing_group,
+                test_alias.harvest_public_state,
             ).filter(test_alias.parent == rec_alias.c.cid)
         )
 
@@ -1195,7 +1198,7 @@ class Indexes(object):
                 query(func.every(db.and_(
                     Index.public_state,
                     db.or_(
-                        Index.public_date == None,
+                        Index.public_date.is_(None),
                         Index.public_date <= date.today()
                     ))).label('parent_state')
                 ).filter(Index.id.in_(path))
@@ -1537,7 +1540,7 @@ class Indexes(object):
             func.cast(Index.id, db.Text).label("path")
         ).filter(
             Index.parent == 0,
-            Index.harvest_public_state == True
+            Index.harvest_public_state.is_(True)
         ).cte(name="recursive_t", recursive=True)
 
         rec_alias = aliased(recursive_t, name="rec")
@@ -1549,7 +1552,7 @@ class Indexes(object):
                 rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text)
             ).filter(
                 test_alias.parent == rec_alias.c.cid,
-                test_alias.harvest_public_state == True)
+                test_alias.harvest_public_state.is_(True))
         )
 
         paths = []
