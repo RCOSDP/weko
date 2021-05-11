@@ -787,15 +787,12 @@ class WorkActivity(object):
         :param utc_now: UTC now.
         :return: activity ID.
         """
-        from sqlalchemy import func
-
         # Calculate activity_id based on id
         current_date_start = utc_now.strftime("%Y-%m-%d 00:00:00")
-        from datetime import timedelta
         next_date_start = (utc_now + timedelta(1)).\
             strftime("%Y-%m-%d 00:00:00")
 
-        max_id = db.session.query(func.max(_Activity.id)).filter(
+        max_id = db.session.query(func.count(_Activity.id)).filter(
             _Activity.created >= '{}'.format(current_date_start),
             _Activity.created < '{}'.format(next_date_start),
         ).scalar()
