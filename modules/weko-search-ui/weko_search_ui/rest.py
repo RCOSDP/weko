@@ -184,17 +184,8 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         params = {}
         if current_app.config['RECORDS_REST_FACETS'] and \
             current_app.config['SEARCH_UI_SEARCH_INDEX'] and \
-                'post_filters' in current_app.config[
-            'RECORDS_REST_FACETS'
-        ][current_app.config[
-            'SEARCH_UI_SEARCH_INDEX'
-        ]]:
-            post_filters = current_app.config[
-                'RECORDS_REST_FACETS'
-            ][current_app.config[
-                'SEARCH_UI_SEARCH_INDEX'
-            ]]['post_filters']
-
+                'post_filters' in current_app.config['RECORDS_REST_FACETS'][current_app.config['SEARCH_UI_SEARCH_INDEX']]:
+            post_filters = current_app.config['RECORDS_REST_FACETS'][current_app.config['SEARCH_UI_SEARCH_INDEX']]['post_filters']
             for param in post_filters:
                 value = request.args.getlist(param)
                 if value:
@@ -213,12 +204,14 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             urlkwargs['q'] = query
 
         # Execute search
-
+        from weko_admin.models import FacetSearchSetting
+        weko_faceted_search_mapping = \
+            FacetSearchSetting.get_activated_facets_mapping()
         for param in params:
-            query_key = current_app.config[
-                'WEKO_FACETED_SEARCH_MAPPING'][param]
+            query_key = weko_faceted_search_mapping[param]
             search = search.post_filter({'terms': {query_key: params[param]}})
 
+        print('====================================================search: ', search.to_dict())
         search_result = search.execute()
 
         # Generate links for prev/next

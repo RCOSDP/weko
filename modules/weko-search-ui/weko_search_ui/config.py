@@ -139,10 +139,8 @@ WEKO_FACETED_SEARCH_MAPPING = {
 
 RECORDS_REST_FACETS[SEARCH_UI_SEARCH_INDEX] = dict(
     aggs=dict(
-        accessRights=dict(terms=dict(
-            field=WEKO_FACETED_SEARCH_MAPPING['accessRights'])),
-        language=dict(terms=dict(
-            field=WEKO_FACETED_SEARCH_MAPPING['language'])),
+        accessRights=dict(terms=dict(field=WEKO_FACETED_SEARCH_MAPPING['accessRights'])),
+        language=dict(terms=dict(field=WEKO_FACETED_SEARCH_MAPPING['language'])),
         distributor=dict(
             filter=dict(
                 term={"contributor.@attributes.contributorType": "Distributor"}

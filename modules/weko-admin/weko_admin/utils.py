@@ -49,7 +49,8 @@ from weko_records.api import ItemsMetadata
 from . import config
 from .models import AdminLangSettings, AdminSettings, ApiCertificate, \
     FeedbackMailFailed, FeedbackMailHistory, FeedbackMailSetting, \
-    SearchManagement, SiteInfo, StatisticTarget, StatisticUnit
+    SearchManagement, SiteInfo, StatisticTarget, StatisticUnit, \
+    FacetSearchSetting
 
 
 def get_response_json(result_list, n_lst):
@@ -1665,6 +1666,18 @@ def get_restricted_access(key: str = None):
     return None
 
 
+def create_facet_search(facet_search: dict):
+    return True if FacetSearchSetting.create(facet_search) else False
+
+
+def update_facet_search(id, facet_search):
+    return True if FacetSearchSetting.update_by_id(id, facet_search) else False
+
+
+def delete_facet_search(id: int = None):
+    return True if FacetSearchSetting.delete(id) else False
+
+
 def update_restricted_access(restricted_access: dict):
     """Update the restricted access.
 
@@ -1956,3 +1969,92 @@ class UsageReport:
         """
         mail_config = MailConfig.get_config()
         return mail_config.get('mail_default_sender', '')
+
+
+def get_facet_search(id: int = None):
+    """Get facet search data.
+
+    :param:id key.
+    :return: facet search data
+
+    Args:
+        id:
+    """
+    if id is None:
+        facet_search = current_app.config['WEKO_ADMIN_FACET_SEACH_SETTINGS']
+    else:
+        facet_search_mapping = FacetSearchSetting.get_by_id(id)
+        facet_search = facet_search_mapping.to_dict()
+    return facet_search
+
+
+def get_item_mapping_list():
+    """
+
+    Returns:
+        object:
+    """
+    def handle_prefix_key(pre_key, key):
+        if key == 'properties':
+            return pre_key
+        return "{}.{}".format(pre_key, key) if pre_key else key
+
+    def get_mapping(pre_key, key, value, mapping_list):
+        if isinstance(value, dict) and value.get('type') == 'keyword':
+            mapping_list.append(handle_prefix_key(pre_key, key))
+        if isinstance(value, dict) :
+            for k1, v1 in value.items():
+                get_mapping(handle_prefix_key(pre_key, key), k1, v1, mapping_list)
+
+    import json
+    import weko_schema_ui
+    current_path = os.path.dirname(os.path.abspath(weko_schema_ui.__file__))
+    file_path = os.path.join(current_path, 'mappings', 'v6', 'weko', 'item-v1.0.0.json')
+    with open(file_path) as json_file:
+        mappings = json.load(json_file).get('mappings')
+        properties = mappings.get('item-v1.0.0').get('properties')
+    result = [""]
+    for k, v in properties.items():
+        mapping_list = []
+        get_mapping('', k, v, mapping_list)
+        result = result + mapping_list
+    return result
+
+
+def create_records_rest_facets():
+    def create_aggregations(facets):
+        aggregations = dict()
+        for facet in facets:
+            key = facet.name_en
+            val = facet.mapping
+            if not facet.aggregations or len(facet.aggregations) == 0:
+                aggregations.update({key: {'terms': {'field': val}}})
+            else:
+                must = [dict(term={agg['agg_mapping']: agg['agg_value']})
+                        for agg in facet.aggregations]
+                aggregations.update({key: {
+                    'filter': {'bool': {'must': must}},
+                    'aggs': {'key': {'terms': {'field': val}}}
+                }})
+        return aggregations
+
+    def create_post_filters(facets):
+        from invenio_records_rest.facets import terms_filter
+        post_filters = dict()
+        for facet in facets:
+            post_filters.update({facet.name_en: terms_filter(facet.mapping)})
+        return post_filters
+
+    from invenio_stats.config import SEARCH_INDEX_PREFIX
+    from weko_admin.models import FacetSearchSetting
+
+    search_ui_search_index = '{}-weko'.format(SEARCH_INDEX_PREFIX)
+    activated_facets = FacetSearchSetting.get_activated_facets()
+
+    result = dict()
+    result[search_ui_search_index] = dict(
+        aggs=create_aggregations(activated_facets),
+        post_filters=create_post_filters(activated_facets)
+    )
+    print('====================================================result: ', result)
+    return result

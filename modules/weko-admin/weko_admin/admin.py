@@ -28,6 +28,7 @@ import re
 import sys
 import unicodedata
 from datetime import datetime, timedelta
+from math import ceil
 
 import redis
 from flask import abort, current_app, flash, jsonify, make_response, \
@@ -36,6 +37,7 @@ from flask_admin import BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.contrib.sqla.fields import QuerySelectField
 from flask_admin.form import rules
+from flask_admin.helpers import get_redirect_target
 from flask_babelex import gettext as _
 from flask_login import current_user
 from flask_mail import Attachment
@@ -53,12 +55,12 @@ from wtforms.validators import ValidationError
 
 from .config import WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR, \
     WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR
-from .models import AdminSettings, Identifier, \
+from .models import AdminSettings, FacetSearchSetting, Identifier, \
     LogAnalysisRestrictedCrawlerList, LogAnalysisRestrictedIpAddress, \
     RankingSettings, SearchManagement, StatisticsEmail
 from .permissions import admin_permission_factory
-from .utils import get_redis_cache, get_response_json, get_restricted_access, \
-    get_search_setting
+from .utils import get_facet_search, get_item_mapping_list, get_redis_cache, \
+    get_response_json, get_restricted_access, get_search_setting
 from .utils import get_user_report_data as get_user_report
 from .utils import package_reports, reset_redis_cache, str_to_bool
 
@@ -1077,6 +1079,223 @@ class RestrictedAccessSettingView(BaseView):
         )
 
 
+class FacetSearchSettingView(ModelView):
+    """Item Management - Bulk Update view."""
+
+    can_create = True
+    can_edit = True
+    can_delete = True
+    can_view_details = True
+
+    column_list = (
+        'id',
+        'name_en',
+        'name_jp',
+        'mapping',
+        'active',
+    )
+    column_searchable_list = (
+        'id',
+        'name_en',
+        'name_jp',
+        'mapping',
+        'active',
+    )
+
+    column_filters = (
+        'id',
+        'name_en',
+        'name_jp',
+        'mapping',
+        'active',
+    )
+    column_labels = dict(
+        id=_('ID'),
+        name_en=_('item Name(EN)'),
+        name_jp=_('item Name(JP)'),
+        mapping=_('Mapping'),
+        active=_('Active')
+    )
+
+    def search_placeholder(self):
+        """Return search placeholder."""
+        return 'Search'
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        """Render view."""
+        from .utils import create_records_rest_facets
+        create_records_rest_facets()
+
+        if self.can_delete:
+            delete_form = self.delete_form()
+        else:
+            delete_form = None
+        # Grab parameters from URL
+        view_args = self._get_list_extra_args()
+        # Map column index to column name
+        sort_column = self._get_column_by_idx(view_args.sort)
+        if sort_column is not None:
+            sort_column = sort_column[0]
+        # Get page size
+        page_size = view_args.page_size or self.page_size
+        # Get count and data
+        count, data = self.get_list(view_args.page, sort_column,
+                                    view_args.sort_desc,
+                                    view_args.search, view_args.filters,
+                                    page_size=page_size)
+        list_forms = {}
+        if self.column_editable_list:
+            for row in data:
+                list_forms[self.get_pk_value(row)] = self.list_form(obj=row)
+        # Calculate number of pages
+        if count is not None and page_size:
+            num_pages = int(ceil(count / float(page_size)))
+        elif not page_size:
+            num_pages = 0  # hide pager for unlimited page_size
+        else:
+            num_pages = None  # use simple pager
+
+        # Various URL generation helpers
+        def pager_url(p):
+            # Do not add page number if it is first page
+            if p == 0:
+                p = None
+            return self._get_list_url(view_args.clone(page=p))
+
+        def sort_url(column, invert=False, desc=None):
+            if not desc and invert and not view_args.sort_desc:
+                desc = 1
+            return self._get_list_url(
+                view_args.clone(sort=column, sort_desc=desc))
+
+        def page_size_url(s):
+            if not s:
+                s = self.page_size
+            return self._get_list_url(view_args.clone(page_size=s))
+
+        # Actions
+        actions, actions_confirmation = self.get_actions_list()
+        if actions:
+            action_form = self.action_form()
+        else:
+            action_form = None
+
+        clear_search_url = self._get_list_url(
+            view_args.clone(page=0,
+                            sort=view_args.sort,
+                            sort_desc=view_args.sort_desc,
+                            search=None,
+                            filters=None))
+        return self.render(
+            self.list_template,
+            data=data,
+            list_forms=list_forms,
+            delete_form=delete_form,
+            action_form=action_form,
+
+            # List
+            list_columns=self._list_columns,
+            sortable_columns=self._sortable_columns,
+            editable_columns=self.column_editable_list,
+            list_row_actions=self.get_list_row_actions(),
+
+            # Pagination
+            count=count,
+            pager_url=pager_url,
+            num_pages=num_pages,
+            can_set_page_size=self.can_set_page_size,
+            page_size_url=page_size_url,
+            page=view_args.page,
+            page_size=page_size,
+            default_page_size=self.page_size,
+
+            # Sorting
+            sort_column=view_args.sort,
+            sort_desc=view_args.sort_desc,
+            sort_url=sort_url,
+
+            # Search
+            search_supported=self._search_supported,
+            clear_search_url=clear_search_url,
+            search=view_args.search,
+            search_placeholder=self.search_placeholder(),
+
+            # Filters
+            filters=self._filters,
+            filter_groups=self._get_filter_groups(),
+            active_filters=view_args.filters,
+            filter_args=self._get_filters(view_args.filters),
+
+            # Actions
+            actions=actions,
+            actions_confirmation=actions_confirmation,
+
+            # Misc
+            enumerate=enumerate,
+            get_pk_value=self.get_pk_value,
+            get_value=self.get_list_value,
+            return_url=self._get_list_url(view_args),
+        )
+
+    @expose('/new/', methods=('GET', 'POST'))
+    def create_view(self):
+        return_url = get_redirect_target() or self.get_url('.index_view')
+        if not self.can_create:
+            return redirect(return_url)
+        facet_search = get_facet_search()
+        facet_search.update({'mapping_list': get_item_mapping_list()})
+        return self.render(
+            current_app.config['WEKO_ADMIN_FACET_SEACH_SETTING_TEMPLATE'],
+            data=json.dumps(facet_search),
+            type_str='new'
+        )
+
+    @expose('/edit/<int:id>', methods=['GET', 'POST'])
+    def edit_view(self, id=None):
+        return_url = get_redirect_target() or self.get_url('.index_view')
+        if not self.can_edit:
+            return redirect(return_url)
+        facet_search = get_facet_search(id=id)
+        facet_search.update({'mapping_list': get_item_mapping_list()})
+        return self.render(
+            current_app.config['WEKO_ADMIN_FACET_SEACH_SETTING_TEMPLATE'],
+            data=json.dumps(facet_search),
+            type_str='edit',
+            id=id
+        )
+
+    @expose('/detail/<int:id>', methods=['GET', 'POST'])
+    def details_view(self, id=None):
+        return_url = get_redirect_target() or self.get_url('.index_view')
+        if not self.can_edit:
+            return redirect(return_url)
+        facet_search = get_facet_search(id=id)
+        facet_search.update({'mapping_list': get_item_mapping_list()})
+        return self.render(
+            current_app.config['WEKO_ADMIN_FACET_SEACH_SETTING_TEMPLATE'],
+            data=json.dumps(facet_search),
+            type_str='detail',
+            id=id
+        )
+
+    @expose('/delete/', methods=['GET', 'POST'])
+    @expose('/delete/<int:id>', methods=['GET', 'POST'])
+    def delete(self, id=None):
+        """Soft-delete an Facet Search."""
+        return_url = get_redirect_target() or self.get_url('.index_view')
+        if not self.can_delete:
+            return redirect(return_url)
+        if not id:
+            id = request.form.get('id')
+        facet_search = get_facet_search(id=id)
+        return self.render(
+            current_app.config['WEKO_ADMIN_FACET_SEACH_SETTING_TEMPLATE'],
+            data=json.dumps(facet_search),
+            type_str='delete',
+            id=id
+        )
+
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
@@ -1219,6 +1438,14 @@ identifier_adminview = dict(
     endpoint='identifier'
 )
 
+facet_search_adminview = dict(
+    modelview=FacetSearchSettingView,
+    model=FacetSearchSetting,
+    category=_('Setting'),
+    name=_('Faceted Search'),
+    endpoint='facetsearch'
+)
+
 __all__ = (
     'style_adminview',
     'report_adminview',
@@ -1235,5 +1462,6 @@ __all__ = (
     'item_export_settings_adminview',
     'site_info_settings_adminview',
     'restricted_access_adminview',
-    'identifier_adminview'
+    'identifier_adminview' ,
+    'facet_search_adminview'
 )

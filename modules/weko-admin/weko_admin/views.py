@@ -25,7 +25,7 @@ import sys
 from datetime import timedelta
 
 from flask import Blueprint, Response, abort, current_app, flash, jsonify, \
-    render_template, request
+    render_template, request, json
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
@@ -43,7 +43,9 @@ from .utils import FeedbackMail, StatisticMail, UsageReport, \
     get_api_certification_type, get_current_api_certification, \
     get_init_display_index, get_initial_stats_report, get_selected_language, \
     get_unit_stats_report, save_api_certification, update_admin_lang_setting, \
-    update_restricted_access, validate_certification, validation_site_info
+    update_restricted_access, validate_certification, validation_site_info, \
+    create_facet_search, delete_facet_search, update_facet_search
+import json
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -602,3 +604,52 @@ def send_mail_reminder_usage_report():
         result = usage_report.send_reminder_mail(activities_id)
 
     return jsonify(status=result), 200
+
+
+@blueprint_api.route("/facetsearch/save", methods=['POST'])
+@login_required
+def save_facet_search():
+    """Save facet search data.
+
+    :return:
+    """
+    result = {
+        "status": True,
+        "msg": _("Success")
+    }
+    data = request.get_json()
+    id = data.get('id')
+    if id and len(id) > 0:
+        #  Edit
+        if not update_facet_search(id, data):
+            result['status'] = False
+            result['msg'] = _("Error")
+    else:
+        #  Create
+        if not create_facet_search(data):
+            result['status'] = False
+            result['msg'] = _("Error")
+    return jsonify(result), 200
+
+
+@blueprint_api.route("/facetsearch/remove", methods=['POST'])
+@login_required
+def remove_facet_search():
+    """Save facet search data.
+
+    :return:
+    """
+    result = {
+        "status": True,
+        "msg": _("Success")
+    }
+    data = request.get_json()
+    id_facet = json.loads(json.dumps(data))["id"]
+    if id_facet:
+        if not delete_facet_search(id_facet):
+            result['status'] = False
+            result['msg'] = _("Error")
+    else:
+        result['status'] = False
+        result['msg'] = _("Can not delete")
+    return jsonify(result), 200

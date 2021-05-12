@@ -1,0 +1,77 @@
+{# -*- coding: utf-8 -*-
+#
+# This file is file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}
+    <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {% assets "weko_admin_css" %}
+    <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% endblock %}
+
+{%- block javascript %}
+{{ super() }}
+{% assets "weko_admin_facet_search" %}
+<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+{% assets "weko_admin_statistics_reactjs_lib" %}
+<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+{% assets "weko_admin_react_bootstrap_js" %}
+<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+<script type="text/javascript"
+      src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+{%- endblock javascript %}
+
+{%- block body %}
+{% from "weko_theme/macros/modal_page.html" import confirm_modal %}
+<input class="facet-search-label" id="lblFacetSearchId" type="hidden" value='{{id}}'/>
+<input class="facet-search-label" id="lblInitData" type="hidden" value='{{ data }}'/>
+<input class="facet-search-label" id="lblTypeScreen" type="hidden" value='{{type_str}}'/>
+
+<input class="facet-search-label" id="lblNameEN" type="hidden" value='{{ _("Item Name(EN)") }}'/>
+<input class="facet-search-label" id="lblNameJP" type="hidden" value='{{ _("Item Name(JP)") }}'/>
+<input class="facet-search-label" id="lblMapping" type="hidden" value='{{ _("Mapping") }}'/>
+<input class="facet-search-label" id="lblCustomAgg" type="hidden" value='{{ _("Custom Aggregations") }}'/>
+<input class="facet-search-label" id="lblAggList" type="hidden" value='{{ _("Aggregations List") }}'/>
+<input class="facet-search-label" id="lblAggMapping" type="hidden" value='{{ _("Aggregation Mapping") }}'/>
+<input class="facet-search-label" id="lblAggValue" type="hidden" value='{{ _("Aggregation Value") }}'/>
+<input class="facet-search-label" id="lblActive" type="hidden" value='{{ _("Active") }}'/>
+<input class="facet-search-label" id="lblDisplay" type="hidden" value='{{ _("Display") }}'/>
+<input class="facet-search-label" id="lblHide" type="hidden" value='{{ _("Hide") }}'/>
+
+<input class="facet-search-label" id="lblList" type="hidden" value='{{ _("List") }}'/>
+<input class="facet-search-label" id="lblCreate" type="hidden" value='{{ _("Create") }}'/>
+<input class="facet-search-label" id="lblEdit" type="hidden" value='{{ _("Edit") }}'/>
+<input class="facet-search-label" id="lblDetail" type="hidden" value='{{ _("Details") }}'/>
+
+<input class="facet-search-label" id="lblCancel" type="hidden" value='{{ _("Cancel") }}'/>
+<input class="facet-search-label" id="lblSave" type="hidden" value='{{ _("Save") }}'/>
+<input class="facet-search-label" id="lblDelete" type="hidden" value='{{ _("Delete") }}'/>
+<input class="facet-search-label" id="lblAdd" type="hidden" value='{{ _("Add") }}'/>
+
+<div id="root" class="col-xs-12"></div>
+{{ confirm_modal(modal_id="facet_search_comfirm_modal",
+                 button_id="Confirm_delete_button",
+                 button_text="Delete",
+                 title=_('Confirmation'),
+                 body=_('Do you want to delete this'))}}
+{%- endblock body %}

@@ -1722,6 +1722,145 @@ class Identifier(db.Model):
                                                         self.repository)
 
 
+class FacetSearchSetting(db.Model):
+    """Database for Facet Search."""
+
+    __tablename__ = 'facet_search_setting'
+
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    """Unique number of rows in this table."""
+
+    name_en = db.Column(db.String(255), nullable=False)
+    """English name of facet search."""
+
+    name_jp = db.Column(db.String(255), nullable=True)
+    """Japanese name of facet search."""
+
+    mapping = db.Column(db.String(255), nullable=False)
+    """Base on this mapping to search columns in ES."""
+
+    aggregations = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """Facet Search Agg."""
+
+    active = db.Column(db.Boolean(), default=True)
+    """True: display this facet search on screen, else hide this."""
+
+    def __int__(self, name_en, name_jp, mapping, aggregations, active):
+        self.name_en = name_en
+        self.name_jp = name_jp
+        self.mapping = mapping
+        self.aggregations = aggregations
+        self.active = active
+
+    def to_dict(self) -> dict:
+        """Convert object to dictionary.
+
+        Returns:
+            dict: the object is converted to dictionary.
+
+        """
+        return {
+            "name_en": self.name_en,
+            "name_jp": self.name_jp,
+            "mapping": self.mapping,
+            "aggregations": self.aggregations,
+            "active": self.active
+        }
+
+    @classmethod
+    def get_by_id(cls, id):
+        """Get a facet search by id."""
+        return cls.query.filter_by(id=id).one_or_none()
+
+    @classmethod
+    def get_all(cls):
+        """Get all facet search."""
+        return cls.query.all()
+
+    @classmethod
+    def get_activated_facets(cls):
+        """Get all activated facets search."""
+        return cls.query.filter_by(active=True).all()
+
+    @classmethod
+    def create(cls, faceted_search_dict):
+        """Create facet search item.
+
+        :param faceted_search_dict: facet search data
+        :return:
+        """
+        try:
+            with db.session.begin_nested():
+                faceted_search = cls(**faceted_search_dict)
+                db.session.add(faceted_search)
+            db.session.commit()
+            return faceted_search
+        except Exception as e:
+            current_app.logger.error(e)
+            db.session.rollback()
+            return None
+
+    @classmethod
+    def delete(cls, id):
+        """Delete settings."""
+
+        if id is not None:
+            try:
+                with db.session.begin_nested():
+                    cls.query.filter_by(id=id).delete()
+                db.session.commit()
+                return True
+            except BaseException as ex:
+                db.session.rollback()
+                current_app.logger.error(ex)
+                raise
+        return False
+
+    @classmethod
+    def update_by_id(cls, id, faceted_search_dict):
+        """update facet search item.
+            :param: id: id of facet search
+                    faceted_search_dict: facet search data update
+            :return True: update success
+                    False: Error
+        """
+        facet_search = cls.get_by_id(id)
+        if facet_search:
+            try:
+                with db.session.begin_nested():
+                    for k,v in faceted_search_dict.items():
+                        setattr(facet_search, k, v)
+                    db.session.merge(facet_search)
+                db.session.commit()
+                return True
+            except BaseException as ex:
+                db.session.rollback()
+                current_app.logger.error(ex)
+                raise
+
+        return False
+
+    @classmethod
+    def get_activated_facets_mapping(cls):
+        activated_facet_search = cls.get_activated_facets()
+        result = dict()
+        for item in activated_facet_search:
+            result.update({item.name_en: item.mapping})
+        return result
+
 __all__ = ([
     'SearchManagement',
     'AdminLangSettings',
@@ -1738,5 +1877,6 @@ __all__ = ([
     'SiteInfo',
     'FeedbackMailHistory',
     'FeedbackMailFailed',
-    'Identifier'
+    'Identifier' ,
+    'FacetSearchSetting',
 ])
