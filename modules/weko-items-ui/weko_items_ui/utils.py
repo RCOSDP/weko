@@ -1318,16 +1318,20 @@ def write_tsv_files(item_types_data, export_path, list_item_role):
             file.write(tsv_output.getvalue())
 
 
+def check_item_type_name(name):
+    """Check a list of allowed characters in filenames.
+
+    :return: new name
+    """
+    new_name = re.sub(r'[\/:*"<>|\s]', '_', name)
+    return new_name
+
+
 def export_items(post_data):
     """Gather all the item data and export and return as a JSON or BIBTEX.
 
     :return: JSON, BIBTEX
     """
-    def check_item_type_name(name):
-        """Check a list of allowed characters in filenames."""
-        new_name = re.sub(r'[\/:*"<>|\s]', '_', name)
-        return new_name
-
     include_contents = True if \
         post_data.get('export_file_contents_radio') == 'True' else False
     export_format = post_data['export_format_radio']
@@ -1343,7 +1347,8 @@ def export_items(post_data):
         return '', 204
 
     result = {'items': []}
-    temp_path = tempfile.TemporaryDirectory()
+    temp_path = tempfile.TemporaryDirectory(
+        prefix=current_app.config['WEKO_ITEMS_UI_EXPORT_TMP_PREFIX'])
     item_types_data = {}
 
     try:
