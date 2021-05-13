@@ -208,7 +208,7 @@ def get_timezone(date):
     return date, offset
 
 
-def get_pid(cls, pid):
+def get_pid(pid):
     """Get record by pid."""
     try:
         pid = PersistentIdentifier.get('depid', pid)

@@ -97,7 +97,7 @@ def run_sync_import(id):
                                 hostname.netloc
                             ),
                             record_id=i,
-                            metadata_prefix='jpcoar',
+                            metadata_prefix='jpcoar_1.0',
                         )
                         process_item(record[0], resync, counter)
                         successful.append(i)
@@ -154,10 +154,10 @@ def get_record(
     payload = {
         'verb': 'GetRecord',
         'metadataPrefix': metadata_prefix,
-        'identifier': 'oai:invenio:recid/{}'.format(record_id)
+        'identifier': 'oai:invenio:{}'.format('%08d' % int(record_id))
     }
     records = None
-    response = requests.get(url, params=payload)
+    response = requests.get(url, params=payload, verify=False)
     et = etree.XML(response.text.encode(encoding))
     current_app.logger.debug(et)
     records = et.findall('./GetRecord/record', namespaces=et.nsmap)
