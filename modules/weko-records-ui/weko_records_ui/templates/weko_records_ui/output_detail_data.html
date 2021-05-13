@@ -52,17 +52,21 @@
         <td>{{ record_detail_data['attribute_value_mlt'] }}</td>
       </tr>
     {%- else -%}
-        {%- for attribute_data in record_detail_data['attribute_value_mlt'] -%}
-          {%- if attribute_data -%}
-          <tr>
-            <th scope="row" colspan="6"
-            style="border-bottom: none">{{ record_detail_data['attribute_name_i18n'] }}</th>
-            <td>
-            </td>
-          </tr>
-            {{ output_attribute_value_mlt(attribute_data, 1) }}
-          {%- endif -%}
-        {%- endfor -%}
+        {%- if not config.WEKO_RECORDS_UI_LANG_DISP_FLG -%}
+            {%- for attribute_data in record_detail_data['attribute_value_mlt'] -%}
+              {%- if attribute_data -%}
+              <tr>
+                <th scope="row" colspan="6"
+                style="border-bottom: none">{{ record_detail_data['attribute_name_i18n'] }}</th>
+                <td>
+                </td>
+              </tr>
+                {{ output_attribute_value_mlt(attribute_data, 1) }}
+              {%- endif -%}
+            {%- endfor -%}
+        {%- else -%}
+            {{ output_attribute_value_mlt_Init( record_detail_data ) }}
+        {%- endif -%}        
     {%- endif -%}
 {% endmacro %}
 
@@ -120,4 +124,122 @@
           style="border-top: none; border-bottom: none"></th>
         {{ out_table_th(parrent_length - 1) }}
     {%- endif -%}
+{% endmacro %}
+
+{% macro output_attribute_value_mlt_Init(record_detail_data) %}
+    {%- set data_attribute_value_mlt = record_detail_data['attribute_value_mlt'] -%}
+    {%- set langkey = _('Language:').split(':')[0] -%}
+    {%- set langjudgeflg =  False -%}
+    {%- if data_attribute_value_mlt -%}
+    <tr>
+        <th scope="row" colspan="6"
+        style="border-bottom: none">{{ record_detail_data['attribute_name_i18n'] }}</th>
+        <td>
+        </td>
+    </tr>
+        {%- if data_attribute_value_mlt[0] -%}
+            {%- set nextdata2 = data_attribute_value_mlt[0] -%}
+            {%- if nextdata2[0] -%}
+                {%- set nextdata1 =  nextdata2[0] -%}
+                {%- if nextdata1[1] -%}
+                    {%- if nextdata1[1][0] -%}
+                        {%- if nextdata1[1][0] is mapping -%}
+                            {%- if langkey in nextdata1[1][0].keys() -%}
+                                {{ output_attribute_value_mlt_lang('',data_attribute_value_mlt,1) }}
+                                {%- set langjudgeflg =  True -%}
+                            {%- endif -%}
+                        {%- endif -%}
+                    {%- endif -%}
+                {%- endif -%}
+            {%- endif -%}
+        {%- endif -%}
+    {%- endif -%}
+    {%- if not langjudgeflg -%}
+        {%- for attribute_data in data_attribute_value_mlt -%}
+            {{ output_attribute_value_mlt_exceptlang(attribute_data,1) }}
+        {%- endfor -%}
+    {%- endif -%}
+{% endmacro %}
+
+{% macro output_attribute_value_mlt_lang(parent_name,language_data,level) %}
+    {%- set ns = namespace(disp_language = '') -%}
+    {%- set nsflg = namespace(dispflg = False) -%}
+    {%- for language_value in language_data -%}
+        {%- if loop.first -%}
+            {%- set ns.disp_language = language_value -%}
+        {%- endif -%}
+        {%- if language_value[0][1] -%}
+            {%- set langv = language_value[0][1] -%}
+            {%- if langv[0] -%}
+                {%- if 'en' in langv[0].values() and not nsflg.dispflg -%}
+                    {%- set ns.disp_language = language_value -%}
+                {%- endif -%}
+                {%- if current_i18n.language in langv[0].values() -%}
+                    {%- set ns.disp_language = language_value -%}
+                    {%- set nsflg.dispflg = True -%}
+                {%- endif -%}
+            {%- endif -%}
+        {%- endif -%}
+        {%- if loop.last -%}
+            {%- if parent_name -%}
+                {{ child_data(parent_name, '', level-1) }}
+            {%- endif -%}    
+            {{ output_attribute_value_mlt(ns.disp_language, level) }}
+        {%- endif -%}
+    {%- endfor -%}
+{% endmacro %}
+
+{% macro output_attribute_value_mlt_exceptlang(attribute_value_mlt,level,parentname) %}
+    {%- set langkey = _('Language:').split(':')[0] -%}
+    {%- for attribute_data in attribute_value_mlt -%}
+        {%- if attribute_data[1] -%}
+            {%- if attribute_data[1][0] -%}
+                {%- if attribute_data[1][0] is mapping -%}
+                    {%- if parentname -%}
+                        {{ child_data(parentname, '', level-1) }}
+                    {%- endif -%}
+                    {%- for key, value in attribute_data[1][0].items() -%}
+                        {%- if value is string -%}
+                            {%- if attribute_data|length == 2 -%}
+                                {{ output_attribute_value_mlt(attribute_data, level) }}
+                            {%- else -%}    
+                                {{ output_attribute_value_mlt_exceptlang(attribute_data,level) }}
+                            {%- endif -%}
+                        {%- else -%}
+                            {{ output_attribute_value_mlt_exceptlang(attribute_data,level) }}
+                        {%- endif -%}
+                    {%- endfor -%}
+                {%- endif -%}
+            {%- endif -%}
+        {%- elif attribute_data is mapping -%}
+            {%- set langjudgeflg =  False -%}
+            {%- for key, value in attribute_data.items() -%}
+                {%- if value is not string -%}
+                    {%- if value[0] -%}
+                        {%- set value_data = value[0] -%}
+                        {%- if value_data[0] -%}
+                            {%- set lang_data =  value_data[0] -%}
+                            {%- if lang_data[1] -%}
+                                {%- if lang_data[1][0] -%}
+                                    {%- if lang_data[1][0] is mapping -%}
+                                        {%- if langkey in lang_data[1][0].keys() -%}
+                                            {{ output_attribute_value_mlt_lang(key,value,level+1) }}
+                                            {%- set langjudgeflg =  True -%}
+                                        {%- endif -%}
+                                    {%- endif -%}
+                                {%- endif -%}
+                            {%- endif -%}
+                        {%- endif -%}
+                    {%- endif -%}
+                    {%- if not langjudgeflg -%}
+                        {{ output_attribute_value_mlt_exceptlang(value,level+1,key) }}
+                    {%- endif -%}
+                {%- else -%}
+                    {{ child_data(key,value,level) }}
+                {%- endif -%}
+            {%- endfor -%}
+        {%- elif attribute_data is iterable and attribute_data is not string -%}
+            {{ output_attribute_value_mlt_exceptlang(attribute_data,level,parentname) }}
+        {%- endif -%}
+    {%- endfor -%}
 {% endmacro %}

@@ -24,8 +24,8 @@ services:
   web:
     restart: "always"
     build: .
-    command: /bin/bash -c "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO -B -D -f /code/celeryd.log && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
-    #command: /bin/bash -c "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO --logfile=celery.log -B -D && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
+    #command: /bin/bash -c "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO -B -D -f /code/celeryd.log && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
+    command: /bin/bash -c "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO -B -D && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
     environment:
       - PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       - VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
@@ -53,7 +53,8 @@ services:
       - INVENIO_ROLE_REPOSITORY=Repository Administrator
       - INVENIO_ROLE_CONTRIBUTOR=Contributor
       - INVENIO_ROLE_COMMUNITY=Community Administrator
-      - FLASK_DEBUG=1
+      - FLASK_ENV=development
+      - FLASK_DEBUG=True
       - SEARCH_INDEX_PREFIX=tenant1
       - INVENIO_DB_POOL_CLASS=QueuePool
       - GOOGLE_TRACKING_ID_SYSTEM=
@@ -119,11 +120,11 @@ services:
   postgresql:
     restart: "always"
     image: postgres:12
+#    command: postgres -c log_destination=stderr -c log_statement=all -c log_connections=on -c log_disconnections=on
     environment:
       - POSTGRES_USER=invenio
       - POSTGRES_DB=invenio
       - POSTGRES_PASSWORD=dbpass123
-#      - POSTGRES_INITDB_ARGS="-c log_statement=all -c log_duration=on"
     volumes:
       - pgsql-data:/var/lib/postgresql/data
     ports:
@@ -185,19 +186,19 @@ services:
     links:
       - rabbitmq
 
-  kibana:
-    build:
-      context: .
-      dockerfile: ./kibana/Dockerfile
-    restart: "always"
-    command: kibana
-    ports:
-      - "5601:5601"
-    environment:
-      - "ELASTICSEARCH_URL=http://elasticsearch:9200"
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    links:
-      - elasticsearch
+#  kibana:
+#    build:
+#      context: .
+#      dockerfile: ./kibana/Dockerfile
+#    restart: "always"
+#    command: kibana
+#    ports:
+#      - "5601:5601"
+#    environment:
+#      - "ELASTICSEARCH_URL=http://elasticsearch:9200"
+#      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+#    links:
+#      - elasticsearch
 
 volumes:
   weko3_data:

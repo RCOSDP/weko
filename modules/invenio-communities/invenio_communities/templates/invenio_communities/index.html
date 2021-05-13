@@ -115,14 +115,14 @@
                               </ul>
                           </div>
                         </div>
-                        {% if obj.id_user == current_user.id %}
+                        {% if obj.id_role == current_user.roles[0].id %}
                           <a href="{{url_for('.curate', community_id=obj.id)}}" class="btn btn-info">{{ _('Curate') }}</a>
                         {% endif %}
                       </div>
                       {{ obj.title }}
                     </h4><br />
                     <p>{{ obj.description|striptags|truncate }}</p>
-                    <small class="text-muted">Curated by: {{ obj.owner.profile.username }}</small>
+                    <small class="text-muted">Curated by: {{ obj.owner.name }}</small>
                   </div>
                 </div>
               {% endif %}

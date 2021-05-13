@@ -85,3 +85,6 @@ msgstr ""
 
 msgid "This index cannot be deleted because the item belonging to this index is being edited by the import function."
 msgstr ""
+
+msgid "The index cannot be kept publication date to a future date because there are links from items that have a DOI."
+msgstr ""

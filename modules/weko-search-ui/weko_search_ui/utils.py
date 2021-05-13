@@ -554,6 +554,8 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
         csv_reader = csv.reader(tsvfile, delimiter='\t')
         try:
             for num, data_row in enumerate(csv_reader, start=1):
+                # current_app.logger.debug(num)
+                # current_app.logger.debug(data_row)
                 if num == 1:
                     first_line_format_exception = Exception({
                         'error_msg': _('There is an error in the format of the'
@@ -587,6 +589,7 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                     item_path = data_row
                     duplication_item_ids = \
                         handle_check_duplication_item_id(item_path)
+                    current_app.logger.debug(duplication_item_ids)
                     if duplication_item_ids:
                         msg = _(
                             'The following metadata keys are duplicated.'
@@ -783,6 +786,7 @@ def handle_check_exist_record(list_record) -> list:
 
     """
     result = []
+    current_app.logger.debug('handle_check_exist_record')
     for item in list_record:
         item = dict(**item, **{
             'status': 'new'
@@ -790,6 +794,7 @@ def handle_check_exist_record(list_record) -> list:
         errors = item.get('errors') or []
         try:
             item_id = item.get('id')
+            current_app.logger.debug(item_id)
             if item_id:
                 system_url = request.url_root + 'records/' + item_id
                 if item.get('uri') != system_url:
@@ -818,10 +823,10 @@ def handle_check_exist_record(list_record) -> list:
                                     item['status'] = _edit_mode.lower()
             else:
                 item['id'] = None
-                if item.get('uri'):
-                    errors.append(_('Item ID does not match the'
-                                    + ' specified URI information.'))
-                    item['status'] = None
+#                if item.get('uri'):
+#                    errors.append(_('Item ID does not match the'
+#                                    + ' specified URI information.'))
+#                    item['status'] = None
         except PIDDoesNotExistError:
             pass
         except BaseException:
@@ -2195,6 +2200,13 @@ def handle_fill_system_item(list_record):
 
     """
     def recursive_sub(keys, node, uri_key, current_type):
+        current_app.logger.debug("recursive_sub")
+        
+        current_app.logger.debug(keys)
+        current_app.logger.debug(node)
+        current_app.logger.debug(uri_key)
+        current_app.logger.debug(current_type)
+        
         if isinstance(node, list):
             for sub_node in node:
                 recursive_sub(keys[1:], sub_node, uri_key, current_type)
@@ -2203,10 +2215,11 @@ def handle_fill_system_item(list_record):
                 recursive_sub(keys[1:], node.get(keys[0]),
                               uri_key, current_type)
             else:
-                type_data = node.get(keys[0])
-                uri = get_system_data_uri(current_type, type_data)
-                if uri is not None:
-                    node[uri_key] = uri
+                if len(keys) > 0:
+                    type_data = node.get(keys[0])
+                    uri = get_system_data_uri(current_type, type_data)
+                    if uri is not None:
+                        node[uri_key] = uri
 
     item_type_id = None
     item_map = None
@@ -2232,7 +2245,10 @@ def handle_fill_system_item(list_record):
             item, item_map, "versiontype.@value")
         _, versionuri_key = get_data_by_property(
             item, item_map, "versiontype.@attributes.rdf:resource")
+        current_app.logger.debug("Version Type")
         if versiontype_key and versionuri_key:
+            current_app.logger.debug(versiontype_key)
+            current_app.logger.debug(versionuri_key)
             recursive_sub(versiontype_key.split('.'),
                           item['metadata'],
                           versionuri_key.split('.')[-1],
@@ -2243,7 +2259,10 @@ def handle_fill_system_item(list_record):
             item, item_map, "accessRights.@value")
         _, accessRightsuri_key = get_data_by_property(
             item, item_map, "accessRights.@attributes.rdf:resource")
+        current_app.logger.debug("Access Right")
         if accessRights_key and accessRightsuri_key:
+            current_app.logger.debug(accessRights_key)
+            current_app.logger.debug(accessRightsuri_key)
             recursive_sub(accessRights_key.split('.'),
                           item['metadata'],
                           accessRightsuri_key.split('.')[-1],
@@ -2424,7 +2443,7 @@ def handle_check_duplication_item_id(ids: list):
     """
     result = []
     for element in ids:
-        if ids.count(element) > 1:
+        if element is not '' and ids.count(element) > 1:
             result.append(element)
     return list(set(result))
 

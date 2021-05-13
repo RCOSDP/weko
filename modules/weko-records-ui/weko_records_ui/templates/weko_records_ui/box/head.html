@@ -39,7 +39,7 @@
         {%- if record_navs -%}
           {%- for nav in record_navs -%}
             <div style="overflow:hidden;">
-              <ol class="breadcrumb"
+              <ol class="breadcrumb" id="body_indexlink"
                 style="display: inline; padding-left: 0.25em; padding-right: 0.25em; background-color: inherit;">
                 {%- set path = nav.path.split('/') -%}
                 {%- for p in path -%}
@@ -71,7 +71,15 @@
         {%- endif -%}
         <div class="panel-group" style="padding-top: 10px;">
           <h2 style="display: inline;">
-            <div style="margin-left: 0.05em;">{{ record.get('item_title', _('No title')) | escape_str }}</div>
+            <!-- temporary fix for display of title -->
+            {%- if title_name_dict[current_i18n.language] and title_name_dict[current_i18n.language]!='' -%}
+            <div style="margin-left: 0.05em;">{{ title_name_dict[current_i18n.language] | escape_str }}</div>
+            {%- else -%}
+            <div style="margin-left: 0.05em;">{{ _('No title') }}</div>
+            {%- endif -%}
+            <!--
+              <div style="margin-left: 0.05em;">{{ record.get('item_title', _('No title')) | escape_str }}</div>
+            -->
           </h2>
         </div>
         <div class="panel-group">
