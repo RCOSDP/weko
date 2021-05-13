@@ -618,7 +618,7 @@ def save_facet_search():
         "msg": _("Success")
     }
     data = request.get_json()
-    id = data.get('id')
+    id = data.pop('id', '')
     if id and len(id) > 0:
         #  Edit
         if not update_facet_search(id, data):

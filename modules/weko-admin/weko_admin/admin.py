@@ -1265,7 +1265,7 @@ class FacetSearchSettingView(ModelView):
             id=id
         )
 
-    @expose('/detail/<int:id>', methods=['GET', 'POST'])
+    @expose('/details/<int:id>', methods=['GET', 'POST'])
     def details_view(self, id=None):
         return_url = get_redirect_target() or self.get_url('.index_view')
         if not self.can_edit:
@@ -1275,7 +1275,7 @@ class FacetSearchSettingView(ModelView):
         return self.render(
             current_app.config['WEKO_ADMIN_FACET_SEACH_SETTING_TEMPLATE'],
             data=json.dumps(facet_search),
-            type_str='detail',
+            type_str='details',
             id=id
         )
 

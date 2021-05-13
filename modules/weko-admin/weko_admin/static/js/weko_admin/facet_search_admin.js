@@ -24,6 +24,9 @@ function Layout({isEditScreen}) {
     return <FacetSearchLayout {...JSON.parse(initValue)} />;
   } else {
     // Detail or Delete
+    $('#Confirm_delete_button').click(function () {
+      handleRemoveFacet();
+    });
     return <FacetSearchDetailsLayout {...JSON.parse(initValue)} />;
   }
 }
@@ -41,16 +44,28 @@ function FacetSearchLayout(
 
   function handleSaveFacetSearch() {
     const URL = "/api/admin/facetsearch/save";
+
+    let errorMessage = "";
+    if  (_nameEN === ""){
+      errorMessage = "Item Name(EN) is required!";
+    }else if (_nameJP === ""){
+      errorMessage = "Item Name(JP) is required!";
+    }else if (_mapping === ""){
+      errorMessage = "Mapping required!";
+    }
+    if (errorMessage){
+      showErrorMessage(errorMessage);
+      return ;
+    }
     let data = {
       name_en: _nameEN,
       name_jp: _nameJP,
       mapping: _mapping,
       active: _active,
-      aggregations: _aggregations
+      aggregations: _aggregations,
+      id:LABELS['lblFacetSearchId']
     }
-    if (LABELS['lblFacetSearchId']){
-      data['id'] = LABELS['lblFacetSearchId'];
-    }
+
     $.ajax({
       url: URL,
       method: 'POST',
@@ -63,70 +78,71 @@ function FacetSearchLayout(
         } else {
           console.log("false");
         }
-        window.location.href = urlList;
       },
       error: function (error) {
-        console.log(error);
+        showErrorMessage(error);
       }
     });
+    window.location.href = urlList;
   }
 
   return (
     <div>
       <HeaderComponent/>
+      <br/>
       <div className="row">
-        <div className="col-sm-12 col-md-12 col-md-12">
-          <div className="panel panel-default">
-            <div className="panel-body">
-              <div className="row">
-                <InputTextComponent value={_nameEN} setValue={_setNameEN}
-                                    idName={LABELS['lblNameEN']}/>
-              </div>
-              <div className="row">
-                <InputTextComponent value={_nameJP} setValue={_setNameJP}
-                                    idName={LABELS['lblNameJP']}/>
-              </div>
-              <div className="row">
-                <div className="form-group row">
-                  <label htmlFor={LABELS['lblMapping']} className="col-sm-2 col-form-label"
-                         style={MARGIN_TEXT}>{LABELS['lblMapping']}</label>
-                  <div className="col-sm-7">
-                    <select className="form-control" id={LABELS['lblMapping']}
-                            value={_mapping}
-                            onChange={e => _setMapping(e.target.value)}>
-                      {
-                        mapping_list.map((item) =>
-                          <option value={item}>{item}</option>)
-                      }
-                    </select>
-                  </div>
-                </div>
-              </div>
-              <div className="row">
-                <CustomAggregations aggregations={_aggregations}
-                                    setAggregations={_setAggregations}
-                                    mappingList={mapping_list}/>
-              </div>
-              <div className="row">
-                <InputRadioComponent value={_active} setValue={_setActive}
-                                     idName={LABELS['lblActive']}/>
-              </div>
-              <div className="row">
-                  <div className="form-group row">
-                    <div className="col-sm-2" style={MARGIN_TEXT}>
-                    </div>
-                    <div className="col-sm-7">
-                      <button type="button" style={{marginRight: "3px"}}
-                              className="btn btn-primary"
-                              onClick={handleSaveFacetSearch}>{LABELS['lblSave']}</button>
-                      <a href="/admin/facetsearch/" className="btn btn-danger"
-                         role="button">{LABELS['lblCancel']}</a>
-                    </div>
-                  </div>
-              </div>
-            </div>
+        <InputTextComponent value={_nameEN} setValue={_setNameEN}
+                            idName={LABELS['lblNameEN']}/>
+      </div>
+      <div className="row">
+        <InputTextComponent value={_nameJP} setValue={_setNameJP}
+                            idName={LABELS['lblNameJP']}/>
+      </div>
+      <div className="row">
+        <div className="form-group row">
+          <label htmlFor={LABELS['lblMapping']} 
+          className="control-label col-xs-2 text-right field-required">
+            {LABELS['lblMapping']}
+          </label>
+          <div className="controls col-xs-6">
+            <select className="form-control" id={LABELS['lblMapping']}
+                    value={_mapping}
+                    onChange={e => _setMapping(e.target.value)}>
+              {
+                mapping_list.map((item) =>
+                  <option value={item}>{item}</option>)
+              }
+            </select>
           </div>
         </div>
+      </div>
+      <div className="row">
+        <CustomAggregations aggregations={_aggregations}
+                            setAggregations={_setAggregations}
+                            mappingList={mapping_list}/>
+      </div>
+      <div className="row">
+        <InputRadioComponent value={_active} setValue={_setActive}
+                              idName={LABELS['lblActive']}/>
+      </div>
+      <br/>
+      <div className="row">
+          <div className="form-group row">
+            <div className="col-xs-offset-2 col-xs-5">
+              <button type="button"
+                      className="btn btn-primary save-button"
+                      onClick={handleSaveFacetSearch}>
+                        <span className="glyphicon glyphicon-download-alt" aria-hidden="true"/>
+                        &nbsp;{LABELS['lblSave']}
+                </button>    
+              <a href="/admin/facetsearch/" className="btn btn-info cancel-button"
+                style={{marginLeft: "10px", paddingTop:"10px"}}
+                role="button">
+                  <span className="glyphicon glyphicon-remove" aria-hidden="true"/>
+                  &nbsp;{LABELS['lblCancel']}
+              </a>
+            </div>
+          </div>
       </div>
     </div>
   )
@@ -143,9 +159,11 @@ function InputTextComponent({value, setValue, idName}) {
   return (
     <div>
       <div className="form-group row">
-        <label htmlFor={idName} className="col-sm-2 col-form-label"
-               style={MARGIN_TEXT}> {idName} </label>
-        <div className="col-sm-7">
+        <label htmlFor={idName} 
+          className="control-label col-xs-2 text-right field-required">
+          {idName} 
+        </label>
+        <div className="controls col-xs-6">
           <input type="text" id={idName} className="form-control" value={value}
                  onChange={handleChange}/>
         </div>
@@ -162,9 +180,10 @@ function InputRadioComponent({value, setValue, idName}) {
 
   return (
     <div className="form-group">
-      <label htmlFor={idName} className="col-sm-2 col-form-label"
-             style={MARGIN_TEXT}> {idName}</label>
-      <div className="form-group">
+      <label htmlFor={idName} className="control-label col-xs-2 text-right"> 
+        {idName}
+      </label>
+      <div className="controls col-xs-6">
         <label className="radio-inline" htmlFor="display">
           <input type="radio" id="display" checked={value === true}
                  onChange={handleChangeDisplay}/>
@@ -263,9 +282,11 @@ function CustomAggregations({aggregations, setAggregations, mappingList}) {
 
   return (
     <div className="form-group row">
-      <label htmlFor={LABELS['lblCustomAgg']} className="col-sm-2 col-form-label"
-             style={MARGIN_TEXT}> {LABELS['lblCustomAgg']}</label>
-      <div className="form-group col-sm-7">
+      <label htmlFor={LABELS['lblCustomAgg']} 
+        className="control-label col-xs-2 text-right">
+         {LABELS['lblCustomAgg']}
+      </label>
+      <div className="form-group col-sm-6">
         <div className="form-group row"
              style={{paddingLeft: "15px", paddingRight: "15px"}}>
           <label htmlFor={LABELS['lblCustomAgg']}
@@ -329,13 +350,13 @@ function FacetSearchDetailsLayout(
   function confirmRemoveFacet() {
     $("#facet_search_comfirm_modal").modal("show");
   }
-
+  
   return (
     <div>
       <HeaderComponent/>
       <div className="row">
         <table class="table table-hover table-bordered searchable">
-          <colgroup><col class="width_250px"/></colgroup>
+          <colgroup><col class="width_300px"/></colgroup>
           <tbody>
           <tr>
             <td><b>{LABELS['lblNameEN']}</b></td>
@@ -362,57 +383,61 @@ function FacetSearchDetailsLayout(
           </tr>
           </tbody>
         </table>
-        {LABELS['lblTypeScreen'] === 'delete' &&
-          <div className="col-sm-7">
-            <button type="button" style={{marginRight: "3px"}}
-                    className="btn btn-primary"
-                    onClick={confirmRemoveFacet}>{LABELS['lblDelete']}
+
+        {!check_type() && (
+        <div className="form-group row">
+          <div className="col-xs-offset-2 col-xs-5">
+            <button type="button" style={{marginLeft: "10px"}}
+                    className="btn btn-danger delete-button"
+                    onClick={confirmRemoveFacet}>
+                      <span className="glyphicon glyphicon-trash" aria-hidden="true"/>
+                      &nbsp;{LABELS['lblDelete']}
             </button>
-            <a href="/admin/facetsearch/" className="btn btn-danger"
-               role="button">{LABELS['lblCancel']}</a>
+            <a href="/admin/facetsearch/" 
+              className="btn btn-info cancel-button"
+              style={{marginLeft: "10px", paddingTop:"10px"}}
+              role="button">
+                <span className="glyphicon glyphicon-remove" aria-hidden="true"/>
+                {LABELS['lblCancel']}
+            </a>
           </div>
-        }
+        </div>
+        )}
       </div>
     </div>
   )
 }
 
 function HeaderComponent() {
-  const hide = {
-    list: '',
-    new: '',
-    edit: LABELS['lblTypeScreen'] === 'new' ? ' hide' : '',
-    detail: LABELS['lblTypeScreen'] === 'new' ? ' hide' : '',
-    delete: LABELS['lblTypeScreen'] === 'new' ? ' hide' : '',
-  };
+  const hideTab = LABELS['lblTypeScreen'] === 'new' ? ' hide' : '';
   const active = {
     list: LABELS['lblTypeScreen'] === '' ? 'active' : '',
     new: LABELS['lblTypeScreen'] === 'new' ? 'active' : '',
     edit: LABELS['lblTypeScreen'] === 'edit' ? 'active' : '',
-    detail: LABELS['lblTypeScreen'] === 'detail' ? 'active' : '',
+    detail: LABELS['lblTypeScreen'] === 'details' ? 'active' : '',
     delete: LABELS['lblTypeScreen'] === 'delete' ? 'active' : ''
-  };
+  }
   const href = {
     list: '/admin/facetsearch/',
     new: '/admin/facetsearch/new/',
     edit: '/admin/facetsearch/edit/' + LABELS['lblFacetSearchId'],
-    detail: '/admin/facetsearch/detail/' + LABELS['lblFacetSearchId'],
+    detail: '/admin/facetsearch/details/' + LABELS['lblFacetSearchId'],
     delete: '/admin/facetsearch/delete/' + LABELS['lblFacetSearchId']
-  };
+  }
   return (
     <div className="resource row">
       <ul class="nav nav-tabs">
-        <li className={active.list + hide.list}><a href={href.list}>{LABELS['lblList']}</a></li>
-        <li className={active.new + hide.new}><a href={href.new}>{LABELS['lblCreate']}</a></li>
-        <li className={active.edit + hide.edit}><a href={href.edit}>{LABELS['lblEdit']}</a></li>
-        <li className={active.detail + hide.detail}><a href={href.detail}>{LABELS['lblDetail']}</a></li>
-        <li className={active.delete + hide.delete}><a href={href.delete}>{LABELS['lblDelete']}</a></li>
+        <li className={active.list}><a href={href.list}>{LABELS['lblList']}</a></li>
+        <li className={active.new}><a href={href.new} >{LABELS['lblCreate']}</a></li>
+        <li className={active.edit + hideTab}><a href={href.edit} >{LABELS['lblEdit']}</a></li>
+        <li className={active.detail + hideTab}><a href={href.detail} >{LABELS['lblDetail']}</a></li>
+        <li className={active.delete + hideTab}><a href={href.delete} >{LABELS['lblDelete']}</a></li>
       </ul>
     </div>
   )
 }
 
-$("#Confirm_delete_button").click(function () {
+function handleRemoveFacet() {
   let data = {id: LABELS['lblFacetSearchId']}
   $.ajax({
     url: '/api/admin/facetsearch/remove',
@@ -420,11 +445,25 @@ $("#Confirm_delete_button").click(function () {
     contentType: 'application/json',
     dataType: 'json',
     data: JSON.stringify(data),
-    success: function (response) {
-      window.location.href = urlList;
+    success: function (result) {
+      if (result.status) {
+        addAlert(result.msg, 2);
+      } else {
+        addAlert(result.msg, 1);
+      }
     },
     error: function (error) {
-      console.log(error);
+      showErrorMessage.log(error);
     }
   });
-});
+  window.location.href = urlList;
+}
+
+function showErrorMessage(errorMessage) {
+  $("#inputModal").html(errorMessage);
+  $("#allModal").modal("show");
+}
+
+function check_type() {
+  return LABELS['lblTypeScreen'] === 'details';
+}
