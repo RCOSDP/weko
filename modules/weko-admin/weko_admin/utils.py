@@ -2021,12 +2021,15 @@ def get_item_mapping_list():
     return result
 
 
-def create_records_rest_facets():
+def create_records_rest_facets(permission=True):
     def create_aggregations(facets):
         aggregations = dict()
         for facet in facets:
             key = facet.name_en
             val = facet.mapping
+            if not permission:
+                facet.aggregations.append(
+                    {'agg_mapping': 'publish_status', 'agg_value': '0'})
             if not facet.aggregations or len(facet.aggregations) == 0:
                 aggregations.update({key: {'terms': {'field': val}}})
             else:
@@ -2056,5 +2059,4 @@ def create_records_rest_facets():
         aggs=create_aggregations(activated_facets),
         post_filters=create_post_filters(activated_facets)
     )
-    print('====================================================result: ', result)
     return result

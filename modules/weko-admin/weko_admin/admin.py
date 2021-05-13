@@ -1124,8 +1124,6 @@ class FacetSearchSettingView(ModelView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         """Render view."""
-        from .utils import create_records_rest_facets
-        create_records_rest_facets()
 
         if self.can_delete:
             delete_form = self.delete_form()

@@ -182,10 +182,11 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         community_id = request.values.get('community')
 
         params = {}
-        if current_app.config['RECORDS_REST_FACETS'] and \
-            current_app.config['SEARCH_UI_SEARCH_INDEX'] and \
-                'post_filters' in current_app.config['RECORDS_REST_FACETS'][current_app.config['SEARCH_UI_SEARCH_INDEX']]:
-            post_filters = current_app.config['RECORDS_REST_FACETS'][current_app.config['SEARCH_UI_SEARCH_INDEX']]['post_filters']
+        from weko_admin.utils import create_records_rest_facets
+        facets = create_records_rest_facets()
+        search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
+        if facets and search_index and 'post_filters' in facets[search_index]:
+            post_filters = facets[search_index]['post_filters']
             for param in post_filters:
                 value = request.args.getlist(param)
                 if value:
@@ -211,7 +212,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             query_key = weko_faceted_search_mapping[param]
             search = search.post_filter({'terms': {query_key: params[param]}})
 
-        print('====================================================search: ', search.to_dict())
         search_result = search.execute()
 
         # Generate links for prev/next

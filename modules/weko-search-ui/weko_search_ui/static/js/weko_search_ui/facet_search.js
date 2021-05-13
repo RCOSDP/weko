@@ -1,12 +1,8 @@
 const label = {
-  "accessRights": document.getElementById("accessRights").value,
   "open access": document.getElementById("open access").value,
   "restricted access": document.getElementById("restricted access").value,
   "metadata only access": document.getElementById("metadata only access").value,
   "embargoed access": document.getElementById("embargoed access").value,
-  "language": document.getElementById("language").value,
-  "distributor": document.getElementById("distributor").value,
-  "dataType": document.getElementById("dataType").value,
   "zho": document.getElementById("zho").value,
   "cmn": document.getElementById("cmn").value,
   "eng": document.getElementById("eng").value,
@@ -19,8 +15,7 @@ const label = {
   "Institute of Economic Research, Hitotsubashi University": document.getElementById("Institute of Economic Research, Hitotsubashi University").value,
   "Panel Data Research Center at Keio University": document.getElementById("Panel Data Research Center at Keio University").value,
   "JGSS Research Center": document.getElementById("JGSS Research Center").value,
-  "Historiographical Institute The University of Tokyo": document.getElementById("Historiographical Institute The University of Tokyo").value,
-
+  "Historiographical Institute The University of Tokyo": document.getElementById("Historiographical Institute The University of Tokyo").value
 }
 
 class MainLayout extends React.Component {
@@ -75,28 +70,16 @@ class MainLayout extends React.Component {
 }
 
   convertData(data) {
-    const list_name_facet = ["accessRights", "dataType", "distributor", "language"]
-    let new_data = {
-        accessRights : {},
-        dataType : {},
-        distributor : {},
-        language : {}
-      }
+    let list_facet = {};
     if (data) {
-      Object.keys(data).map(function (name, k)  {
-        if (list_name_facet.indexOf(name)>=0) {
-          let item = data[name]
-          if (item[name]) {
-            item = item[name]
-          }
-          new_data[name] = item
+      Object.keys(data).map(function (name, k) {
+        let val = data[name];
+        if(val.hasOwnProperty('sum_other_doc_count')){
+          list_facet[name] = val[name] ? val[name] : val;
         }
       })
     }
-
-    this.setState({
-      list_facet: new_data
-    })
+    this.setState({list_facet: list_facet});
   }
 
   componentDidMount() {

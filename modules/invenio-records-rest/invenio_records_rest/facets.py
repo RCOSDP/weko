@@ -130,13 +130,9 @@ def default_facets_factory(search, index):
     """
     urlkwargs = MultiDict()
 
-    facets = None
     from weko_search_ui.permissions import search_permission
-    if search_permission.can():
-        facets = current_app.config['RECORDS_REST_FACETS'].get(index)
-    else:
-        facets = current_app \
-            .config['RECORDS_REST_FACETS_NO_SEARCH_PERMISSION'].get(index)
+    from weko_admin.utils import create_records_rest_facets
+    facets = create_records_rest_facets(search_permission.can())
 
     if facets is not None:
         # Aggregations.

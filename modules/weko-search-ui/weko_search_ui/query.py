@@ -45,12 +45,8 @@ def get_item_type_aggs(search_index):
 
     :return: aggs dict
     """
-    facets = None
-    if search_permission.can():
-        facets = current_app.config['RECORDS_REST_FACETS']
-    else:
-        facets = current_app.config['RECORDS_REST_FACETS_NO_SEARCH_PERMISSION']
-
+    from weko_admin.utils import create_records_rest_facets
+    facets = create_records_rest_facets(search_permission.can())
     return facets.get(search_index).get("aggs", {})
 
 

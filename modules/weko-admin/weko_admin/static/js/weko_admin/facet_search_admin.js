@@ -78,12 +78,12 @@ function FacetSearchLayout(
         } else {
           console.log("false");
         }
+        window.location.href = urlList;
       },
       error: function (error) {
         showErrorMessage(error);
       }
     });
-    window.location.href = urlList;
   }
 
   return (
@@ -100,7 +100,7 @@ function FacetSearchLayout(
       </div>
       <div className="row">
         <div className="form-group row">
-          <label htmlFor={LABELS['lblMapping']} 
+          <label htmlFor={LABELS['lblMapping']}
           className="control-label col-xs-2 text-right field-required">
             {LABELS['lblMapping']}
           </label>
@@ -134,7 +134,7 @@ function FacetSearchLayout(
                       onClick={handleSaveFacetSearch}>
                         <span className="glyphicon glyphicon-download-alt" aria-hidden="true"/>
                         &nbsp;{LABELS['lblSave']}
-                </button>    
+                </button>
               <a href="/admin/facetsearch/" className="btn btn-info cancel-button"
                 style={{marginLeft: "10px", paddingTop:"10px"}}
                 role="button">
@@ -159,9 +159,9 @@ function InputTextComponent({value, setValue, idName}) {
   return (
     <div>
       <div className="form-group row">
-        <label htmlFor={idName} 
+        <label htmlFor={idName}
           className="control-label col-xs-2 text-right field-required">
-          {idName} 
+          {idName}
         </label>
         <div className="controls col-xs-6">
           <input type="text" id={idName} className="form-control" value={value}
@@ -180,7 +180,7 @@ function InputRadioComponent({value, setValue, idName}) {
 
   return (
     <div className="form-group">
-      <label htmlFor={idName} className="control-label col-xs-2 text-right"> 
+      <label htmlFor={idName} className="control-label col-xs-2 text-right">
         {idName}
       </label>
       <div className="controls col-xs-6">
@@ -282,7 +282,7 @@ function CustomAggregations({aggregations, setAggregations, mappingList}) {
 
   return (
     <div className="form-group row">
-      <label htmlFor={LABELS['lblCustomAgg']} 
+      <label htmlFor={LABELS['lblCustomAgg']}
         className="control-label col-xs-2 text-right">
          {LABELS['lblCustomAgg']}
       </label>
@@ -350,7 +350,7 @@ function FacetSearchDetailsLayout(
   function confirmRemoveFacet() {
     $("#facet_search_comfirm_modal").modal("show");
   }
-  
+
   return (
     <div>
       <HeaderComponent/>
@@ -393,7 +393,7 @@ function FacetSearchDetailsLayout(
                       <span className="glyphicon glyphicon-trash" aria-hidden="true"/>
                       &nbsp;{LABELS['lblDelete']}
             </button>
-            <a href="/admin/facetsearch/" 
+            <a href="/admin/facetsearch/"
               className="btn btn-info cancel-button"
               style={{marginLeft: "10px", paddingTop:"10px"}}
               role="button">
@@ -446,17 +446,12 @@ function handleRemoveFacet() {
     dataType: 'json',
     data: JSON.stringify(data),
     success: function (result) {
-      if (result.status) {
-        addAlert(result.msg, 2);
-      } else {
-        addAlert(result.msg, 1);
-      }
+      window.location.href = urlList;
     },
     error: function (error) {
       showErrorMessage.log(error);
     }
   });
-  window.location.href = urlList;
 }
 
 function showErrorMessage(errorMessage) {
