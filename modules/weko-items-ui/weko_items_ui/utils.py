@@ -495,6 +495,11 @@ def validate_form_input_data(
     item_type = ItemTypes.get_by_id(item_id)
     json_schema = item_type.schema.copy()
 
+    current_app.logger.debug("json_schema")
+    current_app.logger.debug(json_schema)
+    current_app.logger.debug("data")
+    current_app.logger.debug(data)
+
     # Remove excluded item in json_schema
     remove_excluded_items_in_json_schema(item_id, json_schema)
 
