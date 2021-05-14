@@ -295,3 +295,16 @@ def get_path_name_dict(path_str=''):
             path_name_dict[path] = idx_name_en.replace(
                 "\n", r"<br\>").replace("&EMPTY&", "")
     return jsonify(path_name_dict)
+
+@blueprint.route("/facetsearch/gettitle", methods=['POST']) 
+def gettitlefacet():
+    """Soft getname Facet Search."""
+
+    from weko_admin.utils import gettitle_facet_search
+    result = {
+        "status": True,
+        "data": {}
+    }
+    result['data']= gettitle_facet_search()
+
+    return jsonify(result), 200

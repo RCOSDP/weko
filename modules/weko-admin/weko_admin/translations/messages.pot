@@ -1188,3 +1188,7 @@ msgstr "Edit"
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:69
 msgid "Details"
 msgstr "Details"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:70
+msgid "Please input all required item."
+msgstr "Please input all required item."

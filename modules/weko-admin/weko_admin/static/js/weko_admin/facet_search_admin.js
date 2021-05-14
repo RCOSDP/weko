@@ -46,12 +46,8 @@ function FacetSearchLayout(
     const URL = "/api/admin/facetsearch/save";
 
     let errorMessage = "";
-    if  (_nameEN === ""){
-      errorMessage = "Item Name(EN) is required!";
-    }else if (_nameJP === ""){
-      errorMessage = "Item Name(JP) is required!";
-    }else if (_mapping === ""){
-      errorMessage = "Mapping required!";
+    if  ( (_nameEN === "") || (_nameJP === "") || (_mapping === "") ){
+      errorMessage = (LABELS['lblRequired']);
     }
     if (errorMessage){
       showErrorMessage(errorMessage);

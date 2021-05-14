@@ -1,22 +1,4 @@
-const label = {
-  "open access": document.getElementById("open access").value,
-  "restricted access": document.getElementById("restricted access").value,
-  "metadata only access": document.getElementById("metadata only access").value,
-  "embargoed access": document.getElementById("embargoed access").value,
-  "zho": document.getElementById("zho").value,
-  "cmn": document.getElementById("cmn").value,
-  "eng": document.getElementById("eng").value,
-  "fra": document.getElementById("fra").value,
-  "deu": document.getElementById("deu").value,
-  "jpn": document.getElementById("jpn").value,
-  "kor": document.getElementById("kor").value,
-  "rus": document.getElementById("rus").value,
-  "Social Science Japan Data Archive (SSJDA)": document.getElementById("Social Science Japan Data Archive (SSJDA)").value,
-  "Institute of Economic Research, Hitotsubashi University": document.getElementById("Institute of Economic Research, Hitotsubashi University").value,
-  "Panel Data Research Center at Keio University": document.getElementById("Panel Data Research Center at Keio University").value,
-  "JGSS Research Center": document.getElementById("JGSS Research Center").value,
-  "Historiographical Institute The University of Tokyo": document.getElementById("Historiographical Institute The University of Tokyo").value
-}
+const LABELS = {};
 
 class MainLayout extends React.Component {
 
@@ -24,14 +6,34 @@ class MainLayout extends React.Component {
     super(props);
     this.state = {
       is_enable: true,
+      list_title: {},
       list_facet: {}
     }
+    this.getTitle = this.getTitle.bind(this);
     this.get_facet_search_list = this.get_facet_search_list.bind(this);
     this.handleCheck = this.handleCheck.bind(this);
     this.convertData = this.convertData.bind(this);
     this.getUrlVars = this.getUrlVars.bind(this);
   }
+  getTitle(){
+    const urltitle = window.location.origin + '/facetsearch/gettitle'
+    let listtitle = {};
 
+    $.ajax({
+      context: this,
+      url: urltitle,
+      type: 'POST',
+      success: function (response) {
+        if (response.status) {
+          listtitle = response.data;
+        }
+        this.setState({list_title: listtitle});
+      },
+      error: function () {
+        console.log("Error in get list")
+      }
+    });
+  }
   get_facet_search_list() {
     let search = window.location.search;
     let url = '/api/records/';
@@ -74,7 +76,7 @@ class MainLayout extends React.Component {
     if (data) {
       Object.keys(data).map(function (name, k) {
         let val = data[name];
-        if(val.hasOwnProperty('sum_other_doc_count')){
+        if(val.hasOwnProperty('sum_other_doc_count')|| val.hasOwnProperty('key')){
           list_facet[name] = val[name] ? val[name] : val;
         }
       })
@@ -83,7 +85,8 @@ class MainLayout extends React.Component {
   }
 
   componentDidMount() {
-      this.get_facet_search_list();
+    this.getTitle();
+    this.get_facet_search_list();
   }
 
   handleCheck(params, value) {
@@ -99,19 +102,26 @@ class MainLayout extends React.Component {
   }
 
   render() {
-    const { is_enable, list_facet } = this.state
+    const { is_enable, list_title, list_facet } = this.state
     const search = window.location.search.replace(',', '%2C')
     const that = this
+    let title = ''
     return (
       <div>
         {is_enable && <div className="facet-search break-word">
           {
             Object.keys(list_facet).map(function(name, key) {
               const item = list_facet[name]
+              if (name in list_title){
+                title = list_title[name];
+              }
+              else{
+                title = name
+              }
               return (
                 <div className="panel panel-default" key={key}>
                   <div className="panel-heading clearfix">
-                    <h3 className="panel-title">{label[name]}</h3>
+                    <h3 className="panel-title">{title}</h3> 
                   </div>
                   <div className="panel-body index-body">
                     {
@@ -143,6 +153,11 @@ class MainLayout extends React.Component {
 }
 
 $(function () {
+  //Get all labels.
+  let labels = document.getElementsByClassName('body-facet-search-label');
+  for (let i = 0; i < labels.length; i++) {
+    LABELS[labels[i].id] = labels[i].value;
+  }
   ReactDOM.render(
     <MainLayout />,
     document.getElementById('app-facet-search')

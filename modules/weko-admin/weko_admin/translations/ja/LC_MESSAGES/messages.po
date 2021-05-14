@@ -1292,3 +1292,7 @@ msgstr "編集"
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
 msgid "Facet Search List"
 msgstr "ファセット検索一覧"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:70
+msgid "Please input all required item."
+msgstr "必須項目は全て入力して下さい。"

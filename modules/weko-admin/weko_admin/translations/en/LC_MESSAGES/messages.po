@@ -786,3 +786,7 @@ msgstr "Display"
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
 msgid "Facet Search List"
 msgstr "Facet Search List"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:70
+msgid "Please input all required item."
+msgstr "Please input all required item."
