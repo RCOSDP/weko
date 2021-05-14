@@ -703,10 +703,7 @@ class WorkActivity(object):
                 activity_update_user = current_user.get_id()
 
             db_activity = _Activity(
-                # Dummy activity ID, the real one will be updated
-                #   after this activity is created
-                activity_id='A' + str(
-                    datetime.utcnow().timestamp()).split('.')[0],
+                activity_id=self.get_new_activity_id(utc_now),
                 item_id=item_id,
                 workflow_id=activity.get('workflow_id'),
                 flow_id=activity.get('flow_id'),
@@ -730,47 +727,12 @@ class WorkActivity(object):
             db.session.commit()
 
             try:
-                # Calculate activity_id based on id
-                current_date_start = utc_now.strftime("%Y-%m-%d 00:00:00")
-                from datetime import timedelta
-                next_date_start = (utc_now + timedelta(1)).\
-                    strftime("%Y-%m-%d 00:00:00")
-
-                from sqlalchemy import func
-                min_id = db.session.query(func.min(_Activity.id)).filter(
-                    _Activity.created >= '{}'.format(current_date_start),
-                    _Activity.created < '{}'.format(next_date_start),
-                ).scalar()
-
-                if min_id:
-                    # Calculate aid
-                    number = db_activity.id - min_id + 1
-                    if number > 99999:
-                        raise IndexError('The number is out of range \
-                            (maximum is 99999, current is {}'.format(number))
-                else:
-                    # The default activity Id of the current day
-                    number = 1
-
-                # Activity Id's format
-                activity_id_format = current_app.\
-                    config['WEKO_WORKFLOW_ACTIVITY_ID_FORMAT']
-
-                # A-YYYYMMDD-NNNNN (NNNNN starts from 00001)
-                datetime_str = utc_now.strftime("%Y%m%d")
-
-                # Define activity Id of day
-                activity_id = activity_id_format.format(
-                    datetime_str,
-                    '{inc:05d}'.format(inc=number))
-
                 # Update the activity with calculated activity_id
-                action_pid = PersistentIdentifier.create(
+                PersistentIdentifier.create(
                     pid_type='actid',
-                    pid_value=str(activity_id),
+                    pid_value=db_activity.activity_id,
                     status=PIDStatus.REGISTERED
                 )
-                db_activity.activity_id = action_pid.pid_value
 
                 # Add history and flow_action
                 db_history = ActivityHistory(
@@ -818,6 +780,44 @@ class WorkActivity(object):
                 db.session.commit()
 
                 return db_activity
+
+    def get_new_activity_id(self, utc_now=datetime.utcnow()):
+        """Get new an activity ID.
+
+        :param utc_now: UTC now.
+        :return: activity ID.
+        """
+        # Calculate activity_id based on id
+        current_date_start = utc_now.strftime("%Y-%m-%d 00:00:00")
+        next_date_start = (utc_now + timedelta(1)).\
+            strftime("%Y-%m-%d 00:00:00")
+
+        max_id = db.session.query(func.count(_Activity.id)).filter(
+            _Activity.created >= '{}'.format(current_date_start),
+            _Activity.created < '{}'.format(next_date_start),
+        ).scalar()
+
+        if max_id:
+            # Calculate aid
+            number = max_id + 1
+            if number > 99999:
+                raise IndexError('The number is out of range \
+                    (maximum is 99999, current is {}'.format(number))
+        else:
+            # The default activity Id of the current day
+            number = 1
+
+        # Activity Id's format
+        activity_id_format = current_app.\
+            config['WEKO_WORKFLOW_ACTIVITY_ID_FORMAT']
+
+        # A-YYYYMMDD-NNNNN (NNNNN starts from 00001)
+        datetime_str = utc_now.strftime("%Y%m%d")
+
+        # Define activity Id of day
+        return activity_id_format.format(
+            datetime_str,
+            '{inc:05d}'.format(inc=number))
 
     def upt_activity_agreement_step(self, activity_id, is_agree):
         """Update agreement step of activity.
