@@ -1,6 +1,6 @@
 const {useState, useEffect} = React;
 const LABELS = {};
-const urlList = window.location.origin + "/admin/facetsearch/";
+const urlList = window.location.origin + "/admin/facet-search/";
 const MARGIN_TEXT = {marginLeft: "15px"};
 
 (function () {
@@ -43,7 +43,7 @@ function FacetSearchLayout(
   const [_aggregations, _setAggregations] = useState(aggregations);
 
   function handleSaveFacetSearch() {
-    const URL = "/api/admin/facetsearch/save";
+    const URL = "/api/admin/facet-search/save";
 
     let errorMessage = "";
     if  ( (_nameEN === "") || (_nameJP === "") || (_mapping === "") ){
@@ -131,7 +131,7 @@ function FacetSearchLayout(
                         <span className="glyphicon glyphicon-download-alt" aria-hidden="true"/>
                         &nbsp;{LABELS['lblSave']}
                 </button>
-              <a href="/admin/facetsearch/" className="btn btn-info cancel-button"
+              <a href="/admin/facet-search/" className="btn btn-info cancel-button"
                 style={{marginLeft: "10px", paddingTop:"10px"}}
                 role="button">
                   <span className="glyphicon glyphicon-remove" aria-hidden="true"/>
@@ -389,7 +389,7 @@ function FacetSearchDetailsLayout(
                       <span className="glyphicon glyphicon-trash" aria-hidden="true"/>
                       &nbsp;{LABELS['lblDelete']}
             </button>
-            <a href="/admin/facetsearch/"
+            <a href="/admin/facet-search/"
               className="btn btn-info cancel-button"
               style={{marginLeft: "10px", paddingTop:"10px"}}
               role="button">
@@ -414,11 +414,11 @@ function HeaderComponent() {
     delete: LABELS['lblTypeScreen'] === 'delete' ? 'active' : ''
   }
   const href = {
-    list: '/admin/facetsearch/',
-    new: '/admin/facetsearch/new/',
-    edit: '/admin/facetsearch/edit/' + LABELS['lblFacetSearchId'],
-    detail: '/admin/facetsearch/details/' + LABELS['lblFacetSearchId'],
-    delete: '/admin/facetsearch/delete/' + LABELS['lblFacetSearchId']
+    list: '/admin/facet-search/',
+    new: '/admin/facet-search/new/',
+    edit: '/admin/facet-search/edit/' + LABELS['lblFacetSearchId'],
+    detail: '/admin/facet-search/details/' + LABELS['lblFacetSearchId'],
+    delete: '/admin/facet-search/delete/' + LABELS['lblFacetSearchId']
   }
   return (
     <div className="resource row">
@@ -436,7 +436,7 @@ function HeaderComponent() {
 function handleRemoveFacet() {
   let data = {id: LABELS['lblFacetSearchId']}
   $.ajax({
-    url: '/api/admin/facetsearch/remove',
+    url: '/api/admin/facet-search/remove',
     method: 'POST',
     contentType: 'application/json',
     dataType: 'json',

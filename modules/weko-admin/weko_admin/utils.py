@@ -2061,22 +2061,19 @@ def create_records_rest_facets(permission=True):
     )
     return result
 
-def gettitle_facet_search():
+
+def get_title_facets():
     """Get title for facet search
     return: dict
         key: name_en
-        value: 
+        value:
             if lang = 'ja' : name_jp
             if lang = 'en' : name_en
-    """ 
-
+    """
     from invenio_i18n.ext import current_i18n
     lang = current_i18n.language
     data = {}
-    data_actives = FacetSearchSetting.get_activated_facets()
-    for data_activem in data_actives:
-        if lang == 'ja':
-            data[data_activem.name_en] = data_activem.name_jp
-        else:
-            data[data_activem.name_en] = data_activem.name_en
+    activated_facets = FacetSearchSetting.get_activated_facets()
+    for item in activated_facets:
+        data[item.name_en] = item.name_jp if lang == 'ja' else item.name_en
     return data

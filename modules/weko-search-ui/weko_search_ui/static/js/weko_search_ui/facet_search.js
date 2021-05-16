@@ -15,13 +15,12 @@ class MainLayout extends React.Component {
     this.convertData = this.convertData.bind(this);
     this.getUrlVars = this.getUrlVars.bind(this);
   }
-  getTitle(){
-    const urltitle = window.location.origin + '/facetsearch/gettitle'
-    let listtitle = {};
 
+  getTitle() {
+    let listtitle = {};
     $.ajax({
       context: this,
-      url: urltitle,
+      url: '/facet-search/get-title',
       type: 'POST',
       success: function (response) {
         if (response.status) {
@@ -34,6 +33,7 @@ class MainLayout extends React.Component {
       }
     });
   }
+
   get_facet_search_list() {
     let search = window.location.search;
     let url = '/api/records/';
@@ -42,41 +42,44 @@ class MainLayout extends React.Component {
       url = '/api/index/';
     }
     $.ajax({
-        context: this,
-        url: url+ search,
-        type: 'GET',
-        contentType: 'application/json; charset=UTF-8',
-        success: function (res) {
-            if (params.search_type && String(params.search_type) === "2") {
-    //          Index faceted search
-              const data = res && res.aggregations && res.aggregations.path && res.aggregations.path.buckets && res.aggregations.path.buckets[0] ? res.aggregations.path.buckets[0] : {}
-              this.convertData(data && data[0] ? data[0] : {})
-            }
-            else {
-    //          default faceted search
-              this.convertData(res && res.aggregations ? res.aggregations : {})
-            }
-        },
-        error: function() {
-          console.log("Error in get list")
+      context: this,
+      url: url + search,
+      type: 'GET',
+      contentType: 'application/json; charset=UTF-8',
+      success: function (res) {
+        if (params.search_type && String(params.search_type) === "2") {
+          // Index faceted search
+          const data = res && res.aggregations && res.aggregations.path && res.aggregations.path.buckets && res.aggregations.path.buckets[0] ? res.aggregations.path.buckets[0] : {}
+          this.convertData(data && data[0] ? data[0] : {})
+        } else {
+          // default faceted search
+          this.convertData(res && res.aggregations ? res.aggregations : {})
         }
+      },
+      error: function () {
+        console.log("Error in get list")
+      }
     });
   }
 
   getUrlVars() {
-    var vars = {};
-    var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
-        vars[key] = value;
+    let vars = {};
+    let pattern = /[?&]+([^=&]+)=([^&]*)/gi;
+    window.location.href.replace(pattern, function (m, key, value) {
+      vars[key] = value;
     });
     return vars;
-}
+  }
 
   convertData(data) {
     let list_facet = {};
     if (data) {
       Object.keys(data).map(function (name, k) {
         let val = data[name];
-        if(val.hasOwnProperty('sum_other_doc_count')|| val.hasOwnProperty('key')){
+        let key = val.hasOwnProperty('key');
+        let hasBuckets = key && key.hasOwnProperty('buckets');
+        hasBuckets = val.hasOwnProperty('buckets') || hasBuckets;
+        if (hasBuckets) {
           list_facet[name] = val[name] ? val[name] : val;
         }
       })
@@ -98,44 +101,37 @@ class MainLayout extends React.Component {
     } else {
       search+= "&" + pattern
     }
-    window.location.href = "/search"+ search
+    window.location.href = "/search"+ search;
   }
 
   render() {
-    const { is_enable, list_title, list_facet } = this.state
-    const search = window.location.search.replace(',', '%2C')
-    const that = this
-    let title = ''
+    const { is_enable, list_title, list_facet } = this.state;
+    const search = window.location.search.replace(',', '%2C');
+    const that = this;
     return (
       <div>
         {is_enable && <div className="facet-search break-word">
           {
-            Object.keys(list_facet).map(function(name, key) {
-              const item = list_facet[name]
-              if (name in list_title){
-                title = list_title[name];
-              }
-              else{
-                title = name
-              }
+            Object.keys(list_facet).map(function (name, key) {
+              const item = list_facet[name];
               return (
                 <div className="panel panel-default" key={key}>
                   <div className="panel-heading clearfix">
-                    <h3 className="panel-title">{title}</h3> 
+                    <h3 className="panel-title">{list_title[name]}</h3>
                   </div>
                   <div className="panel-body index-body">
                     {
-                      item.buckets && item.buckets.map(function(subitem, k) {
-                        const pattern = encodeURIComponent(name) + "=" + encodeURIComponent(subitem.key)
-                        const value = search.indexOf(pattern) >=0 ? true : false
+                      item.buckets && item.buckets.map(function (subitem, k) {
+                        const pattern = encodeURIComponent(name) + "=" + encodeURIComponent(subitem.key);
+                        const value = search.indexOf(pattern) >= 0 ? true : false;
                         return (
                           <label>
-                            <input
-                              type="checkbox"
-                              defaultChecked={value}
-                              onChange={function() { that.handleCheck(name, subitem.key) }}
+                            <input type="checkbox" defaultChecked={value}
+                              onChange={function () {
+                                that.handleCheck(name, subitem.key)
+                              }}
                             ></input>
-                            {label[subitem.key] || subitem.key}({subitem.doc_count})
+                            {LABELS[subitem.key] || subitem.key}({subitem.doc_count})
                           </label>
                         )
                       })
@@ -145,7 +141,6 @@ class MainLayout extends React.Component {
               )
             })
           }
-
         </div>}
       </div>
     )

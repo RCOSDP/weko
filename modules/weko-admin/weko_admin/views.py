@@ -606,7 +606,7 @@ def send_mail_reminder_usage_report():
     return jsonify(status=result), 200
 
 
-@blueprint_api.route("/facetsearch/save", methods=['POST'])
+@blueprint_api.route("/facet-search/save", methods=['POST'])
 @login_required
 def save_facet_search():
     """Save facet search data.
@@ -632,7 +632,7 @@ def save_facet_search():
     return jsonify(result), 200
 
 
-@blueprint_api.route("/facetsearch/remove", methods=['POST'])
+@blueprint_api.route("/facet-search/remove", methods=['POST'])
 @login_required
 def remove_facet_search():
     """Save facet search data.
