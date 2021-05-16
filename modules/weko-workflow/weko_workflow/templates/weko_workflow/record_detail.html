@@ -21,100 +21,100 @@
 {% from "weko_records_ui/box/preview_carousel.html" import preview_carousel %}
 {% from "weko_records_ui/item_detail.html" import output_item_detail %}
 
-{%- if record !=[] -%}
-<div class="panel panel-default">
-  <div class="panel-heading clearfix">
-    <h3 class="panel-title" style="display: inline;">{{_('Item')}}</h3>
-    <div href="#"><span class="glyphicon glyphicon-file" aria-hidden="true" style="margin-left: 0.25em;"></span> {{ record.get('item_title', _('No title')) }}</div>
-  </div>
-  <div class="panel-body">
+{%- if record_org -%}
+  <div class="panel panel-default">
+    <div class="panel-heading clearfix">
+      <h3 class="panel-title" style="display: inline;">{{_('Item')}}</h3>
+      <div href="#"><span class="glyphicon glyphicon-file" aria-hidden="true" style="margin-left: 0.25em;"></span> {{ record_org.get('item_title', _('No title')) }}</div>
+    </div>
     <div class="panel-body">
-      <div class="row">
-        <div class="col-sm-12 col-md-12 col-left">
-          {%- block record_author %}
-            {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
-            {%- if files| selectattr('is_thumbnail', 'equalto', False)| list | length > 0 and not record.hide_file-%}
-            <!-- Preview Carousel -->
-            {{ preview_carousel(record=record, files=files, pid=pid, el_id=preview_carousel_id, edit_page_prev=True) }}
-            <hr />
-            <table class="table table-bordered table-striped">
-              <thead>
-              <tr >
-                <th>{{_('Name')}} / {{_('File')}}</th>
-                <th class="license">{{_('License')}}</th>
-              </tr>
-              </thead>
-              <tbody>
-              {%- set preview_count = {'value': 0} -%}
-              {%- for file in files|sort(attribute='key') -%}
-               {%- if file.displaytype == 'preview' -%}
-                 {% if preview_count.update({'value': preview_count.value + 1}) %}
-                 {% endif %}
-               {%- endif -%}
-              {% if file.is_thumbnail == False %}
-                {%- set img = file.mimetype | get_image_src -%}
-                {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
-                filename=file.key) %}
+      <div class="panel-body">
+        <div class="row">
+          <div class="col-sm-12 col-md-12 col-left">
+            {%- block record_author %}
+              {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
+              {%- if files_org| selectattr('is_thumbnail', 'equalto', False)| list | length > 0 and not record_org.hide_file-%}
+              <!-- Preview Carousel -->
+              {{ preview_carousel(record=record_org, files=files_org, pid=pid, el_id=preview_carousel_id, edit_page_prev=True) }}
+              <hr />
+              <table class="table table-bordered table-striped">
+                <thead>
                 <tr >
-                  <td >{{file.filename or file.key}}</td>
-                  <td rowspan="2">
-                    {%- if not 'simple' == file.displaytype -%}
-                      {%- if 'license_free' == file.licensetype -%}
-                        <span class="break-word">{{ file.licensefree }}</span>
-                      {%- else %}
-                        {% set lst = file.licensetype | get_license_icon %}
-                        {%- if lst[0] -%}
-                          <a target="_blank" href="{{lst[2]}}" alt="Creative Commons Licenses">
-                            <img src="{{lst[0]}}" alt="license.icon" /></a><br>
-                          {{ lst[1] }}
-                        {%- endif -%}
-                      {%- endif %}
-                    {%- endif -%}
-                  </td>
+                  <th>{{_('Name')}} / {{_('File')}}</th>
+                  <th class="license">{{_('License')}}</th>
                 </tr>
-                <tr >
-                  <td>
-                      <span class="filename">
-                        <img src="{{img}}" alt={{file.filename or file.key}} />
-                        <a class="forcewrap"
-                            href="{{file_url}}">{{ file.filename or file.key }} ({{ file.size|filesizeformat }})</a>
-                        <!--<span>[ 0 downloads ]</span><br>-->
-                        <span>{{file.checksum.split(':')[0]}}</span>
-                        <span class="break-word">{{file.checksum.split(':')[1]}}</span>
-                      </span>
-                  </td>
-                </tr>
+                </thead>
+                <tbody>
+                {%- set preview_count = {'value': 0} -%}
+                {%- for file in files_org|sort(attribute='key') -%}
+                {%- if file.displaytype == 'preview' -%}
+                  {% if preview_count.update({'value': preview_count.value + 1}) %}
+                  {% endif %}
+                {%- endif -%}
+                {% if file.is_thumbnail == False %}
+                  {%- set img = file.mimetype | get_image_src -%}
+                  {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
+                  filename=file.key) %}
+                  <tr >
+                    <td >{{file.filename or file.key}}</td>
+                    <td rowspan="2">
+                      {%- if not 'simple' == file.displaytype -%}
+                        {%- if 'license_free' == file.licensetype -%}
+                          <span class="break-word">{{ file.licensefree }}</span>
+                        {%- else %}
+                          {% set lst = file.licensetype | get_license_icon %}
+                          {%- if lst[0] -%}
+                            <a target="_blank" href="{{lst[2]}}" alt="Creative Commons Licenses">
+                              <img src="{{lst[0]}}" alt="license.icon" /></a><br>
+                            {{ lst[1] }}
+                          {%- endif -%}
+                        {%- endif %}
+                      {%- endif -%}
+                    </td>
+                  </tr>
+                  <tr >
+                    <td>
+                        <span class="filename">
+                          <img src="{{img}}" alt={{file.filename or file.key}} />
+                          <a class="forcewrap"
+                              href="{{file_url}}">{{ file.filename or file.key }} ({{ file.size|filesizeformat }})</a>
+                          <!--<span>[ 0 downloads ]</span><br>-->
+                          <span>{{file.checksum.split(':')[0]}}</span>
+                          <span class="break-word">{{file.checksum.split(':')[1]}}</span>
+                        </span>
+                    </td>
+                  </tr>
+                  <!-- demo -->
+                  {%- if record_org | check_permission -%}
+                  {%- if 'pdf' in file.mimetype -%}
+                      <tr><td colspan="2">
+                    <a class="btn btn-default" style="display:none;" id="btn_check" href="/ezas/pdf-detect-weko.html" target="_blank">
+                    <span class="glyphicon glyphicon-edit"
+                      aria-hidden="true"></span> {{_('Plagiarism Check')}}</a>
+                  </td></tr>
+                  {%- endif -%}
+                  {%- endif -%}
+                {%- endif -%}
                 <!-- demo -->
-                {%- if record | check_permission -%}
-                {%- if 'pdf' in file.mimetype -%}
-                    <tr><td colspan="2">
-                  <a class="btn btn-default" style="display:none;" id="btn_check" href="/ezas/pdf-detect-weko.html" target="_blank">
-                  <span class="glyphicon glyphicon-edit"
-                    aria-hidden="true"></span> {{_('Plagiarism Check')}}</a>
-                </td></tr>
-                {%- endif -%}
-                {%- endif -%}
-              {%- endif -%}
-              <!-- demo -->
-              {%- endfor -%}
-              <input type='hidden' id='preview_count' value='{{preview_count.value}}' />
-              </tbody>
-            </table>
-            {%- endif %}
-              {{ output_item_detail(record, files, files_thumbnail, pid, items_show_list, cur_step ) }}
-            {%- if 'main_entry_personal_name' in record %}
-            <p class="record_authors">
-              <i>{{ record['main_entry_personal_name']['personal_name'] }}</i>
-              {%- for author in record.get('added_entry_personal_name', []) %}
-              , <i>{{ author['personal_name'] }}</i>
-              {% endfor %}
-            </p>
-            {% endif %}
-          {%- endblock %}
+                {%- endfor -%}
+                <input type='hidden' id='preview_count' value='{{preview_count.value}}' />
+                </tbody>
+              </table>
+              {%- endif %}
+                {{ output_item_detail(record_org, files_org, thumbnails_org, pid, record_org.items_show_list, cur_step ) }}
+              {%- if 'main_entry_personal_name' in record_org %}
+              <p class="record_authors">
+                <i>{{ record_org['main_entry_personal_name']['personal_name'] }}</i>
+                {%- for author in record_org.get('added_entry_personal_name', []) %}
+                , <i>{{ author['personal_name'] }}</i>
+                {% endfor %}
+              </p>
+              {% endif %}
+            {%- endblock %}
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 {% endif %}
 <br>
