@@ -31,7 +31,7 @@ from invenio_db import db
 from weko_groups.api import Group, Membership, MembershipState
 from weko_index_tree.utils import check_index_permissions, get_user_roles
 from weko_records.api import ItemTypes
-from weko_workflow.api import WorkActivity, WorkFlow
+from weko_workflow.api import WorkActivity
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission

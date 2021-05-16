@@ -61,8 +61,7 @@ from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission, check_publish_status
-from weko_records_ui.utils import hide_item_metadata, \
-    hide_item_metadata_email_only, replace_license_free
+from weko_records_ui.utils import hide_item_metadata, replace_license_free
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
@@ -1582,11 +1581,11 @@ def to_files_js(record):
     for f in files:
         res.append({
             'displaytype': files_from_meta.get(str(f.version_id),
-                                                {}).get("displaytype", ''),
+                                               {}).get("displaytype", ''),
             'filename': f.get('filename', ''),
             'mimetype': f.mimetype,
             'licensetype': files_from_meta.get(str(f.version_id),
-                                                {}).get("licensetype", ''),
+                                               {}).get("licensetype", ''),
             'key': f.key,
             'version_id': str(f.version_id),
             'checksum': f.file.checksum,
@@ -1752,7 +1751,7 @@ def validate_user_mail(users, activity_id, request_data, keys, result):
             'validate_map_flow_and_item_type'] = check_approval_email_in_flow(
             activity_id, users)
 
-    except Exception as ex:
+    except Exception:
         result['validation'] = False
 
     return result
