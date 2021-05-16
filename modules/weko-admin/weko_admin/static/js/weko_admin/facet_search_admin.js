@@ -1,7 +1,6 @@
 const {useState, useEffect} = React;
 const LABELS = {};
 const urlList = window.location.origin + "/admin/facet-search/";
-const MARGIN_TEXT = {marginLeft: "15px"};
 
 (function () {
   // Get all labels.

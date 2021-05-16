@@ -1441,7 +1441,7 @@ facet_search_adminview = dict(
     model=FacetSearchSetting,
     category=_('Setting'),
     name=_('Faceted Search'),
-    endpoint='facetsearch'
+    endpoint='facet-search'
 )
 
 __all__ = (
