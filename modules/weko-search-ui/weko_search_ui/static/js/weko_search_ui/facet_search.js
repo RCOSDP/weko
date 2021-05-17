@@ -75,9 +75,8 @@ class MainLayout extends React.Component {
     let list_facet = {};
     if (data) {
       Object.keys(data).map(function (name, k) {
-        let val = data[name];
-        let key = val.hasOwnProperty('key');
-        let hasBuckets = key && key.hasOwnProperty('buckets');
+        let val = data[name][name] ? data[name][name] : data[name];
+        let hasBuckets = val['key'] && val['key'].hasOwnProperty('buckets');
         hasBuckets = val.hasOwnProperty('buckets') || hasBuckets;
         if (hasBuckets) {
           list_facet[name] = val[name] ? val[name] : val;

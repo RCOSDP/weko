@@ -2049,7 +2049,7 @@ def create_facet_search_query(permission=True):
                         for agg in facet.aggregations]
                 aggregations.update({key: {
                     'filter': {'bool': {'must': must}},
-                    'aggs': {'key': {'terms': {'field': val}}}
+                    'aggs': {key: {'terms': {'field': val}}}
                 }})
         return aggregations
 
