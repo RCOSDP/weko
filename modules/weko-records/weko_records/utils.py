@@ -642,10 +642,13 @@ async def sort_meta_data_by_options(
             elif label and (
                 not extension
                     or check_file_download_permission(record, f, False)):
+                file_url = f.get('url', {}).get('url', '')
+                if extension and file_url:
+                    file_url = replace_fqdn(file_url)
                 result.append({
                     'label': label,
                     'extention': extension,
-                    'url': f.get('url', {}).get('url', '')
+                    'url': file_url
                 })
         return result
 
@@ -1450,3 +1453,48 @@ def add_biographic(sys_bibliographic, bibliographic_key, s, stt_key,
         bibliographic_key: {s['key']: {"value": [bibliographic]}}})
 
     return stt_key, data_result, is_specify_newline_array
+
+
+def custom_record_medata_for_export(record_metadata: dict):
+    """Custom record mata for export.
+
+    :param record_metadata:
+    """
+    from weko_records_ui.utils import hide_item_metadata, replace_license_free
+    hide_item_metadata(record_metadata)
+    replace_license_free(record_metadata)
+
+
+def replace_fqdn(url_path: str, host_url: str = None) -> str:
+    """Replace to new FQDN.
+
+    Args:
+        url_path (str): string url.
+        host_url (str): string host.
+
+    Returns:
+        (str): URL with FQDN replaced.
+
+    """
+    if host_url is None:
+        host_url = current_app.config['THEME_SITEURL']
+    url_pattern = r'^http[s]{0,1}:\/\/'
+    if re.search(url_pattern, url_path) is None:
+        url_path = host_url + url_pattern
+    elif host_url not in url_path:
+        if host_url[-1] != '/':
+            host_url = host_url + '/'
+        pattern = r'^http[s]{0,1}:\/\/[\d\w]+.+\d\w\/'
+        url_path = re.sub(pattern, host_url, url_path)
+    return url_path
+
+
+def replace_fqdn_of_file_metadata(file_metadata_lst: list):
+    """Replace FQDN of file metadata.
+
+    Args:
+        file_metadata_lst (list): File metadata list.
+    """
+    for file in file_metadata_lst:
+        if file.get('version_id') and file.get('url', {}).get('url'):
+            file['url']['url'] = replace_fqdn(file['url']['url'])
