@@ -79,7 +79,7 @@
           "index": true,
           "fields": {
             "tree": {
-              "type": "keyword",
+              "type": "text",
               "fielddata": true,
               "analyzer": "paths"
             }
@@ -90,7 +90,7 @@
           "index": true
         },
         "itemtype": {
-          "type": "keyword",
+          "type": "text",
           "fields": {
             "keyword": {
               "type": "keyword",
@@ -144,7 +144,7 @@
           ]
         },
         "feedback_mail_list": {
-          "type": "object",
+          "type": "nested",
           "properties": {
             "author_id": {
               "type": "keyword",
@@ -297,14 +297,14 @@
           ]
         },
         "apc": {
-          "type": "keyword",
+          "type": "text",
           "index": true,
           "copy_to": [
             "search_other"
           ]
         },
         "rights": {
-          "type": "keyword",
+          "type": "text",
           "copy_to": [
             "search_other"
           ]
@@ -362,13 +362,13 @@
           }
         },
         "publisher": {
-          "type": "keyword",
+          "type": "text",
           "copy_to": [
             "search_publisher"
           ]
         },
         "date": {
-          "type": "object",
+          "type": "nested",
           "properties": {
             "dateType": {
               "type": "keyword",
@@ -389,23 +389,23 @@
           ]
         },
         "version": {
-          "type": "keyword",
+          "type": "text",
           "index": true,
           "copy_to": [
             "search_other"
           ]
         },
         "versionType": {
-          "type": "keyword",
+          "type": "text",
           "copy_to": [
             "search_other"
           ]
         },
         "identifier": {
-          "type": "object",
+          "type": "nested",
           "properties": {
             "value": {
-              "type": "keyword",
+              "type": "text",
               "copy_to": [
                 "search_other"
               ]
@@ -420,10 +420,10 @@
           }
         },
         "identifierRegistration": {
-          "type": "object",
+          "type": "nested",
           "properties": {
             "value": {
-              "type": "keyword",
+              "type": "text",
               "copy_to": [
                 "search_other"
               ]
@@ -441,10 +441,10 @@
           "type": "object",
           "properties": {
             "relatedIdentifier": {
-              "type": "object",
+              "type": "nested",
               "properties": {
                 "value": {
-                  "type": "keyword",
+                  "type": "text",
                   "copy_to": [
                     "search_other"
                   ]
@@ -466,10 +466,10 @@
               ]
             },
             "relationType": {
-              "type": "object",
+              "type": "nested",
               "properties": {
                 "value": {
-                  "type": "keyword",
+                  "type": "text",
                   "index": true
                 },
                 "item_links": {
@@ -563,10 +563,10 @@
           }
         },
         "sourceIdentifier": {
-          "type": "object",
+          "type": "nested",
           "properties": {
             "value": {
-              "type": "keyword",
+              "type": "text",
               "copy_to": [
                 "search_other"
               ]
@@ -581,10 +581,10 @@
           }
         },
         "sourceTitle": {
-          "type": "keyword",
+          "type": "text",
           "fields": {
             "ja": {
-              "type": "keyword"
+              "type": "text"
             }
           },
           "copy_to": [
@@ -592,39 +592,39 @@
           ]
         },
         "volume": {
-          "type": "keyword",
+          "type": "text",
           "index": true,
           "copy_to": [
             "search_other"
           ]
         },
         "issue": {
-          "type": "keyword",
+          "type": "text",
           "index": true,
           "copy_to": [
             "search_other"
           ]
         },
         "numPages": {
-          "type": "keyword"
+          "type": "text"
         },
         "pageStart": {
-          "type": "keyword"
+          "type": "text"
         },
         "pageEnd": {
-          "type": "keyword"
+          "type": "text"
         },
         "dissertationNumber": {
-          "type": "keyword",
+          "type": "text",
           "copy_to": [
             "search_other"
           ]
         },
         "degreeName": {
-          "type": "keyword",
+          "type": "text",
           "fields": {
             "ja": {
-              "type": "keyword"
+              "type": "text"
             }
           },
           "copy_to": [
@@ -691,10 +691,10 @@
           "type": "object",
           "properties": {
             "URI": {
-              "type": "object",
+              "type": "nested",
               "properties": {
                 "value": {
-                  "type": "keyword"
+                  "type": "text"
                 },
                 "objectType": {
                   "type": "keyword",
@@ -711,7 +711,7 @@
               "index": true
             },
             "date": {
-              "type": "object",
+              "type": "nested",
               "properties": {
                 "dateType": {
                   "type": "keyword",
@@ -723,12 +723,12 @@
               }
             },
             "version": {
-              "type": "keyword"
+              "type": "text"
             }
           }
         },
         "content": {
-          "type": "object",
+          "type": "nested",
           "properties": {
             "file_id": {
               "type": "keyword",
@@ -739,31 +739,31 @@
               "index": true
             },
             "file_name": {
-              "type": "keyword",
+              "type": "text",
               "fields": {
                 "ja": {
-                  "type": "keyword"
+                  "type": "text"
                 }
               }
             },
             "display_name": {
-              "type": "keyword",
+              "type": "text",
               "fields": {
                 "ja": {
-                  "type": "keyword"
+                  "type": "text"
                 }
               }
             },
             "license_notation": {
-              "type": "keyword"
+              "type": "text"
             },
             "file": {
-              "type": "keyword",
+              "type": "text",
               "term_vector": "with_positions_offsets",
               "store": true,
               "fields": {
                 "ja": {
-                  "type": "keyword",
+                  "type": "text",
                   "term_vector": "with_positions_offsets",
                   "store": true
                 }
@@ -772,12 +772,12 @@
             "attachment": {
               "properties": {
                 "content": {
-                  "type": "keyword",
+                  "type": "text",
                   "term_vector": "with_positions_offsets",
                   "store": true,
                   "fields": {
                     "ja": {
-                      "type": "keyword",
+                      "type": "text",
                       "term_vector": "with_positions_offsets",
                       "store": true
                     }
@@ -788,77 +788,77 @@
           }
         },
         "weko_creator_id": {
-          "type": "keyword",
+          "type": "text",
           "fielddata": true,
           "index": true
         },
         "weko_id": {
-          "type": "keyword",
+          "type": "text",
           "fielddata": true,
           "index": true
         },
         "search_title": {
-          "type": "keyword",
+          "type": "text",
           "fields": {
             "ja": {
-              "type": "keyword"
+              "type": "text"
             }
           }
         },
         "search_creator": {
-          "type": "keyword",
+          "type": "text",
           "fields": {
             "ja": {
-              "type": "keyword"
+              "type": "text"
             }
           }
         },
         "search_contributor": {
-          "type": "keyword",
+          "type": "text",
           "fields": {
             "ja": {
-              "type": "keyword"
+              "type": "text"
             }
           }
         },
         "search_other": {
-          "type": "keyword",
+          "type": "text",
           "fields": {
             "ja": {
-              "type": "keyword"
+              "type": "text"
             }
           }
         },
         "search_identifier": {
-          "type": "keyword"
+          "type": "text"
         },
         "search_attr": {
-          "type": "keyword"
+          "type": "text"
         },
         "search_string": {
-          "type": "keyword"
+          "type": "text"
         },
         "search_publisher": {
-          "type": "keyword",
+          "type": "text",
           "fields": {
             "ja": {
-              "type": "keyword"
+              "type": "text"
             }
           }
         },
         "search_des": {
-          "type": "keyword",
+          "type": "text",
           "fields": {
             "ja": {
-              "type": "keyword"
+              "type": "text"
             }
           }
         },
         "dgName": {
-          "type": "keyword",
+          "type": "text",
           "fields": {
             "ja": {
-              "type": "keyword"
+              "type": "text"
             }
           }
         }
