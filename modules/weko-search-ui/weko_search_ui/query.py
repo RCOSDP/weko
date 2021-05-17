@@ -45,8 +45,8 @@ def get_item_type_aggs(search_index):
 
     :return: aggs dict
     """
-    from weko_admin.utils import create_records_rest_facets
-    facets = create_records_rest_facets(search_permission.can())
+    from weko_admin.utils import get_facet_search_query
+    facets = get_facet_search_query(search_permission.can())
     return facets.get(search_index).get("aggs", {})
 
 

@@ -44,7 +44,8 @@ from .utils import FeedbackMail, StatisticMail, UsageReport, \
     get_init_display_index, get_initial_stats_report, get_selected_language, \
     get_unit_stats_report, save_api_certification, update_admin_lang_setting, \
     update_restricted_access, validate_certification, validation_site_info, \
-    create_facet_search, delete_facet_search, update_facet_search
+    create_facet_search, delete_facet_search, update_facet_search, \
+    store_facet_search_query_in_redis
 import json
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
@@ -609,7 +610,7 @@ def send_mail_reminder_usage_report():
 @blueprint_api.route("/facet-search/save", methods=['POST'])
 @login_required
 def save_facet_search():
-    """Save facet search data.
+    """Save facet search.
 
     :return:
     """
@@ -620,22 +621,24 @@ def save_facet_search():
     data = request.get_json()
     id = data.pop('id', '')
     if id and len(id) > 0:
-        #  Edit
+        # Edit facet search.
         if not update_facet_search(id, data):
             result['status'] = False
             result['msg'] = _("Error")
     else:
-        #  Create
+        # Create facet search.
         if not create_facet_search(data):
             result['status'] = False
             result['msg'] = _("Error")
+    # Store query facet search in redis.
+    store_facet_search_query_in_redis()
     return jsonify(result), 200
 
 
 @blueprint_api.route("/facet-search/remove", methods=['POST'])
 @login_required
 def remove_facet_search():
-    """Save facet search data.
+    """Remove facet search.
 
     :return:
     """
@@ -652,4 +655,6 @@ def remove_facet_search():
     else:
         result['status'] = False
         result['msg'] = _("Can not delete")
+    # Store query facet search in redis.
+    store_facet_search_query_in_redis()
     return jsonify(result), 200

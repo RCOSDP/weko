@@ -51,6 +51,8 @@ from .models import AdminLangSettings, AdminSettings, ApiCertificate, \
     FeedbackMailFailed, FeedbackMailHistory, FeedbackMailSetting, \
     SearchManagement, SiteInfo, StatisticTarget, StatisticUnit, \
     FacetSearchSetting
+from invenio_records_rest.facets import terms_filter
+import json
 
 
 def get_response_json(result_list, n_lst):
@@ -496,12 +498,23 @@ def reset_redis_cache(cache_key, value):
         raise
 
 
+def is_exists_key_in_redis(key):
+    """Check key exist in redis."""
+    try:
+        datastore = RedisStore(redis.StrictRedis.from_url(
+            current_app.config['CACHE_REDIS_URL']))
+        return datastore.redis.exists(key)
+    except Exception as e:
+        current_app.logger.error('Could get value for ' + key, e)
+    return False
+
+
 def get_redis_cache(cache_key):
     """Check and then retrieve the value of a Redis cache key."""
     try:
         datastore = RedisStore(redis.StrictRedis.from_url(
             current_app.config['CACHE_REDIS_URL']))
-        if datastore.redis.exists(cache_key):
+        if is_exists_key_in_redis(cache_key):
             return datastore.get(cache_key).decode('utf-8')
     except Exception as e:
         current_app.logger.error('Could get value for ' + cache_key, e)
@@ -1560,7 +1573,6 @@ def get_site_name_for_current_language(site_name):
     :param site_name:
     :return: title
     """
-    from invenio_i18n.ext import current_i18n
     lang_code_english = 'en'
     if site_name:
         if hasattr(current_i18n, 'language'):
@@ -1981,10 +1993,10 @@ def get_facet_search(id: int = None):
         id:
     """
     if id is None:
-        facet_search = current_app.config['WEKO_ADMIN_FACET_SEACH_SETTINGS']
+        facet_search = current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING']
     else:
-        facet_search_mapping = FacetSearchSetting.get_by_id(id)
-        facet_search = facet_search_mapping.to_dict()
+        facet_search_setting = FacetSearchSetting.get_by_id(id)
+        facet_search = facet_search_setting.to_dict()
     return facet_search
 
 
@@ -2021,7 +2033,7 @@ def get_item_mapping_list():
     return result
 
 
-def create_records_rest_facets(permission=True):
+def create_facet_search_query(permission=True):
     def create_aggregations(facets):
         aggregations = dict()
         for facet in facets:
@@ -2042,20 +2054,17 @@ def create_records_rest_facets(permission=True):
         return aggregations
 
     def create_post_filters(facets):
-        from invenio_records_rest.facets import terms_filter
+        # from invenio_records_rest.facets import terms_filter
         post_filters = dict()
         for facet in facets:
-            post_filters.update({facet.name_en: terms_filter(facet.mapping)})
+            # post_filters.update({facet.name_en: terms_filter(facet.mapping)})
+            post_filters.update({facet.name_en: facet.mapping})
         return post_filters
 
-    from invenio_stats.config import SEARCH_INDEX_PREFIX
-    from weko_admin.models import FacetSearchSetting
-
-    search_ui_search_index = '{}-weko'.format(SEARCH_INDEX_PREFIX)
-    activated_facets = FacetSearchSetting.get_activated_facets()
-
+    from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX
     result = dict()
-    result[search_ui_search_index] = dict(
+    activated_facets = FacetSearchSetting.get_activated_facets()
+    result[SEARCH_UI_SEARCH_INDEX] = dict(
         aggs=create_aggregations(activated_facets),
         post_filters=create_post_filters(activated_facets)
     )
@@ -2070,10 +2079,49 @@ def get_title_facets():
             if lang = 'ja' : name_jp
             if lang = 'en' : name_en
     """
-    from invenio_i18n.ext import current_i18n
     lang = current_i18n.language
     data = {}
     activated_facets = FacetSearchSetting.get_activated_facets()
     for item in activated_facets:
         data[item.name_en] = item.name_jp if lang == 'ja' else item.name_en
     return data
+
+
+def store_facet_search_query_in_redis():
+    """Store query facet search in redis."""
+    # Store query for has permission.
+    key = get_query_key_by_permission(True)
+    value = json.dumps(create_facet_search_query(True))
+    reset_redis_cache(key, value)
+    # Store query for no permission.
+    key = get_query_key_by_permission(False)
+    value = json.dumps(create_facet_search_query(False))
+    reset_redis_cache(key, value)
+
+
+def get_query_key_by_permission(has_permission):
+    """Get query key by permission."""
+    # from .config import \
+    #     WEKO_ADMIN_FACET_SEARCH_SETTING_QUERY_KEY_HAS_PERMISSION \
+    #         as has_permission_key, \
+    #     WEKO_ADMIN_FACET_SEARCH_SETTING_QUERY_KEY_NO_PERMISSION \
+    #         as no_permission_key
+    # if has_permission:
+    #     return current_app.config[has_permission_key]
+    # return current_app.config[no_permission_key]
+    if has_permission:
+        return 'facet_search_query_has_permission'
+    return 'facet_search_query_no_permission'
+
+
+def get_facet_search_query(has_permission):
+    """Get facet search query in redis."""
+    from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX
+    key = get_query_key_by_permission(has_permission)
+    if not is_exists_key_in_redis(key):
+        store_facet_search_query_in_redis()
+    result = json.loads(get_redis_cache(key)) or {}
+    post_filters = result.get(SEARCH_UI_SEARCH_INDEX).get('post_filters')
+    for k, v in post_filters.items():
+        post_filters.update({k: terms_filter(v)})
+    return result

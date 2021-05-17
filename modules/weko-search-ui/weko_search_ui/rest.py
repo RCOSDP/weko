@@ -177,13 +177,15 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         :returns: the search result containing hits and aggregations as
         returned by invenio-search.
         """
+        from weko_admin.utils import get_facet_search_query
+        from weko_admin.models import FacetSearchSetting
+
         page = request.values.get('page', 1, type=int)
         size = request.values.get('size', 20, type=int)
         community_id = request.values.get('community')
 
         params = {}
-        from weko_admin.utils import create_records_rest_facets
-        facets = create_records_rest_facets()
+        facets = get_facet_search_query()
         search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
         if facets and search_index and 'post_filters' in facets[search_index]:
             post_filters = facets[search_index]['post_filters']
@@ -205,7 +207,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             urlkwargs['q'] = query
 
         # Execute search
-        from weko_admin.models import FacetSearchSetting
         weko_faceted_search_mapping = \
             FacetSearchSetting.get_activated_facets_mapping()
         for param in params:

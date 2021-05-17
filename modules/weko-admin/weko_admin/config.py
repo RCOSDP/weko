@@ -783,14 +783,23 @@ WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
 WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER = 25
 """Default number of usage report activities results that display in one page."""
 
-WEKO_ADMIN_FACET_SEACH_SETTING_TEMPLATE = 'weko_admin/admin/facet_search_setting.html'
+WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE = \
+    'weko_admin/admin/facet_search_setting.html'
 """Facet search setting template."""
 
-WEKO_ADMIN_FACET_SEACH_SETTINGS = {
+WEKO_ADMIN_FACET_SEARCH_SETTING = {
     "name_en": "",
     "name_jp": "",
     "mapping": "",
     "active": True,
     "aggregations": []
 }
+"""Default restricted access settings."""
+
+WEKO_ADMIN_FACET_SEARCH_SETTING_QUERY_KEY_HAS_PERMISSION = \
+    'facet_search_query_has_permission'
+"""Default restricted access settings."""
+
+WEKO_ADMIN_FACET_SEARCH_SETTING_QUERY_KEY_NO_PERMISSION = \
+    'facet_search_query_no_permission'
 """Default restricted access settings."""

@@ -1244,7 +1244,7 @@ class FacetSearchSettingView(ModelView):
         facet_search = get_facet_search()
         facet_search.update({'mapping_list': get_item_mapping_list()})
         return self.render(
-            current_app.config['WEKO_ADMIN_FACET_SEACH_SETTING_TEMPLATE'],
+            current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE'],
             data=json.dumps(facet_search),
             type_str='new'
         )
@@ -1257,7 +1257,7 @@ class FacetSearchSettingView(ModelView):
         facet_search = get_facet_search(id=id)
         facet_search.update({'mapping_list': get_item_mapping_list()})
         return self.render(
-            current_app.config['WEKO_ADMIN_FACET_SEACH_SETTING_TEMPLATE'],
+            current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE'],
             data=json.dumps(facet_search),
             type_str='edit',
             id=id
@@ -1271,7 +1271,7 @@ class FacetSearchSettingView(ModelView):
         facet_search = get_facet_search(id=id)
         facet_search.update({'mapping_list': get_item_mapping_list()})
         return self.render(
-            current_app.config['WEKO_ADMIN_FACET_SEACH_SETTING_TEMPLATE'],
+            current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE'],
             data=json.dumps(facet_search),
             type_str='details',
             id=id
@@ -1288,7 +1288,7 @@ class FacetSearchSettingView(ModelView):
             id = request.form.get('id')
         facet_search = get_facet_search(id=id)
         return self.render(
-            current_app.config['WEKO_ADMIN_FACET_SEACH_SETTING_TEMPLATE'],
+            current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE'],
             data=json.dumps(facet_search),
             type_str='delete',
             id=id
