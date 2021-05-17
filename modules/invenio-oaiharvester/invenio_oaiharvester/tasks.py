@@ -35,12 +35,13 @@ from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from lxml import etree
-from weko_deposit.api import WekoDeposit
+from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.models import Index
 from weko_records.models import ItemMetadata
 from weko_records_ui.utils import soft_delete
 
 from .api import get_records, list_records, send_run_status_mail
+from .config import OAIHARVESTER_ENABLE_ITEM_VERSIONING
 from .harvester import DCMapper, DDIMapper, JPCOARMapper
 from .harvester import list_records as harvester_list_records
 from .harvester import list_sets, map_sets
@@ -163,6 +164,9 @@ def process_item(record, harvesting, counter):
         mapper = DDIMapper(xml)
     else:
         return
+
+    current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
+        0, 'Harvesting', mapper.identifier()))
     hvstid = PersistentIdentifier.query.filter_by(
         pid_type='hvstid', pid_value=mapper.identifier()).first()
     if hvstid:
@@ -172,7 +176,8 @@ def process_item(record, harvesting, counter):
         recid.status = PIDStatus.REGISTERED
         pubdate = dateutil.parser.parse(
             r.json['pubdate']['attribute_value']).date()
-        dep = WekoDeposit(r.json, r)
+        #dep = WekoDeposit(r.json, r)
+        dep = WekoDeposit.get_record(hvstid.object_uuid)
         indexes = dep['path'].copy()
         event = ItemEvents.UPDATE
     elif mapper.is_deleted():
@@ -206,6 +211,7 @@ def process_item(record, harvesting, counter):
         dep.update({'actions': 'publish', 'index': indexes}, json)
         dep.commit()
         dep.publish()
+
         # add item versioning
         pid = PersistentIdentifier.query.filter_by(
             pid_type='recid', pid_value=dep.pid.pid_value).first()
@@ -222,9 +228,10 @@ def process_item(record, harvesting, counter):
             if not pid_obj:
                 idt.register_pidstore(pid_type, it['identifier'])
 
-        with current_app.test_request_context() as ctx:
-            first_ver = dep.newversion(pid)
-            first_ver.publish()
+        if OAIHARVESTER_ENABLE_ITEM_VERSIONING:
+            with current_app.test_request_context() as ctx:
+                first_ver = dep.newversion(pid)
+                first_ver.publish()
 
     harvesting.item_processed = harvesting.item_processed + 1
     db.session.commit()

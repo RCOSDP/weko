@@ -54,3 +54,6 @@ OAIHARVESTER_HDL_PREFIX = 'http://hdl.handle.net'
 
 OAIHARVESTER_VERIFY_TLS_CERTIFICATE = False
 """ If True, verify the server’s TLS certificate """
+
+OAIHARVESTER_ENABLE_ITEM_VERSIONING = False
+""" If True, enable item versioning """
