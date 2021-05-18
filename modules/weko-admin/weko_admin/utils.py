@@ -2114,7 +2114,7 @@ def get_query_key_by_permission(has_permission):
     return 'facet_search_query_no_permission'
 
 
-def get_facet_search_query(has_permission):
+def get_facet_search_query(has_permission=True):
     """Get facet search query in redis."""
     from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX
     key = get_query_key_by_permission(has_permission)
