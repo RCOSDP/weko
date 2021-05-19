@@ -96,7 +96,8 @@ setup(
             'report = weko_admin.cli:report',
             'billing = weko_admin.cli:billing',
             'admin_settings = weko_admin.cli:admin_settings',
-            'authors_prefix = weko_admin.cli:authors_prefix'
+            'authors_prefix = weko_admin.cli:authors_prefix',
+            'facet_search_setting = weko_admin.cli:facet_search_setting'
         ],
         'invenio_celery.tasks': [
             'weko_admin = weko_admin.tasks',

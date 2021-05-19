@@ -33,7 +33,7 @@ COPY public.facet_search_setting (id, name_en, name_jp, mapping, aggregations, a
 3	Location	地域	geoLocation.geoLocationPlace	[]	t
 4	Temporal	時間的範囲	temporal	[]	t
 5	Topic	トピック	subject.value	[]	t
-6	Distributor	酉布者	contributor.contributorName	[{"agg_value": "Distributor", "agg_mapping": "contributor.@attributes.contributorType"}]	t
+6	Distributor	配布者	contributor.contributorName	[{"agg_value": "Distributor", "agg_mapping": "contributor.@attributes.contributorType"}]	t
 7	Data Type	デ一タタイプ	description.value	[{"agg_value": "Other", "agg_mapping": "description.descriptionType"}]	t
 \.
 
