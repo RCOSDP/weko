@@ -27,7 +27,7 @@ class OAISet(db.Model, Timestamp):
 
     __tablename__ = 'oaiserver_set'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.BigInteger, primary_key=True)
 
     spec = db.Column(
         db.String(255),
