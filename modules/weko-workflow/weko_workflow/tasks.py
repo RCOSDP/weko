@@ -37,10 +37,10 @@ def cancel_expired_usage_report_activities():
 
 
 @shared_task(ignore_results=True)
-def update_set_info(pid):
+def update_set_info(pid_uuid):
     """Update the set information to ES."""
     try:
-        record = RecordMetadata.query.get(pid.object_uuid)
+        record = RecordMetadata.query.get(pid_uuid)
         like_value = 'oai:invenio:{}%'.format(record.json['control_number'].zfill(8))
         query = (x[0] for x in PersistentIdentifier.query.filter_by(
             object_type='rec', status=PIDStatus.REGISTERED

@@ -20,7 +20,6 @@
 """Weko Index celery tasks."""
 
 from celery import shared_task
-from celery.utils.log import get_task_logger
 from flask import current_app
 from invenio_db import db
 from invenio_oaiserver.models import OAISet

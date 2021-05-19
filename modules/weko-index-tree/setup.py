@@ -115,7 +115,9 @@ setup(
         'invenio_base.api_blueprints': [
             'weko_index_tree = weko_index_tree.views:blueprint_api',
         ],
-
+        'invenio_celery.tasks': [
+            'weko_index_tree = weko_index_tree.tasks',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,
