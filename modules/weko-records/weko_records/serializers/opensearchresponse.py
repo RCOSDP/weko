@@ -66,11 +66,14 @@ def custom_output_open_search(record_lst: list):
         record_lst (list): Record list.
     """
     def _format_file_url():
+        file_url = []
         for v in _item_metadata.values():
             if isinstance(v, dict) and v.get('attribute_type') == 'file':
-                replace_fqdn_of_file_metadata(v.get('attribute_value_mlt', []))
+                replace_fqdn_of_file_metadata(v.get('attribute_value_mlt', []),
+                                              file_url)
         for file_value in _file_meta.get('URI', []):
-            if file_value.get('value'):
+            if file_value.get('value') and file_value.get(
+                    'value') not in file_url:
                 file_value['value'] = replace_fqdn(file_value['value'])
 
     for record in record_lst:

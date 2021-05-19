@@ -1480,21 +1480,26 @@ def replace_fqdn(url_path: str, host_url: str = None) -> str:
         host_url = current_app.config['THEME_SITEURL']
     url_pattern = r'^http[s]{0,1}:\/\/'
     if re.search(url_pattern, url_path) is None:
-        url_path = host_url + url_pattern
+        url_path = host_url + url_path
     elif host_url not in url_path:
         if host_url[-1] != '/':
             host_url = host_url + '/'
-        pattern = r'^http[s]{0,1}:\/\/[\d\w]+.+\d\w\/'
+        pattern = r'http[s]{0,1}:\/\/([\d\w]+[\.]*[:]{0,1}[\d\w])+\/'
         url_path = re.sub(pattern, host_url, url_path)
     return url_path
 
 
-def replace_fqdn_of_file_metadata(file_metadata_lst: list):
+def replace_fqdn_of_file_metadata(file_metadata_lst: list,
+                                  file_url: list = None):
     """Replace FQDN of file metadata.
 
     Args:
         file_metadata_lst (list): File metadata list.
+        file_url (list): File metadata list.
     """
     for file in file_metadata_lst:
-        if file.get('version_id') and file.get('url', {}).get('url'):
-            file['url']['url'] = replace_fqdn(file['url']['url'])
+        if file.get('url', {}).get('url'):
+            if file.get('version_id'):
+                file['url']['url'] = replace_fqdn(file['url']['url'])
+            elif isinstance(file_url, list):
+                file_url.append(file['url']['url'])
