@@ -262,10 +262,7 @@ def get_feedback_mail_list():
             .get('feedback_mail_list', {})\
             .get('email_list', {})\
             .get('buckets', [])
-    except NotFoundError:
-        current_app.logger.debug('FeedbackMail data cannot found!')
-        return ret
-    except InvalidQueryRESTError:
+    except (NotFoundError, InvalidQueryRESTError):
         current_app.logger.debug('FeedbackMail data cannot found!')
         return ret
 
