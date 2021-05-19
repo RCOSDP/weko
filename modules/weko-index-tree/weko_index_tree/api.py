@@ -1198,7 +1198,7 @@ class Indexes(object):
                 query(func.every(db.and_(
                     Index.public_state,
                     db.or_(
-                        Index.public_date is None,
+                        Index.public_date.is_(None),
                         Index.public_date <= date.today()
                     ))).label('parent_state')
                 ).filter(Index.id.in_(path))
@@ -1540,7 +1540,7 @@ class Indexes(object):
             func.cast(Index.id, db.Text).label("path")
         ).filter(
             Index.parent == 0,
-            Index.harvest_public_state is True
+            Index.harvest_public_state.is_(True)
         ).cte(name="recursive_t", recursive=True)
 
         rec_alias = aliased(recursive_t, name="rec")
@@ -1552,7 +1552,7 @@ class Indexes(object):
                 rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text)
             ).filter(
                 test_alias.parent == rec_alias.c.cid,
-                test_alias.harvest_public_state is True)
+                test_alias.harvest_public_state.is_(True))
         )
 
         paths = []
