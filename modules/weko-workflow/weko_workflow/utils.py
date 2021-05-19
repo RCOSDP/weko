@@ -1469,31 +1469,6 @@ def handle_finish_workflow(deposit, current_pid, recid):
     return item_id
 
 
-def update_set_info(pid):
-    """Update the set information to ES."""
-    from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-    from invenio_indexer.api import RecordIndexer
-
-    try:
-        record = RecordMetadata.query.get(pid.object_uuid)
-        like_value = 'oai:invenio:{}%'.format(record.json['control_number'].zfill(8))
-        query = (x[0] for x in PersistentIdentifier.query.filter_by(
-            object_type='rec', status=PIDStatus.REGISTERED
-        ).filter(
-            PersistentIdentifier.pid_type.in_(['oai'])
-        ).filter(    
-            PersistentIdentifier.pid_value.like(like_value)
-        ).values(
-            PersistentIdentifier.object_uuid
-        ))
-        RecordIndexer().bulk_index(query)
-        RecordIndexer().process_bulk_queue(
-            es_bulk_kwargs={'raise_on_error': True})
-    except Exception as ex:
-        current_app.logger.error('Failed to update the setting information to ES.')
-        current_app.logger.exception(str(ex))
-
-
 def delete_cache_data(key: str):
     """Delete cache data.
 

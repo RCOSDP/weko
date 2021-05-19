@@ -30,7 +30,6 @@ from invenio_accounts.models import Role
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
-from invenio_oaiserver.models import OAISet
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.attributes import flag_modified
@@ -224,7 +223,11 @@ class Indexes(object):
                 index.owner_user_id = current_user.get_id()
                 db.session.merge(index)
             db.session.commit()
-            cls.oaiset_setting(dict(index))
+
+            # create oaiset setting
+            from .tasks import oaiset_setting
+            oaiset_setting.delay(cls.get_browsing_info(), dict(index))
+
             return index
         except Exception as ex:
             current_app.logger.debug(ex)
@@ -1566,44 +1569,3 @@ class Indexes(object):
                 paths.append(idx.path)
         return paths
 
-    @classmethod
-    def oaiset_setting(cls, data):
-        """Create/Update oai set setting."""
-        def _get_spec(index_info, index_id):
-            """Get setspec."""
-            index_name = index_info[index_id]['index_name']
-            if index_info[index_id]['parent'] != '0':
-                setspec, name_path = _get_spec(index_info, index_info[index_id]['parent'])
-                return "{}:{}".format(setspec, index_id), "{}->{}".format(name_path, index_name)
-            else:
-                return index_id, index_name
-
-        try:
-            pub_state = data["public_state"] and data["harvest_public_state"]
-            if int(data["parent"]) == 0:
-                spec = str(data["id"])
-                description = data["index_name"]
-            else:
-                info = cls.get_browsing_info()
-                setspec, name_path = _get_spec(info, str(data["parent"]))
-                spec = "{}:{}".format(setspec, data["id"])
-                description = "{}->{}".format(name_path, data["index_name"])
-            with db.session.begin_nested():
-                oaiset = OAISet.query.filter_by(id=data["id"]).one_or_none()
-                if oaiset:
-                    if pub_state:
-                        oaiset.spec = spec
-                        oaiset.name = data["index_name"]
-                        oaiset.search_pattern = 'path:"{}"'.format(spec.replace(':', '/'))
-                        oaiset.description = description
-                        db.session.merge(oaiset)
-                    else:
-                        db.session.delete(oaiset)
-                elif pub_state:
-                    oaiset = OAISet(id=data["id"], spec=spec, name=data["index_name"], description=description)
-                    oaiset.search_pattern = 'path:"{}"'.format(spec.replace(':', '/'))
-                    db.session.add(oaiset)
-            db.session.commit()
-        except Exception as ex:
-            current_app.logger.debug(ex)
-            db.session.rollback()
