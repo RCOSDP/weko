@@ -70,10 +70,10 @@ function FacetSearchLayout(
       success: function (result) {
         if (result.status) {
           console.log(result.msg, 2);
+          window.location.href = urlList;
         } else {
           console.log("false");
         }
-        window.location.href = urlList;
       },
       error: function (error) {
         showErrorMessage(error);

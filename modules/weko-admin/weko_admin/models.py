@@ -1861,6 +1861,18 @@ class FacetSearchSetting(db.Model):
             result.update({item.name_en: item.mapping})
         return result
 
+    @classmethod
+    def get_by_name(cls, name_en, name_jp):
+        """Get all facet search by name_en, name_jp."""
+        return cls.query.filter_by(name_en=name_en,
+                                   name_jp=name_jp).one_or_none()
+
+    @classmethod
+    def get_by_mapping(cls, mapping):
+        """Get all facet search by mapping."""
+        return cls.query.filter_by(mapping=mapping).one_or_none()
+
+
 __all__ = ([
     'SearchManagement',
     'AdminLangSettings',

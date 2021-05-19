@@ -1111,8 +1111,8 @@ class FacetSearchSettingView(ModelView):
     )
     column_labels = dict(
         id=_('ID'),
-        name_en=_('item Name(EN)'),
-        name_jp=_('item Name(JP)'),
+        name_en=_('Item Name(EN)'),
+        name_jp=_('Item Name(JP)'),
         mapping=_('Mapping'),
         active=_('Active')
     )

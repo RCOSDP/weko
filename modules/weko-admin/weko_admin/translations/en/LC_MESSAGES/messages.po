@@ -790,3 +790,19 @@ msgstr "Facet Search List"
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:70
 msgid "Please input all required item."
 msgstr "Please input all required item."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
+msgid "Failed to create due to server error."
+msgstr "Failed to create due to server error."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
+msgid "Failed to update due to server error."
+msgstr "Failed to update due to server error."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
+msgid "Failed to delete due to server error."
+msgstr "Failed to delete due to server error."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
+msgid "The item name/mapping is already exists. Please input other faceted item/mapping."
+msgstr "The item name/mapping is already exists. Please input other faceted item/mapping."

@@ -1703,18 +1703,6 @@ def get_restricted_access(key: str = None):
     return None
 
 
-def create_facet_search(facet_search: dict):
-    return True if FacetSearchSetting.create(facet_search) else False
-
-
-def update_facet_search(id, facet_search):
-    return True if FacetSearchSetting.update_by_id(id, facet_search) else False
-
-
-def delete_facet_search(id: int = None):
-    return True if FacetSearchSetting.delete(id) else False
-
-
 def update_restricted_access(restricted_access: dict):
     """Update the restricted access.
 
@@ -2150,3 +2138,20 @@ def get_facet_search_query(has_permission=True):
     for k, v in post_filters.items():
         post_filters.update({k: terms_filter(v)})
     return result
+
+
+def is_exits_facet(data, id):
+    """Check facet search is exits."""
+    facet_by_name = FacetSearchSetting.get_by_name(data.get('name_en'),
+                                                   data.get('name_jp'))
+    facet_by_mapping = FacetSearchSetting.get_by_mapping(data.get('mapping'))
+    if id and len(id) > 0:
+        id = int(id)
+        id_name = facet_by_name.id if facet_by_name else id
+        id_mapping = facet_by_mapping.id if facet_by_mapping else id
+        if (id == id_name) and (id == id_mapping):
+            return False
+    else:
+        if (facet_by_name is None) and (facet_by_mapping is None):
+            return False
+    return True

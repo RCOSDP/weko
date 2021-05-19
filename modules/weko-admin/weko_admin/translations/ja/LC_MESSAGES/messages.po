@@ -1230,11 +1230,11 @@ msgid "Confirm Usage Mail"
 msgstr "確認"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:46
-msgid "Item Name (EN)"
+msgid "Item Name(EN)"
 msgstr "項目名（英）"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:47
-msgid "Item Name (JP)"
+msgid "Item Name(JP)"
 msgstr "項目名（日）"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:48
@@ -1296,3 +1296,19 @@ msgstr "ファセット検索一覧"
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:70
 msgid "Please input all required item."
 msgstr "必須項目は全て入力して下さい。"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
+msgid "Failed to create due to server error."
+msgstr "サーバーエラーのため、作成に失敗しました。"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
+msgid "Failed to update due to server error."
+msgstr "サーバーエラーのため、更新に失敗しました。"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
+msgid "Failed to delete due to server error."
+msgstr "サーバーエラーのため、削除に失敗しました。"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
+msgid "The item name/mapping is already exists. Please input other faceted item/mapping."
+msgstr "既に存在する項目名・マッピングです。別のファセット項目名・マッピングを入力してください。"
