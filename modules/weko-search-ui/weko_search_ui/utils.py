@@ -269,7 +269,7 @@ def get_feedback_mail_list():
     for item in aggr:
         if item.get('doc_count'):
             ret[item.get('key')] = {
-                'items': [],
+                'items': {},
                 'author_id': ''
             }
 
@@ -279,7 +279,16 @@ def get_feedback_mail_list():
             _email = ret.get(item.get('email'))
             if _email:
                 _email['author_id'] = item.get('author_id', _email['author_id'])
-                _email['items'].append(hit.meta.id)
+                _email['items'][source.get('control_number')] = hit.meta.id
+
+    for item in ret.values():
+        _items = []
+        _keys = list(item['items'].keys())
+        _keys = [int(x) for x in _keys]
+        _keys.sort()
+        for idx in _keys:
+            _items.append(item['items'][str(idx)])
+        item['items'] = _items
 
     return ret
 
