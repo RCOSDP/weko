@@ -72,7 +72,7 @@ function FacetSearchLayout(
           console.log(result.msg, 2);
           window.location.href = urlList;
         } else {
-          console.log("false");
+          showErrorMessage(result.msg);
         }
       },
       error: function (error) {
