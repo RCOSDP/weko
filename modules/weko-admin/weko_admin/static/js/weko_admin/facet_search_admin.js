@@ -450,7 +450,7 @@ function handleRemoveFacet() {
       }
     },
     error: function (error) {
-      showErrorMessage.(error);
+      showErrorMessage(error);
     }
   });
 }

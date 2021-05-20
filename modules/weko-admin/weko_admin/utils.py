@@ -20,13 +20,13 @@
 
 """Utilities for convert response json."""
 import csv
+import json
 import math
 import os
 import zipfile
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
 from typing import Dict, Tuple, Union
-
 import redis
 import requests
 from flask import current_app, request, url_for
@@ -39,21 +39,18 @@ from invenio_indexer.api import RecordIndexer
 from invenio_mail.admin import MailSettingView
 from invenio_mail.models import MailConfig
 from invenio_records.models import RecordMetadata
+from invenio_records_rest.facets import terms_filter
 from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
 from jinja2 import Template
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_authors.models import Authors
 from weko_records.api import ItemsMetadata
-
 from . import config
 from .models import AdminLangSettings, AdminSettings, ApiCertificate, \
-    FeedbackMailFailed, FeedbackMailHistory, FeedbackMailSetting, \
-    SearchManagement, SiteInfo, StatisticTarget, StatisticUnit, \
-    FacetSearchSetting
-from invenio_records_rest.facets import terms_filter
-import json
-
+    FacetSearchSetting, FeedbackMailFailed, FeedbackMailHistory, \
+    FeedbackMailSetting, SearchManagement, SiteInfo, StatisticTarget, \
+    StatisticUnit
 
 def get_response_json(result_list, n_lst):
     """Get a response json.
@@ -514,7 +511,7 @@ def get_redis_cache(cache_key):
     try:
         datastore = RedisStore(redis.StrictRedis.from_url(
             current_app.config['CACHE_REDIS_URL']))
-        if is_exists_key_in_redis(cache_key):
+        if datastore.redis.exists(cache_key):
             return datastore.get(cache_key).decode('utf-8')
     except Exception as e:
         current_app.logger.error('Could get value for ' + cache_key, e)
@@ -2067,17 +2064,14 @@ def create_facet_search_query(permission=True):
         return aggregations
 
     def create_post_filters(facets):
-        # from invenio_records_rest.facets import terms_filter
         post_filters = dict()
         for facet in facets:
-            # post_filters.update({facet.name_en: terms_filter(facet.mapping)})
             post_filters.update({facet.name_en: facet.mapping})
         return post_filters
 
-    from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX
     result = dict()
     activated_facets = FacetSearchSetting.get_activated_facets()
-    result[SEARCH_UI_SEARCH_INDEX] = dict(
+    result[current_app.config['SEARCH_UI_SEARCH_INDEX']] = dict(
         aggs=create_aggregations(activated_facets),
         post_filters=create_post_filters(activated_facets)
     )
@@ -2114,14 +2108,6 @@ def store_facet_search_query_in_redis():
 
 def get_query_key_by_permission(has_permission):
     """Get query key by permission."""
-    # from .config import \
-    #     WEKO_ADMIN_FACET_SEARCH_SETTING_QUERY_KEY_HAS_PERMISSION \
-    #         as has_permission_key, \
-    #     WEKO_ADMIN_FACET_SEARCH_SETTING_QUERY_KEY_NO_PERMISSION \
-    #         as no_permission_key
-    # if has_permission:
-    #     return current_app.config[has_permission_key]
-    # return current_app.config[no_permission_key]
     if has_permission:
         return 'facet_search_query_has_permission'
     return 'facet_search_query_no_permission'
@@ -2129,12 +2115,11 @@ def get_query_key_by_permission(has_permission):
 
 def get_facet_search_query(has_permission=True):
     """Get facet search query in redis."""
-    from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX
     key = get_query_key_by_permission(has_permission)
     if not is_exists_key_in_redis(key):
         store_facet_search_query_in_redis()
     result = json.loads(get_redis_cache(key)) or {}
-    post_filters = result.get(SEARCH_UI_SEARCH_INDEX).get('post_filters')
+    post_filters = result.get(current_app.config['SEARCH_UI_SEARCH_INDEX']).get('post_filters')
     for k, v in post_filters.items():
         post_filters.update({k: terms_filter(v)})
     return result

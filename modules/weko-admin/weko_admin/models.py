@@ -1888,6 +1888,6 @@ __all__ = ([
     'SiteInfo',
     'FeedbackMailHistory',
     'FeedbackMailFailed',
-    'Identifier' ,
+    'Identifier',
     'FacetSearchSetting',
 ])

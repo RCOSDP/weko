@@ -797,12 +797,12 @@ WEKO_ADMIN_FACET_SEARCH_SETTING = {
     "active": True,
     "aggregations": []
 }
-"""Default restricted access settings."""
+"""Default Facet Search settings."""
 
 WEKO_ADMIN_FACET_SEARCH_SETTING_QUERY_KEY_HAS_PERMISSION = \
     'facet_search_query_has_permission'
-"""Default restricted access settings."""
+"""Default Facet Search query has permission settings."""
 
 WEKO_ADMIN_FACET_SEARCH_SETTING_QUERY_KEY_NO_PERMISSION = \
     'facet_search_query_no_permission'
-"""Default restricted access settings."""
+"""Default Facet Search query has no permission settings."""
