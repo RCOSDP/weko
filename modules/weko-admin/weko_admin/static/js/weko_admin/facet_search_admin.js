@@ -434,6 +434,7 @@ function HeaderComponent() {
 
 function handleRemoveFacet() {
   let data = {id: LABELS['lblFacetSearchId']}
+  $("#facet_search_comfirm_modal").modal("hide")
   $.ajax({
     url: '/api/admin/facet-search/remove',
     method: 'POST',
@@ -441,10 +442,15 @@ function handleRemoveFacet() {
     dataType: 'json',
     data: JSON.stringify(data),
     success: function (result) {
-      window.location.href = urlList;
+      if (result.status) {
+        console.log(result.msg, 2);
+        window.location.href = urlList;
+      } else {
+        showErrorMessage(result.msg);
+      }
     },
     error: function (error) {
-      showErrorMessage.log(error);
+      showErrorMessage.(error);
     }
   });
 }

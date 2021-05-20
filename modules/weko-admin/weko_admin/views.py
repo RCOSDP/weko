@@ -655,7 +655,7 @@ def remove_facet_search():
     if id_facet:
         if not FacetSearchSetting.delete(id_facet):
             result['status'] = False
-            result['msg'] = _("Error")
+            result['msg'] = _("Failed to delete due to server error.")
     else:
         result['status'] = False
         result['msg'] = _("Failed to delete due to server error.")

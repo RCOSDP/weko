@@ -1826,7 +1826,7 @@ class FacetSearchSetting(db.Model):
             except BaseException as ex:
                 db.session.rollback()
                 current_app.logger.error(ex)
-                raise
+                
         return False
 
     @classmethod
@@ -1849,7 +1849,6 @@ class FacetSearchSetting(db.Model):
             except BaseException as ex:
                 db.session.rollback()
                 current_app.logger.error(ex)
-                raise
 
         return False
 
