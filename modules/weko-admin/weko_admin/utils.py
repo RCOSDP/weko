@@ -2043,66 +2043,76 @@ def get_item_mapping_list():
     return result
 
 
-def create_facet_search_query(permission=True):
+def create_facet_search_query():
+    """Create facet search query."""
+
+    def create_agg_by_aggregations(aggregations, key, val):
+        """Create aggregations query."""
+        if not aggregations or len(aggregations) == 0:
+            result = {key: {'terms': {'field': val}}}
+        else:
+            must = [dict(term={agg['agg_mapping']: agg['agg_value']})
+                    for agg in aggregations]
+            result = {key: {
+                'filter': {'bool': {'must': must}},
+                'aggs': {key: {'terms': {'field': val}}}
+            }}
+        return result
+
     def create_aggregations(facets):
-        aggregations = dict()
+        """Create aggregations query."""
+        agg_has_permission_query, agg_no_permission_query = dict(), dict()
         for facet in facets:
             key = facet.name_en
             val = facet.mapping
-            if not permission:
-                facet.aggregations.append(
-                    {'agg_mapping': 'publish_status', 'agg_value': '0'})
-            if not facet.aggregations or len(facet.aggregations) == 0:
-                aggregations.update({key: {'terms': {'field': val}}})
-            else:
-                must = [dict(term={agg['agg_mapping']: agg['agg_value']})
-                        for agg in facet.aggregations]
-                aggregations.update({key: {
-                    'filter': {'bool': {'must': must}},
-                    'aggs': {key: {'terms': {'field': val}}}
-                }})
-        return aggregations
+            # Update agg query for has permission.
+            agg_has_permission_query.update(
+                create_agg_by_aggregations(facet.aggregations, key, val))
+            # Update agg query for no permission.
+            facet.aggregations.append(
+                {'agg_mapping': 'publish_status', 'agg_value': '0'})
+            agg_no_permission_query.update(
+                create_agg_by_aggregations(facet.aggregations, key, val))
+        return agg_has_permission_query, agg_no_permission_query
 
     def create_post_filters(facets):
-        post_filters = dict()
+        """Create post filters query."""
+        post_filters_query = dict()
         for facet in facets:
-            post_filters.update({facet.name_en: facet.mapping})
-        return post_filters
+            post_filters_query.update({facet.name_en: facet.mapping})
+        return post_filters_query
 
-    result = dict()
+    search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
+    has_permission_query, no_permission_query = dict(), dict()
+    # Get all activated facets.
     activated_facets = FacetSearchSetting.get_activated_facets()
-    result[current_app.config['SEARCH_UI_SEARCH_INDEX']] = dict(
-        aggs=create_aggregations(activated_facets),
-        post_filters=create_post_filters(activated_facets)
+    # Get aggregations and post filters query.
+    agg_has_permission, agg_no_permission = create_aggregations(
+        activated_facets)
+    post_filters = create_post_filters(activated_facets)
+    # Create facet search query for has permission.
+    has_permission_query[search_index] = dict(
+        aggs=agg_has_permission,
+        post_filters=post_filters
     )
-    return result
-
-
-def get_title_facets():
-    """Get title for facet search
-    return: dict
-        key: name_en
-        value:
-            if lang = 'ja' : name_jp
-            if lang = 'en' : name_en
-    """
-    lang = current_i18n.language
-    data = {}
-    activated_facets = FacetSearchSetting.get_activated_facets()
-    for item in activated_facets:
-        data[item.name_en] = item.name_jp if lang == 'ja' else item.name_en
-    return data
+    # Create facet search query for no permission.
+    no_permission_query[search_index] = dict(
+        aggs=agg_no_permission,
+        post_filters=post_filters
+    )
+    return has_permission_query, no_permission_query
 
 
 def store_facet_search_query_in_redis():
     """Store query facet search in redis."""
+    has_permission_query, no_permission_query = create_facet_search_query()
     # Store query for has permission.
     key = get_query_key_by_permission(True)
-    value = json.dumps(create_facet_search_query(True))
+    value = json.dumps(has_permission_query)
     reset_redis_cache(key, value)
     # Store query for no permission.
     key = get_query_key_by_permission(False)
-    value = json.dumps(create_facet_search_query(False))
+    value = json.dumps(no_permission_query)
     reset_redis_cache(key, value)
 
 
@@ -2115,14 +2125,34 @@ def get_query_key_by_permission(has_permission):
 
 def get_facet_search_query(has_permission=True):
     """Get facet search query in redis."""
+    search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
     key = get_query_key_by_permission(has_permission)
+    # Check query exists in redis.
     if not is_exists_key_in_redis(key):
         store_facet_search_query_in_redis()
+    # Get query on redis.
     result = json.loads(get_redis_cache(key)) or {}
-    post_filters = result.get(current_app.config['SEARCH_UI_SEARCH_INDEX']).get('post_filters')
+    # Update terms filter function for post filters.
+    post_filters = result.get(search_index).get('post_filters')
     for k, v in post_filters.items():
         post_filters.update({k: terms_filter(v)})
     return result
+
+
+def get_title_facets():
+    """Get title for facet search.
+    return: dict
+        key: name_en
+        value:
+            if lang = 'ja' : name_jp
+            if lang = 'en' : name_en
+    """
+    lang = current_i18n.language
+    data = {}
+    activated_facets = FacetSearchSetting.get_activated_facets()
+    for item in activated_facets:
+        data[item.name_en] = item.name_jp if lang == 'ja' else item.name_en
+    return data
 
 
 def is_exits_facet(data, id):
