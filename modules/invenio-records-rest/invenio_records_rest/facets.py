@@ -130,8 +130,8 @@ def default_facets_factory(search, index):
     """
     urlkwargs = MultiDict()
 
-    from weko_search_ui.permissions import search_permission
     from weko_admin.utils import get_facet_search_query
+    from weko_search_ui.permissions import search_permission
     facets = get_facet_search_query(search_permission.can()).get(index)
 
     if facets is not None:

@@ -347,7 +347,7 @@ WEKO_THEME_ADMIN_MENU = [
                 'name': 'Mail',
                 'order': 16
             },
-             {
+            {
                 'name': 'WebAPI Account',
                 'order': 17
             },

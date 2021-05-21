@@ -21,11 +21,12 @@
 """Views for weko-admin."""
 
 import calendar
+import json
 import sys
 from datetime import timedelta
 
-from flask import Blueprint, Response, abort, current_app, flash, jsonify, \
-    render_template, request, json
+from flask import Blueprint, Response, abort, current_app, flash, json, \
+    jsonify, render_template, request
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
@@ -37,15 +38,14 @@ from weko_records.models import SiteLicenseInfo
 from werkzeug.local import LocalProxy
 
 from .api import send_site_license_mail
-from .models import SessionLifetime, SiteInfo, FacetSearchSetting
+from .models import FacetSearchSetting, SessionLifetime, SiteInfo
 from .utils import FeedbackMail, StatisticMail, UsageReport, \
     format_site_info_data, get_admin_lang_setting, \
     get_api_certification_type, get_current_api_certification, \
     get_init_display_index, get_initial_stats_report, get_selected_language, \
-    get_unit_stats_report, save_api_certification, update_admin_lang_setting, \
-    update_restricted_access, validate_certification, validation_site_info, \
-    store_facet_search_query_in_redis, is_exits_facet
-import json
+    get_unit_stats_report, is_exits_facet, save_api_certification, \
+    store_facet_search_query_in_redis, update_admin_lang_setting, \
+    update_restricted_access, validate_certification, validation_site_info
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
