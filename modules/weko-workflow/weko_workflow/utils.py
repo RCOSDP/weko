@@ -1462,8 +1462,8 @@ def handle_finish_workflow(deposit, current_pid, recid):
                     item_id = current_pid.object_uuid
                 db.session.commit()
 
-                from .tasks import update_set_info
-                update_set_info.delay(str(pid_without_ver.object_uuid))
+        from invenio_oaiserver.tasks import update_records_sets
+        update_records_sets.delay([str(pid_without_ver.object_uuid)])
     except Exception as ex:
         db.session.rollback()
         current_app.logger.exception(str(ex))

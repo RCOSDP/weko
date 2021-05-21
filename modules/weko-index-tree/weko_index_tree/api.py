@@ -502,6 +502,7 @@ class Indexes(object):
                 'index_name': index.index_name,
                 'parent': str(index.parent),
                 'public_date': index.public_date,
+                'harvest_public_state': index.harvest_public_state,
                 'browsing_role': index.browsing_role.split(',')
             }
         return browsing_info

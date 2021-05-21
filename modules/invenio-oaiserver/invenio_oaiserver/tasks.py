@@ -8,11 +8,14 @@
 
 """Task for OAI."""
 
+from time import sleep
 from celery import group, shared_task
 from flask import current_app
 from flask_celeryext import RequestContextTask
 from invenio_db import db
 from invenio_records.api import Record
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_indexer.api import RecordIndexer
 
 from .query import get_affected_records
 
@@ -37,6 +40,21 @@ def update_records_sets(record_ids):
     """
     _records_commit(record_ids)
     db.session.commit()
+
+    # update record to ES
+    sleep(20)
+    query = (x[0] for x in PersistentIdentifier.query.filter_by(
+        object_type='rec', status=PIDStatus.REGISTERED
+    ).filter(
+        PersistentIdentifier.pid_type.in_(['oai'])
+    ).filter(
+        PersistentIdentifier.object_uuid.in_(record_ids)
+    ).values(
+        PersistentIdentifier.object_uuid
+    ))
+    RecordIndexer().bulk_index(query)
+    RecordIndexer().process_bulk_queue(
+        es_bulk_kwargs={'raise_on_error': True})
 
 
 @shared_task(base=RequestContextTask)
