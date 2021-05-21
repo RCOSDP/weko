@@ -25,7 +25,7 @@ msgstr "設定"
 
 #: weko_indextree_journal/admin.py:217
 msgid "Index Journal"
-msgstr "インデックスジャーナル"
+msgstr "雑誌情報"
 
 #. NOTE: This is a note to a translator.
 #: weko_indextree_journal/ext.py:28

@@ -279,11 +279,11 @@ msgstr ""
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:51
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:405
 msgid "Item Type List"
-msgstr ""
+msgstr "Item Type (Source)"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:65
 msgid "Schema List"
-msgstr ""
+msgstr "Schema (Target)"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:89
 msgid "Item type added by system"
@@ -385,7 +385,7 @@ msgstr ""
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/error.html:33
 msgid "You do not even have an itemtype."
-msgstr ""
+msgstr "No itemtypes"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/error.html:34
 msgid "Go to"

@@ -41,7 +41,7 @@ msgstr "表示中のアイテムをエクスポート"
 
 #: weko_theme/templates/weko_theme/body_contents.html:50
 msgid "Export All Items Of This Index"
-msgstr "このインデックス全てのアイテムをエクスポート"
+msgstr "このインデックスすべてのアイテムをエクスポート"
 
 #: weko_theme/templates/weko_theme/body_contents.html:51
 msgid "Print Checked Items"
@@ -49,11 +49,11 @@ msgstr "チェックしたアイテムを印刷"
 
 #: weko_theme/templates/weko_theme/body_contents.html:52
 msgid "Print All Displayed Items"
-msgstr "表示中のアイテムを印刷"
+msgstr "表示中すべてのアイテムを印刷"
 
 #: weko_theme/templates/weko_theme/body_contents.html:53
 msgid "Print All Items Of This Index"
-msgstr "このインデックス全てのアイテムを印刷"
+msgstr "このインデックスすべてのアイテムを印刷"
 
 #: weko_theme/templates/weko_theme/body_contents.html:55
 msgid "Execution"
@@ -419,7 +419,7 @@ msgstr "ランキング"
 #~ msgstr "出版者"
 
 #~ msgid "Contributors"
-#~ msgstr "投稿者"
+#~ msgstr "寄与者"
 
 #~ msgid "Contents created date"
 #~ msgstr "コンテンツ作成日"
@@ -458,7 +458,7 @@ msgstr "ランキング"
 #~ msgstr "フォーマット"
 
 #~ msgid "Journal Title"
-#~ msgstr "ジャーナルタイトル"
+#~ msgstr "雑誌名"
 
 #~ msgid "ID"
 #~ msgstr ""
@@ -470,7 +470,7 @@ msgstr "ランキング"
 #~ msgstr ""
 
 #~ msgid "fullTextURL"
-#~ msgstr "本文フルテキストへのリンク"
+#~ msgstr "フルテキストURL"
 
 #~ msgid "selfDOI"
 #~ msgstr ""
@@ -497,7 +497,7 @@ msgstr "ランキング"
 #~ msgstr ""
 
 #~ msgid "Resource Type"
-#~ msgstr "リソースタイプ"
+#~ msgstr "資源タイプ"
 
 #~ msgid "Conference Paper"
 #~ msgstr "会議発表論文"
@@ -611,10 +611,10 @@ msgstr "ランキング"
 #~ msgstr "学位名"
 
 #~ msgid "Institution for academic degree"
-#~ msgstr "学位取得機関"
+#~ msgstr "学位授与機関"
 
 #~ msgid "Author ID"
-#~ msgstr "著者名ID"
+#~ msgstr "著者ID"
 
 #~ msgid "Index"
 #~ msgstr "インデックス"
