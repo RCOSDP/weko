@@ -20,13 +20,13 @@
 
 """Utilities for convert response json."""
 import csv
+import json
 import math
 import os
 import zipfile
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
 from typing import Dict, Tuple, Union
-
 import redis
 import requests
 from flask import current_app, request, url_for
@@ -39,18 +39,18 @@ from invenio_indexer.api import RecordIndexer
 from invenio_mail.admin import MailSettingView
 from invenio_mail.models import MailConfig
 from invenio_records.models import RecordMetadata
+from invenio_records_rest.facets import terms_filter
 from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
 from jinja2 import Template
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_authors.models import Authors
 from weko_records.api import ItemsMetadata
-
 from . import config
 from .models import AdminLangSettings, AdminSettings, ApiCertificate, \
-    FeedbackMailFailed, FeedbackMailHistory, FeedbackMailSetting, \
-    SearchManagement, SiteInfo, StatisticTarget, StatisticUnit
-
+    FacetSearchSetting, FeedbackMailFailed, FeedbackMailHistory, \
+    FeedbackMailSetting, SearchManagement, SiteInfo, StatisticTarget, \
+    StatisticUnit
 
 def get_response_json(result_list, n_lst):
     """Get a response json.
@@ -493,6 +493,17 @@ def reset_redis_cache(cache_key, value):
     except Exception as e:
         current_app.logger.error('Could not reset redis value', e)
         raise
+
+
+def is_exists_key_in_redis(key):
+    """Check key exist in redis."""
+    try:
+        datastore = RedisStore(redis.StrictRedis.from_url(
+            current_app.config['CACHE_REDIS_URL']))
+        return datastore.redis.exists(key)
+    except Exception as e:
+        current_app.logger.error('Could get value for ' + key, e)
+    return False
 
 
 def get_redis_cache(cache_key):
@@ -1588,7 +1599,6 @@ def get_site_name_for_current_language(site_name):
     :param site_name:
     :return: title
     """
-    from invenio_i18n.ext import current_i18n
     lang_code_english = 'en'
     if site_name:
         if hasattr(current_i18n, 'language'):
@@ -1985,3 +1995,182 @@ class UsageReport:
         """
         mail_config = MailConfig.get_config()
         return mail_config.get('mail_default_sender', '')
+
+
+def get_facet_search(id: int = None):
+    """Get facet search data.
+
+    :param:id key.
+    :return: facet search data
+
+    Args:
+        id:
+    """
+    if id is None:
+        facet_search = current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING']
+    else:
+        facet_search_setting = FacetSearchSetting.get_by_id(id)
+        facet_search = facet_search_setting.to_dict()
+    return facet_search
+
+
+def get_item_mapping_list():
+    """
+
+    Returns:
+        object:
+    """
+    def handle_prefix_key(pre_key, key):
+        if key == 'properties':
+            return pre_key
+        return "{}.{}".format(pre_key, key) if pre_key else key
+
+    def get_mapping(pre_key, key, value, mapping_list):
+        if isinstance(value, dict) and value.get('type') == 'keyword':
+            mapping_list.append(handle_prefix_key(pre_key, key))
+        if isinstance(value, dict) :
+            for k1, v1 in value.items():
+                get_mapping(handle_prefix_key(pre_key, key), k1, v1, mapping_list)
+
+    import json
+    import weko_schema_ui
+    current_path = os.path.dirname(os.path.abspath(weko_schema_ui.__file__))
+    file_path = os.path.join(current_path, 'mappings', 'v6', 'weko', 'item-v1.0.0.json')
+    with open(file_path) as json_file:
+        mappings = json.load(json_file).get('mappings')
+        properties = mappings.get('item-v1.0.0').get('properties')
+    result = [""]
+    for k, v in properties.items():
+        mapping_list = []
+        get_mapping('', k, v, mapping_list)
+        result = result + mapping_list
+    return result
+
+
+def create_facet_search_query():
+    """Create facet search query."""
+
+    def create_agg_by_aggregations(aggregations, key, val):
+        """Create aggregations query."""
+        if not aggregations or len(aggregations) == 0:
+            result = {key: {'terms': {'field': val}}}
+        else:
+            must = [dict(term={agg['agg_mapping']: agg['agg_value']})
+                    for agg in aggregations]
+            result = {key: {
+                'filter': {'bool': {'must': must}},
+                'aggs': {key: {'terms': {'field': val}}}
+            }}
+        return result
+
+    def create_aggregations(facets):
+        """Create aggregations query."""
+        agg_has_permission_query, agg_no_permission_query = dict(), dict()
+        for facet in facets:
+            key = facet.name_en
+            val = facet.mapping
+            # Update agg query for has permission.
+            agg_has_permission_query.update(
+                create_agg_by_aggregations(facet.aggregations, key, val))
+            # Update agg query for no permission.
+            facet.aggregations.append(
+                {'agg_mapping': 'publish_status', 'agg_value': '0'})
+            agg_no_permission_query.update(
+                create_agg_by_aggregations(facet.aggregations, key, val))
+        return agg_has_permission_query, agg_no_permission_query
+
+    def create_post_filters(facets):
+        """Create post filters query."""
+        post_filters_query = dict()
+        for facet in facets:
+            post_filters_query.update({facet.name_en: facet.mapping})
+        return post_filters_query
+
+    search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
+    has_permission_query, no_permission_query = dict(), dict()
+    # Get all activated facets.
+    activated_facets = FacetSearchSetting.get_activated_facets()
+    # Get aggregations and post filters query.
+    agg_has_permission, agg_no_permission = create_aggregations(
+        activated_facets)
+    post_filters = create_post_filters(activated_facets)
+    # Create facet search query for has permission.
+    has_permission_query[search_index] = dict(
+        aggs=agg_has_permission,
+        post_filters=post_filters
+    )
+    # Create facet search query for no permission.
+    no_permission_query[search_index] = dict(
+        aggs=agg_no_permission,
+        post_filters=post_filters
+    )
+    return has_permission_query, no_permission_query
+
+
+def store_facet_search_query_in_redis():
+    """Store query facet search in redis."""
+    has_permission_query, no_permission_query = create_facet_search_query()
+    # Store query for has permission.
+    key = get_query_key_by_permission(True)
+    value = json.dumps(has_permission_query)
+    reset_redis_cache(key, value)
+    # Store query for no permission.
+    key = get_query_key_by_permission(False)
+    value = json.dumps(no_permission_query)
+    reset_redis_cache(key, value)
+
+
+def get_query_key_by_permission(has_permission):
+    """Get query key by permission."""
+    if has_permission:
+        return 'facet_search_query_has_permission'
+    return 'facet_search_query_no_permission'
+
+
+def get_facet_search_query(has_permission=True):
+    """Get facet search query in redis."""
+    search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
+    key = get_query_key_by_permission(has_permission)
+    # Check query exists in redis.
+    if not is_exists_key_in_redis(key):
+        store_facet_search_query_in_redis()
+    # Get query on redis.
+    result = json.loads(get_redis_cache(key)) or {}
+    # Update terms filter function for post filters.
+    post_filters = result.get(search_index).get('post_filters')
+    for k, v in post_filters.items():
+        post_filters.update({k: terms_filter(v)})
+    return result
+
+
+def get_title_facets():
+    """Get title for facet search.
+    return: dict
+        key: name_en
+        value:
+            if lang = 'ja' : name_jp
+            if lang = 'en' : name_en
+    """
+    lang = current_i18n.language
+    data = {}
+    activated_facets = FacetSearchSetting.get_activated_facets()
+    for item in activated_facets:
+        data[item.name_en] = item.name_jp if lang == 'ja' else item.name_en
+    return data
+
+
+def is_exits_facet(data, id):
+    """Check facet search is exits."""
+    facet_by_name = FacetSearchSetting.get_by_name(data.get('name_en'),
+                                                   data.get('name_jp'))
+    facet_by_mapping = FacetSearchSetting.get_by_mapping(data.get('mapping'))
+    if id and len(id) > 0:
+        id = int(id)
+        id_name = facet_by_name.id if facet_by_name else id
+        id_mapping = facet_by_mapping.id if facet_by_mapping else id
+        if (id == id_name) and (id == id_mapping):
+            return False
+    else:
+        if (facet_by_name is None) and (facet_by_mapping is None):
+            return False
+    return True

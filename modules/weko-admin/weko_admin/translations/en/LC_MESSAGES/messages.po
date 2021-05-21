@@ -254,6 +254,7 @@ msgstr ""
 #: weko_admin/templates/weko_admin/admin/web_api_account.html:55
 #: weko_admin/templates/weko_admin/search_management.html:215
 #: weko_admin/templates/weko_admin/site_license.html:207
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:62
 msgid "Save"
 msgstr "Save"
 
@@ -274,6 +275,7 @@ msgid "Organization Name"
 msgstr "Condition Name"
 
 #: weko_admin/templates/weko_admin/site_license.html:73
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:63
 msgid "Delete"
 msgstr ""
 
@@ -497,6 +499,7 @@ msgid "Current"
 msgstr "Current"
 
 #: weko_admin/templates/weko_admin/settings/lifetime.html:55
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:61
 msgid "Cancel"
 msgstr "Cancel"
 
@@ -715,3 +718,91 @@ msgstr "Usage Report Reminder Email"
 
 msgid "Confirm Usage Mail"
 msgstr "Confirm"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:46
+msgid "Item Name(EN)"
+msgstr "Item Name(EN)"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:47
+msgid "Item Name(JP)"
+msgstr "Item Name(JP)"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:48
+msgid "Mapping"
+msgstr "Mapping"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:49
+msgid "Custom Aggregations"
+msgstr "Custom Aggregations"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:50
+msgid "Aggregations List"
+msgstr "Aggregations List"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:51
+msgid "Aggregation Mapping"
+msgstr "Aggregation Mapping"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:52
+msgid "Aggregation Value"
+msgstr "Aggregation Value"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+msgid "Add"
+msgstr "Add"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:55
+msgid "Display/Hide"
+msgstr "Display/Hide"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:57
+msgid "Hide"
+msgstr "Hide"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:71
+msgid "Are you sure you want to delete it?"
+msgstr "Are you sure you want to delete it?"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:66
+msgid "List"
+msgstr "List"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:67
+msgid "Create"
+msgstr "Create"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:68
+msgid "Edit"
+msgstr "Edit"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:69
+msgid "Details"
+msgstr "Details"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:58
+msgid "Display"
+msgstr "Display"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
+msgid "Facet Search List"
+msgstr "Facet Search List"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:70
+msgid "Please input all required item."
+msgstr "Please input all required item."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
+msgid "Failed to create due to server error."
+msgstr "Failed to create due to server error."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
+msgid "Failed to update due to server error."
+msgstr "Failed to update due to server error."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
+msgid "Failed to delete due to server error."
+msgstr "Failed to delete due to server error."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
+msgid "The item name/mapping is already exists. Please input other faceted item/mapping."
+msgstr "The item name/mapping is already exists. Please input other faceted item/mapping."

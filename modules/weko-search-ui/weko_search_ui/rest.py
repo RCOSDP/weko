@@ -177,24 +177,18 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         :returns: the search result containing hits and aggregations as
         returned by invenio-search.
         """
+        from weko_admin.utils import get_facet_search_query
+        from weko_admin.models import FacetSearchSetting
+
         page = request.values.get('page', 1, type=int)
         size = request.values.get('size', 20, type=int)
         community_id = request.values.get('community')
 
         params = {}
-        if current_app.config['RECORDS_REST_FACETS'] and \
-            current_app.config['SEARCH_UI_SEARCH_INDEX'] and \
-                'post_filters' in current_app.config[
-            'RECORDS_REST_FACETS'
-        ][current_app.config[
-            'SEARCH_UI_SEARCH_INDEX'
-        ]]:
-            post_filters = current_app.config[
-                'RECORDS_REST_FACETS'
-            ][current_app.config[
-                'SEARCH_UI_SEARCH_INDEX'
-            ]]['post_filters']
-
+        facets = get_facet_search_query()
+        search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
+        if facets and search_index and 'post_filters' in facets[search_index]:
+            post_filters = facets[search_index]['post_filters']
             for param in post_filters:
                 value = request.args.getlist(param)
                 if value:
@@ -213,10 +207,10 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             urlkwargs['q'] = query
 
         # Execute search
-
+        weko_faceted_search_mapping = \
+            FacetSearchSetting.get_activated_facets_mapping()
         for param in params:
-            query_key = current_app.config[
-                'WEKO_FACETED_SEARCH_MAPPING'][param]
+            query_key = weko_faceted_search_mapping[param]
             search = search.post_filter({'terms': {query_key: params[param]}})
 
         search_result = search.execute()
