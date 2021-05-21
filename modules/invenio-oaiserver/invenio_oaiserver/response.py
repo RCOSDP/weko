@@ -312,17 +312,25 @@ def is_exists_doi(param_record):
 
 
 def getrecord(**kwargs):
-    """Create OAI-PMH response for verb Identify."""
+    """Create OAI-PMH response for verb GetRecord."""
     def get_error_code_msg():
         """Get error by type."""
         code = current_app.config.get('OAISERVER_CODE_NO_RECORDS_MATCH')
         msg = current_app.config.get('OAISERVER_MESSAGE_NO_RECORDS_MATCH')
+        return [(code, msg)]
+    def get_no_match_error_msg():
+        """Get no match error."""
+        code='noRecordsMatch'
+        msg = 'The combination of the values of the from, until, ' \
+              'set and metadataPrefix arguments results in an empty list.'
         return [(code, msg)]
 
     record_dumper = serializer(kwargs['metadataPrefix'])
     pid = OAIIDProvider.get(pid_value=kwargs['identifier']).pid
 
     identify = OaiIdentify.get_all()
+    if not identify:
+        return error(get_no_match_error_msg(), **kwargs)
     harvest_public_state, record = WekoRecord.get_record_with_hps(
         pid.object_uuid)
 
@@ -377,9 +385,11 @@ def getrecord(**kwargs):
 def listidentifiers(**kwargs):
     """Create OAI-PMH response for verb ListIdentifiers."""
     e_tree, e_listidentifiers = verb(**kwargs)
+    identify = OaiIdentify.get_all()
     result = get_records(**kwargs)
 
-    if not result.total:
+    if not identify or not identify.outPutSetting \
+            or not result.total:
         return error(get_error_code_msg(), **kwargs)
 
     for record in result.items:
