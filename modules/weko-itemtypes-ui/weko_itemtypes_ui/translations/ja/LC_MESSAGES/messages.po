@@ -401,7 +401,7 @@ msgstr "フォーム(複数)"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/error.html:33
 msgid "You do not even have an itemtype."
-msgstr "該当するアイテムタイプが見つかりませんでした"
+msgstr "アイテムタイプが存在しません"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/error.html:34
 msgid "Go to"

@@ -201,7 +201,7 @@ msgstr ""
 #: weko_groups/views.py:423
 #, python-format
 msgid "User %(user_email)s was removed from %(group_name)s group."
-msgstr ""
+msgstr "Removed User %(user_email)s from %(group_name)s group."
 
 #: weko_groups/views.py:428
 #, python-format

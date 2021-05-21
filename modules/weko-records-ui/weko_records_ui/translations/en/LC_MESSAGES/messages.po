@@ -21,7 +21,7 @@ msgstr ""
 
 #: weko_records_ui/admin.py:73
 msgid "Author flag was updated."
-msgstr ""
+msgstr "Updated Author flag"
 
 #: weko_records_ui/admin.py:137 weko_records_ui/admin.py:146
 #: weko_records_ui/admin.py:155 weko_records_ui/admin.py:353
@@ -79,7 +79,7 @@ msgstr ""
 
 #: weko_records_ui/admin.py:218
 msgid "Semi-automatic Suffix"
-msgstr ""
+msgstr "Formatted Suffix"
 
 #: weko_records_ui/admin.py:235
 msgid "Only allow halfwith 1-bytes character in input"
@@ -119,7 +119,7 @@ msgstr ""
 
 #: weko_records_ui/views.py:479
 msgid "PDF cover page settings have been updated."
-msgstr ""
+msgstr "Updated PDF cover settings"
 
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:34
 msgid "Index"
@@ -532,7 +532,7 @@ msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/box/share.html:41
 msgid "Your record could not be processed by the citation formatter"
-msgstr ""
+msgstr "Could not show by the citation formatter"
 
 #: weko_records_ui/templates/weko_records_ui/box/stats.html:29
 msgid "Views"
@@ -570,7 +570,7 @@ msgstr ""
 #: weko-records-ui/weko_records_ui/templates/weko_records_ui/body_contents.html:146
 #: weko-records-ui/weko_records_ui/templates/weko_records_ui/file_details_contents.html:86
 msgid "The file cannot be downloaded because you do not have permission to view this file."
-msgstr ""
+msgstr "The file cannot be downloaded because you do not have permission to view it."
 
 #: weko-records-ui/weko_records_ui/templates/weko_records_ui/body_contents.html:436
 #: weko-records-ui/weko_records_ui/templates/weko_records_ui/file_details.html:112

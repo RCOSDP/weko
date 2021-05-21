@@ -21,7 +21,7 @@ msgstr ""
 
 #: weko_accounts/admin.py:56
 msgid "Shibboleth flag was updated."
-msgstr "シボレスフラグが更新されました"
+msgstr "Shibboleth設定を更新しました"
 
 #: weko_accounts/admin.py:69
 msgid "Setting"
@@ -29,7 +29,7 @@ msgstr "設定"
 
 #: weko_accounts/admin.py:70
 msgid "Shibboleth"
-msgstr "シボレス"
+msgstr "Shibboleth"
 
 #. NOTE: This is a note to a translator.
 #: weko_accounts/ext.py:41
@@ -46,18 +46,18 @@ msgstr "アカウント認証"
 
 #: weko_accounts/templates/weko_accounts/confirm_user.html:46
 msgid "Login (Visitors with a WEKO-ID)"
-msgstr "ログイン (WEKO-IDをお持ちの方）"
+msgstr "登録済みのIDでログイン"
 
 #: weko_accounts/templates/weko_accounts/confirm_user.html:49
 msgid "Login (New WEKO users)"
-msgstr "ログイン (WEKO初回ログインの方）"
+msgstr "新規IDでログイン"
 
 #: weko_accounts/templates/weko_accounts/confirm_user.html:58
 #: weko_accounts/templates/weko_accounts/login_user.html:52
 #: weko_accounts/templates/weko_accounts/shib_user.html:76
 #, python-format
 msgid "New to %(sitename)s?"
-msgstr "%(sitename)s が初めての方ですか?"
+msgstr "%(sitename)s は初めての方?"
 
 #: weko_accounts/templates/weko_accounts/confirm_user.html:59
 #: weko_accounts/templates/weko_accounts/login_user.html:52
@@ -94,12 +94,12 @@ msgstr "有効期限"
 #: weko_accounts/templates/weko_accounts/setting/shibuser.html:40
 #: weko_accounts/templates/weko_accounts/setting/shibuser.html:53
 msgid "Allow shibboleth user"
-msgstr "シボレスユーザーを許可する"
+msgstr "Shibbolethを有効にする"
 
 #: weko_accounts/templates/weko_accounts/setting/shibuser.html:46
 #: weko_accounts/templates/weko_accounts/setting/shibuser.html:59
 msgid "Deny shibboleth user"
-msgstr "シボレスユーザーを拒否する"
+msgstr "Shibbolethを無効にする"
 
 #: weko_accounts/templates/weko_accounts/setting/shibuser.html:68
 msgid "Save"
@@ -119,11 +119,11 @@ msgstr "ログインに失敗しました。"
 
 #: weko_accounts/templates/weko_accounts/login_shibuser_pattern_1.html
 msgid "Institutional Login for institutions in Japan."
-msgstr "所属機関の学内認証システムでログインする方"
+msgstr "所属機関のIdPでログインする方"
 
 #: weko_accounts/templates/weko_accounts/login_shibuser_pattern_1.html
 msgid "Users who belongs to institution outside Japan, please choose your institution's location."
-msgstr "海外機関所属で、機関の学内認証システムでログインする方は下から地域を選択してください。"
+msgstr "海外機関所属で、機関のIdPでログインする方は地域を選択してください。"
 
 #: weko_accounts/templates/weko_accounts/login_shibuser_pattern_2.html
 msgid "Select Institution"
