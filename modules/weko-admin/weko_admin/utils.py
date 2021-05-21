@@ -575,6 +575,10 @@ class StatisticMail:
             # Build subject mail.
             subject = cls.build_statistic_mail_subject(
                 site_name, stats_date, system_default_language)
+            # Get host URL
+            host_url = current_app.config['THEME_SITEURL']
+            if host_url[-1] == '/':
+                host_url = host_url[:-1]
 
             for k, v in list_mail_data.items():
                 # Do not send mail to user if email in
@@ -594,7 +598,7 @@ class StatisticMail:
                     cls.get_list_statistic_data(
                         v.get("item"),
                         stats_date,
-                        setting.get('root_url')),
+                        host_url),
                     mail_data, system_default_language)
                 )
 

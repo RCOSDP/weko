@@ -25,7 +25,6 @@ from invenio_records_rest.serializers.citeproc import CiteprocSerializer
 from invenio_records_rest.serializers.json import JSONSerializer
 from invenio_records_rest.serializers.response import record_responsify, \
     search_responsify
-from pkg_resources import resource_filename
 
 from .depositschema import DepositSchemaV1
 from .json import WekoJSONSerializer
