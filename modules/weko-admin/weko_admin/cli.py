@@ -26,8 +26,8 @@ from flask.cli import with_appcontext
 from weko_authors.models import AuthorsPrefixSettings
 
 from .models import AdminLangSettings, AdminSettings, ApiCertificate, \
-    BillingPermission, SessionLifetime, StatisticTarget, StatisticUnit, \
-    FacetSearchSetting
+    BillingPermission, FacetSearchSetting, SessionLifetime, StatisticTarget, \
+    StatisticUnit
 
 
 @click.group()

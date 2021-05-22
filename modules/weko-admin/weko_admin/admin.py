@@ -1080,7 +1080,7 @@ class RestrictedAccessSettingView(BaseView):
 
 
 class FacetSearchSettingView(ModelView):
-    """"Item Management - Facet Search view."""
+    """Facet Search view."""
 
     can_create = True
     can_edit = True
@@ -1178,6 +1178,7 @@ class FacetSearchSettingView(ModelView):
             type_str='delete',
             id=id
         )
+
 
 style_adminview = {
     'view_class': StyleSettingView,
