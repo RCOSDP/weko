@@ -30,18 +30,12 @@ def oaiset_setting(info, data):
     """Create/Update oai set setting."""
     def _get_spec(index_info, index_id):
         """Get setspec."""
-        if index_id not in index_info \
-                or not index_info[index_id]['harvest_public_state']:
-            return False, '-1', ''
         index_name = index_info[index_id]['index_name']
         if index_info[index_id]['parent'] != '0':
-            pub_state, setspec, name_path = _get_spec(index_info, index_info[index_id]['parent'])
-            if pub_state:
-                return True, "{}:{}".format(setspec, index_id), "{}->{}".format(name_path, index_name)
-            else:
-                return False, '-1', ''
+            setspec, name_path = _get_spec(index_info, index_info[index_id]['parent'])
+            return "{}:{}".format(setspec, index_id), "{}->{}".format(name_path, index_name)
         else:
-            return True, index_id, index_name
+            return index_id, index_name
 
     try:
         pub_state = data["public_state"] and data["harvest_public_state"]
@@ -49,8 +43,7 @@ def oaiset_setting(info, data):
             spec = str(data["id"])
             description = data["index_name"]
         else:
-            temp_pub_state, setspec, name_path = _get_spec(info, str(data["parent"]))
-            pub_state = pub_state and temp_pub_state
+            setspec, name_path = _get_spec(info, str(data["parent"]))
             spec = "{}:{}".format(setspec, data["id"])
             description = "{}->{}".format(name_path, data["index_name"])
         with db.session.begin_nested():

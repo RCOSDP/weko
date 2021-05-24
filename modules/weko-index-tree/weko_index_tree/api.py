@@ -226,12 +226,17 @@ class Indexes(object):
 
             # create oaiset setting
             from .tasks import oaiset_setting
-            index_info = cls.get_browsing_info()
-            for k, v in index_info.items():
-                v.pop('public_date')
+            all_indexes = cls.get_all_indexes()
+            index_infos = {}
+            for i in all_indexes.items():
+                index_infos[str(i.id)] = {
+                    'index_name': index.index_name,
+                    'parent': str(index.parent),
+                    'harvest_public_state': index.harvest_public_state
+                }
             index_data = dict(index)
             index_data.pop('public_date')
-            oaiset_setting.delay(index_info, index_data)
+            oaiset_setting.delay(index_infos, index_data)
 
             return index
         except Exception as ex:

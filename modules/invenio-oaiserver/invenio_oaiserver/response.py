@@ -193,13 +193,20 @@ def resumption_token(parent, pagination, **kwargs):
 
 def listsets(**kwargs):
     """Create OAI-PMH response for ListSets verb."""
-    e_tree, e_listsets = verb(**kwargs)
+    from weko_index_tree.api import Indexes
 
+    e_tree, e_listsets = verb(**kwargs)
     page = kwargs.get('resumptionToken', {}).get('page', 1)
     size = current_app.config['OAISERVER_PAGE_SIZE']
     oai_sets = OAISet.query.paginate(page=page, per_page=size, error_out=False)
 
     for oai_set in oai_sets.items:
+        index_path = [oai_set.spec.replace(':', '/')]
+        if Indexes.is_public_state([oai_set.id]) is not None \
+                and (not Indexes.is_public_state(index_path)
+                     or not Indexes.get_harvest_public_state(index_path)):
+            continue
+
         e_set = SubElement(e_listsets, etree.QName(NS_OAIPMH, 'set'))
         e_setSpec = SubElement(e_set, etree.QName(NS_OAIPMH, 'setSpec'))
         e_setSpec.text = oai_set.spec
@@ -394,12 +401,36 @@ def listidentifiers(**kwargs):
 
     for record in result.items:
         pid = oaiid_fetcher(record['id'], record['json']['_source'])
-        header(
-            e_listidentifiers,
-            identifier=pid.pid_value,
-            datestamp=record['updated'],
-            sets=record['json']['_source'].get('_oai', {}).get('sets', []),
-        )
+        pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
+        harvest_public_state, record = WekoRecord.get_record_with_hps(
+            pid_object.object_uuid)
+
+        # Harvest is private
+        _is_private_index = is_private_index(record)
+        if not harvest_public_state or\
+                (_is_private_index
+                    and harvest_public_state and is_exists_doi(record)):
+            continue
+        # Item is deleted
+        # or Harvest is public & Item is private
+        # or Harvest is public & Index is private
+        elif is_deleted_workflow(pid_object) or (
+            harvest_public_state and is_private_workflow(record)) or (
+                harvest_public_state and _is_private_index):
+            header(
+                e_listidentifiers,
+                identifier=pid.pid_value,
+                datestamp=record.updated,
+                sets=record['json']['_source'].get('_oai', {}).get('sets', []),
+                deleted=True
+            )
+        else:
+            header(
+                e_listidentifiers,
+                identifier=pid.pid_value,
+                datestamp=record['updated'],
+                sets=record['json']['_source'].get('_oai', {}).get('sets', []),
+            )
 
     resumption_token(e_listidentifiers, result, **kwargs)
     return e_tree
