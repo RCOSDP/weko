@@ -25,7 +25,7 @@ msgstr "OAI-PMH"
 
 #: invenio_oaiserver/admin.py:52
 msgid "Sets"
-msgstr "設定"
+msgstr "Sets"
 
 #: invenio_oaiserver/admin.py:66
 msgid "outPutSet"
@@ -33,14 +33,14 @@ msgstr "出力"
 
 #: invenio_oaiserver/admin.py:67 invenio_oaiserver/models.py:153
 msgid "Emails"
-msgstr "メール"
+msgstr "Eメール"
 
 #: invenio_oaiserver/admin.py:68
 msgid "RepositoryName"
 msgstr "リポジトリ名"
 
 #: invenio_oaiserver/admin.py:69
-msgid "EarliestDatastamp"
+msgid "Earliest Timestamp"
 msgstr "最古データスタンプ"
 
 #: invenio_oaiserver/admin.py:90
@@ -57,11 +57,11 @@ msgstr "セットの識別子です"
 
 #: invenio_oaiserver/models.py:46
 msgid "Long name"
-msgstr "ロングネーム"
+msgstr "Long name"
 
 #: invenio_oaiserver/models.py:47
 msgid "Long name of the set."
-msgstr "セットのロングネームです"
+msgstr "Long name of the set."
 
 #: invenio_oaiserver/models.py:57
 msgid "Description"
@@ -69,15 +69,15 @@ msgstr "説明"
 
 #: invenio_oaiserver/models.py:58
 msgid "Description of the set."
-msgstr "セットの説明です"
+msgstr "Description of the set."
 
 #: invenio_oaiserver/models.py:67
 msgid "Search pattern"
-msgstr "検索パターン"
+msgstr "Search pattern"
 
 #: invenio_oaiserver/models.py:68
 msgid "Search pattern to select records"
-msgstr "レコード選択の検索パターン"
+msgstr "Search pattern to select records"
 
 #: invenio_oaiserver/models.py:144
 msgid "OutPut Setting"
