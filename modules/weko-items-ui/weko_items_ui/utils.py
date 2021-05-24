@@ -495,6 +495,11 @@ def validate_form_input_data(
     item_type = ItemTypes.get_by_id(item_id)
     json_schema = item_type.schema.copy()
 
+    current_app.logger.debug("json_schema")
+    current_app.logger.debug(json_schema)
+    current_app.logger.debug("data")
+    current_app.logger.debug(data)
+
     # Remove excluded item in json_schema
     remove_excluded_items_in_json_schema(item_id, json_schema)
 
@@ -1059,8 +1064,13 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
 
     ret.extend(['.cnri', '.doi_ra', '.doi', '.edit_mode'])
     ret_label.extend(['.CNRI', '.DOI_RA', '.DOI', 'Keep/Upgrade Version'])
-    ret.append('.metadata.pubdate')
-    ret_label.append('公開日' if current_i18n.language == 'ja' else 'PubDate')
+    has_pubdate = len([
+        record for _, record in records.records.items()
+        if record.get('pubdate')
+    ])
+    if has_pubdate:
+        ret.append('.metadata.pubdate')
+        ret_label.append('公開日' if current_i18n.language == 'ja' else 'PubDate')
 
     for recid in recids:
         record = records.records[recid]
@@ -1118,8 +1128,9 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
         ])
 
         records.attr_output[recid].append('')
-        records.attr_output[recid].append(record[
-            'pubdate']['attribute_value'])
+        if has_pubdate:
+            pubdate = record.get('pubdate', {}).get('attribute_value', '')
+            records.attr_output[recid].append(pubdate)
 
     for item_key in item_type.get('table_row'):
         item = table_row_properties.get(item_key)
@@ -1312,16 +1323,20 @@ def write_tsv_files(item_types_data, export_path, list_item_role):
             file.write(tsv_output.getvalue())
 
 
+def check_item_type_name(name):
+    """Check a list of allowed characters in filenames.
+
+    :return: new name
+    """
+    new_name = re.sub(r'[\/:*"<>|\s]', '_', name)
+    return new_name
+
+
 def export_items(post_data):
     """Gather all the item data and export and return as a JSON or BIBTEX.
 
     :return: JSON, BIBTEX
     """
-    def check_item_type_name(name):
-        """Check a list of allowed characters in filenames."""
-        new_name = re.sub(r'[\/:*"<>|\s]', '_', name)
-        return new_name
-
     include_contents = True if \
         post_data.get('export_file_contents_radio') == 'True' else False
     export_format = post_data['export_format_radio']
@@ -1337,7 +1352,8 @@ def export_items(post_data):
         return '', 204
 
     result = {'items': []}
-    temp_path = tempfile.TemporaryDirectory()
+    temp_path = tempfile.TemporaryDirectory(
+        prefix=current_app.config['WEKO_ITEMS_UI_EXPORT_TMP_PREFIX'])
     item_types_data = {}
 
     try:
@@ -2475,35 +2491,6 @@ def get_ignore_item(_item_type_id, item_type_mapping=None,
         key = [_id.replace('[]', '') for _id in sub_id.split('.')]
         ignore_list.append(key)
     return ignore_list
-
-
-def filter_list_item_uuid_has_doi(list_uuid):
-    """Filter list item_uuid has doi.
-
-    @param list_uuid:
-    @return: list_uuid
-    """
-    if not list_uuid:
-        return []
-    with db.session.no_autoflush:
-        p = PersistentIdentifier
-        uuid_cond = p.object_uuid == list_uuid[0] \
-            if len(list_uuid) == 1 else p.object_uuid.in_(list_uuid)
-        query = db.session.query(p).filter(
-            uuid_cond,
-            p.status == PIDStatus.REGISTERED,
-            p.pid_type == 'doi')
-
-        return [str(record.object_uuid) for record in query.all()]
-
-
-def check_item_has_doi(list_uuid):
-    """Check list item_uuid has doi.
-
-    @param list_uuid:
-    @return:
-    """
-    return True if filter_list_item_uuid_has_doi(list_uuid) else False
 
 
 def make_stats_tsv_with_permission(item_type_id, recids,

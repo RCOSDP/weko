@@ -94,6 +94,7 @@ def search():
 
     # add at 1206 for search management
     sort_options, display_number = SearchSetting.get_results_setting()
+
     ts = time.time()
     disply_setting = dict(size=display_number, timestamp=ts)
 
@@ -186,6 +187,13 @@ def search():
             .get('display_facet_search', {}).get('status', False)
         ctx.update({
             "display_facet_search": display_facet_search,
+        })
+
+        # Get index tree setting.
+        display_index_tree = get_search_setting().get("display_control", {})\
+            .get('display_index_tree', {}).get('status', False)
+        ctx.update({
+            "display_index_tree": display_index_tree,
         })
 
         return render_template(

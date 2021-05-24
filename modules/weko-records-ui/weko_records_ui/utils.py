@@ -635,6 +635,7 @@ def get_file_info_list(record):
 
     is_display_file_preview = False
     files = []
+    file_order = 0
     for key in record:
         meta_data = record.get(key)
         if type(meta_data) == dict and \
@@ -685,7 +686,9 @@ def get_file_info_list(record):
                                 p['role_id'] = role
                                 p['role'] = get_data_by_key_array_json(
                                     role, roles, 'name')
+                    f['file_order'] = file_order
                     files.append(f)
+                file_order += 1
     return is_display_file_preview, files
 
 

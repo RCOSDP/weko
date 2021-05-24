@@ -29,7 +29,7 @@ RUN cd /tmp/incubator-pagespeed-ngx-1.13.35.2-stable ; wget https://dl.google.co
 RUN sed -i "s#--modules-path=/usr/lib/nginx/modules#--modules-path=/usr/lib/nginx/modules --add-module=/tmp/headers-more-nginx-module-0.33 --add-module=/tmp/nginx-http-shibboleth-2.0.1 --add-module=/tmp/nginx-http-auth-digest-master --add-module=/tmp/incubator-pagespeed-ngx-1.13.35.2-stable --add-module=/tmp/ngx_cache_purge-2.3 #g" nginx-1.18.0/debian/rules
 RUN cd nginx-1.18.0 && dpkg-buildpackage -b
 
-FROM ubuntu:focal
+FROM ubuntu:focal AS nginx-stage_1
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y openssl wget curl unzip supervisor shibboleth-sp-common shibboleth-sp-utils php-fpm php-curl

@@ -30,7 +30,7 @@ import hashlib
 from datetime import datetime
 
 from flask import current_app, url_for
-from invenio_accounts.models import User
+from invenio_accounts.models import Role, User
 from invenio_db import db
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
@@ -173,6 +173,13 @@ class Community(db.Model, Timestamp):
     id = db.Column(db.String(100), primary_key=True)
     """Id of the community."""
 
+    id_role = db.Column(
+        db.Integer,
+        db.ForeignKey(Role.id),
+        nullable=False
+    )
+    """Owner of the community."""
+
     id_user = db.Column(
         db.Integer,
         db.ForeignKey(User.id),
@@ -227,11 +234,19 @@ class Community(db.Model, Timestamp):
     #
     # Relationships
     #
-    owner = db.relationship(User, backref='communities',
-                            foreign_keys=[id_user])
+    owner = db.relationship(Role, backref='communities',
+                            foreign_keys=[id_role])
+
     """Relation to the owner (User) of the community."""
 
-    index = db.relationship(Index, backref='index', foreign_keys=[root_node_id])
+    owner_user = db.relationship(User, backref='communities',
+                                 foreign_keys=[id_user])
+
+    """Relation to the owner (User) of the community."""
+
+    index = db.relationship(Index,
+                            backref='index',
+                            foreign_keys=[root_node_id])
     """Relation to the owner (Index) of the community."""
 
     def __repr__(self):
@@ -239,10 +254,15 @@ class Community(db.Model, Timestamp):
         return '<Community, ID: {}>'.format(self.id)
 
     @classmethod
-    def create(cls, community_id, user_id, root_node_id, **data):
+    def create(cls, community_id, role_id, root_node_id, **data):
         """Get a community."""
         with db.session.begin_nested():
-            obj = cls(id=community_id, id_user=user_id, root_node_id=root_node_id, **data)
+            obj = cls(
+                id=community_id,
+                id_role=role_id,
+                root_node_id=root_node_id,
+                **data
+            )
             db.session.add(obj)
         return obj
 
@@ -263,10 +283,10 @@ class Community(db.Model, Timestamp):
         return q.one_or_none()
 
     @classmethod
-    def get_by_user(cls, user_id, with_deleted=False):
+    def get_by_user(cls, role_ids, with_deleted=False):
         """Get a community."""
-        query = cls.query.filter_by(
-            id_user=user_id
+        query = cls.query.filter(
+            Community.id_role.in_(role_ids)
         )
         if not with_deleted:
             query = query.filter(cls.deleted_at.is_(None))
