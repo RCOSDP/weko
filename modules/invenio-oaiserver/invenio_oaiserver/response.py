@@ -361,7 +361,6 @@ def getrecord(**kwargs):
             e_record,
             identifier=pid.pid_value,
             datestamp=record.updated,
-            sets=record.get('_oai', {}).get('sets', []),
             deleted=True
         )
         return e_tree
@@ -399,12 +398,13 @@ def listidentifiers(**kwargs):
             or not result.total:
         return error(get_error_code_msg(), **kwargs)
 
-    for record in result.items:
-        pid = oaiid_fetcher(record['id'], record['json']['_source'])
+    for r in result.items:
+        pid = oaiid_fetcher(r['id'], r['json']['_source'])
         pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
         harvest_public_state, record = WekoRecord.get_record_with_hps(
             pid_object.object_uuid)
 
+        set_identifier(record, record)
         # Harvest is private
         _is_private_index = is_private_index(record)
         if not harvest_public_state or\
@@ -420,16 +420,15 @@ def listidentifiers(**kwargs):
             header(
                 e_listidentifiers,
                 identifier=pid.pid_value,
-                datestamp=record.updated,
-                sets=record['json']['_source'].get('_oai', {}).get('sets', []),
+                datestamp=r['updated'],
                 deleted=True
             )
         else:
             header(
                 e_listidentifiers,
                 identifier=pid.pid_value,
-                datestamp=record['updated'],
-                sets=record['json']['_source'].get('_oai', {}).get('sets', []),
+                datestamp=r['updated'],
+                sets=r['json']['_source'].get('_oai', {}).get('sets', []),
             )
 
     resumption_token(e_listidentifiers, result, **kwargs)
@@ -451,7 +450,6 @@ def listrecords(**kwargs):
             e_record,
             identifier=pid_object.pid_value,
             datestamp=rec.updated,
-            sets=rec.get('_oai', {}).get('sets', []),
             deleted=True
         )
 
