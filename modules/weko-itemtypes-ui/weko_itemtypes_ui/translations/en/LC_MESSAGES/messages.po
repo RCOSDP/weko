@@ -204,7 +204,7 @@ msgstr ""
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:132
 msgid "Item Name"
-msgstr ""
+msgstr "Element Name"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:133
 msgid "Attribute"
@@ -287,7 +287,7 @@ msgstr "Schema (Target)"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:89
 msgid "Item type added by system"
-msgstr ""
+msgstr "Element defined by System"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:90
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:100
@@ -443,3 +443,5 @@ msgstr ""
 #~ msgid "Linking"
 #~ msgstr ""
 
+msgid "Element"
+msgstr ""

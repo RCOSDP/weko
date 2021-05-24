@@ -541,7 +541,7 @@ msgstr "フロー"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:57
 msgid "Select"
-msgstr "削除"
+msgstr "選択"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:59
 msgid "Check"
@@ -653,7 +653,7 @@ msgstr ""
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:89
 msgid "Result"
-msgstr "検索結果"
+msgstr "結果"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:90
 msgid "Next"

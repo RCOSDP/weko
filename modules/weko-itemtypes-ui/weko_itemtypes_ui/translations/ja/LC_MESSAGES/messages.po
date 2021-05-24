@@ -492,3 +492,5 @@ msgstr "アイテムタイプの登録"
 #~ msgid "Check"
 #~ msgstr "確認"
 
+msgid "Element"
+msgstr "アイテムタイプ"
