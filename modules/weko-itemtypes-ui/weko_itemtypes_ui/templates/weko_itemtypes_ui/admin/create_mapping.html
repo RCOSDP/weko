@@ -412,6 +412,12 @@
               <span class="glyphicon glyphicon-plus"></span>&nbsp;
               {{_('Add')}}
             </button>
+            <button id="sub_mapping-add2"
+            class="btn btn-success pull-right twentyeight-pixel-right-margin">
+            <span class="glyphicon glyphicon-plus"></span>&nbsp;
+              {{_('Add static value')}}
+            </button>
+
           </div>
         </div>
       </div>
@@ -427,9 +433,13 @@
               <div class="form">
                 <div class="form-group">
                   <select class="form-control"
-                          name="sub_itemtype_list">
-                    <option value=""></option>
+                  name="sub_itemtype_list">
+                  <option value=""></option>
                   </select>
+                  <input type="text" placeholder="{{_('Input static value')}}" name="sub_itemtype_text" class="hide form-control">
+                  <div class="alert alert-danger hide sub_itemtype_text_warning" role="alert">
+                   <strong>{{_(Warning)}}:</strong> {{_('Item type name is blank.')}}
+                  </div>
                 </div>
               </div>
             </div>
@@ -503,6 +513,10 @@
                           name="sub_itemtype_list">
                     <option value=""></option>
                   </select>
+                  <input type="text" placeholder="{{_('Input static value')}}" name="sub_itemtype_text" class="hide form-control">
+                  <div class="alert alert-danger hide sub_itemtype_text_warning" role="alert" >
+                    <strong>{{_(Warning)}}:</strong> {{_('Item type name is blank.')}}
+                  </div>
                 </div>
               </div>
             </div>
@@ -569,7 +583,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </div>  
   </div> <!--End div pre-scrollable-->
 </div>
 <!--<div class="row">

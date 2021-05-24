@@ -440,7 +440,11 @@ class SchemaTree:
             elif isinstance(list_key, list) and len(list_key) == 1:
                 try:
                     key = list_key[0]
-                    if isinstance(atr_vm, dict):
+                    # if isinstance(atr_vm, dict):
+                    if key.startswith("="):
+                        # mapping by fixed value
+                        yield key[1:], id(key)
+                    elif isinstance(atr_vm, dict):
                         if atr_vm.get(key) is None:
                             yield None, id(key)
                         else:
