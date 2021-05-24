@@ -230,15 +230,15 @@ WEKO_RECORDS_UI_CITES_REST_ENDPOINTS = {
 }
 
 OAISERVER_METADATA_FORMATS = {
-    'junii2': {
-        'serializer': (
-            'weko_schema_ui.utils:dumps_oai_etree', {
-                'schema_type': 'junii2',
-            }
-        ),
-        'schema': 'http://irdb.nii.ac.jp/oai/junii2-3-1.xsd',
-        'namespace': 'http://irdb.nii.ac.jp/oai',
-    },
+#    'junii2': {
+#        'serializer': (
+#            'weko_schema_ui.utils:dumps_oai_etree', {
+#                'schema_type': 'junii2',
+#            }
+#        ),
+#        'schema': 'http://irdb.nii.ac.jp/oai/junii2-3-1.xsd',
+#        'namespace': 'http://irdb.nii.ac.jp/oai',
+#    },
     'jpcoar_1.0': {
         'serializer': (
             'weko_schema_ui.utils:dumps_oai_etree', {
