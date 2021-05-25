@@ -1038,6 +1038,9 @@ class WekoDeposit(Deposit):
                 if r.json and not r.json['path']:
                     from weko_records_ui.utils import soft_delete
                     soft_delete(obj_uuid)
+                else:
+                    dep = WekoDeposit(r.json, r)
+                    dep.indexer.update_path(dep, update_revision=False)
             db.session.commit()
         except Exception as ex:
             db.session.rollback()

@@ -182,7 +182,6 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
                 identifier = IdentifierHandle(item_id)
                 identifier.update_idt_registration_metadata(doi_register_val,
                                                             doi_register_typ)
-            update_indexes_public_state(item_id)
             current_app.logger.info(_('DOI successfully registered!'))
     except Exception as ex:
         current_app.logger.exception(str(ex))
@@ -1516,7 +1515,7 @@ def check_an_item_is_locked(item_id=None):
                     return True
         return False
 
-    if not item_id or not inspect().stats():
+    if not item_id or not inspect().ping():
         return False
 
     return check(inspect().active()) or check(inspect().reserved())
@@ -1535,28 +1534,6 @@ def get_account_info(user_id):
             data.get('subitem_displayname')
     else:
         return None, None
-
-
-def update_indexes_public_state(item_id):
-    """Update indexes public state.
-
-    :param item_id: Item id.
-
-    :return:
-    """
-    rm = RecordMetadata.query.filter_by(id=item_id).first()
-    index_id_list = rm.json['path']
-    updated_index_ids = []
-    update_db = False
-    for index_ids in index_id_list:
-        for index_id in index_ids.split('/'):
-            if index_id not in updated_index_ids:
-                updated_index_ids.append(index_id)
-                update_db = True
-                index = Index.query.filter_by(id=index_id).first()
-                index.public_state = True
-    if update_db:
-        db.session.commit()
 
 
 def check_existed_doi(doi_link):
