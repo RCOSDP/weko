@@ -370,7 +370,7 @@ msgstr "読み込み中..."
 
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:30
 msgid "Access"
-msgstr "アクセス制限"
+msgstr "アクセス制御"
 
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:31
 msgid "Open access"
@@ -455,11 +455,11 @@ msgstr "東京大学史料編纂所"
 #: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:36
 #: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:37
 msgid "Target Index"
-msgstr "ターゲットインデックス"
+msgstr "対象インデックス"
 
 #: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:49
 msgid "Delete items of child recursively"
-msgstr "子のアイテムを再帰的に削除します"
+msgstr "子インデックスのアイテムを再帰的に削除します"
 
 #: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:61
 #: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:65
@@ -541,7 +541,7 @@ msgstr "フロー"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:57
 msgid "Select"
-msgstr "削除"
+msgstr "選択"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:59
 msgid "Check"
@@ -653,7 +653,7 @@ msgstr ""
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:89
 msgid "Result"
-msgstr "検索結果"
+msgstr "結果"
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:90
 msgid "Next"

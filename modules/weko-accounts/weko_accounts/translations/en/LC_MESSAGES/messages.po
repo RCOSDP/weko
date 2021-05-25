@@ -21,7 +21,7 @@ msgstr ""
 
 #: weko_accounts/admin.py:56
 msgid "Shibboleth flag was updated."
-msgstr ""
+msgstr "Updated Shibboleth settings"
 
 #: weko_accounts/admin.py:69
 msgid "Setting"
@@ -46,11 +46,11 @@ msgstr ""
 
 #: weko_accounts/templates/weko_accounts/confirm_user.html:44
 msgid "Login (Visitors with a WEKO-ID)"
-msgstr ""
+msgstr "Login as registerd ID"
 
 #: weko_accounts/templates/weko_accounts/confirm_user.html:47
 msgid "Login (New WEKO users)"
-msgstr ""
+msgstr "Login as new ID"
 
 #: weko_accounts/templates/weko_accounts/confirm_user.html:55
 #: weko_accounts/templates/weko_accounts/login_user.html:52
@@ -94,12 +94,12 @@ msgstr ""
 #: weko_accounts/templates/weko_accounts/setting/shibuser.html:40
 #: weko_accounts/templates/weko_accounts/setting/shibuser.html:53
 msgid "Allow shibboleth user"
-msgstr ""
+msgstr "Enable Shibboleth Authentication"
 
 #: weko_accounts/templates/weko_accounts/setting/shibuser.html:46
 #: weko_accounts/templates/weko_accounts/setting/shibuser.html:59
 msgid "Deny shibboleth user"
-msgstr ""
+msgstr "Disable Shibboleth Authentication"
 
 #: weko_accounts/templates/weko_accounts/setting/shibuser.html:68
 msgid "Update"
