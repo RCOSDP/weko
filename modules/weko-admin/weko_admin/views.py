@@ -21,11 +21,12 @@
 """Views for weko-admin."""
 
 import calendar
+import json
 import sys
 from datetime import timedelta
 
-from flask import Blueprint, Response, abort, current_app, flash, jsonify, \
-    render_template, request
+from flask import Blueprint, Response, abort, current_app, flash, json, \
+    jsonify, render_template, request
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
@@ -37,12 +38,13 @@ from weko_records.models import SiteLicenseInfo
 from werkzeug.local import LocalProxy
 
 from .api import send_site_license_mail
-from .models import SessionLifetime, SiteInfo
+from .models import FacetSearchSetting, SessionLifetime, SiteInfo
 from .utils import FeedbackMail, StatisticMail, UsageReport, \
     format_site_info_data, get_admin_lang_setting, \
     get_api_certification_type, get_current_api_certification, \
     get_init_display_index, get_initial_stats_report, get_selected_language, \
-    get_unit_stats_report, save_api_certification, update_admin_lang_setting, \
+    get_unit_stats_report, is_exits_facet, save_api_certification, \
+    store_facet_search_query_in_redis, update_admin_lang_setting, \
     update_restricted_access, validate_certification, validation_site_info
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
@@ -602,3 +604,61 @@ def send_mail_reminder_usage_report():
         result = usage_report.send_reminder_mail(activities_id)
 
     return jsonify(status=result), 200
+
+
+@blueprint_api.route("/facet-search/save", methods=['POST'])
+@login_required
+def save_facet_search():
+    """Save facet search.
+
+    :return:
+    """
+    result = {
+        "status": True,
+        "msg": _("Success")
+    }
+    data = request.get_json()
+    id = data.pop('id', '')
+    if not is_exits_facet(data, id):
+        if id and len(id) > 0:
+            # Edit facet search.
+            if not FacetSearchSetting.update_by_id(id, data):
+                result['status'] = False
+                result['msg'] = _("Failed to update due to server error.")
+        else:
+            # Create facet search.
+            if not FacetSearchSetting.create(data):
+                result['status'] = False
+                result['msg'] = _("Failed to create due to server error.")
+    else:
+        result['status'] = False
+        result['msg'] = _(
+            "The item name/mapping is already exists. Please input other faceted item/mapping.")
+        # Store query facet search in redis.
+    store_facet_search_query_in_redis()
+    return jsonify(result), 200
+
+
+@blueprint_api.route("/facet-search/remove", methods=['POST'])
+@login_required
+def remove_facet_search():
+    """Remove facet search.
+
+    :return:
+    """
+    result = {
+        "status": True,
+        "msg": _("Success")
+    }
+    data = request.get_json()
+    id_facet = json.loads(json.dumps(data))["id"]
+    if id_facet:
+        if not FacetSearchSetting.delete(id_facet):
+            result['status'] = False
+            result['msg'] = _("Failed to delete due to server error.")
+    else:
+        result['status'] = False
+        result['msg'] = _("Failed to delete due to server error.")
+    # Store query facet search in redis.
+    store_facet_search_query_in_redis()
+    return jsonify(result), 200

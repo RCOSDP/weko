@@ -28,6 +28,7 @@ import re
 import sys
 import unicodedata
 from datetime import datetime, timedelta
+from math import ceil
 
 import redis
 from flask import abort, current_app, flash, jsonify, make_response, \
@@ -36,6 +37,7 @@ from flask_admin import BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.contrib.sqla.fields import QuerySelectField
 from flask_admin.form import rules
+from flask_admin.helpers import get_redirect_target
 from flask_babelex import gettext as _
 from flask_login import current_user
 from flask_mail import Attachment
@@ -53,12 +55,12 @@ from wtforms.validators import ValidationError
 
 from .config import WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR, \
     WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR
-from .models import AdminSettings, Identifier, \
+from .models import AdminSettings, FacetSearchSetting, Identifier, \
     LogAnalysisRestrictedCrawlerList, LogAnalysisRestrictedIpAddress, \
     RankingSettings, SearchManagement, StatisticsEmail
 from .permissions import admin_permission_factory
-from .utils import get_redis_cache, get_response_json, get_restricted_access, \
-    get_search_setting
+from .utils import get_facet_search, get_item_mapping_list, get_redis_cache, \
+    get_response_json, get_restricted_access, get_search_setting
 from .utils import get_user_report_data as get_user_report
 from .utils import package_reports, reset_redis_cache, str_to_bool
 
@@ -1077,6 +1079,107 @@ class RestrictedAccessSettingView(BaseView):
         )
 
 
+class FacetSearchSettingView(ModelView):
+    """Facet Search view."""
+
+    can_create = True
+    can_edit = True
+    can_delete = True
+    can_view_details = True
+
+    column_list = (
+        'id',
+        'name_en',
+        'name_jp',
+        'mapping',
+        'active',
+    )
+    column_searchable_list = (
+        'id',
+        'name_en',
+        'name_jp',
+        'mapping',
+        'active',
+    )
+
+    column_filters = (
+        'id',
+        'name_en',
+        'name_jp',
+        'mapping',
+        'active',
+    )
+    column_labels = dict(
+        id=_('ID'),
+        name_en=_('Item Name(EN)'),
+        name_jp=_('Item Name(JP)'),
+        mapping=_('Mapping'),
+        active=_('Active')
+    )
+
+    def search_placeholder(self):
+        """Return search placeholder."""
+        return 'Search'
+
+    @expose('/new/', methods=('GET', 'POST'))
+    def create_view(self):
+        return_url = get_redirect_target() or self.get_url('.index_view')
+        if not self.can_create:
+            return redirect(return_url)
+        facet_search = get_facet_search()
+        facet_search.update({'mapping_list': get_item_mapping_list()})
+        return self.render(
+            current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE'],
+            data=json.dumps(facet_search),
+            type_str='new'
+        )
+
+    @expose('/edit/<int:id>', methods=['GET', 'POST'])
+    def edit_view(self, id=None):
+        return_url = get_redirect_target() or self.get_url('.index_view')
+        if not self.can_edit:
+            return redirect(return_url)
+        facet_search = get_facet_search(id=id)
+        facet_search.update({'mapping_list': get_item_mapping_list()})
+        return self.render(
+            current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE'],
+            data=json.dumps(facet_search),
+            type_str='edit',
+            id=id
+        )
+
+    @expose('/details/<int:id>', methods=['GET', 'POST'])
+    def details_view(self, id=None):
+        return_url = get_redirect_target() or self.get_url('.index_view')
+        if not self.can_edit:
+            return redirect(return_url)
+        facet_search = get_facet_search(id=id)
+        facet_search.update({'mapping_list': get_item_mapping_list()})
+        return self.render(
+            current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE'],
+            data=json.dumps(facet_search),
+            type_str='details',
+            id=id
+        )
+
+    @expose('/delete/', methods=['GET', 'POST'])
+    @expose('/delete/<int:id>', methods=['GET', 'POST'])
+    def delete(self, id=None):
+        """Soft-delete an Facet Search."""
+        return_url = get_redirect_target() or self.get_url('.index_view')
+        if not self.can_delete:
+            return redirect(return_url)
+        if not id:
+            id = request.form.get('id')
+        facet_search = get_facet_search(id=id)
+        return self.render(
+            current_app.config['WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE'],
+            data=json.dumps(facet_search),
+            type_str='delete',
+            id=id
+        )
+
+
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
@@ -1219,6 +1322,14 @@ identifier_adminview = dict(
     endpoint='identifier'
 )
 
+facet_search_adminview = dict(
+    modelview=FacetSearchSettingView,
+    model=FacetSearchSetting,
+    category=_('Setting'),
+    name=_('Faceted Search'),
+    endpoint='facet-search'
+)
+
 __all__ = (
     'style_adminview',
     'report_adminview',
@@ -1235,5 +1346,6 @@ __all__ = (
     'item_export_settings_adminview',
     'site_info_settings_adminview',
     'restricted_access_adminview',
-    'identifier_adminview'
+    'identifier_adminview',
+    'facet_search_adminview'
 )
