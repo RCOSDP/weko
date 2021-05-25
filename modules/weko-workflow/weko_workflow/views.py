@@ -1344,7 +1344,8 @@ def withdraw_confirm(activity_id='0', action_id='0'):
             return jsonify(code=-1,
                            msg=_('Password not provided'))
         wekouser = ShibUser()
-        if wekouser.check_weko_user(current_user.email, password):
+        if password == 'DELETE':
+        #if wekouser.check_weko_user(current_user.email, password):
             activity = WorkActivity()
             item_id = activity.get_activity_detail(activity_id).item_id
             identifier_actionid = get_actionid('identifier_grant')
