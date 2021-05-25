@@ -228,7 +228,7 @@ class Indexes(object):
             from .tasks import oaiset_setting
             all_indexes = cls.get_all_indexes()
             index_infos = {}
-            for i in all_indexes.items():
+            for i in all_indexes:
                 index_infos[str(i.id)] = {
                     'index_name': index.index_name,
                     'parent': str(index.parent),

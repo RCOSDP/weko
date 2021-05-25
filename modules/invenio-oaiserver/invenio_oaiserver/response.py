@@ -202,9 +202,9 @@ def listsets(**kwargs):
 
     for oai_set in oai_sets.items:
         index_path = [oai_set.spec.replace(':', '/')]
-        if Indexes.is_public_state([oai_set.id]) is not None \
-                and (not Indexes.is_public_state(index_path)
-                     or not Indexes.get_harvest_public_state(index_path)):
+        if Indexes.is_public_state([str(oai_set.id)]) is not None \
+                and (not Indexes.is_public_state(index_path.copy())
+                     or not Indexes.get_harvest_public_state(index_path.copy())):
             continue
 
         e_set = SubElement(e_listsets, etree.QName(NS_OAIPMH, 'set'))
