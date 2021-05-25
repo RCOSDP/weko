@@ -11,8 +11,8 @@
 
 .widget {
   border-radius: 0px !important;
-  left: 15px !important;
-  right: 15px !important;
+  left: 5px !important;
+  right: 5px !important;
   margin-top: 5px !important;
   overflow-y: hidden !important;
   overflow-x: auto !important;
@@ -115,7 +115,7 @@
 
 .widget-nav {
   white-space: pre-line !important;
-  margin-top: 25px;
+  margin-top: 0px;
   border-radius: 4px !important;
 }
 
@@ -197,7 +197,7 @@
 .ie .counter-container {
   word-wrap: break-word;
   margin-top: 0px;
-  padding: 15px 0;
+  padding: 5px 0;
 }
 
 .ie .trumbowyg-editor {

@@ -24,6 +24,7 @@ from datetime import datetime
 
 from flask import current_app
 from invenio_db import db
+from invenio_i18n.ext import current_i18n
 from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy_utils.types import JSONType
 from weko_records.models import Timestamp
@@ -201,8 +202,16 @@ class Index(db.Model, Timestamp):
 
     def __str__(self):
         """Representation."""
-        return 'Index <id={0.id}, index_name={0.index_name_english}>'.format(
-            self)
+        if current_i18n.language == 'ja' and self.index_name:
+            return 'Index <id={}, name={}>'.format(
+                self.id,
+                self.index_name.replace(
+                    "\n", r"<br\>").replace("&EMPTY&", ""))
+        else:
+            return 'Index <id={}, name={}>'.format(
+                self.id,
+                self.index_name_english.replace(
+                    "\n", r"<br\>").replace("&EMPTY&", ""))
 
     @classmethod
     def have_children(cls, id):

@@ -42,6 +42,7 @@ from invenio_records_ui.signals import record_viewed
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from simplekv.memory.redisstore import RedisStore
+from weko_accounts.views import _redirect_method
 from weko_admin.utils import get_search_setting
 from weko_deposit.api import WekoRecord
 from weko_deposit.pidstore import get_record_without_version
@@ -61,7 +62,7 @@ from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
 from .permissions import check_content_clickable, check_created_id, \
     check_file_download_permission, check_original_pdf_download_permission, \
-    check_permission_period, get_permission
+    check_permission_period, file_permission_factory, get_permission
 from .utils import get_billing_file_download_permission, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
     hide_item_metadata, is_show_email_of_creator, replace_license_free
@@ -424,6 +425,31 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     :param kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
     """
+    # Check file permision if request is File Information page.
+    if filename:
+        check_file = None
+        _files = record.get_file_data()
+        if not _files:
+            abort(404)
+
+        file_order = int(request.args.get("file_order", -1))
+        if filename == '[No FileName]':
+            if file_order == -1 or file_order >= len(_files):
+                abort(404)
+            check_file = _files[file_order]
+        else:
+            find_filenames = [file for file in _files if file.get(
+                'filename', '') == filename]
+            if not find_filenames:
+                abort(404)
+            check_file = find_filenames[0]
+
+        # Check file contents permission
+        if not file_permission_factory(record, fjson=check_file).can():
+            if not current_user.is_authenticated:
+                return _redirect_method(has_next=True)
+            abort(403)
+
     path_name_dict = {'ja': {}, 'en': {}}
     for navi in record.navi:
         path_arr = navi.path.split('/')
@@ -495,6 +521,27 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         record["relation"] = {}
 
     google_scholar_meta = _get_google_scholar_meta(record)
+
+    # start: experimental implementation 20210502
+    title_name_dict = {'ja': {}, 'en': {}}
+    recstr = etree.tostring(getrecord(
+        identifier=record['_oai'].get('id'),
+        metadataPrefix='jpcoar',
+        verb='getrecord'))
+    et = etree.fromstring(recstr)
+    if et is not None:
+        mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
+        if mtdata is not None:
+            for e in mtdata.findall('dc:title', namespaces=mtdata.nsmap):
+                # print(etree.tostring(e))
+                title_name_dict[e.attrib.get(
+                    '{http://www.w3.org/XML/1998/namespace}lang')] = e.text
+        else:
+            # if jpcoar mapping is unavilable
+            title_name_dict['ja'] = record['title'][0]
+            title_name_dict['en'] = record['title'][0]
+
+    # end: experimental implementation 20210502
 
     pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
     # Check if user has the permission to download original pdf file
@@ -575,6 +622,13 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         "display_facet_search": display_facet_search
     })
 
+    # Get index tree setting.
+    display_index_tree = get_search_setting().get("display_control", {}).get(
+        'display_index_tree', {}).get('status', False)
+    ctx.update({
+        "display_index_tree": display_index_tree
+    })
+
     return render_template(
         template,
         pid=pid,
@@ -604,6 +658,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         open_day_display_flg=open_day_display_flg,
         path_name_dict=path_name_dict,
         is_display_file_preview=is_display_file_preview,
+        # experimental implementation 20210502
+        title_name_dict=title_name_dict,
         **ctx,
         **kwargs
     )
@@ -838,6 +894,8 @@ def preview_able(file_json):
         file_size_limit = current_app.config[
             'WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT'][
             file_type] * 1000000
+        #current_app.logger.debug('file_json: %s' % file_json)
+        #current_app.logger.debug('file_size: %i , file_size_limit: %i' % (file_size,file_size_limit))
         if file_size > file_size_limit:
             return False
     return True

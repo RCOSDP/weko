@@ -43,7 +43,7 @@
     </div>
     <div class="panel-body" style="padding-top: 10px;">
       <div class="row">
-        <div id="detail-item" class="col-sm-8 col-md-8 col-lg-8 col-left">
+        <div id="detail-item" class="col-sm-9 col-md-9 col-lg-9 col-left">
           <div id="record_id" class="hide">{{ record.id }}</div>
 	        <div id="bucket_id" class="hide">{{ record['_buckets']['deposit'] }}</div>
 	  {%- block record_author %}
@@ -96,8 +96,6 @@
                     {%- endif %}
 
                     {%- set access_permission = record | check_file_permission(file) -%}
-                    {%- set file_details_url = url_for('invenio_records_ui.recid_file_details', pid_value=pid.pid_value,
-                        filename=file.filename or '[No FileName]') %}
 
                     <tr class="file-row">
                       <td rowspan="1" class="filecheck-td">
@@ -137,7 +135,7 @@
                             {%- set file_label = file.filename -%}
                           {%- endif -%}
                           <!-- version_id == '' => not upload file, but fill data for 'File Information' -->
-                          {%- if file.version_id -%}
+                          {%- if file.version_id == '' -%}
                             {%- if file.url.label -%}
                               {%- set file_label = file.url.label -%}
                             {%- elif file.url.url -%}
@@ -249,13 +247,11 @@
                       </td>
 
                       <td>
-                        {%- set user_not_permission = False %}
-                        {%- set urlFile_not_permission = "" %}
                         {%- set is_file_name_url = False %}
                         <!-- Show button 'Download' -->
                         {%- if file.version_id %}
                           {%- set download_id = 'download-' + file.version_id %}
-                          {%- if access_permission and billing_file_access_permission -%}
+                          {%- if (access_permission and billing_file_access_permission) or not clickable -%}
                             <!-- User has permission download. -->
                             <a class="action-anchor" href="{{file_url}}">
                               <button class="img-rounded action-button button-sm" id="{{download_id}}">
@@ -265,66 +261,24 @@
                             </a>
                           {%- elif clickable -%}
                             {{ check_download_file(record, file, permission, community, url_for_security, is_file_name_url, file_label) }}
-                          {%- elif not current_user.is_authenticated -%}
-                            <!-- If user not login => redirect to login screen. -->
-                            <!-- Auto click 'Download' button when logged in. -->
-                            {%- set download_param = '?download=download-' + file.version_id %}
-                            {%- set path = request.path + download_param %}
-                            {%- set next_path = url_for_security('login', next=path) %}
-                            <a class="action-anchor" href="{{next_path}}">
-                              <button class="img-rounded action-button button-sm" id="{{download_id}}">
-                                <i class="action-icon fa fa-download"></i>
-                                {{_('Download')}}
-                              </button>
-                            </a>
-                          {%- else -%}
-                            <!-- User do not permission download -->
-                            {%- set user_not_permission = True %}
-                            {%- set urlFile_not_permission = file_url %}
-                            <a class="action-anchor" href="{{file_url}}" onclick="">
-                              <button class="img-rounded action-button button-sm" id="{{download_id}}">
-                                <i class="action-icon fa fa-download"></i>
-                                {{_('Download')}}
-                              </button>
-                            </a>
                           {%- endif -%}
                         {%- endif -%}
                         <!-- Show button 'Information' -->
+                        {%- set file_details_url = url_for('invenio_records_ui.recid_file_details', pid_value=pid.pid_value, filename=file.filename or '[No FileName]') %}
                         {%- if file.filename -%}
                           {% set file_detail_url = file_details_url + '?filename=' + file.filename %}
                         {%- else -%}
-                          {% set file_detail_url = file_details_url + '?file_order=' + (loop.index - 1)|string %}
+                          {% set file_detail_url = file_details_url + '?file_order=' +file.file_order|string %}
                         {%- endif -%}
                         {%- if community -%}
                           {% set file_detail_url = file_detail_url + "&community=" + community.id %}
                         {%- endif -%}
-                          {%- if user_not_permission -%}
-                            <a class="action-anchor" href="{{ urlFile_not_permission }}">
-                              <button class="img-rounded action-button button-sm">
-                                <i class="action-icon fa fa-info-circle fa-lg"></i>
-                                {{_('Information')}}
-                              </button>
-                            </a>
-                          {%- else -%}
-                            {%- if not access_permission and billing_file_access_permission and not current_user.is_authenticated-%}
-                            {%- set file_details_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
-                              filename=file.filename) %}
-                          {% set file_detail_url =  file_details_url + '?filename=' + file.filename %}
-                              <a class="action-anchor" href="{{ file_detail_url }}">
-                                <button class="img-rounded action-button button-sm">
-                                  <i class="action-icon fa fa-info-circle fa-lg"></i>
-                                  {{_('Information')}}
-                                </button>
-                              </a>
-                            {%- else -%}
-                              <a class="action-anchor" href="{{ file_detail_url }}">
-                                <button class="img-rounded action-button button-sm">
-                                  <i class="action-icon fa fa-info-circle fa-lg"></i>
-                                  {{_('Information')}}
-                                </button>
-                              </a>
-                            {%- endif -%}
-                          {%- endif -%}
+                        <a class="action-anchor" href="{{ file_detail_url }}">
+                          <button class="img-rounded action-button button-sm">
+                            <i class="action-icon fa fa-info-circle fa-lg"></i>
+                            {{_('Information')}}
+                          </button>
+                        </a>
                         <!-- Show button 'Preview' -->
                         {%- if file.version_id and file.displaytype == 'preview'-%}
                           {%- set preview_id = 'preview-' + file.version_id %}
@@ -451,7 +405,7 @@
             {% endif %}
           </div>
         </div>
-        <div id="invenio-csl" class="col-sm-4 col-md-4 col-lg-4 col-right">
+        <div id="invenio-csl" class="col-sm-3 col-md-3 col-lg-3 col-right">
           <!-- start demo block -->
           {%- include "weko_records_ui/box/stats.html" %}
           {%- include "weko_records_ui/box/versions.html" %}

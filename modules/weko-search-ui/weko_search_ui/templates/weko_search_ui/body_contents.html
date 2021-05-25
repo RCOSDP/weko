@@ -85,9 +85,11 @@
   >
   <div id="search_res" ng-controller="searchResCtrl">
   {%- block search_index_results %}
+  <div id="body_indexlist">
   <invenio-search-results
    template="{{ url_for('static', filename=config.WEKO_SEARCH_UI_JSTEMPLATE_INDEX) }}">
   </invenio-search-results>
+  </div>
   {%- endblock search_index_results %}
   <div class="panel panel-default" ng-if="typeIndexList() != 'root'">
     <div class="panel-heading clearfix">
@@ -108,7 +110,7 @@
       </div>
       {%- endblock search_count %}
     </div>
-    
+
     <div id="search-result-body" class="panel-body" >
         <div id="index_item_list" ng-if="vm.invenioSearchResults.hits.total">
         <div class="form-inline flow-root">
@@ -149,6 +151,8 @@
                 <option value="16">{{_('Published Year(Descending)')}}</option>
                 <option value="17">{{_('Custom(Ascending)')}}</option>
                 <option value="18">{{_('Custom(Descending)')}}</option>
+                <option value="19">{{_('Relevance(Ascending)')}}</option>
+                <option value="20">{{_('Relevance(Descending)')}}</option>
               </select>
             </div>
             {%- if index_display_format == '1' %}

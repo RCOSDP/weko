@@ -582,7 +582,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             sort_key, sort = SearchSetting.get_default_sort(
                 current_app.config['WEKO_SEARCH_TYPE_KEYWORD'])
             key_fileds = SearchSetting.get_sort_key(sort_key)
-
             if key_fileds:
                 sort_obj = dict()
                 nested_sorting = SearchSetting.get_nested_sorting(sort_key)

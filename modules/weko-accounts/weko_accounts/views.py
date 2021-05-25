@@ -57,7 +57,7 @@ def _has_admin_access():
         .permission_factory(current_admin.admin.index_view).can()
 
 
-def _redirect_method():
+def _redirect_method(has_next=False):
     """Redirect method for instance login to IdP."""
     shib_login = current_app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']
     shib_login_url = current_app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL']
@@ -66,9 +66,14 @@ def _redirect_method():
         'WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED']
 
     if shib_login and idp_login and idp_login_inst:
-        return redirect(shib_login_url.format(request.url_root))
+        url = shib_login_url.format(request.url_root)
+        if has_next:
+            url += '?next=' + request.full_path
+        return redirect(url)
     else:
-        return redirect(url_for_security('login'))
+        return redirect(url_for_security(
+            'login',
+            next=request.full_path if has_next else None))
 
 
 @blueprint.route('/')

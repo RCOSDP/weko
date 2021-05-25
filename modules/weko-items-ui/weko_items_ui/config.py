@@ -188,3 +188,5 @@ WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT = {
 """Limit size of preview-able file."""
 
 WEKO_ITEMS_UI_MULTIPLE_APPROVALS = True
+
+WEKO_ITEMS_UI_EXPORT_TMP_PREFIX = 'weko_export_'

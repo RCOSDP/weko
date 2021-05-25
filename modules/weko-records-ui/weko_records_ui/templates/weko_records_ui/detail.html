@@ -60,7 +60,7 @@
   {%- if not community_id %}
     {{ super() }}
   {%- else%}
-    {{ super() }} 
+    {{ super() }}
   {%- endif%}
 {%- endblock page_header %}
 
@@ -90,19 +90,21 @@
 {% endblock page_body %}
 
 {%- block page_body_main %}
-  <div class="row">
+  <div class="row no-print">
     <div class="col-sm-12 col-md-12 col-lg-12">
       {% include "weko_theme/body_search.html" %}
     </div>
   </div>
   <div class="row" style="height:100%">
-    <div id="detail-index" class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}} hidden-xs" style="height:100%">
-      {% include "weko_theme/body_index.html" %}
+    <div id="detail-index" class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}} no-print" style="height:100%">
+      {% if display_index_tree or (current_user.is_authenticated and config.WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER) %}
+        {% include "weko_theme/body_index.html" %}
+      {% endif %}
       {% if display_facet_search %}
         {% include "weko_search_ui/body_facet_search.html" %}
       {% endif %}
     </div>
-    <div class="col-sm-{{12-width|int}} col-md-{{12-width|int}} col-lg-{{12-width|int}}">
+    <div id="item-main" class="col-sm-{{12-width|int}} col-md-{{12-width|int}} col-lg-{{12-width|int}}">
       {% include "weko_records_ui/body_contents.html" %}
     </div>
   </div>

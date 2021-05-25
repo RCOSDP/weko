@@ -275,7 +275,7 @@ require([
   }
 
   function checkRestrictDoiIndexes(doi = 0, actionButton) {
-    let result = false;
+    let result = true;
     startLoading(actionButton);
     $.ajax({
       url: '/api/items/check_record_doi_indexes/' + item_id + '?doi=' + doi,
@@ -285,9 +285,10 @@ require([
       dataType: "json",
       success: function (data, status) {
         if (-1 === data.code) {
-          result = true;
           $("#restrict_doi_modal").modal("show");
           endLoading(actionButton);
+        } else {
+          result = false;
         }
       },
       error: function (jqXHE, status) {

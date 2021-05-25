@@ -10,6 +10,7 @@
 
 from __future__ import absolute_import, print_function
 
+import six
 from invenio_rest.errors import RESTException
 
 
@@ -21,6 +22,15 @@ class FilesException(RESTException):
 
 class StorageError(FilesException):
     """Exception raised when a storage operation fails."""
+
+    def get_errors(self):
+        """Get errors.
+
+        :returns: A string with the error message.
+        """
+        if isinstance(self.errors, six.string_types):
+            return self.errors
+        return super(StorageError, self).get_errors()
 
 
 class UnexpectedFileSizeError(StorageError):

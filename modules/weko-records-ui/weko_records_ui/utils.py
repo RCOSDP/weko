@@ -170,12 +170,11 @@ def is_billing_item(item_type_id):
     if item_type:
         properties = item_type.schema['properties']
         for meta_key in properties:
-            if 'type' in  properties[meta_key]:
-                if properties[meta_key]['type'] == 'object' and \
-                    'groupsprice' in properties[meta_key]['properties'] or \
-                    properties[meta_key]['type'] == 'array' and 'groupsprice' in \
-                        properties[meta_key]['items']['properties']:
-                    return True
+            if properties[meta_key]['type'] == 'object' and \
+               'groupsprice' in properties[meta_key]['properties'] or \
+                properties[meta_key]['type'] == 'array' and 'groupsprice' in \
+                    properties[meta_key]['items']['properties']:
+                return True
         return False
 
 
@@ -596,13 +595,13 @@ def get_file_info_list(record):
         """Get file size and convert to byte."""
         file_size = p_file.get('filesize', [{}])[0]
         file_size_value = file_size.get('value', 0)
-        defined_unit = {'b': 1, 'kb': 1000, 'mb': 1000000}
+        defined_unit = {'b': 1, 'kb': 1000, 'mb': 1000000,
+                        'gb': 1000000000, 'tb': 1000000000000}
         if type(file_size_value) is str and ' ' in file_size_value:
-            file_size_value = file_size_value.replace(".", "")
             size_num = file_size_value.split(' ')[0]
             size_unit = file_size_value.split(' ')[1]
             unit_num = defined_unit.get(size_unit.lower(), 0)
-            file_size_value = int(size_num) * unit_num
+            file_size_value = float(size_num) * unit_num
         return file_size_value
 
     def set_message_for_file(p_file):
@@ -636,6 +635,7 @@ def get_file_info_list(record):
 
     is_display_file_preview = False
     files = []
+    file_order = 0
     for key in record:
         meta_data = record.get(key)
         if type(meta_data) == dict and \
@@ -686,7 +686,9 @@ def get_file_info_list(record):
                                 p['role_id'] = role
                                 p['role'] = get_data_by_key_array_json(
                                     role, roles, 'name')
+                    f['file_order'] = file_order
                     files.append(f)
+                file_order += 1
     return is_display_file_preview, files
 
 
@@ -901,7 +903,8 @@ def validate_onetime_download_token(
     secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
     download_pattern = current_app.config[
         'WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN']
-    hash_value = download_pattern.format(file_name, record_id, guest_mail, date)
+    hash_value = download_pattern.format(
+        file_name, record_id, guest_mail, date)
     if not oracle10.verify(secret_key, token, hash_value):
         current_app.logger.debug('Validate token error: {}'.format(hash_value))
         return False, token_invalid

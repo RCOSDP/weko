@@ -21,7 +21,6 @@
 """WEKO3 module docstring."""
 
 import datetime
-import json
 import os
 import shutil
 import sys
@@ -44,8 +43,8 @@ from resync.w3c_datetime import str_to_datetime
 from sqlalchemy.exc import SQLAlchemyError
 from weko_deposit.api import ItemTypes, WekoRecord
 from weko_index_tree.api import Indexes
-from weko_items_ui.utils import make_stats_tsv, package_export_file
-from weko_records_ui.permissions import check_file_download_permission
+from weko_items_ui.utils import _export_item, check_item_type_name, \
+    make_stats_tsv, package_export_file
 
 from .config import INVENIO_CAPABILITY_URL, VALIDATE_MESSAGE, WEKO_ROOT_INDEX
 from .models import ChangeListIndexes, ResourceListIndexes
@@ -479,7 +478,8 @@ class ResourceListHandler(object):
         """
         include_contents = True
         result = {'items': []}
-        temp_path = tempfile.TemporaryDirectory()
+        temp_path = tempfile.TemporaryDirectory(
+            prefix=current_app.config['INVENIO_RESOURCESYNCSERVER_TMP_PREFIX'])
         item_types_data = {}
         if not self._validation(record_id):
             return None
@@ -491,7 +491,7 @@ class ResourceListHandler(object):
             # Double check for limits
             record_path = export_path + '/recid_' + str(record_id)
             os.makedirs(record_path, exist_ok=True)
-            _record, exported_item = _export_item(
+            exported_item, list_item_role = _export_item(
                 record_id,
                 None,
                 include_contents,
@@ -503,12 +503,12 @@ class ResourceListHandler(object):
             item_type_id = exported_item.get('item_type_id')
             item_type = ItemTypes.get_by_id(item_type_id)
             if not item_types_data.get(item_type_id):
-                item_types_data[item_type_id] = {}
-
+                item_type_name = check_item_type_name(
+                    item_type.item_type_name.name)
                 item_types_data[item_type_id] = {
                     'item_type_id': item_type_id,
                     'name': '{}({})'.format(
-                        item_type.item_type_name.name,
+                        item_type_name,
                         item_type_id),
                     'root_url': request.url_root,
                     'jsonschema': 'items/jsonschema/' + item_type_id,
@@ -523,7 +523,8 @@ class ResourceListHandler(object):
             for item_type_id in item_types_data:
                 headers, records = make_stats_tsv(
                     item_type_id,
-                    item_types_data[item_type_id]['recids'])
+                    item_types_data[item_type_id]['recids'],
+                    list_item_role)
                 keys, labels, is_systems, options = headers
                 item_types_data[item_type_id]['recids'].sort()
                 item_types_data[item_type_id]['keys'] = keys
@@ -554,6 +555,7 @@ class ResourceListHandler(object):
             current_app.logger.error('-' * 60)
             traceback.print_exc(file=sys.stdout)
             current_app.logger.error('-' * 60)
+            return None
 
         return send_file(export_path + '.zip')
 
@@ -1122,7 +1124,7 @@ class ChangeListHandler(object):
         :param record_id: Identifier of record
         :return: True if record has register index_id
         """
-        from .utils import get_real_path, get_pid
+        from .utils import get_pid, get_real_path
         if self.repository_id == current_app.config.get(
             "WEKO_ROOT_INDEX",
             WEKO_ROOT_INDEX
@@ -1148,7 +1150,8 @@ class ChangeListHandler(object):
         """
         include_contents = True
         result = {'items': []}
-        temp_path = tempfile.TemporaryDirectory()
+        temp_path = tempfile.TemporaryDirectory(
+            prefix=current_app.config['INVENIO_RESOURCESYNCSERVER_TMP_PREFIX'])
         item_types_data = {}
         if not self._is_record_in_index(record_id):
             return None
@@ -1160,7 +1163,7 @@ class ChangeListHandler(object):
             # Double check for limits
             record_path = export_path + '/recid_' + str(record_id)
             os.makedirs(record_path, exist_ok=True)
-            _record, exported_item = _export_item(
+            exported_item, list_item_role = _export_item(
                 record_id,
                 None,
                 include_contents,
@@ -1172,12 +1175,12 @@ class ChangeListHandler(object):
             item_type_id = exported_item.get('item_type_id')
             item_type = ItemTypes.get_by_id(item_type_id)
             if not item_types_data.get(item_type_id):
-                item_types_data[item_type_id] = {}
-
+                item_type_name = check_item_type_name(
+                    item_type.item_type_name.name)
                 item_types_data[item_type_id] = {
                     'item_type_id': item_type_id,
                     'name': '{}({})'.format(
-                        item_type.item_type_name.name,
+                        item_type_name,
                         item_type_id),
                     'root_url': request.url_root,
                     'jsonschema': 'items/jsonschema/' + item_type_id,
@@ -1192,7 +1195,8 @@ class ChangeListHandler(object):
             for item_type_id in item_types_data:
                 headers, records = make_stats_tsv(
                     item_type_id,
-                    item_types_data[item_type_id]['recids'])
+                    item_types_data[item_type_id]['recids'],
+                    list_item_role)
                 keys, labels, is_systems, options = headers
                 item_types_data[item_type_id]['recids'].sort()
                 item_types_data[item_type_id]['keys'] = keys
@@ -1327,44 +1331,3 @@ class ChangeListHandler(object):
         except BaseException as ex:
             current_app.logger.debug(ex)
             return []
-
-
-def _export_item(record_id,
-                 export_format,
-                 include_contents,
-                 tmp_path=None,
-                 records_data=None):
-    """Exports files for record according to view permissions."""
-    exported_item = {}
-    record = WekoRecord.get_record_by_pid(record_id)
-
-    if record:
-        exported_item['record_id'] = record.id
-        exported_item['name'] = 'recid_{}'.format(record_id)
-        exported_item['files'] = []
-        exported_item['path'] = 'recid_' + str(record_id)
-        exported_item['item_type_id'] = record.get('item_type_id')
-        if not records_data:
-            records_data = record
-
-        # Create metadata file.
-        with open('{}/{}_metadata.json'.format(tmp_path,
-                                               exported_item['name']),
-                  'w',
-                  encoding='utf8') as output_file:
-            json.dump(records_data, output_file, indent=2,
-                      sort_keys=True, ensure_ascii=False)
-        # First get all of the files, checking for permissions while doing so
-        if include_contents:
-            # Get files
-            for file in record.files:  # TODO: Temporary processing
-                if check_file_download_permission(record, file.info()):
-                    exported_item['files'].append(file.info())
-                    # TODO: Then convert the item into the desired format
-                    if file:
-                        file_buffered = file.obj.file.storage().open()
-                        temp_file = open(tmp_path + '/' + file.obj.basename, 'wb')
-                        temp_file.write(file_buffered.read())
-                        temp_file.close()
-
-    return record, exported_item
