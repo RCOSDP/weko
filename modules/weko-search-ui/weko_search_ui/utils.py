@@ -436,11 +436,12 @@ def check_import_items(file_name: str, file_content: str,
 
     """
     file_content_decoded = base64.b64decode(file_content)
-    temp_path = tempfile.TemporaryDirectory()
+    tmp_prefix = current_app.config['WEKO_SEARCH_UI_IMPORT_TMP_PREFIX']
+    temp_path = tempfile.TemporaryDirectory(prefix=tmp_prefix)
     save_path = tempfile.gettempdir()
     import_path = temp_path.name + '/' + \
         datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
-    data_path = save_path + '/' + \
+    data_path = save_path + '/' + tmp_prefix + \
         datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
     result = {'data_path': data_path}
 
@@ -1233,7 +1234,7 @@ def remove_temp_dir(path):
     :return
 
     """
-    shutil.rmtree(str(path.replace("/data", "")))
+    shutil.rmtree(path)
 
 
 def handle_item_title(list_record):
@@ -2483,7 +2484,8 @@ def export_all(root_url):
                 current_app.logger.error(ex)
                 continue
 
-    temp_path = tempfile.TemporaryDirectory()
+    temp_path = tempfile.TemporaryDirectory(
+        prefix=current_app.config['WEKO_ITEMS_UI_EXPORT_TMP_PREFIX'])
     try:
         export_path = temp_path.name + '/' + \
             datetime.utcnow().strftime("%Y%m%d%H%M%S")

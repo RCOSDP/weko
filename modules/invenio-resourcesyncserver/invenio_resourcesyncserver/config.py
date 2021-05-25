@@ -44,3 +44,5 @@ WEKO_ROOT_INDEX = 0
 VALIDATE_MESSAGE = 'Selected repository has been registered already. ' \
     'Please select another repository.'
 """Validate message."""
+
+INVENIO_RESOURCESYNCSERVER_TMP_PREFIX = 'weko_resync_'
