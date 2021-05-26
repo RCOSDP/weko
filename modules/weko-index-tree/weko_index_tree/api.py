@@ -230,9 +230,9 @@ class Indexes(object):
             index_infos = {}
             for i in all_indexes:
                 index_infos[str(i.id)] = {
-                    'index_name': index.index_name,
-                    'parent': str(index.parent),
-                    'harvest_public_state': index.harvest_public_state
+                    'index_name': i.index_name,
+                    'parent': str(i.parent),
+                    'harvest_public_state': i.harvest_public_state
                 }
             index_data = dict(index)
             index_data.pop('public_date')
