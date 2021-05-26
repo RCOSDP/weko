@@ -21,23 +21,23 @@ msgstr ""
 
 #: weko_admin/admin.py:107
 msgid "deny access"
-msgstr ""
+msgstr "Denied access"
 
 #: weko_admin/admin.py:291
 msgid "No. Of File Downloads"
-msgstr ""
+msgstr "Number of File Downloads"
 
 #: weko_admin/admin.py:292
 msgid "Open-Access No. Of File Downloads"
-msgstr ""
+msgstr "Number of Open-Access File Downloads"
 
 #: weko_admin/admin.py:294
 msgid "No. Of File Previews"
-msgstr ""
+msgstr "Number of File Previews"
 
 #: weko_admin/admin.py:295
 msgid "Open-Access No. Of File Previews"
-msgstr ""
+msgstr "Number of Open-Access File Previews"
 
 #: weko_admin/admin.py:301
 msgid "Aggregation Monh"
@@ -53,15 +53,15 @@ msgstr ""
 
 #: weko_admin/admin.py:305
 msgid "No. Of Times Downloaded/Viewed"
-msgstr ""
+msgstr "Number of  Downloads/Views"
 
 #: weko_admin/admin.py:305
 msgid "Non-Logged In User"
-msgstr ""
+msgstr "Non-Logged in User"
 
 #: weko_admin/admin.py:306
 msgid "Logged In User"
-msgstr ""
+msgstr "Logged in User"
 
 #: weko_admin/admin.py:306
 msgid "Site License"
@@ -304,7 +304,7 @@ msgstr ""
 
 #: weko_admin/templates/weko_admin/site_license.html:139
 msgid "The range of ipAddress is not correct"
-msgstr ""
+msgstr "IP Address range is not correct"
 
 #: weko_admin/templates/weko_admin/site_license.html:145
 #: weko_admin/templates/weko_admin/site_license.html:156
@@ -358,7 +358,7 @@ msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/report.html:49
 msgid "Number of items registered"
-msgstr ""
+msgstr "項目タイトルなのでそのままとする"
 
 #: weko_admin/templates/weko_admin/admin/report.html:56
 msgid "Total number of items registered:"
@@ -366,7 +366,7 @@ msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/report.html:64
 msgid "Number of open items registered:"
-msgstr ""
+msgstr "Number of public items registered:"
 
 #: weko_admin/templates/weko_admin/admin/report.html:72
 msgid "Number of private items registered:"
@@ -480,7 +480,7 @@ msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/web_api_account.html:45
 msgid "CrossRef Query Services Account"
-msgstr ""
+msgstr "Crossref Query Services Account"
 
 #: weko_admin/templates/weko_admin/settings/lifetime.html:30
 #, fuzzy
@@ -557,23 +557,23 @@ msgstr "Update"
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:41
 msgid "Automatic Transmission ON/OFF"
-msgstr ""
+msgstr "Feedback email feature"
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:42
 msgid "Send"
-msgstr ""
+msgstr "Enable"
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:43
 msgid "Do not send"
-msgstr ""
+msgstr "Disable"
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:44
 msgid "Send exclusion target persons"
-msgstr ""
+msgstr "Exclusion from sending"
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:45
 msgid "From author DB"
-msgstr ""
+msgstr "Input from author DB"
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:46
 msgid "Delete"
@@ -593,7 +593,7 @@ msgstr ""
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:50
 msgid "Duplicate Email Addresses."
-msgstr ""
+msgstr "Duplicated Email Addresses."
 
 #: weko_admin/utils.py:50
 msgid "Send logs"
@@ -621,7 +621,7 @@ msgstr ""
 
 #: weko_admin/utils.py:50
 msgid "List of authors who failed to send"
-msgstr ""
+msgstr "List of failed feedback emails"
 
 #: weko_admin/utils.py:50
 msgid "Name"
@@ -637,7 +637,7 @@ msgstr ""
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:59
 msgid "There is no data."
-msgstr ""
+msgstr "No search result"
 
 
 #: weko_admin/template/weko_admin/admin/site_info.html:59

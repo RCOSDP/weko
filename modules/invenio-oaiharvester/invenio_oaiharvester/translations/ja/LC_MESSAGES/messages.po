@@ -61,7 +61,7 @@ msgstr "失敗"
 
 #: invenio_oaiharvester/api.py:189
 msgid "harvester running status"
-msgstr "harvester 実行状況"
+msgstr "ハーベスタ実行状況"
 
 #: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:29
 msgid "Organization Name"
@@ -73,7 +73,7 @@ msgstr "処理結果"
 
 #: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:44
 msgid "Repository Name"
-msgstr "対象リポジトリ"
+msgstr "対象リポジトリ名"
 
 #: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:49
 msgid "Start Time"
@@ -121,7 +121,7 @@ msgstr ""
 
 #: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:104
 msgid "Metadata Prefix"
-msgstr "メタデータ形式"
+msgstr "metadataPrefix"
 
 #: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:109
 msgid "Target Index.Index Name"

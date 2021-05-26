@@ -29,7 +29,7 @@ from typing import Dict, Tuple, Union
 
 import redis
 import requests
-from flask import current_app, request, url_for
+from flask import current_app, request
 from flask_babelex import gettext as __
 from flask_babelex import lazy_gettext as _
 from invenio_accounts.models import Role, userrole
@@ -538,7 +538,11 @@ class StatisticMail:
     @classmethod
     def send_mail_to_all(cls, list_mail_data=None, stats_date=None):
         """Send mail to all setting email."""
+        from weko_search_ui.utils import get_feedback_mail_list
+        from weko_workflow.utils import get_site_info_name
+
         # Load setting:
+        system_default_language = get_system_default_language()
         setting = FeedbackMail.get_feed_back_email_setting()
         if not setting.get('is_sending_feedback') and not stats_date:
             return
@@ -552,43 +556,58 @@ class StatisticMail:
         failed_mail = 0
         total_mail = 0
         try:
-            from weko_theme import config as theme_config
             if not list_mail_data:
-                from weko_search_ui.utils import get_feedback_mail_list, \
-                    parse_feedback_mail_data
-                feedback_mail_data = get_feedback_mail_list()
-                if not feedback_mail_data:
+                list_mail_data = get_feedback_mail_list()
+                if not list_mail_data:
                     return
-                list_mail_data = parse_feedback_mail_data(
-                    feedback_mail_data)
-            title = theme_config.THEME_SITENAME
+
+            # Get site name.
+            site_en, site_ja = get_site_info_name()
+            # Set default site name.
+            site_name = current_app.config[
+                'WEKO_ADMIN_FEEDBACK_MAIL_DEFAULT_SUBJECT']
+            if system_default_language == 'ja' and site_ja:
+                site_name = site_ja
+            elif system_default_language == 'en' and site_en:
+                site_name = site_en
+            # Build subject mail.
+            subject = cls.build_statistic_mail_subject(
+                site_name, stats_date, system_default_language)
+            # Get host URL
+            host_url = current_app.config['THEME_SITEURL']
+            if host_url[-1] == '/':
+                host_url = host_url[:-1]
+
             for k, v in list_mail_data.items():
+                # Do not send mail to user if email in
+                # "Send exclusion target persons" list.
+                user_mail = str(k)
+                if user_mail in banned_mail:
+                    continue
+
                 mail_data = {
                     'user_name': cls.get_author_name(
-                        str(k),
+                        user_mail,
                         v.get('author_id')),
-                    'organization': title,
+                    'organization': site_name,
                     'time': stats_date
                 }
-                recipient = str(k)
-                subject = str(
-                    cls.build_statistic_mail_subject(title, stats_date))
                 body = str(cls.fill_email_data(
                     cls.get_list_statistic_data(
-                        v.get("item"),
+                        v.get('items'),
                         stats_date,
-                        setting.get('root_url')),
-                    mail_data))
-                if recipient in banned_mail:
-                    continue
-                send_result = cls.send_mail(recipient, body, subject)
+                        host_url),
+                    mail_data, system_default_language)
+                )
+
+                send_result = cls.send_mail(user_mail, body, subject)
                 total_mail += 1
                 if not send_result:
                     FeedbackMailFailed.create(
                         session,
                         id,
                         v.get('author_id'),
-                        str(k)
+                        user_mail
                     )
                     failed_mail += 1
         except Exception as ex:
@@ -793,11 +812,13 @@ class StatisticMail:
         }
 
     @classmethod
-    def fill_email_data(cls, statistic_data, mail_data):
+    def fill_email_data(cls, statistic_data, mail_data,
+                        system_default_language):
         """Fill data to template.
 
         Arguments:
             mail_data {string} -- data for mail content.
+            system_default_language {string} -- default language.
 
         Returns:
             string -- mail content
@@ -805,9 +826,9 @@ class StatisticMail:
         """
         current_path = os.path.dirname(os.path.abspath(__file__))
         file_name = 'statistic_mail_template_en.tpl'  # default template file
-        if get_system_default_language() == 'ja':
+        if system_default_language == 'ja':
             file_name = 'statistic_mail_template_ja.tpl'
-        elif get_system_default_language() == 'en':
+        elif system_default_language == 'en':
             file_name = 'statistic_mail_template_en.tpl'
 
         file_path = os.path.join(
@@ -820,7 +841,7 @@ class StatisticMail:
             data = file.read()
 
         data_content = cls.build_mail_data_to_string(
-            statistic_data.get('data'))
+            statistic_data.get('data'), system_default_language)
         summary_data = statistic_data.get('summary')
         mail_data = {
             'user_name': mail_data.get('user_name'),
@@ -859,30 +880,36 @@ class StatisticMail:
         return MailSettingView.send_statistic_mail(rf)
 
     @classmethod
-    def build_statistic_mail_subject(cls, title, send_date):
+    def build_statistic_mail_subject(cls, title, send_date,
+                                     system_default_language):
         """Build mail subject.
 
         Arguments:
             title {string} -- The site name
             send_date {string} -- statistic time
+            system_default_language {string} -- default language.
 
         Returns:
             string -- The mail subject
 
         """
         result = '[' + title + ']' + send_date
-        if get_system_default_language() == 'ja':
+        if system_default_language == 'ja':
             result += ' 利用統計レポート'
-        elif get_system_default_language() == 'en':
+        elif system_default_language == 'en':
+            result += ' Usage Statistics Report'
+        else:
+            # default mail subject.
             result += ' Usage Statistics Report'
         return result
 
     @classmethod
-    def build_mail_data_to_string(cls, data):
+    def build_mail_data_to_string(cls, data, system_default_language):
         """Build statistic data as string.
 
         Arguments:
             data {dictionary} -- mail data
+            system_default_language {str} -- default language.
 
         Returns:
             string -- statistic data as string
@@ -897,7 +924,7 @@ class StatisticMail:
             for str_count in item['file_download']:
                 file_down_str += '    ' + str_count + '\n'
             result += '----------------------------------------\n'
-            if get_system_default_language() == 'ja':
+            if system_default_language == 'ja':
                 result += '[タイトル] : ' + item['title'] + '\n'
                 result += '[URL] : ' + item['url'] + '\n'
                 result += '[閲覧回数] : ' + str(
@@ -1376,6 +1403,8 @@ class FeedbackMail:
             dictionary -- resend mail data
 
         """
+        from weko_search_ui.utils import get_feedback_mail_list
+
         result = {
             'data': dict(),
             'stats_date': ''
@@ -1389,13 +1418,9 @@ class FeedbackMail:
         if len(list_failed_mail) == 0:
             return None
 
-        from weko_search_ui.utils import get_feedback_mail_list, \
-            parse_feedback_mail_data
-        feedback_mail_data = get_feedback_mail_list()
-        if not feedback_mail_data:
+        list_mail_data = get_feedback_mail_list()
+        if not list_mail_data:
             return None
-        list_mail_data = parse_feedback_mail_data(
-            feedback_mail_data)
 
         resend_mail_data = dict()
         for k, v in list_mail_data.items():
@@ -1657,7 +1682,8 @@ def get_restricted_access(key: str = None):
     """
     restricted_access = AdminSettings.get('restricted_access', False)
     if not restricted_access:
-        restricted_access = current_app.config['WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
+        restricted_access = current_app.config[
+            'WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
     if not key:
         return restricted_access
     elif key in restricted_access:
@@ -1738,7 +1764,7 @@ class UsageReport:
     def __init__(self):
         """Initialize the usage report."""
         from weko_workflow.api import WorkActivity
-        from weko_workflow.models import ActionStatusPolicy, GuestActivity
+        from weko_workflow.models import ActionStatusPolicy
         from weko_workflow.utils import generate_guest_activity_token_value, \
             process_send_mail
         self.__activities_id = []

@@ -45,11 +45,11 @@ msgstr ""
 
 #: weko_workflow/admin.py:228 weko_workflow/admin.py:237
 msgid "WorkFlow"
-msgstr ""
+msgstr "Workflow"
 
 #: weko_workflow/admin.py:229
 msgid "WorkFlow List"
-msgstr ""
+msgstr "Workflow List"
 
 #: weko_workflow/admin.py:238
 msgid "Flow List"
@@ -97,7 +97,7 @@ msgstr "Canceled"
 
 #: weko_workflow/models.py:130
 msgid "activity_active"
-msgstr "Active"
+msgstr "Start"
 
 #: weko_workflow/models.py:132
 msgid "activity_completed"
@@ -105,7 +105,7 @@ msgstr "Completed"
 
 #: weko_workflow/models.py:134
 msgid "activity_stopped"
-msgstr "StoppedByUser"
+msgstr "Stopped"
 
 #: weko_workflow/models.py:136
 msgid "activity_canceled"
@@ -113,11 +113,11 @@ msgstr "Canceled"
 
 #: weko_workflow/models.py:138
 msgid "activity_doing"
-msgstr "InProgress"
+msgstr "Doing"
 
 #: weko_workflow/models.py:140
 msgid "activity_error"
-msgstr "ErrorOccurred"
+msgstr "Error"
 
 #: weko_workflow/models.py:180
 msgid "Available"
@@ -129,7 +129,7 @@ msgstr ""
 
 #: weko_workflow/models.py:184
 msgid "Making"
-msgstr ""
+msgstr "Creating"
 
 #: weko_workflow/models.py:222
 msgid "Created"
@@ -162,15 +162,15 @@ msgstr ""
 
 #: weko_workflow/models.py:333
 msgid "Record has be created."
-msgstr ""
+msgstr "Created record"
 
 #: weko_workflow/models.py:334
 msgid "Record has be updated."
-msgstr ""
+msgstr "Updated record"
 
 #: weko_workflow/models.py:335
 msgid "Record has be deleted."
-msgstr ""
+msgstr "Deleted record"
 
 #: weko_workflow/models.py:343
 msgid "Status Policy"
@@ -390,7 +390,7 @@ msgstr ""
 
 #: weko_workflow/templates/weko_workflow/identifier_grant.html:67
 msgid "DOI has not been entered."
-msgstr ""
+msgstr "DOI not provided"
 
 #~ msgid "item type"
 #~ msgstr ""

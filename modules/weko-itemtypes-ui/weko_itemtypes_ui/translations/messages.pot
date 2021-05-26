@@ -394,3 +394,5 @@ msgstr ""
 msgid "Register Itemtype"
 msgstr ""
 
+msgid "Element"
+msgstr ""
