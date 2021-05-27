@@ -49,6 +49,8 @@ from .models import HarvestLogs, HarvestSettings
 from .signals import oaiharvest_finished
 from .utils import ItemEvents, get_identifier_names
 
+from collections import OrderedDict
+
 logger = get_task_logger(__name__)
 
 
@@ -208,6 +210,18 @@ def process_item(record, harvesting, counter):
         json = mapper.map()
         json['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
         dep['_deposit']['status'] = 'draft'
+        
+        # temporary fix for JDcat
+        if json['$schema'] == '/items/jsonschema/14' and 'item_1588260046718' in json:
+            for i in json['item_1588260046718']:
+                i['subitem_1592380784883']='Other'
+
+        if json['$schema'] == '/items/jsonschema/14' and 'item_1592405734122' in json:
+            #current_app.logger.debug('json: %s' % json['item_1551264917614'])
+            for i in json['item_1592405734122']:
+              i['subitem_1591320918354']='Distributor'
+        # end temporary fix
+
         dep.update({'actions': 'publish', 'index': indexes}, json)
         dep.commit()
         dep.publish()
@@ -228,14 +242,15 @@ def process_item(record, harvesting, counter):
             if not pid_obj:
                 idt.register_pidstore(pid_type, it['identifier'])
 
-        if OAIHARVESTER_ENABLE_ITEM_VERSIONING:
+        if OAIHARVESTER_ENABLE_ITEM_VERSIONING or (event==ItemEvents.CREATE):
             with current_app.test_request_context() as ctx:
                 first_ver = dep.newversion(pid)
                 first_ver.publish()
 
     harvesting.item_processed = harvesting.item_processed + 1
     db.session.commit()
-
+    current_app.logger.debug('[{0}] [{1}] Finish {2} {3}'.format(
+        0, 'Harvesting', mapper.identifier(),event))
     if event == ItemEvents.CREATE:
         event_counter('created_items', counter)
     elif event == ItemEvents.UPDATE:

@@ -87,6 +87,11 @@ def record_from_pid(pid_value):
         current_app.logger.debug(e)
         return {}
 
+@blueprint.app_template_filter()
+def url_to_link(field):
+    if field.startswith("http"):
+            return True
+    return False
 
 @blueprint.app_template_filter()
 def pid_value_version(pid_value):

@@ -34,6 +34,8 @@ from weko_records.models import ItemType
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import get_options_and_order_list
 
+from flask import current_app
+
 from .config import OAIHARVESTER_DOI_PREFIX, OAIHARVESTER_HDL_PREFIX, OAIHARVESTER_VERIFY_TLS_CERTIFICATE
 
 DEFAULT_FIELD = [
@@ -1378,6 +1380,7 @@ class DDIMapper(BaseMapper):
                     temp_lst = []
                     for key_pair in keys:
                         for mapping_key, item_sub_key in key_pair.items():
+                            #current_app.logger.debug('mapping key:  %s , item_sub_key:  %s' % (mapping_key,item_sub_key))
                             item_sub_key = get_same_key_from_form(item_sub_key)
                             sub_keys = item_sub_key.split('.')
                             root_key = sub_keys[0]
