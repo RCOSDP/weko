@@ -714,7 +714,8 @@ class SchemaTree:
                                     # @attributes
                                     for key, val in v.get(self._atr,
                                                           {}).items():
-                                        val[0] = [val for idx, val
+                                        if(type(val[0]) is not str):
+                                          val[0] = [val for idx, val
                                                   in enumerate(val[0])
                                                   if idx in lst_val_idx]
                             else:
