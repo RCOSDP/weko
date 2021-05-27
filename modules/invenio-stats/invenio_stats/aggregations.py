@@ -360,7 +360,7 @@ class StatAggregator(object):
                     _source=aggregation_data
                 )
                 # Save stats aggregation into Database.
-                StatsAggregation.save(rtn_data, delete=True)
+                # StatsAggregation.save(rtn_data, delete=True)
 
                 yield rtn_data
 
