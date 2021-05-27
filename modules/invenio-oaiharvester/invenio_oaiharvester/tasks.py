@@ -228,13 +228,16 @@ def process_item(record, harvesting, counter):
             if not pid_obj:
                 idt.register_pidstore(pid_type, it['identifier'])
 
-        if OAIHARVESTER_ENABLE_ITEM_VERSIONING:
+        if OAIHARVESTER_ENABLE_ITEM_VERSIONING or (event == ItemEvents.CREATE):
             with current_app.test_request_context() as ctx:
                 first_ver = dep.newversion(pid)
                 first_ver.publish()
 
     harvesting.item_processed = harvesting.item_processed + 1
     db.session.commit()
+
+    current_app.logger.debug('[{0}] [{1}] Finish {2} {3}'.format(
+        0, 'Harvesting', mapper.identifier(), event))
 
     if event == ItemEvents.CREATE:
         event_counter('created_items', counter)
