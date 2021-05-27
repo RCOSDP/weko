@@ -1052,7 +1052,6 @@ def feedback_email_search_factory(self, search):
                        "relation_version_is_last:true " \
             .format(current_app.config['INDEXER_DEFAULT_DOC_TYPE'])
         query_q = {
-            "size": 0,
             "query": {
                 "bool": {
                     "must": [
@@ -1090,11 +1089,6 @@ def feedback_email_search_factory(self, search):
                             "terms": {
                                 "field": "feedback_mail_list.email",
                                 "size": config.WEKO_SEARCH_MAX_FEEDBACK_MAIL
-                            },
-                            "aggs": {
-                                "top_tag_hits": {
-                                    "top_hits": {}
-                                }
                             }
                         }
                     }

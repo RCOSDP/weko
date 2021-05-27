@@ -41,6 +41,7 @@ import bagit
 import redis
 from celery.result import AsyncResult
 from celery.task.control import revoke
+from elasticsearch.exceptions import NotFoundError
 from flask import abort, current_app, request
 from flask_babelex import gettext as _
 from flask_login import current_user
@@ -52,6 +53,7 @@ from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
+from invenio_records_rest.errors import InvalidQueryRESTError
 from invenio_search import RecordsSearch
 from jsonschema import Draft4Validator
 from weko_admin.models import SessionLifetime
@@ -246,36 +248,49 @@ def get_journal_info(index_id=0):
 
 
 def get_feedback_mail_list():
-    """Get tree items."""
+    """Get feedback items."""
     records_search = RecordsSearch()
     records_search = records_search.with_preference_param().params(
         version=False)
     records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
-    search_instance = feedback_email_search_factory(None, records_search)
-    search_result = search_instance.execute()
-    rd = search_result.to_dict()
-    return rd.get('aggregations').get('feedback_mail_list')\
-        .get('email_list').get('buckets')
+    ret = {}
 
+    try:
+        search_instance = feedback_email_search_factory(None, records_search)
+        aggr = search_instance.execute().to_dict()\
+            .get('aggregations', {})\
+            .get('feedback_mail_list', {})\
+            .get('email_list', {})\
+            .get('buckets', [])
+    except (NotFoundError, InvalidQueryRESTError):
+        current_app.logger.debug('FeedbackMail data cannot found!')
+        return ret
 
-def parse_feedback_mail_data(data):
-    """Parse data."""
-    result = {}
-    if data is not None and isinstance(data, list):
-        for author in data:
-            if author.get('doc_count'):
-                email = author.get('key')
-                hits = author.get('top_tag_hits').get('hits').get('hits')
-                result[email] = {
-                    'author_id': '',
-                    'item': []
-                }
-                for index in hits:
-                    if not result[email]['author_id']:
-                        result[email]['author_id'] = index.get(
-                            '_source').get('author_id')
-                    result[email]['item'].append(index.get('_id'))
-    return result
+    for item in aggr:
+        if item.get('doc_count'):
+            ret[item.get('key')] = {
+                'items': {},
+                'author_id': ''
+            }
+
+    for hit in search_instance.scan():
+        source = hit.to_dict()
+        for item in source.get('feedback_mail_list', []):
+            _email = ret.get(item.get('email'))
+            if _email:
+                _email['author_id'] = item.get('author_id', _email['author_id'])
+                _email['items'][source.get('control_number')] = hit.meta.id
+
+    for item in ret.values():
+        _items = []
+        _keys = list(item['items'].keys())
+        _keys = [int(x) for x in _keys]
+        _keys.sort()
+        for idx in _keys:
+            _items.append(item['items'][str(idx)])
+        item['items'] = _items
+
+    return ret
 
 
 def check_permission():
@@ -2846,7 +2861,6 @@ def get_key_by_property(record, item_map, item_property):
     :return: error_list or None
     """
     key = item_map.get(item_property)
-    data = []
     if not key:
         current_app.logger.error(str(item_property) + ' jpcoar:mapping '
                                                       'is not correct')
