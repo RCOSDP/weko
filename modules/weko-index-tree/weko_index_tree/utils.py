@@ -685,18 +685,17 @@ def check_doi_in_list_record_es(index_id):
     return False
 
 
-def check_restrict_doi_with_indexes(other_index_ids):
+def check_restrict_doi_with_indexes(index_ids):
     """Check doi in index.
 
-    @param index_id:
+    @param index_ids:
     @return:
     """
     from .api import Indexes
-    for index_id in other_index_ids:
-        idx = Indexes.get_index(index_id.split('/')[-1])
-        if not idx or (idx.public_state and idx.harvest_public_state):
-            return False
-    return True
+    full_path_index_ids = [Indexes.get_full_path(_id) for _id in index_ids]
+    is_public = Indexes.is_public_state(full_path_index_ids)
+    is_harvest_public = Indexes.get_harvest_public_state(full_path_index_ids)
+    return not (is_public and is_harvest_public)
 
 
 def check_has_any_item_in_index_is_locked(index_id):
