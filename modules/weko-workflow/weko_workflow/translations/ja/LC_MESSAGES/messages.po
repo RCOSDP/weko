@@ -263,7 +263,7 @@ msgstr "DOIが取り下げられました"
 
 #: weko_workflow/templates/weko_workflow/identifier_grant.html:90
 msgid "Items for which a DOI has been withdrawn can not be granted a DOI."
-msgstr "取り下げたアイテムにはDOIを付与できません"
+msgstr "DOIを取り下げたアイテムにはDOIを付与できません"
 
 #: weko_workflow/templates/weko_workflow/identifier_grant.html:99
 #: weko_workflow/templates/weko_workflow/item_link.html:123

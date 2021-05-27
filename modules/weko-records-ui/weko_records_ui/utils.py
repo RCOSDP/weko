@@ -42,6 +42,7 @@ from weko_admin.utils import UsageReport, get_restricted_access
 from weko_deposit.api import WekoDeposit
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
+from weko_records.utils import replace_fqdn
 from weko_workflow.api import WorkActivity, WorkFlow
 
 from .models import FileOnetimeDownload, FilePermission
@@ -407,9 +408,7 @@ def hide_item_metadata(record, settings=None, item_type_mapping=None,
 def hide_item_metadata_email_only(record):
     """Hiding emails only.
 
-    :param name_keys:
-    :param lang_keys:
-    :param datas:
+    :param record:
     :return:
     """
     from weko_items_ui.utils import hide_meta_data_for_role
@@ -558,7 +557,8 @@ def replace_license_free(record_metadata, is_change_label=True):
     If 'licensefree' is not output as a value.
     The value of 'licensetype' is 'license_note'.
 
-    :param record:
+    :param record_metadata:
+    :param is_change_label:
     :return: None
     """
     _license_type = 'licensetype'
@@ -586,8 +586,6 @@ def replace_license_free(record_metadata, is_change_label=True):
 def get_file_info_list(record):
     """File Information of all file in record.
 
-    :param files: all metadata of a record.
-    :param is_display_file_preview: all metadata of a record.
     :param record: all metadata of a record.
     :return: json files.
     """
@@ -658,6 +656,10 @@ def get_file_info_list(record):
                         f.get("filename")
                     )
                     url = f.get("url", {}).get("url", '')
+                    if url and f["version_id"]:
+                        # Check and change FQDN.
+                        url = replace_fqdn(url)
+                        f['url']['url'] = url
                     if base_url in url:
                         is_display_file_preview = True
                     # Get file size and convert to byte.
