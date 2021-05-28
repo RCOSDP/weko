@@ -245,14 +245,17 @@ class Indexes(object):
                     if not slf:
                         return
 
-                    dct = db.session.query(Index).filter(
-                        Index.parent == index_id). \
-                        update({Index.parent: slf.parent,
+                    query = db.session.query(Index).filter(
+                        Index.parent == index_id)
+                    obj_list = query.all()
+                    dct = query.update({Index.parent: slf.parent,
                                 Index.owner_user_id: current_user.get_id(),
                                 Index.updated: datetime.utcnow()},
                                synchronize_session='fetch')
                     db.session.delete(slf)
                     db.session.commit()
+                    p_lst = [o.id for o in obj_list]
+                    cls.delete_set_info('move', index_id, p_lst)
                     return dct
             else:
                 with db.session.no_autoflush:
@@ -286,6 +289,7 @@ class Indexes(object):
                                 Index.id.in_(p_lst[s:e])). \
                                 delete(synchronize_session='fetch')
                     db.session.commit()
+                    cls.delete_set_info('delete', index_id, p_lst)
                     return dct
         except Exception as ex:
             current_app.logger.debug(ex)
@@ -1572,7 +1576,7 @@ class Indexes(object):
     @classmethod
     def update_set_info(cls, index):
         """Create / Update oaiset setting."""
-        from .tasks import oaiset_setting
+        from .tasks import update_oaiset_setting
         all_indexes = cls.get_all_indexes()
         index_infos = {}
         for i in all_indexes:
@@ -1583,4 +1587,13 @@ class Indexes(object):
             }
         index_data = dict(index)
         index_data.pop('public_date')
-        oaiset_setting.delay(index_infos, index_data)
+        update_oaiset_setting.delay(index_infos, index_data)
+
+    @classmethod
+    def delete_set_info(cls, action, index_id, id_list):
+        """Delete oaiset setting."""
+        if action == 'move':  # move items to parent index
+            pass
+        else:  # delete all index
+            from .tasks import delete_oaiset_setting
+            delete_oaiset_setting.delay(id_list)

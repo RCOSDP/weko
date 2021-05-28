@@ -26,7 +26,7 @@ from invenio_oaiserver.models import OAISet
 
 
 @shared_task(ignore_result=True)
-def oaiset_setting(info, data):
+def update_oaiset_setting(info, data):
     """Create/Update oai set setting."""
     def _get_spec(index_info, index_id):
         """Get setspec."""
@@ -61,6 +61,23 @@ def oaiset_setting(info, data):
                 oaiset = OAISet(id=data["id"], spec=spec, name=data["index_name"], description=description)
                 oaiset.search_pattern = 'path:"{}"'.format(spec.replace(':', '/'))
                 db.session.add(oaiset)
+        db.session.commit()
+    except Exception as ex:
+        current_app.logger.debug(ex)
+        db.session.rollback()
+
+@shared_task(ignore_result=True)
+def delete_oaiset_setting(id_list):
+    """Delete oai set setting."""
+    try:
+        e = 0
+        batch = 100
+        while e <= len(id_list):
+            s = e
+            e = e + batch
+            dct = db.session.query(OAISet).filter(
+                OAISet.id.in_(id_list[s:e])). \
+                delete(synchronize_session='fetch')
         db.session.commit()
     except Exception as ex:
         current_app.logger.debug(ex)
