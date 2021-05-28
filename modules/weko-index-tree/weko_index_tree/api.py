@@ -223,21 +223,7 @@ class Indexes(object):
                 index.owner_user_id = current_user.get_id()
                 db.session.merge(index)
             db.session.commit()
-
-            # create oaiset setting
-            from .tasks import oaiset_setting
-            all_indexes = cls.get_all_indexes()
-            index_infos = {}
-            for i in all_indexes:
-                index_infos[str(i.id)] = {
-                    'index_name': i.index_name,
-                    'parent': str(i.parent),
-                    'harvest_public_state': i.harvest_public_state
-                }
-            index_data = dict(index)
-            index_data.pop('public_date')
-            oaiset_setting.delay(index_infos, index_data)
-
+            cls.update_set_info(index)
             return index
         except Exception as ex:
             current_app.logger.debug(ex)
@@ -457,10 +443,12 @@ class Indexes(object):
                         parent_info = cls.get_index(parent, with_count=True)
                     position_max = parent_info.position_max + 1 \
                         if parent_info.position_max is not None else 0
+                    index = Index.query.filter_by(id=index_id).one()
                     try:
                         _update_index(position_max, parent)
                         _re_order_tree(new_position)
                         db.session.commit()
+                        cls.update_set_info(index)
                     except IntegrityError as ie:
                         if 'uix_position' in ''.join(ie.args):
                             try:
@@ -473,6 +461,7 @@ class Indexes(object):
                                     if parent_info.position_max is not None \
                                     else 0
                                 _update_index(position_max)
+                                cls.update_set_info(index)
                             except SQLAlchemyError as ex:
                                 is_ok = False
                                 current_app.logger.debug(ex)
@@ -1580,3 +1569,18 @@ class Indexes(object):
                 paths.append(idx.path)
         return paths
 
+    @classmethod
+    def update_set_info(cls, index):
+        """Create / Update oaiset setting."""
+        from .tasks import oaiset_setting
+        all_indexes = cls.get_all_indexes()
+        index_infos = {}
+        for i in all_indexes:
+            index_infos[str(i.id)] = {
+                'index_name': i.index_name,
+                'parent': str(i.parent),
+                'harvest_public_state': i.harvest_public_state
+            }
+        index_data = dict(index)
+        index_data.pop('public_date')
+        oaiset_setting.delay(index_infos, index_data)
