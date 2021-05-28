@@ -13,5 +13,8 @@ from os import environ
 DB_POOL_CLASS = 'QueuePool'
 """Database connection pool"""
 
+DB_POOL_PRE_PING = True
+"""Enable the pool_pre_ping option of the connection pool"""
+
 DB_SQLALCHEMY_POOL_PACKAGE = 'sqlalchemy.pool'
 """SQLAlchemy pool package"""
