@@ -44,6 +44,7 @@ from .utils import cached_index_tree_json, filter_index_list_by_role, \
 
 class Indexes(object):
     """Define API for index tree creation and update."""
+
     @classmethod
     def create(cls, pid=None, indexes=None):
         """Create the indexes. Delete all indexes before creation.
@@ -248,10 +249,13 @@ class Indexes(object):
                     query = db.session.query(Index).filter(
                         Index.parent == index_id)
                     obj_list = query.all()
-                    dct = query.update({Index.parent: slf.parent,
-                                Index.owner_user_id: current_user.get_id(),
-                                Index.updated: datetime.utcnow()},
-                               synchronize_session='fetch')
+                    dct = query.update(
+                        {
+                            Index.parent: slf.parent,
+                            Index.owner_user_id: current_user.get_id(),
+                            Index.updated: datetime.utcnow()
+                        },
+                        synchronize_session='fetch')
                     db.session.delete(slf)
                     db.session.commit()
                     p_lst = [o.id for o in obj_list]

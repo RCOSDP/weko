@@ -32,8 +32,10 @@ def update_oaiset_setting(info, data):
         """Get setspec."""
         index_name = index_info[index_id]['index_name']
         if index_info[index_id]['parent'] != '0':
-            setspec, name_path = _get_spec(index_info, index_info[index_id]['parent'])
-            return "{}:{}".format(setspec, index_id), "{}->{}".format(name_path, index_name)
+            setspec, name_path = _get_spec(
+                index_info, index_info[index_id]['parent'])
+            return "{}:{}".format(setspec, index_id), \
+                "{}->{}".format(name_path, index_name)
         else:
             return index_id, index_name
 
@@ -52,14 +54,20 @@ def update_oaiset_setting(info, data):
                 if pub_state:
                     oaiset.spec = spec
                     oaiset.name = data["index_name"]
-                    oaiset.search_pattern = 'path:"{}"'.format(spec.replace(':', '/'))
+                    oaiset.search_pattern = 'path:"{}"'.format(
+                        spec.replace(':', '/'))
                     oaiset.description = description
                     db.session.merge(oaiset)
                 else:
                     db.session.delete(oaiset)
             elif pub_state:
-                oaiset = OAISet(id=data["id"], spec=spec, name=data["index_name"], description=description)
-                oaiset.search_pattern = 'path:"{}"'.format(spec.replace(':', '/'))
+                oaiset = OAISet(
+                    id=data["id"],
+                    spec=spec,
+                    name=data["index_name"],
+                    description=description)
+                oaiset.search_pattern = 'path:"{}"'.format(
+                    spec.replace(':', '/'))
                 db.session.add(oaiset)
         db.session.commit()
     except Exception as ex:

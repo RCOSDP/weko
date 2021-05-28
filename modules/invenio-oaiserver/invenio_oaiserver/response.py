@@ -204,7 +204,8 @@ def listsets(**kwargs):
         index_path = [oai_set.spec.replace(':', '/')]
         if Indexes.is_public_state([str(oai_set.id)]) is not None \
                 and (not Indexes.is_public_state(index_path.copy())
-                     or not Indexes.get_harvest_public_state(index_path.copy())):
+                     or not Indexes.get_harvest_public_state(
+                       index_path.copy())):
             continue
 
         e_set = SubElement(e_listsets, etree.QName(NS_OAIPMH, 'set'))
@@ -325,9 +326,10 @@ def getrecord(**kwargs):
         code = current_app.config.get('OAISERVER_CODE_NO_RECORDS_MATCH')
         msg = current_app.config.get('OAISERVER_MESSAGE_NO_RECORDS_MATCH')
         return [(code, msg)]
+        
     def get_no_match_error_msg():
         """Get no match error."""
-        code='noRecordsMatch'
+        code = 'noRecordsMatch'
         msg = 'The combination of the values of the from, until, ' \
               'set and metadataPrefix arguments results in an empty list.'
         return [(code, msg)]

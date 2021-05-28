@@ -13,9 +13,9 @@ from celery import group, shared_task
 from flask import current_app
 from flask_celeryext import RequestContextTask
 from invenio_db import db
-from invenio_records.api import Record
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_indexer.api import RecordIndexer
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_records.api import Record
 
 from .query import get_affected_records
 
