@@ -765,8 +765,6 @@ def check_index_permissions(record, index_id=None, index_path_list=None,
         """
         public_state = index_data.public_state and \
             index_data.harvest_public_state
-        if public_state and isinstance(index_data.public_date, datetime):
-            public_state = date.today() >= index_data.public_date.date()
 
         return public_state
 
