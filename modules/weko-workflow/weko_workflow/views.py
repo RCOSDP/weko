@@ -20,7 +20,6 @@
 
 """Blueprint for weko-workflow."""
 
-import copy
 import json
 import os
 import sys
@@ -32,14 +31,13 @@ from flask import Blueprint, abort, current_app, jsonify, render_template, \
     request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
-from invenio_accounts.models import Role, User, userrole
+from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_pidstore.resolver import Resolver
-from invenio_records.models import RecordMetadata
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
 from sqlalchemy.sql.expression import cast
@@ -51,14 +49,14 @@ from weko_deposit.links import base_factory
 from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
 from weko_items_ui.api import item_login
-from weko_items_ui.utils import to_files_js
 from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
 from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
     get_workflows
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from werkzeug.utils import import_string
 
@@ -73,9 +71,9 @@ from .utils import IdentifierHandle, auto_fill_title, \
     create_onetime_download_url_to_guest, delete_cache_data, \
     delete_guest_activity, filter_all_condition, get_account_info, \
     get_actionid, get_activity_display_info, \
-    get_activity_id_of_record_without_version, get_allow_multi_thumbnail, \
+    get_activity_id_of_record_without_version, \
     get_application_and_approved_date, get_approval_keys, get_cache_data, \
-    get_files_and_thumbnail, get_identifier_setting, get_item_link_info, \
+    get_files_and_thumbnail, get_identifier_setting, get_main_record_detail, \
     get_pid_and_record, get_record_by_root_ver, get_thumbnails, \
     get_usage_data, get_workflow_item_type_names, handle_finish_workflow, \
     init_activity_for_guest_user, is_enable_item_name_link, \
@@ -229,6 +227,16 @@ def iframe_success():
     workflow = WorkFlow()
     workflow_detail = workflow.get_workflow_by_id(activity.workflow_id)
     item_type_name = get_item_type_name(workflow_detail.itemtype_id)
+
+    record_detail_alt = get_main_record_detail(activity.activity_id,
+                                               activity)
+    ctx.update(
+        dict(
+            record_org=record_detail_alt.get('record'),
+            files_org=record_detail_alt.get('files'),
+            thumbnails_org=record_detail_alt.get('files_thumbnail')
+        )
+    )
 
     return render_template('weko_workflow/item_login_success.html',
                            page=page,
@@ -405,16 +413,20 @@ def display_guest_activity(file_name=""):
     guest_activity.update(usage_data)
 
     # Get item link info.
-    item_link_info = get_item_link_info(activity_id,
-                                        guest_activity.get('activity'))
+    record_detail_alt = get_main_record_detail(activity_id,
+                                               guest_activity.get('activity'))
+    if record_detail_alt.get('record'):
+        record_detail_alt['record']['is_guest'] = True
+
     guest_activity.update(
         dict(
-            record_after_update=item_link_info.get('record'),
-            newFiles=item_link_info.get('files'),
-            new_thumbnail=item_link_info.get('files_thumbnail'),
-            record=item_link_info.get('record', []),
-            files=item_link_info.get('files', []),
-            files_thumbnail=item_link_info.get('files_thumbnail', [])
+            record_org=record_detail_alt.get('record'),
+            files_org=record_detail_alt.get('files'),
+            thumbnails_org=record_detail_alt.get('files_thumbnail'),
+            record=record_detail_alt.get('record'),
+            files=record_detail_alt.get('files'),
+            files_thumbnail=record_detail_alt.get('files_thumbnail'),
+            pid=record_detail_alt.get('pid', None),
         )
     )
 
@@ -476,37 +488,37 @@ def display_activity(activity_id="0"):
     if temporary_journal:
         temporary_journal = temporary_journal.action_journal
 
-    cur_step = action_endpoint
-    step_item_login_url = None
+    allow_multi_thumbnail = False
+    application_item_type = False
     approval_record = []
+    cur_step = action_endpoint
+    data_type = activity_detail.extra_info.get(
+        'related_title') if activity_detail.extra_info else None
+    endpoints = {}
+    files = []
+    files_thumbnail = []
+    institute_position_list = WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
+    is_auto_set_index_action = True
+    is_hidden_pubdate_value = False
+    item_save_uri = ''
+    item_type_name = get_item_type_name(workflow_detail.itemtype_id)
+    json_schema = ''
+    links = None
+    need_billing_file = False
+    need_file = False
+    need_thumbnail = False
+    position_list = WEKO_USERPROFILES_POSITION_LIST
     recid = None
     record = {}
-    need_file = False
-    need_billing_file = False
-    json_schema = ''
     schema_form = ''
-    item_save_uri = ''
-    files = []
-    endpoints = {}
-    links = None
-    need_thumbnail = False
-    files_thumbnail = []
-    allow_multi_thumbnail = False
-    term_and_condition_content = ''
-    is_auto_set_index_action = True
-    application_item_type = False
-    title = ""
-    data_type = activity_detail.extra_info.get(
-        "related_title") if activity_detail.extra_info else None
     show_autofill_metadata = True
-    is_hidden_pubdate_value = False
-    position_list = WEKO_USERPROFILES_POSITION_LIST
-    institute_position_list = WEKO_USERPROFILES_INSTITUTE_POSITION_LIST
-    item_type_name = get_item_type_name(workflow_detail.itemtype_id)
+    step_item_login_url = None
+    term_and_condition_content = ''
+    title = ""
 
-    if 'item_login' == action_endpoint or \
-            'item_login_application' == action_endpoint or \
-            'file_upload' == action_endpoint:
+    if action_endpoint in ['item_login',
+                           'item_login_application',
+                           'file_upload']:
         activity_session = dict(
             activity_id=activity_id,
             action_id=activity_detail.action_id,
@@ -590,14 +602,14 @@ def display_activity(activity_id="0"):
         ctx['item_link'] = item_link
 
     # Get item link info.
-    item_link_info = get_item_link_info(
+    record_detail_alt = get_main_record_detail(
         activity_id, activity_detail, action_endpoint, item,
         approval_record, files, files_thumbnail)
     ctx.update(
         dict(
-            record_after_update=item_link_info.get('record'),
-            newFiles=item_link_info.get('files'),
-            new_thumbnail=item_link_info.get('files_thumbnail'),
+            record_org=record_detail_alt.get('record'),
+            files_org=record_detail_alt.get('files'),
+            thumbnails_org=record_detail_alt.get('files_thumbnail')
         )
     )
 
@@ -609,66 +621,74 @@ def display_activity(activity_id="0"):
         workflow_detail.itemtype_id, activity_detail, user_profile)
     ctx.update(usage_data)
 
+    if approval_record and files:
+        files = set_files_display_type(approval_record, files)
+
+    ctx.update(
+        dict(
+            files_thumbnail=files_thumbnail,
+            files=files,
+            record=approval_record
+        )
+    )
+
     return render_template(
         'weko_workflow/activity_detail.html',
-        page=page,
-        render_widgets=render_widgets,
-        activity=activity_detail,
-        item=item,
-        steps=steps,
+        action_endpoint_key=current_app.config.get(
+            'WEKO_ITEMS_UI_ACTION_ENDPOINT_KEY'),
         action_id=action_id,
+        activity_id=activity_detail.activity_id,
+        activity=activity_detail,
+        allow_multi_thumbnail=allow_multi_thumbnail,
+        application_item_type=application_item_type,
+        approval_email_key=approval_email_key,
+        auto_fill_data_type=data_type,
+        auto_fill_title=title,
+        community_id=community_id,
         cur_step=cur_step,
-        temporary_comment=temporary_comment,
-        temporary_journal=temporary_journal,
-        temporary_idf_grant=temporary_identifier_select,
-        temporary_idf_grant_suffix=temporary_identifier_inputs,
+        enable_contributor=current_app.config[
+            'WEKO_WORKFLOW_ENABLE_CONTRIBUTOR'],
+        enable_feedback_maillist=current_app.config[
+            'WEKO_WORKFLOW_ENABLE_FEEDBACK_MAIL'],
+        endpoints=endpoints,
+        error_type='item_login_error',
+        histories=histories,
+        id=workflow_detail.itemtype_id,
         idf_grant_data=identifier_setting,
         idf_grant_input=IDENTIFIER_GRANT_LIST,
         idf_grant_method=current_app.config.get(
             'IDENTIFIER_GRANT_SUFFIX_METHOD', IDENTIFIER_GRANT_SUFFIX_METHOD),
-        record=approval_record,
-        records=record,
-        step_item_login_url=step_item_login_url,
-        need_file=need_file,
-        need_billing_file=need_billing_file,
-        jsonschema=json_schema,
-        schemaform=schema_form,
-        id=workflow_detail.itemtype_id,
-        item_save_uri=item_save_uri,
-        files=files,
-        endpoints=endpoints,
-        error_type='item_login_error',
-        links=links,
-        histories=histories,
-        res_check=res_check,
-        pid=recid,
-        community_id=community_id,
-        need_thumbnail=need_thumbnail,
-        files_thumbnail=files_thumbnail,
-        allow_multi_thumbnail=allow_multi_thumbnail,
-        is_auto_set_index_action=is_auto_set_index_action,
-        term_and_condition_content=term_and_condition_content,
-        enable_feedback_maillist=current_app.config[
-            'WEKO_WORKFLOW_ENABLE_FEEDBACK_MAIL'],
-        enable_contributor=current_app.config[
-            'WEKO_WORKFLOW_ENABLE_CONTRIBUTOR'],
-        activity_id=activity_detail.activity_id,
-        user_profile=user_profile,
-        application_item_type=application_item_type,
-        auto_fill_title=title,
-        out_put_report_title=current_app.config[
-            "WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE"],
-        auto_fill_data_type=data_type,
-        is_show_autofill_metadata=show_autofill_metadata,
-        is_hidden_pubdate=is_hidden_pubdate_value,
-        action_endpoint_key=current_app.config.get(
-            'WEKO_ITEMS_UI_ACTION_ENDPOINT_KEY'),
-        approval_email_key=approval_email_key,
-        position_list=position_list,
         institute_position_list=institute_position_list,
+        is_auto_set_index_action=is_auto_set_index_action,
         is_enable_item_name_link=is_enable_item_name_link(
             action_endpoint, item_type_name),
+        is_hidden_pubdate=is_hidden_pubdate_value,
+        is_show_autofill_metadata=show_autofill_metadata,
+        item_save_uri=item_save_uri,
+        item=item,
+        jsonschema=json_schema,
+        links=links,
         list_license=list_license,
+        need_billing_file=need_billing_file,
+        need_file=need_file,
+        need_thumbnail=need_thumbnail,
+        out_put_report_title=current_app.config[
+            'WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE'],
+        page=page,
+        pid=recid,
+        position_list=position_list,
+        records=record,
+        render_widgets=render_widgets,
+        res_check=res_check,
+        schemaform=schema_form,
+        step_item_login_url=step_item_login_url,
+        steps=steps,
+        temporary_comment=temporary_comment,
+        temporary_idf_grant_suffix=temporary_identifier_inputs,
+        temporary_idf_grant=temporary_identifier_select,
+        temporary_journal=temporary_journal,
+        term_and_condition_content=term_and_condition_content,
+        user_profile=user_profile,
         **ctx
     )
 
@@ -1374,8 +1394,6 @@ def withdraw_confirm(activity_id='0', action_id='0'):
                             get_activity_id_of_record_without_version(
                                 pid_without_ver)
                         if record_without_ver_activity_id is not None:
-                            without_ver_item_id = activity.get_activity_detail(
-                                record_without_ver_activity_id).item_id
                             without_ver_identifier_handle = IdentifierHandle(
                                 item_id)
                             without_ver_identifier_handle \

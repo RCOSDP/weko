@@ -60,7 +60,8 @@ from weko_records.serializers.utils import get_item_type_name, get_mapping
 from weko_records_ui.utils import create_onetime_download_url, \
     generate_one_time_download_url, get_list_licence
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
 from werkzeug.utils import import_string
@@ -1581,8 +1582,6 @@ def get_record_by_root_ver(pid_value):
 
     :return: record, files.
     """
-    from invenio_pidstore.models import PersistentIdentifier
-    from weko_deposit.api import WekoDeposit, WekoRecord
     from weko_items_ui.utils import to_files_js
     files = []
     record = None
@@ -2022,6 +2021,8 @@ def get_item_info(item_id):
 
     :item_id: item id
     """
+    if not item_id:
+        return dict()
     try:
         item = ItemsMetadata.get_record(id_=item_id)
     except Exception as ex:
@@ -3252,7 +3253,7 @@ def get_usage_data(item_type_id, activity_detail, user_profile=None):
         else:
             mail_address = extra_info.get('guest_mail', '')
 
-        related_title = extra_info.get('related_title', '')
+        related_title = str(extra_info.get('related_title', ''))
         item_title = cfg.get('WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TITLE') \
             + activity_detail.created.strftime("%Y%m%d") + related_title + '_'
 
@@ -3571,9 +3572,13 @@ def get_items_metadata_by_activity_detail(activity_detail):
     return item
 
 
-def get_item_link_info(activity_id, activity_detail,
-                       action_endpoint=None, item=None, approval_record=None,
-                       files=None, files_thumbnail=None):
+def get_main_record_detail(activity_id,
+                           activity_detail,
+                           action_endpoint=None,
+                           item=None,
+                           approval_record=None,
+                           files=None,
+                           files_thumbnail=None):
     """Get item link record, files, thumbnail.
 
     Args:
@@ -3585,73 +3590,66 @@ def get_item_link_info(activity_id, activity_detail,
         files: File content
         files_thumbnail: Thumbnail file.
     """
-    def has_pid_value():
-        return item and item.get('pid') and item['pid'].get('value')
-
-    def is_item_login():
-        return action_endpoint and action_endpoint == 'item_login'
-
-    def is_approval():
-        return action_endpoint and action_endpoint == 'approval'
-
     def check_record(record):
         return record and len(record) > 0 and isinstance(record, (list, dict))
 
-    if not action_endpoint:
-        action_endpoint = activity_detail.action.action_endpoint
+    recid = None
+    action_endpoint = action_endpoint or activity_detail.action.action_endpoint
     if not item:
         if not activity_detail.item_id:
-            return dict(itemLink_record=[], newFiles=[], new_thumbnail=None)
+            return dict(
+                record=list(),
+                files=list(),
+                files_thumbnail=list())
         else:
             item = get_items_metadata_by_activity_detail(activity_detail)
     if not approval_record:
-        _, approval_record = get_pid_and_record(item)
+        recid, approval_record = get_pid_and_record(item)
     if not files:
         files, files_thumbnail = get_files_and_thumbnail(activity_id, item)
 
-    item_link_record = []
-    new_files = []
-    new_thumbnail = None
+    record_metadata = []
     item_type_id = approval_record.get('item_type_id')
+    new_files = []
+    new_thumbnail = []
+    pid = item.get('pid')
 
     # case create item
-    if not has_pid_value():
-        item_link_record = approval_record
-        new_files = files
+    if item and item.get('pid', {}).get('value') and action_endpoint:
+        # case when edit item and step is item_login
+        if action_endpoint == 'item_login':
+            pid_value = item['pid']['value']
+            record_metadata, new_files = get_record_by_root_ver(pid_value)
+            allow_multi_thumbnails = get_allow_multi_thumbnail(item_type_id, activity_id)
+            new_thumbnail = get_thumbnails(new_files, allow_multi_thumbnails)
+        else:
+            # case when edit item and step # item_login
+            if activity_detail.item_id:
+                new_files = deepcopy(files)
+                record_metadata, new_files = get_record_by_root_ver(item['pid']['value'])
+                item['title'] = record_metadata['title'][0]
+                multi_thumbnail = get_allow_multi_thumbnail(item_type_id,
+                                                            activity_id)
+                new_thumbnail = get_thumbnails(new_files, multi_thumbnail)
+                if check_record(approval_record) and new_files:
+                    new_files = set_files_display_type(record_metadata, new_files)
+    else:
+        record_metadata = approval_record
+        new_files = deepcopy(files)
+
         allow_multi_thumbnails = \
             get_allow_multi_thumbnail(item_type_id, activity_id)
         new_thumbnail = get_thumbnails(new_files, allow_multi_thumbnails)
+
         if not new_thumbnail:
             new_thumbnail = files_thumbnail
+        pid = recid
 
-    # case when edit item and step is item_login
-    if is_item_login() and has_pid_value():
-        pid_value = item['pid']['value']
-        item_link_record, new_files = get_record_by_root_ver(pid_value)
-        allow_multi_thumbnails = get_allow_multi_thumbnail(item_type_id, None)
-        new_thumbnail = get_thumbnails(new_files, allow_multi_thumbnails)
-
-    # case when edit item and step # item_login
-    if activity_detail.item_id and has_pid_value() and not is_item_login():
-        new_files = deepcopy(files)
-        new_record = deepcopy(approval_record)
-
-        item_link_record, files = get_record_by_root_ver(item['pid']['value'])
-        item['title'] = item_link_record['title'][0]
-        approval_record = item_link_record
-        item_link_record = new_record
-        activity_id_temp = activity_id if is_approval() else None
-        allow_multi_thumbnails = get_allow_multi_thumbnail(item_type_id,
-                                                           activity_id_temp)
-        files_thumbnail = get_thumbnails(files, allow_multi_thumbnails)
-        new_thumbnail = get_thumbnails(new_files, allow_multi_thumbnails)
-
-        if check_record(approval_record) and files and len(files) > 0:
-            files = set_files_display_type(approval_record, files)
-    if check_record(item_link_record) and new_files and len(new_files) > 0:
-        set_files_display_type(item_link_record, new_files)
+    if check_record(record_metadata) and new_files:
+        set_files_display_type(record_metadata, new_files)
 
     return dict(
-        record=item_link_record,
+        record=record_metadata,
         files=new_files,
-        files_thumbnail=new_thumbnail)
+        files_thumbnail=new_thumbnail,
+        pid=pid)
