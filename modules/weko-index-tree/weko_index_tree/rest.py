@@ -212,9 +212,6 @@ class IndexActionResource(ContentNegotiatedMethodView):
         errors = []
         public_state = data.get('public_state') and data.get(
             'harvest_public_state')
-        if public_state and data.get('public_date'):
-            public_date = datetime.strptime(data['public_date'], '%Y%m%d')
-            public_state = date.today() >= public_date.date()
 
         if not public_state and check_doi_in_index(index_id):
             status = 200
@@ -225,12 +222,6 @@ class IndexActionResource(ContentNegotiatedMethodView):
                 errors.append(_('Index harvests cannot be kept private because'
                                 ' there are links from items that have a DOI.'
                                 ))
-            elif data.get('public_date'):
-                errors.append(_(
-                    'The index cannot be kept publication date to a'
-                    ' future date because there are links '
-                    'from items that have a DOI.'
-                ))
         else:
             if data.get('thumbnail_delete_flag'):
                 delete_flag = True
