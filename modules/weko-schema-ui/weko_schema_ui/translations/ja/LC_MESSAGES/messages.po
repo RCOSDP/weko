@@ -21,7 +21,7 @@ msgstr ""
 
 #: weko_schema_ui/admin.py:71
 msgid "Deleted the OAI schema."
-msgstr "OAIスキーマを削除しました"
+msgstr "OAI-PMHスキーマを削除しました"
 
 #: weko_schema_ui/admin.py:78
 msgid "Setting"
@@ -29,5 +29,5 @@ msgstr "設定"
 
 #: weko_schema_ui/admin.py:79
 msgid "OAI Schema"
-msgstr "OAIスキーマ"
+msgstr "OAI-PMHスキーマ"
 

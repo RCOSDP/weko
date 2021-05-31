@@ -24,7 +24,7 @@ msgstr "プラグイン"
 
 #: weko_plugins/admin.py:132
 msgid "Plugin List"
-msgstr "ラグイン一覧"
+msgstr "プラグイン一覧"
 
 #: weko_plugins/views.py:41
 msgid "weko-plugins"
@@ -49,7 +49,7 @@ msgstr "名前"
 
 #: weko_plugins/templates/weko_plugins/macros/display_plugin.html:30
 msgid "Author"
-msgstr "作者"
+msgstr "著者"
 
 #: weko_plugins/templates/weko_plugins/macros/display_plugin.html:36
 msgid "Description"

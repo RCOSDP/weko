@@ -370,7 +370,7 @@ msgstr ""
 
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:30
 msgid "Access"
-msgstr ""
+msgstr "Access Control"
 
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:31
 msgid "Open access"
@@ -459,7 +459,7 @@ msgstr ""
 
 #: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:49
 msgid "Delete items of child recursively"
-msgstr ""
+msgstr "Delete items of child index recursively"
 
 #: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:61
 #: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:65
@@ -468,7 +468,7 @@ msgstr ""
 
 #: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:79
 msgid "Are you sure you want to delete it?"
-msgstr ""
+msgstr "Are you sure you want to discard the input contents?"
 
 #: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:82
 #: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:119
@@ -681,7 +681,7 @@ msgstr ""
 
 #: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:116
 msgid "Is the input contents discarded ?"
-msgstr ""
+msgstr "Is the input contents discarded?"
 
 #~ msgid "Search"
 #~ msgstr "Search"

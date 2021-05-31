@@ -34,7 +34,7 @@ msgstr "ヘッダエラー"
 
 #: weko_items_ui/views.py:739
 msgid "The workflow is being edited. "
-msgstr "ワークフローを編集中です"
+msgstr "編集中のワークフローがあります"
 
 #: weko_items_ui/views.py:743
 msgid "You are not allowed to edit this item."
@@ -42,7 +42,7 @@ msgstr "このアイテムを編集することは許可されていません"
 
 #: weko_items_ui/views.py:747
 msgid "You do not even have an itemtype."
-msgstr "あなたはアイテムタイプを持っていません"
+msgstr "No itemtype"
 
 #: weko_items_ui/views.py:751
 msgid "This itemtype not found."
@@ -71,7 +71,7 @@ msgstr "識別子のプレフィックス・サフィックスがID登録の内�
 
 #: weko_items_ui/views.py:1191
 msgid "Please input location information (URL) for Identifier."
-msgstr "識別子は所在情報（URL）を入力してください。"
+msgstr "識別子のURIを入力してください。"
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:55
 msgid "Itemtype List"
@@ -426,7 +426,7 @@ msgid "The following email address is not registered in the system. Please reche
 msgstr "以下のメールアドレスがシステムに登録されていません。ご確認の上、再度入力してください。"
 
 msgid "The specified number has been exceeded. You can only select up to two fields."
-msgstr "規定の数を超えています。選択できるのは２つまでです。"
+msgstr "最大2つのフィールドを選択します"
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
 msgid "Version Management"

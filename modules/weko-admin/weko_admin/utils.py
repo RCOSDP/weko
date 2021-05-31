@@ -29,7 +29,7 @@ from typing import Dict, Tuple, Union
 
 import redis
 import requests
-from flask import current_app, request, url_for
+from flask import current_app, request
 from flask_babelex import gettext as __
 from flask_babelex import lazy_gettext as _
 from invenio_accounts.models import Role, userrole
@@ -538,6 +538,9 @@ class StatisticMail:
     @classmethod
     def send_mail_to_all(cls, list_mail_data=None, stats_date=None):
         """Send mail to all setting email."""
+        from weko_search_ui.utils import get_feedback_mail_list
+        from weko_workflow.utils import get_site_info_name
+
         # Load setting:
         system_default_language = get_system_default_language()
         setting = FeedbackMail.get_feed_back_email_setting()
@@ -554,16 +557,11 @@ class StatisticMail:
         total_mail = 0
         try:
             if not list_mail_data:
-                from weko_search_ui.utils import get_feedback_mail_list, \
-                    parse_feedback_mail_data
-                feedback_mail_data = get_feedback_mail_list()
-                if not feedback_mail_data:
+                list_mail_data = get_feedback_mail_list()
+                if not list_mail_data:
                     return
-                list_mail_data = parse_feedback_mail_data(
-                    feedback_mail_data)
 
             # Get site name.
-            from weko_workflow.utils import get_site_info_name
             site_en, site_ja = get_site_info_name()
             # Set default site name.
             site_name = current_app.config[
@@ -575,6 +573,10 @@ class StatisticMail:
             # Build subject mail.
             subject = cls.build_statistic_mail_subject(
                 site_name, stats_date, system_default_language)
+            # Get host URL
+            host_url = current_app.config['THEME_SITEURL']
+            if host_url[-1] == '/':
+                host_url = host_url[:-1]
 
             for k, v in list_mail_data.items():
                 # Do not send mail to user if email in
@@ -592,9 +594,9 @@ class StatisticMail:
                 }
                 body = str(cls.fill_email_data(
                     cls.get_list_statistic_data(
-                        v.get("item"),
+                        v.get('items'),
                         stats_date,
-                        setting.get('root_url')),
+                        host_url),
                     mail_data, system_default_language)
                 )
 
@@ -1401,6 +1403,8 @@ class FeedbackMail:
             dictionary -- resend mail data
 
         """
+        from weko_search_ui.utils import get_feedback_mail_list
+
         result = {
             'data': dict(),
             'stats_date': ''
@@ -1414,13 +1418,9 @@ class FeedbackMail:
         if len(list_failed_mail) == 0:
             return None
 
-        from weko_search_ui.utils import get_feedback_mail_list, \
-            parse_feedback_mail_data
-        feedback_mail_data = get_feedback_mail_list()
-        if not feedback_mail_data:
+        list_mail_data = get_feedback_mail_list()
+        if not list_mail_data:
             return None
-        list_mail_data = parse_feedback_mail_data(
-            feedback_mail_data)
 
         resend_mail_data = dict()
         for k, v in list_mail_data.items():
@@ -1682,7 +1682,8 @@ def get_restricted_access(key: str = None):
     """
     restricted_access = AdminSettings.get('restricted_access', False)
     if not restricted_access:
-        restricted_access = current_app.config['WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
+        restricted_access = current_app.config[
+            'WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
     if not key:
         return restricted_access
     elif key in restricted_access:
@@ -1763,7 +1764,7 @@ class UsageReport:
     def __init__(self):
         """Initialize the usage report."""
         from weko_workflow.api import WorkActivity
-        from weko_workflow.models import ActionStatusPolicy, GuestActivity
+        from weko_workflow.models import ActionStatusPolicy
         from weko_workflow.utils import generate_guest_activity_token_value, \
             process_send_mail
         self.__activities_id = []

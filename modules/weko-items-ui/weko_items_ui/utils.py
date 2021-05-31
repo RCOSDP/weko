@@ -59,6 +59,7 @@ from weko_index_tree.utils import check_index_permissions, get_index_id, \
     get_user_roles
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_item_type_name
+from weko_records.utils import replace_fqdn_of_file_metadata
 from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission, check_publish_status
 from weko_records_ui.utils import hide_item_metadata, replace_license_free
@@ -823,8 +824,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                 record = WekoRecord.get_record_by_pid(record_id)
 
                 # Custom Record Metadata for export
-                hide_item_metadata(record)
-                replace_license_free(record, False)
+                _custom_export_metadata(record)
 
                 self.records[record_id] = record
                 self.attr_output[record_id] = []
@@ -1317,16 +1317,20 @@ def write_tsv_files(item_types_data, export_path, list_item_role):
             file.write(tsv_output.getvalue())
 
 
+def check_item_type_name(name):
+    """Check a list of allowed characters in filenames.
+
+    :return: new name
+    """
+    new_name = re.sub(r'[\/:*"<>|\s]', '_', name)
+    return new_name
+
+
 def export_items(post_data):
     """Gather all the item data and export and return as a JSON or BIBTEX.
 
     :return: JSON, BIBTEX
     """
-    def check_item_type_name(name):
-        """Check a list of allowed characters in filenames."""
-        new_name = re.sub(r'[\/:*"<>|\s]', '_', name)
-        return new_name
-
     include_contents = True if \
         post_data.get('export_file_contents_radio') == 'True' else False
     export_format = post_data['export_format_radio']
@@ -1342,7 +1346,8 @@ def export_items(post_data):
         return '', 204
 
     result = {'items': []}
-    temp_path = tempfile.TemporaryDirectory()
+    temp_path = tempfile.TemporaryDirectory(
+        prefix=current_app.config['WEKO_ITEMS_UI_EXPORT_TMP_PREFIX'])
     item_types_data = {}
 
     try:
@@ -1465,6 +1470,8 @@ def _export_item(record_id,
                 exported_item['item_type_id'])
             if records_data.get('metadata'):
                 meta_data = records_data.get('metadata')
+                _custom_export_metadata(meta_data.get('_item_metadata', {}),
+                                        False, False)
                 record_role_ids = {
                     'weko_creator_id': meta_data.get('weko_creator_id'),
                     'weko_shared_id': meta_data.get('weko_shared_id')
@@ -1503,6 +1510,27 @@ def _export_item(record_id,
                             temp_file.close()
 
     return exported_item, list_item_role
+
+
+def _custom_export_metadata(record_metadata: dict, hide_item: bool = True,
+                            replace_license: bool = True):
+    """Custom export metadata.
+
+    Args:
+        record_metadata (dict): Record metadata
+        hide_item (bool): Hide item flag.
+        replace_license (bool): Replace license flag.
+    """
+    # Hide private metadata
+    if hide_item:
+        hide_item_metadata(record_metadata)
+    # Change the item name 'licensefree' to 'license_note'.
+    if replace_license:
+        replace_license_free(record_metadata, False)
+
+    for k, v in record_metadata.items():
+        if isinstance(v, dict) and v.get('attribute_type') == 'file':
+            replace_fqdn_of_file_metadata(v.get("attribute_value_mlt", []))
 
 
 def get_new_items_by_date(start_date: str, end_date: str) -> dict:
@@ -1899,14 +1927,15 @@ def hide_meta_data_for_role(record):
 
     # Admin users
     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
-    for role in list(current_user.roles or []):
+    roles = current_user.roles if current_user else []
+    for role in list(roles):
         if role.name in supers:
             is_hidden = False
             break
     # Community users
     community_role_name = current_app.config[
         'WEKO_PERMISSION_ROLE_COMMUNITY']
-    for role in list(current_user.roles or []):
+    for role in list(roles):
         if role.name in community_role_name:
             is_hidden = False
             break
@@ -2567,7 +2596,7 @@ def make_stats_tsv_with_permission(item_type_id, recids,
 
                 # Custom Record Metadata for export
                 hide_metadata_email(record)
-                replace_license_free(record, False)
+                _custom_export_metadata(record, False, True)
 
                 self.records[record_id] = record
                 self.attr_output[record_id] = []

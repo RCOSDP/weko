@@ -140,7 +140,7 @@ msgstr "サイトライセンス"
 
 #: weko_admin/admin.py:917
 msgid "Specified repository is already registered."
-msgstr "指定したリポジトリが既に登録されました。"
+msgstr "指定したリポジトリが既に登録されています。"
 
 #: weko_admin/config.py:104
 msgid "No. Of File Downloads"
@@ -337,11 +337,11 @@ msgstr "翻訳文字列"
 
 #: weko_admin/utils.py:262
 msgid "Input type is invalid. Please check again."
-msgstr "入力タイプが無効です再度確認してください"
+msgstr "入力タイプが無効です。再度確認してください"
 
 #: weko_admin/utils.py:265 weko_admin/views.py:279 weko_admin/views.py:284
 msgid "Account information is invalid. Please check again."
-msgstr "アカウント情報が無効です再度確認してください"
+msgstr "アカウント情報が無効です。再度確認してください"
 
 #: weko_admin/utils.py:357
 #, fuzzy
@@ -750,7 +750,7 @@ msgstr "詳細検索条件設定"
 
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:152
 msgid "Search Item"
-msgstr "項目"
+msgstr "検索項目"
 
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:157
 msgid "Useable Item"
@@ -762,7 +762,7 @@ msgstr "検索条件"
 
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:167
 msgid "JPCOAR Mapping"
-msgstr "JPCOAR マッピング"
+msgstr "JPCOARスキーママッピング"
 
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:172
 msgid "Initial Condition"
@@ -836,7 +836,7 @@ msgstr "入力タイプを選択してください"
 
 #: weko_admin/templates/weko_admin/admin/web_api_account.html:47
 msgid "CrossRef Query Services Account"
-msgstr "CrossRefクエリサービスアカウント"
+msgstr "Crossrefクエリサービスアカウント"
 
 #: weko_admin/templates/weko_admin/email_templates/report.html:1
 msgid "The report logs have been sent."
@@ -856,7 +856,7 @@ msgstr "送信間隔"
 
 #: weko_admin/templates/weko_admin/partials/email_schedule.html:19
 msgid "Frequency"
-msgstr "周期"
+msgstr "頻度"
 
 #: weko_admin/templates/weko_admin/partials/email_schedule.html:23
 msgid "Details"
@@ -936,15 +936,15 @@ msgstr "更新"
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:41
 msgid "Automatic Transmission ON/OFF"
-msgstr "自動送信設定"
+msgstr "フィードバックメール"
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:42
 msgid "Send"
-msgstr "送信する"
+msgstr "有効"
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:43
 msgid "Do not send"
-msgstr "送信しない"
+msgstr "無効"
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:44
 msgid "Send exclusion target persons"
@@ -1077,7 +1077,7 @@ msgstr "ファビコン"
 
 #: weko_admin/template/weko_admin/admin/site_info.html:41
 msgid "CopyRight"
-msgstr "版権"
+msgstr "著作権"
 
 #: weko_admin/template/weko_admin/admin/site_info.html:42
 msgid "Description"
@@ -1113,7 +1113,7 @@ msgstr "サイト情報を空のフィールドに入力してください。"
 
 #: weko_admin/template/weko_admin/admin/site_info.html:52
 msgid "The same language is set for many site names."
-msgstr "同一言語を複数のサイト名に設定されています。"
+msgstr "サイト名が重複しています"
 
 #: weko_admin/template/weko_admin/admin/site_info.html:53
 msgid "Error when get languages."
@@ -1125,7 +1125,7 @@ msgstr ""
 
 #: weko_admin/template/weko_admin/admin/site_info.html:55
 msgid "Language is deleted from Registered Language of system."
-msgstr "言語が登録言語から削除されました。"
+msgstr "削除された言語は利用できません"
 
 #: weko_admin/template/weko_admin/admin/site_info.html:56
 msgid "Site info is saved successfully."
@@ -1149,7 +1149,7 @@ msgstr "注意書きの字数上限は1000字です。"
 
 #: weko_admin/template/weko_admin/admin/search_management_setting.html
 msgid "Index Tree/Facet Display Setting"
-msgstr "インデックスツリー／ファセット　表示設定"
+msgstr "インデックスツリー／ファセット表示設定"
 
 #: weko_admin/template/weko_admin/admin/search_management_setting.html
 msgid "Index Tree"

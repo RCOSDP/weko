@@ -37,7 +37,7 @@ msgstr ""
 
 #: weko_plugins/templates/weko_plugins/plugin_setting.html:38
 msgid "Sending"
-msgstr ""
+msgstr "Send"
 
 #: weko_plugins/templates/weko_plugins/plugin_setting.html:42
 msgid "Reset"

@@ -178,12 +178,12 @@ msgstr ""
 
 #: weko_user_profiles/forms.py:63
 msgid "Username not provided."
-msgstr ""
+msgstr "Please input username"
 
 #. NOTE: Form validation error.
 #: weko_user_profiles/forms.py:98
 msgid "Username already exists."
-msgstr ""
+msgstr "The username is already exists. Please input other username"
 
 #. NOTE: Form field label
 #: weko_user_profiles/forms.py:108
@@ -203,7 +203,7 @@ msgstr ""
 #. NOTE: Form validation error.
 #: weko_user_profiles/forms.py:127
 msgid "Email addresses do not match."
-msgstr ""
+msgstr "Failed to match entered email addresses"
 
 #. NOTE: Form button label
 #: weko_user_profiles/forms.py:136
@@ -229,7 +229,7 @@ msgstr ""
 #. NOTE: Flash message.
 #: weko_user_profiles/views.py:143
 msgid "Verification email sent."
-msgstr ""
+msgstr "Sent a Verification email"
 
 #. NOTE: Flash message after successful update of profile.
 #: weko_user_profiles/views.py:172
@@ -242,7 +242,7 @@ msgstr ""
 #. NOTE: Flash message after successful update of profile.
 #: weko_user_profiles/views.py:178
 msgid "Profile was updated."
-msgstr ""
+msgstr "Updated your profile"
 
 #~ msgid "Full name"
 #~ msgstr ""
@@ -279,23 +279,23 @@ msgid "Phone number"
 msgstr ""
 
 msgid "Affiliated Institution Name"
-msgstr ""
+msgstr "Affiliated Academic Society"
 
 msgid "Affiliated Institution Position"
-msgstr ""
+msgstr "Affiliated Academic Society Position"
 
 ### Position's data list in combobox
 msgid "Professor"
 msgstr ""
 
 msgid "Assistant Professor"
-msgstr ""
+msgstr "Associate Professor"
 
 msgid "Full-time Instructor"
 msgstr ""
 
 msgid "Assistant Teacher"
-msgstr ""
+msgstr "Assistant Professor"
 
 msgid "Full-time Researcher"
 msgstr ""
@@ -319,10 +319,10 @@ msgid "Fellow Researcher"
 msgstr ""
 
 msgid "Listener"
-msgstr ""
+msgstr "Auditor"
 
 msgid "Student"
-msgstr ""
+msgstr "Undergraduate Student"
 
 ### Affiliated Institution Position's data list in combobox
 msgid "Member"
