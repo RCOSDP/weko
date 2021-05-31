@@ -1652,14 +1652,15 @@ def handle_check_doi(list_record):
                         else:
                             prefix = doi
                             suffix = ''
-                        if not suffix:
-                            item['doi_suffix_not_existed'] = True
 
                         if not item.get('ignore_check_doi_prefix') \
                                 and prefix != get_doi_prefix(doi_ra):
                             error = _('Specified Prefix of {} is incorrect.') \
                                 .format('DOI')
-                        if not re.search(WEKO_IMPORT_SUFFIX_PATTERN, suffix):
+                        elif not suffix:
+                            error = _('Please specify {}.').format(
+                                'DOI suffix')
+                        elif not re.search(WEKO_IMPORT_SUFFIX_PATTERN, suffix):
                             error = _(err_msg_suffix).format('DOI')
             else:
                 if item.get('status') == 'new':
@@ -1838,10 +1839,6 @@ def register_item_doi(item):
 
     data = None
     if is_change_identifier:
-        if item.get('doi_suffix_not_existed'):
-            suffix = "{:010d}".format(int(item_id))
-            doi = doi[:-1] if doi[-1] == '/' else doi
-            doi += '/' + suffix
         if doi_ra and doi:
             data = {
                 'identifier_grant_jalc_doi_link':
