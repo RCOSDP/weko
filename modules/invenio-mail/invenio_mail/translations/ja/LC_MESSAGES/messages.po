@@ -21,7 +21,7 @@ msgstr ""
 
 #: invenio_mail/admin.py:59
 msgid "Mail settings have been updated."
-msgstr "メールの設定は更新しました。"
+msgstr "メールの設定を更新しました"
 
 #: invenio_mail/admin.py:82
 msgid "Test mail sent."
@@ -29,7 +29,7 @@ msgstr "テストメールを送信しました。"
 
 #: invenio_mail/admin.py:84
 msgid "Failed to send mail."
-msgstr "メール送信が失敗しました。"
+msgstr "メールの送信に失敗しました。"
 
 #: invenio_mail/admin.py:98
 msgid "Setting"
@@ -45,7 +45,7 @@ msgstr ""
 
 #: invenio_mail/templates/invenio_mail/mail_setting.html:43
 msgid "Server"
-msgstr "サーバー"
+msgstr "SMTPサーバ"
 
 #: invenio_mail/templates/invenio_mail/mail_setting.html:51
 msgid "Port"

@@ -71,7 +71,7 @@ def delete_exported_task(uri, cache_key):
 
 def is_import_running():
     """Check import is running."""
-    if not inspect().stats():
+    if not inspect().ping():
         return 'celery_not_run'
 
     active = inspect().active()

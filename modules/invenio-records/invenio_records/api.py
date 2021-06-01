@@ -204,7 +204,20 @@ class Record(RecordBase):
             if not with_deleted:
                 query = query.filter(cls.model_cls.json != None)  # noqa
             obj = query.one()
+            cls.__custom_record_metadata(obj.json)
             return cls(obj.json, model=obj)
+
+    @classmethod
+    def __custom_record_metadata(cls, record_metadata: dict):
+        """Custom record metadata.
+
+        Args:
+            record_metadata (dict): Record metadata.
+        """
+        from weko_records.utils import replace_fqdn_of_file_metadata
+        for k, v in record_metadata.items():
+            if isinstance(v, dict) and v.get('attribute_type') == 'file':
+                replace_fqdn_of_file_metadata(v.get("attribute_value_mlt", []))
 
     @classmethod
     def get_records(cls, ids, with_deleted=False):
