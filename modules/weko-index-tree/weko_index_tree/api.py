@@ -1492,14 +1492,6 @@ class Indexes(object):
         return index_list
 
     @classmethod
-    def get_unharvested_indexes(cls):
-        """Get child id list without recursive."""
-        query = Index.query.filter(
-            Index.harvest_public_state.is_(False)
-        ).order_by(Index.id.asc())
-        return query.all()
-
-    @classmethod
     def get_full_path(cls, index_id=0):
         """Get full path of index.
 
@@ -1527,39 +1519,3 @@ class Indexes(object):
             obj = db.session.query(*qlst). \
                 order_by(recursive_t.c.pid).first()
             return obj.path if obj else ''
-
-    @classmethod
-    def get_harverted_index_list(cls):
-        """Get full path of index.
-
-        :return: path.
-        """
-        recursive_t = db.session.query(
-            Index.parent.label("pid"),
-            Index.id.label("cid"),
-            func.cast(Index.id, db.Text).label("path")
-        ).filter(
-            Index.parent == 0,
-            Index.harvest_public_state.is_(True)
-        ).cte(name="recursive_t", recursive=True)
-
-        rec_alias = aliased(recursive_t, name="rec")
-        test_alias = aliased(Index, name="t")
-        recursive_t = recursive_t.union_all(
-            db.session.query(
-                test_alias.parent,
-                test_alias.id,
-                rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text)
-            ).filter(
-                test_alias.parent == rec_alias.c.cid,
-                test_alias.harvest_public_state.is_(True))
-        )
-
-        paths = []
-        with db.session.begin_nested():
-            qlst = [recursive_t.c.path]
-            indexes = db.session.query(*qlst). \
-                order_by(recursive_t.c.pid).all()
-            for idx in indexes:
-                paths.append(idx.path)
-        return paths
