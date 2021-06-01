@@ -881,14 +881,11 @@ class WekoDeposit(Deposit):
         Save when register a new item type, Update when edit an item
         type.
         """
-        if current_user:
-            current_user_id = current_user.get_id()
-        else:
-            current_user_id = '1'
-        if current_user_id:
+        owner = str(self.get('_deposit', {}).get('owners', [1])[0])
+        if owner:
             dc_owner = self.data.get("owner", None)
             if not dc_owner:
-                self.data.update(dict(owner=current_user_id))
+                self.data.update(dict(owner=owner))
 
         if ItemMetadata.query.filter_by(id=self.id).first():
             obj = ItemsMetadata.get_record(self.id)
@@ -966,7 +963,8 @@ class WekoDeposit(Deposit):
 
         # convert item meta data
         try:
-            dc, jrc, is_edit = json_loader(data, self.pid)
+            owner_id = str(self.get('_deposit', {}).get('owners', [1])[0])
+            dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
             dc['publish_date'] = data.get('pubdate')
             dc['title'] = [data.get('title')]
             dc['relation_version_is_last'] = True
