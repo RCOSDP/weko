@@ -25,7 +25,7 @@ import sys
 from datetime import datetime
 from functools import partial
 
-from elasticsearch_dsl.query import Q
+from elasticsearch_dsl.query import Q, QueryString, Bool, Exists
 from flask import current_app, request
 from flask.helpers import flash
 from flask_babelex import gettext as _
@@ -197,6 +197,50 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
             return qry
 
+        def _get_object_query(k, v):
+            # text value
+            kv = request.values.get(k)
+            if not kv:
+                return
+            shuld = []
+            if isinstance(v, tuple) and len(v) > 1 and isinstance(v[1], dict):
+                # attr keyword in request url
+                attrs = map(lambda x: (x, request.values.get(x)),
+                            list(v[1].keys()))
+                for attr_key, attr_val_str in attrs:
+                    attr_obj = v[1].get(attr_key)
+                    if isinstance(attr_obj, dict) and attr_val_str:
+                        if isinstance(v[0], str) and len(v[0]):
+                            attr_key_hit = [
+                                x for x in attr_obj.keys() if v[0] + "." in x]
+                            if attr_key_hit:
+                                vlst = attr_obj.get(attr_key_hit[0])
+                                if isinstance(vlst, list):
+                                    attr_val = [
+                                        int(x) for x in attr_val_str.split(',')
+                                        if x.isdecimal() and int(x) < len(vlst)
+                                    ]
+                                    if attr_val:
+                                        name = v[0] + ".value"
+                                        sub_query_str = ''
+                                        for i in attr_val:
+                                            if attr_val[0] != i:
+                                                sub_query_str = '{} or'.format(
+                                                    sub_query_str)
+                                            sub_query_str = '{} {}:{}'.format(
+                                                sub_query_str, attr_key_hit[0],
+                                                vlst[i])
+                                        query_str = '{}:{}'.format(name, kv)
+                                        query_str = '{} and ({})'.format(
+                                            query_str, sub_query_str)
+                                        must_query = [
+                                            QueryString(query=query_str)
+                                        ]
+                                        shuld.append(Bool(filter=must_query,
+                                                          must=[Exists(
+                                                              field=name)]))
+            return Q('bool', should=shuld) if shuld else None
+
         def _get_nested_query(k, v):
             # text value
             kv = request.values.get(k)
@@ -343,6 +387,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         ks = kwd.get('string')
         kd = kwd.get('date')
         kn = kwd.get('nested')
+        ko = kwd.get('object')
 
         mut = []
 
@@ -361,6 +406,12 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
             for k, v in kd.items():
                 qy = _get_date_query(k, v)
+
+                if qy:
+                    mut.append(qy)
+
+            for k, v in ko.items():
+                qy = _get_object_query(k, v)
 
                 if qy:
                     mut.append(qy)

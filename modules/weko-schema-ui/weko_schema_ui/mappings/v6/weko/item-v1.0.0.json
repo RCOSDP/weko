@@ -141,7 +141,7 @@
           ]
         },
         "feedback_mail_list": {
-          "type": "object",
+          "type": "nested",
           "properties": {
             "author_id": {
               "type": "keyword",
@@ -365,7 +365,7 @@
           ]
         },
         "date": {
-          "type": "object",
+          "type": "nested",
           "properties": {
             "dateType": {
               "type": "keyword",
@@ -399,7 +399,7 @@
           ]
         },
         "identifier": {
-          "type": "object",
+          "type": "nested",
           "properties": {
             "value": {
               "type": "keyword",
@@ -417,7 +417,7 @@
           }
         },
         "identifierRegistration": {
-          "type": "object",
+          "type": "nested",
           "properties": {
             "value": {
               "type": "keyword",
@@ -438,7 +438,7 @@
           "type": "object",
           "properties": {
             "relatedIdentifier": {
-              "type": "object",
+              "type": "nested",
               "properties": {
                 "value": {
                   "type": "keyword",
@@ -463,7 +463,7 @@
               ]
             },
             "relationType": {
-              "type": "object",
+              "type": "nested",
               "properties": {
                 "value": {
                   "type": "keyword",
@@ -560,7 +560,7 @@
           }
         },
         "sourceIdentifier": {
-          "type": "object",
+          "type": "nested",
           "properties": {
             "value": {
               "type": "keyword",
@@ -688,7 +688,7 @@
           "type": "object",
           "properties": {
             "URI": {
-              "type": "object",
+              "type": "nested",
               "properties": {
                 "value": {
                   "type": "keyword"
@@ -708,7 +708,7 @@
               "index": true
             },
             "date": {
-              "type": "object",
+              "type": "nested",
               "properties": {
                 "dateType": {
                   "type": "keyword",
@@ -725,7 +725,7 @@
           }
         },
         "content": {
-          "type": "object",
+          "type": "nested",
           "properties": {
             "file_id": {
               "type": "keyword",
