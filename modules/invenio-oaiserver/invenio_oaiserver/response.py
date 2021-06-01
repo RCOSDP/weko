@@ -270,8 +270,11 @@ def header(parent, identifier, datestamp, sets=None, deleted=False):
     e_datestamp = SubElement(e_header, etree.QName(NS_OAIPMH, 'datestamp'))
     e_datestamp.text = datetime_to_datestamp(datestamp)
     for spec in sets or []:
-        e = SubElement(e_header, etree.QName(NS_OAIPMH, 'setSpec'))
-        e.text = spec
+        index_path = [spec.replace(':', '/')]
+        if Indexes.is_public_state(index_path.copy()) \
+                and Indexes.get_harvest_public_state(index_path.copy()):
+            e = SubElement(e_header, etree.QName(NS_OAIPMH, 'setSpec'))
+            e.text = spec
     return e_header
 
 
