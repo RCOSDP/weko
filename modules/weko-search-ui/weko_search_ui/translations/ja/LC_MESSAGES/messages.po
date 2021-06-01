@@ -750,3 +750,7 @@ msgstr "（{}）に指定したファイルが存在しません。<br/>ファ�
 
 msgid "The file name specified in {} and {} do not match."
 msgstr "{}に指定されたファイル名と{}が一致しません。"
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:50
+msgid "Go to"
+msgstr "移動"

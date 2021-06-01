@@ -714,3 +714,7 @@ msgstr ""
 
 msgid "import_error_msg_is_withdraw_doi"
 msgstr "This DOI was withdrawn. Please input another DOI."
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:50
+msgid "Go to"
+msgstr "Go to"
