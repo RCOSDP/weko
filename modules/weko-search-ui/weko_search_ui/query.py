@@ -222,24 +222,13 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                     ]
                                     if attr_val:
                                         name = v[0] + ".value"
-                                        sub_query_str = ''
-                                        for i in attr_val:
-                                            if attr_val[0] != i:
-                                                sub_query_str = '{} or'.format(
-                                                    sub_query_str)
-                                            sub_query_str = '{} {}:{}'.format(
-                                                sub_query_str, attr_key_hit[0],
-                                                vlst[i])
-                                        query_str = '{}:{}'.format(name, kv)
-                                        query_str = '{} and ({})'.format(
-                                            query_str, sub_query_str)
-                                        must_query = [
-                                            QueryString(query=query_str)
-                                        ]
-                                        shuld.append(Bool(filter=must_query,
-                                                          must=[Exists(
-                                                              field=name)]))
-            return Q('bool', should=shuld) if shuld else None
+                                        schemas = [vlst[i] for i in attr_val]
+                                        return Bool(must=[
+                                            {"term": {name: kv}},
+                                            {"terms": {
+                                                attr_key_hit[0]: schemas}}
+                                        ])
+            return None
 
         def _get_nested_query(k, v):
             # text value
