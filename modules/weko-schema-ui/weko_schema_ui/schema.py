@@ -1131,8 +1131,6 @@ class SchemaTree:
                             lst_name_identifier_scheme.index(identifior_item)])
                 if len(index_remove_items) == total_remove_items:
                     del v['jpcoar:nameIdentifier']
-                    if 'jpcoar:affiliation' in v:
-                        del v['jpcoar:affiliation']
                 else:
                     for index in index_remove_items[::-1]:
                         lst_name_identifier_scheme.pop(index)
@@ -1203,12 +1201,17 @@ class SchemaTree:
         for lst in node_tree:
             for k, v in lst.items():
                 # Remove items that are not set as controlled vocabulary
-                if k in indetifier_keys and affiliation_key in v:
-                    lst_name_affiliation_default = current_app.config[
-                        'WEKO_SCHEMA_UI_LIST_SCHEME_AFFILIATION']
-                    remove_custom_scheme(
-                        v[affiliation_key][name_identifier_key], v,
-                        lst_name_affiliation_default)
+                if k in indetifier_keys:
+                    lst_name_identifier_default = current_app.config[
+                        'WEKO_SCHEMA_UI_LIST_SCHEME']
+                    remove_custom_scheme(v[name_identifier_key], v,
+                                         lst_name_identifier_default)
+                    if affiliation_key in v:
+                        lst_name_affiliation_default = current_app.config[
+                            'WEKO_SCHEMA_UI_LIST_SCHEME_AFFILIATION']
+                        remove_custom_scheme(
+                            v[affiliation_key][name_identifier_key], v,
+                            lst_name_affiliation_default)
                 k = get_prefix(k)
                 set_children(k, v, root, [k])
         return root
