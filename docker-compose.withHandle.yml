@@ -58,6 +58,7 @@ services:
       - type: bind
         source: .
         target: /code
+      - /code/modules/invenio-accounts/invenio_accounts.egg-info
       - /code/modules/invenio-admin/invenio_admin.egg-info
       - /code/modules/invenio-app/invenio_app.egg-info
       - /code/modules/invenio-oauth2server/invenio_oauth2server.egg-info
