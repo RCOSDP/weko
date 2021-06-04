@@ -55,8 +55,7 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
 from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
     get_workflows
-from weko_user_profiles.config import \
-    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from werkzeug.utils import import_string
 

@@ -366,7 +366,6 @@ class StatAggregator(object):
                     # Save stats aggregation into Database.
                     StatsAggregation.save(rtn_data, delete=True)
 
-
                 yield rtn_data
 
     def run(self, start_date=None, end_date=None, update_bookmark=True):

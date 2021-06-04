@@ -163,7 +163,7 @@ def get_records(**kwargs):
         indexes_num = len(indexes)
         max_clause_count = 1024
         if indexes_num > max_clause_count:
-            for div in range(0, int(indexes_num/max_clause_count) + 1):
+            for div in range(0, int(indexes_num / max_clause_count) + 1):
                 e_right = div * max_clause_count
                 e_left = (div + 1) * max_clause_count \
                     if indexes_num > (div + 1) * max_clause_count \
@@ -176,9 +176,9 @@ def get_records(**kwargs):
                 'bool', **{'must': [{'bool': {'should': query_filter}}]})
         else:
             query_string = {
-                    "default_field": "path",
-                    "query": "*" + " OR *".join(indexes)
-                }
+                "default_field": "path",
+                "query": "*" + " OR *".join(indexes)
+            }
             search = search.query(
                 "bool", **{"must": {"query_string": query_string}})
         add_condition_doi_and_future_date(search)
