@@ -56,8 +56,10 @@ def json_loader(data, pid):
     pid = pid.pid_value
 
     # get item type id
-    index = data["$schema"].rfind('/')
-    item_type_id = data["$schema"][index + 1:]
+    split_schema_info = data["$schema"].split('/')
+    item_type_id = split_schema_info[-2] \
+        if 'A-' in split_schema_info[-1] \
+        else split_schema_info[-1]
 
     # get item type mappings
     ojson = ItemTypes.get_record(item_type_id)
@@ -667,7 +669,8 @@ async def sort_meta_data_by_options(
         return thumbnail
 
     try:
-        src_default = copy.deepcopy(record_hit['_source'].get('_item_metadata'))
+        src_default = copy.deepcopy(
+            record_hit['_source'].get('_item_metadata'))
         _item_metadata = copy.deepcopy(record_hit['_source'])
         src = record_hit['_source']['_item_metadata']
         item_type_id = record_hit['_source'].get('item_type_id') or \

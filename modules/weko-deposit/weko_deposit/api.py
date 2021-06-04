@@ -1038,6 +1038,9 @@ class WekoDeposit(Deposit):
                 if r.json and not r.json['path']:
                     from weko_records_ui.utils import soft_delete
                     soft_delete(obj_uuid)
+                else:
+                    dep = WekoDeposit(r.json, r)
+                    dep.indexer.update_path(dep, update_revision=False)
             db.session.commit()
         except Exception as ex:
             db.session.rollback()
@@ -1551,8 +1554,7 @@ class WekoRecord(Record):
     def get_record_with_hps(cls, uuid):
         """Get record with hps."""
         record = cls.get_record(id_=uuid)
-        path = []
-        path.extend(record.get('path'))
+        path = record.get('path')
         harvest_public_state = True
         if path:
             harvest_public_state = Indexes.get_harvest_public_state(path)

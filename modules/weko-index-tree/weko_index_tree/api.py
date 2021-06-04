@@ -1169,19 +1169,21 @@ class Indexes(object):
         return recursive_t
 
     @classmethod
-    def get_harvest_public_state(cls, path):
+    def get_harvest_public_state(cls, paths):
         """Get harvest public state."""
+        def _query(path):
+            return db.session. \
+                query(func.every(Index.harvest_public_state).label(
+                    'parent_state')).filter(Index.id.in_(path))
+
         try:
-            last_path = path.pop(-1).split('/')
-            qry = db.session. \
-                query(func.every(Index.harvest_public_state).
-                      label('parent_state')).filter(Index.id.in_(last_path))
-            for i in range(len(path)):
-                path[i] = path[i].split('/')
-                path[i] = db.session. \
-                    query(func.every(Index.harvest_public_state)). \
-                    filter(Index.id.in_(path[i]))
-            smt = qry.union_all(*path).subquery()
+            _paths = deepcopy(paths)
+            last_path = _paths.pop(-1).split('/')
+            qry = _query(last_path)
+            for i in range(len(_paths)):
+                _paths[i] = _paths[i].split('/')
+                _paths[i] = _query(_paths[i])
+            smt = qry.union_all(*_paths).subquery()
             result = db.session.query(
                 func.bool_or(
                     smt.c.parent_state).label('parent_state')).one()
@@ -1195,6 +1197,30 @@ class Indexes(object):
         """Check have public state."""
         def _query(path):
             return db.session. \
+                query(func.every(Index.public_state).label(
+                    'parent_state')).filter(Index.id.in_(path))
+
+        try:
+            _paths = deepcopy(paths)
+            last_path = _paths.pop(-1).split('/')
+            qry = _query(last_path)
+            for i in range(len(_paths)):
+                _paths[i] = _paths[i].split('/')
+                _paths[i] = _query(_paths[i])
+            smt = qry.union_all(*_paths).subquery()
+            result = db.session.query(
+                func.bool_or(
+                    smt.c.parent_state).label('parent_state')).one()
+            return result.parent_state
+        except Exception as se:
+            current_app.logger.debug(se)
+            return False
+
+    @classmethod
+    def is_public_state_and_not_in_future(cls, paths):
+        """Check have public state and open date not in future."""
+        def _query(path):
+            return db.session. \
                 query(func.every(db.and_(
                     Index.public_state,
                     db.or_(
@@ -1204,12 +1230,13 @@ class Indexes(object):
                 ).filter(Index.id.in_(path))
 
         try:
-            last_path = paths.pop(-1).split('/')
+            _paths = deepcopy(paths)
+            last_path = _paths.pop(-1).split('/')
             qry = _query(last_path)
-            for i in range(len(paths)):
-                paths[i] = paths[i].split('/')
-                paths[i] = _query(paths[i])
-            smt = qry.union_all(*paths).subquery()
+            for i in range(len(_paths)):
+                _paths[i] = _paths[i].split('/')
+                _paths[i] = _query(_paths[i])
+            smt = qry.union_all(*_paths).subquery()
             result = db.session.query(
                 func.bool_or(
                     smt.c.parent_state).label('parent_state')).one()

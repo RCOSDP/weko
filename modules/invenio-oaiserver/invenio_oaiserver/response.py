@@ -286,7 +286,8 @@ def is_pubdate_in_future(record):
 
 def is_private_index(record):
     """Check index of workflow is private."""
-    return not Indexes.is_public_state(copy.deepcopy(record.get("path")))
+    return not Indexes.is_public_state_and_not_in_future(
+        copy.deepcopy(record.get('path')))
 
 
 def set_identifier(param_record, param_rec):
