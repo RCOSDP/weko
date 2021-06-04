@@ -278,7 +278,8 @@ def get_feedback_mail_list():
         for item in source.get('feedback_mail_list', []):
             _email = ret.get(item.get('email'))
             if _email:
-                _email['author_id'] = item.get('author_id', _email['author_id'])
+                _email['author_id'] = item.get(
+                    'author_id', _email['author_id'])
                 _email['items'][source.get('control_number')] = hit.meta.id
 
     for item in ret.values():
@@ -1607,9 +1608,7 @@ def handle_check_doi_ra(list_record):
                     error = _('PID does not meet the conditions.')
             else:
                 if item.get('status') == 'new':
-                    if item.get('doi'):
-                        error = _('{} cannot be set.').format('DOI')
-                    elif not handle_doi_required_check(item):
+                    if not handle_doi_required_check(item):
                         error = _('PID does not meet the conditions.')
                 else:
                     error = check_existed(item_id, doi_ra)
@@ -1653,19 +1652,29 @@ def handle_check_doi(list_record):
                         else:
                             prefix = doi
                             suffix = ''
-                        if not suffix:
-                            item['doi_suffix_not_existed'] = True
 
                         if not item.get('ignore_check_doi_prefix') \
                                 and prefix != get_doi_prefix(doi_ra):
                             error = _('Specified Prefix of {} is incorrect.') \
                                 .format('DOI')
-                        if not re.search(WEKO_IMPORT_SUFFIX_PATTERN, suffix):
+                        elif not suffix:
+                            error = _('Please specify {}.').format(
+                                'DOI suffix')
+                        elif not re.search(WEKO_IMPORT_SUFFIX_PATTERN, suffix):
                             error = _(err_msg_suffix).format('DOI')
             else:
                 if item.get('status') == 'new':
                     if doi:
-                        error = _('{} cannot be set.').format('DOI')
+                        split_doi = doi.split('/')
+                        if len(doi.split('/')) > 1 and not doi.endswith('/'):
+                            error = _('{} cannot be set.').format('DOI')
+                        else:
+                            prefix = re.sub('/$', '', doi)
+                            item['doi_suffix_not_existed'] = True
+                            if not item.get('ignore_check_doi_prefix') \
+                                    and prefix != get_doi_prefix(doi_ra):
+                                error = _('Specified Prefix of {} is incorrect.') \
+                                    .format('DOI')
                 else:
                     pid_doi = None
                     try:
@@ -1675,9 +1684,11 @@ def handle_check_doi(list_record):
                             'item id: %s not found.' % item_id)
                         current_app.logger.error(ex)
                     if pid_doi:
+                        doi_domain = IDENTIFIER_GRANT_LIST[
+                            WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1][2]
                         if not doi:
                             error = _('Please specify {}.').format('DOI')
-                        elif not pid_doi.pid_value.endswith(doi):
+                        elif not pid_doi.pid_value == (doi_domain + '/' + doi):
                             error = _('Specified {} is different from'
                                       + ' existing {}.').format('DOI', 'DOI')
 
@@ -1828,10 +1839,6 @@ def register_item_doi(item):
 
     data = None
     if is_change_identifier:
-        if item.get('doi_suffix_not_existed'):
-            suffix = "{:010d}".format(int(item_id))
-            doi = doi[:-1] if doi[-1] == '/' else doi
-            doi += '/' + suffix
         if doi_ra and doi:
             data = {
                 'identifier_grant_jalc_doi_link':
@@ -1858,7 +1865,7 @@ def register_item_doi(item):
                     is_feature_import=True
                 )
     else:
-        if doi_ra and not doi:
+        if doi_ra and (not doi or item.get('doi_suffix_not_existed')):
             data = prepare_doi_link(item_id)
             doi_duplicated = check_doi_duplicated(doi_ra, data)
             if doi_duplicated:
