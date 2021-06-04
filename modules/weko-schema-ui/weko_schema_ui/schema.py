@@ -1131,8 +1131,6 @@ class SchemaTree:
                             lst_name_identifier_scheme.index(identifior_item)])
                 if len(index_remove_items) == total_remove_items:
                     del v['jpcoar:nameIdentifier']
-                    if 'jpcoar:affiliation' in v:
-                        del v['jpcoar:affiliation']
                 else:
                     for index in index_remove_items[::-1]:
                         lst_name_identifier_scheme.pop(index)

@@ -1601,37 +1601,37 @@ def get_files_from_metadata(record):
 def to_files_js(record):
     """List files in a deposit."""
     res = []
-    files = record.files
+    files = record.files or []
     # Get files form meta_data, so that you can append any extra info to files
     # (which not contained by file_bucket) such as license below
     files_from_meta = get_files_from_metadata(record)
-    if files is not None:
-        for f in files:
-            res.append({
-                'displaytype': files_from_meta.get(str(f.version_id),
-                                                   {}).get("displaytype", ''),
-                'filename': f.get('filename', ''),
-                'mimetype': f.mimetype,
-                'licensetype': files_from_meta.get(str(f.version_id),
-                                                   {}).get("licensetype", ''),
-                'key': f.key,
-                'version_id': str(f.version_id),
-                'checksum': f.file.checksum,
-                'size': f.file.size,
-                'completed': True,
-                'progress': 100,
-                'links': {
-                    'self': (
-                        current_app.config['DEPOSIT_FILES_API']
-                        + u'/{bucket}/{key}?versionId={version_id}'.format(
-                            bucket=f.bucket_id,
-                            key=f.key,
-                            version_id=f.version_id,
-                        )),
-                },
-                'is_show': f.is_show,
-                'is_thumbnail': f.is_thumbnail
-            })
+
+    for f in files:
+        res.append({
+            'displaytype': files_from_meta.get(str(f.version_id),
+                                               {}).get("displaytype", ''),
+            'filename': f.get('filename', ''),
+            'mimetype': f.mimetype,
+            'licensetype': files_from_meta.get(str(f.version_id),
+                                               {}).get("licensetype", ''),
+            'key': f.key,
+            'version_id': str(f.version_id),
+            'checksum': f.file.checksum,
+            'size': f.file.size,
+            'completed': True,
+            'progress': 100,
+            'links': {
+                'self': (
+                    current_app.config['DEPOSIT_FILES_API']
+                    + u'/{bucket}/{key}?versionId={version_id}'.format(
+                        bucket=f.bucket_id,
+                        key=f.key,
+                        version_id=f.version_id,
+                    )),
+            },
+            'is_show': f.is_show,
+            'is_thumbnail': f.is_thumbnail
+        })
 
     return res
 
@@ -1779,7 +1779,7 @@ def validate_user_mail(users, activity_id, request_data, keys, result):
             'validate_map_flow_and_item_type'] = check_approval_email_in_flow(
             activity_id, users)
 
-    except Exception as ex:
+    except Exception:
         result['validation'] = False
 
     return result

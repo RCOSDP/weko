@@ -26,7 +26,7 @@ import sys
 from datetime import date, timedelta
 
 import redis
-from flask import Blueprint, abort, current_app, flash, json, jsonify, \
+from flask import Blueprint, abort, current_app, flash, jsonify, \
     redirect, render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
@@ -430,6 +430,18 @@ def iframe_items_index(pid_value='0'):
             if root_record and files and len(root_record) > 0 and \
                     len(files) > 0 and isinstance(root_record, (list, dict)):
                 files = set_files_display_type(root_record, files)
+
+            from weko_workflow.utils import get_main_record_detail
+            record_detail_alt = get_main_record_detail(cur_activity.activity_id,
+                                                       cur_activity)
+            ctx.update(
+                dict(
+                    record_org=record_detail_alt.get('record'),
+                    files_org=record_detail_alt.get('files'),
+                    thumbnails_org=record_detail_alt.get('files_thumbnail')
+                )
+            )
+
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
                 page=page,
