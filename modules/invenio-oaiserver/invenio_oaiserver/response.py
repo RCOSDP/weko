@@ -424,9 +424,13 @@ def listrecords(**kwargs):
 
     record_dumper = serializer(kwargs['metadataPrefix'])
     e_tree, e_listrecords = verb(**kwargs)
-    result = get_records(**kwargs)
+
     identify = OaiIdentify.get_all()
-    if not result.total or not identify or not identify.outPutSetting:
+    if not identify or not identify.outPutSetting:
+        return error(get_error_code_msg(), **kwargs)
+
+    result = get_records(**kwargs)
+    if not result.total:
         return error(get_error_code_msg(), **kwargs)
     for record in result.items:
         try:
