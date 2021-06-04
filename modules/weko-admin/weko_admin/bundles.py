@@ -156,3 +156,8 @@ weko_admin_restricted_access_js = NpmBundle(
     # filters='jsmin',
     output='gen/restricted_access.%(version)s.js',
 )
+
+weko_admin_facet_search_js = NpmBundle(
+    'js/weko_admin/facet_search_admin.js',
+    output='gen/facet_search.%(version)s.js',
+)

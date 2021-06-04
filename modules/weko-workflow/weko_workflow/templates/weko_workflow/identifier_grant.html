@@ -18,7 +18,7 @@
  # MA 02111-1307, USA.
  #}
 {%- from "weko_workflow/helpers.html" import render_identifier_link with context -%}
-<input type="hidden" id="item_id" value="{{record['_deposit']['id']}}" />
+<input type="hidden" id="item_id" value="{{pid.pid_value}}" />
 <!-- Confirm Modal -->
 {% from "weko_theme/macros/modal_page.html" import approval_modal %}
 {% if temporary_idf_grant >= 0 %}
@@ -39,7 +39,7 @@
     {%- if temporary_idf_grant >= 0 %}
     <div class="form-group radio" style="display: inline-grid;">
       <table>
-        <TR>
+        <tr>
           {%- set idf_link_data = idf_grant_input[0] %}
           <td height="35">
             <label>
@@ -49,7 +49,7 @@
               {{ idf_link_data[1] }}
             </label>
           </td>
-        </TR>
+        </tr>
         {%- if idf_grant_data %}
           {%- set item_id = activity.item_id %}
           {%- if record %}

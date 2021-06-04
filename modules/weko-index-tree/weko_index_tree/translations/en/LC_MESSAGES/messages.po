@@ -21,7 +21,7 @@ msgstr ""
 
 #: weko_index_tree/admin.py:66
 msgid "The information was updated."
-msgstr ""
+msgstr "Updated information"
 
 #: weko_index_tree/admin.py:113 weko_index_tree/admin.py:122
 msgid "Setting"
@@ -37,7 +37,7 @@ msgstr ""
 
 #: weko_index_tree/views.py:65
 msgid "No file part"
-msgstr ""
+msgstr "No part of file"
 
 #: weko_index_tree/views.py:70
 msgid "No selected file"
@@ -124,4 +124,7 @@ msgid "The index cannot be deleted because there is a link from an item that has
 msgstr ""
 
 msgid "When assigning a DOI to an item, it must be associated with an index whose index status is "Public" and Harvest Publishing is "Public"."
+msgstr ""
+
+msgid "The index cannot be kept publication date to a future date because there are links from items that have a DOI."
 msgstr ""

@@ -84,6 +84,7 @@ ENV PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/
 ENV VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
 RUN echo "source /usr/local/bin/virtualenvwrapper.sh" >> ~/.bashrc
 RUN echo "workon invenio" >> ~/.bashrc
+#RUN mv /home/invenio/.virtualenvs/invenio/var/instance/static /home/invenio/.virtualenvs/invenio/var/instance/static.org
 
 FROM stage_7 AS stage_8
 # Start the Weko application:

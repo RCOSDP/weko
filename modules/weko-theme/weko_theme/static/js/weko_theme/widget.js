@@ -396,7 +396,7 @@ const PageBodyGrid = function () {
                 '    background-color: transparent;' +
                 '}' +
                 '</style>' +
-                '<nav class="widget-nav navbar navbar-default ' + navbarID + '" style="background-color:' + settings.menu_bg_color + ';">' +
+                '<nav class="widget-nav navbar navbar-default ' + navbarID + '" style="border:0; background-color:' + settings.menu_bg_color + ';">' +
                 '  <div class="container-fluid">' +
                     navbarHeader +
                 '    <div class="collapse navbar-collapse in" aria-expanded="true" id="' + navbarID + '">' +
@@ -609,7 +609,7 @@ let WidgetTheme = function () {
       return '<div class="grid-stack-item widget-resize">' +
           '    <div class="' + setClass + '" style="' + borderStyle + '">' +
           header +
-          '        <div class="' + panelClasses + ' ' + headerClass + ' ' + noAutoHeight + ' " style="padding-top: 30px; padding-bottom: 0!important;'
+          '        <div class="' + panelClasses + ' ' + headerClass + ' ' + noAutoHeight + ' " style="padding-top: 5px; padding-bottom: 0!important;'
           + overflowY + overFlowX + this.buildCssText('background-color', backgroundColor) + ' "' + id + '>'
           + widget_data.body +
           '        </div>' +

@@ -22,6 +22,7 @@
 
 import urllib.parse
 from copy import deepcopy
+from typing import Union
 
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import QueryString
@@ -1358,7 +1359,36 @@ class ItemsMetadata(RecordBase):
             if not with_deleted:
                 query = query.filter(ItemMetadata.json != None)  # noqa
             obj = query.one()
+            cls.__custom_item_metadata(obj.json)
             return cls(obj.json, model=obj)
+
+    @classmethod
+    def __custom_item_metadata(cls, item_metadata: dict):
+        """Custom item metadata.
+
+        Args:
+            item_metadata (dict): Item metadata.
+        """
+        for k, v in item_metadata.items():
+            if isinstance(v, (list, dict)):
+                cls.__replace_fqdn_of_file_metadata(v)
+
+    @classmethod
+    def __replace_fqdn_of_file_metadata(cls, item_metadata: Union[list, dict]):
+        """Replace FQDN of file metadata.
+
+        Args:
+            item_metadata (Union[list, dict]): Item metadata.
+        """
+        from .utils import replace_fqdn
+        if isinstance(item_metadata, dict) and \
+            item_metadata.get('version_id') and \
+                item_metadata.get('url', {}).get('url'):
+            item_metadata['url']['url'] = replace_fqdn(
+                item_metadata['url']['url'])
+        elif isinstance(item_metadata, list):
+            for metadata in item_metadata:
+                cls.__replace_fqdn_of_file_metadata(metadata)
 
     @classmethod
     def get_records(cls, ids, with_deleted=False):

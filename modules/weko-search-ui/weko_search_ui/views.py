@@ -45,7 +45,7 @@ from weko_search_ui.api import get_search_detail_keyword
 from .api import SearchSetting
 from .config import WEKO_SEARCH_TYPE_DICT
 from .utils import check_index_access_permissions, check_permission, \
-    get_feedback_mail_list, get_journal_info, parse_feedback_mail_data
+    get_feedback_mail_list, get_journal_info
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -274,10 +274,7 @@ def journal_detail(index_id=0):
 @blueprint.route("/search/feedback_mail_list", methods=['GET'])
 def search_feedback_mail_list():
     """Render a check view."""
-    data = get_feedback_mail_list()
-    result = {}
-    if data:
-        result = parse_feedback_mail_data(data)
+    result = get_feedback_mail_list()
     return jsonify(result)
 
 
@@ -303,3 +300,14 @@ def get_path_name_dict(path_str=''):
             path_name_dict[path] = idx_name_en.replace(
                 "\n", r"<br\>").replace("&EMPTY&", "")
     return jsonify(path_name_dict)
+
+
+@blueprint.route("/facet-search/get-title", methods=['POST'])
+def gettitlefacet():
+    """Soft getname Facet Search."""
+    from weko_admin.utils import get_title_facets
+    result = {
+        "status": True,
+        "data": get_title_facets()
+    }
+    return jsonify(result), 200

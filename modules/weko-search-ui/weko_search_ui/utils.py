@@ -41,6 +41,7 @@ import bagit
 import redis
 from celery.result import AsyncResult
 from celery.task.control import revoke
+from elasticsearch.exceptions import NotFoundError
 from flask import abort, current_app, request
 from flask_babelex import gettext as _
 from flask_login import current_user
@@ -52,6 +53,7 @@ from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
+from invenio_records_rest.errors import InvalidQueryRESTError
 from invenio_search import RecordsSearch
 from jsonschema import Draft4Validator
 from weko_admin.models import SessionLifetime
@@ -246,36 +248,49 @@ def get_journal_info(index_id=0):
 
 
 def get_feedback_mail_list():
-    """Get tree items."""
+    """Get feedback items."""
     records_search = RecordsSearch()
     records_search = records_search.with_preference_param().params(
         version=False)
     records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
-    search_instance = feedback_email_search_factory(None, records_search)
-    search_result = search_instance.execute()
-    rd = search_result.to_dict()
-    return rd.get('aggregations').get('feedback_mail_list')\
-        .get('email_list').get('buckets')
+    ret = {}
 
+    try:
+        search_instance = feedback_email_search_factory(None, records_search)
+        aggr = search_instance.execute().to_dict()\
+            .get('aggregations', {})\
+            .get('feedback_mail_list', {})\
+            .get('email_list', {})\
+            .get('buckets', [])
+    except (NotFoundError, InvalidQueryRESTError):
+        current_app.logger.debug('FeedbackMail data cannot found!')
+        return ret
 
-def parse_feedback_mail_data(data):
-    """Parse data."""
-    result = {}
-    if data is not None and isinstance(data, list):
-        for author in data:
-            if author.get('doc_count'):
-                email = author.get('key')
-                hits = author.get('top_tag_hits').get('hits').get('hits')
-                result[email] = {
-                    'author_id': '',
-                    'item': []
-                }
-                for index in hits:
-                    if not result[email]['author_id']:
-                        result[email]['author_id'] = index.get(
-                            '_source').get('author_id')
-                    result[email]['item'].append(index.get('_id'))
-    return result
+    for item in aggr:
+        if item.get('doc_count'):
+            ret[item.get('key')] = {
+                'items': {},
+                'author_id': ''
+            }
+
+    for hit in search_instance.scan():
+        source = hit.to_dict()
+        for item in source.get('feedback_mail_list', []):
+            _email = ret.get(item.get('email'))
+            if _email:
+                _email['author_id'] = item.get('author_id', _email['author_id'])
+                _email['items'][source.get('control_number')] = hit.meta.id
+
+    for item in ret.values():
+        _items = []
+        _keys = list(item['items'].keys())
+        _keys = [int(x) for x in _keys]
+        _keys.sort()
+        for idx in _keys:
+            _items.append(item['items'][str(idx)])
+        item['items'] = _items
+
+    return ret
 
 
 def check_permission():
@@ -436,11 +451,12 @@ def check_import_items(file_name: str, file_content: str,
 
     """
     file_content_decoded = base64.b64decode(file_content)
-    temp_path = tempfile.TemporaryDirectory()
+    tmp_prefix = current_app.config['WEKO_SEARCH_UI_IMPORT_TMP_PREFIX']
+    temp_path = tempfile.TemporaryDirectory(prefix=tmp_prefix)
     save_path = tempfile.gettempdir()
     import_path = temp_path.name + '/' + \
         datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
-    data_path = save_path + '/' + \
+    data_path = save_path + '/' + tmp_prefix + \
         datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
     result = {'data_path': data_path}
 
@@ -554,6 +570,8 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
         csv_reader = csv.reader(tsvfile, delimiter='\t')
         try:
             for num, data_row in enumerate(csv_reader, start=1):
+                # current_app.logger.debug(num)
+                # current_app.logger.debug(data_row)
                 if num == 1:
                     first_line_format_exception = Exception({
                         'error_msg': _('There is an error in the format of the'
@@ -587,6 +605,7 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                     item_path = data_row
                     duplication_item_ids = \
                         handle_check_duplication_item_id(item_path)
+                    current_app.logger.debug(duplication_item_ids)
                     if duplication_item_ids:
                         msg = _(
                             'The following metadata keys are duplicated.'
@@ -783,6 +802,7 @@ def handle_check_exist_record(list_record) -> list:
 
     """
     result = []
+    current_app.logger.debug('handle_check_exist_record')
     for item in list_record:
         item = dict(**item, **{
             'status': 'new'
@@ -790,6 +810,7 @@ def handle_check_exist_record(list_record) -> list:
         errors = item.get('errors') or []
         try:
             item_id = item.get('id')
+            current_app.logger.debug(item_id)
             if item_id:
                 system_url = request.url_root + 'records/' + item_id
                 if item.get('uri') != system_url:
@@ -818,10 +839,10 @@ def handle_check_exist_record(list_record) -> list:
                                     item['status'] = _edit_mode.lower()
             else:
                 item['id'] = None
-                if item.get('uri'):
-                    errors.append(_('Item ID does not match the'
-                                    + ' specified URI information.'))
-                    item['status'] = None
+#                if item.get('uri'):
+#                    errors.append(_('Item ID does not match the'
+#                                    + ' specified URI information.'))
+#                    item['status'] = None
         except PIDDoesNotExistError:
             pass
         except BaseException:
@@ -1233,7 +1254,7 @@ def remove_temp_dir(path):
     :return
 
     """
-    shutil.rmtree(str(path.replace("/data", "")))
+    shutil.rmtree(path)
 
 
 def handle_item_title(list_record):
@@ -2195,6 +2216,13 @@ def handle_fill_system_item(list_record):
 
     """
     def recursive_sub(keys, node, uri_key, current_type):
+        current_app.logger.debug("recursive_sub")
+        
+        current_app.logger.debug(keys)
+        current_app.logger.debug(node)
+        current_app.logger.debug(uri_key)
+        current_app.logger.debug(current_type)
+        
         if isinstance(node, list):
             for sub_node in node:
                 recursive_sub(keys[1:], sub_node, uri_key, current_type)
@@ -2203,10 +2231,11 @@ def handle_fill_system_item(list_record):
                 recursive_sub(keys[1:], node.get(keys[0]),
                               uri_key, current_type)
             else:
-                type_data = node.get(keys[0])
-                uri = get_system_data_uri(current_type, type_data)
-                if uri is not None:
-                    node[uri_key] = uri
+                if len(keys) > 0:
+                    type_data = node.get(keys[0])
+                    uri = get_system_data_uri(current_type, type_data)
+                    if uri is not None:
+                        node[uri_key] = uri
 
     item_type_id = None
     item_map = None
@@ -2232,7 +2261,10 @@ def handle_fill_system_item(list_record):
             item, item_map, "versiontype.@value")
         _, versionuri_key = get_data_by_property(
             item, item_map, "versiontype.@attributes.rdf:resource")
+        current_app.logger.debug("Version Type")
         if versiontype_key and versionuri_key:
+            current_app.logger.debug(versiontype_key)
+            current_app.logger.debug(versionuri_key)
             recursive_sub(versiontype_key.split('.'),
                           item['metadata'],
                           versionuri_key.split('.')[-1],
@@ -2243,7 +2275,10 @@ def handle_fill_system_item(list_record):
             item, item_map, "accessRights.@value")
         _, accessRightsuri_key = get_data_by_property(
             item, item_map, "accessRights.@attributes.rdf:resource")
+        current_app.logger.debug("Access Right")
         if accessRights_key and accessRightsuri_key:
+            current_app.logger.debug(accessRights_key)
+            current_app.logger.debug(accessRightsuri_key)
             recursive_sub(accessRights_key.split('.'),
                           item['metadata'],
                           accessRightsuri_key.split('.')[-1],
@@ -2424,7 +2459,7 @@ def handle_check_duplication_item_id(ids: list):
     """
     result = []
     for element in ids:
-        if ids.count(element) > 1:
+        if element is not '' and ids.count(element) > 1:
             result.append(element)
     return list(set(result))
 
@@ -2483,7 +2518,8 @@ def export_all(root_url):
                 current_app.logger.error(ex)
                 continue
 
-    temp_path = tempfile.TemporaryDirectory()
+    temp_path = tempfile.TemporaryDirectory(
+        prefix=current_app.config['WEKO_ITEMS_UI_EXPORT_TMP_PREFIX'])
     try:
         export_path = temp_path.name + '/' + \
             datetime.utcnow().strftime("%Y%m%d%H%M%S")
@@ -2825,7 +2861,6 @@ def get_key_by_property(record, item_map, item_property):
     :return: error_list or None
     """
     key = item_map.get(item_property)
-    data = []
     if not key:
         current_app.logger.error(str(item_property) + ' jpcoar:mapping '
                                                       'is not correct')

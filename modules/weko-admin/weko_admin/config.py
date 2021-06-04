@@ -919,9 +919,9 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
 
 WEKO_ADMIN_PERMISSION_ROLE_SYSTEM = "System Administrator"
 
-WEKO_PERMISSION_ROLE_REPO = "Repository Administrator"
+WEKO_ADMIN_PERMISSION_ROLE_REPO = "Repository Administrator"
 
-WEKO_PERMISSION_ROLE_COMMUNITY = "Community Administrator"
+WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY = "Community Administrator"
 
 WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
     'admin',
@@ -1066,3 +1066,27 @@ WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
 
 WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER = 25
 """Default number of usage report activities results that display in one page."""
+
+WEKO_ADMIN_FEEDBACK_MAIL_DEFAULT_SUBJECT = "No Site Name"
+"""Default subject of feedback email."""
+
+WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE = \
+    'weko_admin/admin/facet_search_setting.html'
+"""Facet search setting template."""
+
+WEKO_ADMIN_FACET_SEARCH_SETTING = {
+    "name_en": "",
+    "name_jp": "",
+    "mapping": "",
+    "active": True,
+    "aggregations": []
+}
+"""Default Facet Search settings."""
+
+WEKO_ADMIN_FACET_SEARCH_SETTING_QUERY_KEY_HAS_PERMISSION = \
+    'facet_search_query_has_permission'
+"""Default Facet Search query has permission settings."""
+
+WEKO_ADMIN_FACET_SEARCH_SETTING_QUERY_KEY_NO_PERMISSION = \
+    'facet_search_query_no_permission'
+"""Default Facet Search query has no permission settings."""

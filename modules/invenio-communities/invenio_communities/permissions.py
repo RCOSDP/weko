@@ -30,6 +30,8 @@ from flask_login import current_user
 from flask_principal import ActionNeed
 from invenio_access.permissions import Permission
 
+from invenio_communities.utils import get_user_role_ids
+
 
 class _Permission(object):
     """Temporary solution to permissions.
@@ -45,7 +47,8 @@ class _Permission(object):
 
     def can(self):
         """Grant permission if owner or admin."""
-        return str(current_user.get_id()) == str(self.community.id_user) or \
+        role_ids = get_user_role_ids()
+        return int(self.community.id_role) in role_ids or \
             Permission(ActionNeed('admin-access')).can()
 
 

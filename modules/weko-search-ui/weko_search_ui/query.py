@@ -45,12 +45,8 @@ def get_item_type_aggs(search_index):
 
     :return: aggs dict
     """
-    facets = None
-    if search_permission.can():
-        facets = current_app.config['RECORDS_REST_FACETS']
-    else:
-        facets = current_app.config['RECORDS_REST_FACETS_NO_SEARCH_PERMISSION']
-
+    from weko_admin.utils import get_facet_search_query
+    facets = get_facet_search_query(search_permission.can())
     return facets.get(search_index).get("aggs", {})
 
 
@@ -1170,7 +1166,6 @@ def feedback_email_search_factory(self, search):
                        "relation_version_is_last:true " \
             .format(current_app.config['INDEXER_DEFAULT_DOC_TYPE'])
         query_q = {
-            "size": 0,
             "query": {
                 "bool": {
                     "must": [
@@ -1208,11 +1203,6 @@ def feedback_email_search_factory(self, search):
                             "terms": {
                                 "field": "feedback_mail_list.email",
                                 "size": config.WEKO_SEARCH_MAX_FEEDBACK_MAIL
-                            },
-                            "aggs": {
-                                "top_tag_hits": {
-                                    "top_hits": {}
-                                }
                             }
                         }
                     }

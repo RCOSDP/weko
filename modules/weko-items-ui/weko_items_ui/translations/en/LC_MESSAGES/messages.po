@@ -33,7 +33,7 @@ msgstr ""
 
 #: weko_items_ui/views.py:1188
 msgid "PID does not meet the conditions."
-msgstr ""
+msgstr "PID registration does not meet the conditions"
 
 #: weko_items_ui/views.py:1189
 msgid "Since PMID is not subject to DOI registration, please select another type."
@@ -41,11 +41,11 @@ msgstr ""
 
 #: weko_items_ui/views.py:1190
 msgid "Prefix/Suffix of Identifier is not consistency with content of Identifier Registration."
-msgstr ""
+msgstr "Prefix/Suffix of Identifier is not consistent with content of Identifier Registration."
 
 #: weko_items_ui/views.py:1191
 msgid "Please input location information (URL) for Identifier."
-msgstr ""
+msgstr "Please input URI of Identifier."
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:55
 #, fuzzy
@@ -250,7 +250,7 @@ msgid "The following items is required. Please recheck and input."
 msgstr "The following items is required. Please recheck and input."
 
 msgid "Please input all required item."
-msgstr ""
+msgstr "Please input all required items."
 
 msgid "Please input the correct data."
 msgstr ""
@@ -310,7 +310,7 @@ msgid "The following email address is not registered in the system. Please reche
 msgstr ""
 
 msgid "The specified number has been exceeded. You can only select up to two fields."
-msgstr ""
+msgstr "Select up to two fields."
 
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html
 msgid "Version Management"

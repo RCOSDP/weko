@@ -51,3 +51,9 @@ OAIHARVESTER_DOI_PREFIX = 'http://doi.org'
 
 OAIHARVESTER_HDL_PREFIX = 'http://hdl.handle.net'
 """Prefix of record that registered HDL"""
+
+OAIHARVESTER_VERIFY_TLS_CERTIFICATE = False
+""" If True, verify the server’s TLS certificate """
+
+OAIHARVESTER_ENABLE_ITEM_VERSIONING = False
+""" If True, enable item versioning """
