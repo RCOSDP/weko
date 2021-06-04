@@ -33,8 +33,11 @@ from invenio_pidstore.ext import pid_exists
 from invenio_pidstore.models import PersistentIdentifier
 from weko_schema_ui.schema import SchemaTree
 
+from .config import WEKO_TEST_FIELD, COPY_NEW_FIELD
 from .api import ItemTypes, Mapping
 
+from jsonpath_ng import jsonpath
+from jsonpath_ng.ext import parse
 
 def json_loader(data, pid):
     """Convert the item data and mapping to jpcoar.
@@ -48,10 +51,10 @@ def json_loader(data, pid):
     item = dict()
     ar = []
     pubdate = None
-
+    
     if not isinstance(data, dict) or data.get("$schema") is None:
         return
-
+    
     item_id = pid.object_uuid
     pid = pid.pid_value
 
@@ -146,6 +149,9 @@ def json_loader(data, pid):
         dc.update(dict(item_title=title))
         dc.update(dict(item_type_id=item_type_id))
         dc.update(dict(control_number=pid))
+        
+        if COPY_NEW_FIELD:
+            copy_field_test(dc, WEKO_TEST_FIELD, jrc)
 
         # check oai id value
         is_edit = False
@@ -166,6 +172,7 @@ def json_loader(data, pid):
         # relation_ar.append(dict(value="", item_links="", item_title=""))
         # jrc.update(dict(relation=dict(relationType=relation_ar)))
         # dc.update(dict(relation=dict(relationType=relation_ar)))
+
         jrc.update(dict(control_number=pid))
         jrc.update(dict(_oai={"id": oai_value}))
         jrc.update(dict(_item_metadata=dc))
@@ -210,6 +217,44 @@ def json_loader(data, pid):
     del ojson, mjson, item
     return dc, jrc, is_edit
 
+def copy_field_test(dc, map, jrc):
+    if dc["item_type_id"] in map.keys():
+        list1 = map[dc["item_type_id"]]
+        for k, v in list1.items():
+            if v["input_type"] == "geo_point":                
+                geo_point = { k : {"lat" : "", "lon" : ""}}
+                geo_point[k]["lat"] = get_value_from_dict(dc, v["path"]["lat"]) 
+                geo_point[k]["lon"] = get_value_from_dict(dc, v["path"]["lon"])
+                if geo_point[k]["lat"] and geo_point[k]["lon"]:
+                    jrc.update(geo_point)
+            elif v["input_type"] == "geo_shape":
+                geo_shape = {k : { "type" : "", "coordinates" : ""}}
+                geo_shape[k]["type"] = get_value_from_dict(dc, v["path"]["type"])
+                geo_shape[k]["coordinates"] = get_value_from_dict(dc, v["path"]["coordinates"])
+                if geo_shape[k]["type"] and geo_shape[k]["coordinates"]:
+                    jrc.update(geo_shape)
+            elif v["input_type"] == "range":
+                value_range = { k:{"gte":"", "lte":""}}
+                value_range[k]["gte"] = get_value_from_dict(dc, v["path"]["gte"])
+                value_range[k]["lte"] = get_value_from_dict(dc, v["path"]["lte"])
+                if value_range[k]["gte"] and value_range[k]["lte"]:
+                    jrc.update(value_range)
+            elif v["input_type"] == "text":
+                if get_value_from_dict(dc, v["path"]):
+                    jrc[k] = get_value_from_dict(dc,v["path"])
+
+def get_value_from_dict(dc, path):
+    try:
+        matches = parse(path).find(dc)
+        match_value = [match.value for match in matches]
+        print("values****")
+        print(match_value)
+        if len(match_value) > 0 :
+            return match_value[0]
+        else:
+            return None
+    except Exception:
+        return None
 
 def set_timestamp(jrc, created, updated):
     """Set timestamp."""

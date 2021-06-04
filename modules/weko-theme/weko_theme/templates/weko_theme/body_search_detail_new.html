@@ -30,6 +30,42 @@ USA. #}
                 <input ng-if="sub_data.key_value.inputType=='text'" type="text" class="form-control detail-search-text"
                   id="sele_[[$index]]" ng-model="sub_data.key_value.inputVal" placeholder="{{_('Enter Input Value')}}" />
                 <!--input_type is text end-->
+                <!--input_type is range sta-->
+                <div ng-if="sub_data.key_value.inputType=='range'">
+                  <div class="input-daterange input-group detail-search-text col-xs-7">
+                    <input type="text"
+                      class="input-sm form-control" name="[[sub_data.key_value.id]]_from"
+                      id="[[sub_data.key_value.id]]_from"
+                      ng-model="sub_data.key_value.inputVal_from"/>
+                    <span class="input-group-addon">To</span>
+                    <input type="text"
+                      class="input-sm form-control detail-search-date" name="[[sub_data.key_value.id]]_to"
+                      id="[[sub_data.key_value.id]]_to"
+                      ng-model="sub_data.key_value.inputVal_to" />
+                  </div>
+                </div>
+                <!--input_type is range end-->
+                <!--input_type is geo_distance sta-->
+                <div ng-if="sub_data.key_value.inputType=='geo_distance'">
+                  <div class="input-daterange input-group detail-search-text col-xs-7">
+                    <span class="input-group-addon">lat</span>
+                    <input type="text"
+                      class="input-sm form-control" name="[[sub_data.key_value.id]]_from"
+                      id="[[sub_data.key_value.id]]_lat"
+                      ng-model="sub_data.key_value.inputVal_lat"/>
+                    <span class="input-group-addon">lon</span>
+                    <input type="text"
+                      class="input-sm form-control detail-search-date" name="[[sub_data.key_value.id]]_lon"
+                      id="[[sub_data.key_value.id]]_lon"
+                      ng-model="sub_data.key_value.inputVal_lon" />
+                    <span class="input-group-addon">distance</span>
+                    <input type="text"
+                      class="input-sm form-control detail-search-date" name="[[sub_data.key_value.id]]_distance"
+                      id="[[sub_data.key_value.id]]_distance"
+                      ng-model="sub_data.key_value.inputVal_distance" />
+                  </div>
+                </div>
+                <!--input_type is range end-->
                 <!--input_type is sele sta-->
                 <select ng-if="sub_data.key_value.inputType=='selectbox'" id="sele_[[$index]]"
                   ng-model="sub_data.key_value.inputVal" class="form-control">
