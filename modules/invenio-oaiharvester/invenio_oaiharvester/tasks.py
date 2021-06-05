@@ -212,11 +212,13 @@ def process_item(record, harvesting, counter):
         dep['_deposit']['status'] = 'draft'
         
         # temporary fix for JDcat
-        if json['$schema'] == '/items/jsonschema/14' and 'item_1588260046718' in json:
+        # if json['$schema'] == '/items/jsonschema/14' and 'item_1588260046718' in json:
+        if 'item_1588260046718' in json:
             for i in json['item_1588260046718']:
                 i['subitem_1592380784883']='Other'
 
-        if json['$schema'] == '/items/jsonschema/14' and 'item_1592405734122' in json:
+        #if json['$schema'] == '/items/jsonschema/14' and 'item_1592405734122' in json:
+        if 'item_1592405734122' in json:
             #current_app.logger.debug('json: %s' % json['item_1551264917614'])
             for i in json['item_1592405734122']:
               i['subitem_1591320918354']='Distributor'

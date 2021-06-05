@@ -26,29 +26,29 @@
 {%- for attribute_data in attribute_value_mlt -%}
 {%- set index = index + loop.index -%}
 {%- if 'name' in  attribute_data -%}
-{%- if config.WEKO_RECORDS_UI_LANG_DISP_FLG -%}
-{%- if 'order_lang' in  attribute_data | attribute_data['order_lang'][0][current_i18n.language] -%}
-<a class='creator-name' href="javascript:void(0)" data-toggle="popover-x" data-target="#creator_{{ index }}"
-  data-placement="auto" data-toggle="popover">
-  {%- for name in attribute_data['name'] -%}
-  {% autoescape false %}
-  {{ name | escape_str }}
-  {% endautoescape %}
-  <span> </span>
-  {%- endfor -%}
-</a><br>
-{%- endif -%}
-{%- else %}
-<a class='creator-name' href="javascript:void(0)" data-toggle="popover-x" data-target="#creator_{{ index }}"
-  data-placement="auto" data-toggle="popover">
-  {%- for name in attribute_data['name'] -%}
-  {% autoescape false %}
-  {{ name | escape_str }}
-  {% endautoescape %}
-  <span> </span>
-  {%- endfor -%}
-</a><br>
-{%- endif -%}
+  {%- if config.WEKO_RECORDS_UI_LANG_DISP_FLG -%}
+    {%- if ('order_lang' in  attribute_data) and (attribute_data['order_lang'][0][current_i18n.language]) -%}
+      <a class='creator-name' href="javascript:void(0)" data-toggle="popover-x" data-target="#creator_{{ index }}"
+        data-placement="auto" data-toggle="popover">
+      {%- for name in attribute_data['name'] -%}
+        {% autoescape false %}
+        {{ name | escape_str }}
+        {% endautoescape %}
+        <span> </span>
+      {%- endfor -%}
+      </a><br>
+    {%- endif -%}
+  {%- else -%}
+    <a class='creator-name' href="javascript:void(0)" data-toggle="popover-x" data-target="#creator_{{ index }}"
+      data-placement="auto" data-toggle="popover">
+    {%- for name in attribute_data['name'] -%}
+      {% autoescape false %}
+      {{ name | escape_str }}
+      {% endautoescape %}
+      <span> </span>
+    {%- endfor -%}
+    </a><br>
+  {%- endif -%}
 {%- endif -%}
 <div id="creator_{{ index }}" class="popover popover-x popover-default">
   <div class="arrow"></div>
