@@ -756,7 +756,7 @@ msgid "Display/Hide"
 msgstr "Display/Hide"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:57
-msgid "Hide"
+msgid "_Hide"
 msgstr "Hide"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:71
@@ -780,7 +780,7 @@ msgid "Details"
 msgstr "Details"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:58
-msgid "Display"
+msgid "_Display"
 msgstr "Display"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
