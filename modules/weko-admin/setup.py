@@ -96,7 +96,8 @@ setup(
             'report = weko_admin.cli:report',
             'billing = weko_admin.cli:billing',
             'admin_settings = weko_admin.cli:admin_settings',
-            'authors_prefix = weko_admin.cli:authors_prefix'
+            'authors_prefix = weko_admin.cli:authors_prefix',
+            'facet_search_setting = weko_admin.cli:facet_search_setting'
         ],
         'invenio_celery.tasks': [
             'weko_admin = weko_admin.tasks',
@@ -124,6 +125,7 @@ setup(
             'weko_admin_site_info = weko_admin.admin:site_info_settings_adminview',
             'weko_admin_identifier = weko_admin.admin:identifier_adminview',
             'restricted_access_adminview = weko_admin.admin:restricted_access_adminview',
+            'facet_search_adminview = weko_admin.admin:facet_search_adminview'
         ],
         'invenio_access.actions': [
             'page_style_access = weko_admin.permissions:action_admin_access',
@@ -153,6 +155,7 @@ setup(
             'weko_admin_site_info_css = weko_admin.bundles:weko_admin_site_info_css',
             'weko_admin_ng_js_tree = weko_admin.bundles:weko_admin_ng_js_tree_js',
             'weko_admin_restricted_access = weko_admin.bundles:weko_admin_restricted_access_js',
+            'weko_admin_facet_search = weko_admin.bundles:weko_admin_facet_search_js',
         ],
         'invenio_db.models': [
             'weko_admin = weko_admin.models',

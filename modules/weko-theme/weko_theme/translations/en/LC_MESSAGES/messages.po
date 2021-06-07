@@ -941,3 +941,8 @@ msgstr "Others"
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Restricted Access"
 msgstr "Restricted Access"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Faceted Search"
+msgstr "Faceted Search"
+
