@@ -1164,9 +1164,8 @@ msgstr "インデックスツリー"
 msgid "Facet"
 msgstr "ファセット"
 
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:58
-msgid "Display"
+msgid "_Display"
 msgstr "表示"
 
 #: weko_admin/template/weko_admin/admin/search_management_setting.html
@@ -1266,7 +1265,7 @@ msgid "Display/Hide"
 msgstr "表示/非表示"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:59
-msgid "Hide"
+msgid "_Hide"
 msgstr "非表示"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:71
