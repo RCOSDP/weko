@@ -689,11 +689,14 @@ class WekoDeposit(Deposit):
     def commit(self, *args, **kwargs):
         """Store changes on current instance in database and index it."""
         super(WekoDeposit, self).commit(*args, **kwargs)
+        record = RecordMetadata.query.get(self.pid.object_uuid)
         if self.data and len(self.data):
             # save item metadata
             self.save_or_update_item_metadata()
 
             if self.jrc and len(self.jrc):
+                if record and record.json and '_oai' in record.json:
+                    self.jrc['_oai'] = record.json.get('_oai')
                 # upload item metadata to Elasticsearch
                 set_timestamp(self.jrc, self.created, self.updated)
 
@@ -730,7 +733,6 @@ class WekoDeposit(Deposit):
                             del content['file']
 
         # fix schema url
-        record = RecordMetadata.query.get(self.pid.object_uuid)
         if record and record.json and '$schema' in record.json:
             record.json.pop('$schema')
             if record.json.get('_buckets'):

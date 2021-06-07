@@ -14,6 +14,7 @@ from elasticsearch import VERSION as ES_VERSION
 from invenio_indexer.api import RecordIndexer
 from invenio_search import current_search, current_search_client
 from invenio_search.utils import schema_to_index
+from weko_search_ui.config import INDEXER_DEFAULT_INDEX
 
 from .models import OAISet
 from .proxies import current_oaiserver
@@ -82,13 +83,14 @@ def _new_percolator(spec, search_pattern):
         for index in current_search.mappings.keys():
             # Create the percolator doc_type in the existing index for >= ES5
             # TODO: Consider doing this only once in app initialization
-            percolator_doc_type = _get_percolator_doc_type(index)
-            _create_percolator_mapping(index, percolator_doc_type)
-            current_search_client.index(
-                index=index, doc_type=percolator_doc_type,
-                id='oaiset-{}'.format(spec),
-                body={'query': query}
-            )
+            if index == INDEXER_DEFAULT_INDEX:
+                percolator_doc_type = _get_percolator_doc_type(index)
+                _create_percolator_mapping(index, percolator_doc_type)
+                current_search_client.index(
+                    index=index, doc_type=percolator_doc_type,
+                    id='oaiset-{}'.format(spec),
+                    body={'query': query}
+                )
 
 
 def _delete_percolator(spec, search_pattern):
@@ -96,12 +98,13 @@ def _delete_percolator(spec, search_pattern):
     if spec:
         for index in current_search.mappings.keys():
             # Create the percolator doc_type in the existing index for >= ES5
-            percolator_doc_type = _get_percolator_doc_type(index)
-            _create_percolator_mapping(index, percolator_doc_type)
-            current_search_client.delete(
-                index=index, doc_type=percolator_doc_type,
-                id='oaiset-{}'.format(spec), ignore=[404]
-            )
+            if index == INDEXER_DEFAULT_INDEX:
+                percolator_doc_type = _get_percolator_doc_type(index)
+                _create_percolator_mapping(index, percolator_doc_type)
+                current_search_client.delete(
+                    index=index, doc_type=percolator_doc_type,
+                    id='oaiset-{}'.format(spec), ignore=[404]
+                )
 
 
 def _build_cache():

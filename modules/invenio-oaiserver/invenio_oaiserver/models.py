@@ -27,7 +27,7 @@ class OAISet(db.Model, Timestamp):
 
     __tablename__ = 'oaiserver_set'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.BigInteger, primary_key=True)
 
     spec = db.Column(
         db.String(255),
@@ -70,12 +70,12 @@ class OAISet(db.Model, Timestamp):
     )
     """Search pattern to get records."""
 
-    @validates('spec')
-    def validate_spec(self, key, value):
-        """Forbit updates of set identifier."""
-        if self.spec and self.spec != value:
-            raise OAISetSpecUpdateError("Updating spec is not allowed.")
-        return value
+    #@validates('spec')
+    #def validate_spec(self, key, value):
+    #    """Forbit updates of set identifier."""
+    #    if self.spec and self.spec != value:
+    #        raise OAISetSpecUpdateError("Updating spec is not allowed.")
+    #    return value
 
     def add_record(self, record):
         """Add a record to the OAISet.
