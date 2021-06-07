@@ -370,7 +370,6 @@ def update_text_and_textarea(item_type_id, new_schema, new_form):
     @return new_schema: new edited schema
     @return new_form: new edited form
     """
-
     def is_text(prop):
         """Check this property is text property.
 

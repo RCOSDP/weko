@@ -74,6 +74,7 @@ def update_oaiset_setting(info, data):
         current_app.logger.debug(ex)
         db.session.rollback()
 
+
 @shared_task(ignore_result=True)
 def delete_oaiset_setting(id_list):
     """Delete oai set setting."""

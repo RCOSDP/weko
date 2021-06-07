@@ -9,6 +9,7 @@
 """Task for OAI."""
 
 from time import sleep
+
 from celery import group, shared_task
 from flask import current_app
 from flask_celeryext import RequestContextTask
