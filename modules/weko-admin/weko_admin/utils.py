@@ -2019,6 +2019,7 @@ def get_item_mapping_list():
 
     Returns:
         object:
+
     """
     def handle_prefix_key(pre_key, key):
         if key == 'properties':
@@ -2051,7 +2052,6 @@ def get_item_mapping_list():
 
 def create_facet_search_query():
     """Create facet search query."""
-
     def create_agg_by_aggregations(aggregations, key, val):
         """Create aggregations query."""
         if not aggregations or len(aggregations) == 0:

@@ -25,7 +25,7 @@ import sys
 from datetime import datetime
 from functools import partial
 
-from elasticsearch_dsl.query import Q, QueryString, Bool, Exists
+from elasticsearch_dsl.query import Bool, Exists, Q, QueryString
 from flask import current_app, request
 from flask.helpers import flash
 from flask_babelex import gettext as _
