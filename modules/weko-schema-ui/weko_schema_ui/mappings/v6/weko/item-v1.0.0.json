@@ -591,6 +591,9 @@
             "search_other"
           ]
         },
+        "author_link": {
+          "type": "text"
+        },
         "volume": {
           "type": "text",
           "index": true,

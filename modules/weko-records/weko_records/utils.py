@@ -174,6 +174,7 @@ def json_loader(data, pid, owner_id=None):
         jrc.update(dict(_item_metadata=dc))
         jrc.update(dict(itemtype=ojson.model.item_type_name.name))
         jrc.update(dict(publish_date=pubdate))
+        jrc.update(dict(author_link=data.get('author_link', [])))
 
         # save items's creator to check permission
         if current_user:
