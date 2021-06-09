@@ -697,6 +697,14 @@ class WekoDeposit(Deposit):
             if self.jrc and len(self.jrc):
                 if record and record.json and '_oai' in record.json:
                     self.jrc['_oai'] = record.json.get('_oai')
+                if 'path' in self.jrc and '_oai' in self.jrc \
+                        and ('sets' not in self.jrc['_oai']
+                             or not self.jrc['_oai']['sets']):
+                    setspec_list = []
+                    for i in self.jrc['path']:
+                        setspec_list.append(i.replace('/', ':'))
+                    if setspec_list:
+                        self.jrc['_oai'].update(dict(sets=setspec_list))
                 # upload item metadata to Elasticsearch
                 set_timestamp(self.jrc, self.created, self.updated)
 
