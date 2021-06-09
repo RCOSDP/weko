@@ -1634,6 +1634,9 @@ class Indexes(object):
         ).filter(
             Index.parent == 0,
             Index.public_state.is_(True)
+        ).filter(
+            db.or_(Index.public_date.is_(None),
+                   Index.public_date < datetime.utcnow())
         ).cte(name="recursive_t", recursive=True)
 
         rec_alias = aliased(recursive_t, name="rec")
@@ -1645,7 +1648,10 @@ class Indexes(object):
                 rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text)
             ).filter(
                 test_alias.parent == rec_alias.c.cid,
-                test_alias.public_state.is_(True))
+                test_alias.public_state.is_(True)
+            ).filter(
+                db.or_(test_alias.public_date.is_(None),
+                       test_alias.public_date < datetime.utcnow()))
         )
 
         paths = []
