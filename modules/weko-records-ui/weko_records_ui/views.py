@@ -59,6 +59,8 @@ from weko_workflow.api import WorkFlow
 from weko_records_ui.models import InstitutionName
 from weko_records_ui.utils import check_items_settings, get_file_info_list
 
+from invenio_cache import cached_unless_authenticated
+
 from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
 from .permissions import check_content_clickable, check_created_id, \
