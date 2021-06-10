@@ -107,6 +107,7 @@ def search():
     height = style.height if style else None
     if 'item_link' in get_args:
         from weko_workflow.api import WorkActivity
+        from weko_workflow.views import get_main_record_detail
 
         activity_id = request.args.get('item_link')
         workflow_activity = WorkActivity()
@@ -126,31 +127,43 @@ def search():
             approval_record.get('item_type_id'), None)
         files_thumbnail = get_thumbnails(files, is_multi_thumbnails)
 
+        # Get item link info.
+        record_detail_alt = get_main_record_detail(activity_id,
+                                                   activity_detail)
+
+        ctx.update(
+            dict(
+                record_org=record_detail_alt.get('record'),
+                files_org=record_detail_alt.get('files'),
+                thumbnails_org=record_detail_alt.get('files_thumbnail'),
+            )
+        )
+
         return render_template(
             'weko_workflow/activity_detail.html',
-            page=page,
-            render_widgets=render_widgets,
-            activity=activity_detail,
-            item=item,
-            steps=steps,
             action_id=action_id,
-            cur_step=cur_step,
-            temporary_comment=temporary_comment,
-            record=approval_record,
-            step_item_login_url=step_item_login_url,
-            histories=histories,
-            res_check=res_check,
-            pid=pid,
-            index_id=cur_index_id,
-            community_id=community_id,
-            width=width,
-            height=height,
+            activity=activity_detail,
             allow_item_exporting=export_settings.allow_item_exporting,
-            is_permission=check_permission(),
-            is_login=bool(current_user.get_id()),
-            is_enable_item_name_link=True,
-            files=files,
+            community_id=community_id,
+            cur_step=cur_step,
             files_thumbnail=files_thumbnail,
+            files=files,
+            height=height,
+            histories=histories,
+            index_id=cur_index_id,
+            is_enable_item_name_link=True,
+            is_login=bool(current_user.get_id()),
+            is_permission=check_permission(),
+            item=item,
+            page=page,
+            pid=pid,
+            record=approval_record,
+            render_widgets=render_widgets,
+            res_check=res_check,
+            step_item_login_url=step_item_login_url,
+            steps=steps,
+            temporary_comment=temporary_comment,
+            width=width,
             **ctx)
     else:
         journal_info = None

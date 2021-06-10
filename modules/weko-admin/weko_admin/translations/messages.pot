@@ -1056,9 +1056,8 @@ msgstr ""
 msgid "Facet"
 msgstr ""
 
-#: weko_admin/template/weko_admin/admin/search_management_setting.html
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:58
-msgid "Display"
+msgid "_Display"
 msgstr ""
 
 #: weko_admin/template/weko_admin/admin/search_management_setting.html
@@ -1166,7 +1165,7 @@ msgid "Display/Hide"
 msgstr "Display/Hide"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:57
-msgid "Hide"
+msgid "_Hide"
 msgstr "Hide"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:71

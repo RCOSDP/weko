@@ -27,6 +27,7 @@ import zipfile
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
 from typing import Dict, Tuple, Union
+
 import redis
 import requests
 from flask import current_app, request
@@ -46,11 +47,13 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_authors.models import Authors
 from weko_records.api import ItemsMetadata
+
 from . import config
 from .models import AdminLangSettings, AdminSettings, ApiCertificate, \
     FacetSearchSetting, FeedbackMailFailed, FeedbackMailHistory, \
     FeedbackMailSetting, SearchManagement, SiteInfo, StatisticTarget, \
     StatisticUnit
+
 
 def get_response_json(result_list, n_lst):
     """Get a response json.
@@ -2012,10 +2015,11 @@ def get_facet_search(id: int = None):
 
 
 def get_item_mapping_list():
-    """
+    """Get Item Mapping list.
 
     Returns:
         object:
+
     """
     def handle_prefix_key(pre_key, key):
         if key == 'properties':
@@ -2025,14 +2029,16 @@ def get_item_mapping_list():
     def get_mapping(pre_key, key, value, mapping_list):
         if isinstance(value, dict) and value.get('type') == 'keyword':
             mapping_list.append(handle_prefix_key(pre_key, key))
-        if isinstance(value, dict) :
+        if isinstance(value, dict):
             for k1, v1 in value.items():
                 get_mapping(handle_prefix_key(pre_key, key), k1, v1, mapping_list)
 
     import json
+
     import weko_schema_ui
     current_path = os.path.dirname(os.path.abspath(weko_schema_ui.__file__))
-    file_path = os.path.join(current_path, 'mappings', 'v6', 'weko', 'item-v1.0.0.json')
+    file_path = os.path.join(current_path, 'mappings', 'v6', 'weko',
+                             'item-v1.0.0.json')
     with open(file_path) as json_file:
         mappings = json.load(json_file).get('mappings')
         properties = mappings.get('item-v1.0.0').get('properties')
@@ -2046,7 +2052,6 @@ def get_item_mapping_list():
 
 def create_facet_search_query():
     """Create facet search query."""
-
     def create_agg_by_aggregations(aggregations, key, val):
         """Create aggregations query."""
         if not aggregations or len(aggregations) == 0:
@@ -2142,6 +2147,7 @@ def get_facet_search_query(has_permission=True):
 
 def get_title_facets():
     """Get title for facet search.
+
     return: dict
         key: name_en
         value:

@@ -233,21 +233,6 @@ WEKO_SEARCH_REST_ENDPOINTS = dict(
 
 WEKO_SEARCH_KEYWORDS_DICT = {
     "nested": {
-        "subject": ("subject", {"sbjscheme": {
-            "subject.subjectScheme": [
-                "BSH",
-                "DDC",
-                "LCC",
-                "LCSH",
-                "MeSH",
-                "NDC",
-                "NDLC",
-                "NDLSH",
-                "UDC",
-                "Other",
-                "SciVal"
-            ]
-        }}),
         "id": ("", {
             "id_attr": {
                 "identifier": (
@@ -359,6 +344,23 @@ WEKO_SEARCH_KEYWORDS_DICT = {
                                    "Updated",
                                    "Valid"]}})],
         "dategranted": [('from', 'to'), "dateGranted"]
+    },
+    "object": {
+        "subject": ("subject", {"sbjscheme": {
+            "subject.subjectScheme": [
+                "BSH",
+                "DDC",
+                "LCC",
+                "LCSH",
+                "MeSH",
+                "NDC",
+                "NDLC",
+                "NDLSH",
+                "UDC",
+                "Other",
+                "SciVal"
+            ]
+        }})
     }
 }
 

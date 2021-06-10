@@ -19,17 +19,15 @@
 # MA 02111-1307, USA.
 #}
 
-
 {% from "weko_records_ui/box/preview_carousel.html" import preview_carousel %}
 {% from "weko_theme/macros/modal_page.html" import all_modal, email_modal %}
+
 {{ email_modal('email_modal', 'confirm_email_btn', _('Send'),_('Please input email address.')) }}
 {{ all_modal() }}
 
 {%- block javascript %}
   {% assets "weko_records_ui_file_action_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
-
-{%- set items_show_list = record.items_show_list -%}
 
 {% from "weko_records_ui/item_detail.html" import output_item_detail %}
 {% from "weko_records_ui/_macros.html" import check_download_file with context %}
@@ -344,7 +342,7 @@
             {%- endif %}
         {% endif%}
           <div class="table-responsive" style="display: inline-block; _display: inline;">
-              {{ output_item_detail(record, files, files_thumbnail, pid, items_show_list, true, is_logged_in, open_day_display_flg) }}
+              {{ output_item_detail(record, files, files_thumbnail, pid, record.items_show_list, true, is_logged_in, open_day_display_flg) }}
           </div>
           {%- if 'main_entry_personal_name' in record %}
           <p class="record_authors">

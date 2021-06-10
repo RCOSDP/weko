@@ -113,12 +113,15 @@ class BookmarkAPI:
         """Set bookmark for starting next aggregation."""
         _id = self.agg_type
         _source = {'date': value, 'aggregation_type': self.agg_type}
-        StatsBookmark.save(dict(
-            _id=_id,
-            _index=self.bookmark_index,
-            _type=self.doc_type,
-            _source=_source,
-        ), delete=True)
+        if current_app.config['STATS_WEKO_DB_BACKUP_BOOKMARK']:
+            # Save stats bookmark into Database.
+            StatsBookmark.save(dict(
+                _id=_id,
+                _index=self.bookmark_index,
+                _type=self.doc_type,
+                _source=_source,
+            ), delete=True)
+
         self.client.index(
             id=_id,
             index=self.bookmark_index,
@@ -359,8 +362,10 @@ class StatAggregator(object):
                     _type=self.aggregation_doc_type,
                     _source=aggregation_data
                 )
-                # Save stats aggregation into Database.
-                # StatsAggregation.save(rtn_data, delete=True)
+
+                if current_app.config['STATS_WEKO_DB_BACKUP_AGGREGATION']:
+                    # Save stats aggregation into Database.
+                    StatsAggregation.save(rtn_data, delete=True)
 
                 yield rtn_data
 

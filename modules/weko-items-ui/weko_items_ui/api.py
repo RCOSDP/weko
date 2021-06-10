@@ -24,32 +24,32 @@ from weko_workflow.api import WorkActivity
 from .utils import is_schema_include_key
 
 
-@login_required_customize
-def item_login(item_type_id=0):
+def item_login(item_type_id: int = 0):
     """Return information that item register need.
 
     :param item_type_id: Item type ID. (Default: 0)
     """
-    template_url = 'weko_items_ui/iframe/item_edit.html'
-    need_file = False
-    need_billing_file = False
-    record = {}
-    json_schema = ''
-    schema_form = ''
-    item_save_uri = url_for('weko_items_ui.iframe_save_model')
-    files = []
-    endpoints = {}
-    need_thumbnail = False
-    files_thumbnail = []
+    activity_id = None
     allow_multi_thumbnail = False
+    endpoints = {}
+    files = []
+    files_thumbnail = []
+    item_save_uri = url_for('weko_items_ui.iframe_save_model')
+    json_schema = ''
+    need_billing_file = False
+    need_file = False
+    need_thumbnail = False
+    record = {}
+    schema_form = ''
+    template_url = 'weko_items_ui/iframe/item_edit.html'
 
     try:
-        item_type = ItemTypes.get_by_id(item_type_id)
-        if item_type is None:
-            template_url = 'weko_items_ui/iframe/error.html'
+        item_type = ItemTypes.get_by_id(item_type_id) \
+            if ItemTypes.get_by_id(item_type_id) \
+            else 'weko_items_ui/iframe/error.html'
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
-        activity_id = None
+
         if session.get('activity_info'):
             activity_id = session['activity_info'].get('activity_id')
         if activity_id:

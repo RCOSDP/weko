@@ -31,7 +31,7 @@ from invenio_db import db
 from weko_groups.api import Group, Membership, MembershipState
 from weko_index_tree.utils import check_index_permissions, get_user_roles
 from weko_records.api import ItemTypes
-from weko_workflow.api import WorkActivity, WorkFlow
+from weko_workflow.api import WorkActivity
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission
@@ -129,8 +129,9 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
         # Get email of login user.
         is_has_email = hasattr(current_user, "email")
         current_user_email = current_user.email if is_has_email else ''
+
         # Get email list of created workflow user.
-        user_id_list = [int(record.get('owner'))]
+        user_id_list = [int(record['owner'])] if record.get('owner') else []
         if record.get('weko_shared_id'):
             user_id_list.append(record.get('weko_shared_id'))
         created_user_email_list = get_email_list_by_ids(user_id_list)

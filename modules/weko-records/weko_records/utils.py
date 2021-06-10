@@ -36,11 +36,12 @@ from weko_schema_ui.schema import SchemaTree
 from .api import ItemTypes, Mapping
 
 
-def json_loader(data, pid):
+def json_loader(data, pid, owner_id=None):
     """Convert the item data and mapping to jpcoar.
 
     :param data: json from item form post.
     :param pid: pid value.
+    :param owner_id: record owner.
     :return: dc, jrc, is_edit
     """
     dc = OrderedDict()
@@ -56,8 +57,10 @@ def json_loader(data, pid):
     pid = pid.pid_value
 
     # get item type id
-    index = data["$schema"].rfind('/')
-    item_type_id = data["$schema"][index + 1:]
+    split_schema_info = data["$schema"].split('/')
+    item_type_id = split_schema_info[-2] \
+        if 'A-' in split_schema_info[-1] \
+        else split_schema_info[-1]
 
     # get item type mappings
     ojson = ItemTypes.get_record(item_type_id)
@@ -171,6 +174,7 @@ def json_loader(data, pid):
         jrc.update(dict(_item_metadata=dc))
         jrc.update(dict(itemtype=ojson.model.item_type_name.name))
         jrc.update(dict(publish_date=pubdate))
+        jrc.update(dict(author_link=data.get('author_link', [])))
 
         # save items's creator to check permission
         if current_user:
@@ -179,33 +183,27 @@ def json_loader(data, pid):
             current_user_id = '1'
         if current_user_id:
             # jrc is saved on elastic
-            jrc_weko_shared_id = jrc.get("weko_shared_id", None)
             jrc_weko_creator_id = jrc.get("weko_creator_id", None)
             if not jrc_weko_creator_id:
                 # in case first time create record
-                jrc.update(dict(weko_creator_id=current_user_id))
-                jrc.update(dict(weko_shared_id=data.get('shared_user_id',
-                                                        None)))
+                jrc.update(dict(weko_creator_id=owner_id or current_user_id))
+                jrc.update(dict(weko_shared_id=data.get('shared_user_id', -1)))
             else:
                 # incase record is end and someone is updating record
                 if current_user_id == int(jrc_weko_creator_id):
                     # just allow owner update shared_user_id
-                    jrc.update(dict(weko_shared_id=data.get('shared_user_id',
-                                                            None)))
+                    jrc.update(
+                        dict(weko_shared_id=data.get('shared_user_id', -1)))
 
             # dc js saved on postgresql
             dc_owner = dc.get("owner", None)
             if not dc_owner:
-                dc.update(
-                    dict(
-                        weko_shared_id=data.get(
-                            'shared_user_id',
-                            None)))
-                dc.update(dict(owner=current_user_id))
+                dc.update(dict(weko_shared_id=data.get('shared_user_id', -1)))
+                dc.update(dict(owner=owner_id or current_user_id))
             else:
                 if current_user_id == int(dc_owner):
-                    dc.update(dict(weko_shared_id=data.get('shared_user_id',
-                                                           None)))
+                    dc.update(
+                        dict(weko_shared_id=data.get('shared_user_id', -1)))
 
     del ojson, mjson, item
     return dc, jrc, is_edit
@@ -667,7 +665,8 @@ async def sort_meta_data_by_options(
         return thumbnail
 
     try:
-        src_default = copy.deepcopy(record_hit['_source'].get('_item_metadata'))
+        src_default = copy.deepcopy(
+            record_hit['_source'].get('_item_metadata'))
         _item_metadata = copy.deepcopy(record_hit['_source'])
         src = record_hit['_source']['_item_metadata']
         item_type_id = record_hit['_source'].get('item_type_id') or \

@@ -177,8 +177,8 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         :returns: the search result containing hits and aggregations as
         returned by invenio-search.
         """
-        from weko_admin.utils import get_facet_search_query
         from weko_admin.models import FacetSearchSetting
+        from weko_admin.utils import get_facet_search_query
 
         page = request.values.get('page', 1, type=int)
         size = request.values.get('size', 20, type=int)

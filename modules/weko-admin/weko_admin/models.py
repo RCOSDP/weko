@@ -1758,7 +1758,16 @@ class FacetSearchSetting(db.Model):
     active = db.Column(db.Boolean(), default=True)
     """True: display this facet search on screen, else hide this."""
 
-    def __int__(self, name_en, name_jp, mapping, aggregations, active):
+    def __init__(self, name_en, name_jp, mapping, aggregations, active):
+        """Initial Facet search setting.
+
+        Args:
+            name_en: Name fix
+            name_jp:
+            mapping:
+            aggregations:
+            active:
+        """
         self.name_en = name_en
         self.name_jp = name_jp
         self.mapping = mapping
@@ -1816,7 +1825,6 @@ class FacetSearchSetting(db.Model):
     @classmethod
     def delete(cls, id):
         """Delete settings."""
-
         if id is not None:
             try:
                 with db.session.begin_nested():
@@ -1826,22 +1834,25 @@ class FacetSearchSetting(db.Model):
             except BaseException as ex:
                 db.session.rollback()
                 current_app.logger.error(ex)
-                
+
         return False
 
     @classmethod
     def update_by_id(cls, id, faceted_search_dict):
-        """update facet search item.
-            :param: id: id of facet search
-                    faceted_search_dict: facet search data update
-            :return True: update success
-                    False: Error
+        """Update facet search item.
+
+        Args:
+            id: id of facet search
+            faceted_search_dict: facet search data update
+
+        Returns: True if update success.
+
         """
         facet_search = cls.get_by_id(id)
         if facet_search:
             try:
                 with db.session.begin_nested():
-                    for k,v in faceted_search_dict.items():
+                    for k, v in faceted_search_dict.items():
                         setattr(facet_search, k, v)
                     db.session.merge(facet_search)
                 db.session.commit()
@@ -1854,6 +1865,11 @@ class FacetSearchSetting(db.Model):
 
     @classmethod
     def get_activated_facets_mapping(cls):
+        """Get activated facet mapping.
+
+        Returns: Facet mapping.
+
+        """
         activated_facet_search = cls.get_activated_facets()
         result = dict()
         for item in activated_facet_search:
