@@ -1483,7 +1483,7 @@ def replace_fqdn(url_path: str, host_url: str = None) -> str:
     elif host_url not in url_path:
         if host_url[-1] != '/':
             host_url = host_url + '/'
-        pattern = r'http[s]{0,1}:\/\/([\d\w]+[\.]*[:]{0,1}[\d\w])+\/'
+        pattern = r'https?:\/\/([\w-]+(\.\w)*)+(:\d+)?\/'
         url_path = re.sub(pattern, host_url, url_path)
     return url_path
 
