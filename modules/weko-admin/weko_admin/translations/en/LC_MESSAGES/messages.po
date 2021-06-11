@@ -360,7 +360,7 @@ msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/report.html:49
 msgid "Number of items registered"
-msgstr "項目タイトルなのでそのままとする"
+msgstr "Number of items registered"
 
 #: weko_admin/templates/weko_admin/admin/report.html:56
 msgid "Total number of items registered:"
