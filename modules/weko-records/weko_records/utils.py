@@ -369,12 +369,6 @@ def get_all_items2(nlst, klst):
     :return: alst
     """
     alst = []
-
-    # def get_name(key):
-    #     for lst in klst:
-    #         k = lst[0].split('.')[-1]
-    #         if key == k:
-    #             return lst[1]
     def get_items(nlst):
         if isinstance(nlst, dict):
             for k, v in nlst.items():
@@ -386,12 +380,12 @@ def get_all_items2(nlst, klst):
             for lst in nlst:
                 get_items(lst)
 
-    to_orderdict(nlst, klst)
+    to_orderdict(nlst, klst, True)
     get_items(nlst)
     return alst
 
 
-def to_orderdict(alst, klst):
+def to_orderdict(alst, klst, is_full_key=False):
     """Sort item list.
 
     :param alst:
@@ -401,12 +395,12 @@ def to_orderdict(alst, klst):
         for i in range(len(alst)):
             if isinstance(alst[i], dict):
                 alst.insert(i, OrderedDict(alst.pop(i)))
-                to_orderdict(alst[i], klst)
+                to_orderdict(alst[i], klst, is_full_key)
     elif isinstance(alst, dict):
         nlst = []
         if isinstance(klst, list):
             for lst in klst:
-                key = lst[0].split('.')[-1]
+                key = lst[0] if is_full_key else lst[0].split('.')[-1]
                 val = alst.pop(key, {})
                 if val:
                     if isinstance(val, dict):
@@ -420,7 +414,7 @@ def to_orderdict(alst, klst):
 
             for k, v in alst.items():
                 if not isinstance(v, str):
-                    to_orderdict(v, klst)
+                    to_orderdict(v, klst, is_full_key)
 
 
 def get_options_and_order_list(item_type_id, ojson=None):
@@ -461,7 +455,7 @@ async def sort_meta_data_by_options(
         """Convert solst to dict."""
         solst_dict_array = []
         for lst in solst:
-            key = lst[0]
+            key = lst[0].replace('[]', '')
             option = meta_options.get(key, {}).get('option')
             temp = {
                 'key': key,
@@ -538,6 +532,16 @@ async def sort_meta_data_by_options(
     def get_comment(solst_dict_array, hide_email_flag, _item_metadata, src,
                     solst):
         """Check and get info."""
+        def get_option_value(option_type, parent_option, child_option):
+            """Get value of option by option type, prioritized parent.
+
+            @param option_type: show_list, specify_newline, hide, required
+            @return: True or False
+            """
+            return parent_option.get(option_type) \
+                if parent_option and parent_option.get(option_type) \
+                else child_option.get(option_type)
+
         result = []
         data_result = {}
         stt_key = []
@@ -553,21 +557,15 @@ async def sort_meta_data_by_options(
             value = s['value']
             option = s['option']
             parent_option = s['parent_option']
-            # Get show list flag.
-            is_show_list = parent_option.get(
-                'show_list') if parent_option and parent_option.get(
-                'show_list') else option.get('show_list')
-            # Get specify newline flag.
-            is_specify_newline = parent_option.get(
-                'specify_newline') if parent_option and parent_option.get(
-                'specify_newline') else option.get('specify_newline')
-            # Get hide flag.
-            is_hide = parent_option.get('hide') if parent_option and \
-                parent_option.get('hide') else option.get('hide')
+            # Get 'show list', 'specify newline', 'hide' flag.
+            is_show_list = get_option_value('show_list', parent_option, option)
+            is_specify_newline = get_option_value(
+                'specify_newline', parent_option, option)
+            is_hide = get_option_value('hide', parent_option, option)
             # Get hide email flag
-            if 'creatorMails[].creatorMail' in s['key'] \
-                or 'contributorMails[].contributorMail' in s['key'] \
-                    or 'mails[].mail' in s['key']:
+            if 'creatorMails.creatorMail' in s['key'] \
+                or 'contributorMails.contributorMail' in s['key'] \
+                    or 'mails.mail' in s['key']:
                 is_hide = is_hide | hide_email_flag
             # Get creator flag.
             is_author = src.get(s['key'], {}).get('attribute_type',
@@ -664,6 +662,61 @@ async def sort_meta_data_by_options(
                 }
         return thumbnail
 
+    def append_parent_key(key, attribute_value_mlt):
+        """Update parent key attribute_value_mlt."""
+        def get_parent_key(key):
+            """Get root key in string key."""
+            parent_key = key
+            key_arr = key.split('.')
+            if len(key_arr) >= 2:
+                del key_arr[-1]
+                parent_key = '.'.join(key_arr)
+            return parent_key
+
+        def append_parent_key_all_type(parent_key, attr_val_mlt):
+            """Append parent key for all sub key in array and dict."""
+            if isinstance(attr_val_mlt, dict):
+                return append_parent_key_for_dict(parent_key, attr_val_mlt)
+            if isinstance(attr_val_mlt, list):
+                return append_parent_key_for_list(parent_key, attr_val_mlt)
+
+        def append_parent_key_for_dict(parent_key, attr_val_mlt):
+            """Append parent key for all sub key in dict."""
+            mlt_temp = {}
+            for attr_key, attr_val in attr_val_mlt.items():
+                # Join parent and child key. Ex: parent_key_01.sub_key_01
+                parent_key_temp = '{}.{}'.format(parent_key, attr_key)
+                mlt_temp.update({parent_key_temp: attr_val})
+                if isinstance(attr_val, dict):
+                    attr_val_temp = append_parent_key_for_dict(
+                        parent_key_temp, attr_val)
+                    mlt_temp[parent_key_temp] = attr_val_temp
+                if isinstance(attr_val, list):
+                    attr_val_temp = append_parent_key_for_list(
+                        parent_key_temp, attr_val)
+                    mlt_temp[parent_key_temp] = attr_val_temp
+            return mlt_temp
+
+        def append_parent_key_for_list(parent_key, attr_val_mlt):
+            """Append parent key for all sub key in array."""
+            mlt_temp_arr = []
+            for item in attr_val_mlt:
+                if isinstance(item, dict):
+                    mlt_temp = append_parent_key_for_dict(parent_key, item)
+                    mlt_temp_arr.append(mlt_temp)
+                if isinstance(item, list):
+                    mlt_temp = append_parent_key_for_list(parent_key, item)
+                    mlt_temp_arr.append(mlt_temp)
+            attr_val_mlt = mlt_temp_arr
+            return attr_val_mlt
+
+        # Get root key.
+        parent_key = get_parent_key(key)
+        # Append parent key for all sub key.
+        attribute_value_mlt = append_parent_key_all_type(
+            parent_key, attribute_value_mlt)
+        return attribute_value_mlt
+
     try:
         src_default = copy.deepcopy(
             record_hit['_source'].get('_item_metadata'))
@@ -726,6 +779,7 @@ async def sort_meta_data_by_options(
                 continue
             mlt = val.get('attribute_value_mlt', [])
             if mlt:
+                mlt = append_parent_key(key, mlt)
                 if val.get('attribute_type', '') == 'file' \
                     and not option.get("hidden") \
                         and option.get("showlist"):
