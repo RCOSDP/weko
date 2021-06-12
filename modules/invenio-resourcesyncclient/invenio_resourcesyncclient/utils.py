@@ -20,6 +20,8 @@
 
 """WEKO3 module docstring."""
 import json
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 from datetime import datetime as dt
 from urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
 

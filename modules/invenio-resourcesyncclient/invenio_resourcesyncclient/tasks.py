@@ -22,6 +22,8 @@
 import json
 import signal
 from datetime import datetime
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 from urllib.parse import urlparse
 
 import requests
