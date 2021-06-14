@@ -21,9 +21,10 @@
 """Weko-Itemtype UI admin."""
 
 import sys
+import io
 
 from flask import abort, current_app, flash, json, jsonify, redirect, \
-    request, session, url_for
+    request, session, url_for, make_response, send_file
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
@@ -43,7 +44,12 @@ from .permissions import item_type_permission
 from .utils import check_duplicate_mapping, fix_json_schema, \
     has_system_admin_access, remove_xsd_prefix, \
     update_required_schema_not_exist_in_form, update_text_and_textarea
-
+from zipfile import ZipFile, ZIP_DEFLATED
+from marshmallow import fields, missing, post_dump, Schema
+from weko_records.models import ItemType, ItemTypeName, ItemTypeMapping, ItemTypeProperty
+from flask_marshmallow import Marshmallow, sqla
+from marshmallow_sqlalchemy import ModelSchema, SQLAlchemyAutoSchema
+from invenio_files_rest.models import FileInstance
 
 class ItemTypeMetaDataView(BaseView):
     """ItemTypeMetaDataView."""
@@ -310,6 +316,46 @@ class ItemTypeMetaDataView(BaseView):
                         'value': 'datetime'}}
 
         return jsonify(lists)
+    
+    @expose('/<int:item_type_id>/export', methods=['GET'])
+    def export(self,item_type_id):
+        item_types = ItemTypes.get_by_id(id_=item_type_id)
+        item_type_properties = ItemTypeProps.get_records([])
+        item_type_names = ItemTypeNames.get_record(id_=item_types.name_id)
+        item_type_mappings = Mapping.get_record(item_type_id)
+        fp = io.BytesIO()
+        with ZipFile(fp, 'w', compression=ZIP_DEFLATED) as new_zip:
+            # zipファイルにJSON文字列を追加
+            new_zip.writestr("ItemType.json", ItemTypeSchema().dumps(item_types).data.encode().decode('unicode-escape').encode())
+            new_zip.writestr("ItemTypeName.json", ItemTypeNameSchema().dumps(item_type_names).data.encode().decode('unicode-escape').encode())
+            new_zip.writestr("ItemTypeMapping.json", ItemTypeMappingSchema().dumps(item_type_mappings.model).data.encode().decode('unicode-escape').encode())
+            props = []
+            for item_type_property in item_type_properties :
+                props.append(ItemTypePropertySchema().dumps(item_type_property))    
+            new_zip.writestr("ItemTypeProperty.json", json.dumps(props).encode().decode('unicode-escape').encode())
+        fp.seek(0)
+        return send_file(
+            fp ,
+            mimetype = 'application/zip' ,
+            attachment_filename ='ItemType_export.zip' ,
+            as_attachment = True
+        )
+
+class ItemTypeSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = ItemType
+        
+class ItemTypeNameSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = ItemTypeName
+
+class ItemTypeMappingSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = ItemTypeMapping
+
+class ItemTypePropertySchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = ItemTypeProperty
 
 
 class ItemTypePropertiesView(BaseView):

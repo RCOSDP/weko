@@ -171,4 +171,5 @@ iiif-prezi==0.3.0
 netaddr==0.8.0
 # for sentry
 # raven==6.10.0
-
+marshmallow-sqlalchemy==0.23.1
+flask-marshmallow==0.14.0

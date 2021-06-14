@@ -132,6 +132,7 @@ $(document).ready(function () {
       if (this.value === 'normal') {
           $('option.normal_type').show()
           $('option.harvesting_type').hide()
+          enable_export();
           disabled_deleted_type();
       } else if (this.value === 'harvesting') {
           $('option.normal_type').hide()
@@ -1957,3 +1958,21 @@ $(document).ready(function () {
   }
 
 });
+
+//impot
+$('#item_type_import').on('click', function(){
+  console.log('item_type_import test');
+  $('#importUI').toggleClass('hide');
+});
+
+//export
+$('#item_type_export').on('click', function(){
+  let item_type_id = $('#item-type-lists').val();
+  document.location.href = '/admin/itemtypes/'+ item_type_id + '/export' ;
+});
+
+function enable_export(){
+if ($("#item-type-lists option:selected").hasClass('normal_type')) {
+    $('#item_type_export').prop('disabled',false);
+ }
+}
