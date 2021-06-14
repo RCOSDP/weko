@@ -78,6 +78,7 @@ def sync_baseline(map, base_url, counter, dryrun=False,
         client.dryrun = dryrun
         client.set_mappings(map)
         result = client.baseline_or_audit()
+        current_app.logger.debug('client.baseline_or_audit(): {0}'.format(result))
         update_counter(counter, result)
         return True
     except MapperError:
@@ -213,7 +214,6 @@ def get_list_records(resync_id):
     from .api import ResyncHandler
     resync_index = ResyncHandler.get_resync(resync_id)
     records = []
-
     if not resync_index.result:
         return records
     return json.loads(resync_index.result)
@@ -221,9 +221,11 @@ def get_list_records(resync_id):
 
 def process_item(record, resync, counter):
     """Process item."""
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(__file__,'process_item()',resync,counter))
     event_counter('processed_items', counter)
     event = ItemEvents.INIT
     xml = etree.tostring(record, encoding='utf-8').decode()
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(__file__,'process_item()','xml',xml))
     mapper = JPCOARMapper(xml)
 
     resyncid = PersistentIdentifier.query.filter_by(
@@ -300,6 +302,7 @@ def process_sync(resync_id, counter):
     uri_host = urlunsplit([parts[0], parts[1], '', '', ''])
     from_date = resync_index.from_date
     to_date = resync_index.to_date
+    current_app.logger.debug('{0} {1} {2}'.format(__file__,'process_sync', map))
     try:
         if mode == current_app.config.get(
             'INVENIO_RESYNC_INDEXES_MODE',

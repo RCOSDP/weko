@@ -50,6 +50,8 @@ from .config import INVENIO_CAPABILITY_URL, VALIDATE_MESSAGE, WEKO_ROOT_INDEX
 from .models import ChangeListIndexes, ResourceListIndexes
 from .query import get_items_by_index_tree
 
+import urllib.parse
+
 
 class ResourceListHandler(object):
     """Define API for ResourceListIndexes creation and update."""
@@ -257,12 +259,15 @@ class ResourceListHandler(object):
                     new_list = []
                     for resource in list_result:
                         resource_dump_manifest = resource.resource_dump_manifest
+                        parsed_url = urllib.parse.urlparse(resource.url_path)
+                        replaced_url = parsed_url._replace(netloc=request.host)
                         new_res = ResourceListHandler(
                             id=resource.id,
                             status=resource.status,
                             repository_id=resource.repository_id,
                             resource_dump_manifest=resource_dump_manifest,
-                            url_path=resource.url_path,
+                            #url_path=resource.url_path,
+                            url_path=replaced_url.geturl(),
                             created=resource.created,
                             updated=resource.updated
                         )
@@ -353,12 +358,13 @@ class ResourceListHandler(object):
                 if to_date and str_to_datetime(to_date) < resource_date:
                     continue
                 id_item = item.get('_source').get('control_number')
-                # url = '{}records/{}'.format(request.url_root, str(id_item))
+                #url = '{}records/{}'.format(request.url_root, str(id_item))
                 url = '{}resync/{}/records/{}'.format(
                     request.url_root,
                     str(self.repository_id),
                     str(id_item)
                 )
+
                 rl.add(Resource(url, lastmod=item.get('_source').get(
                     '_updated')))
         return rl.as_xml()
@@ -429,6 +435,12 @@ class ResourceListHandler(object):
                 caplist.append(Resource(
                     '{}/resourcedump.xml'.format(resource.url_path),
                     capability='resourcedump'))
+                #caplist.append(Resource(
+                #    '{}/resourcelist.xml'.format(resource.url_path),
+                #    capability='resourcelist'))
+                #caplist.append(Resource(
+                #    '{}/resourcedump.xml'.format(resource.url_path),
+                #    capability='resourcedump'))
         return caplist
 
     def get_resource_dump_manifest(self, record_id):

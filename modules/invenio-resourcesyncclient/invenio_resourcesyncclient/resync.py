@@ -22,6 +22,8 @@
 from flask import current_app
 from resync.client import Client
 
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 class ResourceSyncClient(Client):
     """Class ResourceSyncClient base on Client."""
@@ -42,7 +44,8 @@ class ResourceSyncClient(Client):
                                                                       change)
         current_create = self.result.get('created')
         current_update = self.result.get('updated')
-        record_id = filename.rsplit('/', 1)[1]
+        #record_id = filename.rsplit('/', 1)[1]
+        record_id = filename
         if change == 'created':
             current_create.append(record_id)
         elif change == 'updated':
@@ -58,7 +61,8 @@ class ResourceSyncClient(Client):
                                                                       filename,
                                                                       change)
         current_delete = self.result.get('deleted')
-        record_id = filename.rsplit('/', 1)[1]
+        #record_id = filename.rsplit('/', 1)[1]
+        record_id = filename
         current_delete.append(record_id)
         self.result.update({'deleted': current_delete})
         return num_deleted
