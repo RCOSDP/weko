@@ -714,7 +714,8 @@ class SchemaTree:
                                     # @attributes
                                     for key, val in v.get(self._atr,
                                                           {}).items():
-                                        val[0] = [val for idx, val
+                                        if(type(val[0]) is not str):
+                                          val[0] = [val for idx, val
                                                   in enumerate(val[0])
                                                   if idx in lst_val_idx]
                             else:
@@ -1134,8 +1135,6 @@ class SchemaTree:
                             lst_name_identifier_scheme.index(identifior_item)])
                 if len(index_remove_items) == total_remove_items:
                     del v['jpcoar:nameIdentifier']
-                    if 'jpcoar:affiliation' in v:
-                        del v['jpcoar:affiliation']
                 else:
                     for index in index_remove_items[::-1]:
                         lst_name_identifier_scheme.pop(index)

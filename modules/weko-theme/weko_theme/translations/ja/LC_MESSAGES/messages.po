@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-theme 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2021-05-05 22:53+0900\n"
+"POT-Creation-Date: 2021-02-16 02:37+0000\n"
 "PO-Revision-Date: 2018-04-12 18:01+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -16,145 +16,135 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.8.0\n"
+"Generated-By: Babel 2.5.1\n"
 
-#: weko_theme/templates/weko_theme/macros/tabs_selector.html:27
-#: weko_theme/utils.py:225
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:33
+#: weko_theme/utils.py:210
 msgid "Communities"
 msgstr "コミュニティ"
 
-#: weko_theme/templates/weko_theme/admin_header.html:77
+#: weko_theme/templates/weko_theme/admin_header.html:86
 msgid "Logout"
 msgstr "ログアウト"
 
-#: weko_theme/templates/weko_theme/body_contents.html:33
+#: weko_theme/templates/weko_theme/body_contents.html:35
 msgid "Item list"
 msgstr "アイテムリスト"
 
-#: weko_theme/templates/weko_theme/body_contents.html:44
+#: weko_theme/templates/weko_theme/body_contents.html:48
 msgid "Export Checked Items"
 msgstr "チェックしたアイテムをエクスポート"
 
-#: weko_theme/templates/weko_theme/body_contents.html:45
+#: weko_theme/templates/weko_theme/body_contents.html:49
 msgid "Export All Displayed Items"
 msgstr "表示中のアイテムをエクスポート"
 
-#: weko_theme/templates/weko_theme/body_contents.html:46
+#: weko_theme/templates/weko_theme/body_contents.html:50
 msgid "Export All Items Of This Index"
-msgstr "このインデックス全てのアイテムをエクスポート"
+msgstr "このインデックスすべてのアイテムをエクスポート"
 
-#: weko_theme/templates/weko_theme/body_contents.html:47
+#: weko_theme/templates/weko_theme/body_contents.html:51
 msgid "Print Checked Items"
 msgstr "チェックしたアイテムを印刷"
 
-#: weko_theme/templates/weko_theme/body_contents.html:48
+#: weko_theme/templates/weko_theme/body_contents.html:52
 msgid "Print All Displayed Items"
-msgstr "表示中のアイテムを印刷"
+msgstr "表示中すべてのアイテムを印刷"
 
-#: weko_theme/templates/weko_theme/body_contents.html:49
+#: weko_theme/templates/weko_theme/body_contents.html:53
 msgid "Print All Items Of This Index"
-msgstr "このインデックス全てのアイテムを印刷"
+msgstr "このインデックスすべてのアイテムを印刷"
 
-#: weko_theme/templates/weko_theme/body_contents.html:51
+#: weko_theme/templates/weko_theme/body_contents.html:55
 msgid "Execution"
 msgstr "実行"
 
-#: weko_theme/templates/weko_theme/body_contents.html:54
-#: weko_theme/templates/weko_theme/body_contents.html:79
+#: weko_theme/templates/weko_theme/body_contents.html:58
+#: weko_theme/templates/weko_theme/body_contents.html:85
 msgid "Display order"
 msgstr "表示順"
 
-#: weko_theme/templates/weko_theme/body_contents.html:56
+#: weko_theme/templates/weko_theme/body_contents.html:60
 msgid "Title(Ascending)"
 msgstr "タイトル（昇順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:57
+#: weko_theme/templates/weko_theme/body_contents.html:61
 msgid "Title(Descending)"
 msgstr "タイトル（降順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:58
+#: weko_theme/templates/weko_theme/body_contents.html:62
 msgid "Registrant(Ascending)"
 msgstr "登録者（昇順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:59
+#: weko_theme/templates/weko_theme/body_contents.html:63
 msgid "Registrant(Descending)"
 msgstr "登録者（降順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:60
+#: weko_theme/templates/weko_theme/body_contents.html:64
 msgid "Item Types(Asending)"
 msgstr "アイテムタイプ（昇順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:61
+#: weko_theme/templates/weko_theme/body_contents.html:65
 msgid "Item Types(Descending)"
 msgstr "アイテムタイプ（降順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:62
+#: weko_theme/templates/weko_theme/body_contents.html:66
 msgid "ID(Ascending)"
 msgstr "ID（昇順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:63
+#: weko_theme/templates/weko_theme/body_contents.html:67
 msgid "ID(Descending)"
 msgstr "ID（降順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:64
+#: weko_theme/templates/weko_theme/body_contents.html:68
 msgid "Modified Date and Time(Ascending)"
 msgstr "更新日時（昇順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:65
+#: weko_theme/templates/weko_theme/body_contents.html:69
 msgid "Modified Date and Time(Descending)"
 msgstr "更新日時（降順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:66
+#: weko_theme/templates/weko_theme/body_contents.html:70
 msgid "Created Date and Time(Ascending)"
 msgstr "作成日時（昇順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:67
+#: weko_theme/templates/weko_theme/body_contents.html:71
 msgid "Created Date and Time(Descending)"
 msgstr "作成日時（降順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:68
+#: weko_theme/templates/weko_theme/body_contents.html:72
 msgid "Review Date and Time(Ascending)"
 msgstr "査読日時（昇順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:69
+#: weko_theme/templates/weko_theme/body_contents.html:73
 msgid "Review Date and Time(Descending)"
 msgstr "査読日時（降順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:70
+#: weko_theme/templates/weko_theme/body_contents.html:74
 msgid "Published Year(Ascending)"
 msgstr "出版年（昇順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:71
+#: weko_theme/templates/weko_theme/body_contents.html:75
 msgid "Published Year(Descending)"
 msgstr "出版年（降順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:72
+#: weko_theme/templates/weko_theme/body_contents.html:76
 msgid "Custom(Ascending)"
 msgstr "カスタム（昇順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:73
+#: weko_theme/templates/weko_theme/body_contents.html:77
 msgid "Custom(Descending)"
 msgstr "カスタム（降順）"
 
-#: weko_theme/templates/weko_theme/body_contents.html:74
-#, fuzzy
-msgid "Relevance(Ascending)"
-msgstr "タイトル（昇順）"
-
-#: weko_theme/templates/weko_theme/body_contents.html:75
-#, fuzzy
-msgid "Relevance(Descending)"
-msgstr "タイトル（降順）"
-
-#: weko_theme/templates/weko_theme/body_contents.html:93
+#: weko_theme/templates/weko_theme/body_contents.html:104
 msgid "The number of display"
 msgstr "表示数"
 
-#: weko_theme/templates/weko_theme/body_contents.html:110
+#: weko_theme/templates/weko_theme/body_contents.html:123
 msgid "Search failed."
 msgstr "検索に失敗しました"
 
-#: weko_theme/templates/weko_theme/body_contents.html:114
+#: weko_theme/templates/weko_theme/body_contents.html:129
 msgid "Loading..."
 msgstr "読み込み中..."
 
@@ -162,37 +152,33 @@ msgstr "読み込み中..."
 msgid "Index Link"
 msgstr "インデックスリンク"
 
-#: weko_theme/templates/weko_theme/body_index.html:51
+#: weko_theme/templates/weko_theme/body_index.html:52
 msgid "Index Tree"
 msgstr "インデックスツリー"
 
 #: weko_theme/templates/weko_theme/body_search.html:27
-msgid "Search Keyword"
-msgstr ""
-
-#: weko_theme/templates/weko_theme/body_search.html:28
 msgid "Type and press enter to search"
 msgstr "入力後、Enterキーを押下し検索してください"
 
-#: weko_theme/templates/weko_theme/body_search.html:34
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:129
+#: weko_theme/templates/weko_theme/body_search.html:33
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:120
 msgid "Search"
 msgstr "検索"
 
-#: weko_theme/templates/weko_theme/body_search.html:42
+#: weko_theme/templates/weko_theme/body_search.html:41
 msgid "Advanced"
 msgstr "詳細検索"
 
-#: weko_theme/templates/weko_theme/body_search.html:44
-#: weko_theme/templates/weko_theme/macros/modal_page.html:91
+#: weko_theme/templates/weko_theme/body_search.html:43
+#: weko_theme/templates/weko_theme/macros/modal_page.html:67
 msgid "Close"
 msgstr "閉じる"
 
-#: weko_theme/templates/weko_theme/body_search.html:54
+#: weko_theme/templates/weko_theme/body_search.html:53
 msgid "Full text"
 msgstr "全文"
 
-#: weko_theme/templates/weko_theme/body_search.html:58
+#: weko_theme/templates/weko_theme/body_search.html:57
 msgid "Keyword"
 msgstr "キーワード"
 
@@ -216,41 +202,21 @@ msgstr ""
 msgid "[[sub_radio.contents]]"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:63
-msgid "Start Date"
-msgstr ""
-
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:70
-msgid "End Date"
-msgstr ""
-
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:78
-msgid "Field does not validate"
-msgstr ""
-
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:92
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:83
 msgid "[[sub_attr.contents]]"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:117
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:108
 msgid "Add Search Condition"
 msgstr "検索条件追加"
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:135
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:126
 msgid "Clear"
 msgstr "クリア"
 
-#: weko_theme/templates/weko_theme/edit.html:22
+#: weko_theme/templates/weko_theme/edit.html:25
 msgid "Top Page"
 msgstr "トップページ"
-
-#: weko_theme/templates/weko_theme/error.html:27
-msgid "Internal server error"
-msgstr ""
-
-#: weko_theme/templates/weko_theme/error.html:30
-msgid "Error identifier"
-msgstr ""
 
 #: weko_theme/templates/weko_theme/footer_editor.html:27
 #: weko_theme/templates/weko_theme/footer_wysiwyg.html:27
@@ -263,20 +229,20 @@ msgstr ""
 msgid "Toggle navigation"
 msgstr "ナビゲーションを切り替えます"
 
-#: weko_theme/templates/weko_theme/header_login.html:28
+#: weko_theme/templates/weko_theme/header_login.html:24
 msgid "Log in"
 msgstr "ログイン"
 
-#: weko_theme/templates/weko_theme/header_login.html:31
+#: weko_theme/templates/weko_theme/header_login.html:27
 msgid "Sign up"
 msgstr "サインアップ"
 
 #: weko_theme/templates/weko_theme/header_login.html:45
-#: weko_theme/templates/weko_theme/header_login.html:48
+#: weko_theme/templates/weko_theme/header_login.html:49
 msgid "Log out"
 msgstr "ログアウト"
 
-#: weko_theme/templates/weko_theme/page_setting.html:26
+#: weko_theme/templates/weko_theme/page_setting.html:33
 #, fuzzy
 msgid "Settings"
 msgstr "会議発表用資料"
@@ -303,46 +269,29 @@ msgid "Bulk Delete"
 msgstr "一括削除"
 
 #: weko_theme/templates/weko_theme/macros/language_selector.html:28
-#: weko_theme/templates/weko_theme/macros/language_selector.html:29
 msgid "Language:"
 msgstr "言語:"
 
 #: weko_theme/templates/weko_theme/macros/modal_page.html:31
-#: weko_theme/templates/weko_theme/macros/modal_page.html:54
 msgid "WEKO"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/macros/modal_page.html:39
-#: weko_theme/templates/weko_theme/macros/modal_page.html:117
-#: weko_theme/templates/weko_theme/macros/modal_page.html:160
+#: weko_theme/templates/weko_theme/macros/modal_page.html:94
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: weko_theme/templates/weko_theme/macros/modal_page.html:62
-msgid "OK"
-msgstr ""
-
-#: weko_theme/templates/weko_theme/macros/modal_page.html:138
-#: weko_theme/templates/weko_theme/macros/modal_page.html:141
-msgid "Email address"
-msgstr ""
-
-#: weko_theme/templates/weko_theme/macros/modal_page.html:145
-#: weko_theme/templates/weko_theme/macros/modal_page.html:148
-msgid "Email address(reconfirmation)"
-msgstr ""
-
-#: weko_theme/templates/weko_theme/macros/tabs_selector.html:23
-#: weko_theme/templates/weko_theme/macros/tabs_selector.html:25
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:24
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:29
 msgid "Top"
 msgstr "トップ"
 
-#: weko_theme/templates/weko_theme/macros/tabs_selector.html:24
 #: weko_theme/templates/weko_theme/macros/tabs_selector.html:26
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:31
 msgid "WorkFlow"
 msgstr "ワークフロー"
 
-#: weko_theme/templates/weko_theme/macros/tabs_selector.html:28
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:35
 msgid "Ranking"
 msgstr "ランキング"
 
@@ -470,7 +419,7 @@ msgstr "ランキング"
 #~ msgstr "出版者"
 
 #~ msgid "Contributors"
-#~ msgstr "投稿者"
+#~ msgstr "寄与者"
 
 #~ msgid "Contents created date"
 #~ msgstr "コンテンツ作成日"
@@ -509,7 +458,7 @@ msgstr "ランキング"
 #~ msgstr "フォーマット"
 
 #~ msgid "Journal Title"
-#~ msgstr "ジャーナルタイトル"
+#~ msgstr "雑誌名"
 
 #~ msgid "ID"
 #~ msgstr ""
@@ -521,7 +470,7 @@ msgstr "ランキング"
 #~ msgstr ""
 
 #~ msgid "fullTextURL"
-#~ msgstr "本文フルテキストへのリンク"
+#~ msgstr "フルテキストURL"
 
 #~ msgid "selfDOI"
 #~ msgstr ""
@@ -548,7 +497,7 @@ msgstr "ランキング"
 #~ msgstr ""
 
 #~ msgid "Resource Type"
-#~ msgstr "リソースタイプ"
+#~ msgstr "資源タイプ"
 
 #~ msgid "Conference Paper"
 #~ msgstr "会議発表論文"
@@ -662,10 +611,10 @@ msgstr "ランキング"
 #~ msgstr "学位名"
 
 #~ msgid "Institution for academic degree"
-#~ msgstr "学位取得機関"
+#~ msgstr "学位授与機関"
 
 #~ msgid "Author ID"
-#~ msgstr "著者名ID"
+#~ msgstr "著者ID"
 
 #~ msgid "Index"
 #~ msgstr "インデックス"
@@ -691,260 +640,341 @@ msgstr "ランキング"
 #~ msgid "ANY"
 #~ msgstr "任意"
 
-#~ msgid "Admin menu_ホーム"
-#~ msgstr "ホーム"
-
-#~ msgid "Admin menu_Item Types"
-#~ msgstr "アイテムタイプ管理"
-
-#~ msgid "Admin menu_Items"
-#~ msgstr "アイテム管理"
-
-#~ msgid "Admin menu_Index Tree"
-#~ msgstr "インデックスツリー管理"
-
-#~ msgid "Admin menu_Web Design"
-#~ msgstr "ウェブデザイン管理"
-
-#~ msgid "Admin menu_Author Management"
-#~ msgstr "著者DB管理"
-
-#~ msgid "Admin menu_Statistics"
-#~ msgstr "統計"
-
-#~ msgid "Admin menu_WorkFlow"
-#~ msgstr "ワークフロー管理"
-
-#~ msgid "Admin menu_Communities"
-#~ msgstr "コミュニティ管理"
-
-#~ msgid "Admin menu_OAI-PMH"
-#~ msgstr "OAI-PMH"
-
-#~ msgid "Admin menu_Resource Sync"
-#~ msgstr "Resource Sync"
-
-#~ msgid "Admin menu_Records"
-#~ msgstr "レコード管理"
-
-#~ msgid "Admin menu_Files"
-#~ msgstr "ファイル管理"
-
-#~ msgid "Admin menu_User Management"
-#~ msgstr "ユーザ管理"
-
-#~ msgid "Admin menu_Setting"
-#~ msgstr "設定"
-
-#~ msgid "Admin menu_Item Types_Metadata"
-#~ msgstr "メタデータ"
-
-#~ msgid "Admin menu_Item Types_Mapping"
-#~ msgstr "マッピング"
-
-#~ msgid "Admin menu_Item Types_OAI Schema"
-#~ msgstr "OAIスキーマ"
-
-#~ msgid "Admin menu_Item Types_Properties"
-#~ msgstr "プロパティ"
-
-#~ msgid "Admin menu_Items_Bulk Update"
-#~ msgstr "一括更新"
-
-#~ msgid "Admin menu_Items_Bulk Delete"
-#~ msgstr "一括削除"
-
-#~ msgid "Admin menu_Items_Bulk Export"
-#~ msgstr "一括エクスポート"
-
-#~ msgid "Admin menu_Items_Import"
-#~ msgstr "インポート"
-
-#~ msgid "Admin menu_Index Tree_Edit Tree"
-#~ msgstr "ツリー編集"
-
-#~ msgid "Admin menu_Index Tree_Journal Information"
-#~ msgstr "雑誌情報"
-
-#~ msgid "Admin menu_Index Tree_Custom Sort"
-#~ msgstr "カスタムソート"
-
-#~ msgid "Admin menu_Web Design_Widget"
-#~ msgstr "ウィジェット"
-
-#~ msgid "Admin menu_Web Design_Page Layout"
-#~ msgstr "ページレイアウト"
-
-#~ msgid "Admin menu_Author Management_Edit"
-#~ msgstr "編集"
-
-#~ msgid "Admin menu_Author Management_Export"
-#~ msgstr "一括出力"
-
-#~ msgid "Admin menu_Author Management_Import"
-#~ msgstr "一括登録"
-
-#~ msgid "Admin menu_Statistics_Report"
-#~ msgstr "運用レポート"
-
-#~ msgid "Admin menu_Statistics_Feedback Mail"
-#~ msgstr "フィードバックメール"
-
-#~ msgid "Admin menu_Statistics_Site License"
-#~ msgstr "サイトライセンス"
-
-#~ msgid "Admin menu_WorkFlow_Flow List"
-#~ msgstr "フロー"
-
-#~ msgid "Admin menu_WorkFlow_WorkFlow List"
-#~ msgstr "ワークフロー"
-
-#~ msgid "Admin menu_Communities_Community"
-#~ msgstr "コミュニティ"
-
-#~ msgid "Admin menu_Communities_Featured Community"
-#~ msgstr "注目のコミュニティ"
-
-#~ msgid "Admin menu_Communities_Inclusion Request"
-#~ msgstr "参加リクエスト"
-
-#~ msgid "Admin menu_OAI-PMH_Harvesting"
-#~ msgstr "ハーベスト"
-
-#~ msgid "Admin menu_OAI-PMH_Identify"
-#~ msgstr "Identify"
-
-#~ msgid "Admin menu_OAI-PMH_Sets"
-#~ msgstr "Sets"
-
-#~ msgid "Admin menu_Resource Sync_Resource List"
-#~ msgstr "Resource List"
-
-#~ msgid "Admin menu_Resource Sync_Change List"
-#~ msgstr "Change List"
-
-#~ msgid "Admin menu_Resource Sync_Resync"
-#~ msgstr "Resync"
-
-#~ msgid "Admin menu_Records_Persistent Identifier"
-#~ msgstr "永続識別子"
-
-#~ msgid "Admin menu_Records_Record Metadata"
-#~ msgstr "レコードメタデータ"
-
-#~ msgid "Admin menu_Files_Bucket"
-#~ msgstr "バケット"
-
-#~ msgid "Admin menu_Files_File Instance"
-#~ msgstr "ファイルインスタンス"
-
-#~ msgid "Admin menu_Files_Location"
-#~ msgstr "ロケーション"
-
-#~ msgid "Admin menu_Files_Multipart Object"
-#~ msgstr "マルチパートオブジェクト"
-
-#~ msgid "Admin menu_Files_Object Version"
-#~ msgstr "オブジェクトバージョン"
-
-#~ msgid "Admin menu_User Management_Access: Roles"
-#~ msgstr "アクセス: ロール"
-
-#~ msgid "Admin menu_User Management_Access: System Roles"
-#~ msgstr "アクセス: システムロール"
-
-#~ msgid "Admin menu_User Management_Access: Users"
-#~ msgstr "アクセス: ユーザー"
-
-#~ msgid "Admin menu_User Management_Linked account identities"
-#~ msgstr "連結アカウント識別子"
-
-#~ msgid "Admin menu_User Management_Linked account tokens"
-#~ msgstr "連結アカウントトークン"
-
-#~ msgid "Admin menu_User Management_Linked accounts"
-#~ msgstr "連結アカウント"
-
-#~ msgid "Admin menu_User Management_OAuth Application Tokens"
-#~ msgstr "OAuthアプリケーショントークン"
-
-#~ msgid "Admin menu_User Management_OAuth Applications"
-#~ msgstr "OAuthアプリケーション"
-
-#~ msgid "Admin menu_User Management_Role"
-#~ msgstr "ロール"
-
-#~ msgid "Admin menu_User Management_Session Activity"
-#~ msgstr "セッションアクティビティ"
-
-#~ msgid "Admin menu_User Management_User"
-#~ msgstr "ユーザー"
-
-#~ msgid "Admin menu_User Management_User Profile"
-#~ msgstr "ユーザープロファイル"
-
-#~ msgid "Admin menu_Setting_Items"
-#~ msgstr "アイテム表示"
-
-#~ msgid "Admin menu_Setting_Index Link"
-#~ msgstr "インデックスリンク表示"
-
-#~ msgid "Admin menu_Setting_Index Tree"
-#~ msgstr "インデックスツリー表示"
-
-#~ msgid "Admin menu_Setting_Language"
-#~ msgstr "言語表示"
-
-#~ msgid "Admin menu_Setting_PDF Cover Page"
-#~ msgstr "PDFカバーページ表示"
-
-#~ msgid "Admin menu_Setting_Ranking"
-#~ msgstr "ランキング表示"
-
-#~ msgid "Admin menu_Setting_Stats"
-#~ msgstr "統計情報表示"
-
-#~ msgid "Admin menu_Setting_Style"
-#~ msgstr "画面背景色"
-
-#~ msgid "Admin menu_Setting_Identifier"
-#~ msgstr "識別子"
-
-#~ msgid "Admin menu_Setting_Item Export"
-#~ msgstr "アイテム一括出力"
-
-#~ msgid "Admin menu_Setting_Log Analysis"
-#~ msgstr "ログ解析"
-
-#~ msgid "Admin menu_Setting_Search"
-#~ msgstr "検索設定"
-
-#~ msgid "Admin menu_Setting_Site Info"
-#~ msgstr "サイト情報"
-
-#~ msgid "Admin menu_Setting_Site License"
-#~ msgstr "サイトライセンス"
-
-#~ msgid "Admin menu_Setting_Sitemap"
-#~ msgstr "サイトマップ"
-
-#~ msgid "Admin menu_Setting_Mail"
-#~ msgstr "メール送信"
-
-#~ msgid "Admin menu_Setting_WebAPI Account"
-#~ msgstr "WebAPIアカウント"
-
-#~ msgid "Admin menu_Setting_File Preview"
-#~ msgstr "ファイルプレビュー"
-
-#~ msgid "Admin menu_Setting_Shibboleth"
-#~ msgstr "Shibboleth"
-
-#~ msgid "Admin menu_Setting_Others"
-#~ msgstr "その他"
-
-#~ msgid "Admin menu_Setting_Restricted Access"
-#~ msgstr "制限公開"
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_ホーム"
+msgstr "ホーム"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Item Types"
+msgstr "アイテムタイプ管理"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Items"
+msgstr "アイテム管理"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Index Tree"
+msgstr "インデックスツリー管理"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Web Design"
+msgstr "ウェブデザイン管理"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Author Management"
+msgstr "著者DB管理"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Statistics"
+msgstr "統計"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_WorkFlow"
+msgstr "ワークフロー管理"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Communities"
+msgstr "コミュニティ管理"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_OAI-PMH"
+msgstr "OAI-PMH"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Resource Sync"
+msgstr "Resource Sync"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Records"
+msgstr "レコード管理"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Files"
+msgstr "ファイル管理"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_User Management"
+msgstr "ユーザ管理"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting"
+msgstr "設定"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Item Types_Metadata"
+msgstr "メタデータ"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Item Types_Mapping"
+msgstr "マッピング"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Item Types_OAI Schema"
+msgstr "OAIスキーマ"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Item Types_Properties"
+msgstr "プロパティ"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Items_Bulk Update"
+msgstr "一括更新"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Items_Bulk Delete"
+msgstr "一括削除"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Items_Bulk Export"
+msgstr "一括エクスポート"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Items_Import"
+msgstr "インポート"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Index Tree_Edit Tree"
+msgstr "ツリー編集"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Index Tree_Journal Information"
+msgstr "雑誌情報"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Index Tree_Custom Sort"
+msgstr "カスタムソート"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Web Design_Widget"
+msgstr "ウィジェット"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Web Design_Page Layout"
+msgstr "ページレイアウト"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Author Management_Edit"
+msgstr "編集"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Author Management_Export"
+msgstr "一括出力"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Author Management_Import"
+msgstr "一括登録"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Statistics_Report"
+msgstr "運用レポート"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Statistics_Feedback Mail"
+msgstr "フィードバックメール"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Statistics_Site License"
+msgstr "サイトライセンス"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_WorkFlow_Flow List"
+msgstr "フロー"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_WorkFlow_WorkFlow List"
+msgstr "ワークフロー"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Communities_Community"
+msgstr "コミュニティ"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Communities_Featured Community"
+msgstr "注目のコミュニティ"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Communities_Inclusion Request"
+msgstr "参加リクエスト"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_OAI-PMH_Harvesting"
+msgstr "ハーベスト"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_OAI-PMH_Identify"
+msgstr "Identify"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_OAI-PMH_Sets"
+msgstr "Sets"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Resource Sync_Resource List"
+msgstr "Resource List"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Resource Sync_Change List"
+msgstr "Change List"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Resource Sync_Resync"
+msgstr "Resync"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Records_Persistent Identifier"
+msgstr "永続識別子"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Records_Record Metadata"
+msgstr "レコードメタデータ"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Files_Bucket"
+msgstr "バケット"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Files_File Instance"
+msgstr "ファイルインスタンス"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Files_Location"
+msgstr "ロケーション"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Files_Multipart Object"
+msgstr "マルチパートオブジェクト"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Files_Object Version"
+msgstr "オブジェクトバージョン"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_User Management_Access: Roles"
+msgstr "アクセス: ロール"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_User Management_Access: System Roles"
+msgstr "アクセス: システムロール"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_User Management_Access: Users"
+msgstr "アクセス: ユーザー"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_User Management_Linked account identities"
+msgstr "連結アカウント識別子"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_User Management_Linked account tokens"
+msgstr "連結アカウントトークン"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_User Management_Linked accounts"
+msgstr "連結アカウント"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_User Management_OAuth Application Tokens"
+msgstr "OAuthアプリケーショントークン"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_User Management_OAuth Applications"
+msgstr "OAuthアプリケーション"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_User Management_Role"
+msgstr "ロール"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_User Management_Session Activity"
+msgstr "セッションアクティビティ"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_User Management_User"
+msgstr "ユーザー"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_User Management_User Profile"
+msgstr "ユーザープロファイル"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Items"
+msgstr "アイテム表示"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Index Link"
+msgstr "インデックスリンク表示"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Index Tree"
+msgstr "インデックスツリー表示"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Language"
+msgstr "言語表示"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_PDF Cover Page"
+msgstr "PDFカバーページ表示"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Ranking"
+msgstr "ランキング表示"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Stats"
+msgstr "統計情報表示"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Style"
+msgstr "画面背景色"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Identifier"
+msgstr "識別子"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Item Export"
+msgstr "アイテム一括出力"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Log Analysis"
+msgstr "ログ解析"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Search"
+msgstr "検索設定"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Site Info"
+msgstr "サイト情報"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Site License"
+msgstr "サイトライセンス"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Sitemap"
+msgstr "サイトマップ"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Mail"
+msgstr "メール送信"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_WebAPI Account"
+msgstr "WebAPIアカウント"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_File Preview"
+msgstr "ファイルプレビュー"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Shibboleth"
+msgstr "Shibboleth"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Setting_Others"
+msgstr "その他"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting_Restricted Access"

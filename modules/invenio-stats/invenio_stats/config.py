@@ -201,3 +201,12 @@ STATS_AGGREGATION_INDEXES = [
 
 STATS_WEKO_DEFAULT_TIMEZONE = 'Asia/Tokyo'
 """Bucketing should use a different time zone."""
+
+STATS_WEKO_DB_BACKUP_EVENTS = True
+"""Enable DB backup of events."""
+
+STATS_WEKO_DB_BACKUP_AGGREGATION = False
+"""Enable DB backup of aggregation."""
+
+STATS_WEKO_DB_BACKUP_BOOKMARK = False
+"""Enable DB backup of bookmark."""

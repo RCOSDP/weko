@@ -21,13 +21,11 @@
 {%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
 {%- from "invenio_communities/macros.html" import community_header %}
 
-{%- set items_show_list = record.items_show_list -%}
-
 {%- block css %}
-{{ super() }}
-{% assets "weko_records_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-{% assets "workflow_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-{% assets "weko_records_ui_bootstrap_popover_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ super() }}
+  {% assets "weko_records_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "workflow_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_records_ui_bootstrap_popover_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -144,7 +142,7 @@
                     <p class="form-control-static">
                       {%- if is_enable_item_name_link -%}
                         <a href="#"
-                           id="lnk_item_detail">{{ item.get('title_ja', item.get('title')) if item }}</a>
+                           id="link_record_detail">{{ item.get('title_ja', item.get('title')) if item }}</a>
                       {%- endif -%}
                     </p>
                   </div>

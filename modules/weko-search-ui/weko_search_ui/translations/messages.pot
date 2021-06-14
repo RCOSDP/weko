@@ -744,3 +744,7 @@ msgstr ""
 
 msgid "The file name specified in {} and {} do not match."
 msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_facet_search.html:50
+msgid "Go to"
+msgstr "Go to"

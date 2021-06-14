@@ -193,13 +193,21 @@ def resumption_token(parent, pagination, **kwargs):
 
 def listsets(**kwargs):
     """Create OAI-PMH response for ListSets verb."""
-    e_tree, e_listsets = verb(**kwargs)
+    from weko_index_tree.api import Indexes
 
+    e_tree, e_listsets = verb(**kwargs)
     page = kwargs.get('resumptionToken', {}).get('page', 1)
     size = current_app.config['OAISERVER_PAGE_SIZE']
     oai_sets = OAISet.query.paginate(page=page, per_page=size, error_out=False)
 
     for oai_set in oai_sets.items:
+        index_path = [oai_set.spec.replace(':', '/')]
+        if Indexes.is_public_state([str(oai_set.id)]) is not None \
+                and (not Indexes.is_public_state(index_path.copy())
+                     or not Indexes.get_harvest_public_state(
+                    index_path.copy())):
+            continue
+
         e_set = SubElement(e_listsets, etree.QName(NS_OAIPMH, 'set'))
         e_setSpec = SubElement(e_set, etree.QName(NS_OAIPMH, 'setSpec'))
         e_setSpec.text = oai_set.spec
@@ -262,8 +270,11 @@ def header(parent, identifier, datestamp, sets=None, deleted=False):
     e_datestamp = SubElement(e_header, etree.QName(NS_OAIPMH, 'datestamp'))
     e_datestamp.text = datetime_to_datestamp(datestamp)
     for spec in sets or []:
-        e = SubElement(e_header, etree.QName(NS_OAIPMH, 'setSpec'))
-        e.text = spec
+        index_path = [spec.replace(':', '/')]
+        if Indexes.is_public_state(index_path.copy()) \
+                and Indexes.get_harvest_public_state(index_path.copy()):
+            e = SubElement(e_header, etree.QName(NS_OAIPMH, 'setSpec'))
+            e.text = spec
     return e_header
 
 
@@ -286,7 +297,8 @@ def is_pubdate_in_future(record):
 
 def is_private_index(record):
     """Check index of workflow is private."""
-    return not Indexes.is_public_state(copy.deepcopy(record.get("path")))
+    return not Indexes.is_public_state_and_not_in_future(
+        copy.deepcopy(record.get('path')))
 
 
 def set_identifier(param_record, param_rec):
@@ -317,17 +329,26 @@ def is_exists_doi(param_record):
 
 
 def getrecord(**kwargs):
-    """Create OAI-PMH response for verb Identify."""
+    """Create OAI-PMH response for verb GetRecord."""
     def get_error_code_msg():
         """Get error by type."""
         code = current_app.config.get('OAISERVER_CODE_NO_RECORDS_MATCH')
         msg = current_app.config.get('OAISERVER_MESSAGE_NO_RECORDS_MATCH')
         return [(code, msg)]
 
+    def get_no_match_error_msg():
+        """Get no match error."""
+        code = 'noRecordsMatch'
+        msg = 'The combination of the values of the from, until, ' \
+              'set and metadataPrefix arguments results in an empty list.'
+        return [(code, msg)]
+
     record_dumper = serializer(kwargs['metadataPrefix'])
     pid = OAIIDProvider.get(pid_value=kwargs['identifier']).pid
 
     identify = OaiIdentify.get_all()
+    if not identify:
+        return error(get_no_match_error_msg(), **kwargs)
     harvest_public_state, record = WekoRecord.get_record_with_hps(
         pid.object_uuid)
 
@@ -354,7 +375,6 @@ def getrecord(**kwargs):
             e_record,
             identifier=pid.pid_value,
             datestamp=record.updated,
-            sets=record.get('_oai', {}).get('sets', []),
             deleted=True
         )
         return e_tree
@@ -385,19 +405,45 @@ def getrecord(**kwargs):
 def listidentifiers(**kwargs):
     """Create OAI-PMH response for verb ListIdentifiers."""
     e_tree, e_listidentifiers = verb(**kwargs)
+    identify = OaiIdentify.get_all()
     result = get_records(**kwargs)
 
-    if not result.total:
+    if not identify or not identify.outPutSetting \
+            or not result.total:
         return error(get_error_code_msg(), **kwargs)
 
-    for record in result.items:
-        pid = oaiid_fetcher(record['id'], record['json']['_source'])
-        header(
-            e_listidentifiers,
-            identifier=pid.pid_value,
-            datestamp=record['updated'],
-            sets=record['json']['_source'].get('_oai', {}).get('sets', []),
-        )
+    for r in result.items:
+        pid = oaiid_fetcher(r['id'], r['json']['_source'])
+        pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
+        harvest_public_state, record = WekoRecord.get_record_with_hps(
+            pid_object.object_uuid)
+
+        set_identifier(record, record)
+        # Harvest is private
+        _is_private_index = is_private_index(record)
+        if not harvest_public_state or\
+                (_is_private_index
+                    and harvest_public_state and is_exists_doi(record)):
+            continue
+        # Item is deleted
+        # or Harvest is public & Item is private
+        # or Harvest is public & Index is private
+        elif is_deleted_workflow(pid_object) or (
+            harvest_public_state and is_private_workflow(record)) or (
+                harvest_public_state and _is_private_index):
+            header(
+                e_listidentifiers,
+                identifier=pid.pid_value,
+                datestamp=r['updated'],
+                deleted=True
+            )
+        else:
+            header(
+                e_listidentifiers,
+                identifier=pid.pid_value,
+                datestamp=r['updated'],
+                sets=r['json']['_source'].get('_oai', {}).get('sets', []),
+            )
 
     resumption_token(e_listidentifiers, result, **kwargs)
     return e_tree
@@ -418,15 +464,18 @@ def listrecords(**kwargs):
             e_record,
             identifier=pid_object.pid_value,
             datestamp=rec.updated,
-            sets=rec.get('_oai', {}).get('sets', []),
             deleted=True
         )
 
     record_dumper = serializer(kwargs['metadataPrefix'])
     e_tree, e_listrecords = verb(**kwargs)
-    result = get_records(**kwargs)
+
     identify = OaiIdentify.get_all()
-    if not result.total or not identify or not identify.outPutSetting:
+    if not identify or not identify.outPutSetting:
+        return error(get_error_code_msg(), **kwargs)
+
+    result = get_records(**kwargs)
+    if not result.total:
         return error(get_error_code_msg(), **kwargs)
     for record in result.items:
         try:
