@@ -166,6 +166,20 @@
                     if (item.key_value.inputType == "text") {
                         query_str = query_str + "&" + item.key_value.id + "=" + item.key_value.inputVal;
                     }
+                    if (item.key_value.inputType == "range") {
+                        var inputValFrom = item.key_value.inputVal_from;
+                        var inputValTo = item.key_value.inputVal_to;
+                        query_str = query_str + "&" + item.key_value.id + "_from=" + inputValFrom + "&" +
+                                    item.key_value.id + "_to=" + inputValTo;
+                    }
+                    if (item.key_value.inputType == "geo_distance") {
+                        var inputValLat = item.key_value.inputVal_lat;
+                        var inputValLon = item.key_value.inputVal_lon;
+                        var inputValDistance = item.key_value.inputVal_distance;
+                        query_str = query_str + "&" + item.key_value.id + "_lat=" + inputValLat + "&" +
+                                    item.key_value.id + "_lon=" + inputValLon +  "&" +
+                                    item.key_value.id + "_distance=" + inputValDistance;
+                    }
 
                     if (item.key_value.inputType == "dateRange") {
                         var inputValFrom = item.key_value.inputVal_from;
