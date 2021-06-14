@@ -211,7 +211,7 @@ def process_item(record, harvesting, counter):
         json['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
         dep['_deposit']['status'] = 'draft'
         
-        # temporary fix for JDcat
+        # START: temporary fix for JDCat
         # if json['$schema'] == '/items/jsonschema/14' and 'item_1588260046718' in json:
         if 'item_1588260046718' in json:
             for i in json['item_1588260046718']:
@@ -222,7 +222,7 @@ def process_item(record, harvesting, counter):
             #current_app.logger.debug('json: %s' % json['item_1551264917614'])
             for i in json['item_1592405734122']:
               i['subitem_1591320918354']='Distributor'
-        # end temporary fix
+        # END: temporary fix for JDCat
 
         dep.update({'actions': 'publish', 'index': indexes}, json)
         dep.commit()
