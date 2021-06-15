@@ -1,5 +1,6 @@
 <div class="panel panel-default"
   ng-if="vm.invenioSearchResults.aggregations.hasOwnProperty('path') && (vm.invenioSearchResults.aggregations.path.buckets[0].length >= 1 || (isCommunityRootIndex && vm.invenioSearchResults.aggregations.path.buckets[0].length > 1))">
+ 
   <div class="panel-heading clearfix">
     <h3 class="panel-title">Index List</h3>
       <ol class="breadcrumb" style="padding-bottom:0px;margin-bottom:0px" ng-if="vm.invenioSearchResults.aggregations.hasOwnProperty('path') && vm.invenioSearchResults.aggregations.path.buckets[0].length > 0 
