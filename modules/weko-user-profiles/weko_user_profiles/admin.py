@@ -22,6 +22,7 @@
 # MA 02111-1307, USA.
 
 """Admin views for weko-user-profiles."""
+import os
 from math import ceil
 
 from flask import current_app, flash, redirect, request
@@ -32,6 +33,7 @@ from flask_admin.form import FormOpts
 from flask_admin.helpers import get_redirect_target
 from flask_admin.model.helpers import get_mdict_item_or_list
 from flask_babelex import lazy_gettext as __
+from flask_security import current_user
 from invenio_accounts.models import Role, User
 from invenio_db import db
 from wtforms import SelectField
@@ -53,7 +55,6 @@ class UserProfileView(ModelView):
 
     can_view_details = True
     can_create = False
-    can_delete = True
 
     column_list = (
         'user_id',
@@ -277,11 +278,12 @@ class UserProfileView(ModelView):
         else:
             action_form = None
 
-        clear_search_url = self._get_list_url(view_args.clone(page=0,
-                                                              sort=view_args.sort,
-                                                              sort_desc=view_args.sort_desc,
-                                                              search=None,
-                                                              filters=None))
+        clear_search_url = self._get_list_url(
+            view_args.clone(page=0,
+                            sort=view_args.sort,
+                            sort_desc=view_args.sort_desc,
+                            search=None,
+                            filters=None))
 
         form_column = current_app.config['WEKO_USERPROFILES_FORM_COLUMN']
         if isinstance(form_column, list):
@@ -423,6 +425,19 @@ class UserProfileView(ModelView):
                            form=form,
                            form_opts=form_opts,
                            return_url=return_url)
+
+    _system_role = os.environ.get('INVENIO_ROLE_SYSTEM',
+                                  'System Administrator')
+
+    @property
+    def can_delete(self):
+        """Check permission for Deleting."""
+        return self._system_role in [role.name for role in current_user.roles]
+
+    @property
+    def can_edit(self):
+        """Check permission for Editing."""
+        return self._system_role in [role.name for role in current_user.roles]
 
 
 user_profile_adminview = {
