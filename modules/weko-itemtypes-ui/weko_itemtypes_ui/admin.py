@@ -331,7 +331,7 @@ class ItemTypeMetaDataView(BaseView):
             new_zip.writestr("ItemTypeMapping.json", ItemTypeMappingSchema().dumps(item_type_mappings.model).data.encode().decode('unicode-escape').encode())
             props = []
             for item_type_property in item_type_properties :
-                props.append(ItemTypePropertySchema().dumps(item_type_property))    
+                props.append(ItemTypePropertySchema().dumps(item_type_property).data.encode().decode('unicode-escape').encode())
             new_zip.writestr("ItemTypeProperty.json", json.dumps(props).encode().decode('unicode-escape').encode())
         fp.seek(0)
         return send_file(
