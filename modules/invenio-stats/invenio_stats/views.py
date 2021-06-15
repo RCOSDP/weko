@@ -11,20 +11,12 @@
 import calendar
 from datetime import datetime, timedelta
 from functools import wraps
-from math import ceil
 
-import dateutil.relativedelta as relativedelta
-from dateutil import parser
 from elasticsearch.exceptions import NotFoundError
-from elasticsearch_dsl import Search
 from flask import Blueprint, abort, current_app, jsonify, request
-from flask_login import login_required
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_rest.views import ContentNegotiatedMethodView
-from invenio_search import current_search_client
-
-from invenio_stats.utils import get_aggregations
 
 from . import config
 from .errors import InvalidRequestInputError, UnknownQueryError
