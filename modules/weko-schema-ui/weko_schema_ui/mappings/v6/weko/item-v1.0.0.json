@@ -520,6 +520,66 @@
         "text10": {
           "type": "text"
         },
+        "text11": {
+          "type": "text"
+        },
+        "text12": {
+          "type": "text"
+        },
+        "text13": {
+          "type": "text"
+        },
+        "text14": {
+          "type": "text"
+        },
+        "text15": {
+          "type": "text"
+        },
+        "text16": {
+          "type": "text"
+        },
+        "text17": {
+          "type": "text"
+        },
+        "text18": {
+          "type": "text"
+        },
+        "text19": {
+          "type": "text"
+        },
+        "text20": {
+          "type": "text"
+        },
+        "text21": {
+          "type": "text"
+        },
+        "text22": {
+          "type": "text"
+        },
+        "text23": {
+          "type": "text"
+        },
+        "text24": {
+          "type": "text"
+        },
+        "text25": {
+          "type": "text"
+        },
+        "text26": {
+          "type": "text"
+        },
+        "text27": {
+          "type": "text"
+        },
+        "text28": {
+          "type": "text"
+        },
+        "text29": {
+          "type": "text"
+        },
+        "text30": {
+          "type": "text"
+        },
         "integer_range1":{
           "type": "integer_range"
         },

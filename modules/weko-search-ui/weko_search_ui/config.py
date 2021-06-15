@@ -377,7 +377,27 @@ WEKO_SEARCH_KEYWORDS_DICT = {
         "text7": "text7",
         "text8": "text8",
         "text9": "text9",
-        "text10": "text10"
+        "text10": "text10",
+        "text11": "text11",
+        "text12": "text12",
+        "text13": "text13",
+        "text14": "text14",
+        "text15": "text15",
+        "text16": "text16",
+        "text17": "text17",
+        "text18": "text18",
+        "text19": "text19",
+        "text20": "text20",
+        "text21": "text21",
+        "text22": "text22",
+        "text23": "text23",
+        "text24": "text24",
+        "text25": "text25",
+        "text26": "text26",
+        "text27": "text27",
+        "text28": "text28",
+        "text29": "text29",
+        "text30": "text30"
     },
 
     "range":{
