@@ -600,7 +600,8 @@ async def sort_meta_data_by_options(
                                        )
             elif not (bibliographic_key and bibliographic_key in s['key']) and \
                     value and value not in _ignore_items and \
-                    not is_hide and is_show_list and s['key']:
+                    not is_hide and is_show_list and s['key'] \
+                    and s['title'] != 'Title':
                 data_result, stt_key = get_value_and_lang_by_key(
                     s['key'], solst_dict_array, data_result, stt_key)
                 is_specify_newline_array.append(
@@ -717,6 +718,24 @@ async def sort_meta_data_by_options(
             parent_key, attribute_value_mlt)
         return attribute_value_mlt
 
+    def get_title_option(solst_dict_array):
+        """Get option of title."""
+        parent_option, child_option = {}, {}
+        for item in solst_dict_array:
+            if '.' in item.get('key') and item.get('title') == 'Title':
+                parent_option = item.get('parent_option')
+                child_option = item.get('option')
+                break
+        show_list = parent_option.get('show_list') if parent_option.get(
+            'show_list') else child_option.get('show_list')
+        specify_newline = parent_option.get('crtf') if parent_option.get(
+            'crtf') else child_option.get('specify_newline')
+        option = {
+            "show_list": show_list,
+            "specify_newline": specify_newline
+        }
+        return option
+
     try:
         src_default = copy.deepcopy(
             record_hit['_source'].get('_item_metadata'))
@@ -811,7 +830,12 @@ async def sort_meta_data_by_options(
 
         if 'file' in record_hit['_source']:
             record_hit['_source'].pop('file')
-        if items:
+
+        # Title do not display if show list is false.
+        title_option = get_title_option(solst_dict_array)
+        if not title_option.get('show_list'):
+            record_hit['_source']['_comment'] = []
+        if items and len(items) > 0:
             if record_hit['_source'].get('_comment'):
                 record_hit['_source']['_comment'].extend(items)
             else:
