@@ -58,6 +58,23 @@ const SPECIFIC_INDEX_VALUE = '1';
                     '&times;</button>' + message + '</div>');
         }
 
+      $scope.popEdit=function(data){
+        alert("edit")
+      }
+      $scope.saveEdit=function(){
+
+      }
+      $scope.closeEdit=function(){
+
+      }
+      $scope.addPatern=function(){
+
+      }
+      $scope.deletePatern=function(){
+
+      }
+       
+
       $scope.saveData=function(){
         var url = $location.path();
         let initialDisplayIndex = $("#init_disp_index").val();
@@ -67,6 +84,7 @@ const SPECIFIC_INDEX_VALUE = '1';
           $scope.dataJson['init_disp_setting']['init_disp_index'] = '';
         }
         let dbJson = $scope.dataJson;
+        console.log(JSON.stringify(dbJson))
 
         $http.post(url, dbJson).then(function successCallback(response) {
             // alert(response.data.message);

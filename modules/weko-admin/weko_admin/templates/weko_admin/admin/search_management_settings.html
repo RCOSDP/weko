@@ -40,6 +40,7 @@
 <div id="search_management" class="container-fluid table-responsive">
   <div ng-init="initData('{{ setting_data }}')"
        ng-controller="searchManagementCtrl">
+       {{setting_data}}
     <div class="row">
       <div id="alerts"></div>
       <div class="col-sm-12 col-md-12 col-md-12">
@@ -209,6 +210,7 @@
                 <tr ng-repeat = "option_condition in dataJson.detail_condition track by $index">
                   <td >
                     <div class="col-sm-12 col-md-12 col-md-12">
+                      1
                         <label>
                           <input type="checkbox" id="chk_useable_[[$index]]" value="option_condition.id" ng-model="option_condition.useable_status" >
                         </label>
@@ -216,16 +218,26 @@
                   </td>
                   <td >
                     <div class="col-sm-12 col-md-12 col-md-12">
+                      2
                       {{_('[[option_condition.contents]]')}}
+                      <button type="button" class="btn btn-success
+                            ten-pixel-right-margin ten-pixel-bottom-margin"
+                            style="position:unset; float: right;" 
+                            ng-click="popEdit()">
+                        <span class="glyphicon glyphicon-edit"></span>&nbsp;
+                        {{_('Edit')}}
+                      </button>
                     </div>
                   </td>
                   <td >
                     <div class="col-sm-12 col-md-12 col-md-12">
+                      3
                       <p ng-repeat = "option_condition_mapping in option_condition.mapping track by $index">[[option_condition_mapping]]</p>
                     </div>
                   </td>
                   <td >
                     <div class="col-sm-12 col-md-12 col-md-12">
+                      4
                         <label>
                           <input type="checkbox" id="chk_init_[[$index]]" value="option_condition.id" ng-model="option_condition.default_display" >
                         </label>

@@ -90,12 +90,20 @@ WEKO_TEST_FIELD = {
             "path":{
                 "lat":"$.item_1551265326081.attribute_value_mlt[?subitem_1551256775293=='Location_sub'].subitem_1551256778926[*].subitem_1551256814806",
                 "lon":"$.item_1551265326081.attribute_value_mlt[*].subitem_1551256778926[*].subitem_1551256783928"
+            },
+            "path_type":{
+                "lat":"json",
+                "lon":"json"
             }
         },
         
         "geo_shape1" : {
             "input_type":"geo_shape",
             "path":{
+                "type":"",
+                "coordinates":""
+            },
+            "path_type":{
                 "type":"",
                 "coordinates":""
             }
@@ -106,6 +114,10 @@ WEKO_TEST_FIELD = {
             "path":{
                 "gte":"$.item_1551265553273.attribute_value_mlt[*].subitem_1551256248092",
                 "lte":"$.item_1551265553273.attribute_value_mlt[*].subitem_1551256248092"
+            },
+            "path_type":{
+                "gte":"json",
+                "lte":"json"
             }
         },
         "float_range1":{
@@ -113,19 +125,33 @@ WEKO_TEST_FIELD = {
             "path":{
                 "gte":"",
                 "lte":""
+            },
+            "path_type":{
+                "gte":"",
+                "lte":""
             }
+
         },
         "date_range1":{
             "input_type":"range",
             "path":{
                 "gte":"",
                 "lte":""
+            },
+            "path_type":{
+                "gte":"",
+                "lte":""
             }
         },
-        
         "text1" : {
             "input_type":"text",
-            "path" : "$.item_title"
+            "path" : "$.item_1551264308487.attribute_value_mlt[*].subitem_1551255647225",
+            "path_type":"json"
+        },
+        "text2" : {
+            "input_type":"text",
+            "path" : ["jpcoar","./OAI-PMH/GetRecord/record/metadata/{https://github.com/JPCOAR/schema/blob/master/1.0/}jpcoar/{http://purl.org/dc/elements/1.1/}title"],
+            "path_type":"xml"
         }
     }
 }

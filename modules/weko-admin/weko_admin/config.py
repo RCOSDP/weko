@@ -739,6 +739,7 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
 
         {'id': 'integer_range1',
          'contents': 'integer_range1',
+         'contents_value':{'en':'integer_EN_1', 'ja':'integer_JA_1'},
          'useable_status': True,
          'mapping': [],
          'default_display':True,

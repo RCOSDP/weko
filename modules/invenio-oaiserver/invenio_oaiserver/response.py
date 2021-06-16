@@ -75,7 +75,10 @@ def envelope(**kwargs):
         elif key == 'resumptionToken':
             value = value['token']
         e_request.set(key, value)
-    e_request.text = url_for('invenio_oaiserver.response', _external=True)
+    if "url" in kwargs.keys():
+        e_request.text = kwargs['url']
+    else:
+        e_request.text = url_for('invenio_oaiserver.response', _external=True)
     return e_tree, e_oaipmh
 
 
@@ -378,7 +381,6 @@ def listidentifiers(**kwargs):
     """Create OAI-PMH response for verb ListIdentifiers."""
     e_tree, e_listidentifiers = verb(**kwargs)
     result = get_records(**kwargs)
-
     if not result.total:
         return error(get_error_code_msg(), **kwargs)
 
