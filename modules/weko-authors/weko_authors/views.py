@@ -107,6 +107,9 @@ def update_author():
         db.session.merge(author_data)
     db.session.commit()
 
+    from weko_deposit.tasks import update_items_by_authorInfo
+    update_items_by_authorInfo.delay([json.loads(json.dumps(data))["pk_id"]], data)
+
     return jsonify(msg=_('Success'))
 
 
