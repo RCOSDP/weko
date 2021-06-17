@@ -58,23 +58,6 @@ const SPECIFIC_INDEX_VALUE = '1';
                     '&times;</button>' + message + '</div>');
         }
 
-      $scope.popEdit=function(data){
-        alert("edit")
-      }
-      $scope.saveEdit=function(){
-        alert("save")
-      }
-      $scope.closeEdit=function(){
-        alert("close")
-      }
-      $scope.addinput=function(){
-        alert("add")
-      }
-      $scope.deletecontentsvalue=function(){
-        alert("delete")
-      }
-       
-
       $scope.saveData=function(){
         var url = $location.path();
         let initialDisplayIndex = $("#init_disp_index").val();

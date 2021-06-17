@@ -9,7 +9,6 @@
             $scope.search_community = document.getElementById('community').value;
             $scope.search_type = "0";
             $scope.default_condition_data = [];
-            $scope.currentLanguage = document.getElementById('currentLanguage').value;
 
             // page init
             $scope.initData = function (data) {
@@ -26,15 +25,7 @@
                             disabled_flg: false
                         };
                         obj_key.id = item.id;
-                        if (item.contents_value){
-                            if (item.contents_value[$scope.currentLanguage]){
-                                obj_key.contents = item.contents_value[$scope.currentLanguage];}
-                            else{
-                                obj_key.contents = item.contents
-                            }}
-                        else{
-                            obj_key.contents = item.contents
-                        }
+                        obj_key.contents = item.contents;
                         obj_key.inx = index;
                         $scope.detail_search_key.push(obj_key);
                     };

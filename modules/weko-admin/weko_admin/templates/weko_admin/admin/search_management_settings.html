@@ -209,7 +209,6 @@
                 <tr ng-repeat = "option_condition in dataJson.detail_condition track by $index">
                   <td >
                     <div class="col-sm-12 col-md-12 col-md-12">
-                      1
                         <label>
                           <input type="checkbox" id="chk_useable_[[$index]]" value="option_condition.id" ng-model="option_condition.useable_status" >
                         </label>
@@ -217,64 +216,16 @@
                   </td>
                   <td >
                     <div class="col-sm-12 col-md-12 col-md-12">
-                      2
                       {{_('[[option_condition.contents]]')}}
-                      <button type="button" class="btn btn-success
-                            ten-pixel-right-margin ten-pixel-bottom-margin"
-                            style="position:unset; float: right;" 
-                            ng-click="popEdit()">
-                        <span class="glyphicon glyphicon-edit"></span>&nbsp;
-                        {{_('Edit')}}
-                      </button>
-                      <div id="[[option_condition.contents]]_value">
-                        <!--閉じるボタン-->
-                        <button type="button" class="btn btn-success
-                            ten-pixel-right-margin ten-pixel-bottom-margin"
-                            style="position:unset; float: right;" 
-                            ng-click="closeEdit()">
-                        <span class="glyphicon glyphicon-edit"></span>&nbsp;
-                        閉じる
-                        </button>
-                        <!--値入力-->
-                        <p ng-repeat = "contens_value in option_condition.contents_value track by $index">
-                          <input type="text" id="[[$index]]_[[option_condition.contents]]_value">
-                          <!--contentsvalue消去-->
-                          <button type="button" class="btn btn-success
-                            ten-pixel-right-margin ten-pixel-bottom-margin"
-                            style="position:unset; float: right;" 
-                            ng-click="deletecontentsvalue()">
-                            <span class="glyphicon glyphicon-edit"></span>&nbsp;
-                            {{_('Delete')}}
-                          </button>
-                        </p>
-                        <!--追加ボタン-->
-                        <button type="button" class="btn btn-success
-                            ten-pixel-right-margin ten-pixel-bottom-margin"
-                            style="position:unset; float: right;" 
-                            ng-click="addinput()">
-                        <span class="glyphicon glyphicon-edit"></span>&nbsp;
-                        {{_('Add')}}
-                      </button>
-                        <!--保存ボタン-->
-                        <button type="button" class="btn btn-success
-                            ten-pixel-right-margin ten-pixel-bottom-margin"
-                            style="position:unset; float: right;" 
-                            ng-click="saveEdit()">
-                        <span class="glyphicon glyphicon-edit"></span>&nbsp;
-                        {{_('Save')}}
-                      </button>
-                      </div>
                     </div>
                   </td>
                   <td >
                     <div class="col-sm-12 col-md-12 col-md-12">
-                      3
                       <p ng-repeat = "option_condition_mapping in option_condition.mapping track by $index">[[option_condition_mapping]]</p>
                     </div>
                   </td>
                   <td >
                     <div class="col-sm-12 col-md-12 col-md-12">
-                      4
                         <label>
                           <input type="checkbox" id="chk_init_[[$index]]" value="option_condition.id" ng-model="option_condition.default_display" >
                         </label>

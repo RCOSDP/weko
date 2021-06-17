@@ -32,6 +32,7 @@ from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.ext import pid_exists
 from invenio_pidstore.models import PersistentIdentifier
 from weko_schema_ui.schema import SchemaTree
+
 from .config import WEKO_TEST_FIELD, COPY_NEW_FIELD
 from .api import ItemTypes, Mapping
 
@@ -39,7 +40,6 @@ from jsonpath_ng import jsonpath
 from jsonpath_ng.ext import parse
 import xml.etree.ElementTree as ET
 from lxml import etree
-
 
 def json_loader(data, pid):
     """Convert the item data and mapping to jpcoar.
