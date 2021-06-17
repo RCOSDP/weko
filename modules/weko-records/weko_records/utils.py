@@ -39,8 +39,6 @@ from jsonpath_ng import jsonpath
 from jsonpath_ng.ext import parse
 import xml.etree.ElementTree as ET
 from lxml import etree
-import dicttoxml
-from flask import url_for
 
 
 def json_loader(data, pid):
@@ -258,17 +256,22 @@ def get_value_from_dict(dc, path, path_type, iid=None):
 
 def copy_value_xml_path(dc, xml_path, iid=None):
     from invenio_oaiserver.response import getrecord
-    meta_prefix = xml_path[0]
-    xpath = xml_path[1]
-    if iid:
-        xml = etree.tostring(getrecord(metadataPrefix=meta_prefix, identifier=iid, verb='GetRecord',url = "https://192.168.75.3/oai"))
-    else:
-        xml = dicttoxml.dicttoxml(dc)
-    print(xml)
-    root = ET.fromstring(xml)
-    copy_value = root.findtext(xpath)
-    print(copy_value)
-    return copy_value
+    try:
+        meta_prefix = xml_path[0]
+        xpath = xml_path[1]
+        if iid:
+            xml = etree.tostring(getrecord(metadataPrefix=meta_prefix, identifier=iid, verb='GetRecord',url = "https://192.168.75.3/oai"))    
+            root = ET.fromstring(xml)
+            ns={
+                'oai_dc':'http://www.openarchives.org/OAI/2.0/oai_dc/',
+                'dc':'http://purl.org/dc/elements/1.1/',
+                'jpcoar':'https://irdb.nii.ac.jp/schema/jpcoar/1.0/',
+                'xml':'http://www.w3.org/XML/1998/namespace'
+                }
+            copy_value = root.findall(xpath,ns)[0].text
+            return copy_value
+    except Exception:
+        return None
 
 
 def copy_value_json_path(dc, path):

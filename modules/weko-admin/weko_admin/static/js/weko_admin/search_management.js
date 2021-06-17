@@ -62,16 +62,16 @@ const SPECIFIC_INDEX_VALUE = '1';
         alert("edit")
       }
       $scope.saveEdit=function(){
-
+        alert("save")
       }
       $scope.closeEdit=function(){
-
+        alert("close")
       }
-      $scope.addPatern=function(){
-
+      $scope.addinput=function(){
+        alert("add")
       }
-      $scope.deletePatern=function(){
-
+      $scope.deletecontentsvalue=function(){
+        alert("delete")
       }
        
 

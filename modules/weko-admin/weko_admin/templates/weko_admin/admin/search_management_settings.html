@@ -40,7 +40,6 @@
 <div id="search_management" class="container-fluid table-responsive">
   <div ng-init="initData('{{ setting_data }}')"
        ng-controller="searchManagementCtrl">
-       {{setting_data}}
     <div class="row">
       <div id="alerts"></div>
       <div class="col-sm-12 col-md-12 col-md-12">
@@ -227,6 +226,44 @@
                         <span class="glyphicon glyphicon-edit"></span>&nbsp;
                         {{_('Edit')}}
                       </button>
+                      <div id="[[option_condition.contents]]_value">
+                        <!--閉じるボタン-->
+                        <button type="button" class="btn btn-success
+                            ten-pixel-right-margin ten-pixel-bottom-margin"
+                            style="position:unset; float: right;" 
+                            ng-click="closeEdit()">
+                        <span class="glyphicon glyphicon-edit"></span>&nbsp;
+                        閉じる
+                        </button>
+                        <!--値入力-->
+                        <p ng-repeat = "contens_value in option_condition.contents_value track by $index">
+                          <input type="text" id="[[$index]]_[[option_condition.contents]]_value">
+                          <!--contentsvalue消去-->
+                          <button type="button" class="btn btn-success
+                            ten-pixel-right-margin ten-pixel-bottom-margin"
+                            style="position:unset; float: right;" 
+                            ng-click="deletecontentsvalue()">
+                            <span class="glyphicon glyphicon-edit"></span>&nbsp;
+                            {{_('Delete')}}
+                          </button>
+                        </p>
+                        <!--追加ボタン-->
+                        <button type="button" class="btn btn-success
+                            ten-pixel-right-margin ten-pixel-bottom-margin"
+                            style="position:unset; float: right;" 
+                            ng-click="addinput()">
+                        <span class="glyphicon glyphicon-edit"></span>&nbsp;
+                        {{_('Add')}}
+                      </button>
+                        <!--保存ボタン-->
+                        <button type="button" class="btn btn-success
+                            ten-pixel-right-margin ten-pixel-bottom-margin"
+                            style="position:unset; float: right;" 
+                            ng-click="saveEdit()">
+                        <span class="glyphicon glyphicon-edit"></span>&nbsp;
+                        {{_('Save')}}
+                      </button>
+                      </div>
                     </div>
                   </td>
                   <td >

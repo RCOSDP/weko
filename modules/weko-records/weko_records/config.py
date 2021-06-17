@@ -150,7 +150,7 @@ WEKO_TEST_FIELD = {
         },
         "text2" : {
             "input_type":"text",
-            "path" : ["jpcoar","./OAI-PMH/GetRecord/record/metadata/{https://github.com/JPCOAR/schema/blob/master/1.0/}jpcoar/{http://purl.org/dc/elements/1.1/}title"],
+            "path" : ["jpcoar",".//dc:title[@xml:lang='en']"],
             "path_type":"xml"
         }
     }
