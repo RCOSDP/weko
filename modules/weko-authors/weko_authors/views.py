@@ -212,19 +212,7 @@ def get():
                             "should": [
                                 {
                                     "term": {
-                                        "creator.nameIdentifier":
-                                        "@author_id"
-                                    }
-                                },
-                                {
-                                    "term": {
-                                        "contributor.nameIdentifier":
-                                        "@author_id"
-                                    }
-                                },
-                                {
-                                    "term": {
-                                        "rightsHolder.nameIdentifier":
+                                        "author_link":
                                         "@author_id"
                                     }
                                 }
