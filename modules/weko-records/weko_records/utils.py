@@ -780,6 +780,8 @@ async def sort_meta_data_by_options(
                             arr.append(result)
                             record_hit['_source']['_comment'] = arr
                             break
+            elif val_arr and len(val_arr) > 0:
+                record_hit['_source']['_comment'] = [val_arr[0]]
 
         if not item_type_id:
             return
