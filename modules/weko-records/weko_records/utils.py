@@ -31,13 +31,13 @@ from invenio_pidstore import current_pidstore
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.ext import pid_exists
 from invenio_pidstore.models import PersistentIdentifier
-from weko_schema_ui.schema import SchemaTree
-
-from .config import WEKO_TEST_FIELD, COPY_NEW_FIELD
-from .api import ItemTypes, Mapping
-
 from jsonpath_ng import jsonpath
 from jsonpath_ng.ext import parse
+from weko_schema_ui.schema import SchemaTree
+
+from .api import ItemTypes, Mapping
+from .config import COPY_NEW_FIELD, WEKO_TEST_FIELD
+
 
 def json_loader(data, pid, owner_id=None):
     """Convert the item data and mapping to jpcoar.
@@ -52,10 +52,10 @@ def json_loader(data, pid, owner_id=None):
     item = dict()
     ar = []
     pubdate = None
-    
+
     if not isinstance(data, dict) or data.get("$schema") is None:
         return
-    
+
     item_id = pid.object_uuid
     pid = pid.pid_value
 
@@ -152,7 +152,7 @@ def json_loader(data, pid, owner_id=None):
         dc.update(dict(item_title=title))
         dc.update(dict(item_type_id=item_type_id))
         dc.update(dict(control_number=pid))
-        
+
         if COPY_NEW_FIELD:
             copy_field_test(dc, WEKO_TEST_FIELD, jrc)
 
@@ -215,31 +215,37 @@ def json_loader(data, pid, owner_id=None):
     del ojson, mjson, item
     return dc, jrc, is_edit
 
+
 def copy_field_test(dc, map, jrc):
     if dc["item_type_id"] in map.keys():
         list1 = map[dc["item_type_id"]]
         for k, v in list1.items():
-            if v["input_type"] == "geo_point":                
-                geo_point = { k : {"lat" : "", "lon" : ""}}
-                geo_point[k]["lat"] = get_value_from_dict(dc, v["path"]["lat"]) 
+            if v["input_type"] == "geo_point":
+                geo_point = {k: {"lat": "", "lon": ""}}
+                geo_point[k]["lat"] = get_value_from_dict(dc, v["path"]["lat"])
                 geo_point[k]["lon"] = get_value_from_dict(dc, v["path"]["lon"])
                 if geo_point[k]["lat"] and geo_point[k]["lon"]:
                     jrc.update(geo_point)
             elif v["input_type"] == "geo_shape":
-                geo_shape = {k : { "type" : "", "coordinates" : ""}}
-                geo_shape[k]["type"] = get_value_from_dict(dc, v["path"]["type"])
-                geo_shape[k]["coordinates"] = get_value_from_dict(dc, v["path"]["coordinates"])
+                geo_shape = {k: {"type": "", "coordinates": ""}}
+                geo_shape[k]["type"] = get_value_from_dict(
+                    dc, v["path"]["type"])
+                geo_shape[k]["coordinates"] = get_value_from_dict(
+                    dc, v["path"]["coordinates"])
                 if geo_shape[k]["type"] and geo_shape[k]["coordinates"]:
                     jrc.update(geo_shape)
             elif v["input_type"] == "range":
-                value_range = { k:{"gte":"", "lte":""}}
-                value_range[k]["gte"] = get_value_from_dict(dc, v["path"]["gte"])
-                value_range[k]["lte"] = get_value_from_dict(dc, v["path"]["lte"])
+                value_range = {k: {"gte": "", "lte": ""}}
+                value_range[k]["gte"] = get_value_from_dict(
+                    dc, v["path"]["gte"])
+                value_range[k]["lte"] = get_value_from_dict(
+                    dc, v["path"]["lte"])
                 if value_range[k]["gte"] and value_range[k]["lte"]:
                     jrc.update(value_range)
             elif v["input_type"] == "text":
                 if get_value_from_dict(dc, v["path"]):
-                    jrc[k] = get_value_from_dict(dc,v["path"])
+                    jrc[k] = get_value_from_dict(dc, v["path"])
+
 
 def get_value_from_dict(dc, path):
     try:
@@ -247,12 +253,13 @@ def get_value_from_dict(dc, path):
         match_value = [match.value for match in matches]
         print("values****")
         print(match_value)
-        if len(match_value) > 0 :
+        if len(match_value) > 0:
             return match_value[0]
         else:
             return None
     except Exception:
         return None
+
 
 def set_timestamp(jrc, created, updated):
     """Set timestamp."""
@@ -669,7 +676,7 @@ async def sort_meta_data_by_options(
             elif not _label:
                 _label = _filename
             if f.get('version_id'):
-                _idx = _filename.find('.') + 1
+                _idx = _filename.rfind('.') + 1
                 _extension = _filename[_idx:] if _idx > 0 else 'unknown'
             return _label, _extension
         result = []
