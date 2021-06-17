@@ -42,7 +42,12 @@ DEFAULT_FIELD = [
     'keywords',
     'keywords_en',
     'pubdate',
-    'lang']
+    'lang',
+    'item_titles',
+    'item_language',
+    'item_keyword',
+    'item_resource_type',
+    'item_access_right']
 
 SYSTEM_IDENTIFIER_URI = 'system_identifier_uri'
 SYSTEM_IDENTIFIER_HDL = 'system_identifier_hdl'
@@ -456,8 +461,7 @@ def add_identifier(schema, res, identifier_list):
             item['identifier'] = it
         elif isinstance(it, OrderedDict):
             item['identifier'] = it.get('#text')
-            if it.get('@identifierType'):
-                item['type'] = it.get('@identifierType')
+            item['type'] = it.get('@identifierType')
         res.append(item)
 
 
@@ -526,7 +530,7 @@ def add_language(schema, res, language_list):
     root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
     if not root_key:
         for key in schema['properties']:
-            if _prop_key in key:
+            if _prop_key in key and '_other_language_' not in key:
                 root_key = key
         if not root_key:
             return
@@ -659,80 +663,150 @@ def add_source_title(schema, res, source_title_list):
 
 def add_source_identifier(schema, res, source_identifier_list):
     """Add source identifier."""
+    _prop_key = '_source_identifier_'
+    _title_en = 'Source Identifier'
+    _title_ja = '収録物識別子'
+
     if not isinstance(source_identifier_list, list):
         source_identifier_list = [source_identifier_list]
-    root_key = map_field(schema).get('Source Identifier')
+    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    if not root_key:
+        for key in schema['properties']:
+            if _prop_key in key:
+                root_key = key
+        if not root_key:
+            return
+
     res[root_key] = []
-    source_identifier = map_field(
-        schema['properties'][root_key]['items'])['Source Identifier']
-    source_identifier_type = map_field(
-        schema['properties'][root_key]['items'])['Source Identifier Type']
+    map_data = map_field(schema['properties'][root_key]['items'])
+    source_identifier = map_data.get('Source Identifier', map_data.get('収録物識別子'))
+    source_identifier_type = map_data.get('Source Identifier Type', map_data.get('収録物識別子タイプ'))
     for it in source_identifier_list:
         item = {}
         if isinstance(it, str):
-            item[identifie] = it
+            item[source_identifier] = it
         elif isinstance(it, OrderedDict):
             item[source_identifier] = it.get('#text')
             if it.get('@identifierType'):
                 item[source_identifier_type] = it.get('@identifierType')
+
         res[root_key].append(item)
 
 
 def add_volume(schema, res, jpcoarvolume):
     """Add volume."""
-    root_key = map_field(schema).get('Volume Number')
-    volume_number = map_field(schema['properties'][root_key])['Volume Number']
+    _prop_key = '_volume_number_'
+    _title_en = 'Volume Number'
+    _title_ja = '巻'
+
+    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    if not root_key:
+        for key in schema['properties']:
+            if _prop_key in key:
+                root_key = key
+        if not root_key:
+            return
+
+    map_data = map_field(schema['properties'][root_key])
+    volume_number = map_data.get('Volume Number', map_data.get('巻'))
+
     res[root_key] = {volume_number: jpcoarvolume}
 
 
 def add_issue(schema, res, jpcoarissue):
     """Add issue."""
-    root_key = map_field(schema).get('Issue Number')
-    issue_number = map_field(schema['properties'][root_key])['Issue Number']
+    _prop_key = '_issue_number_'
+    _title_en = 'Issue Number'
+    _title_ja = '号'
+
+    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    if not root_key:
+        for key in schema['properties']:
+            if _prop_key in key:
+                root_key = key
+        if not root_key:
+            return
+
+    map_data = map_field(schema['properties'][root_key])
+    issue_number = map_data.get('Issue Number', map_data.get('号'))
+
     res[root_key] = {issue_number: jpcoarissue}
 
 
-def add_num_pages(schema, res, numPages):
+def get_root_key(schema, _title_en, _title_ja, _prop_key):
     """Add num pages."""
-    root_key = map_field(schema).get('Number of Pages')
-    number_of_pages = map_field(schema['properties'][root_key])[
-        'Number of Pages']
-    res[root_key] = {number_of_pages: numPages}
+    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    if not root_key:
+        for key in schema['properties']:
+            if _prop_key in key:
+                root_key = key
+        if not root_key:
+            return None
+
+    return root_key
 
 
-def add_page_start(schema, res, pageStart):
+def add_num_pages(schema, res, num_pages):
+    """Add num pages."""
+    root_key = get_root_key(schema, 'Number of Pages', 'ページ数', '_number_of_pages_')
+    if not root_key:
+        return
+
+    map_data = map_field(schema['properties'][root_key])
+    number_of_pages = map_data.get('Number of Pages', map_data.get('ページ数'))
+
+    res[root_key] = {number_of_pages: num_pages}
+
+
+def add_page_start(schema, res, page_start):
     """Add page start."""
-    root_key = map_field(schema).get('Page Start')
-    page_start = map_field(schema['properties'][root_key])['Page Start']
-    res[root_key] = {page_start: pageStart}
+    root_key = get_root_key(schema, 'Page Start', '開始ページ', '_page_start_')
+    if not root_key:
+        return
+
+    map_data = map_field(schema['properties'][root_key])
+    _page_start = map_data.get('Page Start', map_data.get('ページ数'))
+
+    res[root_key] = {_page_start: page_start}
 
 
-def add_page_end(schema, res, pageEnd):
+def add_page_end(schema, res, page_end):
     """Add page end."""
-    root_key = map_field(schema).get('Page End')
-    page_end = map_field(schema['properties'][root_key])['Page End']
-    res[root_key] = {page_end: pageEnd}
+    root_key = get_root_key(schema, 'Page End', '終了ページ', '_page_end_')
+    if not root_key:
+        return
+
+    map_data = map_field(schema['properties'][root_key])
+    _page_end = map_data.get('Page End', map_data.get('終了ページ'))
+
+    res[root_key] = {_page_end: page_end}
 
 
-def add_dissertation_number(schema, res, dissertationNumber):
+def add_dissertation_number(schema, res, dissertation_number):
     """Add dissertation number."""
-    root_key = map_field(schema).get('Dissertation Number')
-    dissertation_number = map_field(schema['properties'][root_key])[
-        'Dissertation Number']
-    res[root_key] = {dessertation_number: dissertationNumber}
+    root_key = get_root_key(schema, 'Dissertation Number', '学位授与番号', '_dissertation_number_')
+    if not root_key:
+        return
+
+    map_data = map_field(schema['properties'][root_key])
+    _dissertation_number = map_data.get('Dissertation Number', map_data.get('学位授与番号'))
+
+    res[root_key] = {_dissertation_number: dissertation_number}
 
 
 def add_degree_name(schema, res, degree_name_list):
     """Add degree name."""
     if not isinstance(degree_name_list, list):
         degree_name_list = [degree_name_list]
-    root_key = map_field(schema).get('Degree Name')
+
+    root_key = get_root_key(schema, 'Degree Name', '学位名', '_degree_name_')
     if not root_key:
         return
+
     res[root_key] = []
-    degree_name = map_field(
-        schema['properties'][root_key]['items'])['Degree Name']
-    language = map_field(schema['properties'][root_key]['items'])['Language']
+    map_data = map_field(schema['properties'][root_key]['items'])
+    degree_name = map_data.get('Degree Name', map_data.get('学位名'))
+    language = map_data.get('Language', map_data.get('言語'))
     for it in degree_name_list:
         item = {}
         if isinstance(it, str):
@@ -743,28 +817,43 @@ def add_degree_name(schema, res, degree_name_list):
         res[root_key].append(item)
 
 
-def add_date_granted(schema, res, dateGranted):
+def add_date_granted(schema, res, date_granted):
     """Add date granted."""
-    root_key = map_field(schema).get('Date Granted')
-    date_granted = map_field(schema['properties'][root_key])['Date Granted']
-    res[root_key] = {date_granted: dateGranted}
+    root_key = get_root_key(schema, 'Date Granted', '学位授与機関', '_degree_grantor_')
+    if not root_key:
+        return
+
+    map_data = map_field(schema['properties'][root_key])
+    _date_granted = map_data.get('Date Granted', map_data.get('学位授与機関'))
+
+    res[root_key] = {_date_granted: date_granted}
 
 
-def add_version(schema, res, dataciteVersion):
+def add_version(schema, res, datacite_version):
     """Add version."""
-    root_key = map_field(schema).get('Version')
-    version = map_field(schema['properties'][root_key])['Version']
-    res[root_key] = {version: dateciteVersion}
+    root_key = get_root_key(schema, 'Date Granted', 'バージョン情報', '_version_')
+    if not root_key:
+        return
+
+    map_data = map_field(schema['properties'][root_key])
+    version = map_data.get('Version', map_data.get('バージョン情報'))
+
+    res[root_key] = {version: datacite_version}
 
 
-def add_version_type(schema, res, oaireVersion):
+def add_version_type(schema, res, oaire_version):
     """Add version type."""
-    root_key = map_field(schema).get('Version Type')
-    version_type = map_field(schema['properties'][root_key])['Version Type']
-    if isinstance(oaireVersion, str):
-        res[root_key] = {version_type: oaireVersion}
-    elif isinstance(oaireVersion, OrderedDict):
-        res[root_key] = {version_type: oaireVersion.get('#text')}
+    root_key = get_root_key(schema, 'Version Type', '出版タイプ', '_version_type_')
+    if not root_key:
+        return
+
+    map_data = map_field(schema['properties'][root_key])
+    version_type = map_data.get('Version Type', map_data.get('出版タイプ'))
+
+    if isinstance(oaire_version, str):
+        res[root_key] = {version_type: oaire_version}
+    elif isinstance(oaire_version, OrderedDict):
+        res[root_key] = {oaire_version: oaire_version.get('#text')}
 
 
 def add_geo_location(schema, res, geoLocation_list):
