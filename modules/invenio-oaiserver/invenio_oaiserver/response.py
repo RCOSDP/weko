@@ -381,7 +381,7 @@ def listidentifiers(**kwargs):
     """Create OAI-PMH response for verb ListIdentifiers."""
     e_tree, e_listidentifiers = verb(**kwargs)
     result = get_records(**kwargs)
-    
+
     if not result.total:
         return error(get_error_code_msg(), **kwargs)
 

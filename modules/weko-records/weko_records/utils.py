@@ -53,10 +53,10 @@ def json_loader(data, pid):
     item = dict()
     ar = []
     pubdate = None
-    
+
     if not isinstance(data, dict) or data.get("$schema") is None:
         return
-    
+
     item_id = pid.object_uuid
     pid = pid.pid_value
 

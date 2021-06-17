@@ -67,7 +67,6 @@ const SPECIFIC_INDEX_VALUE = '1';
           $scope.dataJson['init_disp_setting']['init_disp_index'] = '';
         }
         let dbJson = $scope.dataJson;
-        console.log(JSON.stringify(dbJson))
 
         $http.post(url, dbJson).then(function successCallback(response) {
             // alert(response.data.message);
