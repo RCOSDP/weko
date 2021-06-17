@@ -27,6 +27,7 @@ from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
+from sqlalchemy.sql import func
 from weko_records.models import ItemMetadata
 
 from .config import WEKO_AUTHORS_IMPORT_KEY
@@ -59,8 +60,20 @@ def create():
     if request.headers['Content-Type'] != 'application/json':
         return jsonify(msg=_('Header Error'))
 
+    max_id = 1
+    max = db.session.query(func.max(Authors.id)).one()
+    if max[0]:
+        max_id += max[0]
+
     data = request.get_json()
     data["gather_flg"] = 0
+    data["pk_id"] = str(max_id)
+    data["authorIdInfo"].insert(0,
+    {
+        "idType": "1",
+        "authorId": str(max_id),
+        "authorIdShowFlg": "true"
+    })
     indexer = RecordIndexer()
     indexer.client.index(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
@@ -70,7 +83,7 @@ def create():
 
     author_data = dict()
 
-    author_data["id"] = json.loads(json.dumps(data))["pk_id"]
+    author_data["id"] = max_id
     author_data["json"] = json.dumps(data)
 
     with db.session.begin_nested():
