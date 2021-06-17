@@ -19,7 +19,7 @@ from invenio_stats.contrib.event_builders import build_celery_task_unique_id, \
 from invenio_stats.processors import EventsIndexer, anonymize_user, \
     flag_restricted, flag_robots
 from invenio_stats.queries import ESDateHistogramQuery, ESTermsQuery, \
-    ESWekoTermsQuery
+    ESWekoFileStatsQuery, ESWekoTermsQuery
 
 
 def register_events():
@@ -196,6 +196,7 @@ def register_aggregations():
                 file_key='file_key',
                 bucket_id='bucket_id',
                 file_id='file_id',
+                root_file_id='root_file_id',
                 accessrole='accessrole',
                 userrole='userrole',
                 index_list='index_list',
@@ -231,6 +232,7 @@ def register_aggregations():
                 file_key='file_key',
                 bucket_id='bucket_id',
                 file_id='file_id',
+                root_file_id='root_file_id',
                 accessrole='accessrole',
                 userrole='userrole',
                 index_list='index_list',
@@ -444,17 +446,58 @@ def register_queries():
         ),
         dict(
             query_name='bucket-file-download-total',
-            query_class=ESTermsQuery,
+            query_class=ESWekoFileStatsQuery,
             query_config=dict(
                 index='{}-stats-file-download'.format(search_index_prefix),
                 doc_type='file-download-day-aggregation',
-                copy_fields=dict(
-                    # bucket_id='bucket_id',
-                ),
-                required_filters=dict(
-                    bucket_id='bucket_id',
-                    file_key='file_key',
-                ),
+                copy_fields=dict(),
+                main_fields=['bucket_id', 'file_key', 'root_file_id'],
+                main_query={
+                    "query": {
+                        "bool": {
+                            "should": [
+                                {
+                                    "bool": {
+                                        "filter": [
+                                            {
+                                                "term": {
+                                                    "bucket_id": {
+                                                        "value": "@bucket_id",
+                                                        "boost": 1
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "term": {
+                                                    "file_key": {
+                                                        "value": "@file_key",
+                                                        "boost": 1
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "bool": {
+                                        "filter": [
+                                            {
+                                                "term": {
+                                                    "root_file_id": {
+                                                        "value": "@root_file_id",
+                                                        "boost": 1
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ],
+                            "adjust_pure_negative": True,
+                            "boost": 1
+                        }
+                    }
+                },
                 aggregated_fields=['country'],
             )
         ),
@@ -476,17 +519,58 @@ def register_queries():
         ),
         dict(
             query_name='bucket-file-preview-total',
-            query_class=ESTermsQuery,
+            query_class=ESWekoFileStatsQuery,
             query_config=dict(
                 index='{}-stats-file-preview'.format(search_index_prefix),
                 doc_type='file-preview-day-aggregation',
-                copy_fields=dict(
-                    # bucket_id='bucket_id',
-                ),
-                required_filters=dict(
-                    bucket_id='bucket_id',
-                    file_key='file_key',
-                ),
+                copy_fields=dict(),
+                main_fields=['bucket_id', 'file_key', 'root_file_id'],
+                main_query={
+                    "query": {
+                        "bool": {
+                            "should": [
+                                {
+                                    "bool": {
+                                        "filter": [
+                                            {
+                                                "term": {
+                                                    "bucket_id": {
+                                                        "value": "@bucket_id",
+                                                        "boost": 1
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "term": {
+                                                    "file_key": {
+                                                        "value": "@file_key",
+                                                        "boost": 1
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "bool": {
+                                        "filter": [
+                                            {
+                                                "term": {
+                                                    "root_file_id": {
+                                                        "value": "@root_file_id",
+                                                        "boost": 1
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ],
+                            "adjust_pure_negative": True,
+                            "boost": 1
+                        }
+                    }
+                },
                 aggregated_fields=['country'],
             )
         ),

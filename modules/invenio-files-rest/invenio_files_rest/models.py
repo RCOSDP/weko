@@ -54,6 +54,7 @@ from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates
 from sqlalchemy.orm.exc import MultipleResultsFound
+from sqlalchemy.sql.expression import func
 from sqlalchemy_utils.types import JSONType, UUIDType
 from weko_admin.models import AdminSettings
 
@@ -907,7 +908,8 @@ class FileInstance(db.Model, Timestamp):
                 file_type = os.path.splitext(self.json['filename'])[1].lower()
                 # Change preview file to pdf
                 self.json['mimetype'] = 'application/pdf'
-                self.json['filename'] = self.json['filename'].replace(file_type, '.pdf')
+                self.json['filename'] = self.json['filename'].replace(
+                    file_type, '.pdf')
 
                 if not os.path.isfile(pdf_dir + pdf_filename):
                     convert_to(pdf_dir, self.uri)
@@ -1016,6 +1018,9 @@ class ObjectVersion(db.Model, Timestamp):
     A null value in this column defines that the object has been deleted.
     """
 
+    root_file_id = db.Column(UUIDType, nullable=True)
+    """File id in the first time for this object version."""
+
     _mimetype = db.Column(
         db.String(255),
         index=True,
@@ -1096,6 +1101,7 @@ class ObjectVersion(db.Model, Timestamp):
     @ensure_no_file()
     @update_bucket_size
     def set_contents(self, stream, chunk_size=None, size=None, size_limit=None,
+                     replace_version_id=None, root_file_id=None,
                      progress_callback=None):
         """Save contents of stream to file instance.
 
@@ -1106,6 +1112,10 @@ class ObjectVersion(db.Model, Timestamp):
         :param size: Size of stream if known.
         :param chunk_size: Desired chunk size to read stream in. It is up to
             the storage interface if it respects this value.
+        :param replace_version_id: The ObjectVersion ID
+            of the previous version of the file.
+        :param root_file_id: The FileInstance ID
+            of the first version of the file.
         """
         if size_limit is None:
             size_limit = self.bucket.size_limit
@@ -1117,6 +1127,14 @@ class ObjectVersion(db.Model, Timestamp):
             default_location=self.bucket.location.uri,
             default_storage_class=self.bucket.default_storage_class,
         )
+
+        if root_file_id:
+            self.root_file_id = root_file_id
+        else:
+            replace_version = ObjectVersion.get(version_id=replace_version_id) \
+                if replace_version_id else None
+            self.root_file_id = replace_version.root_file_id \
+                if replace_version else self.file.id
 
         return self
 
@@ -1199,6 +1217,7 @@ class ObjectVersion(db.Model, Timestamp):
             self.bucket if bucket is None else as_bucket(bucket),
             key or self.key,
             _file_id=self.file_id,
+            root_file_id=self.root_file_id,
             is_thumbnail=is_thumbnail
         )
 
@@ -1236,8 +1255,8 @@ class ObjectVersion(db.Model, Timestamp):
         return self
 
     @classmethod
-    def create(cls, bucket, key, _file_id=None, stream=None, mimetype=None,
-               version_id=None, is_thumbnail=False, **kwargs):
+    def create(cls, bucket, key, _file_id=None, root_file_id=None, stream=None,
+               mimetype=None, version_id=None, is_thumbnail=False, **kwargs):
         """Create a new object in a bucket.
 
         The created object is by default created as a delete marker. You must
@@ -1246,6 +1265,8 @@ class ObjectVersion(db.Model, Timestamp):
         :param bucket: The bucket (instance or id) to create the object in.
         :param key: Key of object.
         :param _file_id: For internal use.
+        :param root_file_id: The FileInstance ID
+            of the first version of the file.
         :param stream: File-like stream object. Used to set content of object
             immediately after being created.
         :param mimetype: MIME type of the file object if it is known.
@@ -1289,13 +1310,14 @@ class ObjectVersion(db.Model, Timestamp):
                 file_ = _file_id if isinstance(_file_id, FileInstance) else \
                     FileInstance.get(_file_id)
                 obj.set_file(file_)
+                obj.root_file_id = root_file_id or file_.id
             db.session.add(obj)
         if stream:
             obj.set_contents(stream, **kwargs)
         return obj
 
     @classmethod
-    def get(cls, bucket, key, version_id=None):
+    def get(cls, bucket=None, key=None, version_id=None):
         """Fetch a specific object.
 
         By default the latest object version is returned, if
@@ -1305,11 +1327,12 @@ class ObjectVersion(db.Model, Timestamp):
         :param key: Key of object.
         :param version_id: Specific version of an object.
         """
-        filters = [
-            cls.bucket_id == as_bucket_id(bucket),
-            cls.key == key,
-        ]
+        filters = []
 
+        if bucket:
+            filters.append(cls.bucket_id == as_bucket_id(bucket))
+        if key:
+            filters.append(cls.key == key)
         if version_id:
             filters.append(cls.version_id == version_id)
         else:
@@ -1401,6 +1424,20 @@ class ObjectVersion(db.Model, Timestamp):
         with db.session.begin_nested():
             ObjectVersion.query.filter_by(file_id=str(old_file.id)).update({
                 ObjectVersion.file_id: str(new_file.id)})
+
+    @classmethod
+    def num_version_link_to_files(cls, file_ids):
+        """Count the number of versions that link to files with file_id.
+
+        :param file_ids: Specific list of file id.
+        """
+        if file_ids:
+            return db.session.query(cls.file_id, func.count(cls.version_id)) \
+                .filter(cls.file_id.in_(file_ids)) \
+                .group_by(cls.file_id) \
+                .all()
+
+        return []
 
     def get_tags(self):
         """Get tags for object version as dictionary."""

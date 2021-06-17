@@ -232,8 +232,10 @@ class QueryFileStatsCount(WekoQuery):
 
     view_name = 'get_file_stats_count'
 
-    def get_data(self, bucket_id, file_key, query_date=None, get_period=False):
+    def get_data(self, bucket_id, file_key, query_date=None,
+                 get_period=False, root_file_id=None):
         """Get data."""
+        from invenio_files_rest.models import ObjectVersion
         result = {}
         period = []
         country_list = []
@@ -241,20 +243,24 @@ class QueryFileStatsCount(WekoQuery):
         unknown_download = 0
         unknown_preview = 0
 
-        if not query_date:
-            params = {'bucket_id': bucket_id,
-                      'file_key': file_key,
-                      'interval': 'month'}
-        else:
+        if not root_file_id:
+            obv = ObjectVersion.get(bucket_id, file_key)
+            root_file_id = str(obv.root_file_id) if obv else None
+
+        params = {'bucket_id': bucket_id,
+                  'file_key': file_key,
+                  'interval': 'month',
+                  'root_file_id': root_file_id}
+
+        if query_date:
             year = int(query_date[0: 4])
             month = int(query_date[5: 7])
             _, lastday = calendar.monthrange(year, month)
-            params = {'bucket_id': bucket_id,
-                      'file_key': file_key,
-                      'interval': 'month',
-                      'start_date': query_date + '-01',
-                      'end_date': query_date + '-' + str(lastday).zfill(2)
-                      + 'T23:59:59'}
+            params.update({
+                'start_date': query_date + '-01',
+                'end_date': query_date + '-' + str(lastday).zfill(2)
+                + 'T23:59:59'
+            })
 
         try:
             # file download

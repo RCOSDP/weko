@@ -59,6 +59,7 @@ def file_download_event_builder(event, sender_app, obj=None, **kwargs):
             # What:
             bucket_id=str(obj.bucket_id),
             file_id=str(obj.file_id),
+            root_file_id=str(obj.root_file_id),
             file_key=obj.key,
             size=obj.file.size,
             referrer=request.referrer,
@@ -89,6 +90,7 @@ def file_preview_event_builder(event, sender_app, obj=None, **kwargs):
             # What:
             bucket_id=str(obj.bucket_id),
             file_id=str(obj.file_id),
+            root_file_id=str(obj.root_file_id),
             file_key=obj.key,
             size=obj.file.size,
             referrer=request.referrer,

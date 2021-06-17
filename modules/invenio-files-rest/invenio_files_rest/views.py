@@ -624,7 +624,8 @@ class ObjectResource(ContentNegotiatedMethodView):
         cls.check_object_permission(obj, file_access_permission)
         return obj
 
-    def create_object(self, bucket, key, is_thumbnail):
+    def create_object(self, bucket, key,
+                      is_thumbnail=None, replace_version_id=None):
         """Create a new object.
 
         :param bucket: The bucket (instance or id) to get the object from.
@@ -655,14 +656,15 @@ class ObjectResource(ContentNegotiatedMethodView):
         with db.session.begin_nested():
             obj = ObjectVersion.create(bucket, key, is_thumbnail=is_thumbnail)
             obj.set_contents(
-                stream, size=content_length, size_limit=size_limit)
+                stream, size=content_length, size_limit=size_limit,
+                replace_version_id=replace_version_id)
             # Check add tags
             if tags:
                 for key, value in tags.items():
                     ObjectVersionTag.create(obj, key, value)
 
         db.session.commit()
-        return self.make_response(
+        _response = self.make_response(
             data=obj,
             context={
                 'class': ObjectVersion,
@@ -670,6 +672,16 @@ class ObjectResource(ContentNegotiatedMethodView):
             },
             etag=obj.file.checksum
         )
+        if replace_version_id:
+            _response.data = _response.data.replace(
+                bytes('"key":"{}"'.format(_response.json['key']), 'utf-8'),
+                bytes(
+                    '"key":"'
+                    + _response.json['key'] + '?replace_version_id='
+                    + replace_version_id + '"',
+                    'utf-8')
+            )
+        return _response
 
     @need_permissions(
         lambda self, bucket, obj, *args: obj,
@@ -950,7 +962,9 @@ class ObjectResource(ContentNegotiatedMethodView):
             return self.multipart_uploadpart(bucket, key, upload_id)
         else:
             is_thumbnail = True if is_thumbnail is not None else False
-            return self.create_object(bucket, key, is_thumbnail=is_thumbnail)
+            replace_version_id = request.args.get('replace_version_id')
+            return self.create_object(bucket, key, is_thumbnail=is_thumbnail,
+                                      replace_version_id=replace_version_id)
 
     @use_kwargs(delete_args)
     @pass_bucket

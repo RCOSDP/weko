@@ -576,7 +576,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 }
   // Bootstrap it!
   angular.element(document).ready(function () {
-    function WekoRecordsCtrl($scope, $rootScope, InvenioRecordsAPI) {
+    function WekoRecordsCtrl($scope, $rootScope, InvenioRecordsAPI, $filter) {
       $scope.currentUrl = window.location.pathname + window.location.search;
       $scope.resourceTypeKey = "";
       $scope.groups = [];
@@ -625,38 +625,82 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.corresponding_usage_data_type = {};
       $scope.original_title = {};
 
+      $scope.listFileNeedRemoveAfterReplace = [];
+      $scope.onBtnReplaceFileContentClick = function (file_key) {
+        $('#file_replace_' + file_key)[0].click();
+      }
+
+      $scope.onReplaceFileContentChange = function (files, current_version_id) {
+        file = files[0];
+        idx_of_file = $rootScope.filesVM.files.map(f => f.version_id).indexOf(current_version_id);
+        if (idx_of_file !== -1) {
+          $rootScope.filesVM.files[idx_of_file].hide = true;
+          file.replace_version_id = current_version_id;
+          file.position = idx_of_file;
+          $rootScope.filesVM.addFiles([file]);
+
+          this.resetFilesPosition(idx_of_file);
+        }
+      }
+
+      $scope.onUploadFileContents = function () {
+        $rootScope.filesVM.files.forEach(function (file) {
+          if (file.replace_version_id) {
+            file.key += '?replace_version_id=' + file.replace_version_id;
+          }
+        });
+
+        $rootScope.filesVM.upload();
+      }
+
+      $scope.onRemoveFileContent = function (file) {
+        if (file.replace_version_id) {
+          idx_of_file = $rootScope.filesVM.files.map(f => f.version_id).indexOf(file.replace_version_id);
+          $rootScope.filesVM.files[idx_of_file].hide = false;
+          $rootScope.filesVM.files[idx_of_file].position = file.position;
+        }
+        $rootScope.filesVM.remove(file);
+      }
+
+      $scope.resetFilesPosition = function (replace_position) {
+        for (let idx = 0; idx < $rootScope.filesVM.files.length; idx++) {
+          file = $rootScope.filesVM.files[idx];
+          if (!file.hide && file.position !== replace_position) {
+            file.position = idx;
+          }
+        }
+      }
+
       /**
         * hook for check duplication file upload
         * @memberof WekoRecordsCtrl
         * @function hookAddFiles
         */
-      $rootScope.hookAddFiles = function (files) {
+      $scope.hookAddFiles = function (files) {
         if (files !== null) {
-          if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes(".0")) {
-            $rootScope.filesVM.addFiles(files);
-          } else {
-            let duplicateFiles = [];
-            files.forEach(function (file) {
-              let duplicateFile = [];
-              if ($rootScope.filesVM.files.length > 0) {
-                duplicateFile = $rootScope.filesVM.files.filter(function (f) {
-                  return !f.is_thumbnail && f.key === file.name;
-                });
-              }
-              if (duplicateFile.length === 0) {
-                $rootScope.filesVM.addFiles([file]);
-              } else {
-                duplicateFiles.push(duplicateFile[0].key);
-              }
-            });
-
-            // Generate error message and show modal
-            if (duplicateFiles.length > 0) {
-              let message = $("#duplicate_files_error").val() + '<br/><br/>';
-              message += duplicateFiles.join(', ');
-              $("#inputModal").html(message);
-              $("#allModal").modal("show");
+          let duplicateFiles = [];
+          files.forEach(function (file) {
+            let duplicateFile = [];
+            if ($rootScope.filesVM.files.length > 0) {
+              duplicateFile = $rootScope.filesVM.files.filter(function (f) {
+                return !f.is_thumbnail && f.key === file.name;
+              });
             }
+            if (duplicateFile.length === 0) {
+              $rootScope.filesVM.addFiles([file]);
+            } else {
+              duplicateFiles.push(file.name);
+            }
+          });
+          this.resetFilesPosition();
+
+          // Generate error message and show modal
+          if (duplicateFiles.length > 0) {
+            let message = $("#duplicate_files_error").val() + '<br/><br/>';
+            message += duplicateFiles.join(', ');
+            $("#inputModal").html(message);
+            $("#allModal").modal("show");
+            return;
           }
         }
       }
@@ -2496,7 +2540,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             }
             $scope.saveFileNameToSessionStore(model[filemeta_key].length, fileData.key);
             // Push data to model
-            model[filemeta_key].push(fileInfo);
+            if (fileData.replace_version_id) {
+              $scope.replaceFileForm(fileData.replace_version_id, fileInfo);
+            } else {
+              model[filemeta_key].push(fileInfo);
+            }
           }
         });
         // Filter empty form
@@ -2504,6 +2552,15 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           model[filemeta_key] = model[filemeta_key].filter(function (fileInfo) {
             return fileInfo.filename;
           });
+        });
+      }
+
+      $scope.replaceFileForm = function (replace_version_id, fileInfo) {
+        let model = $rootScope.recordsVM.invenioRecordsModel;
+        $scope.searchFilemetaKey();
+        $scope.filemeta_keys.forEach(function (filemeta_key) {
+          idx = model[filemeta_key].map(f => f.version_id).indexOf(replace_version_id);
+          model[filemeta_key].splice(idx, 1, fileInfo);
         });
       }
 
@@ -2699,7 +2756,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 
       $scope.updateNumFiles = function () {
         if (!angular.isUndefined($rootScope.filesVM)) {
-          $scope.previousNumFiles = $rootScope.filesVM.files.length;
+          numOfReplace = $scope.listFileNeedRemoveAfterReplace.length;
+          $scope.previousNumFiles = $rootScope.filesVM.files.length - numOfReplace;
         }
       }
 
@@ -2720,16 +2778,42 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         return filesObject;
       }
 
+      $scope.clearFileNameAfterReplace = function () {
+        $scope.listFileNeedRemoveAfterReplace = [];
+        $rootScope.filesVM.files.forEach(function (file) {
+          if (file.replace_version_id) {
+            file.key = file.key.split('?replace_version_id=')[0];
+            files = $rootScope.filesVM.files.filter(f => f.version_id === file.replace_version_id);
+            if (files.length > 0) {
+              $scope.listFileNeedRemoveAfterReplace.push(files[0]);
+            }
+          }
+        });
+      }
+
+      $scope.reOrderAndClearMetadataOfFileContents = function () {
+        $rootScope.filesVM.files = $filter('orderBy')($rootScope.filesVM.files, 'position');
+        $rootScope.filesVM.files.forEach(function (file) {
+          delete file['position'];
+          delete file['replace_version_id'];
+        });
+      }
+
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
+        $scope.clearFileNameAfterReplace();
         $scope.initFilenameList();
         $scope.hiddenPubdate();
         $scope.addFileFormAndFill();
         $scope.updateNumFiles();
         $scope.storeFilesToSession();
+        $scope.reOrderAndClearMetadataOfFileContents();
         // Delay 1s after page render
         setTimeout(function() {
           // Change position of FileName
           $scope.changePositionFileName();
+          $scope.listFileNeedRemoveAfterReplace.forEach(function (f) {
+            $rootScope.filesVM.remove(f);
+          });
         }, 1000);
       });
 
@@ -4156,6 +4240,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let activityId = $("#activity_id").text();
         let edit_mode = sessionStorage.getItem("edit_mode_" + activityId);
         if ($rootScope.recordsVM.invenioRecordsEndpoints.initialization.includes(".0") || edit_mode) {
+          $rootScope.isEditMode = true;
           if (edit_mode !== null) {
             let version_radios = $('input[name ="radioVersionSelect"]');
 
@@ -4164,6 +4249,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           }
         } else {
           $('#react-component-version').hide();
+          $rootScope.isEditMode = false;
         }
       }
 
@@ -4238,6 +4324,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       '$scope',
       '$rootScope',
       'InvenioRecordsAPI',
+      '$filter'
     ];
     angular.module('wekoRecords.controllers', [])
       .controller('WekoRecordsCtrl', WekoRecordsCtrl);

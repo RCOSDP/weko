@@ -894,11 +894,11 @@ def create_deposit(item_id):
     return dep['recid']
 
 
-def clean_thumbnail_file(bucket, root_path, thumbnail_path):
+def clean_thumbnail_file(deposit, root_path, thumbnail_path):
     """Remove all thumbnail in bucket.
 
     :argument
-        bucket         -- {object} bucket.
+        deposit         -- {object} deposit.
         root_path      -- {str} location of temp folder.
         thumbnail_path -- {list} thumbnails path.
     """
@@ -906,46 +906,70 @@ def clean_thumbnail_file(bucket, root_path, thumbnail_path):
         lambda path: not os.path.isfile(root_path + '/' + path),
         thumbnail_path))
     list_not_remove = [get_file_name(path) for path in list_not_remove]
-    all_file_version = ObjectVersion.get_by_bucket(
-        bucket, True, True).all()
-    for file in all_file_version:
-        if file.is_thumbnail is True and file.key not in list_not_remove:
-            file.remove()
+    for file in deposit.files:
+        if file.obj.is_thumbnail and file.obj.key not in list_not_remove:
+            file.obj.remove()
 
 
-def up_load_file(record, root_path):
+def up_load_file(record, root_path, deposit,
+                 allow_upload_file_content, old_files):
     """Upload thumbnail or file content.
 
     :argument
         record         -- {dict} item import.
         root_path      -- {str} root_path.
+        deposit        -- {object} item deposit.
+        allow_upload_file_content   -- {bool} allow file content upload?
+        old_files      -- {list} List of ObjectVersion in current bucket.
 
     """
-    file_path = list(filter(lambda path: path, record.get('file_path', [])))
+    def upload(paths, is_thumbnail=False):
+        if len(old_files) > len(paths):
+            paths.extend(
+                [None for _idx in range(0, len(old_files) - len(paths))])
+
+        for idx, path in enumerate(paths):
+            old_file = old_files[idx] \
+                if not is_thumbnail and idx < len(old_files) else None
+            if not path or not os.path.isfile(root_path + '/' + path):
+                if old_file and \
+                        old_file.key != record['filenames'][idx]:
+                    old_file.remove()
+                continue
+
+            with open(root_path + '/' + path, 'rb') as file:
+                root_file_id = None
+                if old_file:
+                    root_file_id = old_file.root_file_id
+                    old_file.remove()
+
+                obj = ObjectVersion.create(
+                    deposit.files.bucket,
+                    get_file_name(path)
+                )
+                obj.is_thumbnail = is_thumbnail
+                obj.set_contents(file, root_file_id=root_file_id)
+
+    def clean_file_contents(delete_all):
+        # clean file contents in bucket.
+        for file in deposit.files.bucket.objects:
+            if not file.is_thumbnail \
+                    and (delete_all or not file.is_head):
+                file.remove()
+
+    file_path = record.get('file_path', []) \
+        if allow_upload_file_content else []
     thumbnail_path = record.get('thumbnail_path', [])
     if isinstance(thumbnail_path, str):
         thumbnail_path = [thumbnail_path]
     else:
         thumbnail_path = list(filter(lambda path: path, thumbnail_path))
+
+    clean_thumbnail_file(deposit, root_path, thumbnail_path)
     if file_path or thumbnail_path:
-        pid = PersistentIdentifier.query.filter_by(
-            pid_type='recid',
-            pid_value=record.get('id')).first()
-        rec = RecordMetadata.query.filter_by(
-            id=pid.object_uuid).first()
-        bucket = rec.json['_buckets']['deposit']
-        clean_thumbnail_file(bucket, root_path, thumbnail_path)
-        for path in [*file_path, *thumbnail_path]:
-            if not os.path.isfile(root_path + '/' + path):
-                continue
-            with open(root_path + '/' + path, 'rb') as file:
-                obj = ObjectVersion.create(
-                    bucket,
-                    get_file_name(path)
-                )
-                if path in thumbnail_path:
-                    obj.is_thumbnail = True
-                obj.set_contents(file)
+        upload(thumbnail_path, is_thumbnail=True)
+        upload(file_path)
+    clean_file_contents(not allow_upload_file_content)
 
 
 def get_file_name(file_path):
@@ -959,35 +983,35 @@ def get_file_name(file_path):
     return file_path.split('/')[-1] if file_path.split('/')[-1] else ''
 
 
-def register_item_metadata(item):
+def register_item_metadata(item, root_path):
     """Upload file content.
 
     :argument
-        list_record    -- {list} list item import.
-        file_path      -- {str} file path.
+        item        -- {dict} Information of item need to import.
+        root_path   -- {str} path of the folder include files.
     """
     def clean_file_metadata(item_type_id, data):
         # clear metadata of file information
-        item_map = get_mapping(Mapping.get_record(
-            item_type_id), 'jpcoar_mapping')
-        _, key = get_data_by_property(
-            item, item_map, "file.URI.@value")
+        is_cleaned = True
+        item_map = get_mapping(Mapping.get_record(item_type_id),
+                               'jpcoar_mapping')
+        _, key = get_data_by_property(item, item_map, "file.URI.@value")
         if key:
             key = key.split('.')[0]
             if not data.get(key):
                 deleted_items = data.get('deleted_items') or []
                 deleted_items.append(key)
                 data['deleted_items'] = deleted_items
-        return data
+            else:
+                is_cleaned = False
+        return data, is_cleaned
 
     def autofill_thumbnail_metadata(item_type_id, data):
         key = get_thumbnail_key(item_type_id)
         if key:
-            all_file_version = ObjectVersion.get_by_bucket(
-                deposit.files.bucket, True, True).all()
             thumbnail_item = {}
             subitem_thumbnail = []
-            for file in all_file_version:
+            for file in deposit.files:
                 if file.is_thumbnail is True:
                     subitem_thumbnail.append({
                         'thumbnail_label': file.key,
@@ -1007,32 +1031,6 @@ def register_item_metadata(item):
                 deleted_items.append(key)
                 data['deleted_items'] = deleted_items
         return data
-
-    def clean_file_bucket(deposit):
-        # clean bucket
-        file_names = [file.get('filename', '')
-                      for file in deposit.get_file_data()]
-        lastest_files_version = []
-        # remove lastest version
-        for file in deposit.files:
-            if file.obj.is_thumbnail is False \
-                    and file.obj.key not in file_names:
-                file.obj.remove()
-            else:
-                lastest_files_version.append(file.obj.version_id)
-        # remove old version of file
-        all_file_version = ObjectVersion.get_by_bucket(
-            deposit.files.bucket, True, True).all()
-        for file in all_file_version:
-            if file.version_id not in lastest_files_version:
-                file.remove()
-
-    def clean_all_file_in_bucket(deposit):
-        all_file_version = ObjectVersion.get_by_bucket(
-            deposit.files.bucket, True, True).all()
-        for file in all_file_version:
-            if file.is_thumbnail is False:
-                file.remove()
 
     item_id = str(item.get('id'))
     pid = PersistentIdentifier.query.filter_by(
@@ -1064,15 +1062,29 @@ def register_item_metadata(item):
                 'value': item_id
             }
         })
+
+    # get old files in item with order.
+    old_file_list = []
+    if item['status'] != 'new':
+        for file_metadata in deposit.get_file_data():
+            if file_metadata.get('version_id'):
+                f_filter = list(
+                    filter(
+                        lambda f: str(f.obj.version_id) == file_metadata.get(
+                            'version_id'),
+                        deposit.files)
+                )
+                old_file_list.append(f_filter[0].obj if f_filter else None)
+            else:
+                old_file_list.append(None)
+
+    # set delete flag for file metadata if is empty.
+    new_data, is_cleaned = clean_file_metadata(item['item_type_id'], new_data)
+    # progress upload file, replace file contents.
+    up_load_file(item, root_path, deposit, not is_cleaned, old_file_list)
     new_data = autofill_thumbnail_metadata(item['item_type_id'], new_data)
-    new_data = clean_file_metadata(item['item_type_id'], new_data)
+
     deposit.update(item_status, new_data)
-    if list(filter(lambda path: path, item.get('file_path', []))):
-        # update
-        clean_file_bucket(deposit)
-    else:
-        # delete
-        clean_all_file_in_bucket(deposit)
     deposit.commit()
     deposit.publish_without_commit()
 
@@ -1095,7 +1107,7 @@ def register_item_metadata(item):
             _pid = PIDVersioning(child=pid).last_child
             _record = WekoDeposit.get_record(_pid.object_uuid)
             _deposit = WekoDeposit(_record, _record.model)
-            _deposit.merge_data_to_record_without_version(pid)
+            _deposit.merge_data_to_record_without_version(pid, True)
             _deposit.publish_without_commit()
 
         if feedback_mail_list:
@@ -1209,8 +1221,7 @@ def import_items_to_system(item: dict):
             else:
                 handle_check_item_is_locked(item)
 
-            up_load_file(item, root_path)
-            register_item_metadata(item)
+            register_item_metadata(item, root_path)
             if current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
                 register_item_handle(item)
             register_item_doi(item)
@@ -2793,6 +2804,7 @@ def handle_check_file_content(record, data_path):
     file_paths = record.get('file_path', [])
     # check consistence between file_path and filename
     filenames = get_filenames_from_metadata(record['metadata'])
+    record['filenames'] = filenames
     errors.extend(handle_check_filename_consistence(file_paths, filenames))
 
     # check if file_path exists
@@ -2883,7 +2895,7 @@ def get_data_by_propertys(record, item_map, item_property):
 
 
 def get_filenames_from_metadata(metadata):
-    """Check thumbnails metadata.
+    """Get list name of file contents from metadata.
 
     :argument
         metadata -- {dict} record metadata.
