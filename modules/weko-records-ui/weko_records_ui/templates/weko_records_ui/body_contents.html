@@ -133,18 +133,22 @@
                           {%- endif -%}
                           <!-- version_id == '' => not upload file, but fill data for 'File Information' -->
                           {%- if file.version_id == '' -%}
-                            {%- if file.url.label -%}
+			    {%- if file.url -%} 
+			    {%- if file.url.label -%}
                               {%- set file_label = file.url.label -%}
                             {%- elif file.url.url -%}
                               {%- set file_label = file.url.url -%}
                             {%- else -%}
                               {%- set file_label = file.filename -%}
                             {%- endif -%}
+			    {%- endif -%}
+			    {%- if file.url -%}
                             {%- if file.url.url -%}
                               {%- set text_url = file.url.url -%}
                             {%- else -%}
                               {%- set text_url = '' -%}
                             {%- endif -%}
+			    {%- endif -%}
                           {%- else -%}
                             {%- set text_url = file_url -%}
                           {%- endif -%}
