@@ -40,12 +40,11 @@ from weko_accounts.utils import login_required_customize
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
-from weko_index_tree.utils import check_restrict_doi_with_indexes, \
-    get_index_id, get_user_roles
+from weko_index_tree.utils import check_index_permissions, get_index_id, \
+    get_user_roles
 from weko_records.api import ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
-from weko_records_ui.utils import get_file_info_list
 from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow
 from weko_workflow.utils import check_an_item_is_locked, \
     get_record_by_root_ver, get_thumbnails, prepare_edit_workflow, \
@@ -428,8 +427,8 @@ def iframe_items_index(pid_value='0'):
                     files_thumbnail = get_thumbnails(files, None)
             else:
                 root_record = session['itemlogin_record']
-            if root_record and files and len(root_record) > 0 and len(files) > 0 \
-               and (isinstance(root_record, list) or isinstance(root_record, dict)):
+            if root_record and files and len(root_record) > 0 and \
+                    len(files) > 0 and isinstance(root_record, (list, dict)):
                 files = set_files_display_type(root_record, files)
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
@@ -1115,7 +1114,6 @@ def check_record_doi(pid_value='0'):
     :param pid_value: pid_value.
     :return:
     """
-    from weko_deposit.api import WekoRecord
     record = WekoRecord.get_record_by_pid(pid_value)
     if record.pid_doi:
         return jsonify({'code': 0})
@@ -1132,17 +1130,11 @@ def check_record_doi_indexes(pid_value='0'):
     :return:
     """
     doi = int(request.args.get('doi', '0'))
-    from weko_deposit.api import WekoRecord
     record = WekoRecord.get_record_by_pid(pid_value)
-    if record.pid_doi or doi > 0:
-        idx_paths = record.get('path', [])
-        index_ids = [path.split('/')[-1] for path in idx_paths]
-        if check_restrict_doi_with_indexes(index_ids):
-            return jsonify({
-                'code': -1,
-                'message': _('When assigning a DOI to an item, it must be '
-                             'associated with an index whose index status is '
-                             '"Public" and Harvest Publishing is "Public".')
-            })
+    if (record.pid_doi or doi > 0) and \
+            not check_index_permissions(record=record, is_check_doi=True):
+        return jsonify({
+            'code': -1
+        })
 
     return jsonify({'code': 0})

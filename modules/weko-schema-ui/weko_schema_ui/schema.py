@@ -398,7 +398,7 @@ class SchemaTree:
                 for ke, va in nd.items():
                     if ke != self._atr:
                         if isinstance(va, str):
-                            nd[ke] = {self._v: nv}
+                            nd[ke] = nv if ke == self._v else {self._v: nv}
                             return
                         else:
                             if len(va) == 0 or \
@@ -440,7 +440,10 @@ class SchemaTree:
             elif isinstance(list_key, list) and len(list_key) == 1:
                 try:
                     key = list_key[0]
-                    if isinstance(atr_vm, dict):
+                    if key.startswith("="):
+                        # mapping by fixed value
+                        yield key[1:],id(key)
+                    elif isinstance(atr_vm, dict):
                         if atr_vm.get(key) is None:
                             yield None, id(key)
                         else:
@@ -711,7 +714,8 @@ class SchemaTree:
                                     # @attributes
                                     for key, val in v.get(self._atr,
                                                           {}).items():
-                                        val[0] = [val for idx, val
+                                        if(type(val[0]) is not str):
+                                          val[0] = [val for idx, val
                                                   in enumerate(val[0])
                                                   if idx in lst_val_idx]
                             else:
@@ -825,8 +829,7 @@ class SchemaTree:
 
         vlst = []
         for key_item_parent, value_item_parent in sorted(self._record.items()):
-            if key_item_parent != 'pubdate' and isinstance(value_item_parent,
-                                                           dict):
+            if isinstance(value_item_parent, dict):
                 # Dict
                 # get value of the combination between record and \
                 # mapping data that is inited at __init__ function

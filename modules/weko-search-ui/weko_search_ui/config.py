@@ -700,7 +700,7 @@ RESOURCE_TYPE_URI = {
 }
 WEKO_IMPORT_VALIDATE_MESSAGE = {
     '%r is too long': '%rの数が上限数を超えています。',
-    '%r is not one of %r': '%rは次の決めれられた選択肢に含まれていません。%r',
+    '%r is not one of %r': '%rは次の決められた選択肢に含まれていません。%r',
     '%r is a required property': '%rは必須項目です。'
 }
 
@@ -716,4 +716,8 @@ WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 3
 
 
 
+
+
+=======
+WEKO_SEARCH_UI_IMPORT_TMP_PREFIX = 'weko_import_'
 

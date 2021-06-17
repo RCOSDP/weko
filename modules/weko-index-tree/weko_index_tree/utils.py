@@ -25,6 +25,7 @@ from functools import wraps
 from operator import itemgetter
 
 from elasticsearch.exceptions import NotFoundError
+from elasticsearch_dsl.query import Bool, Exists, Prefix, Q, QueryString
 from flask import Markup, current_app, session
 from flask_login import current_user
 from invenio_cache import current_cache
@@ -661,24 +662,26 @@ def check_doi_in_list_record_es(index_id):
     """Check doi in index.
 
     @param index_id:
-    @return:
+    @return: True if the index do not update the index state to private.
+
     """
-    list_records_in_es = get_record_in_es_of_index(index_id)
-    list_uuid = []
+    list_records_in_es = check_doi_in_index_and_child_index(index_id)
     list_path = []
     for record in list_records_in_es:
-        list_uuid.append(record.get('_id'))
+        # If a record has only an index,
+        # do not update the index state to private.
+        if len(record.get('_source', {}).get('path', [])) <= 1:
+            return True
+
         list_path.append(list(
             filter(lambda x: not x.endswith(str(index_id)),
                    record.get('_source', {}).get('path'))
         ))
-    from weko_items_ui.utils import check_item_has_doi
-    if check_item_has_doi(list_uuid):
-        if not list_path:
+    # Check index permissions
+    for path in list_path:
+        if not check_index_permissions(record={}, index_path_list=path,
+                                       is_check_doi=True):
             return True
-        for path in list_path:
-            if check_restrict_doi_with_indexes(path):
-                return True
     return False
 
 
@@ -712,19 +715,30 @@ def check_has_any_item_in_index_is_locked(index_id):
     return False
 
 
-def check_index_permissions(record, index_id=None) -> bool:
+def check_index_permissions(record, index_id=None, index_path_list=None,
+                            is_check_doi=False) -> bool:
     """Check indexes of record is private.
 
     :param record:Record data.
     :param index_id:Index id.
+    :param index_path_list:Index id list.
+    :param is_check_doi: Check DOI flag.
 
     Returns:
         [bool]: False if the record has indexes(or parent indexes)
         which is private.
 
     """
-    def _check(index_data):
-        """Check index data by role."""
+    def _check_index_permission(index_data) -> bool:
+        """Check index data by role.
+
+        Args:
+            index_data ():
+
+        Returns:
+            [bool]: True if the user can access index.
+
+        """
         can_view = False
         if roles[0]:
             # In case admin role.
@@ -739,6 +753,23 @@ def check_index_permissions(record, index_id=None) -> bool:
             if check_user_role and check_public_date:
                 can_view = True
         return can_view
+
+    def _check_index_permission_for_doi(index_data) -> bool:
+        """Check index permission for DOI.
+
+        Args:
+            index_data ():
+
+        Returns:
+            [bool]: True if the index is public.
+
+        """
+        public_state = index_data.public_state and \
+            index_data.harvest_public_state
+        if public_state and isinstance(index_data.public_date, datetime):
+            public_state = date.today() >= index_data.public_date.date()
+
+        return public_state
 
     def _check_for_index_groups(_index_groups):
         """Check for index groups.
@@ -755,13 +786,21 @@ def check_index_permissions(record, index_id=None) -> bool:
                 return False
         return True
 
-    def _get_record_index_list():
-        """Get index list of record."""
-        list_index = record.get("path")
+    def _convert_index_path(list_index):
+        """Convert index from the path to index identifier.
+
+        Args:
+            list_index (list): Index path list.
+        """
         for _index in list_index:
             _indexes = str(_index).split('/')
             index_lst.extend(_indexes)
             index_groups.append(_indexes)
+
+    def _get_record_index_list():
+        """Get index list of record."""
+        list_index = record.get("path")
+        _convert_index_path(list_index)
 
     def _get_parent_lst():
         """Get parent list of index."""
@@ -777,19 +816,51 @@ def check_index_permissions(record, index_id=None) -> bool:
         _get_record_index_list()
     elif index_id is not None:
         _get_parent_lst()
+    elif index_path_list is not None:
+        _convert_index_path(index_path_list)
     indexes = Indexes.get_path_list(index_lst)
 
-    roles = get_user_roles()
-    groups = get_user_groups()
+    if not is_check_doi:
+        # Get user roles and user groups.
+        roles = get_user_roles()
+        groups = get_user_groups()
+        check_index_method = _check_index_permission
+    else:
+        check_index_method = _check_index_permission_for_doi
+
     index_roles = {}
     # Check index status.
     for index in indexes:
         index_roles.update({
-            str(index.cid): _check(index)
+            str(index.cid): check_index_method(index)
         })
 
-    # Check for index groups.
     for index in index_groups:
         if _check_for_index_groups(index):
             return True
     return False
+
+
+def check_doi_in_index_and_child_index(index_id):
+    """Check DOI in index and child index.
+
+    Args:
+        index_id (list): Record list.
+    """
+    from .api import Indexes
+    tree_path = Indexes.get_full_path(index_id)
+    query_string = "relation_version_is_last:true AND publish_status:0"
+    search = RecordsSearch(
+        index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
+    must_query = [
+        QueryString(query=query_string),
+        Prefix(**{"path.tree": tree_path}),
+        Q("nested", path="identifierRegistration",
+          query=Exists(field="identifierRegistration"))
+    ]
+    search = search.query(
+        Bool(filter=must_query)
+    )
+    records = search.execute().to_dict().get('hits', {}).get('hits', [])
+
+    return records

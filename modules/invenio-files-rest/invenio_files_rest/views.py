@@ -13,7 +13,7 @@ from __future__ import absolute_import, print_function
 import uuid
 from functools import partial, wraps
 
-from flask import Blueprint, abort, current_app, json, jsonify, request
+from flask import Blueprint, abort, current_app, jsonify, request, session
 from flask_login import current_user
 from invenio_db import db
 from invenio_records.models import RecordMetadata
@@ -324,6 +324,8 @@ def check_permission(permission, hidden=True):
         hide or reveal the existence of a particular object).
     """
     if permission is not None and not permission.can():
+        if is_guest_login_can_access_file(permission):
+            return
         if hidden:
             abort(404)
         else:
@@ -364,6 +366,28 @@ need_bucket_permission = partial(
     need_permissions,
     lambda *args, **kwargs: kwargs.get('bucket')
 )
+
+
+def is_guest_login_can_access_file(permission):
+    """Check guest login upload file.
+
+    Args:
+        permission: The permission to check.
+
+    Returns:
+        [boolean]: True if the guest user can upload file.
+
+    """
+    if session and session.get('guest_token') is not None:
+        guest_access_file_actions = [
+            "files-rest-object-read", "files-rest-bucket-update",
+            "files-rest-object-delete", "files-rest-object-delete-version",
+        ]
+        for need in permission.needs:
+            if need.method == 'action' and \
+                    need.value in guest_access_file_actions:
+                return True
+    return False
 
 
 #
@@ -570,7 +594,9 @@ class ObjectResource(ContentNegotiatedMethodView):
         :returns: A :class:`invenio_files_rest.models.ObjectVersion` instance.
         """
         from weko_records_ui.permissions import check_file_download_permission
+
         from invenio_files_rest.models import as_bucket_id
+
         # Get record metadata (table records_metadata) from bucket_id.
         bucket_id = as_bucket_id(bucket)
         rb = RecordsBuckets.query.filter_by(bucket_id=bucket_id).first()

@@ -919,9 +919,9 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
 
 WEKO_ADMIN_PERMISSION_ROLE_SYSTEM = "System Administrator"
 
-WEKO_PERMISSION_ROLE_REPO = "Repository Administrator"
+WEKO_ADMIN_PERMISSION_ROLE_REPO = "Repository Administrator"
 
-WEKO_PERMISSION_ROLE_COMMUNITY = "Community Administrator"
+WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY = "Community Administrator"
 
 WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
     'admin',
@@ -1066,3 +1066,6 @@ WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = {
 
 WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER = 25
 """Default number of usage report activities results that display in one page."""
+
+WEKO_ADMIN_FEEDBACK_MAIL_DEFAULT_SUBJECT = "No Site Name"
+"""Default subject of feedback email."""

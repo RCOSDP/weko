@@ -106,13 +106,18 @@ class _StataModelBase(Timestamp):
     @classmethod
     def __convert_data(cls, data_object: dict) -> object:
         if data_object.get("_source"):
+            date = None
+            if 'timestamp' in data_object.get("_source"):
+                date = data_object.get("_source").get("timestamp")
+            elif 'date' in data_object.get("_source"):
+                date = data_object.get("_source").get("date")
             stats_agg = cls(
                 id=_generate_id(),
                 source_id=data_object.get("_id"),
                 index=data_object.get("_index"),
                 type=data_object.get("_type"),
                 source=json.dumps(data_object.get("_source")),
-                date=data_object.get("_source").get("timestamp"),
+                date=date,
             )
             return stats_agg
         return None
@@ -147,13 +152,18 @@ class _StataModelBase(Timestamp):
         """
         try:
             if data_object.get("_source"):
+                date = None
+                if 'timestamp' in data_object.get("_source"):
+                    date = data_object.get("_source").get("timestamp")
+                elif 'date' in data_object.get("_source"):
+                    date = data_object.get("_source").get("date")
                 stats_data = {
                     'id': _generate_id(),
                     'source_id': data_object.get("_id"),
                     'index': data_object.get("_index"),
                     'type': data_object.get("_type"),
                     'source': json.dumps(data_object.get("_source")),
-                    'date': data_object.get("_source").get("timestamp")
+                    'date': date
                 }
             else:
                 return False

@@ -282,6 +282,11 @@ def is_private_workflow(record):
     return int(record.get("publish_status")) == private_status
 
 
+def is_pubdate_in_future(record):
+    """Check pubdate of workflow is in future."""
+    return record.get('publish_date') > datetime.today().strftime('%Y-%m-%d')
+
+
 def is_private_index(record):
     """Check index of workflow is private."""
     return not Indexes.is_public_state(copy.deepcopy(record.get("path")))
@@ -334,17 +339,20 @@ def getrecord(**kwargs):
     set_identifier(record, record)
     # Harvest is private
     _is_private_index = is_private_index(record)
-    if not harvest_public_state or\
-            (identify and not identify.outPutSetting) or \
-            (_is_private_index
-                and harvest_public_state and is_exists_doi(record)):
+    _is_private_workflow = is_private_workflow(record)
+    if not is_deleted_workflow(pid) and \
+        (not harvest_public_state
+         or not identify
+         or not identify.outPutSetting
+         or (is_exists_doi(record)
+             and (_is_private_index or is_pubdate_in_future(record)))):
         return error(get_error_code_msg(), **kwargs)
     # Item is deleted
     # or Harvest is public & Item is private
     # or Harvest is public & Index is private
-    elif is_deleted_workflow(pid) or (
-        harvest_public_state and is_private_workflow(record)) or (
-            harvest_public_state and _is_private_index):
+    elif is_deleted_workflow(pid) \
+            or _is_private_index or _is_private_workflow \
+            or is_pubdate_in_future(record):
         header(
             e_record,
             identifier=pid.pid_value,
@@ -421,8 +429,7 @@ def listrecords(**kwargs):
     e_tree, e_listrecords = verb(**kwargs)
     result = get_records(**kwargs)
     identify = OaiIdentify.get_all()
-    if not result.total or not identify or \
-            (identify and not identify.outPutSetting):
+    if not result.total or not identify or not identify.outPutSetting:
         return error(get_error_code_msg(), **kwargs)
     for record in result.items:
         try:
@@ -432,12 +439,16 @@ def listrecords(**kwargs):
             set_identifier(record, rec)
             # Check output delete, noRecordsMatch
             if not is_private_index(rec):
-                if is_deleted_workflow(pid_object) or \
-                        is_private_workflow(rec):
-                    append_deleted_record(e_listrecords, pid_object, rec)
+                if is_deleted_workflow(pid_object) \
+                        or is_private_workflow(rec) \
+                        or is_pubdate_in_future(rec):
+                    if not (is_pubdate_in_future(rec)
+                            and is_exists_doi(record)):
+                        append_deleted_record(e_listrecords, pid_object, rec)
                     continue
             else:
-                append_deleted_record(e_listrecords, pid_object, rec)
+                if not is_exists_doi(record):
+                    append_deleted_record(e_listrecords, pid_object, rec)
                 continue
             e_record = SubElement(
                 e_listrecords, etree.QName(NS_OAIPMH, 'record'))

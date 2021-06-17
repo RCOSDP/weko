@@ -30,6 +30,7 @@ from invenio_files_rest import signals
 from invenio_files_rest.models import FileInstance
 from invenio_files_rest.views import ObjectResource
 from invenio_records_files.utils import record_file_factory
+from weko_accounts.views import _redirect_method
 from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
 from weko_records.api import FilesMetadata, ItemTypes
@@ -220,6 +221,8 @@ def file_ui(
 
     # Check file contents permission
     if not file_permission_factory(record, fjson=fileobj).can():
+        if not current_user.is_authenticated:
+            return _redirect_method(has_next=True)
         abort(403)
 
     # Check and create usage report
