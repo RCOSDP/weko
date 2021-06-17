@@ -28,6 +28,7 @@ from json import dumps, loads
 import dateutil
 import requests
 import xmltodict
+from flask.globals import current_app
 from lxml import etree
 from weko_records.api import Mapping
 from weko_records.models import ItemType
@@ -97,7 +98,7 @@ def list_records(
         payload['resumptionToken'] = resumption_token
     records = []
     rtoken = None
-    response = requests.get(url, params=payload)
+    response = requests.get(url, params=payload, verify=False)
     et = etree.XML(response.text.encode(encoding))
     records = records + et.findall('./ListRecords/record', namespaces=et.nsmap)
     resumptionToken = et.find(
@@ -129,15 +130,21 @@ def get_newest_itemtype_info(type_name):
 
 def add_alternative(schema, res, alternative_list):
     """Add alternative."""
+    _prop_key = 'alternative_title'
+
     if not isinstance(alternative_list, list):
         alternative_list = [alternative_list]
-    root_key = map_field(schema).get('Alternative Title')
+    root_key = map_field(schema).get('Alternative Title') or map_field(schema).get('その他のタイトル')
     if not root_key:
-        return
+        for key in schema['properties']:
+            if _prop_key in key:
+                root_key = key
+        if not root_key:
+            return
     res[root_key] = []
-    alternative_title = map_field(schema['properties'][root_key]['items'])[
-        'Alternative Title']
-    language = map_field(schema['properties'][root_key]['items'])['Language']
+    map_data = map_field(schema['properties'][root_key]['items'])
+    alternative_title = map_data.get('Alternative Title', map_data.get('その他のタイトル'))
+    language = map_data.get('Language', map_data.get('言語'))
     for it in alternative_list:
         item = {}
         if isinstance(it, str):
@@ -150,14 +157,22 @@ def add_alternative(schema, res, alternative_list):
 
 def add_title(schema, res, title_list):
     """Add title."""
+    _prop_key = 'titles'
+
     if not isinstance(title_list, list):
         title_list = [title_list]
-    root_key = map_field(schema).get('Title')
+    root_key = map_field(schema).get('Title') or map_field(schema).get('タイトル')
     if not root_key:
-        return
+        for key in schema['properties']:
+            if _prop_key in key:
+                root_key = key
+        if not root_key:
+            return
     res[root_key] = []
-    title = map_field(schema['properties'][root_key]['items'])['Title']
-    language = map_field(schema['properties'][root_key]['items'])['Language']
+    map_data = map_field(schema['properties'][root_key]['items'])
+    title = map_data.get('Title', map_data.get('タイトル'))
+    language = map_data.get('Language', map_data.get('言語'))
+
     for it in title_list:
         item = {}
         if isinstance(it, str):
@@ -171,17 +186,25 @@ def add_title(schema, res, title_list):
 
 def add_description(schema, res, description_list):
     """Add description."""
+    _prop_key = 'description'
+    _title_en = 'Description'
+    _title_ja = '内容記述'
+
     if not isinstance(description_list, list):
         description_list = [description_list]
-    root_key = map_field(schema).get('Description')
+    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
     if not root_key:
-        return
+        for key in schema['properties']:
+            if _prop_key in key:
+                root_key = key
+        if not root_key:
+            return
     res[root_key] = []
-    description = map_field(schema['properties'][root_key]['items'])[
-        'Description']
-    description_type = map_field(schema['properties'][root_key]['items'])[
-        'Description Type']
-    language = map_field(schema['properties'][root_key]['items'])['Language']
+    map_data = map_field(schema['properties'][root_key]['items'])
+    description = map_data.get('Description', map_data.get('内容記述'))
+    description_type = map_data.get('Description Type', map_data.get('内容記述タイプ'))
+    language = map_data.get('Language', map_data.get('言語'))
+
     for it in description_list:
         item = {}
         if isinstance(it, str):
@@ -198,30 +221,26 @@ def add_description(schema, res, description_list):
 
 def add_creator_jpcoar(schema, res, creator_list):
     """Add creator."""
+    _prop_key = 'creator'
+    _title_en = 'Creator'
+    _title_ja = '作成者'
+
     if not isinstance(creator_list, list):
         creator_list = [creator_list]
-    root_key = map_field(schema).get('Creator')
+    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
     if not root_key:
-        return
+        for key in schema['properties']:
+            if _prop_key in key:
+                root_key = key
+        if not root_key:
+            return
     res[root_key] = []
     item_schema = schema['properties'][root_key]['items']
-    affiliation_key = map_field(item_schema)['Affiliation']
-    creator_alternative_key = map_field(item_schema)['Creator Alternative']
-    creator_name_key = map_field(item_schema)['Creator Name']
-    creator_name_identifier_key = map_field(
-        item_schema)['Creator Name Identifier']
-    family_name_key = map_field(item_schema)['Family Name']
-    given_name_key = map_field(item_schema)['Given Name']
-    affiliation_name = map_field(
-        item_schema['properties'][affiliation_key]['items'])
-    ['Affiliation Name']
-    affiliation_name_identifier = map_field(
-        item_schema['properties'][affiliation_key]['items'])
-    ['Affiliation Name Identifier']
-    creator_name = map_field(
-        item_schema['properties'][creator_name_key]['items'])['Creator Name']
-    creator_name_lang = map_field(
-        item_schema['properties'][creator_name_key]['items'])['Language']
+    creator_name_key = map_field(item_schema).get('Creator Name', map_field(item_schema).get('作成者'))
+    map_data = map_field(item_schema['properties'][creator_name_key]['items'])
+    creator_name = map_data.get('Creator Name', map_data.get('作成者姓名'))
+    creator_name_lang  = map_data.get('Language', map_data.get('姓名'))
+
     item = {}
     for it in creator_list:
         if 'jpcoar:creatorName' in it:
@@ -242,32 +261,26 @@ def add_creator_jpcoar(schema, res, creator_list):
 
 def add_contributor_jpcoar(schema, res, contributor_list):
     """Add contributor."""
+    _prop_key = 'contributor'
+    _title_en = 'Contributor'
+    _title_ja = '寄与者'
+
     if not isinstance(contributor_list, list):
         contributor_list = [contributor_list]
-    root_key = map_field(schema).get('Contributor')
+    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
     if not root_key:
-        return
+        for key in schema['properties']:
+            if _prop_key in key:
+                root_key = key
+        if not root_key:
+            return
     res[root_key] = []
     item_schema = schema['properties'][root_key]['items']
-    affiliation_key = map_field(item_schema)['Affiliation']
-    contributor_alternative_key = map_field(
-        item_schema)['Contributor Alternative']
-    contributor_name_key = map_field(item_schema)['Contributor Name']
-    contributor_name_identifier_key = map_field(
-        item_schema)['Contributor Name Identifier']
-    family_name_key = map_field(item_schema)['Family Name']
-    given_name_key = map_field(item_schema)['Given Name']
-    affiliation_name = map_field(
-        item_schema['properties'][affiliation_key]['items'])
-    ['Affiliation Name']
-    affiliation_name_identifier = map_field(
-        item_schema['properties'][affiliation_key]['items'])
-    ['Affiliation Name Identifier']
-    contributor_name = map_field(
-        item_schema['properties'][contributor_name_key]['items'])
-    ['Contributor Name']
-    contributor_name_lang = map_field(
-        item_schema['properties'][contributor_name_key]['items'])['Language']
+    contributor_name_key = map_field(item_schema).get('Contributor Name', map_field(item_schema).get('寄与者姓名'))
+    map_data = map_field(item_schema['properties'][contributor_name_key]['items'])
+    contributor_name = map_field(map_data).get('Contributor Name', map_field(item_schema).get('姓名'))
+    contributor_name_lang = map_field(map_data).get('Language', map_field(item_schema).get('言語'))
+
     item = {}
     for it in contributor_list:
         if 'jpcoar:contributorName' in it:
@@ -286,73 +299,105 @@ def add_contributor_jpcoar(schema, res, contributor_list):
         res[root_key].append(item)
 
 
-def add_access_rights(schema, res, accessRights):
+def add_access_rights(schema, res, access_rights):
     """Add access rights."""
-    root_key = map_field(schema).get('Access Rights')
-    access_rights = map_field(
-        schema['properties'][root_key])['Access Rights']
-    access_rights_resource = map_field(
-        schema['properties'][root_key])['Access Rights Resource']
+    _prop_key = 'item_access_right'
+    _title_en = 'Access Rights'
+    _title_ja = 'アクセス権'
+
+    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    if not root_key:
+        for key in schema['properties']:
+            if _prop_key == key:
+                root_key = key
+        if not root_key:
+            return
+
+    map_data = map_field(schema['properties'][root_key])
+    access_right = map_data.get('Access Rights', map_data.get('アクセス権'))
+    access_right_resource = map_data.get('Access Rights Resource', map_data.get('アクセス権URI'))
     res[root_key] = {
-        access_rights: accessRights.get('#text'),
-        access_rights_resource: accessRights.get('@rdf:resource')}
+        access_right: access_rights.get('#text'),
+        access_right_resource: access_rights.get('@rdf:resource')}
 
 
 def add_rights(schema, res, rights_list):
     """Add rights."""
+    _prop_key = 'rights'
+    _title_en = 'Rights'
+    _title_ja = '権利情報'
+
     if not isinstance(rights_list, list):
         rights_list = [rights_list]
-    root_key = map_field(schema).get('Rights')
+    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    if not root_key:
+        for key in schema['properties']:
+            if _prop_key in key:
+                root_key = key
+        if not root_key:
+            return
+
     res[root_key] = []
-    rights = map_field(
-        schema['properties'][root_key]['items'])['Rights']
-    rights_text = map_field(
-        schema['properties'][root_key]['items']['properties'][rights]
-        ['items'])['Rights']
-    rights_lang = map_field(
-        schema['properties'][root_key]['items']['properties'][rights]
-        ['items'])['Language']
-    rights_resource = map_field(
-        schema['properties'][root_key]['items'])['Rights Resource']
+    map_data = map_field(schema['properties'][root_key]['items'])
+    rights_text = map_data.get('Rights', map_data.get('権利情報'))
+    rights_lang = map_data.get('Language', map_data.get('言語'))
+    rights_resource = map_data.get('Rights Resource', map_data.get('権利情報Resource'))
     for it in rights_list:
         item = {}
-        item[rights] = {}
         if isinstance(it, str):
-            item[rights][rights_text] = it
+            item[rights_text] = it
         elif isinstance(it, OrderedDict):
-            item[rights][rights_text] = it.get('#text')
+            item[rights_text] = it.get('#text')
             if it.get('@xml:lang'):
-                item[rights][rights_lang] = it.get('@xml:lang')
+                item[rights_lang] = it.get('@xml:lang')
             item[rights_resource] = it.get('@rdf:resource')
         res[root_key].append(item)
 
 
 def add_rightsholder(schema, res, rightsholder_list):
     """Add rightsholder."""
-    if not isinstance(rights_list, list):
+    _prop_key = 'rights_holder'
+    _title_en = 'Rights Holder'
+    _title_ja = '権利者情報'
+
+    if not isinstance(rightsholder_list, list):
         rightsholder_list = [rightsholder_list]
-    root_key = map_field(schema).get('Rights Holder')
+    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    if not root_key:
+        for key in schema['properties']:
+            if _prop_key in key:
+                root_key = key
+        if not root_key:
+            return
+
     res[root_key] = []
-    rights_holder_name_key = map_field(
-        sch['properties'][root_key]['items'])['Rights Holder Name']
-    rights_holder_identifier_key = map_field(
-        sch['properties'][root_key]['items'])['Rights Holder Identifier']
+    map_data = map_field(schema['properties'][root_key]['items'])
+    rights_holder_name_key = map_data.get('Rights Holder Name', map_data.get('権利者名'))
+    rights_holder_identifier_key = map_data.get('Rights Holder Identifier', map_data.get('権利者識別子'))
 
 
 def add_subject(schema, res, subject_list):
     """Add subject."""
+    _prop_key = 'subject'
+    _title_en = 'Subject'
+    _title_ja = '主題'
+
     if not isinstance(subject_list, list):
         subject_list = [subject_list]
-    root_key = map_field(schema).get('Subject')
+    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    if not root_key:
+        for key in schema['properties']:
+            if _prop_key in key:
+                root_key = key
+        if not root_key:
+            return
+
     res[root_key] = []
-    subject = map_field(
-        schema['properties'][root_key]['items'])['Subject']
-    subject_uri = map_field(
-        schema['properties'][root_key]['items'])['Subject URI']
-    subject_scheme = map_field(
-        schema['properties'][root_key]['items'])['Subject Scheme']
-    language = map_field(
-        schema['properties'][root_key]['items'])['Language']
+    map_data = map_field(schema['properties'][root_key]['items'])
+    subject = map_data.get('Subject', map_data.get('主題'))
+    subject_uri = map_data.get('Subject URI', map_data.get('主題URI'))
+    subject_scheme = map_data.get('Subject Scheme', map_data.get('主題Scheme'))
+    language = map_data.get('Language', map_data.get('言語'))
     for it in subject_list:
         item = {}
         if isinstance(it, str):
@@ -370,14 +415,24 @@ def add_subject(schema, res, subject_list):
 
 def add_publisher(schema, res, publisher_list):
     """Add publisher."""
+    _prop_key = 'publisher'
+    _title_en = 'Publisher'
+    _title_ja = '出版者'
+
     if not isinstance(publisher_list, list):
         publisher_list = [publisher_list]
-    root_key = map_field(schema).get('Publisher')
+    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
     if not root_key:
-        return
+        for key in schema['properties']:
+            if _prop_key in key:
+                root_key = key
+        if not root_key:
+            return
+
     res[root_key] = []
-    publisher = map_field(schema['properties'][root_key]['items'])['Publisher']
-    language = map_field(schema['properties'][root_key]['items'])['Language']
+    map_data = map_field(schema['properties'][root_key]['items'])
+    publisher = map_data.get('Publisher', map_data.get('出版者'))
+    language = map_data.get('Language', map_data.get('言語'))
     for it in publisher_list:
         item = {}
         if isinstance(it, str):
@@ -406,29 +461,49 @@ def add_identifier(schema, res, identifier_list):
         res.append(item)
 
 
-def add_identifier_registration(schema, res, identifierRegistration):
+def add_identifier_registration(schema, res, identifier_registrations):
     """Add identfier registration."""
-    root_key = map_field(schema).get('Identifier Registration')
-    identifier_registration = map_field(
-        schema['properties'][root_key])['Identifier Registration']
-    identifier_registration_type = map_field(
-        schema['properties'][root_key])['Identifier Registration Type']
+    _prop_key = 'identifier_registration'
+    _title_en = 'Identifier Registration'
+    _title_ja = 'ID登録'
+
+    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    if not root_key:
+        for key in schema['properties']:
+            if _prop_key in key:
+                root_key = key
+        if not root_key:
+            return
+
+    map_data = map_field(schema['properties'][root_key])
+    identifier_registration = map_data.get('Identifier Registration', map_data.get('ID登録'))
+    identifier_registration_type = map_data.get('Identifier Registration Type', map_data.get('ID登録タイプ'))
     res[root_key] = {
-        identifier_registration: identifierRegistration.get('#text'),
-        identifier_registration_type: identifierRegistration.get(
+        identifier_registration: identifier_registrations.get('#text'),
+        identifier_registration_type: identifier_registrations.get(
             '@identifierType')}
 
 
 def add_date(schema, res, date_list):
     """Add date."""
+    _prop_key = '_date_'
+    _title_en = 'Date'
+    _title_ja = '日付'
+
     if not isinstance(date_list, list):
         date_list = [date_list]
-    root_key = map_field(schema).get('Date')
+    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    if not root_key:
+        for key in schema['properties']:
+            if _prop_key in key:
+                root_key = key
+        if not root_key:
+            return
+
     res[root_key] = []
-    date = map_field(
-        schema['properties'][root_key]['items'])['Date']
-    date_type = map_field(
-        schema['properties'][root_key]['items'])['Date Type']
+    map_data = map_field(schema['properties'][root_key]['items'])
+    date = map_data.get('Date', map_data.get('日付'))
+    date_type = map_data.get('Date Type', map_data.get('日付タイプ'))
     for it in date_list:
         item = {}
         if isinstance(it, str):
@@ -442,11 +517,23 @@ def add_date(schema, res, date_list):
 
 def add_language(schema, res, language_list):
     """Add language."""
+    _prop_key = '_language_'
+    _title_en = 'Language'
+    _title_ja = '言語'
+
     if not isinstance(language_list, list):
         language_list = [language_list]
-    root_key = map_field(schema).get('Language')
+    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    if not root_key:
+        for key in schema['properties']:
+            if _prop_key in key:
+                root_key = key
+        if not root_key:
+            return
+
     res[root_key] = []
-    language = map_field(schema['properties'][root_key]['items'])['Language']
+    map_data = map_field(schema['properties'][root_key]['items'])
+    language = map_data.get('Language', map_data.get('言語'))
     for it in language_list:
         if 'lang' not in res:
             res['lang'] = it
@@ -455,14 +542,24 @@ def add_language(schema, res, language_list):
 
 def add_temporal(schema, res, temporal_list):
     """Add temporal."""
+    _prop_key = '_temporal_'
+    _title_en = 'Temporal'
+    _title_ja = '時間的範囲'
+
     if not isinstance(temporal_list, list):
         temporal_list = [temporal_list]
-    root_key = map_field(schema).get('Temporal')
+    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
     if not root_key:
-        return
+        for key in schema['properties']:
+            if _prop_key in key:
+                root_key = key
+        if not root_key:
+            return
+
     res[root_key] = []
-    temporal = map_field(schema['properties'][root_key]['items'])['Temporal']
-    language = map_field(schema['properties'][root_key]['items'])['Language']
+    map_data = map_field(schema['properties'][root_key]['items'])
+    temporal = map_data.get('Temporal', map_data.get('時間的範囲'))
+    language = map_data.get('Language', map_data.get('言語'))
     for it in temporal_list:
         item = {}
         if isinstance(it, str):
@@ -475,16 +572,28 @@ def add_temporal(schema, res, temporal_list):
 
 def add_file(schema, res, file_list):
     """Add file."""
+    _prop_key = 'item_files'
+    _title_en = 'File'
+    _title_ja = 'ファイル情報'
+
     if not isinstance(file_list, list):
         file_list = [file_list]
-    root_key = map_field(schema).get('File')
+    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    if not root_key:
+        for key in schema['properties']:
+            if _prop_key == key:
+                root_key = key
+        if not root_key:
+            return
+
     res[root_key] = []
-    uri_key = map_field(schema['properties'][root_key]['items'])['URI']
+    map_data = map_field(schema['properties'][root_key]['items'])
+    uri_key = map_data.get('URI', map_data.get('本文URL'))
     uri_schema = \
-        schema['properties'][root_key]['items']['properties'][uri_key]['items']
-    uri = map_field(uri_schema)['URI']
-    uri_label = map_field(uri_schema)['URI Label']
-    uri_object_type = map_field(uri_schema)['URI Object Type']
+        map_field(schema['properties'][root_key]['items']['properties'][uri_key]['items'])
+    uri = uri_schema.get('URI', uri_schema.get('本文URL'))
+    uri_label = uri_schema.get('URI Label', uri_schema.get('ラベル'))
+    uri_object_type = uri_schema.get('URI Object Type', uri_schema.get('オブジェクトタイプ'))
     for it in file_list:
         item = {}
         if 'jpcoar:URI' in it:
@@ -501,22 +610,43 @@ def add_file(schema, res, file_list):
 
 def add_apc(schema, res, rioxxtermsapc):
     """Add apc."""
-    root_key = map_field(schema).get('APC')
-    apc = map_field(schema['properties'][root_key])['APC']
+    _prop_key = '_apc_'
+    _title_en = 'APC'
+    _title_ja = 'APC'
+
+    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    if not root_key:
+        for key in schema['properties']:
+            if _prop_key in key:
+                root_key = key
+        if not root_key:
+            return
+
+    map_data = map_field(schema['properties'][root_key])
+    apc = map_data.get('APC', map_data.get('APC'))
     res[root_key] = {apc: rioxxtermsapc}
 
 
 def add_source_title(schema, res, source_title_list):
     """Add source title."""
+    _prop_key = '_source_title_'
+    _title_en = 'Source Title'
+    _title_ja = '収録物名'
+
     if not isinstance(source_title_list, list):
         source_title_list = [source_title_list]
-    root_key = map_field(schema).get('Source Title')
+    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
     if not root_key:
-        return
+        for key in schema['properties']:
+            if _prop_key in key:
+                root_key = key
+        if not root_key:
+            return
+
     res[root_key] = []
-    source_title = map_field(schema['properties'][root_key]['items'])[
-        'Source Title']
-    language = map_field(schema['properties'][root_key]['items'])['Language']
+    map_data = map_field(schema['properties'][root_key]['items'])
+    source_title = map_data.get('Source Title', map_data.get('収録物名'))
+    language = map_data.get('Language', map_data.get('言語'))
     for it in source_title_list:
         item = {}
         if isinstance(it, str):
@@ -1067,7 +1197,7 @@ class BaseMapper:
         self.json = xmltodict.parse(xml)
         if not BaseMapper.itemtype_map:
             BaseMapper.update_itemtype_map()
-        self.itemtype = BaseMapper.itemtype_map['Multiple']
+        # self.itemtype = BaseMapper.itemtype_map['Article']
 
     def is_deleted(self):
         """Check deleted."""
@@ -1159,12 +1289,14 @@ class JPCOARMapper(BaseMapper):
 
     def map(self):
         """Get map."""
+        current_app.logger.error('-' * 60)
         if self.is_deleted():
             return {}
         self.map_itemtype('jpcoar:jpcoar')
         self.identifiers = []
         res = {'$schema': self.itemtype.id,
                'pubdate': str(self.datestamp())}
+        current_app.logger.error(self.itemtype)
         add_funcs = {
             'dc:title': partial(add_title, self.itemtype.schema, res),
             'dcterms:alternative': partial(add_alternative,
