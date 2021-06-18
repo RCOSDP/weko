@@ -12,6 +12,7 @@ from __future__ import absolute_import, print_function
 
 import os
 import uuid
+
 from flask import current_app, flash, url_for
 from flask_admin.actions import action
 from flask_admin.contrib.sqla import ModelView
