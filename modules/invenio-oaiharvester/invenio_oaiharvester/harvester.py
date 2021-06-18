@@ -44,8 +44,7 @@ DEFAULT_FIELD = [
     'lang',
     'item_titles',
     'item_language',
-    'item_keyword',
-    'item_access_right']
+    'item_keyword']
 
 SYSTEM_IDENTIFIER_URI = 'system_identifier_uri'
 SYSTEM_IDENTIFIER_HDL = 'system_identifier_hdl'
