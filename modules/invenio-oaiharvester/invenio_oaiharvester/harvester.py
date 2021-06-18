@@ -101,7 +101,7 @@ def list_records(
         payload['resumptionToken'] = resumption_token
     records = []
     rtoken = None
-    response = requests.get(url, params=payload, verify=False)
+    response = requests.get(url, params=payload)
     et = etree.XML(response.text.encode(encoding))
     records = records + et.findall('./ListRecords/record', namespaces=et.nsmap)
     resumptionToken = et.find(
@@ -1271,7 +1271,11 @@ class BaseMapper:
         self.json = xmltodict.parse(xml)
         if not BaseMapper.itemtype_map:
             BaseMapper.update_itemtype_map()
-        self.itemtype = BaseMapper.itemtype_map['Others']
+
+        for item in BaseMapper.itemtype_map:
+            if 'Others' == item or 'Multiple' == item or 'Others' in item:
+                self.itemtype = BaseMapper.itemtype_map.get(item)
+                break
 
     def is_deleted(self):
         """Check deleted."""
