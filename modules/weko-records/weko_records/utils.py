@@ -260,7 +260,7 @@ def copy_value_xml_path(dc, xml_path, iid=None):
         meta_prefix = xml_path[0]
         xpath = xml_path[1]
         if iid:
-            xml = etree.tostring(getrecord(metadataPrefix=meta_prefix, identifier=iid, verb='GetRecord',url = "https://192.168.75.3/oai"))    
+            xml = etree.tostring(getrecord(metadataPrefix=meta_prefix, identifier=iid, verb='GetRecord',url = "https://192.168.75.3/oai"))    #url_for('invenio_oaiserver.response', _external=True)をこの関数で実行した場合エラーが起きました。原因は調査中です。
             root = ET.fromstring(xml)
             ns={
                 'oai_dc':'http://www.openarchives.org/OAI/2.0/oai_dc/',
