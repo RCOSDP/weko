@@ -46,7 +46,6 @@ DEFAULT_FIELD = [
     'item_titles',
     'item_language',
     'item_keyword',
-    'item_resource_type',
     'item_access_right']
 
 SYSTEM_IDENTIFIER_URI = 'system_identifier_uri'
@@ -169,7 +168,7 @@ def add_title(schema, res, title_list):
     root_key = map_field(schema).get('Title') or map_field(schema).get('タイトル')
     if not root_key:
         for key in schema['properties']:
-            if _prop_key in key:
+            if _prop_key in key and 'alternative_title' not in key:
                 root_key = key
         if not root_key:
             return
@@ -359,28 +358,6 @@ def add_rights(schema, res, rights_list):
         res[root_key].append(item)
 
 
-def add_rightsholder(schema, res, rightsholder_list):
-    """Add rightsholder."""
-    _prop_key = 'rights_holder'
-    _title_en = 'Rights Holder'
-    _title_ja = '権利者情報'
-
-    if not isinstance(rightsholder_list, list):
-        rightsholder_list = [rightsholder_list]
-    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
-    if not root_key:
-        for key in schema['properties']:
-            if _prop_key in key:
-                root_key = key
-        if not root_key:
-            return
-
-    res[root_key] = []
-    map_data = map_field(schema['properties'][root_key]['items'])
-    rights_holder_name_key = map_data.get('Rights Holder Name', map_data.get('権利者名'))
-    rights_holder_identifier_key = map_data.get('Rights Holder Identifier', map_data.get('権利者識別子'))
-
-
 def add_subject(schema, res, subject_list):
     """Add subject."""
     _prop_key = 'subject'
@@ -446,23 +423,6 @@ def add_publisher(schema, res, publisher_list):
             item[publisher] = it.get('#text')
             item[language] = it.get('@xml:lang')
         res[root_key].append(item)
-
-
-def add_identifier(schema, res, identifier_list):
-    """Add identfier."""
-    if not isinstance(identifier_list, list):
-        identifier_list = [identifier_list]
-    for it in identifier_list:
-        item = dict(
-            identifier=None,
-            type=None
-        )
-        if isinstance(it, str):
-            item['identifier'] = it
-        elif isinstance(it, OrderedDict):
-            item['identifier'] = it.get('#text')
-            item['type'] = it.get('@identifierType')
-        res.append(item)
 
 
 def add_identifier_registration(schema, res, identifier_registrations):
@@ -794,29 +754,6 @@ def add_dissertation_number(schema, res, dissertation_number):
     res[root_key] = {_dissertation_number: dissertation_number}
 
 
-def add_degree_name(schema, res, degree_name_list):
-    """Add degree name."""
-    if not isinstance(degree_name_list, list):
-        degree_name_list = [degree_name_list]
-
-    root_key = get_root_key(schema, 'Degree Name', '学位名', '_degree_name_')
-    if not root_key:
-        return
-
-    res[root_key] = []
-    map_data = map_field(schema['properties'][root_key]['items'])
-    degree_name = map_data.get('Degree Name', map_data.get('学位名'))
-    language = map_data.get('Language', map_data.get('言語'))
-    for it in degree_name_list:
-        item = {}
-        if isinstance(it, str):
-            item[degree_name] = it
-        elif isinstance(it, OrderedDict):
-            item[degree_name] = it.get('#text')
-            item[language] = it.get('@xml:lang')
-        res[root_key].append(item)
-
-
 def add_date_granted(schema, res, date_granted):
     """Add date granted."""
     root_key = get_root_key(schema, 'Date Granted', '学位授与機関', '_degree_grantor_')
@@ -856,11 +793,14 @@ def add_version_type(schema, res, oaire_version):
         res[root_key] = {oaire_version: oaire_version.get('#text')}
 
 
-def add_geo_location(schema, res, geoLocation_list):
-    """Add geo location."""
-    if not isinstance(geoLocation_list, list):
-        geoLocation_list = [geoLocation_list]
-    root_key = map_field(schema).get('Geo Location')
+def add_resource_type(schema, res, dc_type):
+    """Add publisher."""
+    root_key = 'item_resource_type'
+
+    if isinstance(dc_type, OrderedDict):
+        res[root_key] = [
+            {'resourcetype': dc_type.get('#text'),
+                'resourceuri': dc_type.get('@rdf:resource')}]
 
 
 def add_creator_dc(schema, res, creator_name, lang=''):
@@ -1311,6 +1251,7 @@ class BaseMapper:
         types = self.json['record']['metadata'][type_tag].get('dc:type')
         if types is None:
             return
+
         types = types if isinstance(types, list) else [types]
         for t in types:
             if type(t) == OrderedDict:
@@ -1378,59 +1319,119 @@ class JPCOARMapper(BaseMapper):
 
     def map(self):
         """Get map."""
-        current_app.logger.error('-' * 60)
         if self.is_deleted():
             return {}
+
         self.map_itemtype('jpcoar:jpcoar')
         self.identifiers = []
         res = {'$schema': self.itemtype.id,
                'pubdate': str(self.datestamp())}
-        current_app.logger.error(self.itemtype)
+
         add_funcs = {
-            'dc:title': partial(add_title, self.itemtype.schema, res),
-            'dcterms:alternative': partial(add_alternative,
-                                           self.itemtype.schema, res),
+            'dc:title': partial(
+                add_title,
+                self.itemtype.schema,
+                res
+            ),
+            'dcterms:alternative': partial(
+                add_alternative,
+                self.itemtype.schema,
+                res
+            ),
             'jpcoar:creator': partial(
                 add_creator_jpcoar,
                 self.itemtype.schema,
                 res
             ),
-            'jpcoar:contributor': partial(add_contributor_jpcoar,
-                                          self.itemtype.schema, res),
-            'dcterms:accessRights': partial(add_access_rights,
-                                            self.itemtype.schema, res),
-            'rioxxterms:apc': partial(add_apc, self.itemtype.schema, res),
-            'dc:rights': partial(add_rights, self.itemtype.schema, res),
-            #            'jpcoar:rightsHolder' : ,
-            'jpcoar:subject': partial(add_subject, self.itemtype.schema, res),
-            'datacite:description': partial(add_description,
-                                            self.itemtype.schema, res),
-            'dc:publisher': partial(add_publisher, self.itemtype.schema, res),
-            'datacite:date': partial(add_date, self.itemtype.schema, res),
-            'dc:language': partial(add_language, self.itemtype.schema, res),
+            'jpcoar:contributor': partial(
+                add_contributor_jpcoar,
+                self.itemtype.schema,
+                res
+            ),
+            'dcterms:accessRights': partial(
+                add_access_rights,
+                self.itemtype.schema,
+                res
+            ),
+            'rioxxterms:apc': partial(
+                add_apc,
+                self.itemtype.schema,
+                res
+            ),
+            'dc:rights': partial(
+                add_rights,
+                self.itemtype.schema,
+                res
+            ),
+            'jpcoar:subject': partial(
+                add_subject,
+                self.itemtype.schema,
+                res
+            ),
+            'datacite:description': partial(
+                add_description,
+                self.itemtype.schema,
+                res
+            ),
+            'dc:publisher': partial(
+                add_publisher,
+                self.itemtype.schema,
+                res
+            ),
+            'datacite:date': partial(
+                add_date,
+                self.itemtype.schema,
+                res
+            ),
+            'dc:language': partial(
+                add_language,
+                self.itemtype.schema,
+                res
+            ),
             'datacite:version': partial(
                 add_version,
                 self.itemtype.schema,
                 res
             ),
-            'oaire:version': partial(add_version_type, self.itemtype.schema,
-                                     res),
-            'jpcoar:identifier': partial(add_identifier,
-                                         None,
-                                         self.identifiers),
+            'oaire:version': partial(
+                add_version_type,
+                self.itemtype.schema,
+                res
+            ),
+            # 'jpcoar:identifier': partial(
+            #     add_identifier,
+            #     None,
+            #     self.identifiers
+            # ),
             'jpcoar:identifierRegistration': partial(
-                add_identifier_registration, self.itemtype.schema, res),
-            #            'jpcoar:relation' : ,
-            'dcterms:temporal': partial(add_temporal, self.itemtype.schema,
-                                        res),
-            #            'datacite:geoLocation' : ,
-            #            'jpcoar:fundingReference' : ,
-            'jpcoar:sourceIdentifier': partial(add_source_identifier,
-                                               self.itemtype.schema, res),
-            'jpcoar:sourceTitle': partial(add_source_title,
-                                          self.itemtype.schema, res),
-            'jpcoar:volume': partial(add_volume, self.itemtype.schema, res),
-            'jpcoar:issue': partial(add_issue, self.itemtype.schema, res),
+                add_identifier_registration,
+                self.itemtype.schema,
+                res
+            ),
+            'dcterms:temporal': partial(
+                add_temporal,
+                self.itemtype.schema,
+                res
+            ),
+            'jpcoar:sourceIdentifier': partial(
+                add_source_identifier,
+                self.itemtype.schema,
+                res
+            ),
+            'jpcoar:sourceTitle': partial(
+                add_source_title,
+                self.itemtype.schema,
+                res
+            ),
+            'jpcoar:volume': partial(
+                add_volume,
+                self.itemtype.schema,
+                res
+            ),
+            'jpcoar:issue': partial(add_issue,
+                self.itemtype.schema,
+                res
+            ),
             'jpcoar:numPages': partial(
                 add_num_pages,
                 self.itemtype.schema,
@@ -1456,14 +1457,19 @@ class JPCOARMapper(BaseMapper):
                 self.itemtype.schema,
                 res
             ),
-            #            'jpcoar:degreeGrantor' : ,
-            #            'jpcoar:conference' : ,
-            'jpcoar:file': partial(add_file, self.itemtype.schema, res),
+            'jpcoar:file': partial(
+                add_file,
+                self.itemtype.schema,
+                res),
+            'dc:type': partial(
+                add_resource_type,
+                self.itemtype.schema,
+                res)
         }
+
         for tag in self.json['record']['metadata']['jpcoar:jpcoar']:
             if tag in add_funcs:
-                add_funcs[tag](
-                    self.json['record']['metadata']['jpcoar:jpcoar'][tag])
+                add_funcs[tag](self.json['record']['metadata']['jpcoar:jpcoar'][tag])
         return res
 
 
