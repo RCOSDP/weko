@@ -46,15 +46,20 @@ def json_loader(data, pid, owner_id=None):
     """
     def _get_author_link(author_link, value):
         """Get author link data."""
-        for v in value:
-            if 'nameIdentifiers' not in v \
-                    or len(v['nameIdentifiers']) == 0 \
-                    or 'nameIdentifierScheme' not in v['nameIdentifiers'][0] \
-                    or v['nameIdentifiers'][0]['nameIdentifierScheme'] != 'WEKO':
-                continue
-            else:
-                author_link.append(v['nameIdentifiers'][0]['nameIdentifier'])
-
+        if isinstance(value, list):
+            for v in value:
+                if 'nameIdentifiers' in v \
+                        and len(v['nameIdentifiers']) == 0 \
+                        and 'nameIdentifierScheme' in v['nameIdentifiers'][0] \
+                        and v['nameIdentifiers'][0]['nameIdentifierScheme'] == 'WEKO':
+                    author_link.append(v['nameIdentifiers'][0]['nameIdentifier'])
+        elif isinstance(value, dict):
+            if 'nameIdentifiers' in value \
+                    and len(value['nameIdentifiers']) > 0 \
+                    and 'nameIdentifierScheme' in value['nameIdentifiers'][0] \
+                    and value['nameIdentifiers'][0]['nameIdentifierScheme'] == 'WEKO':
+                author_link.append(value['nameIdentifiers'][0]['nameIdentifier'])
+                
     dc = OrderedDict()
     jpcoar = OrderedDict()
     item = dict()
@@ -133,6 +138,7 @@ def json_loader(data, pid, owner_id=None):
             ar.append(v)
             item["attribute_value_mlt"] = ar
             ar = []
+            _get_author_link(author_link, v)
         else:
             item["attribute_value"] = v
 
