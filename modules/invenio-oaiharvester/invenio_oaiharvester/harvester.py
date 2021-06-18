@@ -740,7 +740,7 @@ def add_version_type(schema, res, oaire_version):
     if isinstance(oaire_version, str):
         res[root_key] = {version_type: oaire_version}
     elif isinstance(oaire_version, OrderedDict):
-        res[root_key] = {oaire_version: oaire_version.get('#text')}
+        res[root_key] = {version_type: oaire_version.get('#text')}
 
 
 def add_resource_type(schema, res, dc_type):
