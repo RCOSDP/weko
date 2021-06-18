@@ -10,12 +10,13 @@
 
 from __future__ import absolute_import, print_function
 
+import os
 import uuid
-
-from flask import Blueprint, current_app, flash, url_for
+from flask import current_app, flash, url_for
 from flask_admin.actions import action
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.form import SecureForm
+from flask_security import current_user
 from flask_wtf import FlaskForm
 from invenio_admin.filters import FilterConverter
 from invenio_admin.forms import LazyChoices
@@ -53,9 +54,6 @@ class LocationModelView(ModelView):
     """ModelView for the locations."""
 
     filter_converter = FilterConverter()
-    can_create = True
-    can_edit = True
-    can_delete = True
     can_view_details = True
     column_formatters = dict(
         buckets=link('Buckets', lambda o: url_for(
@@ -98,6 +96,24 @@ class LocationModelView(ModelView):
     page_size = 25
     edit_template = 'admin/location_edit.html'
     create_template = 'admin/location_edit.html'
+
+    _system_role = os.environ.get('INVENIO_ROLE_SYSTEM',
+                                  'System Administrator')
+
+    @property
+    def can_create(self):
+        """Check permission for creating."""
+        return self._system_role in [role.name for role in current_user.roles]
+
+    @property
+    def can_edit(self):
+        """Check permission for Editing."""
+        return self._system_role in [role.name for role in current_user.roles]
+
+    @property
+    def can_delete(self):
+        """Check permission for Deleting."""
+        return self._system_role in [role.name for role in current_user.roles]
 
 
 class BucketModelView(ModelView):
