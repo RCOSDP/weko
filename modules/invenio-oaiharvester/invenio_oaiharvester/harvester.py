@@ -536,17 +536,20 @@ def add_file(schema, res, file_list):
     uri_object_type = uri_schema.get('URI Object Type',
                                      uri_schema.get('オブジェクトタイプ'))
     for it in file_list:
-        item = {}
+        item = dict()
         if 'jpcoar:URI' in it:
-            uri_item = {}
-            if it['jpcoar:URI'].get('#text'):
-                uri_item[uri] = it['jpcoar:URI'].get('#text')
-            if it['jpcoar:URI'].get('@label'):
-                uri_item[uri_label] = it['jpcoar:URI'].get('@label')
-            if it['jpcoar:URI'].get('@objectType'):
-                uri_item[uri_object_type] = it['jpcoar:URI'].get('@objectType')
-            item[uri_key] = uri_item
-        res[root_key].append(item)
+            uri_item = dict()
+            if isinstance(it['jpcoar:URI'], OrderedDict):
+                if it['jpcoar:URI'].get('#text'):
+                    uri_item[uri] = it['jpcoar:URI'].get('#text', '')
+                if it['jpcoar:URI'].get('@label'):
+                    uri_item[uri_label] = it['jpcoar:URI'].get('@label', '')
+                if it['jpcoar:URI'].get('@objectType'):
+                    uri_item[uri_object_type] = it[
+                        'jpcoar:URI'].get('@objectType', '')
+                item[uri_key] = uri_item
+        if item:
+            res[root_key].append(item)
 
 
 def add_apc(schema, res, rioxxtermsapc):
