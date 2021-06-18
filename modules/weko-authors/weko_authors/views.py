@@ -22,7 +22,7 @@
 
 import re
 
-from flask import Blueprint, current_app, json, jsonify, request
+from flask import Blueprint, current_app, json, jsonify, request, make_response
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_db import db
@@ -137,6 +137,29 @@ def delete_author():
 
     data = request.get_json()
     indexer = RecordIndexer()
+
+    query_q = {
+        "query": {
+            "term": {
+                "author_link": data["pk_id"]
+            }
+        },
+        "_source": [
+            "control_number"
+        ]
+    }
+    result_itemCnt = indexer.client.search(
+        index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
+        body=json.loads(json.dumps(query_item))
+    )
+    if result_itemCnt \
+            and 'hits' in result_itemCnt \
+            and 'total' in result_itemCnt['hits'] \
+            and result_itemCnt['hits']['total'] > 0:
+        return make_response(
+            'The author is linked to items and cannot be deleted.',
+            500)
+
     indexer.client.delete(
         id=json.loads(json.dumps(data))["Id"],
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
