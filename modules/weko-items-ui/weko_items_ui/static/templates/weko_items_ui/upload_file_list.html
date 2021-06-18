@@ -36,9 +36,9 @@
       </td>
       <td ng-show="f" class="text-center">
         <a ng-click="onRemoveFileContent(f)">✗</a>
-        <span ng-if="isEditMode && f.completed" class="text-success">
+        <span ng-if="isEditMode && f.completed" class="text-success" style="margin-left: 10px;">
           <input type="file" id="file_replace_{{ f.version_id }}" style="display: None;" ngf-select="onReplaceFileContentChange($files, f.version_id)" />
-          <button ng-click="onBtnReplaceFileContentClick(f.version_id)">Replace</button>
+          <button class="btn btn-default" ng-click="onBtnReplaceFileContentClick(f.version_id)">Replace</button>
         </span>
       </td>
     </tr>
