@@ -285,10 +285,8 @@ def add_contributor_jpcoar(schema, res, contributor_list):
         'Contributor Name', map_field(item_schema).get('寄与者姓名'))
     map_data = map_field(
         item_schema['properties'][contributor_name_key]['items'])
-    contributor_name = map_field(
-        map_data).get('Contributor Name', map_field(item_schema).get('姓名'))
-    contributor_name_lang = map_field(
-        map_data).get('Language', map_field(item_schema).get('言語'))
+    contributor_name = map_data.get('Contributor Name', map_data.get('姓名'))
+    contributor_name_lang = map_data.get('Language', map_data.get('言語'))
 
     item = {}
     for it in contributor_list:
