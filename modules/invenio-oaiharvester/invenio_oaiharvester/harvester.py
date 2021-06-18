@@ -28,7 +28,6 @@ from json import dumps, loads
 import dateutil
 import requests
 import xmltodict
-from flask.globals import current_app
 from lxml import etree
 from weko_records.api import Mapping
 from weko_records.models import ItemType
@@ -138,7 +137,8 @@ def add_alternative(schema, res, alternative_list):
 
     if not isinstance(alternative_list, list):
         alternative_list = [alternative_list]
-    root_key = map_field(schema).get('Alternative Title') or map_field(schema).get('その他のタイトル')
+    root_key = map_field(schema).get('Alternative Title') \
+        or map_field(schema).get('その他のタイトル')
     if not root_key:
         for key in schema['properties']:
             if _prop_key in key:
@@ -147,7 +147,8 @@ def add_alternative(schema, res, alternative_list):
             return
     res[root_key] = []
     map_data = map_field(schema['properties'][root_key]['items'])
-    alternative_title = map_data.get('Alternative Title', map_data.get('その他のタイトル'))
+    alternative_title = map_data.get('Alternative Title',
+                                     map_data.get('その他のタイトル'))
     language = map_data.get('Language', map_data.get('言語'))
     for it in alternative_list:
         item = {}
@@ -196,7 +197,8 @@ def add_description(schema, res, description_list):
 
     if not isinstance(description_list, list):
         description_list = [description_list]
-    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    root_key = map_field(schema).get(_title_en) \
+        or map_field(schema).get(_title_ja)
     if not root_key:
         for key in schema['properties']:
             if _prop_key in key:
@@ -206,7 +208,8 @@ def add_description(schema, res, description_list):
     res[root_key] = []
     map_data = map_field(schema['properties'][root_key]['items'])
     description = map_data.get('Description', map_data.get('内容記述'))
-    description_type = map_data.get('Description Type', map_data.get('内容記述タイプ'))
+    description_type = map_data.get(
+        'Description Type', map_data.get('内容記述タイプ'))
     language = map_data.get('Language', map_data.get('言語'))
 
     for it in description_list:
@@ -231,7 +234,8 @@ def add_creator_jpcoar(schema, res, creator_list):
 
     if not isinstance(creator_list, list):
         creator_list = [creator_list]
-    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    root_key = map_field(schema).get(_title_en) \
+        or map_field(schema).get(_title_ja)
     if not root_key:
         for key in schema['properties']:
             if _prop_key in key:
@@ -240,10 +244,11 @@ def add_creator_jpcoar(schema, res, creator_list):
             return
     res[root_key] = []
     item_schema = schema['properties'][root_key]['items']
-    creator_name_key = map_field(item_schema).get('Creator Name', map_field(item_schema).get('作成者'))
+    creator_name_key = map_field(
+        item_schema).get('Creator Name', map_field(item_schema).get('作成者'))
     map_data = map_field(item_schema['properties'][creator_name_key]['items'])
     creator_name = map_data.get('Creator Name', map_data.get('作成者姓名'))
-    creator_name_lang  = map_data.get('Language', map_data.get('姓名'))
+    creator_name_lang = map_data.get('Language', map_data.get('姓名'))
 
     item = {}
     for it in creator_list:
@@ -271,7 +276,8 @@ def add_contributor_jpcoar(schema, res, contributor_list):
 
     if not isinstance(contributor_list, list):
         contributor_list = [contributor_list]
-    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    root_key = map_field(schema).get(_title_en) \
+        or map_field(schema).get(_title_ja)
     if not root_key:
         for key in schema['properties']:
             if _prop_key in key:
@@ -280,10 +286,14 @@ def add_contributor_jpcoar(schema, res, contributor_list):
             return
     res[root_key] = []
     item_schema = schema['properties'][root_key]['items']
-    contributor_name_key = map_field(item_schema).get('Contributor Name', map_field(item_schema).get('寄与者姓名'))
-    map_data = map_field(item_schema['properties'][contributor_name_key]['items'])
-    contributor_name = map_field(map_data).get('Contributor Name', map_field(item_schema).get('姓名'))
-    contributor_name_lang = map_field(map_data).get('Language', map_field(item_schema).get('言語'))
+    contributor_name_key = map_field(item_schema).get(
+        'Contributor Name', map_field(item_schema).get('寄与者姓名'))
+    map_data = map_field(
+        item_schema['properties'][contributor_name_key]['items'])
+    contributor_name = map_field(
+        map_data).get('Contributor Name', map_field(item_schema).get('姓名'))
+    contributor_name_lang = map_field(
+        map_data).get('Language', map_field(item_schema).get('言語'))
 
     item = {}
     for it in contributor_list:
@@ -309,7 +319,8 @@ def add_access_rights(schema, res, access_rights):
     _title_en = 'Access Rights'
     _title_ja = 'アクセス権'
 
-    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    root_key = map_field(schema).get(_title_en) \
+        or map_field(schema).get(_title_ja)
     if not root_key:
         for key in schema['properties']:
             if _prop_key == key:
@@ -319,7 +330,8 @@ def add_access_rights(schema, res, access_rights):
 
     map_data = map_field(schema['properties'][root_key])
     access_right = map_data.get('Access Rights', map_data.get('アクセス権'))
-    access_right_resource = map_data.get('Access Rights Resource', map_data.get('アクセス権URI'))
+    access_right_resource = map_data.get('Access Rights Resource',
+                                         map_data.get('アクセス権URI'))
     res[root_key] = {
         access_right: access_rights.get('#text'),
         access_right_resource: access_rights.get('@rdf:resource')}
@@ -333,7 +345,8 @@ def add_rights(schema, res, rights_list):
 
     if not isinstance(rights_list, list):
         rights_list = [rights_list]
-    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    root_key = map_field(schema).get(_title_en) \
+        or map_field(schema).get(_title_ja)
     if not root_key:
         for key in schema['properties']:
             if _prop_key in key:
@@ -345,7 +358,8 @@ def add_rights(schema, res, rights_list):
     map_data = map_field(schema['properties'][root_key]['items'])
     rights_text = map_data.get('Rights', map_data.get('権利情報'))
     rights_lang = map_data.get('Language', map_data.get('言語'))
-    rights_resource = map_data.get('Rights Resource', map_data.get('権利情報Resource'))
+    rights_resource = map_data.get('Rights Resource',
+                                   map_data.get('権利情報Resource'))
     for it in rights_list:
         item = {}
         if isinstance(it, str):
@@ -366,7 +380,8 @@ def add_subject(schema, res, subject_list):
 
     if not isinstance(subject_list, list):
         subject_list = [subject_list]
-    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    root_key = map_field(schema).get(_title_en) \
+        or map_field(schema).get(_title_ja)
     if not root_key:
         for key in schema['properties']:
             if _prop_key in key:
@@ -403,7 +418,8 @@ def add_publisher(schema, res, publisher_list):
 
     if not isinstance(publisher_list, list):
         publisher_list = [publisher_list]
-    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    root_key = map_field(schema).get(_title_en) \
+        or map_field(schema).get(_title_ja)
     if not root_key:
         for key in schema['properties']:
             if _prop_key in key:
@@ -431,7 +447,8 @@ def add_identifier_registration(schema, res, identifier_registrations):
     _title_en = 'Identifier Registration'
     _title_ja = 'ID登録'
 
-    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    root_key = map_field(schema).get(_title_en) \
+        or map_field(schema).get(_title_ja)
     if not root_key:
         for key in schema['properties']:
             if _prop_key in key:
@@ -440,8 +457,10 @@ def add_identifier_registration(schema, res, identifier_registrations):
             return
 
     map_data = map_field(schema['properties'][root_key])
-    identifier_registration = map_data.get('Identifier Registration', map_data.get('ID登録'))
-    identifier_registration_type = map_data.get('Identifier Registration Type', map_data.get('ID登録タイプ'))
+    identifier_registration = map_data.get(
+        'Identifier Registration', map_data.get('ID登録'))
+    identifier_registration_type = map_data.get(
+        'Identifier Registration Type', map_data.get('ID登録タイプ'))
     res[root_key] = {
         identifier_registration: identifier_registrations.get('#text'),
         identifier_registration_type: identifier_registrations.get(
@@ -456,7 +475,8 @@ def add_date(schema, res, date_list):
 
     if not isinstance(date_list, list):
         date_list = [date_list]
-    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    root_key = map_field(schema).get(_title_en) \
+        or map_field(schema).get(_title_ja)
     if not root_key:
         for key in schema['properties']:
             if _prop_key in key:
@@ -487,7 +507,8 @@ def add_language(schema, res, language_list):
 
     if not isinstance(language_list, list):
         language_list = [language_list]
-    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    root_key = map_field(schema).get(_title_en) \
+        or map_field(schema).get(_title_ja)
     if not root_key:
         for key in schema['properties']:
             if _prop_key in key and '_other_language_' not in key:
@@ -512,7 +533,8 @@ def add_temporal(schema, res, temporal_list):
 
     if not isinstance(temporal_list, list):
         temporal_list = [temporal_list]
-    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    root_key = map_field(schema).get(_title_en) \
+        or map_field(schema).get(_title_ja)
     if not root_key:
         for key in schema['properties']:
             if _prop_key in key:
@@ -542,7 +564,8 @@ def add_file(schema, res, file_list):
 
     if not isinstance(file_list, list):
         file_list = [file_list]
-    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    root_key = map_field(schema).get(_title_en) \
+        or map_field(schema).get(_title_ja)
     if not root_key:
         for key in schema['properties']:
             if _prop_key == key:
@@ -553,11 +576,13 @@ def add_file(schema, res, file_list):
     res[root_key] = []
     map_data = map_field(schema['properties'][root_key]['items'])
     uri_key = map_data.get('URI', map_data.get('本文URL'))
-    uri_schema = \
-        map_field(schema['properties'][root_key]['items']['properties'][uri_key]['items'])
+    uri_schema = map_field(schema['properties'][
+        root_key]['items']['properties'][uri_key]['items'])
     uri = uri_schema.get('URI', uri_schema.get('本文URL'))
-    uri_label = uri_schema.get('URI Label', uri_schema.get('ラベル'))
-    uri_object_type = uri_schema.get('URI Object Type', uri_schema.get('オブジェクトタイプ'))
+    uri_label = uri_schema.get('URI Label',
+                               uri_schema.get('ラベル'))
+    uri_object_type = uri_schema.get('URI Object Type',
+                                     uri_schema.get('オブジェクトタイプ'))
     for it in file_list:
         item = {}
         if 'jpcoar:URI' in it:
@@ -578,7 +603,8 @@ def add_apc(schema, res, rioxxtermsapc):
     _title_en = 'APC'
     _title_ja = 'APC'
 
-    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    root_key = map_field(schema).get(_title_en) \
+        or map_field(schema).get(_title_ja)
     if not root_key:
         for key in schema['properties']:
             if _prop_key in key:
@@ -599,7 +625,8 @@ def add_source_title(schema, res, source_title_list):
 
     if not isinstance(source_title_list, list):
         source_title_list = [source_title_list]
-    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    root_key = map_field(schema).get(_title_en) \
+        or map_field(schema).get(_title_ja)
     if not root_key:
         for key in schema['properties']:
             if _prop_key in key:
@@ -629,7 +656,8 @@ def add_source_identifier(schema, res, source_identifier_list):
 
     if not isinstance(source_identifier_list, list):
         source_identifier_list = [source_identifier_list]
-    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    root_key = map_field(schema).get(_title_en) \
+        or map_field(schema).get(_title_ja)
     if not root_key:
         for key in schema['properties']:
             if _prop_key in key:
@@ -639,8 +667,10 @@ def add_source_identifier(schema, res, source_identifier_list):
 
     res[root_key] = []
     map_data = map_field(schema['properties'][root_key]['items'])
-    source_identifier = map_data.get('Source Identifier', map_data.get('収録物識別子'))
-    source_identifier_type = map_data.get('Source Identifier Type', map_data.get('収録物識別子タイプ'))
+    source_identifier = map_data.get('Source Identifier',
+                                     map_data.get('収録物識別子'))
+    source_identifier_type = map_data.get('Source Identifier Type',
+                                          map_data.get('収録物識別子タイプ'))
     for it in source_identifier_list:
         item = {}
         if isinstance(it, str):
@@ -659,7 +689,8 @@ def add_volume(schema, res, jpcoarvolume):
     _title_en = 'Volume Number'
     _title_ja = '巻'
 
-    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    root_key = map_field(schema).get(_title_en) \
+        or map_field(schema).get(_title_ja)
     if not root_key:
         for key in schema['properties']:
             if _prop_key in key:
@@ -679,7 +710,8 @@ def add_issue(schema, res, jpcoarissue):
     _title_en = 'Issue Number'
     _title_ja = '号'
 
-    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    root_key = map_field(schema).get(_title_en) \
+        or map_field(schema).get(_title_ja)
     if not root_key:
         for key in schema['properties']:
             if _prop_key in key:
@@ -695,7 +727,8 @@ def add_issue(schema, res, jpcoarissue):
 
 def get_root_key(schema, _title_en, _title_ja, _prop_key):
     """Add num pages."""
-    root_key = map_field(schema).get(_title_en) or map_field(schema).get(_title_ja)
+    root_key = map_field(schema).get(_title_en) \
+        or map_field(schema).get(_title_ja)
     if not root_key:
         for key in schema['properties']:
             if _prop_key in key:
@@ -708,12 +741,16 @@ def get_root_key(schema, _title_en, _title_ja, _prop_key):
 
 def add_num_pages(schema, res, num_pages):
     """Add num pages."""
-    root_key = get_root_key(schema, 'Number of Pages', 'ページ数', '_number_of_pages_')
+    root_key = get_root_key(schema,
+                            'Number of Pages',
+                            'ページ数',
+                            '_number_of_pages_')
     if not root_key:
         return
 
     map_data = map_field(schema['properties'][root_key])
-    number_of_pages = map_data.get('Number of Pages', map_data.get('ページ数'))
+    number_of_pages = map_data.get('Number of Pages',
+                                   map_data.get('ページ数'))
 
     res[root_key] = {number_of_pages: num_pages}
 
@@ -744,19 +781,27 @@ def add_page_end(schema, res, page_end):
 
 def add_dissertation_number(schema, res, dissertation_number):
     """Add dissertation number."""
-    root_key = get_root_key(schema, 'Dissertation Number', '学位授与番号', '_dissertation_number_')
+    root_key = get_root_key(
+        schema,
+        'Dissertation Number',
+        '学位授与番号',
+        '_dissertation_number_')
     if not root_key:
         return
 
     map_data = map_field(schema['properties'][root_key])
-    _dissertation_number = map_data.get('Dissertation Number', map_data.get('学位授与番号'))
+    _dissertation_number = map_data.get('Dissertation Number',
+                                        map_data.get('学位授与番号'))
 
     res[root_key] = {_dissertation_number: dissertation_number}
 
 
 def add_date_granted(schema, res, date_granted):
     """Add date granted."""
-    root_key = get_root_key(schema, 'Date Granted', '学位授与機関', '_degree_grantor_')
+    root_key = get_root_key(schema,
+                            'Date Granted',
+                            '学位授与機関',
+                            '_degree_grantor_')
     if not root_key:
         return
 
@@ -1226,7 +1271,7 @@ class BaseMapper:
         self.json = xmltodict.parse(xml)
         if not BaseMapper.itemtype_map:
             BaseMapper.update_itemtype_map()
-        # self.itemtype = BaseMapper.itemtype_map['Article']
+        self.itemtype = BaseMapper.itemtype_map['Others']
 
     def is_deleted(self):
         """Check deleted."""
@@ -1328,148 +1373,100 @@ class JPCOARMapper(BaseMapper):
                'pubdate': str(self.datestamp())}
 
         add_funcs = {
-            'dc:title': partial(
-                add_title,
-                self.itemtype.schema,
-                res
-            ),
-            'dcterms:alternative': partial(
-                add_alternative,
-                self.itemtype.schema,
-                res
-            ),
-            'jpcoar:creator': partial(
-                add_creator_jpcoar,
-                self.itemtype.schema,
-                res
-            ),
-            'jpcoar:contributor': partial(
-                add_contributor_jpcoar,
-                self.itemtype.schema,
-                res
-            ),
-            'dcterms:accessRights': partial(
-                add_access_rights,
-                self.itemtype.schema,
-                res
-            ),
-            'rioxxterms:apc': partial(
-                add_apc,
-                self.itemtype.schema,
-                res
-            ),
-            'dc:rights': partial(
-                add_rights,
-                self.itemtype.schema,
-                res
-            ),
-            'jpcoar:subject': partial(
-                add_subject,
-                self.itemtype.schema,
-                res
-            ),
-            'datacite:description': partial(
-                add_description,
-                self.itemtype.schema,
-                res
-            ),
-            'dc:publisher': partial(
-                add_publisher,
-                self.itemtype.schema,
-                res
-            ),
-            'datacite:date': partial(
-                add_date,
-                self.itemtype.schema,
-                res
-            ),
-            'dc:language': partial(
-                add_language,
-                self.itemtype.schema,
-                res
-            ),
-            'datacite:version': partial(
-                add_version,
-                self.itemtype.schema,
-                res
-            ),
-            'oaire:version': partial(
-                add_version_type,
-                self.itemtype.schema,
-                res
-            ),
+            'dc:title': partial(add_title,
+                                self.itemtype.schema,
+                                res),
+            'dcterms:alternative': partial(add_alternative,
+                                           self.itemtype.schema,
+                                           res),
+            'jpcoar:creator': partial(add_creator_jpcoar,
+                                      self.itemtype.schema,
+                                      res),
+            'jpcoar:contributor': partial(add_contributor_jpcoar,
+                                          self.itemtype.schema,
+                                          res),
+            'dcterms:accessRights': partial(add_access_rights,
+                                            self.itemtype.schema,
+                                            res),
+            'rioxxterms:apc': partial(add_apc,
+                                      self.itemtype.schema,
+                                      res),
+            'dc:rights': partial(add_rights,
+                                 self.itemtype.schema,
+                                 res),
+            'jpcoar:subject': partial(add_subject,
+                                      self.itemtype.schema,
+                                      res),
+            'datacite:description': partial(add_description,
+                                            self.itemtype.schema,
+                                            res),
+            'dc:publisher': partial(add_publisher,
+                                    self.itemtype.schema,
+                                    res),
+            'datacite:date': partial(add_date,
+                                     self.itemtype.schema,
+                                     res),
+            'dc:language': partial(add_language,
+                                   self.itemtype.schema,
+                                   res),
+            'datacite:version': partial(add_version,
+                                        self.itemtype.schema,
+                                        res),
+            'oaire:version': partial(add_version_type,
+                                     self.itemtype.schema,
+                                     res),
             # 'jpcoar:identifier': partial(
             #     add_identifier,
             #     None,
             #     self.identifiers
             # ),
-            'jpcoar:identifierRegistration': partial(
-                add_identifier_registration,
-                self.itemtype.schema,
-                res
-            ),
-            'dcterms:temporal': partial(
-                add_temporal,
-                self.itemtype.schema,
-                res
-            ),
-            'jpcoar:sourceIdentifier': partial(
-                add_source_identifier,
-                self.itemtype.schema,
-                res
-            ),
-            'jpcoar:sourceTitle': partial(
-                add_source_title,
-                self.itemtype.schema,
-                res
-            ),
-            'jpcoar:volume': partial(
-                add_volume,
-                self.itemtype.schema,
-                res
-            ),
+            'jpcoar:identifierRegistration':
+                partial(add_identifier_registration,
+                        self.itemtype.schema,
+                        res),
+            'dcterms:temporal': partial(add_temporal,
+                                        self.itemtype.schema,
+                                        res),
+            'jpcoar:sourceIdentifier': partial(add_source_identifier,
+                                               self.itemtype.schema,
+                                               res),
+            'jpcoar:sourceTitle': partial(add_source_title,
+                                          self.itemtype.schema,
+                                          res),
+            'jpcoar:volume': partial(add_volume,
+                                     self.itemtype.schema,
+                                     res),
             'jpcoar:issue': partial(add_issue,
-                self.itemtype.schema,
-                res
-            ),
-            'jpcoar:numPages': partial(
-                add_num_pages,
-                self.itemtype.schema,
-                res
-            ),
-            'jpcoar:pageStart': partial(
-                add_page_start,
-                self.itemtype.schema,
-                res
-            ),
-            'jpcoar:pageEnd': partial(
-                add_page_end,
-                self.itemtype.schema,
-                res
-            ),
-            'dcndl:dissertationNumber': partial(
-                add_dissertation_number,
-                self.itemtype.schema,
-                res
-            ),
-            'dcndl:dateGranted': partial(
-                add_date_granted,
-                self.itemtype.schema,
-                res
-            ),
-            'jpcoar:file': partial(
-                add_file,
-                self.itemtype.schema,
-                res),
-            'dc:type': partial(
-                add_resource_type,
-                self.itemtype.schema,
-                res)
+                                    self.itemtype.schema,
+                                    res),
+            'jpcoar:numPages': partial(add_num_pages,
+                                       self.itemtype.schema,
+                                       res),
+            'jpcoar:pageStart': partial(add_page_start,
+                                        self.itemtype.schema,
+                                        res),
+            'jpcoar:pageEnd': partial(add_page_end,
+                                      self.itemtype.schema,
+                                      res),
+            'dcndl:dissertationNumber':
+                partial(add_dissertation_number,
+                        self.itemtype.schema,
+                        res),
+            'dcndl:dateGranted': partial(add_date_granted,
+                                         self.itemtype.schema,
+                                         res),
+            'jpcoar:file': partial(add_file,
+                                   self.itemtype.schema,
+                                   res),
+            'dc:type': partial(add_resource_type,
+                               self.itemtype.schema,
+                               res)
         }
 
         for tag in self.json['record']['metadata']['jpcoar:jpcoar']:
             if tag in add_funcs:
-                add_funcs[tag](self.json['record']['metadata']['jpcoar:jpcoar'][tag])
+                add_funcs[tag](
+                    self.json['record']['metadata']['jpcoar:jpcoar'][tag])
         return res
 
 
@@ -1634,8 +1631,8 @@ class DDIMapper(BaseMapper):
                                       list):
                             list_result.append(
                                 result_dict[root_key.replace("[]", "")][0])
-                        elif isinstance(result_dict[root_key.replace("[]", "")],
-                                        dict):
+                        elif isinstance(
+                                result_dict[root_key.replace("[]", "")], dict):
                             list_result.append(
                                 result_dict[root_key.replace("[]", "")])
                 return list_result, root_key.replace("[]", "")
