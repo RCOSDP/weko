@@ -24,18 +24,23 @@ from datetime import date, datetime
 from functools import wraps
 from operator import itemgetter
 
+import redis
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import Bool, Exists, Prefix, Q, QueryString
 from flask import Markup, current_app, session
+from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_search import RecordsSearch
-from sqlalchemy import MetaData, Table, text
+from simplekv.memory.redisstore import RedisStore
+from sqlalchemy import MetaData, Table
+from weko_admin.utils import is_exists_key_in_redis
 from weko_groups.models import Group
 
 from .config import WEKO_INDEX_TREE_STATE_PREFIX
+from .errors import IndexBaseRESTError, IndexDeletedRESTError
 from .models import Index
 
 
@@ -861,3 +866,146 @@ def check_doi_in_index_and_child_index(index_id):
     records = search.execute().to_dict().get('hits', {}).get('hits', [])
 
     return records
+
+
+def __get_redis_store():
+    """Get redis store.
+
+    Returns:
+        Redis store.
+
+    """
+    return RedisStore(redis.StrictRedis.from_url(
+        current_app.config['CACHE_REDIS_URL']))
+
+
+def lock_all_child_index(index_id: str, value: str):
+    """Lock index.
+
+    Args:
+        index_id (str): index identifier.
+        value (str): Lock value.
+
+    Returns:
+        bool: True if the index is locked.
+
+    """
+    locked_key = []
+    try:
+        from .api import Indexes
+        redis_store = __get_redis_store()
+        key_prefix = current_app.config['WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX']
+        child_list = Indexes.get_recursive_tree(index_id)
+        for c_index in child_list:
+            redis_store.put(key_prefix + str(c_index.cid),
+                            value.encode('utf-8'))
+            locked_key.append(key_prefix + str(c_index.cid))
+    except Exception as e:
+        current_app.logger.error('Could not lock index:', e)
+        return False, locked_key
+    return True, locked_key
+
+
+def unlock_index(index_key):
+    """Unlock index.
+
+    Args:
+        index_key (str|list): index key.
+    """
+    try:
+        redis_store = __get_redis_store()
+        if isinstance(index_key, str):
+            redis_store.delete(index_key)
+        elif isinstance(index_key, list):
+            for key in index_key:
+                redis_store.delete(key)
+    except Exception as e:
+        current_app.logger.error('Could not unlock index:', e)
+
+
+def validate_before_delete_index(index_id):
+    """Validate index data before deleting the index.
+
+    Args:
+        index_id (str|int): Index identifier.
+
+    Returns:
+        (boolean, list, list): unlock flag and error list and locked keys list
+
+    """
+    is_unlock = False
+    locked_key = []
+    errors = []
+    if is_index_locked(index_id):
+        errors.append(
+            _('Index Delete is in progress on another device.'))
+    else:
+        is_unlock, locked_key = lock_all_child_index(index_id,
+                                                     str(current_user.get_id()))
+        if check_doi_in_index(index_id):
+            errors.append(
+                _('The index cannot be deleted because there is'
+                  ' a link from an item that has a DOI.')
+            )
+        elif check_has_any_item_in_index_is_locked(index_id):
+            errors.append(_('This index cannot be deleted because '
+                            'the item belonging to this index is '
+                            'being edited by the import function.'))
+
+    return is_unlock, errors, locked_key
+
+
+def is_index_locked(index_id):
+    """Check locked index.
+
+    Args:
+        index_id (str|int): Index identifier.
+
+    Returns:
+        boolean: True if the index is locked.
+
+    """
+    if is_exists_key_in_redis(
+        current_app.config['WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX'] + str(
+            index_id)):
+        return True
+    return False
+
+
+def perform_delete_index(index_id, record_class, action: str):
+    """Perform delete index.
+
+    Args:
+        index_id (str|int): Index identifier
+        record_class (Indexes): Record object.
+        action (str): Action.
+
+    Raises:
+        IndexDeletedRESTError: [description]
+        IndexBaseRESTError: [description]
+        InvalidDataRESTError: [description]
+
+    Returns:
+        tuple(str, list): delete message and error list
+
+    """
+    is_unlock = True
+    locked_key = []
+    try:
+        msg = ''
+        is_unlock, errors, locked_key = validate_before_delete_index(index_id)
+        if len(errors) == 0:
+            res = record_class.get_self_path(index_id)
+            if not res:
+                raise IndexDeletedRESTError()
+            if action in ('move', 'all'):
+                result = record_class. \
+                    delete_by_action(action, index_id, res.path)
+                if result is None:
+                    raise IndexBaseRESTError(
+                        description='Could not delete data.')
+            msg = 'Index deleted successfully.'
+    finally:
+        if is_unlock:
+            unlock_index(locked_key)
+    return msg, errors
