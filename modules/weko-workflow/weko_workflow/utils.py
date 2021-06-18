@@ -52,7 +52,6 @@ from weko_admin.models import Identifier, SiteInfo
 from weko_admin.utils import get_restricted_access
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
-from weko_index_tree.models import Index
 from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
     ItemTypes, Mapping
 from weko_records.models import ItemType
@@ -60,7 +59,8 @@ from weko_records.serializers.utils import get_item_type_name, get_mapping
 from weko_records_ui.utils import create_onetime_download_url, \
     generate_one_time_download_url, get_list_licence
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
 from werkzeug.utils import import_string
@@ -268,7 +268,7 @@ def item_metadata_validation(
         return None
 
     ddi_item_type_name = 'DDI'
-    journalarticle_type = ['other（プレプリント）', 'conference paper',
+    journalarticle_type = ['other', 'conference paper',
                            'data paper', 'departmental bulletin paper',
                            'editorial', 'journal article', 'periodical',
                            'review article', 'article']
@@ -323,20 +323,16 @@ def item_metadata_validation(
     # JaLC DOI identifier registration
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']:
         # 別表2-1 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【ジャーナルアーティクル】
+        # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
         # 別表2-3 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
         # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
         # 別表2-6 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【汎用データ】
         if resource_type in journalarticle_type \
                 or resource_type in report_types \
-                or (resource_type in elearning_type) \
+                or resource_type in thesis_types \
+                or resource_type in elearning_type \
                 or resource_type in datageneral_types:
             required_properties = ['title']
-            if item_type.item_type_name.name != ddi_item_type_name:
-                required_properties.append('fileURI')
-        # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
-        elif resource_type in thesis_types:
-            required_properties = ['title',
-                                   'creator']
             if item_type.item_type_name.name != ddi_item_type_name:
                 required_properties.append('fileURI')
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
@@ -357,13 +353,9 @@ def item_metadata_validation(
                                    'sourceTitle']
             if item_type.item_type_name.name != ddi_item_type_name:
                 required_properties.append('fileURI')
-        elif resource_type in report_types:
+        elif resource_type in report_types \
+                or resource_type in thesis_types:
             required_properties = ['title']
-            if item_type.item_type_name.name != ddi_item_type_name:
-                required_properties.append('fileURI')
-        elif resource_type in thesis_types:
-            required_properties = ['title',
-                                   'creator']
             if item_type.item_type_name.name != ddi_item_type_name:
                 required_properties.append('fileURI')
     # DataCite DOI identifier registration
@@ -1954,7 +1946,7 @@ def replace_characters(data, content):
         '[18]': 'output_registration_title',
         '[19]': 'url_guest_user',
         '[restricted_fullname]': 'restricted_fullname',
-        '[restricted_university_institution]': 'restricted_university_institution',
+        '[restricted_university_institution]':'restricted_university_institution',
         '[restricted_activity_id]': 'restricted_activity_id',
         '[restricted_research_title]': 'restricted_research_title',
         '[restricted_data_name]': 'restricted_data_name',
@@ -3210,7 +3202,8 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
             else:
                 mail_info['mail_recipient'] = approval_user.email
                 process_send_mail(
-                    mail_info, current_app.config["WEKO_WORKFLOW_REQUEST_APPROVAL"])
+                    mail_info,
+                    current_app.config["WEKO_WORKFLOW_REQUEST_APPROVAL"])
 
     if actions_mail_setting["reject"]:
         if actions_mail_setting.get(
@@ -3623,7 +3616,9 @@ def get_main_record_detail(activity_id,
         if action_endpoint == 'item_login':
             pid_value = item['pid']['value']
             record_metadata, new_files = get_record_by_root_ver(pid_value)
-            allow_multi_thumbnails = get_allow_multi_thumbnail(item_type_id, activity_id)
+            allow_multi_thumbnails = get_allow_multi_thumbnail(
+                item_type_id,
+                activity_id)
             new_thumbnail = get_thumbnails(new_files, allow_multi_thumbnails)
         else:
             # case when edit item and step # item_login
@@ -3635,7 +3630,9 @@ def get_main_record_detail(activity_id,
                                                             activity_id)
                 new_thumbnail = get_thumbnails(new_files, multi_thumbnail)
                 if check_record(approval_record) and new_files:
-                    new_files = set_files_display_type(record_metadata, new_files)
+                    new_files = set_files_display_type(
+                        record_metadata,
+                        new_files)
     else:
         record_metadata = approval_record
         new_files = deepcopy(files)
