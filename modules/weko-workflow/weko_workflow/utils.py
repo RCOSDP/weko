@@ -1946,7 +1946,7 @@ def replace_characters(data, content):
         '[18]': 'output_registration_title',
         '[19]': 'url_guest_user',
         '[restricted_fullname]': 'restricted_fullname',
-        '[restricted_university_institution]':'restricted_university_institution',
+        '[restricted_university_institution]': 'restricted_university_institution',
         '[restricted_activity_id]': 'restricted_activity_id',
         '[restricted_research_title]': 'restricted_research_title',
         '[restricted_data_name]': 'restricted_data_name',
@@ -3624,7 +3624,8 @@ def get_main_record_detail(activity_id,
             # case when edit item and step # item_login
             if activity_detail.item_id:
                 new_files = deepcopy(files)
-                record_metadata, new_files = get_record_by_root_ver(item['pid']['value'])
+                record_metadata, new_files = get_record_by_root_ver(
+                    item['pid']['value'])
                 item['title'] = record_metadata['title'][0]
                 multi_thumbnail = get_allow_multi_thumbnail(item_type_id,
                                                             activity_id)
