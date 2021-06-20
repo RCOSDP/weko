@@ -800,7 +800,6 @@ async def sort_meta_data_by_options(
                 continue
             mlt = val.get('attribute_value_mlt', [])
             if mlt:
-                mlt = append_parent_key(key, mlt)
                 if val.get('attribute_type', '') == 'file' \
                     and not option.get("hidden") \
                         and option.get("showlist"):
@@ -811,6 +810,7 @@ async def sort_meta_data_by_options(
                         and option.get("showlist"):
                     thumbnail = get_file_thumbnail(mlt)
                     continue
+                mlt = append_parent_key(key, mlt)
                 meta_data = get_all_items2(mlt, solst)
                 for m in meta_data:
                     for s in solst_dict_array:
