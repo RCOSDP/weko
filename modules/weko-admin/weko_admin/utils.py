@@ -34,6 +34,7 @@ from flask import current_app, request
 from flask_babelex import gettext as __
 from flask_babelex import lazy_gettext as _
 from invenio_accounts.models import Role, userrole
+from invenio_cache import cached_unless_authenticated
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
@@ -154,6 +155,7 @@ def update_admin_lang_setting(admin_lang_settings):
     return 'success'
 
 
+@cached_unless_authenticated(timeout=50, key_prefix='get_selected_lang')
 def get_selected_language():
     """Get selected language."""
     result = {
@@ -2031,7 +2033,8 @@ def get_item_mapping_list():
             mapping_list.append(handle_prefix_key(pre_key, key))
         if isinstance(value, dict):
             for k1, v1 in value.items():
-                get_mapping(handle_prefix_key(pre_key, key), k1, v1, mapping_list)
+                get_mapping(handle_prefix_key(
+                    pre_key, key), k1, v1, mapping_list)
 
     import json
 

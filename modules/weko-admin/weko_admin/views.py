@@ -37,8 +37,6 @@ from sqlalchemy.orm import session
 from weko_records.models import SiteLicenseInfo
 from werkzeug.local import LocalProxy
 
-from invenio_cache import cached_unless_authenticated
-
 from .api import send_site_license_mail
 from .models import FacetSearchSetting, SessionLifetime, SiteInfo
 from .utils import FeedbackMail, StatisticMail, UsageReport, \
@@ -194,9 +192,7 @@ def save_lang_list():
     return jsonify(msg=result)
 
 
-
 @blueprint_api.route('/get_selected_lang', methods=['GET'])
-@cached_unless_authenticated(key_prefix='get_selected_lang')
 def get_selected_lang():
     """Get selected language."""
     try:
