@@ -933,7 +933,8 @@ def up_load_file(record, root_path, deposit,
                 if not is_thumbnail and idx < len(old_files) else None
             if not path or not os.path.isfile(root_path + '/' + path):
                 if old_file and \
-                        old_file.key != record['filenames'][idx]:
+                    not (record['filenames'][idx] and
+                         old_file.key == record['filenames'][idx]['filename']):
                     old_file.remove()
                 continue
 

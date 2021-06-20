@@ -474,6 +474,15 @@ def register_queries():
                                                         "boost": 1
                                                     }
                                                 }
+                                            },
+                                            {
+                                                "bool": {
+                                                    "must_not": {
+                                                        "exists": {
+                                                            "field": "root_file_id"
+                                                        }
+                                                    }
+                                                }
                                             }
                                         ]
                                     }
@@ -545,6 +554,15 @@ def register_queries():
                                                     "file_key": {
                                                         "value": "@file_key",
                                                         "boost": 1
+                                                    }
+                                                }
+                                            },
+                                            {
+                                                "bool": {
+                                                    "must_not": {
+                                                        "exists": {
+                                                            "field": "root_file_id"
+                                                        }
                                                     }
                                                 }
                                             }
