@@ -248,7 +248,7 @@ def soft_delete(recid):
             db.session.commit()
 
         current_app.logger.info(
-            '[{0}] user({2}) deleted record id({1}).'.format(dt.utcnow(), current_user.id, recid))
+            'user({0}) deleted record id({1}).'.format(current_user.id, recid))
     except Exception as ex:
         db.session.rollback()
         raise ex
