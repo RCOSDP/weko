@@ -30,6 +30,8 @@ import sys
 from logging.handlers import TimedRotatingFileHandler
 from os.path import dirname, exists
 
+from flask.logging import default_handler
+
 from . import config
 from .ext import WekoLoggingBase
 
@@ -83,28 +85,40 @@ class WekoLoggingFS(WekoLoggingBase):
 
         :param app: The flask application.
         """
-        # Check if directory exists.
-        basedir = dirname(app.config['WEKO_LOGGING_FS_LOGFILE'])
-        if not exists(basedir):
-            os.makedirs(basedir, exist_ok=True)
+        # Avoid duplicated logger
+        if app.logger.hasHandlers() and \
+            (default_handler in app.logger.handlers) and \
+                (len(app.logger.handlers) == 1):
+
+            # Check if directory exists.
+            basedir = dirname(app.config['WEKO_LOGGING_FS_LOGFILE'])
+            if not exists(basedir):
+                os.makedirs(basedir, exist_ok=True)
             # raise ValueError(
             #    'Log directory {0} does not exists.'.format(basedir))
 
-        handler = TimedRotatingFileHandler(
-            app.config['WEKO_LOGGING_FS_LOGFILE'],
-            when=app.config['WEKO_LOGGING_FS_WHEN'],
-            interval=app.config['WEKO_LOGGING_FS_INTERVAL'],
-            backupCount=app.config['WEKO_LOGGING_FS_BACKUPCOUNT'],
-            delay=True,
-        )
-        handler.setFormatter(logging.Formatter(
-            '%(asctime)s %(levelname)s: %(message)s '
-            '[in %(pathname)s:%(lineno)d]'
-        ))
-        handler.setLevel(app.config['WEKO_LOGGING_FS_LEVEL'])
+            handler = TimedRotatingFileHandler(
+                app.config['WEKO_LOGGING_FS_LOGFILE'],
+                when=app.config['WEKO_LOGGING_FS_WHEN'],
+                interval=app.config['WEKO_LOGGING_FS_INTERVAL'],
+                backupCount=app.config['WEKO_LOGGING_FS_BACKUPCOUNT'],
+                delay=True,
+            )
 
-        # Add handler to application logger
-        app.logger.addHandler(handler)
+            handler.setFormatter(logging.Formatter(
+                '[%(asctime)s] - %(levelname)s - %(filename)s - %(name)s - %(funcName)s - %(message)s '
+                '[in %(pathname)s:%(lineno)d]'
+            ))
+            handler.setLevel(app.config['WEKO_LOGGING_FS_LEVEL'])
+            # Add handler to application logger
+            app.logger.addHandler(handler)
 
-        if app.config['WEKO_LOGGING_FS_PYWARNINGS']:
-            self.capture_pywarnings(handler)
+            default_handler.setLevel(app.config['WEKO_LOGGING_FS_LEVEL'])
+            formatter2 = logging.Formatter(
+                '[%(asctime)s] - %(levelname)s - %(filename)s - %(name)s - %(funcName)s - %(message)s '
+                '[in %(pathname)s:%(lineno)d]')
+            default_handler.setFormatter(formatter2)
+            app.logger.addHandler(default_handler)
+
+            if app.config['WEKO_LOGGING_FS_PYWARNINGS']:
+                self.capture_pywarnings(handler)
