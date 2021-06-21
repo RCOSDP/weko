@@ -1419,7 +1419,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                         maintain_record.model)
                     maintain_deposit['path'] = deposit.get('path', [])
                     new_parent_record = maintain_deposit. \
-                        merge_data_to_record_without_version(current_pid)
+                        merge_data_to_record_without_version(current_pid, True)
                     maintain_deposit.publish()
                     new_parent_record.update_feedback_mail()
                     new_parent_record.commit()

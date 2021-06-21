@@ -876,12 +876,13 @@ class WekoDeposit(Deposit):
     def get_file_data(self):
         """Get file data."""
         file_data = []
-        for key in self.data:
-            if isinstance(self.data.get(key), list):
-                for item in self.data.get(key):
+        data = self.data or self.item_metadata
+        for key in data:
+            if isinstance(data.get(key), list):
+                for item in data.get(key):
                     if (isinstance(item, dict) or isinstance(item, list)) \
                             and 'filename' in item:
-                        file_data.extend(self.data.get(key))
+                        file_data.extend(data.get(key))
                         break
         return file_data
 
@@ -1147,7 +1148,22 @@ class WekoDeposit(Deposit):
                 current_app.logger.debug(ex)
                 db.session.rollback()
 
-    def merge_data_to_record_without_version(self, pid):
+    def clean_unuse_file_contents(self, pre_object_versions,
+                                  new_object_versions):
+        """Remove file not used after replaced in keep version mode."""
+        pre_file_ids = [obv.file_id for obv in pre_object_versions]
+        new_file_ids = [obv.file_id for obv in new_object_versions]
+        diff_list = list(set(pre_file_ids) - set(new_file_ids))
+        unuse_file_ids = [data[0] for data in
+                          ObjectVersion.num_version_link_to_files(diff_list)
+                          if data[1] <= 1]
+        for obv in pre_object_versions:
+            if obv.file_id in unuse_file_ids:
+                obv.remove()
+                obv.file.delete()
+                obv.file.storage().delete()
+
+    def merge_data_to_record_without_version(self, pid, keep_version=False):
         """Update changes to current record by record from PID."""
         with db.session.begin_nested():
             # update item_metadata
@@ -1166,6 +1182,9 @@ class WekoDeposit(Deposit):
             snapshot = Bucket.get(
                 _deposit.files.bucket.id).snapshot(lock=False)
             bucket = Bucket.get(sync_bucket.bucket_id)
+            if keep_version:
+                self.clean_unuse_file_contents(
+                    bucket.objects, snapshot.objects)
             snapshot.locked = False
             sync_bucket.bucket = snapshot
             bucket.locked = False
