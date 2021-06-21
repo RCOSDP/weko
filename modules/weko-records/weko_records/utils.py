@@ -821,7 +821,6 @@ async def sort_meta_data_by_options(
                 continue
             mlt = val.get('attribute_value_mlt', [])
             if mlt:
-                mlt = append_parent_key(key, mlt)
                 if val.get('attribute_type', '') == 'file' \
                     and not option.get("hidden") \
                         and option.get("showlist"):
@@ -832,6 +831,7 @@ async def sort_meta_data_by_options(
                         and option.get("showlist"):
                     thumbnail = get_file_thumbnail(mlt)
                     continue
+                mlt = append_parent_key(key, mlt)
                 meta_data = get_all_items2(mlt, solst)
                 for m in meta_data:
                     for s in solst_dict_array:
@@ -1214,14 +1214,12 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
                     value = s.get(str_key_val[len(str_key_val) - 1]).strip()
                     if len(value) > 0:
                         return value
-                if (s is not None) and (s.get(
-                    str_key_lang[len(str_key_lang) - 1]) is not None) and (
-                        s.get(str_key_val[len(str_key_val) - 1]) is not None):
-                    if (s.get(str_key_lang[len(
-                        str_key_lang) - 1]).strip() == str_lang.strip()) and (
-                        str_key_val[len(str_key_val) - 1] in s) and len(
-                            s.get(str_key_val[len(str_key_val) - 1]).strip()) > 0:
-                        return s.get(str_key_val[len(str_key_val) - 1])
+                if s and isinstance(s, dict) and s.get(str_key_lang[-1]) \
+                        and s.get(str_key_val[-1]):
+                    if s.get(str_key_lang[-1]).strip() == str_lang.strip() \
+                            and str_key_val[-1] in s \
+                            and len(s.get(str_key_val[-1]).strip()) > 0:
+                        return s.get(str_key_val[-1])
     return None
 
 
