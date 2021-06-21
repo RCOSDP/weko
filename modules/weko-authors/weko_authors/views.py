@@ -22,11 +22,12 @@
 
 import re
 
-from flask import Blueprint, current_app, json, jsonify, request
+from flask import Blueprint, current_app, json, jsonify, request, make_response
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
+from sqlalchemy.sql import func
 from weko_records.models import ItemMetadata
 
 from .config import WEKO_AUTHORS_IMPORT_KEY
@@ -59,8 +60,20 @@ def create():
     if request.headers['Content-Type'] != 'application/json':
         return jsonify(msg=_('Header Error'))
 
+    max_id = 1
+    max = db.session.query(func.max(Authors.id)).one()
+    if max[0]:
+        max_id += max[0]
+
     data = request.get_json()
     data["gather_flg"] = 0
+    data["pk_id"] = str(max_id)
+    data["authorIdInfo"].insert(0,
+    {
+        "idType": "1",
+        "authorId": str(max_id),
+        "authorIdShowFlg": "true"
+    })
     indexer = RecordIndexer()
     indexer.client.index(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
@@ -70,7 +83,7 @@ def create():
 
     author_data = dict()
 
-    author_data["id"] = json.loads(json.dumps(data))["pk_id"]
+    author_data["id"] = max_id
     author_data["json"] = json.dumps(data)
 
     with db.session.begin_nested():
@@ -107,6 +120,9 @@ def update_author():
         db.session.merge(author_data)
     db.session.commit()
 
+    from weko_deposit.tasks import update_items_by_authorInfo
+    update_items_by_authorInfo.delay([json.loads(json.dumps(data))["pk_id"]], data)
+
     return jsonify(msg=_('Success'))
 
 
@@ -121,6 +137,29 @@ def delete_author():
 
     data = request.get_json()
     indexer = RecordIndexer()
+
+    query_q = {
+        "query": {
+            "term": {
+                "author_link": data["pk_id"]
+            }
+        },
+        "_source": [
+            "control_number"
+        ]
+    }
+    result_itemCnt = indexer.client.search(
+        index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
+        body=json.loads(json.dumps(query_item))
+    )
+    if result_itemCnt \
+            and 'hits' in result_itemCnt \
+            and 'total' in result_itemCnt['hits'] \
+            and result_itemCnt['hits']['total'] > 0:
+        return make_response(
+            'The author is linked to items and cannot be deleted.',
+            500)
+
     indexer.client.delete(
         id=json.loads(json.dumps(data))["Id"],
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
@@ -196,19 +235,7 @@ def get():
                             "should": [
                                 {
                                     "term": {
-                                        "creator.nameIdentifier":
-                                        "@author_id"
-                                    }
-                                },
-                                {
-                                    "term": {
-                                        "contributor.nameIdentifier":
-                                        "@author_id"
-                                    }
-                                },
-                                {
-                                    "term": {
-                                        "rightsHolder.nameIdentifier":
+                                        "author_link":
                                         "@author_id"
                                     }
                                 }

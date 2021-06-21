@@ -44,6 +44,22 @@ def json_loader(data, pid, owner_id=None):
     :param owner_id: record owner.
     :return: dc, jrc, is_edit
     """
+    def _get_author_link(author_link, value):
+        """Get author link data."""
+        if isinstance(value, list):
+            for v in value:
+                if 'nameIdentifiers' in v \
+                        and len(v['nameIdentifiers']) == 0 \
+                        and 'nameIdentifierScheme' in v['nameIdentifiers'][0] \
+                        and v['nameIdentifiers'][0]['nameIdentifierScheme'] == 'WEKO':
+                    author_link.append(v['nameIdentifiers'][0]['nameIdentifier'])
+        elif isinstance(value, dict):
+            if 'nameIdentifiers' in value \
+                    and len(value['nameIdentifiers']) > 0 \
+                    and 'nameIdentifierScheme' in value['nameIdentifiers'][0] \
+                    and value['nameIdentifiers'][0]['nameIdentifierScheme'] == 'WEKO':
+                author_link.append(value['nameIdentifiers'][0]['nameIdentifier'])
+                
     dc = OrderedDict()
     jpcoar = OrderedDict()
     item = dict()
@@ -71,6 +87,7 @@ def json_loader(data, pid, owner_id=None):
 
     mp = mjson.dumps()
     data.get("$schema")
+    author_link = []
     for k, v in data.items():
         if k != "pubdate":
             if k == "$schema" or mp.get(k) is None:
@@ -114,12 +131,14 @@ def json_loader(data, pid, owner_id=None):
         if isinstance(v, list):
             if len(v) > 0 and isinstance(v[0], dict):
                 item["attribute_value_mlt"] = v
+                _get_author_link(author_link, v)
             else:
                 item["attribute_value"] = v
         elif isinstance(v, dict):
             ar.append(v)
             item["attribute_value_mlt"] = ar
             ar = []
+            _get_author_link(author_link, v)
         else:
             item["attribute_value"] = v
 
@@ -149,6 +168,7 @@ def json_loader(data, pid, owner_id=None):
         dc.update(dict(item_title=title))
         dc.update(dict(item_type_id=item_type_id))
         dc.update(dict(control_number=pid))
+        dc.update(dict(author_link=author_link))
 
         # check oai id value
         is_edit = False
@@ -174,7 +194,7 @@ def json_loader(data, pid, owner_id=None):
         jrc.update(dict(_item_metadata=dc))
         jrc.update(dict(itemtype=ojson.model.item_type_name.name))
         jrc.update(dict(publish_date=pubdate))
-        jrc.update(dict(author_link=data.get('author_link', [])))
+        jrc.update(dict(author_link=author_link))
 
         # save items's creator to check permission
         if current_user:
