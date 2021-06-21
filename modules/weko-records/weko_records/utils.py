@@ -52,14 +52,16 @@ def json_loader(data, pid, owner_id=None):
                         and len(v['nameIdentifiers']) == 0 \
                         and 'nameIdentifierScheme' in v['nameIdentifiers'][0] \
                         and v['nameIdentifiers'][0]['nameIdentifierScheme'] == 'WEKO':
-                    author_link.append(v['nameIdentifiers'][0]['nameIdentifier'])
+                    author_link.append(
+                        v['nameIdentifiers'][0]['nameIdentifier'])
         elif isinstance(value, dict):
             if 'nameIdentifiers' in value \
                     and len(value['nameIdentifiers']) > 0 \
                     and 'nameIdentifierScheme' in value['nameIdentifiers'][0] \
                     and value['nameIdentifiers'][0]['nameIdentifierScheme'] == 'WEKO':
-                author_link.append(value['nameIdentifiers'][0]['nameIdentifier'])
-                
+                author_link.append(
+                    value['nameIdentifiers'][0]['nameIdentifier'])
+
     dc = OrderedDict()
     jpcoar = OrderedDict()
     item = dict()

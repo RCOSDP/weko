@@ -22,7 +22,7 @@
 
 import re
 
-from flask import Blueprint, current_app, json, jsonify, request, make_response
+from flask import Blueprint, current_app, json, jsonify, make_response, request
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_db import db
@@ -69,11 +69,11 @@ def create():
     data["gather_flg"] = 0
     data["pk_id"] = str(max_id)
     data["authorIdInfo"].insert(0,
-    {
-        "idType": "1",
-        "authorId": str(max_id),
-        "authorIdShowFlg": "true"
-    })
+                                {
+                                    "idType": "1",
+                                    "authorId": str(max_id),
+                                    "authorIdShowFlg": "true"
+                                })
     indexer = RecordIndexer()
     indexer.client.index(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
