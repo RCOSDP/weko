@@ -1192,14 +1192,12 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
                     value = s.get(str_key_val[len(str_key_val) - 1]).strip()
                     if len(value) > 0:
                         return value
-                if (s is not None) and (s.get(
-                    str_key_lang[len(str_key_lang) - 1]) is not None) and (
-                        s.get(str_key_val[len(str_key_val) - 1]) is not None):
-                    if (s.get(str_key_lang[len(
-                        str_key_lang) - 1]).strip() == str_lang.strip()) and (
-                        str_key_val[len(str_key_val) - 1] in s) and len(
-                            s.get(str_key_val[len(str_key_val) - 1]).strip()) > 0:
-                        return s.get(str_key_val[len(str_key_val) - 1])
+                if s and isinstance(s, dict) and s.get(str_key_lang[-1]) \
+                        and s.get(str_key_val[-1]):
+                    if s.get(str_key_lang[-1]).strip() == str_lang.strip() \
+                            and str_key_val[-1] in s \
+                            and len(s.get(str_key_val[-1]).strip()) > 0:
+                        return s.get(str_key_val[-1])
     return None
 
 
