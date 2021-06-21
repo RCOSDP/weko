@@ -249,14 +249,13 @@ th {
   }
   .navbar {
     display: none;
-    border: 0;
   }
   .btn > .caret,
   .dropup > .btn > .caret {
     border-top-color: #000 !important;
   }
   .label {
-    /* border: 1px solid #000;  */
+    border: 1px solid #000;
   }
   .table {
     border-collapse: collapse !important;
@@ -1591,8 +1590,8 @@ pre code {
 .container {
   margin-right: auto;
   margin-left: auto;
-  padding-left: 5px;
-  padding-right: 5px;
+  padding-left: 15px;
+  padding-right: 15px;
 }
 @media (min-width: 768px) {
   .container {
@@ -4280,7 +4279,7 @@ select[multiple].input-group-sm > .input-group-btn > .btn {
 }
 .navbar-brand {
   float: left;
-  padding: 5px 5px;
+  padding: 15px 15px;
   font-size: 18px;
   line-height: 20px;
   height: 50px;
@@ -5463,10 +5462,10 @@ button.list-group-item-danger.active:focus {
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
 }
 .panel-body {
-  padding: 5px;
+  padding: 15px;
 }
 .panel-heading {
-  padding: 5px 5px;
+  padding: 10px 15px;
   border-bottom: 1px solid transparent;
   border-top-right-radius: 3px;
   border-top-left-radius: 3px;
@@ -5939,7 +5938,7 @@ button.close {
   filter: alpha(opacity=50);
 }
 .modal-header {
-  padding: 5px;
+  padding: 15px;
   border-bottom: 1px solid #e5e5e5;
 }
 .modal-header .close {
@@ -5951,10 +5950,10 @@ button.close {
 }
 .modal-body {
   position: relative;
-  padding: 5px;
+  padding: 15px;
 }
 .modal-footer {
-  padding: 5px;
+  padding: 15px;
   text-align: right;
   border-top: 1px solid #e5e5e5;
 }

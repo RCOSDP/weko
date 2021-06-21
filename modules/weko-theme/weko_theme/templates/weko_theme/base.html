@@ -57,7 +57,9 @@
     {%- endfor %}
     {%- endblock head_apple_icons %}
     {%- endblock head_links %}
-    {%- block header %}{% endblock header %}
+    {%- block header %}
+
+    {% endblock header %}
     {%- block css %}
     {% assets "weko_theme_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
     {% assets "weko_theme_css_bootstrap" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
@@ -71,6 +73,10 @@
     {% assets "weko_theme_css_widget" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
     {% assets "weko_admin_quill_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
     {%- endblock css %}
+    <!-- start tracking code -->
+    {%- block trackingcode %}{% include config.THEME_TRACKINGCODE_TEMPLATE %}
+    {%- endblock trackingcode %}
+    <!-- end tracking code -->
     {%- endblock head %}
   </head>
   <body {% if body_css_classes %} class="{{ body_css_classes|join(' ') }}"{% endif %}{% if g.ln %} lang="{{ g.ln.split('_', 1)[0]|safe }}"{% if rtl_direction %} {{ rtl_direction|safe }}{% endif %}{% endif %} itemscope itemtype="http://schema.org/WebPage" data-spy="scroll" data-target=".scrollspy-target">
@@ -114,9 +120,12 @@
     {%- block javascript %}
 {% include config.THEME_JAVASCRIPT_TEMPLATE %}
 {% assets "weko_theme_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+
+
+
     {%- endblock javascript %}
-    {%- block trackingcode %}{% include config.THEME_TRACKINGCODE_TEMPLATE %}
-    {%- endblock trackingcode %}
+
     {%- endblock body %}
+
   </body>
 </html>

@@ -53,7 +53,7 @@
     ],
     "Set_Publish_Date_Recursively": [
         null,
-        "子インデックスのペース権限にも再帰的に反映させる"
+        "子インデックスの公開日にも再帰的に反映させる"
     ],
     "Harvest_Publish": [
         null,
@@ -85,7 +85,7 @@
     ],
     "Set_Role_Recursively": [
         null,
-        "子インデックスのペース権限にも再帰的に反映させる"
+        "子インデックスのロール権限にも再帰的に反映させる"
     ],
     "Authorized": [
         null,

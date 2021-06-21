@@ -9,10 +9,14 @@
 """Module of invenio-resourcesyncclient."""
 
 from __future__ import absolute_import, print_function
+from . import config
+
 
 from flask_babelex import gettext as _
 
-from . import config
+# https://stackoverflow.com/questions/48391750/disable-python-requests-ssl-validation-for-an-imported-module/48391751#48391751
+import os
+os.environ['CURL_CA_BUNDLE'] = ''
 
 
 class INVENIOResourceSyncClient(object):

@@ -691,11 +691,22 @@ class WekoDeposit(Deposit):
     def commit(self, *args, **kwargs):
         """Store changes on current instance in database and index it."""
         super(WekoDeposit, self).commit(*args, **kwargs)
+        record = RecordMetadata.query.get(self.pid.object_uuid)
         if self.data and len(self.data):
             # save item metadata
             self.save_or_update_item_metadata()
 
             if self.jrc and len(self.jrc):
+                if record and record.json and '_oai' in record.json:
+                    self.jrc['_oai'] = record.json.get('_oai')
+                if 'path' in self.jrc and '_oai' in self.jrc \
+                        and ('sets' not in self.jrc['_oai']
+                             or not self.jrc['_oai']['sets']):
+                    setspec_list = []
+                    for i in self.jrc['path']:
+                        setspec_list.append(i.replace('/', ':'))
+                    if setspec_list:
+                        self.jrc['_oai'].update(dict(sets=setspec_list))
                 # upload item metadata to Elasticsearch
                 set_timestamp(self.jrc, self.created, self.updated)
 
@@ -732,7 +743,6 @@ class WekoDeposit(Deposit):
                             del content['file']
 
         # fix schema url
-        record = RecordMetadata.query.get(self.pid.object_uuid)
         if record and record.json and '$schema' in record.json:
             record.json.pop('$schema')
             if record.json.get('_buckets'):
@@ -885,14 +895,11 @@ class WekoDeposit(Deposit):
         Save when register a new item type, Update when edit an item
         type.
         """
-        if current_user:
-            current_user_id = current_user.get_id()
-        else:
-            current_user_id = '1'
-        if current_user_id:
+        owner = str(self.get('_deposit', {}).get('owners', [1])[0])
+        if owner:
             dc_owner = self.data.get("owner", None)
             if not dc_owner:
-                self.data.update(dict(owner=current_user_id))
+                self.data.update(dict(owner=owner))
 
         if ItemMetadata.query.filter_by(id=self.id).first():
             obj = ItemsMetadata.get_record(self.id)
@@ -970,7 +977,8 @@ class WekoDeposit(Deposit):
 
         # convert item meta data
         try:
-            dc, jrc, is_edit = json_loader(data, self.pid)
+            owner_id = str(self.get('_deposit', {}).get('owners', [1])[0])
+            dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
             dc['publish_date'] = data.get('pubdate')
             dc['title'] = [data.get('title')]
             dc['relation_version_is_last'] = True
@@ -1044,6 +1052,9 @@ class WekoDeposit(Deposit):
                 if r.json and not r.json['path']:
                     from weko_records_ui.utils import soft_delete
                     soft_delete(obj_uuid)
+                else:
+                    dep = WekoDeposit(r.json, r)
+                    dep.indexer.update_path(dep, update_revision=False)
             db.session.commit()
         except Exception as ex:
             db.session.rollback()
@@ -1278,6 +1289,8 @@ class WekoRecord(Record):
         hide_email_flag = not settings.items_display_email
         solst, meta_options = get_options_and_order_list(
             self.get('item_type_id'))
+        item_type = ItemTypes.get_by_id(self.get('item_type_id'))
+        meta_list = item_type.render.get('meta_list', []) if item_type else {}
 
         for lst in solst:
             key = lst[0]
@@ -1328,6 +1341,11 @@ class WekoRecord(Record):
                         nval['attribute_value_mlt'] = \
                             sys_bibliographic.get_bibliographic_list(False)
                     else:
+                        if meta_list.get(key, {}).get('input_type') == 'text':
+                            for iter in mlt:
+                                if iter.get('interim'):
+                                    iter['interim'] = iter[
+                                        'interim'].replace("\n", " ")
                         nval['attribute_value_mlt'] = \
                             get_attribute_value_all_items(
                                 key,
@@ -1339,6 +1357,10 @@ class WekoRecord(Record):
             else:
                 val['attribute_name_i18n'] = lst[2] or val.get(
                     'attribute_name')
+
+                if meta_list.get(key, {}).get('input_type') == 'text':
+                    val['attribute_value'] = val[
+                        'attribute_value'].replace("\n", " ")
                 items.append(val)
 
         return items
@@ -1557,8 +1579,7 @@ class WekoRecord(Record):
     def get_record_with_hps(cls, uuid):
         """Get record with hps."""
         record = cls.get_record(id_=uuid)
-        path = []
-        path.extend(record.get('path'))
+        path = record.get('path')
         harvest_public_state = True
         if path:
             harvest_public_state = Indexes.get_harvest_public_state(path)

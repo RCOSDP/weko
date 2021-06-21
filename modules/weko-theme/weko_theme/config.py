@@ -284,40 +284,16 @@ WEKO_THEME_ADMIN_MENU = [
         'order': 15,
         'submenu': [
             {
-                'name': 'File Preview',
-                'order': 17
-            },
-            {
-                'name': 'Identifier',
-                'order': 8
+                'name': 'Items',
+                'order': 1
             },
             {
                 'name': 'Index Link',
                 'order': 2
             },
             {
-                'name': 'Item Export',
-                'order': 9
-            },
-            {
-                'name': 'Items',
-                'order': 1
-            },
-            {
                 'name': 'Language',
                 'order': 3
-            },
-            {
-                'name': 'Log Analysis',
-                'order': 10
-            },
-            {
-                'name': 'Mail',
-                'order': 15
-            },
-            {
-                'name': 'Others',
-                'order': 20
             },
             {
                 'name': 'PDF Cover Page',
@@ -328,30 +304,6 @@ WEKO_THEME_ADMIN_MENU = [
                 'order': 5
             },
             {
-                'name': 'Restricted Access',
-                'order': 19
-            },
-            {
-                'name': 'Search',
-                'order': 11
-            },
-            {
-                'name': 'Shibboleth',
-                'order': 18
-            },
-            {
-                'name': 'Site Info',
-                'order': 12
-            },
-            {
-                'name': 'Site License',
-                'order': 13
-            },
-            {
-                'name': 'Sitemap',
-                'order': 14
-            },
-            {
                 'name': 'Stats',
                 'order': 6
             },
@@ -360,8 +312,60 @@ WEKO_THEME_ADMIN_MENU = [
                 'order': 7
             },
             {
-                'name': 'WebAPI Account',
+                'name': 'Identifier',
+                'order': 8
+            },
+            {
+                'name': 'Item Export',
+                'order': 9
+            },
+            {
+                'name': 'Log Analysis',
+                'order': 10
+            },
+            {
+                'name': 'Search',
+                'order': 11
+            },
+            {
+                'name': 'Faceted Search',
+                'order': 12
+            },
+            {
+                'name': 'Site Info',
+                'order': 13
+            },
+            {
+                'name': 'Site License',
+                'order': 14
+            },
+            {
+                'name': 'Sitemap',
+                'order': 15
+            },
+            {
+                'name': 'Mail',
                 'order': 16
+            },
+            {
+                'name': 'WebAPI Account',
+                'order': 17
+            },
+            {
+                'name': 'File Preview',
+                'order': 18
+            },
+            {
+                'name': 'Shibboleth',
+                'order': 19
+            },
+            {
+                'name': 'Restricted Access',
+                'order': 20
+            },
+            {
+                'name': 'Others',
+                'order': 21
             }
         ]
     },

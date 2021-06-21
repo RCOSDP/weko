@@ -64,6 +64,9 @@
         {% endassets %}
         <link href="{{ admin_static.url(filename='admin/css/bootstrap3/admin.css', v='1.1.1') }}" rel="stylesheet">
       {%- endblock css %}
+      {%- block trackingcode %}
+      {% include config.THEME_TRACKINGCODE_TEMPLATE %}
+    {%- endblock %}
     {%- endblock head %}
   </head>
 
@@ -113,9 +116,7 @@
     {% endassets %}
   {%- endblock javascript %}
 
-  {%- block trackingcode %}
-    {% include config.THEME_TRACKINGCODE_TEMPLATE %}
-  {%- endblock %}
+
 
   {% block tail %}{% endblock %}
   </body>

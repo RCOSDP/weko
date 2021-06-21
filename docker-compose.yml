@@ -117,6 +117,10 @@ services:
       - redis
       - elasticsearch
       - rabbitmq
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
     ports:
       - "5001:5000"
 

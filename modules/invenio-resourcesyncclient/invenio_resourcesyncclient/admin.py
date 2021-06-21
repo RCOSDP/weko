@@ -25,6 +25,9 @@ from flask import current_app, jsonify, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
 from .api import ResyncHandler
 from .config import INVENIO_RESYNC_INDEXES_MODE, \
     INVENIO_RESYNC_INDEXES_SAVING_FORMAT, INVENIO_RESYNC_INDEXES_STATUS

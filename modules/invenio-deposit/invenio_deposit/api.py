@@ -238,7 +238,9 @@ class Deposit(Record):
                 cls.deposit_minter(id_, data, recid=recid)
 
         data['_deposit'].setdefault('owners', list())
-        if current_user and current_user.is_authenticated:
+        if not current_user:
+            data['_deposit']['owners'].append(1)
+        elif current_user.is_authenticated:
             creator_id = int(current_user.get_id())
 
             if creator_id not in data['_deposit']['owners']:

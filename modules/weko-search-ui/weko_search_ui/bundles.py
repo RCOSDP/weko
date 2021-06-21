@@ -80,12 +80,15 @@ weko_admin_item_export_css = Bundle(
 )
 
 weko_facet_search_js = Bundle(
-    'js/weko_search_ui/facet_search.js',
+    'js/weko_search_ui/facket.runtime-main.js',
+    'js/weko_search_ui/facet.chunk.js',
+    'js/weko_search_ui/facket.main.chunk.js',
     output="gen/facet_search.js"
 )
 
 weko_facet_search_css = Bundle(
     'css/weko_search_ui/facet_search.less',
+    'css/weko_search_ui/facet_chunk.css',
     filters='cleancss',
     output="gen/facet_search.%(version)s.css"
 )

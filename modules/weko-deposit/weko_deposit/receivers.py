@@ -9,6 +9,7 @@
 """Deposit module receivers."""
 
 from flask import current_app
+from weko_records.api import FeedbackMailList
 from weko_records.utils import json_loader
 
 from .api import WekoDeposit
@@ -35,6 +36,7 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         _, jrc, _ = json_loader(metadata, pid)
         dep.data = metadata
         dep.jrc = jrc
+
         # Update data based on data from DB
         dep.jrc['weko_shared_id'] = im.get('weko_shared_id')
         dep.jrc['weko_creator_id'] = im.get('owner')
@@ -52,6 +54,15 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         if dep.jrc.get('content', None):
             kwargs['arguments']['pipeline'] = 'item-file-pipeline'
         json.update(dep.jrc)
+
+        # Updated FeedbackMail List
+        mail_list = FeedbackMailList.get_mail_list_by_item_id(record.id)
+        if mail_list:
+            feedback_mail = {
+                'feedback_mail_list': mail_list
+            }
+            json.update(feedback_mail)
+
         current_app.logger.info('Done re-index record: {0}'.format(
             im['control_number']))
     except Exception:

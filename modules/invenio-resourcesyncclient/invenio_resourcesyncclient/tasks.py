@@ -21,6 +21,7 @@
 """WEKO3 module docstring."""
 import json
 import signal
+import ssl
 from datetime import datetime
 from urllib.parse import urlparse
 
@@ -39,6 +40,9 @@ from .config import INVENIO_RESYNC_INDEXES_MODE, \
 from .models import ResyncIndexes, ResyncLogs
 from .utils import get_list_records, process_item, process_sync
 
+ssl._create_default_https_context = ssl._create_unverified_context
+
+
 logger = get_task_logger(__name__)
 
 
@@ -53,7 +57,6 @@ def is_running_task(id):
 
 @shared_task
 def run_sync_import(id):
-    """Run harvest."""
     if is_running_task(id):
         return (
             {
@@ -91,6 +94,7 @@ def run_sync_import(id):
                 successful = []
                 try:
                     for i in records_id:
+                        current_app.logger.debug('{0} {1} {2}: {3}'.format(__file__,'run_sync_import()','record_id',i))
                         record = get_record(
                             url='{}://{}/oai'.format(
                                 hostname.scheme,
@@ -99,8 +103,11 @@ def run_sync_import(id):
                             record_id=i,
                             metadata_prefix='jpcoar_1.0',
                         )
-                        process_item(record[0], resync, counter)
-                        successful.append(i)
+                        if len(record)==1 :
+                            current_app.logger.debug('{0} {1} {2}: {3}'.format(__file__,'run_sync_import()','record',record))
+                            process_item(record[0], resync, counter)
+                            successful.append(i)
+
                     for item in successful:
                         records_id.remove(item)
                     resync_index.update({
@@ -154,15 +161,22 @@ def get_record(
     payload = {
         'verb': 'GetRecord',
         'metadataPrefix': metadata_prefix,
-        'identifier': 'oai:invenio:{}'.format('%08d' % int(record_id))
+        'identifier': 'oai:weko3.example.org:{}'.format('%08d' % int(record_id))
+        #'identifier': 'oai:invenio:{}'.format('%08d' % int(record_id))
+        
     }
     records = None
-    response = requests.get(url, params=payload, verify=False)
+    payload_str = "&".join("%s=%s" % (k,v) for k,v in payload.items())
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(__file__,'get_record()','url',url))
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(__file__,'get_record()','payload_str',payload_str))
+    
+    response = requests.get(url, params=payload_str, verify=False)
     et = etree.XML(response.text.encode(encoding))
-    current_app.logger.debug(et)
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(__file__,'get_record()','et',esponse.text.encode(encoding)))
     records = et.findall('./GetRecord/record', namespaces=et.nsmap)
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(__file__,'get_record()','et',records))
+    
     return records
-
 
 @shared_task()
 def resync_sync(id):
@@ -223,7 +237,8 @@ def resync_sync(id):
 
 def prepare_log(resync, id, counter, task_id, log_type):
     """Prepare log for resource sync."""
-    current_app.logger.info('[{0}] [{1}] START'.format(0, 'Resync ' + log_type))
+    current_app.logger.info(
+        '[{0}] [{1}] START'.format(0, 'Resync ' + log_type))
     # For registering runtime stats
 
     resync.task_id = task_id

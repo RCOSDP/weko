@@ -25,7 +25,7 @@ import sys
 from datetime import datetime
 from functools import partial
 
-from elasticsearch_dsl.query import Q
+from elasticsearch_dsl.query import Bool, Exists, Q, QueryString
 from flask import current_app, request
 from flask.helpers import flash
 from flask_babelex import gettext as _
@@ -45,12 +45,8 @@ def get_item_type_aggs(search_index):
 
     :return: aggs dict
     """
-    facets = None
-    if search_permission.can():
-        facets = current_app.config['RECORDS_REST_FACETS']
-    else:
-        facets = current_app.config['RECORDS_REST_FACETS_NO_SEARCH_PERMISSION']
-
+    from weko_admin.utils import get_facet_search_query
+    facets = get_facet_search_query(search_permission.can())
     return facets.get(search_index).get("aggs", {})
 
 
@@ -201,6 +197,39 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
             return qry
 
+        def _get_object_query(k, v):
+            # text value
+            kv = request.values.get(k)
+            if not kv:
+                return
+            shuld = []
+            if isinstance(v, tuple) and len(v) > 1 and isinstance(v[1], dict):
+                # attr keyword in request url
+                attrs = map(lambda x: (x, request.values.get(x)),
+                            list(v[1].keys()))
+                for attr_key, attr_val_str in attrs:
+                    attr_obj = v[1].get(attr_key)
+                    if isinstance(attr_obj, dict) and attr_val_str:
+                        if isinstance(v[0], str) and len(v[0]):
+                            attr_key_hit = [
+                                x for x in attr_obj.keys() if v[0] + "." in x]
+                            if attr_key_hit:
+                                vlst = attr_obj.get(attr_key_hit[0])
+                                if isinstance(vlst, list):
+                                    attr_val = [
+                                        int(x) for x in attr_val_str.split(',')
+                                        if x.isdecimal() and int(x) < len(vlst)
+                                    ]
+                                    if attr_val:
+                                        name = v[0] + ".value"
+                                        schemas = [vlst[i] for i in attr_val]
+                                        return Bool(must=[
+                                            {"term": {name: kv}},
+                                            {"terms": {
+                                                attr_key_hit[0]: schemas}}
+                                        ])
+            return None
+
         def _get_nested_query(k, v):
             # text value
             kv = request.values.get(k)
@@ -343,10 +372,101 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                                 must=[qry]))
             return qry
 
+        def _get_text_query(k, v):
+            qry = None
+            kv = request.values.get(
+                'lang'
+            ) if k == 'language' else request.values.get(k)
+
+            if not kv:
+                return
+
+            if isinstance(v, str):
+                name_dict = dict(operator="and")
+                name_dict.update(dict(query=kv))
+                qry = Q('match', **{v: name_dict})
+           
+            return qry
+        def _get_range_query(k, v):
+            qry = None
+
+            if isinstance(v, list) and len(v) >= 2:
+                value_from = request.values.get(k + "_" + v[0][0])
+                value_to = request.values.get(k + "_" + v[0][1])
+
+                if not value_from or not value_to:
+                    return
+
+                qv = {}
+                qv.update(dict(gte=value_from))
+                qv.update(dict(lte=value_to))
+
+                if isinstance(v[1], str):
+                    qry = Q('range', **{v[1]: qv})
+                    print(qry)
+            return qry
+
+        def _get_geo_distance_query(k, v):
+            
+            qry = None
+
+            if isinstance(v, list) and len(v) >= 2:
+                value_lat = request.values.get(k + "_" + v[0][0])
+                value_lon = request.values.get(k + "_" + v[0][1])
+                value_distance = request.values.get(k + "_" + v[0][2])
+
+                if not value_lat or not value_lon or not value_distance:
+                    return
+
+                qv = {}
+                qv.update(dict(lat=value_lat))
+                qv.update(dict(lon=value_lon))
+
+                if isinstance(v[1], str):
+                    qry= {
+                            "geo_distance": {
+                                    "distance": value_distance,
+                                    v[1]: qv
+                                }}
+                        
+            return qry
+            
+        def _get_geo_shape_query(k, v):
+            qry = None
+
+            if isinstance(v, list) and len(v) >= 2:
+                value_lat = request.values.get(k + "_" + v[0][0])
+                value_lon = request.values.get(k + "_" + v[0][1])
+                value_distance = request.values.get(k + "_" + v[0][2])
+
+                if not value_lat or not value_lon or not value_distance:
+                    return
+
+                qv = []                
+                qv.append(value_lon)
+                qv.append(value_lat)
+                
+                if isinstance(v[1], str):
+                    qry= {
+                            "geo_shape": {
+                                    v[1] :{
+                                        "shape":{
+                                            "type" : "circle",
+                                            "coordinates" : qv,
+                                            "radius" : value_distance,
+                                }}}}
+                        
+            return qry
+
         kwd = current_app.config['WEKO_SEARCH_KEYWORDS_DICT']
         ks = kwd.get('string')
         kd = kwd.get('date')
         kn = kwd.get('nested')
+        ko = kwd.get('object')
+        kr = kwd.get('range')
+        kt = kwd.get('text')
+        kgd = kwd.get('geo_distance')
+        kgs = kwd.get('geo_shape')
 
         mut = []
 
@@ -368,6 +488,35 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
                 if qy:
                     mut.append(qy)
+
+            for k, v in ko.items():
+                qy = _get_object_query(k, v)
+
+                if qy:
+                    mut.append(qy)
+            for k, v in kt.items():
+                qy = _get_text_query(k, v)
+
+                if qy:
+                    mut.append(qy)
+            for k, v in kr.items():
+                qy = _get_range_query(k, v)
+
+                if qy:
+                    mut.append(qy)
+
+            for k, v in kgd.items():
+                qy = _get_geo_distance_query(k, v)
+
+                if qy:
+                    mut.append(qy) 
+
+            for k, v in kgs.items():
+                qy = _get_geo_shape_query(k, v)
+
+                if qy:
+                    mut.append(qy)
+
         except Exception as e:
             current_app.logger.exception(
                 'Detail search query parser failed. err:{0}'.format(e))
@@ -1056,7 +1205,6 @@ def feedback_email_search_factory(self, search):
                        "relation_version_is_last:true " \
             .format(current_app.config['INDEXER_DEFAULT_DOC_TYPE'])
         query_q = {
-            "size": 0,
             "query": {
                 "bool": {
                     "must": [
@@ -1094,11 +1242,6 @@ def feedback_email_search_factory(self, search):
                             "terms": {
                                 "field": "feedback_mail_list.email",
                                 "size": config.WEKO_SEARCH_MAX_FEEDBACK_MAIL
-                            },
-                            "aggs": {
-                                "top_tag_hits": {
-                                    "top_hits": {}
-                                }
                             }
                         }
                     }

@@ -74,6 +74,7 @@ jsonpointer==1.14
 jsonref==0.1
 jsonresolver==0.2.1
 jsonschema==2.6.0
+jsonpath_ng==1.5.2
 jupyter-client==5.2.2
 jupyter-core==4.4.0
 kombu==4.6.10
