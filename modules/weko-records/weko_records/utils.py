@@ -31,16 +31,20 @@ from invenio_pidstore import current_pidstore
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.ext import pid_exists
 from invenio_pidstore.models import PersistentIdentifier
+from jsonpath_ng import jsonpath
+from jsonpath_ng.ext import parse
 from weko_schema_ui.schema import SchemaTree
 
 from .api import ItemTypes, Mapping
+from .config import COPY_NEW_FIELD, WEKO_TEST_FIELD
 
 
-def json_loader(data, pid):
+def json_loader(data, pid, owner_id=None):
     """Convert the item data and mapping to jpcoar.
 
     :param data: json from item form post.
     :param pid: pid value.
+    :param owner_id: record owner.
     :return: dc, jrc, is_edit
     """
     dc = OrderedDict()
@@ -56,8 +60,10 @@ def json_loader(data, pid):
     pid = pid.pid_value
 
     # get item type id
-    index = data["$schema"].rfind('/')
-    item_type_id = data["$schema"][index + 1:]
+    split_schema_info = data["$schema"].split('/')
+    item_type_id = split_schema_info[-2] \
+        if 'A-' in split_schema_info[-1] \
+        else split_schema_info[-1]
 
     # get item type mappings
     ojson = ItemTypes.get_record(item_type_id)
@@ -147,6 +153,9 @@ def json_loader(data, pid):
         dc.update(dict(item_type_id=item_type_id))
         dc.update(dict(control_number=pid))
 
+        if COPY_NEW_FIELD:
+            copy_field_test(dc, WEKO_TEST_FIELD, jrc)
+
         # check oai id value
         is_edit = False
         try:
@@ -166,11 +175,13 @@ def json_loader(data, pid):
         # relation_ar.append(dict(value="", item_links="", item_title=""))
         # jrc.update(dict(relation=dict(relationType=relation_ar)))
         # dc.update(dict(relation=dict(relationType=relation_ar)))
+
         jrc.update(dict(control_number=pid))
         jrc.update(dict(_oai={"id": oai_value}))
         jrc.update(dict(_item_metadata=dc))
         jrc.update(dict(itemtype=ojson.model.item_type_name.name))
         jrc.update(dict(publish_date=pubdate))
+        jrc.update(dict(author_link=data.get('author_link', [])))
 
         # save items's creator to check permission
         if current_user:
@@ -179,36 +190,75 @@ def json_loader(data, pid):
             current_user_id = '1'
         if current_user_id:
             # jrc is saved on elastic
-            jrc_weko_shared_id = jrc.get("weko_shared_id", None)
             jrc_weko_creator_id = jrc.get("weko_creator_id", None)
             if not jrc_weko_creator_id:
                 # in case first time create record
-                jrc.update(dict(weko_creator_id=current_user_id))
-                jrc.update(dict(weko_shared_id=data.get('shared_user_id',
-                                                        None)))
+                jrc.update(dict(weko_creator_id=owner_id or current_user_id))
+                jrc.update(dict(weko_shared_id=data.get('shared_user_id', -1)))
             else:
                 # incase record is end and someone is updating record
                 if current_user_id == int(jrc_weko_creator_id):
                     # just allow owner update shared_user_id
-                    jrc.update(dict(weko_shared_id=data.get('shared_user_id',
-                                                            None)))
+                    jrc.update(
+                        dict(weko_shared_id=data.get('shared_user_id', -1)))
 
             # dc js saved on postgresql
             dc_owner = dc.get("owner", None)
             if not dc_owner:
-                dc.update(
-                    dict(
-                        weko_shared_id=data.get(
-                            'shared_user_id',
-                            None)))
-                dc.update(dict(owner=current_user_id))
+                dc.update(dict(weko_shared_id=data.get('shared_user_id', -1)))
+                dc.update(dict(owner=owner_id or current_user_id))
             else:
                 if current_user_id == int(dc_owner):
-                    dc.update(dict(weko_shared_id=data.get('shared_user_id',
-                                                           None)))
+                    dc.update(
+                        dict(weko_shared_id=data.get('shared_user_id', -1)))
 
     del ojson, mjson, item
     return dc, jrc, is_edit
+
+
+def copy_field_test(dc, map, jrc):
+    if dc["item_type_id"] in map.keys():
+        list1 = map[dc["item_type_id"]]
+        for k, v in list1.items():
+            if v["input_type"] == "geo_point":
+                geo_point = {k: {"lat": "", "lon": ""}}
+                geo_point[k]["lat"] = get_value_from_dict(dc, v["path"]["lat"])
+                geo_point[k]["lon"] = get_value_from_dict(dc, v["path"]["lon"])
+                if geo_point[k]["lat"] and geo_point[k]["lon"]:
+                    jrc.update(geo_point)
+            elif v["input_type"] == "geo_shape":
+                geo_shape = {k: {"type": "", "coordinates": ""}}
+                geo_shape[k]["type"] = get_value_from_dict(
+                    dc, v["path"]["type"])
+                geo_shape[k]["coordinates"] = get_value_from_dict(
+                    dc, v["path"]["coordinates"])
+                if geo_shape[k]["type"] and geo_shape[k]["coordinates"]:
+                    jrc.update(geo_shape)
+            elif v["input_type"] == "range":
+                value_range = {k: {"gte": "", "lte": ""}}
+                value_range[k]["gte"] = get_value_from_dict(
+                    dc, v["path"]["gte"])
+                value_range[k]["lte"] = get_value_from_dict(
+                    dc, v["path"]["lte"])
+                if value_range[k]["gte"] and value_range[k]["lte"]:
+                    jrc.update(value_range)
+            elif v["input_type"] == "text":
+                if get_value_from_dict(dc, v["path"]):
+                    jrc[k] = get_value_from_dict(dc, v["path"])
+
+
+def get_value_from_dict(dc, path):
+    try:
+        matches = parse(path).find(dc)
+        match_value = [match.value for match in matches]
+        print("values****")
+        print(match_value)
+        if len(match_value) > 0:
+            return match_value[0]
+        else:
+            return None
+    except Exception:
+        return None
 
 
 def set_timestamp(jrc, created, updated):
@@ -626,7 +676,7 @@ async def sort_meta_data_by_options(
             elif not _label:
                 _label = _filename
             if f.get('version_id'):
-                _idx = _filename.find('.') + 1
+                _idx = _filename.rfind('.') + 1
                 _extension = _filename[_idx:] if _idx > 0 else 'unknown'
             return _label, _extension
         result = []
@@ -642,10 +692,13 @@ async def sort_meta_data_by_options(
             elif label and (
                 not extension
                     or check_file_download_permission(record, f, False)):
+                file_url = f.get('url', {}).get('url', '')
+                if extension and file_url:
+                    file_url = replace_fqdn(file_url)
                 result.append({
                     'label': label,
                     'extention': extension,
-                    'url': f.get('url', {}).get('url', '')
+                    'url': file_url
                 })
         return result
 
@@ -664,7 +717,8 @@ async def sort_meta_data_by_options(
         return thumbnail
 
     try:
-        src_default = copy.deepcopy(record_hit['_source'].get('_item_metadata'))
+        src_default = copy.deepcopy(
+            record_hit['_source'].get('_item_metadata'))
         _item_metadata = copy.deepcopy(record_hit['_source'])
         src = record_hit['_source']['_item_metadata']
         item_type_id = record_hit['_source'].get('item_type_id') or \
@@ -1450,3 +1504,53 @@ def add_biographic(sys_bibliographic, bibliographic_key, s, stt_key,
         bibliographic_key: {s['key']: {"value": [bibliographic]}}})
 
     return stt_key, data_result, is_specify_newline_array
+
+
+def custom_record_medata_for_export(record_metadata: dict):
+    """Custom record mata for export.
+
+    :param record_metadata:
+    """
+    from weko_records_ui.utils import hide_item_metadata, replace_license_free
+    hide_item_metadata(record_metadata)
+    replace_license_free(record_metadata)
+
+
+def replace_fqdn(url_path: str, host_url: str = None) -> str:
+    """Replace to new FQDN.
+
+    Args:
+        url_path (str): string url.
+        host_url (str): string host.
+
+    Returns:
+        (str): URL with FQDN replaced.
+
+    """
+    if host_url is None:
+        host_url = current_app.config['THEME_SITEURL']
+    url_pattern = r'^http[s]{0,1}:\/\/'
+    if re.search(url_pattern, url_path) is None:
+        url_path = host_url + url_path
+    elif host_url not in url_path:
+        if host_url[-1] != '/':
+            host_url = host_url + '/'
+        pattern = r'http[s]{0,1}:\/\/([\d\w]+[\.]*[:]{0,1}[\d\w])+\/'
+        url_path = re.sub(pattern, host_url, url_path)
+    return url_path
+
+
+def replace_fqdn_of_file_metadata(file_metadata_lst: list,
+                                  file_url: list = None):
+    """Replace FQDN of file metadata.
+
+    Args:
+        file_metadata_lst (list): File metadata list.
+        file_url (list): File metadata list.
+    """
+    for file in file_metadata_lst:
+        if file.get('url', {}).get('url'):
+            if file.get('version_id'):
+                file['url']['url'] = replace_fqdn(file['url']['url'])
+            elif isinstance(file_url, list):
+                file_url.append(file['url']['url'])

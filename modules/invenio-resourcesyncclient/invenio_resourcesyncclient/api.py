@@ -23,6 +23,7 @@ import datetime
 import json
 import os
 import shutil
+import ssl
 import sys
 import tempfile
 import traceback
@@ -33,6 +34,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from weko_index_tree.api import Indexes
 
 from .models import ResyncIndexes, ResyncLogs
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 class ResyncHandler(object):
@@ -127,7 +130,9 @@ class ResyncHandler(object):
 
         :return: Updated resync info
         """
+        current_app.logger.debug('[{0}] [{1}] START'.format(0, 'ResyncHandler.update'))
         validate = self.validate()
+        current_app.logger.debug('[{0}] [{1}] validate: {2}'.format(0, 'ResyncHandler.update',validate))
         if not validate.get('validate'):
             return {
                 'success': False,
@@ -194,6 +199,7 @@ class ResyncHandler(object):
 
                 db.session.merge(resync)
             db.session.commit()
+            current_app.logger.debug('[{0}] [{1}] END'.format(0, 'ResyncHandler.update'))
             return {
                 'success': True,
                 'data': ResyncHandler.from_modal(resync).to_dict()
@@ -209,6 +215,7 @@ class ResyncHandler(object):
     def validate(self):
         """Validate resync item."""
         # check required
+        
         result = []
         if not self.repository_name:
             result.append("Repository is required")

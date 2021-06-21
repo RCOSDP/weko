@@ -16,11 +16,11 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
-ALTER TABLE ONLY public.index DROP CONSTRAINT uix_position ;
-ALTER TABLE ONLY public.index DROP CONSTRAINT pk_index ;
+ALTER TABLE ONLY public.index DROP CONSTRAINT uix_position CASCADE;
+ALTER TABLE ONLY public.index DROP CONSTRAINT pk_index CASCADE;
 ALTER TABLE public.index ALTER COLUMN id DROP DEFAULT;
-DROP SEQUENCE public.index_id_seq ;
-DROP TABLE public.index ;
+DROP SEQUENCE public.index_id_seq CASCADE;
+DROP TABLE public.index CASCADE;
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;

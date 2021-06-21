@@ -42,7 +42,7 @@ from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ATT, \
 from .permissions import item_type_permission
 from .utils import check_duplicate_mapping, fix_json_schema, \
     has_system_admin_access, remove_xsd_prefix, \
-    update_required_schema_not_exist_in_form
+    update_required_schema_not_exist_in_form, update_text_and_textarea
 
 
 class ItemTypeMetaDataView(BaseView):
@@ -170,35 +170,33 @@ class ItemTypeMetaDataView(BaseView):
         data = request.get_json()
         try:
             table_row_map = data.get('table_row_map')
-            json_schema = fix_json_schema(
-                table_row_map.get(
-                    'schema'))
+            json_schema = fix_json_schema(table_row_map.get('schema'))
             json_form = table_row_map.get('form')
             json_schema = update_required_schema_not_exist_in_form(
                 json_schema, json_form)
+
+            if item_type_id != 0:
+                json_schema, json_form = update_text_and_textarea(
+                    item_type_id, json_schema, json_form)
 
             if not json_schema:
                 raise ValueError('Schema is in wrong format.')
 
             record = ItemTypes.update(id_=item_type_id,
-                                      name=table_row_map.get(
-                                          'name'),
+                                      name=table_row_map.get('name'),
                                       schema=json_schema,
-                                      form=table_row_map.get(
-                                          'form'),
+                                      form=table_row_map.get('form'),
                                       render=data)
             upgrade_version = current_app.config[
                 'WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'
             ]
             if not upgrade_version:
                 Mapping.create(item_type_id=record.model.id,
-                               mapping=table_row_map.
-                               get('mapping'))
+                               mapping=table_row_map.get('mapping'))
             # Just update Mapping when create new record
             elif record.model.id != item_type_id:
                 Mapping.create(item_type_id=record.model.id,
-                               mapping=table_row_map.
-                               get('mapping'))
+                               mapping=table_row_map.get('mapping'))
                 workflow = WorkFlow()
                 workflow_list = workflow.get_workflow_by_itemtype_id(
                     item_type_id)

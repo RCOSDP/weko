@@ -359,3 +359,107 @@ def update_required_schema_not_exist_in_form(schema, forms):
             else:
                 del v['required']
     return schema
+
+
+def update_text_and_textarea(item_type_id, new_schema, new_form):
+    """Update type and format of text and textarea when change.
+
+    @param item_type_id:  edited id of item type.
+    @param new_schema: new edited schema
+    @param new_form: new edited form
+    @return new_schema: new edited schema
+    @return new_form: new edited form
+    """
+    def is_text(prop):
+        """Check this property is text property.
+
+        @param prop:  property.
+        @return True/False: if this is text, return True else False.
+        """
+        items = prop.get('items', {}).get('properties', {}) \
+            if is_multiple(prop) else prop.get('properties', {})
+        if items.get('subitem_text_value') \
+                and items.get('subitem_text_language'):
+            return True
+        return False
+
+    def is_textarea(prop):
+        """Check this property is textarea property.
+
+        @param prop:  property.
+        @return True/False: if this is textarea, return True else False.
+        """
+        items = prop.get('items', {}).get('properties', {}) \
+            if is_multiple(prop) else prop.get('properties', {})
+        if items.get('subitem_textarea_value') \
+                and items.get('subitem_textarea_language'):
+            return True
+        return False
+
+    def is_text_or_textarea(prop):
+        """Check this property is text or textarea property.
+
+        @param prop:  property.
+        @return True/False: if this is text or textarea, return True else False.
+        """
+        return is_text(prop) or is_textarea(prop)
+
+    def get_format_string(prop):
+        """Get format of this property.
+
+        @param prop:  property.
+        @return 'text'/'textarea': if this is text,
+                                    return 'text' else 'textarea'.
+        """
+        return 'text' if is_text(prop) else 'textarea'
+
+    def is_multiple(prop):
+        """Check this property is multiple property.
+
+        @param prop:  property.
+        @return True/False: if this is multiple, return True else False.
+        """
+        result = False
+        if prop.get('maxItems') or prop.get('maxItems'):
+            result = True
+        return result
+
+    from weko_records.api import ItemTypes
+    new_properties = new_schema.get('properties')
+
+    item_type = ItemTypes.get_by_id(item_type_id)
+    old_schema = item_type.schema
+    old_properties = old_schema.get('properties')
+    for key, val in old_properties.items():
+        new_val = new_properties.get(key, {})
+        if is_text_or_textarea(val) and is_text_or_textarea(new_val):
+            new_format = get_format_string(new_val)
+            old_format = get_format_string(val)
+            value_key = 'subitem_{}_value'.format(old_format)
+            lang_key = 'subitem_{}_language'.format(old_format)
+            is_multiple_prop = is_multiple(new_val)
+            # Update format for "Text" or "Textarea" schema.
+            items_map = new_val['items']['properties'] \
+                if is_multiple_prop else new_val['properties']
+            prop_temp = {}
+            for item_key, item_val in items_map.items():
+                if item_val.get('format') in ['text', 'textarea']:
+                    prop_temp[value_key] = item_val
+                    prop_temp[value_key]['format'] = new_format
+                else:
+                    prop_temp[lang_key] = item_val
+            if is_multiple_prop:
+                new_val['items']['properties'] = prop_temp
+            else:
+                new_val['properties'] = prop_temp
+            # Update format for "Text" or "Textarea" form.
+            for new_f in new_form:
+                if new_f.get('key') == key:
+                    for item in new_f['items']:
+                        key_pattern = '{}[].{}' if is_multiple_prop else '{}.{}'
+                        if item.get('type') in ['text', 'textarea']:
+                            item['key'] = key_pattern.format(key, value_key)
+                            item['type'] = new_format
+                        else:
+                            item['key'] = key_pattern.format(key, lang_key)
+    return new_schema, new_form

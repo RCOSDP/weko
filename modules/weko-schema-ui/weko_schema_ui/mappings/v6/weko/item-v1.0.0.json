@@ -329,10 +329,10 @@
           }
         },
         "subject": {
-          "type": "nested",
+          "type": "object",
           "properties": {
             "value": {
-              "type": "text",
+              "type": "keyword",
               "copy_to": [
                 "search_other"
               ]
@@ -485,11 +485,101 @@
           }
         },
         "temporal": {
-          "type": "text",
+          "type": "keyword",
           "copy_to": [
             "search_other"
           ]
         },
+        "text1": {
+          "type": "text"
+        },
+        "text2": {
+          "type": "text"
+        },
+        "text3": {
+          "type": "text"
+        },
+        "text4": {
+          "type": "text"
+        },
+        "text5": {
+          "type": "text"
+        },
+        "text6": {
+          "type": "text"
+        },
+        "text7": {
+          "type": "text"
+        },
+        "text8": {
+          "type": "text"
+        },
+        "text9": {
+          "type": "text"
+        },
+        "text10": {
+          "type": "text"
+        },
+        "integer_range1":{
+          "type": "integer_range"
+        },
+        "integer_range2":{
+          "type": "integer_range"
+        },
+        "integer_range3":{
+          "type": "integer_range"
+        },
+        "integer_range4":{
+          "type": "integer_range"
+        },
+        "integer_range5":{
+          "type": "integer_range"
+        },
+        "float_range1":{
+          "type": "float_range"
+        },
+        "float_range2":{
+          "type": "float_range"
+        },
+        "float_range3":{
+          "type": "float_range"
+        },
+        "float_range4":{
+          "type": "float_range"
+        },
+        "float_range5":{
+          "type": "float_range"
+        },
+        "geo_point1":{
+          "type": "geo_point"
+        },
+        "date_range1":{
+          "type" : "date_range",
+          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis" 
+        },
+        "date_range2":{
+          "type" : "date_range",
+          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis" 
+        },
+        "date_range3":{
+          "type" : "date_range",
+          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis" 
+        },
+        "date_range4":{
+          "type" : "date_range",
+          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis" 
+        },
+        "date_range5":{
+          "type" : "date_range",
+          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis" 
+        },
+
+        "geo_shape1":{
+          "type" : "geo_shape"
+        },
+
+
+
         "geoLocation": {
           "type": "object",
           "properties": {
@@ -522,7 +612,7 @@
               }
             },
             "geoLocationPlace": {
-              "type": "text",
+              "type": "keyword",
               "copy_to": [
                 "search_other"
               ]
@@ -590,6 +680,9 @@
           "copy_to": [
             "search_other"
           ]
+        },
+        "author_link": {
+          "type": "text"
         },
         "volume": {
           "type": "text",

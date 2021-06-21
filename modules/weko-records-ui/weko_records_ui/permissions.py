@@ -24,6 +24,7 @@ from datetime import datetime as dt
 from datetime import timedelta
 
 from flask import abort, current_app
+from flask_babelex import get_locale, to_user_timezone, to_utc
 from flask_security import current_user
 from invenio_access import Permission, action_factory
 from invenio_accounts.models import User
@@ -31,7 +32,7 @@ from invenio_db import db
 from weko_groups.api import Group, Membership, MembershipState
 from weko_index_tree.utils import check_index_permissions, get_user_roles
 from weko_records.api import ItemTypes
-from weko_workflow.api import WorkActivity, WorkFlow
+from weko_workflow.api import WorkActivity
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission
@@ -47,6 +48,7 @@ download_original_pdf_permission = Permission(
 
 def page_permission_factory(record, *args, **kwargs):
     """Page permission factory."""
+
     def can(self):
         is_ok = False
 
@@ -71,6 +73,7 @@ def page_permission_factory(record, *args, **kwargs):
 
 def file_permission_factory(record, *args, **kwargs):
     """File permission factory."""
+
     def can(self):
         fjson = kwargs.get('fjson')
         return check_file_download_permission(record, fjson)
@@ -129,8 +132,9 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
         # Get email of login user.
         is_has_email = hasattr(current_user, "email")
         current_user_email = current_user.email if is_has_email else ''
+
         # Get email list of created workflow user.
-        user_id_list = [int(record.get('owner'))]
+        user_id_list = [int(record['owner'])] if record.get('owner') else []
         if record.get('weko_shared_id'):
             user_id_list.append(record.get('weko_shared_id'))
         created_user_email_list = get_email_list_by_ids(user_id_list)
@@ -159,7 +163,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                     if date and isinstance(date, list) and date[0]:
                         adt = date[0].get('dateValue')
                         if adt:
-                            pdt = dt.strptime(adt, '%Y-%m-%d')
+                            pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
                             is_can = True if dt.today() >= pdt else False
                         else:
                             is_can = True
@@ -173,7 +177,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                         date = fjson.get('date')
                         if date and isinstance(date, list) and date[0]:
                             adt = date[0].get('dateValue')
-                            pdt = dt.strptime(adt, '%Y-%m-%d')
+                            pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
                             is_can = True if dt.today() >= pdt else False
                     except BaseException:
                         is_can = False
@@ -371,7 +375,7 @@ def check_publish_status(record):
     pst = record.get('publish_status')
     pdt = record.get('pubdate', {}).get('attribute_value')
     try:
-        pdt = dt.strptime(pdt, '%Y-%m-%d')
+        pdt = to_utc(dt.strptime(pdt, '%Y-%m-%d'))
         pdt = True if dt.today() >= pdt else False
     except BaseException:
         pdt = False

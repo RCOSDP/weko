@@ -26,7 +26,8 @@ from flask.cli import with_appcontext
 from weko_authors.models import AuthorsPrefixSettings
 
 from .models import AdminLangSettings, AdminSettings, ApiCertificate, \
-    BillingPermission, SessionLifetime, StatisticTarget, StatisticUnit
+    BillingPermission, FacetSearchSetting, SessionLifetime, StatisticTarget, \
+    StatisticUnit
 
 
 @click.group()
@@ -225,3 +226,32 @@ def create_default_settings(name, scheme, url):
         click.secho('insert setting success')
     except Exception as ex:
         click.secho(str(ex))
+
+
+@click.group()
+def facet_search_setting():
+    """Facet search commands."""
+
+
+@facet_search_setting.command('create')
+@click.argument('name_en')
+@click.argument('name_jp')
+@click.argument('mapping')
+@click.argument('aggregations')
+@click.argument('active')
+@click.option('--active', is_flag=True, default=False)
+@with_appcontext
+def insert_facet_search_to_db(name_en, name_jp, mapping, aggregations, active):
+    """Insert facet search."""
+    try:
+        facet_search = {
+            'name_en': name_en,
+            'name_jp': name_jp,
+            'mapping': mapping,
+            'aggregations': ast.literal_eval(aggregations),
+            'active': active
+        }
+        FacetSearchSetting.create(facet_search)
+        click.secho('insert facet search')
+    except Exception as e:
+        click.secho(str(e))

@@ -1,27 +1,4 @@
-const label = {
-  "accessRights": document.getElementById("accessRights").value,
-  "open access": document.getElementById("open access").value,
-  "restricted access": document.getElementById("restricted access").value,
-  "metadata only access": document.getElementById("metadata only access").value,
-  "embargoed access": document.getElementById("embargoed access").value,
-  "language": document.getElementById("language").value,
-  "distributor": document.getElementById("distributor").value,
-  "dataType": document.getElementById("dataType").value,
-  "zho": document.getElementById("zho").value,
-  "cmn": document.getElementById("cmn").value,
-  "eng": document.getElementById("eng").value,
-  "fra": document.getElementById("fra").value,
-  "deu": document.getElementById("deu").value,
-  "jpn": document.getElementById("jpn").value,
-  "kor": document.getElementById("kor").value,
-  "rus": document.getElementById("rus").value,
-  "Social Science Japan Data Archive (SSJDA)": document.getElementById("Social Science Japan Data Archive (SSJDA)").value,
-  "Institute of Economic Research, Hitotsubashi University": document.getElementById("Institute of Economic Research, Hitotsubashi University").value,
-  "Panel Data Research Center at Keio University": document.getElementById("Panel Data Research Center at Keio University").value,
-  "JGSS Research Center": document.getElementById("JGSS Research Center").value,
-  "Historiographical Institute The University of Tokyo": document.getElementById("Historiographical Institute The University of Tokyo").value,
-
-}
+const LABELS = {};
 
 class MainLayout extends React.Component {
 
@@ -29,8 +6,10 @@ class MainLayout extends React.Component {
     super(props);
     this.state = {
       is_enable: true,
+      list_title: {},
       list_facet: {}
-    };
+    }
+    this.getTitle = this.getTitle.bind(this);
     this.get_facet_search_list = this.get_facet_search_list.bind(this);
     this.handleCheck = this.handleCheck.bind(this);
     this.convertData = this.convertData.bind(this);
@@ -65,6 +44,23 @@ class MainLayout extends React.Component {
         }
     });
   } */
+  getTitle() {
+    let listtitle = {};
+    $.ajax({
+      context: this,
+      url: '/facet-search/get-title',
+      type: 'POST',
+      success: function (response) {
+        if (response.status) {
+          listtitle = response.data;
+        }
+        this.setState({list_title: listtitle});
+      },
+      error: function () {
+        console.log("Error in get list")
+      }
+    });
+  }
 
   get_facet_search_list() {
     let search = window.location.search;
@@ -74,62 +70,53 @@ class MainLayout extends React.Component {
       url = '/api/index/';
     }
     $.ajax({
-        context: this,
-        url: url+ search,
-        type: 'GET',
-        contentType: 'application/json; charset=UTF-8',
-        success: function (res) {
-            if (params.search_type && String(params.search_type) === "2") {
-    //          Index faceted search
-              const data = res && res.aggregations && res.aggregations.path && res.aggregations.path.buckets && res.aggregations.path.buckets[0] ? res.aggregations.path.buckets[0] : {}
-              this.convertData(data && data[0] ? data[0] : {})
-            }
-            else {
-    //          default faceted search
-              this.convertData(res && res.aggregations ? res.aggregations : {})
-            }
-        },
-        error: function() {
-          console.log("Error in get list")
+      context: this,
+      url: url + search,
+      type: 'GET',
+      contentType: 'application/json; charset=UTF-8',
+      success: function (res) {
+        if (params.search_type && String(params.search_type) === "2") {
+          // Index faceted search
+          const data = res && res.aggregations && res.aggregations.path && res.aggregations.path.buckets && res.aggregations.path.buckets[0] ? res.aggregations.path.buckets[0] : {}
+          this.convertData(data && data[0] ? data[0] : {})
+        } else {
+          // default faceted search
+          this.convertData(res && res.aggregations ? res.aggregations : {})
         }
+      },
+      error: function () {
+        console.log("Error in get list")
+      }
     });
   }
 
   getUrlVars() {
-    var vars = {};
-    var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
-        vars[key] = value;
+    let vars = {};
+    let pattern = /[?&]+([^=&]+)=([^&]*)/gi;
+    window.location.href.replace(pattern, function (m, key, value) {
+      vars[key] = value;
     });
     return vars;
-}
+  }
 
   convertData(data) {
-    const list_name_facet = ["accessRights", "dataType", "distributor", "language"]
-    let new_data = {
-        accessRights : {},
-        dataType : {},
-        distributor : {},
-        language : {}
-      }
+    let list_facet = {};
     if (data) {
-      Object.keys(data).map(function (name, k)  {
-        if (list_name_facet.indexOf(name)>=0) {
-          let item = data[name]
-          if (item[name]) {
-            item = item[name]
-          }
-          new_data[name] = item
+      Object.keys(data).map(function (name, k) {
+        let val = data[name][name] ? data[name][name] : data[name];
+        let hasBuckets = val['key'] && val['key'].hasOwnProperty('buckets');
+        hasBuckets = val.hasOwnProperty('buckets') || hasBuckets;
+        if (hasBuckets) {
+          list_facet[name] = val[name] ? val[name] : val;
         }
       })
     }
-
-    this.setState({
-      list_facet: new_data
-    })
+    this.setState({list_facet: list_facet});
   }
 
   componentDidMount() {
-      this.get_facet_search_list();
+    this.getTitle();
+    this.get_facet_search_list();
   }
 
   handleCheck(params, value) {
@@ -141,37 +128,37 @@ class MainLayout extends React.Component {
     } else {
       search+= "&" + pattern
     }
-    window.location.href = "/search"+ search
+    window.location.href = "/search"+ search;
   }
 
   render() {
-    const { is_enable, list_facet } = this.state
-    const search = window.location.search.replace(',', '%2C')
-    const that = this
+    const { is_enable, list_title, list_facet } = this.state;
+    const search = window.location.search.replace(',', '%2C');
+    const that = this;
     return (
       <div>
         {is_enable && <div className="facet-search break-word">
           {
-            Object.keys(list_facet).map(function(name, key) {
-              const item = list_facet[name]
+            Object.keys(list_facet).map(function (name, key) {
+              const item = list_facet[name];
               return (
                 <div className="panel panel-default" key={key}>
                   <div className="panel-heading clearfix">
-                    <h3 className="panel-title">{label[name]}</h3>
+                    <h3 className="panel-title">{list_title[name]}</h3>
                   </div>
                   <div className="panel-body index-body">
                     {
-                      item.buckets && item.buckets.map(function(subitem, k) {
-                        const pattern = encodeURIComponent(name) + "=" + encodeURIComponent(subitem.key)
-                        const value = search.indexOf(pattern) >=0 ? true : false
+                      item.buckets && item.buckets.map(function (subitem, k) {
+                        const pattern = encodeURIComponent(name) + "=" + encodeURIComponent(subitem.key);
+                        const value = search.indexOf(pattern) >= 0 ? true : false;
                         return (
                           <label>
-                            <input
-                              type="checkbox"
-                              defaultChecked={value}
-                              onChange={function() { that.handleCheck(name, subitem.key) }}
+                            <input type="checkbox" defaultChecked={value}
+                              onChange={function () {
+                                that.handleCheck(name, subitem.key)
+                              }}
                             ></input>
-                            {label[subitem.key] || subitem.key}({subitem.doc_count})
+                            {LABELS[subitem.key] || subitem.key}({subitem.doc_count})
                           </label>
                         )
                       })
@@ -181,7 +168,6 @@ class MainLayout extends React.Component {
               )
             })
           }
-
         </div>}
       </div>
     )
@@ -189,6 +175,11 @@ class MainLayout extends React.Component {
 }
 
 $(function () {
+  //Get all labels.
+  let labels = document.getElementsByClassName('body-facet-search-label');
+  for (let i = 0; i < labels.length; i++) {
+    LABELS[labels[i].id] = labels[i].value;
+  }
   ReactDOM.render(
     <MainLayout />,
     document.getElementById('app-facet-search')
