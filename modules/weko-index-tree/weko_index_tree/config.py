@@ -89,3 +89,6 @@ WEKO_INDEX_TREE_STATE_PREFIX = "index_tree_expand_state"
 
 WEKO_INDEX_TREE_STATE_TIME_LIFE_SECONDS = 60
 """Default index tree state time life."""
+
+WEKO_INDEX_TREE_INDEX_LOCK_KEY_PREFIX = "lock_index_"
+"""Index lock key prefix."""
