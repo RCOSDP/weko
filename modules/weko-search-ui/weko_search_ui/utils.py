@@ -497,10 +497,10 @@ def check_import_items(file_name: str, file_content: str,
             list_record, is_change_identifier)
         handle_check_cnri(list_record)
         handle_check_doi_indexes(list_record)
+        handle_check_file_metadata(list_record, data_path)
         handle_check_doi_ra(list_record)
         handle_check_doi(list_record)
         handle_check_date(list_record)
-        handle_check_file_metadata(list_record, data_path)
         result['list_record'] = list_record
     except Exception as ex:
         error = _('Internal server error')
@@ -933,8 +933,11 @@ def up_load_file(record, root_path, deposit,
                 if not is_thumbnail and idx < len(old_files) else None
             if not path or not os.path.isfile(root_path + '/' + path):
                 if old_file and \
-                    not (record['filenames'][idx] and
-                         old_file.key == record['filenames'][idx]['filename']):
+                        not (
+                            record['filenames'][idx]
+                            and old_file.key
+                            == record['filenames'][idx]['filename']
+                        ):
                     old_file.remove()
                 continue
 

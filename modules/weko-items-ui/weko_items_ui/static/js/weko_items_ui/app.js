@@ -626,8 +626,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.original_title = {};
 
       $scope.listFileNeedRemoveAfterReplace = [];
-      $scope.onBtnReplaceFileContentClick = function (file_key) {
-        $('#file_replace_' + file_key)[0].click();
+      $scope.onBtnReplaceFileContentClick = function (fileKey) {
+        $('#file_replace_' + fileKey)[0].click();
       }
 
       $scope.onReplaceFileContentChange = function (files, current_version_id) {
@@ -2558,9 +2558,13 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.replaceFileForm = function (replace_version_id, fileInfo) {
         let model = $rootScope.recordsVM.invenioRecordsModel;
         $scope.searchFilemetaKey();
-        $scope.filemeta_keys.forEach(function (filemeta_key) {
-          idx = model[filemeta_key].map(f => f.version_id).indexOf(replace_version_id);
-          model[filemeta_key].splice(idx, 1, fileInfo);
+        $scope.filemeta_keys.forEach(function (filemetaKey) {
+          f = model[filemetaKey].filter(f => f.version_id === replace_version_id)[0];
+          f.filename = fileInfo.filename;
+          f.version_id = fileInfo.version_id;
+          f.filesize = fileInfo.filesize;
+          f.format = fileInfo.format;
+          f.url.url = fileInfo.url.url;
         });
       }
 

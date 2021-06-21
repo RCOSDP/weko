@@ -757,7 +757,10 @@ class ObjectResource(ContentNegotiatedMethodView):
                 'File checksum mismatch detected.', extra=logger_data)
 
         if is_preview:
-            file_previewed.send(current_app._get_current_object(), obj=obj)
+            allow_aggs = bool(request.args
+                              and request.args.get('allow_aggs', '') == 'True')
+            if allow_aggs:
+                file_previewed.send(current_app._get_current_object(), obj=obj)
         else:
             file_downloaded.send(current_app._get_current_object(), obj=obj)
         return obj.send_file(restricted=restricted,
