@@ -24,6 +24,7 @@ from datetime import datetime as dt
 from datetime import timedelta
 
 from flask import abort, current_app
+from flask_babelex import get_locale, to_user_timezone, to_utc
 from flask_security import current_user
 from invenio_access import Permission, action_factory
 from invenio_accounts.models import User
@@ -47,6 +48,7 @@ download_original_pdf_permission = Permission(
 
 def page_permission_factory(record, *args, **kwargs):
     """Page permission factory."""
+
     def can(self):
         is_ok = False
 
@@ -71,6 +73,7 @@ def page_permission_factory(record, *args, **kwargs):
 
 def file_permission_factory(record, *args, **kwargs):
     """File permission factory."""
+
     def can(self):
         fjson = kwargs.get('fjson')
         return check_file_download_permission(record, fjson)
@@ -160,7 +163,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                     if date and isinstance(date, list) and date[0]:
                         adt = date[0].get('dateValue')
                         if adt:
-                            pdt = dt.strptime(adt, '%Y-%m-%d')
+                            pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
                             is_can = True if dt.today() >= pdt else False
                         else:
                             is_can = True
@@ -174,7 +177,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                         date = fjson.get('date')
                         if date and isinstance(date, list) and date[0]:
                             adt = date[0].get('dateValue')
-                            pdt = dt.strptime(adt, '%Y-%m-%d')
+                            pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
                             is_can = True if dt.today() >= pdt else False
                     except BaseException:
                         is_can = False
@@ -372,7 +375,7 @@ def check_publish_status(record):
     pst = record.get('publish_status')
     pdt = record.get('pubdate', {}).get('attribute_value')
     try:
-        pdt = dt.strptime(pdt, '%Y-%m-%d')
+        pdt = to_utc(dt.strptime(pdt, '%Y-%m-%d'))
         pdt = True if dt.today() >= pdt else False
     except BaseException:
         pdt = False
