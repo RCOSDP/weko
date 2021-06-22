@@ -39,8 +39,7 @@ class S3FSFileStorage(PyFSFileStorage):
         """Initialize file on storage and truncate to given size."""
         fs, path = self._get_fs()
 
-        if fs.exists(path):
-            fp = fs.rm(path)
+        self.remove(fs, path)
         fp = fs.open(path, mode='wb')
 
         try:
@@ -62,11 +61,18 @@ class S3FSFileStorage(PyFSFileStorage):
 
         return self.fileurl, size, None
 
+    def remove(self, fs, path):
+        """Delete a file with check FS."""
+        if fs.exists(path):
+            if isinstance(fs, s3fs.S3FileSystem):
+                fs.rm(path)
+            else:
+                fs.remove(path)
+
     def delete(self):
         """Delete a file."""
         fs, path = self._get_fs()
-        if fs.exists(path):
-            fs.rm(path)
+        self.remove(fs, path)
         return True
 
     def update(self,
