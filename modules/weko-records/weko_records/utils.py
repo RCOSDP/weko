@@ -49,7 +49,7 @@ def json_loader(data, pid, owner_id=None):
         if isinstance(value, list):
             for v in value:
                 if 'nameIdentifiers' in v \
-                        and len(v['nameIdentifiers']) == 0 \
+                        and len(v['nameIdentifiers']) > 0 \
                         and 'nameIdentifierScheme' in v['nameIdentifiers'][0] \
                         and v['nameIdentifiers'][0]['nameIdentifierScheme'] == 'WEKO':
                     author_link.append(
