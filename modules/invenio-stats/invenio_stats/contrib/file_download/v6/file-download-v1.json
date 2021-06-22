@@ -45,6 +45,10 @@
           "type": "keyword",
           "index": true
         },
+        "root_file_id": {
+          "type": "keyword",
+          "index": true
+        },
         "file_key": {
           "type": "keyword",
           "index": true

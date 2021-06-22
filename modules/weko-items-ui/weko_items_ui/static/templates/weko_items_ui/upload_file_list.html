@@ -23,8 +23,10 @@
       <th class="text-center">Progress</th>
       <th class="text-center">Actions</th>
     </tr>
-    <tr class="sel-file" ng-repeat="f in filesVM.files | filter:fileSearch | filter:{is_thumbnail: '!true'}">
-      <td>{{ f.key | limitTo:40 }} <span ng-show="f.key.length > 50">...</span></td>
+    <tr class="sel-file" ng-repeat="f in filesVM.files | filter:fileSearch | filter:{is_thumbnail: '!true', hide: '!true'} | orderBy: 'position'">
+      <td ng-style="{color: f.replace_version_id?'rgb(167 64 97)':'initial'}">
+        {{ f.key.split('?replace_version_id=')[0] | limitTo:40 }} <span ng-show="f.key.split('?replace_version_id=')[0].length > 40">...</span>
+      </td>
       <td>{{ f.size | bytesToHumanReadable }}</td>
       <td class="text-center">
         <span ng-show="f.progress < 100 && !f.errored">{{ f.progress }} %</span>
@@ -32,7 +34,13 @@
         <span ng-show="f.errored" class="text-danger">Error</span>
         <span ng-show="f.completed" class="text-success">✓</span>
       </td>
-      <td ng-show="f" class="text-center"><a ng-click="filesVM.remove(f)"><i class="fa fa-trash" aria-hidden="true"></i></a></td>
+      <td ng-show="f" class="text-center">
+        <a ng-click="onRemoveFileContent(f)"><i class="fa fa-trash" aria-hidden="true"></i></a>
+        <span ng-if="isEditMode && f.completed" class="text-success" style="margin-left: 10px;">
+          <input type="file" id="file_replace_{{ f.version_id }}" style="display: None;" ngf-select="onReplaceFileContentChange($files, f.version_id)" />
+          <button class="btn btn-default" ng-click="onBtnReplaceFileContentClick(f.version_id)">Replace</button>
+        </span>
+      </td>
     </tr>
     <tr ng-show="(filesVM.files | filter:fileSearch).length == 0">
       <td colspan="4" class="text-center text-muted"> No results.</td>
@@ -44,7 +52,7 @@
         Loading ..
       </span>
       <button class="btn btn-sm btn-default" type="submit" ng-show="filesVM.invenioFilesBusy" ng-click="filesVM.cancel()">Cancel</button>
-      <button class="btn btn-sm btn-primary" type="submit" ng-disabled="filesVM.invenioFilesBusy || filesVM.getCompleted().length === filesVM.files.length" ng-click="filesVM.upload()">Start upload</button>
+      <button class="btn btn-sm btn-primary" type="submit" ng-disabled="filesVM.invenioFilesBusy || filesVM.getCompleted().length === filesVM.files.length" ng-click="onUploadFileContents()">Start upload</button>
     </div>
   </div>
 </div>

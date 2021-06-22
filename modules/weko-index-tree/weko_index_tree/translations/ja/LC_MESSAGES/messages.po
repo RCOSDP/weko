@@ -139,3 +139,6 @@ msgstr "このインデクスに所属しているアイテムがインポート
 
 msgid "The index cannot be kept publication date to a future date because there are links from items that have a DOI."
 msgstr "DOIが付与されているアイテムからのリンクがあるため、インデックスの公開日を未来日に変更することはできません。"
+
+msgid "Index Delete is in progress on another device."
+msgstr "他の端末でインデックス削除を実行中です"

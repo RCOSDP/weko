@@ -59,7 +59,9 @@ def preview(pid, record, template=None, **kwargs):
         file_previewer = None
 
     # Find a suitable previewer
-    fileobj = PreviewFile(pid, record, fileobj)
+    allow_aggs = bool(request.args
+                      and request.args.get('allow_aggs', '') == 'True')
+    fileobj = PreviewFile(pid, record, fileobj, allow_aggs)
 
     if fileobj.has_extensions('.doc', '.docx', '.ppt',
                               '.pptx', '.xls', '.xlsx'):

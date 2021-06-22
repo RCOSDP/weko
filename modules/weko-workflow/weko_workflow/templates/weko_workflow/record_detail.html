@@ -35,7 +35,7 @@
               {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
               {%- if files_org| selectattr('is_thumbnail', 'equalto', False)| list | length > 0 and not record_org.hide_file-%}
               <!-- Preview Carousel -->
-              {{ preview_carousel(record=record_org, files=files_org, pid=pid, el_id=preview_carousel_id, edit_page_prev=True) }}
+              {{ preview_carousel(record=record_org, files=files_org, pid=pid, el_id=preview_carousel_id, edit_page_prev=True, cur_step=cur_step) }}
               <hr />
               <table class="table table-bordered table-striped">
                 <thead>

@@ -28,7 +28,6 @@ import re
 import sys
 import unicodedata
 from datetime import datetime, timedelta
-from math import ceil
 
 import redis
 from flask import abort, current_app, flash, jsonify, make_response, \
@@ -204,73 +203,95 @@ class ReportView(BaseView):
 
     @expose('/', methods=['GET'])
     def index(self):
+        from invenio_stats.utils import get_aggregations
+        from weko_index_tree.api import Indexes
+
         try:
+            indexes = Indexes.get_public_indexes_list()
+            indexes_query = []
+
+            if indexes:
+                indexes_num = len(indexes)
+                max_clause_count = 1024
+                for div in range(0, int(indexes_num / max_clause_count) + 1):
+                    e_right = div * max_clause_count
+                    e_left = (div + 1) * max_clause_count \
+                        if indexes_num > (div + 1) * max_clause_count \
+                        else indexes_num
+                    div_indexes = []
+                    for index in indexes[e_right:e_left]:
+                        div_indexes.append({
+                            "wildcard": {
+                                "path": str(index)
+                            }
+                        })
+                    indexes_query.append({
+                        "bool": {
+                            "should": div_indexes
+                        }
+                    })
+
             aggs_query = {
                 "size": 0,
-                "post_filter": {
-                    "bool": {
-                        "must": [
-                            {
-                                "term": {
-                                    "relation_version_is_last": True
-                                }
-                            },
-                            {
-                                "exists": {
-                                    "field": "path"
-                                }
-                            }
-                        ]
-                    }
-                },
                 "aggs": {
-                    "aggs_filter": {
+                    "aggs_public": {
                         "filter": {
                             "bool": {
                                 "must": [
                                     {
                                         "term": {
-                                            "relation_version_is_last": True
+                                            "publish_status": "0"
                                         }
                                     },
                                     {
-                                        "exists": {
-                                            "field": "path"
+                                        "range": {
+                                            "publish_date": {
+                                                "lte": "now/d"
+                                            }
                                         }
                                     }
-                                ]
-                            }
-                        },
-                        "aggs": {
-                            "aggs_term": {
-                                "terms": {
-                                    "field": "publish_status",
-                                    "order": {"_count": "desc"}
-                                }
+                                ],
+                                "should": indexes_query
                             }
                         }
+                    }
+                },
+                "query": {
+                    "bool": {
+                        "must": [
+                            {
+                                "term":
+                                {
+                                    "relation_version_is_last": True
+                                }
+                            },
+                            {
+                                "exists":
+                                {
+                                    "field": "path"
+                                }
+                            }
+                        ]
                     }
                 }
             }
 
-            from invenio_stats.utils import get_aggregations
             aggs_results = get_aggregations(
                 current_app.config['SEARCH_UI_SEARCH_INDEX'], aggs_query)
 
-            total = 0
-            result = {}
-            if aggs_results \
-                    and 'aggs_filter' in aggs_results \
-                    and 'aggs_term' in aggs_results['aggs_filter']:
-                for bucket \
-                        in aggs_results['aggs_filter']['aggs_term']['buckets']:
-                    bkt = {'open': bucket['doc_count']} \
-                        if bucket['key'] == '0' \
-                        else {'private': bucket['doc_count']}
-                    result.update(bkt)
-                    total = total + bucket['doc_count']
-
-            result.update({'total': total})
+            result = {
+                'total': 0,
+                'open': 0,
+                'private': 0
+            }
+            if aggs_results and aggs_results.get(
+                    'aggregations', {}).get('aggs_public'):
+                result = {
+                    'total': aggs_results['hits']['total'],
+                    'open': aggs_results['aggregations'][
+                        'aggs_public']['doc_count']
+                }
+                result['private'] = result['total'] - result['open']
 
             cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
                 format(name='email_schedule')
@@ -1072,7 +1093,8 @@ class RestrictedAccessSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         return self.render(
-            current_app.config["WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS_TEMPLATE"],
+            current_app.config[
+                "WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS_TEMPLATE"],
             data=json.dumps(get_restricted_access()),
             items_per_page=current_app.config[
                 "WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER"]

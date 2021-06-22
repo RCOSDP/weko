@@ -8,6 +8,7 @@
 
 """Query processing classes."""
 
+import json
 from datetime import datetime
 
 import dateutil.parser
@@ -325,6 +326,71 @@ class ESTermsQuery(ESQuery):
         query_result = agg_query.execute().to_dict()
         res = self.process_query_result(query_result, start_date, end_date)
         return res
+
+
+class ESWekoFileStatsQuery(ESTermsQuery):
+    """Weko ES Query for File Stats."""
+
+    def __init__(self, main_fields=None, main_query=None, *args, **kwargs):
+        """Constructor.
+
+        :param main_fields: name of the timestamp field.
+        :param main_query: list of fields to copy from the top hit document
+            into the resulting aggregation.
+        """
+        super(ESWekoFileStatsQuery, self).__init__(*args, **kwargs)
+        self.main_fields = main_fields or []
+        self.main_query = main_query or {}
+
+    def build_query(self, start_date, end_date, **kwargs):
+        """Build the elasticsearch query."""
+        agg_query = Search(using=self.client,
+                           index=self.index,
+                           doc_type=self.doc_type)[0:0]
+        if self.main_query:
+            query_q = self.main_query
+            for _field in self.main_fields:
+                query_q = json.dumps(query_q).replace(
+                    "@{}".format(_field), kwargs[_field])
+                query_q = json.loads(query_q)
+            agg_query.update_from_dict(query_q)
+
+        if start_date or end_date:
+            time_range = {}
+            if start_date:
+                time_range['gte'] = start_date.isoformat()
+            if end_date:
+                time_range['lte'] = end_date.isoformat()
+            time_range['time_zone'] = current_app.config[
+                'STATS_WEKO_DEFAULT_TIMEZONE']
+            agg_query = agg_query.filter(
+                'range',
+                **{self.time_field: time_range})
+
+        for modifier in self.query_modifiers:
+            agg_query = modifier(agg_query, **kwargs)
+
+        base_agg = agg_query.aggs
+
+        def _apply_metric_aggs(agg):
+            for dst, (metric, field, opts) in self.metric_fields.items():
+                agg.metric(dst, metric, field=field, **opts)
+
+        _apply_metric_aggs(base_agg)
+        if self.aggregated_fields:
+            cur_agg = base_agg
+            for term in self.aggregated_fields:
+                size = kwargs.get('agg_size') if kwargs.get('agg_size') else \
+                    current_app.config['STATS_ES_INTEGER_MAX_VALUE']
+                cur_agg = cur_agg.bucket(term, 'terms', field=term, size=size)
+                _apply_metric_aggs(cur_agg)
+
+        if self.copy_fields:
+            base_agg.metric(
+                'top_hit', 'top_hits', size=1, sort={'timestamp': 'desc'}
+            )
+
+        return agg_query
 
 
 class ESWekoTermsQuery(ESTermsQuery):
