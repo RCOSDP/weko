@@ -24,7 +24,7 @@ msgstr ""
 msgid ""
 "Required. Provide list of the emails of the users you wish to be added. "
 "Put each email on new line."
-msgstr "必須です　追加したいユーザーのメールアドレスを指定してください 新しいの行にメールアドレスを追加してください"
+msgstr "必須.追加するユーザーのメールアドレスを入力してください．複数メールアドレスを入力する際は改行してください．"
 
 #: weko_groups/models.py:54
 msgid "Users can self-subscribe."

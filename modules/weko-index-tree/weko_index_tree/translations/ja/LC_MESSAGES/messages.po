@@ -25,7 +25,7 @@ msgstr "情報が更新されました"
 
 #: weko_index_tree/admin.py:137
 msgid "No file part"
-msgstr "ファイルの一部がありません"
+msgstr "No file part"
 
 #: weko_index_tree/admin.py:142
 msgid "No selected file"

@@ -218,8 +218,10 @@ class EventsIndexer(object):
                     _type=self.doctype,
                     _source=msg,
                 )
-                # Save stats event into Database.
-                StatsEvents.save(rtn_data, True)
+                if current_app.config['STATS_WEKO_DB_BACKUP_EVENTS']:
+                    # Save stats event into Database.
+                    StatsEvents.save(rtn_data, True)
+
                 yield rtn_data
             except Exception:
                 current_app.logger.exception(u'Error while processing event')

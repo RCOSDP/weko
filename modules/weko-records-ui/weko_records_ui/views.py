@@ -30,6 +30,7 @@ from flask import Blueprint, abort, current_app, escape, flash, jsonify, \
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
+from invenio_cache import cached_unless_authenticated
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
 from invenio_files_rest.permissions import has_update_version_role
@@ -51,7 +52,8 @@ from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_records.api import ItemLink
 from weko_records.serializers import citeproc_v1
-from weko_records.utils import remove_weko2_special_character
+from weko_records.utils import custom_record_medata_for_export, \
+    remove_weko2_special_character
 from weko_search_ui.api import get_search_detail_keyword
 from weko_workflow.api import WorkFlow
 
@@ -65,7 +67,7 @@ from .permissions import check_content_clickable, check_created_id, \
     check_permission_period, file_permission_factory, get_permission
 from .utils import get_billing_file_download_permission, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
-    hide_item_metadata, is_show_email_of_creator, replace_license_free
+    is_show_email_of_creator
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
@@ -86,6 +88,13 @@ def record_from_pid(pid_value):
         current_app.logger.debug('Unable to get version record: ')
         current_app.logger.debug(e)
         return {}
+
+
+@blueprint.app_template_filter()
+def url_to_link(field):
+    if field.startswith("http"):
+        return True
+    return False
 
 
 @blueprint.app_template_filter()
@@ -152,17 +161,14 @@ def export(pid, record, template=None, **kwargs):
         pid.pid_type)
     schema_type = request.view_args.get('format')
     fmt = formats.get(schema_type)
-
-    # Custom Record Metadata for export JSON
-    hide_item_metadata(record)
-    replace_license_free(record)
-
     if fmt is False:
         # If value is set to False, it means it was deprecated.
         abort(410)
     elif fmt is None:
         abort(404)
     else:
+        # Custom Record Metadata for export JSON
+        custom_record_medata_for_export(record)
         if 'json' not in schema_type and 'bibtex' not in schema_type:
             record.update({'@export_schema_type': schema_type})
 
@@ -868,14 +874,20 @@ def escape_str(s):
     :param s: string
     :return: result
     """
-    br_char = '<br/>'
     if s:
         s = remove_weko2_special_character(s)
         s = str(escape(s))
-        s = s.replace(
-            '\r\n',
-            br_char).replace('\r', br_char).replace('\n', br_char)
+        s = escape_newline(s)
     return s
+
+
+def escape_newline(s):
+    """replace \n to <br/>
+    :param s: string
+    :return: result
+    """
+    br_char = '<br/>'
+    return s.replace('\r\n', br_char).replace('\r', br_char).replace('\n', br_char)
 
 
 @blueprint.app_template_filter('preview_able')

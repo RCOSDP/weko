@@ -21,16 +21,24 @@
 {% from "weko_records_ui/output_detail_data.html" import output_detail_data, output_attribute_value %}
 {% from "weko_records_ui/creator_detail_template.html" import output_creator_data %}
 {% from "weko_records_ui/output_bibliographic_information_detail.html" import output_bibliographic_information %}
-{% macro output_item_detail(record, files, files_thumbnail, pid, items_show_list, is_top_page=false, is_logged_in=false, open_day_display_flg=true, cur_step=None) %}
-{% autoescape false %}
+{% macro output_item_detail(m_record,
+                            m_files,
+                            m_files_thumbnail,
+                            m_pid,
+                            m_items_show_list,
+                            m_is_top_page=False,
+                            m_is_logged_in=False,
+                            m_open_day_display_flg=true,
+                            m_cur_step=None) %}
+  {% autoescape False %}
   <table class="table table-bordered table-striped detail-table">
       {% if record.item_type_info and is_logged_in %}
         <tr>
-          <th scope="row" colspan="6">{{ _('item type') }}</th>
-          <td>{{ record.item_type_info }}</td>
+          <th scope="row" colspan="6">{{ _('Item type') }}</th>
+          <td>{{ m_record.item_type_info }}</td>
         </tr>
       {% endif %}
-      {% for lst in items_show_list %}
+      {% for lst in m_items_show_list %}
           {% if 'attribute_name_hidden' not in lst.keys() %}
               {% if lst['attribute_name'] == 'Reference' %}
                 <tr>
@@ -72,8 +80,8 @@
                               {{ key }}
                             {%- endfor -%}
                           {%- endif -%}
-                          {%- for l in lst['attribute_value_mlt'] -%}
-                            {{ output_attribute_value(l, is_logged_in, open_day_display_flg) }}
+                          {%- for item in lst['attribute_value_mlt'] -%}
+                            {{ output_attribute_value(item, m_is_logged_in, m_open_day_display_flg) }}
                           {%- endfor -%}
                         </td>
                       </tr>
@@ -84,37 +92,44 @@
                 {% endif %}
               {% endif %}
           {% endif %}
-          {%- if 'is_thumbnail' in lst.keys() and lst.get('is_thumbnail') and files_thumbnail -%}
+          {%- if 'is_thumbnail' in lst.keys() and lst.get('is_thumbnail') and m_files_thumbnail -%}
             <tr>
               <th scope="row"
                   colspan="6">{{ lst.get('attribute_name_i18n', _('Thumbnail')) }}</th>
               <td>
-                  {%- for thumb in files_thumbnail -%}
-                      {%- set thumb_name = thumb.filename or thumb.key -%}
-                      {% if cur_step and cur_step == 'item_login' or cur_step == 'approval' %}
-                        {%- set thumb_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
-                          filename=thumb.key) %}
+                {%- for thumb in m_files_thumbnail -%}
+                    {%- set thumb_name = thumb.filename or thumb.key -%}
+                    {% if m_record.is_guest and thumb.links and thumb.links.self %}
+                      {%- set thumb_url = thumb.links.self %}
+                    {% else %}
+                      {% if m_cur_step and m_cur_step == 'item_login' or m_cur_step == 'approval' %}
+                        {%- set thumb_url = url_for('invenio_records_ui.recid_files',
+                                                    pid_value=m_pid.pid_value,
+                                                    filename=thumb.key) -%}
                       {% else %}
-                        {%- set rootVer = pid.pid_value.split('.') -%}
-                        {%- set thumb_url = url_for('invenio_records_ui.recid_files', pid_value=rootVer[0],
-                          filename=thumb.key) %}
+                        {%- set root_pid = m_pid.pid_value.split('.') -%}
+                        {%- set thumb_url = url_for('invenio_records_ui.recid_files',
+                                                    pid_value=root_pid[0],
+                                                    filename=thumb.key) -%}
                       {% endif %}
-                    <p>
-                      <span>{{ thumb_name }}</span><br>
-                      <img src="{{ thumb_url }}" alt={{ thumb_name }}
-                              style="max-width:{{ config.WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL }}px;"
-                      />
-                    </p>
-                  {% endfor %}
+                    {% endif %}
+                  <p>
+                    <span>{{ thumb_name }}</span><br>
+                    <img src={{ thumb_url }}
+                         alt={{ thumb_name }}
+                         style="max-width: {{ config.WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL }}px;"
+                    />
+                  </p>
+                {% endfor %}
               </td>
             </tr>
           {% endif %}
       {% endfor %}
-      {% if record.relation and is_top_page %}
+      {% if m_record.relation and m_is_top_page %}
         <tr>
           <th scope="row" colspan="6">{{ _('Link') }}</th>
           <td>
-              {%- for sub_record in record.relation %}
+              {%- for sub_record in m_record.relation %}
                 <a target="_self"
                    href="{{ sub_record.item_links }}">{{ sub_record.item_title | escape_str }}</a>
                 <br>
@@ -122,11 +137,11 @@
           </td>
         </tr>
       {% endif %}
-      {% if record.pubdate and is_top_page and is_logged_in %}
+      {% if m_record.pubdate and m_is_top_page and m_is_logged_in %}
         <tr>
           <th scope="row" colspan="6">{{ _('Publish Status') }}</th>
-            {%- set pubs = record.get('publish_status','1') -%}
-            {% if record.editable %}
+            {%- set public_status = m_record.get('publish_status','1') -%}
+            {% if m_record.editable %}
                 {%- set dis = '' -%}
             {% else %}
                 {%- set dis = 'disabled' -%}
@@ -134,10 +149,10 @@
           <td>
             <div>
               <form class="form form-inline" id="public_status_form"
-                    action="{{ url_for('invenio_records_ui.recid_publish', pid_value=pid.pid_value) }}"
+                    action="{{ url_for('invenio_records_ui.recid_publish', pid_value=m_pid.pid_value) }}"
                     method="POST">
-                {% if record | check_permission %}
-                    {% if '0' in pubs %}
+                {% if m_record | check_permission %}
+                    {% if '0' in public_status %}
                         {{ _('Public') }}
                         <input type="hidden" name="status" value="1">
                       <button class="btn btn-default btn-xs" type="button"
@@ -155,7 +170,7 @@
                       </button>
                     {% endif %}
                 {% else %}
-                    {% if '0' in pubs %}{{ _('Publish') }}{% else %}
+                    {% if '0' in public_status %}{{ _('Publish') }}{% else %}
                         {{ _('Private') }}
                     {% endif %}
                 {% endif %}
@@ -165,5 +180,5 @@
         </tr>
       {% endif %}
   </table>
-{% endautoescape %}
+  {% endautoescape %}
 {% endmacro %}

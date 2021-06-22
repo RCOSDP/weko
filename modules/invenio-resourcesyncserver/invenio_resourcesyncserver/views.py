@@ -13,7 +13,10 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Blueprint, Response, abort, redirect, url_for
+from flask import Blueprint, Response, abort, redirect, url_for, current_app
+
+from invenio_oaiserver.response import getrecord
+from lxml import etree
 
 from .api import ChangeListHandler, ResourceListHandler
 from .utils import render_capability_xml, render_well_know_resourcesync
@@ -175,6 +178,16 @@ def source_description():
 @blueprint.route("/resync/<index_id>/records/<record_id>")
 def record_detail_in_index(index_id, record_id):
     """Alternate route for record detail."""
-    return redirect(
-        url_for('invenio_records_ui.recid',
-                pid_value=record_id))
+
+    recid_zfill=record_id.zfill(current_app.config.get('OAISERVER_CONTROL_NUMBER_LEN', 0))
+    pid = current_app.config.get('OAISERVER_ID_PREFIX', '') + str(recid_zfill)
+    et = etree.XML(etree.tostring(getrecord(identifier=pid,metadataPrefix='jpcoar',verb='getrecord')))
+    records = et.findall('./getrecord/record/metadata/{https://github.com/JPCOAR/schema/blob/master/1.0/}jpcoar', namespaces=et.nsmap)
+    xml =  ''
+    if len(records)==1:
+      xml = etree.tostring(records[0], encoding='utf-8').decode()
+
+    return Response(xml,mimetype='application/xml')
+    #return redirect(
+    #    url_for('invenio_records_ui.recid',
+    #            pid_value=record_id))

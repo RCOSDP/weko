@@ -87,4 +87,5 @@ celerybeat-schedule
 celeryd.pid
 # demo data
 weko-demodata/
-
+test/data
+test/import.zip

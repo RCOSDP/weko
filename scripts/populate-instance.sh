@@ -425,3 +425,20 @@ ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
 # create-widget-bucket-begin
 ${INVENIO_WEB_INSTANCE} widget init
 # create-widget-bucket-end
+
+# create-facet-search-setting-begin
+${INVENIO_WEB_INSTANCE} facet_search_setting create \
+       "Data Language"	"デ一タの言語"	"language"	"[]"	True
+${INVENIO_WEB_INSTANCE} facet_search_setting create \
+       "Access"	"アクセス制限"	"accessRights"	"[]"	True
+${INVENIO_WEB_INSTANCE} facet_search_setting create \
+       "Location"	"地域"	"geoLocation.geoLocationPlace"	"[]"	True
+${INVENIO_WEB_INSTANCE} facet_search_setting create \
+       "Temporal"	"時間的範囲"	"temporal"	"[]"	True
+${INVENIO_WEB_INSTANCE} facet_search_setting create \
+       "Topic"	"トピック"	"subject.value"	"[]"	True
+${INVENIO_WEB_INSTANCE} facet_search_setting create \
+       "Distributor"	"配布者"	"contributor.contributorName"	"[{'agg_value': 'Distributor', 'agg_mapping': 'contributor.@attributes.contributorType'}]"	True
+${INVENIO_WEB_INSTANCE} facet_search_setting create \
+       "Data Type"	"デ一タタイプ"	"description.value"	"[{'agg_value': 'Other', 'agg_mapping': 'description.descriptionType'}]"	True
+# create-facet-search-setting-end

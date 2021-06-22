@@ -224,6 +224,7 @@ class Indexes(object):
                 index.owner_user_id = current_user.get_id()
                 db.session.merge(index)
             db.session.commit()
+            cls.update_set_info(index)
             return index
         except Exception as ex:
             current_app.logger.debug(ex)
@@ -245,14 +246,20 @@ class Indexes(object):
                     if not slf:
                         return
 
-                    dct = db.session.query(Index).filter(
-                        Index.parent == index_id). \
-                        update({Index.parent: slf.parent,
-                                Index.owner_user_id: current_user.get_id(),
-                                Index.updated: datetime.utcnow()},
-                               synchronize_session='fetch')
+                    query = db.session.query(Index).filter(
+                        Index.parent == index_id)
+                    obj_list = query.all()
+                    dct = query.update(
+                        {
+                            Index.parent: slf.parent,
+                            Index.owner_user_id: current_user.get_id(),
+                            Index.updated: datetime.utcnow()
+                        },
+                        synchronize_session='fetch')
                     db.session.delete(slf)
                     db.session.commit()
+                    p_lst = [o.id for o in obj_list]
+                    cls.delete_set_info('move', index_id, p_lst)
                     return dct
             else:
                 with db.session.no_autoflush:
@@ -286,6 +293,7 @@ class Indexes(object):
                                 Index.id.in_(p_lst[s:e])). \
                                 delete(synchronize_session='fetch')
                     db.session.commit()
+                    cls.delete_set_info('delete', index_id, p_lst)
                     return dct
         except Exception as ex:
             current_app.logger.debug(ex)
@@ -443,10 +451,12 @@ class Indexes(object):
                         parent_info = cls.get_index(parent, with_count=True)
                     position_max = parent_info.position_max + 1 \
                         if parent_info.position_max is not None else 0
+                    index = Index.query.filter_by(id=index_id).one()
                     try:
                         _update_index(position_max, parent)
                         _re_order_tree(new_position)
                         db.session.commit()
+                        cls.update_set_info(index)
                     except IntegrityError as ie:
                         if 'uix_position' in ''.join(ie.args):
                             try:
@@ -459,6 +469,7 @@ class Indexes(object):
                                     if parent_info.position_max is not None \
                                     else 0
                                 _update_index(position_max)
+                                cls.update_set_info(index)
                             except SQLAlchemyError as ex:
                                 is_ok = False
                                 current_app.logger.debug(ex)
@@ -495,8 +506,10 @@ class Indexes(object):
         indexes = cls.get_public_indexes()
         for index in indexes:
             browsing_info[str(index.id)] = {
+                'index_name': index.index_name,
                 'parent': str(index.parent),
                 'public_date': index.public_date,
+                'harvest_public_state': index.harvest_public_state,
                 'browsing_role': index.browsing_role.split(',')
             }
         return browsing_info
@@ -1169,19 +1182,21 @@ class Indexes(object):
         return recursive_t
 
     @classmethod
-    def get_harvest_public_state(cls, path):
+    def get_harvest_public_state(cls, paths):
         """Get harvest public state."""
+        def _query(path):
+            return db.session. \
+                query(func.every(Index.harvest_public_state).label(
+                    'parent_state')).filter(Index.id.in_(path))
+
         try:
-            last_path = path.pop(-1).split('/')
-            qry = db.session. \
-                query(func.every(Index.harvest_public_state).
-                      label('parent_state')).filter(Index.id.in_(last_path))
-            for i in range(len(path)):
-                path[i] = path[i].split('/')
-                path[i] = db.session. \
-                    query(func.every(Index.harvest_public_state)). \
-                    filter(Index.id.in_(path[i]))
-            smt = qry.union_all(*path).subquery()
+            _paths = deepcopy(paths)
+            last_path = _paths.pop(-1).split('/')
+            qry = _query(last_path)
+            for i in range(len(_paths)):
+                _paths[i] = _paths[i].split('/')
+                _paths[i] = _query(_paths[i])
+            smt = qry.union_all(*_paths).subquery()
             result = db.session.query(
                 func.bool_or(
                     smt.c.parent_state).label('parent_state')).one()
@@ -1195,6 +1210,30 @@ class Indexes(object):
         """Check have public state."""
         def _query(path):
             return db.session. \
+                query(func.every(Index.public_state).label(
+                    'parent_state')).filter(Index.id.in_(path))
+
+        try:
+            _paths = deepcopy(paths)
+            last_path = _paths.pop(-1).split('/')
+            qry = _query(last_path)
+            for i in range(len(_paths)):
+                _paths[i] = _paths[i].split('/')
+                _paths[i] = _query(_paths[i])
+            smt = qry.union_all(*_paths).subquery()
+            result = db.session.query(
+                func.bool_or(
+                    smt.c.parent_state).label('parent_state')).one()
+            return result.parent_state
+        except Exception as se:
+            current_app.logger.debug(se)
+            return False
+
+    @classmethod
+    def is_public_state_and_not_in_future(cls, paths):
+        """Check have public state and open date not in future."""
+        def _query(path):
+            return db.session. \
                 query(func.every(db.and_(
                     Index.public_state,
                     db.or_(
@@ -1204,12 +1243,13 @@ class Indexes(object):
                 ).filter(Index.id.in_(path))
 
         try:
-            last_path = paths.pop(-1).split('/')
+            _paths = deepcopy(paths)
+            last_path = _paths.pop(-1).split('/')
             qry = _query(last_path)
-            for i in range(len(paths)):
-                paths[i] = paths[i].split('/')
-                paths[i] = _query(paths[i])
-            smt = qry.union_all(*paths).subquery()
+            for i in range(len(_paths)):
+                _paths[i] = _paths[i].split('/')
+                _paths[i] = _query(_paths[i])
+            smt = qry.union_all(*_paths).subquery()
             result = db.session.query(
                 func.bool_or(
                     smt.c.parent_state).label('parent_state')).one()
@@ -1492,14 +1532,6 @@ class Indexes(object):
         return index_list
 
     @classmethod
-    def get_unharvested_indexes(cls):
-        """Get child id list without recursive."""
-        query = Index.query.filter(
-            Index.harvest_public_state.is_(False)
-        ).order_by(Index.id.asc())
-        return query.all()
-
-    @classmethod
     def get_full_path(cls, index_id=0):
         """Get full path of index.
 
@@ -1563,3 +1595,28 @@ class Indexes(object):
             for idx in indexes:
                 paths.append(idx.path)
         return paths
+
+    @classmethod
+    def update_set_info(cls, index):
+        """Create / Update oaiset setting."""
+        from .tasks import update_oaiset_setting
+        all_indexes = cls.get_all_indexes()
+        index_infos = {}
+        for i in all_indexes:
+            index_infos[str(i.id)] = {
+                'index_name': i.index_name,
+                'parent': str(i.parent),
+                'harvest_public_state': i.harvest_public_state
+            }
+        index_data = dict(index)
+        index_data.pop('public_date')
+        update_oaiset_setting.delay(index_infos, index_data)
+
+    @classmethod
+    def delete_set_info(cls, action, index_id, id_list):
+        """Delete oaiset setting."""
+        if action == 'move':  # move items to parent index
+            pass
+        else:  # delete all index
+            from .tasks import delete_oaiset_setting
+            delete_oaiset_setting.delay(id_list)

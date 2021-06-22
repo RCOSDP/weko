@@ -3603,7 +3603,18 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         return result;
       }
 
-      $scope.checkEitherRequired = function(depositionForm) {
+      $scope.checkDataIndepositionForm = function (sub_item_key) {
+        const keys = Object.keys($scope.depositionForm);
+        for (let idx = 0; idx < keys.length; idx++) {
+          const key = keys[idx];
+          if (key.endsWith(sub_item_key) && $scope.depositionForm[key].$viewValue) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      $scope.checkEitherRequired = function() {
         let eitherRequireds = [];
         if ($scope.error_list) {
           eitherRequireds = $scope.error_list['either'];
@@ -3617,8 +3628,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           if (eitherRequireds[i] instanceof Array) {
             let check = true;
             for (let y = 0; y < eitherRequireds[i].length; y++) {
-              let sub_item = eitherRequireds[i][y].split('.').pop();
-              if (sub_item in depositionForm && depositionForm[sub_item].$viewValue) {
+              let sub_item_key = eitherRequireds[i][y].split('.').pop();
+              if ($scope.checkDataIndepositionForm(sub_item_key)) {
                 check = check && true;
               } else {
                 check = check && false;
@@ -3629,8 +3640,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               return true;
             }
           } else {
-            let sub_item = eitherRequireds[i].split('.').pop();
-            if (sub_item in depositionForm && depositionForm[sub_item].$viewValue) {
+            let sub_item_key = eitherRequireds[i].split('.').pop();
+            if ($scope.checkDataIndepositionForm(sub_item_key)) {
               return true;
             }
           }
@@ -3644,7 +3655,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let depositionForm = $scope.depositionForm;
         let listItemErrors = [];
         let eitherRequired = [];
-        let noEitherError = $scope.checkEitherRequired(depositionForm);
+        let noEitherError = $scope.checkEitherRequired();
         if (noEitherError && $scope.error_list && $scope.error_list['either']) {
           eitherRequired = [];
           $scope.error_list['either'].forEach(function(item) {
@@ -3670,7 +3681,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 depositionForm[listSubItem[j].id].$setViewValue("");
               }
               if (noEitherError && eitherRequired) {
-                if (eitherRequired.indexOf(listSubItem[j].id) === -1) {
+                if (eitherRequired.indexOf(listSubItem[j].id.split('.').pop()) === -1) {
                   listItemErrors.push(listSubItem[j].title);
                 }
               } else {

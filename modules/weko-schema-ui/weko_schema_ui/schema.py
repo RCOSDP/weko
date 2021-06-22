@@ -715,11 +715,10 @@ class SchemaTree:
                                     # @attributes
                                     for key, val in v.get(self._atr,
                                                           {}).items():
-                                        # temp fix 20210430
-                                        if not isinstance(val,str):
+                                        if(type(val[0]) is not str):
                                             val[0] = [val for idx, val
-                                                  in enumerate(val[0])
-                                                  if idx in lst_val_idx]
+                                                      in enumerate(val[0])
+                                                      if idx in lst_val_idx]
                             else:
                                 if not v.get(self._atr, {}).items():
                                     lst_val_idx = \
@@ -921,7 +920,6 @@ class SchemaTree:
 
             return nlst
 
-
         def set_children(kname, node, tree, parent_keys,
                          current_lang=None, index=0):
             if kname == 'type':
@@ -982,7 +980,8 @@ class SchemaTree:
                                 chld = etree.Element(kname, None, ns)
                                 # remove invalid character
                                 input_text = val[index][i]
-                                input_text = re.sub(u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', input_text)
+                                input_text = re.sub(
+                                    u'[^\u0020-\uD7FF\u0009\u000A\u000D\uE000-\uFFFD\U00010000-\U0010FFFF]+', '', input_text)
                                 chld.text = input_text
                                 tree.append(chld)
                     else:
@@ -1141,8 +1140,6 @@ class SchemaTree:
                             lst_name_identifier_scheme.index(identifior_item)])
                 if len(index_remove_items) == total_remove_items:
                     del v['jpcoar:nameIdentifier']
-                    if 'jpcoar:affiliation' in v:
-                        del v['jpcoar:affiliation']
                 else:
                     for index in index_remove_items[::-1]:
                         lst_name_identifier_scheme.pop(index)

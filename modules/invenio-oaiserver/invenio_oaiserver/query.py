@@ -12,6 +12,7 @@ from datetime import datetime
 
 import six
 from elasticsearch_dsl import Q
+from elasticsearch_dsl.query import QueryString
 from flask import current_app
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.models import RecordMetadata
@@ -115,9 +116,17 @@ def get_records(**kwargs):
                         'bool',
                         **{'must_not': [
                             {'term': {'_id': str(record.id)}}]})
-                    continue
 
-    from weko_index_tree.api import Indexes
+    def get_harvested_indexes():
+        r"""Get index's id list without recursive."""
+        indexes = Index.query.filter(
+            Index.harvest_public_state.is_(True)
+        ).all()
+        ret = []
+        for index in indexes:
+            ret.append(str(index.id))
+        return ret
+
     page_ = kwargs.get('resumptionToken', {}).get('page', 1)
     size_ = current_app.config['OAISERVER_PAGE_SIZE']
     scroll = current_app.config['OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME']
@@ -146,20 +155,34 @@ def get_records(**kwargs):
             search = search.filter('range', **{'_updated': time_range})
 
         search = search.query('match', **{'relation_version_is_last': 'true'})
-        index_paths = Indexes.get_harverted_index_list()
+        indexes = get_harvested_indexes()
         query_filter = [
             # script get deleted items.
             {"bool": {"must_not": {"exists": {"field": "path"}}}}
         ]
-        for index_path in index_paths:
-            query_filter.append({
-                "wildcard": {
-                    "path": index_path
-                }
-            })
-        search = search.query(
-            'bool', **{'must': [{'bool': {'should': query_filter}}]})
+        indexes_num = len(indexes)
+        max_clause_count = 1024
+        if indexes_num > max_clause_count:
+            for div in range(0, int(indexes_num / max_clause_count) + 1):
+                e_right = div * max_clause_count
+                e_left = (div + 1) * max_clause_count \
+                    if indexes_num > (div + 1) * max_clause_count \
+                    else indexes_num
+                query_string = "*" + " OR *".join(indexes[e_right:e_left])
+                query_filter.append(
+                    QueryString(query=query_string,
+                                default_field="path"))
+            search = search.query(
+                'bool', **{'must': [{'bool': {'should': query_filter}}]})
+        else:
+            query_string = {
+                "default_field": "path",
+                "query": "*" + " OR *".join(indexes)
+            }
+            search = search.query(
+                "bool", **{"must": {"query_string": query_string}})
         add_condition_doi_and_future_date(search)
+
         response = search.execute().to_dict()
     else:
         response = current_search_client.scroll(

@@ -154,6 +154,10 @@ class WekoAdmin(object):
         """
         @app.before_first_request
         def make_session_permanent():
+            # avoid session control
+            if request.path == "/ping":
+                return
+            print(request.path)
             session.permanent = True
             db_lifetime = SessionLifetime.get_validtime()
             if db_lifetime is None:

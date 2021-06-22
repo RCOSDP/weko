@@ -111,7 +111,9 @@
         {% autoescape false %}
             {%- if label == 'URL' -%}
                 <td><a href="{{content}}">{{ content | escape_str }}</a></td>
-            {%- else -%}
+            {%- elif content|url_to_link -%}
+<td><a href="{{content}}" target='_blank'>{{ content | escape_str }}</a></td>
+	    {%- else -%}
                 <td class="multiple-line">{{ content | escape_str }}</td>
             {%- endif -%}
         {% endautoescape %}
@@ -130,6 +132,7 @@
     {%- set data_attribute_value_mlt = record_detail_data['attribute_value_mlt'] -%}
     {%- set langkey = _('Language:').split(':')[0] -%}
     {%- set langjudgeflg =  False -%}
+    {%- set langflg = namespace(langjudgeflg = False) -%}
     {%- if data_attribute_value_mlt -%}
     <tr>
         <th scope="row" colspan="6"
@@ -141,20 +144,22 @@
             {%- set nextdata2 = data_attribute_value_mlt[0] -%}
             {%- if nextdata2[0] -%}
                 {%- set nextdata1 =  nextdata2[0] -%}
-                {%- if nextdata1[1] -%}
-                    {%- if nextdata1[1][0] -%}
-                        {%- if nextdata1[1][0] is mapping -%}
-                            {%- if langkey in nextdata1[1][0].keys() -%}
-                                {{ output_attribute_value_mlt_lang('',data_attribute_value_mlt,1) }}
-                                {%- set langjudgeflg =  True -%}
+                {%- for nextdata_value in nextdata1 -%}
+                    {%- if not langflg.langjudgeflg -%}
+                        {%- if nextdata_value[0] -%}
+                            {%- if nextdata_value[0] is mapping -%}
+                                {%- if langkey in nextdata_value[0].keys() -%}
+                                    {{ output_attribute_value_mlt_lang('',data_attribute_value_mlt,1) }}
+                                    {%- set langflg.langjudgeflg =  True -%}
+                                {%- endif -%}
                             {%- endif -%}
                         {%- endif -%}
                     {%- endif -%}
-                {%- endif -%}
+                {%- endfor -%}
             {%- endif -%}
         {%- endif -%}
     {%- endif -%}
-    {%- if not langjudgeflg -%}
+    {%- if not langflg.langjudgeflg -%}
         {%- for attribute_data in data_attribute_value_mlt -%}
             {{ output_attribute_value_mlt_exceptlang(attribute_data,1) }}
         {%- endfor -%}
@@ -164,23 +169,33 @@
 {% macro output_attribute_value_mlt_lang(parent_name,language_data,level) %}
     {%- set ns = namespace(disp_language = '') -%}
     {%- set nsflg = namespace(dispflg = False) -%}
+    {%- set nslang = namespace(langv = '') -%}
+    {%- set langkey = _('Language:').split(':')[0] -%}
     {%- for language_value in language_data -%}
+        {%- set looplastflg = False -%}
         {%- if loop.first -%}
             {%- set ns.disp_language = language_value -%}
         {%- endif -%}
-        {%- if language_value[0][1] -%}
-            {%- set langv = language_value[0][1] -%}
-            {%- if langv[0] -%}
-                {%- if 'en' in langv[0].values() and not nsflg.dispflg -%}
-                    {%- set ns.disp_language = language_value -%}
-                {%- endif -%}
-                {%- if current_i18n.language in langv[0].values() -%}
-                    {%- set ns.disp_language = language_value -%}
-                    {%- set nsflg.dispflg = True -%}
+        {%- if loop.last -%}
+            {%- set looplastflg = True -%}
+        {%- endif -%}
+        {%- for language_val in language_value[0] -%}
+            {%- if language_val -%}
+                {%- if langkey in language_val[0].keys() -%}
+                    {%- set nslang.langv = language_val -%}
                 {%- endif -%}
             {%- endif -%}
+        {%- endfor -%}
+        {%- if nslang.langv[0] -%}
+            {%- if 'en' in nslang.langv[0].values() and not nsflg.dispflg -%}
+                {%- set ns.disp_language = language_value -%}
+            {%- endif -%}
+            {%- if current_i18n.language in nslang.langv[0].values() -%}
+                {%- set ns.disp_language = language_value -%}
+                {%- set nsflg.dispflg = True -%}
+            {%- endif -%}
         {%- endif -%}
-        {%- if loop.last -%}
+        {%- if looplastflg -%}
             {%- if parent_name -%}
                 {{ child_data(parent_name, '', level-1) }}
             {%- endif -%}    
@@ -212,26 +227,28 @@
                 {%- endif -%}
             {%- endif -%}
         {%- elif attribute_data is mapping -%}
-            {%- set langjudgeflg =  False -%}
+            {%- set langflg = namespace(langjudgeflg = False) -%}
             {%- for key, value in attribute_data.items() -%}
                 {%- if value is not string -%}
                     {%- if value[0] -%}
                         {%- set value_data = value[0] -%}
                         {%- if value_data[0] -%}
                             {%- set lang_data =  value_data[0] -%}
-                            {%- if lang_data[1] -%}
-                                {%- if lang_data[1][0] -%}
-                                    {%- if lang_data[1][0] is mapping -%}
-                                        {%- if langkey in lang_data[1][0].keys() -%}
-                                            {{ output_attribute_value_mlt_lang(key,value,level+1) }}
-                                            {%- set langjudgeflg =  True -%}
+                            {%- for lang_value in lang_data -%}
+                                {%- if not langflg.langjudgeflg -%}
+                                    {%- if lang_value[0] -%}
+                                        {%- if lang_value[0] is mapping -%}
+                                            {%- if langkey in lang_value[0].keys() -%}
+                                                {{ output_attribute_value_mlt_lang(key,value,level+1) }}
+                                                {%- set langflg.langjudgeflg = True -%}
+                                            {%- endif -%}
                                         {%- endif -%}
                                     {%- endif -%}
                                 {%- endif -%}
-                            {%- endif -%}
+                            {%- endfor -%}
                         {%- endif -%}
                     {%- endif -%}
-                    {%- if not langjudgeflg -%}
+                    {%- if not langflg.langjudgeflg -%}
                         {{ output_attribute_value_mlt_exceptlang(value,level+1,key) }}
                     {%- endif -%}
                 {%- else -%}

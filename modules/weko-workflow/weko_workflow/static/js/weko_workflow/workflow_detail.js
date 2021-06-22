@@ -308,7 +308,7 @@ require([
     });
   });
 
-  $('#lnk_item_detail').on('click', function () {
+  $('#link_record_detail').on('click', function () {
     $('#myModal').modal('show');
   });
 

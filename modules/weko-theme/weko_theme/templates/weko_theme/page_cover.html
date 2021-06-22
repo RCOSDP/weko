@@ -23,6 +23,7 @@
 {%- block header %}
     {%- from "weko_theme/macros/site_info.html" import site_info %}
       {{ site_info() }}
+      {%- block trackingcode %}{% include config.THEME_TRACKINGCODE_TEMPLATE %}{% endblock %}
 {%- endblock header %}
 {%- set html_css_classes=['cover-page'] %}
 {%- set body_css_classes=['cover-page'] %}
@@ -80,5 +81,5 @@
   {% endblock page_footer %}
 </div>
 {%- block javascript %}{% include config.THEME_JAVASCRIPT_TEMPLATE %}{% endblock javascript %}
-{%- block trackingcode %}{% include config.THEME_TRACKINGCODE_TEMPLATE %}{% endblock %}
+
 {%- endblock body %}

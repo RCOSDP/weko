@@ -82,3 +82,52 @@ WEKO_RECORDS_ALTERNATIVE_NAME_KEYS = ['creatorAlternative',
 
 WEKO_RECORDS_AFFILIATION_NAME_KEYS = ['affiliationName', 'affiliationNameLang']
 """List affiliation name key."""
+
+WEKO_TEST_FIELD = {
+    "1" : {
+        "geo_point1" : {
+            "input_type":"geo_point",
+            "path":{
+                "lat":"$.item_1551265326081.attribute_value_mlt[?subitem_1551256775293=='Location_sub'].subitem_1551256778926[*].subitem_1551256814806",
+                "lon":"$.item_1551265326081.attribute_value_mlt[*].subitem_1551256778926[*].subitem_1551256783928"
+            }
+        },
+        
+        "geo_shape1" : {
+            "input_type":"geo_shape",
+            "path":{
+                "type":"",
+                "coordinates":""
+            }
+        },
+        
+        "integer_range1":{
+            "input_type":"range",
+            "path":{
+                "gte":"$.item_1551265553273.attribute_value_mlt[*].subitem_1551256248092",
+                "lte":"$.item_1551265553273.attribute_value_mlt[*].subitem_1551256248092"
+            }
+        },
+        "float_range1":{
+            "input_type":"range",
+            "path":{
+                "gte":"",
+                "lte":""
+            }
+        },
+        "date_range1":{
+            "input_type":"range",
+            "path":{
+                "gte":"",
+                "lte":""
+            }
+        },
+        
+        "text1" : {
+            "input_type":"text",
+            "path" : "$.item_title"
+        }
+    }
+}
+
+COPY_NEW_FIELD = True

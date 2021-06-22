@@ -118,6 +118,10 @@ services:
       - elasticsearch
       - rabbitmq
       - handle
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
     ports:
       - "127.0.0.1:5001:5000"
 #    networks:
