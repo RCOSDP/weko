@@ -11,20 +11,12 @@
 import calendar
 from datetime import datetime, timedelta
 from functools import wraps
-from math import ceil
 
-import dateutil.relativedelta as relativedelta
-from dateutil import parser
 from elasticsearch.exceptions import NotFoundError
-from elasticsearch_dsl import Search
 from flask import Blueprint, abort, current_app, jsonify, request
-from flask_login import login_required
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_rest.views import ContentNegotiatedMethodView
-from invenio_search import current_search_client
-
-from invenio_stats.utils import get_aggregations
 
 from . import config
 from .errors import InvalidRequestInputError, UnknownQueryError
@@ -232,8 +224,10 @@ class QueryFileStatsCount(WekoQuery):
 
     view_name = 'get_file_stats_count'
 
-    def get_data(self, bucket_id, file_key, query_date=None, get_period=False):
+    def get_data(self, bucket_id, file_key, query_date=None,
+                 get_period=False, root_file_id=None):
         """Get data."""
+        from invenio_files_rest.models import ObjectVersion
         result = {}
         period = []
         country_list = []
@@ -241,20 +235,24 @@ class QueryFileStatsCount(WekoQuery):
         unknown_download = 0
         unknown_preview = 0
 
-        if not query_date:
-            params = {'bucket_id': bucket_id,
-                      'file_key': file_key,
-                      'interval': 'month'}
-        else:
+        if not root_file_id:
+            obv = ObjectVersion.get(bucket_id, file_key)
+            root_file_id = str(obv.root_file_id) if obv else None
+
+        params = {'bucket_id': bucket_id,
+                  'file_key': file_key,
+                  'interval': 'month',
+                  'root_file_id': root_file_id}
+
+        if query_date:
             year = int(query_date[0: 4])
             month = int(query_date[5: 7])
             _, lastday = calendar.monthrange(year, month)
-            params = {'bucket_id': bucket_id,
-                      'file_key': file_key,
-                      'interval': 'month',
-                      'start_date': query_date + '-01',
-                      'end_date': query_date + '-' + str(lastday).zfill(2)
-                      + 'T23:59:59'}
+            params.update({
+                'start_date': query_date + '-01',
+                'end_date': query_date + '-' + str(lastday).zfill(2)
+                + 'T23:59:59'
+            })
 
         try:
             # file download

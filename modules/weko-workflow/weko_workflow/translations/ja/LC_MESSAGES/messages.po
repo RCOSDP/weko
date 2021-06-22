@@ -492,7 +492,7 @@ msgstr "閉じる"
 #~ msgstr "ロール"
 
 #~ msgid "Action User"
-#~ msgstr "ユーザ"
+#~ msgstr "ユーザー"
 
 #~ msgid "Action Status"
 #~ msgstr "ステータス"

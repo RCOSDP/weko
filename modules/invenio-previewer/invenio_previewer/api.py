@@ -41,7 +41,7 @@ from flask_babelex import gettext as _
 class PreviewFile(object):
     """Preview file default implementation."""
 
-    def __init__(self, pid, record, fileobj):
+    def __init__(self, pid, record, fileobj, allow_aggs=True):
         """Default constructor.
 
         :param file: ObjectVersion instance from Invenio-Files-REST.
@@ -49,6 +49,7 @@ class PreviewFile(object):
         self.file = fileobj
         self.pid = pid
         self.record = record
+        self.allow_aggs = allow_aggs
 
     @property
     def size(self):
@@ -77,7 +78,8 @@ class PreviewFile(object):
         return url_for(
             '.{0}_file_preview'.format(self.pid.pid_type),
             pid_value=self.pid.pid_value,
-            filename=self.file.key)
+            filename=self.file.key,
+            allow_aggs=self.allow_aggs)
 
     def is_local(self):
         """Check if file is local."""

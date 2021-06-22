@@ -29,6 +29,7 @@ import shutil
 import sys
 import tempfile
 import traceback
+from collections import OrderedDict
 from datetime import date, datetime, timedelta
 from io import StringIO
 
@@ -1590,7 +1591,7 @@ def get_files_from_metadata(record):
     @param record:
     @return:
     """
-    files = {}
+    files = OrderedDict()
     for key in record:
         meta_data = record.get(key)
         if isinstance(meta_data, dict) and \
@@ -1607,11 +1608,24 @@ def to_files_js(record):
     """List files in a deposit."""
     res = []
     files = record.files or []
+    files_content_dict = {}
+    files_thumbnail = []
+    for f in files:
+        if f.is_thumbnail:
+            files_thumbnail.append(f)
+        else:
+            files_content_dict[f.key] = f
     # Get files form meta_data, so that you can append any extra info to files
     # (which not contained by file_bucket) such as license below
     files_from_meta = get_files_from_metadata(record)
 
-    for f in files:
+    # get file with order similar metadata
+    files_content = []
+    for _k, f in files_from_meta.items():
+        if files_content_dict.get(f.get('filename')):
+            files_content.append(files_content_dict.get(f.get('filename')))
+
+    for f in [*files_content, *files_thumbnail]:
         res.append({
             'displaytype': files_from_meta.get(str(f.version_id),
                                                {}).get("displaytype", ''),

@@ -117,15 +117,7 @@ def get_records(**kwargs):
                         **{'must_not': [
                             {'term': {'_id': str(record.id)}}]})
 
-    def get_harvested_indexes():
-        r"""Get index's id list without recursive."""
-        indexes = Index.query.filter(
-            Index.harvest_public_state.is_(True)
-        ).all()
-        ret = []
-        for index in indexes:
-            ret.append(str(index.id))
-        return ret
+    from weko_index_tree.api import Indexes
 
     page_ = kwargs.get('resumptionToken', {}).get('page', 1)
     size_ = current_app.config['OAISERVER_PAGE_SIZE']
@@ -155,32 +147,35 @@ def get_records(**kwargs):
             search = search.filter('range', **{'_updated': time_range})
 
         search = search.query('match', **{'relation_version_is_last': 'true'})
-        indexes = get_harvested_indexes()
+        indexes = Indexes.get_harverted_index_list()
         query_filter = [
             # script get deleted items.
             {"bool": {"must_not": {"exists": {"field": "path"}}}}
         ]
-        indexes_num = len(indexes)
-        max_clause_count = 1024
-        if indexes_num > max_clause_count:
+
+        if indexes:
+            indexes_num = len(indexes)
+            max_clause_count = 1024
             for div in range(0, int(indexes_num / max_clause_count) + 1):
                 e_right = div * max_clause_count
                 e_left = (div + 1) * max_clause_count \
                     if indexes_num > (div + 1) * max_clause_count \
                     else indexes_num
-                query_string = "*" + " OR *".join(indexes[e_right:e_left])
-                query_filter.append(
-                    QueryString(query=query_string,
-                                default_field="path"))
-            search = search.query(
-                'bool', **{'must': [{'bool': {'should': query_filter}}]})
-        else:
-            query_string = {
-                "default_field": "path",
-                "query": "*" + " OR *".join(indexes)
-            }
-            search = search.query(
-                "bool", **{"must": {"query_string": query_string}})
+                div_indexes = []
+                for index in indexes[e_right:e_left]:
+                    div_indexes.append({
+                        "wildcard": {
+                            "path": str(index)
+                        }
+                    })
+                query_filter.append({
+                    "bool": {
+                        "should": div_indexes
+                    }
+                })
+
+        search = search.query(
+            'bool', **{'must': [{'bool': {'should': query_filter}}]})
         add_condition_doi_and_future_date(search)
 
         response = search.execute().to_dict()
