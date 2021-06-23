@@ -273,6 +273,7 @@ def update_items_by_authorInfo(origin_list, target):
             update_from_dict(query_q).execute().to_dict()
 
         record_ids = []
+        update_es_authorinfo = []
         for item in search['hits']['hits']:
             item_id = item['_source']['control_number']
             pid = PersistentIdentifier.get('recid', item_id)
@@ -316,7 +317,8 @@ def update_items_by_authorInfo(origin_list, target):
                                 
             dep['author_link'] = list(author_link)
             dep.update_item_by_task()
-            dep.update_author_link(list(author_link))
+            update_es_authorinfo.append({
+                'id': pid.object_uuid, 'author_link': list(author_link)})
         db.session.commit()
         # update record to ES
         if record_ids:
@@ -329,6 +331,11 @@ def update_items_by_authorInfo(origin_list, target):
             RecordIndexer().bulk_index(query)
             RecordIndexer().process_bulk_queue(
                 es_bulk_kwargs={'raise_on_error': True})
+        if update_es_authorinfo:
+            sleep(20)
+            for d in update_es_authorinfo:
+                dep = WekoDeposit.get_record(d['id'])
+                dep.update_author_link(d['author_link'])
     except SQLAlchemyError as e:
         db.session.rollback()
         current_app.logger. \
