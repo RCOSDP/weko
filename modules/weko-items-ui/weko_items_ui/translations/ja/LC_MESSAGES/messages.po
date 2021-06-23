@@ -467,7 +467,7 @@ msgid "is too long."
 msgstr "の数が上限数を超えています。"
 
 msgid "Guest"
-msgstr "非ログインユーザ"
+msgstr "非ログインユーザー"
 
 msgid "Free Input"
 msgstr "自由入力"
