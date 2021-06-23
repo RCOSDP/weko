@@ -178,7 +178,7 @@ msgstr "%(username_rules)sは必須入力項目です"
 
 #: weko_user_profiles/forms.py:63
 msgid "Username not provided."
-msgstr "ユーザ名を入力してください"
+msgstr "ユーザー名を入力してください"
 
 #. NOTE: Form validation error.
 #: weko_user_profiles/forms.py:98

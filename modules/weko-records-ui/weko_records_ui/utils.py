@@ -27,7 +27,9 @@ from decimal import Decimal
 from typing import NoReturn, Tuple
 
 from flask import abort, current_app, request, url_for
+from flask_babelex import get_locale
 from flask_babelex import gettext as _
+from flask_babelex import to_user_timezone, to_utc
 from flask_login import current_user
 from invenio_accounts.models import Role
 from invenio_cache import current_cache
@@ -246,6 +248,9 @@ def soft_delete(recid):
             for p in pids:
                 p.status = PIDStatus.DELETED
             db.session.commit()
+
+        current_app.logger.info(
+            'user({0}) deleted record id({1}).'.format(current_user.id, recid))
     except Exception as ex:
         db.session.rollback()
         raise ex
@@ -613,7 +618,7 @@ def get_file_info_list(record):
         elif access == "open_date":
             if date and isinstance(date, list) and date[0]:
                 adt = date[0].get('dateValue')
-                pdt = dt.strptime(adt, '%Y-%m-%d')
+                pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
                 if pdt > dt.today():
                     message = "Download is available from {}/{}/{}."
                     p_file['future_date_message'] = _(message).format(

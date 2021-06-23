@@ -10,7 +10,7 @@ make_index(){
  done
 }
 
-for j in `seq 0 100`;do
+for j in `seq 0 50`;do
   make_index $idx $j
 done
 

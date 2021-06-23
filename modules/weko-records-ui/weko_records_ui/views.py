@@ -30,6 +30,7 @@ from flask import Blueprint, abort, current_app, escape, flash, jsonify, \
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
+from invenio_cache import cached_unless_authenticated
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion
 from invenio_files_rest.permissions import has_update_version_role
@@ -58,8 +59,6 @@ from weko_workflow.api import WorkFlow
 
 from weko_records_ui.models import InstitutionName
 from weko_records_ui.utils import check_items_settings, get_file_info_list
-
-from invenio_cache import cached_unless_authenticated
 
 from .ipaddr import check_site_license_permission
 from .models import FilePermission, PDFCoverPageSettings
@@ -90,11 +89,13 @@ def record_from_pid(pid_value):
         current_app.logger.debug(e)
         return {}
 
+
 @blueprint.app_template_filter()
 def url_to_link(field):
     if field.startswith("http"):
-            return True
+        return True
     return False
+
 
 @blueprint.app_template_filter()
 def pid_value_version(pid_value):
@@ -866,14 +867,20 @@ def escape_str(s):
     :param s: string
     :return: result
     """
-    br_char = '<br/>'
     if s:
         s = remove_weko2_special_character(s)
         s = str(escape(s))
-        s = s.replace(
-            '\r\n',
-            br_char).replace('\r', br_char).replace('\n', br_char)
+        s = escape_newline(s)
     return s
+
+
+def escape_newline(s):
+    """replace \n to <br/>
+    :param s: string
+    :return: result
+    """
+    br_char = '<br/>'
+    return s.replace('\r\n', br_char).replace('\r', br_char).replace('\n', br_char)
 
 
 @blueprint.app_template_filter('preview_able')

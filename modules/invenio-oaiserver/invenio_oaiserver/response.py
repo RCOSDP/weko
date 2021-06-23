@@ -12,6 +12,7 @@ import traceback
 from datetime import MINYEAR, datetime, timedelta
 
 from flask import current_app, request, url_for
+from flask_babelex import get_locale, to_user_timezone, to_utc
 from invenio_db import db
 from invenio_records.models import RecordMetadata
 from lxml import etree
@@ -295,7 +296,9 @@ def is_private_workflow(record):
 
 def is_pubdate_in_future(record):
     """Check pubdate of workflow is in future."""
-    return record.get('publish_date') > datetime.today().strftime('%Y-%m-%d')
+    adt = record.get('publish_date')
+    pdt = to_utc(datetime.strptime(adt, '%Y-%m-%d'))
+    return pdt > datetime.today()
 
 
 def is_private_index(record):

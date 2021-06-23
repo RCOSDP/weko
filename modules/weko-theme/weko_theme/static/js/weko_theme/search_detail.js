@@ -60,6 +60,11 @@
 
                 if (sessionStorage.getItem('btn') == 'detail-search') {
                     $scope.condition_data = angular.fromJson(sessionStorage.getItem('detail_search_conditions'));
+                    sessionStorage.removeItem('btn');
+                }
+                else {
+                    $scope.reset_data();
+                    sessionStorage.setItem('detail_search_conditions', angular.toJson($scope.condition_data));
                 }
 
                 $scope.update_disabled_flg();

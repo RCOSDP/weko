@@ -29,6 +29,7 @@ import shutil
 import sys
 import tempfile
 import traceback
+from collections import OrderedDict
 from datetime import date, datetime, timedelta
 from io import StringIO
 
@@ -495,10 +496,10 @@ def validate_form_input_data(
     item_type = ItemTypes.get_by_id(item_id)
     json_schema = item_type.schema.copy()
 
-    #current_app.logger.debug("json_schema")
-    #current_app.logger.debug(json_schema)
-    #current_app.logger.debug("data")
-    #current_app.logger.debug(data)
+    # current_app.logger.debug("json_schema")
+    # current_app.logger.debug(json_schema)
+    # current_app.logger.debug("data")
+    # current_app.logger.debug(data)
 
     # Remove excluded item in json_schema
     remove_excluded_items_in_json_schema(item_id, json_schema)
@@ -797,7 +798,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
         records.attr_output -- Record data
 
     """
-    from weko_records_ui.views import escape_str
+    from weko_records_ui.views import escape_newline, escape_str
 
     item_type = ItemTypes.get_by_id(item_type_id).render
     list_hide = get_item_from_option(item_type_id)
@@ -1000,7 +1001,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
                         key_list.append(new_key)
                         key_label.append(new_label)
                         if data and idx < len(data) and data[idx].get(key):
-                            key_data.append(escape_str(data[idx][key]))
+                            key_data.append(escape_newline(data[idx][key]))
+                            # key_data.append(escape_str(data[idx][key]))
                         else:
                             key_data.append('')
 
@@ -1370,7 +1372,6 @@ def export_items(post_data):
                 record_path,
                 record_metadata.get(str(record_id))
             )
-
             result['items'].append(exported_item)
 
             item_type_id = exported_item.get('item_type_id')
@@ -1590,7 +1591,7 @@ def get_files_from_metadata(record):
     @param record:
     @return:
     """
-    files = {}
+    files = OrderedDict()
     for key in record:
         meta_data = record.get(key)
         if isinstance(meta_data, dict) and \
@@ -1607,11 +1608,24 @@ def to_files_js(record):
     """List files in a deposit."""
     res = []
     files = record.files or []
+    files_content_dict = {}
+    files_thumbnail = []
+    for f in files:
+        if f.is_thumbnail:
+            files_thumbnail.append(f)
+        else:
+            files_content_dict[f.key] = f
     # Get files form meta_data, so that you can append any extra info to files
     # (which not contained by file_bucket) such as license below
     files_from_meta = get_files_from_metadata(record)
 
-    for f in files:
+    # get file with order similar metadata
+    files_content = []
+    for _k, f in files_from_meta.items():
+        if files_content_dict.get(f.get('filename')):
+            files_content.append(files_content_dict.get(f.get('filename')))
+
+    for f in [*files_content, *files_thumbnail]:
         res.append({
             'displaytype': files_from_meta.get(str(f.version_id),
                                                {}).get("displaytype", ''),
@@ -2530,7 +2544,7 @@ def make_stats_tsv_with_permission(item_type_id, recids,
 
     """
     from weko_records_ui.utils import check_items_settings, hide_by_email
-    from weko_records_ui.views import escape_str
+    from weko_records_ui.views import escape_newline, escape_str
 
     def _get_root_item_option(item_id, item, sub_form={'title_i18n': {}}):
         """Handle if is root item."""
@@ -2772,7 +2786,8 @@ def make_stats_tsv_with_permission(item_type_id, recids,
                         key_list.append(new_key)
                         key_label.append(new_label)
                         if data and idx < len(data) and data[idx].get(key):
-                            key_data.append(escape_str(data[idx][key]))
+                            key_data.append(escape_newline(data[idx][key]))
+                            # key_data.append(escape_str(data[idx][key]))
                         else:
                             key_data.append('')
 
