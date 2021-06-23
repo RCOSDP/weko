@@ -119,6 +119,7 @@ def update_items_by_authorInfo(origin_list, target):
         return result
 
     def _change_to_meta(target, author_prefix, key_map):
+        target_id = None
         meta = {}
         if target:
             family_names = []
@@ -159,6 +160,9 @@ def update_items_by_authorInfo(origin_list, target):
                             url = prefix_info['url'] + id['authorId']
                         id_info.update({key_map['id_uri_key']: url})
                     identifiers.append(id_info)
+
+                    if prefix_info['scheme'] == 'WEKO':
+                        target_id = id['authorId']
             for email in target['emailInfo']:
                 mails.append({
                     key_map['mail_key']: email['email']
@@ -184,7 +188,7 @@ def update_items_by_authorInfo(origin_list, target):
                 meta.update({
                     key_map['mails_key']: mails
                 })
-        return meta
+        return target_id, meta
 
     key_map = {
         "creator": {
@@ -291,20 +295,27 @@ def update_items_by_authorInfo(origin_list, target):
                                 prop_type = 'full_name'
                             else:
                                 continue
+                            origin_id = -1
                             change_flag = False
                             for id in data['nameIdentifiers']:
                                 if id['nameIdentifierScheme'] == 'WEKO':
                                     author_link.add(id['nameIdentifier'])
                                     if id['nameIdentifier'] in origin_list:
+                                        origin_id = id['nameIdentifier']
                                         change_flag = True
                                         record_ids.append(pid.object_uuid)
                                         break
                                 else:
                                     continue
                             if change_flag:
-                                dep[k]['attribute_value_mlt'][index] = _change_to_meta(target, author_prefix, key_map[prop_type])
-                                dep['author_link'] = list(author_link)
-                                dep.update_item_by_task()
+                                target_id, new_meta = _change_to_meta(target, author_prefix, key_map[prop_type])
+                                dep[k]['attribute_value_mlt'][index].update(new_meta)
+                                if origin_id != target_id:
+                                    author_link.remove(origin_id)
+                                    author_link.add(target_id)
+                                
+            dep['author_link'] = list(author_link)
+            dep.update_item_by_task()
         db.session.commit()
         # update record to ES
         if record_ids:
