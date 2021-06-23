@@ -1117,7 +1117,7 @@ class WekoDeposit(Deposit):
         if author_link:
             author_link_info = {
                 "id": item_id,
-                "author_list": author_link
+                "author_link": author_link
             }
             self.indexer.update_author_link(author_link_info)
 
