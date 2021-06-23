@@ -316,6 +316,7 @@ def update_items_by_authorInfo(origin_list, target):
                                 
             dep['author_link'] = list(author_link)
             dep.update_item_by_task()
+            dep.update_author_link(list(author_link))
         db.session.commit()
         # update record to ES
         if record_ids:

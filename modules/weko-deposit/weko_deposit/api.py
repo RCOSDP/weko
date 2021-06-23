@@ -317,6 +317,18 @@ class WekoIndexer(RecordIndexer):
             body=body
         )
 
+    def update_author_link(self, author_link):
+        """Update author_link info."""
+        self.get_es_index()
+        pst = 'author_link'
+        body = {'doc': {pst: author_link.get('author_link')}}
+        return self.client.update(
+            index=self.es_index,
+            doc_type=self.es_doc_type,
+            id=str(author_link.get('id')),
+            body=body
+        )
+
     def update_jpcoar_identifier(self, dc, item_id):
         """Update JPCOAR meta data item."""
         self.get_es_index()
@@ -1098,6 +1110,16 @@ class WekoDeposit(Deposit):
             except BaseException:
                 pass
             raise PIDResolveRESTError(description='This item has been deleted')
+
+    def update_author_link(self, author_link):
+        """Index feedback mail list."""
+        item_id = self.id
+        if author_link:
+            author_link_info = {
+                "id": item_id,
+                "author_list": author_link
+            }
+            self.indexer.update_author_link(author_link_info)
 
     def update_feedback_mail(self):
         """Index feedback mail list."""
