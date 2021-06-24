@@ -3685,7 +3685,7 @@ def prepare_doi_link_workflow(item_id, doi_input):
         doi_input: DOI input from last Identifier Setting.
     """
     data = request.get_json() or {}
-    community_id = data.get('community', 'Root Index')
+    community_id = data['community'] if data.get('community') else 'Root Index'
     identifier_setting = get_identifier_setting(community_id)
 
     # valid date pidstore_identifier data
@@ -3771,3 +3771,5 @@ def prepare_doi_link_workflow(item_id, doi_input):
             'identifier_grant_jalc_dc_doi_link': _jalc_dc_doi_link,
             'identifier_grant_ndl_jalc_doi_link': _ndl_jalc_doi_link
         }
+    else:
+        return {}
