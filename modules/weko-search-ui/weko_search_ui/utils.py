@@ -934,7 +934,8 @@ def up_load_file(record, root_path, deposit,
             if not path or not os.path.isfile(root_path + '/' + path):
                 if old_file and \
                         not (
-                            record['filenames'][idx]
+                            len(record['filenames']) > idx
+                            and record['filenames'][idx]
                             and old_file.key
                             == record['filenames'][idx]['filename']
                         ):
