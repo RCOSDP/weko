@@ -170,42 +170,14 @@ def get_search_detail_keyword(st):
         check_val.append(sub)
 
     check_val2 = []
-    index_all = Indexes.get_all_indexes()
-    index_role = filter_index_list_by_role(index_all)
-    role_list = []
-    for index in index_role:
-        role_list.append(index.id)
+    index_browsing_tree = Indexes.get_browsing_tree()
+    for indextree in index_browsing_tree:
+        index_parelist=[]
+        index_list = get_childinfo(indextree,index_parelist)
 
-    idx = ""
-    for index in index_role:
-        if index.parent == 0:
-            child_index = Indexes.get_child_list_by_pip(index.id)
-            for child_id in child_index:
-                if child_id[1] in role_list:
-                    idx = Indexes.get_all_parent_indexes(child_id[1])
-                    idxname = ""
-                    idxidstr = ""
-                    first = True
-                    for x in idx:
-                        if hasattr(current_i18n, 'language'):
-                            if current_i18n.language == 'ja':
-                                idxname = x.index_name
-                            else:
-                                idxname = x.index_name_english
-                        else:
-                            idxname = x.index_name_english
-                        if first:
-                            first = False
-                            printname = idxname
-                            idxidstr = str(x.id)
-                        else:
-                            printname = printname + "/" 
-                            printname = printname + idxname
-                            idxidstr = idxidstr + "/"
-                            idxidstr = idxidstr + str(x.id)
-                            
-                    sub2 = dict(id=idxidstr, contents=printname, checkStus=False)
-                    check_val2.append(sub2)
+        for idx in index_list :
+            sub2 = dict(id=idx['parent_id'], contents=idx['parent_name'], checkStus=False)
+            check_val2.append(sub2)
 
     for k_v in options:
         if k_v.get('id') == 'itemtype':
@@ -220,3 +192,27 @@ def get_search_detail_keyword(st):
     key_options_str.replace('True', 'true')
 
     return key_options_str
+
+def get_childinfo(index_tree, result_list=[], parename=""):
+
+    if isinstance(index_tree, dict):
+        if index_tree['pid'] != 0:
+            pname = parename + "/" + index_tree['name']
+            pid = index_tree['parent'] + "/" + str(index_tree['cid'])
+        else :
+            pname = index_tree['name']
+            pid = index_tree['cid']
+
+        data = {
+            'id':index_tree['cid'],
+            'index_name':index_tree['name'],
+            'parent_id':pid,
+            'parent_name':pname
+        }
+        result_list.append(data)
+
+        for childlist in index_tree['children']:
+            if childlist:
+                get_childinfo(childlist, result_list,pname)
+
+    return result_list
