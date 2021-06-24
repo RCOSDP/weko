@@ -317,17 +317,6 @@ class WekoIndexer(RecordIndexer):
             body=body
         )
 
-    def update_jpcoar_identifier(self, dc, item_id):
-        """Update JPCOAR meta data item."""
-        self.get_es_index()
-        body = {'doc': {'_item_metadata': dc}}
-        return self.client.update(
-            index=self.es_index,
-            doc_type=self.es_doc_type,
-            id=str(item_id),
-            body=body
-        )
-
     def __build_bulk_es_data(self, updated_data):
         """Build ElasticSearch data.
 
@@ -1118,35 +1107,6 @@ class WekoDeposit(Deposit):
             "mail_list": []
         }
         self.indexer.update_feedback_mail_list(feedback_mail)
-
-    def update_jpcoar_identifier(self):
-        """
-        Update JPCOAR meta data item.
-
-        Update JPCOAR meta data item for grant DOI which added at the
-        Identifier Grant screen.
-        """
-        obj = ItemsMetadata.get_record(self.id)
-        attrs = ['attribute_value_mlt',
-                 'item_1551265147138',
-                 'item_1551265178780']
-        dc = {
-            attrs[1]: {attrs[0]: obj.get(attrs[1])},
-            attrs[2]: {attrs[0]: [obj.get(attrs[2])]}
-        }
-        self.indexer.update_jpcoar_identifier(dc, self.id)
-        record = RecordMetadata.query.get(self.id)
-        if record and record.json:
-            try:
-                with db.session.begin_nested():
-                    record.json[attrs[1]][attrs[0]] = obj.get(attrs[1])
-                    record.json[attrs[2]][attrs[0]] = [obj.get(attrs[2])]
-                    flag_modified(record, 'json')
-                    db.session.merge(record)
-                db.session.commit()
-            except Exception as ex:
-                current_app.logger.debug(ex)
-                db.session.rollback()
 
     def clean_unuse_file_contents(self, pre_object_versions,
                                   new_object_versions):

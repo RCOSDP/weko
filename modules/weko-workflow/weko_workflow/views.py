@@ -974,7 +974,6 @@ def next_action(activity_id='0', action_id=0):
 
         if deposit:
             deposit.update_feedback_mail()
-            deposit.update_jpcoar_identifier()
 
     if action_endpoint == 'item_link' and item_id:
         current_pid = PersistentIdentifier.get_by_object(
