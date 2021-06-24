@@ -936,6 +936,7 @@ def next_action(activity_id='0', action_id=0):
             record_without_version = item_id
             if deposit and pid_without_ver and not recid:
                 record_without_version = pid_without_ver.object_uuid
+
             saving_doi_pidstore(
                 item_id,
                 record_without_version,

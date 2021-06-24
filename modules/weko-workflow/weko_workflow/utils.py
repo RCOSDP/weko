@@ -3682,10 +3682,10 @@ def prepare_doi_link_workflow(item_id, doi_input):
 
     Args:
         item_id: Record identifier number.
+        doi_input: DOI input from last Identifier Setting.
     """
-    community_id = request.args.get('community', None)
-    if not community_id:
-        community_id = 'Root Index'
+    data = request.get_json() or {}
+    community_id = data.get('community', 'Root Index')
     identifier_setting = get_identifier_setting(community_id)
 
     # valid date pidstore_identifier data
@@ -3701,6 +3701,8 @@ def prepare_doi_link_workflow(item_id, doi_input):
             identifier_setting.ndl_jalc_doi = text_empty
         # Semi-automatic suffix
         suffix_method = IDENTIFIER_GRANT_SUFFIX_METHOD
+        if not identifier_setting.suffix:
+            identifier_setting.suffix = ''
 
         if suffix_method == 0:
             url_format = '{}/{}/{}'
