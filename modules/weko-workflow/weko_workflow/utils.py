@@ -3706,14 +3706,15 @@ def prepare_doi_link_workflow(item_id, doi_input):
 
         if suffix_method == 0:
             url_format = '{}/{}/{}'
+            _item_id = '%010d' % int(item_id)
             _jalc_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[1][2],
                 identifier_setting.jalc_doi,
-                item_id)
+                _item_id)
             _jalc_cr_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[2][2],
                 identifier_setting.jalc_doi,
-                item_id)
+                _item_id)
             _jalc_dc_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[3][2],
                 identifier_setting.jalc_doi,
@@ -3721,7 +3722,7 @@ def prepare_doi_link_workflow(item_id, doi_input):
             _ndl_jalc_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[4][2],
                 identifier_setting.jalc_doi,
-                item_id)
+                _item_id)
         elif suffix_method == 1:
             url_format = '{}/{}/{}{}'
             _jalc_doi_link = url_format.format(
