@@ -934,7 +934,8 @@ def up_load_file(record, root_path, deposit,
             if not path or not os.path.isfile(root_path + '/' + path):
                 if old_file and \
                         not (
-                            record['filenames'][idx]
+                            len(record['filenames']) > idx
+                            and record['filenames'][idx]
                             and old_file.key
                             == record['filenames'][idx]['filename']
                         ):
@@ -1242,7 +1243,7 @@ def import_items_to_system(item: dict):
 
             db.session.rollback()
             current_app.logger.error('item id: %s update error.' % item['id'])
-            current_app.logger.error(ex)
+            traceback.print_exc(file=sys.stdout)
             error_id = None
             if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
                     and ex.args[0].get('error_id'):
