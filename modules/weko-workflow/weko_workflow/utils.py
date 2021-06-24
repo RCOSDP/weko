@@ -59,7 +59,8 @@ from weko_records.serializers.utils import get_item_type_name, get_mapping
 from weko_records_ui.utils import create_onetime_download_url, \
     generate_one_time_download_url, get_list_licence
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
 from werkzeug.utils import import_string
@@ -124,8 +125,12 @@ def get_identifier_setting(community_id):
             repository=community_id).one_or_none()
 
 
-def saving_doi_pidstore(item_id, record_without_version, data=None,
-                        doi_select=0, is_feature_import=False):
+def saving_doi_pidstore(item_id,
+                        record_without_version,
+                        data=None,
+                        doi_select=0,
+                        is_feature_import=False,
+                        temporal_saving=False):
     """
     Mapp doi pidstore data to ItemMetadata.
 
@@ -169,21 +174,32 @@ def saving_doi_pidstore(item_id, record_without_version, data=None,
         doi_register_typ = 'NDL JaLC'
     else:
         current_app.logger.error(_('Identifier datas are empty!'))
+        return False
 
     try:
         if not flag_del_pidstore and identifier_val and doi_register_val:
-            identifier = IdentifierHandle(record_without_version)
-            reg = identifier.register_pidstore('doi', identifier_val)
-            identifier.update_idt_registration_metadata(doi_register_val,
-                                                        doi_register_typ)
-
-            if reg:
+            if temporal_saving:
                 identifier = IdentifierHandle(item_id)
-                identifier.update_idt_registration_metadata(doi_register_val,
-                                                            doi_register_typ)
-            current_app.logger.info(_('DOI successfully registered!'))
+                identifier.update_idt_registration_metadata(
+                    doi_register_val,
+                    doi_register_typ)
+                current_app.logger.info(_('DOI temporary registered!'))
+            else:
+                identifier = IdentifierHandle(record_without_version)
+                reg = identifier.register_pidstore('doi', identifier_val)
+                identifier.update_idt_registration_metadata(
+                    doi_register_val,
+                    doi_register_typ)
+                if reg:
+                    identifier = IdentifierHandle(item_id)
+                    identifier.update_idt_registration_metadata(
+                        doi_register_val,
+                        doi_register_typ)
+                current_app.logger.info(_('DOI successfully registered!'))
+        return True
     except Exception as ex:
         current_app.logger.exception(str(ex))
+        return False
 
 
 def register_hdl(activity_id):
@@ -965,8 +981,7 @@ class IdentifierHandle(object):
                     key_typ=key_type.split('.')[1],
                     atr_nam='Identifier Registration',
                     atr_val=input_value,
-                    atr_typ=input_type
-                    )
+                    atr_typ=input_type)
 
     def get_idt_registration_data(self):
         """Get Identifier Registration data.
@@ -3318,7 +3333,8 @@ def update_approval_date(activity):
     record = WekoRecord.get_record(item_id)
     deposit = WekoDeposit(record, record.model)
     if deposit.get("item_type_id") not in \
-            WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST + WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST:
+        WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TYPES_LIST \
+            + WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST:
         return
     approval_date_key = current_app.config[
         'WEKO_WORKFLOW_RESTRICTED_ACCESS_APPROVAL_DATE']
@@ -3653,3 +3669,97 @@ def get_main_record_detail(activity_id,
         files=new_files,
         files_thumbnail=new_thumbnail,
         pid=pid)
+
+
+def prepare_doi_link_workflow(item_id, doi_input):
+    """Parsing DOI link from storing data.
+
+    Args:
+        item_id: Record identifier number.
+    """
+    community_id = request.args.get('community', None)
+    if not community_id:
+        community_id = 'Root Index'
+    identifier_setting = get_identifier_setting(community_id)
+
+    # valid date pidstore_identifier data
+    if identifier_setting:
+        text_empty = '<Empty>'
+        if not identifier_setting.jalc_doi:
+            identifier_setting.jalc_doi = text_empty
+        if not identifier_setting.jalc_crossref_doi:
+            identifier_setting.jalc_crossref_doi = text_empty
+        if not identifier_setting.jalc_datacite_doi:
+            identifier_setting.jalc_datacite_doi = text_empty
+        if not identifier_setting.ndl_jalc_doi:
+            identifier_setting.ndl_jalc_doi = text_empty
+        # Semi-automatic suffix
+        suffix_method = IDENTIFIER_GRANT_SUFFIX_METHOD
+
+        if suffix_method == 0:
+            url_format = '{}/{}/{}'
+            _jalc_doi_link = url_format.format(
+                IDENTIFIER_GRANT_LIST[1][2],
+                identifier_setting.jalc_doi,
+                item_id)
+            _jalc_cr_doi_link = url_format.format(
+                IDENTIFIER_GRANT_LIST[2][2],
+                identifier_setting.jalc_doi,
+                item_id)
+            _jalc_dc_doi_link = url_format.format(
+                IDENTIFIER_GRANT_LIST[3][2],
+                identifier_setting.jalc_doi,
+                item_id)
+            _ndl_jalc_doi_link = url_format.format(
+                IDENTIFIER_GRANT_LIST[4][2],
+                identifier_setting.jalc_doi,
+                item_id)
+        elif suffix_method == 1:
+            url_format = '{}/{}/{}{}'
+            _jalc_doi_link = url_format.format(
+                IDENTIFIER_GRANT_LIST[1][2],
+                identifier_setting.jalc_doi,
+                identifier_setting.suffix,
+                doi_input.get('action_identifier_jalc_doi'))
+            _jalc_cr_doi_link = url_format.format(
+                IDENTIFIER_GRANT_LIST[2][2],
+                identifier_setting.jalc_doi,
+                identifier_setting.suffix,
+                doi_input.get('action_identifier_jalc_doi'))
+            _jalc_dc_doi_link = url_format.format(
+                IDENTIFIER_GRANT_LIST[3][2],
+                identifier_setting.jalc_doi,
+                identifier_setting.suffix,
+                doi_input.get('action_identifier_jalc_doi'))
+            _ndl_jalc_doi_link = url_format.format(
+                IDENTIFIER_GRANT_LIST[4][2],
+                identifier_setting.jalc_doi,
+                identifier_setting.suffix,
+                doi_input.get('action_identifier_jalc_doi'))
+        elif suffix_method == 2:
+            url_format = '{}/{}/{}'
+            _jalc_doi_link = url_format.format(
+                IDENTIFIER_GRANT_LIST[1][2],
+                identifier_setting.jalc_doi,
+                doi_input.get('action_identifier_jalc_doi'))
+            _jalc_cr_doi_link = url_format.format(
+                IDENTIFIER_GRANT_LIST[2][2],
+                identifier_setting.jalc_doi,
+                doi_input.get('action_identifier_jalc_doi'))
+            _jalc_dc_doi_link = url_format.format(
+                IDENTIFIER_GRANT_LIST[3][2],
+                identifier_setting.jalc_doi,
+                doi_input.get('action_identifier_jalc_doi'))
+            _ndl_jalc_doi_link = url_format.format(
+                IDENTIFIER_GRANT_LIST[4][2],
+                identifier_setting.jalc_doi,
+                doi_input.get('action_identifier_jalc_doi'))
+        else:
+            return {}
+
+        return {
+            'identifier_grant_jalc_doi_link': _jalc_doi_link,
+            'identifier_grant_jalc_cr_doi_link': _jalc_cr_doi_link,
+            'identifier_grant_jalc_dc_doi_link': _jalc_dc_doi_link,
+            'identifier_grant_ndl_jalc_doi_link': _ndl_jalc_doi_link
+        }
