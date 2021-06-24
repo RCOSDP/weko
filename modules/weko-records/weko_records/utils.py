@@ -246,31 +246,41 @@ def json_loader(data, pid, owner_id=None):
     del ojson, mjson, item
     return dc, jrc, is_edit
 
+
 def copy_field_test(dc, map, jrc, iid=None):
     if dc["item_type_id"] in map.keys():
         list1 = map[dc["item_type_id"]]
         for k, v in list1.items():
             if v["input_type"] == "geo_point":
-                geo_point = { k : {"lat" : "", "lon" : ""}}
-                geo_point[k]["lat"] = get_value_from_dict(dc, v["path"]["lat"], v["path_type"]["lat"], iid)
-                geo_point[k]["lon"] = get_value_from_dict(dc, v["path"]["lon"], v["path_type"]["lon"], iid)
+                geo_point = {k: {"lat": "", "lon": ""}}
+                geo_point[k]["lat"] = get_value_from_dict(
+                    dc, v["path"]["lat"], v["path_type"]["lat"], iid)
+                geo_point[k]["lon"] = get_value_from_dict(
+                    dc, v["path"]["lon"], v["path_type"]["lon"], iid)
                 if geo_point[k]["lat"] and geo_point[k]["lon"]:
                     jrc.update(geo_point)
             elif v["input_type"] == "geo_shape":
-                geo_shape = {k : { "type" : "", "coordinates" : ""}}
-                geo_shape[k]["type"] = get_value_from_dict(dc, v["path"]["type"], v["path_type"]["type"], iid)
-                geo_shape[k]["coordinates"] = get_value_from_dict(dc, v["path"]["coordinates"],v["path_type"]["coordinates"], iid)
+                geo_shape = {k: {"type": "", "coordinates": ""}}
+                geo_shape[k]["type"] = get_value_from_dict(
+                    dc, v["path"]["type"], v["path_type"]["type"], iid)
+                geo_shape[k]["coordinates"] = get_value_from_dict(
+                    dc, v["path"]["coordinates"], v["path_type"]["coordinates"], iid)
                 if geo_shape[k]["type"] and geo_shape[k]["coordinates"]:
                     jrc.update(geo_shape)
             elif v["input_type"] == "range":
-                value_range = { k:{"gte":"", "lte":""}}
-                value_range[k]["gte"] = get_value_from_dict(dc, v["path"]["gte"], v["path_type"]["gte"], iid)
-                value_range[k]["lte"] = get_value_from_dict(dc, v["path"]["lte"], v["path_type"]["lte"], iid)
+                value_range = {k: {"gte": "", "lte": ""}}
+                value_range[k]["gte"] = get_value_from_dict(
+                    dc, v["path"]["gte"], v["path_type"]["gte"], iid)
+                value_range[k]["lte"] = get_value_from_dict(
+                    dc, v["path"]["lte"], v["path_type"]["lte"], iid)
                 if value_range[k]["gte"] and value_range[k]["lte"]:
                     jrc.update(value_range)
             elif v["input_type"] == "text":
                 if get_value_from_dict(dc, v["path"], v["path_type"], iid):
-                    jrc[k] = get_value_from_dict(dc,v["path"], v["path_type"], iid)
+                    jrc[k] = get_value_from_dict(
+                        dc, v["path"], v["path_type"], iid)
+    current_app.logger.debug(jrc)
+
 
 def get_value_from_dict(dc, path, path_type, iid=None):
     if path_type == "xml":
@@ -278,21 +288,24 @@ def get_value_from_dict(dc, path, path_type, iid=None):
     elif path_type == "json":
         return copy_value_json_path(dc, path)
 
+
 def copy_value_xml_path(dc, xml_path, iid=None):
     from invenio_oaiserver.response import getrecord
     try:
         meta_prefix = xml_path[0]
         xpath = xml_path[1]
         if iid:
-            xml = etree.tostring(getrecord(metadataPrefix=meta_prefix, identifier=iid, verb='GetRecord',url = "https://192.168.75.3/oai"))    #url_for('invenio_oaiserver.response', _external=True)をこの関数で実行した場合エラーが起きました。原因は調査中です。
+            # url_for('invenio_oaiserver.response', _external=True)をこの関数で実行した場合エラーが起きました。原因は調査中です。
+            xml = etree.tostring(getrecord(
+                metadataPrefix=meta_prefix, identifier=iid, verb='GetRecord', url="https://192.168.75.3/oai"))
             root = ET.fromstring(xml)
-            ns={
-                'oai_dc':'http://www.openarchives.org/OAI/2.0/oai_dc/',
-                'dc':'http://purl.org/dc/elements/1.1/',
-                'jpcoar':'https://irdb.nii.ac.jp/schema/jpcoar/1.0/',
-                'xml':'http://www.w3.org/XML/1998/namespace'
-                }
-            copy_value = root.findall(xpath,ns)[0].text
+            ns = {
+                'oai_dc': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
+                'dc': 'http://purl.org/dc/elements/1.1/',
+                'jpcoar': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/',
+                'xml': 'http://www.w3.org/XML/1998/namespace'
+            }
+            copy_value = root.findall(xpath, ns)[0].text
             return str(copy_value)
     except Exception:
         print("exception")
@@ -303,7 +316,7 @@ def copy_value_json_path(dc, path):
     try:
         matches = parse(path).find(dc)
         match_value = [match.value for match in matches]
-        if len(match_value) > 0 :
+        if len(match_value) > 0:
             return match_value[0]
         else:
             return None

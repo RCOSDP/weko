@@ -370,6 +370,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                             'nested', path=path, query=Q(
                                                 'bool', should=shud,
                                                 must=[qry]))
+            current_app.logger.debug(qry)
             return qry
 
         def _get_text_query(k, v):
@@ -385,8 +386,9 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 name_dict = dict(operator="and")
                 name_dict.update(dict(query=kv))
                 qry = Q('match', **{v: name_dict})
-           
+
             return qry
+
         def _get_range_query(k, v):
             qry = None
 
@@ -407,7 +409,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             return qry
 
         def _get_geo_distance_query(k, v):
-            
+
             qry = None
 
             if isinstance(v, list) and len(v) >= 2:
@@ -423,14 +425,14 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 qv.update(dict(lon=value_lon))
 
                 if isinstance(v[1], str):
-                    qry= {
-                            "geo_distance": {
-                                    "distance": value_distance,
-                                    v[1]: qv
-                                }}
-                        
+                    qry = {
+                        "geo_distance": {
+                            "distance": value_distance,
+                            v[1]: qv
+                        }}
+
             return qry
-            
+
         def _get_geo_shape_query(k, v):
             qry = None
 
@@ -442,20 +444,20 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 if not value_lat or not value_lon or not value_distance:
                     return
 
-                qv = []                
+                qv = []
                 qv.append(value_lon)
                 qv.append(value_lat)
-                
+
                 if isinstance(v[1], str):
-                    qry= {
-                            "geo_shape": {
-                                    v[1] :{
-                                        "shape":{
-                                            "type" : "circle",
-                                            "coordinates" : qv,
-                                            "radius" : value_distance,
+                    qry = {
+                        "geo_shape": {
+                            v[1]: {
+                                "shape": {
+                                    "type": "circle",
+                                            "coordinates": qv,
+                                            "radius": value_distance,
                                 }}}}
-                        
+
             return qry
 
         kwd = current_app.config['WEKO_SEARCH_KEYWORDS_DICT']
@@ -509,7 +511,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 qy = _get_geo_distance_query(k, v)
 
                 if qy:
-                    mut.append(qy) 
+                    mut.append(qy)
 
             for k, v in kgs.items():
                 qy = _get_geo_shape_query(k, v)

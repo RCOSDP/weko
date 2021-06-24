@@ -23,6 +23,7 @@ from __future__ import absolute_import, print_function
 
 import signal
 from ast import literal_eval as make_tuple
+from collections import OrderedDict
 from datetime import datetime
 
 import dateutil
@@ -48,8 +49,6 @@ from .harvester import list_sets, map_sets
 from .models import HarvestLogs, HarvestSettings
 from .signals import oaiharvest_finished
 from .utils import ItemEvents, get_identifier_names
-
-from collections import OrderedDict
 
 logger = get_task_logger(__name__)
 
@@ -192,6 +191,7 @@ def process_item(record, harvesting, counter):
                                     object_uuid=dep.pid.object_uuid)
         indexes = []
         event = ItemEvents.CREATE
+
     if int(harvesting.auto_distribution):
         for i in map_indexes(mapper.specs(), harvesting.index_id):
             indexes.append(str(i)) if i not in indexes else None
@@ -210,21 +210,22 @@ def process_item(record, harvesting, counter):
         json = mapper.map()
         json['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
         dep['_deposit']['status'] = 'draft'
-        
+
         # START: temporary fix for JDCat
         # if json['$schema'] == '/items/jsonschema/14' and 'item_1588260046718' in json:
         if 'item_1588260046718' in json:
             for i in json['item_1588260046718']:
-                i['subitem_1592380784883']='Other'
+                i['subitem_1592380784883'] = 'Other'
 
-        #if json['$schema'] == '/items/jsonschema/14' and 'item_1592405734122' in json:
+        # if json['$schema'] == '/items/jsonschema/14' and 'item_1592405734122' in json:
         if 'item_1592405734122' in json:
             #current_app.logger.debug('json: %s' % json['item_1551264917614'])
             for i in json['item_1592405734122']:
-              i['subitem_1591320918354']='Distributor'
+                i['subitem_1591320918354'] = 'Distributor'
         # END: temporary fix for JDCat
 
         dep.update({'actions': 'publish', 'index': indexes}, json)
+
         dep.commit()
         dep.publish()
 

@@ -49,7 +49,7 @@
             {%- set community_param = '&community=' + community.id -%}
             {%- set param = '&root_index=true&q=' + community.index.id|string + community_param -%}
           {%- else %}
-            {%- set param = '&q=0' -%}
+            {%- set param = '&q=' -%}
           {%- endif %}
           <h3 class="panel-title"><a href="/search?page=1&size=20&search_type=2{{param}}">{{_('Index Tree')}}</a></h3>
       </div>

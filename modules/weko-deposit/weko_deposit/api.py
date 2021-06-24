@@ -872,7 +872,8 @@ class WekoDeposit(Deposit):
 
                             except Exception as e:
                                 import traceback
-                                current_app.logger.error(traceback.format_exc())
+                                current_app.logger.error(
+                                    traceback.format_exc())
                                 abort(500, '{}'.format(str(e)))
                             break
             self.jrc.update({'content': contents})
@@ -896,7 +897,10 @@ class WekoDeposit(Deposit):
         Save when register a new item type, Update when edit an item
         type.
         """
-        owner = str(self.get('_deposit', {}).get('owners', [1])[0])
+        tmp = self.get('_deposit', {}).get('owners', {})
+        owner = str(1)
+        if len(tmp) > 0:
+            owner = str(tmp[0])
         if owner:
             dc_owner = self.data.get("owner", None)
             if not dc_owner:
@@ -978,7 +982,10 @@ class WekoDeposit(Deposit):
 
         # convert item meta data
         try:
-            owner_id = str(self.get('_deposit', {}).get('owners', [1])[0])
+            tmp = self.get('_deposit', {}).get('owners', {})
+            owner_id = str(1)
+            if len(tmp) > 0:
+                owner_id = str(tmp[0])
             dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
             dc['publish_date'] = data.get('pubdate')
             dc['title'] = [data.get('title')]
@@ -996,6 +1003,7 @@ class WekoDeposit(Deposit):
 
         # Save Index Path on ES
         jrc.update(dict(path=index_lst))
+        current_app.logger.debug(jrc)
         # add at 20181121 start
         sub_sort = {}
         for pth in index_lst:
