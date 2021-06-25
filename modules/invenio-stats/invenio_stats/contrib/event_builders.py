@@ -11,7 +11,6 @@
 from __future__ import absolute_import, print_function
 
 import datetime
-import hashlib
 import uuid
 
 from flask import request
@@ -198,7 +197,7 @@ def record_view_event_builder(event, sender_app, pid=None, record=None,
             for index in record.navi:
                 index_list.append(dict(
                     index_id=str(index[1]),
-                    index_name=index[3],
+                    index_name=index[3] if index[3] else index[4],
                     index_name_en=index[4]
                 ))
 
@@ -266,12 +265,13 @@ def build_item_create_unique_id(doc):
 
 
 def resolve_address(addr):
-    """Resolve the ip address string addr and return its DNS name. If no name is found, return None."""
+    """Resolve the ip address string addr and return its DNS name. \
+    If no name is found, return None."""
     from socket import gethostbyaddr, herror
     try:
         record = gethostbyaddr(addr)
 
-    except herror as exc:
+    except herror:
         # print('an error occurred while resolving ', addr, ': ', exc)
         return None
 
