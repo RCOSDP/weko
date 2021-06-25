@@ -1304,9 +1304,16 @@ def prepare_edit_workflow(post_activity, recid, deposit):
             bucket.remove()
 
             # update metadata
+            _metadata = cur_deposit.item_metadata
+            _metadata['deleted_items'] = {}
+            _cur_keys = [_key for _key in cur_deposit.item_metadata.keys()
+                         if 'item_' in _key]
+            _drf_keys = [_key for _key in drf_deposit.item_metadata.keys()
+                         if 'item_' in _key]
+            _metadata['deleted_items'] = list(set(_drf_keys) - set(_cur_keys))
             index = {'index': drf_deposit.get('path', []),
                      'actions': drf_deposit.get('publish_status')}
-            args = [index, cur_deposit.item_metadata]
+            args = [index, _metadata]
             drf_deposit.update(*args)
             drf_deposit.commit()
             db.session.add(sync_bucket)
