@@ -155,7 +155,7 @@ def update_admin_lang_setting(admin_lang_settings):
     return 'success'
 
 
-@cached_unless_authenticated(timeout=50, key_prefix='get_selected_lang')
+#@cached_unless_authenticated(timeout=50, key_prefix='get_selected_lang')
 def get_selected_language():
     """Get selected language."""
     result = {

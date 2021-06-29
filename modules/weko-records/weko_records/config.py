@@ -223,7 +223,7 @@ WEKO_TEST_FIELD = {
         },
         "text11": {
             "input_type": "text",
-            "path": "$.item_1602147887655.attribute_value_mlt[*].subitem_1591178807921",
+            "path": "$.item_1588260046718.attribute_value_mlt[*].subitem_1591178807921",
             "path_type": "json"
         },
 

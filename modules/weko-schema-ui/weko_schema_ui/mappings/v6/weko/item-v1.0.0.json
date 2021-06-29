@@ -615,31 +615,28 @@
         },
         "date_range1":{
           "type" : "date_range",
-          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"
         },
         "date_range2":{
           "type" : "date_range",
-          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"
         },
         "date_range3":{
           "type" : "date_range",
-          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"
         },
         "date_range4":{
           "type" : "date_range",
-          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"
         },
         "date_range5":{
           "type" : "date_range",
-          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"
         },
 
         "geo_shape1":{
           "type" : "geo_shape"
         },
-
-
-
         "geoLocation": {
           "type": "object",
           "properties": {
