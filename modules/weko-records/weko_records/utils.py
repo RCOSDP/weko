@@ -317,7 +317,7 @@ def copy_value_json_path(dc, path):
         matches = parse(path).find(dc)
         match_value = [match.value for match in matches]
         if len(match_value) > 0:
-            return match_value[0]
+            return match_value
         else:
             return None
     except Exception:

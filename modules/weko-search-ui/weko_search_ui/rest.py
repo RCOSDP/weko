@@ -235,7 +235,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                                     page=page + 1, **urlkwargs)
         # aggs result identify
         rd = search_result.to_dict()
-        q = request.values.get('q') or '0'
+        q = request.values.get('q') or ''
         lang = current_i18n.language
 
         try:

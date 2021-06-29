@@ -2058,13 +2058,13 @@ def create_facet_search_query():
     def create_agg_by_aggregations(aggregations, key, val):
         """Create aggregations query."""
         if not aggregations or len(aggregations) == 0:
-            result = {key: {'terms': {'field': val}}}
+            result = {key: {'terms': {'field': val, "size": 10000}}}
         else:
             must = [dict(term={agg['agg_mapping']: agg['agg_value']})
                     for agg in aggregations]
             result = {key: {
                 'filter': {'bool': {'must': must}},
-                'aggs': {key: {'terms': {'field': val}}}
+                'aggs': {key: {'terms': {'field': val, "size": 10000}}}
             }}
         return result
 
