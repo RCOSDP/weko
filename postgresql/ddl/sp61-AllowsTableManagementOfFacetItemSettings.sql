@@ -1,10 +1,12 @@
 -- weko#25657
-CREATE TABLE public.facet_search_setting (
-    id serial NOT NULL,
-    name_en varchar(255) NOT NULL,
-    name_jp varchar(255) NULL,
-    "mapping" varchar(255) NOT NULL,
-    aggregations jsonb NULL,
-    active bool NULL,
-    CONSTRAINT pk_facet_search_setting null
+create table facet_search_setting
+(
+    id           serial       not null
+        constraint pk_facet_search_setting
+            primary key,
+    name_en      varchar(255) not null,
+    name_jp      varchar(255),
+    mapping      varchar(255) not null,
+    aggregations jsonb,
+    active       boolean
 );
