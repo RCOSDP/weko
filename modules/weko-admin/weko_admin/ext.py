@@ -90,6 +90,9 @@ class WekoAdmin(object):
         @app.before_request  # Add extra access control for roles
         def is_accessible_to_role():
             """Check if current user's role has access to view."""
+            # avoid ping request
+            if request.path == "/ping":
+                return
             for view in app.extensions['admin'][0]._views:
                 setattr(view, 'is_accessible', self.role_has_access)
                 new_views = []
@@ -105,6 +108,9 @@ class WekoAdmin(object):
             In case user opens the web for the first time,
             set default language base on Admin language setting
             """
+            # avoid ping request
+            if request.path == "/ping":
+                return
             if "selected_language" not in session:
                 registered_languages = AdminLangSettings\
                     .get_registered_language()

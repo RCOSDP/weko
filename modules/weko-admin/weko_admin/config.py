@@ -331,9 +331,8 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
 
     'detail_condition': [
         {'id': 'title',
-         'contents': 'Title',
-         'contents_value': {'en': 'integer_EN_5', 'ja': 'integer_JA_5'},
-
+         'contents': '',
+         'contents_value': {'en': 'Title', 'ja': 'タイトル'},
          'useable_status': True,
          'mapping': ['title'],
          'sche_or_attr':[{'id': 'title',
@@ -345,9 +344,8 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mappingFlg': False,
          'mappingName': ''},
         {'id': 'creator',
-         'contents': 'Author Name',
-         'contents_value': {'en': 'integer_EN_5', 'ja': 'integer_JA_5'},
-
+         'contents': '',
+         'contents_value': {'en': 'Author', 'ja': '作成者'},
          'useable_status': True,
          'mapping': ['creator'],
          'sche_or_attr':[{'id': 'creator',
@@ -359,8 +357,7 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mappingFlg': False,
          'mappingName': ''},
         {'id': 'subject', 'contents': 'Subject',
-         'contents_value': {'en': 'integer_EN_5', 'ja': 'integer_JA_5'},
-
+         'contents_value': {'en': 'Subject', 'ja': 'Subject'},
          'useable_status': True, 'mapping': ['BSH', 'DDC', 'LCC', 'LCSH', 'MeSH', 'NDC', 'NDLC', 'NDLSH', 'UDC', 'Other', 'Scival'],
          'sche_or_attr':[{'id': '0', 'contents': 'BSH', 'checkStus': False},
                          {'id': '1', 'contents': 'DDC', 'checkStus': False},
@@ -377,8 +374,7 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
 
         {'id': 'spatial',
          'contents': 'Region',
-         'contents_value': {'en': 'integer_EN_5', 'ja': 'integer_JA_5'},
-
+         'contents_value': {'en': 'Region', 'ja': 'Region'},
          'useable_status': True,
          'mapping': ['spatial'],
          'default_display':True,
@@ -388,8 +384,7 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mappingName':''},
         {'id': 'des',
          'contents': 'Description',
-         'contents_value': {'en': 'integer_EN_5', 'ja': 'integer_JA_5'},
-
+         'contents_value': {'en': 'Description', 'ja': 'Description'},
          'useable_status': True,
          'mapping': ['description'],
          'default_display':True,
