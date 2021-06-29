@@ -158,8 +158,10 @@ def copy_record_index_list(doc, aggregation_data=None):
     if list:
         agg_record_index_list = []
         for index in list:
-            agg_record_index_list.append(index.get('index_name', ''))
-            record_index_names = ", ".join(agg_record_index_list)
+            idx_name = index.get('index_name', '')
+            if idx_name is not None:
+                agg_record_index_list.append(idx_name)
+                record_index_names = ", ".join(agg_record_index_list)
     return record_index_names
 
 
@@ -265,8 +267,10 @@ def build_item_create_unique_id(doc):
 
 
 def resolve_address(addr):
-    """Resolve the ip address string addr and return its DNS name. \
-    If no name is found, return None."""
+    """Resolve the ip address string addr and return its DNS name.
+
+    If no name is found, return None.
+    """
     from socket import gethostbyaddr, herror
     try:
         record = gethostbyaddr(addr)
