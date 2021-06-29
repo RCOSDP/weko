@@ -2054,14 +2054,16 @@ def create_facet_search_query():
     """Create facet search query."""
     def create_agg_by_aggregations(aggregations, key, val):
         """Create aggregations query."""
+        from .config import \
+            WEKO_ADMIN_FACET_SEARCH_SETTING_BUCKET_SIZE as bucket_size
         if not aggregations or len(aggregations) == 0:
-            result = {key: {'terms': {'field': val, "size": 10000}}}
+            result = {key: {'terms': {'field': val, "size": bucket_size}}}
         else:
             must = [dict(term={agg['agg_mapping']: agg['agg_value']})
                     for agg in aggregations]
             result = {key: {
                 'filter': {'bool': {'must': must}},
-                'aggs': {key: {'terms': {'field': val, "size": 10000}}}
+                'aggs': {key: {'terms': {'field': val, "size": bucket_size}}}
             }}
         return result
 
