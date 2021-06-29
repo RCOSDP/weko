@@ -27,6 +27,11 @@ from weko_admin import config as ad_config
 from weko_admin.models import SearchManagement as sm
 from weko_index_tree.api import Indexes
 from weko_records.utils import get_keywords_data_load
+from invenio_i18n.ext import current_i18n
+
+from weko_index_tree.utils import cached_index_tree_json, filter_index_list_by_role, \
+   get_index_id_list, get_publish_index_id_list, get_tree_json, \
+   get_user_roles, reset_tree, sanitize
 
 
 class SearchSetting(object):
@@ -148,7 +153,7 @@ class SearchSetting(object):
         return nested_sorting
 
 
-def get_search_detail_keyword(str):
+def get_search_detail_keyword(st):
     """Get search detail keyword."""
     res = sm.get()
     options = None
@@ -164,10 +169,27 @@ def get_search_detail_keyword(str):
         sub = dict(id=x[0], contents=x[0], checkStus=False)
         check_val.append(sub)
 
+    check_val2 = []
+    index_browsing_tree = Indexes.get_browsing_tree()
+    for indextree in index_browsing_tree:
+        index_parelist=[]
+        index_list = get_childinfo(indextree,index_parelist)
+
+        for idx in index_list :
+            sub2 = dict(id=idx['parent_id'], contents=idx['parent_name'], checkStus=False)
+            check_val2.append(sub2)
+
     for k_v in options:
         if k_v.get('id') == 'itemtype':
             k_v['check_val'] = check_val
-            break
+        elif k_v.get('id') == 'iid':
+            k_v['check_val'] = check_val2
+        elif k_v.get('contents') == '':
+            contents_value = k_v.get('contents_value')
+            k_v['contents'] = contents_value['en']
+            for key_lang in contents_value.keys() :
+                if key_lang == current_i18n.language:
+                    k_v['contents'] = contents_value[key_lang]
 
     key_options['condition_setting'] = options
 
@@ -177,27 +199,26 @@ def get_search_detail_keyword(str):
 
     return key_options_str
 
-
 def get_childinfo(index_tree, result_list=[], parename=""):
 
     if isinstance(index_tree, dict):
         if index_tree['pid'] != 0:
             pname = parename + "/" + index_tree['name']
             pid = index_tree['parent'] + "/" + str(index_tree['cid'])
-        else:
+        else :
             pname = index_tree['name']
             pid = index_tree['cid']
 
         data = {
-            'id': index_tree['cid'],
-            'index_name': index_tree['name'],
-            'parent_id': pid,
-            'parent_name': pname
+            'id':index_tree['cid'],
+            'index_name':index_tree['name'],
+            'parent_id':pid,
+            'parent_name':pname
         }
         result_list.append(data)
 
         for childlist in index_tree['children']:
             if childlist:
-                get_childinfo(childlist, result_list, pname)
+                get_childinfo(childlist, result_list,pname)
 
     return result_list

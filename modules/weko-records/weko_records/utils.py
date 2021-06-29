@@ -276,8 +276,8 @@ def copy_field_test(dc, map, jrc, iid=None):
                 if value_range[k]["gte"] and value_range[k]["lte"]:
                     jrc.update(value_range)
             elif v["input_type"] == "text":
-                if get_value_from_dict(dc, v["path"], v["path_type"], iid):
-                    jrc[k] = get_value_from_dict(
+                if get_values_from_dict(dc, v["path"], v["path_type"], iid):
+                    jrc[k] = get_values_from_dict(
                         dc, v["path"], v["path_type"], iid)
     current_app.logger.debug(jrc)
 
@@ -287,6 +287,13 @@ def get_value_from_dict(dc, path, path_type, iid=None):
         return copy_value_xml_path(dc, path, iid)
     elif path_type == "json":
         return copy_value_json_path(dc, path)
+
+
+def get_values_from_dict(dc, path, path_type, iid=None):
+    if path_type == "xml":
+        return copy_value_xml_path(dc, path, iid)
+    elif path_type == "json":
+        return copy_values_json_path(dc, path)
 
 
 def copy_value_xml_path(dc, xml_path, iid=None):
@@ -313,6 +320,18 @@ def copy_value_xml_path(dc, xml_path, iid=None):
 
 
 def copy_value_json_path(dc, path):
+    try:
+        matches = parse(path).find(dc)
+        match_value = [match.value for match in matches]
+        if len(match_value) > 0:
+            return match_value[0]
+        else:
+            return None
+    except Exception:
+        return None
+
+
+def copy_values_json_path(dc, path):
     try:
         matches = parse(path).find(dc)
         match_value = [match.value for match in matches]
