@@ -437,52 +437,23 @@ def gatherById():
                 body=body
             )
 
-    update_q = {
+    target_author_q = {
         "query": {
             "match": {
-                "weko_id": "@id"
+                "_id": "@id"
             }
         }
     }
-    indexer = RecordIndexer()
-    item_pk_id = []
-    for t in gatherFrom:
-        q = json.dumps(update_q).replace("@id", t)
-        q = json.loads(q)
-        res = indexer.client.search(
-            index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
-            body=q
-        )
-        current_app.logger.debug(res.get("hits").get("hits"))
-        for h in res.get("hits").get("hits"):
-            sub = {"id": h.get("_id"), "weko_id": t}
-            item_pk_id.append(sub)
-            body = {
-                'doc': {
-                    "weko_id": gatherTo,
-                    "weko_id_hidden": gatherTo
-                }
-            }
-            indexer.client.update(
-                index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
-                doc_type=current_app.config['INDEXER_DEFAULT_DOCTYPE'],
-                id=h.get("_id"),
-                body=body
-            )
-    current_app.logger.debug(item_pk_id)
-    try:
-        with db.session.begin_nested():
-            for j in item_pk_id:
-                itemData = ItemMetadata.query.filter_by(id=j.get("id")).one()
-                itemJson = json.dumps(itemData.json)
-                itemJson = itemJson.replace(j.get("weko_id"), gatherTo)
-                itemData.json = json.loads(itemJson)
-                db.session.merge(itemData)
-        db.session.commit()
-    except Exception as ex:
-        current_app.logger.debug(ex)
-        db.session.rollback()
-        return jsonify({'code': 204, 'msg': 'Faild'})
+    q = json.dumps(target_author_q).replace("@id", gatherTo)
+    q = json.loads(q)
+    res = indexer.client.search(
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        body=q
+    )
+    target_data = res.get("hits").get("hits")[0].get("_source")
+
+    from weko_deposit.tasks import update_items_by_authorInfo
+    update_items_by_authorInfo.delay(gatherFromPkId, target_data)
 
     return jsonify({'code': 0, 'msg': 'Success'})
 

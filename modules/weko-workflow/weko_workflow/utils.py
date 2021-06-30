@@ -1301,6 +1301,7 @@ def prepare_edit_workflow(post_activity, recid, deposit):
 
             sync_bucket.bucket_id = snapshot.id
             drf_deposit['_buckets']['deposit'] = str(snapshot.id)
+            db.session.add(sync_bucket)
             bucket.remove()
 
             # update metadata
@@ -1316,7 +1317,6 @@ def prepare_edit_workflow(post_activity, recid, deposit):
             args = [index, _metadata]
             drf_deposit.update(*args)
             drf_deposit.commit()
-            db.session.add(sync_bucket)
         db.session.commit()
         rtn = activity.init_activity(post_activity,
                                      community,
