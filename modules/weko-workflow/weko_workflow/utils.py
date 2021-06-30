@@ -1286,37 +1286,39 @@ def prepare_edit_workflow(post_activity, recid, deposit):
                                      draft_record.model.id)
     else:
         # Clone org bucket into draft record.
-        with db.session.begin_nested():
-            drf_deposit = WekoDeposit.get_record(draft_pid.object_uuid)
-            cur_deposit = WekoDeposit.get_record(recid.object_uuid)
-            cur_bucket = cur_deposit.files.bucket
-            bucket = Bucket.get(drf_deposit.files.bucket.id)
+        try:
+            _deposit = WekoDeposit.get_record(draft_pid.object_uuid)
+            _bucket = Bucket.get(_deposit.files.bucket.id)
+            bucket = deposit.files.bucket
 
             sync_bucket = RecordsBuckets.query.filter_by(
-                bucket_id=drf_deposit.files.bucket.id
+                bucket_id=_deposit.files.bucket.id
             ).first()
-            snapshot = cur_bucket.snapshot(lock=False)
+            snapshot = bucket.snapshot(lock=False)
             snapshot.locked = False
-            bucket.locked = False
+            _bucket.locked = False
 
             sync_bucket.bucket_id = snapshot.id
-            drf_deposit['_buckets']['deposit'] = str(snapshot.id)
+            _deposit['_buckets']['deposit'] = str(snapshot.id)
+            _bucket.remove()
             db.session.add(sync_bucket)
-            bucket.remove()
 
             # update metadata
-            _metadata = cur_deposit.item_metadata
+            _metadata = deposit.item_metadata
             _metadata['deleted_items'] = {}
-            _cur_keys = [_key for _key in cur_deposit.item_metadata.keys()
+            _cur_keys = [_key for _key in deposit.item_metadata.keys()
                          if 'item_' in _key]
-            _drf_keys = [_key for _key in drf_deposit.item_metadata.keys()
+            _drf_keys = [_key for _key in _deposit.item_metadata.keys()
                          if 'item_' in _key]
             _metadata['deleted_items'] = list(set(_drf_keys) - set(_cur_keys))
-            index = {'index': drf_deposit.get('path', []),
-                     'actions': drf_deposit.get('publish_status')}
+            index = {'index': _deposit.get('path', []),
+                     'actions': _deposit.get('publish_status')}
             args = [index, _metadata]
-            drf_deposit.update(*args)
-            drf_deposit.commit()
+            _deposit.update(*args)
+            _deposit.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.error(ex)
+            db.session.rollback()
         db.session.commit()
         rtn = activity.init_activity(post_activity,
                                      community,
