@@ -914,7 +914,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 
       /**
        * Get Identifier URI value.
-       * @param e HTML event
+       * @param currentForm Form element.
        * @param identifier_key Identifier key.
        */
       $scope.getIdentifierURIValue = function (currentForm, identifier_key) {
@@ -943,6 +943,26 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           error: function (data, status) {
           }
         });
+      }
+
+      /**
+       * Disable Name Identifier when schema is WEKO.
+       */
+      $scope.disableNameIdentifier = function () {
+        setTimeout(function () {
+          $("select[name*='nameIdentifierScheme'], " +
+            "select[name*='affiliationNameIdentifierScheme']," +
+            "select[name*='contributorAffiliationScheme']")
+            .each(function () {
+              let val = $(this).val();
+              if (val && val.split(":").length > 1
+                && val.split(":")[1] === "WEKO") {
+                $(this).closest('li')
+                  .find('input, select')
+                  .attr('disabled', true);
+              }
+            });
+        }, 1000);
       }
 
       $scope.getDataAuthors = function () {
@@ -2419,6 +2439,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           $scope.removeValidateControlsWhenInit();
           //Expand all parent panels when child or grandchild controls required.
           $scope.expandAllParentPanel();
+          // Disable Name Identifier when schema is WEKO.
+          $scope.disableNameIdentifier();
         }, 3000);
         // Auto fill user profile
         $scope.autoFillProfileInfo();
@@ -2434,6 +2456,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 
         // Resize main content widget after optional items are collapsed
         setTimeout(function () {
+          window.dispatchEvent(new Event('resize'));
           $scope.resizeMainContentWidget();
         }, 500)
       });
@@ -3109,6 +3132,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         $("#btn_id").text('');
         $("#author_info").text('');
         $("#array_flg").text('');
+
+        // Disable Name Identifier when schema is WEKO.
+        setTimeout(function () {
+          $scope.disableNameIdentifier();
+        }, 0);
       }
       // add by ryuu. end 20180410
       $scope.updated = function (model_id, modelValue, form, arrayFlg) {
