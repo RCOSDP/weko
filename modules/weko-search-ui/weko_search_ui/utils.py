@@ -1000,7 +1000,7 @@ def register_item_metadata(item, root_path):
         is_cleaned = True
         item_map = get_mapping(Mapping.get_record(item_type_id),
                                'jpcoar_mapping')
-        _, key = get_data_by_property(item, item_map, "file.URI.@value")
+        key = item_map.get("file.URI.@value")
         if key:
             key = key.split('.')[0]
             if not data.get(key):
@@ -1856,19 +1856,19 @@ def register_item_doi(item):
     data = None
     if is_change_identifier:
         if doi_ra and doi:
-            data = {
-                'identifier_grant_jalc_doi_link':
-                    IDENTIFIER_GRANT_LIST[1][2] + '/' + doi,
-                'identifier_grant_jalc_cr_doi_link':
-                    IDENTIFIER_GRANT_LIST[2][2] + '/' + doi,
-                'identifier_grant_jalc_dc_doi_link':
-                    IDENTIFIER_GRANT_LIST[3][2] + '/' + doi,
-                'identifier_grant_ndl_jalc_doi_link':
-                    IDENTIFIER_GRANT_LIST[4][2] + '/' + doi
-            }
             if pid_doi and not pid_doi.pid_value.endswith(doi):
                 pid_doi.delete()
             if not pid_doi or not pid_doi.pid_value.endswith(doi):
+                data = {
+                    'identifier_grant_jalc_doi_link':
+                    IDENTIFIER_GRANT_LIST[1][2] + '/' + doi,
+                    'identifier_grant_jalc_cr_doi_link':
+                    IDENTIFIER_GRANT_LIST[2][2] + '/' + doi,
+                    'identifier_grant_jalc_dc_doi_link':
+                    IDENTIFIER_GRANT_LIST[3][2] + '/' + doi,
+                    'identifier_grant_ndl_jalc_doi_link':
+                    IDENTIFIER_GRANT_LIST[4][2] + '/' + doi
+                }
                 doi_duplicated = check_doi_duplicated(doi_ra, data)
                 if doi_duplicated:
                     raise Exception({'error_id': doi_duplicated})
@@ -2256,10 +2256,8 @@ def handle_fill_system_item(list_record):
                 item_type_id), 'jpcoar_mapping')
 
         # Resource Type
-        _, resourcetype_key = get_data_by_property(
-            item, item_map, "type.@value")
-        _, resourceuri_key = get_data_by_property(
-            item, item_map, "type.@attributes.rdf:resource")
+        resourcetype_key = item_map.get("type.@value")
+        resourceuri_key = item_map.get("type.@attributes.rdf:resource")
         if resourcetype_key and resourceuri_key:
             recursive_sub(resourcetype_key.split('.'),
                           item['metadata'],
@@ -2267,10 +2265,8 @@ def handle_fill_system_item(list_record):
                           WEKO_IMPORT_SYSTEM_ITEMS[0])
 
         # Version Type
-        _, versiontype_key = get_data_by_property(
-            item, item_map, "versiontype.@value")
-        _, versionuri_key = get_data_by_property(
-            item, item_map, "versiontype.@attributes.rdf:resource")
+        versiontype_key = item_map.get("versiontype.@value")
+        versionuri_key = item_map.get("versiontype.@attributes.rdf:resource")
         if versiontype_key and versionuri_key:
             recursive_sub(versiontype_key.split('.'),
                           item['metadata'],
@@ -2278,15 +2274,22 @@ def handle_fill_system_item(list_record):
                           WEKO_IMPORT_SYSTEM_ITEMS[1])
 
         # Access Right
-        _, accessRights_key = get_data_by_property(
-            item, item_map, "accessRights.@value")
-        _, accessRightsuri_key = get_data_by_property(
-            item, item_map, "accessRights.@attributes.rdf:resource")
+        accessRights_key = item_map.get("accessRights.@value")
+        accessRightsuri_key = item_map.get(
+            "accessRights.@attributes.rdf:resource")
         if accessRights_key and accessRightsuri_key:
             recursive_sub(accessRights_key.split('.'),
                           item['metadata'],
                           accessRightsuri_key.split('.')[-1],
                           WEKO_IMPORT_SYSTEM_ITEMS[2])
+
+        # Clean Identifier Registration
+        identifierRegistration_key = item_map.get(
+            "identifierRegistration.@attributes.identifierType", '')
+        identifierRegistration_key = identifierRegistration_key.split('.')[0]
+        if identifierRegistration_key \
+                and item['metadata'].get(identifierRegistration_key):
+            del item['metadata'][identifierRegistration_key]
 
 
 def get_thumbnail_key(item_type_id=0):
