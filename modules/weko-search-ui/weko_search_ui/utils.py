@@ -2708,13 +2708,16 @@ def handle_remove_es_metadata(item):
     """
     try:
         item_id = item.get('id')
-        pid = WekoRecord.get_record_by_pid(item_id).pid_recid
-        pid_lastest = WekoRecord.get_record_by_pid(
-            item_id + '.' + str(get_latest_version_id(item_id) - 1)).pid_recid
-        deposit = WekoDeposit.get_record(pid.object_uuid)
-        deposit.indexer.delete(deposit)
-        deposit = WekoDeposit.get_record(pid_lastest.object_uuid)
-        deposit.indexer.delete(deposit)
+        status = item.get('status')
+        if status == 'new':
+            pid = WekoRecord.get_record_by_pid(item_id).pid_recid
+            pid_lastest = WekoRecord.get_record_by_pid(
+                item_id + '.' + str(get_latest_version_id(item_id) - 1)
+            ).pid_recid
+            deposit = WekoDeposit.get_record(pid.object_uuid)
+            deposit.indexer.delete(deposit)
+            deposit = WekoDeposit.get_record(pid_lastest.object_uuid)
+            deposit.indexer.delete(deposit)
     except Exception as ex:
         current_app.logger.error(ex)
 
