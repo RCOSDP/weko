@@ -896,7 +896,8 @@ class WekoDeposit(Deposit):
         Save when register a new item type, Update when edit an item
         type.
         """
-        owner = str(self.get('_deposit', {}).get('owners', [1])[0])
+        deposit_owners = self.get('_deposit', {}).get('owners')
+        owner = str(deposit_owners[0] if deposit_owners else 1)
         if owner:
             dc_owner = self.data.get("owner", None)
             if not dc_owner:
@@ -978,7 +979,8 @@ class WekoDeposit(Deposit):
 
         # convert item meta data
         try:
-            owner_id = str(self.get('_deposit', {}).get('owners', [1])[0])
+            deposit_owners = self.get('_deposit', {}).get('owners')
+            owner_id = str(deposit_owners[0] if deposit_owners else 1)
             dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
             dc['publish_date'] = data.get('pubdate')
             dc['title'] = [data.get('title')]
