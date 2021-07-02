@@ -236,7 +236,7 @@ def get_lst_mapping(current_checking, parent_node=[]):
                 yield i
 
 
-def get_detail_node(lst_data, idx):
+def get_detail_node(lst_data, idx, meta_list):
     """Get detail info of node.
 
     @param lst_data:
@@ -245,11 +245,13 @@ def get_detail_node(lst_data, idx):
     """
     item_key = next(iter(lst_data[idx]))
     item_val = lst_data[idx].get(item_key)
-    lst_values = [i for i in item_val if i.endswith('@value')]
-    return item_key, item_val, lst_values
+    lst_values = [i for i in item_val]
+    lst_values.sort()
+    input_type = meta_list.get(item_key, {}).get('input_type')
+    return item_key, item_val, lst_values, input_type
 
 
-def get_all_mapping(item_value):
+def get_all_mapping(item_value, mapping_type):
     """Get all mapping of each item.
 
     @param item_value:
@@ -257,13 +259,14 @@ def get_all_mapping(item_value):
     """
     lst_result = []
     for sub_key, sub_val in item_value.items():
-        if sub_key.endswith('_mapping') and isinstance(sub_val, dict):
+        if sub_key == mapping_type and isinstance(sub_val, dict):
             for i in get_lst_mapping(sub_val, [sub_key]):
                 lst_result.append(i)
     return lst_result
 
 
-def check_duplicate_mapping(data_mapping, meta_system, item_type):
+def check_duplicate_mapping(
+    data_mapping, meta_system, item_type, mapping_type):
     """Check_duplicate mapping.
 
     @param data_mapping:
@@ -274,28 +277,29 @@ def check_duplicate_mapping(data_mapping, meta_system, item_type):
     def process_overlap():
         """Process partial overlap if any."""
         for overlap_val in lst_overlap:
-            overlap_key = overlap_val.replace('.@value', '')
-            lst_all_src = [i for i in item_src_val if
-                           i.startswith(overlap_key)]
-            lst_all_des = [i for i in item_des_val if
-                           i.startswith(overlap_key)]
-            if lst_all_src != lst_all_des:
+            lst_all_src = [i for i in item_src_val]
+            lst_all_des = [i for i in item_des_val]
+            if lst_all_src != lst_all_des \
+                    and not [item_src_name, item_des_name] in lst_duplicate:
                 lst_duplicate.append([item_src_name, item_des_name])
 
     lst_temporary = {}
+    meta_list = item_type.render.get('meta_list')
     for item_key, item_value in data_mapping.items():
-        lst_temporary[item_key] = get_all_mapping(item_value)
+        lst_temporary[item_key] = get_all_mapping(item_value, mapping_type)
     lst_mapping_detail = []
     for k, v in lst_temporary.items():
         lst_mapping_detail.append({k: v})
     lst_duplicate = []
     for i in range(len(lst_mapping_detail)):
-        item_src_key, item_src_val, lst_values_src = get_detail_node(
-            lst_mapping_detail, i)
+        item_src_key, item_src_val, lst_values_src, input_type_src = \
+            get_detail_node(lst_mapping_detail, i, meta_list)
         for j in range(i + 1, len(lst_mapping_detail)):
-            item_des_key, item_des_val, lst_values_des = get_detail_node(
-                lst_mapping_detail, j)
-            if item_des_key == 'system_file' or item_src_key == 'system_file':
+            item_des_key, item_des_val, lst_values_des, input_type_des = \
+                get_detail_node(lst_mapping_detail, j, meta_list)
+            if item_des_key == 'system_file' \
+                    or item_src_key == 'system_file' \
+                    or input_type_src != input_type_des:
                 continue
             item_des_in_sys = item_des_key in meta_system
             item_src_in_sys = item_src_key in meta_system
@@ -306,7 +310,8 @@ def check_duplicate_mapping(data_mapping, meta_system, item_type):
                     item_src_key).get('title')
                 item_des_name = item_type.schema.get('properties').get(
                     item_des_key).get('title')
-                if item_des_in_sys and item_src_in_sys:
+                if (item_des_in_sys and item_src_in_sys) \
+                        or [item_src_name, item_des_name] in lst_duplicate:
                     continue
                 elif (item_des_in_sys or item_src_in_sys) and lst_overlap:
                     lst_duplicate.append([item_src_name, item_des_name])

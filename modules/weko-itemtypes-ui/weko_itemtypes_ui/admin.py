@@ -528,8 +528,9 @@ class ItemTypeMappingView(BaseView):
         data = request.get_json()
         item_type = ItemTypes.get_by_id(data.get('item_type_id'))
         meta_system = item_type.render.get('meta_system')
-        lst_duplicate = check_duplicate_mapping(data.get('mapping'),
-                                                meta_system, item_type)
+        mapping_type = data.get('mapping_type')
+        lst_duplicate = check_duplicate_mapping(
+            data.get('mapping'), meta_system, item_type, mapping_type)
         if len(lst_duplicate) > 0:
             return jsonify(duplicate=True, err_items=lst_duplicate,
                            msg=_('Duplicate mapping as below:'))
