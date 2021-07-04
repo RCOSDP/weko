@@ -3,7 +3,8 @@ FROM ubuntu:focal AS nginx-with-shib
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /tmp
 
-RUN apt-get update -y && apt-get install -y wget curl gnupg2 ca-certificates lsb-release unzip uuid-dev dpkg-dev
+RUN apt-get update -y 
+RUN apt-get install -y wget curl gnupg2 ca-certificates lsb-release unzip uuid-dev dpkg-dev
 RUN echo "deb http://nginx.org/packages/ubuntu focal nginx" | tee /etc/apt/sources.list.d/nginx.list
 RUN echo "deb-src http://nginx.org/packages/ubuntu focal nginx" | tee -a /etc/apt/sources.list.d/nginx.list
 RUN curl -fsSL https://nginx.org/keys/nginx_signing.key | apt-key add -

@@ -2057,6 +2057,9 @@ def create_facet_search_query():
     """Create facet search query."""
     def create_agg_by_aggregations(aggregations, key, val):
         """Create aggregations query."""
+        if "fields" in val:
+            """ remove "fields" when using multi-field """
+            val = val.replace(".fields.",".")
         if not aggregations or len(aggregations) == 0:
             result = {key: {'terms': {'field': val, "size": 10000}}}
         else:
@@ -2088,6 +2091,9 @@ def create_facet_search_query():
         """Create post filters query."""
         post_filters_query = dict()
         for facet in facets:
+            if "fields.raw" in facet.mapping:
+                """ remove "fields" when using multi-field """
+                facet.mapping = facet.mapping.replace(".fields.raw",".raw")
             post_filters_query.update({facet.name_en: facet.mapping})
         return post_filters_query
 

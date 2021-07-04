@@ -279,7 +279,7 @@ def copy_field_test(dc, map, jrc, iid=None):
                 if get_values_from_dict(dc, v["path"], v["path_type"], iid):
                     jrc[k] = get_values_from_dict(
                         dc, v["path"], v["path_type"], iid)
-    current_app.logger.debug(jrc)
+    # current_app.logger.debug(jrc)
 
 
 def get_value_from_dict(dc, path, path_type, iid=None):

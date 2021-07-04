@@ -25,7 +25,7 @@ services:
     restart: "always"
     build:
       context: .
-      #target: stage_7
+      target: stage_8
     #command: /bin/bash -c "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO -B -D -f /code/celeryd.log && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
     command: /bin/bash -c "jinja2 /code/scripts/instance.cfg > /home/invenio/.virtualenvs/invenio/var/instance/conf/invenio.cfg; rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=DEBUG -B -D -f /code/celeryd.log && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
     environment:
@@ -123,6 +123,10 @@ services:
         max-size: "10m"
     ports:
       - "5001:5000"
+    deploy:
+      resources:
+        limits:
+          memory: 2000m
 
   postgresql:
     restart: "always"
@@ -142,6 +146,10 @@ services:
     image: redis
     ports:
       - "26301:6379"
+    deploy:
+      resources:
+        limits:
+          memory: 100m
 
   elasticsearch:
     restart: "always"
@@ -176,6 +184,10 @@ services:
 #      - letsencrypt_html:/var/www/html
     links:
       - web
+    deploy:
+      resources:
+        limits:
+          memory: 300m
 
 #  certbot:
 #    image: certbot/certbot:latest

@@ -491,94 +491,244 @@
           ]
         },
         "text1": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text2": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text3": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text4": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text5": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text6": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text7": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text8": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text9": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text10": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text11": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text12": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text13": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text14": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text15": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text16": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text17": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text18": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text19": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text20": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text21": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text22": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text23": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text24": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text25": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text26": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text27": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text28": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text29": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text30": {
-          "type": "keyword"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "integer_range1":{
           "type": "integer_range"

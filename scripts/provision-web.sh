@@ -87,7 +87,9 @@ provision_web_common_ubuntu14 () {
          libjpeg-dev \
          nodejs \
          python-dev \
-         python-pip
+         python-pip \
+	 libpcre3-dev \
+	 libpcre3 
     # sphinxdoc-install-web-common-ubuntu14-end
 }
 
@@ -175,7 +177,11 @@ setup_virtualenvwrapper () {
     # shellcheck source=/dev/null
     source "$(which virtualenvwrapper.sh)"
     # sphinxdoc-install-virtualenvwrapper-end
-
+    $sudo pip install -U gunicorn
+    $sudo pip install -U meinheld
+    $sudo pip install -U uwsgi
+    $sudo pip install -U uwsgitop
+    $sudo pip install -U uwsgi-plugin-python
     # enable quitting on errors back:
     set -o errexit
     set -o nounset
