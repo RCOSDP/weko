@@ -170,14 +170,15 @@
     {%- set ns = namespace(disp_language = '') -%}
     {%- set nsflg = namespace(dispflg = False) -%}
     {%- set nslang = namespace(langv = '') -%}
+    {%- set nslangvalue = namespace(langval = '') -%}
     {%- set langkey = _('Language:').split(':')[0] -%}
+    {%- set nspare = namespace(dispflg = False) -%}
+    {%- set nsfirst = namespace(firstflg = '') -%}
     {%- for language_value in language_data -%}
-        {%- set looplastflg = False -%}
         {%- if loop.first -%}
-            {%- set ns.disp_language = language_value -%}
-        {%- endif -%}
-        {%- if loop.last -%}
-            {%- set looplastflg = True -%}
+            {%- set nsfirst.firstflg = True -%}
+        {%- else -%}
+            {%- set nsfirst.firstflg = False -%}
         {%- endif -%}
         {%- for language_val in language_value[0] -%}
             {%- if language_val -%}
@@ -187,19 +188,39 @@
             {%- endif -%}
         {%- endfor -%}
         {%- if nslang.langv[0] -%}
-            {%- if 'en' in nslang.langv[0].values() and not nsflg.dispflg -%}
-                {%- set ns.disp_language = language_value -%}
-            {%- endif -%}
-            {%- if current_i18n.language in nslang.langv[0].values() -%}
-                {%- set ns.disp_language = language_value -%}
-                {%- set nsflg.dispflg = True -%}
-            {%- endif -%}
+            {%- if nslang.langv[0] -%}
+                {%- for k, v in nslang.langv[0].items() -%}
+                    {%- if nsfirst.firstflg -%}
+                        {%- set nslangvalue.langval = v -%}
+                    {%- endif -%}
+                    {%- if 'en' in nslang.langv[0].values() and not nsflg.dispflg -%}
+                        {%- set nslangvalue.langval = v -%}
+                    {%- endif -%}
+                    {%- if current_i18n.language in nslang.langv[0].values() -%}
+                        {%- set nslangvalue.langval = v -%}
+                        {%- set nsflg.dispflg = True -%}
+                    {%- endif -%}
+                {%- endfor -%}
+            {%- endif -%}        
         {%- endif -%}
-        {%- if looplastflg -%}
-            {%- if parent_name -%}
-                {{ child_data(parent_name, '', level-1) }}
-            {%- endif -%}    
-            {{ output_attribute_value_mlt(ns.disp_language, level) }}
+    {%- endfor -%}
+    {%- for language_value in language_data -%}
+        {%- for language_val in language_value[0] -%}
+            {%- if language_val -%}
+                {%- if langkey in language_val[0].keys() -%}
+                    {%- set nslang.langv = language_val -%}
+                {%- endif -%}
+            {%- endif -%}
+        {%- endfor -%}
+        {%- if nslang.langv[0] -%}
+            {%- if nslangvalue.langval in nslang.langv[0].values() -%}
+                {%- set ns.disp_language = language_value -%}
+                {%- if parent_name and not nspare.dispflg -%}
+                    {{ child_data(parent_name, '', level-1) }}
+                    {%- set nspare.dispflg = True -%}
+                {%- endif -%}
+                {{ output_attribute_value_mlt(ns.disp_language, level) }}
+            {%- endif -%}
         {%- endif -%}
     {%- endfor -%}
 {% endmacro %}
