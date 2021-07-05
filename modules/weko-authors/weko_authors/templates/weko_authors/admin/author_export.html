@@ -46,7 +46,7 @@
   <input id="internal_server_error" type="hidden" value="{{_('Internal server error')}}" />
   <input id="cancel_message" type="hidden" value="{{_('Are you sure you want to cancel process of exporting all creator?')}}" />
   <input id="is_exporting_error" type="hidden" value="{{_('Export is in progress on another device.')}}" />
-  <input id="cancel_export_error" type="hidden" value="{{_('Cancel process of exporting is failed.')}}" />
+  <input id="cancel_export_error" type="hidden" value="{{_('Failed to cancel export.')}}" />
 
   <input id="export_authors_entrypoints" type="hidden" value='{{ config.WEKO_AUTHORS_EXPORT_ENTRYPOINTS | tojson }}' />
 {%- endblock body %}

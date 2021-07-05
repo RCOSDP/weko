@@ -56,8 +56,8 @@ WEKO_AUTHORS_EXPORT_CACHE_URL_KEY = 'weko_authors_exported_url'
 
 WEKO_AUTHORS_TSV_MAPPING = [
     {
-        'header': 'WEKO ID',
-        'label': 'WEKO ID',
+        'header': '#WEKO ID',
+        'label': '#WEKO ID',
         'json_id': 'pk_id'
     },
     {

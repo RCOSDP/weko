@@ -34,3 +34,32 @@ msgstr ""
 msgid "Success"
 msgstr ""
 
+msgid "Export all creator"
+msgstr ""
+
+msgid "Download URL"
+msgstr ""
+
+msgid "Export"
+msgstr ""
+
+msgid "Are you sure you want to export all creator?"
+msgstr ""
+
+msgid "Confirm"
+msgstr ""
+
+msgid "Execute"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Internal server error"
+msgstr ""
+
+msgid "Are you sure you want to cancel process of exporting all creator?"
+msgstr ""
+
+msgid "Failed to cancel export."
+msgstr ""
