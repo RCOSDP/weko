@@ -214,17 +214,15 @@ def get():
         "size": 0,
         "query": {
             "bool": {
-                "must_not": [{
-                    "wildcard": {
-                        "_oai.id": {
-                            "value": "*.*"
-                        }
-                    }
-                }],
                 "must": [
                     {
-                        "term": {
+                        "match": {
                             "publish_status": 0
+                        }
+                    },
+                    {
+                        "match": {
+                            "relation_version_is_last": "true"
                         }
                     },
                     {
