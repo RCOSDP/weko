@@ -245,8 +245,7 @@ def get_detail_node(lst_data, idx, meta_list):
     """
     item_key = next(iter(lst_data[idx]))
     item_val = lst_data[idx].get(item_key)
-    lst_values = [i for i in item_val]
-    lst_values.sort()
+    lst_values = sorted([i for i in item_val])
     input_type = meta_list.get(item_key, {}).get('input_type')
     return item_key, item_val, lst_values, input_type
 
@@ -266,7 +265,7 @@ def get_all_mapping(item_value, mapping_type):
 
 
 def check_duplicate_mapping(
-    data_mapping, meta_system, item_type, mapping_type):
+        data_mapping, meta_system, item_type, mapping_type):
     """Check_duplicate mapping.
 
     @param data_mapping:
