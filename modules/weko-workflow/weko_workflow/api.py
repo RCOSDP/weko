@@ -2068,13 +2068,13 @@ class WorkActivity(object):
 
         # display_activity of Identifier grant
         if action_endpoint == 'identifier_grant' and item:
-            text_empty = '<Empty>'
             community_id = request.args.get('community', None)
             if not community_id:
                 community_id = 'Root Index'
             identifier_setting = get_identifier_setting(community_id)
 
             # valid date pidstore_identifier data
+            text_empty = '<Empty>'
             if identifier_setting:
                 if not identifier_setting.jalc_doi:
                     identifier_setting.jalc_doi = text_empty
@@ -2082,6 +2082,8 @@ class WorkActivity(object):
                     identifier_setting.jalc_crossref_doi = text_empty
                 if not identifier_setting.jalc_datacite_doi:
                     identifier_setting.jalc_datacite_doi = text_empty
+                if not identifier_setting.ndl_jalc_doi:
+                    identifier_setting.ndl_jalc_doi = text_empty
 
             temporary_idt_select = 0
             temporary_idt_inputs = []
@@ -2096,13 +2098,16 @@ class WorkActivity(object):
                     last_idt_setting.get('action_identifier_jalc_cr_doi'))
                 temporary_idt_inputs.append(
                     last_idt_setting.get('action_identifier_jalc_dc_doi'))
+                temporary_idt_inputs.append(
+                    last_idt_setting.get('action_identifier_ndl_jalc_doi'))
 
             ctx['temporary_idf_grant'] = temporary_idt_select
             ctx['temporary_idf_grant_suffix'] = temporary_idt_inputs
             ctx['idf_grant_data'] = identifier_setting
             ctx['idf_grant_input'] = IDENTIFIER_GRANT_LIST
             ctx['idf_grant_method'] = current_app.config.get(
-                'IDENTIFIER_GRANT_SUFFIX_METHOD', IDENTIFIER_GRANT_SUFFIX_METHOD)
+                'IDENTIFIER_GRANT_SUFFIX_METHOD',
+                IDENTIFIER_GRANT_SUFFIX_METHOD)
 
         return activity_detail, item, steps, action_id, cur_step, \
             temporary_comment, approval_record, step_item_login_url,\

@@ -175,9 +175,11 @@ require([
     let $currentStep = $('.cur_step');
     let uri_apo = $currentStep.data('next-uri');
     let act_ver = $currentStep.data('action-version');
+    let community_id = $('#community_id').text();
     let post_data = {
       commond: $('#input-comment').val(),
-      action_version: act_ver
+      action_version: act_ver,
+      community: community_id
     };
     $.ajax({
       url: uri_apo,
