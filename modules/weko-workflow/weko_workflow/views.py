@@ -927,7 +927,7 @@ def next_action(activity_id='0', action_id=0):
             activity_id=activity_id,
             action_id=identifier_actionid)
 
-        if not post_json.get('temporary_save') \
+        if not post_json.get('temporary_save') and last_idt_setting \
             and last_idt_setting.get('action_identifier_select') \
                 and last_idt_setting.get('action_identifier_select') > 0:
             _pid = current_pid.pid_value
