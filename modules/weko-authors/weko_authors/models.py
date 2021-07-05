@@ -54,6 +54,12 @@ class Authors(db.Model, Timestamp):
         default=0)
     """gather_flg of the authors."""
 
+    is_deleted = db.Column(
+        db.Boolean(name='is_deleted'),
+        nullable=False,
+        default=False)
+    """Delete status of the authors."""
+
     json = db.Column(
         db.JSON().with_variant(
             postgresql.JSONB(none_as_null=True),

@@ -994,7 +994,7 @@ class FeedbackMail:
         :return: author mail
         """
         search_key = request_data.get('searchKey') or ''
-        match = [{"term": {"gather_flg": 0}}]
+        match = [{"term": {"gather_flg": 0}}, {"term": {"is_deleted": False}}]
 
         if search_key:
             match.append(
