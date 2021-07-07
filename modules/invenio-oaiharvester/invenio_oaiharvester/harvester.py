@@ -21,6 +21,7 @@
 
 import copy
 import re
+from bs4 import BeautifulSoup
 from collections import OrderedDict
 from functools import partial
 from json import dumps, loads
@@ -1526,7 +1527,12 @@ class DDIMapper(BaseMapper):
                             sub_keys_clone = copy.deepcopy(sub_keys)
                             if mapping_key.split(".@")[1] == "value":
                                 if val_obj.get('#text'):
-                                    value = val_obj['#text']
+                                    value = val_obj['#text'].replace('\n', '$NEWLINE')
+                                    soup = BeautifulSoup(value, "html.parser")
+                                    for tag in soup.find_all():
+                                        tag.unwrap()
+                                    value = soup.get_text(strip=True). \
+                                        replace('$NEWLINE', '\n').replace('\xa0', ' ')
                                     if mapping_key == DDI_MAPPING_KEY_TITLE:
                                         self.record_title = value
                                     if mapping_key == DDI_MAPPING_KEY_URI:
