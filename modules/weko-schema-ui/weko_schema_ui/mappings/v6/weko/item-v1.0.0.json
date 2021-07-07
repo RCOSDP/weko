@@ -27,7 +27,7 @@
       },
       "analyzer": {
         "default": {
-          "tokenizer": "ja_tokenizer",
+          "tokenizer": "ngram_tokenizer",
           "filter": [
             "kuromoji_baseform",
             "kuromoji_part_of_speech",

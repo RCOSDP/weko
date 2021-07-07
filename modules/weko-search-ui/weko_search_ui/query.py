@@ -523,6 +523,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             current_app.logger.exception(
                 'Detail search query parser failed. err:{0}'.format(e))
 
+        current_app.logger.debug(mut)
         return mut
 
     def _get_simple_search_query(qs=None):

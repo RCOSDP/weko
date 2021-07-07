@@ -28,15 +28,15 @@ from json import dumps, loads
 import dateutil
 import requests
 import xmltodict
+from flask import current_app
 from lxml import etree
 from weko_records.api import Mapping
 from weko_records.models import ItemType
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import get_options_and_order_list
 
-from flask import current_app
-
-from .config import OAIHARVESTER_DOI_PREFIX, OAIHARVESTER_HDL_PREFIX, OAIHARVESTER_VERIFY_TLS_CERTIFICATE
+from .config import OAIHARVESTER_DOI_PREFIX, OAIHARVESTER_HDL_PREFIX, \
+    OAIHARVESTER_VERIFY_TLS_CERTIFICATE
 
 DEFAULT_FIELD = [
     'title',
@@ -66,7 +66,8 @@ def list_sets(url, encoding='utf-8'):
     payload = {
         'verb': 'ListSets'}
     while True:
-        response = requests.get(url, params=payload, verify = OAIHARVESTER_VERIFY_TLS_CERTIFICATE )
+        response = requests.get(url, params=payload,
+                                verify=OAIHARVESTER_VERIFY_TLS_CERTIFICATE)
         et = etree.XML(response.text.encode(encoding))
         sets = sets + et.findall('./ListSets/set', namespaces=et.nsmap)
         resumptionToken = et.find(
@@ -102,7 +103,8 @@ def list_records(
         payload['resumptionToken'] = resumption_token
     records = []
     rtoken = None
-    response = requests.get(url, params=payload, verify = OAIHARVESTER_VERIFY_TLS_CERTIFICATE)
+    response = requests.get(url, params=payload,
+                            verify=OAIHARVESTER_VERIFY_TLS_CERTIFICATE)
     et = etree.XML(response.text.encode(encoding))
     records = records + et.findall('./ListRecords/record', namespaces=et.nsmap)
     resumptionToken = et.find(
@@ -1503,10 +1505,11 @@ class DDIMapper(BaseMapper):
                     else:
                         full_key_val_obj = {
                             current_key: full_key_val_obj}
-                temp_lst.append(
-                    {"full": full_key_val_obj,
-                     "key": sub_keys_clone,
-                     "val": {last_key: parse_data}})
+                if {"full": full_key_val_obj, "key": sub_keys_clone, "val": {last_key: parse_data}} not in temp_list:
+                    temp_lst.append(
+                        {"full": full_key_val_obj,
+                         "key": sub_keys_clone,
+                         "val": {last_key: parse_data}})
 
             try:
                 list_result = []
