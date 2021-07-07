@@ -418,7 +418,7 @@ class Indexes(object):
                 if is_index_locked(parent) or is_index_locked(pre_parent):
                     ret['is_ok'] = False
                     ret['msg'] = _('Index Delete is in progress '
-                                    'on another device.')
+                                   'on another device.')
                     return ret
                 if check_doi_in_index(index_id) and parent_info[0] != 0 and \
                         check_restrict_doi_with_indexes([parent]):
