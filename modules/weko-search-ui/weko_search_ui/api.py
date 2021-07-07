@@ -164,7 +164,7 @@ def get_search_detail_keyword(str):
         sub = dict(id=x[0], contents=x[0], checkStus=False)
         check_val.append(sub)
 
-    # check_val2 = []
+    #check_val2 = []
     # index_browsing_tree = Indexes.get_browsing_tree()
     # for indextree in index_browsing_tree:
     #     index_parelist = []
@@ -178,8 +178,8 @@ def get_search_detail_keyword(str):
     for k_v in options:
         if k_v.get('id') == 'itemtype':
             k_v['check_val'] = check_val
-        elif k_v.get('id') == 'iid':
-            k_v['check_val'] = check_val2
+    #    elif k_v.get('id') == 'iid':
+    #        k_v['check_val'] = check_val2
         elif k_v.get('contents') == '':
             contents_value = k_v.get('contents_value')
             k_v['contents'] = contents_value['en']

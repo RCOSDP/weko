@@ -72,7 +72,7 @@
     }
   },
   "mappings": {
-    "item-v1.0.0": {
+    "item-v1.0.1": {
       "properties": {
         "path": {
           "type": "keyword",
