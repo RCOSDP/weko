@@ -27,7 +27,7 @@ from weko_admin import config as ad_config
 from weko_admin.models import SearchManagement as sm
 from weko_index_tree.api import Indexes
 from weko_records.utils import get_keywords_data_load
-
+from invenio_i18n.ext import current_i18n
 
 class SearchSetting(object):
     """About search setting."""
