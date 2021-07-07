@@ -416,15 +416,16 @@ class Indexes(object):
 
                 # Validator
                 if is_index_locked(parent) or is_index_locked(pre_parent):
-                        ret['is_ok'] = False
-                        ret['msg'] = _('Index Delete is in progress '
-                                       'on another device.')
-                        return ret
+                    ret['is_ok'] = False
+                    ret['msg'] = _('Index Delete is in progress '
+                                    'on another device.')
+                    return ret
                 if check_doi_in_index(index_id) and parent_info[0] != 0 and \
                         check_restrict_doi_with_indexes([parent]):
                     ret['is_ok'] = False
                     ret['msg'] = _('The index cannot be kept private because '
-                                'there are links from items that have a DOI.')
+                                   'there are links from items that have a '
+                                   'DOI.')
                     return ret
 
                 # move index on the same hierarchy
