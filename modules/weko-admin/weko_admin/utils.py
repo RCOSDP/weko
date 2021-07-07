@@ -155,7 +155,7 @@ def update_admin_lang_setting(admin_lang_settings):
     return 'success'
 
 
-#@cached_unless_authenticated(timeout=50, key_prefix='get_selected_lang')
+# @cached_unless_authenticated(timeout=50, key_prefix='get_selected_lang')
 def get_selected_language():
     """Get selected language."""
     result = {
@@ -2057,17 +2057,16 @@ def create_facet_search_query():
     """Create facet search query."""
     def create_agg_by_aggregations(aggregations, key, val):
         """Create aggregations query."""
-        if "fields" in val:
-            """ remove "fields" when using multi-field """
-            val = val.replace(".fields.",".")
+        from .config import \
+            WEKO_ADMIN_FACET_SEARCH_SETTING_BUCKET_SIZE as bucket_size
         if not aggregations or len(aggregations) == 0:
-            result = {key: {'terms': {'field': val, "size": 10000}}}
+            result = {key: {'terms': {'field': val, "size": bucket_size}}}
         else:
             must = [dict(term={agg['agg_mapping']: agg['agg_value']})
                     for agg in aggregations]
             result = {key: {
                 'filter': {'bool': {'must': must}},
-                'aggs': {key: {'terms': {'field': val, "size": 10000}}}
+                'aggs': {key: {'terms': {'field': val, "size": bucket_size}}}
             }}
         return result
 
@@ -2093,7 +2092,7 @@ def create_facet_search_query():
         for facet in facets:
             if "fields.raw" in facet.mapping:
                 """ remove "fields" when using multi-field """
-                facet.mapping = facet.mapping.replace(".fields.raw",".raw")
+                facet.mapping = facet.mapping.replace(".fields.raw", ".raw")
             post_filters_query.update({facet.name_en: facet.mapping})
         return post_filters_query
 

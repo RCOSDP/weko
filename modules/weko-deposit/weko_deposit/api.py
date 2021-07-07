@@ -317,6 +317,18 @@ class WekoIndexer(RecordIndexer):
             body=body
         )
 
+    def update_author_link(self, author_link):
+        """Update author_link info."""
+        self.get_es_index()
+        pst = 'author_link'
+        body = {'doc': {pst: author_link.get('author_link')}}
+        return self.client.update(
+            index=self.es_index,
+            doc_type=self.es_doc_type,
+            id=str(author_link.get('id')),
+            body=body
+        )
+
     def update_jpcoar_identifier(self, dc, item_id):
         """Update JPCOAR meta data item."""
         self.get_es_index()
@@ -897,10 +909,8 @@ class WekoDeposit(Deposit):
         Save when register a new item type, Update when edit an item
         type.
         """
-        tmp = self.get('_deposit', {}).get('owners', {})
-        owner = str(1)
-        if len(tmp) > 0:
-            owner = str(tmp[0])
+        deposit_owners = self.get('_deposit', {}).get('owners')
+        owner = str(deposit_owners[0] if deposit_owners else 1)
         if owner:
             dc_owner = self.data.get("owner", None)
             if not dc_owner:
@@ -982,10 +992,8 @@ class WekoDeposit(Deposit):
 
         # convert item meta data
         try:
-            tmp = self.get('_deposit', {}).get('owners', {})
-            owner_id = str(1)
-            if len(tmp) > 0:
-                owner_id = str(tmp[0])
+            deposit_owners = self.get('_deposit', {}).get('owners')
+            owner_id = str(deposit_owners[0] if deposit_owners else 1)
             dc, jrc, is_edit = json_loader(data, self.pid, owner_id=owner_id)
             dc['publish_date'] = data.get('pubdate')
             dc['title'] = [data.get('title')]
@@ -1114,6 +1122,16 @@ class WekoDeposit(Deposit):
                 pass
             raise PIDResolveRESTError(description='This item has been deleted')
 
+    def update_author_link(self, author_link):
+        """Index feedback mail list."""
+        item_id = self.id
+        if author_link:
+            author_link_info = {
+                "id": item_id,
+                "author_link": author_link
+            }
+            self.indexer.update_author_link(author_link_info)
+
     def update_feedback_mail(self):
         """Index feedback mail list."""
         item_id = self.id
@@ -1132,35 +1150,6 @@ class WekoDeposit(Deposit):
             "mail_list": []
         }
         self.indexer.update_feedback_mail_list(feedback_mail)
-
-    def update_jpcoar_identifier(self):
-        """
-        Update JPCOAR meta data item.
-
-        Update JPCOAR meta data item for grant DOI which added at the
-        Identifier Grant screen.
-        """
-        obj = ItemsMetadata.get_record(self.id)
-        attrs = ['attribute_value_mlt',
-                 'item_1551265147138',
-                 'item_1551265178780']
-        dc = {
-            attrs[1]: {attrs[0]: obj.get(attrs[1])},
-            attrs[2]: {attrs[0]: [obj.get(attrs[2])]}
-        }
-        self.indexer.update_jpcoar_identifier(dc, self.id)
-        record = RecordMetadata.query.get(self.id)
-        if record and record.json:
-            try:
-                with db.session.begin_nested():
-                    record.json[attrs[1]][attrs[0]] = obj.get(attrs[1])
-                    record.json[attrs[2]][attrs[0]] = [obj.get(attrs[2])]
-                    flag_modified(record, 'json')
-                    db.session.merge(record)
-                db.session.commit()
-            except Exception as ex:
-                current_app.logger.debug(ex)
-                db.session.rollback()
 
     def clean_unuse_file_contents(self, pre_object_versions,
                                   new_object_versions):

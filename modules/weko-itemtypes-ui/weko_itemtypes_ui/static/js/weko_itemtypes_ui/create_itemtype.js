@@ -818,7 +818,8 @@ $(document).ready(function () {
     new_meta_row('item_' + $.now(), propertyOptions);
   });
 
-  function new_meta_row(row_id, option_list) {
+  function new_meta_row(row_id, option_list, isDisableChangeInputType=false) {
+    let isDisable = isDisableChangeInputType ? 'disabled' : '';
     var row_template = '<tr id="tr_' + row_id + '">'
         + '<td><input type="text" class="form-control" id="txt_title_' + row_id + '" value="">'
         + '  <div class="hide" id="text_title_JaEn_' + row_id + '">'
@@ -831,7 +832,7 @@ $(document).ready(function () {
         +'</td>'
         + '<td><div class="form-inline"><div class="form-group">'
         + '  <label class="sr-only" for="select_input_type_'+row_id+'">select_input_type</label>'
-        + '  <select class="form-control change_input_type" id="select_input_type_' + row_id + '" metaid="' + row_id + '">'
+        + '  <select class="form-control change_input_type" id="select_input_type_' + row_id + '" metaid="' + row_id + '" '+isDisable+'>'
         + option_list
         + '  </select>'
         + '  </div></div>'
@@ -1273,7 +1274,7 @@ $(document).ready(function () {
         if (generalTextProps.includes(data.meta_list[row_id].input_type)) {
           new_meta_row(row_id, textPropertyOptions);
         } else {
-          new_meta_row(row_id, propertyOptions);
+          new_meta_row(row_id, propertyOptions, true);
         }
         let requiredCheckbox = $('#chk_'+row_id+'_0');
         let multipleCheckbox = $('#chk_'+row_id+'_1');

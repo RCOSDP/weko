@@ -842,7 +842,8 @@ $(document).ready(function () {
     }
     var data = {
       item_type_id: parseInt($('#item-type-lists').val()),
-      mapping: page_global.mapping_prop
+      mapping: page_global.mapping_prop,
+      mapping_type: $('#jpcoar_lists').val()
     };
     send('/admin/itemtypes/mapping', data);
   });
