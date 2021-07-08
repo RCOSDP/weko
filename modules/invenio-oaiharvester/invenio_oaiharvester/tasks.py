@@ -154,7 +154,10 @@ def process_item(record, harvesting, counter):
     """Process item."""
     event_counter('processed_items', counter)
     event = ItemEvents.INIT
+
     xml = etree.tostring(record, encoding='utf-8').decode()
+    # current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
+    #     0, 'Harvesting', xml))
     if harvesting.metadata_prefix == 'oai_dc':
         mapper = DCMapper(xml)
     elif harvesting.metadata_prefix == 'jpcoar' or \
@@ -166,8 +169,8 @@ def process_item(record, harvesting, counter):
     else:
         return
 
-    current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
-        0, 'Harvesting', mapper.identifier()))
+    current_app.logger.debug('[{0}] [{1}] Processing {2} {3}'.format(
+        0, 'Harvesting', mapper.identifier(), harvesting.metadata_prefix))
     hvstid = PersistentIdentifier.query.filter_by(
         pid_type='hvstid', pid_value=mapper.identifier()).first()
     if hvstid:
@@ -208,6 +211,17 @@ def process_item(record, harvesting, counter):
         event = ItemEvents.DELETE
     else:
         json = mapper.map()
+
+        # START: temporary fix for JDCat
+        # merge creatorNames
+        n = int(len(json['item_1593074267803'])/2)
+        for i in range(n):
+            json['item_1593074267803'][i]['creatorNames'].append(
+                json['item_1593074267803'][i+n]['creatorNames'][0])
+        for i in range(n):
+            del json['item_1593074267803'][i+n]
+        # END: temporary fix for JDCat
+
         json['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
         dep['_deposit']['status'] = 'draft'
 
@@ -224,8 +238,9 @@ def process_item(record, harvesting, counter):
                 i['subitem_1591320918354'] = 'Distributor'
         # END: temporary fix for JDCat
 
+        # current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
+        #     0, 'Harvesting', json))
         dep.update({'actions': 'publish', 'index': indexes}, json)
-
         dep.commit()
         dep.publish()
 
@@ -233,10 +248,17 @@ def process_item(record, harvesting, counter):
         pid = PersistentIdentifier.query.filter_by(
             pid_type='recid', pid_value=dep.pid.pid_value).first()
 
+        current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
+            0, 'Harvesting', pid))
+
         idt_list = mapper.identifiers
         from weko_workflow.utils import IdentifierHandle
 
         idt = IdentifierHandle(pid.object_uuid)
+        current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
+            0, 'Harvesting', idt_list))
+        current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
+            0, 'Harvesting', idt))
         for it in idt_list:
             if not it.get('type'):
                 continue

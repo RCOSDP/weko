@@ -21,7 +21,6 @@
 
 import copy
 import re
-from bs4 import BeautifulSoup
 from collections import OrderedDict
 from functools import partial
 from json import dumps, loads
@@ -29,6 +28,7 @@ from json import dumps, loads
 import dateutil
 import requests
 import xmltodict
+from bs4 import BeautifulSoup
 from flask import current_app
 from lxml import etree
 from weko_records.api import Mapping
@@ -1527,12 +1527,14 @@ class DDIMapper(BaseMapper):
                             sub_keys_clone = copy.deepcopy(sub_keys)
                             if mapping_key.split(".@")[1] == "value":
                                 if val_obj.get('#text'):
-                                    value = val_obj['#text'].replace('\n', '$NEWLINE')
+                                    value = val_obj['#text'].replace(
+                                        '\n', '$NEWLINE')
                                     soup = BeautifulSoup(value, "html.parser")
                                     for tag in soup.find_all():
                                         tag.unwrap()
                                     value = soup.get_text(strip=True). \
-                                        replace('$NEWLINE', '\n').replace('\xa0', ' ')
+                                        replace('$NEWLINE', '\n').replace(
+                                            '\xa0', ' ')
                                     if mapping_key == DDI_MAPPING_KEY_TITLE:
                                         self.record_title = value
                                     if mapping_key == DDI_MAPPING_KEY_URI:
@@ -1597,6 +1599,7 @@ class DDIMapper(BaseMapper):
                                         identifier})
 
         lst_keys = []
+        temp_list = []
         harvest_data = to_dict(harvest_data)
         lst_keys_unique = set()
         item_mapping = get_mapping_ddi()
