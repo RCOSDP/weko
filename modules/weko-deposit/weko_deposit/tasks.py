@@ -255,6 +255,7 @@ def _process(data_size, data_from, process_counter, target, origin_pkid_list, ke
         index=current_app.config['INDEXER_DEFAULT_INDEX'],). \
         update_from_dict(query_q).execute().to_dict()
 
+<<<<<<< HEAD
     record_ids = []
     update_es_authorinfo = []
     for item in search['hits']['hits']:
@@ -352,6 +353,30 @@ def _update_author_data(item_id, record_ids, process_counter, target, origin_pki
                                     change_flag = True
                                     record_ids.append(pid.object_uuid)
                                     break
+=======
+        record_ids = []
+        update_es_authorinfo = []
+        for item in search['hits']['hits']:
+            item_id = item['_source']['control_number']
+            pid = PersistentIdentifier.get('recid', item_id)
+            dep = WekoDeposit.get_record(pid.object_uuid)
+            author_link = set()
+            for k, v in dep.items():
+                if isinstance(v, dict) \
+                        and 'attribute_value_mlt' in v \
+                        and isinstance(v['attribute_value_mlt'], list):
+                    data_list = v['attribute_value_mlt']
+                    prop_type = None
+                    for index, data in enumerate(data_list):
+                        if isinstance(data, dict) \
+                                and 'nameIdentifiers' in data:
+                            if 'creatorNames' in data:
+                                prop_type = 'creator'
+                            elif 'contributorNames' in data:
+                                prop_type = 'contributor'
+                            elif 'names' in data:
+                                prop_type = 'full_name'
+>>>>>>> 9a652eff2 (fix oaiph)
                             else:
                                 continue
                         if change_flag:

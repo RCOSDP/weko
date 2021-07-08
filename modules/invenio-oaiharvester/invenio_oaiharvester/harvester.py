@@ -21,7 +21,11 @@
 
 import copy
 import re
+<<<<<<< HEAD
 from collections import OrderedDict, defaultdict
+=======
+from collections import OrderedDict
+>>>>>>> 9a652eff2 (fix oaiph)
 from functools import partial
 from json import dumps, loads
 
@@ -1759,8 +1763,13 @@ class DDIMapper(BaseMapper):
                             last_key = sub_keys.pop()
                             sub_keys_clone = copy.deepcopy(sub_keys)
                             if mapping_key.split(".@")[1] == "value":
+<<<<<<< HEAD
                                 if val_obj.get(TEXT):
                                     value = val_obj[TEXT].replace(
+=======
+                                if val_obj.get('#text'):
+                                    value = val_obj['#text'].replace(
+>>>>>>> 9a652eff2 (fix oaiph)
                                         '\n', '$NEWLINE')
                                     soup = BeautifulSoup(value, "html.parser")
                                     for tag in soup.find_all():

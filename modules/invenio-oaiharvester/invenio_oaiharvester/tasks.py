@@ -162,9 +162,14 @@ def process_item(record, harvesting, counter, request_info):
     event = ItemEvents.INIT
 
     xml = etree.tostring(record, encoding='utf-8').decode()
+<<<<<<< HEAD
     version = ""
     # current_app.logger.debug('[{0}] [{1}] Processing xml: {2}'.format(
     #    0, 'Harvesting', xml))
+=======
+    # current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
+    #     0, 'Harvesting', xml))
+>>>>>>> 9a652eff2 (fix oaiph)
     if harvesting.metadata_prefix == 'oai_dc':
         mapper = DCMapper(xml)
     elif harvesting.metadata_prefix == 'jpcoar' or \
@@ -180,7 +185,11 @@ def process_item(record, harvesting, counter, request_info):
     else:
         return
 
+<<<<<<< HEAD
     current_app.logger.debug('[{0}] [{1}] Processing identifier: {2} prefix: {3}'.format(
+=======
+    current_app.logger.debug('[{0}] [{1}] Processing {2} {3}'.format(
+>>>>>>> 9a652eff2 (fix oaiph)
         0, 'Harvesting', mapper.identifier(), harvesting.metadata_prefix))
     hvstid = PersistentIdentifier.query.filter_by(
         pid_type='hvstid', pid_value=mapper.identifier()).first()
@@ -220,6 +229,7 @@ def process_item(record, harvesting, counter, request_info):
         soft_delete(recid.pid_value)
         event = ItemEvents.DELETE
     else:
+<<<<<<< HEAD
         if dep.pid.status == PIDStatus.DELETED:
             recid.status = PIDStatus.DELETED
             restore(recid.pid_value)
@@ -266,6 +276,21 @@ def process_item(record, harvesting, counter, request_info):
         # END: temporary fix for JDCat
 
         json_data['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
+=======
+        json = mapper.map()
+
+        # START: temporary fix for JDCat
+        # merge creatorNames
+        n = int(len(json['item_1593074267803'])/2)
+        for i in range(n):
+            json['item_1593074267803'][i]['creatorNames'].append(
+                json['item_1593074267803'][i+n]['creatorNames'][0])
+        for i in range(n):
+            del json['item_1593074267803'][i+n]
+        # END: temporary fix for JDCat
+
+        json['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
+>>>>>>> 9a652eff2 (fix oaiph)
         dep['_deposit']['status'] = 'draft'
         dep.clear()
 
@@ -294,7 +319,11 @@ def process_item(record, harvesting, counter, request_info):
 
         # current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
         #     0, 'Harvesting', json))
+<<<<<<< HEAD
         dep.update({'actions': 'publish', 'index': indexes}, json_data)
+=======
+        dep.update({'actions': 'publish', 'index': indexes}, json)
+>>>>>>> 9a652eff2 (fix oaiph)
         dep.commit()
         dep.publish()
 
