@@ -2025,6 +2025,7 @@ def get_item_mapping_list():
     def handle_prefix_key(pre_key, key):
         if key == 'properties':
             return pre_key
+        pre_key = pre_key.replace('.fields','')
         return "{}.{}".format(pre_key, key) if pre_key else key
 
     def get_mapping(pre_key, key, value, mapping_list):
@@ -2040,10 +2041,10 @@ def get_item_mapping_list():
     import weko_schema_ui
     current_path = os.path.dirname(os.path.abspath(weko_schema_ui.__file__))
     file_path = os.path.join(current_path, 'mappings', 'v6', 'weko',
-                             'item-v1.0.0.json')
+                             'item-v1.0.1.json')
     with open(file_path) as json_file:
         mappings = json.load(json_file).get('mappings')
-        properties = mappings.get('item-v1.0.0').get('properties')
+        properties = mappings.get('item-v1.0.1').get('properties')
     result = [""]
     for k, v in properties.items():
         mapping_list = []

@@ -156,8 +156,8 @@ def process_item(record, harvesting, counter):
     event = ItemEvents.INIT
 
     xml = etree.tostring(record, encoding='utf-8').decode()
-    # current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
-    #     0, 'Harvesting', xml))
+    current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
+         0, 'Harvesting', xml))
     if harvesting.metadata_prefix == 'oai_dc':
         mapper = DCMapper(xml)
     elif harvesting.metadata_prefix == 'jpcoar' or \
@@ -218,8 +218,8 @@ def process_item(record, harvesting, counter):
         for i in range(n):
             json['item_1593074267803'][i]['creatorNames'].append(
                 json['item_1593074267803'][i+n]['creatorNames'][0])
-        for i in range(n):
-            del json['item_1593074267803'][i+n]
+        
+        del json['item_1593074267803'][n+1:]
         # END: temporary fix for JDCat
 
         json['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
@@ -405,6 +405,8 @@ def run_harvesting(id, start_time, user_data):
                 try:
                     process_item(record, harvesting, counter)
                 except Exception as ex:
+                    import traceback
+                    current_app.logger.error(traceback.format_exc())
                     current_app.logger.error(
                         'Error occurred while processing harvesting item\n' + str(ex))
                     db.session.rollback()
