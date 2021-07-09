@@ -78,8 +78,12 @@ def replace_widget_url_for_widget_design_setting():
     print("END replace URL for widget_design_setting")
 
 
-def replace_widget_url_for_widget_design_page():
-    """Replace URL for widget_design_page table."""
+def replace_widget_url_for_widget_design_page(page_ids: list):
+    """Replace URL for widget_design_page table.
+
+    Args:
+        page_ids (list): Widget settings.
+    """
     print("START replace URL for widget_design_page")
     widget_design_page_lst = WidgetDesignPage.query.all()
     with db.session.begin_nested():
@@ -89,6 +93,7 @@ def replace_widget_url_for_widget_design_page():
                 replace_settings_url(settings)
                 widget_design_page.settings = settings
                 db.session.merge(widget_design_page)
+                page_ids.append(widget_design_page.id)
     db.session.commit()
     print("END replace URL for widget_design_page")
 
@@ -112,11 +117,15 @@ def replace_widget_url_for_widget_multi_lang_data():
 if __name__ == '__main__':
     try:
         # Replace Widget URL.
+        page_id_lst = []
         replace_widget_url_for_widget_design_setting()
-        replace_widget_url_for_widget_design_page()
+        replace_widget_url_for_widget_design_page(page_id_lst)
         replace_widget_url_for_widget_multi_lang_data()
         # Clear Widget cache.
         delete_widget_cache('Root Index')
+        # Clear Widget page cache.
+        for page_id in page_id_lst:
+            delete_widget_cache('', page_id)
         print("Complete!!!")
     except Exception as ex:
         print(ex)
