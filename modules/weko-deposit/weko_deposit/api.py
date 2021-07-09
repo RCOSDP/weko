@@ -2241,10 +2241,7 @@ class _FormatSysBibliographicInformation:
             if not value:
                 continue
             elif current_lang == key:
-                if current_lang == 'ja':
-                    return value, current_lang
-                else:
-                    return value, 'en'
+                return value, key
             else:
                 if key:
                     title[key] = value
@@ -2253,11 +2250,17 @@ class _FormatSysBibliographicInformation:
                     title_data_none_lang.append(value)
         for title_data in title_data_lang:
             if title_data.get('en'):
-                return title_data.get('en'), 'en'
+                if current_lang == 'ja':
+                    return None, 'ja'
+                else:
+                    return title_data.get('en'), 'en'
 
         if len(title_data_lang) > 0:
-            return list(title_data_lang[0].values())[0], \
-                'en'
+            if current_lang == 'en':
+                return None, 'en'
+            else:
+                return list(title_data_lang[0].values())[0], \
+                    list(title_data_lang[0])[0]
         return (title_data_none_lang[0], 'ja') if len(
             title_data_none_lang) > 0 else (None, 'ja')
 
