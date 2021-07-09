@@ -130,16 +130,16 @@ def export_authors():
     file_uri = None
     try:
         mappings = deepcopy(WEKO_AUTHORS_TSV_MAPPING)
-        authors = WekoAuthors.get_all()
+        authors = WekoAuthors.get_all(with_deleted=False, with_gather=False)
         schemes = WekoAuthors.get_identifier_scheme_info()
-        row_header, row_label, row_data = WekoAuthors.prepare_export_data(
-            mappings, authors, schemes)
+        row_header, row_label_en, row_label_jp, row_data = \
+            WekoAuthors.prepare_export_data(mappings, authors, schemes)
 
         # write csv data to a stream
         csv_io = io.StringIO()
         writer = csv.writer(csv_io, delimiter='\t',
                             quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        writer.writerows([row_header, row_label, *row_data])
+        writer.writerows([row_header, row_label_en, row_label_jp, *row_data])
         reader = io.BufferedReader(io.BytesIO(
             csv_io.getvalue().encode("utf-8")))
 

@@ -136,3 +136,9 @@ msgstr "著者DBの全件エクスポートの処理をキャンセルしてよ�
 
 msgid "Failed to cancel export."
 msgstr "エクスポートのキャンセルに失敗しました。"
+
+msgid "Export is in progress on another device."
+msgstr "他の端末でエクスポートを実行中です。"
+
+msgid "Export is failed."
+msgstr "エクスポートに失敗しました。"

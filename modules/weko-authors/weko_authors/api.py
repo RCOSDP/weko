@@ -33,12 +33,14 @@ class WekoAuthors(object):
     """Weko Authors API for import/export."""
 
     @classmethod
-    def get_all(cls, with_deleted=True):
+    def get_all(cls, with_deleted=True, with_gather=True):
         """Get all authors."""
         filters = []
         with db.session.no_autoflush:
             if not with_deleted:
-                filters.append(Authors.is_deleted._is(False))
+                filters.append(Authors.is_deleted.is_(False))
+            if not with_gather:
+                filters.append(Authors.gather_flg == 0)
             query = Authors.query.filter(*filters)
             query = query.order_by(Authors.id)
 
@@ -62,13 +64,14 @@ class WekoAuthors(object):
     def prepare_export_data(cls, mappings, authors, schemes):
         """Prepare export data of all authors."""
         row_header = []
-        row_label = []
+        row_label_en = []
+        row_label_jp = []
         row_data = []
 
         if not mappings:
             mappings = deepcopy(WEKO_AUTHORS_TSV_MAPPING)
         if not authors:
-            authors = cls.get_all()
+            authors = cls.get_all(with_deleted=False, with_gather=False)
         if not schemes:
             schemes = cls.get_identifier_scheme_info()
 
@@ -88,11 +91,19 @@ class WekoAuthors(object):
 
                 for i in range(0, mapping['max']):
                     for child in mapping.get('child'):
-                        row_header.append('{}[{}]'.format(child['header'], i))
-                        row_label.append('{}[{}]'.format(child['label'], i))
+                        row_header.append('{}[{}].{}'.format(
+                            mapping['json_id'], i, child['json_id']))
+                        row_label_en.append(
+                            '{}[{}]'.format(child['label_en'], i))
+                        row_label_jp.append(
+                            '{}[{}]'.format(child['label_jp'], i))
             else:
-                row_header.append(mapping['header'])
-                row_label.append(mapping['label'])
+                row_header.append(mapping['json_id'])
+                row_label_en.append(mapping['label_en'])
+                row_label_jp.append(mapping['label_jp'])
+        row_header[0] = '#' + row_header[0]
+        row_label_en[0] = '#' + row_label_en[0]
+        row_label_jp[0] = '#' + row_label_jp[0]
 
         # handle data rows
         for author in authors:
@@ -109,7 +120,6 @@ class WekoAuthors(object):
                         idx_size += 1
 
                     for i in range(idx_start, idx_size):
-                        scheme = None
                         for child in mapping.get('child'):
                             if i >= len(data):
                                 row.append(None)
@@ -123,17 +133,10 @@ class WekoAuthors(object):
                                 )
                             else:
                                 val = data[i].get(child['json_id'])
-                                if child['json_id'] == 'idType' \
-                                        or child['json_id'] == 'authorId':
-                                    if child['json_id'] == 'idType':
-                                        scheme = schemes.get(val)
-                                        row.append(
-                                            scheme['scheme']
-                                            if scheme else val)
-                                    else:
-                                        row.append(
-                                            scheme['url'] + val
-                                            if scheme else val)
+                                if child['json_id'] == 'idType':
+                                    scheme = schemes.get(val)
+                                    row.append(
+                                        scheme['scheme'] if scheme else val)
                                 else:
                                     row.append(val)
                 else:
@@ -152,4 +155,4 @@ class WekoAuthors(object):
                         row.append(None)
             row_data.append(row)
 
-        return row_header, row_label, row_data
+        return row_header, row_label_en, row_label_jp, row_data

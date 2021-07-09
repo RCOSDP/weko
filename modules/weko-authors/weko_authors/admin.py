@@ -118,6 +118,8 @@ class ExportView(BaseView):
                     or task.state == states.REVOKED:
                 delete_export_status()
                 status = get_export_url()
+                if not task.result:
+                    status['error'] = 'export_fail'
             else:
                 status['file_uri'] = get_export_url().get('file_uri', '')
 

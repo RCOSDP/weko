@@ -63,3 +63,9 @@ msgstr ""
 
 msgid "Failed to cancel export."
 msgstr ""
+
+msgid "Export is in progress on another device."
+msgstr ""
+
+msgid "Export is failed."
+msgstr ""

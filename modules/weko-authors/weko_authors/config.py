@@ -56,31 +56,31 @@ WEKO_AUTHORS_EXPORT_CACHE_URL_KEY = 'weko_authors_exported_url'
 
 WEKO_AUTHORS_TSV_MAPPING = [
     {
-        'header': '#WEKO ID',
-        'label': '#WEKO ID',
+        'label_en': 'WEKO ID',
+        'label_jp': 'WEKO ID',
         'json_id': 'pk_id'
     },
     {
         'json_id': 'authorNameInfo',
         'child': [
             {
-                'header': 'Family Name',
-                'label': '姓',
+                'label_en': 'Family Name',
+                'label_jp': '姓',
                 'json_id': 'familyName'
             },
             {
-                'header': 'Given name',
-                'label': '名',
+                'label_en': 'Given Name',
+                'label_jp': '名',
                 'json_id': 'firstName'
             },
             {
-                'header': 'Language',
-                'label': '言語',
+                'label_en': 'Language',
+                'label_jp': '言語',
                 'json_id': 'language'
             },
             {
-                'header': 'Name Display',
-                'label': '姓名・言語 表示／非表示',
+                'label_en': 'Name Display',
+                'label_jp': '姓名・言語 表示／非表示',
                 'json_id': 'nameShowFlg',
                 'mask': {
                     'true': 'Y',
@@ -92,18 +92,18 @@ WEKO_AUTHORS_TSV_MAPPING = [
         'json_id': 'authorIdInfo',
         'child': [
             {
-                'header': 'Identifier Scheme',
-                'label': '外部著者ID 識別子',
+                'label_en': 'Identifier Scheme',
+                'label_jp': '外部著者ID 識別子',
                 'json_id': 'idType'
             },
             {
-                'header': 'Identifier URI',
-                'label': '外部著者ID URI',
+                'label_en': 'Identifier',
+                'label_jp': '外部著者ID',
                 'json_id': 'authorId'
             },
             {
-                'header': 'Identifier Display',
-                'label': '外部著者ID 表示／非表示',
+                'label_en': 'Identifier Display',
+                'label_jp': '外部著者ID 表示／非表示',
                 'json_id': 'authorIdShowFlg',
                 'mask': {
                     'true': 'Y',
@@ -116,20 +116,11 @@ WEKO_AUTHORS_TSV_MAPPING = [
         'json_id': 'emailInfo',
         'child': [
             {
-                'header': 'Mail Address',
-                'label': 'メールアドレス',
+                'label_en': 'Mail Address',
+                'label_jp': 'メールアドレス',
                 'json_id': 'email'
             }
         ]
-    },
-    {
-        'header': 'Delete Flag',
-        'label': '削除フラグ',
-        'json_id': 'is_deleted',
-        'mask': {
-            'true': 'D',
-            'false': None
-        }
     }
 ]
 

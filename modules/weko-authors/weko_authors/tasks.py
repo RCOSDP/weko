@@ -39,8 +39,6 @@ def export_all():
             end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             save_export_url(start_time, end_time, file_uri)
 
-        delete_export_status()
-
         return file_uri
     except Exception as ex:
         current_app.logger.error(ex)
