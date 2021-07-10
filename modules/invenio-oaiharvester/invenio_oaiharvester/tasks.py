@@ -180,7 +180,7 @@ def process_item(record, harvesting, counter):
         recid.status = PIDStatus.REGISTERED
         pubdate = dateutil.parser.parse(
             r.json['pubdate']['attribute_value']).date()
-        #dep = WekoDeposit(r.json, r)
+        # dep = WekoDeposit(r.json, r)
         dep = WekoDeposit.get_record(hvstid.object_uuid)
         indexes = dep['path'].copy()
         event = ItemEvents.UPDATE
@@ -214,12 +214,24 @@ def process_item(record, harvesting, counter):
 
         # START: temporary fix for JDCat
         # merge creatorNames
-        n = int(len(json['item_1593074267803'])/2)
-        for i in range(n):
-            json['item_1593074267803'][i]['creatorNames'].append(
-                json['item_1593074267803'][i+n]['creatorNames'][0])
+        # current_app.logger.debug(json)
+        if 'item_1593074267803' in json:
+            if len(json['item_1593074267803']) > 0:
+                n2 = len(json['item_1593074267803'])
+                n = int(n2/2)
+                if 'creatorNames' in json['item_1593074267803'][0] and 'creatorNames' in json['item_1593074267803'][n]:
+                    if 'creatorNameLang' in json['item_1593074267803'][0]['creatorNames'][0] and 'creatorNameLang' in json['item_1593074267803'][n]['creatorNames'][0]:
+                        if json['item_1593074267803'][0]['creatorNames'][0]['creatorNameLang'] != json['item_1593074267803'][n]['creatorNames'][0]['creatorNameLang']:
+                            for i in range(n):
+                                if 'creatorNames' in json['item_1593074267803'][i] and 'creatorNames' in json['item_1593074267803'][i+n]:
+                                    json['item_1593074267803'][i]['creatorNames'].append(
+                                        json['item_1593074267803'][i+n]['creatorNames'][0])
+                                    if json['item_1593074267803'][i]['creatorNames'][0]['creatorNameLang'] == 'en':
+                                        tmp = json['item_1593074267803'][i]['creatorNames'][0]
+                                        json['item_1593074267803'][i]['creatorNames'][0] = json['item_1593074267803'][i]['creatorNames'][1]
+                                        json['item_1593074267803'][i]['creatorNames'][1] = tmp
 
-        del json['item_1593074267803'][n:]
+                            del json['item_1593074267803'][n:]
         # END: temporary fix for JDCat
 
         json['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
@@ -233,7 +245,7 @@ def process_item(record, harvesting, counter):
 
         # if json['$schema'] == '/items/jsonschema/14' and 'item_1592405734122' in json:
         if 'item_1592405734122' in json:
-            #current_app.logger.debug('json: %s' % json['item_1551264917614'])
+            # current_app.logger.debug('json: %s' % json['item_1551264917614'])
             for i in json['item_1592405734122']:
                 i['subitem_1591320918354'] = 'Distributor'
         # END: temporary fix for JDCat
@@ -286,7 +298,7 @@ def process_item(record, harvesting, counter):
         event_counter('deleted_items', counter)
 
 
-@shared_task
+@ shared_task
 def link_success_handler(retval):
     """Register task stats into invenio-stats."""
     current_app.logger.info(
@@ -296,7 +308,7 @@ def link_success_handler(retval):
                              exec_data=retval[0], user_data=retval[1])
 
 
-@shared_task
+@ shared_task
 def link_error_handler(request, exc, traceback):
     """Register task stats into invenio-stats for failure."""
     args = make_tuple(request.argsrepr)  # Cannot access original args
@@ -327,18 +339,17 @@ def is_harvest_running(id, task_id):
     return False
 
 
-@shared_task
+@ shared_task
 def run_harvesting(id, start_time, user_data):
     """Run harvest."""
     def dump(setting):
         setting_json = {}
         setting_json['repository_name'] = setting.repository_name
         setting_json['base_url'] = setting.base_url
-        setting_json['from_date'] = \
-            setting.from_date.strftime('%Y-%m-%d') if setting.from_date else ''
-        setting_json['until_date'] = \
-            setting.until_date.strftime(
-                '%Y-%m-%d') if setting.until_date else ''
+        setting_json['from_date'] = setting.from_date.strftime(
+            '%Y-%m-%d') if setting.from_date else ''
+        setting_json['until_date'] = setting.until_date.strftime(
+            '%Y-%m-%d') if setting.until_date else ''
         setting_json['set_spec'] = setting.set_spec
         setting_json['metadata_prefix'] = setting.metadata_prefix
         setting_json['target_index'] = setting.target_index.index_name
@@ -370,10 +381,9 @@ def run_harvesting(id, start_time, user_data):
                                   start_time=datetime.utcnow(), counter=counter)
         db.session.add(harvest_log)
     else:
-        harvest_log = \
-            HarvestLogs.query.filter_by(
-                harvest_setting_id=id).order_by(
-                HarvestLogs.id.desc()).first()
+        harvest_log = HarvestLogs.query.filter_by(
+            harvest_setting_id=id).order_by(
+            HarvestLogs.id.desc()).first()
         harvest_log.end_time = None
         harvest_log.status = 'Running'
         counter = harvest_log.counter
@@ -444,7 +454,7 @@ def run_harvesting(id, start_time, user_data):
                 user_data)
 
 
-@shared_task(ignore_results=True)
+@ shared_task(ignore_results=True)
 def check_schedules_and_run():
     """Check schedules and run."""
     settings = HarvestSettings.query.all()
