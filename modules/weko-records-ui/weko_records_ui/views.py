@@ -880,8 +880,9 @@ def escape_newline(s):
     :return: result
     """
     br_char = '<br/>'
-    return s.replace('\r\n', br_char).replace('\r', br_char).replace('\n', br_char)
-
+    s=s.replace('\r\n', br_char).replace('\r', br_char).replace('\n', br_char)
+    s='<br />'.join(s.splitlines())
+    return s
 
 @blueprint.app_template_filter('preview_able')
 def preview_able(file_json):

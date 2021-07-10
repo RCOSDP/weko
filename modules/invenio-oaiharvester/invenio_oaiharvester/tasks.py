@@ -21,6 +21,7 @@
 
 from __future__ import absolute_import, print_function
 
+import json
 import signal
 from ast import literal_eval as make_tuple
 from collections import OrderedDict
@@ -156,8 +157,8 @@ def process_item(record, harvesting, counter):
     event = ItemEvents.INIT
 
     xml = etree.tostring(record, encoding='utf-8').decode()
-    current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
-        0, 'Harvesting', xml))
+    # current_app.logger.debug('[{0}] [{1}] Processing xml: {2}'.format(
+    #    0, 'Harvesting', xml))
     if harvesting.metadata_prefix == 'oai_dc':
         mapper = DCMapper(xml)
     elif harvesting.metadata_prefix == 'jpcoar' or \
@@ -169,7 +170,7 @@ def process_item(record, harvesting, counter):
     else:
         return
 
-    current_app.logger.debug('[{0}] [{1}] Processing {2} {3}'.format(
+    current_app.logger.debug('[{0}] [{1}] Processing identifier: {2} prefix: {3}'.format(
         0, 'Harvesting', mapper.identifier(), harvesting.metadata_prefix))
     hvstid = PersistentIdentifier.query.filter_by(
         pid_type='hvstid', pid_value=mapper.identifier()).first()
@@ -210,49 +211,66 @@ def process_item(record, harvesting, counter):
         soft_delete(recid.pid_value)
         event = ItemEvents.DELETE
     else:
-        json = mapper.map()
+        json_data = mapper.map()
 
         # START: temporary fix for JDCat
         # merge creatorNames
-        # current_app.logger.debug(json)
-        if 'item_1593074267803' in json:
-            if len(json['item_1593074267803']) > 0:
-                n2 = len(json['item_1593074267803'])
+        current_app.logger.debug('[{0}] [{1}] Processing json: {2}'.format(
+            0, 'Harvesting', mapper.identifier()))
+        if 'item_1593074267803' in json_data:
+            if len(json_data['item_1593074267803']) > 0:
+                n2 = len(json_data['item_1593074267803'])
                 n = int(n2/2)
-                if 'creatorNames' in json['item_1593074267803'][0] and 'creatorNames' in json['item_1593074267803'][n]:
-                    if 'creatorNameLang' in json['item_1593074267803'][0]['creatorNames'][0] and 'creatorNameLang' in json['item_1593074267803'][n]['creatorNames'][0]:
-                        if json['item_1593074267803'][0]['creatorNames'][0]['creatorNameLang'] != json['item_1593074267803'][n]['creatorNames'][0]['creatorNameLang']:
+                if 'creatorNames' in json_data['item_1593074267803'][0] and 'creatorNames' in json_data['item_1593074267803'][n]:
+                    if 'creatorNameLang' in json_data['item_1593074267803'][0]['creatorNames'][0] and 'creatorNameLang' in json_data['item_1593074267803'][n]['creatorNames'][0]:
+                        if json_data['item_1593074267803'][0]['creatorNames'][0]['creatorNameLang'] != json_data['item_1593074267803'][n]['creatorNames'][0]['creatorNameLang']:
                             for i in range(n):
-                                if 'creatorNames' in json['item_1593074267803'][i] and 'creatorNames' in json['item_1593074267803'][i+n]:
-                                    json['item_1593074267803'][i]['creatorNames'].append(
-                                        json['item_1593074267803'][i+n]['creatorNames'][0])
-                                    if json['item_1593074267803'][i]['creatorNames'][0]['creatorNameLang'] == 'en':
-                                        tmp = json['item_1593074267803'][i]['creatorNames'][0]
-                                        json['item_1593074267803'][i]['creatorNames'][0] = json['item_1593074267803'][i]['creatorNames'][1]
-                                        json['item_1593074267803'][i]['creatorNames'][1] = tmp
+                                json_data['item_1593074267803'][i]['creatorNames'].append(
+                                    json_data['item_1593074267803'][i+n]['creatorNames'][0])
+                                if json_data['item_1593074267803'][i]['creatorNames'][0]['creatorNameLang'] == 'en':
+                                    tmp = json_data['item_1593074267803'][i]['creatorNames'][0]
+                                    json_data['item_1593074267803'][i]['creatorNames'][0] = json_data['item_1593074267803'][i]['creatorNames'][1]
+                                    json_data['item_1593074267803'][i]['creatorNames'][1] = tmp
+                                if 'nameIdentifiers' in json_data['item_1593074267803'][i]:
+                                    del json_data['item_1593074267803'][i]['nameIdentifiers']
 
-                            del json['item_1593074267803'][n:]
+                            del json_data['item_1593074267803'][n:]
+
+        for e in json_data:
+            current_app.logger.debug('[{0}] [{1}] Processing json_data[e]: {2}'.format(
+                0, 'Harvesting', json_data[e]))
+            current_app.logger.debug('[{0}] [{1}] Processing json_data[e] type: {2}'.format(
+                0, 'Harvesting', type(json_data[e])))
+            if isinstance(json_data[e], list):
+                tmp = list(
+                    map(json.loads, set(map(json.dumps, json_data[e]))))
+                json_data[e] = tmp
+                current_app.logger.debug('[{0}] [{1}] Processing json_data[e]: {2}'.format(
+                    0, 'Harvesting', json_data[e]))
+
+        # current_app.logger.debug('[{0}] [{1}] Processing json_data: {2}'.format(
+        #    0, 'Harvesting', json_data))
         # END: temporary fix for JDCat
 
-        json['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
+        json_data['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
         dep['_deposit']['status'] = 'draft'
 
         # START: temporary fix for JDCat
         # if json['$schema'] == '/items/jsonschema/14' and 'item_1588260046718' in json:
-        if 'item_1588260046718' in json:
-            for i in json['item_1588260046718']:
+        if 'item_1588260046718' in json_data:
+            for i in json_data['item_1588260046718']:
                 i['subitem_1592380784883'] = 'Other'
 
         # if json['$schema'] == '/items/jsonschema/14' and 'item_1592405734122' in json:
-        if 'item_1592405734122' in json:
+        if 'item_1592405734122' in json_data:
             # current_app.logger.debug('json: %s' % json['item_1551264917614'])
-            for i in json['item_1592405734122']:
+            for i in json_data['item_1592405734122']:
                 i['subitem_1591320918354'] = 'Distributor'
         # END: temporary fix for JDCat
 
         # current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
         #     0, 'Harvesting', json))
-        dep.update({'actions': 'publish', 'index': indexes}, json)
+        dep.update({'actions': 'publish', 'index': indexes}, json_data)
         dep.commit()
         dep.publish()
 

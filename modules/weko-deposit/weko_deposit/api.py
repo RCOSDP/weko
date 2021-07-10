@@ -1011,7 +1011,7 @@ class WekoDeposit(Deposit):
 
         # Save Index Path on ES
         jrc.update(dict(path=index_lst))
-        current_app.logger.debug(jrc)
+        #current_app.logger.debug(jrc)
         # add at 20181121 start
         sub_sort = {}
         for pth in index_lst:
