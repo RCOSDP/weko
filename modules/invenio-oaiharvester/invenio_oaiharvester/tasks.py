@@ -157,7 +157,7 @@ def process_item(record, harvesting, counter):
 
     xml = etree.tostring(record, encoding='utf-8').decode()
     current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
-         0, 'Harvesting', xml))
+        0, 'Harvesting', xml))
     if harvesting.metadata_prefix == 'oai_dc':
         mapper = DCMapper(xml)
     elif harvesting.metadata_prefix == 'jpcoar' or \
@@ -218,8 +218,8 @@ def process_item(record, harvesting, counter):
         for i in range(n):
             json['item_1593074267803'][i]['creatorNames'].append(
                 json['item_1593074267803'][i+n]['creatorNames'][0])
-        
-        del json['item_1593074267803'][n+1:]
+
+        del json['item_1593074267803'][n:]
         # END: temporary fix for JDCat
 
         json['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
@@ -394,8 +394,8 @@ def run_harvesting(id, start_time, user_data):
         while True:
             records, rtoken = harvester_list_records(
                 harvesting.base_url,
-                harvesting.from_date.__str__() if harvesting.from_date else None,
-                harvesting.until_date.__str__() if harvesting.until_date else None,
+                harvesting.from_date.__str__() if harvesting.from_date and not rtoken else None,
+                harvesting.until_date.__str__() if harvesting.until_date and not rtoken else None,
                 harvesting.metadata_prefix,
                 harvesting.set_spec,
                 rtoken)

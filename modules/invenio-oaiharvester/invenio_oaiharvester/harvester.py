@@ -31,12 +31,15 @@ import xmltodict
 from bs4 import BeautifulSoup
 from flask import current_app
 from lxml import etree
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 from weko_records.api import Mapping
 from weko_records.models import ItemType
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import get_options_and_order_list
 
-from .config import OAIHARVESTER_DOI_PREFIX, OAIHARVESTER_HDL_PREFIX, \
+from .config import OAIHARVESTER_BACKOFF_FACTOR, OAIHARVESTER_DOI_PREFIX, \
+    OAIHARVESTER_HDL_PREFIX, OAIHARVESTER_RETRY_COUNT, \
     OAIHARVESTER_VERIFY_TLS_CERTIFICATE
 
 DEFAULT_FIELD = [
@@ -94,6 +97,10 @@ def list_records(
     requests.packages.urllib3.disable_warnings()
     requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += 'HIGH:!DH:!aNULL'
 
+    if resumption_token is not None:
+        from_date = None
+        until_date = None
+
     payload = {
         'verb': 'ListRecords',
         'from': from_date,
@@ -104,8 +111,19 @@ def list_records(
         payload['resumptionToken'] = resumption_token
     records = []
     rtoken = None
-    response = requests.get(url, params=payload,
-                            verify=OAIHARVESTER_VERIFY_TLS_CERTIFICATE)
+
+    with requests.Session() as s:
+        retries = Retry(total=OAIHARVESTER_RETRY_COUNT,
+                        backoff_factor=OAIHARVESTER_BACKOFF_FACTOR,
+                        status_forcelist=[500, 502, 503, 504])
+        s.mount('https://', HTTPAdapter(max_retries=retries))
+        s.mount('http://', HTTPAdapter(max_retries=retries))
+        response = s.get(url, params=payload,
+                         verify=OAIHARVESTER_VERIFY_TLS_CERTIFICATE)
+
+    # response = requests.get(url, params=payload,
+    #                        verify=OAIHARVESTER_VERIFY_TLS_CERTIFICATE)
+
     et = etree.XML(response.text.encode(encoding))
     records = records + et.findall('./ListRecords/record', namespaces=et.nsmap)
     resumptionToken = et.find(
