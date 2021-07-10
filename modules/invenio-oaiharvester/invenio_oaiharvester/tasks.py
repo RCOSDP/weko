@@ -236,17 +236,17 @@ def process_item(record, harvesting, counter):
 
                             del json_data['item_1593074267803'][n:]
 
-        for e in json_data:
-            current_app.logger.debug('[{0}] [{1}] Processing json_data[e]: {2}'.format(
-                0, 'Harvesting', json_data[e]))
-            current_app.logger.debug('[{0}] [{1}] Processing json_data[e] type: {2}'.format(
-                0, 'Harvesting', type(json_data[e])))
-            if isinstance(json_data[e], list):
-                tmp = list(
-                    map(json.loads, set(map(json.dumps, json_data[e]))))
-                json_data[e] = tmp
-                current_app.logger.debug('[{0}] [{1}] Processing json_data[e]: {2}'.format(
-                    0, 'Harvesting', json_data[e]))
+        #for e in json_data:
+        #    current_app.logger.debug('[{0}] [{1}] Processing json_data[e]: {2}'.format(
+        #        0, 'Harvesting', json_data[e]))
+        #    current_app.logger.debug('[{0}] [{1}] Processing json_data[e] type: {2}'.format(
+        #        0, 'Harvesting', type(json_data[e])))
+        #    if isinstance(json_data[e], list):
+        #        tmp = list(
+        #            map(json.loads, set(map(json.dumps, json_data[e]))))
+        #        json_data[e] = tmp
+        #        current_app.logger.debug('[{0}] [{1}] Processing json_data[e]: {2}'.format(
+        #            0, 'Harvesting', json_data[e]))
 
         # current_app.logger.debug('[{0}] [{1}] Processing json_data: {2}'.format(
         #    0, 'Harvesting', json_data))
