@@ -28,13 +28,19 @@ from json import dumps, loads
 import dateutil
 import requests
 import xmltodict
+from bs4 import BeautifulSoup
+from flask import current_app
 from lxml import etree
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 from weko_records.api import Mapping
 from weko_records.models import ItemType
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import get_options_and_order_list
 
-from .config import OAIHARVESTER_DOI_PREFIX, OAIHARVESTER_HDL_PREFIX, OAIHARVESTER_VERIFY_TLS_CERTIFICATE
+from .config import OAIHARVESTER_BACKOFF_FACTOR, OAIHARVESTER_DOI_PREFIX, \
+    OAIHARVESTER_HDL_PREFIX, OAIHARVESTER_RETRY_COUNT, \
+    OAIHARVESTER_VERIFY_TLS_CERTIFICATE
 
 DEFAULT_FIELD = [
     'title',
@@ -64,7 +70,8 @@ def list_sets(url, encoding='utf-8'):
     payload = {
         'verb': 'ListSets'}
     while True:
-        response = requests.get(url, params=payload, verify = OAIHARVESTER_VERIFY_TLS_CERTIFICATE )
+        response = requests.get(url, params=payload,
+                                verify=OAIHARVESTER_VERIFY_TLS_CERTIFICATE)
         et = etree.XML(response.text.encode(encoding))
         sets = sets + et.findall('./ListSets/set', namespaces=et.nsmap)
         resumptionToken = et.find(
@@ -90,6 +97,10 @@ def list_records(
     requests.packages.urllib3.disable_warnings()
     requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += 'HIGH:!DH:!aNULL'
 
+    if resumption_token is not None:
+        from_date = None
+        until_date = None
+
     payload = {
         'verb': 'ListRecords',
         'from': from_date,
@@ -100,7 +111,19 @@ def list_records(
         payload['resumptionToken'] = resumption_token
     records = []
     rtoken = None
-    response = requests.get(url, params=payload, verify = OAIHARVESTER_VERIFY_TLS_CERTIFICATE)
+
+    with requests.Session() as s:
+        retries = Retry(total=OAIHARVESTER_RETRY_COUNT,
+                        backoff_factor=OAIHARVESTER_BACKOFF_FACTOR,
+                        status_forcelist=[500, 502, 503, 504])
+        s.mount('https://', HTTPAdapter(max_retries=retries))
+        s.mount('http://', HTTPAdapter(max_retries=retries))
+        response = s.get(url, params=payload,
+                         verify=OAIHARVESTER_VERIFY_TLS_CERTIFICATE)
+
+    # response = requests.get(url, params=payload,
+    #                        verify=OAIHARVESTER_VERIFY_TLS_CERTIFICATE)
+
     et = etree.XML(response.text.encode(encoding))
     records = records + et.findall('./ListRecords/record', namespaces=et.nsmap)
     resumptionToken = et.find(
@@ -1501,10 +1524,11 @@ class DDIMapper(BaseMapper):
                     else:
                         full_key_val_obj = {
                             current_key: full_key_val_obj}
-                temp_lst.append(
-                    {"full": full_key_val_obj,
-                     "key": sub_keys_clone,
-                     "val": {last_key: parse_data}})
+                if {"full": full_key_val_obj, "key": sub_keys_clone, "val": {last_key: parse_data}} not in temp_list:
+                    temp_lst.append(
+                        {"full": full_key_val_obj,
+                         "key": sub_keys_clone,
+                         "val": {last_key: parse_data}})
 
             try:
                 list_result = []
@@ -1513,6 +1537,7 @@ class DDIMapper(BaseMapper):
                     temp_lst = []
                     for key_pair in keys:
                         for mapping_key, item_sub_key in key_pair.items():
+                            #current_app.logger.debug('mapping key:  %s , item_sub_key:  %s' % (mapping_key,item_sub_key))
                             item_sub_key = get_same_key_from_form(item_sub_key)
                             sub_keys = item_sub_key.split('.')
                             root_key = sub_keys[0]
@@ -1520,7 +1545,14 @@ class DDIMapper(BaseMapper):
                             sub_keys_clone = copy.deepcopy(sub_keys)
                             if mapping_key.split(".@")[1] == "value":
                                 if val_obj.get('#text'):
-                                    value = val_obj['#text']
+                                    value = val_obj['#text'].replace(
+                                        '\n', '$NEWLINE')
+                                    soup = BeautifulSoup(value, "html.parser")
+                                    for tag in soup.find_all():
+                                        tag.unwrap()
+                                    value = soup.get_text(strip=True). \
+                                        replace('$NEWLINE', '\n').replace(
+                                            '\xa0', ' ')
                                     if mapping_key == DDI_MAPPING_KEY_TITLE:
                                         self.record_title = value
                                     if mapping_key == DDI_MAPPING_KEY_URI:
@@ -1585,6 +1617,7 @@ class DDIMapper(BaseMapper):
                                         identifier})
 
         lst_keys = []
+        temp_list = []
         harvest_data = to_dict(harvest_data)
         lst_keys_unique = set()
         item_mapping = get_mapping_ddi()
