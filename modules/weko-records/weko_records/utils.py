@@ -1218,12 +1218,16 @@ def selected_value_by_language(lang_array, value_array, lang_id, val_id,
                 if value is not None:
                     return value
             if "en" in lang_array:  # English
+                if lang_selected == 'ja':
+                    return None
                 value = check_info_in_metadata(lang_id, val_id, "en",
                                                _item_metadata)
                 if value is not None:
                     return value
             # 1st language when registering items
             if len(lang_array) > 0:
+                if lang_selected == 'en':
+                    return None
                 for idx, lg in enumerate(lang_array):
                     if len(lg) > 0:
                         value = check_info_in_metadata(lang_id, val_id, lg,
