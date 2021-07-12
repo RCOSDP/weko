@@ -154,7 +154,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
             descOrEsc = "-";
             key_sort = key_sort.replace("_desc", "");
           }
-         
+
           // Default param
           let param = {
             page: 1,
@@ -580,6 +580,7 @@ function escapeString(data) {
   data = data
     .replace(/(^(&EMPTY&,|,&EMPTY&)|(&EMPTY&,|,&EMPTY&)$|&EMPTY&)/g, "")
     .replace(/[\x00-\x1F\x7F]/g, "")
+    .replace(/\\n/g,"") // temp fix for JDCat
     .trim();
   return data === ',' ? '' : data;
 }
