@@ -517,12 +517,12 @@ def upload_file(community_id):
 
 
 @blueprint.route('/widget/uploaded/<string:filename>',
-                 defaults={"community_id": 0}, methods=["GET"]
+                 defaults={"community_id": "Root Index"}, methods=["GET"]
                  )
-@blueprint.route('/widget/uploaded/<string:filename>/<string:community_id>',
+@blueprint.route('/widget/uploaded/<string:community_id>/<string:filename>',
                  methods=["GET"]
                  )
-def uploaded_file(filename, community_id=0):
+def uploaded_file(filename, community_id="Root Index"):
     """Get widget static file.
 
     :param filename: file name.

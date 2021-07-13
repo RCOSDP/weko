@@ -962,7 +962,8 @@ class WidgetBucket:
             db.session.add(bucket)
             db.session.commit()
 
-    def __validate(self, file_stream, file_name, community_id="0", file_size=0):
+    def __validate(self, file_stream, file_name, community_id="Root Index",
+                   file_size=0):
         """Validate upload file.
 
         :param file_stream: file stream.
@@ -998,7 +999,7 @@ class WidgetBucket:
             )
 
     def save_file(self, file_stream, file_name: str, mimetype: str,
-                  community_id="0"):
+                  community_id="Root Index"):
         """Save widget static file.
 
         :param file_stream: file stream.
@@ -1018,7 +1019,6 @@ class WidgetBucket:
         file_bucket = Bucket.query.get(self.bucket_id)
         community_id = community_id.split("@")[0]
         key = "{0}_{1}".format(community_id, file_name)
-        root_url = request.host_url
         try:
             file_stream.seek(SEEK_SET, SEEK_END)  # Seek from beginning to end
             file_size = file_stream.tell()
@@ -1030,8 +1030,8 @@ class WidgetBucket:
                         mimetype=mimetype
                     )
                 db.session.commit()
-                rtn["url"] = "{}widget/uploaded/{}/{}".format(
-                    root_url, file_name, community_id
+                rtn["url"] = "/widget/uploaded/{}/{}".format(
+                    community_id, file_name
                 )
                 return rtn
         except UnexpectedFileSizeError as error:
@@ -1044,12 +1044,12 @@ class WidgetBucket:
             rtn['status'] = False
             rtn['duplicated'] = True
             rtn['msg'] = str(error.errors)
-            rtn["url"] = "{}widget/uploaded/{}/{}".format(
-                root_url, file_name, community_id
+            rtn["url"] = "/widget/uploaded/{}/{}".format(
+                community_id, file_name
             )
             return rtn
 
-    def get_file(self, file_name, community_id=0):
+    def get_file(self, file_name, community_id="Root Index"):
         """Get widget static file.
 
         :param file_name:
