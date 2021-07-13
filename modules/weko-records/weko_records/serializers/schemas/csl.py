@@ -103,7 +103,11 @@ class RecordSchemaCSLJSON(Schema):
     version = fields.Method('get_version')
     issued = fields.Method('get_issue_date')
     page = fields.Method('get_page')
-    DOI = fields.Method('get_doi')
+    identifier = str(fields.Method('get_doi'))
+    if "doi.org" in identifier:
+        DOI = identifier.split("doi.org/")[1]
+    else:
+        URL = identifier
     type = fields.Function(
         lambda obj: get_data_from_mapping('dc:type', obj))
     title = fields.Function(

@@ -133,7 +133,7 @@
                           {%- endif -%}
                           <!-- version_id == '' => not upload file, but fill data for 'File Information' -->
                           {%- if file.version_id == '' -%}
-			    {%- if file.url -%} 
+			    {%- if file.url -%}
 			    {%- if file.url.label -%}
                               {%- set file_label = file.url.label -%}
                             {%- elif file.url.url -%}
@@ -410,7 +410,9 @@
           <!-- start demo block -->
           {%- include "weko_records_ui/box/stats.html" %}
           {%- include "weko_records_ui/box/versions.html" %}
-          {%- include "weko_records_ui/box/share.html" %}
+          <!-- hide for JDCat 2021-07-14 -->
+          {# include "weko_records_ui/box/share.html" #}
+
           {%- include "weko_records_ui/box/export.html" %}
           <!-- end demo block -->
         </div>
