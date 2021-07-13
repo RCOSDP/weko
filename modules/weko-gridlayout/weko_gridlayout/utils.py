@@ -1076,6 +1076,6 @@ def validate_upload_file(community_id: str):
     if file.filename == '':
         return _("No selected file")
     community_id = community_id.split("@")
-    if len(community_id) > 1 and community_id[0] == '0':
+    if len(community_id) > 1 and (community_id[0] in ['0', '']):
         return _("Repository is required!")
     return ""
