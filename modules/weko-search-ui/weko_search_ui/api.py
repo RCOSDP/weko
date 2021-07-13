@@ -27,6 +27,7 @@ from weko_admin import config as ad_config
 from weko_admin.models import SearchManagement as sm
 from weko_index_tree.api import Indexes
 from weko_records.utils import get_keywords_data_load
+from invenio_i18n.ext import current_i18n
 
 
 class SearchSetting(object):
@@ -167,7 +168,12 @@ def get_search_detail_keyword(str):
     for k_v in options:
         if k_v.get('id') == 'itemtype':
             k_v['check_val'] = check_val
-            break
+        
+        contents_value = k_v.get('contents_value')
+        k_v['contents'] = contents_value['en']
+        for key_lang in contents_value.keys() :
+            if key_lang == current_i18n.language:
+                k_v['contents'] = contents_value[key_lang]
 
     key_options['condition_setting'] = options
 
