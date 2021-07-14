@@ -341,7 +341,11 @@ class StatAggregator(object):
                 doc = aggregation.top_hit.hits.hits[0]['_source']
                 for destination, source in self.copy_fields.items():
                     if isinstance(source, six.string_types):
-                        aggregation_data[destination] = doc[source]
+                        if source == 'root_file_id' and source not in doc:
+                            if 'file_id' in doc:
+                                aggregation_data[destination] = doc['file_id']
+                        else:
+                            aggregation_data[destination] = doc[source]
                     else:
                         aggregation_data[destination] = source(
                             doc,
