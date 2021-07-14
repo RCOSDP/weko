@@ -56,6 +56,64 @@ def _get_mapping_data(schema, data, keyword):
 
 def get_data_from_mapping(key, obj):
     """Get data base on mapping."""
+    def _get_data_by_recursive(meta, value_key, lang_key):
+        """Get data by recursive."""
+        if isinstance(meta, list):
+            value_list = []
+            for v in meta:
+                temp = _get_data_by_recursive(v, value_key, lang_key)
+                if temp:
+                    if isinstance(v, dict) and value_key in v:
+                        if isinstance(value_list, list):
+                            value_list = {}
+                        value_list.update(temp)
+                    else:
+                        value_list.append(temp)
+            if value_list:
+                return value_list
+        elif isinstance(meta, dict):
+            if value_key in meta:
+                if lang_key in meta:
+                    return {meta[lang_key]: meta[value_key]}
+                else:
+                    return {"None Language": meta[value_key]}
+            else:
+                for v in list(meta.values()):
+                    temp = _get_data_by_recursive(v, value_key, lang_key)
+                    if temp:
+                        return temp
+                return None
+        else:
+            return None
+
+    def _get_data_by_lang(data_list, cur_lang):
+        """Get data by lang."""
+        if isinstance(data_list, dict):
+            lang_list = list(data_list.keys())
+            if cur_lang in lang_list:
+                return data_list[cur_lang]
+            elif 'en' in lang_list:
+                if cur_lang == 'ja':
+                    return ''
+                else:
+                    return data_list['en']
+            elif len(lang_list) > 0:
+                if cur_lang != 'en' or \
+                        (len(lang_list) == 1 and lang_list[0] == 'None Language'):
+                    return data_list[lang_list[0]]
+                else:
+                    return ''
+        if isinstance(data_list, list):
+            return_list = []
+            for v in data_list:
+                temp = _get_data_by_lang(v, cur_lang)
+                if temp:
+                    return_list.append(temp)
+            if return_list:
+                return ', '.join(return_list)
+            else:
+                return ''
+
     cur_lang = current_i18n.language
     arr = obj['mapping_dict'][key]
     lang_key = obj['mapping_dict']['{}__lang'.format(key)]
@@ -63,36 +121,9 @@ def get_data_from_mapping(key, obj):
         lang_key = lang_key[-1]
     result = None
     if arr:
-        result = obj[arr[0]]
-        for i in range(len(arr)):
-            if i != 0 and result:
-                # Update index in order to get data by language.
-                if arr[i] in ['attribute_value_mlt', 'creatorNames']:
-                    temp = result.get(arr[i], [])
-                    k = 0
-                    # Check show data with current language. (1)
-                    for j in temp:
-                        if j.get(lang_key):
-                            if j.get(lang_key) == cur_lang:
-                                arr[i + 1] = k
-                                break
-                            k = k + 1
-                    # (1) not exist => Priority 'en'. (2)
-                    if k == len(temp):
-                        k = 0
-                        for j in temp:
-                            if j.get(lang_key) == 'en':
-                                arr[i + 1] = k
-                                break
-                            k = k + 1
-                    # (2) not exist => Priority the first element.
-                    if k == len(temp):
-                        arr[i + 1] = 0
-                # Get data.
-                if type(result) is list:
-                    result = result[arr[i]]
-                else:
-                    result = result.get(arr[i])
+        temp_data = obj[arr[0]]
+        data_list = _get_data_by_recursive(temp_data, arr[-1], lang_key)
+        result = _get_data_by_lang(data_list, cur_lang)
     return result if result else ''
 
 
