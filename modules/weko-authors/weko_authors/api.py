@@ -85,6 +85,8 @@ class WekoAuthors(object):
                         list(map(lambda x: len(json.loads(x.json).get(
                             mapping['json_id'], [])), authors))
                     )
+                    if mapping['max'] == 0:
+                        mapping['max'] = 1
                 if authors and mapping['json_id'] == 'authorIdInfo':
                     if mapping['max'] > 1:
                         mapping['max'] -= 1

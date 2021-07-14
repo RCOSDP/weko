@@ -192,7 +192,11 @@ def get():
     data = request.get_json()
 
     search_key = data.get('searchKey') or ''
-    match = [{"term": {"gather_flg": 0}}, {"term": {"is_deleted": False}}]
+    should = [
+        {"bool": {"must": [{"term": {"is_deleted": {"value": "false"}}}]}},
+        {"bool": {"must_not": {"exists": {"field": "is_deleted"}}}}
+    ]
+    match = [{"term": {"gather_flg": 0}}, {"bool": {"should": should}}]
 
     if search_key:
         match.append({"multi_match": {"query": search_key, "type": "phrase"}})

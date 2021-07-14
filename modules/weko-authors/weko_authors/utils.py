@@ -59,7 +59,6 @@ def check_email_existed(email: str):
             "bool": {
                 "must": [
                     {"term": {"gather_flg": 0}},
-                    {"term": {"is_deleted": False}},
                     {"term": {"emailInfo.email.raw": email}}
                 ]
             }
