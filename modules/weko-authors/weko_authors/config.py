@@ -39,10 +39,10 @@ WEKO_AUTHORS_ADMIN_EDIT_TEMPLATE = 'weko_authors/admin/author_edit.html'
 """Edit template for the admin author page."""
 
 WEKO_AUTHORS_ADMIN_PREFIX_TEMPLATE = 'weko_authors/admin/prefix_list.html'
-"""template for the id prefix settings page."""
+"""Template for the id prefix settings page."""
 
 WEKO_AUTHORS_ADMIN_EXPORT_TEMPLATE = 'weko_authors/admin/author_export.html'
-"""template for the export page."""
+"""Template for the export page."""
 
 WEKO_AUTHORS_EXPORT_ENTRYPOINTS = {
     'export': '/admin/authors/export/export',
@@ -58,7 +58,10 @@ WEKO_AUTHORS_TSV_MAPPING = [
     {
         'label_en': 'WEKO ID',
         'label_jp': 'WEKO ID',
-        'json_id': 'pk_id'
+        'json_id': 'pk_id',
+        'validation': {
+            'is_required': True
+        }
     },
     {
         'json_id': 'authorNameInfo',
@@ -79,14 +82,27 @@ WEKO_AUTHORS_TSV_MAPPING = [
                 'json_id': 'language'
             },
             {
+                'label_en': 'Name Format',
+                'label_jp': 'フォーマット',
+                'json_id': 'nameFormat',
+                'validation': {
+                    'map': ['familyNmAndNm']
+                },
+                'autofill': 'familyNmAndNm'
+            },
+            {
                 'label_en': 'Name Display',
                 'label_jp': '姓名・言語 表示／非表示',
                 'json_id': 'nameShowFlg',
                 'mask': {
                     'true': 'Y',
                     'false': 'N'
+                },
+                'validation': {
+                    'map': ['Y', 'N']
                 }
-            }]
+            }
+        ]
     },
     {
         'json_id': 'authorIdInfo',
@@ -108,6 +124,9 @@ WEKO_AUTHORS_TSV_MAPPING = [
                 'mask': {
                     'true': 'Y',
                     'false': 'N'
+                },
+                'validation': {
+                    'map': ['Y', 'N']
                 }
             }
         ]
@@ -121,6 +140,18 @@ WEKO_AUTHORS_TSV_MAPPING = [
                 'json_id': 'email'
             }
         ]
+    },
+    {
+        'label_en': 'Delete Flag',
+        'label_jp': '削除フラグ',
+        'json_id': 'is_deleted',
+        'mask': {
+            'true': 'D',
+            'false': None
+        },
+        'validation': {
+            'map': ['D']
+        }
     }
 ]
 

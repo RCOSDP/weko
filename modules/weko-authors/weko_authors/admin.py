@@ -31,12 +31,11 @@ from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_files_rest.models import FileInstance
 
-from weko_authors.config import WEKO_AUTHORS_EXPORT_FILE_NAME
-from weko_authors.utils import delete_export_status, get_export_status, \
-    get_export_url, set_export_status
-
+from .config import WEKO_AUTHORS_EXPORT_FILE_NAME
 from .permissions import author_permission
 from .tasks import export_all
+from .utils import delete_export_status, get_export_status, get_export_url, \
+    set_export_status
 
 
 class AuthorManagementView(BaseView):
