@@ -107,3 +107,38 @@ msgstr "成功"
 #~ msgid "Author_On_1_Page"
 #~ msgstr "1ページに:"
 
+msgid "Export all creator"
+msgstr "全件エクスポート"
+120
+msgid "Download URL"
+msgstr "ダウンロードURL"
+
+msgid "Export"
+msgstr "エクスポート"
+
+msgid "Are you sure you want to export all creator?"
+msgstr "著者DBの全件エクスポートを実行してよいですか？"
+
+msgid "Confirm"
+msgstr "確認"
+
+msgid "Execute"
+msgstr "実行"
+
+msgid "Cancel"
+msgstr "キャンセル"
+
+msgid "Internal server error"
+msgstr "サーバ内部エラー"
+
+msgid "Are you sure you want to cancel process of exporting all creator?"
+msgstr "著者DBの全件エクスポートの処理をキャンセルしてよいですか？"
+
+msgid "Failed to cancel export."
+msgstr "エクスポートのキャンセルに失敗しました。"
+
+msgid "Export is in progress on another device."
+msgstr "他の端末でエクスポートを実行中です。"
+
+msgid "Export is failed."
+msgstr "エクスポートに失敗しました。"
