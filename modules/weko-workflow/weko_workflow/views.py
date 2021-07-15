@@ -33,6 +33,7 @@ from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
+from invenio_files_rest.utils import remove_file_cancel_action
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -71,8 +72,9 @@ from .utils import IdentifierHandle, auto_fill_title, \
     get_activity_id_of_record_without_version, \
     get_application_and_approved_date, get_approval_keys, get_cache_data, \
     get_files_and_thumbnail, get_identifier_setting, get_main_record_detail, \
-    get_pid_and_record, get_record_by_root_ver, get_thumbnails, \
-    get_usage_data, get_workflow_item_type_names, handle_finish_workflow, \
+    get_pid_and_record, get_pid_value_by_activity_detail, \
+    get_record_by_root_ver, get_thumbnails, get_usage_data, \
+    get_workflow_item_type_names, handle_finish_workflow, \
     init_activity_for_guest_user, is_enable_item_name_link, \
     is_hidden_pubdate, is_show_autofill_metadata, \
     is_usage_application_item_type, item_metadata_validation, \
@@ -1304,7 +1306,9 @@ def cancel_action(activity_id='0', action_id=0):
     if activity_detail:
         cancel_item_id = activity_detail.item_id
         if not cancel_item_id:
-            pid_value = post_json.get('pid_value')
+            pid_value = post_json.get('pid_value') if post_json.get(
+                'pid_value') else get_pid_value_by_activity_detail(
+                activity_detail)
             if pid_value:
                 pid = PersistentIdentifier.get('recid', pid_value)
                 cancel_item_id = pid.object_uuid
@@ -1315,6 +1319,12 @@ def cancel_action(activity_id='0', action_id=0):
                     if cancel_record:
                         cancel_deposit = WekoDeposit(
                             cancel_record, cancel_record.model)
+
+                        # Remove file and update size location.
+                        if cancel_deposit.files and cancel_deposit.files.bucket:
+                            remove_file_cancel_action(
+                                cancel_deposit.files.bucket.id)
+
                         cancel_deposit.clear()
                         # Remove draft child
                         cancel_pid = PersistentIdentifier.get_by_object(

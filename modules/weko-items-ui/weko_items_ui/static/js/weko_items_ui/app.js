@@ -2324,7 +2324,18 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           "endpoints": JSON.stringify($rootScope.filesVM.invenioFilesEndpoints),
           "recordsModel": JSON.stringify($rootScope.recordsVM.invenioRecordsModel),
         }
+        //Add pid_value to sessionStorage when uploaded processing done
         sessionStorage.setItem(actionID, JSON.stringify(data))
+        if ($rootScope.filesVM.invenioFilesEndpoints.self) {
+          let pid_value = $rootScope.filesVM.invenioFilesEndpoints.self.split("/")
+          if (pid_value.length > 0) {
+            let pid_value_data = {
+              "activity_id": actionID,
+              "pid_value_temp": pid_value[pid_value.length - 1]
+            }
+            sessionStorage.setItem("pid_value_data", JSON.stringify(pid_value_data))
+          }
+        }
       }
 
       $scope.setFilesModel = function (recordsModel) {

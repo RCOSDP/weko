@@ -35,6 +35,7 @@ from invenio_accounts.models import Role, User, userrole
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
+from invenio_files_rest.views import delete_file_instance
 from invenio_i18n.ext import current_i18n
 from invenio_mail.admin import MailSettingView
 from invenio_mail.models import MailConfig
@@ -3782,3 +3783,20 @@ def prepare_doi_link_workflow(item_id, doi_input):
         }
     else:
         return {}
+
+
+def get_pid_value_by_activity_detail(activity_detail):
+    """Get pid_value by activity detail.
+
+    Args:
+        activity_detail: Activity detail.
+    """
+    if activity_detail.temp_data:
+        temp_data = json.loads(activity_detail.temp_data)
+        if temp_data.get('endpoints', {}).get('self', ''):
+            self_list = temp_data.get('endpoints').get('self', '').split('/')
+
+            if len(self_list) > 0:
+                return self_list[-1]
+            else:
+                return ''
