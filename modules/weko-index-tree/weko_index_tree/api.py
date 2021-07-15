@@ -401,7 +401,7 @@ class Indexes(object):
             parent = data.get('parent')
             if not pre_parent or not parent:
                 ret['is_ok'] = False
-                ret['msg'] = _('Select an index to moved.')
+                ret['msg'] = _('Select an index to move.')
                 return ret
 
             try:
