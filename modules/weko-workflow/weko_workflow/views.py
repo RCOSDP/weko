@@ -24,6 +24,7 @@ import json
 import os
 import sys
 from collections import OrderedDict
+from copy import deepcopy
 from functools import wraps
 
 import redis
@@ -1323,7 +1324,12 @@ def cancel_action(activity_id='0', action_id=0):
                             object_uuid=cancel_item_id)
                         cancel_pv = PIDVersioning(child=cancel_pid)
                         if cancel_pv.exists:
+                            parent_pid = deepcopy(cancel_pv.parent)
                             cancel_pv.remove_child(cancel_pid)
+                            # rollback parent info
+                            cancel_pv.parent.status = parent_pid.status
+                            cancel_pv.parent.object_type = parent_pid.object_type
+                            cancel_pv.parent.object_uuid = parent_pid.object_uuid
                 db.session.commit()
             except Exception:
                 db.session.rollback()

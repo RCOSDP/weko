@@ -1197,7 +1197,7 @@ def get_parent_pid_with_type(pid_type, object_uuid):
             pid_object = PersistentIdentifier.query.filter_by(
                 pid_type=pid_type,
                 object_uuid=record.pid_parent.object_uuid
-            ).one_or_none()
+            ).order_by(PersistentIdentifier.created.desc()).first()
             return pid_object
     except PIDDoesNotExistError as pid_not_exist:
         current_app.logger.error(pid_not_exist)
