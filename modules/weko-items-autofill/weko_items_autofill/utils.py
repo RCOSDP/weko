@@ -883,9 +883,12 @@ def sort_by_item_type_order(item_forms, autofill_key_tree):
                 for item in v:
                     str_value = get_parent_key(item)
                     if item_form_key == str_value:
-                       temp.append(item)
+                        temp.append(item)
+                        break
+                if len(temp) > 0:
+                    break
             # Reset sorted value.
-            v = temp
+            autofill_key_tree[k] = temp
     return autofill_key_tree
 
 
