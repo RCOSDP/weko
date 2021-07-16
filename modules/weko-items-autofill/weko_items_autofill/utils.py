@@ -864,10 +864,12 @@ def sort_by_item_type_order(item_forms, autofill_key_tree):
         :return: Parent key
         """
         if isinstance(_item, str):
-            return _item.split('.')[0]
+            parent_key = _item.split('.')[0]
+            return parent_key.replace('[]', '')
         if isinstance(_item, dict):
             if _item.get('@value'):
-                return _item.get('@value').split('.')[0]
+                parent_key = _item.get('@value').split('.')[0]
+                return parent_key.replace('[]', '')
             values = _item.values()
             values_list = list(values)
             first_value = values_list[0]
