@@ -39,6 +39,7 @@ from operator import getitem
 
 import bagit
 import redis
+import sqlalchemy as sa
 from celery.result import AsyncResult
 from celery.task.control import revoke
 from elasticsearch.exceptions import NotFoundError
@@ -47,6 +48,7 @@ from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
 from invenio_files_rest.models import FileInstance, Location, ObjectVersion
+from invenio_files_rest.utils import find_and_update_location_size
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
@@ -953,7 +955,8 @@ def up_load_file(record, root_path, deposit,
                     get_file_name(path)
                 )
                 obj.is_thumbnail = is_thumbnail
-                obj.set_contents(file, root_file_id=root_file_id)
+                obj.set_contents(file, root_file_id=root_file_id,
+                                 is_set_size_location=False)
 
     def clean_file_contents(delete_all):
         # clean file contents in bucket.
@@ -1088,6 +1091,9 @@ def register_item_metadata(item, root_path):
     # progress upload file, replace file contents.
     up_load_file(item, root_path, deposit, not is_cleaned, old_file_list)
     new_data = autofill_thumbnail_metadata(item['item_type_id'], new_data)
+
+    # check location file
+    find_and_update_location_size()
 
     deposit.update(item_status, new_data)
     deposit.commit()

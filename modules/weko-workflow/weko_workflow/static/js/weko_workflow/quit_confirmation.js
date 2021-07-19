@@ -22,10 +22,17 @@ require([
     }
     let post_uri = $('.cur_step').data('cancel-uri');
     let request_uri = $('#post_url').text();
+    let pid_val = request_uri.substring(request_uri.lastIndexOf("/") + 1, request_uri.length)
+    if (!pid_val) {
+      let pid_value_data = JSON.parse(sessionStorage.getItem("pid_value_data"))
+      if (pid_value_data && pid_value_data.activity_id == $('#activity_id').text()) {
+        pid_val = pid_value_data.pid_value_temp
+      }
+    }
     let data = {
       commond: comment,
       action_version: $('.cur_step').data('action-version'),
-      pid_value: request_uri.substring(request_uri.lastIndexOf("/") + 1, request_uri.length),
+      pid_value: pid_val,
     };
     if(!validateSession())
       return;

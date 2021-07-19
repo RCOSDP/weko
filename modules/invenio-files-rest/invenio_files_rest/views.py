@@ -26,12 +26,13 @@ from webargs.flaskparser import use_kwargs
 
 from .errors import DuplicateTagError, ExhaustedStreamError, FileSizeError, \
     InvalidTagError, MissingQueryParameter, MultipartInvalidChunkSize
-from .models import Bucket, Location, MultipartObject, ObjectVersion, \
-    ObjectVersionTag, Part
+from .models import Bucket, FileInstance, Location, MultipartObject, \
+    ObjectVersion, ObjectVersionTag, Part
 from .proxies import current_files_rest, current_permission_factory
 from .serializer import json_serializer
 from .signals import file_downloaded, file_previewed
 from .tasks import merge_multipartobject, remove_file_data
+from .utils import _location_has_quota, delete_file_instance
 
 blueprint = Blueprint(
     'invenio_files_rest',
@@ -717,7 +718,7 @@ class ObjectResource(ContentNegotiatedMethodView):
                 if obj_to_restore:
                     obj_to_restore.is_head = True
 
-            if obj.file_id:
+            if obj.file_id and not delete_file_instance(obj.file_id):
                 remove_file_data.delay(str(obj.file_id))
 
         db.session.commit()
@@ -1016,19 +1017,6 @@ class LocationUsageAmountInfo(ContentNegotiatedMethodView):
             result.append(data)
 
         return jsonify(result)
-
-
-def _location_has_quota(bucket, content_length):
-    quota = bucket.location.quota_size
-    if not quota:
-        return True
-    if not content_length:
-        return True
-    buckets = Bucket.query.filter_by(location=bucket.location).all()
-    total_size = content_length
-    for b in buckets:
-        total_size = total_size + b.size
-    return total_size + 1 < quota
 
 
 #
