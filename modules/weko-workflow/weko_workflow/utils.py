@@ -1342,7 +1342,7 @@ def prepare_edit_workflow(post_activity, recid, deposit):
         else:
             identifier['action_identifier_select'] = current_app.config.get(
                 "WEKO_WORKFLOW_IDENTIFIER_GRANT_DOI", 0)
- 
+
         activity.create_or_update_action_identifier(
             rtn.activity_id,
             identifier_actionid,
