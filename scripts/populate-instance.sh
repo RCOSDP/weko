@@ -415,6 +415,8 @@ ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
 
 # create-default-authors-prefix-settings-begin
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "WEKO" "WEKO" ""
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "ORCID" "ORCID" "https://orcid.org/"
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "CiNii" "CiNii" "https://ci.nii.ac.jp/"

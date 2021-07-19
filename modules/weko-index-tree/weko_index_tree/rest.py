@@ -21,7 +21,6 @@
 """Blueprint for Weko index tree rest."""
 
 import os
-from datetime import date, datetime
 from functools import wraps
 
 from flask import Blueprint, abort, current_app, jsonify, make_response, \
@@ -32,11 +31,10 @@ from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
 
 from .api import Indexes
-from .errors import IndexAddedRESTError, IndexBaseRESTError, \
-    IndexDeletedRESTError, IndexMovedRESTError, IndexNotFoundRESTError, \
-    IndexUpdatedRESTError, InvalidDataRESTError
+from .errors import IndexAddedRESTError, IndexMovedRESTError, \
+    IndexNotFoundRESTError, IndexUpdatedRESTError, InvalidDataRESTError
 from .models import Index
-from .utils import check_doi_in_index, check_has_any_item_in_index_is_locked
+from .utils import check_doi_in_index, is_index_locked, perform_delete_index
 
 
 def need_record_permission(factory_name):
@@ -193,13 +191,19 @@ class IndexActionResource(ContentNegotiatedMethodView):
         data = self.loaders[request.mimetype]()
         if not data:
             raise InvalidDataRESTError()
-        if not self.record_class.create(index_id, data):
-            raise IndexAddedRESTError()
-
-        status = 201
-        msg = 'Index created successfully.'
+        errors = []
+        msg = ''
+        status = 200
+        if is_index_locked(index_id):
+            errors.append(_('Index Delete is in progress on another device.'))
+        else:
+            if not self.record_class.create(index_id, data):
+                raise IndexAddedRESTError()
+            status = 201
+            msg = 'Index created successfully.'
         return make_response(
-            jsonify({'status': status, 'message': msg}), status)
+            jsonify({'status': status, 'message': msg, 'errors': errors}),
+            status)
 
     @need_record_permission('update_permission_factory')
     def put(self, index_id, **kwargs):
@@ -212,9 +216,10 @@ class IndexActionResource(ContentNegotiatedMethodView):
         errors = []
         public_state = data.get('public_state') and data.get(
             'harvest_public_state')
-
-        if not public_state and check_doi_in_index(index_id):
-            status = 200
+        status = 200
+        if is_index_locked(index_id):
+            errors.append(_('Index Delete is in progress on another device.'))
+        elif not public_state and check_doi_in_index(index_id):
             if not data.get('public_state'):
                 errors.append(_('The index cannot be kept private because '
                                 'there are links from items that have a DOI.'))
@@ -238,7 +243,6 @@ class IndexActionResource(ContentNegotiatedMethodView):
                 del data['thumbnail_delete_flag']
             if not self.record_class.update(index_id, **data):
                 raise IndexUpdatedRESTError()
-            status = 200
             msg = 'Index updated successfully.'
 
         return make_response(jsonify(
@@ -251,30 +255,9 @@ class IndexActionResource(ContentNegotiatedMethodView):
         if not index_id or index_id <= 0:
             raise IndexNotFoundRESTError()
 
-        msg = ''
-        errors = []
-        if check_doi_in_index(index_id):
-            errors.append(_('The index cannot be deleted because there is'
-                            ' a link from an item that has a DOI.'))
-        elif check_has_any_item_in_index_is_locked(index_id):
-            errors.append(_('This index cannot be deleted because '
-                            'the item belonging to this index is '
-                            'being edited by the import function.'))
-        else:
-            action = request.values.get('action', 'all')
-            res = self.record_class.get_self_path(index_id)
-            if not res:
-                raise IndexDeletedRESTError()
-            if action in ('move', 'all'):
-                result = self.record_class. \
-                    delete_by_action(action, index_id, res.path)
-                if result is None:
-                    raise IndexBaseRESTError(
-                        description='Could not delete data.')
-            else:
-                raise InvalidDataRESTError()
+        action = request.values.get('action', 'all')
+        msg, errors = perform_delete_index(index_id, self.record_class, action)
 
-            msg = 'Index deleted successfully.'
         return make_response(jsonify(
             {'status': 200, 'message': msg, 'errors': errors}), 200)
 

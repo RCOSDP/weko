@@ -11,7 +11,6 @@
 from __future__ import absolute_import, print_function
 
 import datetime
-import hashlib
 import uuid
 
 from flask import request
@@ -59,6 +58,7 @@ def file_download_event_builder(event, sender_app, obj=None, **kwargs):
             # What:
             bucket_id=str(obj.bucket_id),
             file_id=str(obj.file_id),
+            root_file_id=str(obj.root_file_id),
             file_key=obj.key,
             size=obj.file.size,
             referrer=request.referrer,
@@ -89,6 +89,7 @@ def file_preview_event_builder(event, sender_app, obj=None, **kwargs):
             # What:
             bucket_id=str(obj.bucket_id),
             file_id=str(obj.file_id),
+            root_file_id=str(obj.root_file_id),
             file_key=obj.key,
             size=obj.file.size,
             referrer=request.referrer,
@@ -157,8 +158,10 @@ def copy_record_index_list(doc, aggregation_data=None):
     if list:
         agg_record_index_list = []
         for index in list:
-            agg_record_index_list.append(index['index_name'])
-            record_index_names = ", ".join(agg_record_index_list)
+            idx_name = index.get('index_name', '')
+            if idx_name is not None:
+                agg_record_index_list.append(idx_name)
+                record_index_names = ", ".join(agg_record_index_list)
     return record_index_names
 
 
@@ -196,7 +199,7 @@ def record_view_event_builder(event, sender_app, pid=None, record=None,
             for index in record.navi:
                 index_list.append(dict(
                     index_id=str(index[1]),
-                    index_name=index[3],
+                    index_name=index[3] if index[3] else index[4],
                     index_name_en=index[4]
                 ))
 
@@ -264,12 +267,15 @@ def build_item_create_unique_id(doc):
 
 
 def resolve_address(addr):
-    """Resolve the ip address string addr and return its DNS name. If no name is found, return None."""
+    """Resolve the ip address string addr and return its DNS name.
+
+    If no name is found, return None.
+    """
     from socket import gethostbyaddr, herror
     try:
         record = gethostbyaddr(addr)
 
-    except herror as exc:
+    except herror:
         # print('an error occurred while resolving ', addr, ': ', exc)
         return None
 

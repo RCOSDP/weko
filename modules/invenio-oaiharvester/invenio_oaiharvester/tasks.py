@@ -21,8 +21,10 @@
 
 from __future__ import absolute_import, print_function
 
+import json
 import signal
 from ast import literal_eval as make_tuple
+from collections import OrderedDict
 from datetime import datetime
 
 import dateutil
@@ -153,7 +155,10 @@ def process_item(record, harvesting, counter):
     """Process item."""
     event_counter('processed_items', counter)
     event = ItemEvents.INIT
+
     xml = etree.tostring(record, encoding='utf-8').decode()
+    # current_app.logger.debug('[{0}] [{1}] Processing xml: {2}'.format(
+    #    0, 'Harvesting', xml))
     if harvesting.metadata_prefix == 'oai_dc':
         mapper = DCMapper(xml)
     elif harvesting.metadata_prefix == 'jpcoar' or \
@@ -165,8 +170,8 @@ def process_item(record, harvesting, counter):
     else:
         return
 
-    current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
-        0, 'Harvesting', mapper.identifier()))
+    current_app.logger.debug('[{0}] [{1}] Processing identifier: {2} prefix: {3}'.format(
+        0, 'Harvesting', mapper.identifier(), harvesting.metadata_prefix))
     hvstid = PersistentIdentifier.query.filter_by(
         pid_type='hvstid', pid_value=mapper.identifier()).first()
     if hvstid:
@@ -176,7 +181,7 @@ def process_item(record, harvesting, counter):
         recid.status = PIDStatus.REGISTERED
         pubdate = dateutil.parser.parse(
             r.json['pubdate']['attribute_value']).date()
-        #dep = WekoDeposit(r.json, r)
+        # dep = WekoDeposit(r.json, r)
         dep = WekoDeposit.get_record(hvstid.object_uuid)
         indexes = dep['path'].copy()
         event = ItemEvents.UPDATE
@@ -190,6 +195,7 @@ def process_item(record, harvesting, counter):
                                     object_uuid=dep.pid.object_uuid)
         indexes = []
         event = ItemEvents.CREATE
+
     if int(harvesting.auto_distribution):
         for i in map_indexes(mapper.specs(), harvesting.index_id):
             indexes.append(str(i)) if i not in indexes else None
@@ -205,10 +211,66 @@ def process_item(record, harvesting, counter):
         soft_delete(recid.pid_value)
         event = ItemEvents.DELETE
     else:
-        json = mapper.map()
-        json['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
+        json_data = mapper.map()
+
+        # START: temporary fix for JDCat
+        # merge creatorNames
+        current_app.logger.debug('[{0}] [{1}] Processing json: {2}'.format(
+            0, 'Harvesting', mapper.identifier()))
+        if 'item_1593074267803' in json_data:
+            if len(json_data['item_1593074267803']) > 0:
+                n2 = len(json_data['item_1593074267803'])
+                n = int(n2/2)
+                if 'creatorNames' in json_data['item_1593074267803'][0] and 'creatorNames' in json_data['item_1593074267803'][n]:
+                    if 'creatorNameLang' in json_data['item_1593074267803'][0]['creatorNames'][0] and 'creatorNameLang' in json_data['item_1593074267803'][n]['creatorNames'][0]:
+                        if json_data['item_1593074267803'][0]['creatorNames'][0]['creatorNameLang'] != json_data['item_1593074267803'][n]['creatorNames'][0]['creatorNameLang']:
+                            for i in range(n):
+                                json_data['item_1593074267803'][i]['creatorNames'].append(
+                                    json_data['item_1593074267803'][i+n]['creatorNames'][0])
+                                if json_data['item_1593074267803'][i]['creatorNames'][0]['creatorNameLang'] == 'en':
+                                    tmp = json_data['item_1593074267803'][i]['creatorNames'][0]
+                                    json_data['item_1593074267803'][i]['creatorNames'][0] = json_data['item_1593074267803'][i]['creatorNames'][1]
+                                    json_data['item_1593074267803'][i]['creatorNames'][1] = tmp
+                                if 'nameIdentifiers' in json_data['item_1593074267803'][i]:
+                                    del json_data['item_1593074267803'][i]['nameIdentifiers']
+
+                            del json_data['item_1593074267803'][n:]
+
+        #for e in json_data:
+        #    current_app.logger.debug('[{0}] [{1}] Processing json_data[e]: {2}'.format(
+        #        0, 'Harvesting', json_data[e]))
+        #    current_app.logger.debug('[{0}] [{1}] Processing json_data[e] type: {2}'.format(
+        #        0, 'Harvesting', type(json_data[e])))
+        #    if isinstance(json_data[e], list):
+        #        tmp = list(
+        #            map(json.loads, set(map(json.dumps, json_data[e]))))
+        #        json_data[e] = tmp
+        #        current_app.logger.debug('[{0}] [{1}] Processing json_data[e]: {2}'.format(
+        #            0, 'Harvesting', json_data[e]))
+
+        # current_app.logger.debug('[{0}] [{1}] Processing json_data: {2}'.format(
+        #    0, 'Harvesting', json_data))
+        # END: temporary fix for JDCat
+
+        json_data['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
         dep['_deposit']['status'] = 'draft'
-        dep.update({'actions': 'publish', 'index': indexes}, json)
+
+        # START: temporary fix for JDCat
+        # if json['$schema'] == '/items/jsonschema/14' and 'item_1588260046718' in json:
+        if 'item_1588260046718' in json_data:
+            for i in json_data['item_1588260046718']:
+                i['subitem_1592380784883'] = 'Other'
+
+        # if json['$schema'] == '/items/jsonschema/14' and 'item_1592405734122' in json:
+        if 'item_1592405734122' in json_data:
+            # current_app.logger.debug('json: %s' % json['item_1551264917614'])
+            for i in json_data['item_1592405734122']:
+                i['subitem_1591320918354'] = 'Distributor'
+        # END: temporary fix for JDCat
+
+        # current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
+        #     0, 'Harvesting', json))
+        dep.update({'actions': 'publish', 'index': indexes}, json_data)
         dep.commit()
         dep.publish()
 
@@ -216,10 +278,17 @@ def process_item(record, harvesting, counter):
         pid = PersistentIdentifier.query.filter_by(
             pid_type='recid', pid_value=dep.pid.pid_value).first()
 
+        current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
+            0, 'Harvesting', pid))
+
         idt_list = mapper.identifiers
         from weko_workflow.utils import IdentifierHandle
 
         idt = IdentifierHandle(pid.object_uuid)
+        current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
+            0, 'Harvesting', idt_list))
+        current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
+            0, 'Harvesting', idt))
         for it in idt_list:
             if not it.get('type'):
                 continue
@@ -247,7 +316,7 @@ def process_item(record, harvesting, counter):
         event_counter('deleted_items', counter)
 
 
-@shared_task
+@ shared_task
 def link_success_handler(retval):
     """Register task stats into invenio-stats."""
     current_app.logger.info(
@@ -257,7 +326,7 @@ def link_success_handler(retval):
                              exec_data=retval[0], user_data=retval[1])
 
 
-@shared_task
+@ shared_task
 def link_error_handler(request, exc, traceback):
     """Register task stats into invenio-stats for failure."""
     args = make_tuple(request.argsrepr)  # Cannot access original args
@@ -288,18 +357,17 @@ def is_harvest_running(id, task_id):
     return False
 
 
-@shared_task
+@ shared_task
 def run_harvesting(id, start_time, user_data):
     """Run harvest."""
     def dump(setting):
         setting_json = {}
         setting_json['repository_name'] = setting.repository_name
         setting_json['base_url'] = setting.base_url
-        setting_json['from_date'] = \
-            setting.from_date.strftime('%Y-%m-%d') if setting.from_date else ''
-        setting_json['until_date'] = \
-            setting.until_date.strftime(
-                '%Y-%m-%d') if setting.until_date else ''
+        setting_json['from_date'] = setting.from_date.strftime(
+            '%Y-%m-%d') if setting.from_date else ''
+        setting_json['until_date'] = setting.until_date.strftime(
+            '%Y-%m-%d') if setting.until_date else ''
         setting_json['set_spec'] = setting.set_spec
         setting_json['metadata_prefix'] = setting.metadata_prefix
         setting_json['target_index'] = setting.target_index.index_name
@@ -331,10 +399,9 @@ def run_harvesting(id, start_time, user_data):
                                   start_time=datetime.utcnow(), counter=counter)
         db.session.add(harvest_log)
     else:
-        harvest_log = \
-            HarvestLogs.query.filter_by(
-                harvest_setting_id=id).order_by(
-                HarvestLogs.id.desc()).first()
+        harvest_log = HarvestLogs.query.filter_by(
+            harvest_setting_id=id).order_by(
+            HarvestLogs.id.desc()).first()
         harvest_log.end_time = None
         harvest_log.status = 'Running'
         counter = harvest_log.counter
@@ -355,8 +422,8 @@ def run_harvesting(id, start_time, user_data):
         while True:
             records, rtoken = harvester_list_records(
                 harvesting.base_url,
-                harvesting.from_date.__str__() if harvesting.from_date else None,
-                harvesting.until_date.__str__() if harvesting.until_date else None,
+                harvesting.from_date.__str__() if harvesting.from_date and not rtoken else None,
+                harvesting.until_date.__str__() if harvesting.until_date and not rtoken else None,
                 harvesting.metadata_prefix,
                 harvesting.set_spec,
                 rtoken)
@@ -366,6 +433,8 @@ def run_harvesting(id, start_time, user_data):
                 try:
                     process_item(record, harvesting, counter)
                 except Exception as ex:
+                    import traceback
+                    current_app.logger.error(traceback.format_exc())
                     current_app.logger.error(
                         'Error occurred while processing harvesting item\n' + str(ex))
                     db.session.rollback()
@@ -403,7 +472,7 @@ def run_harvesting(id, start_time, user_data):
                 user_data)
 
 
-@shared_task(ignore_results=True)
+@ shared_task(ignore_results=True)
 def check_schedules_and_run():
     """Check schedules and run."""
     settings = HarvestSettings.query.all()

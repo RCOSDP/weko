@@ -623,7 +623,7 @@ msgstr "アイテムビュー"
 
 #: weko_admin/templates/weko_admin/admin/report.html:113
 msgid "File Using Per User"
-msgstr "ユーザ毎に使用するファイル"
+msgstr "ユーザー毎に使用するファイル"
 
 #: weko_admin/templates/weko_admin/admin/report.html:115
 msgid "Top Page Access"

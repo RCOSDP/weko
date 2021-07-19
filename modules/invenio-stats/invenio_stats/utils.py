@@ -148,7 +148,7 @@ def get_aggregations(index, aggs_query):
     if index and aggs_query and 'aggs' in aggs_query:
         from invenio_indexer.api import RecordIndexer
         results = RecordIndexer().client.search(
-            index=index, body=aggs_query)['aggregations']
+            index=index, body=aggs_query)
 
     return results
 

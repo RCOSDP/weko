@@ -27,11 +27,6 @@ from weko_admin import config as ad_config
 from weko_admin.models import SearchManagement as sm
 from weko_index_tree.api import Indexes
 from weko_records.utils import get_keywords_data_load
-from invenio_i18n.ext import current_i18n
-
-from weko_index_tree.utils import cached_index_tree_json, filter_index_list_by_role, \
-   get_index_id_list, get_publish_index_id_list, get_tree_json, \
-   get_user_roles, reset_tree, sanitize
 
 
 class SearchSetting(object):
@@ -153,7 +148,7 @@ class SearchSetting(object):
         return nested_sorting
 
 
-def get_search_detail_keyword(st):
+def get_search_detail_keyword(str):
     """Get search detail keyword."""
     res = sm.get()
     options = None
@@ -169,49 +164,10 @@ def get_search_detail_keyword(st):
         sub = dict(id=x[0], contents=x[0], checkStus=False)
         check_val.append(sub)
 
-    check_val2 = []
-    index_all = Indexes.get_all_indexes()
-    index_role = filter_index_list_by_role(index_all)
-    role_list = []
-    for index in index_role:
-        role_list.append(index.id)
-
-    idx = ""
-    for index in index_role:
-        if index.parent == 0:
-            child_index = Indexes.get_child_list_by_pip(index.id)
-            for child_id in child_index:
-                if child_id[1] in role_list:
-                    idx = Indexes.get_all_parent_indexes(child_id[1])
-                    idxname = ""
-                    idxidstr = ""
-                    first = True
-                    for x in idx:
-                        if hasattr(current_i18n, 'language'):
-                            if current_i18n.language == 'ja':
-                                idxname = x.index_name
-                            else:
-                                idxname = x.index_name_english
-                        else:
-                            idxname = x.index_name_english
-                        if first:
-                            first = False
-                            printname = idxname
-                            idxidstr = str(x.id)
-                        else:
-                            printname = printname + "/" 
-                            printname = printname + idxname
-                            idxidstr = idxidstr + "/"
-                            idxidstr = idxidstr + str(x.id)
-                            
-                    sub2 = dict(id=idxidstr, contents=printname, checkStus=False)
-                    check_val2.append(sub2)
-
     for k_v in options:
         if k_v.get('id') == 'itemtype':
             k_v['check_val'] = check_val
-        elif k_v.get('id') == 'iid':
-            k_v['check_val'] = check_val2
+            break
 
     key_options['condition_setting'] = options
 

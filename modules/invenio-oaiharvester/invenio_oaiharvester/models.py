@@ -99,7 +99,7 @@ class HarvestSettings(db.Model):
 
     item_processed = db.Column(db.Integer, default=0)
 
-    resumption_token = db.Column(db.String(255), default=None)
+    resumption_token = db.Column(db.String(512), default=None)
 
     schedule_enable = db.Column(db.Boolean(name='schedule_enable'),
                                 name='schedule_enable', default=False)

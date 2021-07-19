@@ -1620,3 +1620,45 @@ class Indexes(object):
         else:  # delete all index
             from .tasks import delete_oaiset_setting
             delete_oaiset_setting.delay(id_list)
+
+    @classmethod
+    def get_public_indexes_list(cls):
+        """Get full path of public indexes.
+
+        :return: path.
+        """
+        recursive_t = db.session.query(
+            Index.parent.label("pid"),
+            Index.id.label("cid"),
+            func.cast(Index.id, db.Text).label("path")
+        ).filter(
+            Index.parent == 0,
+            Index.public_state.is_(True)
+        ).filter(
+            db.or_(Index.public_date.is_(None),
+                   Index.public_date < datetime.utcnow())
+        ).cte(name="recursive_t", recursive=True)
+
+        rec_alias = aliased(recursive_t, name="rec")
+        test_alias = aliased(Index, name="t")
+        recursive_t = recursive_t.union_all(
+            db.session.query(
+                test_alias.parent,
+                test_alias.id,
+                rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text)
+            ).filter(
+                test_alias.parent == rec_alias.c.cid,
+                test_alias.public_state.is_(True)
+            ).filter(
+                db.or_(test_alias.public_date.is_(None),
+                       test_alias.public_date < datetime.utcnow()))
+        )
+
+        paths = []
+        with db.session.begin_nested():
+            qlst = [recursive_t.c.path]
+            indexes = db.session.query(*qlst). \
+                order_by(recursive_t.c.pid).all()
+            for idx in indexes:
+                paths.append(idx.path)
+        return paths

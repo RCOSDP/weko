@@ -192,10 +192,10 @@ def handle_license_free(record_metadata):
     for val in record_metadata.values():
         if isinstance(val, dict) and \
                 val.get('attribute_type') == _attribute_type:
-            for attr in val[_attribute_value_mlt]:
+            for attr in val.get(_attribute_value_mlt, {}):
                 if attr.get(_license_type) == _license_type_free:
                     if attr.get(_license_free):
-                        attr[_license_type] = attr[_license_free]
+                        attr[_license_type] = attr.get(_license_free)
                         del attr[_license_free]
                     else:
                         del attr[_license_type]

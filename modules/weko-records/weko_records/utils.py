@@ -47,6 +47,24 @@ def json_loader(data, pid, owner_id=None):
     :param owner_id: record owner.
     :return: dc, jrc, is_edit
     """
+    def _get_author_link(author_link, value):
+        """Get author link data."""
+        if isinstance(value, list):
+            for v in value:
+                if 'nameIdentifiers' in v \
+                        and len(v['nameIdentifiers']) > 0 \
+                        and 'nameIdentifierScheme' in v['nameIdentifiers'][0] \
+                        and v['nameIdentifiers'][0]['nameIdentifierScheme'] == 'WEKO':
+                    author_link.append(
+                        v['nameIdentifiers'][0]['nameIdentifier'])
+        elif isinstance(value, dict):
+            if 'nameIdentifiers' in value \
+                    and len(value['nameIdentifiers']) > 0 \
+                    and 'nameIdentifierScheme' in value['nameIdentifiers'][0] \
+                    and value['nameIdentifiers'][0]['nameIdentifierScheme'] == 'WEKO':
+                author_link.append(
+                    value['nameIdentifiers'][0]['nameIdentifier'])
+
     dc = OrderedDict()
     jpcoar = OrderedDict()
     item = dict()
@@ -74,6 +92,7 @@ def json_loader(data, pid, owner_id=None):
 
     mp = mjson.dumps()
     data.get("$schema")
+    author_link = []
     for k, v in data.items():
         if k != "pubdate":
             if k == "$schema" or mp.get(k) is None:
@@ -117,12 +136,14 @@ def json_loader(data, pid, owner_id=None):
         if isinstance(v, list):
             if len(v) > 0 and isinstance(v[0], dict):
                 item["attribute_value_mlt"] = v
+                _get_author_link(author_link, v)
             else:
                 item["attribute_value"] = v
         elif isinstance(v, dict):
             ar.append(v)
             item["attribute_value_mlt"] = ar
             ar = []
+            _get_author_link(author_link, v)
         else:
             item["attribute_value"] = v
 
@@ -152,6 +173,7 @@ def json_loader(data, pid, owner_id=None):
         dc.update(dict(item_title=title))
         dc.update(dict(item_type_id=item_type_id))
         dc.update(dict(control_number=pid))
+        dc.update(dict(author_link=author_link))
 
         if COPY_NEW_FIELD:
             copy_field_test(dc, WEKO_TEST_FIELD, jrc)
@@ -181,7 +203,7 @@ def json_loader(data, pid, owner_id=None):
         jrc.update(dict(_item_metadata=dc))
         jrc.update(dict(itemtype=ojson.model.item_type_name.name))
         jrc.update(dict(publish_date=pubdate))
-        jrc.update(dict(author_link=data.get('author_link', [])))
+        jrc.update(dict(author_link=author_link))
 
         # save items's creator to check permission
         if current_user:
@@ -422,11 +444,6 @@ def get_all_items2(nlst, klst):
     """
     alst = []
 
-    # def get_name(key):
-    #     for lst in klst:
-    #         k = lst[0].split('.')[-1]
-    #         if key == k:
-    #             return lst[1]
     def get_items(nlst):
         if isinstance(nlst, dict):
             for k, v in nlst.items():
@@ -438,12 +455,12 @@ def get_all_items2(nlst, klst):
             for lst in nlst:
                 get_items(lst)
 
-    to_orderdict(nlst, klst)
+    to_orderdict(nlst, klst, True)
     get_items(nlst)
     return alst
 
 
-def to_orderdict(alst, klst):
+def to_orderdict(alst, klst, is_full_key=False):
     """Sort item list.
 
     :param alst:
@@ -453,12 +470,12 @@ def to_orderdict(alst, klst):
         for i in range(len(alst)):
             if isinstance(alst[i], dict):
                 alst.insert(i, OrderedDict(alst.pop(i)))
-                to_orderdict(alst[i], klst)
+                to_orderdict(alst[i], klst, is_full_key)
     elif isinstance(alst, dict):
         nlst = []
         if isinstance(klst, list):
             for lst in klst:
-                key = lst[0].split('.')[-1]
+                key = lst[0] if is_full_key else lst[0].split('.')[-1]
                 val = alst.pop(key, {})
                 if val:
                     if isinstance(val, dict):
@@ -472,7 +489,7 @@ def to_orderdict(alst, klst):
 
             for k, v in alst.items():
                 if not isinstance(v, str):
-                    to_orderdict(v, klst)
+                    to_orderdict(v, klst, is_full_key)
 
 
 def get_options_and_order_list(item_type_id, ojson=None):
@@ -513,7 +530,7 @@ async def sort_meta_data_by_options(
         """Convert solst to dict."""
         solst_dict_array = []
         for lst in solst:
-            key = lst[0]
+            key = lst[0].replace('[]', '')
             option = meta_options.get(key, {}).get('option')
             temp = {
                 'key': key,
@@ -590,6 +607,16 @@ async def sort_meta_data_by_options(
     def get_comment(solst_dict_array, hide_email_flag, _item_metadata, src,
                     solst):
         """Check and get info."""
+        def get_option_value(option_type, parent_option, child_option):
+            """Get value of option by option type, prioritized parent.
+
+            @param option_type: show_list, specify_newline, hide, required
+            @return: True or False
+            """
+            return parent_option.get(option_type) \
+                if parent_option and parent_option.get(option_type) \
+                else child_option.get(option_type)
+
         result = []
         data_result = {}
         stt_key = []
@@ -605,21 +632,15 @@ async def sort_meta_data_by_options(
             value = s['value']
             option = s['option']
             parent_option = s['parent_option']
-            # Get show list flag.
-            is_show_list = parent_option.get(
-                'show_list') if parent_option and parent_option.get(
-                'show_list') else option.get('show_list')
-            # Get specify newline flag.
-            is_specify_newline = parent_option.get(
-                'specify_newline') if parent_option and parent_option.get(
-                'specify_newline') else option.get('specify_newline')
-            # Get hide flag.
-            is_hide = parent_option.get('hide') if parent_option and \
-                parent_option.get('hide') else option.get('hide')
+            # Get 'show list', 'specify newline', 'hide' flag.
+            is_show_list = get_option_value('show_list', parent_option, option)
+            is_specify_newline = get_option_value(
+                'specify_newline', parent_option, option)
+            is_hide = get_option_value('hide', parent_option, option)
             # Get hide email flag
-            if 'creatorMails[].creatorMail' in s['key'] \
-                or 'contributorMails[].contributorMail' in s['key'] \
-                    or 'mails[].mail' in s['key']:
+            if 'creatorMails.creatorMail' in s['key'] \
+                or 'contributorMails.contributorMail' in s['key'] \
+                    or 'mails.mail' in s['key']:
                 is_hide = is_hide | hide_email_flag
             # Get creator flag.
             is_author = src.get(s['key'], {}).get('attribute_type',
@@ -654,7 +675,8 @@ async def sort_meta_data_by_options(
                                        )
             elif not (bibliographic_key and bibliographic_key in s['key']) and \
                     value and value not in _ignore_items and \
-                    not is_hide and is_show_list and s['key']:
+                    not is_hide and is_show_list and s['key'] \
+                    and s['title'] != 'Title':
                 data_result, stt_key = get_value_and_lang_by_key(
                     s['key'], solst_dict_array, data_result, stt_key)
                 is_specify_newline_array.append(
@@ -716,6 +738,79 @@ async def sort_meta_data_by_options(
                 }
         return thumbnail
 
+    def append_parent_key(key, attribute_value_mlt):
+        """Update parent key attribute_value_mlt."""
+        def get_parent_key(key):
+            """Get root key in string key."""
+            parent_key = key
+            key_arr = key.split('.')
+            if len(key_arr) >= 2:
+                del key_arr[-1]
+                parent_key = '.'.join(key_arr)
+            return parent_key
+
+        def append_parent_key_all_type(parent_key, attr_val_mlt):
+            """Append parent key for all sub key in array and dict."""
+            if isinstance(attr_val_mlt, dict):
+                return append_parent_key_for_dict(parent_key, attr_val_mlt)
+            if isinstance(attr_val_mlt, list):
+                return append_parent_key_for_list(parent_key, attr_val_mlt)
+
+        def append_parent_key_for_dict(parent_key, attr_val_mlt):
+            """Append parent key for all sub key in dict."""
+            mlt_temp = {}
+            for attr_key, attr_val in attr_val_mlt.items():
+                # Join parent and child key. Ex: parent_key_01.sub_key_01
+                parent_key_temp = '{}.{}'.format(parent_key, attr_key)
+                mlt_temp.update({parent_key_temp: attr_val})
+                if isinstance(attr_val, dict):
+                    attr_val_temp = append_parent_key_for_dict(
+                        parent_key_temp, attr_val)
+                    mlt_temp[parent_key_temp] = attr_val_temp
+                if isinstance(attr_val, list):
+                    attr_val_temp = append_parent_key_for_list(
+                        parent_key_temp, attr_val)
+                    mlt_temp[parent_key_temp] = attr_val_temp
+            return mlt_temp
+
+        def append_parent_key_for_list(parent_key, attr_val_mlt):
+            """Append parent key for all sub key in array."""
+            mlt_temp_arr = []
+            for item in attr_val_mlt:
+                if isinstance(item, dict):
+                    mlt_temp = append_parent_key_for_dict(parent_key, item)
+                    mlt_temp_arr.append(mlt_temp)
+                if isinstance(item, list):
+                    mlt_temp = append_parent_key_for_list(parent_key, item)
+                    mlt_temp_arr.append(mlt_temp)
+            attr_val_mlt = mlt_temp_arr
+            return attr_val_mlt
+
+        # Get root key.
+        parent_key = get_parent_key(key)
+        # Append parent key for all sub key.
+        attribute_value_mlt = append_parent_key_all_type(
+            parent_key, attribute_value_mlt)
+        return attribute_value_mlt
+
+    def get_title_option(solst_dict_array):
+        """Get option of title."""
+        parent_option, child_option = {}, {}
+        for item in solst_dict_array:
+            if '.' in item.get('key') and item.get('title') == 'Title':
+                parent_option = item.get('parent_option')
+                child_option = item.get('option')
+                break
+        show_list = parent_option.get('show_list') if parent_option.get(
+            'show_list') else child_option.get('show_list')
+        specify_newline = parent_option.get('crtf') if parent_option.get(
+            'crtf') else child_option.get('specify_newline')
+        option = {
+            "show_list": show_list,
+            "specify_newline": specify_newline
+        }
+        return option
+
     try:
         src_default = copy.deepcopy(
             record_hit['_source'].get('_item_metadata'))
@@ -760,6 +855,8 @@ async def sort_meta_data_by_options(
                             arr.append(result)
                             record_hit['_source']['_comment'] = arr
                             break
+            elif val_arr and len(val_arr) > 0:
+                record_hit['_source']['_comment'] = [val_arr[0]]
 
         if not item_type_id:
             return
@@ -788,6 +885,7 @@ async def sort_meta_data_by_options(
                         and option.get("showlist"):
                     thumbnail = get_file_thumbnail(mlt)
                     continue
+                mlt = append_parent_key(key, mlt)
                 meta_data = get_all_items2(mlt, solst)
                 for m in meta_data:
                     for s in solst_dict_array:
@@ -809,7 +907,12 @@ async def sort_meta_data_by_options(
 
         if 'file' in record_hit['_source']:
             record_hit['_source'].pop('file')
-        if items:
+
+        # Title do not display if show list is false.
+        title_option = get_title_option(solst_dict_array)
+        if not title_option.get('show_list'):
+            record_hit['_source']['_comment'] = []
+        if items and len(items) > 0:
             if record_hit['_source'].get('_comment'):
                 record_hit['_source']['_comment'].extend(items)
             else:
@@ -884,7 +987,8 @@ def check_has_attribute_value(node):
         return False
 
 
-def get_attribute_value_all_items(root_key, nlst, klst, is_author=False, hide_email_flag=True):
+def get_attribute_value_all_items(
+        root_key, nlst, klst, is_author=False, hide_email_flag=True):
     """Convert and sort item list.
 
     :param root_key:
@@ -1164,14 +1268,12 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
                     value = s.get(str_key_val[len(str_key_val) - 1]).strip()
                     if len(value) > 0:
                         return value
-                if (s is not None) and (s.get(
-                    str_key_lang[len(str_key_lang) - 1]) is not None) and (
-                        s.get(str_key_val[len(str_key_val) - 1]) is not None):
-                    if (s.get(str_key_lang[len(
-                        str_key_lang) - 1]).strip() == str_lang.strip()) and (
-                        str_key_val[len(str_key_val) - 1] in s) and len(
-                            s.get(str_key_val[len(str_key_val) - 1]).strip()) > 0:
-                        return s.get(str_key_val[len(str_key_val) - 1])
+                if s and isinstance(s, dict) and s.get(str_key_lang[-1]) \
+                        and s.get(str_key_val[-1]):
+                    if s.get(str_key_lang[-1]).strip() == str_lang.strip() \
+                            and str_key_val[-1] in s \
+                            and len(s.get(str_key_val[-1]).strip()) > 0:
+                        return s.get(str_key_val[-1])
     return None
 
 
@@ -1535,7 +1637,7 @@ def replace_fqdn(url_path: str, host_url: str = None) -> str:
     elif host_url not in url_path:
         if host_url[-1] != '/':
             host_url = host_url + '/'
-        pattern = r'http[s]{0,1}:\/\/([\d\w]+[\.]*[:]{0,1}[\d\w])+\/'
+        pattern = r'https?:\/\/([\w-]+(\.\w)*)+(:\d+)?\/'
         url_path = re.sub(pattern, host_url, url_path)
     return url_path
 

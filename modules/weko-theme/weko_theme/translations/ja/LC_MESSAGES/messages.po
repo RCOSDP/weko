@@ -694,7 +694,7 @@ msgstr "ファイル管理"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_User Management"
-msgstr "ユーザ管理"
+msgstr "ユーザー管理"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Setting"
