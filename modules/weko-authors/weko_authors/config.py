@@ -39,7 +39,121 @@ WEKO_AUTHORS_ADMIN_EDIT_TEMPLATE = 'weko_authors/admin/author_edit.html'
 """Edit template for the admin author page."""
 
 WEKO_AUTHORS_ADMIN_PREFIX_TEMPLATE = 'weko_authors/admin/prefix_list.html'
-"""template for the id prefix settings page."""
+"""Template for the id prefix settings page."""
+
+WEKO_AUTHORS_ADMIN_EXPORT_TEMPLATE = 'weko_authors/admin/author_export.html'
+"""Template for the export page."""
+
+WEKO_AUTHORS_EXPORT_ENTRYPOINTS = {
+    'export': '/admin/authors/export/export',
+    'cancel': '/admin/authors/export/cancel',
+    'check_status': '/admin/authors/export/check_status'
+}
+
+WEKO_AUTHORS_EXPORT_FILE_NAME = 'Creator_export_all.tsv'
+WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY = 'weko_authors_export_status'
+WEKO_AUTHORS_EXPORT_CACHE_URL_KEY = 'weko_authors_exported_url'
+
+WEKO_AUTHORS_TSV_MAPPING = [
+    {
+        'label_en': 'WEKO ID',
+        'label_jp': 'WEKO ID',
+        'json_id': 'pk_id',
+        'validation': {
+            'is_required': True
+        }
+    },
+    {
+        'json_id': 'authorNameInfo',
+        'child': [
+            {
+                'label_en': 'Family Name',
+                'label_jp': '姓',
+                'json_id': 'familyName'
+            },
+            {
+                'label_en': 'Given Name',
+                'label_jp': '名',
+                'json_id': 'firstName'
+            },
+            {
+                'label_en': 'Language',
+                'label_jp': '言語',
+                'json_id': 'language'
+            },
+            {
+                'label_en': 'Name Format',
+                'label_jp': 'フォーマット',
+                'json_id': 'nameFormat',
+                'validation': {
+                    'map': ['familyNmAndNm']
+                },
+                'autofill': 'familyNmAndNm'
+            },
+            {
+                'label_en': 'Name Display',
+                'label_jp': '姓名・言語 表示／非表示',
+                'json_id': 'nameShowFlg',
+                'mask': {
+                    'true': 'Y',
+                    'false': 'N'
+                },
+                'validation': {
+                    'map': ['Y', 'N']
+                }
+            }
+        ]
+    },
+    {
+        'json_id': 'authorIdInfo',
+        'child': [
+            {
+                'label_en': 'Identifier Scheme',
+                'label_jp': '外部著者ID 識別子',
+                'json_id': 'idType'
+            },
+            {
+                'label_en': 'Identifier',
+                'label_jp': '外部著者ID',
+                'json_id': 'authorId'
+            },
+            {
+                'label_en': 'Identifier Display',
+                'label_jp': '外部著者ID 表示／非表示',
+                'json_id': 'authorIdShowFlg',
+                'mask': {
+                    'true': 'Y',
+                    'false': 'N'
+                },
+                'validation': {
+                    'map': ['Y', 'N']
+                }
+            }
+        ]
+    },
+    {
+        'json_id': 'emailInfo',
+        'child': [
+            {
+                'label_en': 'Mail Address',
+                'label_jp': 'メールアドレス',
+                'json_id': 'email'
+            }
+        ]
+    },
+    {
+        'label_en': 'Delete Flag',
+        'label_jp': '削除フラグ',
+        'json_id': 'is_deleted',
+        'mask': {
+            'true': 'D',
+            'false': None
+        },
+        'validation': {
+            'map': ['D']
+        }
+    }
+]
 
 WEKO_AUTHORS_NUM_OF_PAGE = 25
 """Default number of author search results that display in one page."""

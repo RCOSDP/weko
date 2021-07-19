@@ -67,6 +67,7 @@ def create():
 
     data = request.get_json()
     data["gather_flg"] = 0
+    data["is_deleted"] = False
     data["pk_id"] = str(max_id)
     data["authorIdInfo"].insert(0,
                                 {
@@ -123,7 +124,7 @@ def update_author():
     return jsonify(msg=_('Success'))
 
 
-@blueprint_api.route("/delete", methods=['post'])
+@blueprint_api.route("/delete", methods=['POST'])
 @login_required
 @author_permission.require(http_exception=403)
 def delete_author():
@@ -147,7 +148,7 @@ def delete_author():
     }
     result_itemCnt = indexer.client.search(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
-        body=json.loads(json.dumps(query_item))
+        body=json.loads(json.dumps(query_q))
     )
     if result_itemCnt \
             and 'hits' in result_itemCnt \
@@ -157,17 +158,27 @@ def delete_author():
             'The author is linked to items and cannot be deleted.',
             500)
 
-    indexer.client.delete(
-        id=json.loads(json.dumps(data))["Id"],
-        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],)
+    try:
+        with db.session.begin_nested():
+            author_data = Authors.query.filter_by(
+                id=json.loads(json.dumps(data))["pk_id"]).one()
+            author_data.is_deleted = True
+            json_data = json.loads(author_data.json)
+            json_data['is_deleted'] = True
+            author_data.json = json.dumps(json_data)
+            db.session.merge(author_data)
 
-    with db.session.begin_nested():
-        author_data = Authors.query.filter_by(
-            id=json.loads(json.dumps(data))["pk_id"]).one()
-        db.session.delete(author_data)
+            indexer.client.update(
+                id=json.loads(json.dumps(data))["Id"],
+                index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+                doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+                body={'doc': {'is_deleted': True}}
+            )
+    except Exception as ex:
+        db.session.rollback()
+        current_app.logger.error(ex)
+
     db.session.commit()
-
     return jsonify(msg=_('Success'))
 
 # add by ryuu. at 20180820 end
@@ -181,7 +192,11 @@ def get():
     data = request.get_json()
 
     search_key = data.get('searchKey') or ''
-    match = [{"term": {"gather_flg": 0}}]
+    should = [
+        {"bool": {"must": [{"term": {"is_deleted": {"value": "false"}}}]}},
+        {"bool": {"must_not": {"exists": {"field": "is_deleted"}}}}
+    ]
+    match = [{"term": {"gather_flg": 0}}, {"bool": {"should": should}}]
 
     if search_key:
         match.append({"multi_match": {"query": search_key, "type": "phrase"}})
