@@ -193,8 +193,11 @@ def get_crossref_record_data(pid, doi, item_type_id):
     if items is None:
         return result
     elif items.form is not None:
-        autofill_key_tree = get_autofill_key_tree(
-            items.form, get_crossref_autofill_item(item_type_id))
+        autofill_key_tree = sort_by_item_type_order(
+            items.form,
+            get_autofill_key_tree(
+                items.form,
+                get_crossref_autofill_item(item_type_id)))
         result = build_record_model(autofill_key_tree, api_data)
     return result
 
@@ -847,6 +850,50 @@ def get_autofill_key_tree(schema_form, item, result=None):
     return result
 
 
+def sort_by_item_type_order(item_forms, autofill_key_tree):
+    """Sort autofill_key_tree by order of item type.
+
+    :param item_forms: List forms in order to get item order
+    :param autofill_key_tree: autofill key tree
+    :return: Sorted autofill_key_tree
+    """
+    def get_parent_key(_item):
+        """Get parent key of item in sub autofill_key_tree.
+
+        :param _item: Mapping objet
+        :return: Parent key
+        """
+        if isinstance(_item, str):
+            parent_key = _item.split('.')[0]
+            return parent_key.replace('[]', '')
+        if isinstance(_item, dict):
+            if _item.get('@value'):
+                parent_key = _item.get('@value').split('.')[0]
+                return parent_key.replace('[]', '')
+            values = _item.values()
+            values_list = list(values)
+            first_value = values_list[0]
+            return get_parent_key(first_value)
+
+    # Get all parent key of items in item type.
+    item_form_key_list = [i.get('key') for i in item_forms]
+    # Sort index autofill key tree by order of item type.
+    for k, v in autofill_key_tree.items():
+        if isinstance(v, list):
+            temp = []
+            for item_form_key in item_form_key_list:
+                for item in v:
+                    str_value = get_parent_key(item)
+                    if item_form_key == str_value:
+                        temp.append(item)
+                        break
+                if len(temp) > 0:
+                    break
+            # Reset sorted value.
+            autofill_key_tree[k] = temp
+    return autofill_key_tree
+
+
 def get_key_value(schema_form, val, parent_key):
     """Get key value.
 
@@ -971,7 +1018,8 @@ def build_record_model(item_autofill_key, api_data):
     :param api_data: Api data
     :return: Record model list
     """
-    def _build_record_model(_api_data, _item_autofill_key, _record_model_lst):
+    def _build_record_model(_api_data, _item_autofill_key, _record_model_lst,
+                            _filled_key):
         """Build record model.
 
         @param _api_data: Api data
@@ -981,14 +1029,14 @@ def build_record_model(item_autofill_key, api_data):
         for k, v in _item_autofill_key.items():
             data_model = {}
             api_autofill_data = _api_data.get(k)
-            if not api_autofill_data:
+            if not api_autofill_data or k in _filled_key:
                 continue
             if isinstance(v, dict):
                 build_form_model(data_model, v)
             elif isinstance(v, list):
                 for mapping_data in v:
                     _build_record_model(_api_data, mapping_data,
-                                        _record_model_lst)
+                                        _record_model_lst, _filled_key)
             record_model = {}
             for key, value in data_model.items():
                 merge_dict(record_model, value)
@@ -996,11 +1044,14 @@ def build_record_model(item_autofill_key, api_data):
             fill_data(record_model, api_autofill_data, is_multiple_data)
             if record_model:
                 _record_model_lst.append(record_model)
+                _filled_key.append(k)
 
     record_model_lst = list()
+    filled_key = list()
     if not api_data or not item_autofill_key:
         return record_model_lst
-    _build_record_model(api_data, item_autofill_key, record_model_lst)
+    _build_record_model(api_data, item_autofill_key, record_model_lst,
+                        filled_key)
 
     return record_model_lst
 
