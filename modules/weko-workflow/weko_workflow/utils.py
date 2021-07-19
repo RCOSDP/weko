@@ -1197,7 +1197,7 @@ def get_parent_pid_with_type(pid_type, object_uuid):
             pid_object = PersistentIdentifier.query.filter_by(
                 pid_type=pid_type,
                 object_uuid=record.pid_parent.object_uuid
-            ).one_or_none()
+            ).order_by(PersistentIdentifier.created.desc()).first()
             return pid_object
     except PIDDoesNotExistError as pid_not_exist:
         current_app.logger.error(pid_not_exist)
@@ -1326,43 +1326,27 @@ def prepare_edit_workflow(post_activity, recid, deposit):
     if rtn:
         # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
         identifier_actionid = get_actionid('identifier_grant')
-        if post_workflow:
-            identifier = activity.get_action_identifier_grant(
-                post_workflow.activity_id, identifier_actionid)
+        identifier = {
+            'action_identifier_jalc_doi': '',
+            'action_identifier_jalc_cr_doi': '',
+            'action_identifier_jalc_dc_doi': '',
+            'action_identifier_ndl_jalc_doi': ''
+        }
+        pid_doi = IdentifierHandle(recid.object_uuid).get_pidstore()
+        if pid_doi and pid_doi.status == PIDStatus.DELETED:
+            identifier['action_identifier_select'] = current_app.config.get(
+                "WEKO_WORKFLOW_IDENTIFIER_GRANT_WITHDRAWN", -3)
+        elif pid_doi:
+            identifier['action_identifier_select'] = current_app.config.get(
+                "WEKO_WORKFLOW_IDENTIFIER_GRANT_CAN_WITHDRAW", -1)
         else:
-            identifier = activity.get_action_identifier_grant(
-                '', identifier_actionid)
-
-        if not identifier:
-            identifier_handle = IdentifierHandle(recid.object_uuid)
-            doi_value, doi_type = identifier_handle.get_idt_registration_data()
-            if doi_value and doi_type:
-                identifier = {
-                    'action_identifier_select':
-                        WEKO_IMPORT_DOI_TYPE.index(doi_type[0]) + 1,
-                    'action_identifier_jalc_doi': '',
-                    'action_identifier_jalc_cr_doi': '',
-                    'action_identifier_jalc_dc_doi': '',
-                    'action_identifier_ndl_jalc_doi': ''
-                }
-
-        if identifier:
-            if identifier.get('action_identifier_select') > \
-                current_app.config.get(
-                    "WEKO_WORKFLOW_IDENTIFIER_GRANT_DOI", 0):
-                identifier['action_identifier_select'] = \
-                    current_app.config.get(
-                        "WEKO_WORKFLOW_IDENTIFIER_GRANT_CAN_WITHDRAW", -1)
-            elif identifier.get('action_identifier_select') == \
-                current_app.config.get(
-                    "WEKO_WORKFLOW_IDENTIFIER_GRANT_IS_WITHDRAWING", -2):
-                identifier['action_identifier_select'] = \
-                    current_app.config.get(
-                        "WEKO_WORKFLOW_IDENTIFIER_GRANT_WITHDRAWN", -3)
-            activity.create_or_update_action_identifier(
-                rtn.activity_id,
-                identifier_actionid,
-                identifier)
+            identifier['action_identifier_select'] = current_app.config.get(
+                "WEKO_WORKFLOW_IDENTIFIER_GRANT_DOI", 0)
+ 
+        activity.create_or_update_action_identifier(
+            rtn.activity_id,
+            identifier_actionid,
+            identifier)
 
         mail_list = FeedbackMailList.get_mail_list_by_item_id(
             item_id=recid.object_uuid)
