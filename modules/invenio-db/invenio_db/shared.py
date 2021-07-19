@@ -102,7 +102,7 @@ class SQLAlchemy(FlaskSQLAlchemy):
             pool_class = QueuePool
             app.logger.debug(error)
         options.setdefault('poolclass', pool_class)
-	options.setdefault('pool_pre_ping',True)
+        options.setdefault('pool_pre_ping', True)
 
 
 def do_sqlite_connect(dbapi_connection, connection_record):
