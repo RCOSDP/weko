@@ -25,6 +25,7 @@ from datetime import date, datetime
 from functools import partial
 
 from flask import current_app, json
+from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role
 from invenio_db import db
@@ -37,9 +38,10 @@ from sqlalchemy.sql.expression import case, func, literal_column
 from weko_groups.api import Group
 
 from .models import Index
-from .utils import cached_index_tree_json, filter_index_list_by_role, \
+from .utils import cached_index_tree_json, check_doi_in_index, \
+    check_restrict_doi_with_indexes, filter_index_list_by_role, \
     get_index_id_list, get_publish_index_id_list, get_tree_json, \
-    get_user_roles, reset_tree, sanitize
+    get_user_roles, is_index_locked, reset_tree, sanitize
 
 
 class Indexes(object):
@@ -389,29 +391,47 @@ class Indexes(object):
                                     index_tree.position = i
                                     db.session.merge(index_tree)
 
-        is_ok = True
+        ret = {
+            'is_ok': True,
+            'msg': ''}
         user_id = current_user.get_id()
 
         if isinstance(data, dict):
             pre_parent = data.get('pre_parent')
             parent = data.get('parent')
             if not pre_parent or not parent:
-                return False
+                ret['is_ok'] = False
+                ret['msg'] = _('Select an index to move.')
+                return ret
 
             try:
                 new_position = int(data.get('position'))
+                if int(parent) == 0:
+                    parent_info = cls.get_root_index_count()
+                else:
+                    parent_info = cls.get_index(parent,
+                                                with_count=True)
+                position_max = parent_info.position_max + 1 \
+                    if parent_info.position_max is not None else 0
+
+                # Validator
+                if is_index_locked(parent) or is_index_locked(pre_parent):
+                    ret['is_ok'] = False
+                    ret['msg'] = _('Index Delete is in progress '
+                                   'on another device.')
+                    return ret
+                if check_doi_in_index(index_id) and parent_info[0] != 0 and \
+                        check_restrict_doi_with_indexes([parent]):
+                    ret['is_ok'] = False
+                    ret['msg'] = _('The index cannot be kept private because '
+                                   'there are links from items that have a '
+                                   'DOI.')
+                    return ret
+
                 # move index on the same hierarchy
                 if str(pre_parent) == str(parent):
-                    if int(pre_parent) == 0:
-                        parent_info = cls.get_root_index_count()
-                    else:
-                        parent_info = cls.get_index(pre_parent,
-                                                    with_count=True)
-                    pmax = parent_info.position_max \
-                        if parent_info.position_max is not None else 0
-
-                    if new_position >= pmax:
-                        new_position = pmax + 1
+                    if new_position >= position_max:
+                        new_position = position_max + 1
                         try:
                             _update_index(new_position)
                             db.session.commit()
@@ -422,35 +442,33 @@ class Indexes(object):
                                     _update_index(new_position)
                                     db.session.commit()
                                 except SQLAlchemyError as ex:
-                                    is_ok = False
+                                    ret['is_ok'] = False
+                                    ret['msg'] = str(ex)
                                     current_app.logger.debug(ex)
                             else:
-                                is_ok = False
+                                ret['is_ok'] = False
+                                ret['msg'] = str(ie)
                                 current_app.logger.debug(ie)
                         except Exception as ex:
-                            is_ok = False
+                            ret['is_ok'] = False
+                            ret['msg'] = str(ex)
                             current_app.logger.debug(ex)
                         finally:
-                            if not is_ok:
+                            if not ret['is_ok']:
                                 db.session.rollback()
                     else:
                         try:
                             _re_order_tree(new_position)
                             db.session.commit()
                         except Exception as ex:
-                            is_ok = False
+                            ret['is_ok'] = False
+                            ret['msg'] = str(ex)
                             current_app.logger.debug(ex)
                         finally:
-                            if not is_ok:
+                            if not ret['is_ok']:
                                 db.session.rollback()
                 else:
                     slf_path = cls.get_self_path(index_id)
-                    if int(parent) == 0:
-                        parent_info = cls.get_root_index_count()
-                    else:
-                        parent_info = cls.get_index(parent, with_count=True)
-                    position_max = parent_info.position_max + 1 \
-                        if parent_info.position_max is not None else 0
                     index = Index.query.filter_by(id=index_id).one()
                     try:
                         _update_index(position_max, parent)
@@ -471,16 +489,19 @@ class Indexes(object):
                                 _update_index(position_max)
                                 cls.update_set_info(index)
                             except SQLAlchemyError as ex:
-                                is_ok = False
+                                ret['is_ok'] = False
+                                ret['msg'] = str(ex)
                                 current_app.logger.debug(ex)
                         else:
-                            is_ok = False
+                            ret['is_ok'] = False
+                            ret['msg'] = str(ie)
                             current_app.logger.debug(ie)
                     except Exception as ex:
-                        is_ok = False
+                        ret['is_ok'] = False
+                        ret['msg'] = str(ex)
                         current_app.logger.debug(ex)
                     finally:
-                        if not is_ok:
+                        if not ret['is_ok']:
                             db.session.rollback()
 
                     # move items
@@ -489,9 +510,10 @@ class Indexes(object):
                     WekoDeposit.update_by_index_tree_id(slf_path.path,
                                                         target.path)
             except Exception as ex:
+                ret['is_ok'] = False
+                ret['msg'] = str(ex)
                 current_app.logger.debug(ex)
-                is_ok = False
-        return is_ok
+        return ret
 
     @classmethod
     @cached_index_tree_json(timeout=None,)

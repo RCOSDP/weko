@@ -3612,9 +3612,9 @@ def get_main_record_detail(activity_id,
                 files_thumbnail=list())
         else:
             item = get_items_metadata_by_activity_detail(activity_detail)
-    if not approval_record:
+    if item and not approval_record:
         recid, approval_record = get_pid_and_record(item)
-    if not files:
+    if item and not files:
         files, files_thumbnail = get_files_and_thumbnail(activity_id, item)
 
     record_metadata = []

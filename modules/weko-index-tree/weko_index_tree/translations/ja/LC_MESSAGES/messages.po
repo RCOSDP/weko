@@ -142,3 +142,6 @@ msgstr "DOIが付与されているアイテムからのリンクがあるため
 
 msgid "Index Delete is in progress on another device."
 msgstr "他の端末でインデックス削除を実行中です"
+
+msgid "Select an index to move."
+msgstr "移動インデックスを選択して下さい。"

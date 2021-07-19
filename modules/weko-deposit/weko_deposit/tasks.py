@@ -277,7 +277,7 @@ def update_items_by_authorInfo(origin_list, target):
             author_link = set()
             for k, v in dep.items():
                 if isinstance(v, dict) \
-                        and 'attribute_value_mlt'in v \
+                        and 'attribute_value_mlt' in v \
                         and isinstance(v['attribute_value_mlt'], list):
                     data_list = v['attribute_value_mlt']
                     prop_type = None
