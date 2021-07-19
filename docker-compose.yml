@@ -25,7 +25,7 @@ services:
     restart: "always"
     build:
       context: .
-      #target: stage_8
+      target: stage_8
     #command: /bin/bash -c "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO -B -D -f /code/celeryd.log && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
     command: /bin/bash -c "jinja2 /code/scripts/instance.cfg > /home/invenio/.virtualenvs/invenio/var/instance/conf/invenio.cfg; rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=DEBUG -B -D -f /code/celeryd.log && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
     environment:

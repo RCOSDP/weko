@@ -1380,8 +1380,9 @@ class WekoRecord(Record):
                     'attribute_name')
 
                 if meta_list.get(key, {}).get('input_type') == 'text':
-                    val['attribute_value'] = val[
-                        'attribute_value'].replace("\n", " ")
+                    if 'attribute_value' in val:
+                        val['attribute_value'] = val[
+                            'attribute_value'].replace("\n", " ")
                 items.append(val)
 
         return items

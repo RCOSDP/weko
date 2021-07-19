@@ -32,7 +32,7 @@
                             m_cur_step=None) %}
   {% autoescape False %}
   <table class="table table-bordered table-striped detail-table">
-      {% if record.item_type_info and is_logged_in %}
+      {% if m_record.item_type_info and is_logged_in %}
         <tr>
           <th scope="row" colspan="6">{{ _('Item type') }}</th>
           <td>{{ m_record.item_type_info }}</td>
