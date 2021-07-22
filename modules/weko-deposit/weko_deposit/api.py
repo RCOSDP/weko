@@ -981,11 +981,7 @@ class WekoDeposit(Deposit):
             raise PIDResolveRESTError(
                 description='Any tree index has been deleted')
 
-        index_lst.clear()
-        for lst in plst:
-            index_lst.append(lst.path)
-
-        # convert item meta data
+        # Convert item meta data
         try:
             deposit_owners = self.get('_deposit', {}).get('owners')
             owner_id = str(deposit_owners[0] if deposit_owners else 1)
@@ -1009,8 +1005,6 @@ class WekoDeposit(Deposit):
         for pth in index_lst:
             # es setting
             sub_sort[pth[-13:]] = ""
-        #        jrc.update(dict(custom_sort=sub_sort))
-        #        dc.update(dict(custom_sort=sub_sort))
         dc.update(dict(path=index_lst))
         pubs = '1'
         actions = index_obj.get('actions')
@@ -1069,12 +1063,12 @@ class WekoDeposit(Deposit):
             db.session.rollback()
             raise ex
 
-    @classmethod
-    def update_by_index_tree_id(cls, path, target):
-        """Update by index tree id."""
-        # update item path only
-        from .tasks import update_items_by_id
-        update_items_by_id.delay(path, target)
+    # @classmethod
+    # def update_by_index_tree_id(cls, path, target):
+    #     """Update by index tree id."""
+    #     # update item path only
+    #     from .tasks import update_items_by_id
+    #     update_items_by_id.delay(path, target)
 
     def update_pid_by_index_tree_id(self, path):
         """Update pid by index tree id.

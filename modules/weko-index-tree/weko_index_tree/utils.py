@@ -90,15 +90,12 @@ def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
         more_ids = []
     roles = get_user_roles()
     groups = get_user_groups()
-    if path is not None:
+    if path:
         id_tp = []
-        if isinstance(path, list):
-            for lp in path:
-                index_id = lp.split('/')[-1]
-                id_tp.append(index_id)
+        if not isinstance(path, list):
+            id_tp = [path]
         else:
-            index_id = path.split('/')[-1]
-            id_tp.append(index_id)
+            id_tp = path
 
         reduce_index_by_role(tree, roles, groups, False, id_tp)
     else:

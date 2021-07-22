@@ -315,16 +315,17 @@ class Indexes(object):
         """
         from weko_deposit.api import WekoDeposit
         if "move" == action:
-            result = cls.delete(index_id, True)
-            if result is not None:
-                # move indexes all
-                target = path.split('/')
-                if len(target) >= 2:
-                    target.pop(-2)
-                    target = "/".join(target)
-                else:
-                    target = ""
-                WekoDeposit.update_by_index_tree_id(path, target)
+            pass
+            # result = cls.delete(index_id, True)
+            # if result is not None:
+            #     # move indexes all
+            #     target = path.split('/')
+            #     if len(target) >= 2:
+            #         target.pop(-2)
+            #         target = "/".join(target)
+            #     else:
+            #         target = ""
+            #     WekoDeposit.update_by_index_tree_id(path, target)
         else:
             result = cls.delete(index_id)
             if result is not None:
@@ -505,10 +506,10 @@ class Indexes(object):
                             db.session.rollback()
 
                     # move items
-                    target = cls.get_self_path(index_id)
-                    from weko_deposit.api import WekoDeposit
-                    WekoDeposit.update_by_index_tree_id(slf_path.path,
-                                                        target.path)
+                    # target = cls.get_self_path(index_id)
+                    # from weko_deposit.api import WekoDeposit
+                    # WekoDeposit.update_by_index_tree_id(slf_path.path,
+                    #                                     target.path)
             except Exception as ex:
                 ret['is_ok'] = False
                 ret['msg'] = str(ex)
@@ -823,43 +824,6 @@ class Indexes(object):
                 query = query.filter(recursive_t.c.public_state)
             q = query.order_by(recursive_t.c.path).all()
             return q
-
-    @classmethod
-    def get_all_path_list(cls, node_path):
-        """Get child of index list info.
-
-        :param node_path: Identifier of the index.
-        :return: the list of index.
-        """
-        # def get_path_list(node_path):
-        #     """
-        #     Get index list info.
-        #
-        #     :param node_path: Identifier of the index.
-        #     :return: the list of index.
-        #     """
-        #     node_path = str(node_path)
-        #     index = node_path.rfind('/')
-        #     pid = node_path[index + 1:]
-        #     recursive_t = cls.recs_query()
-        #     q = db.session.query(recursive_t).filter(
-        #         db.or_(recursive_t.c.pid == pid,
-        #                recursive_t.c.cid == pid)). \
-        #         order_by(recursive_t.c.path).all()
-        #     if q and len(q) >1:
-        #         path_list.append(q[0].path)
-        #         q = q[1:]
-        #         for inx in q:
-        #             get_path_list(inx.path)
-        #     else:
-        #         path_list.append(q[0].path)
-        #     return path_list
-        #
-        # path_list=[]
-        # path = get_path_list(node_path)
-        path = Indexes.get_browsing_tree_paths(node_path)
-
-        return path
 
     @classmethod
     def get_self_path(cls, node_id):
@@ -1269,7 +1233,7 @@ class Indexes(object):
             last_path = _paths.pop(-1).split('/')
             qry = _query(last_path)
             for i in range(len(_paths)):
-                _paths[i] = _paths[i].split('/')
+                # _paths[i] = _paths[i]
                 _paths[i] = _query(_paths[i])
             smt = qry.union_all(*_paths).subquery()
             result = db.session.query(
@@ -1374,19 +1338,18 @@ class Indexes(object):
         return Index.get_children(index_id)
 
     @classmethod
-    def get_coverpage_state(cls, path):
+    def get_coverpage_state(cls, index_id):
         """
         Get coverpage state from index path.
 
         :param path: item's index path
         """
         try:
-            last_path = path.pop(-1).split('/')
             return Index.query.filter_by(
-                id=last_path.pop()).one().coverpage_state
+                id=index_id).one().coverpage_state
 
-        except Exception as se:
-            current_app.logger.debug(se)
+        except Exception as ex:
+            current_app.logger.debug(ex)
             return False
 
     @classmethod
@@ -1480,19 +1443,17 @@ class Indexes(object):
         return Index.query.count()
 
     @classmethod
-    def get_child_list(cls, node_path):
+    def get_child_list(cls, index_id):
         """
         Get index list info.
 
-        :param node_path: Identifier of the index.
-        :return: the list of index.
+        :param index_id: Index identifier number.
+        :return: The list of index.
         """
-        index = node_path.rfind('/')
-        pid = node_path[index + 1:]
         recursive_t = cls.recs_query()
         query = db.session.query(recursive_t).filter(
-            db.or_(recursive_t.c.pid == pid,
-                   recursive_t.c.cid == pid))
+            db.or_(recursive_t.c.pid == index_id,
+                   recursive_t.c.cid == index_id))
         if not get_user_roles()[0]:
             query = query.filter(recursive_t.c.public_state)
         q = query.order_by(recursive_t.c.path).all()
