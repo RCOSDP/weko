@@ -423,8 +423,7 @@ class OpenSearchDetailData:
             if _index_id:
                 fe.dc.dc_subject(index_meta[_index_id])
             else:
-                indexes = item_metadata['path'][0].split('/')
-                index_id = indexes[len(indexes) - 1]
+                index_id = item_metadata['path'][0]
 
                 if index_id in index_meta:
                     index_name = index_meta[index_id]

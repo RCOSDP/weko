@@ -22,7 +22,7 @@
 
 import json
 
-from flask import current_app, request
+from flask import current_app
 from invenio_records_rest.errors import InvalidQueryRESTError
 from invenio_search import RecordsSearch
 from weko_index_tree.api import Indexes
@@ -129,8 +129,7 @@ def item_path_search_factory(search, index_id="0"):
                 })
             # create search query
             try:
-                fp = Indexes.get_self_path(q)
-                query_q = json.dumps(query_q).replace("@index", fp.path)
+                query_q = json.dumps(query_q).replace("@index", q)
                 query_q = json.loads(query_q)
             except BaseException:
                 pass
@@ -272,8 +271,7 @@ def item_changes_search_factory(search,
                 })
             # create search query
             try:
-                fp = Indexes.get_self_path(q)
-                query_q = json.dumps(query_q).replace("@index", fp.path)
+                query_q = json.dumps(query_q).replace("@index", q)
                 query_q = json.loads(query_q)
             except BaseException:
                 pass
