@@ -28,7 +28,6 @@ from flask_login import login_required
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from sqlalchemy.sql import func
-from weko_records.models import ItemMetadata
 
 from .config import WEKO_AUTHORS_IMPORT_KEY
 from .models import Authors, AuthorsPrefixSettings

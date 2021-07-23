@@ -135,3 +135,139 @@ msgstr ""
 
 msgid "Export is failed."
 msgstr ""
+
+# Import authors
+msgid "Select"
+msgstr ""
+
+msgid "Import"
+msgstr ""
+
+msgid "Result"
+msgstr ""
+
+msgid "Download"
+msgstr ""
+
+msgid "No."
+msgstr ""
+
+msgid "WEKO ID"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Select File"
+msgstr ""
+
+msgid "Selected file name"
+msgstr ""
+
+msgid "Next"
+msgstr ""
+
+msgid "Summary"
+msgstr ""
+
+msgid "Total"
+msgstr ""
+
+msgid "New Creator"
+msgstr ""
+
+msgid "Update Creator"
+msgstr ""
+
+msgid "Delete Creator"
+msgstr ""
+
+msgid "Result Error"
+msgstr ""
+
+msgid "Mail Address"
+msgstr ""
+
+msgid "Check Result"
+msgstr ""
+
+msgid "Start Date"
+msgstr ""
+
+msgid "End Date"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+msgid "To Do"
+msgstr ""
+
+msgid "Error"
+msgstr ""
+
+msgid "Warning"
+msgstr ""
+
+msgid "Register"
+msgstr ""
+
+msgid "Update"
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
+msgid "Internal server error"
+msgstr ""
+
+msgid "Celery is not running."
+msgstr ""
+
+msgid "Import is in progress."
+msgstr ""
+
+msgid "Import is in progress on another device."
+msgstr ""
+
+msgid "The following metadata keys are duplicated.<br/>{}"
+msgstr ""
+
+msgid "The item does not consistent with the specified database.<br/>{}"
+msgstr ""
+
+msgid "The TSV file could not be read. Make sure the file format is TSV and that the file is UTF-8 encoded."
+msgstr ""
+
+msgid "There is no data to import."
+msgstr ""
+
+msgid "{} is required item."
+msgstr ""
+
+msgid "{} should be set by one of {}."
+msgstr ""
+
+msgid "Specified WEKO ID does not exist."
+msgstr ""
+
+msgid "Specified Identifier Scheme '{}' does not exist."
+msgstr ""
+
+msgid "There is duplicate data in the TSV file."
+msgstr ""
+
+msgid "External author identifier exists in DB.<br/>{}"
+msgstr ""
+
+msgid "Register Success"
+msgstr ""
+
+msgid "Update Success"
+msgstr ""
+
+msgid "Delete Success"
+msgstr ""
+
+msgid "Import is failed."
+msgstr ""

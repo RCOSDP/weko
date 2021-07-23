@@ -109,7 +109,7 @@ msgstr "成功"
 
 msgid "Export all creator"
 msgstr "全件エクスポート"
-120
+
 msgid "Download URL"
 msgstr "ダウンロードURL"
 
@@ -142,3 +142,139 @@ msgstr "他の端末でエクスポートを実行中です。"
 
 msgid "Export is failed."
 msgstr "エクスポートに失敗しました。"
+
+# Import authors
+msgid "Select"
+msgstr "選択"
+
+msgid "Import"
+msgstr "インポート"
+
+msgid "Result"
+msgstr "結果"
+
+msgid "Download"
+msgstr "ダウンロード"
+
+msgid "No."
+msgstr "No."
+
+msgid "WEKO ID"
+msgstr "WEKO ID"
+
+msgid "Name"
+msgstr "名前"
+
+msgid "Select File"
+msgstr "ファイル選択"
+
+msgid "Selected file name"
+msgstr "選択したファイル名"
+
+msgid "Next"
+msgstr "次へ"
+
+msgid "Summary"
+msgstr "サマリー"
+
+msgid "Total"
+msgstr "総計"
+
+msgid "New Creator"
+msgstr "新規登録クリエーター"
+
+msgid "Update Creator"
+msgstr "更新クリエーター"
+
+msgid "Delete Creator"
+msgstr "削除クリエーター"
+
+msgid "Result Error"
+msgstr "結果エラー"
+
+msgid "Mail Address"
+msgstr "メールアドレス"
+
+msgid "Check Result"
+msgstr "チェック結果"
+
+msgid "Start Date"
+msgstr "開始日"
+
+msgid "End Date"
+msgstr "終了日"
+
+msgid "Status"
+msgstr "ステータス"
+
+msgid "To Do"
+msgstr "To Do"
+
+msgid "Error"
+msgstr "エラー"
+
+msgid "Warning"
+msgstr "警告"
+
+msgid "Register"
+msgstr "登録"
+
+msgid "Update"
+msgstr "更新"
+
+msgid "Delete"
+msgstr "削除"
+
+msgid "Internal server error"
+msgstr "サーバ内部エラー"
+
+msgid "Celery is not running."
+msgstr "Celeryは実行されていません。"
+
+msgid "Import is in progress."
+msgstr "インポートを実行中です。"
+
+msgid "Import is in progress on another device."
+msgstr "他の端末でインポートを実行中です。"
+
+msgid "The following metadata keys are duplicated.<br/>{}"
+msgstr "以下のメタデータキーが重複しています。<br/>{}"
+
+msgid "The item does not consistent with the specified database.<br/>{}"
+msgstr "指定されたdatabaseと項目が一致しません。<br/>{}"
+
+msgid "The TSV file could not be read. Make sure the file format is TSV and that the file is UTF-8 encoded."
+msgstr "TSVファイルを読み込めませんでした。ファイル形式がTSVであること、またそのファイルがUTF-8でエンコードされているかを確認してください。"
+
+msgid "There is no data to import."
+msgstr "インポートするデータがありません。"
+
+msgid "{} is required item."
+msgstr "{}は必須項目です。"
+
+msgid "{} should be set by one of {}."
+msgstr "{}は{}のいずれかを設定してください。"
+
+msgid "Specified WEKO ID does not exist."
+msgstr "指定されたWEKO IDが存在していません。"
+
+msgid "Specified Identifier Scheme '{}' does not exist."
+msgstr "指定された外部著者ID 識別子'{}'が存在していません。"
+
+msgid "There is duplicate data in the TSV file."
+msgstr "TSVファイルの中に重複するデータがある。"
+
+msgid "External author identifier exists in DB.<br/>{}"
+msgstr "外部著者識別子がDBに存在している。<br/>{}"
+
+msgid "Register Success"
+msgstr "登録成功"
+
+msgid "Update Success"
+msgstr "更新成功"
+
+msgid "Delete Success"
+msgstr "削除成功"
+
+msgid "Import is failed."
+msgstr "インポートに失敗しました。"

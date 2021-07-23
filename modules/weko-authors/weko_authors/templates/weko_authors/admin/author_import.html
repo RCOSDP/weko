@@ -1,0 +1,88 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{%- block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_authors_import_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
+{%- block javascript %}
+  {{ super() }}
+  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_authors_import_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block body %}
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <div id="app-author-import"></div>
+
+  <!-- all -->
+  <input id="select" type="hidden" value="{{ _('Select') }}" />
+  <input id="import" type="hidden" value="{{ _('Import') }}" />
+  <input id="result" type="hidden" value="{{ _('Result') }}" />
+  <input id="download" type="hidden" value="{{ _('Download') }}" />
+  <input id="no" type="hidden" value="{{ _('No.') }}" />
+  <input id="weko_id" type="hidden" value="{{ _('WEKO ID') }}" />
+  <input id="name" type="hidden" value="{{ _('Name') }}" />
+
+  <!-- select -->
+  <input id="select_file" type="hidden" value="{{ _('Select File') }}" />
+  <input id="selected_file_name" type="hidden" value="{{ _('Selected file name') }}" />
+  <input id="next" type="hidden" value="{{ _('Next') }}" />
+
+  <!-- import -->
+  <input id="summary" type="hidden" value="{{ _('Summary') }}" />
+  <input id="total" type="hidden" value="{{ _('Total') }}" />
+  <input id="new_creator" type="hidden" value="{{ _('New Creator') }}" />
+  <input id="update_creator" type="hidden" value="{{ _('Update Creator') }}" />
+  <input id="delete_creator" type="hidden" value="{{ _('Delete Creator') }}" />
+  <input id="check_error" type="hidden" value="{{ _('Result Error') }}" />
+  <input id="mail_address" type="hidden" value="{{ _('Mail Address') }}" />
+  <input id="check_result" type="hidden" value="{{ _('Check Result') }}" />
+
+  <!-- result -->
+  <input id="start_date" type="hidden" value="{{ _('Start Date') }}" />
+  <input id="end_date" type="hidden" value="{{ _('End Date') }}" />
+  <input id="status" type="hidden" value="{{ _('Status') }}" />
+  <input id="to_do" type="hidden" value="{{ _('To Do') }}" />
+  <input id="register_success" type="hidden" value="{{ _('Register Success') }}" />
+  <input id="update_success" type="hidden" value="{{ _('Update Success') }}" />
+  <input id="delete_success" type="hidden" value="{{ _('Delete Success') }}" />
+
+  <!--label check-->
+  <input id="error" type="hidden" value="{{ _('Error') }}" />
+  <input id="warning" type="hidden" value="{{ _('Warning') }}" />
+  <input id="register" type="hidden" value="{{ _('Register') }}" />
+  <input id="update" type="hidden" value="{{ _('Update') }}" />
+  <input id="deleted" type="hidden" value="{{ _('Delete') }}" />
+
+  <!-- error -->
+  <input id="import_fail_error" type="hidden" value="{{ _('Import is failed.') }}" />
+  <input id="internal_server_error" type="hidden" value="{{ _('Internal server error') }}" />
+  <input id="celery_not_run" type="hidden" value="{{ _('Celery is not running.') }}" />
+  <input id="not_available_error" type="hidden" value="{{ _('Import is in progress.') }}" />
+  <input id="not_available_error_another" type="hidden" value="{{ _('Import is in progress on another device.') }}" />
+
+  <input id="import_authors_entrypoints" type="hidden" value='{{ config.WEKO_AUTHORS_IMPORT_ENTRYPOINTS | tojson }}' />
+{%- endblock body %}

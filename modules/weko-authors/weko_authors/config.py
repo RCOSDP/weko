@@ -58,10 +58,7 @@ WEKO_AUTHORS_TSV_MAPPING = [
     {
         'label_en': 'WEKO ID',
         'label_jp': 'WEKO ID',
-        'json_id': 'pk_id',
-        'validation': {
-            'is_required': True
-        }
+        'json_id': 'pk_id'
     },
     {
         'json_id': 'authorNameInfo',
@@ -79,7 +76,12 @@ WEKO_AUTHORS_TSV_MAPPING = [
             {
                 'label_en': 'Language',
                 'label_jp': '言語',
-                'json_id': 'language'
+                'json_id': 'language',
+                'validation': {
+                    'map': ['ja', 'ja-Kana', 'en', 'fr',
+                            'it', 'de', 'es', 'zh-cn', 'zh-tw',
+                            'ru', 'la', 'ms', 'eo', 'ar', 'el', 'ko']
+                }
             },
             {
                 'label_en': 'Name Format',
@@ -88,7 +90,12 @@ WEKO_AUTHORS_TSV_MAPPING = [
                 'validation': {
                     'map': ['familyNmAndNm']
                 },
-                'autofill': 'familyNmAndNm'
+                'autofill': {
+                    'condition': {
+                        'either_required': ['familyName', 'firstName']
+                    },
+                    'value': 'familyNmAndNm'
+                }
             },
             {
                 'label_en': 'Name Display',
@@ -110,12 +117,26 @@ WEKO_AUTHORS_TSV_MAPPING = [
             {
                 'label_en': 'Identifier Scheme',
                 'label_jp': '外部著者ID 識別子',
-                'json_id': 'idType'
+                'json_id': 'idType',
+                'validation': {
+                    'validator': {
+                        'class_name': 'weko_authors.contrib.validation',
+                        'func_name': 'validate_identifier_scheme'
+                    },
+                    'required': {
+                        'if': ['authorId']
+                    }
+                }
             },
             {
                 'label_en': 'Identifier',
                 'label_jp': '外部著者ID',
-                'json_id': 'authorId'
+                'json_id': 'authorId',
+                'validation': {
+                    'required': {
+                        'if': ['idType']
+                    }
+                }
             },
             {
                 'label_en': 'Identifier Display',
@@ -147,13 +168,27 @@ WEKO_AUTHORS_TSV_MAPPING = [
         'json_id': 'is_deleted',
         'mask': {
             'true': 'D',
-            'false': None
+            'false': ''
         },
         'validation': {
             'map': ['D']
         }
     }
 ]
+
+WEKO_AUTHORS_ADMIN_IMPORT_TEMPLATE = 'weko_authors/admin/author_import.html'
+"""Template for the import page."""
+
+WEKO_AUTHORS_IMPORT_TMP_PREFIX = 'weko_authors_import_'
+
+WEKO_AUTHORS_IMPORT_ENTRYPOINTS = {
+    'is_import_available': '/admin/authors/import/is_import_available',
+    'check_import_file': '/admin/authors/import/check_import_file',
+    'import': '/admin/authors/import/import',
+    'check_import_status': '/admin/authors/import/check_import_status'
+}
+
+WEKO_AUTHORS_IMPORT_CACHE_KEY = 'author_import_cache'
 
 WEKO_AUTHORS_NUM_OF_PAGE = 25
 """Default number of author search results that display in one page."""

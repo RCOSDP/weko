@@ -22,7 +22,10 @@
 import json
 from copy import deepcopy
 
+from flask import current_app, json
 from invenio_db import db
+from invenio_indexer.api import RecordIndexer
+from sqlalchemy.sql.functions import func
 
 from weko_authors.config import WEKO_AUTHORS_TSV_MAPPING
 
@@ -31,6 +34,106 @@ from .models import Authors, AuthorsPrefixSettings
 
 class WekoAuthors(object):
     """Weko Authors API for import/export."""
+
+    @classmethod
+    def create(cls, data):
+        """Create new author."""
+        config_index = current_app.config['WEKO_AUTHORS_ES_INDEX_NAME']
+        config_doc_type = current_app.config['WEKO_AUTHORS_ES_DOC_TYPE']
+
+        new_id = cls.get_new_author_id()
+        data["pk_id"] = str(new_id)
+        data["gather_flg"] = 0
+        data["authorIdInfo"].insert(
+            0,
+            {
+                "idType": "1",
+                "authorId": str(new_id),
+                "authorIdShowFlg": "true"
+            }
+        )
+
+        es_id = RecordIndexer().client.index(
+            index=config_index,
+            doc_type=config_doc_type,
+            body=data
+        ).get('_id', '')
+
+        try:
+            with db.session.begin_nested():
+                data['id'] = es_id
+                author = Authors(id=new_id, json=json.dumps(data))
+                db.session.add(author)
+        except Exception as ex:
+            if es_id:
+                RecordIndexer().client.delete(
+                    index=config_index,
+                    doc_type=config_doc_type,
+                    id=es_id
+                )
+            raise ex
+
+    @classmethod
+    def update(cls, author_id, data, es_id=None):
+        """Update author."""
+        config_index = current_app.config['WEKO_AUTHORS_ES_INDEX_NAME']
+        config_doc_type = current_app.config['WEKO_AUTHORS_ES_DOC_TYPE']
+
+        if not es_id:
+            es_author = RecordIndexer().client.search(
+                index=config_index,
+                doc_type=config_doc_type,
+                body={
+                    "query": {
+                        'term': {
+                            'pk_id': {'value': author_id}
+                        }
+                    },
+                    "size": 1
+                }
+            )
+            if es_author['hits']['total'] > 0:
+                es_id = es_author['hits']['hits'][0].get('_id')
+
+        if es_id:
+            RecordIndexer().client.update(
+                index=config_index,
+                doc_type=config_doc_type,
+                id=es_id,
+                body={'doc': data}
+            )
+        else:
+            es_id = RecordIndexer().client.index(
+                index=config_index,
+                doc_type=config_doc_type,
+                body=data
+            ).get('_id', '')
+
+        try:
+            with db.session.begin_nested():
+                data['id'] = es_id
+                author = Authors.query.filter_by(id=author_id).one()
+                if data.get('is_deleted'):
+                    author.is_deleted = data.get('is_deleted', False)
+                author.json = json.dumps(data)
+                db.session.merge(author)
+        except Exception as ex:
+            if es_id:
+                RecordIndexer().client.delete(
+                    index=config_index,
+                    doc_type=config_doc_type,
+                    id=es_id
+                )
+            raise ex
+
+    @classmethod
+    def get_new_author_id(cls):
+        """Get new author id."""
+        new_id = 1
+        max = db.session.query(func.max(Authors.id)).one()
+        if max[0]:
+            new_id += max[0]
+        return new_id
 
     @classmethod
     def get_all(cls, with_deleted=True, with_gather=True):
@@ -45,6 +148,23 @@ class WekoAuthors(object):
             query = query.order_by(Authors.id)
 
             return query.all()
+
+    @classmethod
+    def get_author_for_validation(cls):
+        """Get new author id."""
+        existed_authors_id = []
+        existed_external_authors_id = {}
+        for author in cls.get_all():
+            existed_authors_id.append(author.id)
+            metadata = json.loads(author.json)
+            for authorIdInfo in metadata.get('authorIdInfo', {}):
+                idType = authorIdInfo.get('idType')
+                if idType and idType != '1':
+                    author_ids = existed_external_authors_id.get(idType, [])
+                    author_ids.append(authorIdInfo.get('authorId'))
+                    existed_external_authors_id[idType] = author_ids
+
+        return existed_authors_id, existed_external_authors_id
 
     @classmethod
     def get_identifier_scheme_info(cls):

@@ -21,10 +21,15 @@
 """WEKO3 authors tasks."""
 from datetime import datetime
 
-from celery import shared_task
+from celery import shared_task, states
+from celery.result import GroupResult
+from celery.task.control import inspect
 from flask import current_app
+from weko_workflow.utils import delete_cache_data, get_cache_data
 
-from .utils import delete_export_status, export_authors, save_export_url, \
+from weko_authors.config import WEKO_AUTHORS_IMPORT_CACHE_KEY
+
+from .utils import export_authors, import_author_to_system, save_export_url, \
     set_export_status
 
 
@@ -42,3 +47,46 @@ def export_all():
         return file_uri
     except Exception as ex:
         current_app.logger.error(ex)
+
+
+@shared_task
+def import_author(author):
+    """Import Author."""
+    result = {'start_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+    try:
+        from time import sleep
+        sleep(10)
+        import_author_to_system(author)
+        result['status'] = states.SUCCESS
+    except Exception as ex:
+        current_app.logger.error(ex)
+        result['status'] = states.FAILURE
+
+    result['end_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return result
+
+
+def check_is_import_available(group_task_id=None):
+    """Is import available."""
+    result = {
+        'is_available': True
+    }
+
+    if not inspect().ping():
+        result['is_available'] = False
+        result['celery_not_run'] = True
+    else:
+        cache_data = get_cache_data(WEKO_AUTHORS_IMPORT_CACHE_KEY)
+        if cache_data:
+            task = GroupResult.restore(cache_data.get('group_task_id'))
+            if task:
+                if task.successful() or task.failed():
+                    delete_cache_data(WEKO_AUTHORS_IMPORT_CACHE_KEY)
+                else:
+                    result['is_available'] = False
+                    if group_task_id and group_task_id == task.id:
+                        result['continue_data'] = cache_data
+            else:
+                delete_cache_data(WEKO_AUTHORS_IMPORT_CACHE_KEY)
+
+    return result
