@@ -891,7 +891,7 @@ class Indexes(object):
         )
         query = db.session.query(recursive_t)
         q = query.order_by(recursive_t.c.path).all()
-        return q
+        return [str(item.cid) for item in q]
 
     @classmethod
     def recs_query(cls, pid=0):

@@ -281,7 +281,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     'comment': p.comment,
                 }
                 current_idx = nd
-            private_count, public_count = count_items((str(p.path)), items_count, all_indexes)
+            private_count, public_count = count_items((str(p.cid)), items_count, all_indexes)
             current_idx["date_range"]["pub_cnt"] = public_count
             current_idx["date_range"]["un_pub_cnt"] = private_count
             nlst.append(current_idx)

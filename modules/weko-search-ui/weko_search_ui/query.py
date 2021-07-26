@@ -50,9 +50,15 @@ def get_item_type_aggs(search_index):
     return facets.get(search_index).get("aggs", {})
 
 
-def get_permission_filter(comm_id=None):
-    """Get permission filter."""
-    # check permission
+def get_permission_filter(index_id=None):
+    """Check permission.
+
+    Args:
+        index_id (str, optional): Index Identifier Number. Defaults to None.
+
+    Returns:
+        List: Query command.
+    """
     is_perm = search_permission.can()
     match = Q('match', publish_status='0')
     version = Q('match', relation_version_is_last='true')
@@ -62,13 +68,12 @@ def get_permission_filter(comm_id=None):
     is_perm_paths = Indexes.get_browsing_tree_paths()
     search_type = request.values.get('search_type')
 
-    if comm_id:
-
+    if index_id:
         if search_type == config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']:
-            self_path = Indexes.get_self_path(comm_id)
+            self_path = Indexes.get_self_path(index_id)
 
             if self_path and self_path.path in is_perm_paths:
-                term_list.append(self_path.path)
+                term_list.append(index_id)
 
             path = term_list[0] + '*'
             should_path = []
@@ -79,10 +84,10 @@ def get_permission_filter(comm_id=None):
             mst.append(rng)
             terms = Q('bool', should=should_path)
         else:   # In case search_type is keyword or index
-            self_path = Indexes.get_self_path(comm_id)
+            self_path = Indexes.get_self_path(index_id)
 
             if self_path and self_path.path in is_perm_paths:
-                term_list.append(self_path.path)
+                term_list.append(index_id)
 
             mst.append(match)
             mst.append(rng)
@@ -650,7 +655,11 @@ def item_path_search_factory(self, search, index_id=None):
     :returns: Tuple with search instance and URL arguments.
     """
     def _get_index_earch_query():
+        """Prepare search query.
 
+        Returns:
+            [dict]: Search query.
+        """
         query_q = {
             "_source": {
                 "excludes": ['content']
@@ -658,11 +667,6 @@ def item_path_search_factory(self, search, index_id=None):
             "query": {
                 "bool": {
                     "must": [
-                        {
-                            "match": {
-                                "path.tree": "@index"
-                            }
-                        },
                         {
                             "match": {
                                 "relation_version_is_last": "true"
@@ -743,23 +747,41 @@ def item_path_search_factory(self, search, index_id=None):
             if q:
                 try:
                     child_idx = Indexes.get_child_list_by_pip(q)
-                    child_idx_str = ""
-                    fp = Indexes.get_self_path(q)
+                    child_idx_str = "|".join(child_idx)
+                    max_clause_count = current_app.config.get(
+                        'OAISERVER_ES_MAX_CLAUSE_COUNT', 1024)
 
-                    for i in range(len(child_idx)):
+                    if len(child_idx) > max_clause_count:
+                        div_indexes = []
+                        for div in range(0, int(len(child_idx) / max_clause_count) + 1):
+                            _right = div * max_clause_count
+                            _left = (div + 1) * max_clause_count \
+                                if len(child_idx) > (div + 1) * max_clause_count \
+                                else len(child_idx)
+                            div_indexes.append({
+                                "terms": {
+                                    "path": child_idx[_right:_left]
+                                }
+                            })
 
-                        if i != 0:
-                            child_idx_str += "|" + str(child_idx[i][2])
-                        else:
-                            child_idx_str += str(child_idx[i][2])
+                        query_q["query"]["bool"]["must"].append({
+                            "bool": {
+                                "should": div_indexes
+                            }
+                        })
+                    else:
+                        query_q["query"]["bool"]["must"].append({
+                            "terms": {
+                                "path": child_idx
+                            }
+                        })
 
-                    query_q = json.dumps(query_q).replace("@index", fp.path)
-                    query_q = json.loads(query_q)
                     query_q = json.dumps(query_q).replace(
                         "@idxchild", child_idx_str
                     )
                     query_q = json.loads(query_q)
                 except BaseException as ex:
+                    current_app.logger.error(ex)
                     import traceback
                     traceback.print_exc(file=sys.stdout)
 

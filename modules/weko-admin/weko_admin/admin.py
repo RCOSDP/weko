@@ -212,7 +212,8 @@ class ReportView(BaseView):
 
             if indexes:
                 indexes_num = len(indexes)
-                max_clause_count = 1024
+                max_clause_count = current_app.config.get(
+                    'OAISERVER_ES_MAX_CLAUSE_COUNT', 1024)
                 for div in range(0, int(indexes_num / max_clause_count) + 1):
                     e_right = div * max_clause_count
                     e_left = (div + 1) * max_clause_count \
