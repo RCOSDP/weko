@@ -872,7 +872,8 @@ class WekoDeposit(Deposit):
 
                             except Exception as e:
                                 import traceback
-                                current_app.logger.error(traceback.format_exc())
+                                current_app.logger.error(
+                                    traceback.format_exc())
                                 abort(500, '{}'.format(str(e)))
                             break
             self.jrc.update({'content': contents})
@@ -1381,8 +1382,8 @@ class WekoRecord(Record):
 
                 if meta_list.get(key, {}).get('input_type') == 'text':
                     if 'attribute_value' in val:
-                        val['attribute_value'] = val[
-                            'attribute_value'].replace("\n", " ")
+                        val['attribute_value'] = val['attribute_value'].replace(
+                            "\n", " ")
                 items.append(val)
 
         return items
