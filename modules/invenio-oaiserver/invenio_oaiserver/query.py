@@ -155,6 +155,7 @@ def get_records(**kwargs):
 
         if indexes:
             indexes_num = len(indexes)
+            div_indexes = []
             max_clause_count = current_app.config.get(
                 'OAISERVER_ES_MAX_CLAUSE_COUNT', 1024)
             for div in range(0, int(indexes_num / max_clause_count) + 1):
@@ -162,18 +163,16 @@ def get_records(**kwargs):
                 e_left = (div + 1) * max_clause_count \
                     if indexes_num > (div + 1) * max_clause_count \
                     else indexes_num
-                div_indexes = []
-                for index in indexes[e_right:e_left]:
-                    div_indexes.append({
-                        "wildcard": {
-                            "path": str(index)
-                        }
-                    })
-                query_filter.append({
-                    "bool": {
-                        "should": div_indexes
+                div_indexes.append({
+                    "terms": {
+                        "path": indexes[e_right:e_left]
                     }
                 })
+            query_filter.append({
+                "bool": {
+                    "should": div_indexes
+                }
+            })
 
         search = search.query(
             'bool', **{'must': [{'bool': {'should': query_filter}}]})

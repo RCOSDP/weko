@@ -504,12 +504,6 @@ class Indexes(object):
                     finally:
                         if not ret['is_ok']:
                             db.session.rollback()
-
-                    # move items
-                    # target = cls.get_self_path(index_id)
-                    # from weko_deposit.api import WekoDeposit
-                    # WekoDeposit.update_by_index_tree_id(slf_path.path,
-                    #                                     target.path)
             except Exception as ex:
                 ret['is_ok'] = False
                 ret['msg'] = str(ex)
@@ -1346,7 +1340,7 @@ class Indexes(object):
         """
         try:
             return Index.query.filter_by(
-                id=index_id).one().coverpage_state
+                id=index_id).one().coverpage_state or False
 
         except Exception as ex:
             current_app.logger.debug(ex)
@@ -1576,7 +1570,7 @@ class Indexes(object):
             indexes = db.session.query(*qlst). \
                 order_by(recursive_t.c.pid).all()
             for idx in indexes:
-                paths.append(idx.path)
+                paths.append(str(idx.cid))
         return paths
 
     @classmethod
@@ -1643,5 +1637,5 @@ class Indexes(object):
             indexes = db.session.query(*qlst). \
                 order_by(recursive_t.c.pid).all()
             for idx in indexes:
-                paths.append(idx.path)
+                paths.append(str(idx.cid))
         return paths

@@ -413,8 +413,7 @@ def parse_ranking_results(index_info,
                 hidden_items.append(str(record.id))
                 continue
             is_hidden = True
-            for path in record['path']:
-                index_id = path.split('/')[-1]
+            for index_id in record['path']:
                 is_hidden = is_hidden \
                     and get_hidden_flag_for_ranking(index_info, index_id)
             if is_hidden:

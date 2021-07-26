@@ -183,10 +183,10 @@ def delete_records(index_tree_id):
             if len(paths) > 0:
                 # Remove the element which matches the index_tree_id
                 removed_path = None
-                for path in paths:
-                    if path.endswith(str(index_tree_id)):
-                        removed_path = path
-                        paths.remove(path)
+                for index_id in paths:
+                    if index_id == str(index_tree_id):
+                        removed_path = index_id
+                        paths.remove(index_id)
                         break
 
                 # Do update the path on record

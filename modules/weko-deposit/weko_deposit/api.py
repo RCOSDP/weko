@@ -712,9 +712,7 @@ class WekoDeposit(Deposit):
                 if 'path' in self.jrc and '_oai' in self.jrc \
                         and ('sets' not in self.jrc['_oai']
                              or not self.jrc['_oai']['sets']):
-                    setspec_list = []
-                    for i in self.jrc['path']:
-                        setspec_list.append(i.replace('/', ':'))
+                    setspec_list = self.jrc['path'] or []
                     if setspec_list:
                         self.jrc['_oai'].update(dict(sets=setspec_list))
                 # upload item metadata to Elasticsearch
@@ -1039,10 +1037,6 @@ class WekoDeposit(Deposit):
     @classmethod
     def delete_by_index_tree_id(cls, path):
         """Delete by index tree id."""
-        # first update target pid when index tree id was deleted
-        # if cls.update_pid_by_index_tree_id(cls, path):
-        #    from .tasks import delete_items_by_id
-        #    delete_items_by_id.delay(path)
         obj_ids = next((cls.indexer.get_pid_by_es_scroll(path)), [])
         try:
             for obj_uuid in obj_ids:
@@ -1062,13 +1056,6 @@ class WekoDeposit(Deposit):
         except Exception as ex:
             db.session.rollback()
             raise ex
-
-    # @classmethod
-    # def update_by_index_tree_id(cls, path, target):
-    #     """Update by index tree id."""
-    #     # update item path only
-    #     from .tasks import update_items_by_id
-    #     update_items_by_id.delay(path, target)
 
     def update_pid_by_index_tree_id(self, path):
         """Update pid by index tree id.
@@ -1591,12 +1578,7 @@ class WekoRecord(Record):
     def get_record_cvs(cls, uuid):
         """Get record cvs."""
         record = cls.get_record(id_=uuid)
-        path = []
-        path.extend(record.get('path'))
-        coverpage_state = False
-        if path:
-            coverpage_state = Indexes.get_coverpage_state(path)
-        return coverpage_state
+        return Indexes.get_coverpage_state(record.get('path'))
 
     def _get_pid(self, pid_type):
         """Return pid_value from persistent identifier."""

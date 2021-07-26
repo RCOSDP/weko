@@ -212,6 +212,7 @@ class ReportView(BaseView):
 
             if indexes:
                 indexes_num = len(indexes)
+                div_indexes = []
                 max_clause_count = current_app.config.get(
                     'OAISERVER_ES_MAX_CLAUSE_COUNT', 1024)
                 for div in range(0, int(indexes_num / max_clause_count) + 1):
@@ -219,18 +220,16 @@ class ReportView(BaseView):
                     e_left = (div + 1) * max_clause_count \
                         if indexes_num > (div + 1) * max_clause_count \
                         else indexes_num
-                    div_indexes = []
-                    for index in indexes[e_right:e_left]:
-                        div_indexes.append({
-                            "wildcard": {
-                                "path": str(index)
-                            }
-                        })
-                    indexes_query.append({
-                        "bool": {
-                            "should": div_indexes
+                    div_indexes.append({
+                        "terms": {
+                            "path": indexes[e_right:e_left]
                         }
                     })
+                indexes_query.append({
+                    "bool": {
+                        "should": div_indexes
+                    }
+                })
 
             aggs_query = {
                 "size": 0,

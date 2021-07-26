@@ -792,7 +792,7 @@ def check_index_permissions(record, index_id=None, index_path_list=None,
             list_index (list): Index path list.
         """
         for _index in list_index:
-            _indexes = str(_index).split('/')
+            _indexes = str(_index)
             index_lst.extend(_indexes)
             index_groups.append(_indexes)
 
