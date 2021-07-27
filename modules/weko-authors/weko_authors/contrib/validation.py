@@ -130,7 +130,11 @@ def validate_external_author_identifier(item, values=[],
         idType = reduce(getitem, reduce_keys[:-1], item)['idType']
         authorId = reduce(getitem, reduce_keys[:-1], item)['authorId']
         if idType and authorId:
-            if authorId in existed_external_authors_id.get(idType, []):
+            weko_ids_has_authorId = existed_external_authors_id \
+                .get(idType, {}) \
+                .get(authorId, [])
+            if weko_ids_has_authorId \
+                    and item.get('pk_id') not in weko_ids_has_authorId:
                 warnings.append(val['key'])
     if warnings:
         return msg.format('<br/>'.join(warnings))

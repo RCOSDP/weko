@@ -228,8 +228,6 @@ class ImportView(BaseView):
         if records:
             group_tasks = []
             for author in records:
-                # from .utils import import_author_to_system
-                # import_author_to_system(author)
                 group_tasks.append(import_author.s(author))
 
             # handle import tasks

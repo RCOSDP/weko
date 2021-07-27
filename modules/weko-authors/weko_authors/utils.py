@@ -312,7 +312,7 @@ def validate_import_data(tsv_data, mapping_ids, mapping):
             warnings.append(_('There is duplicated data in the TSV file.'))
 
         # set status
-        set_record_status(existed_authors_id, item, errors)
+        set_record_status(existed_authors_id, item, errors, warnings)
 
         # get data folow by mapping
         data_by_mapping = {}
@@ -374,11 +374,9 @@ def validate_import_data(tsv_data, mapping_ids, mapping):
         if errors:
             item['errors'] = item['errors'] + errors \
                 if item.get('errors') else errors
-            item['errors'] = list(set(item['errors']))
         if warnings:
             item['warnings'] = item['warnings'] + warnings \
                 if item.get('warnings') else warnings
-            item['warnings'] = list(set(item['warnings']))
 
     return tsv_data
 
@@ -439,7 +437,7 @@ def convert_data_by_mask(item, values, mask):
         if value['value']:
             import_value = [key for key, val in mask.items()
                             if val == value['value']]
-            import_value = import_value[0] == 'true' if import_value else False
+            import_value = import_value[0] if import_value else None
             reduce_keys = value['reduce_keys']
             reduce(getitem, reduce_keys[:-1],
                    item)[reduce_keys[-1]] = import_value
@@ -454,7 +452,7 @@ def convert_scheme_to_id(item, values, authors_prefix):
                 authors_prefix.get(value['value'], None)
 
 
-def set_record_status(list_existed_author_id, item, errors):
+def set_record_status(list_existed_author_id, item, errors, warnings):
     """Set status to import data."""
     item['status'] = 'new'
     pk_id = item.get('pk_id')
@@ -462,11 +460,15 @@ def set_record_status(list_existed_author_id, item, errors):
 
     if item.get('is_deleted', '') == 'D':
         item['status'] = 'deleted'
-        if not pk_id or int(pk_id) not in list_existed_author_id:
+        if not pk_id or list_existed_author_id.get(pk_id) is not None:
             errors.append(err_msg)
     elif pk_id:
-        if int(pk_id) in list_existed_author_id:
+        if list_existed_author_id.get(pk_id) is not None:
             item['status'] = 'update'
+            if not list_existed_author_id.get(pk_id):
+                warnings.append(_('The specified author has been deleted.'
+                                  ' Update author information with tsv content'
+                                  ', but author remains deleted as it is.'))
         else:
             errors.append(err_msg)
 

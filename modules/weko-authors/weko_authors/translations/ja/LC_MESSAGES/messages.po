@@ -278,3 +278,6 @@ msgstr "削除成功"
 
 msgid "Failed to import."
 msgstr "インポートに失敗しました。"
+
+msgid "The specified author has been deleted. Update author information with tsv content, but author remains deleted as it is."
+msgstr "指定された著者は削除済です。tsvの内容で著者情報を更新しますが、著者は削除されたままです。"

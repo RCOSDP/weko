@@ -59,37 +59,36 @@ def create():
     if request.headers['Content-Type'] != 'application/json':
         return jsonify(msg=_('Header Error'))
 
-    max_id = 1
-    max = db.session.query(func.max(Authors.id)).one()
-    if max[0]:
-        max_id += max[0]
+    session = db.session
+    new_id = Authors.get_sequence(session)
 
     data = request.get_json()
     data["gather_flg"] = 0
-    data["is_deleted"] = False
-    data["pk_id"] = str(max_id)
+    data["is_deleted"] = "false"
+    data["pk_id"] = str(new_id)
     data["authorIdInfo"].insert(0,
                                 {
                                     "idType": "1",
-                                    "authorId": str(max_id),
+                                    "authorId": str(new_id),
                                     "authorIdShowFlg": "true"
                                 })
     indexer = RecordIndexer()
-    indexer.client.index(
+    es_id = indexer.client.index(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
         doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         body=data,
     )
+    data['id'] = es_id
 
     author_data = dict()
 
-    author_data["id"] = max_id
+    author_data["id"] = new_id
     author_data["json"] = json.dumps(data)
 
-    with db.session.begin_nested():
+    with session.begin_nested():
         author = Authors(**author_data)
-        db.session.add(author)
-    db.session.commit()
+        session.add(author)
+    session.commit()
     return jsonify(msg=_('Success'))
 
 
@@ -163,7 +162,7 @@ def delete_author():
                 id=json.loads(json.dumps(data))["pk_id"]).one()
             author_data.is_deleted = True
             json_data = json.loads(author_data.json)
-            json_data['is_deleted'] = True
+            json_data['is_deleted'] = 'true'
             author_data.json = json.dumps(json_data)
             db.session.merge(author_data)
 
@@ -171,7 +170,7 @@ def delete_author():
                 id=json.loads(json.dumps(data))["Id"],
                 index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
                 doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
-                body={'doc': {'is_deleted': True}}
+                body={'doc': {'is_deleted': 'true'}}
             )
     except Exception as ex:
         db.session.rollback()

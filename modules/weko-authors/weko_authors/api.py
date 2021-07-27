@@ -38,10 +38,11 @@ class WekoAuthors(object):
     @classmethod
     def create(cls, data):
         """Create new author."""
+        session = db.session
         config_index = current_app.config['WEKO_AUTHORS_ES_INDEX_NAME']
         config_doc_type = current_app.config['WEKO_AUTHORS_ES_DOC_TYPE']
 
-        new_id = cls.get_new_author_id()
+        new_id = Authors.get_sequence(session)
         data["pk_id"] = str(new_id)
         data["gather_flg"] = 0
         data["authorIdInfo"].insert(
@@ -60,10 +61,10 @@ class WekoAuthors(object):
         ).get('_id', '')
 
         try:
-            with db.session.begin_nested():
+            with session.begin_nested():
                 data['id'] = es_id
                 author = Authors(id=new_id, json=json.dumps(data))
-                db.session.add(author)
+                session.add(author)
         except Exception as ex:
             if es_id:
                 RecordIndexer().client.delete(
@@ -127,15 +128,6 @@ class WekoAuthors(object):
             raise ex
 
     @classmethod
-    def get_new_author_id(cls):
-        """Get new author id."""
-        new_id = 1
-        max = db.session.query(func.max(Authors.id)).one()
-        if max[0]:
-            new_id += max[0]
-        return new_id
-
-    @classmethod
     def get_all(cls, with_deleted=True, with_gather=True):
         """Get all authors."""
         filters = []
@@ -152,16 +144,19 @@ class WekoAuthors(object):
     @classmethod
     def get_author_for_validation(cls):
         """Get new author id."""
-        existed_authors_id = []
+        existed_authors_id = {}
         existed_external_authors_id = {}
         for author in cls.get_all():
-            existed_authors_id.append(author.id)
+            existed_authors_id[str(author.id)] = not author.is_deleted \
+                and author.gather_flg == 0
             metadata = json.loads(author.json)
             for authorIdInfo in metadata.get('authorIdInfo', {}):
                 idType = authorIdInfo.get('idType')
                 if idType and idType != '1':
-                    author_ids = existed_external_authors_id.get(idType, [])
-                    author_ids.append(authorIdInfo.get('authorId'))
+                    author_ids = existed_external_authors_id.get(idType, {})
+                    weko_ids = author_ids.get(authorIdInfo.get('authorId'), [])
+                    weko_ids.append(str(author.id))
+                    author_ids[authorIdInfo.get('authorId')] = weko_ids
                     existed_external_authors_id[idType] = author_ids
 
         return existed_authors_id, existed_external_authors_id

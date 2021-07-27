@@ -271,3 +271,6 @@ msgstr ""
 
 msgid "Failed to import."
 msgstr ""
+
+msgid "The specified author has been deleted. Update author information with tsv content, but author remains deleted as it is."
+msgstr ""

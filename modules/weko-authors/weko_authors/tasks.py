@@ -54,8 +54,6 @@ def import_author(author):
     """Import Author."""
     result = {'start_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
     try:
-        from time import sleep
-        sleep(10)
         import_author_to_system(author)
         result['status'] = states.SUCCESS
     except Exception as ex:
