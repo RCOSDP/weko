@@ -89,7 +89,7 @@ msgstr ""
 msgid "WEKO ID"
 msgstr ""
 
-msgid "Name"
+msgid "full_name"
 msgstr ""
 
 msgid "Select File"
@@ -167,7 +167,7 @@ msgstr ""
 msgid "The following metadata keys are duplicated.<br/>{}"
 msgstr ""
 
-msgid "The item does not consistent with the specified database.<br/>{}"
+msgid "Specified item does not consistency with DB item.<br/>{}"
 msgstr ""
 
 msgid "The TSV file could not be read. Make sure the file format is TSV and that the file is UTF-8 encoded."
@@ -188,7 +188,7 @@ msgstr ""
 msgid "Specified Identifier Scheme '{}' does not exist."
 msgstr ""
 
-msgid "There is duplicate data in the TSV file."
+msgid "There is duplicated data in the TSV file."
 msgstr ""
 
 msgid "External author identifier exists in DB.<br/>{}"
@@ -203,5 +203,5 @@ msgstr ""
 msgid "Delete Success"
 msgstr ""
 
-msgid "Import is failed."
+msgid "Failed to import."
 msgstr ""

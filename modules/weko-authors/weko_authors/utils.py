@@ -246,8 +246,8 @@ def unpackage_and_check_import_file(tsv_file_name, temp_file, mapping_ids):
                         handle_check_consistence_with_mapping(mapping_ids,
                                                               header)
                     if not_consistent_list:
-                        msg = _('The item does not consistent with the '
-                                'specified database.<br/>{}')
+                        msg = _('Specified item does not consistency '
+                                'with DB item.<br/>{}')
                         raise Exception({
                             'error_msg': msg.format(
                                 '<br/>'.join(not_consistent_list))
@@ -309,7 +309,7 @@ def validate_import_data(tsv_data, mapping_ids, mapping):
         if weko_id and weko_id not in list_import_id:
             list_import_id.append(weko_id)
         elif weko_id:
-            warnings.append(_('There is duplicate data in the TSV file.'))
+            warnings.append(_('There is duplicated data in the TSV file.'))
 
         # set status
         set_record_status(existed_authors_id, item, errors)
