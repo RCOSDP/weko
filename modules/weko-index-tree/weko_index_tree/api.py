@@ -837,7 +837,7 @@ class Indexes(object):
             return False
 
     @classmethod
-    def get_child_list_by_pip(cls, pid):
+    def get_child_list_recursive(cls, pid):
         """
         Get index list info.
 
@@ -1578,17 +1578,10 @@ class Indexes(object):
     def update_set_info(cls, index):
         """Create / Update oaiset setting."""
         from .tasks import update_oaiset_setting
-        all_indexes = cls.get_all_indexes()
-        index_infos = {}
-        for i in all_indexes:
-            index_infos[str(i.id)] = {
-                'index_name': i.index_name,
-                'parent': str(i.parent),
-                'harvest_public_state': i.harvest_public_state
-            }
         index_data = dict(index)
         index_data.pop('public_date')
-        update_oaiset_setting.delay(index_infos, index_data)
+        index_info = Indexes.get_path_name([index_data["id"]])[0]
+        update_oaiset_setting.delay(index_info, index_data)
 
     @classmethod
     def delete_set_info(cls, action, index_id, id_list):

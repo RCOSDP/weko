@@ -746,7 +746,7 @@ def item_path_search_factory(self, search, index_id=None):
             # create search query
             if q:
                 try:
-                    child_idx = Indexes.get_child_list_by_pip(q)
+                    child_idx = Indexes.get_child_list_recursive(q)
                     child_idx_str = "|".join(child_idx)
                     max_clause_count = current_app.config.get(
                         'OAISERVER_ES_MAX_CLAUSE_COUNT', 1024)

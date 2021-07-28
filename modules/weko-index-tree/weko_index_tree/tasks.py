@@ -26,36 +26,23 @@ from invenio_oaiserver.models import OAISet
 
 
 @shared_task(ignore_result=True)
-def update_oaiset_setting(info, data):
+def update_oaiset_setting(index_info, data):
     """Create/Update oai set setting."""
-    def _get_spec(index_info, index_id):
-        """Get setspec."""
-        index_name = index_info[index_id]['index_name']
-        if index_info[index_id]['parent'] != '0':
-            setspec, name_path = _get_spec(
-                index_info, index_info[index_id]['parent'])
-            return "{}:{}".format(setspec, index_id), \
-                "{}->{}".format(name_path, index_name)
-        else:
-            return index_id, index_name
-
     try:
         pub_state = data["public_state"] and data["harvest_public_state"]
         if int(data["parent"]) == 0:
             spec = str(data["id"])
             description = data["index_name"]
         else:
-            setspec, name_path = _get_spec(info, str(data["parent"]))
-            spec = "{}:{}".format(setspec, data["id"])
-            description = "{}->{}".format(name_path, data["index_name"])
+            spec = index_info[2].replace("/", ":")
+            description = index_info[4].replace("-/-", "->")
         with db.session.begin_nested():
             oaiset = OAISet.query.filter_by(id=data["id"]).one_or_none()
             if oaiset:
                 if pub_state:
                     oaiset.spec = spec
                     oaiset.name = data["index_name"]
-                    oaiset.search_pattern = 'path:"{}"'.format(
-                        spec.replace(':', '/'))
+                    oaiset.search_pattern = 'path:"{}"'.format(data["id"])
                     oaiset.description = description
                     db.session.merge(oaiset)
                 else:
@@ -66,8 +53,7 @@ def update_oaiset_setting(info, data):
                     spec=spec,
                     name=data["index_name"],
                     description=description)
-                oaiset.search_pattern = 'path:"{}"'.format(
-                    spec.replace(':', '/'))
+                oaiset.search_pattern = 'path:"{}"'.format(data["id"])
                 db.session.add(oaiset)
         db.session.commit()
     except Exception as ex:

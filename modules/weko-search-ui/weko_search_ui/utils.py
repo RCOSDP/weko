@@ -1393,7 +1393,6 @@ def handle_check_and_prepare_index_tree(list_record):
 
     for item in list_record:
         indexes = []
-        index_id = item.get('metadata', {}).get('path', [])
         index_ids = [Indexes.get_full_path(index) for index in item.get('metadata', {}).get('path', [])]
         pos_index = item.get('pos_index')
 
