@@ -274,3 +274,6 @@ msgstr ""
 
 msgid "The specified author has been deleted. Update author information with tsv content, but author remains deleted as it is."
 msgstr ""
+
+msgid "The author is linked to items and cannot be deleted."
+msgstr ""

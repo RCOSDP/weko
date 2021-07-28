@@ -267,14 +267,17 @@ class ImportView(BaseView):
                 task = import_author.AsyncResult(task_id)
                 start_date = task.result['start_date'] if task.result else ''
                 end_date = task.result['end_date'] if task.result else ''
-                status = task.result.get('status') \
-                    if task.result and task.result.get('status') \
-                    else states.PENDING
+                status = states.PENDING
+                error_id = None
+                if task.result and task.result.get('status'):
+                    status = task.result.get('status')
+                    error_id = task.result.get('error_id')
                 result.append({
                     "task_id": task_id,
                     "start_date": start_date,
                     "end_date": end_date,
-                    "status": status
+                    "status": status,
+                    "error_id": error_id
                 })
 
         return jsonify(result)

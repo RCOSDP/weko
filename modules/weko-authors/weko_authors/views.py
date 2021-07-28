@@ -27,12 +27,11 @@ from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
-from sqlalchemy.sql import func
 
 from .config import WEKO_AUTHORS_IMPORT_KEY
 from .models import Authors, AuthorsPrefixSettings
 from .permissions import author_permission
-from .utils import get_author_setting_obj
+from .utils import get_author_setting_obj, get_count_item_link
 
 blueprint = Blueprint(
     'weko_authors',
@@ -132,28 +131,9 @@ def delete_author():
         return jsonify(msg=_('Header Error'))
 
     data = request.get_json()
-    indexer = RecordIndexer()
-
-    query_q = {
-        "query": {
-            "term": {
-                "author_link": data["pk_id"]
-            }
-        },
-        "_source": [
-            "control_number"
-        ]
-    }
-    result_itemCnt = indexer.client.search(
-        index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
-        body=json.loads(json.dumps(query_q))
-    )
-    if result_itemCnt \
-            and 'hits' in result_itemCnt \
-            and 'total' in result_itemCnt['hits'] \
-            and result_itemCnt['hits']['total'] > 0:
+    if get_count_item_link(data['pk_id']):
         return make_response(
-            'The author is linked to items and cannot be deleted.',
+            _('The author is linked to items and cannot be deleted.'),
             500)
 
     try:
@@ -166,7 +146,7 @@ def delete_author():
             author_data.json = json.dumps(json_data)
             db.session.merge(author_data)
 
-            indexer.client.update(
+            RecordIndexer().client.update(
                 id=json.loads(json.dumps(data))["Id"],
                 index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
                 doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],

@@ -59,6 +59,10 @@ def import_author(author):
     except Exception as ex:
         current_app.logger.error(ex)
         result['status'] = states.FAILURE
+        if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                and ex.args[0].get('error_id'):
+            error_msg = ex.args[0].get('error_id')
+            result['error_id'] = error_msg
 
     result['end_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return result

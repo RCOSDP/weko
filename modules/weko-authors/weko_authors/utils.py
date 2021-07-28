@@ -309,7 +309,7 @@ def validate_import_data(tsv_data, mapping_ids, mapping):
         if weko_id and weko_id not in list_import_id:
             list_import_id.append(weko_id)
         elif weko_id:
-            warnings.append(_('There is duplicated data in the TSV file.'))
+            errors.append(_('There is duplicated data in the TSV file.'))
 
         # set status
         set_record_status(existed_authors_id, item, errors, warnings)
@@ -460,8 +460,11 @@ def set_record_status(list_existed_author_id, item, errors, warnings):
 
     if item.get('is_deleted', '') == 'D':
         item['status'] = 'deleted'
-        if not pk_id or list_existed_author_id.get(pk_id) is not None:
+        if not pk_id or list_existed_author_id.get(pk_id) is None:
             errors.append(err_msg)
+        elif get_count_item_link(pk_id) > 0:
+            errors.append(
+                _('The author is linked to items and cannot be deleted.'))
     elif pk_id:
         if list_existed_author_id.get(pk_id) is not None:
             item['status'] = 'update'
@@ -518,6 +521,10 @@ def import_author_to_system(author):
             if status == 'new':
                 WekoAuthors.create(author)
             else:
+                if status == 'deleted' \
+                        and get_count_item_link(author['pk_id']) > 0:
+                    raise Exception({'error_id': 'delete_author_link'})
+
                 author["authorIdInfo"].insert(
                     0,
                     {
@@ -528,9 +535,29 @@ def import_author_to_system(author):
                 )
                 WekoAuthors.update(author['pk_id'], author)
             db.session.commit()
-        except Exception:
+        except Exception as ex:
             db.session.rollback()
             current_app.logger.error(
                 'Author id: %s import error.' % author['pk_id'])
             traceback.print_exc(file=sys.stdout)
-            raise
+            raise ex
+
+
+def get_count_item_link(pk_id):
+    """Get count of item link of author."""
+    count = 0
+    query_q = {
+        "query": {"term": {"author_link": pk_id}},
+        "_source": ["control_number"]
+    }
+    result_itemCnt = RecordIndexer().client.search(
+        index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
+        body=query_q
+    )
+
+    if result_itemCnt \
+            and 'hits' in result_itemCnt \
+            and 'total' in result_itemCnt['hits'] \
+            and result_itemCnt['hits']['total'] > 0:
+        count = result_itemCnt['hits']['total']
+    return count

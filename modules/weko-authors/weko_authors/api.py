@@ -75,12 +75,10 @@ class WekoAuthors(object):
             raise ex
 
     @classmethod
-    def update(cls, author_id, data, es_id=None):
+    def update(cls, author_id, data):
         """Update author."""
-        config_index = current_app.config['WEKO_AUTHORS_ES_INDEX_NAME']
-        config_doc_type = current_app.config['WEKO_AUTHORS_ES_DOC_TYPE']
-
-        if not es_id:
+        def update_es_data(data):
+            """Update author data in ES."""
             es_author = RecordIndexer().client.search(
                 index=config_index,
                 doc_type=config_doc_type,
@@ -93,29 +91,38 @@ class WekoAuthors(object):
                     "size": 1
                 }
             )
+
             if es_author['hits']['total'] > 0:
                 es_id = es_author['hits']['hits'][0].get('_id')
 
-        if es_id:
-            RecordIndexer().client.update(
-                index=config_index,
-                doc_type=config_doc_type,
-                id=es_id,
-                body={'doc': data}
-            )
-        else:
-            es_id = RecordIndexer().client.index(
-                index=config_index,
-                doc_type=config_doc_type,
-                body=data
-            ).get('_id', '')
+            if es_id:
+                RecordIndexer().client.update(
+                    index=config_index,
+                    doc_type=config_doc_type,
+                    id=es_id,
+                    body={'doc': data}
+                )
+            else:
+                es_id = RecordIndexer().client.index(
+                    index=config_index,
+                    doc_type=config_doc_type,
+                    body=data
+                ).get('_id', '')
+
+        es_id = None
+        config_index = current_app.config['WEKO_AUTHORS_ES_INDEX_NAME']
+        config_doc_type = current_app.config['WEKO_AUTHORS_ES_DOC_TYPE']
 
         try:
             with db.session.begin_nested():
-                data['id'] = es_id
                 author = Authors.query.filter_by(id=author_id).one()
                 if data.get('is_deleted'):
                     author.is_deleted = data.get('is_deleted', False)
+                else:
+                    data['is_deleted'] = author.is_deleted
+
+                update_es_data(data)
+                data['id'] = es_id
                 author.json = json.dumps(data)
                 db.session.merge(author)
         except Exception as ex:

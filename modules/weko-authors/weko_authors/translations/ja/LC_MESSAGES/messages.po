@@ -281,3 +281,6 @@ msgstr "インポートに失敗しました。"
 
 msgid "The specified author has been deleted. Update author information with tsv content, but author remains deleted as it is."
 msgstr "指定された著者は削除済です。tsvの内容で著者情報を更新しますが、著者は削除されたままです。"
+
+msgid "The author is linked to items and cannot be deleted."
+msgstr "アイテムがリンクしているため、指定された著者は削除できません。"

@@ -135,7 +135,7 @@ def validate_external_author_identifier(item, values=[],
                 .get(authorId, [])
             if weko_ids_has_authorId \
                     and item.get('pk_id') not in weko_ids_has_authorId:
-                warnings.append(val['key'])
+                warnings.append(authorId)
     if warnings:
         return msg.format('<br/>'.join(warnings))
     return None
