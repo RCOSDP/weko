@@ -200,3 +200,17 @@ WEKO_DEPOSIT_ES_PARSING_ERROR_PROCESS_ENABLE = True
 
 WEKO_DEPOSIT_ES_PARSING_ERROR_KEYWORD = 'ElasticsearchParseException'
 """Parsing error's Keyword in Elasticsearch exception info."""
+
+WEKO_DEPOSIT_GEOLOCATION_POINT = [
+    ["pointLatitude", "pointLongitude"],
+    ["lat", "lon"]
+]
+"""WEKO DEPOSIT GEOLOCATION POINT KEYWORD."""
+
+WEKO_DEPOSIT_GEOLOCATION_BOX = [
+    ["northBoundLatitude", "eastBoundLongitude", "southBoundLatitude",
+     "westBoundLongitude"],
+    ["northEastPoint", "northEastPoint", "southWestPoint", "southWestPoint"],
+    ["lat", "lon", "lat", "lon"]
+]
+"""WEKO DEPOSIT GEOLOCATION BOX KEYWORD."""

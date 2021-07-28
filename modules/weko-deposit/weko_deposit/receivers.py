@@ -9,9 +9,9 @@
 """Deposit module receivers."""
 
 from flask import current_app
+
 from weko_records.api import FeedbackMailList
 from weko_records.utils import json_loader
-
 from .api import WekoDeposit
 from .pidstore import get_record_without_version
 
@@ -46,6 +46,7 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         dep.jrc['relation_version_is_last'] = True \
             if pid == get_record_without_version(pid) else False
         dep._convert_description_to_object()
+        dep._convert_data_for_geo_location()
         im.pop('recid')
         dep.get_content_files()
         dep.jrc.update(dict(path=dep.get('path')))

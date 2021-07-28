@@ -34,11 +34,6 @@ from elasticsearch.helpers import bulk
 from flask import abort, current_app, has_request_context, json, request, \
     session
 from flask_security import current_user
-from invenio_db import db
-from invenio_deposit.api import Deposit, index, preserve
-from invenio_deposit.errors import MergeConflict
-from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
-    Part
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.records import RecordDraft
@@ -47,13 +42,19 @@ from invenio_pidrelations.models import PIDRelation
 from invenio_pidrelations.serializers.utils import serialize_relations
 from invenio_pidstore.errors import PIDDoesNotExistError, PIDInvalidAction
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from invenio_records.models import RecordMetadata
 from invenio_records_files.api import FileObject, Record
 from invenio_records_files.models import RecordsBuckets
-from invenio_records_rest.errors import PIDResolveRESTError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
+
+from invenio_db import db
+from invenio_deposit.api import Deposit, index, preserve
+from invenio_deposit.errors import MergeConflict
+from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
+    Part
+from invenio_records.models import RecordMetadata
+from invenio_records_rest.errors import PIDResolveRESTError
 from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
 from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, \
@@ -63,7 +64,6 @@ from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, remove_weko2_special_character, \
     set_timestamp
 from weko_user_profiles.models import UserProfile
-
 from .config import WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_KEY, \
     WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY, WEKO_DEPOSIT_SYS_CREATOR_KEY
 from .pidstore import get_latest_version_id, get_record_without_version, \
@@ -997,6 +997,7 @@ class WekoDeposit(Deposit):
             self.jrc = jrc
             self.is_edit = is_edit
             self._convert_description_to_object()
+            self._convert_data_for_geo_location()
         except RuntimeError:
             raise
         except BaseException:
@@ -1041,6 +1042,40 @@ class WekoDeposit(Deposit):
                         _new_description.append(data)
             if _new_description:
                 self.jrc[description_key] = _new_description
+
+    def _convert_data_for_geo_location(self):
+        """Convert geo location to object."""
+        point_key = current_app.config.get('WEKO_DEPOSIT_GEOLOCATION_POINT')
+        box_key = current_app.config.get('WEKO_DEPOSIT_GEOLOCATION_BOX')
+
+        def __convert_geo_location_data(result, geo_data):
+            """Convert sub geo location to object."""
+            for val in geo_data:
+                if val in box_key[0]:
+                    ch_geo_location_key = box_key[1][box_key[0].index(val)]
+                    ch_geo_location_sub_key = box_key[2][box_key[0].index(val)]
+                    if ch_geo_location_key not in result:
+                        result[ch_geo_location_key] = {}
+                    result[ch_geo_location_key][ch_geo_location_sub_key] = \
+                        geo_data[val]
+                elif val in point_key[0]:
+                    ch_geo_location_key = point_key[1][point_key[0].index(val)]
+                    result[ch_geo_location_key] = geo_data[val]
+
+        geo_location_key = "geoLocation"
+        if isinstance(self.jrc, dict) and self.jrc.get(geo_location_key):
+            geo_location = self.jrc.get(geo_location_key)
+            new_data = {}
+            for value in geo_location:
+                if "geoLocationPlace" == value and isinstance(
+                        geo_location[value], list):
+                    new_data["geoLocationPlace"] = geo_location[value]
+                elif isinstance(geo_location[value], dict):
+                    new_data[value] = {}
+                    __convert_geo_location_data(new_data[value],
+                                                geo_location[value])
+            if new_data:
+                self.jrc[geo_location_key] = new_data
 
     @classmethod
     def delete_by_index_tree_id(cls, path):
