@@ -64,7 +64,6 @@ from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
 from weko_handle.api import Handle
-from weko_index_tree.api import Indexes
 from weko_index_tree.utils import check_index_permissions, \
     check_restrict_doi_with_indexes
 from weko_indextree_journal.api import Journals
@@ -1329,12 +1328,23 @@ def handle_check_and_prepare_index_tree(list_record):
     :return
 
     """
+    from weko_index_tree.api import Indexes
     errors = []
     warnings = []
 
-    def check(index_ids, index_names, parent_id=0, is_root=False):
+    def check(index_ids, index_name='', parent_id=0, is_root=False):
+        """Check index_id/index_name.
+
+        Args:
+            index_ids ([type]): [description]
+            index_names ([type]): [description]
+            parent_id (int, optional): [description]. Defaults to 0.
+            is_root (bool, optional): [description]. Defaults to False.
+
+        Returns:
+            [type]: [description]
+        """
         index_id = index_ids[0]
-        index_name = index_names[0]
         index = None
         try:
             index = Indexes.get_index(index_id)
@@ -1345,7 +1355,8 @@ def handle_check_and_prepare_index_tree(list_record):
             (is_root and not index.parent)
             or (not is_root and parent_id and index.parent == parent_id)
         ):
-            if index.index_name_english != index_name:
+            if index_name and index_name not in \
+                    [index.index_name, index.index_name_english]:
                 warnings.append(
                     _('Specified {} does not match with existing index.')
                     .format('POS_INDEX'))
@@ -1372,8 +1383,7 @@ def handle_check_and_prepare_index_tree(list_record):
         }
 
         if len(index_ids) > 1:
-            child = check(index_ids[1:], index_names[1:],
-                          data['index_id'], False)
+            child = check(index_ids[1:], '', data['index_id'], False)
             if child:
                 data['child'] = child
             else:
@@ -1383,26 +1393,24 @@ def handle_check_and_prepare_index_tree(list_record):
 
     for item in list_record:
         indexes = []
-        index_ids = item.get('metadata', {}).get('path', [])
+        index_id = item.get('metadata', {}).get('path', [])
+        index_ids = [Indexes.get_full_path(index) for index in item.get('metadata', {}).get('path', [])]
         pos_index = item.get('pos_index')
 
         if not index_ids and not pos_index:
             errors = [_('Both of IndexID and POS_INDEX are not being set.')]
         else:
             if not index_ids:
-                index_ids = ['' for i in range(len(pos_index))]
+                index_ids = ['' for _ in range(len(pos_index))]
             for x, index_id in enumerate(index_ids):
                 tree_ids = [i.strip() for i in index_id.split('/')]
-                tree_names = []
+                tree_names = ''
                 if pos_index and x <= len(pos_index) - 1:
-                    tree_names = [
-                        i.strip().replace('\\/', '/')
-                        for i in re.split(r'(?<!\\)\/', pos_index[x])
-                    ]
+                    tree_names = pos_index[x].strip()
                     if index_id == '':
-                        tree_ids = ['' for i in tree_names]
+                        tree_ids = ['']
                 else:
-                    tree_names = ['' for i in range(len(tree_ids))]
+                    tree_names = ''
 
                 root = check(tree_ids, tree_names, 0, True)
                 if root:

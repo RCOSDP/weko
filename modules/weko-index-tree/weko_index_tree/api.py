@@ -766,16 +766,17 @@ class Indexes(object):
         return q
 
     @classmethod
-    def get_path_name(cls, node_path):
+    def get_path_name(cls, index_ids):
         """
         Get index title info.
 
         :param node_path: List of the Index Identifiers.
         :return: the list of index.
         """
+        node_paths = [cls.get_full_path(item) for item in index_ids]
         recursive_t = cls.recs_query()
         q = db.session.query(recursive_t).filter(
-            recursive_t.c.path.in_(node_path)). \
+            recursive_t.c.path.in_(node_paths)). \
             order_by(recursive_t.c.path).all()
         return filter_index_list_by_role(q)
 
@@ -1637,5 +1638,5 @@ class Indexes(object):
             indexes = db.session.query(*qlst). \
                 order_by(recursive_t.c.pid).all()
             for idx in indexes:
-                paths.append(str(idx.cid))
+                paths.append(str(idx[0]))
         return paths
