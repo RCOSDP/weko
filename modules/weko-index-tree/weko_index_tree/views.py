@@ -76,7 +76,7 @@ def get_rss_data():
         term = WEKO_INDEX_TREE_RSS_DEFAULT_TERM
     lang = data.get('lang') or WEKO_INDEX_TREE_RSS_DEFAULT_LANG
 
-    idx_tree_ids = generate_path(Indexes.get_recursive_tree(index_id))
+    idx_tree_ids = [idx.cid for idx in Indexes.get_recursive_tree(index_id)]
     current_date = date.today()
     end_date = current_date.strftime("%Y-%m-%d")
     start_date = (current_date - timedelta(days=term)).strftime("%Y-%m-%d")
@@ -87,7 +87,8 @@ def get_rss_data():
     hits = records_data.get('hits')
     es_data = hits.get('hits')
     item_id_list = list(map(itemgetter('_id'), es_data))
-    hidden_items = find_hidden_items(item_id_list, idx_tree_ids)
+    idx_tree_full_ids = generate_path(Indexes.get_recursive_tree(index_id))
+    hidden_items = find_hidden_items(item_id_list, idx_tree_full_ids)
 
     rss_data = []
     for es_item in es_data:

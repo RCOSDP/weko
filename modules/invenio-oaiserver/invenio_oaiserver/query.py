@@ -200,7 +200,6 @@ def get_records(**kwargs):
                     filter_data.append(rec)
             else:
                 filter_data.append(rec)
-        response['hits']['total'] = len(filter_data)
         response['hits']['hits'] = filter_data
 
     class Pagination(object):

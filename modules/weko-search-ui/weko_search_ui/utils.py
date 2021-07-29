@@ -1332,69 +1332,50 @@ def handle_check_and_prepare_index_tree(list_record):
     errors = []
     warnings = []
 
-    def check(index_ids, index_name='', parent_id=0, is_root=False):
+    def check(index_id, index_name):
         """Check index_id/index_name.
 
         Args:
-            index_ids ([type]): [description]
-            index_names ([type]): [description]
-            parent_id (int, optional): [description]. Defaults to 0.
-            is_root (bool, optional): [description]. Defaults to False.
+            index_id (str): Index id.
+            index_name (str): Index name.
 
         Returns:
-            [type]: [description]
+            [bool]: Check result.
         """
-        index_id = index_ids[0]
+        result = None
         index = None
         try:
             index = Indexes.get_index(index_id)
         except Exception:
             current_app.logger.warning("Specified IndexID is invalid!")
 
-        if index and (
-            (is_root and not index.parent)
-            or (not is_root and parent_id and index.parent == parent_id)
-        ):
+        if index:
             if index_name and index_name not in \
                     [index.index_name, index.index_name_english]:
                 warnings.append(
                     _('Specified {} does not match with existing index.')
                     .format('POS_INDEX'))
+            result = index.id
         elif index_name:
-            index = Indexes.get_index_by_name_english(
-                index_name, parent_id)
+            index = Indexes.get_index_by_all_name(index_name)
             msg_not_exist = _('The specified {} does not exist in system.')
             if not index:
                 if index_id:
                     errors.append(msg_not_exist.format('IndexID, POS_INDEX'))
-                    return None
                 else:
                     errors.append(msg_not_exist.format('POS_INDEX'))
-                    return None
             else:
                 if index_id:
                     errors.append(msg_not_exist.format('IndexID'))
-                    return None
+                else:
+                    result = index.id
 
-        data = {
-            'index_id': index.id if index else index_id,
-            'index_name': index.index_name_english if index else index_name,
-            'parent_id': parent_id
-        }
-
-        if len(index_ids) > 1:
-            child = check(index_ids[1:], '', data['index_id'], False)
-            if child:
-                data['child'] = child
-            else:
-                return None
-
-        return data
+        return result
 
     for item in list_record:
         indexes = []
-        index_ids = [Indexes.get_full_path(index) for index in item.get('metadata', {}).get('path', [])]
-        pos_index = item.get('pos_index')
+        index_ids = item.get('metadata', {}).get('path', [])
+        pos_index = item.get('pos_index', [])
 
         if not index_ids and not pos_index:
             errors = [_('Both of IndexID and POS_INDEX are not being set.')]
@@ -1402,22 +1383,18 @@ def handle_check_and_prepare_index_tree(list_record):
             if not index_ids:
                 index_ids = ['' for _ in range(len(pos_index))]
             for x, index_id in enumerate(index_ids):
-                tree_ids = [i.strip() for i in index_id.split('/')]
-                tree_names = ''
+                index_name = ''
                 if pos_index and x <= len(pos_index) - 1:
-                    tree_names = pos_index[x].strip()
-                    if index_id == '':
-                        tree_ids = ['']
+                    index_name = pos_index[x].strip()
                 else:
-                    tree_names = ''
+                    index_name = ''
 
-                root = check(tree_ids, tree_names, 0, True)
-                if root:
-                    indexes.append(root)
+                _index_id = check(index_id, index_name)
+                if _index_id:
+                    indexes.append(_index_id)
 
         if indexes:
-            item['indexes'] = indexes
-            handle_index_tree(item)
+            item['metadata']['path'] = indexes
 
         if errors:
             errors = list(set(errors))
@@ -1430,28 +1407,6 @@ def handle_check_and_prepare_index_tree(list_record):
             item['warnings'] = item['warnings'] + warnings \
                 if item.get('warnings') else warnings
             warnings = []
-
-
-def handle_index_tree(item):
-    """Handle get index_id of item need import to.
-
-    :argument
-        item     -- {object} record item.
-    :return
-
-    """
-    def check_and_create_index(index):
-        if index.get('child'):
-            return check_and_create_index(index['child'])
-        else:
-            return index['index_id']  # Return last child index_id
-
-    indexes = item['indexes']
-    if indexes:
-        path = []
-        for index in indexes:
-            path.append(check_and_create_index(index))
-        item['metadata']['path'] = path
 
 
 def handle_check_and_prepare_feedback_mail(list_record):
@@ -1585,7 +1540,7 @@ def handle_check_doi_indexes(list_record):
         # Check restrict DOI with Indexes:
         index_ids = [str(idx) for idx in item['metadata'].get('path', [])]
         if doi_ra and check_restrict_doi_with_indexes(index_ids):
-            if item.get('status') == 'new':
+            if not item.get('status') or item.get('status') == 'new':
                 errors.append(err_msg_register_doi)
             else:
                 pid_doi = WekoRecord.get_record_by_pid(item.get('id')).pid_doi

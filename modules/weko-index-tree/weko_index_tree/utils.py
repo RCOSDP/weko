@@ -26,7 +26,7 @@ from operator import itemgetter
 
 import redis
 from elasticsearch.exceptions import NotFoundError
-from elasticsearch_dsl.query import Bool, Exists, Prefix, Q, QueryString
+from elasticsearch_dsl.query import Bool, Exists, Q, QueryString
 from flask import Markup, current_app, session
 from flask_babelex import gettext as _
 from flask_login import current_user
@@ -532,11 +532,13 @@ def count_items(target_check_key, indexes_aggr, all_indexes):
     :param all_indexes:
     :return:
     """
+    from .api import Indexes
     def get_child_agg_by_key():
         """Get all child indexes of target index."""
         lst_result = []
         for index_aggr in indexes_aggr:
-            if index_aggr['key'].startswith(target_check_key + '/') \
+            key = Indexes.get_full_path(index_aggr['key'])
+            if key.startswith(target_check_key + '/') \
                     or index_aggr['key'] == target_check_key:
                 lst_result.append(index_aggr)
         return lst_result
@@ -572,6 +574,7 @@ def count_items(target_check_key, indexes_aggr, all_indexes):
             lst_result[str(index.id)] = index.public_state
         return lst_result
 
+    target_check_key = Indexes.get_full_path(target_check_key)
     pub_items_count = 0
     pri_items_count = 0
     lst_child_agg = get_child_agg_by_key()
@@ -847,13 +850,13 @@ def check_doi_in_index_and_child_index(index_id):
         index_id (list): Record list.
     """
     from .api import Indexes
-    tree_path = Indexes.get_full_path(index_id)
+    child_idx = Indexes.get_child_list_recursive(index_id)
     query_string = "relation_version_is_last:true AND publish_status:0"
     search = RecordsSearch(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
     must_query = [
         QueryString(query=query_string),
-        Prefix(**{"path.tree": tree_path}),
+        Q("terms", path=child_idx),
         Q("nested", path="identifierRegistration",
           query=Exists(field="identifierRegistration"))
     ]

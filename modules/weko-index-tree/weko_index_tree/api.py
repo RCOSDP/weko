@@ -703,20 +703,19 @@ class Indexes(object):
         return obj
 
     @classmethod
-    def get_index_by_name_english(cls, index_name_english="", pid=0):
-        """Get index by English index name.
+    def get_index_by_all_name(cls, index_name=""):
+        """Get index by index name (jp, eng).
 
         :argument
-            index_name_english   -- {str} index_name_english query
-            pid          -- {number} parent index id
+            index_name   -- {str} Index name.
         :return
             return       -- index object
 
         """
         with db.session.begin_nested():
             obj = db.session.query(Index). \
-                filter_by(index_name_english=index_name_english,
-                          parent=pid).one_or_none()
+                filter(db.or_(Index.index_name_english == index_name,
+                              Index.index_name == index_name)).first()
         return obj
 
     @classmethod
@@ -1581,6 +1580,8 @@ class Indexes(object):
         index_data = dict(index)
         index_data.pop('public_date')
         index_info = Indexes.get_path_name([index_data["id"]])[0]
+        if index_info:
+            index_info = index_info[:5]
         update_oaiset_setting.delay(index_info, index_data)
 
     @classmethod
@@ -1627,7 +1628,7 @@ class Indexes(object):
 
         paths = []
         with db.session.begin_nested():
-            qlst = [recursive_t.c.path]
+            qlst = [recursive_t.c.cid]
             indexes = db.session.query(*qlst). \
                 order_by(recursive_t.c.pid).all()
             for idx in indexes:

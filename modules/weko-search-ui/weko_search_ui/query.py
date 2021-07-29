@@ -789,7 +789,6 @@ def item_path_search_factory(self, search, index_id=None):
             return query_q
         else:
             # add item type aggs
-
             query_not_q = {
                 "_source": {
                     "excludes": ["content"]
