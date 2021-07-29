@@ -1571,7 +1571,7 @@ class Indexes(object):
             indexes = db.session.query(*qlst). \
                 order_by(recursive_t.c.pid).all()
             for idx in indexes:
-                paths.append(str(idx.cid))
+                paths.append(str(idx[0].split("/")[-1]))
         return paths
 
     @classmethod

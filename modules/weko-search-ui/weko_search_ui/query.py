@@ -66,27 +66,24 @@ def get_permission_filter(index_id=None):
     term_list = []
     mst = []
     is_perm_paths = Indexes.get_browsing_tree_paths()
+    is_perm_indexes = [item.split('/')[-1] for item in is_perm_paths]
     search_type = request.values.get('search_type')
 
     if index_id:
         if search_type == config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']:
-            self_path = Indexes.get_self_path(index_id)
-
-            if self_path and self_path.path in is_perm_paths:
+            if index_id in is_perm_indexes:
                 term_list.append(index_id)
 
-            path = term_list[0] + '*'
+            path = term_list[0]
             should_path = []
-            wildcard_path = Q("wildcard", path=path)
+            wildcard_path = Q("match", path=path)
             should_path.append(wildcard_path)
 
             mst.append(match)
             mst.append(rng)
             terms = Q('bool', should=should_path)
         else:   # In case search_type is keyword or index
-            self_path = Indexes.get_self_path(index_id)
-
-            if self_path and self_path.path in is_perm_paths:
+            if index_id in is_perm_indexes:
                 term_list.append(index_id)
 
             mst.append(match)
@@ -95,7 +92,7 @@ def get_permission_filter(index_id=None):
     else:
         mst.append(match)
         mst.append(rng)
-        terms = Q('terms', path=is_perm_paths)
+        terms = Q('terms', path=is_perm_indexes)
 
     mut = []
 
@@ -792,18 +789,6 @@ def item_path_search_factory(self, search, index_id=None):
             return query_q
         else:
             # add item type aggs
-            wild_card = []
-            child_list = Indexes.get_child_list(q)
-
-            if child_list:
-
-                for item in child_list:
-                    wc = {
-                        "wildcard": {
-                            "path.tree": item.cid
-                        }
-                    }
-                    wild_card.append(wc)
 
             query_not_q = {
                 "_source": {
@@ -812,11 +797,6 @@ def item_path_search_factory(self, search, index_id=None):
                 "query": {
                     "bool": {
                         "must": [
-                            {
-                                "bool": {
-                                    "should": wild_card
-                                }
-                            },
                             {
                                 "match": {
                                     "relation_version_is_last": "true"
@@ -870,6 +850,35 @@ def item_path_search_factory(self, search, index_id=None):
                 },
                 "post_filter": {}
             }
+
+            child_idx = [item.split("/")[-1] for item in Indexes.get_browsing_tree_paths()]
+            child_idx = list(set(child_idx))
+            max_clause_count = current_app.config.get(
+                'OAISERVER_ES_MAX_CLAUSE_COUNT', 1024)
+
+            if len(child_idx) > max_clause_count:
+                div_indexes = []
+                for div in range(0, int(len(child_idx) / max_clause_count) + 1):
+                    _right = div * max_clause_count
+                    _left = (div + 1) * max_clause_count \
+                        if len(child_idx) > (div + 1) * max_clause_count \
+                        else len(child_idx)
+                    div_indexes.append({
+                        "terms": {
+                            "path": child_idx[_right:_left]
+                        }
+                    })
+                query_not_q["query"]["bool"]["must"].append({
+                    "bool": {
+                        "should": div_indexes
+                    }
+                })
+            else:
+                query_q["query"]["bool"]["must"].append({
+                    "terms": {
+                        "path": child_idx
+                    }
+                })
 
             query_not_q['aggs']['path']['aggs']. \
                 update(get_item_type_aggs(search._index[0]))
