@@ -673,10 +673,12 @@ class SearchSettingsView(BaseView):
             return make_response(jsonify(jfy), jfy['status'])
 
         try:
+            lists = ItemTypes.get_latest()  # ItemTypes.get_all()
             return self.render(
                 current_app.config['WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE'],
                 widths=current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['widths'],
                 setting_data=result,
+                lists=lists,
             )
         except BaseException as e:
             current_app.logger.error('Could not save search settings', e)

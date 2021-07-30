@@ -4,6 +4,9 @@ const SPECIFIC_INDEX_VALUE = '1';
   angular.element(document).ready(function() {
     angular.module('searchManagement.controllers', []);
     function searchManagementCtrl($scope, $rootScope,$http,$location){
+      var regist = [];
+      var disp = [];
+      var frm_cnt = 0;
       $scope.initData = function (data) {
         $scope.dataJson = angular.fromJson(data);
         $scope.clearNullDataInSortOption();
@@ -66,6 +69,77 @@ const SPECIFIC_INDEX_VALUE = '1';
         } else {
           $scope.dataJson['init_disp_setting']['init_disp_index'] = '';
         }
+
+        var cnt = 0;
+        const contants_lang = document.getElementById("label_contents_0").lang
+
+        for (cnt; cnt < $scope.dataJson.detail_condition.length; cnt++) {
+          let labelname = $("#label_contents_" + cnt).val();
+          let labelsubname = $("#hidden_contents_" + cnt).val();
+
+          $scope.dataJson['detail_condition'][cnt]['contents'] = '';
+          if(contants_lang == 'ja') {
+            $scope.dataJson['detail_condition'][cnt]['contents_value']['ja'] = labelname;
+            $scope.dataJson['detail_condition'][cnt]['contents_value']['en'] = labelsubname;
+          }
+          else {
+            $scope.dataJson['detail_condition'][cnt]['contents_value']['en'] = labelname;
+            $scope.dataJson['detail_condition'][cnt]['contents_value']['ja'] = labelsubname;
+          }
+        }
+
+        if ( regist.length != 0 ) {
+          var formshape = {path:{type:'',coordinates:''},path_type:{type:'json',coordinates:'json'}}
+          var formrange = {path:{gte:'',lte:''},path_type:{gte:'json',lte:'json'}}
+          var formpoint = {path:{lat:'',lon:''},path_type:{lat:'json',lon:'json'}}
+          var formtext = {path:'', path_type:'json'}
+          
+          for ( var count =0; count < $scope.dataJson['detail_condition'].length; count++ ) {
+            for ( var cnt = 0; cnt < regist.length; cnt++ ) {
+              if( count == regist[cnt].index ) {
+                itemtype_id = regist[cnt].item_type_id
+
+                if( regist[cnt].input_type == 'text' ) {
+                  if (!$scope.dataJson['detail_condition'][count]['item_value'][itemtype_id]) {
+                    $scope.dataJson['detail_condition'][count]['item_value'][itemtype_id] = JSON.parse(JSON.stringify(formtext));;
+                  }
+                  $scope.dataJson['detail_condition'][count]['item_value'][itemtype_id]['path'] = regist[cnt].path1;
+                  $scope.dataJson['detail_condition'][count]['item_value'][itemtype_id]['path_type'] = regist[cnt].pathtype1;  
+                }
+                
+                if( regist[cnt].input_type == 'range' ) {
+                  if (!$scope.dataJson['detail_condition'][count]['item_value'][itemtype_id]) {
+                    $scope.dataJson['detail_condition'][count]['item_value'][itemtype_id] = JSON.parse(JSON.stringify(formrange));;
+                  }
+                  $scope.dataJson['detail_condition'][count]['item_value'][itemtype_id]['path']['gte'] = regist[cnt].path1;
+                  $scope.dataJson['detail_condition'][count]['item_value'][itemtype_id]['path_type']['gte'] = regist[cnt].pathtype1;
+                  $scope.dataJson['detail_condition'][count]['item_value'][itemtype_id]['path']['lte'] = regist[cnt].path2;
+                  $scope.dataJson['detail_condition'][count]['item_value'][itemtype_id]['path_type']['lte'] = regist[cnt].pathtype2;
+                }
+                if( regist[cnt].input_type == 'geo_point' ) {
+                  if (!$scope.dataJson['detail_condition'][count]['item_value'][itemtype_id]) {
+                    $scope.dataJson['detail_condition'][count]['item_value'][itemtype_id] = JSON.parse(JSON.stringify(formpoint));;
+                  }
+                  $scope.dataJson['detail_condition'][count]['item_value'][itemtype_id]['path']['lat'] = regist[cnt].path1;
+                  $scope.dataJson['detail_condition'][count]['item_value'][itemtype_id]['path_type']['lat'] = regist[cnt].pathtype1;
+                  $scope.dataJson['detail_condition'][count]['item_value'][itemtype_id]['path']['lon'] = regist[cnt].path2;
+                  $scope.dataJson['detail_condition'][count]['item_value'][itemtype_id]['path_type']['lon'] = regist[cnt].pathtype2;
+                }
+                if( regist[cnt].input_type == 'geo_shape' ) {
+                  if (!$scope.dataJson['detail_condition'][count]['item_value'][itemtype_id]) {
+                    $scope.dataJson['detail_condition'][count]['item_value'][itemtype_id] = JSON.parse(JSON.stringify(formshape));;
+                  }
+                  $scope.dataJson['detail_condition'][count]['item_value'][item_type_id]['path']['type'] = regist[cnt].path1;
+                  $scope.dataJson['detail_condition'][count]['item_value'][item_type_id]['path_type']['type'] = regist[cnt].pathtype1;
+                  $scope.dataJson['detail_condition'][count]['item_value'][item_type_id]['path']['coordinates'] = regist[cnt].path2;
+                  $scope.dataJson['detail_condition'][count]['item_value'][item_type_id]['path_type']['coordinates'] = regist[cnt].pathtype2;
+                }
+                break;
+              }
+            }
+          }
+        }
+
         let dbJson = $scope.dataJson;
 
         $http.post(url, dbJson).then(function successCallback(response) {
@@ -242,7 +316,304 @@ const SPECIFIC_INDEX_VALUE = '1';
           });
         }
       }
+     
+      $("#save_button").click(function(){
+        $('#search_contents_chg').trigger('click');
+        let mainvalues = $("#labelname_text1").val();
+        let subvalues = $("#labelname_text2").val();
+        let index = $("#labelname_id").val();
+        let lang = $("#labelname_lang").val();
+        let select1 = $("#sel_lang1").val();
+        let select2 = $("#sel_lang2").val();
+
+        if ( select1 == lang ) {
+          document.getElementById("label_contents_" + index).value = mainvalues;
+        }
+        else if ( select2 == lang ) {
+          document.getElementById("label_contents_" + index).value = subvalues;
+        }
+        if ( select1 != lang ) {
+          document.getElementById("hidden_contents_" + index).value = mainvalues;
+        }
+        else if ( select2 != lang ) {
+          document.getElementById("hidden_contents_" + index).value = subvalues;
+        }
+      });
+
+      $('#search_contents_chg').on('show.bs.modal', function (event) {
+        var subGmn = $(event.relatedTarget);
+        var contents = subGmn.data('contents');
+        var subcontents = subGmn.data('subcontents');
+        var index = subGmn.data('index');
+        var language = subGmn.data('lang');
+
+        let contvalues = $("#" + contents).val();
+        let subvalues = $("#" + subcontents).val();
+
+        document.getElementById("labelname_text1").value = contvalues;
+        document.getElementById("labelname_text2").value = subvalues;
+
+        document.getElementById("labelname_id").value = index;
+        document.getElementById("labelname_lang").value = language;
+
+        var select1 = document.getElementById("sel_lang1");
+        var select2 = document.getElementById("sel_lang2");
+
+        if( language == 'ja') {
+          select1.options[1].selected = true;  
+          select2.options[0].selected = true;  
+        }
+        else {
+          select1.options[0].selected = true;  
+          select2.options[1].selected = true;  
+        }
+        
+      });
+
+      $('#item-type-lists').change(function () {
+        frm_cnt = 0;
+        $(".tr_lists[id^='tr_lists']").each(function(index, formObj) {
+          if ($(formObj).attr('id') != 'tr_lists' && $(formObj).attr('id') != 'tr_lists0') {
+            $(formObj).remove();
+          }
+        });
+
+        $scope.setItemTypeInfo();
+
+        $("#tr_lists0 > #item_id > #search_item option[value='0']").prop('selected', true);
+        var select_inputType = $("#tr_lists0 > #item_id > #search_item").val();
+        $scope.setTextLabel(select_inputType, 'tr_lists0', true);
+      });
+
+      $('#search_item').change(function () {
+        var select_inputType = $("#" + this.closest("tr").id).find("#search_item").val();
+        $scope.setTextLabel(select_inputType, this.closest("tr").id, false);
+      });
+
+
+      $('#search_item_chg').on('show.bs.modal', function (event) {
+        var subGmn = $(event.relatedTarget);
+        var contents = subGmn.data('contents');
+        document.getElementById("contents_word").value = contents;
+
+        $("#tr_lists0").find("#button_remove").prop('disabled', true);
+        $scope.setItemTypeInfo();
+
+        $("#tr_lists0 > #item_id > #search_item option[value='0']").prop('selected', true);
+        frm_cnt = 0;
+        $(".tr_lists[id^='tr_lists']").each(function(index, formObj) {
+          if ($(formObj).attr('id') != 'tr_lists' && $(formObj).attr('id') != 'tr_lists0') {
+            $(formObj).remove();
+          }
+        });
+
+        var select_inputType = $("#tr_lists0 > #item_id > #search_item").val();
+        $scope.setTextLabel(select_inputType, 'tr_lists0', true);
+      });
+      
+      $('button[type="button"]').on('click', function(ev){
+        action = this.dataset.action;
+        
+        if('add' == action) {
+          frm_cnt++;
+
+          $('#tr_lists0').clone(true).appendTo($('#t_keyword > #tb_keyword')).attr('id', 'tr_lists' + frm_cnt ).end();
+          $("#tr_lists" + frm_cnt).find("#button_remove").prop('disabled', false);
+          $("#tr_lists" + frm_cnt + " > #item_id > #search_item option[value='0']").prop('selected', true);
+
+          var select_inputType = $("#tr_lists" + frm_cnt + " > #item_id > #search_item").val();
+          $scope.setTextLabel(select_inputType, 'tr_lists' + frm_cnt, true);
+        }
+
+        if('del' == action) {
+          this.closest("tr").remove();
+
+          frm_cnt = 0;
+          $(".tr_lists[id^='tr_lists']").each(function(index, formObj) {
+            if ($(formObj).attr('id') != 'tr_lists' && $(formObj).attr('id') != 'tr_lists0') {
+                frm_cnt++;
+                $(formObj).attr('id', 'tr_lists' + frm_cnt).end();
+            }
+          });
+
+          if( frm_cnt == 0 ) {
+            $("#tr_lists0").find("#button_remove").prop('disabled',true);
+          }
+        }
+
+        if('save' == action) {
+          $('#search_item_chg').trigger('click');
+          var count = 0;
+          var item_type_id = $("#item-type-lists").val();
+
+          $(".tr_lists[id^='tr_lists']").each(function(index, formObj) {
+            if ( count <= frm_cnt ) {
+              if( $(formObj).attr('id', 'tr_lists' + count) ) {
+                var pathtype1 = $('#tr_lists' + count + ' > #setting_label > #setting_label1 > #label_list1 option:selected').text();
+                var pathtype2 = $('#tr_lists' + count + ' > #setting_label > #setting_label2 > #label_list2 option:selected').text();
+                var path1 = $('#tr_lists' + count + ' > #setting_label > #setting_label1 > #path_text1').val();
+                var path2 = $('#tr_lists' + count + ' > #setting_label > #setting_label2 > #path_text2').val();
+                var select_contents = $('#tr_lists' + count + ' > #item_id > #search_item option:selected').text();
+                var item_content = $('#tr_lists' + count + ' > #item_id > #contents_index').val();
+                var item_input_type = $('#tr_lists' + count + ' > #item_id > #search_item option:selected').val();
+
+                reg_match = {
+                  item_type_id : item_type_id,
+                  contents : select_contents,
+                  index: item_content,
+                  input_type: item_input_type,
+                  path1: path1,
+                  path2: path2,
+                  pathtype1: pathtype1,
+                  pathtype2: pathtype2
+                }
+                regist.push(reg_match);
+              }
+            }
+            count++;
+          });
+        }
+      });
+
+      $scope.setTextLabel = function(select_inputType, tr_id, initFlg){
+        var cnt = 0;
+        var idx = 0;
+        var obj = document.getElementById(tr_id);
+        var selectobj = obj.firstElementChild.firstElementChild;
+        if (!initFlg) {
+          idx = selectobj.selectedIndex;
+        }
+
+        var select_contents  = selectobj.options[idx].text;
+
+        if ( select_inputType == 'text' ){
+          $('#' + tr_id + ' > #label_id > div > #label_id1').text("");
+          $('#' + tr_id + ' > #label_id > div > #label_id2').text("");
+          $('#' + tr_id + ' > #setting_label > #setting_label2').hide();
+        }
+
+        if ( select_inputType == 'range' ){
+          $('#' + tr_id + ' > #label_id > div > #label_id1').text($("#gte").val());
+          $('#' + tr_id + ' > #label_id > div > #label_id2').text($("#lte").val());
+          $('#' + tr_id + ' > #setting_label > #setting_label2').show();
+        }
+
+        if ( select_inputType == 'geo_point' ){
+          $('#' + tr_id + ' > #label_id > div > #label_id1').text($("#lat").val());
+          $('#' + tr_id + ' > #label_id > div > #label_id2').text($("#lon").val());
+          $('#' + tr_id + ' > #setting_label > #setting_label2').show();
+        }
+
+        if ( select_inputType == 'geo_shape' ){
+          $('#' + tr_id + ' > #label_id > div > #label_id1').text($("#type").val());
+          $('#' + tr_id + ' > #label_id > div > #label_id2').text($("#coordinates").val());
+          $('#' + tr_id + ' > #setting_label > #setting_label2').show();
+        }
+
+        var flg = false;
+        for( cnt = 0; cnt < disp.length; cnt++ ) {
+          if( disp[cnt].contents == select_contents ) {
+            $('#' + tr_id + ' > #setting_label > #setting_label1 > #path_text1').val(disp[cnt].path1);
+            $('#' + tr_id + ' > #setting_label > #setting_label2 > #path_text2').val(disp[cnt].path2);
+            $('#' + tr_id + ' > #item_id > #contents_index').val(disp[cnt].index);
+
+            if( disp[cnt].pathtype1 == 'xml' ) {
+              $("#" + tr_id + " > #setting_label > #setting_label1 > #label_list1 option[value='1']").prop('selected', true);
+            } else {
+              $("#" + tr_id + " > #setting_label > #setting_label1 > #label_list1 option[value='0']").prop('selected', true);
+            }
+            if( disp[cnt].pathtype2 == 'xml' ) {
+              $("#" + tr_id + " > #setting_label > #setting_label2 > #label_list2 option[value='1']").prop('selected', true);
+            } else {
+              $("#" + tr_id + " > #setting_label > #setting_label2 > #label_list2 option[value='0']").prop('selected', true);
+            }
+            
+            flg = true;
+            break;
+          }
+        }
+        if( !flg ) {
+          $('#' + tr_id + ' > #setting_label > #setting_label1 > #path_text1').val("");
+          $('#' + tr_id + ' > #setting_label > #setting_label2 > #path_text2').val("");
+          $("#" + tr_id + " > #setting_label > #setting_label1 > #label_list1 option[value='0']").prop('selected', true);
+          $("#" + tr_id + " > #setting_label > #setting_label2 > #label_list2 option[value='0']").prop('selected', true);
+        }
+      }
+
+      $scope.setItemTypeInfo = function(){
+
+        var item_content;
+        var item_content_id;
+        var item_input_type = "";
+        var item_val = "";
+        var contents = $("#contents_word").val();
+        disp = [];
+        
+        var item_type_id = $("#item-type-lists").val();
+
+        for (labelcnt = 0; labelcnt < $scope.dataJson.detail_condition.length; labelcnt++ ) {
+          
+          if($scope.dataJson.detail_condition[labelcnt].item_value){
+            item_val = $scope.dataJson.detail_condition[labelcnt].item_value;
+            item_content_id = contents + labelcnt;
+            item_content = $("#" + item_content_id).val();
+
+            item_input_type = $scope.dataJson.detail_condition[labelcnt].input_Type;
+
+            var item_path1 = "";
+            var item_path2 = "";
+            var item_pathtype1 = "";
+            var item_pathtype2 = "";
+
+            var item_val_sel = "";
+            if( item_val[item_type_id] ) {
+              item_val_sel = item_val[item_type_id];
+
+              if( item_input_type == 'text'){
+                item_path1 = item_val_sel.path;
+                item_pathtype1 = item_val_sel.path_type;
+              }
+              
+              if( item_input_type == 'range'){
+                item_path1 = item_val_sel.path.gte;
+                item_path2 = item_val_sel.path.lte;
+                item_pathtype1 = item_val_sel.path_type.gte;
+                item_pathtype2 = item_val_sel.path_type.lte;
+              }
+  
+              if( item_input_type == 'geo_point'){
+                item_path1 = item_val_sel.path.lat;
+                item_path2 = item_val_sel.path.lon;
+                item_pathtype1 = item_val_sel.path_type.lat;
+                item_pathtype2 = item_val_sel.path_type.lon;
+              }
+              
+              if( item_input_type == 'geo_shape'){
+                item_path1 = item_val_sel.path.type;
+                item_path2 = item_val_sel.path.coordinates;
+                item_pathtype1 = item_val_sel.path_type.type;
+                item_pathtype2 = item_val_sel.path_type.coordinates;
+              }
+            }
+
+            var match = {
+              item_type_id : item_type_id,
+              contents : item_content,
+              input_type: item_input_type,
+              index: labelcnt,
+              path1: item_path1,
+              path2: item_path2,
+              pathtype1: item_pathtype1,
+              pathtype2: item_pathtype2
+            };
+
+            disp.push(match);
+            var select = $('#tr_lists0 > #item_id > #search_item').append($('<option>').html(item_content).val(item_input_type));
+          }
+        }
+      }
     }
+
     // Inject depedencies
     searchManagementCtrl.$inject = [
       '$scope',
