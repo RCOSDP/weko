@@ -13,6 +13,7 @@ from datetime import MINYEAR, datetime, timedelta
 
 from flask import current_app, request, url_for
 from flask_babelex import get_locale, to_user_timezone, to_utc
+from invenio_communities import config as invenio_communities_config
 from invenio_db import db
 from invenio_records.models import RecordMetadata
 from lxml import etree
@@ -202,6 +203,8 @@ def listsets(**kwargs):
     oai_sets = OAISet.query.paginate(page=page, per_page=size, error_out=False)
 
     for oai_set in oai_sets.items:
+        if invenio_communities_config.COMMUNITIES_OAI_FORMAT.replace("{community_id}", "") in oai_set.spec:
+            is_comunities_spec = True
         index_path = [oai_set.spec.replace(':', '/')]
         if Indexes.is_public_state([str(oai_set.id)]) is not None \
                 and (not Indexes.is_public_state(index_path.copy())
@@ -271,8 +274,10 @@ def header(parent, identifier, datestamp, sets=None, deleted=False):
     e_datestamp = SubElement(e_header, etree.QName(NS_OAIPMH, 'datestamp'))
     e_datestamp.text = datetime_to_datestamp(datestamp)
     for spec in sets or []:
+        if invenio_communities_config.COMMUNITIES_OAI_FORMAT.replace("{community_id}", "") in spec:
+            is_comunities_spec = True
         index_path = [spec.replace(':', '/')]
-        if Indexes.is_public_state(index_path.copy()) \
+        if is_comunities_spec or Indexes.is_public_state(index_path.copy()) \
                 and Indexes.get_harvest_public_state(index_path.copy()):
             e = SubElement(e_header, etree.QName(NS_OAIPMH, 'setSpec'))
             e.text = spec
