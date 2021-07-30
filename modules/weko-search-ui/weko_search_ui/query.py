@@ -76,7 +76,7 @@ def get_permission_filter(index_id=None):
 
             path = term_list[0]
             should_path = []
-            wildcard_path = Q("match", path=path)
+            wildcard_path = Q("terms", path=path)
             should_path.append(wildcard_path)
 
             mst.append(match)
@@ -873,7 +873,7 @@ def item_path_search_factory(self, search, index_id=None):
                     }
                 })
             else:
-                query_q["query"]["bool"]["must"].append({
+                query_not_q["query"]["bool"]["must"].append({
                     "terms": {
                         "path": child_idx
                     }
