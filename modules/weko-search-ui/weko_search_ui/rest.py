@@ -299,9 +299,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         agp.clear()
         # process index tree image info
         if len(nlst):
-            index_id = nlst[0].get('key')
-            index_id = index_id if '/' not in index_id \
-                else index_id.split('/').pop()
+            index_id = nlst[0].get('key').split('/')[-1]
             index_info = Indexes.get_index(index_id=index_id)
             # update by weko_dev17 at 2019/04/04
             if len(index_info.image_name) > 0:
@@ -310,9 +308,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             nlst[0]['rss_status'] = index_info.rss_status
         # Update rss_status for index child
         for idx in range(0, len(nlst)):
-            index_id = nlst[idx].get('key')
-            index_id = index_id if '/' not in index_id \
-                else index_id.split('/').pop()
+            index_id = nlst[idx].get('key').split('/')[-1]
             index_info = Indexes.get_index(index_id=index_id)
             nlst[idx]['rss_status'] = index_info.rss_status
         agp.append(nlst)

@@ -415,7 +415,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         :return: Query parser.
         """
         # add Permission filter by publish date and status
-        mst = get_permission_filter()
+        mst, _ = get_permission_filter()
 
         q = _get_search_qs_query(qs)
 
