@@ -553,9 +553,18 @@ class Indexes(object):
         return tree
 
     @classmethod
-    def get_browsing_tree_paths(cls, pid=0):
-        """Get browsing tree paths."""
-        tree = cls.get_browsing_tree_ignore_more(pid)
+    def get_browsing_tree_paths(cls, index_id: int = 0):
+        """Get browsing tree paths.
+
+        Args:
+            pid (int, optional): Index identifier. Defaults to 0.
+
+        Returns:
+            [type]: [description]
+        """
+        if not index_id:
+            index_id = 0
+        tree = cls.get_browsing_tree_ignore_more(index_id)
         return get_index_id_list(tree, [])
 
     @classmethod
@@ -572,7 +581,7 @@ class Indexes(object):
         return tree
 
     @classmethod
-    def get_recursive_tree(cls, pid=0):
+    def get_recursive_tree(cls, pid: int = 0):
         """Get recursive tree."""
         with db.session.begin_nested():
             recursive_t = cls.recs_tree_query(pid)
@@ -780,7 +789,7 @@ class Indexes(object):
         return filter_index_list_by_role(q)
 
     @classmethod
-    def get_self_list(cls, node_path, community_id=None):
+    def get_self_list(cls, index_id, community_id=None):
         """
         Get index list info.
 
@@ -788,18 +797,16 @@ class Indexes(object):
         :return: the list of index.
         """
         if community_id:
-            index = node_path.rfind('/')
-            pid = node_path[index + 1:]
             from invenio_communities.models import Community
             community_obj = Community.get(community_id)
             recursive_t = cls.recs_query()
             query = db.session.query(recursive_t).filter(db.or_(
-                recursive_t.c.cid == pid, recursive_t.c.pid == pid))
+                recursive_t.c.cid == index_id, recursive_t.c.pid == index_id))
             if not get_user_roles()[0]:
                 query = query.filter(recursive_t.c.public_state)
             q = query.order_by(recursive_t.c.path).all()
             lst = list()
-            if node_path != '0':
+            if index_id != '0':
                 for item in q:
                     if item.cid == community_obj.root_node_id \
                             and item.pid == '0':
@@ -808,12 +815,10 @@ class Indexes(object):
                         lst.append(item)
                 return lst
         else:
-            index = node_path.rfind('/')
-            pid = node_path[index + 1:]
             recursive_t = cls.recs_query()
             query = db.session.query(recursive_t).filter(
-                db.or_(recursive_t.c.pid == pid,
-                       recursive_t.c.cid == pid))
+                db.or_(recursive_t.c.pid == index_id,
+                       recursive_t.c.cid == index_id))
             if not get_user_roles()[0]:
                 query = query.filter(recursive_t.c.public_state)
             q = query.order_by(recursive_t.c.path).all()
@@ -1051,7 +1056,7 @@ class Indexes(object):
         return recursive_t
 
     @classmethod
-    def recs_root_tree_query(cls, pid=0, ):
+    def recs_root_tree_query(cls, pid=0):
         """
         Init select condition of index.
 

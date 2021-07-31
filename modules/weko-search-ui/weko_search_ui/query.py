@@ -71,13 +71,9 @@ def get_permission_filter(index_id=None):
 
     if index_id:
         if search_type == config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']:
-            if index_id in is_perm_indexes:
-                term_list.append(index_id)
-
-            path = term_list[0]
             should_path = []
-            wildcard_path = Q("terms", path=path)
-            should_path.append(wildcard_path)
+            if index_id in is_perm_indexes:
+                should_path.append(Q("terms", path=index_id))
 
             mst.append(match)
             mst.append(rng)
@@ -111,7 +107,7 @@ def get_permission_filter(index_id=None):
         base_mut = [match, version]
         mut.append(Q('bool', must=base_mut))
 
-    return mut
+    return mut, is_perm_paths
 
 
 def default_search_factory(self, search, query_parser=None, search_type=None):
@@ -440,7 +436,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         comm = Community.get(community_id)
         root_node_id = comm.root_node_id
 
-        mst = get_permission_filter(root_node_id)
+        mst, _ = get_permission_filter(root_node_id)
         q = _get_search_qs_query(qs)
 
         if q:
@@ -475,7 +471,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         :returns: Query parser.
         """
         # add  Permission filter by publish date and status
-        mst = get_permission_filter()
+        mst, _ = get_permission_filter()
 
         # multi keywords search filter
         mkq = _get_detail_keywords_query()
@@ -507,7 +503,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         # add  Permission filter by publish date and status
         comm = Community.get(community_id)
         root_node_id = comm.root_node_id
-        mst = get_permission_filter(root_node_id)
+        mst, _ = get_permission_filter(root_node_id)
 
         # multi keywords search filter
         mkq = _get_detail_keywords_query()
@@ -727,9 +723,9 @@ def item_path_search_factory(self, search, index_id=None):
                 update(get_item_type_aggs(search._index[0]))
 
             if q:
-                mut = get_permission_filter(q)
+                mut, is_perm_paths = get_permission_filter(q)
             else:
-                mut = get_permission_filter()
+                mut, is_perm_paths = get_permission_filter()
 
             if mut:
                 mut = list(map(lambda x: x.to_dict(), mut))
@@ -786,7 +782,7 @@ def item_path_search_factory(self, search, index_id=None):
             query_q = json.dumps(query_q).replace("@count", count)
             query_q = json.loads(query_q)
 
-            return query_q
+            return query_q, is_perm_paths
         else:
             # add item type aggs
             query_not_q = {
@@ -850,7 +846,13 @@ def item_path_search_factory(self, search, index_id=None):
                 "post_filter": {}
             }
 
-            child_idx = [item.split("/")[-1] for item in Indexes.get_browsing_tree_paths()]
+            is_perm_paths = []
+            if q:
+                mut, is_perm_paths = get_permission_filter(q)
+            else:
+                mut, is_perm_paths = get_permission_filter()
+
+            child_idx = [item.split("/")[-1] for item in is_perm_paths]
             child_idx = list(set(child_idx))
             max_clause_count = current_app.config.get(
                 'OAISERVER_ES_MAX_CLAUSE_COUNT', 1024)
@@ -882,11 +884,6 @@ def item_path_search_factory(self, search, index_id=None):
             query_not_q['aggs']['path']['aggs']. \
                 update(get_item_type_aggs(search._index[0]))
 
-            if q:
-                mut = get_permission_filter(q)
-            else:
-                mut = get_permission_filter()
-
             if mut:
                 mut = list(map(lambda x: x.to_dict(), mut))
                 post_filter = query_not_q['post_filter']
@@ -901,10 +898,10 @@ def item_path_search_factory(self, search, index_id=None):
             query_not_q = json.dumps(query_not_q).replace("@count", count)
             query_not_q = json.loads(query_not_q)
 
-            return query_not_q
+            return query_not_q, is_perm_paths
 
     # create a index search query
-    query_q = _get_index_earch_query()
+    query_q, is_perm_paths = _get_index_earch_query()
     urlkwargs = MultiDict()
 
     try:
@@ -924,7 +921,6 @@ def item_path_search_factory(self, search, index_id=None):
     search, sortkwargs = default_sorter_factory(search, search_index)
 
     for key, value in sortkwargs.items():
-
         # set custom sort option
         if 'custom_sort' in value:
             ind_id = request.values.get('q', '')
@@ -976,6 +972,7 @@ def item_path_search_factory(self, search, index_id=None):
         urlkwargs.add('sort', sort_key)
 
     urlkwargs.add('q', query_q)
+    urlkwargs.add('is_perm_paths', is_perm_paths)
 
     return search, urlkwargs
 

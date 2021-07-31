@@ -243,13 +243,21 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             paths = []
         agp = rd["aggregations"]["path"]["buckets"]
         nlst = []
-        items_count = []
+        items_count = dict()
         all_indexes = Indexes.get_all_indexes()
+        indexes_state = dict()
+        for index in all_indexes:
+            indexes_state[str(index.id)] = index.public_state
         recorrect_private_items_count(agp)
         for i in agp:
-            items_count.append({"key": i["key"], "doc_count": i["doc_count"],
-                                "no_available": i["no_available"]["doc_count"]})
+            items_count[i["key"]] = {
+                "key": i["key"],
+                "doc_count": i["doc_count"],
+                "no_available": i["no_available"]["doc_count"],
+                "public_state": indexes_state[i["key"]]
+            }
 
+        is_perm_paths = qs_kwargs.get('is_perm_paths', [])
         for p in paths:
             m = 0
             current_idx = {}
@@ -266,8 +274,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     m = 1
                     break
             if m == 0:
-                index_id = p.path if '/' not in p.path \
-                    else p.path.split('/').pop()
+                index_id = p.cid
                 index_info = Indexes.get_index(index_id=index_id)
                 rss_status = index_info.rss_status
                 nd = {
@@ -281,7 +288,11 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     'comment': p.comment,
                 }
                 current_idx = nd
-            private_count, public_count = count_items((str(p.cid)), items_count, all_indexes)
+            _child_indexes = []
+            for _path in is_perm_paths:
+                if (_path.startswith(str(p.path) + '/') or _path == str(p.cid)) and items_count.get(str(_path.split('/')[-1])):
+                    _child_indexes.append(items_count[str(_path.split('/')[-1])])
+            private_count, public_count = count_items(_child_indexes)
             current_idx["date_range"]["pub_cnt"] = public_count
             current_idx["date_range"]["un_pub_cnt"] = private_count
             nlst.append(current_idx)

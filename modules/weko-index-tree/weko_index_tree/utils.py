@@ -232,7 +232,7 @@ def get_user_groups():
 def check_roles(user_role, roles):
     """Check roles."""
     is_can = True
-    if isinstance(roles, type("")):
+    if isinstance(roles, str):
         roles = roles.split(',')
     if not user_role[0]:
         if current_user.is_authenticated:
@@ -240,7 +240,7 @@ def check_roles(user_role, roles):
                     if str(x) in (roles or [])]
             if not role and (user_role[1] or "-98" not in roles):
                 is_can = False
-        elif "-99" not in roles:
+        elif roles and "-99" not in roles:
             is_can = False
     return is_can
 
@@ -523,74 +523,26 @@ def sanitize(s):
     return esc_str
 
 
-def count_items(target_check_key, indexes_aggr, all_indexes):
+def count_items(indexes_aggr):
     """
     Count public and private items of a target index based on index state.
 
-    :param target_check_key: id of target index
-    :param indexes_aggr: indexes aggregation returned from ES
-    :param all_indexes:
-    :return:
+    Args:
+        target_check_key ([type]): [description]
+        indexes_aggr ([type]): [description]
+
+    Returns:
+        [type]: [description]
     """
-    from .api import Indexes
-    def get_child_agg_by_key():
-        """Get all child indexes of target index."""
-        lst_result = []
-        for index_aggr in indexes_aggr:
-            key = Indexes.get_full_path(index_aggr['key'])
-            if key.startswith(target_check_key + '/') \
-                    or index_aggr['key'] == target_check_key:
-                lst_result.append(index_aggr)
-        return lst_result
-
-    def set_private_index_count(target_index, lst_deleted):
-        """Set private count of index based on index and parent index state.
-
-        :param target_index: in of target index
-        :param lst_deleted: lst deleted indexes
-        :return:
-        """
-        temp = target_index.copy()
-        list_parent_key = temp['key'].split('/')
-        is_parent_private = False
-        while list_parent_key:
-            nearest_parent_key = list_parent_key.pop()
-            if lst_indexes_state.get(nearest_parent_key) is None:
-                lst_deleted.add(nearest_parent_key)
-                current_app.logger.warning(
-                    "Index {} is existed in ElasticSearch but not "
-                    "in DataBase".format(str(nearest_parent_key)))
-                continue
-            if lst_indexes_state[nearest_parent_key] is False:
-                is_parent_private = True
-                break
-        if is_parent_private:
-            target_index['no_available'] = target_index['doc_count']
-
-    def get_indexes_state():
-        """Get indexes state."""
-        lst_result = {}
-        for index in all_indexes:
-            lst_result[str(index.id)] = index.public_state
-        return lst_result
-
-    target_check_key = Indexes.get_full_path(target_check_key)
     pub_items_count = 0
     pri_items_count = 0
-    lst_child_agg = get_child_agg_by_key()
-    lst_indexes_state = get_indexes_state()
-    # list indexes existed in ES but deleted in DB
-    lst_indexes_deleted = set()
-    # Modify counts of index based on index and parent indexes state
-    for agg in lst_child_agg:
-        set_private_index_count(agg, lst_indexes_deleted)
-    for agg in lst_child_agg:
-        for index_deleted in lst_indexes_deleted:
-            if str(agg['key']).endswith(str(index_deleted)):
-                agg['no_available'] = 0
-                agg['doc_count'] = 0
-        pri_items_count += agg['no_available']
-        pub_items_count += agg['doc_count'] - agg['no_available']
+
+    for agg in indexes_aggr:
+        if agg.get('public_state'):
+            pub_items_count += agg['doc_count']
+        else:
+            pri_items_count += agg['doc_count']
+
     return pri_items_count, pub_items_count
 
 
