@@ -50,7 +50,7 @@ def get_item_type_aggs(search_index):
     return facets.get(search_index).get("aggs", {})
 
 
-def get_permission_filter(index_id=None):
+def get_permission_filter(index_id:str = None):
     """Check permission.
 
     Args:
@@ -70,6 +70,7 @@ def get_permission_filter(index_id=None):
     search_type = request.values.get('search_type')
 
     if index_id:
+        index_id = str(index_id)
         if search_type == config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']:
             should_path = []
             if index_id in is_perm_indexes:
