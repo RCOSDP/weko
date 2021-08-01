@@ -290,7 +290,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 current_idx = nd
             _child_indexes = []
             for _path in is_perm_paths:
-                if (_path.startswith(str(p.path) + '/') or _path == str(p.cid)) and items_count.get(str(_path.split('/')[-1])):
+                if (_path.startswith(str(p.path) + '/') or _path == p.path) and items_count.get(str(_path.split('/')[-1])):
                     _child_indexes.append(items_count[str(_path.split('/')[-1])])
             private_count, public_count = count_items(_child_indexes)
             current_idx["date_range"]["pub_cnt"] = public_count
