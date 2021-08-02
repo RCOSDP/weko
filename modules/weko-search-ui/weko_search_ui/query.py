@@ -1016,10 +1016,11 @@ def opensearch_factory(self, search, query_parser=None):
     :param query_parser:
     :return:
     """
-    index_id = request.values.get('index_id')
+    index_id = request.values.get('q')
     search_type = config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']
 
     if index_id:
+        index_id = str(index_id)
         return item_path_search_factory(self,
                                         search,
                                         index_id=index_id)
