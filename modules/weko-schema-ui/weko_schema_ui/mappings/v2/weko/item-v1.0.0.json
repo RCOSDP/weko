@@ -478,29 +478,15 @@
           "type": "object",
           "properties": {
             "geoLocationPoint": {
-              "type": "object",
-              "properties": {
-                "pointLongitude": {
-                  "type": "geo_point"
-                },
-                "pointLatitude": {
-                  "type": "geo_point"
-                }
-              }
+              "type": "geo_point"
             },
             "geoLocationBox": {
               "type": "object",
               "properties": {
-                "westBoundLongitude": {
+                "northEastPoint": {
                   "type": "geo_point"
                 },
-                "eastBoundLongitude": {
-                  "type": "geo_point"
-                },
-                "southBoundLatitude": {
-                  "type": "geo_point"
-                },
-                "northBoundLatitude": {
+                "southWestPoint": {
                   "type": "geo_point"
                 }
               }

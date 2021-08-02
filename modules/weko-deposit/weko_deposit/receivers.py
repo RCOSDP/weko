@@ -45,7 +45,7 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
         dep.jrc['_oai'] = im.get('_oai')
         dep.jrc['relation_version_is_last'] = True \
             if pid == get_record_without_version(pid) else False
-        dep._convert_description_to_object()
+        dep._convert_jpcoar_data_to_es()
         im.pop('recid')
         dep.get_content_files()
         dep.jrc.update(dict(path=dep.get('path')))
