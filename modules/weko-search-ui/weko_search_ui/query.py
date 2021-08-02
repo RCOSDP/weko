@@ -25,7 +25,7 @@ import sys
 from datetime import datetime
 from functools import partial
 
-from elasticsearch_dsl.query import Bool, Exists, Q, QueryString
+from elasticsearch_dsl.query import Bool, Q
 from flask import current_app, request
 from flask.helpers import flash
 from flask_babelex import gettext as _
@@ -50,7 +50,7 @@ def get_item_type_aggs(search_index):
     return facets.get(search_index).get("aggs", {})
 
 
-def get_permission_filter(index_id:str = None):
+def get_permission_filter(index_id: str = None):
     """Check permission.
 
     Args:
@@ -201,7 +201,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             kv = request.values.get(k)
             if not kv:
                 return
-            shuld = []
             if isinstance(v, tuple) and len(v) > 1 and isinstance(v[1], dict):
                 # attr keyword in request url
                 attrs = map(lambda x: (x, request.values.get(x)),
@@ -747,10 +746,13 @@ def item_path_search_factory(self, search, index_id=None):
 
                     if len(child_idx) > max_clause_count:
                         div_indexes = []
-                        for div in range(0, int(len(child_idx) / max_clause_count) + 1):
+                        for div in range(
+                                0,
+                                int(len(child_idx) / max_clause_count) + 1):
                             _right = div * max_clause_count
                             _left = (div + 1) * max_clause_count \
-                                if len(child_idx) > (div + 1) * max_clause_count \
+                                if len(child_idx) > \
+                                    (div + 1) * max_clause_count \
                                 else len(child_idx)
                             div_indexes.append({
                                 "terms": {
@@ -860,7 +862,9 @@ def item_path_search_factory(self, search, index_id=None):
 
             if len(child_idx) > max_clause_count:
                 div_indexes = []
-                for div in range(0, int(len(child_idx) / max_clause_count) + 1):
+                for div in range(
+                        0,
+                        int(len(child_idx) / max_clause_count) + 1):
                     _right = div * max_clause_count
                     _left = (div + 1) * max_clause_count \
                         if len(child_idx) > (div + 1) * max_clause_count \

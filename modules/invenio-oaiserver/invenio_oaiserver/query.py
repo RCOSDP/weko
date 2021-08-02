@@ -12,7 +12,6 @@ from datetime import datetime
 
 import six
 from elasticsearch_dsl import Q
-from elasticsearch_dsl.query import QueryString
 from flask import current_app
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.models import RecordMetadata

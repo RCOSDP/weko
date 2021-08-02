@@ -69,10 +69,6 @@ class StyleSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         """Block style setting page."""
-        # wysiwyg_editor_default = [
-        #     '<div class="ql-editor ql-blank" data-gramm="false" '
-        #     'contenteditable="true"><p><br></p></div>']
-
         body_bg = '#fff'
         panel_bg = '#fff'
         footer_default_bg = 'rgba(13,95,137,0.8)'
@@ -321,7 +317,6 @@ class ReportView(BaseView):
     def get_file_stats_tsv(self):
         """Get file download/preview stats report."""
         stats_json = json.loads(request.form.get('report'))
-        # file_type = request.form.get('type')
         year = request.form.get('year')
         month = request.form.get('month').zfill(2)
 
@@ -623,7 +618,8 @@ class SearchSettingsView(BaseView):
         width = style.width if style else '3'
         height = style.height if style else None
         search_setting['index_tree_style'] = {
-            'width_options': current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['widths'],
+            'width_options': current_app.config[
+                'WEKO_INDEX_TREE_STYLE_OPTIONS']['widths'],
             'width': width,
             'height': height
         }
@@ -649,12 +645,14 @@ class SearchSettingsView(BaseView):
                     height = index_tree_style.get('height', None)
                     if style:
                         IndexStyle.update(
-                            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
+                            current_app.config[
+                                'WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
                             width=width,
                             height=height)
                     else:
                         IndexStyle.create(
-                            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
+                            current_app.config[
+                                'WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
                             width=width,
                             height=height)
                 # update other search settings
@@ -675,7 +673,8 @@ class SearchSettingsView(BaseView):
         try:
             return self.render(
                 current_app.config['WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE'],
-                widths=current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['widths'],
+                widths=current_app.config[
+                    'WEKO_INDEX_TREE_STYLE_OPTIONS']['widths'],
                 setting_data=result,
             )
         except BaseException as e:

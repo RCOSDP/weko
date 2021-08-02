@@ -205,7 +205,6 @@ def get_user_roles():
     """Get user roles."""
     def _check_admin():
         result = False
-        users = current_app.config['WEKO_PERMISSION_ROLE_USER']
         for lst in list(current_user.roles or []):
             # if is administrator
             if 'Administrator' in lst.name:
@@ -528,7 +527,6 @@ def count_items(indexes_aggr):
     Count public and private items of a target index based on index state.
 
     Args:
-        target_check_key ([type]): [description]
         indexes_aggr ([type]): [description]
 
     Returns:
@@ -570,7 +568,7 @@ def check_doi_in_index(index_id):
         if check_doi_in_list_record_es(index_id):
             return True
         return False
-    except Exception as e:
+    except Exception:
         return True
 
 

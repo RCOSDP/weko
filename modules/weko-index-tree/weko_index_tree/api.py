@@ -315,17 +315,7 @@ class Indexes(object):
         """
         from weko_deposit.api import WekoDeposit
         if "move" == action:
-            pass
-            # result = cls.delete(index_id, True)
-            # if result is not None:
-            #     # move indexes all
-            #     target = path.split('/')
-            #     if len(target) >= 2:
-            #         target.pop(-2)
-            #         target = "/".join(target)
-            #     else:
-            #         target = ""
-            #     WekoDeposit.update_by_index_tree_id(path, target)
+            result = cls.delete(index_id, True)
         else:
             result = cls.delete(index_id)
             if result is not None:
@@ -469,7 +459,6 @@ class Indexes(object):
                             if not ret['is_ok']:
                                 db.session.rollback()
                 else:
-                    slf_path = cls.get_self_path(index_id)
                     index = Index.query.filter_by(id=index_id).one()
                     try:
                         _update_index(position_max, parent)
@@ -1232,7 +1221,6 @@ class Indexes(object):
             last_path = _paths.pop(-1).split('/')
             qry = _query(last_path)
             for i in range(len(_paths)):
-                # _paths[i] = _paths[i]
                 _paths[i] = _query(_paths[i])
             smt = qry.union_all(*_paths).subquery()
             result = db.session.query(
@@ -1550,8 +1538,7 @@ class Indexes(object):
         """
         recursive_t = db.session.query(
             Index.parent.label("pid"),
-            Index.id.label("cid"),
-            func.cast(Index.id, db.Text).label("path")
+            Index.id.label("cid")
         ).filter(
             Index.parent == 0,
             Index.harvest_public_state.is_(True)
@@ -1562,21 +1549,20 @@ class Indexes(object):
         recursive_t = recursive_t.union_all(
             db.session.query(
                 test_alias.parent,
-                test_alias.id,
-                rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text)
+                test_alias.id
             ).filter(
                 test_alias.parent == rec_alias.c.cid,
                 test_alias.harvest_public_state.is_(True))
         )
 
-        paths = []
+        ret = []
         with db.session.begin_nested():
-            qlst = [recursive_t.c.path]
+            qlst = [recursive_t.c.cid]
             indexes = db.session.query(*qlst). \
                 order_by(recursive_t.c.pid).all()
             for idx in indexes:
-                paths.append(str(idx[0].split("/")[-1]))
-        return paths
+                ret.append(str(idx[0]))
+        return ret
 
     @classmethod
     def update_set_info(cls, index):
@@ -1606,8 +1592,7 @@ class Indexes(object):
         """
         recursive_t = db.session.query(
             Index.parent.label("pid"),
-            Index.id.label("cid"),
-            func.cast(Index.id, db.Text).label("path")
+            Index.id.label("cid")
         ).filter(
             Index.parent == 0,
             Index.public_state.is_(True)
@@ -1621,8 +1606,7 @@ class Indexes(object):
         recursive_t = recursive_t.union_all(
             db.session.query(
                 test_alias.parent,
-                test_alias.id,
-                rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text)
+                test_alias.id
             ).filter(
                 test_alias.parent == rec_alias.c.cid,
                 test_alias.public_state.is_(True)

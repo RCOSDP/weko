@@ -24,7 +24,6 @@ from datetime import date, timedelta
 from operator import itemgetter
 
 from flask import Blueprint, current_app, jsonify, request, session
-from flask_login import current_user
 
 from .api import Indexes
 from .config import WEKO_INDEX_TREE_RSS_COUNT_LIMIT, \

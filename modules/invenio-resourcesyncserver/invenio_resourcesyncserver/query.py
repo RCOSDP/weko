@@ -22,7 +22,7 @@
 
 import json
 
-from flask import current_app, request
+from flask import current_app
 from invenio_records_rest.errors import InvalidQueryRESTError
 from invenio_search import RecordsSearch
 from weko_index_tree.api import Indexes

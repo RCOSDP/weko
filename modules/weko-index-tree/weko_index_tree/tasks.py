@@ -70,7 +70,7 @@ def delete_oaiset_setting(id_list):
         while e <= len(id_list):
             s = e
             e = e + batch
-            dct = db.session.query(OAISet).filter(
+            db.session.query(OAISet).filter(
                 OAISet.id.in_(id_list[s:e])). \
                 delete(synchronize_session='fetch')
         db.session.commit()

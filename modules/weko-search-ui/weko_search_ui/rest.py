@@ -21,10 +21,6 @@
 """Blueprint for Index Search rest."""
 
 import copy
-import json
-import os.path
-import shutil
-import uuid
 from functools import partial
 
 from flask import Blueprint, abort, current_app, jsonify, redirect, request, \
@@ -220,9 +216,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             size=size,
             _external=True,
         )
-        # endpoint = '.{0}_index'.format(
-        #     current_records_rest.default_endpoint_prefixes[self.pid_type])
-
         links = dict(self=url_for('weko_search_rest.recid_index', page=page,
                                   **urlkwargs))
         if page > 1:
@@ -290,8 +283,10 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 current_idx = nd
             _child_indexes = []
             for _path in is_perm_paths:
-                if (_path.startswith(str(p.path) + '/') or _path == p.path) and items_count.get(str(_path.split('/')[-1])):
-                    _child_indexes.append(items_count[str(_path.split('/')[-1])])
+                if (_path.startswith(str(p.path) + '/') or _path == p.path) \
+                        and items_count.get(str(_path.split('/')[-1])):
+                    _child_indexes.append(
+                        items_count[str(_path.split('/')[-1])])
             private_count, public_count = count_items(_child_indexes)
             current_idx["date_range"]["pub_cnt"] = public_count
             current_idx["date_range"]["un_pub_cnt"] = private_count
