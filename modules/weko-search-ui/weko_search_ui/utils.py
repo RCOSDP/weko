@@ -399,15 +399,17 @@ def handle_generate_key_path(key) -> list:
     return key_path
 
 
-def parse_to_json_form(data: list, item_path_not_existed: list) -> dict:
+def parse_to_json_form(data: list,
+                       item_path_not_existed=[],
+                       include_empty=False):
     """Parse set argument to json object.
 
     :argument
         data    -- {list zip} argument if json object.
         item_path_not_existed -- {list} item paths not existed in metadata.
+        include_empty -- {bool} include empty value?
     :return
         return  -- {dict} dict after convert argument.
-
     """
     result = defaultify({})
 
@@ -432,7 +434,8 @@ def parse_to_json_form(data: list, item_path_not_existed: list) -> dict:
         if key in item_path_not_existed:
             continue
         key_path = handle_generate_key_path(key)
-        if value or key_path[0] in ['file_path', 'thumbnail_path'] \
+        if include_empty or value \
+                or key_path[0] in ['file_path', 'thumbnail_path'] \
                 or key_path[-1] == 'filename':
             set_nested_item(result, key_path, value)
 
@@ -615,9 +618,11 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                                 msg.format('<br/>'.join(duplication_item_ids))
                         })
                     if check_item_type:
+                        mapping_ids = handle_get_all_id_in_item_type(
+                            check_item_type.get('item_type_id'))
                         not_consistent_list = \
-                            handle_check_consistence_with_item_type(
-                                check_item_type.get('item_type_id'),
+                            handle_check_consistence_with_mapping(
+                                mapping_ids,
                                 item_path)
                         if not_consistent_list:
                             msg = _('The item does not consistent with the '
@@ -1695,7 +1700,8 @@ def handle_check_doi(list_record):
                             item['doi_suffix_not_existed'] = True
                             if not item.get('ignore_check_doi_prefix') \
                                     and prefix != get_doi_prefix(doi_ra):
-                                error = _('Specified Prefix of {} is incorrect.') \
+                                error = \
+                                    _('Specified Prefix of {} is incorrect.') \
                                     .format('DOI')
                 else:
                     pid_doi = None
@@ -2437,25 +2443,24 @@ def handle_get_all_id_in_item_type(item_type_id):
     return result
 
 
-def handle_check_consistence_with_item_type(item_type_id, keys):
-    """Check consistence between tsv and item type.
+def handle_check_consistence_with_mapping(mapping_ids, keys):
+    """Check consistence between tsv and mapping.
 
     :argument
-        item_type_id - {str} item type id.
+        mapping_ids - {list} list id from mapping.
         keys - {list} data from line 2 of tsv file.
     :return
         ids - {list} ids is not consistent.
     """
     result = []
-    ids = handle_get_all_id_in_item_type(item_type_id)
-    clean_ids = list(map(lambda x: re.sub(r'\[\d+\]', '', x), ids))
+    clean_ids = list(map(lambda x: re.sub(r'\[\d+\]', '', x), mapping_ids))
     for _key in keys:
         if re.sub(r'\[\d+\]', '', _key) in clean_ids \
-                and re.sub(r'\[\d+\]', '[0]', _key) not in ids:
+                and re.sub(r'\[\d+\]', '[0]', _key) not in mapping_ids:
             result.append(_key)
 
     clean_keys = list(map(lambda x: re.sub(r'\[\d+\]', '', x), keys))
-    for _id in ids:
+    for _id in mapping_ids:
         if re.sub(r'\[\d+\]', '', _id) not in clean_keys:
             result.append(_id)
 
