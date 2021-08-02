@@ -39,6 +39,7 @@ def validate_by_extend_validator(values=[], validator={}):
 
     Returns:
         list: List error messages.
+
     """
     errors = []
     if values and validator:
@@ -58,6 +59,7 @@ def validate_required(item, values=[], required={}):
 
     Returns:
         list: List metadata paths are errors.
+
     """
     errors_key = []
     if_cond = required.get('if', [])
@@ -80,6 +82,7 @@ def validate_map(values=[], _map=[]):
 
     Returns:
         list: List metadata paths are errors.
+
     """
     errors_key = []
     if values and _map:
@@ -97,6 +100,7 @@ def validate_identifier_scheme(values=[]):
 
     Returns:
         list: List errors message.
+
     """
     errors = []
     err_mgs = _("Specified Identifier Scheme '{}' does not exist.")
@@ -122,6 +126,7 @@ def validate_external_author_identifier(item, values=[],
 
     Returns:
         list: List metadata paths are warning.
+
     """
     warnings = []
     msg = _('External author identifier exists in DB.<br/>{}')
