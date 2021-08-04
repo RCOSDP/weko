@@ -52,7 +52,7 @@ def _addOAISet(c):
             # record = Record.get_record(i['_id'])
             pid = PersistentIdentifier.query.filter_by(
                 pid_type='parent', object_uuid=i.id).first()
-            if not pid.is_deleted():
+            if pid is not None and not pid.is_deleted():
                 record = Record.get_record(i.id)
                 if record is not None:
                     c.add_record(record)
