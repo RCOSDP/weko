@@ -147,11 +147,7 @@ def get_records(**kwargs):
             search = search.filter('range', **{'_updated': time_range})
 
         search = search.query('match', **{'relation_version_is_last': 'true'})
-        query_filter = [
-            # script get deleted items.
-            {"bool": {"must_not": {"exists": {"field": "path"}}}}
-        ]
-
+        query_filter = []
         if indexes:
             indexes_num = len(indexes)
             div_indexes = []
@@ -164,7 +160,7 @@ def get_records(**kwargs):
                     else indexes_num
                 div_indexes.append({
                     "terms": {
-                        "path": indexes[e_right:e_left]
+                        "_item_metadata.path.raw": indexes[e_right:e_left]
                     }
                 })
             query_filter.append({
@@ -184,22 +180,6 @@ def get_records(**kwargs):
             scroll='{0}s'.format(scroll),
         )
 
-    # remove deleted items link to private harvest index.
-    if indexes:
-        filter_data = []
-        for rec in response['hits']['hits']:
-            if not rec['_source'].get('path'):
-                allow_show = False
-                paths = rec['_source']['_item_metadata'].get('path')
-                for path in paths:
-                    if path in indexes:
-                        allow_show = True
-                        break
-                if allow_show:
-                    filter_data.append(rec)
-            else:
-                filter_data.append(rec)
-        response['hits']['hits'] = filter_data
 
     class Pagination(object):
         """Dummy pagination class."""

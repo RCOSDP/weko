@@ -882,6 +882,49 @@ class Indexes(object):
         return [str(item.cid) for item in q]
 
     @classmethod
+    def recs_reverse_query(cls, pid=0):
+        """Init select condition of index.
+
+        :return: the query of db.session.
+        """
+        _id = str(pid)
+        recursive_t = db.session.query(
+            Index.parent.label("pid"),
+            Index.id.label("cid"),
+            func.cast(Index.id, db.Text).label("path"),
+            Index.index_name.label("name"),
+            Index.index_name_english.label("name_en"),
+            literal_column("1", db.Integer).label("lev"),
+            Index.public_state.label("public_state"),
+            Index.public_date.label("public_date"),
+            Index.comment.label("comment"),
+            Index.browsing_role.label("browsing_role"),
+            Index.browsing_group.label("browsing_group"),
+            Index.harvest_public_state.label("harvest_public_state")
+        ).filter(Index.id == pid). \
+            cte(name='recursive_t_' + _id, recursive=True)
+
+        rec_alias = aliased(recursive_t, name="rec_" + _id)
+        test_alias = aliased(Index, name="t_" + _id)
+        return recursive_t.union_all(
+            db.session.query(
+                test_alias.parent,
+                test_alias.id,
+                rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
+                case([(func.length(test_alias.index_name) == 0, None)],
+                     else_=rec_alias.c.name + '-/-' + test_alias.index_name),
+                rec_alias.c.name_en + '-/-' + test_alias.index_name_english,
+                rec_alias.c.lev + 1,
+                test_alias.public_state,
+                test_alias.public_date,
+                test_alias.comment,
+                test_alias.browsing_role,
+                test_alias.browsing_group,
+                test_alias.harvest_public_state,
+            ).filter(test_alias.id == rec_alias.c.pid)
+        )
+
+    @classmethod
     def recs_query(cls, pid=0):
         """
         Init select condition of index.
@@ -1204,30 +1247,30 @@ class Indexes(object):
             return False
 
     @classmethod
-    def is_public_state_and_not_in_future(cls, paths):
+    def is_public_state_and_not_in_future(cls, ids):
         """Check have public state and open date not in future."""
-        def _query(path):
-            return db.session. \
-                query(func.every(db.and_(
-                    Index.public_state,
-                    db.or_(
-                        Index.public_date.is_(None),
-                        Index.public_date <= date.today()
-                    ))).label('parent_state')
-                ).filter(Index.id.in_(path))
+        def _query(_id):
+            recursive_t = cls.recs_reverse_query(_id)
+            return db.session.query(func.every(db.and_(
+                recursive_t.c.public_state,
+                db.or_(
+                    recursive_t.c.public_date.is_(None),
+                    recursive_t.c.public_date <= date.today()
+                ))).label('parent_state'))
 
         try:
-            _paths = deepcopy(paths)
-            last_path = _paths.pop(-1).split('/')
-            qry = _query(last_path)
-            for i in range(len(_paths)):
-                _paths[i] = _query(_paths[i])
-            smt = qry.union_all(*_paths).subquery()
+            _ids = deepcopy(ids)
+            qry = _query(_ids.pop(-1))
+            for i in range(len(_ids)):
+                _ids[i] = _query(_ids[i])
+
+            smt = qry.union_all(*_ids).subquery()
             result = db.session.query(
-                func.bool_or(
-                    smt.c.parent_state).label('parent_state')).one()
+                func.bool_or(smt.c.parent_state).label('parent_state')).one()
+
             return result.parent_state
         except Exception as se:
+            print(se)
             current_app.logger.debug(se)
             return False
 
@@ -1508,27 +1551,10 @@ class Indexes(object):
         :param index_id: Identifier of the index.
         :return: path.
         """
-        recursive_t = db.session.query(
-            Index.parent.label("pid"),
-            Index.id.label("cid"),
-            func.cast(Index.id, db.Text).label("path")
-        ).filter(Index.id == index_id).cte(name="recursive_t", recursive=True)
-
-        rec_alias = aliased(recursive_t, name="rec")
-        test_alias = aliased(Index, name="t")
-        recursive_t = recursive_t.union_all(
-            db.session.query(
-                test_alias.parent,
-                test_alias.id,
-                func.cast(test_alias.id, db.Text) + '/' + rec_alias.c.path
-            ).filter(test_alias.id == rec_alias.c.pid)
-        )
-
-        with db.session.begin_nested():
-            qlst = [recursive_t.c.path]
-            obj = db.session.query(*qlst). \
-                order_by(recursive_t.c.pid).first()
-            return obj.path if obj else ''
+        recursive_t = cls.recs_reverse_query(index_id)
+        qlst = [recursive_t.c.path]
+        obj = db.session.query(*qlst).order_by(recursive_t.c.pid).first()
+        return obj.path if obj else ''
 
     @classmethod
     def get_harverted_index_list(cls):
@@ -1586,7 +1612,7 @@ class Indexes(object):
 
     @classmethod
     def get_public_indexes_list(cls):
-        """Get full path of public indexes.
+        """Get list id of public indexes.
 
         :return: path.
         """
@@ -1615,11 +1641,11 @@ class Indexes(object):
                        test_alias.public_date < datetime.utcnow()))
         )
 
-        paths = []
+        ids = []
         with db.session.begin_nested():
             qlst = [recursive_t.c.cid]
             indexes = db.session.query(*qlst). \
                 order_by(recursive_t.c.pid).all()
             for idx in indexes:
-                paths.append(str(idx[0]))
-        return paths
+                ids.append(str(idx[0]))
+        return ids
