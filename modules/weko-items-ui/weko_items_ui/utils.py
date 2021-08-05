@@ -360,24 +360,6 @@ def find_hidden_items(item_id_list, idx_paths=None):
     return hidden_list
 
 
-def get_hidden_flag_for_ranking(index_info, index_id):
-    """Check if item is hidden in the ranking."""
-    if index_id in index_info:
-        cur_date = datetime.now()
-        if index_info[index_id]['public_date'] \
-                and index_info[index_id]['public_date'] > cur_date:
-            return True
-        if "-99" not in index_info[index_id]['browsing_role']:
-            return True
-        if index_info[index_id]['parent'] != '0':
-            return get_hidden_flag_for_ranking(
-                index_info, index_info[index_id]['parent'])
-        else:
-            return False
-    else:
-        return True
-
-
 def parse_ranking_results(index_info,
                           results,
                           display_rank,
@@ -402,33 +384,11 @@ def parse_ranking_results(index_info,
         results = dict()
         results['all'] = data_list
 
-    hidden_items = []
-    for item in results[list_name]:
-        record_id = item.get('record_id')
-        if record_id:
-            record = WekoRecord.get_record(record_id)
-            if record['publish_status'] != '0' \
-                    or datetime.strptime(record['publish_date'],
-                                         '%Y-%m-%d') > datetime.now():
-                hidden_items.append(str(record.id))
-                continue
-            is_hidden = True
-            for index_id in record['path']:
-                is_hidden = is_hidden \
-                    and get_hidden_flag_for_ranking(index_info, index_id)
-            if is_hidden:
-                hidden_items.append(str(record.id))
-
     if results and list_name in results:
         rank = 1
         count = 0
         date = ''
         for item in results[list_name]:
-            # Skip hidden items
-            record_id = item.get('record_id')
-            if record_id and record_id in hidden_items:
-                continue
-
             t = {}
             if count_key:
                 if not count == int(item[count_key]):
@@ -452,7 +412,7 @@ def parse_ranking_results(index_info,
                     title = 'None'
             t['title'] = title
             t['url'] = url.format(item[key]) if url and key in item else None
-            if(title != ''):  # Do not add empty searches
+            if title != '':  # Do not add empty searches
                 ranking_list.append(t)
             if len(ranking_list) == display_rank:
                 break
@@ -480,6 +440,21 @@ def parse_ranking_new_items(result_data):
             item_title = meta_data.get('item_title')
         data['record_name'] = item_title
         data_list.append(data)
+    return data_list
+
+
+def parse_ranking_record(result_data):
+    """Parse ranking record.
+
+    :param result_data: result data
+    """
+    data_list = list()
+    if not result_data or not result_data.get('hits') \
+            or not result_data.get('hits').get('hits'):
+        return data_list
+    for item_data in result_data.get('hits').get('hits'):
+        if item_data.get('_source', {}).get('control_number'):
+            data_list.append(item_data.get('_source').get('control_number'))
     return data_list
 
 
@@ -1533,11 +1508,12 @@ def _custom_export_metadata(record_metadata: dict, hide_item: bool = True,
             replace_fqdn_of_file_metadata(v.get("attribute_value_mlt", []))
 
 
-def get_new_items_by_date(start_date: str, end_date: str) -> dict:
+def get_new_items_by_date(start_date: str, end_date: str, ranking=False) -> dict:
     """Get ranking new item by date.
 
     :param start_date:
     :param end_date:
+    :param ranking:
     :return:
     """
     record_search = RecordsSearch(
@@ -1545,10 +1521,15 @@ def get_new_items_by_date(start_date: str, end_date: str) -> dict:
     result = dict()
 
     try:
+        indexes = Indexes.get_public_indexes_list()
+        if len(indexes) == 0:
+            return result
         search_instance, _qs_kwargs = item_search_factory(None,
                                                           record_search,
                                                           start_date,
-                                                          end_date)
+                                                          end_date,
+                                                          indexes,
+                                                          ranking=ranking)
         search_result = search_instance.execute()
         result = search_result.to_dict()
     except NotFoundError as e:
@@ -2277,13 +2258,20 @@ def get_ranking(settings):
     rankings = {}
     start_date = start_date_original.strftime('%Y-%m-%d')
     end_date = end_date_original.strftime('%Y-%m-%d')
+    pid_value_permissions = []
     # most_reviewed_items
     if settings.rankings['most_reviewed_items']:
         result = QueryRecordViewReportHelper.get(
             start_date=start_date,
             end_date=end_date,
             agg_size=settings.display_rank,
-            agg_sort={'value': 'desc'})
+            agg_sort={'value': 'desc'},
+            ranking=True)
+        if not pid_value_permissions:
+            pid_value_permissions = parse_ranking_record(
+                get_new_items_by_date(start_date, end_date, ranking=True))
+        permission_ranking(result, pid_value_permissions, settings.display_rank,
+                           'all', 'pid_value')
         rankings['most_reviewed_items'] = \
             parse_ranking_results(index_info, result, settings.display_rank,
                                   list_name='all',
@@ -2298,7 +2286,13 @@ def get_ranking(settings):
             target_report='3',
             unit='Item',
             agg_size=settings.display_rank,
-            agg_sort={'_count': 'desc'})
+            agg_sort={'_count': 'desc'},
+            ranking=True)
+        if not pid_value_permissions:
+            pid_value_permissions = parse_ranking_record(
+                get_new_items_by_date(start_date, end_date, ranking=True))
+        permission_ranking(result, pid_value_permissions, settings.display_rank,
+                           'data', 'col1')
         rankings['most_downloaded_items'] = \
             parse_ranking_results(index_info, result, settings.display_rank,
                                   list_name='data', title_key='col2',
@@ -2323,7 +2317,7 @@ def get_ranking(settings):
         result = QuerySearchReportHelper.get(
             start_date=start_date,
             end_date=end_date,
-            agg_size=settings.display_rank,
+            agg_size=settings.display_rank + 1,
             agg_sort={'value': 'desc'}
         )
         rankings['most_searched_keywords'] = \
@@ -3066,3 +3060,15 @@ def check_item_is_deleted(recid):
         pid = PersistentIdentifier.query.filter_by(
             pid_type='recid', object_uuid=recid).first()
     return pid and pid.status == PIDStatus.DELETED
+
+
+def permission_ranking(result, pid_value_permissions, display_rank, list_name,
+                       pid_value):
+    """Permission ranking."""
+    list_result = list()
+    for data in result.get(list_name, []):
+        if data.get(pid_value, '') in pid_value_permissions:
+            list_result.append(data)
+        if len(list_result) == display_rank:
+            break
+    result[list_name] = list_result

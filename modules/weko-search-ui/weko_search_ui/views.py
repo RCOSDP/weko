@@ -174,7 +174,8 @@ def search():
         send_info['site_license_name'] = current_user.site_license_name \
             if hasattr(current_user, 'site_license_name') else ''
         if search_type in WEKO_SEARCH_TYPE_DICT.values():
-            if not search_type == WEKO_SEARCH_TYPE_DICT['INDEX']:
+            if not search_type == WEKO_SEARCH_TYPE_DICT[
+                    'INDEX'] and get_args.get('q', '').strip():
                 searched.send(
                     current_app._get_current_object(),
                     search_args=get_args,

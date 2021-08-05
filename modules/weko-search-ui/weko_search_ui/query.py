@@ -1038,7 +1038,8 @@ def item_search_factory(self,
                         start_date,
                         end_date,
                         list_index_id=None,
-                        ignore_publish_status=False):
+                        ignore_publish_status=False,
+                        ranking=False):
     """Factory for opensearch.
 
     :param self:
@@ -1047,28 +1048,18 @@ def item_search_factory(self,
     :param end_date: End date for search
     :param list_index_id: index tree list or None
     :param ignore_publish_status: both public and private
+    :param ranking: Ranking check
     :return:
     """
     def _get_query(start_term, end_term, indexes):
-        query_string = "_type:{} AND " \
-                       "relation_version_is_last:true AND " \
-                       "publish_date:[{} TO {}]".format(current_app.config[
-                           "INDEXER_DEFAULT_DOC_TYPE"],
-                           start_term,
-                           end_term)
+        query_string = "_type:{} AND relation_version_is_last:true ".format(
+            current_app.config["INDEXER_DEFAULT_DOC_TYPE"])
         if not ignore_publish_status:
             query_string += " AND publish_status:0 "
-        query_filter = []
-
-        if indexes:
-
-            for index in indexes:
-                q_wildcard = {
-                    "wildcard": {
-                        "path": index
-                    }
-                }
-                query_filter.append(q_wildcard)
+        if not ranking:
+            query_string += " AND publish_date:[* TO {}] ".format(end_term)
+        else:
+            query_string += " AND publish_date:[{} TO {}]".format(start_term, end_term)
 
         query_q = {
             "size": 10000,
@@ -1078,11 +1069,6 @@ def item_search_factory(self,
                         {
                             "query_string": {
                                 "query": query_string
-                            }
-                        },
-                        {
-                            "bool": {
-                                "should": query_filter
                             }
                         }
                     ]
@@ -1098,6 +1084,31 @@ def item_search_factory(self,
                     }
             ]
         }
+        query_must_param = []
+        if indexes:
+            indexes_num = len(indexes)
+            max_clause_count = 1024
+            for div in range(0, int(indexes_num / max_clause_count) + 1):
+                e_right = div * max_clause_count
+                e_left = (div + 1) * max_clause_count \
+                    if indexes_num > (div + 1) * max_clause_count \
+                    else indexes_num
+                div_indexes = []
+                for index in indexes[e_right:e_left]:
+                    div_indexes.append({
+                        "wildcard": {
+                            "path": str(index)
+                        }
+                    })
+                query_must_param.append({
+                    "bool": {
+                        "should": div_indexes
+                    }
+                })
+        if ranking:
+            query_must_param.append({'exists': {'field': 'path'}})
+        if query_must_param:
+            query_q["query"]["bool"]["must"] += query_must_param
         return query_q
 
     query_q = _get_query(start_date, end_date, list_index_id)
