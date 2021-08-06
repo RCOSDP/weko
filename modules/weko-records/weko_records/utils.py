@@ -1561,9 +1561,12 @@ def custom_record_medata_for_export(record_metadata: dict):
 
     :param record_metadata:
     """
-    from weko_records_ui.utils import hide_item_metadata, replace_license_free
+    from weko_records_ui.utils import display_oaiset_path, \
+        hide_item_metadata, replace_license_free
+
     hide_item_metadata(record_metadata)
     replace_license_free(record_metadata)
+    display_oaiset_path(record_metadata)
 
 
 def replace_fqdn(url_path: str, host_url: str = None) -> str:

@@ -201,16 +201,11 @@ def listsets(**kwargs):
     oai_sets = OAISet.query.paginate(page=page, per_page=size, error_out=False)
 
     for oai_set in oai_sets.items:
-        index_path = [oai_set.spec.replace(':', '/')]
-        if Indexes.is_public_state([str(oai_set.id)]) is not None \
-                and (not Indexes.is_public_state(index_path.copy())
-                     or not Indexes.get_harvest_public_state(
-                    index_path.copy())):
-            continue
+        index_path = Indexes.get_full_path(str(oai_set.spec)).replace('/', ':')
 
         e_set = SubElement(e_listsets, etree.QName(NS_OAIPMH, 'set'))
         e_setSpec = SubElement(e_set, etree.QName(NS_OAIPMH, 'setSpec'))
-        e_setSpec.text = oai_set.spec
+        e_setSpec.text = index_path
         e_setName = SubElement(e_set, etree.QName(NS_OAIPMH, 'setName'))
         e_setName.text = oai_set.name
         if oai_set.description:
@@ -270,11 +265,10 @@ def header(parent, identifier, datestamp, sets=None, deleted=False):
     e_datestamp = SubElement(e_header, etree.QName(NS_OAIPMH, 'datestamp'))
     e_datestamp.text = datetime_to_datestamp(datestamp)
     for spec in sets or []:
-        index_path = [spec.replace(':', '/')]
-        if Indexes.is_public_state(index_path.copy()) \
-                and Indexes.get_harvest_public_state(index_path.copy()):
+        index_path = Indexes.get_full_path(str(spec)).replace('/', ':')
+        if index_path:
             e = SubElement(e_header, etree.QName(NS_OAIPMH, 'setSpec'))
-            e.text = spec
+            e.text = index_path
     return e_header
 
 

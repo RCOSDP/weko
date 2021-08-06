@@ -1067,3 +1067,21 @@ def get_terms():
                 get(current_lang, "en").get("content", "")}
         )
     return terms_result
+
+
+def display_oaiset_path(record_metadata):
+    """Display _oai.sets in metadata by path.
+
+    Args:
+        record_metadata ([type]): [description]
+    """
+    from weko_index_tree.api import Indexes
+
+    sets = record_metadata.get('_oai',{}).get('sets')
+    if sets:
+        index_paths = []
+        for set in sets:
+            _path = Indexes.get_full_path(str(set)).replace('/', ':')
+            if _path:
+                index_paths.append(_path)
+        record_metadata['_oai']['sets'] = index_paths
