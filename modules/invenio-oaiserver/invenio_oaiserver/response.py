@@ -201,11 +201,16 @@ def listsets(**kwargs):
     oai_sets = OAISet.query.paginate(page=page, per_page=size, error_out=False)
 
     for oai_set in oai_sets.items:
-        index_path = Indexes.get_full_path(str(oai_set.spec)).replace('/', ':')
+        index_path =  [oai_set.spec.replace(':', '/')]
+        if Indexes.is_public_state([str(oai_set.id)]) is not None \
+                and (not Indexes.is_public_state(index_path.copy())
+                     or not Indexes.get_harvest_public_state(
+                    index_path.copy())):
+            continue
 
         e_set = SubElement(e_listsets, etree.QName(NS_OAIPMH, 'set'))
         e_setSpec = SubElement(e_set, etree.QName(NS_OAIPMH, 'setSpec'))
-        e_setSpec.text = index_path
+        e_setSpec.text = oai_set.spec
         e_setName = SubElement(e_set, etree.QName(NS_OAIPMH, 'setName'))
         e_setName.text = oai_set.name
         if oai_set.description:
@@ -255,7 +260,7 @@ def listmetadataformats(**kwargs):
     return e_tree
 
 
-def header(parent, identifier, datestamp, sets=None, deleted=False):
+def header(parent, identifier, datestamp, sets=[], deleted=False):
     """Attach ``<header/>`` element to a parent."""
     e_header = SubElement(parent, etree.QName(NS_OAIPMH, 'header'))
     if deleted:
@@ -264,11 +269,13 @@ def header(parent, identifier, datestamp, sets=None, deleted=False):
     e_identifier.text = identifier
     e_datestamp = SubElement(e_header, etree.QName(NS_OAIPMH, 'datestamp'))
     e_datestamp.text = datetime_to_datestamp(datestamp)
-    for spec in sets or []:
-        index_path = Indexes.get_full_path(str(spec)).replace('/', ':')
-        if index_path:
+    if not sets:
+        sets = []
+    paths = Indexes.get_path_name(sets)
+    for path in paths:
+        if path.public_state and path.harvest_public_state:
             e = SubElement(e_header, etree.QName(NS_OAIPMH, 'setSpec'))
-            e.text = index_path
+            e.text = path.path.replace('/', ':')
     return e_header
 
 
