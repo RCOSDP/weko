@@ -1077,7 +1077,7 @@ def display_oaiset_path(record_metadata):
     """
     from weko_index_tree.api import Indexes
 
-    sets = record_metadata.get('_oai',{}).get('sets')
+    sets = record_metadata.get('path', [])
     index_paths = []
     if sets:
         paths = Indexes.get_path_name(sets)

@@ -391,7 +391,7 @@ def getrecord(**kwargs):
         e_record,
         identifier=pid.pid_value,
         datestamp=record.updated,
-        sets=record.get('_oai', {}).get('sets', []),
+        sets=record.get('path', [])
     )
     e_metadata = SubElement(e_record,
                             etree.QName(NS_OAIPMH, 'metadata'))
@@ -519,7 +519,7 @@ def listrecords(**kwargs):
                 e_record,
                 identifier=pid.pid_value,
                 datestamp=record['updated'],
-                sets=record['json']['_source'].get('_oai', {}).get('sets', []),
+                sets=record['json']['_source'].get('path', [])
             )
             e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
                                                           'metadata'))

@@ -136,7 +136,7 @@ def get_records(**kwargs):
         )[(page_ - 1) * size_:page_ * size_]
 
         if 'set' in kwargs:
-            search = search.query('match', **{'_oai.sets': kwargs['set']})
+            search = search.query('match', **{'path': kwargs['set']})
 
         time_range = {}
         if 'from_' in kwargs:
