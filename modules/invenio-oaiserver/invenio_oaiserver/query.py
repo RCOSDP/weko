@@ -62,7 +62,7 @@ def get_affected_records(spec=None, search_pattern=None):
     queries = []
 
     if spec is not None:
-        queries.append(Q('match', **{'_oai.sets': spec}))
+        queries.append(Q('match', **{'_oai.sets': spec.split(':')[-1]}))
 
     if search_pattern:
         queries.append(query_string_parser(search_pattern=search_pattern))

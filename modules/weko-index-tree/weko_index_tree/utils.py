@@ -417,16 +417,13 @@ def reduce_index_by_more(tree, more_ids=None):
 
 def get_admin_coverpage_setting():
     """Get 'avail' value from pdfcoverpage_set table."""
+    from weko_records_ui.models import PDFCoverPageSettings
     avail = 'disable'
     try:
-        metadata = MetaData()
-        metadata.reflect(bind=db.engine)
-        table_name = 'pdfcoverpage_set'
+        setting = PDFCoverPageSettings.find(1)
 
-        pdfcoverpage_table = Table(table_name, metadata)
-        record = db.session.query(pdfcoverpage_table)
-
-        avail = record.first()[1]
+        if setting:
+            avail = setting.avail
     except Exception as ex:
         current_app.logger.debug(ex)
     return avail == 'enable'
