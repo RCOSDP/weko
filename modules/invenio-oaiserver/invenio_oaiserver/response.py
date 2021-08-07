@@ -414,10 +414,11 @@ def listidentifiers(**kwargs):
     """Create OAI-PMH response for verb ListIdentifiers."""
     e_tree, e_listidentifiers = verb(**kwargs)
     identify = OaiIdentify.get_all()
-    result = get_records(**kwargs)
+    if not identify or not identify.outPutSetting:
+        return error(get_error_code_msg(), **kwargs)
 
-    if not identify or not identify.outPutSetting \
-            or not result.total:
+    result = get_records(**kwargs)
+    if not result.total:
         return error(get_error_code_msg(), **kwargs)
 
     public_index_ids = Indexes.get_public_indexes_list()
@@ -452,7 +453,7 @@ def listidentifiers(**kwargs):
                 e_listidentifiers,
                 identifier=pid.pid_value,
                 datestamp=r['updated'],
-                sets=r['json']['_source'].get('_oai', {}).get('sets', []),
+                sets=r['json']['_source'].get('path', [])
             )
 
     resumption_token(e_listidentifiers, result, **kwargs)
