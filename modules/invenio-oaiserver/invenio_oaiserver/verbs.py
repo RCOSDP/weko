@@ -168,6 +168,7 @@ class ResumptionVerbs(Verbs):
 
         metadataPrefix = fields.Str(load_only=True,
                                     validate=validate_metadata_prefix)
+
     class ListRecords(OAISchema, ResumptionTokenSchema):
         """Arguments for ListRecords verb."""
 

@@ -201,7 +201,7 @@ def listsets(**kwargs):
     oai_sets = OAISet.query.paginate(page=page, per_page=size, error_out=False)
 
     for oai_set in oai_sets.items:
-        index_path =  [oai_set.spec.replace(':', '/')]
+        index_path = [oai_set.spec.replace(':', '/')]
         if Indexes.is_public_state([str(oai_set.id)]) is not None \
                 and (not Indexes.is_public_state(index_path.copy())
                      or not Indexes.get_harvest_public_state(

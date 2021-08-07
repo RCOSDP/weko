@@ -1178,7 +1178,7 @@ class BaseMapper:
             BaseMapper.update_itemtype_map()
 
         for item in BaseMapper.itemtype_map:
-            if 'Others' == item or 'Multiple' == item or 'Others' in item:
+            if 'Others' == item or 'Multiple' == item:
                 self.itemtype = BaseMapper.itemtype_map.get(item)
                 break
 

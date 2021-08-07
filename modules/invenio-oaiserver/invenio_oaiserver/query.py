@@ -180,7 +180,6 @@ def get_records(**kwargs):
             scroll='{0}s'.format(scroll),
         )
 
-
     class Pagination(object):
         """Dummy pagination class."""
 
