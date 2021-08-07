@@ -1200,7 +1200,11 @@ class Indexes(object):
 
     @classmethod
     def get_harvest_public_state(cls, paths):
-        """Get harvest public state."""
+        """Check harvest_public_state of recursive index tree.
+
+        Args:
+            paths ([type]): [description]
+        """
         def _query(path):
             return db.session. \
                 query(func.every(Index.harvest_public_state).label(
