@@ -563,9 +563,9 @@ class Indexes(object):
         record = WekoRecord.get_record_by_pid(pid)
         tree = cls.get_index_tree(root_node_id)
         if record.get('_oai'):
-            reset_tree(tree=tree, path=record.get('path'))
+            reset_tree(tree=tree, path=record.get('path'), ignore_more=True)
         else:
-            reset_tree(tree=tree, path=[])
+            reset_tree(tree=tree, path=[], ignore_more=True)
 
         return tree
 
