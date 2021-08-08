@@ -990,7 +990,7 @@ class WekoDeposit(Deposit):
             self.data = data
             self.jrc = jrc
             self.is_edit = is_edit
-            self._convert_description_to_object()
+            self._convert_jpcoar_data_to_es()
         except RuntimeError:
             raise
         except BaseException:
@@ -1033,6 +1033,65 @@ class WekoDeposit(Deposit):
                         _new_description.append(data)
             if _new_description:
                 self.jrc[description_key] = _new_description
+
+    def _convert_jpcoar_data_to_es(self):
+        """Convert data jpcoar to es."""
+        # Convert description to object.
+        self._convert_description_to_object()
+
+        # Convert data for geo location.
+        self._convert_data_for_geo_location()
+
+    def _convert_data_for_geo_location(self):
+        """Convert geo location to object."""
+        def _convert_geo_location(value):
+            _point = []
+            if isinstance(value.get("pointLongitude"), list) and isinstance(
+                    value.get("pointLatitude"), list):
+                lat_len = len(value.get("pointLatitude"))
+                for _idx, _value in enumerate(value.get("pointLongitude")):
+                    _point.append({
+                        "lat": value.get("pointLatitude")[
+                            _idx] if _idx < lat_len else "",
+                        "lon": _value
+                    })
+            return _point
+
+        def _convert_geo_location_box():
+            point_box = {}
+            jpcoar_north_east_point = {
+                "pointLatitude": v.get("northBoundLatitude"),
+                "pointLongitude": v.get("eastBoundLongitude"),
+            }
+            jpcoar_south_west_point = {
+                "pointLatitude": v.get("southBoundLatitude"),
+                "pointLongitude": v.get("westBoundLongitude"),
+            }
+            es_north_east_point = _convert_geo_location(jpcoar_north_east_point)
+            es_south_west_point = _convert_geo_location(jpcoar_south_west_point)
+            if es_north_east_point:
+                point_box['northEastPoint'] = es_north_east_point
+            if es_south_west_point:
+                point_box['southWestPoint'] = es_south_west_point
+            return point_box
+
+        geo_location_key = "geoLocation"
+        if isinstance(self.jrc, dict) and self.jrc.get(geo_location_key):
+            geo_location = self.jrc.get(geo_location_key)
+            new_data = {}
+            for k, v in geo_location.items():
+                if "geoLocationPlace" == k:
+                    new_data[k] = v
+                elif "geoLocationPoint" == k:
+                    point = _convert_geo_location(v)
+                    if point:
+                        new_data[k] = point
+                elif "geoLocationBox" == k:
+                    point = _convert_geo_location_box()
+                    if point:
+                        new_data[k] = point
+            if new_data:
+                self.jrc[geo_location_key] = new_data
 
     @classmethod
     def delete_by_index_tree_id(cls, path):

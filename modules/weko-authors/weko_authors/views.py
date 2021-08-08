@@ -27,13 +27,11 @@ from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
-from sqlalchemy.sql import func
-from weko_records.models import ItemMetadata
 
 from .config import WEKO_AUTHORS_IMPORT_KEY
 from .models import Authors, AuthorsPrefixSettings
 from .permissions import author_permission
-from .utils import get_author_setting_obj
+from .utils import get_author_setting_obj, get_count_item_link
 
 blueprint = Blueprint(
     'weko_authors',
@@ -60,37 +58,36 @@ def create():
     if request.headers['Content-Type'] != 'application/json':
         return jsonify(msg=_('Header Error'))
 
-    max_id = 1
-    max = db.session.query(func.max(Authors.id)).one()
-    if max[0]:
-        max_id += max[0]
+    session = db.session
+    new_id = Authors.get_sequence(session)
 
     data = request.get_json()
     data["gather_flg"] = 0
-    data["is_deleted"] = False
-    data["pk_id"] = str(max_id)
+    data["is_deleted"] = "false"
+    data["pk_id"] = str(new_id)
     data["authorIdInfo"].insert(0,
                                 {
                                     "idType": "1",
-                                    "authorId": str(max_id),
+                                    "authorId": str(new_id),
                                     "authorIdShowFlg": "true"
                                 })
     indexer = RecordIndexer()
-    indexer.client.index(
+    es_id = indexer.client.index(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
         doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         body=data,
     )
+    data['id'] = es_id
 
     author_data = dict()
 
-    author_data["id"] = max_id
+    author_data["id"] = new_id
     author_data["json"] = json.dumps(data)
 
-    with db.session.begin_nested():
+    with session.begin_nested():
         author = Authors(**author_data)
-        db.session.add(author)
-    db.session.commit()
+        session.add(author)
+    session.commit()
     return jsonify(msg=_('Success'))
 
 
@@ -134,28 +131,9 @@ def delete_author():
         return jsonify(msg=_('Header Error'))
 
     data = request.get_json()
-    indexer = RecordIndexer()
-
-    query_q = {
-        "query": {
-            "term": {
-                "author_link": data["pk_id"]
-            }
-        },
-        "_source": [
-            "control_number"
-        ]
-    }
-    result_itemCnt = indexer.client.search(
-        index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
-        body=json.loads(json.dumps(query_q))
-    )
-    if result_itemCnt \
-            and 'hits' in result_itemCnt \
-            and 'total' in result_itemCnt['hits'] \
-            and result_itemCnt['hits']['total'] > 0:
+    if get_count_item_link(data['pk_id']):
         return make_response(
-            'The author is linked to items and cannot be deleted.',
+            _('The author is linked to items and cannot be deleted.'),
             500)
 
     try:
@@ -164,15 +142,15 @@ def delete_author():
                 id=json.loads(json.dumps(data))["pk_id"]).one()
             author_data.is_deleted = True
             json_data = json.loads(author_data.json)
-            json_data['is_deleted'] = True
+            json_data['is_deleted'] = 'true'
             author_data.json = json.dumps(json_data)
             db.session.merge(author_data)
 
-            indexer.client.update(
+            RecordIndexer().client.update(
                 id=json.loads(json.dumps(data))["Id"],
                 index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
                 doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
-                body={'doc': {'is_deleted': True}}
+                body={'doc': {'is_deleted': 'true'}}
             )
     except Exception as ex:
         db.session.rollback()
