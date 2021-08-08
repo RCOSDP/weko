@@ -1,7 +1,3 @@
-"""
-Usage:
-invenio shell deleteItem item_id
-"""
 import os
 import sys
 import traceback
@@ -18,22 +14,17 @@ from weko_records.models import ItemMetadata, ItemReference
 from elasticsearch import Elasticsearch, helpers
 
 
-def deleteItem(item_id):
-    """Delete an item and all related information(PersistentID, Usage statictis).
-
-    Args:
-        item_id (integer): item id
-    """
+def deleteItem(id):
     object_uuid_list = []
     itemid_list = []
     pid = PersistentIdentifier.get(
-        pid_type="parent", pid_value="parent:{0}".format(item_id))
+        pid_type="parent", pid_value="parent:{0}".format(id))
     current_app.logger.debug(pid)
     object_uuid_list.append(pid.object_uuid)
-    itemid_list.append(item_id)
+    itemid_list.append(id)
 
     ret = PersistentIdentifier.query.filter(
-        PersistentIdentifier.pid_value.like("{0}.%".format(item_id)))
+        PersistentIdentifier.pid_value.like("{0}.%".format(id)))
 
     for i in ret.all():
         object_uuid_list.append(i.object_uuid)

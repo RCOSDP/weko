@@ -482,6 +482,7 @@ def listrecords(**kwargs):
         return error(get_error_code_msg(), **kwargs)
 
     result = get_records(**kwargs)
+
     if not result.total:
         return error(get_error_code_msg(), **kwargs)
     for record in result.items:
