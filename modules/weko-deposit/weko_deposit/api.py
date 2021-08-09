@@ -1094,16 +1094,19 @@ class WekoDeposit(Deposit):
                 self.jrc[geo_location_key] = new_data
 
     @classmethod
-    def delete_by_index_tree_id(cls, path):
+    def delete_by_index_tree_id(cls, index_id: str):
         """Delete by index tree id."""
-        obj_ids = next((cls.indexer.get_pid_by_es_scroll(path)), [])
+        if index_id:
+            index_id = str(index_id)
+        obj_ids = next((cls.indexer.get_pid_by_es_scroll(index_id)), [])
         try:
             for obj_uuid in obj_ids:
                 r = RecordMetadata.query.filter_by(id=obj_uuid).first()
                 try:
-                    r.json['path'].remove(path)
+                    r.json['path'].remove(index_id)
                     flag_modified(r, 'json')
-                except BaseException:
+                except BaseException as bex:
+                    current_app.logger.error(bex)
                     pass
                 if r.json and not r.json['path']:
                     from weko_records_ui.utils import soft_delete
@@ -1113,6 +1116,7 @@ class WekoDeposit(Deposit):
                     dep.indexer.update_path(dep, update_revision=False)
             db.session.commit()
         except Exception as ex:
+            current_app.logger.error(ex)
             db.session.rollback()
             raise ex
 

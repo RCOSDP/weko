@@ -247,7 +247,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 "key": i["key"],
                 "doc_count": i["doc_count"],
                 "no_available": i["no_available"]["doc_count"],
-                "public_state": indexes_state[i["key"]]
+                "public_state": indexes_state.get(i["key"], False)
             }
 
         is_perm_paths = qs_kwargs.get('is_perm_paths', [])

@@ -947,7 +947,7 @@ def perform_delete_index(index_id, record_class, action: str):
                 raise IndexDeletedRESTError()
             if action in ('move', 'all'):
                 result = record_class. \
-                    delete_by_action(action, index_id, res.path)
+                    delete_by_action(action, index_id)
                 if result is None:
                     raise IndexBaseRESTError(
                         description='Could not delete data.')

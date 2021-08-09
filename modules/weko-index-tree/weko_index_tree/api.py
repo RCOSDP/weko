@@ -304,7 +304,7 @@ class Indexes(object):
         return 0
 
     @classmethod
-    def delete_by_action(cls, action, index_id, path):
+    def delete_by_action(cls, action, index_id):
         """
         Delete_by_action.
 
@@ -320,7 +320,7 @@ class Indexes(object):
             result = cls.delete(index_id)
             if result is not None:
                 # delete indexes all
-                WekoDeposit.delete_by_index_tree_id(path)
+                WekoDeposit.delete_by_index_tree_id(index_id)
         return result
 
     @classmethod
