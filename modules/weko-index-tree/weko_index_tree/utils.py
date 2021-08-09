@@ -90,7 +90,7 @@ def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
         more_ids = []
     roles = get_user_roles()
     groups = get_user_groups()
-    if path:
+    if path is not None:
         id_tp = []
         if not isinstance(path, list):
             id_tp = [path]
