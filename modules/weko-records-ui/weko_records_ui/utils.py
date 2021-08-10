@@ -940,14 +940,7 @@ def is_private_index(record):
     """
     from weko_index_tree.api import Indexes
     list_index = record.get("path")
-    index_lst = []
-    if list_index:
-        index_id_lst = []
-        for index in list_index:
-            indexes = str(index).split('/')
-            index_id_lst.append(indexes[-1])
-        index_lst = index_id_lst
-    indexes = Indexes.get_path_list(index_lst)
+    indexes = Indexes.get_path_list(list_index)
     publish_state = 6
     for index in indexes:
         if len(indexes) == 1:

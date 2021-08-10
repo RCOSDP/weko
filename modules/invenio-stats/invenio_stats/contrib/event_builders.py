@@ -195,13 +195,12 @@ def record_view_event_builder(event, sender_app, pid=None, record=None,
         # get index information
         index_list = []
 
-        if record.navi:
-            for index in record.navi:
-                index_list.append(dict(
-                    index_id=str(index[1]),
-                    index_name=index[3] if index[3] else index[4],
-                    index_name_en=index[4]
-                ))
+        for index in record.navi:
+            index_list.append(dict(
+                index_id=str(index[1]),
+                index_name=index[3] if index[3] else index[4],
+                index_name_en=index[4]
+            ))
 
         cur_user = get_user()
         cur_user_id = cur_user['user_id'] if cur_user['user_id'] else 'guest'

@@ -316,15 +316,6 @@ class Indexes(object):
         from weko_deposit.api import WekoDeposit
         if "move" == action:
             result = cls.delete(index_id, True)
-            if result is not None:
-                # move indexes all
-                target = path.split('/')
-                if len(target) >= 2:
-                    target.pop(-2)
-                    target = "/".join(target)
-                else:
-                    target = ""
-                WekoDeposit.update_by_index_tree_id(path, target)
         else:
             result = cls.delete(index_id)
             if result is not None:
@@ -468,7 +459,6 @@ class Indexes(object):
                             if not ret['is_ok']:
                                 db.session.rollback()
                 else:
-                    slf_path = cls.get_self_path(index_id)
                     index = Index.query.filter_by(id=index_id).one()
                     try:
                         _update_index(position_max, parent)
@@ -503,12 +493,6 @@ class Indexes(object):
                     finally:
                         if not ret['is_ok']:
                             db.session.rollback()
-
-                    # move items
-                    target = cls.get_self_path(index_id)
-                    from weko_deposit.api import WekoDeposit
-                    WekoDeposit.update_by_index_tree_id(slf_path.path,
-                                                        target.path)
             except Exception as ex:
                 ret['is_ok'] = False
                 ret['msg'] = str(ex)
@@ -558,9 +542,18 @@ class Indexes(object):
         return tree
 
     @classmethod
-    def get_browsing_tree_paths(cls, pid=0):
-        """Get browsing tree paths."""
-        tree = cls.get_browsing_tree_ignore_more(pid)
+    def get_browsing_tree_paths(cls, index_id: int = 0):
+        """Get browsing tree paths.
+
+        Args:
+            pid (int, optional): Index identifier. Defaults to 0.
+
+        Returns:
+            [type]: [description]
+        """
+        if not index_id:
+            index_id = 0
+        tree = cls.get_browsing_tree_ignore_more(index_id)
         return get_index_id_list(tree, [])
 
     @classmethod
@@ -577,7 +570,7 @@ class Indexes(object):
         return tree
 
     @classmethod
-    def get_recursive_tree(cls, pid=0):
+    def get_recursive_tree(cls, pid: int = 0):
         """Get recursive tree."""
         with db.session.begin_nested():
             recursive_t = cls.recs_tree_query(pid)
@@ -708,20 +701,19 @@ class Indexes(object):
         return obj
 
     @classmethod
-    def get_index_by_name_english(cls, index_name_english="", pid=0):
-        """Get index by English index name.
+    def get_index_by_all_name(cls, index_name=""):
+        """Get index by index name (jp, eng).
 
         :argument
-            index_name_english   -- {str} index_name_english query
-            pid          -- {number} parent index id
+            index_name   -- {str} Index name.
         :return
             return       -- index object
 
         """
         with db.session.begin_nested():
             obj = db.session.query(Index). \
-                filter_by(index_name_english=index_name_english,
-                          parent=pid).one_or_none()
+                filter(db.or_(Index.index_name_english == index_name,
+                              Index.index_name == index_name)).first()
         return obj
 
     @classmethod
@@ -771,21 +763,22 @@ class Indexes(object):
         return q
 
     @classmethod
-    def get_path_name(cls, node_path):
+    def get_path_name(cls, index_ids):
         """
         Get index title info.
 
         :param node_path: List of the Index Identifiers.
         :return: the list of index.
         """
+        node_paths = [cls.get_full_path(item) for item in index_ids]
         recursive_t = cls.recs_query()
         q = db.session.query(recursive_t).filter(
-            recursive_t.c.path.in_(node_path)). \
+            recursive_t.c.path.in_(node_paths)). \
             order_by(recursive_t.c.path).all()
         return filter_index_list_by_role(q)
 
     @classmethod
-    def get_self_list(cls, node_path, community_id=None):
+    def get_self_list(cls, index_id, community_id=None):
         """
         Get index list info.
 
@@ -793,18 +786,16 @@ class Indexes(object):
         :return: the list of index.
         """
         if community_id:
-            index = node_path.rfind('/')
-            pid = node_path[index + 1:]
             from invenio_communities.models import Community
             community_obj = Community.get(community_id)
             recursive_t = cls.recs_query()
             query = db.session.query(recursive_t).filter(db.or_(
-                recursive_t.c.cid == pid, recursive_t.c.pid == pid))
+                recursive_t.c.cid == index_id, recursive_t.c.pid == index_id))
             if not get_user_roles()[0]:
                 query = query.filter(recursive_t.c.public_state)
             q = query.order_by(recursive_t.c.path).all()
             lst = list()
-            if node_path != '0':
+            if index_id != '0':
                 for item in q:
                     if item.cid == community_obj.root_node_id \
                             and item.pid == '0':
@@ -813,53 +804,14 @@ class Indexes(object):
                         lst.append(item)
                 return lst
         else:
-            index = node_path.rfind('/')
-            pid = node_path[index + 1:]
             recursive_t = cls.recs_query()
             query = db.session.query(recursive_t).filter(
-                db.or_(recursive_t.c.pid == pid,
-                       recursive_t.c.cid == pid))
+                db.or_(recursive_t.c.pid == index_id,
+                       recursive_t.c.cid == index_id))
             if not get_user_roles()[0]:
                 query = query.filter(recursive_t.c.public_state)
             q = query.order_by(recursive_t.c.path).all()
             return q
-
-    @classmethod
-    def get_all_path_list(cls, node_path):
-        """Get child of index list info.
-
-        :param node_path: Identifier of the index.
-        :return: the list of index.
-        """
-        # def get_path_list(node_path):
-        #     """
-        #     Get index list info.
-        #
-        #     :param node_path: Identifier of the index.
-        #     :return: the list of index.
-        #     """
-        #     node_path = str(node_path)
-        #     index = node_path.rfind('/')
-        #     pid = node_path[index + 1:]
-        #     recursive_t = cls.recs_query()
-        #     q = db.session.query(recursive_t).filter(
-        #         db.or_(recursive_t.c.pid == pid,
-        #                recursive_t.c.cid == pid)). \
-        #         order_by(recursive_t.c.path).all()
-        #     if q and len(q) >1:
-        #         path_list.append(q[0].path)
-        #         q = q[1:]
-        #         for inx in q:
-        #             get_path_list(inx.path)
-        #     else:
-        #         path_list.append(q[0].path)
-        #     return path_list
-        #
-        # path_list=[]
-        # path = get_path_list(node_path)
-        path = Indexes.get_browsing_tree_paths(node_path)
-
-        return path
 
     @classmethod
     def get_self_path(cls, node_id):
@@ -878,7 +830,7 @@ class Indexes(object):
             return False
 
     @classmethod
-    def get_child_list_by_pip(cls, pid):
+    def get_child_list_recursive(cls, pid):
         """
         Get index list info.
 
@@ -927,7 +879,7 @@ class Indexes(object):
         )
         query = db.session.query(recursive_t)
         q = query.order_by(recursive_t.c.path).all()
-        return q
+        return [str(item.cid) for item in q]
 
     @classmethod
     def recs_query(cls, pid=0):
@@ -1093,7 +1045,7 @@ class Indexes(object):
         return recursive_t
 
     @classmethod
-    def recs_root_tree_query(cls, pid=0, ):
+    def recs_root_tree_query(cls, pid=0):
         """
         Init select condition of index.
 
@@ -1269,7 +1221,6 @@ class Indexes(object):
             last_path = _paths.pop(-1).split('/')
             qry = _query(last_path)
             for i in range(len(_paths)):
-                _paths[i] = _paths[i].split('/')
                 _paths[i] = _query(_paths[i])
             smt = qry.union_all(*_paths).subquery()
             result = db.session.query(
@@ -1374,19 +1325,18 @@ class Indexes(object):
         return Index.get_children(index_id)
 
     @classmethod
-    def get_coverpage_state(cls, path):
+    def get_coverpage_state(cls, index_id):
         """
         Get coverpage state from index path.
 
         :param path: item's index path
         """
         try:
-            last_path = path.pop(-1).split('/')
             return Index.query.filter_by(
-                id=last_path.pop()).one().coverpage_state
+                id=index_id).one().coverpage_state or False
 
-        except Exception as se:
-            current_app.logger.debug(se)
+        except Exception as ex:
+            current_app.logger.debug(ex)
             return False
 
     @classmethod
@@ -1480,19 +1430,17 @@ class Indexes(object):
         return Index.query.count()
 
     @classmethod
-    def get_child_list(cls, node_path):
+    def get_child_list(cls, index_id):
         """
         Get index list info.
 
-        :param node_path: Identifier of the index.
-        :return: the list of index.
+        :param index_id: Index identifier number.
+        :return: The list of index.
         """
-        index = node_path.rfind('/')
-        pid = node_path[index + 1:]
         recursive_t = cls.recs_query()
         query = db.session.query(recursive_t).filter(
-            db.or_(recursive_t.c.pid == pid,
-                   recursive_t.c.cid == pid))
+            db.or_(recursive_t.c.pid == index_id,
+                   recursive_t.c.cid == index_id))
         if not get_user_roles()[0]:
             query = query.filter(recursive_t.c.public_state)
         q = query.order_by(recursive_t.c.path).all()
@@ -1590,8 +1538,7 @@ class Indexes(object):
         """
         recursive_t = db.session.query(
             Index.parent.label("pid"),
-            Index.id.label("cid"),
-            func.cast(Index.id, db.Text).label("path")
+            Index.id.label("cid")
         ).filter(
             Index.parent == 0,
             Index.harvest_public_state.is_(True)
@@ -1602,37 +1549,31 @@ class Indexes(object):
         recursive_t = recursive_t.union_all(
             db.session.query(
                 test_alias.parent,
-                test_alias.id,
-                rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text)
+                test_alias.id
             ).filter(
                 test_alias.parent == rec_alias.c.cid,
                 test_alias.harvest_public_state.is_(True))
         )
 
-        paths = []
+        ret = []
         with db.session.begin_nested():
-            qlst = [recursive_t.c.path]
+            qlst = [recursive_t.c.cid]
             indexes = db.session.query(*qlst). \
                 order_by(recursive_t.c.pid).all()
             for idx in indexes:
-                paths.append(idx.path)
-        return paths
+                ret.append(str(idx[0]))
+        return ret
 
     @classmethod
     def update_set_info(cls, index):
         """Create / Update oaiset setting."""
         from .tasks import update_oaiset_setting
-        all_indexes = cls.get_all_indexes()
-        index_infos = {}
-        for i in all_indexes:
-            index_infos[str(i.id)] = {
-                'index_name': i.index_name,
-                'parent': str(i.parent),
-                'harvest_public_state': i.harvest_public_state
-            }
         index_data = dict(index)
         index_data.pop('public_date')
-        update_oaiset_setting.delay(index_infos, index_data)
+        index_info = Indexes.get_path_name([index_data["id"]])[0]
+        if index_info:
+            index_info = index_info[:5]
+        update_oaiset_setting.delay(index_info, index_data)
 
     @classmethod
     def delete_set_info(cls, action, index_id, id_list):
@@ -1651,8 +1592,7 @@ class Indexes(object):
         """
         recursive_t = db.session.query(
             Index.parent.label("pid"),
-            Index.id.label("cid"),
-            func.cast(Index.id, db.Text).label("path")
+            Index.id.label("cid")
         ).filter(
             Index.parent == 0,
             Index.public_state.is_(True)
@@ -1666,8 +1606,7 @@ class Indexes(object):
         recursive_t = recursive_t.union_all(
             db.session.query(
                 test_alias.parent,
-                test_alias.id,
-                rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text)
+                test_alias.id
             ).filter(
                 test_alias.parent == rec_alias.c.cid,
                 test_alias.public_state.is_(True)
@@ -1678,9 +1617,9 @@ class Indexes(object):
 
         paths = []
         with db.session.begin_nested():
-            qlst = [recursive_t.c.path]
+            qlst = [recursive_t.c.cid]
             indexes = db.session.query(*qlst). \
                 order_by(recursive_t.c.pid).all()
             for idx in indexes:
-                paths.append(idx.path)
+                paths.append(str(idx[0]))
         return paths
