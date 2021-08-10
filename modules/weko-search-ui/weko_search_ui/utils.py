@@ -2340,7 +2340,7 @@ def handle_get_all_sub_id_and_name(
             continue
         item = items.get(key)
         sub_form = next(
-            (x for x in form if key in x.get('key', '')),
+            (x for x in form if key == x.get('key', '').split('.')[-1]),
             {'title_i18n': {}})
         title = sub_form.get('title_i18n', {}).get(
             current_i18n.language) or item.get('title')
