@@ -122,9 +122,10 @@ def get_records(**kwargs):
     size_ = current_app.config['OAISERVER_PAGE_SIZE']
     scroll = current_app.config['OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME']
     scroll_id = kwargs.get('resumptionToken', {}).get('scroll_id')
-    indexes = Indexes.get_harverted_index_list()
 
     if not scroll_id:
+        indexes = Indexes.get_harverted_index_list()
+
         search = OAIServerSearch(
             index=current_app.config['INDEXER_DEFAULT_INDEX'],
         ).params(
