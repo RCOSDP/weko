@@ -550,6 +550,7 @@ class Indexes(object):
 
         Returns:
             [type]: [description]
+
         """
         if not index_id:
             index_id = 0

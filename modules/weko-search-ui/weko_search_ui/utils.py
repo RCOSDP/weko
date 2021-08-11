@@ -1345,6 +1345,7 @@ def handle_check_and_prepare_index_tree(list_record):
 
         Returns:
             [bool]: Check result.
+
         """
         result = None
         index = None
