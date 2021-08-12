@@ -1218,12 +1218,16 @@ def selected_value_by_language(lang_array, value_array, lang_id, val_id,
                 if value is not None:
                     return value
             if "en" in lang_array:  # English
+                if lang_selected == 'ja':
+                    return None
                 value = check_info_in_metadata(lang_id, val_id, "en",
                                                _item_metadata)
                 if value is not None:
                     return value
             # 1st language when registering items
             if len(lang_array) > 0:
+                if lang_selected == 'en':
+                    return None
                 for idx, lg in enumerate(lang_array):
                     if len(lg) > 0:
                         value = check_info_in_metadata(lang_id, val_id, lg,
@@ -1349,10 +1353,16 @@ def result_rule_create_show_list(source_title, current_lang):
 
     for title_data_lang in title_data_langs:
         if title_data_lang.get('en'):
-            return title_data_lang.get('en')
+            if current_lang == 'ja':
+                return None
+            else:
+                return title_data_lang.get('en')
 
     if len(title_data_langs) > 0:
-        return list(title_data_langs[0].values())[0]
+        if current_lang == 'en':
+            return None
+        else:
+            return list(title_data_langs[0].values())[0]
 
     if len(title_data_langs_none) > 0:
         return list(title_data_langs_none[0].values())[0]
@@ -1522,12 +1532,13 @@ def get_author_has_language(creator, result_end, current_lang, map_keys):
                 result[key_data].append(value_data)
                 is_added.append(key_data)
     alternative = result_rule_create_show_list(result, current_lang)
-    if map_keys[0] not in result_end:
-        result_end[map_keys[0]] = []
-    if isinstance(alternative, str):
-        result_end[map_keys[0]].append(alternative)
-    elif isinstance(alternative, list):
-        result_end[map_keys[0]] += alternative
+    if alternative:
+        if map_keys[0] not in result_end:
+            result_end[map_keys[0]] = []
+        if isinstance(alternative, str):
+            result_end[map_keys[0]].append(alternative)
+        elif isinstance(alternative, list):
+            result_end[map_keys[0]] += alternative
 
     return result_end
 
