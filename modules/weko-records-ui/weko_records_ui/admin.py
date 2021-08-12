@@ -189,8 +189,7 @@ class ItemManagementBulkUpdate(BaseView):
             record = WekoRecord.get_record_by_pid(pid_value)
             indexes = []
             if isinstance(record.get('path'), list):
-                for path in record.get('path'):
-                    indexes.append(path.split('/')[-1])
+                indexes = record.get('path')
 
             pid = PersistentIdentifier.get('recid', pid_value)
             meta = ItemsMetadata.get_record(pid.object_uuid)

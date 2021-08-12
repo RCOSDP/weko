@@ -700,9 +700,7 @@ class WekoDeposit(Deposit):
                 if 'path' in self.jrc and '_oai' in self.jrc \
                         and ('sets' not in self.jrc['_oai']
                              or not self.jrc['_oai']['sets']):
-                    setspec_list = []
-                    for i in self.jrc['path']:
-                        setspec_list.append(i.replace('/', ':'))
+                    setspec_list = self.jrc['path'] or []
                     if setspec_list:
                         self.jrc['_oai'].update(dict(sets=setspec_list))
                 # upload item metadata to Elasticsearch
@@ -969,11 +967,7 @@ class WekoDeposit(Deposit):
             raise PIDResolveRESTError(
                 description='Any tree index has been deleted')
 
-        index_lst.clear()
-        for lst in plst:
-            index_lst.append(lst.path)
-
-        # convert item meta data
+        # Convert item meta data
         try:
             deposit_owners = self.get('_deposit', {}).get('owners')
             owner_id = str(deposit_owners[0] if deposit_owners else 1)
@@ -997,8 +991,6 @@ class WekoDeposit(Deposit):
         for pth in index_lst:
             # es setting
             sub_sort[pth[-13:]] = ""
-        #        jrc.update(dict(custom_sort=sub_sort))
-        #        dc.update(dict(custom_sort=sub_sort))
         dc.update(dict(path=index_lst))
         pubs = '1'
         actions = index_obj.get('actions')
@@ -1090,20 +1082,19 @@ class WekoDeposit(Deposit):
                 self.jrc[geo_location_key] = new_data
 
     @classmethod
-    def delete_by_index_tree_id(cls, path):
+    def delete_by_index_tree_id(cls, index_id: str):
         """Delete by index tree id."""
-        # first update target pid when index tree id was deleted
-        # if cls.update_pid_by_index_tree_id(cls, path):
-        #    from .tasks import delete_items_by_id
-        #    delete_items_by_id.delay(path)
-        obj_ids = next((cls.indexer.get_pid_by_es_scroll(path)), [])
+        if index_id:
+            index_id = str(index_id)
+        obj_ids = next((cls.indexer.get_pid_by_es_scroll(index_id)), [])
         try:
             for obj_uuid in obj_ids:
                 r = RecordMetadata.query.filter_by(id=obj_uuid).first()
                 try:
-                    r.json['path'].remove(path)
+                    r.json['path'].remove(index_id)
                     flag_modified(r, 'json')
-                except BaseException:
+                except BaseException as bex:
+                    current_app.logger.error(bex)
                     pass
                 if r.json and not r.json['path']:
                     from weko_records_ui.utils import soft_delete
@@ -1113,15 +1104,9 @@ class WekoDeposit(Deposit):
                     dep.indexer.update_path(dep, update_revision=False)
             db.session.commit()
         except Exception as ex:
+            current_app.logger.error(ex)
             db.session.rollback()
             raise ex
-
-    @classmethod
-    def update_by_index_tree_id(cls, path, target):
-        """Update by index tree id."""
-        # update item path only
-        from .tasks import update_items_by_id
-        update_items_by_id.delay(path, target)
 
     def update_pid_by_index_tree_id(self, path):
         """Update pid by index tree id.
@@ -1634,22 +1619,18 @@ class WekoRecord(Record):
     def get_record_with_hps(cls, uuid):
         """Get record with hps."""
         record = cls.get_record(id_=uuid)
-        path = record.get('path')
+        indexes = record.get('path')
         harvest_public_state = True
-        if path:
-            harvest_public_state = Indexes.get_harvest_public_state(path)
+        paths = [Indexes.get_full_path(_id) for _id in indexes]
+        if paths:
+            harvest_public_state = Indexes.get_harvest_public_state(paths)
         return harvest_public_state, record
 
     @classmethod
     def get_record_cvs(cls, uuid):
         """Get record cvs."""
         record = cls.get_record(id_=uuid)
-        path = []
-        path.extend(record.get('path'))
-        coverpage_state = False
-        if path:
-            coverpage_state = Indexes.get_coverpage_state(path)
-        return coverpage_state
+        return Indexes.get_coverpage_state(record.get('path'))
 
     def _get_pid(self, pid_type):
         """Return pid_value from persistent identifier."""
