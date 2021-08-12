@@ -528,6 +528,7 @@ def count_items(indexes_aggr):
 
     Returns:
         [type]: [description]
+
     """
     pub_items_count = 0
     pri_items_count = 0

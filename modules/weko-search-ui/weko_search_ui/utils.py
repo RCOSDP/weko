@@ -91,6 +91,11 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_REPO_USER, WEKO_SEARCH_TYPE_DICT, WEKO_SEARCH_UI_BULK_EXPORT_TASK, \
     WEKO_SEARCH_UI_BULK_EXPORT_URI, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
+from invenio_stats.processors import anonymize_user, flag_restricted, \
+    flag_robots, hash_id
+from invenio_indexer.api import RecordIndexer
+from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
+from invenio_stats.models import StatsEvents
 
 err_msg_suffix = 'Suffix of {} can only be used with half-width' \
     + ' alphanumeric characters and half-width symbols "_-.; () /".'
@@ -1215,7 +1220,7 @@ def create_flow_define():
                                      WEKO_FLOW_DEFINE_LIST_ACTION)
 
 
-def import_items_to_system(item: dict):
+def import_items_to_system(item: dict, request_info: dict):
     """Validation importing zip file.
 
     :argument
@@ -1224,6 +1229,73 @@ def import_items_to_system(item: dict):
         return      -- PID object if exist.
 
     """
+
+    def store_data_to_es_and_db(item, request_info):
+        """Store data to es and db."""
+        # Default admin user (1) for this import.
+        request_info['user_id'] = 1
+        timestamp = datetime.utcnow().replace(microsecond=0)
+        # Prepare stored data.
+        data = prepare_stored_data(item, request_info)
+        doc_type = 'stats-item-create'
+        index = '{}-events-{}-{}'.format(index_prefix, doc_type, timestamp.year)
+        id = hash_id(timestamp, data)
+        # Push item to elasticsearch.
+        push_item_to_elasticsearch(id, index, doc_type, data)
+        # Save item to stats events.
+        save_item_to_stats_events(id, index, doc_type, data)
+
+    def prepare_stored_data(item, request_info):
+        """Prepare stored data."""
+        timestamp = datetime.utcnow().replace(microsecond=0)
+        doc = {
+            'ip_address': request_info.get('remote_addr'),
+            'timestamp': timestamp.isoformat(),
+        }
+        doc = anonymize_user(doc)
+        doc = flag_restricted(doc)
+        doc = flag_robots(doc)
+        data = {
+            "remote_addr": request_info.get('remote_addr'),
+            "country": doc.get('country'),
+            "record_name": item.get('item_title'),
+            "referrer": request_info.get('referrer'),
+            "is_robot": doc.get('is_robot'),
+            "cur_user_id": request_info.get('user_id'),
+            "is_restricted": doc.get('is_restricted'),
+            "unique_session_id": doc.get('unique_session_id'),
+            "hostname": request_info.get('hostname'),
+            "pid_value": item.get('id'),
+            "unique_id": "item_create_{}".format(item.get('id')),
+            "pid_type": "depid",
+            "timestamp": doc.get('timestamp'),
+            "visitor_id": doc.get('visitor_id')
+        }
+        return data
+
+    def push_item_to_elasticsearch(id, index, doc_type, data):
+        """Push item to elasticsearch in order to count report."""
+        indexer = RecordIndexer()
+        indexer.client.index(
+            index=index,
+            doc_type=doc_type,
+            id=id,
+            body=data
+        )
+
+    def save_item_to_stats_events(id, index, doc_type, data):
+        """Save item to db in order to run aggregation."""
+        rtn_data = dict(
+            _id=id,
+            _op_type='index',
+            _index=index,
+            _type=doc_type,
+            _source=data,
+        )
+        if current_app.config['STATS_WEKO_DB_BACKUP_EVENTS']:
+            # Save stats event into Database.
+            StatsEvents.save(rtn_data, True)
+
     if not item:
         return None
     else:
@@ -1244,7 +1316,9 @@ def import_items_to_system(item: dict):
                 item.get('publish_status')
             )
             register_item_update_publish_status(item, str(status_number))
-
+            if item.get('status') == 'new':
+                # Store data to es and db.
+                store_data_to_es_and_db(item, request_info)
             db.session.commit()
         except Exception as ex:
             if item.get('id'):
@@ -1345,6 +1419,7 @@ def handle_check_and_prepare_index_tree(list_record):
 
         Returns:
             [bool]: Check result.
+
         """
         result = None
         index = None

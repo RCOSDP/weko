@@ -550,6 +550,7 @@ class Indexes(object):
 
         Returns:
             [type]: [description]
+
         """
         if not index_id:
             index_id = 0
@@ -1372,19 +1373,20 @@ class Indexes(object):
         return Index.get_children(index_id)
 
     @classmethod
-    def get_coverpage_state(cls, index_id):
+    def get_coverpage_state(cls, indexes: list):
         """
-        Get coverpage state from index path.
+        Get coverpage state from indexes id.
 
-        :param path: item's index path
+        :param indexes: item's indexes id.
         """
         try:
-            return Index.query.filter_by(
-                id=index_id).one().coverpage_state or False
+            for item in Index.query.filter(Index.id.in_(indexes)).all():
+                if item.coverpage_state:
+                    return True
 
         except Exception as ex:
             current_app.logger.debug(ex)
-            return False
+        return False
 
     @classmethod
     def set_coverpage_state_resc(cls, index_id, state):

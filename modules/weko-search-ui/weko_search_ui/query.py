@@ -58,6 +58,7 @@ def get_permission_filter(index_id: str = None):
 
     Returns:
         List: Query command.
+
     """
     is_perm = search_permission.can()
     match = Q('match', publish_status='0')
@@ -652,6 +653,7 @@ def item_path_search_factory(self, search, index_id=None):
 
         Returns:
             [dict]: Search query.
+
         """
         query_q = {
             "_source": {
