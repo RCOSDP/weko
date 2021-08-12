@@ -123,6 +123,10 @@ services:
         max-size: "10m"
     ports:
       - "5001:5000"
+    deploy:
+      resources:
+        limits:
+          memory: 2000m
 
   postgresql:
     restart: "always"
@@ -142,6 +146,10 @@ services:
     image: redis
     ports:
       - "26301:6379"
+    deploy:
+      resources:
+        limits:
+          memory: 100m
 
   elasticsearch:
     restart: "always"
@@ -176,6 +184,10 @@ services:
 #      - letsencrypt_html:/var/www/html
     links:
       - web
+    deploy:
+      resources:
+        limits:
+          memory: 300m
 
 #  certbot:
 #    image: certbot/certbot:latest
