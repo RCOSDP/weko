@@ -39,6 +39,8 @@ from weko_schema_ui.schema import SchemaTree
 
 from .api import ItemTypes, Mapping
 from .config import COPY_NEW_FIELD, WEKO_TEST_FIELD
+from weko_admin import config as ad_config
+from weko_admin.models import SearchManagement as sm
 
 
 def json_loader(data, pid, owner_id=None):
@@ -175,6 +177,11 @@ def json_loader(data, pid, owner_id=None):
         dc.update(dict(item_title=title))
         dc.update(dict(item_type_id=item_type_id))
         dc.update(dict(control_number=pid))
+<<<<<<< HEAD
+=======
+
+        dc.update(dict(author_link=author_link))
+>>>>>>> ivis302
 
         # check oai id value
         is_edit = False
@@ -197,10 +204,24 @@ def json_loader(data, pid, owner_id=None):
         # dc.update(dict(relation=dict(relationType=relation_ar)))
 
         if COPY_NEW_FIELD:
+<<<<<<< HEAD
             if is_edit:
                 copy_field_test(dc, WEKO_TEST_FIELD, jrc, oai_value)
             else:
                 copy_field_test(dc, WEKO_TEST_FIELD, jrc)
+=======
+            res = sm.get()
+            options = None
+            if res:
+                detail_condition = res.search_conditions
+            else:
+                detail_condition = ad_config.WEKO_ADMIN_MANAGEMENT_OPTIONS['detail_condition']
+
+            if is_edit:
+                copy_field_test(dc, detail_condition, jrc, oai_value)
+            else:
+                copy_field_test(dc, detail_condition, jrc)
+>>>>>>> ivis302
 
         jrc.update(dict(control_number=pid))
         jrc.update(dict(_oai={"id": oai_value}))
@@ -241,7 +262,63 @@ def json_loader(data, pid, owner_id=None):
     del ojson, mjson, item
     return dc, jrc, is_edit
 
+def copy_field_test(dc, map, jrc, iid=None):
+    for k_v in map:
+        if k_v.get('item_value'):
+            if dc["item_type_id"] in k_v.get('item_value').keys():
+                for key, val in k_v.get('item_value').items():
+                    if dc["item_type_id"] == key:
+                        if k_v.get('input_Type') == 'text':
+                            if get_value_from_dict(dc, val["path"], val["path_type"], iid):
+                                jrc[key] = get_value_from_dict(dc, val["path"], val["path_type"], iid)
+                            elif k_v.get('input_Type') == "range":
+                                value_range = {key: {"gte": "", "lte": ""}}
+                                value_range[key]["gte"] = get_value_from_dict(dc, val["path"]["gte"], val["path_type"]["gte"], iid)
+                                value_range[key]["lte"] = get_value_from_dict(dc, val["path"]["lte"], val["path_type"]["lte"], iid)
+                                if value_range[key]["gte"] and value_range[key]["lte"]:
+                                    jrc.update(value_range)
+                            elif k_v.get('input_Type') == "geo_point":
+                                geo_point = {key: {"lat": "", "lon": ""}}
+                                geo_point[key]["lat"] = get_value_from_dict(dc, val["path"]["lat"], val["path_type"]["lat"], iid)
+                                geo_point[key]["lon"] = get_value_from_dict(dc, val["path"]["lon"], val["path_type"]["lon"], iid)
+                                if geo_point[key]["lat"] and geo_point[key]["lon"]:
+                                    jrc.update(geo_point)
+                            elif k_v.get('input_Type') == "geo_shape":
+                                geo_shape = {key: {"type": "", "coordinates": ""}}
+                                geo_shape[key]["type"] = get_value_from_dict(dc, val["path"]["type"], val["path_type"]["type"], iid)
+                                geo_shape[key]["coordinates"] = get_value_from_dict(dc, val["path"]["coordinates"], val["path_type"]["coordinates"], iid)
+                                if geo_shape[key]["type"] and geo_shape[key]["coordinates"]:
+                                    jrc.update(geo_shape)
 
+def get_value_from_dict(dc, path, path_type, iid=None):
+    if path_type == "xml":
+        return copy_value_xml_path(dc, path, iid)
+    elif path_type == "json":
+        return copy_value_json_path(dc, path)
+
+def copy_value_xml_path(dc, xml_path, iid=None):
+    from invenio_oaiserver.response import getrecord
+    try:
+        meta_prefix = xml_path[0]
+        xpath = xml_path[1]
+        if iid:
+            # url_for('invenio_oaiserver.response', _external=True)をこの関数で実行した場合エラーが起きました。原因は調査中です。
+            xml = etree.tostring(getrecord(
+                metadataPrefix=meta_prefix, identifier=iid, verb='GetRecord', url="https://192.168.75.3/oai"))
+            root = ET.fromstring(xml)
+            ns = {
+                'oai_dc': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
+                'dc': 'http://purl.org/dc/elements/1.1/',
+                'jpcoar': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/',
+                'xml': 'http://www.w3.org/XML/1998/namespace'
+            }
+            copy_value = root.findall(xpath, ns)[0].text
+            return str(copy_value)
+    except Exception:
+        print("exception")
+        return None
+
+<<<<<<< HEAD
 def copy_field_test(dc, map, jrc, iid=None):
     if dc["item_type_id"] in map.keys():
         list1 = map[dc["item_type_id"]]
@@ -305,6 +382,8 @@ def copy_value_xml_path(dc, xml_path, iid=None):
         print("exception")
         return None
 
+=======
+>>>>>>> ivis302
 
 def copy_value_json_path(dc, path):
     try:
@@ -312,6 +391,18 @@ def copy_value_json_path(dc, path):
         match_value = [match.value for match in matches]
         if len(match_value) > 0:
             return match_value[0]
+        else:
+            return None
+    except Exception:
+        return None
+
+
+def copy_values_json_path(dc, path):
+    try:
+        matches = parse(path).find(dc)
+        match_value = [match.value for match in matches]
+        if len(match_value) > 0:
+            return match_value
         else:
             return None
     except Exception:

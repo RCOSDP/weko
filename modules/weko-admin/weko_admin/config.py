@@ -663,9 +663,13 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':True,
          'inputType':'text',
+         'input_Type':'text',
          'inputVal':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': '', 'path_type': 'json'}
+                       }
+         },
         {'id': 'text2',
          'contents': '',
          'contents_value': {'en': 'text2', 'ja': 'テキスト2'},
@@ -673,9 +677,13 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':False,
          'inputType':'text',
+         'input_Type':'text',
          'inputVal':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': '', 'path_type': 'json'}
+                       }
+         },
         {'id': 'text3',
          'contents': '',
          'contents_value': {'en': 'text3', 'ja': 'テキスト3'},
@@ -683,9 +691,13 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':False,
          'inputType':'text',
+         'input_Type':'text',
          'inputVal':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': '', 'path_type': 'json'}
+                       }
+         },
         {'id': 'text4',
          'contents': '',
          'contents_value': {'en': 'text4', 'ja': 'テキスト4'},
@@ -693,9 +705,13 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':False,
          'inputType':'text',
+         'input_Type':'text',
          'inputVal':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': '', 'path_type': 'json'}
+                       }
+         },
         {'id': 'text5',
          'contents': '',
          'contents_value': {'en': 'text5', 'ja': 'テキスト5'},
@@ -703,9 +719,13 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':False,
          'inputType':'text',
+         'input_Type':'text',
          'inputVal':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': '', 'path_type': 'json'}
+                       }
+         },
         {'id': 'text6',
          'contents': '',
          'contents_value': {'en': 'text6', 'ja': 'テキスト6'},
@@ -713,9 +733,13 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':False,
          'inputType':'text',
+         'input_Type':'text',
          'inputVal':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': '', 'path_type': 'json'}
+                       }
+         },
         {'id': 'text7',
          'contents': '',
          'contents_value': {'en': 'text7', 'ja': 'テキスト7'},
@@ -723,9 +747,13 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':False,
          'inputType':'text',
+         'input_Type':'text',
          'inputVal':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': '', 'path_type': 'json'}
+                       }
+         },
         {'id': 'text8',
          'contents': '',
          'contents_value': {'en': 'text8', 'ja': 'テキスト8'},
@@ -733,9 +761,13 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':False,
          'inputType':'text',
+         'input_Type':'text',
          'inputVal':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': '', 'path_type': 'json'}
+                       }
+         },
         {'id': 'text9',
          'contents': '',
          'contents_value': {'en': 'text9', 'ja': 'テキスト9'},
@@ -743,9 +775,13 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':False,
          'inputType':'text',
+         'input_Type':'text',
          'inputVal':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': '', 'path_type': 'json'}
+                       }
+         },
         {'id': 'text10',
          'contents': '',
          'contents_value': {'en': 'text10', 'ja': 'テキスト10'},
@@ -753,9 +789,13 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':False,
          'inputType':'text',
+         'input_Type':'text',
          'inputVal':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': '', 'path_type': 'json'}
+                       }
+         },
 
 
         {'id': 'integer_range1',
@@ -765,10 +805,14 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':True,
          'inputType':'range',
+         'input_Type':'range',
          'inputVal_from':'',
          'inputVal_to':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}
+                       }
+         },
         {'id': 'integer_range2',
          'contents': '',
          'contents_value': {'en': 'integer_EN_2', 'ja': 'integer_JA_2'},
@@ -776,10 +820,14 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':False,
          'inputType':'range',
+         'input_Type':'range',
          'inputVal_from':'',
          'inputVal_to':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}
+                       }
+         },
         {'id': 'integer_range3',
          'contents': '',
          'contents_value': {'en': 'integer_EN_3', 'ja': 'integer_JA_3'},
@@ -787,10 +835,14 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':False,
          'inputType':'range',
+         'input_Type':'range',
          'inputVal_from':'',
          'inputVal_to':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}
+                       }
+         },
         {'id': 'integer_range4',
          'contents': '',
          'contents_value': {'en': 'integer_EN_4', 'ja': 'integer_JA_4'},
@@ -798,10 +850,14 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':False,
          'inputType':'range',
+         'input_Type':'range',
          'inputVal_from':'',
          'inputVal_to':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}
+                       }
+         },
         {'id': 'integer_range5',
          'contents': '',
          'contents_value': {'en': 'integer_EN_5', 'ja': 'integer_JA_5'},
@@ -809,10 +865,14 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':False,
          'inputType':'range',
+         'input_Type':'range',
          'inputVal_from':'',
          'inputVal_to':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}
+                       }
+         },
 
         {'id': 'float_range1',
          'contents': 'float_range1',
@@ -822,10 +882,14 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':True,
          'inputType':'range',
+         'input_Type':'range',
          'inputVal_from':'',
          'inputVal_to':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}
+                       }
+         },
         {'id': 'float_range2',
          'contents': '',
          'contents_value': {'en': 'float_EN_2', 'ja': 'float_JA_2'},
@@ -833,10 +897,14 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':False,
          'inputType':'range',
+         'input_Type':'range',
          'inputVal_from':'',
          'inputVal_to':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}
+                       }
+         },
         {'id': 'float_range3',
          'contents': '',
          'contents_value': {'en': 'float_EN_3', 'ja': 'float_JA_3'},
@@ -844,10 +912,14 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':False,
          'inputType':'range',
+         'input_Type':'range',
          'inputVal_from':'',
          'inputVal_to':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}
+                       }
+         },
         {'id': 'float_range4',
          'contents': '',
          'contents_value': {'en': 'float_EN_4', 'ja': 'float_JA_4'},
@@ -855,10 +927,14 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':False,
          'inputType':'range',
+         'input_Type':'range',
          'inputVal_from':'',
          'inputVal_to':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}
+                       }
+         },
         {'id': 'float_range5',
          'contents': '',
          'contents_value': {'en': 'float_EN_5', 'ja': 'float_JA_5'},
@@ -866,10 +942,14 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':False,
          'inputType':'range',
+         'input_Type':'range',
          'inputVal_from':'',
          'inputVal_to':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}
+                       }
+         },
 
         {'id': 'date_range1',
          'contents': '',
@@ -878,10 +958,14 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':True,
          'inputType':'dateRange',
+         'input_Type':'range',
          'inputVal_from':'',
          'inputVal_to':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}
+                       }
+         },
         {'id': 'date_range2',
          'contents': '',
          'contents_value': {'en': 'date_EN_2', 'ja': 'date_JA_2'},
@@ -889,10 +973,14 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':False,
          'inputType':'dateRange',
+         'input_Type':'range',
          'inputVal_from':'',
          'inputVal_to':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}
+                       }
+         },
         {'id': 'date_range3',
          'contents': '',
          'contents_value': {'en': 'date_EN_3', 'ja': 'date_JA_3'},
@@ -900,10 +988,14 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':False,
          'inputType':'dateRange',
+         'input_Type':'range',
          'inputVal_from':'',
          'inputVal_to':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}
+                       }
+         },
         {'id': 'date_range4',
          'contents': '',
          'contents_value': {'en': 'date_EN_4', 'ja': 'date_JA_4'},
@@ -911,10 +1003,14 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':False,
          'inputType':'dateRange',
+         'input_Type':'range',
          'inputVal_from':'',
          'inputVal_to':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}
+                       }
+         },
         {'id': 'date_range5',
          'contents': '',
          'contents_value': {'en': 'date_EN_5', 'ja': 'date_JA_5'},
@@ -922,10 +1018,14 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':False,
          'inputType':'dateRange',
+         'input_Type':'range',
          'inputVal_from':'',
          'inputVal_to':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}
+                       }
+         },
 
         {'id': 'geo_point1',
          'contents': '',
@@ -934,11 +1034,15 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':True,
          'inputType':'geo_distance',
+         'input_Type':'geo_point',
          'inputVal_lat':'',
          'inputVal_lon':'',
          'inputVal_distance':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': {'lat': '', 'lon': ''}, 'path_type': {'lat': 'json', 'lon': 'json'}}
+                       }
+         },
 
         {'id': 'geo_shape1',
          'contents': '',
@@ -947,11 +1051,15 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':True,
          'inputType':'geo_distance',
+         'input_Type':'geo_shape',
          'inputVal_lat':'',
          'inputVal_lon':'',
          'inputVal_distance':'',
          'mappingFlg':False,
-         'mappingName':''},
+         'mappingName':'',
+         'item_value':{'1': {'path': {'type': '', 'coordinates': ''}, 'path_type': {'type': 'json', 'coordinates': 'json'}}
+                       }
+         },
     ]
 }
 

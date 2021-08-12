@@ -27,7 +27,7 @@
       },
       "analyzer": {
         "default": {
-          "tokenizer": "ja_tokenizer",
+          "tokenizer": "ngram_tokenizer",
           "filter": [
             "kuromoji_baseform",
             "kuromoji_part_of_speech",
@@ -491,34 +491,244 @@
           ]
         },
         "text1": {
-          "type": "text"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text2": {
-          "type": "text"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text3": {
-          "type": "text"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text4": {
-          "type": "text"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text5": {
-          "type": "text"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text6": {
-          "type": "text"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text7": {
-          "type": "text"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text8": {
-          "type": "text"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text9": {
-          "type": "text"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "text10": {
-          "type": "text"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
+        },
+        "text11": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
+        },
+        "text12": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
+        },
+        "text13": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
+        },
+        "text14": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
+        },
+        "text15": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
+        },
+        "text16": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
+        },
+        "text17": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
+        },
+        "text18": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
+        },
+        "text19": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
+        },
+        "text20": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
+        },
+        "text21": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
+        },
+        "text22": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
+        },
+        "text23": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
+        },
+        "text24": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
+        },
+        "text25": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
+        },
+        "text26": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
+        },
+        "text27": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
+        },
+        "text28": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
+        },
+        "text29": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
+        },
+        "text30": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type":  "keyword"
+            }
+          }
         },
         "integer_range1":{
           "type": "integer_range"
@@ -555,31 +765,28 @@
         },
         "date_range1":{
           "type" : "date_range",
-          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis" 
+          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"
         },
         "date_range2":{
           "type" : "date_range",
-          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis" 
+          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"
         },
         "date_range3":{
           "type" : "date_range",
-          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis" 
+          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"
         },
         "date_range4":{
           "type" : "date_range",
-          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis" 
+          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"
         },
         "date_range5":{
           "type" : "date_range",
-          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis" 
+          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"
         },
 
         "geo_shape1":{
           "type" : "geo_shape"
         },
-
-
-
         "geoLocation": {
           "type": "object",
           "properties": {
