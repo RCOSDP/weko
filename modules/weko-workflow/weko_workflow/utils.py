@@ -3606,7 +3606,8 @@ def get_main_record_detail(activity_id,
     recid = None
     action_endpoint = action_endpoint or activity_detail.action.action_endpoint
     if not item:
-        if not activity_detail.item_id:
+        if not isinstance(approval_record, dict) \
+                or not approval_record.get('item_type_id'):
             return dict(
                 record=list(),
                 files=list(),

@@ -45,11 +45,3 @@ def upt_activity_item(app, user_id, item_id, item_title):
             activity, item_id.object_uuid)
         if rtn:
             del session['activity_info']
-            # sessionstore = RedisStore(redis.StrictRedis.from_url(
-            #    'redis://{host}:{port}/1'.format(
-            #        host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-            #        port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
-            # activity_id = activity.get('activity_id', None)
-            # if activity_id and sessionstore.redis.exists(
-            #        'activity_item_' + activity_id):
-            #    sessionstore.delete('activity_item_' + activity_id)

@@ -85,6 +85,8 @@ from .utils import IdentifierHandle, auto_fill_title, \
     saving_doi_pidstore, send_usage_application_mail_for_guest_user, \
     set_files_display_type, update_approval_date, update_cache_data, \
     validate_guest_activity_expired, validate_guest_activity_token
+from flask import has_request_context
+from weko_deposit.signals import item_created
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -1119,6 +1121,17 @@ def next_action(activity_id='0', action_id=0):
                 action_order=next_action_order
             )
             work_activity.end_activity(activity)
+            # Call signal to push item data to ES.
+            try:
+                if not '.' in current_pid.pid_value and has_request_context():
+                    item_created.send(
+                        current_app._get_current_object(),
+                        user_id=current_user.get_id() if current_user else -1,
+                        item_id=current_pid,
+                        item_title=activity_detail.title
+                    )
+            except BaseException:
+                abort(500, 'MAPPING_ERROR')
         else:
             work_activity.upt_activity_action(
                 activity_id=activity_id, action_id=next_action_id,

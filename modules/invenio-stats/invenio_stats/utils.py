@@ -907,10 +907,16 @@ class QueryItemRegReportHelper(object):
                         total_results = (end_date - start_date).days + 1
                         delta = timedelta(days=1)
                         for i in range(total_results):
-                            if page_index * \
-                                    reports_per_page <= i < (page_index + 1) * reports_per_page:
-                                start_date_string = d.strftime('%Y-%m-%d')
-                                end_date_string = d.strftime('%Y-%m-%d')
+                            if page_index * reports_per_page <= i < (
+                                    page_index + 1) * reports_per_page:
+                                d_start = d.replace(hour=0, minute=0, second=0,
+                                                    microsecond=0)
+                                d_end = d.replace(hour=23, minute=59, second=59,
+                                                  microsecond=9999)
+                                start_date_string = d_start.strftime(
+                                    '%Y-%m-%d %H:%M:%S')
+                                end_date_string = d_end.strftime(
+                                    '%Y-%m-%d %H:%M:%S')
                                 params = {'interval': 'day',
                                           'start_date': start_date_string,
                                           'end_date': end_date_string,
