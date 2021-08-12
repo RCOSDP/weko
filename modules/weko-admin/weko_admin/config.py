@@ -1090,6 +1090,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'identify',
     'items/bulk/delete',
     'items/bulk/update',
+    'items/search',
     'itemtypes',
     'language',
     'loganalysissetting',
@@ -1236,3 +1237,6 @@ WEKO_ADMIN_FACET_SEARCH_SETTING_QUERY_KEY_HAS_PERMISSION = \
 WEKO_ADMIN_FACET_SEARCH_SETTING_QUERY_KEY_NO_PERMISSION = \
     'facet_search_query_no_permission'
 """Default Facet Search query has no permission settings."""
+
+WEKO_ADMIN_FACET_SEARCH_SETTING_BUCKET_SIZE = 1000
+"""Default Facet Search bucket size."""

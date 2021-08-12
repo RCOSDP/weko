@@ -364,12 +364,11 @@ def getrecord(**kwargs):
     # Harvest is private
     _is_private_index = is_private_index(record)
     _is_private_workflow = is_private_workflow(record)
-    if not is_deleted_workflow(pid) and \
-        (not harvest_public_state
-         or not identify
-         or not identify.outPutSetting
-         or (is_exists_doi(record)
-             and (_is_private_index or is_pubdate_in_future(record)))):
+    if (not harvest_public_state
+        or not identify
+        or not identify.outPutSetting
+        or (is_exists_doi(record)
+            and (_is_private_index or is_pubdate_in_future(record)))):
         return error(get_error_code_msg(), **kwargs)
     # Item is deleted
     # or Harvest is public & Item is private

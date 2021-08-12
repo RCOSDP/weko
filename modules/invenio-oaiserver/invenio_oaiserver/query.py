@@ -123,6 +123,7 @@ def get_records(**kwargs):
     size_ = current_app.config['OAISERVER_PAGE_SIZE']
     scroll = current_app.config['OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME']
     scroll_id = kwargs.get('resumptionToken', {}).get('scroll_id')
+    indexes = Indexes.get_harverted_index_list()
 
     if not scroll_id:
         search = OAIServerSearch(
@@ -147,7 +148,6 @@ def get_records(**kwargs):
             search = search.filter('range', **{'_updated': time_range})
 
         search = search.query('match', **{'relation_version_is_last': 'true'})
-        indexes = Indexes.get_harverted_index_list()
         query_filter = [
             # script get deleted items.
             {"bool": {"must_not": {"exists": {"field": "path"}}}}
@@ -184,6 +184,24 @@ def get_records(**kwargs):
             scroll_id=scroll_id,
             scroll='{0}s'.format(scroll),
         )
+
+    # remove deleted items link to private harvest index.
+    if indexes:
+        filter_data = []
+        for rec in response['hits']['hits']:
+            if not rec['_source'].get('path'):
+                allow_show = False
+                paths = rec['_source']['_item_metadata'].get('path')
+                for path in paths:
+                    if path in indexes:
+                        allow_show = True
+                        break
+                if allow_show:
+                    filter_data.append(rec)
+            else:
+                filter_data.append(rec)
+        response['hits']['total'] = len(filter_data)
+        response['hits']['hits'] = filter_data
 
     class Pagination(object):
         """Dummy pagination class."""

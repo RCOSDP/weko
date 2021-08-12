@@ -123,14 +123,11 @@ class ItemTypeMetaDataView(BaseView):
                     name_id=record.model.name_id)
                 # Check that item type is already registered to an item or not
                 for item in all_records:
-                    metaDataRecords = ItemsMetadata.get_by_item_type_id(
+                    items = ItemsMetadata.get_registered_item_metadata(
                         item_type_id=item.id)
-                    if len(metaDataRecords) > 0:
-                        flash(
-                            _(
-                                'Cannot delete due to child'
-                                ' existing item types.'),
-                            'error')
+                    if len(items) > 0:
+                        flash(_('Cannot delete due to child'
+                                ' existing item types.'), 'error')
                         return jsonify(code=-1)
                 # Get item type name
                 item_type_name = ItemTypeNames.get_record(
@@ -528,8 +525,9 @@ class ItemTypeMappingView(BaseView):
         data = request.get_json()
         item_type = ItemTypes.get_by_id(data.get('item_type_id'))
         meta_system = item_type.render.get('meta_system')
-        lst_duplicate = check_duplicate_mapping(data.get('mapping'),
-                                                meta_system, item_type)
+        mapping_type = data.get('mapping_type')
+        lst_duplicate = check_duplicate_mapping(
+            data.get('mapping'), meta_system, item_type, mapping_type)
         if len(lst_duplicate) > 0:
             return jsonify(duplicate=True, err_items=lst_duplicate,
                            msg=_('Duplicate mapping as below:'))

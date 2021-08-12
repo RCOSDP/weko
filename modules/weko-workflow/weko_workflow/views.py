@@ -24,6 +24,7 @@ import json
 import os
 import sys
 from collections import OrderedDict
+from copy import deepcopy
 from functools import wraps
 
 import redis
@@ -33,11 +34,11 @@ from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
+from invenio_files_rest.utils import remove_file_cancel_action
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
 from sqlalchemy.sql.expression import cast
@@ -49,7 +50,7 @@ from weko_deposit.links import base_factory
 from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
 from weko_items_ui.api import item_login
-from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata
+from weko_records.api import FeedbackMailList, ItemLink
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
@@ -57,7 +58,6 @@ from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
     get_workflows
 from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
-from werkzeug.utils import import_string
 
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
@@ -73,17 +73,18 @@ from .utils import IdentifierHandle, auto_fill_title, \
     get_activity_id_of_record_without_version, \
     get_application_and_approved_date, get_approval_keys, get_cache_data, \
     get_files_and_thumbnail, get_identifier_setting, get_main_record_detail, \
-    get_pid_and_record, get_record_by_root_ver, get_thumbnails, \
-    get_usage_data, get_workflow_item_type_names, handle_finish_workflow, \
+    get_pid_and_record, get_pid_value_by_activity_detail, \
+    get_record_by_root_ver, get_thumbnails, get_usage_data, \
+    get_workflow_item_type_names, handle_finish_workflow, \
     init_activity_for_guest_user, is_enable_item_name_link, \
     is_hidden_pubdate, is_show_autofill_metadata, \
     is_usage_application_item_type, item_metadata_validation, \
-    prepare_data_for_guest_activity, process_send_approval_mails, \
-    process_send_notification_mail, process_send_reminder_mail, register_hdl, \
-    save_activity_data, saving_doi_pidstore, \
-    send_usage_application_mail_for_guest_user, set_files_display_type, \
-    update_approval_date, update_cache_data, validate_guest_activity_expired, \
-    validate_guest_activity_token
+    prepare_data_for_guest_activity, prepare_doi_link_workflow, \
+    process_send_approval_mails, process_send_notification_mail, \
+    process_send_reminder_mail, register_hdl, save_activity_data, \
+    saving_doi_pidstore, send_usage_application_mail_for_guest_user, \
+    set_files_display_type, update_approval_date, update_cache_data, \
+    validate_guest_activity_expired, validate_guest_activity_token
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -924,13 +925,26 @@ def next_action(activity_id='0', action_id=0):
         )
 
     if action_endpoint == 'approval' and item_id:
-        item = ItemsMetadata.get_record(id_=item_id)
-        pid_identifier = PersistentIdentifier.get_by_object(
-            pid_type='depid', object_type='rec', object_uuid=item.id)
-        record_class = import_string('weko_deposit.api:WekoRecord')
-        resolver = Resolver(pid_type='recid', object_type='rec',
-                            getter=record_class.get_record)
-        _pid, _approval_record = resolver.resolve(pid_identifier.pid_value)
+        identifier_actionid = get_actionid('identifier_grant')
+        last_idt_setting = work_activity.get_action_identifier_grant(
+            activity_id=activity_id,
+            action_id=identifier_actionid)
+
+        if not post_json.get('temporary_save') and last_idt_setting \
+            and last_idt_setting.get('action_identifier_select') \
+                and last_idt_setting.get('action_identifier_select') > 0:
+            _pid = current_pid.pid_value
+            if pid_without_ver:
+                _pid = pid_without_ver.pid_value
+            record_without_version = item_id
+            if deposit and pid_without_ver and not recid:
+                record_without_version = pid_without_ver.object_uuid
+
+            saving_doi_pidstore(
+                item_id,
+                record_without_version,
+                prepare_doi_link_workflow(_pid, last_idt_setting),
+                int(last_idt_setting['action_identifier_select']))
 
         action_feedbackmail = work_activity.get_action_feedbackmail(
             activity_id=activity_id,
@@ -964,7 +978,6 @@ def next_action(activity_id='0', action_id=0):
 
         if deposit:
             deposit.update_feedback_mail()
-            deposit.update_jpcoar_identifier()
 
     if action_endpoint == 'item_link' and item_id:
         current_pid = PersistentIdentifier.get_by_object(
@@ -993,66 +1006,77 @@ def next_action(activity_id='0', action_id=0):
 
     # save pidstore_identifier to ItemsMetadata
     identifier_select = post_json.get('identifier_grant')
-    if 'identifier_grant' == action_endpoint and identifier_select:
-        idf_grant_jalc_doi_manual = post_json.get(
-            'identifier_grant_jalc_doi_suffix')
-        idf_grant_jalc_cr_doi_manual = post_json.get(
-            'identifier_grant_jalc_cr_doi_suffix')
-        idf_grant_jalc_dc_doi_manual = post_json.get(
-            'identifier_grant_jalc_dc_doi_suffix')
-        idf_grant_ndl_jalc_doi_manual = post_json.get(
-            'identifier_grant_ndl_jalc_doi_suffix')
-
+    if 'identifier_grant' == action_endpoint \
+            and identifier_select is not None:
         # If is action identifier_grant, then save to to database
         identifier_grant = {
             'action_identifier_select': identifier_select,
-            'action_identifier_jalc_doi': idf_grant_jalc_doi_manual,
-            'action_identifier_jalc_cr_doi': idf_grant_jalc_cr_doi_manual,
-            'action_identifier_jalc_dc_doi': idf_grant_jalc_dc_doi_manual,
-            'action_identifier_ndl_jalc_doi': idf_grant_ndl_jalc_doi_manual
+            'action_identifier_jalc_doi': post_json.get(
+                'identifier_grant_jalc_doi_suffix'),
+            'action_identifier_jalc_cr_doi': post_json.get(
+                'identifier_grant_jalc_cr_doi_suffix'),
+            'action_identifier_jalc_dc_doi': post_json.get(
+                'identifier_grant_jalc_dc_doi_suffix'),
+            'action_identifier_ndl_jalc_doi': post_json.get(
+                'identifier_grant_ndl_jalc_doi_suffix')
         }
-
         work_activity.create_or_update_action_identifier(
             activity_id=activity_id,
             action_id=action_id,
             identifier=identifier_grant
         )
-
-        error_list = item_metadata_validation(item_id, identifier_select)
-
         if post_json.get('temporary_save') == 1:
             return jsonify(code=0, msg=_('success'))
 
-        if isinstance(error_list, str):
-            return jsonify(code=-1, msg=_(error_list))
-
-        sessionstore = RedisStore(redis.StrictRedis.from_url(
-            'redis://{host}:{port}/1'.format(
-                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
-        if error_list:
-            sessionstore.put(
-                'updated_json_schema_{}'.format(activity_id),
-                json.dumps(error_list).encode('utf-8'),
-                ttl_secs=300)
-            return previous_action(
-                activity_id=activity_id,
-                action_id=action_id,
-                req=-1
-            )
+        if identifier_select == IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
+            if item_id != pid_without_ver.object_uuid:
+                _old_idt = IdentifierHandle(pid_without_ver.object_uuid)
+                _new_idt = IdentifierHandle(item_id)
+                _old_v, _old_t = _old_idt.get_idt_registration_data()
+                _new_v, _new_t = _new_idt.get_idt_registration_data()
+                if not _old_v:
+                    _new_idt.remove_idt_registration_metadata()
+                elif _old_v != _new_v:
+                    _new_idt.update_idt_registration_metadata(
+                        _old_v,
+                        _old_t)
+            else:
+                _identifier = IdentifierHandle(item_id)
+                _value, _type = _identifier.get_idt_registration_data()
+                if _value:
+                    _identifier.remove_idt_registration_metadata()
         else:
-            if sessionstore.redis.exists(
-                    'updated_json_schema_{}'.format(activity_id)):
-                sessionstore.delete(
-                    'updated_json_schema_{}'.format(activity_id))
+            # If is action identifier_grant, then save to to database
+            error_list = item_metadata_validation(item_id, identifier_select)
+            if isinstance(error_list, str):
+                return jsonify(code=-1, msg=_(error_list))
 
-        if identifier_select != IDENTIFIER_GRANT_SELECT_DICT['NotGrant'] \
-                and item_id is not None:
-            record_without_version = item_id
-            if deposit and pid_without_ver and not recid:
-                record_without_version = pid_without_ver.object_uuid
-            saving_doi_pidstore(item_id, record_without_version, post_json,
-                                int(identifier_select))
+            sessionstore = RedisStore(redis.StrictRedis.from_url(
+                'redis://{host}:{port}/1'.format(
+                    host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+                    port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+            if error_list:
+                sessionstore.put(
+                    'updated_json_schema_{}'.format(activity_id),
+                    json.dumps(error_list).encode('utf-8'),
+                    ttl_secs=300)
+                return previous_action(
+                    activity_id=activity_id,
+                    action_id=action_id,
+                    req=-1
+                )
+            else:
+                if sessionstore.redis.exists(
+                        'updated_json_schema_{}'.format(activity_id)):
+                    sessionstore.delete(
+                        'updated_json_schema_{}'.format(activity_id))
+
+            if item_id:
+                record_without_version = item_id
+                if deposit and pid_without_ver and not recid:
+                    record_without_version = pid_without_ver.object_uuid
+                saving_doi_pidstore(item_id, record_without_version, post_json,
+                                    int(identifier_select), False, True)
 
     rtn = history.create_activity_history(activity, action_order)
     if not rtn:
@@ -1283,7 +1307,9 @@ def cancel_action(activity_id='0', action_id=0):
     if activity_detail:
         cancel_item_id = activity_detail.item_id
         if not cancel_item_id:
-            pid_value = post_json.get('pid_value')
+            pid_value = post_json.get('pid_value') if post_json.get(
+                'pid_value') else get_pid_value_by_activity_detail(
+                activity_detail)
             if pid_value:
                 pid = PersistentIdentifier.get('recid', pid_value)
                 cancel_item_id = pid.object_uuid
@@ -1294,6 +1320,12 @@ def cancel_action(activity_id='0', action_id=0):
                     if cancel_record:
                         cancel_deposit = WekoDeposit(
                             cancel_record, cancel_record.model)
+
+                        # Remove file and update size location.
+                        if cancel_deposit.files and cancel_deposit.files.bucket:
+                            remove_file_cancel_action(
+                                cancel_deposit.files.bucket.id)
+
                         cancel_deposit.clear()
                         # Remove draft child
                         cancel_pid = PersistentIdentifier.get_by_object(
@@ -1302,7 +1334,12 @@ def cancel_action(activity_id='0', action_id=0):
                             object_uuid=cancel_item_id)
                         cancel_pv = PIDVersioning(child=cancel_pid)
                         if cancel_pv.exists:
+                            parent_pid = deepcopy(cancel_pv.parent)
                             cancel_pv.remove_child(cancel_pid)
+                            # rollback parent info
+                            cancel_pv.parent.status = parent_pid.status
+                            cancel_pv.parent.object_type = parent_pid.object_type
+                            cancel_pv.parent.object_uuid = parent_pid.object_uuid
                 db.session.commit()
             except Exception:
                 db.session.rollback()

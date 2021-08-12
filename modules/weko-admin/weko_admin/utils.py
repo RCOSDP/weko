@@ -995,7 +995,11 @@ class FeedbackMail:
         :return: author mail
         """
         search_key = request_data.get('searchKey') or ''
-        match = [{"term": {"gather_flg": 0}}]
+        should = [
+            {"bool": {"must": [{"term": {"is_deleted": {"value": "false"}}}]}},
+            {"bool": {"must_not": {"exists": {"field": "is_deleted"}}}}
+        ]
+        match = [{"term": {"gather_flg": 0}}, {"bool": {"should": should}}]
 
         if search_key:
             match.append(
@@ -2056,14 +2060,16 @@ def create_facet_search_query():
     """Create facet search query."""
     def create_agg_by_aggregations(aggregations, key, val):
         """Create aggregations query."""
+        from .config import \
+            WEKO_ADMIN_FACET_SEARCH_SETTING_BUCKET_SIZE as bucket_size
         if not aggregations or len(aggregations) == 0:
-            result = {key: {'terms': {'field': val}}}
+            result = {key: {'terms': {'field': val, "size": bucket_size}}}
         else:
             must = [dict(term={agg['agg_mapping']: agg['agg_value']})
                     for agg in aggregations]
             result = {key: {
                 'filter': {'bool': {'must': must}},
-                'aggs': {key: {'terms': {'field': val}}}
+                'aggs': {key: {'terms': {'field': val, "size": bucket_size}}}
             }}
         return result
 

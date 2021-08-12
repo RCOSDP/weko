@@ -317,6 +317,18 @@ class WekoIndexer(RecordIndexer):
             body=body
         )
 
+    def update_author_link(self, author_link):
+        """Update author_link info."""
+        self.get_es_index()
+        pst = 'author_link'
+        body = {'doc': {pst: author_link.get('author_link')}}
+        return self.client.update(
+            index=self.es_index,
+            doc_type=self.es_doc_type,
+            id=str(author_link.get('id')),
+            body=body
+        )
+
     def update_jpcoar_identifier(self, dc, item_id):
         """Update JPCOAR meta data item."""
         self.get_es_index()
@@ -989,7 +1001,7 @@ class WekoDeposit(Deposit):
             self.data = data
             self.jrc = jrc
             self.is_edit = is_edit
-            self._convert_description_to_object()
+            self._convert_jpcoar_data_to_es()
         except RuntimeError:
             raise
         except BaseException:
@@ -1036,6 +1048,65 @@ class WekoDeposit(Deposit):
                         _new_description.append(data)
             if _new_description:
                 self.jrc[description_key] = _new_description
+
+    def _convert_jpcoar_data_to_es(self):
+        """Convert data jpcoar to es."""
+        # Convert description to object.
+        self._convert_description_to_object()
+
+        # Convert data for geo location.
+        self._convert_data_for_geo_location()
+
+    def _convert_data_for_geo_location(self):
+        """Convert geo location to object."""
+        def _convert_geo_location(value):
+            _point = []
+            if isinstance(value.get("pointLongitude"), list) and isinstance(
+                    value.get("pointLatitude"), list):
+                lat_len = len(value.get("pointLatitude"))
+                for _idx, _value in enumerate(value.get("pointLongitude")):
+                    _point.append({
+                        "lat": value.get("pointLatitude")[
+                            _idx] if _idx < lat_len else "",
+                        "lon": _value
+                    })
+            return _point
+
+        def _convert_geo_location_box():
+            point_box = {}
+            jpcoar_north_east_point = {
+                "pointLatitude": v.get("northBoundLatitude"),
+                "pointLongitude": v.get("eastBoundLongitude"),
+            }
+            jpcoar_south_west_point = {
+                "pointLatitude": v.get("southBoundLatitude"),
+                "pointLongitude": v.get("westBoundLongitude"),
+            }
+            es_north_east_point = _convert_geo_location(jpcoar_north_east_point)
+            es_south_west_point = _convert_geo_location(jpcoar_south_west_point)
+            if es_north_east_point:
+                point_box['northEastPoint'] = es_north_east_point
+            if es_south_west_point:
+                point_box['southWestPoint'] = es_south_west_point
+            return point_box
+
+        geo_location_key = "geoLocation"
+        if isinstance(self.jrc, dict) and self.jrc.get(geo_location_key):
+            geo_location = self.jrc.get(geo_location_key)
+            new_data = {}
+            for k, v in geo_location.items():
+                if "geoLocationPlace" == k:
+                    new_data[k] = v
+                elif "geoLocationPoint" == k:
+                    point = _convert_geo_location(v)
+                    if point:
+                        new_data[k] = point
+                elif "geoLocationBox" == k:
+                    point = _convert_geo_location_box()
+                    if point:
+                        new_data[k] = point
+            if new_data:
+                self.jrc[geo_location_key] = new_data
 
     @classmethod
     def delete_by_index_tree_id(cls, path):
@@ -1109,6 +1180,16 @@ class WekoDeposit(Deposit):
                 pass
             raise PIDResolveRESTError(description='This item has been deleted')
 
+    def update_author_link(self, author_link):
+        """Index feedback mail list."""
+        item_id = self.id
+        if author_link:
+            author_link_info = {
+                "id": item_id,
+                "author_link": author_link
+            }
+            self.indexer.update_author_link(author_link_info)
+
     def update_feedback_mail(self):
         """Index feedback mail list."""
         item_id = self.id
@@ -1127,35 +1208,6 @@ class WekoDeposit(Deposit):
             "mail_list": []
         }
         self.indexer.update_feedback_mail_list(feedback_mail)
-
-    def update_jpcoar_identifier(self):
-        """
-        Update JPCOAR meta data item.
-
-        Update JPCOAR meta data item for grant DOI which added at the
-        Identifier Grant screen.
-        """
-        obj = ItemsMetadata.get_record(self.id)
-        attrs = ['attribute_value_mlt',
-                 'item_1551265147138',
-                 'item_1551265178780']
-        dc = {
-            attrs[1]: {attrs[0]: obj.get(attrs[1])},
-            attrs[2]: {attrs[0]: [obj.get(attrs[2])]}
-        }
-        self.indexer.update_jpcoar_identifier(dc, self.id)
-        record = RecordMetadata.query.get(self.id)
-        if record and record.json:
-            try:
-                with db.session.begin_nested():
-                    record.json[attrs[1]][attrs[0]] = obj.get(attrs[1])
-                    record.json[attrs[2]][attrs[0]] = [obj.get(attrs[2])]
-                    flag_modified(record, 'json')
-                    db.session.merge(record)
-                db.session.commit()
-            except Exception as ex:
-                current_app.logger.debug(ex)
-                db.session.rollback()
 
     def clean_unuse_file_contents(self, pre_object_versions,
                                   new_object_versions):
