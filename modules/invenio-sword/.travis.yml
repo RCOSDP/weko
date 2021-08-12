@@ -1,0 +1,88 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of Invenio.
+# Copyright (C) 2015, 2016 CERN.
+#
+# Invenio is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# Invenio is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Invenio; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#
+# In applying this license, CERN does not
+# waive the privileges and immunities granted to it by virtue of its status
+# as an Intergovernmental Organization or submit itself to any jurisdiction.
+
+addons:
+  apt:
+    packages:
+      - rabbitmq-server
+  postgresql: 9.4
+
+notifications:
+  email: false
+
+sudo: false
+
+services:
+  - postgresql
+  - redis-server
+
+language: python
+
+matrix:
+  fast_finish: true
+  allow_failures:
+    - env: REQUIREMENTS=devel EXTRAS=all,elasticsearch6 ES_URL=$ES6_DOWNLOAD_URL
+    - env: REQUIREMENTS=devel EXTRAS=all,elasticsearch7 ES_URL=$ES7_DOWNLOAD_URL
+
+cache:
+  - pip
+
+env:
+  global:
+    - PYTHONPATH=.
+#    - ES5_DOWNLOAD_URL="https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.6.4.tar.gz"
+    - ES6_DOWNLOAD_URL="https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.8.2.tar.gz"
+    - ES7_DOWNLOAD_URL="https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-7.3.0-linux-x86_64.tar.gz"
+  matrix:
+#    - EXTRAS=all,elasticsearch5 ES_URL=$ES5_DOWNLOAD_URL
+#    - EXTRAS=all,elasticsearch6 ES_URL=$ES6_DOWNLOAD_URL
+    - EXTRAS=all,elasticsearch7,test ES_URL=$ES7_DOWNLOAD_URL
+
+python:
+#  - "3.7"
+  - "3.8"
+
+before_install:
+  - "mkdir /tmp/elasticsearch"
+  - "wget -O - $ES_URL | tar xz --directory=/tmp/elasticsearch --strip-components=1"
+  - "/tmp/elasticsearch/bin/elasticsearch > /tmp/local-es.log &"
+
+install:
+  - pip install tox-travis pre-commit pytest pytest-cov codecov sphinx
+  - pip install elasticsearch invenio-access invenio-search flask-oauthlib elasticsearch-dsl invenio-app 'werkzeug<1.0'
+  - pip install -e 'git+https://github.com/swordapp/sword3-common.py.git@travis#egg=sword3common'
+  - pip install -e .[$EXTRAS]
+
+before_script:
+  # Allow ES to start
+  - sleep 5
+  - curl http://127.0.0.1:9200 && echo "Elasticsearch is up!" || cat /tmp/local-es.log
+
+script:
+  - pre-commit run --all-files
+  - pytest tests --cov=invenio_sword --cov-branch
+  - (cd docs; make html)
+
+after_success:
+  - codecov

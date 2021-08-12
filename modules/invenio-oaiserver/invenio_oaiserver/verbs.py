@@ -72,7 +72,7 @@ class DateTime(_DateTime):
                                               '%Y-%m-%dT%H:%M:%S')
 
     DATEFORMAT_DESERIALIZATION_FUNCS = dict(
-        _DateTime.DATEFORMAT_DESERIALIZATION_FUNCS,
+        _DateTime.DESERIALIZATION_FUNCS,
         permissive=from_iso_permissive
     )
 

@@ -1,0 +1,6 @@
+API reference
+=============
+
+.. toctree::
+
+   views

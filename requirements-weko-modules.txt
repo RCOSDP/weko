@@ -1,4 +1,4 @@
-
+-e /code/modules/invenio-sword
 -e /code/modules/invenio-files-rest
 -e /code/modules/invenio-s3
 -e /code/modules/invenio-oaiserver
