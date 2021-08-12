@@ -24,7 +24,7 @@ from elasticsearch import Elasticsearch, helpers
 
 
 def removeOAISet():
-    start = time.process_time()
+    start = time.time()
     count = 0
     try:
         records = RecordMetadata.query.filter(
@@ -50,7 +50,7 @@ def removeOAISet():
                     "no record match {0}".format(record.id))
         db.session.commit()
         current_app.logger.info(
-            "Processed {0} items, elapsed time: {1}".format(count, time.process_time()-start))
+            "Processed {0} items, elapsed time: {1}".format(count, time.time()-start))
     except SQLAlchemyError as e:
         db.session.rollback()
         current_app.logger.error(
@@ -127,7 +127,7 @@ def _addOAISet(id):
 
 
 def addOAISetToAll():
-    start = time.process_time()
+    start = time.time()
     cl = Community.query.all()
     c_id_list = []
     for c in cl:
@@ -139,7 +139,7 @@ def addOAISetToAll():
         current_app.logger.info("end {0}".format(c))
 
     current_app.logger.info(
-        "elapsed time: {0}".format(time.process_time()-start))
+        "elapsed time: {0}".format(time.time()-start))
 
 
 def init_parser():

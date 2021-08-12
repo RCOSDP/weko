@@ -18,7 +18,7 @@ from elasticsearch import Elasticsearch, helpers
 def deleteUntrackableItemsFromElasticsearch():
     """Delete untrackable items from item index in Elasticsearch
     """
-    start = time.process_time()
+    start = time.time()
     es = Elasticsearch(
         "http://"+os.environ.get('INVENIO_ELASTICSEARCH_HOST', 'localhost')+":9200")
     _query = '{"query": {"match_all" : {}}}'
@@ -45,4 +45,4 @@ def deleteUntrackableItemsFromElasticsearch():
         current_app.logger.info("delete item : {0}".format(item))
 
     current_app.logger.info(
-        "elapsed time: {0}".format(time.process_time()-start))
+        "elapsed time: {0}".format(time.time()-start))

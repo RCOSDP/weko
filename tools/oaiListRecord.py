@@ -7,7 +7,7 @@ from sickle import Sickle
 
 def countListRecords(baseURL='https://localhost/oai',
                      meta='oai_dc', setspec=''):
-    startTime = time.process_time()
+    startTime = time.time()
     sickle = Sickle(endpoint=baseURL,
                     max_retries=3, verify=False)
     ids = []
@@ -19,7 +19,7 @@ def countListRecords(baseURL='https://localhost/oai',
         else:
             deletedIds.append(r.header.identifier)
 
-    elapsedTime = time.process_time() - startTime
-    current_app.logger.info("# of items: ".format(len(ids)))
-    current_app.logger.info("# of deleted items: ".format(len(deletedIds)))
+    elapsedTime = time.time() - startTime
+    current_app.logger.info("# of items: {0}".format(len(ids)))
+    current_app.logger.info("# of deleted items: {0}".format(len(deletedIds)))
     current_app.logger.info("elapsed time: {0}".format(elapsedTime))
