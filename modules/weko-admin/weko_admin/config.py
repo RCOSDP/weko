@@ -328,6 +328,7 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
         'init_disp_index_disp_method': '0',
         'init_disp_index': ''
     },
+
     'detail_condition': [
         {'id': 'title',
          'contents': 'Title',
@@ -732,7 +733,6 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
         'mappingFlg':False,
         'mappingName':''},
     
-
         {'id': 'integer_range1',
          'contents': 'integer_range1',
          'useable_status': True,
@@ -904,10 +904,8 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mapping': [],
          'default_display':True,
          'inputType':'geo_distance',
-         'inputVal_east':'',
-         'inputVal_west':'',
-         'inputVal_south':'',
-         'inputVal_north':'',
+         'inputVal_lat':'',
+         'inputVal_lon':'',
          'mappingFlg':False,
          'mappingName':''},
     ]
