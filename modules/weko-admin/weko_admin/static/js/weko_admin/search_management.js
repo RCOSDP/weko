@@ -66,6 +66,25 @@ const SPECIFIC_INDEX_VALUE = '1';
         } else {
           $scope.dataJson['init_disp_setting']['init_disp_index'] = '';
         }
+
+        var cnt = 0;
+        const contants_lang = document.getElementById("label_contents_0").lang
+
+        for (cnt; cnt < $scope.dataJson.detail_condition.length; cnt++) {
+          let labelname = $("#label_contents_" + cnt).val();
+          let labelsubname = $("#hidden_contents_" + cnt).val();
+
+          $scope.dataJson['detail_condition'][cnt]['contents'] = '';
+          if(contants_lang == 'ja') {
+            $scope.dataJson['detail_condition'][cnt]['contents_value']['ja'] = labelname;
+            $scope.dataJson['detail_condition'][cnt]['contents_value']['en'] = labelsubname;
+          }
+          else {
+            $scope.dataJson['detail_condition'][cnt]['contents_value']['en'] = labelname;
+            $scope.dataJson['detail_condition'][cnt]['contents_value']['ja'] = labelsubname;
+          }
+        }
+
         let dbJson = $scope.dataJson;
 
         $http.post(url, dbJson).then(function successCallback(response) {
@@ -242,7 +261,63 @@ const SPECIFIC_INDEX_VALUE = '1';
           });
         }
       }
+     
+      $("#save_button").click(function(){
+        $('#search_contents_chg').trigger('click');
+        let mainvalues = $("#labelname_text1").val();
+        let subvalues = $("#labelname_text2").val();
+        let index = $("#labelname_id").val();
+        let lang = $("#labelname_lang").val();
+        let select1 = $("#sel_lang1").val();
+        let select2 = $("#sel_lang2").val();
+
+        if ( select1 == lang ) {
+          document.getElementById("label_contents_" + index).value = mainvalues;
+        }
+        else if ( select2 == lang ) {
+          document.getElementById("label_contents_" + index).value = subvalues;
+        }
+        if ( select1 != lang ) {
+          document.getElementById("hidden_contents_" + index).value = mainvalues;
+        }
+        else if ( select2 != lang ) {
+          document.getElementById("hidden_contents_" + index).value = subvalues;
+        }
+      });
+
+      $('#search_contents_chg').on('show.bs.modal', function (event) {
+        var subGmn = $(event.relatedTarget);
+        var contents = subGmn.data('contents');
+        var subcontents = subGmn.data('subcontents');
+        var index = subGmn.data('index');
+        var language = subGmn.data('lang');
+
+        let contvalues = $("#" + contents).val();
+        let subvalues = $("#" + subcontents).val();
+
+        document.getElementById("labelname_text1").value = contvalues;
+        document.getElementById("labelname_text2").value = subvalues;
+
+        document.getElementById("labelname_id").value = index;
+        document.getElementById("labelname_lang").value = language;
+
+        var select1 = document.getElementById("sel_lang1");
+        var select2 = document.getElementById("sel_lang2");
+
+        if( language == 'ja') {
+          select1.options[1].selected = true;  
+          select2.options[0].selected = true;  
+        }
+        else {
+          select1.options[0].selected = true;  
+          select2.options[1].selected = true;  
+        }
+        
+      });
+   
     }
+
+    
     // Inject depedencies
     searchManagementCtrl.$inject = [
       '$scope',
