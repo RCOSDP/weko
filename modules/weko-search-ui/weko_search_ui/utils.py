@@ -1572,7 +1572,8 @@ def handle_check_doi_ra(list_record):
             identifier = IdentifierHandle(pid.object_uuid)
             _value, doi_type = identifier.get_idt_registration_data()
 
-            if doi_type and doi_type[0] != doi_ra:
+            if (doi_type and doi_type[0] != doi_ra) \
+                    or (not doi_type and doi_ra):
                 error = _('Specified {} is different from '
                           + 'existing {}.').format('DOI_RA', 'DOI_RA')
         except Exception as ex:
@@ -1601,6 +1602,8 @@ def handle_check_doi_ra(list_record):
                         error = _('PID does not meet the conditions.')
                 else:
                     error = check_existed(item_id, doi_ra)
+        else:
+            error = check_existed(item_id, doi_ra)
 
         if error:
             item['errors'] = item['errors'] + [error] \
@@ -1681,6 +1684,9 @@ def handle_check_doi(list_record):
                         elif not pid_doi.pid_value == (doi_domain + '/' + doi):
                             error = _('Specified {} is different from'
                                       + ' existing {}.').format('DOI', 'DOI')
+                    elif doi:
+                        error = _('Specified {} is different from'
+                                  + ' existing {}.').format('DOI', 'DOI')
 
         if error:
             item['errors'] = item['errors'] + [error] \
