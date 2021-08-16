@@ -1003,6 +1003,7 @@ class SchemaTree:
                                             continue
                                         chld.set(get_prefix(k2), v2)
 
+                                    # Check affiliation node
                                     if node.get(self._aff):
                                         if creator_idx >= 0:
                                             numbs_child = count_aff_childs(
@@ -1015,6 +1016,7 @@ class SchemaTree:
 
                                         for k1, v1 in node.items():
                                             if k1 != self._atr:
+                                                # Handle affiliation node
                                                 if k1 == self._aff \
                                                         and numbs_child:
                                                     create_affiliation(
@@ -1070,6 +1072,7 @@ class SchemaTree:
                                     child = etree.Element(kname, None, ns)
                                     tree.append(child)
 
+                                    # Check affiliation node
                                     if val.get(self._aff):
                                         if creator_idx >= 0:
                                             numbs_child = count_aff_childs(
@@ -1082,6 +1085,7 @@ class SchemaTree:
 
                                         for k1, v1 in val.items():
                                             if k1 != self._atr:
+                                                # Handle affiliation node
                                                 if k1 == self._aff \
                                                         and numbs_child:
                                                     create_affiliation(
@@ -1362,15 +1366,17 @@ class SchemaTree:
                 # Just add an empty element in case there is no language
                 if len(val) == 0:
                     val.add('')
+        # Initial counter of creator and contributor node
+        # Start counter from -1 to can use as index
         creator_idx = -1
         contributor_idx = -1
         for lst in node_tree:
+            # Each creator/contributor node increasing by one
             if lst.get('jpcoar:creator'):
                 creator_idx += 1
-                contributor_idx = -1
             elif lst.get('jpcoar:contributor'):
                 contributor_idx += 1
-                creator_idx = -1
+
             for k, v in lst.items():
                 # Remove items that are not set as controlled vocabulary
                 if k in indetifier_keys:
