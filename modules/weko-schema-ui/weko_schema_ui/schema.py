@@ -1015,7 +1015,8 @@ class SchemaTree:
 
                                         for k1, v1 in node.items():
                                             if k1 != self._atr:
-                                                if k1 == self._aff:
+                                                if k1 == self._aff \
+                                                        and numbs_child:
                                                     create_affiliation(
                                                         numbs_child, k1, v1,
                                                         chld, parent_keys,
@@ -1081,7 +1082,8 @@ class SchemaTree:
 
                                         for k1, v1 in val.items():
                                             if k1 != self._atr:
-                                                if k1 == self._aff:
+                                                if k1 == self._aff \
+                                                        and numbs_child:
                                                     create_affiliation(
                                                         numbs_child, k1, v1,
                                                         child, parent_keys,
@@ -1209,10 +1211,10 @@ class SchemaTree:
             """Count number of affiliationName and affiliationNameIdentifier.
 
             Returns:
-                [type]: [description]
+                ret [type]: [description] numbs_child
 
             """
-            numbs_child = {
+            ret = {
                 "parent": 0,
                 "childs": []
             }
@@ -1227,17 +1229,23 @@ class SchemaTree:
             for _item in self._record.values():
                 if isinstance(_item, dict) and _item.get('jpcoar_mapping') \
                         and _item.get('jpcoar_mapping', {}).get(key):
+                    if creator_idx >= len(_item.get('attribute_value_mlt', [])):
+                        return None
+
                     aff_data = _item.get('attribute_value_mlt')[creator_idx]
-                    numbs_child['parent'] = len(aff_data.get(_item_key))
+                    if not aff_data.get(_item_key):
+                        return None
+
+                    ret['parent'] = len(aff_data.get(_item_key))
                     for _subitem in aff_data.get(_item_key):
-                        numbs_child['childs'].append({
+                        ret['childs'].append({
                             jpcoar_affname: len(_subitem.get(
                                 _name_key, [])),
                             jpcoar_nameidt: len(_subitem.get(
                                 _idtf_key, []))
                         })
 
-            return numbs_child
+            return ret
 
         def create_affiliation(numbs_child, k, v, child,
                                parent_keys, current_lang):
