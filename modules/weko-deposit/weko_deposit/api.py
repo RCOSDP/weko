@@ -858,13 +858,13 @@ class WekoDeposit(Deposit):
                                     'WEKO_MAX_FILE_SIZE_FOR_ES']
                                 mimetypes = current_app.config[
                                     'WEKO_MIMETYPE_WHITELIST_FOR_ES']
+                                content = lst.copy()
+                                file_content = ""
                                 if file.obj.file.size <= file_size_max and \
                                         file.obj.mimetype in mimetypes:
-
-                                    content = lst.copy()
-                                    content.update(
-                                        {"file": file.obj.file.read_file(lst)})
-                                    contents.append(content)
+                                    file_content = file.obj.file.read_file(lst)
+                                content.update({"file": file_content})
+                                contents.append(content)
 
                             except Exception as e:
                                 abort(500, '{}'.format(str(e)))
@@ -1055,8 +1055,10 @@ class WekoDeposit(Deposit):
                 "pointLatitude": v.get("southBoundLatitude"),
                 "pointLongitude": v.get("westBoundLongitude"),
             }
-            es_north_east_point = _convert_geo_location(jpcoar_north_east_point)
-            es_south_west_point = _convert_geo_location(jpcoar_south_west_point)
+            es_north_east_point = _convert_geo_location(
+                jpcoar_north_east_point)
+            es_south_west_point = _convert_geo_location(
+                jpcoar_south_west_point)
             if es_north_east_point:
                 point_box['northEastPoint'] = es_north_east_point
             if es_south_west_point:
