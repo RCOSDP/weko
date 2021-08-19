@@ -50,12 +50,17 @@ from invenio_db import db
 from invenio_files_rest.models import FileInstance, Location, ObjectVersion
 from invenio_files_rest.utils import find_and_update_location_size
 from invenio_i18n.ext import current_i18n
+from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.api import Record
 from invenio_records_rest.errors import InvalidQueryRESTError
 from invenio_search import RecordsSearch
+from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
+from invenio_stats.models import StatsEvents
+from invenio_stats.processors import anonymize_user, flag_restricted, \
+    flag_robots, hash_id
 from jsonschema import Draft4Validator
 from weko_admin.models import SessionLifetime
 from weko_admin.utils import get_redis_cache
@@ -91,11 +96,6 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_REPO_USER, WEKO_SEARCH_TYPE_DICT, WEKO_SEARCH_UI_BULK_EXPORT_TASK, \
     WEKO_SEARCH_UI_BULK_EXPORT_URI, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
-from invenio_stats.processors import anonymize_user, flag_restricted, \
-    flag_robots, hash_id
-from invenio_indexer.api import RecordIndexer
-from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
-from invenio_stats.models import StatsEvents
 
 err_msg_suffix = 'Suffix of {} can only be used with half-width' \
     + ' alphanumeric characters and half-width symbols "_-.; () /".'
@@ -1229,7 +1229,6 @@ def import_items_to_system(item: dict, request_info: dict):
         return      -- PID object if exist.
 
     """
-
     def store_data_to_es_and_db(item, request_info):
         """Store data to es and db."""
         # Default admin user (1) for this import.

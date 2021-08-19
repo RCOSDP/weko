@@ -28,8 +28,8 @@ from copy import deepcopy
 from functools import wraps
 
 import redis
-from flask import Blueprint, abort, current_app, jsonify, render_template, \
-    request, session, url_for
+from flask import Blueprint, abort, current_app, has_request_context, \
+    jsonify, render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
@@ -49,6 +49,7 @@ from weko_deposit.api import WekoDeposit
 from weko_deposit.links import base_factory
 from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
+from weko_deposit.signals import item_created
 from weko_items_ui.api import item_login
 from weko_records.api import FeedbackMailList, ItemLink
 from weko_records.models import ItemMetadata
@@ -85,8 +86,6 @@ from .utils import IdentifierHandle, auto_fill_title, \
     saving_doi_pidstore, send_usage_application_mail_for_guest_user, \
     set_files_display_type, update_approval_date, update_cache_data, \
     validate_guest_activity_expired, validate_guest_activity_token
-from flask import has_request_context
-from weko_deposit.signals import item_created
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -1123,7 +1122,7 @@ def next_action(activity_id='0', action_id=0):
             work_activity.end_activity(activity)
             # Call signal to push item data to ES.
             try:
-                if not '.' in current_pid.pid_value and has_request_context():
+                if '.' not in current_pid.pid_value and has_request_context():
                     item_created.send(
                         current_app._get_current_object(),
                         user_id=current_user.get_id() if current_user else -1,
