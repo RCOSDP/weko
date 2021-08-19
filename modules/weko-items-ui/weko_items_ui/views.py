@@ -23,6 +23,7 @@
 import json
 import os
 import sys
+from copy import deepcopy
 from datetime import date, timedelta
 
 import redis
@@ -190,6 +191,13 @@ def iframe_save_model():
     """
     try:
         data = request.get_json()
+        # remove either check temp data
+        if data and data.get('metainfo'):
+            metainfo = deepcopy(data.get('metainfo'))
+            for key in metainfo.keys():
+                if key.startswith('either_valid_'):
+                    del data['metainfo'][key]
+
         activity_session = session['activity_info']
         activity_id = activity_session.get('activity_id', None)
         if activity_id:
@@ -423,7 +431,8 @@ def iframe_items_index(pid_value='0'):
             if pid_value and '.' in pid_value:
                 root_record, files = get_record_by_root_ver(pid_value)
                 if root_record and root_record.get('title'):
-                    session['itemlogin_item']['title'] = root_record['title'][0]
+                    session['itemlogin_item']['title'] = \
+                        root_record['title'][0]
                     files_thumbnail = get_thumbnails(files, None)
             else:
                 root_record = session['itemlogin_record']
@@ -432,8 +441,8 @@ def iframe_items_index(pid_value='0'):
                 files = set_files_display_type(root_record, files)
 
             from weko_workflow.utils import get_main_record_detail
-            record_detail_alt = get_main_record_detail(cur_activity.activity_id,
-                                                       cur_activity)
+            record_detail_alt = get_main_record_detail(
+                cur_activity.activity_id, cur_activity)
             ctx.update(
                 dict(
                     record_org=record_detail_alt.get('record'),

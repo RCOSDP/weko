@@ -1364,7 +1364,7 @@ def handle_item_title(list_record):
         item_type_mapping = Mapping.get_record(item['item_type_id'])
         item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
         title_data, _title_key = get_data_by_property(
-            item, item_map, "title.@value")
+            item['metadata'], item_map, 'title.@value')
         if not title_data:
             error = _('Title is required item.')
         else:
@@ -2001,31 +2001,6 @@ def handle_doi_required_check(record):
         else:
             return True
     return False
-
-
-def get_data_by_property(record, item_map, item_property):
-    """
-    Get data by property text.
-
-    :param item_property: property value in item_map
-    :return: error_list or None
-    """
-    key = item_map.get(item_property)
-    data = []
-    if not key:
-        current_app.logger.warn(str(item_property)
-                                + ' jpcoar:mapping is not correct')
-        return None, None
-    attribute = record['metadata'].get(key.split('.')[0])
-    if not attribute:
-        return None, key
-    else:
-        data_result = get_sub_item_value(
-            attribute, key.split('.')[-1])
-        if data_result:
-            for value in data_result:
-                data.append(value)
-    return data, key
 
 
 def handle_check_date(list_record):
@@ -2931,21 +2906,21 @@ def get_key_by_property(record, item_map, item_property):
     return key
 
 
-def get_data_by_propertys(record, item_map, item_property):
+def get_data_by_property(item_metadata, item_map, mapping_key):
     """Get data by property text.
 
-    :param item_map:
-    :param record:
-    :param item_property: property value in item_map
-    :return: error_list or None
+    :param item_metadata: Item metadata.
+    :param item_map: Mapping of item type.
+    :param mapping_key: Mapping key.
+    :return: Property key and values.
     """
-    key = item_map.get(item_property)
+    key = item_map.get(mapping_key)
     data = []
     if not key:
-        current_app.logger.error(str(item_property) + ' jpcoar:mapping '
-                                                      'is not correct')
+        current_app.logger.error(str(mapping_key) + ' jpcoar:mapping '
+                                 'is not correct')
         return None, None
-    attribute = record['_item_metadata'].get(key.split('.')[0])
+    attribute = item_metadata.get(key.split('.')[0])
     if not attribute:
         return None, key
     else:
