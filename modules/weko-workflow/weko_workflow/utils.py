@@ -72,7 +72,8 @@ from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
 
 from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
     WorkFlow
-from .config import IDENTIFIER_GRANT_SELECT_DICT, WEKO_SERVER_CNRI_HOST_LINK
+from .config import DOI_VALIDATION_INFO, IDENTIFIER_GRANT_SELECT_DICT, \
+    WEKO_SERVER_CNRI_HOST_LINK
 from .models import Action as _Action
 from .models import ActionStatusPolicy, ActivityStatusPolicy, GuestActivity
 
@@ -311,24 +312,13 @@ def item_metadata_validation(
 
     # check resource type request
     if not resource_type and not type_key:
-        return {
-            'required': [],
-            'pattern': [],
-            'either': [],
-            'pmid': '',
-            'doi': '',
-            'url': '',
-            "msg": 'Resource Type Property either missing '
-                   'or jpcoar mapping not correct!',
-            'error_type': 'no_resource_type'
-        }
+        return {'required': [], 'pattern': [],
+                'either': [], 'mapping': ['dc:type']}
 
     type_check = check_required_data(resource_type, type_key)
     if not item_type or not resource_type and type_check:
-        error_list = {'required': [], 'pattern': [], 'pmid': '',
-                      'doi': '', 'url': '', 'either': []}
-        error_list['required'].append(type_key)
-        return error_list
+        return {'required': [type_key], 'pattern': [],
+                'either': [], 'mapping': []}
     resource_type = resource_type.pop()
     properties = {}
     # 必須
@@ -397,6 +387,18 @@ def item_metadata_validation(
                  'item.')
 
 
+def merge_doi_error_list(current, new):
+    """Merge DOI validation error list."""
+    if new['required']:
+        current['required'].extend(new['required'])
+    if new['either']:
+        current['either'].extend(new['either'])
+    if new['pattern']:
+        current['pattern'].extend(new['pattern'])
+    if new['mapping']:
+        current['mapping'].extend(new['mapping'])
+
+
 def validation_item_property(mapping_data, properties):
     """
     Validate item property.
@@ -405,23 +407,20 @@ def validation_item_property(mapping_data, properties):
     :param properties: Property's keywords
     :return: error_list or None
     """
-    error_list = {'required': [], 'pattern': [], 'pmid': '',
-                  'doi': '', 'url': '', 'either': []}
+    error_list = {'required': [], 'pattern': [], 'either': [], 'mapping': []}
     empty_list = deepcopy(error_list)
 
     if properties.get('required'):
         error_list_required = validattion_item_property_required(
             mapping_data, properties['required'])
         if error_list_required:
-            error_list['required'] = error_list_required['required']
-            error_list['pattern'] = error_list_required['pattern']
-            error_list['either'] = error_list_required['either']
+            merge_doi_error_list(error_list, error_list_required)
 
     if properties.get('either'):
         error_list_either = validattion_item_property_either_required(
             mapping_data, properties['either'])
         if error_list_either:
-            error_list['either'].extend(error_list_either)
+            merge_doi_error_list(error_list, error_list_either)
 
     if error_list == empty_list:
         return None
@@ -449,26 +448,34 @@ def handle_check_required_data(mapping_data, mapping_key):
 
 
 def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
-                                             error_list, is_either=False):
+                                             error_list=None, is_either=False):
     """Check required, pattern and either required."""
     if not (mapping_data and mapping_keys):
         return
-
+    if not error_list:
+        error_list = {'required': [], 'pattern': [],
+                      'either': [], 'mapping': []}
+    empty_list = deepcopy(error_list)
     keys = []
     num_map = 0
     requirements = []
-    pattern_err_keys = []
-    for mapping_key, pattern in mapping_keys:
-        check_required_info = handle_check_required_data(
-            mapping_data, mapping_key)
-        keys.extend(check_required_info[1])
-        requirements.extend(check_required_info[0])
-        if num_map == 0:
-            num_map = len(check_required_info[1])
-        if pattern and check_required_info[2]:
-            for idx, values in enumerate(check_required_info[2]):
-                if values and pattern not in values:
-                    pattern_err_keys.append(check_required_info[1][idx])
+    for mapping_key in mapping_keys:
+        for elem, pattern in DOI_VALIDATION_INFO[mapping_key]:
+            check_required_info = handle_check_required_data(
+                mapping_data, elem)
+            if not check_required_info[1]:
+                error_list['mapping'].append(mapping_key)
+                continue
+
+            keys.extend(check_required_info[1])
+            requirements.extend(check_required_info[0])
+            if num_map == 0:
+                num_map = len(check_required_info[1])
+            if pattern and check_required_info[2]:
+                for idx, values in enumerate(check_required_info[2]):
+                    if values and pattern not in values:
+                        error_list['pattern'].append(
+                            check_required_info[1][idx])
 
     if requirements:
         if num_map == 1 and not is_either:
@@ -480,9 +487,13 @@ def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
             for key in filter_root_keys:
                 either_list.append([
                     k for k in keys if k.split('.')[0] == key])
-            error_list['either'].append(either_list)
-    if pattern_err_keys:
-        error_list['pattern'].extend(pattern_err_keys)
+            if is_either and not error_list['either']:
+                error_list['either'] = either_list
+            else:
+                error_list['either'].append(either_list)
+
+    if empty_list != error_list:
+        return error_list
 
 
 def validattion_item_property_required(
@@ -494,53 +505,42 @@ def validattion_item_property_required(
     :param properties: Property's keywords
     :return: error_list or None
     """
-    error_list = {'required': [], 'pattern': [], 'either': []}
+    error_list = {'required': [], 'pattern': [], 'either': [], 'mapping': []}
     empty_list = deepcopy(error_list)
 
     # check file jpcoar:URI
     if 'fileURI' in properties:
-        mapping_keys = [['file.URI.@value', None]]
+        mapping_keys = ['jpcoar:URI']
         handle_check_required_pattern_and_either(
             mapping_data, mapping_keys, error_list)
 
     # check タイトル dc:title
     if 'title' in properties:
-        mapping_keys = [['title.@value', None],
-                        ['title.@attributes.xml:lang', None]]
+        mapping_keys = ['dc:title']
         handle_check_required_pattern_and_either(
             mapping_data, mapping_keys, error_list)
 
     # check 識別子 jpcoar:givenName
     if 'givenName' in properties:
-        mapping_keys = [['creator.givenName.@value', None]]
-        handle_check_required_pattern_and_either(
-            mapping_data, mapping_keys, error_list)
-
-    # check 識別子 jpcoar:givenName and jpcoar:nameIdentifier
-    if 'creator' in properties:
-        mapping_keys = [['creator.givenName.@value', None],
-                        ['creator.nameIdentifier.@value', None]]
+        mapping_keys = ['jpcoar:givenName']
         handle_check_required_pattern_and_either(
             mapping_data, mapping_keys, error_list)
 
     # check 収録物識別子 jpcoar:sourceIdentifier
     if 'sourceIdentifier' in properties:
-        mapping_keys = [['sourceIdentifier.@value', None],
-                        ['sourceIdentifier.@attributes.identifierType', None]]
+        mapping_keys = ['jpcoar:sourceIdentifier']
         handle_check_required_pattern_and_either(
             mapping_data, mapping_keys, error_list)
 
     # check 収録物名 jpcoar:sourceTitle
     if 'sourceTitle' in properties:
-        mapping_keys = [['sourceTitle.@value', None],
-                        ['sourceTitle.@attributes.xml:lang', 'en']]
+        mapping_keys = ['jpcoar:sourceTitle']
         handle_check_required_pattern_and_either(
             mapping_data, mapping_keys, error_list)
 
     # check 収録物名 dc:publisher
     if 'publisher' in properties:
-        mapping_keys = [['publisher.@value', None],
-                        ['publisher.@attributes.xml:lang', 'en']]
+        mapping_keys = ['dc:publisher']
         handle_check_required_pattern_and_either(
             mapping_data, mapping_keys, error_list)
 
@@ -562,94 +562,75 @@ def validattion_item_property_either_required(
     :param properties: Property's keywords
     :return: either_list
     """
-    either_list = []
+    error_list = {'required': [], 'pattern': [], 'either': [], 'mapping': []}
 
     # For Dataset
-    geo_location = []
+    geo_location = None
     if 'geoLocation' in properties:
-        # check 位置情報（点） detacite:geoLocationPoint
-        error_list = {'either': []}
-        mapping_keys = [
-            ['geoLocation.geoLocationPoint.pointLatitude.@value', None],
-            ['geoLocation.geoLocationPoint.pointLongitude.@value', None]]
-        handle_check_required_pattern_and_either(
-            mapping_data, mapping_keys, error_list, True)
-
-        if error_list['either']:
-            geo_location.extend(error_list['either'][0])
+        # check 位置情報（点） datacite:geoLocationPoint
+        mapping_keys = ['datacite:geoLocationPoint']
+        geo_location = handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, None, True)
 
         # check 位置情報（空間） datacite:geoLocationBox
         if geo_location:
-            error_list = {'either': []}
-            mapping_keys = [
-                ['geoLocation.geoLocationBox.eastBoundLongitude.@value', None],
-                ['geoLocation.geoLocationBox.northBoundLatitude.@value', None],
-                ['geoLocation.geoLocationBox.southBoundLatitude.@value', None],
-                ['geoLocation.geoLocationBox.westBoundLongitude.@value', None]]
-            handle_check_required_pattern_and_either(
-                mapping_data, mapping_keys, error_list, True)
-
-            if error_list['either']:
-                geo_location.extend(error_list['either'][0])
+            mapping_keys = ['datacite:geoLocationBox']
+            errors = handle_check_required_pattern_and_either(
+                mapping_data, mapping_keys, None, True)
+            if not errors:
+                geo_location = None
             else:
-                geo_location = []
+                merge_doi_error_list(geo_location, errors)
 
         # check 位置情報（自由記述） datacite:geoLocationPlace
         if geo_location:
-            error_list = {'either': []}
-            mapping_keys = [['geoLocation.geoLocationPlace.@value', None]]
-            handle_check_required_pattern_and_either(
-                mapping_data, mapping_keys, error_list, True)
-
-            if error_list['either']:
-                geo_location.extend(error_list['either'][0])
+            mapping_keys = ['datacite:geoLocationPlace']
+            errors = handle_check_required_pattern_and_either(
+                mapping_data, mapping_keys, None, True)
+            if not errors:
+                geo_location = None
             else:
-                geo_location = []
+                merge_doi_error_list(geo_location, errors)
 
         if geo_location:
-            either_list.append(geo_location)
+            if geo_location['either']:
+                geo_location['either'] = [geo_location['either']]
+            merge_doi_error_list(error_list, geo_location)
 
     # For other resource type
-    version = []
+    version = None
     if 'version' in properties:
         # check フォーマット jpcoar:mimeType
-        error_list = {'either': []}
-        mapping_keys = [['file.mimeType.@value', None]]
-        handle_check_required_pattern_and_either(
-            mapping_data, mapping_keys, error_list, True)
-
-        if error_list['either']:
-            version.extend(error_list['either'][0])
+        mapping_keys = ['jpcoar:mimeType']
+        version = handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, None, True)
 
         # check バージョン datacite:version
+        mapping_keys = ['datacite:version']
         if version:
-            error_list = {'either': []}
-            mapping_keys = [['version.@value', None]]
-            handle_check_required_pattern_and_either(
-                mapping_data, mapping_keys, error_list, True)
-
-            if error_list['either']:
-                version.extend(error_list['either'][0])
+            errors = handle_check_required_pattern_and_either(
+                mapping_data, mapping_keys, None, True)
+            if not errors:
+                version = None
             else:
-                version = []
+                merge_doi_error_list(version, errors)
 
         # check 出版タイプ oaire:version
         if version:
-            error_list = {'either': []}
-            mapping_keys = [['versiontype.@value', None],
-                            ['versiontype.@attributes.rdf:resource', None]]
-            handle_check_required_pattern_and_either(
-                mapping_data, mapping_keys, error_list, True)
-
-            if error_list['either']:
-                version.extend(error_list['either'][0])
+            mapping_keys = ['oaire:version']
+            errors = handle_check_required_pattern_and_either(
+                mapping_data, mapping_keys, None, True)
+            if not errors:
+                version = None
             else:
-                version = []
+                merge_doi_error_list(version, errors)
 
         if version:
-            either_list.append(version)
+            if version['either']:
+                version['either'] = [version['either']]
+            merge_doi_error_list(error_list, version)
 
-    return either_list
+    return error_list
 
 
 def check_required_data(data, key, repeatable=False):
