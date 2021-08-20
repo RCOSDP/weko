@@ -18,8 +18,8 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-# Use Python-3.5:
-FROM python:3.6-slim as stage_1
+# Use Python-3.6:
+FROM python:3.6-slim-buster as stage_1
 
 # Configure Weko instance:
 ENV INVENIO_WEB_HOST=127.0.0.1
