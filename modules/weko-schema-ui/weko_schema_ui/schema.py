@@ -1012,7 +1012,7 @@ class SchemaTree:
                                             numbs_child = count_aff_childs(
                                                 'contributor', contributor_idx)
                                         else:
-                                            numbs_child = None
+                                            numbs_child = []
 
                                         for k1, v1 in node.items():
                                             if k1 != self._atr:
@@ -1081,7 +1081,7 @@ class SchemaTree:
                                             numbs_child = count_aff_childs(
                                                 'contributor', contributor_idx)
                                         else:
-                                            numbs_child = None
+                                            numbs_child = []
 
                                         for k1, v1 in val.items():
                                             if k1 != self._atr:
@@ -1215,38 +1215,45 @@ class SchemaTree:
             """Count number of affiliationName and affiliationNameIdentifier.
 
             Returns:
-                ret [type]: [description] numbs_child
+                ret [type]: [description] Counter affiliation metadata.
 
             """
-            ret = {
-                "parent": 0,
-                "childs": []
-            }
-            _item_key = 'creatorAffiliations'
-            _name_key = 'affiliationNames'
-            _idtf_key = 'affiliationNameIdentifiers'
-            if key == 'contributor':
-                _item_key = 'contributorAffiliations'
-                _name_key = 'contributorAffiliationNames'
-                _idtf_key = 'contributorAffiliationNameIdentifiers'
+            ret = []
+            _item_key = "creatorAffiliations"
+            _name_keys = "affiliationNames"
+            _name_key = "affiliationName"
+            _idtf_keys = "affiliationNameIdentifiers"
+            _idtf_key = "affiliationNameIdentifier"
+            if key == "contributor":
+                _item_key = "contributorAffiliations"
+                _name_keys = "contributorAffiliationNames"
+                _name_key = "contributorAffiliationName"
+                _idtf_keys = "contributorAffiliationNameIdentifiers"
+                _idtf_key = "contributorAffiliationNameIdentifier"
 
             for _item in self._record.values():
-                if isinstance(_item, dict) and _item.get('jpcoar_mapping') \
-                        and _item.get('jpcoar_mapping', {}).get(key):
-                    if creator_idx >= len(_item.get('attribute_value_mlt', [])):
+                if isinstance(_item, dict) and _item.get("jpcoar_mapping") \
+                        and _item.get("jpcoar_mapping", {}).get(key):
+                    if creator_idx >= len(_item.get("attribute_value_mlt", [])):
                         return None
 
-                    aff_data = _item.get('attribute_value_mlt')[creator_idx]
+                    aff_data = _item.get("attribute_value_mlt")[creator_idx]
                     if not aff_data.get(_item_key):
                         return None
 
-                    ret['parent'] = len(aff_data.get(_item_key))
                     for _subitem in aff_data.get(_item_key):
-                        ret['childs'].append({
-                            jpcoar_affname: len(_subitem.get(
-                                _name_key, [])),
-                            jpcoar_nameidt: len(_subitem.get(
-                                _idtf_key, []))
+                        _len_affname = 0
+                        _len_nameidt = 0
+                        for item in _subitem.get(_name_keys, []):
+                            if item.get(_name_key):
+                                _len_affname += 1
+                        for item in _subitem.get(_idtf_keys, []):
+                            if item.get(_idtf_key):
+                                _len_nameidt += 1
+
+                        ret.append({
+                            jpcoar_affname: _len_affname,
+                            jpcoar_nameidt: _len_nameidt
                         })
 
             return ret
@@ -1265,44 +1272,50 @@ class SchemaTree:
             """
             count_name = 0
             count_idtf = 0
-            for _idx in range(0, numbs_child['parent']):
+            for _child in numbs_child:
                 _value = copy.deepcopy(v)
-                len_name = numbs_child['childs'][_idx][jpcoar_affname]
+                len_name = _child[jpcoar_affname]
                 if len_name > 0:
                     _data = _value[jpcoar_affname][self._v][0]
-                    _lang = _value[jpcoar_affname][self._atr]['xml:lang'][0]
+                    _lang = _value[jpcoar_affname][self._atr].get(
+                        "xml:lang", [])
                     _max_len_name = len(_data) \
                         if len(_data) < count_name + len_name \
                         else count_name + len_name
                     _value[jpcoar_affname][self._v][0] = _data[
                         count_name:_max_len_name]
-                    _value[jpcoar_affname][self._atr]['xml:lang'][
-                        0] = _lang[count_name:_max_len_name]
+                    if _lang:
+                        _value[jpcoar_affname][self._atr]["xml:lang"][0] \
+                            = _lang[0][count_name:_max_len_name]
                     count_name += _max_len_name
                 else:
                     if _value[jpcoar_affname].get(self._v):
-                        _value[jpcoar_affname][self._v][0] = []
+                        _value[jpcoar_affname][self._v][0] = [[]]
 
-                len_idtf = numbs_child['childs'][_idx][jpcoar_nameidt]
+                len_idtf = _child[jpcoar_nameidt]
                 if len_idtf > 0:
                     _data = _value[jpcoar_nameidt][self._v][0]
-                    _schm = _value[jpcoar_nameidt][self._atr][
-                        'nameIdentifierScheme'][0]
-                    _urli = _value[jpcoar_nameidt][self._atr][
-                        'nameIdentifierURI'][0]
+                    _schm = _value[jpcoar_nameidt][self._atr].get(
+                        "nameIdentifierScheme", [])
+                    _urli = _value[jpcoar_nameidt][self._atr].get(
+                        "nameIdentifierURI", [])
                     _max_len_idtf = len(_data) \
                         if len(_data) < count_idtf + len_idtf \
                         else count_idtf + len_idtf
                     _value[jpcoar_nameidt][self._v][
                         0] = _data[count_idtf:_max_len_idtf]
-                    _value[jpcoar_nameidt][self._atr]['nameIdentifierScheme'][
-                        0] = _schm[count_idtf:_max_len_idtf]
-                    _value[jpcoar_nameidt][self._atr]['nameIdentifierURI'][
-                        0] = _urli[count_idtf:_max_len_idtf]
+                    if _schm:
+                        _value[jpcoar_nameidt][self._atr][
+                            "nameIdentifierScheme"][0] \
+                            = _schm[0][count_idtf:_max_len_idtf]
+                    if _urli:
+                        _value[jpcoar_nameidt][self._atr][
+                            "nameIdentifierURI"][0] \
+                            = _urli[0][count_idtf:_max_len_idtf]
                     count_idtf += _max_len_idtf
                 else:
                     if _value[jpcoar_nameidt].get(self._v):
-                        _value[jpcoar_nameidt][self._v][0] = []
+                        _value[jpcoar_nameidt][self._v] = [[]]
 
                 k1 = get_prefix(k)
                 clone_lst = parent_keys.copy()
@@ -1374,8 +1387,13 @@ class SchemaTree:
             # Each creator/contributor node increasing by one
             if lst.get('jpcoar:creator'):
                 creator_idx += 1
+                contributor_idx = -1
             elif lst.get('jpcoar:contributor'):
+                creator_idx = -1
                 contributor_idx += 1
+            else:
+                creator_idx = -1
+                contributor_idx = -1
 
             for k, v in lst.items():
                 # Remove items that are not set as controlled vocabulary
