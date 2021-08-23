@@ -2212,7 +2212,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               if (cnt === 3) {
                 if ($scope.error_list['required'].length > 0) {
                   angular.forEach($scope.error_list['required'], function (value, key) {
-                    if (value) {
+                    if (value && $scope.depositionForm[value]) {
                       $scope.depositionForm[value].$viewValue = '';
                       $scope.depositionForm[value].$commitViewValue();
                     }
@@ -3735,7 +3735,20 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
        * @param modelValue Input value.
        * @param form Curent form.
        */
+      let eitherInputTypingTimeout = null;
       $scope.onChangeEitherField = function ($event, form, modelValue, callback) {
+        $rootScope.recordsVM.removeValidationMessage(modelValue, form);
+        if (form.type === 'text') {
+          clearTimeout(eitherInputTypingTimeout);
+          eitherInputTypingTimeout = setTimeout(function () {
+            $scope.behaviorEitherInput($event, form, modelValue, callback);
+          }, 500);
+        } else {
+          $scope.behaviorEitherInput($event, form, modelValue, callback);
+        }
+      }
+
+      $scope.behaviorEitherInput = function ($event, form, modelValue, callback) {
         if (callback) {
           this[callback]($event, modelValue);
         }
@@ -3778,8 +3791,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             }
           }
         }
-
-        $rootScope.recordsVM.removeValidationMessage(modelValue, form);
       }
 
       $scope.checkDataIndepositionForm = function (item_key) {

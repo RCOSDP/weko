@@ -72,10 +72,10 @@ WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID = 3
 
 IDENTIFIER_GRANT_SELECT_DICT = {
     'NotGrant': '0',
-    'JaLCDOI': '1',
-    'CrossRefDOI': '2',
-    'DataCiteDOI': '3',
-    'NDLJaLCDOI': '4'
+    'JaLC': '1',
+    'Crossref': '2',
+    'DataCite': '3',
+    'NDL JaLC': '4'
 }
 """Identifier grant selected enum."""
 

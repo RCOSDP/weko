@@ -28,6 +28,7 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import NoReturn, Optional, Tuple, Union
 
+import redis
 from celery.task.control import inspect
 from flask import current_app, request, session
 from flask_babelex import gettext as _
@@ -48,6 +49,7 @@ from invenio_pidstore.resolver import Resolver
 from invenio_records.models import RecordMetadata
 from invenio_records_files.models import RecordsBuckets
 from passlib.handlers.oracle import oracle10
+from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from weko_admin.models import Identifier, SiteInfo
@@ -327,7 +329,7 @@ def item_metadata_validation(
     either_properties = []
 
     # JaLC DOI identifier registration
-    if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']:
+    if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLC']:
         # 別表2-1 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【ジャーナルアーティクル】
         # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
         # 別表2-3 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
@@ -350,7 +352,7 @@ def item_metadata_validation(
                 required_properties.append('fileURI')
             either_properties = ['geoLocation']
     # CrossRef DOI identifier registration
-    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']:
+    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['Crossref']:
         if resource_type in journalarticle_type:
             required_properties = ['title',
                                    'publisher',
@@ -364,11 +366,11 @@ def item_metadata_validation(
             if item_type.item_type_name.name != ddi_item_type_name:
                 required_properties.append('fileURI')
     # DataCite DOI identifier registration
-    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI'] \
+    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCite'] \
             and item_type.item_type_name.name != ddi_item_type_name:
         required_properties = ['fileURI']
     # NDL JaLC DOI identifier registration
-    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI'] \
+    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NDL JaLC'] \
             and item_type.item_type_name.name != ddi_item_type_name:
         required_properties = ['fileURI']
 
@@ -378,8 +380,8 @@ def item_metadata_validation(
         properties['either'] = either_properties
 
     if properties and \
-            ((identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI']
-              and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI']
+            ((identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCite']
+              and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDL JaLC']
               ) or is_import):
         return validation_item_property(metadata_item, properties)
     else:
@@ -397,6 +399,7 @@ def merge_doi_error_list(current, new):
         current['pattern'].extend(new['pattern'])
     if new['mapping']:
         current['mapping'].extend(new['mapping'])
+        current['mapping'] = list(set(current['mapping']))
 
 
 def validation_item_property(mapping_data, properties):
@@ -3712,15 +3715,15 @@ def prepare_doi_link_workflow(item_id, doi_input):
                 _item_id)
             _jalc_cr_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[2][2],
-                identifier_setting.jalc_doi,
+                identifier_setting.jalc_crossref_doi,
                 _item_id)
             _jalc_dc_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[3][2],
-                identifier_setting.jalc_doi,
+                identifier_setting.jalc_datacite_doi,
                 item_id)
             _ndl_jalc_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[4][2],
-                identifier_setting.jalc_doi,
+                identifier_setting.ndl_jalc_doi,
                 _item_id)
         elif suffix_method == 1:
             url_format = '{}/{}/{}{}'
@@ -3731,17 +3734,17 @@ def prepare_doi_link_workflow(item_id, doi_input):
                 doi_input.get('action_identifier_jalc_doi'))
             _jalc_cr_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[2][2],
-                identifier_setting.jalc_doi,
+                identifier_setting.jalc_crossref_doi,
                 identifier_setting.suffix,
                 doi_input.get('action_identifier_jalc_doi'))
             _jalc_dc_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[3][2],
-                identifier_setting.jalc_doi,
+                identifier_setting.jalc_datacite_doi,
                 identifier_setting.suffix,
                 doi_input.get('action_identifier_jalc_doi'))
             _ndl_jalc_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[4][2],
-                identifier_setting.jalc_doi,
+                identifier_setting.ndl_jalc_doi,
                 identifier_setting.suffix,
                 doi_input.get('action_identifier_jalc_doi'))
         elif suffix_method == 2:
@@ -3752,15 +3755,15 @@ def prepare_doi_link_workflow(item_id, doi_input):
                 doi_input.get('action_identifier_jalc_doi'))
             _jalc_cr_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[2][2],
-                identifier_setting.jalc_doi,
+                identifier_setting.jalc_crossref_doi,
                 doi_input.get('action_identifier_jalc_doi'))
             _jalc_dc_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[3][2],
-                identifier_setting.jalc_doi,
+                identifier_setting.jalc_datacite_doi,
                 doi_input.get('action_identifier_jalc_doi'))
             _ndl_jalc_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[4][2],
-                identifier_setting.jalc_doi,
+                identifier_setting.ndl_jalc_doi,
                 doi_input.get('action_identifier_jalc_doi'))
         else:
             return {}
@@ -3790,3 +3793,27 @@ def get_pid_value_by_activity_detail(activity_detail):
                 return self_list[-1]
             else:
                 return ''
+
+
+def check_doi_validation_not_pass(item_id, activity_id, identifier_select):
+    """Call DOI validation and save error cache."""
+    error_list = item_metadata_validation(item_id, identifier_select)
+    if isinstance(error_list, str):
+        return error_list
+
+    sessionstore = RedisStore(redis.StrictRedis.from_url(
+        'redis://{host}:{port}/1'.format(
+            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+    if error_list:
+        sessionstore.put(
+            'updated_json_schema_{}'.format(activity_id),
+            json.dumps(error_list).encode('utf-8'),
+            ttl_secs=300)
+        return True
+    else:
+        if sessionstore.redis.exists(
+                'updated_json_schema_{}'.format(activity_id)):
+            sessionstore.delete(
+                'updated_json_schema_{}'.format(activity_id))
+        return False

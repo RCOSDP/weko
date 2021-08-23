@@ -1996,7 +1996,8 @@ def handle_doi_required_check(record):
             return False
         if error_list and (error_list.get('required')
                            or error_list.get('either')
-                           or error_list.get('pattern')):
+                           or error_list.get('pattern')
+                           or error_list.get('mapping')):
             return False
         else:
             return True
