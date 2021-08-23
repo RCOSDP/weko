@@ -23,10 +23,8 @@
 import logging
 import os
 from datetime import datetime
-from time import sleep
 
 from invenio_db import db
-from invenio_indexer.api import RecordIndexer
 from invenio_oaiserver import current_oaiserver
 from invenio_oaiserver.models import OAISet
 from invenio_records.models import RecordMetadata
@@ -35,6 +33,7 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.sql.expression import case, func
 from weko_deposit.api import WekoDeposit
 from weko_index_tree.models import Index
+from weko_records.api import ItemsMetadata
 
 
 def get_public_indexes():
@@ -78,7 +77,7 @@ def get_public_indexes():
         ).filter(
             recursive_t.c.public_state.is_(True),
             recursive_t.c.harvest_public_state.is_(True)
-        ).all()
+        ).yield_per(1000)
 
     return indexes
 
@@ -89,13 +88,12 @@ def update_oai_sets():
     Returns:
         [type]: [description]
     """
-    logging.info(' START update OAI Sets.')
+    logging.info(' STARTED update OAI Sets.')
     oai_sets = OAISet.query.all()
     indexes = get_public_indexes()
 
     # INIT
     sets_totals = 0
-    sets_errors = 0
     sets_update = 0
     sets_delete = 0
     sets_create = 0
@@ -106,35 +104,27 @@ def update_oai_sets():
     sets_totals = len(index_ids)
 
     # Handle for update/delete OAISet
-    for oaiset in oai_sets:
-        update = False
-        try:
-            with db.session.begin_nested():
+    try:
+        with db.session.begin_nested():
+            for oaiset in oai_sets:
                 if oaiset.id in index_ids:
                     new_set = 'path:"{}"'.format(str(oaiset.id))
                     if oaiset.search_pattern != new_set:
                         oaiset.search_pattern = new_set
                         db.session.merge(oaiset)
-                        update = True
+                        sets_update += 1
                     else:
                         continue
                 else:
                     db.session.delete(oaiset)
-            if update:
-                sets_update += 1
-            else:
-                sets_delete += 1
-        except Exception as ex:
-            logging.info(' ERROR!: When handle Set'
-                         ': {}/ detail: {}.'.format(oaiset.id, ex))
-            sets_errors += 1
-            continue
-
+                    sets_delete += 1
+    except SQLAlchemyError as ex:
+        logging.info(' ERROR: {}.'.format(ex))
     # Handle for new OAISet
-    for index in indexes:
-        if index.cid in sets_missed:
-            try:
-                with db.session.begin_nested():
+    try:
+        with db.session.begin_nested():
+            for index in indexes:
+                if index.cid in sets_missed:
                     oaiset = OAISet(
                         id=index.cid,
                         spec=index.path.replace("/", ":"),
@@ -145,23 +135,17 @@ def update_oai_sets():
                         search_pattern='path:"{}"'.format(index.cid)
                     )
                     db.session.add(oaiset)
-                sets_create += 1
-            except Exception as ex:
-                logging.info(' ERROR!: When create Set'
-                             ': {}/ detail: {}.'.format(oaiset.id, ex))
-                sets_errors += 1
-                continue
-
+                    sets_create += 1
+    except SQLAlchemyError as ex:
+        logging.info(' ERROR: {}.'.format(ex))
     # Commit
     db.session.commit()
-    logging.info(' FINISH update OAI Sets.')
-    logging.info(' Total    : {}'.format(sets_totals))
+
+    logging.info(' FINISHED update OAI Sets.')
+    logging.info(' Totals   : {}'.format(sets_totals))
     logging.info(' Created  : {}'.format(sets_create))
     logging.info(' Updated  : {}'.format(sets_update))
     logging.info(' Deleted  : {}'.format(sets_delete))
-    logging.info(' Errored  : {}'.format(sets_errors))
-    if sets_totals != (sets_create + sets_update + sets_delete + sets_errors):
-        logging.info(' The remains not had been changed.')
     logging.info('-' * 60)
 
     return index_ids
@@ -173,16 +157,14 @@ def update_records_metadata(oai_sets: list = []):
     Args:
         oai_sets (list, optional): [description]. Defaults to [].
     """
-    logging.info(' START update Records Metadata.')
+    logging.info(' STARTED update Records Metadata.')
     records = db.session.query(RecordMetadata).yield_per(1000)
 
     rec_totals = 0
-    rec_errors = 0
 
-    for rec in records:
-        rec_totals += 1
-        try:
-            with db.session.begin_nested():
+    try:
+        with db.session.begin_nested():
+            for rec in records:
                 deposit = WekoDeposit(rec.json, rec)
                 if deposit.get('path'):
                     deposit['path'] = [item.split("/")[-1] for item
@@ -191,27 +173,23 @@ def update_records_metadata(oai_sets: list = []):
                         deposit['_oai']['sets'] = \
                             [item for item in deposit["path"]
                                 if item in oai_sets]
-                deposit.update_item_by_task()
-        except SQLAlchemyError as ex:
-            logging.info(' ERROR!: When update Record'
-                         ': {}/ detail: {}.'.format(rec.id, ex))
-            rec_errors += 1
-            continue
-
+                index = {
+                    'index': deposit['path'],
+                    'actions': deposit.get('publish_status')
+                }
+                item_metadata = ItemsMetadata.get_record(id_=rec.id).dumps()
+                item_metadata.pop('id', None)
+                item_metadata['_oai'] = deposit['_oai']
+                item_metadata['path'] = deposit['path']
+                deposit.update(index, item_metadata)
+                deposit.commit()
+                rec_totals += 1
+    except SQLAlchemyError as ex:
+        logging.info(' ERROR: {}.'.format(ex))
     db.session.commit()
 
-    # Update record to ES
-    sleep(20)
-    query = (item.id for item in records if item)
-    logging.info(' REINDEX Records Metadata on ES.')
-
-    RecordIndexer().bulk_index(query)
-    RecordIndexer().process_bulk_queue(
-        es_bulk_kwargs={'raise_on_error': True})
-
-    logging.info(' FINISH update Records Metadata.')
-    logging.info(' Total    : {}'.format(rec_totals))
-    logging.info(' Errored  : {}'.format(rec_errors))
+    logging.info(' FINISHED update Records Metadata.')
+    logging.info(' Totals   : {}'.format(rec_totals))
 
 
 def main():
@@ -227,6 +205,7 @@ def main():
     logging.info('*' * 60)
 
     # Temporary disable oaiset signals.
+    # Prevent percolator update.
     current_oaiserver.unregister_signals()
     indexes = []
 
