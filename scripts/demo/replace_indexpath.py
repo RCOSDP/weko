@@ -225,16 +225,16 @@ def main():
         format="%(asctime)-15s %(levelname)-5s %(message)s")
     logging.info('*' * 60)
 
-    # Temporary disable oaiset signals.
-    # Prevent percolator update.
-    current_oaiserver.unregister_signals()
     indexes = []
 
     # Update OAISets
     indexes = update_oai_sets()
+
+    # Temporary disable oaiset signals.
+    # Prevent percolator update.
+    current_oaiserver.unregister_signals()
     # Update Record Metadata.
     update_records_metadata(indexes)
-
     current_oaiserver.register_signals()
 
     logging.info(' FINISHED ')
