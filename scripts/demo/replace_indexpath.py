@@ -24,16 +24,17 @@ import logging
 import os
 from datetime import datetime
 
+from elasticsearch.exceptions import TransportError
 from invenio_db import db
 from invenio_oaiserver import current_oaiserver
 from invenio_oaiserver.models import OAISet
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.expression import case, func
 from weko_deposit.api import WekoDeposit
 from weko_index_tree.models import Index
-from weko_records.api import ItemsMetadata
 
 
 def get_public_indexes():
@@ -80,6 +81,22 @@ def get_public_indexes():
         ).yield_per(1000)
 
     return indexes
+
+
+def get_delete_records():
+    """Get all deleted records.
+
+    Returns:
+        [type]: [description]
+    """
+    pids = db.session.query(
+        PersistentIdentifier
+    ).filter(
+        PersistentIdentifier.pid_type == 'recid',
+        PersistentIdentifier.status == PIDStatus.DELETED
+    ).yield_per(1000)
+
+    return [item.object_uuid for item in pids]
 
 
 def update_oai_sets():
@@ -159,8 +176,8 @@ def update_records_metadata(oai_sets: list = []):
     """
     logging.info(' STARTED update Records Metadata.')
     records = db.session.query(RecordMetadata).yield_per(1000)
-
     rec_totals = 0
+    delete_records = get_delete_records()
 
     try:
         with db.session.begin_nested():
@@ -173,19 +190,23 @@ def update_records_metadata(oai_sets: list = []):
                         deposit['_oai']['sets'] = \
                             [item for item in deposit["path"]
                                 if item in oai_sets]
-                index = {
-                    'index': deposit['path'],
-                    'actions': deposit.get('publish_status')
-                }
-                item_metadata = ItemsMetadata.get_record(id_=rec.id).dumps()
-                item_metadata.pop('id', None)
-                item_metadata['_oai'] = deposit['_oai']
-                item_metadata['path'] = deposit['path']
-                deposit.update(index, item_metadata)
-                deposit.commit()
+                    deposit.commit()
+                    try:
+                        is_deleted = False
+                        if deposit.id in delete_records:
+                            is_deleted = True
+                        deposit.indexer.update_path(
+                            deposit,
+                            update_revision=False,
+                            update_oai=True,
+                            is_deleted=is_deleted)
+                    except TransportError as ex:
+                        logging.info(' ERROR-TransportError: {}.'.format(ex))
+                        continue
                 rec_totals += 1
     except SQLAlchemyError as ex:
         logging.info(' ERROR: {}.'.format(ex))
+        db.session.rollback()
     db.session.commit()
 
     logging.info(' FINISHED update Records Metadata.')
