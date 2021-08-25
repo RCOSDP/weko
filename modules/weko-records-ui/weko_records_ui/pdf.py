@@ -490,7 +490,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
                    True)
 
     # Footer
-    pdf.set_font('Arial', '', 10)
+    pdf.set_font('IPAexm', '', 10)
     pdf.set_x(108)
 
     try:
