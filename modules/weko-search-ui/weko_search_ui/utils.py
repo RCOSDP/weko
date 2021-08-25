@@ -75,7 +75,7 @@ from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
-    IDENTIFIER_GRANT_SUFFIX_METHOD
+    IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_GRANT_SUFFIX_METHOD
 from weko_workflow.models import FlowDefine, WorkFlow
 from weko_workflow.utils import IdentifierHandle, check_existed_doi, \
     get_identifier_setting, get_sub_item_value, get_url_root, \
@@ -1237,7 +1237,8 @@ def import_items_to_system(item: dict, request_info: dict):
         # Prepare stored data.
         data = prepare_stored_data(item, request_info)
         doc_type = 'stats-item-create'
-        index = '{}-events-{}-{}'.format(index_prefix, doc_type, timestamp.year)
+        index = '{}-events-{}-{}'.format(index_prefix, doc_type,
+                                         timestamp.year)
         id = hash_id(timestamp, data)
         # Push item to elasticsearch.
         push_item_to_elasticsearch(id, index, doc_type, data)
@@ -1655,32 +1656,34 @@ def handle_check_doi_ra(list_record):
         return error
 
     for item in list_record:
-        error = None
+        errors = []
         item_id = str(item.get('id'))
         doi_ra = item.get('doi_ra')
 
         if item.get('doi') and not doi_ra:
-            error = _('Please specify {}.').format('DOI_RA')
+            errors.append(_('Please specify {}.').format('DOI_RA'))
         elif doi_ra:
             if doi_ra not in WEKO_IMPORT_DOI_TYPE:
-                error = _('DOI_RA should be set by one of JaLC'
-                          + ', Crossref, DataCite, NDL JaLC.')
+                errors.append(_('DOI_RA should be set by one of JaLC'
+                                + ', Crossref, DataCite, NDL JaLC.'))
                 item['ignore_check_doi_prefix'] = True
-            elif item.get('is_change_identifier'):
-                if not handle_doi_required_check(item):
-                    error = _('PID does not meet the conditions.')
             else:
-                if item.get('status') == 'new':
-                    if not handle_doi_required_check(item):
-                        error = _('PID does not meet the conditions.')
-                else:
+                validation_errors = handle_doi_required_check(item)
+                if validation_errors:
+                    errors.extend(validation_errors)
+                if not item.get('is_change_identifier') \
+                        and item.get('status') != 'new':
                     error = check_existed(item_id, doi_ra)
-        else:
+                    if error:
+                        errors.append(error)
+        elif item.get('status') != 'new':
             error = check_existed(item_id, doi_ra)
+            if error:
+                errors.append(error)
 
-        if error:
-            item['errors'] = item['errors'] + [error] \
-                if item.get('errors') else [error]
+        if errors:
+            item['errors'] = item['errors'] + errors \
+                if item.get('errors') else errors
             item['errors'] = list(set(item['errors']))
 
 
@@ -1989,19 +1992,24 @@ def handle_doi_required_check(record):
         record_data[key] = {'attribute_value_mlt': [value]}
 
     if 'doi_ra' in record and record['doi_ra'] in WEKO_IMPORT_DOI_TYPE:
+        root_item_id = None
+        if record.get('status') != 'new':
+            root_item_id = WekoRecord.get_record_by_pid(
+                str(record.get('id'))).pid_recid.object_uuid
         error_list = item_metadata_validation(
-            None, str(WEKO_IMPORT_DOI_TYPE.index(record['doi_ra']) + 1),
-            record_data, True)
-        if isinstance(error_list, str):
-            return False
-        if error_list and (error_list.get('required')
-                           or error_list.get('either')
-                           or error_list.get('pattern')
-                           or error_list.get('mapping')):
-            return False
-        else:
-            return True
-    return False
+            None, IDENTIFIER_GRANT_SELECT_DICT[record['doi_ra']],
+            record_data, True, root_item_id)
+        if error_list:
+            errors = [_('PID does not meet the conditions.')]
+            if error_list.get('mapping'):
+                mapping_err_msg = _('The mapping of required items for DOI '
+                                    'validation is not set. Please recheck the'
+                                    ' following mapping settings.<br/>{}')
+                keys = [k for k in error_list.get('mapping')]
+                errors.append(mapping_err_msg.format('<br/>'.join(keys)))
+            if error_list.get('other'):
+                errors.append(_(error_list.get('other')))
+            return errors
 
 
 def handle_check_date(list_record):

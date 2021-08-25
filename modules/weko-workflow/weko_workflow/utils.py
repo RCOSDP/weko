@@ -274,8 +274,8 @@ def register_hdl_by_handle(handle, item_uuid):
         identifier.register_pidstore('hdl', handle)
 
 
-def item_metadata_validation(
-        item_id, identifier_type, record=None, is_import=False):
+def item_metadata_validation(item_id, identifier_type, record=None,
+                             is_import=False, without_ver_id=None):
     """
     Validate item metadata.
 
@@ -312,16 +312,27 @@ def item_metadata_validation(
     type_key, resource_type = metadata_item.get_first_data_by_mapping(
         'type.@value')
 
+    error_list = {'required': [], 'pattern': [],
+                  'either': [], 'mapping': [], 'other': ''}
     # check resource type request
     if not resource_type and not type_key:
-        return {'required': [], 'pattern': [],
-                'either': [], 'mapping': ['dc:type']}
+        error_list['mapping'].append('dc:type')
+        return error_list
 
     type_check = check_required_data(resource_type, type_key)
     if not item_type or not resource_type and type_check:
-        return {'required': [type_key], 'pattern': [],
-                'either': [], 'mapping': []}
+        error_list['required'].append(type_key)
+        return error_list
+
     resource_type = resource_type.pop()
+    if without_ver_id:
+        _type_key, old_resource_type = MappingData(without_ver_id) \
+            .get_first_data_by_mapping('type.@value')
+        if old_resource_type and resource_type != old_resource_type.pop():
+            error_list['other'] = 'You cannot change the resource type of ' \
+                + 'items that have been grant a DOI.'
+            return error_list
+
     properties = {}
     # 必須
     required_properties = []
@@ -3795,9 +3806,11 @@ def get_pid_value_by_activity_detail(activity_detail):
                 return ''
 
 
-def check_doi_validation_not_pass(item_id, activity_id, identifier_select):
+def check_doi_validation_not_pass(item_id, activity_id,
+                                  identifier_select, without_ver_id=None):
     """Call DOI validation and save error cache."""
-    error_list = item_metadata_validation(item_id, identifier_select)
+    error_list = item_metadata_validation(item_id, identifier_select,
+                                          without_ver_id=without_ver_id)
     if isinstance(error_list, str):
         return error_list
 

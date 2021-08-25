@@ -1054,9 +1054,13 @@ def check_validation_error_msg(activity_id):
         error_list = json.loads(session_data.decode('utf-8'))
         msg = [_('PID does not meet the conditions.')]
         if error_list.get('mapping'):
-            mapping_err_msg = _('JPCOAR mapping is missing.<br/>{}')
+            mapping_err_msg = _('The mapping of required items for DOI '
+                                'validation is not set. Please recheck the '
+                                'following mapping settings.<br/>{}')
             keys = [k for k in error_list.get('mapping')]
             msg.append(mapping_err_msg.format('<br/>'.join(keys)))
+        if error_list.get('other'):
+            msg.append(_(error_list.get('other')))
         return jsonify(code=1, msg=msg, error_list=error_list)
     else:
         return jsonify(code=0)

@@ -1067,7 +1067,8 @@ def next_action(activity_id='0', action_id=0):
         _value, _type = IdentifierHandle(item_id).get_idt_registration_data()
         if _value and _type:
             error_list = check_doi_validation_not_pass(
-                item_id, activity_id, IDENTIFIER_GRANT_SELECT_DICT[_type[0]])
+                item_id, activity_id, IDENTIFIER_GRANT_SELECT_DICT[_type[0]],
+                pid_without_ver.object_uuid)
             if isinstance(error_list, str):
                 return jsonify(code=-1, msg=_(error_list))
             elif error_list:
