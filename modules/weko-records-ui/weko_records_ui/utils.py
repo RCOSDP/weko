@@ -72,12 +72,7 @@ def get_record_permalink(record):
     doi = record.pid_doi
     cnri = record.pid_cnri
 
-    if doi and cnri:
-        if doi.updated > cnri.updated:
-            return doi.pid_value
-        else:
-            return cnri.pid_value
-    elif doi or cnri:
+    if doi or cnri:
         return doi.pid_value if doi else cnri.pid_value
 
     return None
