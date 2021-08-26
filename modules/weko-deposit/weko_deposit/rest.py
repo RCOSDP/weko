@@ -193,7 +193,6 @@ class ItemResource(ContentNegotiatedMethodView):
     def put(self, **kwargs):
         """Put."""
         from weko_workflow.api import WorkActivity
-
         try:
             data = request.get_json()
             self.__sanitize_input_data(data)

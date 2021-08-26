@@ -9,7 +9,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 
 def recoverVersionID(dryrun=False):
-    start = time.process_time()
+    start = time.time()
     q = PersistentIdentifier.query.filter_by(pid_type='parent', status='R')
     FILE_PROP = 'item_1583103120197'
     count = 0
@@ -24,7 +24,7 @@ def recoverVersionID(dryrun=False):
                                 prop['version_id'] = str(f.version_id)
                             count = count + 1
                             current_app.logger.info(
-                                "{0} Process recid: {1}, id: {2}".format(time.process_time(), r['recid'], i.object_uuid))
+                                "{0} Process recid: {1}, id: {2}".format(time.time(), r['recid'], i.object_uuid))
                             if not dryrun:
                                 r.commit()
         except NoResultFound as e:
@@ -35,7 +35,7 @@ def recoverVersionID(dryrun=False):
         except Exception as e:
             db.session.rollback()
     current_app.logger.info(
-        "Processed {0} items, elapsed time: {1}".format(count, time.process_time()-start))
+        "Processed {0} items, elapsed time: {1}".format(count, time.time()-start))
 
 
 if __name__ == '__main__':

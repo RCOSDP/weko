@@ -6,7 +6,7 @@ from flask import current_app
 from invenio_db import db
 from invenio_files_rest.models import FileInstance, ObjectVersion
 from invenio_pidstore.models import PersistentIdentifier
-from invenio_records_files.api import Record
+from invenio_records_files.api import Record,FileObject
 from sqlalchemy.exc import SQLAlchemyError
 from weko_deposit.api import WekoRecord
 from weko_records.models import ItemMetadata, ItemReference
@@ -36,6 +36,7 @@ def deleteItem(id):
     itemid_list = list(set(itemid_list))
 
     current_app.logger.debug(itemid_list)
+ 
 
     for uid in object_uuid_list:
         try:
@@ -53,7 +54,7 @@ def deleteItem(id):
         "http://"+os.environ.get('INVENIO_ELASTICSEARCH_HOST', 'localhost')+":9200")
     query = '{"query":{"bool":{"should":['
     for i in itemid_list:
-        query = query + '{"term":{"pid_value":{"value":"'+i+'"}}},'
+        query = query + '{"term":{"pid_value":{"value":"'+str(i)+'"}}},'
 
     query = query[:len(query)-1]
     query = query + ']}}}'
@@ -61,26 +62,26 @@ def deleteItem(id):
     current_app.logger.debug('query: {0}'.format(query))
 
     result = es.delete_by_query(index=os.environ.get(
-        'SEARCH_INDEX_PREFIX', 'tenant1')+"-stats-item-create", body=query)
+        'SEARCH_INDEX_PREFIX', 'tenant1')+"-stats-item-create", body=query,conflicts='proceed')
 
     result = es.delete_by_query(index=os.environ.get(
-        'SEARCH_INDEX_PREFIX', 'tenant1')+"-events-stats-item-create", body=query)
+        'SEARCH_INDEX_PREFIX', 'tenant1')+"-events-stats-item-create", body=query,conflicts='proceed')
 
     result = es.delete_by_query(index=os.environ.get(
-        'SEARCH_INDEX_PREFIX', 'tenant1')+"-stats-record-view", body=query)
+        'SEARCH_INDEX_PREFIX', 'tenant1')+"-stats-record-view", body=query,conflicts='proceed')
 
     result = es.delete_by_query(index=os.environ.get(
-        'SEARCH_INDEX_PREFIX', 'tenant1')+"-events-stats-record-view", body=query)
+        'SEARCH_INDEX_PREFIX', 'tenant1')+"-events-stats-record-view", body=query,conflicts='proceed')
 
     query = '{"query":{"bool":{"should":['
-    for i in itemid_list:
-        query = query + '{"term":{"control_number":{"value":"'+i+'"}}},'
+    for itemid in itemid_list:
+        query = query + '{"term":{"control_number":{"value":"'+str(itemid)+'"}}},'
 
     query = query[:len(query)-1]
     query = query + ']}}}'
 
     result = es.delete_by_query(index=os.environ.get(
-        'SEARCH_INDEX_PREFIX', 'tenant1')+"-weko", body=query)
+        'SEARCH_INDEX_PREFIX', 'tenant1')+"-weko", body=query,conflicts='proceed')
 
     for uid in object_uuid_list:
         try:
@@ -89,9 +90,9 @@ def deleteItem(id):
                 if record.files:
                     for obj in record.files:
                         f = FileInstance.get(obj.file_id)
+                        ObjectVersion.query.filter_by(file_id=obj.file_id).delete()
                         f.delete()
                         f.storage().delete()
-                        obj.delete()
                         current_app.logger.debug(
                             "version_id {0}".format(obj.version_id))
                         current_app.logger.debug(
