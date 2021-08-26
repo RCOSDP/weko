@@ -15,7 +15,7 @@ from weko_records.models import ItemMetadata, ItemReference
 from elasticsearch import Elasticsearch, helpers
 
 
-def deleteUntrackableItemsFromElasticsearch():
+def deleteUntrackableItemsFromElasticsearch(dryrun=True):
     """Delete untrackable items from item index in Elasticsearch
     """
     start = time.time()
@@ -40,8 +40,9 @@ def deleteUntrackableItemsFromElasticsearch():
     current_app.logger.info("deleting items: {0}".format(len(delList)))
 
     for item in delList:
-        es.delete(index=os.environ.get('SEARCH_INDEX_PREFIX',
-                                       'tenant1')+"-weko-item-v1.0.0", doc_type="item-v1.0.0", id=item)
+        if not dryrun:
+            es.delete(index=os.environ.get('SEARCH_INDEX_PREFIX',
+                                           'tenant1')+"-weko-item-v1.0.0", doc_type="item-v1.0.0", id=item)
         current_app.logger.info("delete item : {0}".format(item))
 
     current_app.logger.info(
