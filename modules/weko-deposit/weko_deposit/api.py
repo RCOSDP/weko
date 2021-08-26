@@ -31,7 +31,7 @@ from dictdiffer import dot_lookup
 from dictdiffer.merge import Merger, UnresolvedConflictsException
 from elasticsearch.exceptions import TransportError
 from elasticsearch.helpers import bulk
-from flask import abort, current_app, has_request_context, json, request, \
+from flask import abort, current_app, json, request, \
     session
 from flask_security import current_user
 from invenio_db import db
@@ -68,7 +68,6 @@ from .config import WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_KEY, \
     WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY, WEKO_DEPOSIT_SYS_CREATOR_KEY
 from .pidstore import get_latest_version_id, get_record_without_version, \
     weko_deposit_fetcher, weko_deposit_minter
-from .signals import item_created
 
 PRESERVE_FIELDS = (
     '_deposit',
@@ -196,17 +195,50 @@ class WekoIndexer(RecordIndexer):
             body=body
         )
 
-    def update_path(self, record, update_revision=True):
-        """Update path."""
+    def update_path(self, record, update_revision=True,
+                    update_oai=False, is_deleted=False):
+        """Update path.
+
+        Args:
+            record ([type]): [description]
+            update_revision (bool, optional): [description]. Defaults to True.
+            update_oai (bool, optional): [description]. Defaults to False.
+            is_deleted (bool, optional): [description]. Defaults to False.
+
+        Returns:
+            [type]: [description]
+        """
         self.get_es_index()
         path = 'path'
-        body = {
-            'doc': {
-                path: record.get(path),
-                '_updated': datetime.utcnow().replace(
-                    tzinfo=timezone.utc).isoformat()
+        _oai = '_oai'
+        sets = 'sets'
+        body = {}
+        if not update_oai:
+            body = {
+                'doc': {
+                    path: record.get(path),
+                    '_updated': datetime.utcnow().replace(
+                        tzinfo=timezone.utc).isoformat()
+                }
             }
-        }
+        else:
+            body = {
+                'doc': {
+                    _oai: {
+                        sets: record.get(_oai, {}).get(sets, []),
+                    } if record.get(_oai) else {},
+                    '_item_metadata': {
+                        _oai: {
+                            sets: record.get(_oai, {}).get(sets, []),
+                        } if record.get(_oai) else {},
+                        path: record.get(path)
+                    },
+                    path: record.get(path) if not is_deleted else [],
+                    '_updated': datetime.utcnow().replace(
+                        tzinfo=timezone.utc).isoformat()
+                }
+            }
+
         if update_revision:
             return self.client.update(
                 index=self.es_index,
@@ -1097,7 +1129,6 @@ class WekoDeposit(Deposit):
                     flag_modified(r, 'json')
                 except BaseException as bex:
                     current_app.logger.error(bex)
-                    pass
                 if r.json and not r.json['path']:
                     from weko_records_ui.utils import soft_delete
                     soft_delete(obj_uuid)
@@ -1583,8 +1614,8 @@ class WekoRecord(Record):
         today = datetime.now().date()
         # Get 'open_date' and convert to datetime.date.
         date_value = self.get_open_date_value(file_metadata)
-        format = '%Y-%m-%d'
-        dt = datetime.strptime(date_value, format)
+        _format = '%Y-%m-%d'
+        dt = datetime.strptime(date_value, _format)
         # Compare open_date with current date.
         is_future = dt.date() > today
         return is_future
@@ -2310,9 +2341,9 @@ class _FormatSysBibliographicInformation:
                     'bibliographicIssueDate') and issued_date.get(
                         'bibliographicIssueDateType') == issue_type:
                     date.append(issued_date.get('bibliographicIssueDate'))
-        elif isinstance(issue_date, dict):
-            if issue_date.get('bibliographicIssueDate') \
-                and issue_date.get('bibliographicIssueDateType') \
-                    == issue_type:
-                date.append(issue_date.get('bibliographicIssueDate'))
+        elif isinstance(issue_date, dict) and \
+            (issue_date.get('bibliographicIssueDate')
+             and issue_date.get('bibliographicIssueDateType')
+                == issue_type):
+            date.append(issue_date.get('bibliographicIssueDate'))
         return date
