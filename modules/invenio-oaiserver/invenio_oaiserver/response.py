@@ -102,7 +102,7 @@ def identify(**kwargs):
 
     # add by Mr ryuu. at 2018/06/06 start
     # Get The Set Of Identify
-    oaiObj = OaiIdentify.get_all()
+    identify = OaiIdentify.get_all()
     # add by Mr ryuu. at 2018/06/06 end
 
     e_tree, e_identify = verb(**kwargs)
@@ -111,9 +111,11 @@ def identify(**kwargs):
         e_identify, etree.QName(NS_OAIPMH, 'repositoryName'))
 
     # add by Mr ryuu. at 2018/06/06 start
-    if oaiObj is not None:
-        cfg['OAISERVER_REPOSITORY_NAME'] = oaiObj.repositoryName
+    if identify:
+        cfg['OAISERVER_REPOSITORY_NAME'] = identify.repositoryName
     # add by Mr ryuu. at 2018/06/06 end
+        e_email = SubElement(e_identify, etree.QName(NS_OAIPMH, 'adminEmail'))
+        e_email.text = identify.emails
 
     e_repositoryName.text = cfg['OAISERVER_REPOSITORY_NAME']
 
@@ -130,14 +132,14 @@ def identify(**kwargs):
             NS_OAIPMH, 'earliestDatestamp'))
 
     # update by Mr ryuu. at 2018/06/06 start
-    if not oaiObj:
+    if not identify:
         e_earliestDatestamp.text = datetime_to_datestamp(
             db.session.query(db.func.min(RecordMetadata.created)
                              ).scalar() or datetime(MINYEAR, 1, 1)
         )
     else:
         e_earliestDatestamp.text = datetime_to_datestamp(
-            oaiObj.earliestDatastamp)
+            identify.earliestDatastamp)
     # update by Mr ryuu. at 2018/06/06 end
 
     e_deletedRecord = SubElement(e_identify,
