@@ -2553,13 +2553,6 @@ def make_stats_tsv_with_permission(item_type_id, recids,
         return _id, _name, _option
 
     item_type = ItemTypes.get_by_id(item_type_id).render
-    list_hide = get_item_from_option(item_type_id)
-    hide_permission = permissions['permission_show_hide'](item_type_id)
-    if hide_permission and item_type and item_type.get('table_row'):
-        for it in list_hide:
-            if it in item_type.get('table_row'):
-                item_type['table_row'].remove(it)
-
     table_row_properties = item_type['table_row_map']['schema'].get(
         'properties')
 
@@ -2974,17 +2967,9 @@ def make_stats_tsv_with_permission(item_type_id, recids,
             if not sub_options:
                 ret_option.append(', '.join(root_option))
             else:
-                if hide_permission and 'Hide' in sub_options:
-                    del ret[index - del_num]
-                    del ret_label[index - del_num]
-                    del ret_system[index - del_num]
-                    for recid in recids:
-                        del records.attr_output[recid][index - del_num - 2]
-                    del_num += 1
-                else:
-                    ret_option.append(
-                        ', '.join(list(set(root_option + sub_options)))
-                    )
+                ret_option.append(
+                    ', '.join(list(set(root_option + sub_options)))
+                )
         elif key == '#.id':
             ret_system.append('#')
             ret_option.append('#')
