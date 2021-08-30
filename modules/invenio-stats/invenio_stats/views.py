@@ -192,6 +192,7 @@ class QueryRecordViewCount(WekoQuery):
 
             _data = list(self._get_data(
                 record_id=child.object_uuid,
+                query_date=query_date,
                 get_period=True) for child in versioning.children.all())
 
             countries = result['country']
