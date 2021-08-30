@@ -234,7 +234,8 @@ def file_ui(
 
     # Get user's language and defautl language for PDF coverpage.
     user_profile = UserProfile.get_by_userid(current_user.get_id())
-    lang = user_profile.language if user_profile else 'en'
+    lang = user_profile.language if user_profile and user_profile.language \
+        else 'en'
 
     return _download_file(fileobj, is_preview, lang, obj, pid, record)
 
