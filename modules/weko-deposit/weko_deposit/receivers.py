@@ -9,10 +9,10 @@
 """Deposit module receivers."""
 
 from flask import current_app
+from invenio_pidstore.models import PIDStatus
+from invenio_records.models import RecordMetadata
 from weko_records.api import FeedbackMailList
 from weko_records.utils import json_loader
-from invenio_records.models import RecordMetadata
-from invenio_pidstore.models import PIDStatus
 
 from .api import WekoDeposit
 from .pidstore import get_record_without_version

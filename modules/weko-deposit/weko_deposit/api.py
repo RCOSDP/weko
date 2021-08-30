@@ -31,8 +31,7 @@ from dictdiffer import dot_lookup
 from dictdiffer.merge import Merger, UnresolvedConflictsException
 from elasticsearch.exceptions import TransportError
 from elasticsearch.helpers import bulk
-from flask import abort, current_app, json, request, \
-    session
+from flask import abort, current_app, json, request, session
 from flask_security import current_user
 from invenio_db import db
 from invenio_deposit.api import Deposit, index, preserve
@@ -207,6 +206,7 @@ class WekoIndexer(RecordIndexer):
 
         Returns:
             [type]: [description]
+
         """
         self.get_es_index()
         path = 'path'
