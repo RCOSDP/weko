@@ -303,12 +303,20 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                                 operator='and', fields=[name])
                                         mst.append(qry)
                                         name = attr_key_hit[0]
-                                        qm = Q('terms',
-                                               **{name: list(map(partial(lambda m, n: m[int(n)], vlst), attr_val))})
+                                        name_val = list(map(partial(
+                                            lambda m, n: m[int(n)], vlst),
+                                            attr_val))
+                                        qm = Q('terms', **{name: name_val})
                                         mst.append(qm)
                                         shuld.append(Q('nested', path=v[0],
                                                        query=Q(
                                                            'bool', must=mst)))
+                    elif isinstance(attr_obj, str) and attr_val_str:
+                        query = Q('bool',
+                                  must=[
+                                      {"terms": {
+                                          attr_obj: attr_val_str.split(',')}}])
+                        shuld.append(Q('nested', path=v[0], query=query))
 
             return Q('bool', should=shuld) if shuld else None
 
@@ -1142,21 +1150,18 @@ def feedback_email_search_factory(self, search):
             "query": {
                 "bool": {
                     "must": [
-                        {
-                            "nested": {
-                                "path": "feedback_mail_list",
-                                "query": {
-                                    "bool": {
-                                        "must": [
-                                            {
-                                                "exists": {
-                                                    "field": "feedback_mail_list.email"
-                                                }
-                                            }
-                                        ]
-                                    }
+                        {"nested": {
+                            "path": "feedback_mail_list",
+                            "query": {
+                                "bool": {
+                                    "must": [
+                                        {"exists": {
+                                            "field": "feedback_mail_list.email"
+                                        }}
+                                    ]
                                 }
                             }
+                        }
                         },
                         {
                             "query_string": {
