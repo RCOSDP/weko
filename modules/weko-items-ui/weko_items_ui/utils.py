@@ -595,35 +595,6 @@ def update_schema_form_by_activity_id(schema_form, activity_id):
     return schema_form
 
 
-def prepare_either_condition_required(either_required_list):
-    """Prepare either condition required list.
-
-    :param either_required_list: List return from
-    recursive_prepare_either_required_list
-    """
-    condition_required = []
-    condition_not_required = []
-    for item in either_required_list:
-        if isinstance(item, list):
-            sub_condition_required = []
-            sub_condition_not_required = []
-            for sub_item in item:
-                sub_condition_required.append('!model.' + sub_item)
-                sub_condition_not_required.append('model.' + sub_item)
-
-            condition_required.append(
-                '(' + (' || '.join(sub_condition_required)) + ')')
-            condition_not_required.append(
-                '(' + (' && '.join(sub_condition_not_required)) + ')')
-        else:
-            condition_required.append('!model.' + item)
-            condition_not_required.append('model.' + item)
-
-    return [
-        ' && '.join(condition_required).replace('[]', '[arrayIndex]'),
-        ' || '.join(condition_not_required).replace('[]', '[arrayIndex]')]
-
-
 def recursive_prepare_either_required_list(schema_form, either_required_list):
     """Recursive prepare either required list.
 
@@ -636,16 +607,17 @@ def recursive_prepare_either_required_list(schema_form, either_required_list):
                 elem.get('items'), either_required_list)
         else:
             if elem.get('key') and '[]' in elem['key']:
-                for i, ids in enumerate(either_required_list):
-                    if isinstance(ids, list):
-                        for y, _id in enumerate(ids):
-                            if elem['key'].replace('[]', '') == _id:
-                                either_required_list[i][y] = elem['key']
+                for x, group in enumerate(either_required_list):
+                    for i, ids in enumerate(group):
+                        if isinstance(ids, list):
+                            for y, _id in enumerate(ids):
+                                if elem['key'].replace('[]', '') == _id:
+                                    either_required_list[x][i][y] = elem['key']
+                                    break
+                        elif isinstance(ids, str):
+                            if elem['key'].replace('[]', '') == ids:
+                                either_required_list[x][i] = elem['key']
                                 break
-                    elif isinstance(ids, str):
-                        if elem['key'].replace('[]', '') == ids:
-                            either_required_list[i] = elem['key']
-                            break
 
 
 def recursive_update_schema_form_with_condition(
@@ -655,6 +627,26 @@ def recursive_update_schema_form_with_condition(
     :param schema_form: The schema form
     :param either_required_list: Either required list
     """
+    def prepare_either_condition_required(group_idx, key):
+        """Prepare either condition required list."""
+        _key = key.replace('[]', '')
+        cond_1 = 'model.either_valid_' + str(group_idx)
+        cond_2 = cond_1 + ".indexOf('" + _key + "')"
+        return ["!{} || {} !== -1".format(cond_1, cond_2),
+                "{} && {} === -1".format(cond_1, cond_2)]
+
+    def set_on_change(elem):
+        """Set onChange event."""
+        calback_func_name = None
+        if elem.get('onChange'):
+            calback_func_name = elem.get('onChange').split('(')[0]
+            elem['onChange'] = \
+                "onChangeEitherField(this, form, modelValue, '" \
+                + calback_func_name + "')"
+        else:
+            elem['onChange'] = \
+                "onChangeEitherField(this, form, modelValue, undefined)"
+
     schema_form_condition = []
     for index, elem in enumerate(schema_form):
         if elem.get('items'):
@@ -662,42 +654,45 @@ def recursive_update_schema_form_with_condition(
                 elem.get('items'), either_required_list)
         else:
             if elem.get('key'):
-                for ids in either_required_list:
-                    condition_required, condition_not_required = \
-                        prepare_either_condition_required(list(
-                            filter(
-                                lambda x: x != ids,
-                                either_required_list
-                            )
-                        ))
-                    if isinstance(ids, list):
-                        for _id in ids:
-                            if elem['key'] == _id:
-                                if len(either_required_list) != 1:
+                for group_idx, group in enumerate(either_required_list):
+                    for ids in group:
+                        if isinstance(ids, list):
+                            for _id in ids:
+                                if elem['key'] == _id:
+                                    set_on_change(elem)
+                                    if len(group) != 1:
+                                        cond_required, cond_not_required = \
+                                            prepare_either_condition_required(
+                                                group_idx, _id)
+                                        condition_item = copy.deepcopy(elem)
+                                        condition_item['required'] = True
+                                        condition_item['condition'] \
+                                            = cond_required
+                                        schema_form_condition.append(
+                                            {'index': index, 'item':
+                                                condition_item})
+
+                                        elem['condition'] = cond_not_required
+                                    else:
+                                        elem['required'] = True
+                        elif isinstance(ids, str):
+                            if elem['key'] == ids:
+                                set_on_change(elem)
+                                if len(group) != 1:
+                                    cond_required, cond_not_required = \
+                                        prepare_either_condition_required(
+                                            group_idx, ids)
                                     condition_item = copy.deepcopy(elem)
                                     condition_item['required'] = True
-                                    condition_item['condition'] \
-                                        = condition_required
-                                    schema_form_condition.append(
-                                        {'index': index, 'item':
-                                            condition_item})
+                                    condition_item['condition'] = \
+                                        cond_required
+                                    schema_form_condition.append({
+                                        'index': index,
+                                        'item': condition_item})
 
-                                    elem['condition'] = condition_not_required
+                                    elem['condition'] = cond_not_required
                                 else:
                                     elem['required'] = True
-                    elif isinstance(ids, str):
-                        if elem['key'] == ids:
-                            if len(either_required_list) != 1:
-                                condition_item = copy.deepcopy(elem)
-                                condition_item['required'] = True
-                                condition_item['condition'] = \
-                                    condition_required
-                                schema_form_condition.append(
-                                    {'index': index, 'item': condition_item})
-
-                                elem['condition'] = condition_not_required
-                            else:
-                                elem['required'] = True
 
     for index, condition_item in enumerate(schema_form_condition):
         schema_form.insert(
