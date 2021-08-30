@@ -114,7 +114,7 @@ def list_records(
 def map_field(schema):
     """Get field map."""
     res = {}
-    for field_name in schema['properties']:
+    for field_name in schema.get("properties", []):
         if field_name not in DEFAULT_FIELD:
             res[schema['properties'][field_name]['title']] = field_name
     return res
@@ -1151,10 +1151,11 @@ def map_sets(sets, encoding='utf-8'):
     for s in sets:
         xml = etree.tostring(s, encoding=encoding).decode()
         m = re.search(pattern, xml)
-        spec = m.group(1)
-        name = m.group(2)
-        if spec and name:
-            res[spec] = name
+        if m:
+            spec = m.group(1)
+            name = m.group(2)
+            if spec and name:
+                res[spec] = name
     return res
 
 
@@ -1211,8 +1212,13 @@ class BaseMapper:
             if type(t) == OrderedDict:
                 t = t['#text']
             if t.lower() in RESOURCE_TYPE_MAP:
-                self.itemtype \
-                    = BaseMapper.itemtype_map[RESOURCE_TYPE_MAP[t.lower()]]
+                resource_type = RESOURCE_TYPE_MAP.get(t.lower())
+                self.itemtype = BaseMapper.itemtype_map.get(resource_type)
+                if not self.itemtype:
+                    if BaseMapper.itemtype_map.get("Others"):
+                        self.itemtype = BaseMapper.itemtype_map.get("Others")
+                    if BaseMapper.itemtype_map.get("Multiple"):
+                        self.itemtype = BaseMapper.itemtype_map.get("Multiple")
                 break
 
 

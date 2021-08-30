@@ -136,7 +136,7 @@ def map_indexes(index_specs, parent_id):
     for spec in index_specs:
         idx = Index.query.filter_by(
             harvest_spec=spec, parent=parent_id).first()
-        res.append(idx.id)
+        res.append(idx.id) if idx else None
     return res
 
 
@@ -173,7 +173,7 @@ def process_item(record, harvesting, counter):
         pubdate = dateutil.parser.parse(
             r.json['pubdate']['attribute_value']).date()
         dep = WekoDeposit(r.json, r)
-        indexes = dep['path'].copy()
+        indexes = dep.get("path", []).copy()
         event = ItemEvents.UPDATE
     elif mapper.is_deleted():
         return
@@ -188,7 +188,7 @@ def process_item(record, harvesting, counter):
     if int(harvesting.auto_distribution):
         for i in map_indexes(mapper.specs(), harvesting.index_id):
             indexes.append(str(i)) if i not in indexes else None
-    else:
+    if not indexes or len(indexes) == 0:
         indexes.append(str(harvesting.index_id)) if str(
             harvesting.index_id) not in indexes else None
 
@@ -201,6 +201,8 @@ def process_item(record, harvesting, counter):
         event = ItemEvents.DELETE
     else:
         json = mapper.map()
+        if not json:
+            return
         json['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
         dep['_deposit']['status'] = 'draft'
         dep.update({'actions': 'publish', 'index': indexes}, json)
