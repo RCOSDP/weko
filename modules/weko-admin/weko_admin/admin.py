@@ -58,10 +58,10 @@ from .models import AdminSettings, FacetSearchSetting, Identifier, \
     LogAnalysisRestrictedCrawlerList, LogAnalysisRestrictedIpAddress, \
     RankingSettings, SearchManagement, StatisticsEmail
 from .permissions import admin_permission_factory
-from .utils import get_facet_search, get_item_mapping_list, get_redis_cache, \
-    get_response_json, get_restricted_access, get_search_setting
+from .utils import get_facet_search, get_item_mapping_list, get_response_json, \
+    get_restricted_access, get_search_setting
 from .utils import get_user_report_data as get_user_report
-from .utils import package_reports, reset_redis_cache, str_to_bool
+from .utils import package_reports, str_to_bool
 
 
 # FIXME: Change all setting views' path to be under settings/
@@ -289,11 +289,10 @@ class ReportView(BaseView):
                 }
                 result['private'] = result['total'] - result['open']
 
-            cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-                format(name='email_schedule')
-            current_schedule = get_redis_cache(cache_key)
-            current_schedule = json.loads(current_schedule) if \
-                current_schedule else \
+            current_schedule = AdminSettings.get(
+                name='report_email_schedule_settings',
+                dict_to_object=False)
+            current_schedule = current_schedule if current_schedule else \
                 current_app.config['WEKO_ADMIN_REPORT_DELIVERY_SCHED']
 
             # Emails to send reports to
@@ -366,9 +365,6 @@ class ReportView(BaseView):
     @expose('/set_email_schedule', methods=['POST'])
     def set_email_schedule(self):
         """Set new email schedule."""
-        cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-            format(name='email_schedule')
-
         # Get Schedule
         frequency = request.form.get('frequency')
         enabled = True if request.form.get('dis_enable_schedule') == 'True' \
@@ -388,7 +384,7 @@ class ReportView(BaseView):
         }
 
         try:
-            reset_redis_cache(cache_key, json.dumps(schedule))
+            AdminSettings.update('report_email_schedule_settings', schedule)
             flash(_('Successfully Changed Schedule.'), 'error')
         except Exception:
             flash(_('Could Not Save Changes.'), 'error')
