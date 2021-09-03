@@ -756,6 +756,8 @@ function autoAdjustWidgetHeight(widgetElement, pageBodyGrid, otherElement) {
         pageBodyGrid.resizeWidget(widgetElement, width, newHeight);
       } else if (newHeight === currentHeight) {
         pageBodyGrid.resizeWidget(widgetElement, width, newHeight + 1);
+      } else {
+        pageBodyGrid.resizeWidget(widgetElement, width, newHeight);
       }
     }
   }

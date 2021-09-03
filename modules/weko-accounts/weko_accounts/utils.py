@@ -23,7 +23,7 @@ import random
 import string
 from functools import wraps
 
-from flask import current_app, request, session
+from flask import abort, current_app, request, session
 from flask_login import current_user
 from flask_login.config import EXEMPT_METHODS
 
@@ -123,3 +123,34 @@ def login_required_customize(func):
             return current_app.login_manager.unauthorized()
         return func(*args, **kwargs)
     return decorated_view
+
+
+def roles_required(roles):
+    """Roles required.
+
+    Args:
+        roles (list): List roles.
+    """
+    def decorator(func):
+        @wraps(func)
+        def decorated_view(*args, **kwargs):
+            if request.method in EXEMPT_METHODS:
+                return func(*args, **kwargs)
+            elif current_app.login_manager._login_disabled:
+                return func(*args, **kwargs)
+            elif not current_user.is_authenticated:
+                guest_token = session.get('guest_token')
+                if guest_token:
+                    return func(*args, **kwargs)
+                abort(401)
+            else:
+                can = False
+                for role in current_user.roles:
+                    if role and role.name in roles:
+                        can = True
+                        break
+                if not can:
+                    abort(403)
+            return func(*args, **kwargs)
+        return decorated_view
+    return decorator

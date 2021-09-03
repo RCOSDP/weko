@@ -1,0 +1,15 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2015-2018 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+{%- extends config.ACCOUNTS_BASE_TEMPLATE %}
+
+{% from "security/_macros.html" import render_field_with_errors, render_field %}
+
+{% block content %}
+{% include "security/send_login.html" %}
+{% endblock %}

@@ -83,6 +83,7 @@ WEKO_RECORDS_ALTERNATIVE_NAME_KEYS = ['creatorAlternative',
 WEKO_RECORDS_AFFILIATION_NAME_KEYS = ['affiliationName', 'affiliationNameLang']
 """List affiliation name key."""
 
+"""
 WEKO_TEST_FIELD = {
     "1" : {
         "geo_point1" : {
@@ -90,22 +91,34 @@ WEKO_TEST_FIELD = {
             "path":{
                 "lat":"$.item_1551265326081.attribute_value_mlt[?subitem_1551256775293=='Location_sub'].subitem_1551256778926[*].subitem_1551256814806",
                 "lon":"$.item_1551265326081.attribute_value_mlt[*].subitem_1551256778926[*].subitem_1551256783928"
+            },
+            "path_type":{
+                "lat":"json",
+                "lon":"json"
             }
         },
-        
+
         "geo_shape1" : {
             "input_type":"geo_shape",
             "path":{
                 "type":"",
                 "coordinates":""
+            },
+            "path_type":{
+                "type":"",
+                "coordinates":""
             }
         },
-        
+
         "integer_range1":{
             "input_type":"range",
             "path":{
                 "gte":"$.item_1551265553273.attribute_value_mlt[*].subitem_1551256248092",
                 "lte":"$.item_1551265553273.attribute_value_mlt[*].subitem_1551256248092"
+            },
+            "path_type":{
+                "gte":"json",
+                "lte":"json"
             }
         },
         "float_range1":{
@@ -113,21 +126,110 @@ WEKO_TEST_FIELD = {
             "path":{
                 "gte":"",
                 "lte":""
+            },
+            "path_type":{
+                "gte":"",
+                "lte":""
             }
+
         },
+
         "date_range1":{
             "input_type":"range",
             "path":{
                 "gte":"",
                 "lte":""
+            },
+            "path_type":{
+                "gte":"",
+                "lte":""
             }
         },
-        
         "text1" : {
             "input_type":"text",
-            "path" : "$.item_title"
+            "path" : "$.item_1551264308487.attribute_value_mlt[*].subitem_1551255647225",
+            "path_type":"json"
+        },
+        "text2" : {
+            "input_type":"text",
+            "path" : ["jpcoar",".//dc:title[@xml:lang='en']"],
+            "path_type":"xml"
         }
     }
 }
+"""
+
+WEKO_TEST_FIELD = {
+    "1": {
+        "date_range1": {
+            "input_type": "range",
+            "path": {
+                "gte": "$.item_1602145192334.attribute_value_mlt[0].subitem_1602144573160",
+                "lte": "$.item_1602145192334.attribute_value_mlt[1].subitem_1602144573160"
+            },
+            "path_type": {
+                "gte": "json",
+                "lte": "json"
+            }
+        },
+        "text1": {
+            "input_type": "text",
+            "path": "$.item_1592405734122.attribute_value_mlt[*].subitem_1592369405220",
+            "path_type": "json"
+        },
+        "text2": {
+            "input_type": "text",
+            "path": "$.item_1551264822581.attribute_value_mlt[*].subitem_1592472785169",
+            "path_type": "json"
+        },
+        "text3": {
+            "input_type": "text",
+            "path": "$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890",
+            "path_type": "json"
+        },
+        "text4": {
+            "input_type": "text",
+            "path": "$.item_1570068313185.attribute_value_mlt[*].subitem_1586419454219",
+            "path_type": "json"
+        },
+        "text5": {
+            "input_type": "text",
+            "path": "$.item_1602145817646.attribute_value_mlt[*].subitem_1602142814330",
+            "path_type": "json"
+        },
+        "text6": {
+            "input_type": "text",
+            "path": ".metadata.item_1602145850035.attribute_value_mlt[*].subitem_1602142123771",
+            "path_type": "json"
+        },
+        "text7": {
+            "input_type": "text",
+            "path": "$.item_1592405736602.attribute_value_mlt[0].subitem_1602215239359",
+            "path_type": "json"
+        },
+        "text8": {
+            "input_type": "text",
+            "path": "$.item_1592405735401.attribute_value_mlt[*].subitem_1602214558730",
+            "path_type": "json"
+        },
+        "text9": {
+            "input_type": "text",
+            "path": "$.item_1551264917614.attribute_value_mlt[*].subitem_1551255702686",
+            "path_type": "json"
+        },
+        "text10": {
+            "input_type": "text",
+            "path": "$.item_1602147887655.attribute_value_mlt[*].subitem_1602143328410",
+            "path_type": "json"
+        },
+        "text11": {
+            "input_type": "text",
+            "path": "$.item_1588260046718.attribute_value_mlt[*].subitem_1591178807921",
+            "path_type": "json"
+        },
+
+    }
+}
+
 
 COPY_NEW_FIELD = True

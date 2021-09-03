@@ -1,0 +1,172 @@
+# Translations template for invenio-accounts.
+# Copyright (C) 2016 CERN
+# This file is distributed under the same license as the invenio-accounts
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: invenio-accounts 1.0.0a14.dev20160704\n"
+"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
+"POT-Creation-Date: 2016-09-09 08:13+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Alizee Pace <alizee.pace@gmail.com>, 2016\n"
+"Language-Team: French (https://www.transifex.com/inveniosoftware/teams/23537/fr/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.3.4\n"
+"Language: fr\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: invenio_accounts/admin.py:68
+msgid "Current Login IP"
+msgstr "IP de connexion actuel"
+
+#: invenio_accounts/admin.py:69
+msgid "Last Login IP"
+msgstr "Dernier IP de connexion"
+
+#: invenio_accounts/admin.py:72
+msgid "Inactivate"
+msgstr "Désactiver"
+
+#: invenio_accounts/admin.py:73
+msgid "Are you sure you want to inactivate selected users?"
+msgstr "Êtes-vous sûr de vouloir désactiver les utilisateurs séléctionnés?"
+
+#: invenio_accounts/admin.py:82 invenio_accounts/admin.py:105
+msgid "Cannot find user."
+msgstr "Impossible de trouver cet utilisateur."
+
+#: invenio_accounts/admin.py:86 invenio_accounts/admin.py:109
+msgid "User(s) were successfully inactivated."
+msgstr "Ces utilisateurs ont été désactivés avec succès."
+
+#: invenio_accounts/admin.py:92
+msgid "Failed to inactivate users."
+msgstr "Échec : ces utilisateurs n'ont pas pu être désactivés."
+
+#: invenio_accounts/admin.py:95
+msgid "Activate"
+msgstr "Activer"
+
+#: invenio_accounts/admin.py:96
+msgid "Are you sure you want to activate selected users?"
+msgstr "Êtes-vous sûr de vouloir activer les utilisateurs séléctionnés?"
+
+#: invenio_accounts/admin.py:115
+msgid "Failed to activate users."
+msgstr "Échec: ces utilisateurs n'ont pas pu être activés."
+
+#: invenio_accounts/admin.py:137 invenio_accounts/admin.py:143
+msgid "User Management"
+msgstr "Gestion des utilisateurs"
+
+#: invenio_accounts/forms.py:38
+msgid "Please complete the reCAPTCHA."
+msgstr "Veuillez compléter le reCAPTCHA."
+
+#: invenio_accounts/views.py:68
+msgid "Account"
+msgstr "Compte"
+
+#: invenio_accounts/templates/invenio_accounts/change_password.html:29
+#: invenio_accounts/views.py:73 invenio_accounts/views.py:91
+msgid "Change password"
+msgstr "Modifier le mot de passe"
+
+#. NOTE: Menu item text (icon replaced by a user icon).
+#: invenio_accounts/views.py:81
+#, python-format
+msgid "%(icon)s Change password"
+msgstr "Modifier le mot de passe %(icon)s"
+
+#: invenio_accounts/templates/invenio_accounts/change_password.html:38
+msgid "Current password"
+msgstr "Mot de passe actuel"
+
+#: invenio_accounts/templates/invenio_accounts/change_password.html:42
+msgid "New password"
+msgstr "Nouveau mot de passe"
+
+#: invenio_accounts/templates/invenio_accounts/change_password.html:46
+msgid "Confirm new password"
+msgstr "Confirmer le nouveau mot de passe"
+
+#: invenio_accounts/templates/invenio_accounts/change_password.html:50
+msgid "Change Password"
+msgstr "Modifier le mot de passe"
+
+#: invenio_accounts/templates/invenio_accounts/forgot_password.html:35
+#: invenio_accounts/templates/invenio_accounts/forgot_password.html:45
+#: invenio_accounts/templates/invenio_accounts/reset_password.html:36
+#: invenio_accounts/templates/invenio_accounts/reset_password.html:46
+msgid "Reset Password"
+msgstr "Réinitailiser le mot de passe"
+
+#: invenio_accounts/templates/invenio_accounts/forgot_password.html:41
+msgid ""
+"Enter your email address below and we will send you a link to reset your "
+"password."
+msgstr ""
+"Entrez votre adresse email ci-dessous et nous vous enverrons un lien pour "
+"réinitialiser votre mot de passe."
+
+#: invenio_accounts/templates/invenio_accounts/forgot_password.html:53
+#: invenio_accounts/templates/invenio_accounts/login_user.html:43
+#: invenio_accounts/templates/invenio_accounts/register_user.html:54
+#: invenio_accounts/templates/invenio_accounts/reset_password.html:54
+msgid "Log In"
+msgstr "Connexion"
+
+#: invenio_accounts/templates/invenio_accounts/forgot_password.html:53
+#: invenio_accounts/templates/invenio_accounts/reset_password.html:54
+msgid "or"
+msgstr "ou"
+
+#: invenio_accounts/templates/invenio_accounts/forgot_password.html:53
+#: invenio_accounts/templates/invenio_accounts/login_user.html:51
+#: invenio_accounts/templates/invenio_accounts/register_user.html:48
+#: invenio_accounts/templates/invenio_accounts/reset_password.html:54
+msgid "Sign Up"
+msgstr "Inscription"
+
+#: invenio_accounts/templates/invenio_accounts/login_user.html:34
+msgid "Log in to account"
+msgstr "Connectez-vous à votre compte"
+
+#: invenio_accounts/templates/invenio_accounts/login_user.html:51
+#, python-format
+msgid "New to %(sitename)s?"
+msgstr "Vous découvrez %(sitename)s?"
+
+#: invenio_accounts/templates/invenio_accounts/login_user.html:58
+msgid "Forgot password?"
+msgstr "Mot de passe oublié?"
+
+#: invenio_accounts/templates/invenio_accounts/register_user.html:34
+#, python-format
+msgid "Sign up for a %(sitename)s account!"
+msgstr "Inscrivez-vous sur %(sitename)s!"
+
+#: invenio_accounts/templates/invenio_accounts/register_user.html:53
+msgid "Already have an account?"
+msgstr "Déja inscrit?"
+
+#: invenio_accounts/templates/invenio_accounts/send_confirmation.html:35
+msgid "Resend Confirmation Email"
+msgstr "Renvoyer l'email de confirmation"
+
+#: invenio_accounts/templates/invenio_accounts/send_confirmation.html:36
+msgid ""
+"Enter your email address below and we will send you an email confirmation "
+"link."
+msgstr ""
+"Entrez votre adresse email ci-dessous et nous vous enverrons un lien pour "
+"confirmer votre inscription."
+
+#: invenio_accounts/templates/invenio_accounts/send_confirmation.html:41
+msgid "Send Confirmation"
+msgstr "Envoyer la confirmation"

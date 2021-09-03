@@ -1,0 +1,61 @@
+{# -*- coding: utf-8 -*-
+
+  This file is part of Invenio.
+  Copyright (C) 2017-2018 CERN.
+
+  Invenio is free software; you can redistribute it and/or modify it
+  under the terms of the MIT License; see LICENSE file for more details.
+#}
+{%- extends config.ACCOUNTS_SETTINGS_TEMPLATE %}
+
+{% set panel_title = _('Sessions') %}
+{% set panel_icon = 'fa fa-shield fa-fw' %}
+
+{% from "invenio_accounts/_macros.html" import render_field, form_errors %}
+
+{% set revoke_action = _("Revoke") %}
+
+
+{% block settings_form %}
+  <p>{{_('This is a list of devices that have logged into your account.')}}</p>
+  <hr>
+  {%- for session in sessions %}
+  {%- set is_current_sid = is_current(session.sid_s) %}
+  {%- set form = formclass(sid_s=session.sid_s) %}
+  <div class="row record-elem">
+    <div class="col-xs-1">
+      {%- if is_current_sid %}
+        <i class="fa fa-circle text-success" aria-hidden="true"></i>
+      {%- else %}
+        <i class="fa fa-circle text-muted" aria-hidden="true"></i>
+      {%- endif %}
+    </div>
+    <div class="col-xs-9">
+      <b>{{session.ip}}</b><br />
+      <small>
+        {{_("Signed in")}}:
+        {{session.created | tousertimezone | dateformat}}
+        {% if is_current_sid %}<span class="text-muted">({{_("current session")}})</span>{% endif %}
+        {%- if session.browser %}
+        <br>{{'{0} {1} on {2} ({3})'.format(
+          session.browser, session.browser_version, session.os,
+          session.device)
+          }}
+        {%- endif %}
+        {%- if session.country %}
+          <br>{{_('Location')}}: {{session.country}}
+        {%- endif %}
+      </small>
+    </div>
+    <div class="col-xs-1">
+        <form action="{{url_for('invenio_accounts.revoke_session')}}" method="POST">
+          {{ form.csrf_token }}
+          {{ form.sid_s }}
+          <button type="submit" class="btn btn-default" title="{{remove_action}}">
+            {{revoke_action if not is_current_sid else _('Logout')}}
+          </button>
+        </form>
+    </div>
+  </div>
+  {% endfor %}
+{% endblock settings_form %}

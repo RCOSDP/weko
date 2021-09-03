@@ -27,13 +27,11 @@ from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
-from sqlalchemy.sql import func
-from weko_records.models import ItemMetadata
 
 from .config import WEKO_AUTHORS_IMPORT_KEY
 from .models import Authors, AuthorsPrefixSettings
 from .permissions import author_permission
-from .utils import get_author_setting_obj
+from .utils import get_author_setting_obj, get_count_item_link
 
 blueprint = Blueprint(
     'weko_authors',
@@ -60,36 +58,36 @@ def create():
     if request.headers['Content-Type'] != 'application/json':
         return jsonify(msg=_('Header Error'))
 
-    max_id = 1
-    max = db.session.query(func.max(Authors.id)).one()
-    if max[0]:
-        max_id += max[0]
+    session = db.session
+    new_id = Authors.get_sequence(session)
 
     data = request.get_json()
     data["gather_flg"] = 0
-    data["pk_id"] = str(max_id)
+    data["is_deleted"] = "false"
+    data["pk_id"] = str(new_id)
     data["authorIdInfo"].insert(0,
                                 {
                                     "idType": "1",
-                                    "authorId": str(max_id),
+                                    "authorId": str(new_id),
                                     "authorIdShowFlg": "true"
                                 })
     indexer = RecordIndexer()
-    indexer.client.index(
+    es_id = indexer.client.index(
         index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
         doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         body=data,
     )
+    data['id'] = es_id
 
     author_data = dict()
 
-    author_data["id"] = max_id
+    author_data["id"] = new_id
     author_data["json"] = json.dumps(data)
 
-    with db.session.begin_nested():
+    with session.begin_nested():
         author = Authors(**author_data)
-        db.session.add(author)
-    db.session.commit()
+        session.add(author)
+    session.commit()
     return jsonify(msg=_('Success'))
 
 
@@ -123,7 +121,7 @@ def update_author():
     return jsonify(msg=_('Success'))
 
 
-@blueprint_api.route("/delete", methods=['post'])
+@blueprint_api.route("/delete", methods=['POST'])
 @login_required
 @author_permission.require(http_exception=403)
 def delete_author():
@@ -133,41 +131,32 @@ def delete_author():
         return jsonify(msg=_('Header Error'))
 
     data = request.get_json()
-    indexer = RecordIndexer()
-
-    query_q = {
-        "query": {
-            "term": {
-                "author_link": data["pk_id"]
-            }
-        },
-        "_source": [
-            "control_number"
-        ]
-    }
-    result_itemCnt = indexer.client.search(
-        index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
-        body=json.loads(json.dumps(query_item))
-    )
-    if result_itemCnt \
-            and 'hits' in result_itemCnt \
-            and 'total' in result_itemCnt['hits'] \
-            and result_itemCnt['hits']['total'] > 0:
+    if get_count_item_link(data['pk_id']):
         return make_response(
-            'The author is linked to items and cannot be deleted.',
+            _('The author is linked to items and cannot be deleted.'),
             500)
 
-    indexer.client.delete(
-        id=json.loads(json.dumps(data))["Id"],
-        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],)
+    try:
+        with db.session.begin_nested():
+            author_data = Authors.query.filter_by(
+                id=json.loads(json.dumps(data))["pk_id"]).one()
+            author_data.is_deleted = True
+            json_data = json.loads(author_data.json)
+            json_data['is_deleted'] = 'true'
+            author_data.json = json.dumps(json_data)
+            db.session.merge(author_data)
 
-    with db.session.begin_nested():
-        author_data = Authors.query.filter_by(
-            id=json.loads(json.dumps(data))["pk_id"]).one()
-        db.session.delete(author_data)
+            RecordIndexer().client.update(
+                id=json.loads(json.dumps(data))["Id"],
+                index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+                doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+                body={'doc': {'is_deleted': 'true'}}
+            )
+    except Exception as ex:
+        db.session.rollback()
+        current_app.logger.error(ex)
+
     db.session.commit()
-
     return jsonify(msg=_('Success'))
 
 # add by ryuu. at 20180820 end
@@ -181,7 +170,11 @@ def get():
     data = request.get_json()
 
     search_key = data.get('searchKey') or ''
-    match = [{"term": {"gather_flg": 0}}]
+    should = [
+        {"bool": {"must": [{"term": {"is_deleted": {"value": "false"}}}]}},
+        {"bool": {"must_not": {"exists": {"field": "is_deleted"}}}}
+    ]
+    match = [{"term": {"gather_flg": 0}}, {"bool": {"should": should}}]
 
     if search_key:
         match.append({"multi_match": {"query": search_key, "type": "phrase"}})
@@ -214,17 +207,15 @@ def get():
         "size": 0,
         "query": {
             "bool": {
-                "must_not": [{
-                    "wildcard": {
-                        "_oai.id": {
-                            "value": "*.*"
-                        }
-                    }
-                }],
                 "must": [
                     {
-                        "term": {
+                        "match": {
                             "publish_status": 0
+                        }
+                    },
+                    {
+                        "match": {
+                            "relation_version_is_last": "true"
                         }
                     },
                     {
@@ -437,52 +428,23 @@ def gatherById():
                 body=body
             )
 
-    update_q = {
+    target_author_q = {
         "query": {
             "match": {
-                "weko_id": "@id"
+                "_id": "@id"
             }
         }
     }
-    indexer = RecordIndexer()
-    item_pk_id = []
-    for t in gatherFrom:
-        q = json.dumps(update_q).replace("@id", t)
-        q = json.loads(q)
-        res = indexer.client.search(
-            index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
-            body=q
-        )
-        current_app.logger.debug(res.get("hits").get("hits"))
-        for h in res.get("hits").get("hits"):
-            sub = {"id": h.get("_id"), "weko_id": t}
-            item_pk_id.append(sub)
-            body = {
-                'doc': {
-                    "weko_id": gatherTo,
-                    "weko_id_hidden": gatherTo
-                }
-            }
-            indexer.client.update(
-                index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
-                doc_type=current_app.config['INDEXER_DEFAULT_DOCTYPE'],
-                id=h.get("_id"),
-                body=body
-            )
-    current_app.logger.debug(item_pk_id)
-    try:
-        with db.session.begin_nested():
-            for j in item_pk_id:
-                itemData = ItemMetadata.query.filter_by(id=j.get("id")).one()
-                itemJson = json.dumps(itemData.json)
-                itemJson = itemJson.replace(j.get("weko_id"), gatherTo)
-                itemData.json = json.loads(itemJson)
-                db.session.merge(itemData)
-        db.session.commit()
-    except Exception as ex:
-        current_app.logger.debug(ex)
-        db.session.rollback()
-        return jsonify({'code': 204, 'msg': 'Faild'})
+    q = json.dumps(target_author_q).replace("@id", gatherTo)
+    q = json.loads(q)
+    res = indexer.client.search(
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        body=q
+    )
+    target_data = res.get("hits").get("hits")[0].get("_source")
+
+    from weko_deposit.tasks import update_items_by_authorInfo
+    update_items_by_authorInfo.delay(gatherFromPkId, target_data)
 
     return jsonify({'code': 0, 'msg': 'Success'})
 
