@@ -34,8 +34,12 @@ from flask_menu import register_menu
 from invenio_admin.proxies import current_admin
 from invenio_stats.utils import QueryCommonReportsHelper
 from sqlalchemy.orm import session
+from weko_accounts.utils import roles_required
 from weko_records.models import SiteLicenseInfo
 from werkzeug.local import LocalProxy
+
+from weko_admin.config import WEKO_ADMIN_PERMISSION_ROLE_REPO, \
+    WEKO_ADMIN_PERMISSION_ROLE_SYSTEM
 
 from .api import send_site_license_mail
 from .models import FacetSearchSetting, SessionLifetime, SiteInfo
@@ -351,7 +355,9 @@ def update_feedback_mail():
         return jsonify(result)
 
 
-@blueprint_api.route('/get_feedback_mail', methods=['GET'])
+@blueprint_api.route('/get_feedback_mail', methods=['POST'])
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def get_feedback_mail():
     """API allow get feedback email setting.
 
@@ -392,7 +398,9 @@ def get_send_mail_history():
     return jsonify(result)
 
 
-@blueprint_api.route('/get_failed_mail', methods=['GET'])
+@blueprint_api.route('/get_failed_mail', methods=['POST'])
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def get_failed_mail():
     """Get list failed mail.
 
@@ -401,7 +409,7 @@ def get_failed_mail():
 
     """
     try:
-        data = request.args
+        data = request.form
         page = int(data.get('page'))
         history_id = int(data.get('id'))
     except Exception as ex:
@@ -632,8 +640,8 @@ def save_facet_search():
                 result['msg'] = _("Failed to create due to server error.")
     else:
         result['status'] = False
-        result['msg'] = _(
-            "The item name/mapping is already exists. Please input other faceted item/mapping.")
+        result['msg'] = _('The item name/mapping is already exists.'
+                          + ' Please input other faceted item/mapping.')
         # Store query facet search in redis.
     store_facet_search_query_in_redis()
     return jsonify(result), 200

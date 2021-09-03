@@ -251,7 +251,8 @@ WEKO_SEARCH_KEYWORDS_DICT = {
                 "NAID": ("relation.relatedIdentifier", "identifierType=NAID"),
                 "ichushi": (
                     "relation.relatedIdentifier", "identifierType=ICHUSHI")
-            }})
+            }}),
+        "license": ("content", {"license": ("content.licensetype.raw")})
     },
     "string": {
         "title": ["search_title", "search_title.ja"],
@@ -324,7 +325,6 @@ WEKO_SEARCH_KEYWORDS_DICT = {
         "srctitle": ["sourceTitle", "sourceTitle.ja"],
         "spatial": "geoLocation.geoLocationPlace",
         "temporal": "temporal",
-        "rights": "rights",
         "version": "versionType",
         "dissno": "dissertationNumber",
         "degreename": ["degreeName", "degreeName.ja"],

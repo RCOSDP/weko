@@ -92,15 +92,13 @@ class SchemaConverter:
                     for pat in type.patterns.patterns:
                         plst.append(pat.pattern)
                     rstr.update(OrderedDict(patterns=plst))
-            elif isinstance(type, XsdAtomicBuiltin):
-                pass
-            elif isinstance(type, XsdAnyAttribute):
-                pass
+            elif isinstance(type, XsdAtomicBuiltin) or \
+                isinstance(type, XsdAnyAttribute) or \
+                    isinstance(type, XsdGroup):
+                return typd
             elif isinstance(type, XsdUnion):
                 for mt in type.member_types:
                     typd.update(get_element_type(mt))
-            elif isinstance(type, XsdGroup):
-                pass
             else:
                 atrlst = []
                 if hasattr(type, 'attributes'):
@@ -121,7 +119,6 @@ class SchemaConverter:
                     typd['attributes'] = atrlst
                 if hasattr(type, 'content_type'):
                     typd.update(get_element_type(type.content_type))
-                pass
 
             return typd
 
@@ -231,6 +228,7 @@ class SchemaTree:
         self._atr_lang = "xml:lang"
         self._special_lang = 'ja-Kana'
         self._special_lang_default = 'ja'
+        self._aff = "jpcoar:affiliation"
         # nodes need be be separated to multiple nodes by language
         self._separate_nodes = None
         self._location = ''
@@ -278,10 +276,10 @@ class SchemaTree:
         def get_mapping():
 
             if isinstance(self._record, dict):
-                id = self._record.pop("item_type_id")
+                _id = self._record.pop("item_type_id")
                 self._record.pop("_buckets", {})
                 self._record.pop("_deposit", {})
-                mjson = Mapping.get_record(id)
+                mjson = Mapping.get_record(_id)
                 self.item_type_mapping = mjson
                 mp = mjson.dumps()
                 if mjson:
@@ -289,7 +287,7 @@ class SchemaTree:
                         if isinstance(v, dict) and mp.get(k) and k != "_oai":
                             v.update({self._schema_name: mp.get(
                                 k).get(self._schema_name)})
-                return id
+                return _id
 
         # inject mappings info to record
         item_type_id = get_mapping()
@@ -609,13 +607,12 @@ class SchemaTree:
                     type_item = 'relationType'
                 for k, v in self.item_type_mapping.items():
                     jpcoar = v.get("jpcoar_mapping")
-                    if isinstance(jpcoar, dict):
-                        if atr_name in jpcoar.keys():
-                            value = jpcoar[atr_name]
-                            if '@attributes' in value.keys():
-                                attr = value['@attributes']
-                                if type_item in attr:
-                                    return attr[type_item]
+                    if isinstance(jpcoar, dict) and atr_name in jpcoar.keys():
+                        value = jpcoar[atr_name]
+                        if self._atr in value.keys():
+                            attr = value[self._atr]
+                            if type_item in attr:
+                                return attr[type_item]
 
             def get_item_by_type(temporary, type_item):
                 """Get Contributor and Relation by Type."""
@@ -853,16 +850,16 @@ class SchemaTree:
                         atr_v = [[atr_v]]
                     set_value(mpdic, atr_v)
                     vlst.append(mpdic)
-                elif atr_vm and atr_name:
-                    if isinstance(atr_vm, list) and isinstance(mpdic, dict):
-                        for atr_vm_item in atr_vm:
-                            if self._ignore_list_all:
-                                remove_hide_data(atr_vm_item, key_item_parent)
-                            vlst_child = get_mapping_value(mpdic, atr_vm_item,
-                                                           key_item_parent,
-                                                           atr_name)
-                            if vlst_child[0]:
-                                vlst.extend(vlst_child)
+                elif atr_vm and atr_name and isinstance(atr_vm, list) \
+                        and isinstance(mpdic, dict):
+                    for atr_vm_item in atr_vm:
+                        if self._ignore_list_all:
+                            remove_hide_data(atr_vm_item, key_item_parent)
+                        vlst_child = get_mapping_value(mpdic, atr_vm_item,
+                                                       key_item_parent,
+                                                       atr_name)
+                        if vlst_child[0]:
+                            vlst.extend(vlst_child)
         return vlst
 
     def create_xml(self):
@@ -872,6 +869,9 @@ class SchemaTree:
         :return:
 
         """
+        jpcoar_affname = 'jpcoar:affiliationName'
+        jpcoar_nameidt = 'jpcoar:nameIdentifier'
+
         def check_node(node):
             if isinstance(node, dict):
                 if node.get(self._v):
@@ -912,15 +912,28 @@ class SchemaTree:
                 for i in range(cnt):
                     attr = OrderedDict()
                     for k, v in node.items():
-                        if isinstance(v, list):
-                            if len(v) > i:
-                                attr.update({k: v[i]})
+                        if isinstance(v, list) and len(v) > i:
+                            attr.update({k: v[i]})
                     nlst.append(attr)
 
             return nlst
 
         def set_children(kname, node, tree, parent_keys,
-                         current_lang=None, index=0):
+                         current_lang=None, index=0,
+                         creator_idx=-1, contributor_idx=-1):
+            """Set childrent xml.
+
+            Args:
+                kname ([type]): [description]
+                node ([type]): [description]
+                tree ([type]): [description]
+                parent_keys ([type]): [description]
+                current_lang ([type], optional): [description].
+                    Defaults to None.
+                index (int, optional): [description]. Defaults to 0.
+                creator_idx (int, optional): [description]. Defaults to -1.
+                contributor_idx (int, optional): [description]. Defaults to -1.
+            """
             if kname == 'type':
                 return
             current_separate_key_node = None
@@ -956,7 +969,6 @@ class SchemaTree:
                             atr = get_atr_list(node.get(self._atr))
                             for altt in atr:
                                 if altt:
-                                    # atr = get_atr_list(atr[index])
                                     atrt = get_atr_list(altt)
                                     clone_val, clone_atr = recorrect_node(
                                         val[index],
@@ -995,14 +1007,43 @@ class SchemaTree:
                                             continue
                                         chld.set(get_prefix(k2), v2)
 
-                                    for k1, v1 in node.items():
-                                        if k1 != self._atr:
-                                            k1 = get_prefix(k1)
-                                            clone_lst = parent_keys.copy()
-                                            clone_lst.append(k1)
-                                            set_children(k1, v1, chld,
-                                                         clone_lst,
-                                                         current_lang, i)
+                                    # Check affiliation node
+                                    if node.get(self._aff):
+                                        if creator_idx >= 0:
+                                            numbs_child = count_aff_childs(
+                                                'creator', creator_idx)
+                                        elif contributor_idx >= 0:
+                                            numbs_child = count_aff_childs(
+                                                'contributor', contributor_idx)
+                                        else:
+                                            numbs_child = []
+
+                                        for k1, v1 in node.items():
+                                            if k1 != self._atr:
+                                                # Handle affiliation node
+                                                if k1 == self._aff \
+                                                        and numbs_child:
+                                                    create_affiliation(
+                                                        numbs_child, k1, v1,
+                                                        chld, parent_keys,
+                                                        current_lang)
+                                                else:
+                                                    k1 = get_prefix(k1)
+                                                    clone_lst = \
+                                                        parent_keys.copy()
+                                                    clone_lst.append(k1)
+                                                    set_children(k1, v1, chld,
+                                                                 clone_lst,
+                                                                 current_lang)
+                                    else:
+                                        for k1, v1 in node.items():
+                                            if k1 != self._atr:
+                                                k1 = get_prefix(k1)
+                                                clone_lst = parent_keys.copy()
+                                                clone_lst.append(k1)
+                                                set_children(k1, v1, chld,
+                                                             clone_lst,
+                                                             current_lang, i)
                             else:
                                 nodes = [node]
                                 if bool(node) and not [i for i in node.values()
@@ -1035,14 +1076,43 @@ class SchemaTree:
                                     child = etree.Element(kname, None, ns)
                                     tree.append(child)
 
-                                    for k1, v1 in val.items():
-                                        if k1 != self._atr:
-                                            k1 = get_prefix(k1)
-                                            clone_lst = parent_keys.copy()
-                                            clone_lst.append(k1)
-                                            set_children(k1, v1, child,
-                                                         clone_lst,
-                                                         current_lang)
+                                    # Check affiliation node
+                                    if val.get(self._aff):
+                                        if creator_idx >= 0:
+                                            numbs_child = count_aff_childs(
+                                                'creator', creator_idx)
+                                        elif contributor_idx >= 0:
+                                            numbs_child = count_aff_childs(
+                                                'contributor', contributor_idx)
+                                        else:
+                                            numbs_child = []
+
+                                        for k1, v1 in val.items():
+                                            if k1 != self._atr:
+                                                # Handle affiliation node
+                                                if k1 == self._aff \
+                                                        and numbs_child:
+                                                    create_affiliation(
+                                                        numbs_child, k1, v1,
+                                                        child, parent_keys,
+                                                        current_lang)
+                                                else:
+                                                    k1 = get_prefix(k1)
+                                                    clone_lst = \
+                                                        parent_keys.copy()
+                                                    clone_lst.append(k1)
+                                                    set_children(k1, v1, child,
+                                                                 clone_lst,
+                                                                 current_lang)
+                                    else:
+                                        for k1, v1 in val.items():
+                                            if k1 != self._atr:
+                                                k1 = get_prefix(k1)
+                                                clone_lst = parent_keys.copy()
+                                                clone_lst.append(k1)
+                                                set_children(k1, v1, child,
+                                                             clone_lst,
+                                                             current_lang)
 
         def recorrect_node(val, attr, current_lang, mandatory=True,
                            repeatable=False):
@@ -1115,18 +1185,18 @@ class SchemaTree:
         # Function Remove custom scheme
         def remove_custom_scheme(name_identifier, v,
                                  lst_name_identifier_default):
-            if '@attributes' in name_identifier and \
-                    name_identifier['@attributes'].get('nameIdentifierScheme'):
+            if self._atr in name_identifier and \
+                    name_identifier[self._atr].get('nameIdentifierScheme'):
                 element_first = 0
                 lst_name_identifier_scheme = name_identifier[
-                    '@attributes']['nameIdentifierScheme'][element_first]
+                    self._atr]['nameIdentifierScheme'][element_first]
                 lst_value = []
-                if '@value' in name_identifier:
-                    lst_value = name_identifier['@value'][element_first]
-                if name_identifier['@attributes'].\
+                if self._v in name_identifier:
+                    lst_value = name_identifier[self._v][element_first]
+                if name_identifier[self._atr].\
                         get("nameIdentifierURI", None):
                     lst_name_identifier_uri = name_identifier[
-                        '@attributes']['nameIdentifierURI'][element_first]
+                        self._atr]['nameIdentifierURI'][element_first]
                 index_remove_items = []
                 total_remove_items = len(lst_name_identifier_scheme)
                 for identifior_item in lst_name_identifier_scheme:
@@ -1134,7 +1204,7 @@ class SchemaTree:
                         index_remove_items.extend([
                             lst_name_identifier_scheme.index(identifior_item)])
                 if len(index_remove_items) == total_remove_items:
-                    del v['jpcoar:nameIdentifier']
+                    del v[jpcoar_nameidt]
                 else:
                     for index in index_remove_items[::-1]:
                         lst_name_identifier_scheme.pop(index)
@@ -1144,6 +1214,119 @@ class SchemaTree:
                         if lst_name_identifier_uri and \
                                 index < len(lst_name_identifier_uri):
                             lst_name_identifier_uri.pop(index)
+
+        def count_aff_childs(key, creator_idx):
+            """Count number of affiliationName and affiliationNameIdentifier.
+
+            Returns:
+                ret [type]: [description] Counter affiliation metadata.
+
+            """
+            ret = []
+            _item_key = "creatorAffiliations"
+            _name_keys = "affiliationNames"
+            _name_key = "affiliationName"
+            _idtf_keys = "affiliationNameIdentifiers"
+            _idtf_key = "affiliationNameIdentifier"
+            if key == "contributor":
+                _item_key = "contributorAffiliations"
+                _name_keys = "contributorAffiliationNames"
+                _name_key = "contributorAffiliationName"
+                _idtf_keys = "contributorAffiliationNameIdentifiers"
+                _idtf_key = "contributorAffiliationNameIdentifier"
+
+            for _item in self._record.values():
+                if isinstance(_item, dict) and _item.get("jpcoar_mapping") \
+                        and _item.get("jpcoar_mapping", {}).get(key):
+                    if creator_idx >= len(_item.get("attribute_value_mlt", [])):
+                        return None
+
+                    aff_data = _item.get("attribute_value_mlt")[creator_idx]
+                    if not aff_data.get(_item_key):
+                        return None
+
+                    for _subitem in aff_data.get(_item_key):
+                        _len_affname = 0
+                        _len_nameidt = 0
+                        for item in _subitem.get(_name_keys, []):
+                            if item.get(_name_key):
+                                _len_affname += 1
+                        for item in _subitem.get(_idtf_keys, []):
+                            if item.get(_idtf_key):
+                                _len_nameidt += 1
+
+                        ret.append({
+                            jpcoar_affname: _len_affname,
+                            jpcoar_nameidt: _len_nameidt
+                        })
+
+            return ret
+
+        def create_affiliation(numbs_child, k, v, child,
+                               parent_keys, current_lang):
+            """Seperate jpcoar:affiliation by metadata structure.
+
+            Args:
+                numbs_child ([type]): [description]
+                k ([type]): [description]
+                v ([type]): [description]
+                child ([type]): [description]
+                parent_keys ([type]): [description]
+                current_lang ([type], optional): [description].
+            """
+            count_name = 0
+            count_idtf = 0
+            for _child in numbs_child:
+                _value = copy.deepcopy(v)
+                len_name = _child[jpcoar_affname]
+                if len_name > 0:
+                    _data = _value[jpcoar_affname][self._v][0]
+                    _lang = _value[jpcoar_affname][self._atr].get(
+                        "xml:lang", [])
+                    _max_len_name = len(_data) \
+                        if len(_data) < count_name + len_name \
+                        else count_name + len_name
+                    _value[jpcoar_affname][self._v][0] = _data[
+                        count_name:_max_len_name]
+                    if _lang:
+                        _value[jpcoar_affname][self._atr]["xml:lang"][0] \
+                            = _lang[0][count_name:_max_len_name]
+                    count_name += _max_len_name
+                else:
+                    if _value[jpcoar_affname].get(self._v):
+                        _value[jpcoar_affname][self._v][0] = [[]]
+
+                len_idtf = _child[jpcoar_nameidt]
+                if len_idtf > 0:
+                    _data = _value[jpcoar_nameidt][self._v][0]
+                    _schm = _value[jpcoar_nameidt][self._atr].get(
+                        "nameIdentifierScheme", [])
+                    _urli = _value[jpcoar_nameidt][self._atr].get(
+                        "nameIdentifierURI", [])
+                    _max_len_idtf = len(_data) \
+                        if len(_data) < count_idtf + len_idtf \
+                        else count_idtf + len_idtf
+                    _value[jpcoar_nameidt][self._v][
+                        0] = _data[count_idtf:_max_len_idtf]
+                    if _schm:
+                        _value[jpcoar_nameidt][self._atr][
+                            "nameIdentifierScheme"][0] \
+                            = _schm[0][count_idtf:_max_len_idtf]
+                    if _urli:
+                        _value[jpcoar_nameidt][self._atr][
+                            "nameIdentifierURI"][0] \
+                            = _urli[0][count_idtf:_max_len_idtf]
+                    count_idtf += _max_len_idtf
+                else:
+                    if _value[jpcoar_nameidt].get(self._v):
+                        _value[jpcoar_nameidt][self._v] = [[]]
+
+                k1 = get_prefix(k)
+                clone_lst = parent_keys.copy()
+                clone_lst.append(k1)
+                set_children(k1, _value, child,
+                             clone_lst,
+                             current_lang)
 
         if not self._schema_obj:
             E = ElementMaker()
@@ -1188,8 +1371,6 @@ class SchemaTree:
         # Create sub element
         indetifier_keys = ['jpcoar:creator', 'jpcoar:contributor',
                            'jpcoar:rightsHolder']
-        affiliation_key = 'jpcoar:affiliation'
-        name_identifier_key = 'jpcoar:nameIdentifier'
         # Remove all None languages and check special case
         if self._separate_nodes:
             for key, val in self._separate_nodes.items():
@@ -1202,22 +1383,38 @@ class SchemaTree:
                 # Just add an empty element in case there is no language
                 if len(val) == 0:
                     val.add('')
+        # Initial counter of creator and contributor node
+        # Start counter from -1 to can use as index
+        creator_idx = -1
+        contributor_idx = -1
         for lst in node_tree:
+            # Each creator/contributor node increasing by one
+            if lst.get('jpcoar:creator'):
+                creator_idx += 1
+                contributor_idx = -1
+            elif lst.get('jpcoar:contributor'):
+                creator_idx = -1
+                contributor_idx += 1
+            else:
+                creator_idx = -1
+                contributor_idx = -1
+
             for k, v in lst.items():
                 # Remove items that are not set as controlled vocabulary
                 if k in indetifier_keys:
                     lst_name_identifier_default = current_app.config[
                         'WEKO_SCHEMA_UI_LIST_SCHEME']
-                    remove_custom_scheme(v[name_identifier_key], v,
+                    remove_custom_scheme(v[jpcoar_nameidt], v,
                                          lst_name_identifier_default)
-                    if affiliation_key in v:
+                    if self._aff in v:
                         lst_name_affiliation_default = current_app.config[
                             'WEKO_SCHEMA_UI_LIST_SCHEME_AFFILIATION']
                         remove_custom_scheme(
-                            v[affiliation_key][name_identifier_key], v,
+                            v[self._aff][jpcoar_nameidt], v,
                             lst_name_affiliation_default)
                 k = get_prefix(k)
-                set_children(k, v, root, [k])
+                set_children(k, v, root, [k], None, 0,
+                             creator_idx, contributor_idx)
         return root
 
     def __remove_files_do_not_publish(self):
@@ -1256,15 +1453,15 @@ class SchemaTree:
             if reference_type in current_app.config[
                     'WEKO_SCHEMA_RELATION_TYPE']:
                 _relation.update({
-                    "@attributes": {"relationType": [[reference_type]]}
+                    self._atr: {"relationType": [[reference_type]]}
                 })
             if url and identifierType:
                 _relation.update({
                     "relatedIdentifier": {
-                        "@attributes": {
+                        self._atr: {
                             "identifierType": identifierType
                         },
-                        "@value": url
+                        self._v: url
                     }
                 })
             list_json_xml.append(relation_tmp.copy())
@@ -1305,10 +1502,10 @@ class SchemaTree:
         def get_key_list(nodes):
             # if no child
             if len(nodes.keys()) == 1:
-                str = ""
+                _str = ""
                 for lst in klst:
-                    str = str + "." + get_element(lst)
-                elst.append(str[1:])
+                    _str = _str + "." + get_element(lst)
+                elst.append(_str[1:])
 
                 klst.pop(-1)
                 return
@@ -1344,14 +1541,6 @@ class SchemaTree:
 
     def find_nodes(self, mlst):
         """Find_nodes."""
-        def get_generator(nlst):
-            gdc.clear()
-
-            for lst in mlst:
-                if isinstance(lst, dict):
-                    gdc['g' + str(mlst.index(lst))] = items_node(lst, nlst)
-            return gdc
-
         def del_type(nid):
             if isinstance(nid, dict):
                 if nid.get("type"):
@@ -1363,15 +1552,13 @@ class SchemaTree:
             return str.split(':')[-1] if ':' in str else str
 
         def items_node(nid, nlst, index=0):
-            if len(nlst) > index:
-                if isinstance(nid, dict):
-                    for k3, v3 in nid.items():
-                        if len(nlst) > index:
-                            if cut_pre(k3) == nlst[index]:
-                                index = index + 1
-                                yield v3
-                                for x in items_node(v3, nlst, index):
-                                    yield x
+            if len(nlst) > index and isinstance(nid, dict):
+                for k3, v3 in nid.items():
+                    if len(nlst) > index and cut_pre(k3) == nlst[index]:
+                        index = index + 1
+                        yield v3
+                        for x in items_node(v3, nlst, index):
+                            yield x
 
         def get_node_dic(key):
             for lst in mlst:
@@ -1388,12 +1575,7 @@ class SchemaTree:
                     klst.append(plst[i])
             return klst
 
-        gdc = OrderedDict()
-        vlst = []
-        alst = []
         ndic = copy.deepcopy(self._schema_obj)
-        tlst = self.to_list()
-
         # start
         # ---------------------------------------------------------------------------------------------------
         nlst = []
@@ -1427,18 +1609,17 @@ class SchemaTree:
                                         node.update({self._v: val})
                                     elif isinstance(val, str):
                                         node.update({self._v: [[val]]})
-                                if atr:
-                                    if isinstance(atr, dict):
-                                        if self._atr_lang in atr.keys() \
-                                            and current_separate_key and \
-                                                atr.get(self._atr_lang)[0]:
-                                            self._separate_nodes.get(
-                                                current_separate_key).update(
-                                                atr.get(self._atr_lang)[0])
-                                        for k1, v1 in atr.items():
-                                            if isinstance(v1, str):
-                                                atr[k1] = [[v1]]
-                                        node.update({self._atr: atr})
+                                if atr and isinstance(atr, dict):
+                                    if self._atr_lang in atr.keys() \
+                                        and current_separate_key and \
+                                            atr.get(self._atr_lang)[0]:
+                                        self._separate_nodes.get(
+                                            current_separate_key).update(
+                                            atr.get(self._atr_lang)[0])
+                                    for k1, v1 in atr.items():
+                                        if isinstance(v1, str):
+                                            atr[k1] = [[v1]]
+                                    node.update({self._atr: atr})
                         except StopIteration:
                             pass
                 version_type = current_app.config['WEKO_SCHEMA_VERSION_TYPE']
@@ -1487,7 +1668,7 @@ def cache_schema(schema_name, delete=False):
             object_pairs_hook=OrderedDict)
         if delete:
             datastore.delete(cache_key)
-    except BaseException as ex:
+    except BaseException:
         try:
             schema = get_schema()
             if schema:

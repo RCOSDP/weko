@@ -28,8 +28,8 @@ from copy import deepcopy
 from functools import wraps
 
 import redis
-from flask import Blueprint, abort, current_app, jsonify, render_template, \
-    request, session, url_for
+from flask import Blueprint, abort, current_app, has_request_context, \
+    jsonify, render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
@@ -49,6 +49,7 @@ from weko_deposit.api import WekoDeposit
 from weko_deposit.links import base_factory
 from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
+from weko_deposit.signals import item_created
 from weko_items_ui.api import item_login
 from weko_records.api import FeedbackMailList, ItemLink
 from weko_records.models import ItemMetadata
@@ -66,10 +67,10 @@ from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
 from .models import ActionStatusPolicy, Activity, ActivityAction, FlowAction
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import IdentifierHandle, auto_fill_title, \
-    check_authority_by_admin, check_continue, check_existed_doi, \
-    create_onetime_download_url_to_guest, delete_cache_data, \
-    delete_guest_activity, filter_all_condition, get_account_info, \
-    get_actionid, get_activity_display_info, \
+    check_authority_by_admin, check_continue, check_doi_validation_not_pass, \
+    check_existed_doi, create_onetime_download_url_to_guest, \
+    delete_cache_data, delete_guest_activity, filter_all_condition, \
+    get_account_info, get_actionid, get_activity_display_info, \
     get_activity_id_of_record_without_version, \
     get_application_and_approved_date, get_approval_keys, get_cache_data, \
     get_files_and_thumbnail, get_identifier_setting, get_main_record_detail, \
@@ -781,10 +782,9 @@ def check_authority_action(activity_id='0', action_id=0,
             # user, allow to access
             return 0
     # Check current user is action handler of activity
-    activity_action_obj = ActivityAction.query.filter_by(
-        activity_id=activity_id, action_id=action_id,
-        action_order=action_order).first()
-    if (activity_action_obj.action_handler
+    activity_action_obj = work.get_activity_action_comment(
+        activity_id, action_id, action_order)
+    if (activity_action_obj and activity_action_obj.action_handler
             and int(activity_action_obj.action_handler) == int(cur_user)
             and contain_login_item_application):
         return 0
@@ -924,12 +924,10 @@ def next_action(activity_id='0', action_id=0):
             journal=post_json.get('journal')
         )
 
+    last_idt_setting = work_activity.get_action_identifier_grant(
+        activity_id=activity_id,
+        action_id=get_actionid('identifier_grant'))
     if action_endpoint == 'approval' and item_id:
-        identifier_actionid = get_actionid('identifier_grant')
-        last_idt_setting = work_activity.get_action_identifier_grant(
-            activity_id=activity_id,
-            action_id=identifier_actionid)
-
         if not post_json.get('temporary_save') and last_idt_setting \
             and last_idt_setting.get('action_identifier_select') \
                 and last_idt_setting.get('action_identifier_select') > 0:
@@ -1047,29 +1045,15 @@ def next_action(activity_id='0', action_id=0):
                     _identifier.remove_idt_registration_metadata()
         else:
             # If is action identifier_grant, then save to to database
-            error_list = item_metadata_validation(item_id, identifier_select)
+            error_list = check_doi_validation_not_pass(
+                item_id, activity_id, identifier_select)
             if isinstance(error_list, str):
                 return jsonify(code=-1, msg=_(error_list))
-
-            sessionstore = RedisStore(redis.StrictRedis.from_url(
-                'redis://{host}:{port}/1'.format(
-                    host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                    port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
-            if error_list:
-                sessionstore.put(
-                    'updated_json_schema_{}'.format(activity_id),
-                    json.dumps(error_list).encode('utf-8'),
-                    ttl_secs=300)
+            elif error_list:
                 return previous_action(
                     activity_id=activity_id,
                     action_id=action_id,
-                    req=-1
-                )
-            else:
-                if sessionstore.redis.exists(
-                        'updated_json_schema_{}'.format(activity_id)):
-                    sessionstore.delete(
-                        'updated_json_schema_{}'.format(activity_id))
+                    req=-1)
 
             if item_id:
                 record_without_version = item_id
@@ -1077,6 +1061,20 @@ def next_action(activity_id='0', action_id=0):
                     record_without_version = pid_without_ver.object_uuid
                 saving_doi_pidstore(item_id, record_without_version, post_json,
                                     int(identifier_select), False, True)
+    elif 'identifier_grant' == action_endpoint \
+            and not post_json.get('temporary_save'):
+        _value, _type = IdentifierHandle(item_id).get_idt_registration_data()
+        if _value and _type:
+            error_list = check_doi_validation_not_pass(
+                item_id, activity_id, IDENTIFIER_GRANT_SELECT_DICT[_type[0]],
+                pid_without_ver.object_uuid)
+            if isinstance(error_list, str):
+                return jsonify(code=-1, msg=_(error_list))
+            elif error_list:
+                return previous_action(
+                    activity_id=activity_id,
+                    action_id=action_id,
+                    req=-1)
 
     rtn = history.create_activity_history(activity, action_order)
     if not rtn:
@@ -1119,6 +1117,17 @@ def next_action(activity_id='0', action_id=0):
                 action_order=next_action_order
             )
             work_activity.end_activity(activity)
+            # Call signal to push item data to ES.
+            try:
+                if '.' not in current_pid.pid_value and has_request_context():
+                    item_created.send(
+                        current_app._get_current_object(),
+                        user_id=current_user.get_id() if current_user else -1,
+                        item_id=current_pid,
+                        item_title=activity_detail.title
+                    )
+            except BaseException:
+                abort(500, 'MAPPING_ERROR')
         else:
             work_activity.upt_activity_action(
                 activity_id=activity_id, action_id=next_action_id,

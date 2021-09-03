@@ -50,13 +50,17 @@ from invenio_db import db
 from invenio_files_rest.models import FileInstance, Location, ObjectVersion
 from invenio_files_rest.utils import find_and_update_location_size
 from invenio_i18n.ext import current_i18n
+from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.api import Record
-from invenio_records.models import RecordMetadata
 from invenio_records_rest.errors import InvalidQueryRESTError
 from invenio_search import RecordsSearch
+from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
+from invenio_stats.models import StatsEvents
+from invenio_stats.processors import anonymize_user, flag_restricted, \
+    flag_robots, hash_id
 from jsonschema import Draft4Validator
 from weko_admin.models import SessionLifetime
 from weko_admin.utils import get_redis_cache
@@ -64,7 +68,6 @@ from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
 from weko_handle.api import Handle
-from weko_index_tree.api import Indexes
 from weko_index_tree.utils import check_index_permissions, \
     check_restrict_doi_with_indexes
 from weko_indextree_journal.api import Journals
@@ -72,7 +75,7 @@ from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
-    IDENTIFIER_GRANT_SUFFIX_METHOD
+    IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_GRANT_SUFFIX_METHOD
 from weko_workflow.models import FlowDefine, WorkFlow
 from weko_workflow.utils import IdentifierHandle, check_existed_doi, \
     get_identifier_setting, get_sub_item_value, get_url_root, \
@@ -183,10 +186,10 @@ def delete_records(index_tree_id):
             if len(paths) > 0:
                 # Remove the element which matches the index_tree_id
                 removed_path = None
-                for path in paths:
-                    if path.endswith(str(index_tree_id)):
-                        removed_path = path
-                        paths.remove(path)
+                for index_id in paths:
+                    if index_id == str(index_tree_id):
+                        removed_path = index_id
+                        paths.remove(index_id)
                         break
 
                 # Do update the path on record
@@ -1222,7 +1225,7 @@ def create_flow_define():
                                      WEKO_FLOW_DEFINE_LIST_ACTION)
 
 
-def import_items_to_system(item: dict):
+def import_items_to_system(item: dict, request_info: dict):
     """Validation importing zip file.
 
     :argument
@@ -1231,6 +1234,73 @@ def import_items_to_system(item: dict):
         return      -- PID object if exist.
 
     """
+    def store_data_to_es_and_db(item, request_info):
+        """Store data to es and db."""
+        # Default admin user (1) for this import.
+        request_info['user_id'] = 1
+        timestamp = datetime.utcnow().replace(microsecond=0)
+        # Prepare stored data.
+        data = prepare_stored_data(item, request_info)
+        doc_type = 'stats-item-create'
+        index = '{}-events-{}-{}'.format(index_prefix, doc_type,
+                                         timestamp.year)
+        id = hash_id(timestamp, data)
+        # Push item to elasticsearch.
+        push_item_to_elasticsearch(id, index, doc_type, data)
+        # Save item to stats events.
+        save_item_to_stats_events(id, index, doc_type, data)
+
+    def prepare_stored_data(item, request_info):
+        """Prepare stored data."""
+        timestamp = datetime.utcnow().replace(microsecond=0)
+        doc = {
+            'ip_address': request_info.get('remote_addr'),
+            'timestamp': timestamp.isoformat(),
+        }
+        doc = anonymize_user(doc)
+        doc = flag_restricted(doc)
+        doc = flag_robots(doc)
+        data = {
+            "remote_addr": request_info.get('remote_addr'),
+            "country": doc.get('country'),
+            "record_name": item.get('item_title'),
+            "referrer": request_info.get('referrer'),
+            "is_robot": doc.get('is_robot'),
+            "cur_user_id": request_info.get('user_id'),
+            "is_restricted": doc.get('is_restricted'),
+            "unique_session_id": doc.get('unique_session_id'),
+            "hostname": request_info.get('hostname'),
+            "pid_value": item.get('id'),
+            "unique_id": "item_create_{}".format(item.get('id')),
+            "pid_type": "depid",
+            "timestamp": doc.get('timestamp'),
+            "visitor_id": doc.get('visitor_id')
+        }
+        return data
+
+    def push_item_to_elasticsearch(id, index, doc_type, data):
+        """Push item to elasticsearch in order to count report."""
+        indexer = RecordIndexer()
+        indexer.client.index(
+            index=index,
+            doc_type=doc_type,
+            id=id,
+            body=data
+        )
+
+    def save_item_to_stats_events(id, index, doc_type, data):
+        """Save item to db in order to run aggregation."""
+        rtn_data = dict(
+            _id=id,
+            _op_type='index',
+            _index=index,
+            _type=doc_type,
+            _source=data,
+        )
+        if current_app.config['STATS_WEKO_DB_BACKUP_EVENTS']:
+            # Save stats event into Database.
+            StatsEvents.save(rtn_data, True)
+
     if not item:
         return None
     else:
@@ -1251,7 +1321,9 @@ def import_items_to_system(item: dict):
                 item.get('publish_status')
             )
             register_item_update_publish_status(item, str(status_number))
-
+            if item.get('status') == 'new':
+                # Store data to es and db.
+                store_data_to_es_and_db(item, request_info)
             db.session.commit()
         except Exception as ex:
             if item.get('id'):
@@ -1298,7 +1370,7 @@ def handle_item_title(list_record):
         item_type_mapping = Mapping.get_record(item['item_type_id'])
         item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
         title_data, _title_key = get_data_by_property(
-            item, item_map, "title.@value")
+            item['metadata'], item_map, 'title.@value')
         if not title_data:
             error = _('Title is required item.')
         else:
@@ -1339,88 +1411,74 @@ def handle_check_and_prepare_index_tree(list_record):
     :return
 
     """
+    from weko_index_tree.api import Indexes
     errors = []
     warnings = []
 
-    def check(index_ids, index_names, parent_id=0, is_root=False):
-        index_id = index_ids[0]
-        index_name = index_names[0]
+    def check(index_id, index_name):
+        """Check index_id/index_name.
+
+        Args:
+            index_id (str): Index id.
+            index_name (str): Index name.
+
+        Returns:
+            [bool]: Check result.
+
+        """
+        result = None
         index = None
         try:
             index = Indexes.get_index(index_id)
         except Exception:
             current_app.logger.warning("Specified IndexID is invalid!")
 
-        if index and (
-            (is_root and not index.parent)
-            or (not is_root and parent_id and index.parent == parent_id)
-        ):
-            if index.index_name_english != index_name:
+        if index:
+            if index_name and index_name not in \
+                    [index.index_name, index.index_name_english]:
                 warnings.append(
                     _('Specified {} does not match with existing index.')
                     .format('POS_INDEX'))
+            result = index.id
         elif index_name:
-            index = Indexes.get_index_by_name_english(
-                index_name, parent_id)
+            index = Indexes.get_index_by_all_name(index_name)
             msg_not_exist = _('The specified {} does not exist in system.')
             if not index:
                 if index_id:
                     errors.append(msg_not_exist.format('IndexID, POS_INDEX'))
-                    return None
                 else:
                     errors.append(msg_not_exist.format('POS_INDEX'))
-                    return None
             else:
                 if index_id:
                     errors.append(msg_not_exist.format('IndexID'))
-                    return None
+                else:
+                    result = index.id
 
-        data = {
-            'index_id': index.id if index else index_id,
-            'index_name': index.index_name_english if index else index_name,
-            'parent_id': parent_id
-        }
-
-        if len(index_ids) > 1:
-            child = check(index_ids[1:], index_names[1:],
-                          data['index_id'], False)
-            if child:
-                data['child'] = child
-            else:
-                return None
-
-        return data
+        return result
 
     for item in list_record:
         indexes = []
         index_ids = item.get('metadata', {}).get('path', [])
-        pos_index = item.get('pos_index')
+        pos_index = item.get('pos_index', [])
 
         if not index_ids and not pos_index:
             errors = [_('Both of IndexID and POS_INDEX are not being set.')]
         else:
             if not index_ids:
-                index_ids = ['' for i in range(len(pos_index))]
+                index_ids = ['' for _ in range(len(pos_index))]
             for x, index_id in enumerate(index_ids):
-                tree_ids = [i.strip() for i in index_id.split('/')]
-                tree_names = []
+                index_name = ''
                 if pos_index and x <= len(pos_index) - 1:
-                    tree_names = [
-                        i.strip().replace('\\/', '/')
-                        for i in re.split(r'(?<!\\)\/', pos_index[x])
-                    ]
-                    if index_id == '':
-                        tree_ids = ['' for i in tree_names]
+                    index_name = pos_index[x].strip()
                 else:
-                    tree_names = ['' for i in range(len(tree_ids))]
+                    index_name = ''
 
-                root = check(tree_ids, tree_names, 0, True)
-                if root:
-                    indexes.append(root)
+                _index_id = check(index_id, index_name)
+                if _index_id:
+                    indexes.append(_index_id)
 
         if indexes:
-            item['indexes'] = indexes
-            handle_index_tree(item)
+            item['metadata']['path'] = indexes
 
         if errors:
             errors = list(set(errors))
@@ -1433,28 +1491,6 @@ def handle_check_and_prepare_index_tree(list_record):
             item['warnings'] = item['warnings'] + warnings \
                 if item.get('warnings') else warnings
             warnings = []
-
-
-def handle_index_tree(item):
-    """Handle get index_id of item need import to.
-
-    :argument
-        item     -- {object} record item.
-    :return
-
-    """
-    def check_and_create_index(index):
-        if index.get('child'):
-            return check_and_create_index(index['child'])
-        else:
-            return index['index_id']  # Return last child index_id
-
-    indexes = item['indexes']
-    if indexes:
-        path = []
-        for index in indexes:
-            path.append(check_and_create_index(index))
-        item['metadata']['path'] = path
 
 
 def handle_check_and_prepare_feedback_mail(list_record):
@@ -1588,7 +1624,7 @@ def handle_check_doi_indexes(list_record):
         # Check restrict DOI with Indexes:
         index_ids = [str(idx) for idx in item['metadata'].get('path', [])]
         if doi_ra and check_restrict_doi_with_indexes(index_ids):
-            if item.get('status') == 'new':
+            if not item.get('status') or item.get('status') == 'new':
                 errors.append(err_msg_register_doi)
             else:
                 pid_doi = WekoRecord.get_record_by_pid(item.get('id')).pid_doi
@@ -1615,7 +1651,8 @@ def handle_check_doi_ra(list_record):
             identifier = IdentifierHandle(pid.object_uuid)
             _value, doi_type = identifier.get_idt_registration_data()
 
-            if doi_type and doi_type[0] != doi_ra:
+            if (doi_type and doi_type[0] != doi_ra) \
+                    or (not doi_type and doi_ra):
                 error = _('Specified {} is different from '
                           + 'existing {}.').format('DOI_RA', 'DOI_RA')
         except Exception as ex:
@@ -1624,30 +1661,34 @@ def handle_check_doi_ra(list_record):
         return error
 
     for item in list_record:
-        error = None
+        errors = []
         item_id = str(item.get('id'))
         doi_ra = item.get('doi_ra')
 
         if item.get('doi') and not doi_ra:
-            error = _('Please specify {}.').format('DOI_RA')
+            errors.append(_('Please specify {}.').format('DOI_RA'))
         elif doi_ra:
             if doi_ra not in WEKO_IMPORT_DOI_TYPE:
-                error = _('DOI_RA should be set by one of JaLC'
-                          + ', Crossref, DataCite, NDL JaLC.')
+                errors.append(_('DOI_RA should be set by one of JaLC'
+                                + ', Crossref, DataCite, NDL JaLC.'))
                 item['ignore_check_doi_prefix'] = True
-            elif item.get('is_change_identifier'):
-                if not handle_doi_required_check(item):
-                    error = _('PID does not meet the conditions.')
             else:
-                if item.get('status') == 'new':
-                    if not handle_doi_required_check(item):
-                        error = _('PID does not meet the conditions.')
-                else:
+                validation_errors = handle_doi_required_check(item)
+                if validation_errors:
+                    errors.extend(validation_errors)
+                if not item.get('is_change_identifier') \
+                        and item.get('status') != 'new':
                     error = check_existed(item_id, doi_ra)
+                    if error:
+                        errors.append(error)
+        elif item.get('status') != 'new':
+            error = check_existed(item_id, doi_ra)
+            if error:
+                errors.append(error)
 
-        if error:
-            item['errors'] = item['errors'] + [error] \
-                if item.get('errors') else [error]
+        if errors:
+            item['errors'] = item['errors'] + errors \
+                if item.get('errors') else errors
             item['errors'] = list(set(item['errors']))
 
 
@@ -1724,6 +1765,9 @@ def handle_check_doi(list_record):
                         elif not pid_doi.pid_value == (doi_domain + '/' + doi):
                             error = _('Specified {} is different from'
                                       + ' existing {}.').format('DOI', 'DOI')
+                    elif doi:
+                        error = _('Specified {} is different from'
+                                  + ' existing {}.').format('DOI', 'DOI')
 
         if error:
             item['errors'] = item['errors'] + [error] \
@@ -1953,43 +1997,24 @@ def handle_doi_required_check(record):
         record_data[key] = {'attribute_value_mlt': [value]}
 
     if 'doi_ra' in record and record['doi_ra'] in WEKO_IMPORT_DOI_TYPE:
+        root_item_id = None
+        if record.get('status') != 'new':
+            root_item_id = WekoRecord.get_record_by_pid(
+                str(record.get('id'))).pid_recid.object_uuid
         error_list = item_metadata_validation(
-            None, str(WEKO_IMPORT_DOI_TYPE.index(record['doi_ra']) + 1),
-            record_data, True)
-        if isinstance(error_list, str):
-            return False
-        if error_list and (error_list.get('required')
-                           or error_list.get('either')
-                           or error_list.get('pattern')):
-            return False
-        else:
-            return True
-    return False
-
-
-def get_data_by_property(record, item_map, item_property):
-    """
-    Get data by property text.
-
-    :param item_property: property value in item_map
-    :return: error_list or None
-    """
-    key = item_map.get(item_property)
-    data = []
-    if not key:
-        current_app.logger.warn(str(item_property)
-                                + ' jpcoar:mapping is not correct')
-        return None, None
-    attribute = record['metadata'].get(key.split('.')[0])
-    if not attribute:
-        return None, key
-    else:
-        data_result = get_sub_item_value(
-            attribute, key.split('.')[-1])
-        if data_result:
-            for value in data_result:
-                data.append(value)
-    return data, key
+            None, IDENTIFIER_GRANT_SELECT_DICT[record['doi_ra']],
+            record_data, True, root_item_id)
+        if error_list:
+            errors = [_('PID does not meet the conditions.')]
+            if error_list.get('mapping'):
+                mapping_err_msg = _('The mapping of required items for DOI '
+                                    'validation is not set. Please recheck the'
+                                    ' following mapping settings.<br/>{}')
+                keys = [k for k in error_list.get('mapping')]
+                errors.append(mapping_err_msg.format('<br/>'.join(keys)))
+            if error_list.get('other'):
+                errors.append(_(error_list.get('other')))
+            return errors
 
 
 def handle_check_date(list_record):
@@ -2396,7 +2421,7 @@ def handle_get_all_sub_id_and_name(
             continue
         item = items.get(key)
         sub_form = next(
-            (x for x in form if key in x.get('key', '')),
+            (x for x in form if key == x.get('key', '').split('.')[-1]),
             {'title_i18n': {}})
         title = sub_form.get('title_i18n', {}).get(
             current_i18n.language) or item.get('title')
@@ -2907,21 +2932,21 @@ def get_key_by_property(record, item_map, item_property):
     return key
 
 
-def get_data_by_propertys(record, item_map, item_property):
+def get_data_by_property(item_metadata, item_map, mapping_key):
     """Get data by property text.
 
-    :param item_map:
-    :param record:
-    :param item_property: property value in item_map
-    :return: error_list or None
+    :param item_metadata: Item metadata.
+    :param item_map: Mapping of item type.
+    :param mapping_key: Mapping key.
+    :return: Property key and values.
     """
-    key = item_map.get(item_property)
+    key = item_map.get(mapping_key)
     data = []
     if not key:
-        current_app.logger.error(str(item_property) + ' jpcoar:mapping '
-                                                      'is not correct')
+        current_app.logger.error(str(mapping_key) + ' jpcoar:mapping '
+                                 'is not correct')
         return None, None
-    attribute = record['_item_metadata'].get(key.split('.')[0])
+    attribute = item_metadata.get(key.split('.')[0])
     if not attribute:
         return None, key
     else:

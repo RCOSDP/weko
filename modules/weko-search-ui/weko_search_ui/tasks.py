@@ -30,11 +30,11 @@ from .utils import delete_exported, export_all, import_items_to_system, \
 
 
 @shared_task
-def import_item(item):
+def import_item(item, request_info):
     """Import Item ."""
     try:
         start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        result = import_items_to_system(item) or dict()
+        result = import_items_to_system(item, request_info) or dict()
         result['start_date'] = start_date
         return result
     except Exception as ex:

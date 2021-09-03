@@ -68,6 +68,40 @@ def get_mapping(item_type_mapping, mapping_type):
     return schema
 
 
+def get_full_mapping(item_type_mapping, mapping_type):
+    """Get itemtype mapping data.
+
+    [Key:Schema, Value:ItemId]
+    :param item_type_mapping:
+    :param mapping_type:
+    :return:
+    """
+    def get_schema_key_info(schema, parent_key, schema_json={}):
+        for k, v in schema.items():
+            key = parent_key + '.' + k if parent_key else k
+            if isinstance(v, dict):
+                child_key = copy.deepcopy(key)
+                get_schema_key_info(v, child_key, schema_json)
+            else:
+                properties = schema_json.get(key, [])
+                properties.append(v)
+                schema_json[key] = properties
+        return schema_json
+
+    schema = {}
+    for item_id, maps in item_type_mapping.items():
+        if mapping_type in maps.keys() \
+                and isinstance(maps[mapping_type], dict):
+            item_schema = get_schema_key_info(maps[mapping_type], '', {})
+            for k, v in item_schema.items():
+                properties = schema.get(k, [])
+                for val in v:
+                    properties.append(item_id + '.' + val if val else item_id)
+                schema[k] = properties
+
+    return schema
+
+
 def get_mapping_inactive_show_list(item_type_mapping, mapping_type):
     """Format itemtype mapping data.
 
@@ -423,8 +457,7 @@ class OpenSearchDetailData:
             if _index_id:
                 fe.dc.dc_subject(index_meta[_index_id])
             else:
-                indexes = item_metadata['path'][0].split('/')
-                index_id = indexes[len(indexes) - 1]
+                index_id = item_metadata['path'][0]
 
                 if index_id in index_meta:
                     index_name = index_meta[index_id]

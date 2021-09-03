@@ -74,12 +74,7 @@ def get_record_permalink(record):
     doi = record.pid_doi
     cnri = record.pid_cnri
 
-    if doi and cnri:
-        if doi.updated > cnri.updated:
-            return doi.pid_value
-        else:
-            return cnri.pid_value
-    elif doi or cnri:
+    if doi or cnri:
         return doi.pid_value if doi else cnri.pid_value
 
     return None
@@ -946,14 +941,7 @@ def is_private_index(record):
     """
     from weko_index_tree.api import Indexes
     list_index = record.get("path")
-    index_lst = []
-    if list_index:
-        index_id_lst = []
-        for index in list_index:
-            indexes = str(index).split('/')
-            index_id_lst.append(indexes[-1])
-        index_lst = index_id_lst
-    indexes = Indexes.get_path_list(index_lst)
+    indexes = Indexes.get_path_list(list_index)
     publish_state = 6
     for index in indexes:
         if len(indexes) == 1:
@@ -1080,3 +1068,22 @@ def get_terms():
                 get(current_lang, "en").get("content", "")}
         )
     return terms_result
+
+
+def display_oaiset_path(record_metadata):
+    """Display _oai.sets in metadata by path.
+
+    Args:
+        record_metadata ([type]): [description]
+    """
+    from weko_index_tree.api import Indexes
+
+    sets = record_metadata.get('path', [])
+    index_paths = []
+    if sets:
+        paths = Indexes.get_path_name(sets)
+        for path in paths:
+            if path.public_state and path.harvest_public_state:
+                index_paths.append(path.path.replace('/', ':'))
+
+    record_metadata['_oai']['sets'] = index_paths

@@ -219,6 +219,7 @@ def unpackage_and_check_import_file(tsv_file_name, temp_file, mapping_ids):
 
     Returns:
         list: Tsv data.
+
     """
     from weko_search_ui.utils import handle_check_consistence_with_mapping, \
         handle_check_duplication_item_id, parse_to_json_form

@@ -579,7 +579,7 @@ async def sort_meta_data_by_options(
     from weko_deposit.api import _FormatSysBibliographicInformation
     from weko_records_ui.permissions import check_file_download_permission
     from weko_records_ui.utils import hide_item_metadata
-    from weko_search_ui.utils import get_data_by_propertys
+    from weko_search_ui.utils import get_data_by_property
 
     from weko_records.serializers.utils import get_mapping
 
@@ -883,12 +883,12 @@ async def sort_meta_data_by_options(
         for key in item_map:
             if key.find(suffixes) != -1:
                 # get language
-                title_languages, _title_key = get_data_by_propertys(
-                    _item_metadata, item_map, key)
+                title_languages, _title_key = get_data_by_property(
+                    src, item_map, key)
                 # get value
                 prefix = key.replace(suffixes, '')
-                title_values, _title_key1 = get_data_by_propertys(
-                    _item_metadata, item_map, prefix + '.@value')
+                title_values, _title_key1 = get_data_by_property(
+                    src, item_map, prefix + '.@value')
                 language_dict.update({
                     prefix: {'lang': title_languages, 'lang-id': _title_key,
                              'val': title_values, 'val-id': _title_key1}})
@@ -1683,9 +1683,12 @@ def custom_record_medata_for_export(record_metadata: dict):
 
     :param record_metadata:
     """
-    from weko_records_ui.utils import hide_item_metadata, replace_license_free
+    from weko_records_ui.utils import display_oaiset_path, \
+        hide_item_metadata, replace_license_free
+
     hide_item_metadata(record_metadata)
     replace_license_free(record_metadata)
+    display_oaiset_path(record_metadata)
 
 
 def replace_fqdn(url_path: str, host_url: str = None) -> str:

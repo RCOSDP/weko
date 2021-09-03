@@ -23,10 +23,12 @@
 import base64
 import json
 import os
+from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import NoReturn, Optional, Tuple, Union
 
+import redis
 from celery.task.control import inspect
 from flask import current_app, request, session
 from flask_babelex import gettext as _
@@ -47,6 +49,7 @@ from invenio_pidstore.resolver import Resolver
 from invenio_records.models import RecordMetadata
 from invenio_records_files.models import RecordsBuckets
 from passlib.handlers.oracle import oracle10
+from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from weko_admin.models import Identifier, SiteInfo
@@ -56,10 +59,9 @@ from weko_handle.api import Handle
 from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
     ItemTypes, Mapping
 from weko_records.models import ItemType
-from weko_records.serializers.utils import get_item_type_name, get_mapping
+from weko_records.serializers.utils import get_full_mapping, get_item_type_name
 from weko_records_ui.utils import create_onetime_download_url, \
     generate_one_time_download_url, get_list_licence
-from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
@@ -72,7 +74,8 @@ from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
 
 from .api import GetCommunity, UpdateItem, WorkActivity, WorkActivityHistory, \
     WorkFlow
-from .config import IDENTIFIER_GRANT_SELECT_DICT, WEKO_SERVER_CNRI_HOST_LINK
+from .config import DOI_VALIDATION_INFO, IDENTIFIER_GRANT_SELECT_DICT, \
+    WEKO_SERVER_CNRI_HOST_LINK
 from .models import Action as _Action
 from .models import ActionStatusPolicy, ActivityStatusPolicy, GuestActivity
 
@@ -271,8 +274,8 @@ def register_hdl_by_handle(handle, item_uuid):
         identifier.register_pidstore('hdl', handle)
 
 
-def item_metadata_validation(
-        item_id, identifier_type, record=None, is_import=False):
+def item_metadata_validation(item_id, identifier_type, record=None,
+                             is_import=False, without_ver_id=None):
     """
     Validate item metadata.
 
@@ -306,30 +309,30 @@ def item_metadata_validation(
     metadata_item = MappingData(
         item_id) if item_id else MappingData(record=record)
     item_type = metadata_item.get_data_item_type()
-    resource_type, type_key = metadata_item.get_data_by_property("type.@value")
-    type_check = check_required_data(resource_type, type_key)
+    type_key, resource_type = metadata_item.get_first_data_by_mapping(
+        'type.@value')
 
+    error_list = {'required': [], 'pattern': [],
+                  'either': [], 'mapping': [], 'other': ''}
     # check resource type request
     if not resource_type and not type_key:
-        return {
-            'required': [],
-            'pattern': [],
-            'either': [],
-            'pmid': '',
-            'doi': '',
-            'url': '',
-            "msg": 'Resource Type Property either missing '
-                   'or jpcoar mapping not correct!',
-            'error_type': 'no_resource_type'
-        }
+        error_list['mapping'].append('dc:type')
+        return error_list
 
+    type_check = check_required_data(resource_type, type_key)
     if not item_type or not resource_type and type_check:
-        error_list = {'required': [], 'pattern': [], 'pmid': '',
-                      'doi': '', 'url': '', 'either': []}
         error_list['required'].append(type_key)
         return error_list
 
     resource_type = resource_type.pop()
+    if without_ver_id:
+        _type_key, old_resource_type = MappingData(without_ver_id) \
+            .get_first_data_by_mapping('type.@value')
+        if old_resource_type and resource_type != old_resource_type.pop():
+            error_list['other'] = 'You cannot change the resource type of ' \
+                + 'items that have been grant a DOI.'
+            return error_list
+
     properties = {}
     # 必須
     required_properties = []
@@ -337,7 +340,7 @@ def item_metadata_validation(
     either_properties = []
 
     # JaLC DOI identifier registration
-    if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']:
+    if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLC']:
         # 別表2-1 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【ジャーナルアーティクル】
         # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
         # 別表2-3 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
@@ -351,17 +354,16 @@ def item_metadata_validation(
             required_properties = ['title']
             if item_type.item_type_name.name != ddi_item_type_name:
                 required_properties.append('fileURI')
+            either_properties = ['version']
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif resource_type in dataset_type:
             required_properties = ['title',
                                    'givenName']
             if item_type.item_type_name.name != ddi_item_type_name:
                 required_properties.append('fileURI')
-            either_properties = ['geoLocationPoint',
-                                 'geoLocationBox',
-                                 'geoLocationPlace']
+            either_properties = ['geoLocation']
     # CrossRef DOI identifier registration
-    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']:
+    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['Crossref']:
         if resource_type in journalarticle_type:
             required_properties = ['title',
                                    'publisher',
@@ -375,11 +377,11 @@ def item_metadata_validation(
             if item_type.item_type_name.name != ddi_item_type_name:
                 required_properties.append('fileURI')
     # DataCite DOI identifier registration
-    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI'] \
+    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCite'] \
             and item_type.item_type_name.name != ddi_item_type_name:
         required_properties = ['fileURI']
     # NDL JaLC DOI identifier registration
-    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI'] \
+    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NDL JaLC'] \
             and item_type.item_type_name.name != ddi_item_type_name:
         required_properties = ['fileURI']
 
@@ -395,13 +397,26 @@ def item_metadata_validation(
     current_app.logger.debug(metadata_item)
 
     if properties and \
-            ((identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCiteDOI']
-              and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDLJaLCDOI']
+            ((identifier_type != IDENTIFIER_GRANT_SELECT_DICT['DataCite']
+              and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDL JaLC']
               ) or is_import):
         return validation_item_property(metadata_item, properties)
     else:
         return _('Cannot register selected DOI for current Item Type of this '
                  'item.')
+
+
+def merge_doi_error_list(current, new):
+    """Merge DOI validation error list."""
+    if new['required']:
+        current['required'].extend(new['required'])
+    if new['either']:
+        current['either'].extend(new['either'])
+    if new['pattern']:
+        current['pattern'].extend(new['pattern'])
+    if new['mapping']:
+        current['mapping'].extend(new['mapping'])
+        current['mapping'] = list(set(current['mapping']))
 
 
 def validation_item_property(mapping_data, properties):
@@ -412,26 +427,92 @@ def validation_item_property(mapping_data, properties):
     :param properties: Property's keywords
     :return: error_list or None
     """
-    error_list = {'required': [], 'pattern': [], 'pmid': '',
-                  'doi': '', 'url': '', 'either': []}
+    error_list = {'required': [], 'pattern': [], 'either': [], 'mapping': []}
     empty_list = deepcopy(error_list)
 
     if properties.get('required'):
         error_list_required = validattion_item_property_required(
             mapping_data, properties['required'])
         if error_list_required:
-            error_list['required'] = error_list_required['required']
-            error_list['pattern'] = error_list_required['pattern']
+            merge_doi_error_list(error_list, error_list_required)
 
     if properties.get('either'):
         error_list_either = validattion_item_property_either_required(
             mapping_data, properties['either'])
         if error_list_either:
-            error_list['either'] = error_list_either
+            merge_doi_error_list(error_list, error_list_either)
 
     if error_list == empty_list:
         return None
     else:
+        return error_list
+
+
+def handle_check_required_data(mapping_data, mapping_key):
+    """Check required and append to error_list if error."""
+    keys = []
+    values = []
+    requirements = []
+    data = mapping_data.get_data_by_mapping(mapping_key)
+    for key, value in data.items():
+        keys.append(key)
+        values.append(value)
+        _requirements = check_required_data(value, key, True)
+        if _requirements:
+            requirements.extend(_requirements)
+        else:
+            requirements = []
+            break
+
+    return requirements, keys, values
+
+
+def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
+                                             error_list=None, is_either=False):
+    """Check required, pattern and either required."""
+    if not (mapping_data and mapping_keys):
+        return
+    if not error_list:
+        error_list = {'required': [], 'pattern': [],
+                      'either': [], 'mapping': []}
+    empty_list = deepcopy(error_list)
+    keys = []
+    num_map = 0
+    requirements = []
+    for mapping_key in mapping_keys:
+        for elem, pattern in DOI_VALIDATION_INFO[mapping_key]:
+            check_required_info = handle_check_required_data(
+                mapping_data, elem)
+            if not check_required_info[1]:
+                error_list['mapping'].append(mapping_key)
+                continue
+
+            keys.extend(check_required_info[1])
+            requirements.extend(check_required_info[0])
+            if num_map == 0:
+                num_map = len(check_required_info[1])
+            if pattern and check_required_info[2]:
+                for idx, values in enumerate(check_required_info[2]):
+                    if values and pattern not in values:
+                        error_list['pattern'].append(
+                            check_required_info[1][idx])
+
+    if requirements:
+        if num_map == 1 and not is_either:
+            error_list['required'].extend(requirements)
+        else:
+            filter_root_keys = list(set([
+                key.split('.')[0] for key in keys[:num_map]]))
+            either_list = []
+            for key in filter_root_keys:
+                either_list.append([
+                    k for k in keys if k.split('.')[0] == key])
+            if is_either and not error_list['either']:
+                error_list['either'] = either_list
+            else:
+                error_list['either'].append(either_list)
+
+    if empty_list != error_list:
         return error_list
 
 
@@ -444,155 +525,50 @@ def validattion_item_property_required(
     :param properties: Property's keywords
     :return: error_list or None
     """
-    error_list = {'required': [], 'pattern': []}
+    error_list = {'required': [], 'pattern': [], 'either': [], 'mapping': []}
     empty_list = deepcopy(error_list)
-    # check jpcoar:URI
-    if 'fileURI' in properties:
-        _, key = mapping_data.get_data_by_property(
-            "file.URI.@value")
-        data = []
-        if key:
-            key = key.split('.')[0]
-            item_file = mapping_data.record.get(key)
-            if item_file:
-                file_name_data = get_sub_item_value(
-                    item_file.get("attribute_value_mlt"), 'filename')
-                if file_name_data:
-                    for value in file_name_data:
-                        data.append(value)
-                data.append(file_name_data)
 
-            repeatable = True
-            requirements = check_required_data(
-                data, key + '.filename', repeatable)
-            if requirements:
-                error_list['required'] += requirements
+    # check file jpcoar:URI
+    if 'fileURI' in properties:
+        mapping_keys = ['jpcoar:URI']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
+
     # check タイトル dc:title
     if 'title' in properties:
-        title_data, title_key = mapping_data.get_data_by_property(
-            "title.@value")
-        lang_data, lang_key = mapping_data.get_data_by_property(
-            "title.@attributes.xml:lang")
-
-        repeatable = True
-        requirements = check_required_data(title_data, title_key, repeatable)
-        lang_requirements = check_required_data(lang_data,
-                                                lang_key,
-                                                repeatable)
-        if requirements:
-            error_list['required'] += requirements
-        if lang_requirements:
-            error_list['required'] += lang_requirements
+        mapping_keys = ['dc:title']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
 
     # check 識別子 jpcoar:givenName
     if 'givenName' in properties:
-        _, key = mapping_data.get_data_by_property(
-            "creator.givenName.@value")
-        data = []
-        if key:
-            creators = mapping_data.record.get(key.split('.')[0])
-            if creators:
-                given_name_data = get_sub_item_value(
-                    creators.get("attribute_value_mlt"), key.split('.')[-1])
-                if given_name_data:
-                    for value in given_name_data:
-                        data.append(value)
-                data.append(given_name_data)
-
-        repeatable = True
-        requirements = check_required_data(data, key, repeatable)
-        if requirements:
-            error_list['pattern'] += requirements
-
-    # check 識別子 jpcoar:givenName and jpcoar:nameIdentifier
-    if 'creator' in properties:
-        _, key = mapping_data.get_data_by_property(
-            "creator.givenName.@value")
-        _, idt_key = mapping_data.get_data_by_property(
-            "creator.nameIdentifier.@value")
-
-        data = []
-        idt_data = []
-        if key:
-            creators = mapping_data.record.get(key.split('.')[0])
-            if creators:
-                creator_data = get_sub_item_value(
-                    creators.get("attribute_value_mlt"),
-                    key.split('.')[-1])
-                if creator_data:
-                    for value in creator_data:
-                        data.append(value)
-                if idt_key:
-                    creator_name_identifier = get_sub_item_value(
-                        creators.get("attribute_value_mlt"),
-                        idt_key.split('.')[-1])
-                    if creator_name_identifier:
-                        for value in creator_name_identifier:
-                            idt_data.append(value)
-
-        repeatable = True
-        requirements = check_required_data(data, key, repeatable)
-        repeatable = True
-        idt_requirements = check_required_data(idt_data, idt_key, repeatable)
-        if requirements and idt_requirements:
-            error_list['pattern'] += requirements
-            error_list['pattern'] += idt_requirements
+        mapping_keys = ['jpcoar:givenName']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
 
     # check 収録物識別子 jpcoar:sourceIdentifier
     if 'sourceIdentifier' in properties:
-        data, key = mapping_data.get_data_by_property(
-            "sourceIdentifier.@value")
-        type_data, type_key = mapping_data.get_data_by_property(
-            "sourceIdentifier.@attributes.identifierType")
-
-        requirements = check_required_data(data, key)
-        type_requirements = check_required_data(type_data, type_key)
-        if requirements:
-            error_list['required'] += requirements
-        if type_requirements:
-            error_list['required'] += type_requirements
+        mapping_keys = ['jpcoar:sourceIdentifier']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
 
     # check 収録物名 jpcoar:sourceTitle
     if 'sourceTitle' in properties:
-        data, key = mapping_data.get_data_by_property("sourceTitle.@value")
-        lang_data, lang_key = mapping_data.get_data_by_property(
-            "sourceTitle.@attributes.xml:lang")
-
-        requirements = check_required_data(data, key)
-        lang_requirements = check_required_data(lang_data, lang_key)
-        if requirements:
-            error_list['required'] += requirements
-        if lang_requirements:
-            error_list['required'] += lang_requirements
-        else:
-            if 'en' not in lang_data:
-                error_list['required'].append(lang_key)
+        mapping_keys = ['jpcoar:sourceTitle']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
 
     # check 収録物名 dc:publisher
     if 'publisher' in properties:
-        data, key = mapping_data.get_data_by_property("publisher.@value")
-        lang_data, lang_key = mapping_data.get_data_by_property(
-            "publisher.@attributes.xml:lang")
-
-        repeatable = True
-        requirements = check_required_data(data, key, repeatable)
-        lang_requirements = check_required_data(lang_data,
-                                                lang_key,
-                                                repeatable)
-        if requirements:
-            error_list['required'] += requirements
-        if lang_requirements:
-            error_list['required'] += lang_requirements
-        else:
-            if 'en' not in lang_data:
-                error_list['required'].append(lang_key)
+        mapping_keys = ['dc:publisher']
+        handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, error_list)
 
     if error_list == empty_list:
         return None
     else:
         error_list['required'] = list(
-            set(filter(None, error_list['required']))
-        )
+            set(filter(None, error_list['required'])))
         error_list['pattern'] = list(set(filter(None, error_list['pattern'])))
         return error_list
 
@@ -604,88 +580,77 @@ def validattion_item_property_either_required(
 
     :param mapping_data: Mapping Data contain record and item_map
     :param properties: Property's keywords
-    :return: error_list or None
+    :return: either_list
     """
-    error_list = []
-    # check 位置情報（点） detacite:geoLocationPoint
-    if 'geoLocationPoint' in properties:
-        latitude_data, latitude_key = mapping_data.get_data_by_property(
-            "geoLocation.geoLocationPoint.pointLatitude.@value")
-        longitude_data, longitude_key = mapping_data.get_data_by_property(
-            "geoLocation.geoLocationPoint.pointLongitude.@value")
+    error_list = {'required': [], 'pattern': [], 'either': [], 'mapping': []}
 
-        repeatable = True
-        requirements = []
-        latitude_requirement = check_required_data(
-            latitude_data, latitude_key, repeatable)
-        if latitude_requirement:
-            requirements += latitude_requirement
+    # For Dataset
+    geo_location = None
+    if 'geoLocation' in properties:
+        # check 位置情報（点） datacite:geoLocationPoint
+        mapping_keys = ['datacite:geoLocationPoint']
+        geo_location = handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, None, True)
 
-        longitude_requirement = check_required_data(
-            longitude_data, longitude_key, repeatable)
-        if longitude_requirement:
-            requirements += longitude_requirement
+        # check 位置情報（空間） datacite:geoLocationBox
+        if geo_location:
+            mapping_keys = ['datacite:geoLocationBox']
+            errors = handle_check_required_pattern_and_either(
+                mapping_data, mapping_keys, None, True)
+            if not errors:
+                geo_location = None
+            else:
+                merge_doi_error_list(geo_location, errors)
 
-        if not requirements:
-            return None
-        else:
-            requirements = list(filter(None, requirements))
-            error_list.append(requirements)
+        # check 位置情報（自由記述） datacite:geoLocationPlace
+        if geo_location:
+            mapping_keys = ['datacite:geoLocationPlace']
+            errors = handle_check_required_pattern_and_either(
+                mapping_data, mapping_keys, None, True)
+            if not errors:
+                geo_location = None
+            else:
+                merge_doi_error_list(geo_location, errors)
 
-    # check 位置情報（空間） datacite:geoLocationBox
-    if 'geoLocationBox' in properties:
-        east_data, east_key = mapping_data.get_data_by_property(
-            "geoLocation.geoLocationBox.eastBoundLongitude.@value")
-        north_data, north_key = mapping_data.get_data_by_property(
-            "geoLocation.geoLocationBox.northBoundLatitude.@value")
-        south_data, south_key = mapping_data.get_data_by_property(
-            "geoLocation.geoLocationBox.southBoundLatitude.@value")
-        west_data, west_key = mapping_data.get_data_by_property(
-            "geoLocation.geoLocationBox.westBoundLongitude.@value")
+        if geo_location:
+            if geo_location['either']:
+                geo_location['either'] = [geo_location['either']]
+            merge_doi_error_list(error_list, geo_location)
 
-        repeatable = True
-        requirements = []
-        east_requirement = check_required_data(
-            east_data, east_key, repeatable)
-        if east_requirement:
-            requirements += east_requirement
+    # For other resource type
+    version = None
+    if 'version' in properties:
+        # check フォーマット jpcoar:mimeType
+        mapping_keys = ['jpcoar:mimeType']
+        version = handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, None, True)
 
-        north_requirement = check_required_data(
-            north_data, north_key, repeatable)
-        if north_requirement:
-            requirements += north_requirement
+        # check バージョン datacite:version
+        mapping_keys = ['datacite:version']
+        if version:
+            errors = handle_check_required_pattern_and_either(
+                mapping_data, mapping_keys, None, True)
+            if not errors:
+                version = None
+            else:
+                merge_doi_error_list(version, errors)
 
-        south_requirement = check_required_data(
-            south_data, south_key, repeatable)
-        if south_requirement:
-            requirements += south_requirement
+        # check 出版タイプ oaire:version
+        if version:
+            mapping_keys = ['oaire:version']
+            errors = handle_check_required_pattern_and_either(
+                mapping_data, mapping_keys, None, True)
+            if not errors:
+                version = None
+            else:
+                merge_doi_error_list(version, errors)
 
-        west_requirement = check_required_data(
-            west_data, west_key, repeatable)
-        if west_requirement:
-            requirements += west_requirement
+        if version:
+            if version['either']:
+                version['either'] = [version['either']]
+            merge_doi_error_list(error_list, version)
 
-        if not requirements:
-            return None
-        else:
-            requirements = list(filter(None, requirements))
-            error_list.append(requirements)
-
-    # check 位置情報（自由記述） datacite:geoLocationPlace
-    if 'geoLocationPlace' in properties:
-        data, key = mapping_data.get_data_by_property(
-            "geoLocation.geoLocationPlace.@value")
-
-        repeatable = True
-        requirements = check_required_data(data, key, repeatable)
-        if not requirements:
-            return None
-        else:
-            error_list += requirements
-
-    error_list = list(filter(None, error_list))
-    if error_list:
-        return error_list
+    return error_list
 
 
 def check_required_data(data, key, repeatable=False):
@@ -709,7 +674,7 @@ def check_required_data(data, key, repeatable=False):
     if not error_list:
         return None
     else:
-        return error_list
+        return list(set(error_list))
 
 
 def get_activity_id_of_record_without_version(pid_object=None):
@@ -778,35 +743,65 @@ class MappingData(object):
         self.record = WekoRecord.get_record(item_id) if item_id else record
         item_type = self.get_data_item_type()
         item_type_mapping = Mapping.get_record(item_type.id)
-        self.item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
+        self.item_map = get_full_mapping(item_type_mapping, "jpcoar_mapping")
 
     def get_data_item_type(self):
         """Return item type data."""
         return ItemTypes.get_by_id(id_=self.record.get('item_type_id'))
 
-    def get_data_by_property(self, item_property):
+    def get_data_by_mapping(self, mapping_key, ignore_empty=False):
         """
-        Get data by property text.
+        Get data by mapping key.
 
-        :param item_property: property value in item_map
-        :return: error_list or None
+        :param mapping_key: mapping key.
+        :param ignore_empty: Is ignore empty value.
+        :return: properties key and data.
         """
-        key = self.item_map.get(item_property)
-        data = []
-        if not key:
-            current_app.logger.error(str(item_property) + ' jpcoar:mapping '
-                                                          'is not correct')
-            return None, None
-        attribute = self.record.get(key.split('.')[0])
-        if not attribute:
-            return None, key
+        result = OrderedDict()
+
+        property_keys = self.item_map.get(mapping_key)
+        if not property_keys:
+            current_app.logger.error(
+                mapping_key + ' jpcoar:mapping is not correct')
         else:
-            data_result = get_sub_item_value(
-                attribute.get('attribute_value_mlt'), key.split('.')[-1])
-            if data_result:
-                for value in data_result:
-                    data.append(value)
-        return data, key
+            for key in property_keys:
+                data = []
+                split_key = key.split('.')
+                attribute = self.record.get(split_key[0])
+                if attribute and len(split_key) > 1:
+                    data_result = get_item_value_in_deep(
+                        attribute.get('attribute_value_mlt'),
+                        split_key[1:]
+                    )
+                    if data_result:
+                        for value in data_result:
+                            data.append(value)
+                if ignore_empty and not data:
+                    continue
+                result[key] = data
+
+        return result
+
+    def get_first_data_by_mapping(self, mapping_key):
+        """
+        Get the first data by mapping key.
+
+        :param mapping_key: mapping key.
+        :return: properties key and data.
+        """
+        data_info = self.get_data_by_mapping(mapping_key, True)
+        return next(iter(data_info.items())) if data_info else (None, None)
+
+    def get_first_property_by_mapping(self, mapping_key, ignore_empty=False):
+        """
+        Get the first key of property by mapping key.
+
+        :param mapping_key: mapping key.
+        :param ignore_empty: Is ignore empty value.
+        :return: properties key and data.
+        """
+        data_info = self.get_data_by_mapping(mapping_key, ignore_empty)
+        return next(iter(data_info.items()))[0] if data_info else None
 
 
 def get_sub_item_value(atr_vm, key):
@@ -827,6 +822,29 @@ def get_sub_item_value(atr_vm, key):
         for n in atr_vm:
             for k in get_sub_item_value(n, key):
                 yield k
+
+
+def get_item_value_in_deep(data, keys):
+    """Get all data of input key.
+
+    @param data: Metadata.
+    @param keys: Split of mapping key.
+    @return: A generator values.
+    """
+    if not (data and keys):
+        return None
+
+    if isinstance(data, dict):
+        sub_data = data.get(keys[0], None)
+        if not sub_data or len(keys) == 1:
+            yield sub_data
+        else:
+            for val in get_item_value_in_deep(sub_data, keys[1:]):
+                yield val
+    elif isinstance(data, list):
+        for sub_data in data:
+            for val in get_item_value_in_deep(sub_data, keys):
+                yield val
 
 
 class IdentifierHandle(object):
@@ -943,9 +961,9 @@ class IdentifierHandle(object):
             None
 
         """
-        _, key_value = self.metadata_mapping.get_data_by_property(
+        key_value = self.metadata_mapping.get_first_property_by_mapping(
             "identifierRegistration.@value")
-        key_id = key_value.split('.')[0]
+        key_id = key_value.split('.')[0] if key_value else ''
         if self.item_metadata.get(key_id, []):
             del self.item_metadata[key_id]
 
@@ -978,9 +996,9 @@ class IdentifierHandle(object):
             None
 
         """
-        _, key_value = self.metadata_mapping.get_data_by_property(
+        key_value = self.metadata_mapping.get_first_property_by_mapping(
             "identifierRegistration.@value")
-        _, key_type = self.metadata_mapping.get_data_by_property(
+        key_type = self.metadata_mapping.get_first_property_by_mapping(
             "identifierRegistration.@attributes.identifierType")
 
         self.commit(key_id=key_value.split('.')[0],
@@ -998,9 +1016,9 @@ class IdentifierHandle(object):
             doi_type  -- {string} Identifier type
 
         """
-        doi_value, _ = self.metadata_mapping.get_data_by_property(
+        _, doi_value = self.metadata_mapping.get_first_data_by_mapping(
             "identifierRegistration.@value")
-        doi_type, _ = self.metadata_mapping.get_data_by_property(
+        _, doi_type = self.metadata_mapping.get_first_data_by_mapping(
             "identifierRegistration.@attributes.identifierType")
 
         return doi_value, doi_type
@@ -1588,7 +1606,7 @@ def get_url_root():
     :return: url root.
     """
     site_url = current_app.config['THEME_SITEURL'] + '/'
-    return request.url_root if request else site_url
+    return request.host_url if request else site_url
 
 
 def get_record_by_root_ver(pid_value):
@@ -3613,7 +3631,8 @@ def get_main_record_detail(activity_id,
     recid = None
     action_endpoint = action_endpoint or activity_detail.action.action_endpoint
     if not item:
-        if not activity_detail.item_id:
+        if not isinstance(approval_record, dict) \
+                or not approval_record.get('item_type_id'):
             return dict(
                 record=list(),
                 files=list(),
@@ -3713,15 +3732,15 @@ def prepare_doi_link_workflow(item_id, doi_input):
                 _item_id)
             _jalc_cr_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[2][2],
-                identifier_setting.jalc_doi,
+                identifier_setting.jalc_crossref_doi,
                 _item_id)
             _jalc_dc_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[3][2],
-                identifier_setting.jalc_doi,
+                identifier_setting.jalc_datacite_doi,
                 item_id)
             _ndl_jalc_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[4][2],
-                identifier_setting.jalc_doi,
+                identifier_setting.ndl_jalc_doi,
                 _item_id)
         elif suffix_method == 1:
             url_format = '{}/{}/{}{}'
@@ -3732,17 +3751,17 @@ def prepare_doi_link_workflow(item_id, doi_input):
                 doi_input.get('action_identifier_jalc_doi'))
             _jalc_cr_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[2][2],
-                identifier_setting.jalc_doi,
+                identifier_setting.jalc_crossref_doi,
                 identifier_setting.suffix,
                 doi_input.get('action_identifier_jalc_doi'))
             _jalc_dc_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[3][2],
-                identifier_setting.jalc_doi,
+                identifier_setting.jalc_datacite_doi,
                 identifier_setting.suffix,
                 doi_input.get('action_identifier_jalc_doi'))
             _ndl_jalc_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[4][2],
-                identifier_setting.jalc_doi,
+                identifier_setting.ndl_jalc_doi,
                 identifier_setting.suffix,
                 doi_input.get('action_identifier_jalc_doi'))
         elif suffix_method == 2:
@@ -3753,15 +3772,15 @@ def prepare_doi_link_workflow(item_id, doi_input):
                 doi_input.get('action_identifier_jalc_doi'))
             _jalc_cr_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[2][2],
-                identifier_setting.jalc_doi,
+                identifier_setting.jalc_crossref_doi,
                 doi_input.get('action_identifier_jalc_doi'))
             _jalc_dc_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[3][2],
-                identifier_setting.jalc_doi,
+                identifier_setting.jalc_datacite_doi,
                 doi_input.get('action_identifier_jalc_doi'))
             _ndl_jalc_doi_link = url_format.format(
                 IDENTIFIER_GRANT_LIST[4][2],
-                identifier_setting.jalc_doi,
+                identifier_setting.ndl_jalc_doi,
                 doi_input.get('action_identifier_jalc_doi'))
         else:
             return {}
@@ -3791,3 +3810,29 @@ def get_pid_value_by_activity_detail(activity_detail):
                 return self_list[-1]
             else:
                 return ''
+
+
+def check_doi_validation_not_pass(item_id, activity_id,
+                                  identifier_select, without_ver_id=None):
+    """Call DOI validation and save error cache."""
+    error_list = item_metadata_validation(item_id, identifier_select,
+                                          without_ver_id=without_ver_id)
+    if isinstance(error_list, str):
+        return error_list
+
+    sessionstore = RedisStore(redis.StrictRedis.from_url(
+        'redis://{host}:{port}/1'.format(
+            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+    if error_list:
+        sessionstore.put(
+            'updated_json_schema_{}'.format(activity_id),
+            json.dumps(error_list).encode('utf-8'),
+            ttl_secs=300)
+        return True
+    else:
+        if sessionstore.redis.exists(
+                'updated_json_schema_{}'.format(activity_id)):
+            sessionstore.delete(
+                'updated_json_schema_{}'.format(activity_id))
+        return False
