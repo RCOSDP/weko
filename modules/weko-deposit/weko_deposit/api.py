@@ -31,7 +31,8 @@ from dictdiffer import dot_lookup
 from dictdiffer.merge import Merger, UnresolvedConflictsException
 from elasticsearch.exceptions import TransportError
 from elasticsearch.helpers import bulk
-from flask import abort, current_app, json, request, session
+from flask import abort, current_app, has_request_context, json, request, \
+    session
 from flask_security import current_user
 from invenio_db import db
 from invenio_deposit.api import Deposit, index, preserve
@@ -67,6 +68,7 @@ from .config import WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_KEY, \
     WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_SYS_KEY, WEKO_DEPOSIT_SYS_CREATOR_KEY
 from .pidstore import get_latest_version_id, get_record_without_version, \
     weko_deposit_fetcher, weko_deposit_minter
+from .signals import item_created
 
 PRESERVE_FIELDS = (
     '_deposit',
