@@ -20,17 +20,22 @@
 
 """Blueprint for weko-index-tree."""
 
+import json
+import time
 from datetime import date, timedelta
 from operator import itemgetter
 
-from flask import Blueprint, current_app, jsonify, request, session
+from flask import Blueprint, current_app, jsonify, make_response, request, \
+    session
 from flask_login import current_user
+from invenio_oauth2server import require_api_auth, require_oauth_scopes
 
 from .api import Indexes
 from .config import WEKO_INDEX_TREE_RSS_COUNT_LIMIT, \
     WEKO_INDEX_TREE_RSS_DEFAULT_COUNT, WEKO_INDEX_TREE_RSS_DEFAULT_INDEX_ID, \
     WEKO_INDEX_TREE_RSS_DEFAULT_LANG, WEKO_INDEX_TREE_RSS_DEFAULT_PAGE, \
     WEKO_INDEX_TREE_RSS_DEFAULT_TERM, WEKO_INDEX_TREE_STATE_PREFIX
+from .scopes import create_index_scope
 from .utils import generate_path, get_elasticsearch_records_data_by_indexes
 
 blueprint = Blueprint(
@@ -76,7 +81,7 @@ def get_rss_data():
         term = WEKO_INDEX_TREE_RSS_DEFAULT_TERM
     lang = data.get('lang') or WEKO_INDEX_TREE_RSS_DEFAULT_LANG
 
-    idx_tree_ids = generate_path(Indexes.get_recursive_tree(index_id))
+    idx_tree_ids = [idx.cid for idx in Indexes.get_recursive_tree(index_id)]
     current_date = date.today()
     end_date = current_date.strftime("%Y-%m-%d")
     start_date = (current_date - timedelta(days=term)).strftime("%Y-%m-%d")
@@ -87,7 +92,8 @@ def get_rss_data():
     hits = records_data.get('hits')
     es_data = hits.get('hits')
     item_id_list = list(map(itemgetter('_id'), es_data))
-    hidden_items = find_hidden_items(item_id_list, idx_tree_ids)
+    idx_tree_full_ids = generate_path(Indexes.get_recursive_tree(index_id))
+    hidden_items = find_hidden_items(item_id_list, idx_tree_full_ids)
 
     rss_data = []
     for es_item in es_data:
@@ -123,3 +129,52 @@ def set_expand():
     session[key] = session_data
 
     return jsonify(success=True)
+
+
+@blueprint_api.route('/indextree/create', methods=['POST'])
+@require_api_auth()
+@require_oauth_scopes(create_index_scope.id)
+def create_index():
+    """Create index by api."""
+    try:
+        data = request.get_json(force=True)
+        if data:
+            pid = data.get("parent_id", 0)
+            index_info = data.get("index_info", {})
+            index_id = int(time.time() * 1000)
+            create_data = {
+                "id": index_id,
+                "value": "New Index"
+            }
+            update_data = {}
+            if index_info:
+                update_data.update({
+                    "index_name":
+                    index_info.get("index_name", "New Index")
+                })
+                update_data.update({
+                    "index_name_english":
+                    index_info.get("index_name_english", "New Index")
+                })
+                update_data.update({
+                    "comment": index_info.get("comment", "")
+                })
+                update_data.update({
+                    "public_state": index_info.get("public_state", False)
+                })
+                update_data.update({
+                    "harvest_public_state":
+                    index_info.get("harvest_public_state", True)
+                })
+                index = None
+                with current_app.test_request_context() as ctx:
+                    Indexes.create(pid, create_data)
+                    index = Indexes.update(index_id, **update_data)
+                return make_response(json.dumps(dict(index)), 201)
+            else:
+                return make_response("index_info can not be null.", 400)
+        else:
+            return make_response("No data to create.", 400)
+    except Exception as e:
+        current_app.logger.error(e)
+        return make_response(str(e), 400)

@@ -131,3 +131,6 @@ msgstr ""
 
 msgid "Index Delete is in progress on another device."
 msgstr "Index Delete is in progress on another device."
+
+msgid "Select an index to move."
+msgstr ""

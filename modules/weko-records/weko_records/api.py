@@ -29,7 +29,7 @@ from elasticsearch_dsl.query import QueryString
 from flask import current_app, request
 from flask_babelex import gettext as _
 from invenio_db import db
-from invenio_pidstore.models import PersistentIdentifier
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.api import Record
 from invenio_records.errors import MissingModelError
 from invenio_records.models import RecordMetadata
@@ -1418,6 +1418,25 @@ class ItemsMetadata(RecordBase):
             if not with_deleted:
                 query = query.filter(ItemMetadata.json != None)  # noqa
             return query.all()
+
+    @classmethod
+    def get_registered_item_metadata(cls, item_type_id):
+        """Retrieve multiple records by item types identifier.
+
+        :param item_type_id: Identifier of item type.
+        :returns: A list of :class:`Record` instance.
+        """
+        with db.session.no_autoflush:
+            # Get all item metadata registered by item_type_id
+            items = ItemMetadata.query.filter_by(item_type_id=item_type_id).all()
+            item_metadata_array = [str(item.id) for item in items]
+            # Get all persistent identifier which are not deleted.
+            persistent_identifier = PersistentIdentifier.query.filter(
+                PersistentIdentifier.object_uuid.in_(item_metadata_array),
+                PersistentIdentifier.pid_type == 'recid',
+                PersistentIdentifier.status == PIDStatus.REGISTERED
+            ).all()
+            return persistent_identifier
 
     @classmethod
     def get_by_object_id(cls, object_id):

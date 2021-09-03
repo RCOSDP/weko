@@ -914,7 +914,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 
       /**
        * Get Identifier URI value.
-       * @param e HTML event
+       * @param currentForm Form element.
        * @param identifier_key Identifier key.
        */
       $scope.getIdentifierURIValue = function (currentForm, identifier_key) {
@@ -943,6 +943,26 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           error: function (data, status) {
           }
         });
+      }
+
+      /**
+       * Disable Name Identifier when schema is WEKO.
+       */
+      $scope.disableNameIdentifier = function () {
+        setTimeout(function () {
+          $("select[name*='nameIdentifierScheme'], " +
+            "select[name*='affiliationNameIdentifierScheme']," +
+            "select[name*='contributorAffiliationScheme']")
+            .each(function () {
+              let val = $(this).val();
+              if (val && val.split(":").length > 1
+                && val.split(":")[1] === "WEKO") {
+                $(this).closest('li')
+                  .find('input, select')
+                  .attr('disabled', true);
+              }
+            });
+        }, 1000);
       }
 
       $scope.getDataAuthors = function () {
@@ -2192,10 +2212,9 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               if (cnt === 3) {
                 if ($scope.error_list['required'].length > 0) {
                   angular.forEach($scope.error_list['required'], function (value, key) {
-                    let id = value.split('.')[1]
-                    if (id) {
-                      $scope.depositionForm[id].$viewValue = '';
-                      $scope.depositionForm[id].$commitViewValue();
+                    if (value && $scope.depositionForm[value]) {
+                      $scope.depositionForm[value].$viewValue = '';
+                      $scope.depositionForm[value].$commitViewValue();
                     }
                   });
                   $scope.$broadcast('schemaFormValidate');
@@ -2304,7 +2323,18 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           "endpoints": JSON.stringify($rootScope.filesVM.invenioFilesEndpoints),
           "recordsModel": JSON.stringify($rootScope.recordsVM.invenioRecordsModel),
         }
+        //Add pid_value to sessionStorage when uploaded processing done
         sessionStorage.setItem(actionID, JSON.stringify(data))
+        if ($rootScope.filesVM.invenioFilesEndpoints.self) {
+          let pid_value = $rootScope.filesVM.invenioFilesEndpoints.self.split("/")
+          if (pid_value.length > 0) {
+            let pid_value_data = {
+              "activity_id": actionID,
+              "pid_value_temp": pid_value[pid_value.length - 1]
+            }
+            sessionStorage.setItem("pid_value_data", JSON.stringify(pid_value_data))
+          }
+        }
       }
 
       $scope.setFilesModel = function (recordsModel) {
@@ -2419,6 +2449,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           $scope.removeValidateControlsWhenInit();
           //Expand all parent panels when child or grandchild controls required.
           $scope.expandAllParentPanel();
+          // Disable Name Identifier when schema is WEKO.
+          $scope.disableNameIdentifier();
         }, 3000);
         // Auto fill user profile
         $scope.autoFillProfileInfo();
@@ -2434,6 +2466,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 
         // Resize main content widget after optional items are collapsed
         setTimeout(function () {
+          window.dispatchEvent(new Event('resize'));
           $scope.resizeMainContentWidget();
         }, 500)
       });
@@ -2719,9 +2752,13 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       //Set data for model base on input control.
       $scope.setValueForModelByInputControl = function (inputControl) {
         let ngModel = $(inputControl).attr('ng-model');
+        const formKey = ngModel.replace('model', '').replace('][', '.').replace(/[\'\[\]]/g, '');
         ngModel = ngModel.replace('model', '$rootScope.recordsVM.invenioRecordsModel');
         let strSetModel = ngModel + '=$(inputControl).val();';
         eval(strSetModel);
+        $scope.depositionForm[formKey].$setViewValue($(inputControl).val());
+        $scope.depositionForm[formKey].$render();
+        $scope.depositionForm[formKey].$commitViewValue();
       }
 
       // This is callback function - Please do NOT change function name
@@ -3109,6 +3146,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         $("#btn_id").text('');
         $("#author_info").text('');
         $("#array_flg").text('');
+
+        // Disable Name Identifier when schema is WEKO.
+        setTimeout(function () {
+          $scope.disableNameIdentifier();
+        }, 0);
       }
       // add by ryuu. end 20180410
       $scope.updated = function (model_id, modelValue, form, arrayFlg) {
@@ -3688,18 +3730,81 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         return result;
       }
 
-      $scope.checkDataIndepositionForm = function (sub_item_key) {
+      /**
+       * Check and prepare condition value for either required.
+       * @param modelValue Input value.
+       * @param form Curent form.
+       */
+      let eitherInputTypingTimeout = null;
+      $scope.onChangeEitherField = function ($event, form, modelValue, callback) {
+        $rootScope.recordsVM.removeValidationMessage(modelValue, form);
+        if (form.type === 'text') {
+          clearTimeout(eitherInputTypingTimeout);
+          eitherInputTypingTimeout = setTimeout(function () {
+            $scope.behaviorEitherInput($event, form, modelValue, callback);
+          }, 500);
+        } else {
+          $scope.behaviorEitherInput($event, form, modelValue, callback);
+        }
+      }
+
+      $scope.behaviorEitherInput = function ($event, form, modelValue, callback) {
+        if (callback) {
+          this[callback]($event, modelValue);
+        }
+
+        const model = $rootScope.recordsVM.invenioRecordsModel;
+        const current_elem = form.key.filter((e) => isNaN(e)).join('.');
+
+        const eitherRequireds = $scope.error_list['either'];
+        for (let i = 0; i < eitherRequireds.length; i++) {
+          const eitherGroup = eitherRequireds[i];
+          for (let x = 0; x < eitherGroup.length; x++) {
+            if (eitherGroup[x] instanceof Array) {
+              if (eitherGroup[x].indexOf(current_elem) === -1) {
+                continue;
+              }
+              let check = true;
+              for (let y = 0; y < eitherGroup[x].length; y++) {
+                const keys = form.key.slice(0, form.key.length - 1);
+                keys.push(eitherGroup[x][y].split('.').pop());
+                if ($scope.checkDataIndepositionForm(keys.join('.'))) {
+                  check = check && true;
+                } else {
+                  check = check && false;
+                }
+              }
+
+              if (check) {
+                model['either_valid_' + i] = eitherGroup[x];
+              } else if (model['either_valid_' + i] == eitherGroup[x]) {
+                delete model['either_valid_' + i];
+              }
+            } else {
+              const keys = form.key.slice(0, form.key.length - 1);
+              keys.push(eitherGroup[x].split('.').pop());
+              if ($scope.checkDataIndepositionForm(keys.join('.'))) {
+                model['either_valid_' + i] = eitherGroup[x];
+              } else if (model['either_valid_' + i] == eitherGroup[x]) {
+                delete model['either_valid_' + i];
+              }
+            }
+          }
+        }
+      }
+
+      $scope.checkDataIndepositionForm = function (item_key) {
         const keys = Object.keys($scope.depositionForm);
         for (let idx = 0; idx < keys.length; idx++) {
           const key = keys[idx];
-          if (key.endsWith(sub_item_key) && $scope.depositionForm[key].$viewValue) {
+          if ((key === item_key || key.endsWith(item_key)) && $scope.depositionForm[key].$viewValue) {
             return true;
           }
         }
         return false;
       }
 
-      $scope.checkEitherRequired = function() {
+      $scope.checkEitherRequired = function () {
         let eitherRequireds = [];
         if ($scope.error_list) {
           eitherRequireds = $scope.error_list['either'];
@@ -3710,24 +3815,27 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
 
         for (let i = 0; i < eitherRequireds.length; i++) {
-          if (eitherRequireds[i] instanceof Array) {
-            let check = true;
-            for (let y = 0; y < eitherRequireds[i].length; y++) {
-              let sub_item_key = eitherRequireds[i][y].split('.').pop();
-              if ($scope.checkDataIndepositionForm(sub_item_key)) {
-                check = check && true;
-              } else {
-                check = check && false;
+          const eitherGroup = eitherRequireds[i];
+          for (let x = 0; x < eitherGroup.length; x++) {
+            if (eitherGroup[x] instanceof Array) {
+              let check = true;
+              for (let y = 0; y < eitherGroup[x].length; y++) {
+                let sub_item_key = eitherGroup[x][y].split('.').pop();
+                if ($scope.checkDataIndepositionForm(sub_item_key)) {
+                  check = check && true;
+                } else {
+                  check = check && false;
+                }
               }
-            }
 
-            if (check) {
-              return true;
-            }
-          } else {
-            let sub_item_key = eitherRequireds[i].split('.').pop();
-            if ($scope.checkDataIndepositionForm(sub_item_key)) {
-              return true;
+              if (check) {
+                return true;
+              }
+            } else {
+              let sub_item_key = eitherGroup[x].split('.').pop();
+              if ($scope.checkDataIndepositionForm(sub_item_key)) {
+                return true;
+              }
             }
           }
         }
@@ -3743,14 +3851,16 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let noEitherError = $scope.checkEitherRequired();
         if (noEitherError && $scope.error_list && $scope.error_list['either']) {
           eitherRequired = [];
-          $scope.error_list['either'].forEach(function(item) {
-            if (item instanceof Array) {
-              item.forEach(function(i) {
-                eitherRequired.push(i.split('.').pop());
-              });
-            } else {
-              eitherRequired.push(item.split('.').pop());
-            }
+          $scope.error_list['either'].forEach(function (group) {
+            group.forEach(function (item) {
+              if (item instanceof Array) {
+                item.forEach(function (i) {
+                  eitherRequired.push(i.split('.').pop());
+                });
+              } else {
+                eitherRequired.push(item.split('.').pop());
+              }
+            });
           });
         }
         for (let i = 0; i < schemaForm.length; i++) {

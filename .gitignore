@@ -89,3 +89,5 @@ celeryd.pid
 weko-demodata/
 test/data
 test/import.zip
+test/dummyfile/import.zip
+test/dummyfile/data

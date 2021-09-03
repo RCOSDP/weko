@@ -339,10 +339,14 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
         data = self.loaders[request.mimetype]()
         if not data:
             raise InvalidDataRESTError()
-        if not self.record_class.move(index_id, **data):
-            raise IndexMovedRESTError()
+        # Moving
+        moved = self.record_class.move(index_id, **data)
+        if not moved or not moved.get('is_ok'):
+            status = 202
+            msg = moved.get('msg')
+        else:
+            status = 201
+            msg = _('Index moved successfully.')
 
-        status = 201
-        msg = 'Index moved successfully.'
         return make_response(
             jsonify({'status': status, 'message': msg}), status)

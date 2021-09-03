@@ -76,7 +76,10 @@ def envelope(**kwargs):
         elif key == 'resumptionToken':
             value = value['token']
         e_request.set(key, value)
-    e_request.text = url_for('invenio_oaiserver.response', _external=True)
+    if "url" in kwargs.keys():
+        e_request.text = kwargs['url']
+    else:
+        e_request.text = url_for('invenio_oaiserver.response', _external=True)
     return e_tree, e_oaipmh
 
 
@@ -103,7 +106,7 @@ def identify(**kwargs):
 
     # add by Mr ryuu. at 2018/06/06 start
     # Get The Set Of Identify
-    oaiObj = OaiIdentify.get_all()
+    identify = OaiIdentify.get_all()
     # add by Mr ryuu. at 2018/06/06 end
 
     e_tree, e_identify = verb(**kwargs)
@@ -112,9 +115,11 @@ def identify(**kwargs):
         e_identify, etree.QName(NS_OAIPMH, 'repositoryName'))
 
     # add by Mr ryuu. at 2018/06/06 start
-    if oaiObj is not None:
-        cfg['OAISERVER_REPOSITORY_NAME'] = oaiObj.repositoryName
+    if identify:
+        cfg['OAISERVER_REPOSITORY_NAME'] = identify.repositoryName
     # add by Mr ryuu. at 2018/06/06 end
+        e_email = SubElement(e_identify, etree.QName(NS_OAIPMH, 'adminEmail'))
+        e_email.text = identify.emails
 
     e_repositoryName.text = cfg['OAISERVER_REPOSITORY_NAME']
 
@@ -131,14 +136,14 @@ def identify(**kwargs):
             NS_OAIPMH, 'earliestDatestamp'))
 
     # update by Mr ryuu. at 2018/06/06 start
-    if not oaiObj:
+    if not identify:
         e_earliestDatestamp.text = datetime_to_datestamp(
             db.session.query(db.func.min(RecordMetadata.created)
                              ).scalar() or datetime(MINYEAR, 1, 1)
         )
     else:
         e_earliestDatestamp.text = datetime_to_datestamp(
-            oaiObj.earliestDatastamp)
+            identify.earliestDatastamp)
     # update by Mr ryuu. at 2018/06/06 end
 
     e_deletedRecord = SubElement(e_identify,
@@ -261,7 +266,7 @@ def listmetadataformats(**kwargs):
     return e_tree
 
 
-def header(parent, identifier, datestamp, sets=None, deleted=False):
+def header(parent, identifier, datestamp, sets=[], deleted=False):
     """Attach ``<header/>`` element to a parent."""
     e_header = SubElement(parent, etree.QName(NS_OAIPMH, 'header'))
     if deleted:
@@ -270,12 +275,13 @@ def header(parent, identifier, datestamp, sets=None, deleted=False):
     e_identifier.text = identifier
     e_datestamp = SubElement(e_header, etree.QName(NS_OAIPMH, 'datestamp'))
     e_datestamp.text = datetime_to_datestamp(datestamp)
-    for spec in sets or []:
-        index_path = [spec.replace(':', '/')]
-        if Indexes.is_public_state(index_path.copy()) \
-                and Indexes.get_harvest_public_state(index_path.copy()):
+    if not sets:
+        sets = []
+    paths = Indexes.get_path_name(sets)
+    for path in paths:
+        if path.public_state and path.harvest_public_state:
             e = SubElement(e_header, etree.QName(NS_OAIPMH, 'setSpec'))
-            e.text = spec
+            e.text = path.path.replace('/', ':')
     return e_header
 
 
@@ -300,8 +306,16 @@ def is_pubdate_in_future(record):
 
 def is_private_index(record):
     """Check index of workflow is private."""
-    return not Indexes.is_public_state_and_not_in_future(
-        copy.deepcopy(record.get('path')))
+    paths = copy.deepcopy(record.get('path'))
+    return not Indexes.is_public_state_and_not_in_future(paths)
+
+
+def is_private_index_by_public_list(item_path, public_index_ids):
+    """Check index of workflow is private."""
+    for path in item_path:
+        if path in public_index_ids:
+            return False
+    return True
 
 
 def set_identifier(param_record, param_rec):
@@ -361,12 +375,11 @@ def getrecord(**kwargs):
     # Harvest is private
     _is_private_index = is_private_index(record)
     _is_private_workflow = is_private_workflow(record)
-    if not is_deleted_workflow(pid) and \
-        (not harvest_public_state
-         or not identify
-         or not identify.outPutSetting
-         or (is_exists_doi(record)
-             and (_is_private_index or is_pubdate_in_future(record)))):
+    if (not harvest_public_state
+        or not identify
+        or not identify.outPutSetting
+        or (is_exists_doi(record)
+            and (_is_private_index or is_pubdate_in_future(record)))):
         return error(get_error_code_msg(), **kwargs)
     # Item is deleted
     # or Harvest is public & Item is private
@@ -386,7 +399,7 @@ def getrecord(**kwargs):
         e_record,
         identifier=pid.pid_value,
         datestamp=record.updated,
-        sets=record.get('_oai', {}).get('sets', []),
+        sets=record.get('path', [])
     )
     e_metadata = SubElement(e_record,
                             etree.QName(NS_OAIPMH, 'metadata'))
@@ -409,12 +422,14 @@ def listidentifiers(**kwargs):
     """Create OAI-PMH response for verb ListIdentifiers."""
     e_tree, e_listidentifiers = verb(**kwargs)
     identify = OaiIdentify.get_all()
-    result = get_records(**kwargs)
-
-    if not identify or not identify.outPutSetting \
-            or not result.total:
+    if not identify or not identify.outPutSetting:
         return error(get_error_code_msg(), **kwargs)
 
+    result = get_records(**kwargs)
+    if not result.total:
+        return error(get_error_code_msg(), **kwargs)
+
+    public_index_ids = Indexes.get_public_indexes_list()
     for r in result.items:
         pid = oaiid_fetcher(r['id'], r['json']['_source'])
         pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
@@ -423,7 +438,8 @@ def listidentifiers(**kwargs):
 
         set_identifier(record, record)
         # Harvest is private
-        _is_private_index = is_private_index(record)
+        _is_private_index = is_private_index_by_public_list(
+            record.get('path'), public_index_ids)
         if not harvest_public_state or\
                 (_is_private_index
                     and harvest_public_state and is_exists_doi(record)):
@@ -445,7 +461,7 @@ def listidentifiers(**kwargs):
                 e_listidentifiers,
                 identifier=pid.pid_value,
                 datestamp=r['updated'],
-                sets=r['json']['_source'].get('_oai', {}).get('sets', []),
+                sets=r['json']['_source'].get('path', [])
             )
 
     resumption_token(e_listidentifiers, result, **kwargs)
@@ -480,14 +496,21 @@ def listrecords(**kwargs):
     result = get_records(**kwargs)
     if not result.total:
         return error(get_error_code_msg(), **kwargs)
+
+    public_index_ids = Indexes.get_public_indexes_list()
+    db_records = WekoRecord.get_records(
+        [record['id'] for record in result.items])
+    db_records = {str(record.id): record for record in db_records}
     for record in result.items:
         try:
             pid = oaiid_fetcher(record['id'], record['json']['_source'])
             pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
-            rec = WekoRecord.get_record(record['id'])
+            rec = db_records.get(record['id'])
             set_identifier(record, rec)
             # Check output delete, noRecordsMatch
-            if not is_private_index(rec):
+            is_link_private_index = is_private_index_by_public_list(
+                rec.get('path', []), public_index_ids)
+            if not is_link_private_index:
                 if is_deleted_workflow(pid_object) \
                         or is_private_workflow(rec) \
                         or is_pubdate_in_future(rec):
@@ -505,7 +528,7 @@ def listrecords(**kwargs):
                 e_record,
                 identifier=pid.pid_value,
                 datestamp=record['updated'],
-                sets=record['json']['_source'].get('_oai', {}).get('sets', []),
+                sets=record['json']['_source'].get('path', [])
             )
             e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
                                                           'metadata'))

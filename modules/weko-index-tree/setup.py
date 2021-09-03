@@ -118,6 +118,9 @@ setup(
         'invenio_celery.tasks': [
             'weko_index_tree = weko_index_tree.tasks',
         ],
+        'invenio_oauth2server.scopes': [
+            'weko_index_tree_create = weko_index_tree.scopes:create_index_scope',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

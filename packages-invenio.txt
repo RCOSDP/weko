@@ -1,5 +1,5 @@
 invenio-access==1.1.0
-invenio-accounts==1.1.4
+#invenio-accounts==1.1.4
 invenio-admin==1.0.0
 invenio-app==1.0.6
 invenio-assets==1.0.0

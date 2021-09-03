@@ -1,0 +1,91 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of Invenio.
+# Copyright (C) 2015-2018 CERN.
+#
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+
+dist: trusty
+
+addons:
+  postgresql: 9.4
+  firefox: "49.0"
+  apt:
+    packages:
+      - xvfb
+
+notifications:
+  email: false
+
+sudo: false
+
+language: python
+
+matrix:
+  fast_finish: true
+  allow_failures:
+    - env: REQUIREMENTS=devel E2E_WEBDRIVER_BROWSERS="" EXTRAS=all,sqlite SQLALCHEMY_DATABASE_URI="sqlite:///test.db"
+    - env: REQUIREMENTS=devel E2E_WEBDRIVER_BROWSERS="" EXTRAS=all,mysql SQLALCHEMY_DATABASE_URI="mysql+pymysql://travis@localhost:3306/invenio"
+    - env: REQUIREMENTS=devel E2E_WEBDRIVER_BROWSERS="" EXTRAS=all,postgresql SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://postgres@localhost:5432/invenio"
+
+before_cache:
+  - "rm -f $HOME/selenium/geckodriver-v0.11.1-linux32.tar.gz"
+
+cache:
+  pip: true
+  directories:
+  - $HOME/selenium
+
+services:
+  - mysql
+  - postgresql
+  - redis
+
+env:
+  - REQUIREMENTS=lowest E2E_WEBDRIVER_BROWSERS="" EXTRAS=all,sqlite SQLALCHEMY_DATABASE_URI="sqlite:///test.db"
+  - REQUIREMENTS=lowest E2E_WEBDRIVER_BROWSERS="" EXTRAS=all,mysql SQLALCHEMY_DATABASE_URI="mysql+pymysql://travis@localhost:3306/invenio"
+  - REQUIREMENTS=lowest E2E_WEBDRIVER_BROWSERS="" EXTRAS=all,postgresql SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://postgres@localhost:5432/invenio"
+  - REQUIREMENTS=release E2E_WEBDRIVER_BROWSERS="" EXTRAS=all,sqlite SQLALCHEMY_DATABASE_URI="sqlite:///test.db"
+  - REQUIREMENTS=release E2E_WEBDRIVER_BROWSERS="" EXTRAS=all,mysql SQLALCHEMY_DATABASE_URI="mysql+pymysql://travis@localhost:3306/invenio"
+  - REQUIREMENTS=release E2E_WEBDRIVER_BROWSERS="Firefox" EXTRAS=all,postgresql SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://postgres@localhost:5432/invenio"
+  - REQUIREMENTS=devel E2E_WEBDRIVER_BROWSERS="" EXTRAS=all,sqlite SQLALCHEMY_DATABASE_URI="sqlite:///test.db"
+  - REQUIREMENTS=devel E2E_WEBDRIVER_BROWSERS="" EXTRAS=all,mysql SQLALCHEMY_DATABASE_URI="mysql+pymysql://travis@localhost:3306/invenio"
+  - REQUIREMENTS=devel E2E_WEBDRIVER_BROWSERS="" EXTRAS=all,postgresql SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://postgres@localhost:5432/invenio"
+
+python:
+  - "3.6"
+
+before_install:
+  - "travis_retry pip install --upgrade pip setuptools py"
+  - "travis_retry pip install twine wheel coveralls requirements-builder"
+  - "requirements-builder --level=min setup.py > .travis-lowest-requirements.txt"
+  - "requirements-builder --level=pypi setup.py > .travis-release-requirements.txt"
+  - "requirements-builder --level=dev --req requirements-devel.txt setup.py > .travis-devel-requirements.txt"
+  - "if [ ! -f $HOME/selenium/geckodriver ]; then wget https://github.com/mozilla/geckodriver/releases/download/v0.11.1/geckodriver-v0.11.1-linux32.tar.gz -P $HOME/selenium; tar xvfz $HOME/selenium/geckodriver-v0.11.1-linux32.tar.gz -C $HOME/selenium; fi"
+  - "PATH=$PATH:$HOME/selenium"
+
+install:
+  - "travis_retry pip install -r .travis-${REQUIREMENTS}-requirements.txt"
+  - "travis_retry pip install -e .[${EXTRAS}]"
+
+before_script:
+    - "export DISPLAY=:99.0"
+    - "sh -e /etc/init.d/xvfb start"
+    - "sleep 3" # give xvfb some time to start
+
+script:
+  - "./run-tests.sh"
+
+after_success:
+  - coveralls
+
+deploy:
+  provider: pypi
+  user: inveniosoftware
+  password:
+    secure: "Cz3TIh93zaYcO/JviDqyqMdGc8sMl7F9VJdIBqDBaX+B8HBLHFRUhd5EcSkh7hBi3SVbbdvR5qU+YwjpiBQ4Tilihg8DphBQoixUfl5UORlSfndO/w6JVnVdbG81NXOksSm0hC/nJ/aft8PZ/4l65QXcGiiJVjw9UfxTMPpyf1R1ey6vsK8zT/ImtVgIUdDiDmp3/NIwnBQb+9cSK5qCy16/qrohcrt0HQXJr41j/9ckD3wGCYbbhJ05sAvVaupgED7YOPGZW0R6BUJ44pliaxS5R1bIUkva5QOgSAIEhrINAXmhbmCh7qflo1LAFh1hj+vX9AcSzDp3G0J6iIZzG3sfEhcNZDQMNO9cXBCOYOFVLR6C5Dkfe85FaDYD9yVPzX49Vai7X2q7gV0s4aEvevhs1SYtMCkZgHSBmlELrJ/olYF8/DL1cZpm8B6iCuoY8HHIp8OwaDqZ3LHscadKVo9TdLdFsC7rTo0HyDDuvl+zf1Nahy5Px6iyHf+SjfTj320ypxch0AU+BQbdbXjuq/dmAIJ3b7isKI9TgUCQkQPrQBg5e5co9fnVbKBCfO8DLq6GLxNu43HMkCX0WyVINBq73eFKLVTzpGEm8qF3lSbPbEJGR3jsvpPPW1BOv29/oFVwqbdB5ikt1kueTUq6KS7AyN/2qo4hItJb3oGjYcg="
+  distributions: "compile_catalog sdist bdist_wheel"
+  on:
+    tags: true
+  skip_existing: true
