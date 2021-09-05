@@ -3006,6 +3006,8 @@ def check_item_is_being_edit(
         post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
     if post_workflow and post_workflow.action_status \
             in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]:
+        current_app.logger.debug("post_workflow: {0} status: {1}".format(
+            item_uuid, post_workflow.action_status))
         return True
 
     draft_pid = PersistentIdentifier.query.filter_by(
@@ -3018,6 +3020,8 @@ def check_item_is_being_edit(
         if draft_workflow and \
             draft_workflow.action_status in [ASP.ACTION_BEGIN,
                                              ASP.ACTION_DOING]:
+            current_app.logger.debug("draft_workflow: {0} status: {1}".format(
+                draft_pid.object_uuid, draft_workflow.action_status))
             return True
 
         pv = PIDVersioning(child=recid)
@@ -3030,6 +3034,8 @@ def check_item_is_being_edit(
         if latest_workflow and \
             latest_workflow.action_status in [ASP.ACTION_BEGIN,
                                               ASP.ACTION_DOING]:
+            current_app.logger.debug("latest_workflow: {0} status: {1}".format(
+                latest_pid.object_uuid, latest_workflow.action_status))
             return True
     return False
 
