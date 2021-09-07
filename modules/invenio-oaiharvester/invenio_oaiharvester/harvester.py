@@ -24,17 +24,16 @@ import re
 from collections import OrderedDict
 from functools import partial
 from json import dumps, loads
-
 import dateutil
 import requests
 import xmltodict
 from lxml import etree
 from weko_records.api import Mapping
 from weko_records.models import ItemType
-from weko_records.serializers.utils import get_mapping
+from weko_records.serializers.utils import get_mapping, get_full_mapping
 from weko_records.utils import get_options_and_order_list
 
-from .config import OAIHARVESTER_DOI_PREFIX, OAIHARVESTER_HDL_PREFIX
+from .config import OAIHARVESTER_DOI_PREFIX, OAIHARVESTER_HDL_PREFIX, OAIHARVESTER_MAPPING_FORMAT
 
 DEFAULT_FIELD = [
     'title',
@@ -145,58 +144,81 @@ def get_root_key(schema, _title_en, _title_ja, _prop_key):
     return root_key
 
 
-def add_alternative(schema, res, alternative_list):
-    """Add alternative."""
-    if not isinstance(alternative_list, list):
-        alternative_list = [alternative_list]
-    root_key = get_root_key(schema,
-                            'Alternative Title',
-                            'その他のタイトル',
-                            '_alternative_title_')
-    if not root_key:
-        return
-    res[root_key] = []
-    map_data = map_field(schema['properties'][root_key]['items'])
-    alternative_title = map_data.get('Alternative Title',
-                                     map_data.get('その他のタイトル'))
-    language = map_data.get('Language', map_data.get('言語'))
-    for it in alternative_list:
-        item = {}
-        if isinstance(it, str):
-            item[alternative_title] = it
-        elif isinstance(it, OrderedDict):
-            item[alternative_title] = it.get('#text')
-            item[language] = it.get('@xml:lang')
-        res[root_key].append(item)
+def add_titles(schema, mapping, res, metadata):
+    """Add title.
 
+    Args:
+        schema ([type]): [description]
+        res ([type]): [description]
+        mapping ([type]): [description]
+        titles ([type]): [description]
+    """
+    _value = 'title.@value'
+    _lang  = 'title.@attributes.xml:lang'
 
-def add_title(schema, res, title_list):
-    """Add title."""
-    _prop_key = 'titles'
+    if not isinstance(metadata, list):
+        metadata = [metadata]
 
-    if not isinstance(title_list, list):
-        title_list = [title_list]
-    root_key = map_field(schema).get('Title') or map_field(schema).get('タイトル')
-    if not root_key:
-        for key in schema['properties']:
-            if _prop_key in key and 'alternative_title' not in key:
-                root_key = key
-        if not root_key:
+    item_key = mapping.get(_value, [])[0].split('.')[0]
+    if item_key and schema.get('properties', {}).get(item_key):
+        subitem_val = mapping.get(_value, [])[0].split('.')[-1]
+        subitem_lang = mapping.get(_lang, [])[0].split('.')[-1]
+
+        if not (subitem_val or subitem_lang):
             return
-    res[root_key] = []
-    map_data = map_field(schema['properties'][root_key]['items'])
-    title = map_data.get('Title', map_data.get('タイトル'))
-    language = map_data.get('Language', map_data.get('言語'))
+        items = []
+        for it in metadata:
+            if isinstance(it, str):
+                items.append({
+                    subitem_val: it
+                })
+            elif isinstance(it, OrderedDict):
+                items.append({
+                    subitem_val: it.get('#text'),
+                    subitem_lang: it.get('@xml:lang')
 
-    for it in title_list:
-        item = {}
-        if isinstance(it, str):
-            item[title] = it
-        elif isinstance(it, OrderedDict):
-            item[title] = it.get('#text')
-            item[language] = it.get('@xml:lang')
-        res[root_key].append(item)
-    res['title'] = res[root_key][0][title]
+                })
+        if items:
+            res[item_key] = items
+            res['title'] = res[item_key][0][subitem_val]
+
+
+def add_alternatives(schema, mapping, res, metadata):
+    """Add alternative.
+
+    Args:
+        schema ([type]): [description]
+        mapping ([type]): [description]
+        res ([type]): [description]
+        metadata ([type]): [description]
+    """
+    _value = 'alternative.@value'
+    _lang  = 'alternative.@attributes.xml:lang'
+
+    if not isinstance(metadata, list):
+        metadata = [metadata]
+
+    item_key = mapping.get(_value, [])[0].split('.')[0]
+    if item_key and schema.get('properties', {}).get(item_key):
+        subitem_val = mapping.get(_value, [])[0].split('.')[-1]
+        subitem_lang = mapping.get(_lang, [])[0].split('.')[-1]
+
+        if not (subitem_val or subitem_lang):
+            return
+        items = []
+        for it in metadata:
+            if isinstance(it, str):
+                items.append({
+                    subitem_val: it
+                })
+            elif isinstance(it, OrderedDict):
+                items.append({
+                    subitem_val: it.get('#text'),
+                    subitem_lang: it.get('@xml:lang')
+
+                })
+        if items:
+            res[item_key] = items
 
 
 def add_description(schema, res, description_list):
@@ -305,56 +327,114 @@ def add_contributor_jpcoar(schema, res, contributor_list):
         res[root_key].append(item)
 
 
-def add_access_rights(schema, res, access_rights):
-    """Add access rights."""
-    _prop_key = 'item_access_right'
-    _title_en = 'Access Rights'
-    _title_ja = 'アクセス権'
+def add_access_rights(schema, mapping, res, metadata):
+    """Add access rights.
 
-    root_key = map_field(schema).get(_title_en) \
-        or map_field(schema).get(_title_ja)
-    if not root_key:
-        for key in schema['properties']:
-            if _prop_key == key:
-                root_key = key
-        if not root_key:
-            return
+    Args:
+        schema ([type]): [description]
+        mapping ([type]): [description]
+        res ([type]): [description]
+        access_rights ([type]): [description]
+    """
+    _key = 'accessRights.@value'
+    _res = 'accessRights.@attributes.rdf:resource'
+    if not isinstance(metadata, list):
+        metadata = [metadata]
 
-    map_data = map_field(schema['properties'][root_key])
-    access_right = map_data.get('Access Rights', map_data.get('アクセス権'))
-    access_right_resource = map_data.get('Access Rights Resource',
-                                         map_data.get('アクセス権URI'))
-    res[root_key] = {
-        access_right: access_rights.get('#text'),
-        access_right_resource: access_rights.get('@rdf:resource')}
+    item_key = mapping.get(_key, [])[0].split('.')[0]
+
+    if item_key and schema.get('properties', {}).get(item_key):
+        subitem_val = mapping.get(_key, [])[0].split('.')[-1]
+        subitem_res = mapping.get(_res, [])[0].split('.')[-1]
+
+        items = []
+        for item in metadata:
+            if isinstance(item, str):
+                items.append({
+                    subitem_val: item
+                })
+            elif isinstance(item, OrderedDict):
+                items.append({
+                    subitem_val: item.get('#text'),
+                    subitem_res: item.get('@rdf:resource')
+                })
+        if items:
+            res[item_key] = items
 
 
-def add_rights(schema, res, rights_list):
+def add_apcs(schema, mapping, res, metadata):
+    """Add apc.
+
+    Args:
+        schema ([type]): [description]
+        mapping ([type]): [description]
+        res ([type]): [description]
+        metadata ([type]): [description]
+    """
+    _key = 'apc.@value'
+    if not isinstance(metadata, list):
+        metadata = [metadata]
+
+    item_key = mapping.get(_key, [])[0].split('.')[0]
+    if item_key and schema.get('properties', {}).get(item_key):
+        subitem_val = mapping.get(_key, [])[0].split('.')[-1]
+
+        items = []
+        for item in metadata:
+            if isinstance(item, str):
+                items.append({
+                    subitem_val: item
+                })
+            elif isinstance(item, OrderedDict):
+                items.append({
+                    subitem_val: item.get('#text'),
+                })
+        if items:
+            res[item_key] = items
+
+
+def add_rights(schema, mapping, res, metadata):
     """Add rights."""
-    if not isinstance(rights_list, list):
-        rights_list = [rights_list]
-    root_key = get_root_key(schema,
-                            'Rights',
-                            '権利情報',
-                            '_rights_')
-    if not root_key:
-        return
-    res[root_key] = []
-    map_data = map_field(schema['properties'][root_key]['items'])
-    rights_text = map_data.get('Rights', map_data.get('権利情報'))
-    rights_lang = map_data.get('Language', map_data.get('言語'))
-    rights_resource = map_data.get('Rights Resource',
-                                   map_data.get('権利情報Resource'))
-    for it in rights_list:
-        item = {}
-        if isinstance(it, str):
-            item[rights_text] = it
-        elif isinstance(it, OrderedDict):
-            item[rights_text] = it.get('#text')
-            if it.get('@xml:lang'):
-                item[rights_lang] = it.get('@xml:lang')
-            item[rights_resource] = it.get('@rdf:resource')
-        res[root_key].append(item)
+    _key = 'rights.@value'
+    _key_lag = 'rights.@attributes.xml:lang'
+    _key_res = 'rights.@attributes.rdf:resource'
+
+    if not isinstance(metadata, list):
+        metadata = [metadata]
+
+    item_key = mapping.get(_key, [])[0].split('.')[0]
+    if item_key and schema.get('properties', {}).get(item_key):
+        subitem_val = mapping.get(_key, [])[0].split('.')[-1]
+        subitem_lag = mapping.get(_key_lag, [])[0].split('.')[-1]
+
+        subitem_res = mapping.get(_key_res, [])[0].split('.')[-1]
+
+        item = None
+        if len(mapping.get(_key, [])[0].split('.')) == 2:
+            pass
+        else: # len == 3
+            if schema['properties'][item_key].get('items'):
+                items = []
+                subtime_mid = mapping.get(_key, [])[0].split('.')[1]
+                for item in metadata:
+                    if isinstance(item, str):
+                        items.append({
+                            subtime_mid: {
+                                subitem_val: item
+                            }
+                        })
+                    elif isinstance(item, OrderedDict):
+                        items.append({
+                            subtime_mid: {
+                                subitem_val: item.get('#text'),
+                                subitem_lag: None
+                            },
+                        })
+            else:
+                items = {}
+                pass
+        if items:
+            res[item_key] = items
 
 
 def add_subject(schema, res, subject_list):
@@ -549,19 +629,6 @@ def add_file(schema, res, file_list):
                 item[uri_key] = uri_item
         if item:
             res[root_key].append(item)
-
-
-def add_apc(schema, res, rioxxtermsapc):
-    """Add apc."""
-    root_key = get_root_key(schema,
-                            'APC',
-                            'APC',
-                            '_apc_')
-    if not root_key:
-        return
-    map_data = map_field(schema['properties'][root_key])
-    apc = map_data.get('APC', map_data.get('APC'))
-    res[root_key] = {apc: rioxxtermsapc}
 
 
 def add_source_title(schema, res, source_title_list):
@@ -1213,13 +1280,8 @@ class BaseMapper:
                 t = t['#text']
             if t.lower() in RESOURCE_TYPE_MAP:
                 resource_type = RESOURCE_TYPE_MAP.get(t.lower())
-                self.itemtype = BaseMapper.itemtype_map.get(resource_type)
-                if not self.itemtype:
-                    if BaseMapper.itemtype_map.get("Others"):
-                        self.itemtype = BaseMapper.itemtype_map.get("Others")
-                    if BaseMapper.itemtype_map.get("Multiple"):
-                        self.itemtype = BaseMapper.itemtype_map.get("Multiple")
-                break
+                if BaseMapper.itemtype_map.get(resource_type):
+                    self.itemtype = BaseMapper.itemtype_map.get(resource_type)
 
 
 class DCMapper(BaseMapper):
@@ -1287,28 +1349,26 @@ class JPCOARMapper(BaseMapper):
         res = {'$schema': self.itemtype.id,
                'pubdate': str(self.datestamp())}
 
+        item_type_mapping = Mapping.get_record(self.itemtype.id)
+        item_map = get_full_mapping(item_type_mapping, "jpcoar_mapping")
+
+        args = [self.itemtype.schema, item_map, res]
+
         add_funcs = {
-            'dc:title': partial(add_title,
-                                self.itemtype.schema,
-                                res),
-            'dcterms:alternative': partial(add_alternative,
-                                           self.itemtype.schema,
-                                           res),
-            'jpcoar:creator': partial(add_creator_jpcoar,
-                                      self.itemtype.schema,
-                                      res),
-            'jpcoar:contributor': partial(add_contributor_jpcoar,
-                                          self.itemtype.schema,
-                                          res),
-            'dcterms:accessRights': partial(add_access_rights,
-                                            self.itemtype.schema,
-                                            res),
-            'rioxxterms:apc': partial(add_apc,
-                                      self.itemtype.schema,
-                                      res),
-            'dc:rights': partial(add_rights,
-                                 self.itemtype.schema,
-                                 res),
+            'dc:title':
+                partial(add_titles, *args),
+            'dcterms:alternative':
+                partial(add_alternatives, *args),
+            # 'jpcoar:creator':
+            #     partial(add_creator_jpcoar, *args),
+            # 'jpcoar:contributor':
+            #     partial(add_contributor_jpcoar, *args),
+            'dcterms:accessRights':
+                partial(add_access_rights, *args),
+            'rioxxterms:apc':
+                partial(add_apcs, *args),
+            'dc:rights':
+                partial(add_rights, *args),
             'jpcoar:subject': partial(add_subject,
                                       self.itemtype.schema,
                                       res),
@@ -1330,11 +1390,6 @@ class JPCOARMapper(BaseMapper):
             'oaire:version': partial(add_version_type,
                                      self.itemtype.schema,
                                      res),
-            # 'jpcoar:identifier': partial(
-            #     add_identifier,
-            #     None,
-            #     self.identifiers
-            # ),
             'jpcoar:identifierRegistration':
                 partial(add_identifier_registration,
                         self.itemtype.schema,
