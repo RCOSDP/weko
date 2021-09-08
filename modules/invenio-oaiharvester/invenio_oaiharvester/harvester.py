@@ -24,13 +24,14 @@ import re
 from collections import OrderedDict
 from functools import partial
 from json import dumps, loads
+
 import dateutil
 import requests
 import xmltodict
 from lxml import etree
 from weko_records.api import Mapping
 from weko_records.models import ItemType
-from weko_records.serializers.utils import get_mapping, get_full_mapping
+from weko_records.serializers.utils import get_full_mapping, get_mapping
 from weko_records.utils import get_options_and_order_list
 
 from .config import OAIHARVESTER_DOI_PREFIX, OAIHARVESTER_HDL_PREFIX
@@ -45,10 +46,7 @@ DEFAULT_FIELD = [
     'item_language',
     'item_keyword']
 
-SYSTEM_IDENTIFIER_URI = 'system_identifier_uri'
-SYSTEM_IDENTIFIER_HDL = 'system_identifier_hdl'
-SYSTEM_IDENTIFIER_DOI = 'system_identifier_doi'
-SUBITEM_SYSTEMIDT_IDENTIFIER = 'subitem_systemidt_identifier'
+
 DDI_MAPPING_KEY_TITLE = 'stdyDscr.citation.titlStmt.titl.@value'
 DDI_MAPPING_KEY_URI = 'stdyDscr.citation.holdings.@value'
 
@@ -63,7 +61,7 @@ def list_sets(url, encoding='utf-8'):
     payload = {
         'verb': 'ListSets'}
     while True:
-        response = requests.get(url, params=payload)
+        response = requests.get(url, params=payload, verify=False)
         et = etree.XML(response.text.encode(encoding))
         sets = sets + et.findall('./ListSets/set', namespaces=et.nsmap)
         resumptionToken = et.find(
@@ -151,7 +149,7 @@ def subitem_recs(schema, keys, value):
     return subitems
 
 
-def parsing_metadata(mappin, schema, patterns, metadata):
+def parsing_metadata(mappin, props, patterns, metadata, default='#text'):
     """[summary]
 
     Args:
@@ -164,7 +162,6 @@ def parsing_metadata(mappin, schema, patterns, metadata):
         [type]: [description]
     """
     item_key = mappin.get(patterns[0][0], [])[0].split('.')[0]
-    props = schema.get('properties')
 
     if item_key and props.get(item_key):
         if props[item_key].get('items'):
@@ -179,13 +176,13 @@ def parsing_metadata(mappin, schema, patterns, metadata):
                 keys = mappin.get(elem, [])[0].split('.')[1:]
 
                 _value = None
-                if isinstance(it, str) and value == 'val':
+                if isinstance(it, str) and value == default:
                     _value = it
-                elif isinstance(it, dict) and it.get(value):
+                elif isinstance(it, OrderedDict) and it.get(value):
                     _value = it.get(value)
                 if keys and item_schema.get(keys[0]) and _value:
                     if len(keys) > 1:
-                        subitems = subitem_recs(item_schema[keys[0]], keys[1:], it, _value)
+                        subitems = subitem_recs(item_schema[keys[0]], keys[1:], _value)
                         if subitems:
                             if isinstance(subitems, list) and items.get(keys[0]):
                                 items[keys[0]].extend(subitems)
@@ -195,7 +192,8 @@ def parsing_metadata(mappin, schema, patterns, metadata):
                         items[keys[0]] = _value
                 else:
                     continue
-            ret.append(items)
+            if items:
+                ret.append(items)
 
         return item_key, ret
     else:
@@ -203,7 +201,7 @@ def parsing_metadata(mappin, schema, patterns, metadata):
 
 
 def add_title(schema, mapping, res, metadata):
-    """Add title.
+    """Add title of the resource.
 
     Args:
         schema ([type]): [description]
@@ -217,13 +215,17 @@ def add_title(schema, mapping, res, metadata):
     ]
 
     item_key, ret = parsing_metadata(mapping, schema, patterns, metadata)
+
     if item_key and ret:
         res[item_key] = ret
-        # res['title'] = res[item_key][0][subitem_val]
+        if isinstance(metadata[0], str):
+            res['title'] = metadata[0]
+        elif isinstance(metadata[0], OrderedDict):
+            res['title'] = metadata[0].get('#text')
 
 
 def add_alternative(schema, mapping, res, metadata):
-    """Add alternative.
+    """Add titles other than the main title such as the title for a contents page or colophon.
 
     Args:
         schema ([type]): [description]
@@ -347,7 +349,7 @@ def add_contributor_jpcoar(schema, mapping, res, metadata):
 
 
 def add_access_right(schema, mapping, res, metadata):
-    """Add access rights.
+    """Add the access status of the resource.
 
     Args:
         schema ([type]): [description]
@@ -1315,17 +1317,17 @@ class JPCOARMapper(BaseMapper):
         item_type_mapping = Mapping.get_record(self.itemtype.id)
         item_map = get_full_mapping(item_type_mapping, "jpcoar_mapping")
 
-        args = [self.itemtype.schema, item_map, res]
+        args = [self.itemtype.schema.get('properties'), item_map, res]
 
         add_funcs = {
             'dc:title':
                 partial(add_title, *args),
             'dcterms:alternative':
                 partial(add_alternative, *args),
-            'jpcoar:creator':
-                partial(add_creator_jpcoar, *args),
-            'jpcoar:contributor':
-                partial(add_contributor_jpcoar, *args),
+            # 'jpcoar:creator':
+            #     partial(add_creator_jpcoar, *args),
+            # 'jpcoar:contributor':
+            #     partial(add_contributor_jpcoar, *args),
             'dcterms:accessRights':
                 partial(add_access_right, *args),
             'rioxxterms:apc':
@@ -1368,10 +1370,10 @@ class JPCOARMapper(BaseMapper):
                 partial(add_dissertation_number, *args),
             'dcndl:dateGranted':
                 partial(add_date_granted, *args),
-            'dc:type':
-                partial(add_resource_type, *args),
-            'jpcoar:file':
-                partial(add_file, *args),
+            # 'dc:type':
+            #     partial(add_resource_type, *args),
+            # 'jpcoar:file':
+            #     partial(add_file, *args),
         }
 
         tags = self.json['record']['metadata']['jpcoar:jpcoar']
