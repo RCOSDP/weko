@@ -22,7 +22,6 @@
 
 import os
 
-import redis
 import six
 import werkzeug
 from flask import Blueprint, abort, current_app, escape, flash, jsonify, \
@@ -41,8 +40,8 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records_ui.signals import record_viewed
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
-from simplekv.memory.redisstore import RedisStore
 from weko_accounts.views import _redirect_method
+from weko_admin.models import AdminSettings
 from weko_admin.utils import get_search_setting
 from weko_deposit.api import WekoRecord
 from weko_deposit.pidstore import get_record_without_version
@@ -55,7 +54,6 @@ from weko_records.utils import custom_record_medata_for_export, \
     remove_weko2_special_character
 from weko_search_ui.api import get_search_detail_keyword
 from weko_workflow.api import WorkFlow
-
 from weko_records_ui.models import InstitutionName
 from weko_records_ui.utils import check_items_settings, get_file_info_list
 
@@ -538,13 +536,10 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     can_update_version = has_update_version_role(current_user)
 
-    datastore = RedisStore(redis.StrictRedis.from_url(
-        current_app.config['CACHE_REDIS_URL']))
-    cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-        format(name='display_stats')
-    if datastore.redis.exists(cache_key):
-        curr_display_setting = datastore.get(cache_key).decode('utf-8')
-        display_stats = True if curr_display_setting == 'True' else False
+    display_setting = AdminSettings.get(name='display_stats_settings',
+                                        dict_to_object=False)
+    if display_setting:
+        display_stats = display_setting.get('display_stats')
     else:
         display_stats = True
 
