@@ -51,27 +51,3 @@ OAIHARVESTER_DOI_PREFIX = 'http://doi.org'
 
 OAIHARVESTER_HDL_PREFIX = 'http://hdl.handle.net'
 """Prefix of record that registered HDL"""
-
-OAIHARVESTER_MAPPING_FORMAT = {
-    'dc:title': [('title.@value', '#text'), ('title.@attributes.xml:lang', '@xml:lang')],
-    'dcterms:alternative': [('alternative.@value', '#text'), ('alternative.@attributes.xml:lang', '@xml:lang')],
-    'jpcoar:creator': [
-        ('creator.creatorName.@value', None),
-        ('creator.creatorName.@attributes.xml:lang', None),
-        ('creator.familyName.@value', None),
-        ('creator.familyName.@attributes.xml:lang', None),
-        ('creator.givenName.@value', None),
-        ('creator.givenName.@attributes.xml:lang', None),
-        ('creator.creatorAlternative.@value', None),
-        ('creator.creatorAlternative.@attributes.xml:lang', None),
-        ('creator.nameIdentifier.@value', None),
-        ('creator.nameIdentifier.@attributes.nameIdentifierURI', None),
-        ('creator.nameIdentifier.@attributes.nameIdentifierScheme', None),
-        ('creator.affiliation.affiliationName.@value', None),
-        ('creator.affiliation.affiliationName.@attributes.xml:lang', None),
-        ('creator.affiliation.nameIdentifier.@value', None),
-        ('creator.affiliation.nameIdentifier.@attributes.nameIdentifierURI', None),
-        ('creator.affiliation.nameIdentifier.@attributes.nameIdentifierScheme', None)],
-    'dcterms:accessRights': [('accessRights.@value', None), ('accessRights.@attributes.rdf:resource', None)]
-}
-"""."""
