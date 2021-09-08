@@ -61,7 +61,7 @@ def list_sets(url, encoding='utf-8'):
     payload = {
         'verb': 'ListSets'}
     while True:
-        response = requests.get(url, params=payload, verify=False)
+        response = requests.get(url, params=payload)
         et = etree.XML(response.text.encode(encoding))
         sets = sets + et.findall('./ListSets/set', namespaces=et.nsmap)
         resumptionToken = et.find(
@@ -161,7 +161,13 @@ def parsing_metadata(mappin, props, patterns, metadata, default='#text'):
     Returns:
         [type]: [description]
     """
-    item_key = mappin.get(patterns[0][0], [])[0].split('.')[0]
+    mapping = mappin.get(patterns[0][0])
+    if not mapping:
+        return None, None
+    else:
+        mapping.sort()
+
+    item_key = mapping[0].split('.')[0]
 
     if item_key and props.get(item_key):
         if props[item_key].get('items'):
@@ -173,7 +179,13 @@ def parsing_metadata(mappin, props, patterns, metadata, default='#text'):
         for it in metadata:
             items = {}
             for elem, value in patterns:
-                keys = mappin.get(elem, [])[0].split('.')[1:]
+                mapping = mappin.get(elem)
+                if not mappin.get(elem):
+                    continue
+                else:
+                    mapping.sort()
+
+                keys = mapping[0].split('.')[1:]
 
                 _value = None
                 if isinstance(it, str) and value == default:
@@ -775,14 +787,13 @@ def add_rights_holder(schema, mapping, res, metadata):
 def add_resource_type(schema, mapping, res, metadata):
     """Add publisher."""
     patterns = [
-        ('system_identifier.@value', '#text'),
-        ('system_identifier.@attributes.identifierType', None),
+        ('type.@value', '#text'),
+        ('type.@attributes.rdf:resource', '@rdf:resource'),
     ]
 
-    # if isinstance(dc_type, OrderedDict):
-    #     res[root_key] = [
-    #         {'resourcetype': dc_type.get('#text'),
-    #          'resourceuri': dc_type.get('@rdf:resource')}]
+    item_key, ret = parsing_metadata(mapping, schema, patterns, metadata)
+    if item_key and ret:
+        res[item_key] = ret
 
 
 def add_creator_dc(schema, res, creator_name, lang=''):
@@ -1370,8 +1381,8 @@ class JPCOARMapper(BaseMapper):
                 partial(add_dissertation_number, *args),
             'dcndl:dateGranted':
                 partial(add_date_granted, *args),
-            # 'dc:type':
-            #     partial(add_resource_type, *args),
+            'dc:type':
+                partial(add_resource_type, *args),
             # 'jpcoar:file':
             #     partial(add_file, *args),
         }
