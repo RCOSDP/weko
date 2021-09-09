@@ -1271,3 +1271,224 @@ def _get_contributor_and_author_names(elem, contributor_roles, rtn_data):
             rtn_data["author"].append(temp)
         else:
             rtn_data.update({"author": [temp]})
+
+
+def get_wekoid_record_data(recid, item_type_id):
+    """Get data from this system by recid.
+
+    @param search_data: recid
+    """
+    from invenio_oaiserver.provider import OAIIDProvider
+    from weko_workflow.utils import MappingData
+    from weko_records.serializers.utils import get_mapping
+    ignore_mapping = [
+        "identifier.@value",
+        "identifier.@attributes.identifierType",
+        "identifierRegistration.@value",
+        "identifierRegistration.@attributes.identifierType"
+    ]
+    # Get item id.
+    identifier = 'oai:invenio:{}'.format('%08d' % int(recid))
+    pid = OAIIDProvider.get(pid_value=identifier).pid
+    # Get source mapping info.
+    mapping_src = MappingData(pid.object_uuid)
+    record_src = mapping_src.record
+    item_map_src = mapping_src.item_map
+    item_map_data_src = {}
+    for mapping_key, item_key in item_map_src.items():
+        data = mapping_src.get_data_by_mapping_test(mapping_key)
+        values = [value for key, value in data.items() if value]
+        if values and values[0] and not mapping_key in ignore_mapping:
+            item_map_data_src[mapping_key] = values[0]
+    # Get destination mapping info.
+    mapping_des = Mapping.get_record(item_type_id)
+    item_map_des = get_mapping(mapping_des, "jpcoar_mapping")
+    item_map_data_des = {}
+    for mapping_key, item_key in item_map_des.items():
+        if mapping_key in item_map_data_src.keys():
+            value = item_map_data_src.get(mapping_key)
+            if not all(x is None for x in value):
+                item_map_data_des[item_key] = value
+    # Convert structure of schema to record model.
+    record_model = build_record_model_for_wekoid(
+        item_type_id, item_map_data_des)
+    # Set value for record model.
+    result = set_val_for_record_model(record_model, item_map_data_des)
+    return result
+
+
+def build_record_model_for_wekoid(item_type_id, item_map_data):
+    """Build record model map with structure of metadata.
+
+    @param item_type_id: id of item type.
+    @param item_map_data: is dict, key is mapping,
+        value are values of item on this mapping key.
+    """
+    from weko_records.api import ItemTypes
+    # Get parent key of item has value to improve performence.
+    item_has_val = set()
+    for k, v in item_map_data.items():
+        item_has_val.add(k.split('.')[0])
+    # Convert structure of schema to record model.
+    # Default value is [] or {}.
+    item_type = ItemTypes.get_by_id(item_type_id)
+    properties = item_type.schema.get('properties')
+    result = []
+    for k, v in properties.items():
+        if not k in item_has_val:
+            continue
+        res_temp = {k: [] if is_multiple(v) else {}}
+        props = v.get('properties') or v.get('items', {}).get(
+            'properties') or None
+        if props:
+            get_record_model(res_temp, k, props)
+        result.append(res_temp)
+    return result
+
+
+def is_multiple(val):
+    """Check current item is multiple.
+
+    @param val:
+    """
+    if isinstance(val, dict):
+        if val.get('items', {}).get('properties'):
+            return True
+    return False
+
+
+def get_record_model(res_temp, key, properties):
+    """Build sub record model.
+
+    @param res_temp:
+    @param key:
+    @param properties:
+    """
+    if isinstance(res_temp, list):
+        item_temp = {}
+        for item in res_temp:
+            if item.get(key) in [[], {}]:
+                item_temp = item
+                break
+        index = res_temp.index(item_temp)
+        temp = res_temp[index]
+    else:
+        temp = res_temp[key]
+
+    if isinstance(temp, list):
+        temp_1 = {}
+        for k, v in properties.items():
+            if isinstance(v, dict):
+                temp_1[k] = [] if is_multiple(v) else {}
+                props = v.get('properties') or v.get('items', {}).get(
+                    'properties') or None
+                if props:
+                    get_record_model(temp_1, k, props)
+        temp.append(temp_1)
+    if isinstance(temp, dict):
+        for k, v in properties.items():
+            if isinstance(v, dict):
+                temp[k] = [] if is_multiple(v) else {}
+                props = v.get('properties') or v.get('items', {}).get(
+                    'properties') or None
+                if props:
+                    get_record_model(temp, k, props)
+
+
+def set_val_for_record_model(record_model, item_map_data):
+    """Set value for record model by item_map_data.
+
+    @param record_model:
+    @param item_map_data:
+    """
+    the_most_levels = 0
+    for k, v in item_map_data.items():
+        keys = k.split('.')
+        if len(keys) > the_most_levels:
+            the_most_levels = len(keys)
+        set_val_for_all_child(keys, record_model, item_map_data.get(k))
+    # Remove item if value is empty.
+    # values map with this condition => remove.
+    condition = [[], {}, [{}], '']
+    for item in record_model:
+        for i in range(0, the_most_levels):
+            remove_sub_record_model_no_value(item, condition)
+    return record_model
+
+
+def set_val_for_all_child(keys, models, values):
+    """Set value for sub record model.
+
+    @param keys:
+    @param models:
+    @param values:
+    """
+    import copy
+    model_temp = None
+    for key in keys:
+        for model in models:
+            if model.get(key):
+                model_temp = model[key]
+    if isinstance(model_temp, dict):
+        for val in values:
+            for k, v in model_temp.items():
+                if k == keys[-1]:
+                    model_temp[k] = val if val else ''
+    if isinstance(model_temp, list):
+        if len(model_temp) == len(values):
+            # Set value for case multiple data.
+            i = 0
+            for val in values:
+                if not model_temp[i].get(keys[-1]) is None and model_temp[i][
+                    keys[-1]].get(keys[-1]) is None:
+                    model_temp[i][keys[-1]] = val if val else ''
+                else:
+                    for k, v in model_temp[i].items():
+                        if isinstance(v, dict) and not v.get(keys[-1]) is None:
+                            model_temp[i][k] = v
+                            model_temp[i][k][keys[-1]] = val if val else ''
+                        if isinstance(v, list) and not v[0].get(
+                            keys[-1]) is None:
+                            model_temp[i][k] = v
+                            model_temp[i][k][0][keys[-1]] = val if val else ''
+                i += 1
+        else:
+            # The first time set value for this item.
+            organization_item = model_temp[0]
+            model_temp.remove(organization_item)
+            for val in values:
+                temp = copy.deepcopy(organization_item)
+                if not temp.get(keys[-1]) is None and temp[keys[-1]].get(
+                    keys[-1]) is None:
+                    temp[keys[-1]] = val if val else ''
+                else:
+                    for k, v in temp.items():
+                        if isinstance(v, dict) and not v.get(keys[-1]) is None:
+                            temp[k] = v
+                            temp[k][keys[-1]] = val if val else ''
+                        if isinstance(v, list) and not v[0].get(
+                            keys[-1]) is None:
+                            temp[k] = v
+                            temp[k][0][keys[-1]] = val if val else ''
+                model_temp.append(temp)
+
+
+def remove_sub_record_model_no_value(item, condition):
+    """Remove sub record model no value.
+
+    @param keys:
+    @param models:
+    @param values:
+    """
+    import copy
+    if isinstance(item, dict):
+        temp = copy.deepcopy(item)
+        for k, v in temp.items():
+            if v in condition:
+                del item[k]
+            else:
+                remove_sub_record_model_no_value(item[k], condition)
+    if isinstance(item, list):
+        item = [] if item in condition else item
+        for sub_item in item:
+            remove_sub_record_model_no_value(sub_item, condition)
