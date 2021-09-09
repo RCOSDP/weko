@@ -132,15 +132,15 @@ def subitem_recs(schema, keys, value, metadata):
                 if len(_v) > 2 or not metadata.get(_v[0]):
                     return None
 
-                if isinstance(metadata.get(_v[0]), list):
+                if isinstance(metadata.get(_v[0]), str) and _v[1] == '#text':
+                    subitems.append({
+                        item_key: metadata.get(_v[0], "")
+                    })
+                elif isinstance(metadata.get(_v[0]), list):
                     for item in metadata.get(_v[0]):
                         subitems.append({
                             item_key: item.get(_v[1], "")
                         })
-                elif isinstance(metadata.get(_v[0]), str):
-                    subitems.append({
-                        item_key: metadata.get(_v[0], "")
-                    })
                 elif isinstance(metadata.get(_v[0]), OrderedDict):
                     subitems.append({
                         item_key: metadata.get(_v[0], {}).get(_v[1], "")
@@ -164,10 +164,10 @@ def subitem_recs(schema, keys, value, metadata):
                 if len(_v) > 2 or not metadata.get(_v[0]):
                     return None
 
-                if isinstance(metadata.get(_v[0]), list):
-                    subitems[item_key] = metadata.get(_v[0])[0].get(_v[1], "")
-                elif isinstance(metadata.get(_v[0]), str):
+                if isinstance(metadata.get(_v[0]), str) and _v[1] == '#text':
                     subitems[item_key] = metadata.get(_v[0])
+                elif isinstance(metadata.get(_v[0]), list):
+                    subitems[item_key] = metadata.get(_v[0])[0].get(_v[1], "")
                 elif isinstance(metadata.get(_v[0]), OrderedDict):
                     subitems[item_key] = metadata.get(_v[0], {}).get(_v[1], "")
             else:
@@ -176,10 +176,24 @@ def subitem_recs(schema, keys, value, metadata):
                 elif isinstance(metadata, OrderedDict):
                     subitems[item_key] = metadata.get(value, "")
     else:
-        if isinstance(metadata, str) and value == '#text':
-            subitems = metadata
-        elif isinstance(metadata, OrderedDict):
-            subitems = metadata.get(value, "")
+        if '.' in value:
+            _v = value.split('.')
+            if len(_v) > 2 or not metadata.get(_v[0]):
+                return None
+
+            if isinstance(metadata.get(_v[0]), str) and _v[1] == '#text':
+                subitems = metadata.get(_v[0])
+            elif isinstance(metadata.get(_v[0]), list):
+                subitems = metadata.get(_v[0])[0].get(_v[1], "")
+            elif isinstance(metadata.get(_v[0]), OrderedDict):
+                subitems = metadata.get(_v[0], {}).get(_v[1], "")
+        else:
+            if isinstance(metadata, str) and value == '#text':
+                subitems = metadata
+            if isinstance(metadata, list):
+                subitems = metadata[0]
+            elif isinstance(metadata, OrderedDict):
+                subitems = metadata.get(value, "")
 
     return subitems
 
