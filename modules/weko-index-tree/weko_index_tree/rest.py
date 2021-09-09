@@ -26,15 +26,17 @@ from functools import wraps
 from flask import Blueprint, abort, current_app, jsonify, make_response, \
     request
 from flask_babelex import gettext as _
+from flask_login import current_user
 from invenio_communities.models import Community
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
 
 from .api import Indexes
-from .errors import IndexAddedRESTError, IndexMovedRESTError, \
-    IndexNotFoundRESTError, IndexUpdatedRESTError, InvalidDataRESTError
+from .errors import IndexAddedRESTError, IndexNotFoundRESTError, \
+    IndexUpdatedRESTError, InvalidDataRESTError
 from .models import Index
-from .utils import check_doi_in_index, is_index_locked, perform_delete_index
+from .utils import check_doi_in_index, check_index_permissions, \
+    is_index_locked, perform_delete_index
 
 
 def need_record_permission(factory_name):
@@ -48,12 +50,16 @@ def need_record_permission(factory_name):
                                              **kwargs):
             permission_factory = (getattr(self, factory_name))
 
-            if permission_factory:
+            if permission_factory is not None:
                 if not permission_factory.can():
-                    from flask_login import current_user
-                    if not current_user.is_authenticated:
-                        abort(401)
-                    abort(403)
+                    index_id = kwargs.get('index_id')
+                    if index_id and factory_name == 'read_permission_factory':
+                        if not check_index_permissions(index_id=index_id):
+                            abort(403)
+                    else:
+                        if not current_user.is_authenticated:
+                            abort(401)
+                        abort(403)
 
             return f(self, *args, **kwargs)
         return need_record_permission_decorator
@@ -287,7 +293,6 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
         for key, value in ctx.items():
             setattr(self, key, value)
 
-    @need_record_permission('read_permission_factory')
     def get(self, **kwargs):
         """Get tree json."""
         try:
