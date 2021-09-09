@@ -631,21 +631,13 @@ class Indexes(object):
 
         role = cls.get_account_role()
         allow = index["browsing_role"].split(',') \
-            if len(index["browsing_role"]) else None
-        if allow:
-            allow, deny = _get_allow_deny(allow, deepcopy(role), True)
-        else:
-            allow = role
-            deny = []
+            if len(index["browsing_role"]) else []
+        allow, deny = _get_allow_deny(allow, deepcopy(role), True)
         index["browsing_role"] = dict(allow=allow, deny=deny)
 
         allow = index["contribute_role"].split(',') \
-            if len(index["contribute_role"]) else None
-        if allow:
-            allow, deny = _get_allow_deny(allow, role)
-        else:
-            allow = role
-            deny = []
+            if len(index["contribute_role"]) else []
+        allow, deny = _get_allow_deny(allow, role)
         index["contribute_role"] = dict(allow=allow, deny=deny)
 
         if index["public_date"]:

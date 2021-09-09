@@ -667,7 +667,7 @@ def check_has_any_item_in_index_is_locked(index_id):
     return False
 
 
-def check_index_permissions(record, index_id=None, index_path_list=None,
+def check_index_permissions(record=None, index_id=None, index_path_list=None,
                             is_check_doi=False) -> bool:
     """Check indexes of record is private.
 
