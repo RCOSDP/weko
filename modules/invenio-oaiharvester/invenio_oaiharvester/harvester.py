@@ -141,7 +141,7 @@ def subitem_recs(schema, keys, value, metadata):
                     subitems.append({
                         item_key: metadata.get(_v[0], "")
                     })
-                else:
+                elif isinstance(metadata.get(_v[0]), OrderedDict):
                     subitems.append({
                         item_key: metadata.get(_v[0], {}).get(_v[1], "")
                     })
@@ -166,7 +166,9 @@ def subitem_recs(schema, keys, value, metadata):
 
                 if isinstance(metadata.get(_v[0]), list):
                     subitems[item_key] = metadata.get(_v[0])[0].get(_v[1], "")
-                else:
+                elif isinstance(metadata.get(_v[0]), str):
+                    subitems[item_key] = metadata.get(_v[0])
+                elif isinstance(metadata.get(_v[0]), OrderedDict):
                     subitems[item_key] = metadata.get(_v[0], {}).get(_v[1], "")
             else:
                 if isinstance(metadata, str) and value == '#text':
@@ -343,24 +345,28 @@ def add_contributor_jpcoar(schema, mapping, res, metadata):
         metadata ([type]): [description]
     """
     patterns = [
-        ('contributor.@attributes.contributorType', None),
-        ('contributor.nameIdentifier.@value', '#text'),
-        ('contributor.nameIdentifier.@attributes.nameIdentifierURI', None),
-        ('contributor.nameIdentifier.@attributes.nameIdentifierScheme', None),
-        ('contributor.contributorName.@value', '#text'),
-        ('contributor.contributorName.@attributes.xml:lang', '@xml:lang'),
-        ('contributor.givenName.@value', '#text'),
-        ('contributor.givenName.@attributes.xml:lang', '@xml:lang'),
-        ('contributor.familyName.@value', '#text'),
-        ('contributor.familyName.@attributes.xml:lang', '@xml:lang'),
-        ('contributor.contributorAlternative.@value', '#text'),
-        ('contributor.contributorAlternative.@attributes.xml:lang', '@xml:lang'),
-        # ('contributor.affiliation.nameIdentifier.@value', '#text'),
+        # ('contributor.@attributes.contributorType',       None),
+        # ('contributor.nameIdentifier.@value',               'jpcoar:nameIdentifier.#text'),
+        # ('contributor.nameIdentifier.@attributes.nameIdentifierURI', 'jpcoar:nameIdentifier.@nameIdentifierURI'),
+        # ('contributor.nameIdentifier.@attributes.nameIdentifierScheme', 'jpcoar:nameIdentifier.@nameIdentifierScheme'),
+        ('contributor.givenName.@value',                'jpcoar:givenName#text'),
+        ('contributor.givenName.@attributes.xml:lang',  'jpcoar:givenName.@xml:lang'),
+        ('contributor.familyName.@value',               'jpcoar:familyName.#text'),
+        ('contributor.familyName.@attributes.xml:lang', 'jpcoar:familyName.@xml:lang'),
+        ('contributor.contributorName.@value',          'jpcoar:contributorName.#text'),
+        ('contributor.contributorName.@attributes.xml:lang',
+                                                        'jpcoar:contributorName.@xml:lang'),
+        ('contributor.contributorAlternative.@value',   'jpcoar:contributorAlternative.#text'),
+        ('contributor.contributorAlternative.@attributes.xml:lang',
+                                                        'jpcoar:contributorAlternative.@xml:lang'),
+        # ('contributor.affiliation.nameIdentifier.@value', None),
         # ('contributor.affiliation.nameIdentifier.@attributes.nameIdentifierURI', None),
         # ('contributor.affiliation.nameIdentifier.@attributes.nameIdentifierScheme', None),
-        # ('contributor.affiliation.affiliationName.@value', '#text'),
-        # ('contributor.affiliation.affiliationName.@attributes.xml:lang', '@xml:lang'),
+        # ('contributor.affiliation.affiliationName.@value', None),
+        # ('contributor.affiliation.affiliationName.@attributes.xml:lang', None),
     ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
 def add_access_right(schema, mapping, res, metadata):
@@ -518,50 +524,21 @@ def add_source_identifier(schema, mapping, res, metadata):
     parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-def add_file(schema, res, file_list):
+def add_file(schema, mapping, res, metadata):
     """Add file."""
-    _prop_key = 'item_files'
-    _title_en = 'File'
-    _title_ja = 'ファイル情報'
+    patterns = [
+        ('file.version.@value',             'datacite:version.#text'),
+        ('file.mimeType.@value',            'jpcoar:mimeType.#text'),
+        ('file.extent.@value',              'jpcoar:extent.#text'),
+        ('file.date.@value',                'datacite:date.#text'),
+        ('file.date.@attributes.dateType',  'datacite:date.@dateType'),
+        ('file.URI.@value',                 'jpcoar:URI.#text'),
+        ('file.URI.@attributes.objectType', 'jpcoar:URI.@objectType'),
+        ('file.URI.@attributes.label',      'jpcoar:URI.@label'),
+    ]
 
-    if not isinstance(file_list, list):
-        file_list = [file_list]
-    root_key = map_field(schema).get(_title_en) \
-        or map_field(schema).get(_title_ja)
-    if not root_key:
-        for key in schema['properties']:
-            if _prop_key == key:
-                root_key = key
-        if not root_key:
-            return
+    parsing_metadata(mapping, schema, patterns, metadata, res)
 
-    res[root_key] = []
-    map_data = map_field(schema['properties'][root_key]['items'])
-    uri_key = map_data.get('URI', map_data.get('本文URL'))
-    uri_schema = map_field(schema['properties'][
-        root_key]['items']['properties'][uri_key])
-    if not uri_schema:
-        return
-    uri = uri_schema.get('URI', uri_schema.get('本文URL'))
-    uri_label = uri_schema.get('URI Label',
-                               uri_schema.get('ラベル'))
-    uri_object_type = uri_schema.get('URI Object Type',
-                                     uri_schema.get('オブジェクトタイプ'))
-    for it in file_list:
-        item = dict()
-        if 'jpcoar:URI' in it:
-            uri_item = dict()
-            if isinstance(it['jpcoar:URI'], OrderedDict):
-                if it['jpcoar:URI'].get('#text'):
-                    uri_item[uri] = it['jpcoar:URI'].get('#text', '')
-                if it['jpcoar:URI'].get('@label'):
-                    uri_item[uri_label] = it['jpcoar:URI'].get('@label', '')
-                if it['jpcoar:URI'].get('@objectType'):
-                    uri_item[uri_object_type] = it[
-                        'jpcoar:URI'].get('@objectType', '')
-                item[uri_key] = uri_item
-        if item:
-            res[root_key].append(item)
 
 
 def add_source_title(schema, mapping, res, metadata):
@@ -1289,8 +1266,8 @@ class JPCOARMapper(BaseMapper):
                 partial(add_alternative, *args),
             'jpcoar:creator':
                 partial(add_creator_jpcoar, *args),
-            # 'jpcoar:contributor':
-            #     partial(add_contributor_jpcoar, *args),
+            'jpcoar:contributor':
+                partial(add_contributor_jpcoar, *args),
             'dcterms:accessRights':
                 partial(add_access_right, *args),
             'rioxxterms:apc':
@@ -1337,8 +1314,8 @@ class JPCOARMapper(BaseMapper):
                 partial(add_resource_type, *args),
             'jpcoar:relation':
                 partial(add_relation, *args),
-            # 'jpcoar:file':
-            #     partial(add_file, *args),
+            'jpcoar:file':
+                partial(add_file, *args),
         }
 
         tags = self.json['record']['metadata']['jpcoar:jpcoar']
