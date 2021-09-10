@@ -1444,14 +1444,12 @@ class WorkActivity(object):
         query,
         is_community_admin,
         community_user_ids,
-        is_todo_tabs=False
     ):
         """Query activities by tab is all.
 
         :param query:
         :param is_community_admin:
         :param community_user_ids:
-        :param is_todo_tabs:
         :return:
         """
         self_user_id = int(current_user.get_id())
@@ -1734,7 +1732,7 @@ class WorkActivity(object):
                     query_action_activities = self\
                         .query_activities_by_tab_is_all(
                             query_action_activities, is_community_admin,
-                            community_user_ids, True
+                            community_user_ids
                         )
 
                 query_action_activities = self.query_activities_by_tab_is_todo(
