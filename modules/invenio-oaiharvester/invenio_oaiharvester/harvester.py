@@ -130,6 +130,7 @@ def subitem_recs(schema, keys, value, metadata):
 
     Returns:
         [type]: [description]
+
     """
     subitems = None
     item_key = keys[0] if keys else None
@@ -226,6 +227,7 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
 
     Returns:
         [type]: [description]
+
     """
     mapping = mappin.get(patterns[0][0])
     if not mapping:
@@ -680,12 +682,18 @@ def add_date_granted(schema, mapping, res, metadata):
 def add_conference(schema, mapping, res, metadata):
     """Add conference information."""
     patterns = [
-        ('conference.conferenceCountry.@value',             None),
-        ('conference.conferenceSequence.@value',            None),
-        ('conference.conferencePlace.@value',               None),
-        ('conference.conferencePlace.@attributes.xml:lang', None),
-        ('conference.conferenceName.@value',                None),
-        ('conference.conferenceName.@attributes.xml:lang',  None),
+        ('conference.conferenceCountry.@value',
+            None),
+        ('conference.conferenceSequence.@value',
+            None),
+        ('conference.conferencePlace.@value',
+            None),
+        ('conference.conferencePlace.@attributes.xml:lang',
+            None),
+        ('conference.conferenceName.@value',
+            None),
+        ('conference.conferenceName.@attributes.xml:lang',
+            None),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -711,8 +719,10 @@ def add_degree_name(schema, mapping, res, metadata):
     """Add academic degree and field of the degree specified in the \
         Degree Regulation."""
     patterns = [
-        ('degreeName.@value',               TEXT),
-        ('degreeName.@attributes.xml:lang', LANG),
+        ('degreeName.@value',
+            TEXT),
+        ('degreeName.@attributes.xml:lang',
+            LANG),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -722,15 +732,22 @@ def add_funding_reference(schema, mapping, res, metadata):
     """Add the grant information if you have received  financial support \
         (funding) to create the resource."""
     patterns = [
-        ('fundingReference.funderName.@value',                  None),
-        ('fundingReference.funderName.@attributes.xml:lang',    None),
-        ('fundingReference.funderIdentifier.@value',            None),
+        ('fundingReference.funderName.@value',
+            None),
+        ('fundingReference.funderName.@attributes.xml:lang',
+            None),
+        ('fundingReference.funderIdentifier.@value',
+            None),
         ('fundingReference.funderIdentifier.@attributes.funderIdentifierType',
             None),
-        ('fundingReference.awardTitle.@value',                  None),
-        ('fundingReference.awardTitle.@attributes.xml:lang',    None),
-        ('fundingReference.awardNumber.@value',                 None),
-        ('fundingReference.awardNumber.@attributes.awardURI',   None),
+        ('fundingReference.awardTitle.@value',
+            None),
+        ('fundingReference.awardTitle.@attributes.xml:lang',
+            None),
+        ('fundingReference.awardNumber.@value',
+            None),
+        ('fundingReference.awardNumber.@attributes.awardURI',
+            None),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -740,13 +757,20 @@ def add_geo_location(schema, mapping, res, metadata):
     """Add Spatial region or named place where the resource was gathered \
         or about which the data is focused."""
     patterns = [
-        ('geoLocation.geoLocationPoint.pointLongitude.@value',   None),
-        ('geoLocation.geoLocationPoint.pointLatitude.@value',    None),
-        ('geoLocation.geoLocationPlace.@value',                  None),
-        ('geoLocation.geoLocationBox.westBoundLongitude.@value', None),
-        ('geoLocation.geoLocationBox.southBoundLatitude.@value', None),
-        ('geoLocation.geoLocationBox.northBoundLatitude.@value', None),
-        ('geoLocation.geoLocationBox.eastBoundLongitude.@value', None),
+        ('geoLocation.geoLocationPoint.pointLongitude.@value',
+            None),
+        ('geoLocation.geoLocationPoint.pointLatitude.@value',
+            None),
+        ('geoLocation.geoLocationPlace.@value',
+            None),
+        ('geoLocation.geoLocationBox.westBoundLongitude.@value',
+            None),
+        ('geoLocation.geoLocationBox.southBoundLatitude.@value',
+            None),
+        ('geoLocation.geoLocationBox.northBoundLatitude.@value',
+            None),
+        ('geoLocation.geoLocationBox.eastBoundLongitude.@value',
+            None),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
