@@ -583,14 +583,22 @@ def add_source_identifier(schema, mapping, res, metadata):
 def add_file(schema, mapping, res, metadata):
     """Add file."""
     patterns = [
-        ('file.version.@value',             'datacite:version.#text'),
-        ('file.mimeType.@value',            'jpcoar:mimeType.#text'),
-        ('file.extent.@value',              'jpcoar:extent.#text'),
-        ('file.date.@value',                'datacite:date.#text'),
-        ('file.date.@attributes.dateType',  'datacite:date.@dateType'),
-        ('file.URI.@value',                 'jpcoar:URI.#text'),
-        ('file.URI.@attributes.objectType', 'jpcoar:URI.@objectType'),
-        ('file.URI.@attributes.label',      'jpcoar:URI.@label'),
+        ('file.version.@value',
+            'datacite:version.#text'),
+        ('file.mimeType.@value',
+            'jpcoar:mimeType.#text'),
+        ('file.extent.@value',
+            'jpcoar:extent.#text'),
+        ('file.date.@value',
+            'datacite:date.#text'),
+        ('file.date.@attributes.dateType',
+            'datacite:date.@dateType'),
+        ('file.URI.@value',
+            'jpcoar:URI.#text'),
+        ('file.URI.@attributes.objectType',
+            'jpcoar:URI.@objectType'),
+        ('file.URI.@attributes.label',
+            'jpcoar:URI.@label'),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
