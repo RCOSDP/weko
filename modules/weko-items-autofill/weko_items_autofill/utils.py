@@ -27,9 +27,14 @@ from invenio_db import db
 from lxml import etree
 from weko_records.api import ItemTypes, Mapping
 from weko_workflow.models import ActionJournal
-
 from . import config
 from .api import CiNiiURL, CrossRefOpenURL
+from invenio_oaiserver.provider import OAIIDProvider
+from weko_workflow.utils import MappingData
+from weko_records.serializers.utils import get_mapping
+from weko_records_ui.permissions import page_permission_factory
+from flask_babelex import gettext as _
+import copy
 
 
 def is_update_cache():
@@ -1278,21 +1283,18 @@ def get_wekoid_record_data(recid, item_type_id):
 
     @param search_data: recid
     """
-    from invenio_oaiserver.provider import OAIIDProvider
-    from weko_workflow.utils import MappingData
-    from weko_records.serializers.utils import get_mapping
-    ignore_mapping = [
-        "identifier.@value",
-        "identifier.@attributes.identifierType",
-        "identifierRegistration.@value",
-        "identifierRegistration.@attributes.identifierType"
-    ]
+    ignore_mapping = current_app.config['WEKO_ITEMS_AUTOFILL_IGNORE_MAPPING']
     # Get item id.
     identifier = 'oai:invenio:{}'.format('%08d' % int(recid))
     pid = OAIIDProvider.get(pid_value=identifier).pid
     # Get source mapping info.
     mapping_src = MappingData(pid.object_uuid)
     record_src = mapping_src.record
+    # Check permission.
+    permission = page_permission_factory(record_src).can()
+    if not permission:
+        raise ValueError(_("The item cannot be copied because "
+                           "you do not have permission to view it."))
     item_map_src = mapping_src.item_map
     item_map_data_src = {}
     for mapping_key, item_key in item_map_src.items():
@@ -1480,7 +1482,6 @@ def remove_sub_record_model_no_value(item, condition):
     @param models:
     @param values:
     """
-    import copy
     if isinstance(item, dict):
         temp = copy.deepcopy(item)
         for k, v in temp.items():

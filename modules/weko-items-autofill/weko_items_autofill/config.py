@@ -102,3 +102,10 @@ WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM = [
 
 WEKO_ITEMS_AUTOFILL_DEFAULT_PAGE_NUMBER = 1
 """Default page number"""
+
+WEKO_ITEMS_AUTOFILL_IGNORE_MAPPING = [
+        "identifier.@value",
+        "identifier.@attributes.identifierType",
+        "identifierRegistration.@value",
+        "identifierRegistration.@attributes.identifierType"
+    ]
