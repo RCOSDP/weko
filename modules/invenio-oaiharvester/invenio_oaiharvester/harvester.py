@@ -28,6 +28,7 @@ from json import dumps, loads
 import dateutil
 import requests
 import xmltodict
+from flask import current_app
 from lxml import etree
 from weko_records.api import Mapping
 from weko_records.models import ItemType
@@ -61,7 +62,7 @@ def list_sets(url, encoding='utf-8'):
     payload = {
         'verb': 'ListSets'}
     while True:
-        response = requests.get(url, params=payload)
+        response = requests.get(url, params=payload, verify=False)
         et = etree.XML(response.text.encode(encoding))
         sets = sets + et.findall('./ListSets/set', namespaces=et.nsmap)
         resumptionToken = et.find(
@@ -175,7 +176,7 @@ def subitem_recs(schema, keys, value, metadata):
                     subitems[item_key] = metadata
                 elif isinstance(metadata, OrderedDict):
                     subitems[item_key] = metadata.get(value, "")
-    else:
+    elif not item_key:
         if '.' in value:
             _v = value.split('.')
             if len(_v) > 2 or not metadata.get(_v[0]):
@@ -194,6 +195,8 @@ def subitem_recs(schema, keys, value, metadata):
                 subitems = metadata[0]
             elif isinstance(metadata, OrderedDict):
                 subitems = metadata.get(value, "")
+    else:
+        current_app.logger.debug(item_key)
 
     return subitems
 
@@ -234,7 +237,12 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
                 else:
                     mapping.sort()
 
-                subitems = mapping[0].split('.')[1:]
+                subitems = None
+                if ',' in mapping[0]:
+                    subitems = mapping[0].split(',')[0].split('.')[1:]
+                else:
+                    subitems = mapping[0].split('.')[1:]
+
                 if subitems:
                     submetadata = subitem_recs(item_schema[subitems[0]], subitems[1:], value, it)
 
@@ -1270,7 +1278,6 @@ class JPCOARMapper(BaseMapper):
         item_type_mapping = Mapping.get_record(self.itemtype.id)
         item_map = get_full_mapping(item_type_mapping, "jpcoar_mapping")
 
-        current_app.logger.debug('*' * 60)
         args = [self.itemtype.schema.get('properties'), item_map, res]
 
         add_funcs = {
@@ -1340,8 +1347,6 @@ class JPCOARMapper(BaseMapper):
                 else:
                     metadata = tags[t]
                 add_funcs[t](metadata)
-
-        current_app.logger.debug(res)
 
         return res
 
