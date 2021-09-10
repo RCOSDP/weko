@@ -68,10 +68,11 @@ def list_sets(url, encoding='utf-8'):
         response = requests.get(url, params=payload)
         et = etree.XML(response.text.encode(encoding))
         sets = sets + et.findall('./ListSets/set', namespaces=et.nsmap)
-        resump_token = et.find('./ListSets/resumptionToken',
-                               namespaces=et.nsmap)
-        if resump_token and resump_token.text:
-            payload['resumptionToken'] = resump_token.text
+        resumptionToken = et.find(
+            './ListSets/resumptionToken',
+            namespaces=et.nsmap)
+        if resumptionToken is not None and resumptionToken.text is not None:
+            payload['resumptionToken'] = resumptionToken.text
         else:
             break
     return sets
@@ -103,10 +104,11 @@ def list_records(
     response = requests.get(url, params=payload)
     et = etree.XML(response.text.encode(encoding))
     records = records + et.findall('./ListRecords/record', namespaces=et.nsmap)
-    resump_token = et.find('./ListRecords/resumptionToken',
-                           namespaces=et.nsmap)
-    if resump_token:
-        rtoken = resump_token.text
+    resumptionToken = et.find(
+        './ListRecords/resumptionToken',
+        namespaces=et.nsmap)
+    if resumptionToken is not None:
+        rtoken = resumptionToken.text
     return records, rtoken
 
 
