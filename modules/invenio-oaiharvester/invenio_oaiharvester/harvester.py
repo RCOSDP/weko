@@ -62,7 +62,7 @@ def list_sets(url, encoding='utf-8'):
     payload = {
         'verb': 'ListSets'}
     while True:
-        response = requests.get(url, params=payload, verify=False)
+        response = requests.get(url, params=payload)
         et = etree.XML(response.text.encode(encoding))
         sets = sets + et.findall('./ListSets/set', namespaces=et.nsmap)
         resumptionToken = et.find(
