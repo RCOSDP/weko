@@ -15,15 +15,8 @@ readme = open('README.rst').read()
 history = open('CHANGES.rst').read()
 
 tests_require = [
-    'coverage>=4.5.3,<5.0.0',
-    'mock>=3.0.0,<4.0.0',
-    'moto==1.3.5',
-    'pytest>=4.6.4,<5.0.0',
-    'pytest-cache',
-    'pytest-cov',
-    'pytest-pep8',
-    'pytest-invenio',
-    'responses',
+    'pytest-invenio==1.3.4',
+    'moto==1.3.4',
 ]
 
 extras_require = {
