@@ -51,6 +51,9 @@ DEFAULT_FIELD = [
 DDI_MAPPING_KEY_TITLE = 'stdyDscr.citation.titlStmt.titl.@value'
 DDI_MAPPING_KEY_URI = 'stdyDscr.citation.holdings.@value'
 
+TEXT = '#text'
+LANG = '@xml:lang'
+
 
 def list_sets(url, encoding='utf-8'):
     """Get sets list."""
@@ -65,11 +68,10 @@ def list_sets(url, encoding='utf-8'):
         response = requests.get(url, params=payload)
         et = etree.XML(response.text.encode(encoding))
         sets = sets + et.findall('./ListSets/set', namespaces=et.nsmap)
-        resumptionToken = et.find(
-            './ListSets/resumptionToken',
-            namespaces=et.nsmap)
-        if resumptionToken is not None and resumptionToken.text is not None:
-            payload['resumptionToken'] = resumptionToken.text
+        resump_token = et.find('./ListSets/resumptionToken',
+                               namespaces=et.nsmap)
+        if resump_token and resump_token.text:
+            payload['resumptionToken'] = resump_token.text
         else:
             break
     return sets
@@ -101,11 +103,10 @@ def list_records(
     response = requests.get(url, params=payload)
     et = etree.XML(response.text.encode(encoding))
     records = records + et.findall('./ListRecords/record', namespaces=et.nsmap)
-    resumptionToken = et.find(
-        './ListRecords/resumptionToken',
-        namespaces=et.nsmap)
-    if resumptionToken is not None:
-        rtoken = resumptionToken.text
+    resump_token = et.find('./ListRecords/resumptionToken',
+                           namespaces=et.nsmap)
+    if resump_token:
+        rtoken = resump_token.text
     return records, rtoken
 
 
@@ -119,12 +120,24 @@ def map_field(schema):
 
 
 def subitem_recs(schema, keys, value, metadata):
+    """Generate subitem metadata.
+
+    Args:
+        schema ([type]): [description]
+        keys ([type]): [description]
+        value ([type]): [description]
+        metadata ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     subitems = None
     item_key = keys[0] if keys else None
     if schema.get('items', {}).get('properties', {}).get(item_key):
         subitems = []
         if len(keys) > 1:
-            _subitems = subitem_recs(schema['items']['properties'][item_key], keys[1:], value, metadata)
+            _subitems = subitem_recs(schema['items']['properties'][item_key],
+                                     keys[1:], value, metadata)
             if _subitems:
                 subitems.append(_subitems)
         else:
@@ -133,7 +146,7 @@ def subitem_recs(schema, keys, value, metadata):
                 if len(_v) > 2 or not metadata.get(_v[0]):
                     return None
 
-                if isinstance(metadata.get(_v[0]), str) and _v[1] == '#text':
+                if isinstance(metadata.get(_v[0]), str) and _v[1] == TEXT:
                     subitems.append({
                         item_key: metadata.get(_v[0], "")
                     })
@@ -147,7 +160,7 @@ def subitem_recs(schema, keys, value, metadata):
                         item_key: metadata.get(_v[0], {}).get(_v[1], "")
                     })
             else:
-                if isinstance(metadata, str) and value == '#text':
+                if isinstance(metadata, str) and value == TEXT:
                     subitems.append({
                         item_key: metadata
                     })
@@ -158,21 +171,22 @@ def subitem_recs(schema, keys, value, metadata):
     elif schema.get('properties', {}).get(item_key):
         subitems = {}
         if len(keys) > 1:
-            subitems = subitem_recs(schema[item_key], keys[1:], value, metadata)
+            subitems = subitem_recs(schema[item_key], keys[1:],
+                                    value, metadata)
         else:
             if '.' in value:
                 _v = value.split('.')
                 if len(_v) > 2 or not metadata.get(_v[0]):
                     return None
 
-                if isinstance(metadata.get(_v[0]), str) and _v[1] == '#text':
+                if isinstance(metadata.get(_v[0]), str) and _v[1] == TEXT:
                     subitems[item_key] = metadata.get(_v[0])
                 elif isinstance(metadata.get(_v[0]), list):
                     subitems[item_key] = metadata.get(_v[0])[0].get(_v[1], "")
                 elif isinstance(metadata.get(_v[0]), OrderedDict):
                     subitems[item_key] = metadata.get(_v[0], {}).get(_v[1], "")
             else:
-                if isinstance(metadata, str) and value == '#text':
+                if isinstance(metadata, str) and value == TEXT:
                     subitems[item_key] = metadata
                 elif isinstance(metadata, OrderedDict):
                     subitems[item_key] = metadata.get(value, "")
@@ -182,14 +196,14 @@ def subitem_recs(schema, keys, value, metadata):
             if len(_v) > 2 or not metadata.get(_v[0]):
                 return None
 
-            if isinstance(metadata.get(_v[0]), str) and _v[1] == '#text':
+            if isinstance(metadata.get(_v[0]), str) and _v[1] == TEXT:
                 subitems = metadata.get(_v[0])
             elif isinstance(metadata.get(_v[0]), list):
                 subitems = metadata.get(_v[0])[0].get(_v[1], "")
             elif isinstance(metadata.get(_v[0]), OrderedDict):
                 subitems = metadata.get(_v[0], {}).get(_v[1], "")
         else:
-            if isinstance(metadata, str) and value == '#text':
+            if isinstance(metadata, str) and value == TEXT:
                 subitems = metadata
             if isinstance(metadata, list):
                 subitems = metadata[0]
@@ -202,7 +216,7 @@ def subitem_recs(schema, keys, value, metadata):
 
 
 def parsing_metadata(mappin, props, patterns, metadata, res):
-    """[summary]
+    """Genererate item metadata.
 
     Args:
         mappin ([type]): [description]
@@ -244,7 +258,12 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
                     subitems = mapping[0].split('.')[1:]
 
                 if subitems:
-                    submetadata = subitem_recs(item_schema[subitems[0]], subitems[1:], value, it)
+                    submetadata = subitem_recs(
+                        item_schema[subitems[0]],
+                        subitems[1:],
+                        value,
+                        it
+                    )
 
                     if submetadata:
                         if isinstance(submetadata, list):
@@ -293,8 +312,8 @@ def add_title(schema, mapping, res, metadata):
         titles ([type]): [description]
     """
     patterns = [
-        ('title.@value', '#text'),
-        ('title.@attributes.xml:lang', '@xml:lang')
+        ('title.@value', TEXT),
+        ('title.@attributes.xml:lang', LANG)
     ]
 
     item_key, ret = parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -303,58 +322,59 @@ def add_title(schema, mapping, res, metadata):
         if isinstance(metadata[0], str):
             res['title'] = metadata[0]
         elif isinstance(metadata[0], OrderedDict):
-            res['title'] = metadata[0].get('#text')
+            res['title'] = metadata[0].get(TEXT)
 
 
 def add_alternative(schema, mapping, res, metadata):
-    """Add titles other than the main title such as the title for a contents page or colophon.
-
-    Args:
-        schema ([type]): [description]
-        mapping ([type]): [description]
-        res ([type]): [description]
-        metadata ([type]): [description]
-    """
+    """Add titles other than the main title such as the title for a contents \
+        page or colophon."""
     patterns = [
-        ('alternative.@value', '#text'),
-        ('alternative.@attributes.xml:lang', '@xml:lang')
+        ('alternative.@value', TEXT),
+        ('alternative.@attributes.xml:lang', LANG)
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
 def add_creator_jpcoar(schema, mapping, res, metadata):
-    """Add creator.
-
-    Args:
-        schema ([type]): [description]
-        mapping ([type]): [description]
-        res ([type]): [description]
-        metadata ([type]): [description]
-    """
+    """Add individual or organisation that is responsible \
+        for the creation of the resource."""
     patterns = [
-        ('creator.givenName.@value',                                'jpcoar:givenName.#text'),
-        ('creator.givenName.@attributes.xml:lang',                  'jpcoar:givenName.@xml:lang'),
-        ('creator.familyName.@value',                               'jpcoar:familyName.#text'),
-        ('creator.familyName.@attributes.xml:lang',                 'jpcoar:familyName.@xml:lang'),
-        ('creator.creatorName.@value',                              'jpcoar:creatorName.#text'),
-        ('creator.creatorName.@attributes.xml:lang',                'jpcoar:creatorName.@xml:lang'),
-        ('creator.creatorAlternative.@value',                       'jpcoar:creatorAlternative.#text'),
-        ('creator.creatorAlternative.@attributes.xml:lang',         'jpcoar:creatorAlternative.@xml:lang'),
-        # ('creator.nameIdentifier.@value',                           'jpcoar:nameIdentifier.#text'),
-        # ('creator.nameIdentifier.@attributes.nameIdentifierURI',    'jpcoar:nameIdentifier.@nameIdentifierURI'),
-        # ('creator.nameIdentifier.@attributes.nameIdentifierScheme', 'jpcoar:nameIdentifier.@nameIdentifierScheme'),
-        # ('creator.affiliation.nameIdentifier.@value',               '#text'),
+        ('creator.givenName.@value',
+            'jpcoar:givenName.#text'),
+        ('creator.givenName.@attributes.xml:lang',
+            'jpcoar:givenName.@xml:lang'),
+        ('creator.familyName.@value',
+            'jpcoar:familyName.#text'),
+        ('creator.familyName.@attributes.xml:lang',
+            'jpcoar:familyName.@xml:lang'),
+        ('creator.creatorName.@value',
+            'jpcoar:creatorName.#text'),
+        ('creator.creatorName.@attributes.xml:lang',
+            'jpcoar:creatorName.@xml:lang'),
+        ('creator.creatorAlternative.@value',
+            'jpcoar:creatorAlternative.#text'),
+        ('creator.creatorAlternative.@attributes.xml:lang',
+            'jpcoar:creatorAlternative.@xml:lang'),
+        # ('creator.nameIdentifier.@value',
+        #     'jpcoar:nameIdentifier.#text'),
+        # ('creator.nameIdentifier.@attributes.nameIdentifierURI',
+        #     'jpcoar:nameIdentifier.@nameIdentifierURI'),
+        # ('creator.nameIdentifier.@attributes.nameIdentifierScheme',
+        #     'jpcoar:nameIdentifier.@nameIdentifierScheme'),
+        # ('creator.affiliation.nameIdentifier.@value',
+        #     TEXT),
         # ('creator.affiliation.nameIdentifier.@attributes.nameIdentifierURI',
-        #                                                             None),
+        #     None),
         # ('creator.affiliation.nameIdentifier.@attributes.nameIdentifierScheme',
-        #                                                             None),
-        # ('creator.affiliation.affiliationName.@value',              '#text'),
-        # ('creator.affiliation.affiliationName.@attributes.xml:lang','@xml:lang'),
+        #     None),
+        # ('creator.affiliation.affiliationName.@value',
+        #     TEXT),
+        # ('creator.affiliation.affiliationName.@attributes.xml:lang',
+        #     LANG),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
-
 
 
 def add_contributor_jpcoar(schema, mapping, res, metadata):
@@ -367,25 +387,39 @@ def add_contributor_jpcoar(schema, mapping, res, metadata):
         metadata ([type]): [description]
     """
     patterns = [
-        # ('contributor.@attributes.contributorType',       None),
-        # ('contributor.nameIdentifier.@value',               'jpcoar:nameIdentifier.#text'),
-        # ('contributor.nameIdentifier.@attributes.nameIdentifierURI', 'jpcoar:nameIdentifier.@nameIdentifierURI'),
-        # ('contributor.nameIdentifier.@attributes.nameIdentifierScheme', 'jpcoar:nameIdentifier.@nameIdentifierScheme'),
-        ('contributor.givenName.@value',                'jpcoar:givenName#text'),
-        ('contributor.givenName.@attributes.xml:lang',  'jpcoar:givenName.@xml:lang'),
-        ('contributor.familyName.@value',               'jpcoar:familyName.#text'),
-        ('contributor.familyName.@attributes.xml:lang', 'jpcoar:familyName.@xml:lang'),
-        ('contributor.contributorName.@value',          'jpcoar:contributorName.#text'),
+        # ('contributor.@attributes.contributorType',
+        #     None),
+        # ('contributor.nameIdentifier.@value',
+        #     'jpcoar:nameIdentifier.#text'),
+        # ('contributor.nameIdentifier.@attributes.nameIdentifierURI',
+        #     'jpcoar:nameIdentifier.@nameIdentifierURI'),
+        # ('contributor.nameIdentifier.@attributes.nameIdentifierScheme',
+        #     'jpcoar:nameIdentifier.@nameIdentifierScheme'),
+        ('contributor.givenName.@value',
+            'jpcoar:givenName#text'),
+        ('contributor.givenName.@attributes.xml:lang',
+            'jpcoar:givenName.@xml:lang'),
+        ('contributor.familyName.@value',
+            'jpcoar:familyName.#text'),
+        ('contributor.familyName.@attributes.xml:lang',
+            'jpcoar:familyName.@xml:lang'),
+        ('contributor.contributorName.@value',
+            'jpcoar:contributorName.#text'),
         ('contributor.contributorName.@attributes.xml:lang',
-                                                        'jpcoar:contributorName.@xml:lang'),
-        ('contributor.contributorAlternative.@value',   'jpcoar:contributorAlternative.#text'),
+            'jpcoar:contributorName.@xml:lang'),
+        ('contributor.contributorAlternative.@value',
+            'jpcoar:contributorAlternative.#text'),
         ('contributor.contributorAlternative.@attributes.xml:lang',
-                                                        'jpcoar:contributorAlternative.@xml:lang'),
-        # ('contributor.affiliation.nameIdentifier.@value', None),
-        # ('contributor.affiliation.nameIdentifier.@attributes.nameIdentifierURI', None),
-        # ('contributor.affiliation.nameIdentifier.@attributes.nameIdentifierScheme', None),
+            'jpcoar:contributorAlternative.@xml:lang'),
+        # ('contributor.affiliation.nameIdentifier.@value',
+        #     None),
+        # ('contributor.affiliation.nameIdentifier.@attributes.nameIdentifierURI',
+        #     None),
+        # ('contributor.affiliation.nameIdentifier.@attributes.nameIdentifierScheme',
+        #     None),
         # ('contributor.affiliation.affiliationName.@value', None),
-        # ('contributor.affiliation.affiliationName.@attributes.xml:lang', None),
+        # ('contributor.affiliation.affiliationName.@attributes.xml:lang',
+        #     None),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -401,7 +435,7 @@ def add_access_right(schema, mapping, res, metadata):
         access_rights ([type]): [description]
     """
     patterns = [
-        ('accessRights.@value', '#text'),
+        ('accessRights.@value', TEXT),
         ('accessRights.@attributes.rdf:resource', '@rdf:resource'),
     ]
 
@@ -418,7 +452,7 @@ def add_apc(schema, mapping, res, metadata):
         metadata ([type]): [description]
     """
     patterns = [
-        ('apc.@value', '#text'),
+        ('apc.@value', TEXT),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -427,20 +461,19 @@ def add_apc(schema, mapping, res, metadata):
 def add_right(schema, mapping, res, metadata):
     """Add rights."""
     patterns = [
-        ('rights.@value', '#text'),
-        ('rights.@attributes.xml:lang', '@xml:lang'),
+        ('rights.@value', TEXT),
+        ('rights.@attributes.xml:lang', LANG),
         ('rights.@attributes.rdf:resource', '@rdf:resource'),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-
 def add_subject(schema, mapping, res, metadata):
     """Add subject."""
     patterns = [
-        ('subject.@value', '#text'),
-        ('subject.@attributes.xml:lang', '@xml:lang'),
+        ('subject.@value', TEXT),
+        ('subject.@attributes.xml:lang', LANG),
         ('subject.@attributes.subjectURI', '@subjectURI'),
         ('subject.@attributes.subjectScheme', '@subjectScheme'),
     ]
@@ -460,20 +493,19 @@ def add_description(schema, mapping, res, metadata):
         metadata ([type]): [description]
     """
     patterns = [
-        ('description.@value', '#text'),
-        ('description.@attributes.xml:lang', '@xml:lang'),
+        ('description.@value', TEXT),
+        ('description.@attributes.xml:lang', LANG),
         ('description.@attributes.descriptionType', '@descriptionType')
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-
 def add_publisher(schema, mapping, res, metadata):
     """Add publisher."""
     patterns = [
-        ('publisher.@value', '#text'),
-        ('publisher.@attributes.xml:lang', '@xml:lang'),
+        ('publisher.@value', TEXT),
+        ('publisher.@attributes.xml:lang', LANG),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -482,7 +514,7 @@ def add_publisher(schema, mapping, res, metadata):
 def add_date(schema, mapping, res, metadata):
     """Add date."""
     patterns = [
-        ('date.@value', '#text'),
+        ('date.@value', TEXT),
         ('date.@attributes.dateType', '@dateType'),
     ]
 
@@ -492,7 +524,7 @@ def add_date(schema, mapping, res, metadata):
 def add_language(schema, mapping, res, metadata):
     """Add language."""
     patterns = [
-        ('language.@value', '#text'),
+        ('language.@value', TEXT),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -501,7 +533,7 @@ def add_language(schema, mapping, res, metadata):
 def add_version(schema, mapping, res, metadata):
     """Add version."""
     patterns = [
-        ('version.@value', '#text'),
+        ('version.@value', TEXT),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -510,7 +542,7 @@ def add_version(schema, mapping, res, metadata):
 def add_version_type(schema, mapping, res, metadata):
     """Add version type."""
     patterns = [
-        ('versionType.@value', '#text'),
+        ('versionType.@value', TEXT),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -519,8 +551,10 @@ def add_version_type(schema, mapping, res, metadata):
 def add_identifier_registration(schema, mapping, res, metadata):
     """Add identfier registration."""
     patterns = [
-        ('identifierRegistration.@value', '#text'),
-        ('identifierRegistration.@attributes.identifierType', '@identifierType'),
+        ('identifierRegistration.@value',
+            TEXT),
+        ('identifierRegistration.@attributes.identifierType',
+            '@identifierType'),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -529,8 +563,8 @@ def add_identifier_registration(schema, mapping, res, metadata):
 def add_temporal(schema, mapping, res, metadata):
     """Add temporal."""
     patterns = [
-        ('temporal.@value', '#text'),
-        ('temporal.@attributes.xml:lang', '@xml:lang'),
+        ('temporal.@value', TEXT),
+        ('temporal.@attributes.xml:lang', LANG),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -539,7 +573,7 @@ def add_temporal(schema, mapping, res, metadata):
 def add_source_identifier(schema, mapping, res, metadata):
     """Add source identifier."""
     patterns = [
-        ('sourceIdentifier.@value', '#text'),
+        ('sourceIdentifier.@value', TEXT),
         ('sourceIdentifier.@attributes.identifierType', '@identifierType'),
     ]
 
@@ -562,12 +596,11 @@ def add_file(schema, mapping, res, metadata):
     parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-
 def add_source_title(schema, mapping, res, metadata):
     """Add source title."""
     patterns = [
-        ('sourceTitle.@value', '#text'),
-        ('sourceTitle.@attributes.xml:lang', '@xml:lang'),
+        ('sourceTitle.@value', TEXT),
+        ('sourceTitle.@attributes.xml:lang', LANG),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -576,7 +609,7 @@ def add_source_title(schema, mapping, res, metadata):
 def add_volume(schema, mapping, res, metadata):
     """Add volume."""
     patterns = [
-        ('volume.@value', '#text'),
+        ('volume.@value', TEXT),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -585,7 +618,7 @@ def add_volume(schema, mapping, res, metadata):
 def add_issue(schema, mapping, res, metadata):
     """Add issue."""
     patterns = [
-        ('issue.@value', '#text'),
+        ('issue.@value', TEXT),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -594,7 +627,7 @@ def add_issue(schema, mapping, res, metadata):
 def add_num_page(schema, mapping, res, metadata):
     """Add num pages."""
     patterns = [
-        ('numPages.@value', '#text'),
+        ('numPages.@value', TEXT),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -603,7 +636,7 @@ def add_num_page(schema, mapping, res, metadata):
 def add_page_start(schema, mapping, res, metadata):
     """Add page start."""
     patterns = [
-        ('pageStart.@value', '#text'),
+        ('pageStart.@value', TEXT),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -612,7 +645,7 @@ def add_page_start(schema, mapping, res, metadata):
 def add_page_end(schema, mapping, res, metadata):
     """Add page end."""
     patterns = [
-        ('pageStart.@value', '#text'),
+        ('pageStart.@value', TEXT),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -621,7 +654,7 @@ def add_page_end(schema, mapping, res, metadata):
 def add_dissertation_number(schema, mapping, res, metadata):
     """Add dissertation number."""
     patterns = [
-        ('dissertationNumber.@value', '#text'),
+        ('dissertationNumber.@value', TEXT),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -630,7 +663,7 @@ def add_dissertation_number(schema, mapping, res, metadata):
 def add_date_granted(schema, mapping, res, metadata):
     """Add date granted."""
     patterns = [
-        ('dateGranted.@value', '#text'),
+        ('dateGranted.@value', TEXT),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -653,35 +686,39 @@ def add_conference(schema, mapping, res, metadata):
 def add_degree_grantor(schema, mapping, res, metadata):
     """Add information on the degree granting institution."""
     patterns = [
-        ('degreeGrantor.nameIdentifier.@value',             None),
+        ('degreeGrantor.nameIdentifier.@value',
+            None),
         ('degreeGrantor.nameIdentifier.@attributes.nameIdentifierScheme',
-                                                            None),
-        ('degreeGrantor.degreeGrantorName.@value',          None),
+            None),
+        ('degreeGrantor.degreeGrantorName.@value',
+            None),
         ('degreeGrantor.degreeGrantorName.@attributes.xml:lang',
-                                                            None),
+            None),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
 def add_degree_name(schema, mapping, res, metadata):
-    """Add academic degree and field of the degree specified in the Degree Regulation."""
+    """Add academic degree and field of the degree specified in the \
+        Degree Regulation."""
     patterns = [
-        ('degreeName.@value', '#text'),
-        ('degreeName.@attributes.xml:lang', '@xml:lang'),
+        ('degreeName.@value',               TEXT),
+        ('degreeName.@attributes.xml:lang', LANG),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
 def add_funding_reference(schema, mapping, res, metadata):
-    """Add the grant information if you have received  financial support (funding) to create the resource."""
+    """Add the grant information if you have received  financial support \
+        (funding) to create the resource."""
     patterns = [
         ('fundingReference.funderName.@value',                  None),
         ('fundingReference.funderName.@attributes.xml:lang',    None),
         ('fundingReference.funderIdentifier.@value',            None),
         ('fundingReference.funderIdentifier.@attributes.funderIdentifierType',
-                                                                None),
+            None),
         ('fundingReference.awardTitle.@value',                  None),
         ('fundingReference.awardTitle.@attributes.xml:lang',    None),
         ('fundingReference.awardNumber.@value',                 None),
@@ -692,7 +729,8 @@ def add_funding_reference(schema, mapping, res, metadata):
 
 
 def add_geo_location(schema, mapping, res, metadata):
-    """Add Spatial region or named place where the resource was gathered or about which the data is focused."""
+    """Add Spatial region or named place where the resource was gathered \
+        or about which the data is focused."""
     patterns = [
         ('geoLocation.geoLocationPoint.pointLongitude.@value',   None),
         ('geoLocation.geoLocationPoint.pointLatitude.@value',    None),
@@ -707,15 +745,21 @@ def add_geo_location(schema, mapping, res, metadata):
 
 
 def add_relation(schema, mapping, res, metadata):
-    """Add the relationship between the registering resource and other related resource.
+    """Add the relationship between the registering resource and other \
+    related resource.
+
     Select and enter 'relationType' from the controlled vocabularies.
     If there is no corresponding vocabulary, do not enter 'relationType'.
     """
     patterns = [
-        ('relation.@attributes.relationType', '@relationType'),
-        ('relation.relatedTitle.@value', 'jpcoar:relatedTitle.#text'),
-        ('relation.relatedTitle.@attributes.xml:lang', 'jpcoar:relatedTitle.@xml:lang'),
-        ('relation.relatedIdentifier.@value', 'jpcoar:relatedIdentifier.#text'),
+        ('relation.@attributes.relationType',
+            '@relationType'),
+        ('relation.relatedTitle.@value',
+            'jpcoar:relatedTitle.#text'),
+        ('relation.relatedTitle.@attributes.xml:lang',
+            'jpcoar:relatedTitle.@xml:lang'),
+        ('relation.relatedIdentifier.@value',
+            'jpcoar:relatedIdentifier.#text'),
         ('relation.relatedIdentifier.@attributes.identifierType',
             'jpcoar:relatedIdentifier.@identifierType'),
     ]
@@ -724,7 +768,8 @@ def add_relation(schema, mapping, res, metadata):
 
 
 def add_rights_holder(schema, mapping, res, metadata):
-    """Add the information on the rights holder of such as copyright other than the creator or contributor."""
+    """Add the information on the rights holder of such as copyright other \
+        than the creator or contributor."""
     patterns = [
         ('rightsHolder.rightsHolderName.@value', None),
         ('rightsHolder.rightsHolderName.@attributes.xml:lang', None),
@@ -739,7 +784,7 @@ def add_rights_holder(schema, mapping, res, metadata):
 def add_resource_type(schema, mapping, res, metadata):
     """Add publisher."""
     patterns = [
-        ('type.@value', '#text'),
+        ('type.@value', TEXT),
         ('type.@attributes.rdf:resource', '@rdf:resource'),
     ]
 
@@ -785,8 +830,8 @@ def add_data_by_key(schema, res, resource_list, key):
         if isinstance(it, str):
             item[temporal] = it
         elif isinstance(it, OrderedDict):
-            item[temporal] = it.get('#text')
-            item[language] = it.get('@xml:lang')
+            item[temporal] = it.get(TEXT)
+            item[language] = it.get(LANG)
         res[root_key].append(item)
 
 
@@ -813,7 +858,7 @@ def add_format_dc(schema, res, file_list):
         if isinstance(it, str):
             item[format_key] = it
         elif isinstance(it, OrderedDict):
-            item[format_key] = it.get('#text')
+            item[format_key] = it.get(TEXT)
         res[root_key].append(item)
 
 
@@ -1203,7 +1248,7 @@ class BaseMapper:
         types = types if isinstance(types, list) else [types]
         for t in types:
             if type(t) == OrderedDict:
-                t = t['#text']
+                t = t[TEXT]
             if t.lower() in RESOURCE_TYPE_MAP:
                 resource_type = RESOURCE_TYPE_MAP.get(t.lower())
                 if BaseMapper.itemtype_map.get(resource_type):
@@ -1423,11 +1468,11 @@ class DDIMapper(BaseMapper):
                     full_key = current_key + '.' + key
                     if full_key in lst_keys_unique:
                         if isinstance(val, str):
-                            val = {'#text': val}
+                            val = {TEXT: val}
                         elif isinstance(val, list):
                             for i in range(len(val)):
                                 if isinstance(val[i], str):
-                                    val[i] = {'#text': val[i]}
+                                    val[i] = {TEXT: val[i]}
 
                         if dict_data.get(full_key):
                             if isinstance(val, list):
@@ -1445,7 +1490,7 @@ class DDIMapper(BaseMapper):
                 for data in data_mapping:
                     merge_data_by_mapping_keys(parent_key, data)
             elif isinstance(data_mapping, str) and '@' not in current_key:
-                data_mapping = {'#text': data_mapping}
+                data_mapping = {TEXT: data_mapping}
                 if dict_data.get(current_key):
                     dict_data[current_key].append(data_mapping)
                 else:
@@ -1491,8 +1536,8 @@ class DDIMapper(BaseMapper):
                             last_key = sub_keys.pop()
                             sub_keys_clone = copy.deepcopy(sub_keys)
                             if mapping_key.split(".@")[1] == "value":
-                                if val_obj.get('#text'):
-                                    value = val_obj['#text']
+                                if val_obj.get(TEXT):
+                                    value = val_obj[TEXT]
                                     if mapping_key == DDI_MAPPING_KEY_TITLE:
                                         self.record_title = value
                                     if mapping_key == DDI_MAPPING_KEY_URI:
