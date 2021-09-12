@@ -575,4 +575,5 @@ ${INVENIO_WEB_INSTANCE} roles add \
        "student3@example.org" \
        "${WEKO3_ROLE_STUDENT}"
 
+#
 set -e
