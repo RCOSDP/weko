@@ -70,7 +70,7 @@ jobs:
       - name: Install python dependencies
         run: |
           source venv/bin/activate
-          python -m pip install -U setuptools wheel pip coveralls PyYAML
+          python -m pip install -U setuptools wheel 'pip==20.2.4' coveralls PyYAML
           python -m pip install -r packages.txt
           python -m pip install -r packages-invenio.txt
           sed -E 's/\/code\///g' requirements-weko-modules.txt | xargs python -m pip install
