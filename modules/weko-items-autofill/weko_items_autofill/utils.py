@@ -19,22 +19,23 @@
 # MA 02111-1307, USA.
 
 """Module of weko-items-autofill utils.."""
+import copy
 from functools import wraps
 
 from flask import current_app
+from flask_babelex import gettext as _
 from invenio_cache import current_cache
 from invenio_db import db
+from invenio_oaiserver.provider import OAIIDProvider
 from lxml import etree
 from weko_records.api import ItemTypes, Mapping
-from weko_workflow.models import ActionJournal
-from . import config
-from .api import CiNiiURL, CrossRefOpenURL
-from invenio_oaiserver.provider import OAIIDProvider
-from weko_workflow.utils import MappingData
 from weko_records.serializers.utils import get_mapping
 from weko_records_ui.permissions import page_permission_factory
-from flask_babelex import gettext as _
-import copy
+from weko_workflow.models import ActionJournal
+from weko_workflow.utils import MappingData
+
+from . import config
+from .api import CiNiiURL, CrossRefOpenURL
 
 
 def is_update_cache():
@@ -1300,7 +1301,7 @@ def get_wekoid_record_data(recid, item_type_id):
     for mapping_key, item_key in item_map_src.items():
         data = mapping_src.get_data_by_mapping_test(mapping_key)
         values = [value for key, value in data.items() if value]
-        if values and values[0] and not mapping_key in ignore_mapping:
+        if values and values[0] and mapping_key not in ignore_mapping:
             item_map_data_src[mapping_key] = values[0]
     # Get destination mapping info.
     mapping_des = Mapping.get_record(item_type_id)
@@ -1337,7 +1338,7 @@ def build_record_model_for_wekoid(item_type_id, item_map_data):
     properties = item_type.schema.get('properties')
     result = []
     for k, v in properties.items():
-        if not k in item_has_val:
+        if k not in item_has_val:
             continue
         res_temp = {k: [] if is_multiple(v) else {}}
         props = v.get('properties') or v.get('items', {}).get(
@@ -1442,7 +1443,7 @@ def set_val_for_all_child(keys, models, values):
             i = 0
             for val in values:
                 if not model_temp[i].get(keys[-1]) is None and model_temp[i][
-                    keys[-1]].get(keys[-1]) is None:
+                        keys[-1]].get(keys[-1]) is None:
                     model_temp[i][keys[-1]] = val if val else ''
                 else:
                     for k, v in model_temp[i].items():
@@ -1450,7 +1451,7 @@ def set_val_for_all_child(keys, models, values):
                             model_temp[i][k] = v
                             model_temp[i][k][keys[-1]] = val if val else ''
                         if isinstance(v, list) and not v[0].get(
-                            keys[-1]) is None:
+                                keys[-1]) is None:
                             model_temp[i][k] = v
                             model_temp[i][k][0][keys[-1]] = val if val else ''
                 i += 1
@@ -1461,7 +1462,7 @@ def set_val_for_all_child(keys, models, values):
             for val in values:
                 temp = copy.deepcopy(organization_item)
                 if not temp.get(keys[-1]) is None and temp[keys[-1]].get(
-                    keys[-1]) is None:
+                        keys[-1]) is None:
                     temp[keys[-1]] = val if val else ''
                 else:
                     for k, v in temp.items():
@@ -1469,7 +1470,7 @@ def set_val_for_all_child(keys, models, values):
                             temp[k] = v
                             temp[k][keys[-1]] = val if val else ''
                         if isinstance(v, list) and not v[0].get(
-                            keys[-1]) is None:
+                                keys[-1]) is None:
                             temp[k] = v
                             temp[k][0][keys[-1]] = val if val else ''
                 model_temp.append(temp)

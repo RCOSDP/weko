@@ -16,7 +16,7 @@ from weko_accounts.utils import login_required_customize
 from weko_admin.utils import get_current_api_certification
 
 from .utils import get_cinii_record_data, get_crossref_record_data, \
-    get_title_pubdate_path, get_workflow_journal, get_wekoid_record_data
+    get_title_pubdate_path, get_wekoid_record_data, get_workflow_journal
 
 blueprint = Blueprint(
     "weko_items_autofill",
