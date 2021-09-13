@@ -36,7 +36,8 @@ WEKO_ITEMS_AUTOFILL_API_CACHE_TIMEOUT = 50
 
 WEKO_ITEMS_AUTOFILL_SELECT_OPTION = [
     {'value': 'CrossRef', 'text': 'CrossRef'},
-    {'value': 'CiNii', 'text': 'CiNii'}
+    {'value': 'CiNii', 'text': 'CiNii'},
+    {'value': 'WEKOID', 'text': 'WEKOID'}
 ]
 """API select option"""
 
@@ -101,3 +102,10 @@ WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM = [
 
 WEKO_ITEMS_AUTOFILL_DEFAULT_PAGE_NUMBER = 1
 """Default page number"""
+
+WEKO_ITEMS_AUTOFILL_IGNORE_MAPPING = [
+        "identifier.@value",
+        "identifier.@attributes.identifierType",
+        "identifierRegistration.@value",
+        "identifierRegistration.@attributes.identifierType"
+    ]

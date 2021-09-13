@@ -480,3 +480,6 @@ msgstr "自由入力"
 
 msgid "Can not found the email address of approval."
 msgstr "承認者のメールアドレスを検出できません。"
+
+msgid "The item cannot be copied because you do not have permission to view it."
+msgstr "該当アイテムの参照権限がないため流用できません。"

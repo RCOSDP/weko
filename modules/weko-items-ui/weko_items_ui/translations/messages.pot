@@ -403,3 +403,6 @@ msgstr ""
 
 msgid "Can not found the email address of approval."
 msgstr ""
+
+msgid "The item cannot be copied because you do not have permission to view it."
+msgstr ""

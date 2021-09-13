@@ -3043,12 +3043,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           if (itemData.length === 1) {
             $scope.setRecordData(model[0], itemData[0]);
           } else {
-            let cloneData = model[0];
             for (let key in itemData) {
               if (model[key]) {
                 $scope.setRecordData(model[key], itemData[key]);
               } else {
-                model.push(JSON.parse(JSON.stringify(cloneData)));
+                model.push({});
                 $scope.setRecordData(model[key], itemData[key]);
               }
             }
