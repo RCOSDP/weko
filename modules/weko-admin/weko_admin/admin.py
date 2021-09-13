@@ -56,8 +56,8 @@ from .models import AdminSettings, FacetSearchSetting, Identifier, \
     LogAnalysisRestrictedCrawlerList, LogAnalysisRestrictedIpAddress, \
     RankingSettings, SearchManagement, StatisticsEmail
 from .permissions import admin_permission_factory
-from .utils import get_facet_search, get_item_mapping_list, get_response_json, \
-    get_restricted_access, get_search_setting
+from .utils import get_facet_search, get_item_mapping_list, \
+    get_response_json, get_restricted_access, get_search_setting
 from .utils import get_user_report_data as get_user_report
 from .utils import package_reports, str_to_bool
 

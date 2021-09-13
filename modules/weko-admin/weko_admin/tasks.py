@@ -33,8 +33,7 @@ from invenio_stats.utils import QueryCommonReportsHelper, \
     QueryRecordViewReportHelper, QuerySearchReportHelper
 
 from .models import AdminSettings, StatisticsEmail
-from .utils import StatisticMail, get_user_report_data, \
-    package_reports
+from .utils import StatisticMail, get_user_report_data, package_reports
 from .views import manual_send_site_license_mail
 
 logger = get_task_logger(__name__)
