@@ -130,6 +130,7 @@ def subitem_recs(schema, keys, value, metadata):
 
     Returns:
         [type]: [description]
+
     """
     subitems = None
     item_key = keys[0] if keys else None
@@ -226,6 +227,7 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
 
     Returns:
         [type]: [description]
+
     """
     mapping = mappin.get(patterns[0][0])
     if not mapping:
@@ -583,14 +585,22 @@ def add_source_identifier(schema, mapping, res, metadata):
 def add_file(schema, mapping, res, metadata):
     """Add file."""
     patterns = [
-        ('file.version.@value',             'datacite:version.#text'),
-        ('file.mimeType.@value',            'jpcoar:mimeType.#text'),
-        ('file.extent.@value',              'jpcoar:extent.#text'),
-        ('file.date.@value',                'datacite:date.#text'),
-        ('file.date.@attributes.dateType',  'datacite:date.@dateType'),
-        ('file.URI.@value',                 'jpcoar:URI.#text'),
-        ('file.URI.@attributes.objectType', 'jpcoar:URI.@objectType'),
-        ('file.URI.@attributes.label',      'jpcoar:URI.@label'),
+        ('file.version.@value',
+            'datacite:version.#text'),
+        ('file.mimeType.@value',
+            'jpcoar:mimeType.#text'),
+        ('file.extent.@value',
+            'jpcoar:extent.#text'),
+        ('file.date.@value',
+            'datacite:date.#text'),
+        ('file.date.@attributes.dateType',
+            'datacite:date.@dateType'),
+        ('file.URI.@value',
+            'jpcoar:URI.#text'),
+        ('file.URI.@attributes.objectType',
+            'jpcoar:URI.@objectType'),
+        ('file.URI.@attributes.label',
+            'jpcoar:URI.@label'),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -672,12 +682,18 @@ def add_date_granted(schema, mapping, res, metadata):
 def add_conference(schema, mapping, res, metadata):
     """Add conference information."""
     patterns = [
-        ('conference.conferenceCountry.@value',             None),
-        ('conference.conferenceSequence.@value',            None),
-        ('conference.conferencePlace.@value',               None),
-        ('conference.conferencePlace.@attributes.xml:lang', None),
-        ('conference.conferenceName.@value',                None),
-        ('conference.conferenceName.@attributes.xml:lang',  None),
+        ('conference.conferenceCountry.@value',
+            'jpcoar:conferenceCountry.#text'),
+        ('conference.conferenceSequence.@value',
+            'jpcoar:conferenceSequence.#text'),
+        ('conference.conferencePlace.@value',
+            'jpcoar:conferencePlace.#text'),
+        ('conference.conferencePlace.@attributes.xml:lang',
+            'jpcoar:conferencePlace.@xml:lang'),
+        ('conference.conferenceName.@value',
+            'jpcoar:conferenceName.#text'),
+        ('conference.conferenceName.@attributes.xml:lang',
+            'jpcoar:conferenceName.@xml:lang'),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -687,13 +703,13 @@ def add_degree_grantor(schema, mapping, res, metadata):
     """Add information on the degree granting institution."""
     patterns = [
         ('degreeGrantor.nameIdentifier.@value',
-            None),
+            'jpcoar:nameIdentifier.#text'),
         ('degreeGrantor.nameIdentifier.@attributes.nameIdentifierScheme',
-            None),
+            'jpcoar:nameIdentifier.@nameIdentifierScheme'),
         ('degreeGrantor.degreeGrantorName.@value',
-            None),
+            'jpcoar:degreeGrantorName.#text'),
         ('degreeGrantor.degreeGrantorName.@attributes.xml:lang',
-            None),
+            'jpcoar:degreeGrantorName.@xml:lang'),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -703,8 +719,10 @@ def add_degree_name(schema, mapping, res, metadata):
     """Add academic degree and field of the degree specified in the \
         Degree Regulation."""
     patterns = [
-        ('degreeName.@value',               TEXT),
-        ('degreeName.@attributes.xml:lang', LANG),
+        ('degreeName.@value',
+            TEXT),
+        ('degreeName.@attributes.xml:lang',
+            LANG),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -714,15 +732,22 @@ def add_funding_reference(schema, mapping, res, metadata):
     """Add the grant information if you have received  financial support \
         (funding) to create the resource."""
     patterns = [
-        ('fundingReference.funderName.@value',                  None),
-        ('fundingReference.funderName.@attributes.xml:lang',    None),
-        ('fundingReference.funderIdentifier.@value',            None),
+        ('fundingReference.funderName.@value',
+            'jpcoar:funderName.#text'),
+        ('fundingReference.funderName.@attributes.xml:lang',
+            'jpcoar:funderName.@xml:lang'),
+        ('fundingReference.funderIdentifier.@value',
+            'datacite:funderIdentifier.#text'),
         ('fundingReference.funderIdentifier.@attributes.funderIdentifierType',
-            None),
-        ('fundingReference.awardTitle.@value',                  None),
-        ('fundingReference.awardTitle.@attributes.xml:lang',    None),
-        ('fundingReference.awardNumber.@value',                 None),
-        ('fundingReference.awardNumber.@attributes.awardURI',   None),
+            'datacite:funderIdentifier.@funderIdentifierType'),
+        ('fundingReference.awardTitle.@value',
+            'jpcoar:awardTitle.#text'),
+        ('fundingReference.awardTitle.@attributes.xml:lang',
+            'jpcoar:awardTitle.@xml:lang'),
+        ('fundingReference.awardNumber.@value',
+            'datacite:awardNumber.#text'),
+        ('fundingReference.awardNumber.@attributes.awardURI',
+            'datacite:awardNumber.@awardURI'),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -732,13 +757,20 @@ def add_geo_location(schema, mapping, res, metadata):
     """Add Spatial region or named place where the resource was gathered \
         or about which the data is focused."""
     patterns = [
-        ('geoLocation.geoLocationPoint.pointLongitude.@value',   None),
-        ('geoLocation.geoLocationPoint.pointLatitude.@value',    None),
-        ('geoLocation.geoLocationPlace.@value',                  None),
-        ('geoLocation.geoLocationBox.westBoundLongitude.@value', None),
-        ('geoLocation.geoLocationBox.southBoundLatitude.@value', None),
-        ('geoLocation.geoLocationBox.northBoundLatitude.@value', None),
-        ('geoLocation.geoLocationBox.eastBoundLongitude.@value', None),
+        ('geoLocation.geoLocationPoint.pointLongitude.@value',
+            None),
+        ('geoLocation.geoLocationPoint.pointLatitude.@value',
+            None),
+        ('geoLocation.geoLocationPlace.@value',
+            None),
+        ('geoLocation.geoLocationBox.westBoundLongitude.@value',
+            None),
+        ('geoLocation.geoLocationBox.southBoundLatitude.@value',
+            None),
+        ('geoLocation.geoLocationBox.northBoundLatitude.@value',
+            None),
+        ('geoLocation.geoLocationBox.eastBoundLongitude.@value',
+            None),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -771,11 +803,16 @@ def add_rights_holder(schema, mapping, res, metadata):
     """Add the information on the rights holder of such as copyright other \
         than the creator or contributor."""
     patterns = [
-        ('rightsHolder.rightsHolderName.@value', None),
-        ('rightsHolder.rightsHolderName.@attributes.xml:lang', None),
-        ('rightsHolder.nameIdentifier.@value', None),
-        ('rightsHolder.nameIdentifier.@attributes.nameIdentifierURI', None),
-        ('rightsHolder.nameIdentifier.@attributes.nameIdentifierScheme', None),
+        ('rightsHolder.rightsHolderName.@value',
+            'jpcoar:rightsHolderName.#text'),
+        ('rightsHolder.rightsHolderName.@attributes.xml:lang',
+            'jpcoar:rightsHolderName.@xml:lang'),
+        ('rightsHolder.nameIdentifier.@value',
+            'jpcoar:nameIdentifier.#text'),
+        ('rightsHolder.nameIdentifier.@attributes.nameIdentifierURI',
+            'jpcoar:nameIdentifier.@nameIdentifierURI'),
+        ('rightsHolder.nameIdentifier.@attributes.nameIdentifierScheme',
+            'jpcoar:nameIdentifier.@nameIdentifierScheme'),
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
@@ -1380,6 +1417,16 @@ class JPCOARMapper(BaseMapper):
                 partial(add_resource_type, *args),
             'jpcoar:relation':
                 partial(add_relation, *args),
+            'jpcoar:degreeGrantor':
+                partial(add_degree_grantor, *args),
+            'dcndl:degreeName':
+                partial(add_degree_name, *args),
+            'jpcoar:conference':
+                partial(add_conference, *args),
+            'jpcoar:fundingReference':
+                partial(add_funding_reference, *args),
+            'jpcoar:rightsHolder':
+                partial(add_rights_holder, *args),
             'jpcoar:file':
                 partial(add_file, *args),
         }
