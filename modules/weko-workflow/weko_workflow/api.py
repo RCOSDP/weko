@@ -1411,7 +1411,6 @@ class WorkActivity(object):
         self_user_id = int(current_user.get_id())
         self_group_ids = [role.id for role in current_user.roles]
         query = query \
-            .filter(_Activity.activity_login_user == self_user_id) \
             .filter(_FlowAction.action_id == _Activity.action_id) \
             .filter(
                 or_(
@@ -1420,22 +1419,63 @@ class WorkActivity(object):
                     _Activity.activity_status
                     == ActivityStatusPolicy.ACTIVITY_MAKING
                 )
-            )\
-            .filter(
-                or_(
-                    and_(
-                        _FlowActionRole.action_user != self_user_id,
-                        _FlowActionRole.action_user_exclude == '0'
-                    ),
-                    and_(
-                        _FlowActionRole.action_role.notin_(self_group_ids),
-                        _FlowActionRole.action_role_exclude == '0'
-                    ),
-                    and_(
-                        ActivityAction.action_handler != self_user_id
+            )
+
+        if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']:
+            query = query \
+                .filter(_Activity.activity_login_user == self_user_id) \
+                .filter(
+                    or_(
+                        and_(
+                            _FlowActionRole.action_user != self_user_id,
+                            _FlowActionRole.action_user_exclude == '0'
+                        ),
+                        and_(
+                            _FlowActionRole.action_role.notin_(self_group_ids),
+                            _FlowActionRole.action_role_exclude == '0'
+                        ),
+                        and_(
+                            ActivityAction.action_handler != self_user_id
+                        )
                     )
                 )
-            )
+        else:
+            query = query \
+                .filter(
+                    or_(
+                        _Activity.activity_login_user == self_user_id,
+                        _Activity.shared_user_id == self_user_id
+                    )
+                ) \
+                .filter(
+                    or_(
+                        and_(
+                            _FlowActionRole.action_user != self_user_id,
+                            _FlowActionRole.action_user_exclude == '0',
+                            _Activity.shared_user_id != self_user_id
+                        ),
+                        and_(
+                            _FlowActionRole.action_role.notin_(self_group_ids),
+                            _FlowActionRole.action_role_exclude == '0',
+                            _Activity.shared_user_id != self_user_id
+                        ),
+                        and_(
+                            ActivityAction.action_handler != self_user_id,
+                            _Activity.shared_user_id != self_user_id
+                        ),
+                        and_(
+                            _Activity.shared_user_id == self_user_id,
+                            _FlowActionRole.action_user !=
+                            _Activity.activity_login_user,
+                            _FlowActionRole.action_user_exclude == '0'
+                        ),
+                        and_(
+                            _Activity.shared_user_id == self_user_id,
+                            ActivityAction.action_handler !=
+                            _Activity.activity_login_user
+                        ),
+                    )
+                )
 
         return query
 
@@ -1483,7 +1523,8 @@ class WorkActivity(object):
                         _FlowActionRole.action_role_exclude == '0'
                     ),
                     and_(
-                        _Activity.shared_user_id == self_user_id
+                        _Activity.shared_user_id == self_user_id,
+                        _FlowAction.action_id != 4
                     ),
                 )
             )
@@ -1545,7 +1586,10 @@ class WorkActivity(object):
                         ),
                         and_(
                             _FlowActionRole.id.is_(None)
-                        )
+                        ),
+                        and_(
+                            _Activity.shared_user_id == self_user_id,
+                        ),
                     )
                 )\
                 .filter(_FlowAction.action_id == _Activity.action_id) \
@@ -1565,7 +1609,10 @@ class WorkActivity(object):
                         and_(
                             _FlowActionRole.action_role.in_(self_group_ids),
                             _FlowActionRole.action_role_exclude == '0'
-                        )
+                        ),
+                        and_(
+                            _Activity.shared_user_id == self_user_id,
+                        ),
                     )
                 )
 
