@@ -1276,23 +1276,31 @@ def selected_value_by_language(lang_array, value_array, lang_id, val_id,
                                                _item_metadata)
                 if value is not None:
                     return value
-            if "en" in lang_array:  # English
-                if lang_selected == 'ja':
-                    return None
+            if "en" in lang_array and lang_selected != 'ja':  # English
                 value = check_info_in_metadata(lang_id, val_id, "en",
+                                               _item_metadata)
+                if value is not None:
+                    return value
+            if "ja-Latn" in lang_array:  # ja_Latn
+                value = check_info_in_metadata(lang_id, val_id, "ja-Latn",
                                                _item_metadata)
                 if value is not None:
                     return value
             # 1st language when registering items
             if len(lang_array) > 0:
-                if lang_selected == 'en':
-                    return None
+                noreturn = False
                 for idx, lg in enumerate(lang_array):
+                    if (lg == 'ja' and lang_selected == 'en') or \
+                            (lg == 'en' and lang_selected == 'ja'):
+                        noreturn = True
+                        break
                     if len(lg) > 0:
                         value = check_info_in_metadata(lang_id, val_id, lg,
                                                        _item_metadata)
                         if value is not None:
                             return value
+                if noreturn:
+                    return None
             # 1st value when registering without language
             if len(value_array) > 0:
                 return value_array[0]
@@ -1394,6 +1402,8 @@ def result_rule_create_show_list(source_title, current_lang):
     @param current_lang:
     @return:
     """
+    value_en = None
+    value_latn = None
     title_data_langs = []
     title_data_langs_none = []
     for key, value in source_title.items():
@@ -1403,28 +1413,34 @@ def result_rule_create_show_list(source_title, current_lang):
         elif current_lang == key:
             return value
         else:
-            if key == 'None Language':
-                title[key] = value
+            title[key] = value
+            if key == 'en':
+                value_en = value
+            elif key == 'ja-Latn':
+                value_latn = value
+            elif key == 'None Language':
                 title_data_langs_none.append(title)
             elif key:
-                title[key] = value
                 title_data_langs.append(title)
 
-    for title_data_lang in title_data_langs:
-        if title_data_lang.get('en'):
-            if current_lang == 'ja':
-                return None
-            else:
-                return title_data_lang.get('en')
+    if value_en and current_lang != 'ja':
+        return value_en
+
+    if value_latn:
+        return value_latn
 
     if len(title_data_langs) > 0:
         if current_lang == 'en':
-            return None
+            for t in title_data_lang:
+                if list(t)[0] != 'ja':
+                    return list(t.values())[0]
         else:
             return list(title_data_langs[0].values())[0]
 
     if len(title_data_langs_none) > 0:
         return list(title_data_langs_none[0].values())[0]
+    else:
+        return None
 
 
 def get_show_list_author(solst_dict_array, hide_email_flag, author_key,

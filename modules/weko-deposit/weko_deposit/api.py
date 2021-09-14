@@ -2308,10 +2308,11 @@ class _FormatSysBibliographicInformation:
         :param source_titles:
         :return:
         """
+        value_en = None
+        value_latn = None
         title_data_lang = []
         title_data_none_lang = []
         for source_title in source_titles:
-            title = {}
             key = source_title.get('bibliographic_titleLang')
             value = source_title.get('bibliographic_title')
             if not value:
@@ -2320,23 +2321,31 @@ class _FormatSysBibliographicInformation:
                 return value, key
             else:
                 if key:
-                    title[key] = value
-                    title_data_lang.append(title)
+                    if key == 'en':
+                        value_en = value
+                    elif key == 'ja-Latn':
+                        value_latn = value
+                    else:
+                        title = {}
+                        title[key] = value
+                        title_data_lang.append(title)
                 else:
                     title_data_none_lang.append(value)
-        for title_data in title_data_lang:
-            if title_data.get('en'):
-                if current_lang == 'ja':
-                    return None, 'ja'
-                else:
-                    return title_data.get('en'), 'en'
+
+        if value_en and current_lang != 'ja':
+            return value_en, 'en'
+
+        if value_latn:
+            return value_latn, 'ja-Latn'
 
         if len(title_data_lang) > 0:
-            if current_lang == 'en':
-                return None, 'en'
-            else:
+            if current_lang != 'en':
                 return list(title_data_lang[0].values())[0], \
                     list(title_data_lang[0])[0]
+            else:
+                for t in title_data_lang:
+                    if list(t)[0] != 'ja':
+                        return list(t.values())[0], list(t)[0]
         return (title_data_none_lang[0], 'ja') if len(
             title_data_none_lang) > 0 else (None, 'ja')
 
