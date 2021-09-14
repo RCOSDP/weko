@@ -384,6 +384,7 @@ class WorkFlow(object):
                     _workflow.flow_id = workflow.get('flow_id')
                     _workflow.index_tree_id = workflow.get('index_tree_id')
                     _workflow.open_restricted = workflow.get('open_restricted')
+                    _workflow.is_gakuninrdm = workflow.get('is_gakuninrdm')
                     db.session.merge(_workflow)
             db.session.commit()
             return _workflow

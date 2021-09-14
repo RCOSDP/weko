@@ -318,3 +318,22 @@ WEKO_WORKFLOW_USAGE_REPORT_ITEM_TITLE = '利用報告'
 WEKO_WORKFLOW_RESTRICTED_ACCESS_APPROVAL_DATE = 'subitem_restricted_access_approval_date'
 
 WEKO_WORKFLOW_RESTRICTED_ACCESS_USAGE_REPORT_ID = 'subitem_restricted_access_usage_report_id'
+
+WEKO_WORKFLOW_GAKUNINRDM_DATA = [
+    {
+        'workflow_id': -1,
+        'workflow_name': 'GRDM_デフォルトワークフロー',
+        'item_type_id': 15,
+        'flow_id': -1,
+        'flow_name': 'GRDM_デフォルトフロー',
+        'action_endpoint_list': [
+            'begin_action',
+            'item_login',
+            'item_link',
+            'identifier_grant',
+            'approval',
+            'end_action'
+        ]
+    }
+]
+"""GakuninRDM information to create flow and workflow"""

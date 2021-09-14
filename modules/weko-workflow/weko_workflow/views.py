@@ -29,16 +29,18 @@ from functools import wraps
 
 import redis
 from flask import Blueprint, abort, current_app, has_request_context, \
-    jsonify, render_template, request, session, url_for
+    jsonify, make_response, render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
-from invenio_accounts.models import Role, userrole
+from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
 from invenio_files_rest.utils import remove_file_cancel_action
+from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_rest import ContentNegotiatedMethodView
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
 from sqlalchemy.sql.expression import cast
@@ -57,20 +59,28 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
 from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
     get_workflows
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
+from werkzeug.utils import secure_filename
 
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
-from .models import ActionStatusPolicy, Activity, ActivityAction, FlowAction
+from .errors import ActivityBaseRESTError, ActivityNotFoundRESTError, \
+    DeleteActivityFailedRESTError, InvalidInputRESTError, \
+    RegisteredActivityNotFoundRESTError
+from .models import ActionStatusPolicy, Activity, ActivityAction, \
+    ActivityStatusPolicy, FlowAction
 from .romeo import search_romeo_issn, search_romeo_jtitles
+from .scopes import activity_scope
 from .utils import IdentifierHandle, auto_fill_title, \
     check_authority_by_admin, check_continue, check_doi_validation_not_pass, \
-    check_existed_doi, create_onetime_download_url_to_guest, \
-    delete_cache_data, delete_guest_activity, filter_all_condition, \
-    get_account_info, get_actionid, get_activity_display_info, \
+    check_existed_doi, check_register_item, \
+    create_onetime_download_url_to_guest, delete_cache_data, \
+    delete_guest_activity, filter_all_condition, get_account_info, \
+    get_actionid, get_activity_display_info, \
     get_activity_id_of_record_without_version, \
     get_application_and_approved_date, get_approval_keys, get_cache_data, \
     get_files_and_thumbnail, get_identifier_setting, get_main_record_detail, \
@@ -79,13 +89,13 @@ from .utils import IdentifierHandle, auto_fill_title, \
     get_workflow_item_type_names, handle_finish_workflow, \
     init_activity_for_guest_user, is_enable_item_name_link, \
     is_hidden_pubdate, is_show_autofill_metadata, \
-    is_usage_application_item_type, item_metadata_validation, \
-    prepare_data_for_guest_activity, prepare_doi_link_workflow, \
-    process_send_approval_mails, process_send_notification_mail, \
-    process_send_reminder_mail, register_hdl, save_activity_data, \
-    saving_doi_pidstore, send_usage_application_mail_for_guest_user, \
-    set_files_display_type, update_approval_date, update_cache_data, \
-    validate_guest_activity_expired, validate_guest_activity_token
+    is_usage_application_item_type, prepare_data_for_guest_activity, \
+    prepare_doi_link_workflow, process_send_approval_mails, \
+    process_send_notification_mail, process_send_reminder_mail, register_hdl, \
+    save_activity_data, saving_doi_pidstore, \
+    send_usage_application_mail_for_guest_user, set_files_display_type, \
+    update_approval_date, update_cache_data, validate_guest_activity_expired, \
+    validate_guest_activity_token
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -93,6 +103,13 @@ blueprint = Blueprint(
     template_folder='templates',
     static_folder='static',
     url_prefix='/workflow'
+)
+
+
+activity_blueprint = Blueprint(
+    'weko_activity_rest',
+    __name__,
+    url_prefix='/depositactivity',
 )
 
 
@@ -1331,7 +1348,8 @@ def cancel_action(activity_id='0', action_id=0):
                             cancel_record, cancel_record.model)
 
                         # Remove file and update size location.
-                        if cancel_deposit.files and cancel_deposit.files.bucket:
+                        if cancel_deposit.files and \
+                                cancel_deposit.files.bucket:
                             remove_file_cancel_action(
                                 cancel_deposit.files.bucket.id)
 
@@ -1347,8 +1365,10 @@ def cancel_action(activity_id='0', action_id=0):
                             cancel_pv.remove_child(cancel_pid)
                             # rollback parent info
                             cancel_pv.parent.status = parent_pid.status
-                            cancel_pv.parent.object_type = parent_pid.object_type
-                            cancel_pv.parent.object_uuid = parent_pid.object_uuid
+                            cancel_pv.parent.object_type = \
+                                parent_pid.object_type
+                            cancel_pv.parent.object_uuid = \
+                                parent_pid.object_uuid
                 db.session.commit()
             except Exception:
                 db.session.rollback()
@@ -1499,7 +1519,7 @@ def save_feedback_maillist(activity_id='0', action_id='0'):
             feedback_maillist=feedback_maillist
         )
         return jsonify(code=0, msg=_('Success'))
-    except (ValueError, Exception):
+    except Exception:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error'))
 
@@ -1534,7 +1554,7 @@ def get_feedback_maillist(activity_id='0'):
                            data=mail_list)
         else:
             return jsonify(code=0, msg=_('Empty!'))
-    except (ValueError, Exception):
+    except Exception:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error'))
 
@@ -1619,7 +1639,7 @@ def check_approval(activity_id='0'):
     }
     try:
         response = check_continue(response, activity_id)
-    except (ValueError, Exception):
+    except Exception:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         response['error'] = -1
     return jsonify(response)
@@ -1707,3 +1727,181 @@ def get_data_init():
         init_workflows=init_workflows,
         init_roles=init_roles,
         init_terms=init_terms)
+
+
+class ActivityActionResource(ContentNegotiatedMethodView):
+    """Workflow Activity Resource."""
+
+    activity = WorkActivity()
+
+    def activity_information(self, activity):
+        """Display Activity Detail in response.
+
+        Args:
+            activity ([type]): [description]
+
+        Returns:
+            [type]: [description]
+
+        """
+        response = {
+            'activityId': activity.activity_id,
+            'email': None,
+            'status': None
+        }
+
+        user = User.query.get(activity.activity_login_user)
+        response['email'] = user.email if user else ''
+
+        status = ActionStatusPolicy.describe(
+            ActionStatusPolicy.ACTION_DOING)
+        if activity.activity_status == \
+                ActivityStatusPolicy.ACTIVITY_FINALLY:
+            status = ActionStatusPolicy.describe(
+                ActionStatusPolicy.ACTION_DONE)
+        elif activity.activity_status == \
+                ActivityStatusPolicy.ACTIVITY_CANCEL:
+            status = ActionStatusPolicy.describe(
+                ActionStatusPolicy.ACTION_CANCELED)
+        response['status'] = _(status)
+
+        return response
+
+    @require_api_auth()
+    @require_oauth_scopes(activity_scope.id)
+    def post(self):
+        """Handle POST activity action.
+
+        Raises:
+            InvalidInputRESTError: [description]
+            InvalidInputRESTError: [description]
+            InvalidInputRESTError: [description]
+
+        Returns:
+            [type]: [description]
+
+        """
+        item_type_id = request.form.get('item_type_id')
+        itemmetadata = request.files.get('file')
+        if not item_type_id or not itemmetadata:
+            raise InvalidInputRESTError()
+
+        # TODO: Check itemmetadata input from file.
+        file_name = secure_filename(
+            request.form.get('name') or itemmetadata.filename
+        )
+        result = check_register_item(itemmetadata)
+        if not file_name or not result or result.get('error') is not False:
+            raise InvalidInputRESTError()
+
+        _default = current_app.config.get('WEKO_WORKFLOW_GAKUNINRDM_DATA')[0]
+        post_activity = {
+            'flow_id': _default.get('flow_id'),
+            'itemtype_id': item_type_id,
+            'workflow_id': _default.get('workflow_id')
+        }
+
+        if not post_activity:
+            raise InvalidInputRESTError()
+        try:
+            activity = None
+            activity = self.activity.init_activity(post_activity)
+            # TODO: Parse itemmetadata on Item Registration Flow.
+        except Exception:
+            raise InvalidInputRESTError()
+        finally:
+            if not activity or not activity.activity_id:
+                raise InvalidInputRESTError()
+
+        return make_response(jsonify(self.activity_information(activity)), 200)
+
+    @require_api_auth()
+    @require_oauth_scopes(activity_scope.id)
+    def get(self, activity_id):
+        """Handle GET activity action.
+
+        Args:
+            activity_id ([type]): [description]
+
+        Raises:
+            ActivityBaseRESTError: [description]
+            ActivityNotFoundRESTError: [description]
+
+        Returns:
+            [type]: [description]
+
+        """
+        if not activity_id:
+            raise ActivityBaseRESTError()
+
+        activity = self.activity.get_activity_by_id(activity_id)
+        if not activity:
+            raise ActivityNotFoundRESTError()
+
+        return make_response(jsonify(self.activity_information(activity)), 200)
+
+    @require_api_auth()
+    @require_oauth_scopes(activity_scope.id)
+    def delete(self, activity_id):
+        """Handle DELETE activity action.
+
+        This will cancel selected activity.
+        Args:
+            activity_id ([type]): [description]
+
+        Raises:
+            ActivityBaseRESTError: [description]
+            RegisteredActivityNotFoundRESTError: [description]
+            DeleteActivityFailedRESTError: [description]
+
+        Returns:
+            [type]: [description]
+
+        """
+        if not activity_id:
+            raise ActivityBaseRESTError()
+
+        activity = self.activity.get_activity_by_id(activity_id)
+        if not activity:
+            raise RegisteredActivityNotFoundRESTError()
+        elif activity.activity_status != ActionStatusPolicy.ACTION_DOING:
+            raise DeleteActivityFailedRESTError()
+
+        _activity = dict(
+            activity_id=activity.activity_id,
+            action_id=activity.action_id,
+            action_status=ActionStatusPolicy.ACTION_CANCELED,
+            action_order=activity.action_order
+        )
+
+        result = self.activity.quit_activity(_activity)
+        if not result:
+            raise DeleteActivityFailedRESTError()
+        else:
+            self.activity.upt_activity_action_status(
+                activity_id=activity.activity_id,
+                action_id=activity.action_id,
+                action_status=ActionStatusPolicy.ACTION_CANCELED,
+                action_order=activity.action_order)
+
+        status = 200
+        message = '登録アクティビティを削除'
+        return make_response(message, status)
+
+
+activity_blueprint.add_url_rule(
+    '/<string:activity_id>',
+    view_func=ActivityActionResource.as_view(
+        'workflow_activity_action'
+    ),
+    methods=['GET', 'DELETE']
+)
+
+
+activity_blueprint.add_url_rule(
+    '',
+    view_func=ActivityActionResource.as_view(
+        'workflow_activity_new'
+    ),
+    methods=['POST']
+)

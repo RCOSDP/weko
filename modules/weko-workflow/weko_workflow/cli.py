@@ -276,6 +276,54 @@ def init_workflow_tables(tables):
         ))
         return db_workflow
 
+    def init_gakuninrdm_data():
+        """Insert flow and action."""
+        gakuninrdm_data = current_app.config.get('WEKO_WORKFLOW_GAKUNINRDM_DATA')
+        for gakuninrdm in gakuninrdm_data:
+            # Insert flow.
+            flow_name = gakuninrdm.get('flow_name')
+            flow_define = FlowDefine.query.filter_by(
+                id=gakuninrdm.get('flow_id'),
+                flow_name=gakuninrdm.get('flow_name')
+            ).one_or_none()
+            if not flow_define:
+                flow_define = FlowDefine(
+                    id=gakuninrdm.get('flow_id'),
+                    flow_id=uuid.uuid4(),
+                    flow_name=flow_name,
+                    flow_user=1
+                )
+                db.session.add(flow_define)
+                # Insert action.
+                action_endpoint_list = gakuninrdm.get('action_endpoint_list')
+                order = 1
+                for action_endpoint in action_endpoint_list:
+                    action = Action.query.filter_by(
+                        action_endpoint=action_endpoint).one_or_none()
+                    flow_action = FlowAction(
+                        flow_id=flow_define.flow_id,
+                        action_id=action.id,
+                        action_version=action.action_version,
+                        action_order=order
+                    )
+                    db.session.add(flow_action)
+                    order += 1
+            # Insert workflow.
+            workflow = WorkFlow.query.filter_by(
+                id=gakuninrdm.get('workflow_id'),
+                flows_name=gakuninrdm.get('workflow_name')
+            ).one_or_none()
+            if not workflow:
+                workflow = dict(
+                    id=gakuninrdm.get('workflow_id'),
+                    flows_name=gakuninrdm.get('workflow_name'),
+                    itemtype_id=gakuninrdm.get('item_type_id'),
+                    flow_id=flow_define.id,
+                    open_restricted=False,
+                    is_gakuninrdm=True
+                )
+                db.session.execute(WorkFlow.__table__.insert(), workflow)
+
     if len(tables):
         try:
             with db.session.begin_nested():
@@ -299,6 +347,8 @@ def init_workflow_tables(tables):
                         db_workflow = init_workflow()
                         db.session.execute(WorkFlow.__table__.insert(),
                                            db_workflow)
+                    if 'gakuninrdm_data' == table:
+                        init_gakuninrdm_data()
         except BaseException as ex:
             db.session.rollback()
             click.secho(str(ex), fg='blue')

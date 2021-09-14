@@ -817,7 +817,7 @@ def handle_check_exist_record(list_record) -> list:
         try:
             item_id = item.get('id')
             if item_id:
-                system_url = request.url_root + 'records/' + item_id
+                system_url = request.host_url + 'records/' + item_id
                 if item.get('uri') != system_url:
                     errors.append(_('Specified URI and system'
                                     ' URI do not match.'))
@@ -830,7 +830,7 @@ def handle_check_exist_record(list_record) -> list:
                             errors.append(_('Item already DELETED'
                                             ' in the system'))
                         else:
-                            exist_url = request.url_root + \
+                            exist_url = request.host_url + \
                                 'records/' + item_exist.get('recid')
                             if item.get('uri') == exist_url:
                                 _edit_mode = item.get('edit_mode')
