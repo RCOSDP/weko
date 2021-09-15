@@ -124,109 +124,109 @@ INVENIO_USER_PASS=uspass123
 
 
 # WEKO3
-${INVENIO_WEB_INSTANCE} roles create "${WEKO3_ROLE_SYSTEM}"
-${INVENIO_WEB_INSTANCE} roles create "${WEKO3_ROLE_REPOSITORY}"
-${INVENIO_WEB_INSTANCE} roles create "${WEKO3_ROLE_CONTRIBUTOR}"
-${INVENIO_WEB_INSTANCE} roles create "${WEKO3_ROLE_COMMUNITY}"
-# WEKO3
+# ${INVENIO_WEB_INSTANCE} roles create "${WEKO3_ROLE_SYSTEM}"
+# ${INVENIO_WEB_INSTANCE} roles create "${WEKO3_ROLE_REPOSITORY}"
+# ${INVENIO_WEB_INSTANCE} roles create "${WEKO3_ROLE_CONTRIBUTOR}"
+# ${INVENIO_WEB_INSTANCE} roles create "${WEKO3_ROLE_COMMUNITY}"
+# JGSS
 ${INVENIO_WEB_INSTANCE} roles create "${WEKO3_ROLE_ADMIN}"
 ${INVENIO_WEB_INSTANCE} roles create "${WEKO3_ROLE_GENERAL}"
 ${INVENIO_WEB_INSTANCE} roles create "${WEKO3_ROLE_GRADUATED_STUDENT}"
 ${INVENIO_WEB_INSTANCE} roles create "${WEKO3_ROLE_STUDENT}"
 
 # Access
-${INVENIO_WEB_INSTANCE} access \
-       allow "superuser-access" \
-       role "${WEKO3_ROLE_SYSTEM}"
+# ${INVENIO_WEB_INSTANCE} access \
+#       allow "superuser-access" \
+#       role "${WEKO3_ROLE_SYSTEM}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "superuser-access" \
        role "${WEKO3_ROLE_ADMIN}"
 
-${INVENIO_WEB_INSTANCE} access \
-       allow "admin-access" \
-       role "${WEKO3_ROLE_REPOSITORY}" \
-       role "${WEKO3_ROLE_COMMUNITY}"
+#${INVENIO_WEB_INSTANCE} access \
+#       allow "admin-access" \
+#       role "${WEKO3_ROLE_REPOSITORY}" \
+#       role "${WEKO3_ROLE_COMMUNITY}"
 
-${INVENIO_WEB_INSTANCE} access \
-       allow "schema-access" \
-       role "${WEKO3_ROLE_REPOSITORY}"
+#${INVENIO_WEB_INSTANCE} access \
+#       allow "schema-access" \
+#       role "${WEKO3_ROLE_REPOSITORY}"
 
-${INVENIO_WEB_INSTANCE} access \
-       allow "index-tree-access" \
-       role "${WEKO3_ROLE_REPOSITORY}" \
-       role "${WEKO3_ROLE_COMMUNITY}"
+#${INVENIO_WEB_INSTANCE} access \
+#       allow "index-tree-access" \
+#       role "${WEKO3_ROLE_REPOSITORY}" \
+#       role "${WEKO3_ROLE_COMMUNITY}"
 
-${INVENIO_WEB_INSTANCE} access \
-       allow "indextree-journal-access" \
-       role "${WEKO3_ROLE_REPOSITORY}" \
-       role "${WEKO3_ROLE_COMMUNITY}"
+#${INVENIO_WEB_INSTANCE} access \
+#       allow "indextree-journal-access" \
+#       role "${WEKO3_ROLE_REPOSITORY}" \
+#       role "${WEKO3_ROLE_COMMUNITY}"
 
-${INVENIO_WEB_INSTANCE} access \
-       allow "item-type-access" \
-       role "${WEKO3_ROLE_REPOSITORY}"
+#${INVENIO_WEB_INSTANCE} access \
+#       allow "item-type-access" \
+#       role "${WEKO3_ROLE_REPOSITORY}"
 
-${INVENIO_WEB_INSTANCE} access \
-       allow "item-access" \
-       role "${WEKO3_ROLE_REPOSITORY}" \
-       role "${WEKO3_ROLE_COMMUNITY}" \
-       role "${WEKO3_ROLE_CONTRIBUTOR}"
+#${INVENIO_WEB_INSTANCE} access \
+#       allow "item-access" \
+#       role "${WEKO3_ROLE_REPOSITORY}" \
+#       role "${WEKO3_ROLE_COMMUNITY}" \
+#       role "${WEKO3_ROLE_CONTRIBUTOR}"
 
-${INVENIO_WEB_INSTANCE} access \
-       allow "files-rest-bucket-update" \
-       role "${WEKO3_ROLE_REPOSITORY}" \
-       role "${WEKO3_ROLE_COMMUNITY}" \
-       role "${WEKO3_ROLE_CONTRIBUTOR}"
+#${INVENIO_WEB_INSTANCE} access \
+#       allow "files-rest-bucket-update" \
+#       role "${WEKO3_ROLE_REPOSITORY}" \
+#       role "${WEKO3_ROLE_COMMUNITY}" \
+#       role "${WEKO3_ROLE_CONTRIBUTOR}"
 
-${INVENIO_WEB_INSTANCE} access \
-       allow "files-rest-object-delete" \
-       role "${WEKO3_ROLE_REPOSITORY}" \
-       role "${WEKO3_ROLE_COMMUNITY}" \
-       role "${WEKO3_ROLE_CONTRIBUTOR}"
+#${INVENIO_WEB_INSTANCE} access \
+#       allow "files-rest-object-delete" \
+#       role "${WEKO3_ROLE_REPOSITORY}" \
+#       role "${WEKO3_ROLE_COMMUNITY}" \
+#       role "${WEKO3_ROLE_CONTRIBUTOR}"
 
-${INVENIO_WEB_INSTANCE} access \
-       allow "files-rest-object-delete-version" \
-       role "${WEKO3_ROLE_REPOSITORY}" \
-       role "${WEKO3_ROLE_COMMUNITY}" \
-       role "${WEKO3_ROLE_CONTRIBUTOR}"
+#${INVENIO_WEB_INSTANCE} access \
+#       allow "files-rest-object-delete-version" \
+#       role "${WEKO3_ROLE_REPOSITORY}" \
+#       role "${WEKO3_ROLE_COMMUNITY}" \
+#       role "${WEKO3_ROLE_CONTRIBUTOR}"
 
-${INVENIO_WEB_INSTANCE} access \
-       allow "files-rest-object-read" \
-       role "${WEKO3_ROLE_REPOSITORY}" \
-       role "${WEKO3_ROLE_COMMUNITY}" \
-       role "${WEKO3_ROLE_CONTRIBUTOR}"
+# ${INVENIO_WEB_INSTANCE} access \
+#       allow "files-rest-object-read" \
+#       role "${WEKO3_ROLE_REPOSITORY}" \
+#       role "${WEKO3_ROLE_COMMUNITY}" \
+#       role "${WEKO3_ROLE_CONTRIBUTOR}"
 
-${INVENIO_WEB_INSTANCE} access \
-       allow "search-access" \
-       role "${WEKO3_ROLE_REPOSITORY}" \
-       role "${WEKO3_ROLE_COMMUNITY}" \
-       role "${WEKO3_ROLE_CONTRIBUTOR}"
+#${INVENIO_WEB_INSTANCE} access \
+#       allow "search-access" \
+#       role "${WEKO3_ROLE_REPOSITORY}" \
+#       role "${WEKO3_ROLE_COMMUNITY}" \
+#       role "${WEKO3_ROLE_CONTRIBUTOR}"
 
-${INVENIO_WEB_INSTANCE} access \
-       allow "detail-page-access" \
-       role "${WEKO3_ROLE_REPOSITORY}" \
-       role "${WEKO3_ROLE_COMMUNITY}" \
-       role "${WEKO3_ROLE_CONTRIBUTOR}"
+#${INVENIO_WEB_INSTANCE} access \
+#       allow "detail-page-access" \
+#       role "${WEKO3_ROLE_REPOSITORY}" \
+#       role "${WEKO3_ROLE_COMMUNITY}" \
+#       role "${WEKO3_ROLE_CONTRIBUTOR}"
 
-${INVENIO_WEB_INSTANCE} access \
-       allow "download-original-pdf-access" \
-       role "${WEKO3_ROLE_REPOSITORY}" \
-       role "${WEKO3_ROLE_COMMUNITY}" \
-       role "${WEKO3_ROLE_CONTRIBUTOR}"
+#${INVENIO_WEB_INSTANCE} access \
+#       allow "download-original-pdf-access" \
+#       role "${WEKO3_ROLE_REPOSITORY}" \
+#       role "${WEKO3_ROLE_COMMUNITY}" \
+#       role "${WEKO3_ROLE_CONTRIBUTOR}"
 
-${INVENIO_WEB_INSTANCE} access \
-       allow "author-access" \
-       role "${WEKO3_ROLE_REPOSITORY}"
+#${INVENIO_WEB_INSTANCE} access \
+#       allow "author-access" \
+#       role "${WEKO3_ROLE_REPOSITORY}"
 
-${INVENIO_WEB_INSTANCE} access \
-       allow "items-autofill" \
-       role "${WEKO3_ROLE_REPOSITORY}" \
-       role "${WEKO3_ROLE_COMMUNITY}" \
-       role "${WEKO3_ROLE_CONTRIBUTOR}"
+#${INVENIO_WEB_INSTANCE} access \
+#       allow "items-autofill" \
+#       role "${WEKO3_ROLE_REPOSITORY}" \
+#       role "${WEKO3_ROLE_COMMUNITY}" \
+#       role "${WEKO3_ROLE_CONTRIBUTOR}"
 
-${INVENIO_WEB_INSTANCE} access \
-       allow "stats-api-access" \
-       role "${WEKO3_ROLE_REPOSITORY}"
+#${INVENIO_WEB_INSTANCE} access \
+#       allow "stats-api-access" \
+#       role "${WEKO3_ROLE_REPOSITORY}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "item-access" \
@@ -283,10 +283,10 @@ ${INVENIO_WEB_INSTANCE} access \
        role "${WEKO3_ROLE_STUDENT}"
 
 # User
-${INVENIO_WEB_INSTANCE} users create \
-       "${INVENIO_USER_EMAIL}" \
-       --password "${INVENIO_USER_PASS}" \
-       --active
+#${INVENIO_WEB_INSTANCE} users create \
+#       "${INVENIO_USER_EMAIL}" \
+#       --password "${INVENIO_USER_PASS}" \
+#       --active
 
 ${INVENIO_WEB_INSTANCE} users create \
        "sysadmin@example.org" \
@@ -313,10 +313,10 @@ ${INVENIO_WEB_INSTANCE} users create \
        --password "${INVENIO_USER_PASS}" \
        --active
 
-${INVENIO_WEB_INSTANCE} users create \
-       "repoadmin@example.org" \
-       --password "${INVENIO_USER_PASS}" \
-       --active
+#${INVENIO_WEB_INSTANCE} users create \
+#       "repoadmin@example.org" \
+#       --password "${INVENIO_USER_PASS}" \
+#       --active
 
 ${INVENIO_WEB_INSTANCE} users create \
        "repoadmin1@example.org" \
@@ -333,10 +333,10 @@ ${INVENIO_WEB_INSTANCE} users create \
        --password "${INVENIO_USER_PASS}" \
        --active
 
-${INVENIO_WEB_INSTANCE} users create \
-       "contributor@example.org" \
-       --password "${INVENIO_USER_PASS}" \
-       --active
+#${INVENIO_WEB_INSTANCE} users create \
+#       "contributor@example.org" \
+#       --password "${INVENIO_USER_PASS}" \
+#       --active
 
 ${INVENIO_WEB_INSTANCE} users create \
        "contributor1@example.org" \
@@ -353,10 +353,10 @@ ${INVENIO_WEB_INSTANCE} users create \
        --password "${INVENIO_USER_PASS}" \
        --active
 
-${INVENIO_WEB_INSTANCE} users create \
-      "comadmin@example.org" \
-      --password "${INVENIO_USER_PASS}" \
-      --active
+#${INVENIO_WEB_INSTANCE} users create \
+#      "comadmin@example.org" \
+#      --password "${INVENIO_USER_PASS}" \
+#      --active
 
 ${INVENIO_WEB_INSTANCE} users create \
       "comadmin1@example.org" \
@@ -373,10 +373,10 @@ ${INVENIO_WEB_INSTANCE} users create \
       --password "${INVENIO_USER_PASS}" \
       --active
 
-${INVENIO_WEB_INSTANCE} users create \
-       "user@example.org" \
-       --password "${INVENIO_USER_PASS}" \
-       --active
+#${INVENIO_WEB_INSTANCE} users create \
+#       "user@example.org" \
+#       --password "${INVENIO_USER_PASS}" \
+#       --active
 
 ${INVENIO_WEB_INSTANCE} users create \
        "user1@example.org" \
@@ -454,9 +454,9 @@ ${INVENIO_WEB_INSTANCE} users create \
        --active
 
 # Add Role
-${INVENIO_WEB_INSTANCE} roles add \
-       "${INVENIO_USER_EMAIL}" \
-       "${WEKO3_ROLE_SYSTEM}"
+#${INVENIO_WEB_INSTANCE} roles add \
+#       "${INVENIO_USER_EMAIL}" \
+#       "${WEKO3_ROLE_SYSTEM}"
 
 ${INVENIO_WEB_INSTANCE} roles add \
        "sysadmin@example.org" \
@@ -478,9 +478,9 @@ ${INVENIO_WEB_INSTANCE} roles add \
        "admin@example.org" \
        "${WEKO3_ROLE_ADMIN}"
 
-${INVENIO_WEB_INSTANCE} roles add \
-       "repoadmin@example.org" \
-       "${WEKO3_ROLE_REPOSITORY}"
+#${INVENIO_WEB_INSTANCE} roles add \
+#       "repoadmin@example.org" \
+#       "${WEKO3_ROLE_REPOSITORY}"
 
 ${INVENIO_WEB_INSTANCE} roles add \
        "repoadmin1@example.org" \
@@ -494,9 +494,9 @@ ${INVENIO_WEB_INSTANCE} roles add \
        "repoadmin3@example.org" \
        "${WEKO3_ROLE_REPOSITORY}"
 
-${INVENIO_WEB_INSTANCE} roles add \
-      "comadmin@example.org" \
-      "${WEKO3_ROLE_COMMUNITY}"
+#${INVENIO_WEB_INSTANCE} roles add \
+#      "comadmin@example.org" \
+#      "${WEKO3_ROLE_COMMUNITY}"
 
 ${INVENIO_WEB_INSTANCE} roles add \
       "comadmin1@example.org" \
@@ -510,9 +510,9 @@ ${INVENIO_WEB_INSTANCE} roles add \
       "comadmin3@example.org" \
       "${WEKO3_ROLE_COMMUNITY}"
 
-${INVENIO_WEB_INSTANCE} roles add \
-       "contributor@example.org" \
-       "${WEKO3_ROLE_CONTRIBUTOR}"
+#${INVENIO_WEB_INSTANCE} roles add \
+#       "contributor@example.org" \
+#       "${WEKO3_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} roles add \
        "contributor1@example.org" \

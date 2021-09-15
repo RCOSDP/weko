@@ -2,7 +2,7 @@
 
 
 docker-compose down -v
-docker-compose build
+#docker-compose build
 docker-compose up -d
 docker-compose exec web ./scripts/populate-instance.sh
 docker cp scripts/demo/item_type2.sql $(docker-compose ps -q postgresql):/tmp/item_type.sql
