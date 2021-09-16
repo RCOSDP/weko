@@ -1022,6 +1022,7 @@ $(document).ready(function () {
         if(isFile || product.properties[key]["isHide"] ==true){
           product.properties[key]["showListDisable"] = true
           product.properties[key]["specifyNLDisable"] = true
+          product.properties[key]["nonDisplayDisable"] = true
         }
         if(isFile){
           product.properties[key]["hideDisable"] = true
@@ -1344,6 +1345,7 @@ $(document).ready(function () {
             if(isFile || properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["isHide"] ==true){
               properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["showListDisable"] = true
               properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["specifyNLDisable"] = true
+              properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["nonDisplayDisable"] = true
             }
             if(isFile){
               properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["hideDisable"] = true
@@ -1538,6 +1540,7 @@ $(document).ready(function () {
     itpSchema.isShowList = itForm.isShowList;
     itpSchema.isSpecifyNewline = itForm.isSpecifyNewline;
     itpSchema.isHide = itForm.isHide;
+    itpSchema.isNonDisplay = itForm.isNonDisplay;
     // itpSchema.format = itForm.format;
     if(itForm.hasOwnProperty('titleMap')) {
       let titleMapList = itForm['titleMap'];
@@ -1826,6 +1829,7 @@ $(document).ready(function () {
     form.isShowList = property.isShowList;
     form.isSpecifyNewline = property.isSpecifyNewline;
     form.isHide = property.isHide;
+    form.isNonDisplay = property.isNonDisplay;
     //Set TitleMap for form.
     let _enum, editAble;
     editAble = property.hasOwnProperty('editAble') && property['editAble'];
