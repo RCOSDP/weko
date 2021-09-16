@@ -1299,7 +1299,7 @@ def get_wekoid_record_data(recid, item_type_id):
     item_map_src = mapping_src.item_map
     item_map_data_src = {}
     for mapping_key, item_key in item_map_src.items():
-        data = mapping_src.get_data_by_mapping_test(mapping_key)
+        data = mapping_src.get_data_by_mapping(mapping_key)
         values = [value for key, value in data.items() if value]
         if values and values[0] and mapping_key not in ignore_mapping:
             item_map_data_src[mapping_key] = values[0]
@@ -1340,7 +1340,7 @@ def build_record_model_for_wekoid(item_type_id, item_map_data):
     for k, v in properties.items():
         if k not in item_has_val:
             continue
-        res_temp = {k: [] if is_multiple(v) else {}}
+        res_temp = {k: [] if is_multiple_item(v) else {}}
         props = v.get('properties') or v.get('items', {}).get(
             'properties') or None
         if props:
@@ -1349,7 +1349,7 @@ def build_record_model_for_wekoid(item_type_id, item_map_data):
     return result
 
 
-def is_multiple(val):
+def is_multiple_item(val):
     """Check current item is multiple.
 
     @param val:
@@ -1382,7 +1382,7 @@ def get_record_model(res_temp, key, properties):
         temp_1 = {}
         for k, v in properties.items():
             if isinstance(v, dict):
-                temp_1[k] = [] if is_multiple(v) else {}
+                temp_1[k] = [] if is_multiple_item(v) else {}
                 props = v.get('properties') or v.get('items', {}).get(
                     'properties') or None
                 if props:
@@ -1391,7 +1391,7 @@ def get_record_model(res_temp, key, properties):
     if isinstance(temp, dict):
         for k, v in properties.items():
             if isinstance(v, dict):
-                temp[k] = [] if is_multiple(v) else {}
+                temp[k] = [] if is_multiple_item(v) else {}
                 props = v.get('properties') or v.get('items', {}).get(
                     'properties') or None
                 if props:
