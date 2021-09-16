@@ -425,6 +425,7 @@ def find_items(form):
                 'show_list': node.get('isShowList', False),
                 'specify_newline': node.get('isSpecifyNewline', False),
                 'hide': node.get('isHide', False),
+                'non_display': node.get('isNonDisplay', False)
             }
             val = ''
             if key:
@@ -1047,13 +1048,15 @@ def check_has_attribute_value(node):
 
 
 def get_attribute_value_all_items(
-        root_key, nlst, klst, is_author=False, hide_email_flag=True):
+        root_key, nlst, klst, is_author=False, hide_email_flag=True, non_display_flag=False):
     """Convert and sort item list.
 
     :param root_key:
     :param nlst:
     :param klst:
     :param is_author:
+    :param hide_email_flag:
+    :param non_display_flag:
     :return: alst
     """
     def get_name(key):
@@ -1080,7 +1083,9 @@ def get_attribute_value_all_items(
                     for lst in klst:
                         key = lst[0].split('.')[-1]
                         val = alst.pop(key, {})
-                        hide = lst[3].get('hide')
+                        hide = lst[3].get('hide') or \
+                            (non_display_flag and lst[3].get('non_display', False))
+
                         if key in ('creatorMail', 'contributorMail', 'mail'):
                             hide = hide | hide_email_flag
                         if val and (isinstance(val, str)
