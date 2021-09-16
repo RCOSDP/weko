@@ -1729,6 +1729,8 @@ def get_data_init():
 class ActivityActionResource(ContentNegotiatedMethodView):
     """Workflow Activity Resource."""
 
+    activity = WorkActivity()
+
     @require_api_auth()
     @require_oauth_scopes(activity_scope.id)
     def post(self):
@@ -1756,9 +1758,14 @@ class ActivityActionResource(ContentNegotiatedMethodView):
         if not post_activity:
             raise InvalidInputRESTError()
 
-        activity = WorkActivity.init_activity(post_activity)
-        if not activity or not activity.activity_id:
+        try:
+            activity = None
+            activity = self.activity.init_activity(post_activity)
+        except Exception:
             raise InvalidInputRESTError()
+        finally:
+            if not activity or not activity.activity_id:
+                raise InvalidInputRESTError()
 
         status = 200
         response = {
@@ -1787,7 +1794,7 @@ class ActivityActionResource(ContentNegotiatedMethodView):
         if not activity_id:
             raise ActivityBaseRESTError()
 
-        activity = WorkActivity.get_activity_by_id(activity_id)
+        activity = self.activity.get_activity_by_id(activity_id)
         if not activity:
             raise ActivityNotFoundRESTError()
 
@@ -1820,11 +1827,11 @@ class ActivityActionResource(ContentNegotiatedMethodView):
         if not activity_id:
             raise ActivityBaseRESTError()
 
-        activity = WorkActivity.get_activity_by_id(activity_id)
+        activity = self.activity.get_activity_by_id(activity_id)
         if not activity:
             raise RegisteredActivityNotFoundRESTError()
 
-        result = WorkActivity.quit_activity(activity)
+        result = self.activity.quit_activity(activity)
         if not result:
             raise DeleteActivityFailedRESTError()
 
