@@ -29,16 +29,18 @@ from functools import wraps
 
 import redis
 from flask import Blueprint, abort, current_app, has_request_context, \
-    jsonify, render_template, request, session, url_for
+    jsonify, make_response, render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_files_rest.utils import remove_file_cancel_action
+from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_rest import ContentNegotiatedMethodView
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
 from sqlalchemy.sql.expression import cast
@@ -57,7 +59,8 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
 from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
     get_workflows
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 
 from .api import Action, Flow, GetCommunity, WorkActivity, \
@@ -66,6 +69,7 @@ from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
 from .models import ActionStatusPolicy, Activity, ActivityAction, FlowAction
 from .romeo import search_romeo_issn, search_romeo_jtitles
+from .scopes import activity_scope
 from .utils import IdentifierHandle, auto_fill_title, \
     check_authority_by_admin, check_continue, check_doi_validation_not_pass, \
     check_existed_doi, create_onetime_download_url_to_guest, \
@@ -93,6 +97,13 @@ blueprint = Blueprint(
     template_folder='templates',
     static_folder='static',
     url_prefix='/workflow'
+)
+
+
+activity_blueprint = Blueprint(
+    'weko_activity_rest',
+    __name__,
+    url_prefix='/depositactivity',
 )
 
 
@@ -1707,3 +1718,29 @@ def get_data_init():
         init_workflows=init_workflows,
         init_roles=init_roles,
         init_terms=init_terms)
+
+class ActivityActionResource(ContentNegotiatedMethodView):
+    """Index create update delete view."""
+
+    view_name = 'workflow_activity_action'
+
+    @require_api_auth()
+    @require_oauth_scopes(activity_scope.id)
+    def post(self, **kwargs):
+        """Create a index."""
+        return make_response(jsonify({'message': 'activity_id'}), 200)
+
+    @require_api_auth()
+    @require_oauth_scopes(activity_scope.id)
+    def get(self, activity_id):
+        """Get a tree index record."""
+        return make_response(jsonify({'message': activity_id}), 200)
+
+
+activity_blueprint.add_url_rule(
+    '/<string:activity_id>',
+    view_func=ActivityActionResource.as_view(
+        ActivityActionResource.view_name,
+    ),
+    methods=['GET']
+)
