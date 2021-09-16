@@ -923,7 +923,8 @@ class WorkActivity(object):
                 db.session.merge(activity_action)
         db.session.commit()
 
-    def get_activity_action_comment(self, activity_id, action_id, action_order):
+    def get_activity_action_comment(
+            self, activity_id, action_id, action_order):
         """Get activity info.
 
         :param action_order:
@@ -1465,14 +1466,12 @@ class WorkActivity(object):
                         ),
                         and_(
                             _Activity.shared_user_id == self_user_id,
-                            _FlowActionRole.action_user !=
-                            _Activity.activity_login_user,
+                            _FlowActionRole.action_user != _Activity.activity_login_user,
                             _FlowActionRole.action_user_exclude == '0'
                         ),
                         and_(
                             _Activity.shared_user_id == self_user_id,
-                            ActivityAction.action_handler !=
-                            _Activity.activity_login_user
+                            ActivityAction.action_handler != _Activity.activity_login_user
                         ),
                     )
                 )
