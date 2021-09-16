@@ -67,6 +67,9 @@ from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, WEKO_WORKFLOW_TODO_TAB
+from .errors import ActivityBaseRESTError, ActivityNotFoundRESTError, \
+    DeleteActivityFailedRESTError, InvalidInputRESTError, \
+    RegisteredActivityNotFoundRESTError
 from .models import ActionStatusPolicy, Activity, ActivityAction, FlowAction
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .scopes import activity_scope
@@ -83,13 +86,13 @@ from .utils import IdentifierHandle, auto_fill_title, \
     get_workflow_item_type_names, handle_finish_workflow, \
     init_activity_for_guest_user, is_enable_item_name_link, \
     is_hidden_pubdate, is_show_autofill_metadata, \
-    is_usage_application_item_type, item_metadata_validation, \
-    prepare_data_for_guest_activity, prepare_doi_link_workflow, \
-    process_send_approval_mails, process_send_notification_mail, \
-    process_send_reminder_mail, register_hdl, save_activity_data, \
-    saving_doi_pidstore, send_usage_application_mail_for_guest_user, \
-    set_files_display_type, update_approval_date, update_cache_data, \
-    validate_guest_activity_expired, validate_guest_activity_token
+    is_usage_application_item_type, prepare_data_for_guest_activity, \
+    prepare_doi_link_workflow, process_send_approval_mails, \
+    process_send_notification_mail, process_send_reminder_mail, register_hdl, \
+    save_activity_data, saving_doi_pidstore, \
+    send_usage_application_mail_for_guest_user, set_files_display_type, \
+    update_approval_date, update_cache_data, validate_guest_activity_expired, \
+    validate_guest_activity_token
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -1342,7 +1345,8 @@ def cancel_action(activity_id='0', action_id=0):
                             cancel_record, cancel_record.model)
 
                         # Remove file and update size location.
-                        if cancel_deposit.files and cancel_deposit.files.bucket:
+                        if cancel_deposit.files and \
+                                cancel_deposit.files.bucket:
                             remove_file_cancel_action(
                                 cancel_deposit.files.bucket.id)
 
@@ -1358,8 +1362,10 @@ def cancel_action(activity_id='0', action_id=0):
                             cancel_pv.remove_child(cancel_pid)
                             # rollback parent info
                             cancel_pv.parent.status = parent_pid.status
-                            cancel_pv.parent.object_type = parent_pid.object_type
-                            cancel_pv.parent.object_uuid = parent_pid.object_uuid
+                            cancel_pv.parent.object_type = \
+                                parent_pid.object_type
+                            cancel_pv.parent.object_uuid = \
+                                parent_pid.object_uuid
                 db.session.commit()
             except Exception:
                 db.session.rollback()
@@ -1510,7 +1516,7 @@ def save_feedback_maillist(activity_id='0', action_id='0'):
             feedback_maillist=feedback_maillist
         )
         return jsonify(code=0, msg=_('Success'))
-    except (ValueError, Exception):
+    except Exception:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error'))
 
@@ -1545,7 +1551,7 @@ def get_feedback_maillist(activity_id='0'):
                            data=mail_list)
         else:
             return jsonify(code=0, msg=_('Empty!'))
-    except (ValueError, Exception):
+    except Exception:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error'))
 
@@ -1630,7 +1636,7 @@ def check_approval(activity_id='0'):
     }
     try:
         response = check_continue(response, activity_id)
-    except (ValueError, Exception):
+    except Exception:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         response['error'] = -1
     return jsonify(response)
@@ -1719,28 +1725,127 @@ def get_data_init():
         init_roles=init_roles,
         init_terms=init_terms)
 
-class ActivityActionResource(ContentNegotiatedMethodView):
-    """Index create update delete view."""
 
-    view_name = 'workflow_activity_action'
+class ActivityActionResource(ContentNegotiatedMethodView):
+    """Workflow Activity Resource."""
 
     @require_api_auth()
     @require_oauth_scopes(activity_scope.id)
-    def post(self, **kwargs):
-        """Create a index."""
-        return make_response(jsonify({'message': 'activity_id'}), 200)
+    def post(self):
+        """Handle POST activity action.
+
+        Raises:
+            InvalidInputRESTError: [description]
+            InvalidInputRESTError: [description]
+            InvalidInputRESTError: [description]
+
+        Returns:
+            [type]: [description]
+
+        """
+        data = request.get_json(force=False)
+        if not data:
+            raise InvalidInputRESTError()
+
+        # Required arg for new activity
+        post_activity = {
+            'flow_id': None,
+            'itemtype_id': None,
+            'workflow_id': None
+        }
+        if not post_activity:
+            raise InvalidInputRESTError()
+
+        activity = WorkActivity.init_activity(post_activity)
+        if not activity or not activity.activity_id:
+            raise InvalidInputRESTError()
+
+        status = 200
+        response = {
+            "activityId": "A-20210903-00000",
+            "email": "wekosoftware@nii.ac.jp",
+            "status": "Done"
+        }
+        return make_response(jsonify(response), status)
 
     @require_api_auth()
     @require_oauth_scopes(activity_scope.id)
     def get(self, activity_id):
-        """Get a tree index record."""
-        return make_response(jsonify({'message': activity_id}), 200)
+        """Handle GET activity action.
+
+        Args:
+            activity_id ([type]): [description]
+
+        Raises:
+            ActivityBaseRESTError: [description]
+            ActivityNotFoundRESTError: [description]
+
+        Returns:
+            [type]: [description]
+
+        """
+        if not activity_id:
+            raise ActivityBaseRESTError()
+
+        activity = WorkActivity.get_activity_by_id(activity_id)
+        if not activity:
+            raise ActivityNotFoundRESTError()
+
+        status = 200
+        response = {
+            "activityId": "A-20210903-00000",
+            "email": "wekosoftware@nii.ac.jp",
+            "status": "Done"
+        }
+        return make_response(jsonify(response), status)
+
+    @require_api_auth()
+    @require_oauth_scopes(activity_scope.id)
+    def delete(self, activity_id):
+        """Handle DELETE activity action.
+
+        This will cancel selected activity.
+        Args:
+            activity_id ([type]): [description]
+
+        Raises:
+            ActivityBaseRESTError: [description]
+            RegisteredActivityNotFoundRESTError: [description]
+            DeleteActivityFailedRESTError: [description]
+
+        Returns:
+            [type]: [description]
+
+        """
+        if not activity_id:
+            raise ActivityBaseRESTError()
+
+        activity = WorkActivity.get_activity_by_id(activity_id)
+        if not activity:
+            raise RegisteredActivityNotFoundRESTError()
+
+        result = WorkActivity.quit_activity(activity)
+        if not result:
+            raise DeleteActivityFailedRESTError()
+
+        status = 200
+        message = '登録アクティビティを削除'
+        return make_response(message, status)
 
 
 activity_blueprint.add_url_rule(
     '/<string:activity_id>',
     view_func=ActivityActionResource.as_view(
-        ActivityActionResource.view_name,
+        'workflow_activity_action'
     ),
-    methods=['GET']
+    methods=['GET', 'DELETE']
+)
+
+
+activity_blueprint.add_url_rule(
+    '',
+    view_func=ActivityActionResource.as_view(
+        'workflow_activity_new'
+    ),
+    methods=['POST']
 )

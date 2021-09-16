@@ -28,10 +28,10 @@ from invenio_rest.errors import RESTException
 
 
 class ActivityBaseRESTError(RESTException):
-    """Invalid request body."""
+    """Invalid argument."""
 
     code = 400
-    description = _('Invalid request body.')
+    description = _('Invalid ID supplied.')
 
 
 class InvalidInputRESTError(RESTException):
@@ -40,3 +40,23 @@ class InvalidInputRESTError(RESTException):
     code = 405
     description = _('Invalid input.')
 
+
+class ActivityNotFoundRESTError(RESTException):
+    """Can't get Activity detail by ID."""
+
+    code = 404
+    description = _('指定されたIDによる登録アクティビティが存在しない。')
+
+
+class RegisteredActivityNotFoundRESTError(RESTException):
+    """Can't get Registered Activity by ID."""
+
+    code = 404
+    description = _('登録アクティビティが見つからない。')
+
+
+class DeleteActivityFailedRESTError(RESTException):
+    """Can't finish Delete Activity process."""
+
+    code = 404
+    description = _('登録アクティビティを削除エラー。')
