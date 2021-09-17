@@ -1,23 +1,5 @@
 #!/bin/bash
 
-
-# head -n 5 item_type.tsv > header.tsv
-# head -n 6 item.tsv |tail -n1|gsed 's/\t/\\t/g'|pbcopy
-
-
-if [ $# -ne 3 ]; then
-  echo "import.zip generator"
-  echo "USAGE: $0 NUMBER_OF_ITEMS FILE_SIZE_KB .POS_INDEX[0](NAME OR RND OR SEQ)" 1>&2
-  echo "EXAMPLE: $0 100 1000 RND" 1>&2
-
-  exit 1
-fi
-
-ITEM_OFFSET=$1
-N=$2
-KB=$3
-WAY=$4
-
 # parameter
 ITEM_OFFSET=1
 N=258
