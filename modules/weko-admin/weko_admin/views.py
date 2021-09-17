@@ -23,6 +23,7 @@
 import calendar
 import json
 import sys
+import time
 from datetime import timedelta
 
 from flask import Blueprint, Response, abort, current_app, flash, json, \
@@ -38,11 +39,10 @@ from weko_accounts.utils import roles_required
 from weko_records.models import SiteLicenseInfo
 from werkzeug.local import LocalProxy
 
-from weko_admin.config import WEKO_ADMIN_PERMISSION_ROLE_REPO, \
-    WEKO_ADMIN_PERMISSION_ROLE_SYSTEM
-
 from .api import send_site_license_mail
-from .models import FacetSearchSetting, SessionLifetime, SiteInfo
+from .config import WEKO_ADMIN_PERMISSION_ROLE_REPO, \
+    WEKO_ADMIN_PERMISSION_ROLE_SYSTEM
+from .models import AdminSettings, FacetSearchSetting, SessionLifetime, SiteInfo
 from .utils import FeedbackMail, StatisticMail, UsageReport, \
     format_site_info_data, get_admin_lang_setting, \
     get_api_certification_type, get_current_api_certification, \
@@ -491,12 +491,16 @@ def update_site_info():
 
     """
     site_info = request.get_json()
-    format_data = format_site_info_data(site_info)
+    format_data, google_tracking_id_user, addthis_user_id = format_site_info_data(
+        site_info)
     validate = validation_site_info(format_data)
     if validate.get('error'):
         return jsonify(validate)
     else:
         SiteInfo.update(format_data)
+        AdminSettings.update('google_tracking_id_settings',
+                             google_tracking_id_user)
+        AdminSettings.update('addthis_user_id_settings', addthis_user_id)
         return jsonify(format_data)
 
 
@@ -519,6 +523,24 @@ def get_site_info():
     result['favicon_name'] = site_info.favicon_name
     result['site_name'] = site_info.site_name
     result['notify'] = site_info.notify
+    if site_info.ogp_image:
+        ts = time.time()
+        result['ogp_image'] = request.host_url + 'api/admin/ogp_image?timestamp=' + str(ts)
+    result['ogp_image_name'] = site_info.ogp_image_name
+    result['google_tracking_id_user'] = ''
+    result['addthis_user_id'] = ''
+    google_tracking_id_user = AdminSettings.get(
+        name='google_tracking_id_settings',
+        dict_to_object=False)
+    if google_tracking_id_user:
+        result['google_tracking_id_user'] = google_tracking_id_user.get(
+            'GOOGLE_TRACKING_ID_USER', '')
+    addthis_user_id = AdminSettings.get(name='addthis_user_id_settings',
+                                        dict_to_object=False)
+    if addthis_user_id:
+        result['addthis_user_id'] = addthis_user_id.get(
+            'ADDTHIS_USER_ID', '')
+
     return jsonify(result)
 
 
@@ -541,6 +563,28 @@ def get_avatar():
     b = io.BytesIO(favicon)
     w = FileWrapper(b)
     return Response(b, mimetype="image/x-icon", direct_passthrough=True)
+
+
+@blueprint_api.route('/ogp_image', methods=['GET'])
+def get_ogp_image():
+    """Get ogp image.
+
+    :return: result
+
+    """
+    from invenio_files_rest.models import FileInstance
+
+    site_info = SiteInfo.get()
+    if not site_info and site_info.ogp_image and site_info.ogp_image_name:
+        return jsonify({})
+    file_instance = FileInstance.get_by_uri(site_info.ogp_image)
+    if not file_instance:
+        return jsonify({})
+    return file_instance.send_file(
+        site_info.ogp_image_name,
+        mimetype='application/octet-stream',
+        as_attachment=True
+    )
 
 
 @blueprint_api.route('/search/init_display_index/<string:selected_index>',

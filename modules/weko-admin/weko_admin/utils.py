@@ -1592,7 +1592,13 @@ def format_site_info_data(site_info):
     result['favicon'] = site_info.get('favicon')
     result['favicon_name'] = site_info.get('favicon_name')
     result['notify'] = notify
-    return result
+    result['ogp_image'] = site_info.get('ogp_image')
+    result['ogp_image_name'] = site_info.get('ogp_image_name')
+    google_tracking_id_user = {
+        "GOOGLE_TRACKING_ID_USER": site_info.get("google_tracking_id_user", "").strip()}
+    addthis_user_id = {
+        "ADDTHIS_USER_ID": site_info.get("addthis_user_id", "").strip()}
+    return result, google_tracking_id_user, addthis_user_id
 
 
 def get_site_name_for_current_language(site_name):

@@ -22,7 +22,7 @@
 
 from datetime import datetime
 
-from flask import current_app, escape
+from flask import current_app, escape, request
 from invenio_db import db
 from sqlalchemy import Sequence, asc
 from sqlalchemy.dialects import postgresql
@@ -1339,6 +1339,17 @@ class SiteInfo(db.Model):
     )
     """notify."""
 
+    ogp_image = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    ogp_image_name = db.Column(
+        db.Text,
+        nullable=True
+    )
+    """url of ogp image file."""
+
     @classmethod
     def get(cls):
         """Get site infomation."""
@@ -1355,6 +1366,7 @@ class SiteInfo(db.Model):
     @classmethod
     def update(cls, site_info):
         """Update/Create settings."""
+        from invenio_files_rest.utils import update_ogp_image
         try:
             with db.session.begin_nested():
                 new_site_info_flag = False
@@ -1387,7 +1399,17 @@ class SiteInfo(db.Model):
                     "favicon_name").strip())
                 query_object.site_name = site_name
                 query_object.notify = notify
-
+                if escape(site_info.get(
+                    "ogp_image").strip()) and request.url_root not in escape(
+                    site_info.get("ogp_image").strip()) and escape(
+                        site_info.get("ogp_image_name").strip()):
+                    query_object.ogp_image = escape(
+                        site_info.get("ogp_image").strip())
+                    query_object.ogp_image_name = escape(
+                        site_info.get("ogp_image_name").strip())
+                    url_ogp_image = update_ogp_image(query_object.ogp_image)
+                    if url_ogp_image:
+                        query_object.ogp_image = url_ogp_image
                 if new_site_info_flag:
                     db.session.add(query_object)
                 else:

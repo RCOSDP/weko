@@ -7,8 +7,9 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """Implementation of various utility functions."""
-
+import base64
 import mimetypes
+import tempfile
 
 import six
 import sqlalchemy as sa
@@ -134,3 +135,16 @@ def find_and_update_location_size():
                 loc = db.session.query(Location).filter(
                     Location.id == row[0]).one()
                 loc.size = row[1]
+
+
+def update_ogp_image(ogp_image):
+    """Update ogp image in FileInstances."""
+    temp_file = tempfile.NamedTemporaryFile(delete=False)
+    file_content = ogp_image.split(',')[-1]
+    temp_file.write(base64.b64decode(file_content))
+    temp_file.flush()
+    with open(temp_file.name, 'rb') as file:
+        src = FileInstance.create()
+        src.set_contents(file, default_location=Location.get_default().uri)
+
+    return src.uri if src else None
