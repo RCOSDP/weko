@@ -23,6 +23,7 @@ from __future__ import absolute_import, print_function
 
 import json
 import signal
+import traceback
 from ast import literal_eval as make_tuple
 from collections import OrderedDict
 from datetime import datetime
@@ -435,8 +436,7 @@ def run_harvesting(id, start_time, user_data):
                 try:
                     process_item(record, harvesting, counter)
                 except Exception as ex:
-                    import traceback
-                    current_app.logger.error(traceback.format_exc())
+                    current_app.logger.debug(traceback.format_exc())
                     current_app.logger.error(
                         'Error occurred while processing harvesting item\n' + str(ex))
                     db.session.rollback()

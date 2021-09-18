@@ -84,7 +84,8 @@ def get_records(**kwargs):
             Index.public_date > datetime.now(),
             Index.harvest_public_state.is_(True)
         )
-        indexes = query.all() or []
+        indexes = []
+        indexes = query.yield_per(1000)
         index_ids = [index.id for index in indexes]
         return index_ids
 

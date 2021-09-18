@@ -501,8 +501,7 @@ def check_import_items(file_name: str, file_content: str,
         handle_check_and_prepare_publish_status(list_record)
         handle_check_and_prepare_index_tree(list_record)
         handle_check_and_prepare_feedback_mail(list_record)
-        handle_set_change_identifier_flag(
-            list_record, is_change_identifier)
+        handle_set_change_identifier_flag(list_record, is_change_identifier)
         handle_check_cnri(list_record)
         handle_check_doi_indexes(list_record)
         handle_check_file_metadata(list_record, data_path)
@@ -1107,6 +1106,21 @@ def register_item_metadata(item, root_path):
 
     # check location file
     find_and_update_location_size()
+
+    # Clean item metadata
+    if item['status'] != 'new':
+        item_type = ItemTypes.get_by_id(
+            id_=item.get('item_type_id', 0),
+            with_deleted=True).render
+        for metadata_id in item_type['table_row']:
+            # ignore Identifier Regstration (Import hasn't withdraw DOI)
+            if metadata_id == item.get('identifier_key', ''):
+                continue
+            if metadata_id not in new_data \
+                    and metadata_id in deposit.item_metadata:
+                deleted_items = new_data.get('deleted_items') or []
+                deleted_items.append(metadata_id)
+                new_data['deleted_items'] = deleted_items
 
     deposit.update(item_status, new_data)
     deposit.commit()
@@ -2341,9 +2355,10 @@ def handle_fill_system_item(list_record):
         identifierRegistration_key = item_map.get(
             "identifierRegistration.@attributes.identifierType", '')
         identifierRegistration_key = identifierRegistration_key.split('.')[0]
-        if identifierRegistration_key \
-                and item['metadata'].get(identifierRegistration_key):
-            del item['metadata'][identifierRegistration_key]
+        if identifierRegistration_key:
+            item['identifier_key'] = identifierRegistration_key
+            if identifierRegistration_key in item['metadata']:
+                del item['metadata'][identifierRegistration_key]
 
 
 def get_thumbnail_key(item_type_id=0):
