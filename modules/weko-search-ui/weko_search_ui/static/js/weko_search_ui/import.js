@@ -187,8 +187,7 @@ class MainLayout extends React.Component {
           that.setState(() => {
             return {
               list_record: response.list_record,
-              root_path: response.data_path,
-              remove_temp_dir_task_id: response.remove_temp_dir_task_id,
+              data_path: response.data_path,
               is_import,
               step: step.IMPORT_STEP
             }
@@ -235,7 +234,7 @@ class MainLayout extends React.Component {
   }
 
   handleImport() {
-    const { list_record, root_path, is_import, remove_temp_dir_task_id } = this.state;
+    const { list_record, data_path, is_import } = this.state;
     const that = this;
     if (is_import || !this.handleCheckImportAvailable()) {
       return;
@@ -248,8 +247,7 @@ class MainLayout extends React.Component {
       type: 'POST',
       data: JSON.stringify({
         list_record: list_record.filter(item => !item.errors),
-        root_path,
-        remove_temp_dir_task_id
+        data_path
       }),
       contentType: "application/json; charset=utf-8",
       dataType: "json",
@@ -275,13 +273,12 @@ class MainLayout extends React.Component {
 
   getStatus() {
     const that = this
-    const { tasks, root_path } = this.state
+    const { tasks } = this.state
     $.ajax({
       url: urlCheckStatus,
       method: 'POST',
       data: JSON.stringify({
-        tasks,
-        root_path
+        tasks
       }),
       contentType: "application/json; charset=utf-8",
       dataType: "json",
