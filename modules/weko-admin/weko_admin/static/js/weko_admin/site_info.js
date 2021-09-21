@@ -581,7 +581,6 @@ class MainLayout extends React.Component {
                      />
                   </div>
                 </div>
-
                 <div className={`row form-group ${errors[`google_tracking_id_user`] && "has-error"}`}>
                   <div className="col-md-2 text-right">
                     <label>{google_tracking_id_user_label}</label>
@@ -635,11 +634,11 @@ class MainLayout extends React.Component {
                                       onClick={()=> {
                                           this.refs.input.click()
                                       }}
-                              >{select_file_name_label}</button>
+                              >{selected_file_label}</button>
                           </div>
                       </div>
                       <div className="row">
-                          <div className="col-md-9"><p style={{ wordBreak: 'break-all'}}>{ogp_image_name ? ogp_image_name: ogp_image ? ogp_image : selected_file_label}</p></div>
+                          <div className="col-md-9"><p style={{ wordBreak: 'break-all'}}>{ogp_image_name ? ogp_image_name: ogp_image ? ogp_image : select_file_name_label}</p></div>
                           <div className="col-md-3">
                               {
                                 ogp_image && <img src={ogp_image} alt="ogp_image" className="img-response" style={{ maxWidth: "50px", maxHeight: "50px"}}/>

@@ -137,14 +137,20 @@ def find_and_update_location_size():
                 loc.size = row[1]
 
 
-def update_ogp_image(ogp_image):
+def update_ogp_image(ogp_image, file_uri):
     """Update ogp image in FileInstances."""
     temp_file = tempfile.NamedTemporaryFile(delete=False)
-    file_content = ogp_image.split(',')[-1]
+    base64_files = ogp_image.split(',')
+    file_content = base64_files[-1] if len(base64_files) >= 2 else ''
     temp_file.write(base64.b64decode(file_content))
     temp_file.flush()
     with open(temp_file.name, 'rb') as file:
-        src = FileInstance.create()
-        src.set_contents(file, default_location=Location.get_default().uri)
+        if not file_uri:
+            src = FileInstance.create()
+            src.set_contents(file, default_location=Location.get_default().uri)
+        else:
+            src = FileInstance.get_by_uri(file_uri)
+            src.writable = True
+            src.set_contents(file)
 
     return src.uri if src else None

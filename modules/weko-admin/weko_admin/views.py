@@ -42,7 +42,7 @@ from werkzeug.local import LocalProxy
 from .api import send_site_license_mail
 from .config import WEKO_ADMIN_PERMISSION_ROLE_REPO, \
     WEKO_ADMIN_PERMISSION_ROLE_SYSTEM
-from .models import AdminSettings, FacetSearchSetting, SessionLifetime, SiteInfo
+from .models import FacetSearchSetting, SessionLifetime, SiteInfo
 from .utils import FeedbackMail, StatisticMail, UsageReport, \
     format_site_info_data, get_admin_lang_setting, \
     get_api_certification_type, get_current_api_certification, \
@@ -491,16 +491,12 @@ def update_site_info():
 
     """
     site_info = request.get_json()
-    format_data, google_tracking_id_user, addthis_user_id = format_site_info_data(
-        site_info)
+    format_data = format_site_info_data(site_info)
     validate = validation_site_info(format_data)
     if validate.get('error'):
         return jsonify(validate)
     else:
         SiteInfo.update(format_data)
-        AdminSettings.update('google_tracking_id_settings',
-                             google_tracking_id_user)
-        AdminSettings.update('addthis_user_id_settings', addthis_user_id)
         return jsonify(format_data)
 
 
@@ -515,7 +511,13 @@ def get_site_info():
     site_info = SiteInfo.get()
     result = dict()
     if not site_info:
-        return jsonify({})
+        try:
+            result['google_tracking_id_user'] = current_app.config[
+                'GOOGLE_TRACKING_ID_USER']
+            result['addthis_user_id'] = current_app.config['ADDTHIS_USER_ID']
+            return jsonify(result)
+        except BaseException:
+            return jsonify({})
     result['copy_right'] = site_info.copy_right
     result['description'] = site_info.description
     result['keyword'] = site_info.keyword
@@ -523,24 +525,20 @@ def get_site_info():
     result['favicon_name'] = site_info.favicon_name
     result['site_name'] = site_info.site_name
     result['notify'] = site_info.notify
-    if site_info.ogp_image:
+    try:
+        result['google_tracking_id_user'] = site_info.google_tracking_id_user \
+            if site_info.google_tracking_id_user \
+            else current_app.config['GOOGLE_TRACKING_ID_USER']
+        result['addthis_user_id'] = site_info.addthis_user_id if \
+            site_info.addthis_user_id else current_app.config['ADDTHIS_USER_ID']
+    except BaseException:
+        result['google_tracking_id_user'] = ""
+        result['addthis_user_id'] = ""
+    if site_info.ogp_image and site_info.ogp_image_name:
         ts = time.time()
-        result['ogp_image'] = request.host_url + 'api/admin/ogp_image?timestamp=' + str(ts)
-    result['ogp_image_name'] = site_info.ogp_image_name
-    result['google_tracking_id_user'] = ''
-    result['addthis_user_id'] = ''
-    google_tracking_id_user = AdminSettings.get(
-        name='google_tracking_id_settings',
-        dict_to_object=False)
-    if google_tracking_id_user:
-        result['google_tracking_id_user'] = google_tracking_id_user.get(
-            'GOOGLE_TRACKING_ID_USER', '')
-    addthis_user_id = AdminSettings.get(name='addthis_user_id_settings',
-                                        dict_to_object=False)
-    if addthis_user_id:
-        result['addthis_user_id'] = addthis_user_id.get(
-            'ADDTHIS_USER_ID', '')
-
+        result['ogp_image'] = request.host_url + \
+            'api/admin/ogp_image?timestamp=' + str(ts)
+        result['ogp_image_name'] = site_info.ogp_image_name
     return jsonify(result)
 
 

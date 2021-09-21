@@ -1339,6 +1339,18 @@ class SiteInfo(db.Model):
     )
     """notify."""
 
+    google_tracking_id_user = db.Column(
+        db.Text,
+        nullable=True
+    )
+    """tracking id."""
+
+    addthis_user_id = db.Column(
+        db.Text,
+        nullable=True
+    )
+    """add this id."""
+
     ogp_image = db.Column(
         db.Text,
         nullable=True
@@ -1399,17 +1411,18 @@ class SiteInfo(db.Model):
                     "favicon_name").strip())
                 query_object.site_name = site_name
                 query_object.notify = notify
-                if escape(site_info.get(
-                    "ogp_image").strip()) and request.url_root not in escape(
-                    site_info.get("ogp_image").strip()) and escape(
-                        site_info.get("ogp_image_name").strip()):
-                    query_object.ogp_image = escape(
-                        site_info.get("ogp_image").strip())
-                    query_object.ogp_image_name = escape(
-                        site_info.get("ogp_image_name").strip())
-                    url_ogp_image = update_ogp_image(query_object.ogp_image)
+                query_object.google_tracking_id_user = escape(site_info.get(
+                    "google_tracking_id_user").strip())
+                query_object.addthis_user_id = escape(site_info.get(
+                    "addthis_user_id").strip())
+                ogp_image_data = site_info.get("ogp_image").strip()
+                if ogp_image_data and request.url_root not in ogp_image_data:
+                    url_ogp_image = update_ogp_image(ogp_image_data,
+                                                     query_object.ogp_image)
                     if url_ogp_image:
                         query_object.ogp_image = url_ogp_image
+                        query_object.ogp_image_name = escape(
+                            site_info.get("ogp_image_name").strip())
                 if new_site_info_flag:
                     db.session.add(query_object)
                 else:
