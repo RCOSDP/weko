@@ -1813,8 +1813,9 @@ class _FormatSysCreator:
             if len(lst_value) > 0:
                 for i in range(len(lst_value)):
                     if lst_value[i] and lst_value[i].get(lang_key) == language:
-                        lst.append(lst_value[i][name_key])
-                        break
+                        if name_key in lst_value[i]:
+                            lst.append(lst_value[i][name_key])
+                            break
 
     def _get_creator_to_show_popup(self, creators: Union[list, dict],
                                    language: any,

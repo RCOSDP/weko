@@ -66,6 +66,7 @@ target/
 
 # Vagrant
 .vagrant
+.DS_Store
 
 # backup
 scripts/demo/contents/

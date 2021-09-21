@@ -13,6 +13,7 @@ from datetime import MINYEAR, datetime, timedelta
 
 from flask import current_app, request, url_for
 from flask_babelex import get_locale, to_user_timezone, to_utc
+from invenio_communities import config as invenio_communities_config
 from invenio_db import db
 from invenio_records.models import RecordMetadata
 from lxml import etree
@@ -275,13 +276,25 @@ def header(parent, identifier, datestamp, sets=[], deleted=False):
     e_identifier.text = identifier
     e_datestamp = SubElement(e_header, etree.QName(NS_OAIPMH, 'datestamp'))
     e_datestamp.text = datetime_to_datestamp(datestamp)
-    if not sets:
-        sets = []
-    paths = Indexes.get_path_name(sets)
-    for path in paths:
-        if path.public_state and path.harvest_public_state:
+    if sets:
+        _paths = []
+        _sets = []
+        for set in sets:
+            if invenio_communities_config.COMMUNITIES_OAI_FORMAT.replace("{community_id}", "") in set:
+                _sets.append(set)
+            else:
+                _paths.append(set)
+
+        paths = Indexes.get_path_name(_paths)
+        for path in paths:
+            if path.public_state and path.harvest_public_state:
+                e = SubElement(e_header, etree.QName(NS_OAIPMH, 'setSpec'))
+                e.text = path.path.replace('/', ':')
+
+        for set in _sets:
             e = SubElement(e_header, etree.QName(NS_OAIPMH, 'setSpec'))
-            e.text = path.path.replace('/', ':')
+            e.text = set
+
     return e_header
 
 
@@ -395,11 +408,13 @@ def getrecord(**kwargs):
         )
         return e_tree
 
+    _sets = record.get('path', [])
+    _sets = record['_oai'].get('sets', [])
     header(
         e_record,
         identifier=pid.pid_value,
         datestamp=record.updated,
-        sets=record.get('path', [])
+        sets=_sets
     )
     e_metadata = SubElement(e_record,
                             etree.QName(NS_OAIPMH, 'metadata'))
@@ -457,11 +472,13 @@ def listidentifiers(**kwargs):
                 deleted=True
             )
         else:
+            _sets = r['json']['_source'].get('path', [])
+            _sets = record['json']['_source']['_oai'].get('sets', [])
             header(
                 e_listidentifiers,
                 identifier=pid.pid_value,
                 datestamp=r['updated'],
-                sets=r['json']['_source'].get('path', [])
+                sets=_sets
             )
 
     resumption_token(e_listidentifiers, result, **kwargs)
@@ -524,11 +541,13 @@ def listrecords(**kwargs):
                 continue
             e_record = SubElement(
                 e_listrecords, etree.QName(NS_OAIPMH, 'record'))
+            _sets = record['json']['_source'].get('path', [])
+            _sets = record['json']['_source']['_oai'].get('sets', [])
             header(
                 e_record,
                 identifier=pid.pid_value,
                 datestamp=record['updated'],
-                sets=record['json']['_source'].get('path', [])
+                sets=_sets
             )
             e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
                                                           'metadata'))
