@@ -10,6 +10,7 @@ const description_label = document.getElementById("description_label").value;
 const keyword_label = document.getElementById("keyword_label").value;
 const notify_label = document.getElementById("notify_label").value;
 const selected_icon_label = document.getElementById("selected_icon_label").value;
+const selected_file_label = document.getElementById("selected_file_label").value;
 const add_site_name_label = document.getElementById("add_site_name_label").value;
 const add_notify_label = document.getElementById("add_notify_label").value;
 const site_name_not_set_label = document.getElementById("site_name_not_set_label").value;
@@ -25,7 +26,11 @@ const error_when_get_site_infomation_label = document.getElementById("error_when
 const language_not_match_label = document.getElementById("language_not_match_label").value;
 const delete_label = document.getElementById("delete_label").value;
 const select_icon_file_label = document.getElementById("select_icon_file_label").value;
+const select_file_name_label = document.getElementById("select_file_name_label").value;
 const success_mess = document.getElementById("success_mess").value;
+const google_tracking_id_user_label = document.getElementById("google_tracking_id_user_label").value;
+const addthis_user_id_label = document.getElementById("addthis_user_id_label").value;
+const ogp_image_label = document.getElementById("ogp_image_label").value;
 const lang_code_ja = 'ja'
 class MainLayout extends React.Component {
 
@@ -39,6 +44,10 @@ class MainLayout extends React.Component {
            description: "",
            favicon_name: "",
            favicon: "",
+           google_tracking_id_user: "",
+           addthis_user_id: "",
+           ogp_image: "",
+           ogp_image_name: "",
            notify: [],
            errors: [],
            show_alert: false,
@@ -56,7 +65,8 @@ class MainLayout extends React.Component {
         this.isEnableAddSiteName = this.isEnableAddSiteName.bind(this)
         this.isEnableAddNotify = this.isEnableAddNotify.bind(this);
         this.handleValidation = this.handleValidation.bind(this)
-        this.handleChangeFavicon = this.handleChangeFavicon.bind(this)
+        this.handleChangeFavicon = this.handleChangeFavicon.bind(this);
+        this.handleChangeOGPImage = this.handleChangeOGPImage.bind(this);
         this.getLastString = this.getLastString.bind(this)
         this.handle_focus_error = this.handle_focus_error.bind(this)
         this.handleDimiss = this.handleDimiss.bind(this)
@@ -178,7 +188,7 @@ class MainLayout extends React.Component {
     }
 
     handleSave() {
-      const { site_name, copy_right, keyword, description, favicon_name, favicon, notify } = this.state
+      const { site_name, copy_right, keyword, description, favicon_name, favicon, notify, google_tracking_id_user, addthis_user_id, ogp_image, ogp_image_name } = this.state
       const validate = this.handleValidation()
       console.log("validate", validate)
       if (validate.status) {
@@ -199,10 +209,14 @@ class MainLayout extends React.Component {
           data: JSON.stringify({
             site_name: new_site_name,
             copy_right: copy_right,
+            google_tracking_id_user: google_tracking_id_user,
+            addthis_user_id: addthis_user_id,
             keyword: keyword,
             description: description,
             favicon_name: favicon_name,
             favicon: favicon,
+            ogp_image_name: ogp_image_name,
+            ogp_image: ogp_image,
             notify: new_notify
           }),
           success: function (result) {
@@ -362,6 +376,29 @@ class MainLayout extends React.Component {
         reader.readAsDataURL(file);
     }
 
+  handleChangeOGPImage(e) {
+      const list_validation = ['JPG', 'PNG', 'WEBP', 'GIF', 'jpg', 'png', 'webp', 'gif']
+      const file = e.target.files[0],
+        pattern = /image-*/,
+        reader = new FileReader();
+      const ogp_image_name = this.getLastString(e.target.value, "\\")
+      if (list_validation.indexOf(this.getLastString(ogp_image_name,".")) < 0) {
+        return false
+      }
+
+      this.setState({
+        ogp_image_name:ogp_image_name
+      });
+
+      reader.onload = (e) => {
+        this.setState({
+          ogp_image: reader.result,
+        });
+      }
+
+      reader.readAsDataURL(file);
+    }
+
     getLastString(path, code){
         const split_path = path.split(code)
         return split_path.pop()
@@ -385,7 +422,7 @@ class MainLayout extends React.Component {
       })
     }
     render() {
-        const {errors,site_name,list_lang_register,copy_right,description,keyword, favicon,favicon_name,success, show_alert, list_error, notify} = this.state
+        const {errors,site_name,list_lang_register,copy_right,description,keyword, favicon,favicon_name,success, show_alert, list_error, notify, google_tracking_id_user, addthis_user_id, ogp_image, ogp_image_name} = this.state
         return (
             <div className="site_info row">
             {
@@ -469,7 +506,7 @@ class MainLayout extends React.Component {
                     <div className="row"  style={{marginBottom: "10px"}}>
                       <div className="col-md-6" >
                        <input
-                        ref="input"
+                        ref="icon"
                         type="file"
                         className="input-favicon"
                         id="favicon"
@@ -478,7 +515,7 @@ class MainLayout extends React.Component {
                         />
                        <button className="btn btn-primary"
                         onClick={()=> {
-                          this.refs.input.click()
+                          this.refs.icon.click()
                         }}
                        >{select_icon_file_label}</button>
                       </div>
@@ -544,6 +581,72 @@ class MainLayout extends React.Component {
                      />
                   </div>
                 </div>
+                <div className={`row form-group ${errors[`google_tracking_id_user`] && "has-error"}`}>
+                  <div className="col-md-2 text-right">
+                    <label>{google_tracking_id_user_label}</label>
+                  </div>
+                  <div className="col-md-6">
+                    <input
+                    type="text"
+                    className="form-control"
+                    id="google_tracking_id_user"
+                    value={google_tracking_id_user}
+                    onChange={(e)=> {
+                          this.handleChange('google_tracking_id_user', e.target.value)
+                        }}
+                    />
+                  </div>
+                </div>
+
+                <div className={`row form-group ${errors[`addthis_user_id`] && "has-error"}`}>
+                  <div className="col-md-2 text-right">
+                    <label>{addthis_user_id_label}</label>
+                  </div>
+                  <div className="col-md-6">
+                    <input
+                    type="text"
+                    className="form-control"
+                    id="addthis_user_id"
+                    value={addthis_user_id}
+                    onChange={(e)=> {
+                          this.handleChange('addthis_user_id', e.target.value)
+                        }}
+                    />
+                  </div>
+                </div>
+
+              <div className={`row form-group ${errors[`ogp_image`] && "has-error"}`}>
+                  <div className="col-md-2 text-right">
+                      <label>{ogp_image_label}</label>
+                  </div>
+                  <div className="col-md-6" >
+                      <div className="row"  style={{marginBottom: "10px"}}>
+                          <div className="col-md-6" >
+                              <input
+                                  ref="input"
+                                  type="file"
+                                  className="input-favicon"
+                                  id="ogp_image"
+                                  accept="image/png, image/gif, image/jpeg, image/webp"
+                                  onChange={this.handleChangeOGPImage}
+                              />
+                              <button className="btn btn-primary"
+                                      onClick={()=> {
+                                          this.refs.input.click()
+                                      }}
+                              >{selected_file_label}</button>
+                          </div>
+                      </div>
+                      <div className="row">
+                          <div className="col-md-9"><p style={{ wordBreak: 'break-all'}}>{ogp_image_name ? ogp_image_name: ogp_image ? ogp_image : select_file_name_label}</p></div>
+                          <div className="col-md-3">
+                              {
+                                ogp_image && <img src={ogp_image} alt="ogp_image" className="img-response" style={{ maxWidth: "50px", maxHeight: "50px"}}/>
+                              }
+                          </div>
+                      </div>
+                  </div>
+              </div>
 
                 {this.props.enable_notify ? (
                     <div className="row form-group">

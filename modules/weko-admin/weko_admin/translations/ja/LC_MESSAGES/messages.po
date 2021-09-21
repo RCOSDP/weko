@@ -1152,6 +1152,18 @@ msgstr " 同一言語を複数の注意書きに設定されています。"
 msgid "Maximum length of instruction is 1000 characters. "
 msgstr "注意書きの字数上限は1000字です。"
 
+#: weko_admin/template/weko_admin/admin/site_info.html:64
+msgid "Tracking ID"
+msgstr "トラッキングID"
+
+#: weko_admin/template/weko_admin/admin/site_info.html:65
+msgid "AddThis ID"
+msgstr "AddThis ID"
+
+#: weko_admin/template/weko_admin/admin/site_info.html:66
+msgid "OGP Image"
+msgstr "OGPイメージ"
+
 #: weko_admin/template/weko_admin/admin/search_management_setting.html
 msgid "Index Tree/Facet Display Setting"
 msgstr "インデックスツリー／ファセット表示設定"

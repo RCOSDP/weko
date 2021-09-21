@@ -1592,6 +1592,10 @@ def format_site_info_data(site_info):
     result['favicon'] = site_info.get('favicon')
     result['favicon_name'] = site_info.get('favicon_name')
     result['notify'] = notify
+    result['google_tracking_id_user'] = site_info.get('google_tracking_id_user')
+    result['addthis_user_id'] = site_info.get('addthis_user_id')
+    result['ogp_image'] = site_info.get('ogp_image')
+    result['ogp_image_name'] = site_info.get('ogp_image_name')
     return result
 
 
