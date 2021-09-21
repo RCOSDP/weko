@@ -164,7 +164,7 @@ setup_virtualenvwrapper () {
     set +o nounset
 
     # sphinxdoc-install-virtualenvwrapper-begin
-    $sudo pip install -U setuptools pip
+    $sudo pip install -U setuptools==57.5.0 pip
     $sudo pip install -U virtualenvwrapper
     if ! grep -q virtualenvwrapper ~/.bashrc; then
         mkdir -p "$HOME/.virtualenvs"
