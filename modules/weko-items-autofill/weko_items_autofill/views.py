@@ -16,7 +16,7 @@ from weko_accounts.utils import login_required_customize
 from weko_admin.utils import get_current_api_certification
 
 from .utils import get_cinii_record_data, get_crossref_record_data, \
-    get_title_pubdate_path, get_workflow_journal
+    get_title_pubdate_path, get_wekoid_record_data, get_workflow_journal
 
 blueprint = Blueprint(
     "weko_items_autofill",
@@ -103,6 +103,9 @@ def get_auto_fill_record_data():
             api_response = get_cinii_record_data(
                 search_data, item_type_id)
             result['result'] = api_response
+        elif api_type == 'WEKOID':
+            result['result'] = get_wekoid_record_data(
+                search_data, item_type_id)
         else:
             result['error'] = api_type + ' is NOT support autofill feature.'
     except Exception as e:

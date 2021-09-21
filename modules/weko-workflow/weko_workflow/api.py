@@ -923,7 +923,8 @@ class WorkActivity(object):
                 db.session.merge(activity_action)
         db.session.commit()
 
-    def get_activity_action_comment(self, activity_id, action_id, action_order):
+    def get_activity_action_comment(
+            self, activity_id, action_id, action_order):
         """Get activity info.
 
         :param action_order:
@@ -1411,7 +1412,6 @@ class WorkActivity(object):
         self_user_id = int(current_user.get_id())
         self_group_ids = [role.id for role in current_user.roles]
         query = query \
-            .filter(_Activity.activity_login_user == self_user_id) \
             .filter(_FlowAction.action_id == _Activity.action_id) \
             .filter(
                 or_(
@@ -1422,26 +1422,59 @@ class WorkActivity(object):
                 )
             )
 
-        if not current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] or \
-                not current_app.config['WEKO_ITEMS_UI_MULTIPLE_APPROVALS']:
-            query = query.filter(
-
-                or_(
-                    and_(
-                        _FlowActionRole.action_user != self_user_id,
-                        _FlowActionRole.action_user_exclude == '0'
-                    ),
-                    and_(
-                        _FlowActionRole.action_role.notin_(self_group_ids),
-                        _FlowActionRole.action_role_exclude == '0'
+        if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']:
+            query = query \
+                .filter(_Activity.activity_login_user == self_user_id) \
+                .filter(
+                    or_(
+                        and_(
+                            _FlowActionRole.action_user != self_user_id,
+                            _FlowActionRole.action_user_exclude == '0'
+                        ),
+                        and_(
+                            _FlowActionRole.action_role.notin_(self_group_ids),
+                            _FlowActionRole.action_role_exclude == '0'
+                        ),
+                        and_(
+                            ActivityAction.action_handler != self_user_id
+                        )
                     )
                 )
-
-            )
         else:
-            query = query.filter(
-                ActivityAction.action_handler != self_user_id
-            )
+            query = query \
+                .filter(
+                    or_(
+                        _Activity.activity_login_user == self_user_id,
+                        _Activity.shared_user_id == self_user_id
+                    )
+                ) \
+                .filter(
+                    or_(
+                        and_(
+                            _FlowActionRole.action_user != self_user_id,
+                            _FlowActionRole.action_user_exclude == '0',
+                            _Activity.shared_user_id != self_user_id
+                        ),
+                        and_(
+                            _FlowActionRole.action_role.notin_(self_group_ids),
+                            _FlowActionRole.action_role_exclude == '0',
+                            _Activity.shared_user_id != self_user_id
+                        ),
+                        and_(
+                            ActivityAction.action_handler != self_user_id,
+                            _Activity.shared_user_id != self_user_id
+                        ),
+                        and_(
+                            _Activity.shared_user_id == self_user_id,
+                            _FlowActionRole.action_user != _Activity.activity_login_user,
+                            _FlowActionRole.action_user_exclude == '0'
+                        ),
+                        and_(
+                            _Activity.shared_user_id == self_user_id,
+                            ActivityAction.action_handler != _Activity.activity_login_user
+                        ),
+                    )
+                )
 
         return query
 
@@ -1450,14 +1483,12 @@ class WorkActivity(object):
         query,
         is_community_admin,
         community_user_ids,
-        is_todo_tabs=False
     ):
         """Query activities by tab is all.
 
         :param query:
         :param is_community_admin:
         :param community_user_ids:
-        :param is_todo_tabs:
         :return:
         """
         self_user_id = int(current_user.get_id())
@@ -1466,59 +1497,37 @@ class WorkActivity(object):
             query = query \
                 .filter(_Activity.activity_login_user.in_(community_user_ids))
         else:
-            if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] or \
-                    current_app.config['WEKO_ITEMS_UI_MULTIPLE_APPROVALS']:
-                if is_todo_tabs:
-                    query = query.filter(
-                        or_(
-                            and_(
-                                _Activity.activity_login_user == self_user_id,
-                                _Activity.activity_status
-                                == ActivityStatusPolicy.ACTIVITY_FINALLY
-                            ),
-                            ActivityAction.action_handler == self_user_id,
-                            _Activity.approval1 == current_user.email,
-                            _Activity.approval2 == current_user.email,
-                            and_(
-                                _FlowActionRole.action_user == self_user_id,
-                                _FlowActionRole.action_user_exclude == '0'
-                            ),
-                            and_(
-                                _FlowActionRole.action_role.in_(self_group_ids),
-                                _FlowActionRole.action_role_exclude == '0'
-                            )
-                        )
-                    )
-                else:
-                    query = query.filter(
-                        or_(
-                            and_(
-                                _Activity.activity_login_user == self_user_id,
-                                _Activity.activity_status
-                                == ActivityStatusPolicy.ACTIVITY_FINALLY
-                            ),
-                            and_(
-                                _Activity.activity_login_user == self_user_id,
-                                ActivityAction.action_handler == self_user_id
-                            ),
-                            and_(
-                                ActivityAction.action_handler == self_user_id,
-                                _Activity.approval1 == current_user.email,
-                                _Activity.approval2.is_(None)
-                            ),
-                            and_(
-                                ActivityAction.action_handler == self_user_id,
-                                _Activity.approval2 == current_user.email,
-                            )
-                        ),
-                    )
-            else:
-                query = query.filter(
-                    or_(
+            query = query.filter(
+                or_(
+                    and_(
                         _Activity.activity_login_user == self_user_id,
-                        _Activity.shared_user_id == self_user_id
-                    )
+                        _Activity.activity_status
+                        == ActivityStatusPolicy.ACTIVITY_FINALLY
+                    ),
+                    and_(
+                        ActivityAction.action_handler == self_user_id
+                    ),
+                    and_(
+                        _Activity.approval1 == current_user.email
+                    ),
+                    and_(
+                        _Activity.approval2 == current_user.email
+                    ),
+                    and_(
+                        _FlowActionRole.action_user == self_user_id,
+                        _FlowActionRole.action_user_exclude == '0'
+                    ),
+                    and_(
+                        _FlowActionRole.action_role.in_(self_group_ids),
+                        _FlowActionRole.action_role_exclude == '0'
+                    ),
+                    and_(
+                        _Activity.shared_user_id == self_user_id,
+                        _FlowAction.action_id != 4
+                    ),
                 )
+            )
+
         return query
 
     @staticmethod
@@ -1554,33 +1563,36 @@ class WorkActivity(object):
         :param is_admin:
         :return:
         """
-        self_user_id = int(current_user.get_id())
-        self_group_ids = [role.id for role in current_user.roles]
         query = query \
             .filter(or_(_Activity.activity_status
                         == ActivityStatusPolicy.ACTIVITY_BEGIN,
                         _Activity.activity_status
-                        == ActivityStatusPolicy.ACTIVITY_MAKING)) \
-            .filter(
-                or_(
-                    and_(
-                        _FlowActionRole.action_user == self_user_id,
-                        _FlowActionRole.action_user_exclude == '0'
-                    ),
-                    and_(
-                        _FlowActionRole.action_role.in_(self_group_ids),
-                        _FlowActionRole.action_role_exclude == '0'
-                    ),
-                    and_(
-                        _FlowActionRole.id.is_(None)
+                        == ActivityStatusPolicy.ACTIVITY_MAKING))
+        if not is_admin or current_app.config[
+                'WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']:
+            self_user_id = int(current_user.get_id())
+            self_group_ids = [role.id for role in current_user.roles]
+            query = query \
+                .filter(
+                    or_(
+                        and_(
+                            _FlowActionRole.action_user == self_user_id,
+                            _FlowActionRole.action_user_exclude == '0'
+                        ),
+                        and_(
+                            _FlowActionRole.action_role.in_(self_group_ids),
+                            _FlowActionRole.action_role_exclude == '0'
+                        ),
+                        and_(
+                            _FlowActionRole.id.is_(None)
+                        ),
+                        and_(
+                            _Activity.shared_user_id == self_user_id,
+                        ),
                     )
-                )
-            )\
-            .filter(_FlowAction.action_id == _Activity.action_id) \
-            .filter(_FlowAction.action_order == _Activity.action_order)
-
-        if current_app.config['WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY'] or \
-                current_app.config['WEKO_ITEMS_UI_MULTIPLE_APPROVALS']:
+                )\
+                .filter(_FlowAction.action_id == _Activity.action_id) \
+                .filter(_FlowAction.action_order == _Activity.action_order)
             if is_admin:
                 query = query.filter(
                     ActivityAction.action_handler.in_([-1, self_user_id])
@@ -1596,7 +1608,10 @@ class WorkActivity(object):
                         and_(
                             _FlowActionRole.action_role.in_(self_group_ids),
                             _FlowActionRole.action_role_exclude == '0'
-                        )
+                        ),
+                        and_(
+                            _Activity.shared_user_id == self_user_id,
+                        ),
                     )
                 )
 
@@ -1763,7 +1778,7 @@ class WorkActivity(object):
                     query_action_activities = self\
                         .query_activities_by_tab_is_all(
                             query_action_activities, is_community_admin,
-                            community_user_ids, True
+                            community_user_ids
                         )
 
                 query_action_activities = self.query_activities_by_tab_is_todo(

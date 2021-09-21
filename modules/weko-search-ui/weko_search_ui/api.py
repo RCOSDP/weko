@@ -21,6 +21,8 @@
 """WEKO3 module docstring."""
 
 
+from operator import index
+
 from flask import current_app, json
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
@@ -198,25 +200,27 @@ def get_search_detail_keyword(str):
 
 
 def get_childinfo(index_tree, result_list=[], parename=""):
-
+    #current_app.logger.debug("index_tree: {0}".format(index_tree))
     if isinstance(index_tree, dict):
-        if index_tree['pid'] != 0:
-            pname = parename + "/" + index_tree['name']
-            pid = index_tree['parent'] + "/" + str(index_tree['cid'])
-        else:
-            pname = index_tree['name']
-            pid = index_tree['cid']
+        if 'pid' in index_tree.keys():
+            if index_tree['pid'] != 0:
+                pname = parename + "/" + index_tree['name']
+                pid = index_tree['parent'] + "/" + str(index_tree['cid'])
+            else:
+                pname = index_tree['name']
+                pid = index_tree['cid']
 
-        data = {
-            'id': index_tree['cid'],
-            'index_name': index_tree['name'],
-            'parent_id': pid,
-            'parent_name': pname
-        }
-        result_list.append(data)
+            data = {
+                'id': index_tree['cid'],
+                'index_name': index_tree['name'],
+                'parent_id': pid,
+                'parent_name': pname
+            }
+            result_list.append(data)
 
-        for childlist in index_tree['children']:
-            if childlist:
-                get_childinfo(childlist, result_list, pname)
+        if 'children' in index_tree.keys():
+            for childlist in index_tree['children']:
+                if childlist:
+                    get_childinfo(childlist, result_list, pname)
 
     return result_list

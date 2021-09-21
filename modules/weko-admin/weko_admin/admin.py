@@ -29,7 +29,6 @@ import sys
 import unicodedata
 from datetime import datetime, timedelta
 
-import redis
 from flask import abort, current_app, flash, jsonify, make_response, \
     redirect, render_template, request, url_for
 from flask_admin import BaseView, expose
@@ -44,7 +43,6 @@ from invenio_communities.models import Community
 from invenio_db import db
 from invenio_files_rest.storage.pyfs import remove_dir_with_file
 from invenio_mail.api import send_mail
-from simplekv.memory.redisstore import RedisStore
 from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemTypes, SiteLicense
 from weko_records.models import SiteLicenseInfo
@@ -58,10 +56,10 @@ from .models import AdminSettings, FacetSearchSetting, Identifier, \
     LogAnalysisRestrictedCrawlerList, LogAnalysisRestrictedIpAddress, \
     RankingSettings, SearchManagement, StatisticsEmail
 from .permissions import admin_permission_factory
-from .utils import get_facet_search, get_item_mapping_list, get_redis_cache, \
+from .utils import get_facet_search, get_item_mapping_list, \
     get_response_json, get_restricted_access, get_search_setting
 from .utils import get_user_report_data as get_user_report
-from .utils import package_reports, reset_redis_cache, str_to_bool
+from .utils import package_reports, str_to_bool
 
 
 # FIXME: Change all setting views' path to be under settings/
@@ -289,11 +287,10 @@ class ReportView(BaseView):
                 }
                 result['private'] = result['total'] - result['open']
 
-            cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-                format(name='email_schedule')
-            current_schedule = get_redis_cache(cache_key)
-            current_schedule = json.loads(current_schedule) if \
-                current_schedule else \
+            current_schedule = AdminSettings.get(
+                name='report_email_schedule_settings',
+                dict_to_object=False)
+            current_schedule = current_schedule if current_schedule else \
                 current_app.config['WEKO_ADMIN_REPORT_DELIVERY_SCHED']
 
             # Emails to send reports to
@@ -366,9 +363,6 @@ class ReportView(BaseView):
     @expose('/set_email_schedule', methods=['POST'])
     def set_email_schedule(self):
         """Set new email schedule."""
-        cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-            format(name='email_schedule')
-
         # Get Schedule
         frequency = request.form.get('frequency')
         enabled = True if request.form.get('dis_enable_schedule') == 'True' \
@@ -388,7 +382,7 @@ class ReportView(BaseView):
         }
 
         try:
-            reset_redis_cache(cache_key, json.dumps(schedule))
+            AdminSettings.update('report_email_schedule_settings', schedule)
             flash(_('Successfully Changed Schedule.'), 'error')
         except Exception:
             flash(_('Could Not Save Changes.'), 'error')
@@ -441,23 +435,20 @@ class WebApiAccount(BaseView):
 class StatsSettingsView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
-        cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-            format(name='display_stats')
-
-        current_display_setting = True  # Default
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
-        if datastore.redis.exists(cache_key):
-            curr_display_setting = datastore.get(cache_key).decode('utf-8')
-            current_display_setting = True if curr_display_setting == 'True' \
-                else False
-
         if request.method == 'POST':
-            display_setting = request.form.get('record_stats_radio', 'True')
-            datastore.delete(cache_key)
-            datastore.put(cache_key, display_setting.encode('utf-8'))
+            display_setting = True if request.form.get(
+                'record_stats_radio') == 'True' else False
+            AdminSettings.update('display_stats_settings',
+                                 {'display_stats': display_setting})
             flash(_('Successfully Changed Settings.'))
             return redirect(url_for('statssettings.index'))
+
+        current_display_setting = True  # Default
+        display_setting = AdminSettings.get(
+            name='display_stats_settings',
+            dict_to_object=False)
+        if display_setting:
+            current_display_setting = display_setting.get('display_stats')
 
         return self.render(
             current_app.config["WEKO_ADMIN_STATS_SETTINGS_TEMPLATE"],
