@@ -2187,3 +2187,18 @@ def is_exits_facet(data, id):
         if (facet_by_name is None) and (facet_by_mapping is None):
             return False
     return True
+
+
+def overwrite_the_memory_config_with_db(app, site_info):
+    """Overwrite the memory Config values with the DB values."""
+    if site_info:
+        if site_info.google_tracking_id_user:
+            app.config.setdefault(
+                'GOOGLE_TRACKING_ID_USER',
+                site_info.google_tracking_id_user,
+            )
+        if site_info.addthis_user_id:
+            app.config.setdefault(
+                'ADDTHIS_USER_ID',
+                site_info.addthis_user_id,
+            )
