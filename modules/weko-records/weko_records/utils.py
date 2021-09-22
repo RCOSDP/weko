@@ -1048,7 +1048,8 @@ def check_has_attribute_value(node):
 
 
 def get_attribute_value_all_items(
-        root_key, nlst, klst, is_author=False, hide_email_flag=True, non_display_flag=False):
+        root_key, nlst, klst, is_author=False, hide_email_flag=True,
+        non_display_flag=False, one_line_flag=False):
     """Convert and sort item list.
 
     :param root_key:
@@ -1057,14 +1058,86 @@ def get_attribute_value_all_items(
     :param is_author:
     :param hide_email_flag:
     :param non_display_flag:
+    :param one_line_flag:
     :return: alst
     """
-    def get_name(key):
+    name_mapping = {}
+    def get_name_mapping():
         for lst in klst:
             keys = lst[0].replace("[]", "").split('.')
-            if keys[0].startswith(root_key) and key == keys[-1]:
-                return lst[2] if not is_author else '{}.{}'.format(
-                    key, lst[2])
+            if keys[0].startswith(root_key):
+                key = keys[-1]
+                name = lst[2] if not is_author \
+                    else '{}.{}'.format(key, lst[2])
+                name_mapping[key] = {'multi_lang': name, 'item_name': lst[1]}
+
+    def get_name(key, multi_lang_flag=True):
+        if key in name_mapping:
+            name = name_mapping[key]['multi_lang'] \
+                if multi_lang_flag else name_mapping[key]['item_name']
+            return name
+        else:
+            return ''
+
+    def get_value(data):
+        lang_key = None
+        value_key = None
+        event_key = None
+        date_key = None
+        key_list = list(data.keys())
+        if key_list and len(key_list) <= 3:
+            for k in key_list:
+                item_name = get_name(k, False) or ''
+                if item_name in ['言語', 'Language']:
+                    lang_key = k
+                elif item_name in [
+                        '調査開始／終了',
+                        'イベント',
+                        'Event',
+                        '開始時点/終了時点',
+                        'Time Period Event']:
+                    event_key = k
+                elif item_name in [
+                        '時間的範囲',
+                        'Time Period',
+                        '調査日',
+                        'Date',
+                        '対象時期',
+                        'TimePeriod',
+                        'Time Period(s)']:
+                    date_key = k
+                else:
+                    if value_key:
+                        value_key = None
+                        break
+                    value_key = k
+
+        data_type = None
+        data_key = None
+        split_data = 'none'
+        return_data = ''
+        if date_key and event_key:
+            data_type = 'event'
+            data_key = date_key
+            split_data = data[event_key]
+            return_data = '{}({})'.format(data[date_key], data[event_key])
+        elif date_key and len(ley_list) == 1:
+            data_type = 'event'
+            data_key = date_key
+            split_data = 'none_event'
+            return_data = data[date_key]
+        elif value_key and lang_key:
+            data_type = 'lang'
+            data_key = value_key
+            split_data = data[lang_key]
+            return_data = '{}({})'.format(data[value_key], data[lang_key])
+        elif value_key and len(key_list) == 1:
+            data_type = 'lang'
+            data_key = value_key
+            split_data = 'none_lang'
+            return_data = data[value_key]
+
+        return data_type, data_key, split_data, return_data
 
     def to_sort_dict(alst, klst):
         """Sort item list.
@@ -1075,6 +1148,56 @@ def get_attribute_value_all_items(
         if isinstance(klst, list):
             result = []
             try:
+                if one_line_flag:
+                    if isinstance(alst, list):
+                        data_split = {}
+                        value_key = None
+                        data_type = None
+                        for a in alst:
+                            t, k, l, v = get_value(a)
+                            if t == 'lang':
+                                if l in data_split:
+                                    temp = data_split[l]
+                                else:
+                                    temp = []
+                                    data_split[l] = temp
+                                data_type = t
+                                value_key = k
+                                temp.append(v)
+                            elif t == 'event':
+                                if 'data' not in data_split:
+                                    temp = []
+                                    data_split['data'] = temp
+                                else:
+                                    temp = data_split['data']
+                                if l == 'start':
+                                    if 'start' in data_split:
+                                        temp.append(data_split.pop('start'))
+                                    data_split['start'] = v
+                                elif l == 'end':
+                                    if 'start' in data_split:
+                                        v = '{} / {}'.format(data_split.pop('start'), v)
+                                    temp.append(v)
+                                data_type = t
+                                value_key = k
+                            else:
+                                data_type = None
+                                result = []
+                                break
+                        if data_type == 'lang':
+                            for k, v in data_split.items():
+                                data_split[k] = str.join(', ', v)
+                            result.append([{value_key: str.join('\n', list(data_split.values()))}])
+                        elif data_type == 'event':
+                            if 'start' in data_split:
+                                data_split['data'].append(data_split.pop('start'))
+                            result.append([{value_key: str.join('\n', data_split['data'])}])
+                    elif isinstance(alst, dict):
+                        data_type, value_key, l, v = get_value(alst)
+                        if data_type is not None and value_key:
+                            result.append([{value_key: v}])
+                    if result:
+                        return result
                 if isinstance(alst, list):
                     for a in alst:
                         result.append(to_sort_dict(a, klst))
@@ -1138,6 +1261,7 @@ def get_attribute_value_all_items(
             current_app.logger.error('Function set_node error: ', e)
             return _list
 
+    get_name_mapping()
     orderdict = to_sort_dict(nlst, klst)
     alst = set_attribute_value(orderdict)
 

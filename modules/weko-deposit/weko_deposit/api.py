@@ -1452,7 +1452,8 @@ class WekoRecord(Record):
                                 copy.deepcopy(solst),
                                 is_author,
                                 hide_email_flag,
-                                True)
+                                True,
+                                option.get("oneline", False))
                 items.append(nval)
             else:
                 val['attribute_name_i18n'] = lst[2] or val.get(
