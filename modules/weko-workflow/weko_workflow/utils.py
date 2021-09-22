@@ -762,7 +762,8 @@ class MappingData(object):
                 mapping_key + ' jpcoar:mapping is not correct')
         else:
             for key in property_keys:
-                if key.replace('[]', '') in ignore_prop_keys:
+                if ignore_prop_keys and \
+                        key.replace('[]', '') in ignore_prop_keys:
                     continue
                 data = []
                 split_key = key.split('.')
