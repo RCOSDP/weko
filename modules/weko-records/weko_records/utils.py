@@ -1069,7 +1069,10 @@ def get_attribute_value_all_items(
                 key = keys[-1]
                 name = lst[2] if not is_author \
                     else '{}.{}'.format(key, lst[2])
-                name_mapping[key] = {'multi_lang': name, 'item_name': lst[1]}
+                name_mapping[key] = {
+                    'multi_lang': name,
+                    'item_name': lst[1],
+                    'non_display': lst[3].get('non_display', False)}
 
     def get_name(key, multi_lang_flag=True):
         if key in name_mapping:
@@ -1080,24 +1083,30 @@ def get_attribute_value_all_items(
             return ''
 
     def get_value(data):
+        temp_data = data.copy()
         lang_key = None
         value_key = None
         event_key = None
         date_key = None
+        non_display_list = []
         key_list = list(data.keys())
-        if key_list and len(key_list) <= 3:
-            for k in key_list:
-                item_name = get_name(k, False) or ''
-                if item_name in ['言語', 'Language']:
-                    lang_key = k
-                elif item_name in [
-                        '調査開始／終了',
-                        'イベント',
-                        'Event',
-                        '開始時点/終了時点',
-                        'Time Period Event']:
-                    event_key = k
-                elif item_name in [
+        for k in key_list:
+            item_name = ''
+            flag = False
+            if k in name_mapping:
+                item_name = name_mapping[k]['item_name']
+                flag = name_mapping[k]['non_display']
+            if item_name in ['言語', 'Language']:
+                lang_key = k
+            elif item_name in [
+                    '調査開始／終了',
+                    'イベント',
+                    'Event',
+                    '開始時点/終了時点',
+                    'Time Period Event']:
+                event_key = k
+            elif not flag and \
+                    item_name in [
                         '時間的範囲',
                         'Time Period',
                         '調査日',
@@ -1105,12 +1114,15 @@ def get_attribute_value_all_items(
                         '対象時期',
                         'TimePeriod',
                         'Time Period(s)']:
-                    date_key = k
-                else:
-                    if value_key:
-                        value_key = None
-                        break
-                    value_key = k
+                date_key = k
+            elif not flag:
+                if value_key:
+                    value_key = None
+                    break
+                value_key = k
+            if flag:
+                non_display_list.append(k)
+                temp_data.pop(k)
 
         data_type = None
         data_key = None
@@ -1120,8 +1132,11 @@ def get_attribute_value_all_items(
             data_type = 'event'
             data_key = date_key
             split_data = data[event_key]
-            return_data = '{}({})'.format(data[date_key], data[event_key])
-        elif date_key and len(key_list) == 1:
+            if event_key in non_display_list:
+                return_data = data[date_key]
+            else:
+                return_data = '{}({})'.format(data[date_key], data[event_key])
+        elif date_key and len(list(temp_data.keys())) == 1:
             data_type = 'event'
             data_key = date_key
             split_data = 'none_event'
@@ -1130,8 +1145,11 @@ def get_attribute_value_all_items(
             data_type = 'lang'
             data_key = value_key
             split_data = data[lang_key]
-            return_data = '{}({})'.format(data[value_key], data[lang_key])
-        elif value_key and len(key_list) == 1:
+            if lang_key in non_display_list:
+                return_data = data[value_key]
+            else:
+                return_data = '{}({})'.format(data[value_key], data[lang_key])
+        elif value_key and len(list(temp_data.keys())) == 1:
             data_type = 'lang'
             data_key = value_key
             split_data = 'none_lang'
