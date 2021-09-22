@@ -28,6 +28,7 @@ from invenio_cache import current_cache
 from invenio_db import db
 from invenio_oaiserver.provider import OAIIDProvider
 from lxml import etree
+from weko_items_ui.utils import get_hide_list_by_schema_form
 from weko_records.api import ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_records_ui.permissions import page_permission_factory
@@ -36,7 +37,6 @@ from weko_workflow.utils import MappingData
 
 from . import config
 from .api import CiNiiURL, CrossRefOpenURL
-from weko_items_ui.utils import get_hide_list_by_schema_form
 
 
 def is_update_cache():
@@ -1334,6 +1334,7 @@ def build_record_model_for_wekoid(item_type_id, item_map_data):
         value are values of item on this mapping key.
     """
     from weko_records.api import ItemTypes
+
     # Get parent key of item has value to improve performence.
     item_has_val = set()
     for k, v in item_map_data.items():
