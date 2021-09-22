@@ -1405,13 +1405,13 @@ def selected_value_by_language(lang_array, value_array, lang_id, val_id,
                                                _item_metadata)
                 if value is not None:
                     return value
-            if "en" in lang_array and lang_selected != 'ja':  # English
-                value = check_info_in_metadata(lang_id, val_id, "en",
+            if "ja-Latn" in lang_array:  # ja_Latn
+                value = check_info_in_metadata(lang_id, val_id, "ja-Latn",
                                                _item_metadata)
                 if value is not None:
                     return value
-            if "ja-Latn" in lang_array:  # ja_Latn
-                value = check_info_in_metadata(lang_id, val_id, "ja-Latn",
+            if "en" in lang_array and lang_selected != 'ja':  # English
+                value = check_info_in_metadata(lang_id, val_id, "en",
                                                _item_metadata)
                 if value is not None:
                     return value
@@ -1552,15 +1552,15 @@ def result_rule_create_show_list(source_title, current_lang):
             elif key:
                 title_data_langs.append(title)
 
-    if value_en and current_lang != 'ja':
-        return value_en
-
     if value_latn:
         return value_latn
 
+    if value_en and current_lang != 'ja':
+        return value_en
+
     if len(title_data_langs) > 0:
         if current_lang == 'en':
-            for t in title_data_lang:
+            for t in title_data_langs:
                 if list(t)[0] != 'ja':
                     return list(t.values())[0]
         else:

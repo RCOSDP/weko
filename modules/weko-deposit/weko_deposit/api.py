@@ -2334,11 +2334,11 @@ class _FormatSysBibliographicInformation:
                 else:
                     title_data_none_lang.append(value)
 
-        if value_en and current_lang != 'ja':
-            return value_en, 'en'
-
         if value_latn:
             return value_latn, 'ja-Latn'
+
+        if value_en and current_lang != 'ja':
+            return value_en, 'en'
 
         if len(title_data_lang) > 0:
             if current_lang != 'en':
