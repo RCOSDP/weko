@@ -1121,7 +1121,7 @@ def get_attribute_value_all_items(
             data_key = date_key
             split_data = data[event_key]
             return_data = '{}({})'.format(data[date_key], data[event_key])
-        elif date_key and len(ley_list) == 1:
+        elif date_key and len(key_list) == 1:
             data_type = 'event'
             data_key = date_key
             split_data = 'none_event'
@@ -1177,6 +1177,10 @@ def get_attribute_value_all_items(
                                 elif l == 'end':
                                     if 'start' in data_split:
                                         v = '{} / {}'.format(data_split.pop('start'), v)
+                                    temp.append(v)
+                                else:
+                                    if 'start' in data_split:
+                                        temp.append(data_split.pop('start'))
                                     temp.append(v)
                                 data_type = t
                                 value_key = k
