@@ -745,7 +745,7 @@ class MappingData(object):
         return ItemTypes.get_by_id(id_=self.record.get('item_type_id'))
 
     def get_data_by_mapping(self, mapping_key, ignore_empty=False,
-                            ignore_prop_keys=None):
+                            hide_sub_keys=None, hide_parent_key=None):
         """
         Get data by mapping key.
 
@@ -762,11 +762,12 @@ class MappingData(object):
                 mapping_key + ' jpcoar:mapping is not correct')
         else:
             for key in property_keys:
-                if ignore_prop_keys and \
-                        key.replace('[]', '') in ignore_prop_keys:
-                    continue
                 data = []
                 split_key = key.split('.')
+                if hide_parent_key and split_key[0] in hide_parent_key:
+                    continue
+                if hide_sub_keys and key.replace('[]', '') in hide_sub_keys:
+                    continue
                 attribute = self.record.get(split_key[0])
                 if attribute and len(split_key) > 1:
                     data_result = get_item_value_in_deep(

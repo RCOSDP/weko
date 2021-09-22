@@ -28,10 +28,10 @@ from invenio_cache import current_cache
 from invenio_db import db
 from invenio_oaiserver.provider import OAIIDProvider
 from lxml import etree
-from weko_items_ui.utils import get_hide_list_by_schema_form
+from weko_items_ui.utils import get_hide_parent_and_sub_keys, \
+    has_permission_edit_item
 from weko_records.api import ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
-from weko_records_ui.permissions import page_permission_factory
 from weko_workflow.models import ActionJournal
 from weko_workflow.utils import MappingData
 
@@ -1293,19 +1293,19 @@ def get_wekoid_record_data(recid, item_type_id):
     mapping_src = MappingData(pid.object_uuid)
     record_src = mapping_src.record
     # Check permission.
-    permission = page_permission_factory(record_src).can()
+    permission = has_permission_edit_item(record_src, recid)
     if not permission:
         raise ValueError(_("The item cannot be copied because "
                            "you do not have permission to view it."))
-    # Get items have 'Hide' option.
+    # Get keys of 'Hide' items.
     item_type = mapping_src.get_data_item_type()
-    prop_keys = get_hide_list_by_schema_form(item_type.id)
-    prop_keys = [prop.replace('[]', '') for prop in prop_keys]
+    hide_parent_key, hide_sub_keys = get_hide_parent_and_sub_keys(item_type)
     # Get data source and remove value of hide item.
     item_map_src = mapping_src.item_map
     item_map_data_src = {}
     for mapping_key, item_key in item_map_src.items():
-        data = mapping_src.get_data_by_mapping(mapping_key, False, prop_keys)
+        data = mapping_src.get_data_by_mapping(mapping_key, False,
+                                               hide_sub_keys, hide_parent_key)
         values = [value for key, value in data.items() if value]
         if values and values[0] and mapping_key not in ignore_mapping:
             item_map_data_src[mapping_key] = values[0]
