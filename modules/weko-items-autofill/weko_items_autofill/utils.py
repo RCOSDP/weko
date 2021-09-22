@@ -36,6 +36,7 @@ from weko_workflow.utils import MappingData
 
 from . import config
 from .api import CiNiiURL, CrossRefOpenURL
+from weko_items_ui.utils import get_hide_list_by_schema_form
 
 
 def is_update_cache():
@@ -1296,10 +1297,15 @@ def get_wekoid_record_data(recid, item_type_id):
     if not permission:
         raise ValueError(_("The item cannot be copied because "
                            "you do not have permission to view it."))
+    # Get items have 'Hide' option.
+    item_type = mapping_src.get_data_item_type()
+    prop_keys = get_hide_list_by_schema_form(item_type.id)
+    prop_keys = [prop.replace('[]', '') for prop in prop_keys]
+    # Get data source and remove value of hide item.
     item_map_src = mapping_src.item_map
     item_map_data_src = {}
     for mapping_key, item_key in item_map_src.items():
-        data = mapping_src.get_data_by_mapping(mapping_key)
+        data = mapping_src.get_data_by_mapping(mapping_key, False, prop_keys)
         values = [value for key, value in data.items() if value]
         if values and values[0] and mapping_key not in ignore_mapping:
             item_map_data_src[mapping_key] = values[0]

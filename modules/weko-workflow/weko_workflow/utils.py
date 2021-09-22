@@ -743,12 +743,14 @@ class MappingData(object):
         """Return item type data."""
         return ItemTypes.get_by_id(id_=self.record.get('item_type_id'))
 
-    def get_data_by_mapping(self, mapping_key, ignore_empty=False):
+    def get_data_by_mapping(self, mapping_key, ignore_empty=False,
+                            ignore_prop_keys=None):
         """
         Get data by mapping key.
 
         :param mapping_key: mapping key.
         :param ignore_empty: Is ignore empty value.
+        :param ignore_prop_keys: Is ignore by keys.
         :return: properties key and data.
         """
         result = OrderedDict()
@@ -759,6 +761,8 @@ class MappingData(object):
                 mapping_key + ' jpcoar:mapping is not correct')
         else:
             for key in property_keys:
+                if key.replace('[]', '') in ignore_prop_keys:
+                    continue
                 data = []
                 split_key = key.split('.')
                 attribute = self.record.get(split_key[0])
