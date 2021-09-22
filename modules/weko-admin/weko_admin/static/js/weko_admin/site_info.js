@@ -235,6 +235,9 @@ class MainLayout extends React.Component {
                 success: true,
                 show_alert: true
               })
+              setTimeout(() => {
+                window.location.reload();
+              }, 500);
             }
           },
           error: function (error) {
