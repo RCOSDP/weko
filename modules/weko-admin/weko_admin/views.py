@@ -26,8 +26,8 @@ import sys
 import time
 from datetime import timedelta
 
-from flask import Blueprint, Response, abort, current_app, flash, json, \
-    jsonify, render_template, request
+from flask import Blueprint, Response, abort, current_app, \
+    flash, json, jsonify, render_template, request
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
@@ -47,7 +47,8 @@ from .utils import FeedbackMail, StatisticMail, UsageReport, \
     format_site_info_data, get_admin_lang_setting, \
     get_api_certification_type, get_current_api_certification, \
     get_init_display_index, get_initial_stats_report, get_selected_language, \
-    get_unit_stats_report, is_exits_facet, save_api_certification, \
+    get_unit_stats_report, is_exits_facet, \
+    overwrite_the_memory_config_with_db, save_api_certification, \
     store_facet_search_query_in_redis, update_admin_lang_setting, \
     update_restricted_access, validate_certification, validation_site_info
 
@@ -496,7 +497,8 @@ def update_site_info():
     if validate.get('error'):
         return jsonify(validate)
     else:
-        SiteInfo.update(format_data)
+        site_info = SiteInfo.update(format_data)
+        overwrite_the_memory_config_with_db(current_app, site_info)
         return jsonify(format_data)
 
 
