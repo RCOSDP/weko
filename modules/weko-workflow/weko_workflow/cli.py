@@ -278,7 +278,7 @@ def init_workflow_tables(tables):
 
     def init_gakuninrdm_data():
         """Insert flow and action."""
-        gakuninrdm_data = current_app.config['WEKO_WORKFLOW_GAKUNINRDM_DATA']
+        gakuninrdm_data = current_app.config.get('WEKO_WORKFLOW_GAKUNINRDM_DATA')
         for gakuninrdm in gakuninrdm_data:
             # Insert flow.
             flow_name = gakuninrdm.get('flow_name')

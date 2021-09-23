@@ -23,6 +23,10 @@
 import base64
 import json
 import os
+import sys
+import tempfile
+import traceback
+import zipfile
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timedelta
@@ -37,7 +41,6 @@ from invenio_accounts.models import Role, User, userrole
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
-from invenio_files_rest.views import delete_file_instance
 from invenio_i18n.ext import current_i18n
 from invenio_mail.admin import MailSettingView
 from invenio_mail.models import MailConfig
@@ -62,7 +65,8 @@ from weko_records.models import ItemType
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
 from weko_records_ui.utils import create_onetime_download_url, \
     generate_one_time_download_url, get_list_licence
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
 from werkzeug.utils import import_string
@@ -1290,7 +1294,6 @@ def prepare_edit_workflow(post_activity, recid, deposit):
     """
     # ! Check pid's version
     community = post_activity['community']
-    post_workflow = post_activity['post_workflow']
     activity = WorkActivity()
 
     draft_pid = PersistentIdentifier.query.filter_by(
@@ -1978,7 +1981,8 @@ def replace_characters(data, content):
         '[18]': 'output_registration_title',
         '[19]': 'url_guest_user',
         '[restricted_fullname]': 'restricted_fullname',
-        '[restricted_university_institution]': 'restricted_university_institution',
+        '[restricted_university_institution]':
+            'restricted_university_institution',
         '[restricted_activity_id]': 'restricted_activity_id',
         '[restricted_research_title]': 'restricted_research_title',
         '[restricted_data_name]': 'restricted_data_name',
@@ -3830,3 +3834,103 @@ def check_doi_validation_not_pass(item_id, activity_id,
             sessionstore.delete(
                 'updated_json_schema_{}'.format(activity_id))
         return False
+
+
+def check_register_item(file):
+    """Validation metadata of item using create new activity.
+
+    Args:
+        file ([type]): [description]
+
+    Raises:
+        FileNotFoundError: [description]
+
+    Returns:
+        [type]: [description]
+
+    """
+    from weko_search_ui.utils import handle_check_and_prepare_feedback_mail, \
+        handle_check_and_prepare_index_tree, \
+        handle_check_and_prepare_publish_status, handle_check_cnri, \
+        handle_check_date, handle_check_doi, handle_check_doi_indexes, \
+        handle_check_doi_ra, handle_check_exist_record, \
+        handle_check_file_metadata, handle_item_title, \
+        handle_set_change_identifier_flag, unpackage_import_file
+
+    tmp_prefix = 'deposit_activity_'
+    temp_path = tempfile.TemporaryDirectory(prefix=tmp_prefix)
+    save_path = tempfile.gettempdir()
+    import_path = temp_path.name + '/' + \
+        datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
+    data_path = save_path + '/' + tmp_prefix + \
+        datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
+    result = {'data_path': data_path,
+              'error': False}
+
+    try:
+        # Create temp dir for import data
+        os.mkdir(data_path)
+
+        file.save(import_path + '.zip')
+
+        with zipfile.ZipFile(import_path + '.zip') as z:
+            for info in z.infolist():
+                try:
+                    info.filename = info.orig_filename.encode(
+                        'cp437').decode('cp932')
+                    if os.sep != "/" and os.sep in info.filename:
+                        info.filename = info.filename.replace(os.sep, "/")
+                except Exception:
+                    current_app.logger.warn('-' * 60)
+                    traceback.print_exc(file=sys.stdout)
+                    current_app.logger.warn('-' * 60)
+                z.extract(info, path=data_path)
+        data_path += '/data'
+        list_record = []
+        list_tsv = list(
+            filter(lambda x: x.endswith('.tsv'), os.listdir(data_path)))
+        if not list_tsv:
+            raise FileNotFoundError()
+        for tsv_entry in list_tsv:
+            list_record.extend(unpackage_import_file(data_path, tsv_entry))
+        list_record = handle_check_exist_record(list_record)
+        handle_item_title(list_record)
+        handle_check_and_prepare_publish_status(list_record)
+        # handle_check_and_prepare_index_tree(list_record)
+        handle_check_and_prepare_feedback_mail(list_record)
+        # handle_set_change_identifier_flag(list_record, False)
+        # handle_check_cnri(list_record)
+        # handle_check_doi_indexes(list_record)
+        handle_check_file_metadata(list_record, data_path)
+        # handle_check_doi_ra(list_record)
+        # handle_check_doi(list_record)
+        handle_check_date(list_record)
+        result['list_record'] = list_record
+    except Exception as ex:
+        error = _('Internal server error')
+        if isinstance(ex, zipfile.BadZipFile):
+            error = _('The format of the specified file {} does not'
+                      + ' support import. Please specify one of the'
+                      + ' following formats: zip, tar, gztar, bztar,'
+                      + ' xztar.').format(file.file_name)
+        elif isinstance(ex, FileNotFoundError):
+            error = _('The TSV file was not found in the specified file {}.'
+                      + ' Check if the directory structure is correct.') \
+                .format(file.file_name)
+        elif isinstance(ex, UnicodeDecodeError):
+            error = ex.reason
+        elif ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                and ex.args[0].get('error_msg'):
+            error = ex.args[0].get('error_msg')
+        result['error'] = error
+        current_app.logger.error('-' * 60)
+        traceback.print_exc(file=sys.stdout)
+        current_app.logger.error('-' * 60)
+    finally:
+        temp_path.cleanup()
+
+    for item in result['list_record']:
+        if item.get('errors'):
+            result['error'] = True
+
+    return result

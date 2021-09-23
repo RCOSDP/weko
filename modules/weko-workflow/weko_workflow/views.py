@@ -32,7 +32,7 @@ from flask import Blueprint, abort, current_app, has_request_context, \
     jsonify, make_response, render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
-from invenio_accounts.models import Role, userrole
+from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
 from invenio_files_rest.utils import remove_file_cancel_action
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
@@ -62,6 +62,7 @@ from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
+from werkzeug.utils import secure_filename
 
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
@@ -70,14 +71,16 @@ from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SELECT_DICT, \
 from .errors import ActivityBaseRESTError, ActivityNotFoundRESTError, \
     DeleteActivityFailedRESTError, InvalidInputRESTError, \
     RegisteredActivityNotFoundRESTError
-from .models import ActionStatusPolicy, Activity, ActivityAction, FlowAction
+from .models import ActionStatusPolicy, Activity, ActivityAction, \
+    ActivityStatusPolicy, FlowAction
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .scopes import activity_scope
 from .utils import IdentifierHandle, auto_fill_title, \
     check_authority_by_admin, check_continue, check_doi_validation_not_pass, \
-    check_existed_doi, create_onetime_download_url_to_guest, \
-    delete_cache_data, delete_guest_activity, filter_all_condition, \
-    get_account_info, get_actionid, get_activity_display_info, \
+    check_existed_doi, check_register_item, \
+    create_onetime_download_url_to_guest, delete_cache_data, \
+    delete_guest_activity, filter_all_condition, get_account_info, \
+    get_actionid, get_activity_display_info, \
     get_activity_id_of_record_without_version, \
     get_application_and_approved_date, get_approval_keys, get_cache_data, \
     get_files_and_thumbnail, get_identifier_setting, get_main_record_detail, \
@@ -1731,6 +1734,39 @@ class ActivityActionResource(ContentNegotiatedMethodView):
 
     activity = WorkActivity()
 
+    def activity_information(self, activity):
+        """Display Activity Detail in response.
+
+        Args:
+            activity ([type]): [description]
+
+        Returns:
+            [type]: [description]
+
+        """
+        response = {
+            'activityId': activity.activity_id,
+            'email': None,
+            'status': None
+        }
+
+        user = User.query.get(activity.activity_login_user)
+        response['email'] = user.email if user else ''
+
+        status = ActionStatusPolicy.describe(
+            ActionStatusPolicy.ACTION_DOING)
+        if activity.activity_status == \
+                ActivityStatusPolicy.ACTIVITY_FINALLY:
+            status = ActionStatusPolicy.describe(
+                ActionStatusPolicy.ACTION_DONE)
+        elif activity.activity_status == \
+                ActivityStatusPolicy.ACTIVITY_CANCEL:
+            status = ActionStatusPolicy.describe(
+                ActionStatusPolicy.ACTION_CANCELED)
+        response['status'] = _(status)
+
+        return response
+
     @require_api_auth()
     @require_oauth_scopes(activity_scope.id)
     def post(self):
@@ -1745,35 +1781,39 @@ class ActivityActionResource(ContentNegotiatedMethodView):
             [type]: [description]
 
         """
-        data = request.get_json(force=False)
-        if not data:
+        item_type_id = request.form.get('item_type_id')
+        itemmetadata = request.files.get('file')
+        if not item_type_id or not itemmetadata:
             raise InvalidInputRESTError()
 
-        # Required arg for new activity
+        # TODO: Check itemmetadata input from file.
+        file_name = secure_filename(
+            request.form.get('name') or itemmetadata.filename
+        )
+        result = check_register_item(itemmetadata)
+        if not file_name or not result or result.get('error') is not False:
+            raise InvalidInputRESTError()
+
+        _default = current_app.config.get('WEKO_WORKFLOW_GAKUNINRDM_DATA')[0]
         post_activity = {
-            'flow_id': None,
-            'itemtype_id': None,
-            'workflow_id': None
+            'flow_id': _default.get('flow_id'),
+            'itemtype_id': item_type_id,
+            'workflow_id': _default.get('workflow_id')
         }
+
         if not post_activity:
             raise InvalidInputRESTError()
-
         try:
             activity = None
             activity = self.activity.init_activity(post_activity)
+            # TODO: Parse itemmetadata on Item Registration Flow.
         except Exception:
             raise InvalidInputRESTError()
         finally:
             if not activity or not activity.activity_id:
                 raise InvalidInputRESTError()
 
-        status = 200
-        response = {
-            "activityId": "A-20210903-00000",
-            "email": "wekosoftware@nii.ac.jp",
-            "status": "Done"
-        }
-        return make_response(jsonify(response), status)
+        return make_response(jsonify(self.activity_information(activity)), 200)
 
     @require_api_auth()
     @require_oauth_scopes(activity_scope.id)
@@ -1798,13 +1838,7 @@ class ActivityActionResource(ContentNegotiatedMethodView):
         if not activity:
             raise ActivityNotFoundRESTError()
 
-        status = 200
-        response = {
-            "activityId": "A-20210903-00000",
-            "email": "wekosoftware@nii.ac.jp",
-            "status": "Done"
-        }
-        return make_response(jsonify(response), status)
+        return make_response(jsonify(self.activity_information(activity)), 200)
 
     @require_api_auth()
     @require_oauth_scopes(activity_scope.id)
@@ -1830,10 +1864,25 @@ class ActivityActionResource(ContentNegotiatedMethodView):
         activity = self.activity.get_activity_by_id(activity_id)
         if not activity:
             raise RegisteredActivityNotFoundRESTError()
+        elif activity.activity_status != ActionStatusPolicy.ACTION_DOING:
+            raise DeleteActivityFailedRESTError()
 
-        result = self.activity.quit_activity(activity)
+        _activity = dict(
+            activity_id=activity.activity_id,
+            action_id=activity.action_id,
+            action_status=ActionStatusPolicy.ACTION_CANCELED,
+            action_order=activity.action_order
+        )
+
+        result = self.activity.quit_activity(_activity)
         if not result:
             raise DeleteActivityFailedRESTError()
+        else:
+            self.activity.upt_activity_action_status(
+                activity_id=activity.activity_id,
+                action_id=activity.action_id,
+                action_status=ActionStatusPolicy.ACTION_CANCELED,
+                action_order=activity.action_order)
 
         status = 200
         message = '登録アクティビティを削除'
