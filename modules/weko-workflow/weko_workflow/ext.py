@@ -24,7 +24,7 @@ from weko_deposit.signals import item_created
 
 from . import config
 from .sessions import upt_activity_item
-from .views import blueprint, activity_blueprint
+from .views import activity_blueprint, blueprint
 
 
 class WekoWorkflow(object):
