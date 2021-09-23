@@ -2193,11 +2193,13 @@ def overwrite_the_memory_config_with_db(app, site_info):
     """Overwrite the memory Config values with the DB values."""
     if site_info:
         if site_info.google_tracking_id_user:
+            del app.config['GOOGLE_TRACKING_ID_USER']
             app.config.setdefault(
                 'GOOGLE_TRACKING_ID_USER',
                 site_info.google_tracking_id_user,
             )
         if site_info.addthis_user_id:
+            del app.config['ADDTHIS_USER_ID']
             app.config.setdefault(
                 'ADDTHIS_USER_ID',
                 site_info.addthis_user_id,
