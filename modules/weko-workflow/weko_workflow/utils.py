@@ -3855,7 +3855,8 @@ def check_register_item(file):
         handle_check_date, handle_check_doi, handle_check_doi_indexes, \
         handle_check_doi_ra, handle_check_exist_record, \
         handle_check_file_metadata, handle_item_title, \
-        handle_set_change_identifier_flag, unpackage_import_file
+        handle_set_change_identifier_flag, remove_temp_dir, \
+        unpackage_import_file
 
     tmp_prefix = 'deposit_activity_'
     temp_path = tempfile.TemporaryDirectory(prefix=tmp_prefix)
@@ -3928,6 +3929,7 @@ def check_register_item(file):
         current_app.logger.error('-' * 60)
     finally:
         temp_path.cleanup()
+        remove_temp_dir(data_path)
 
     for item in result['list_record']:
         if item.get('errors'):
