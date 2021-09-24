@@ -516,10 +516,13 @@ def get_site_info():
         try:
             result['google_tracking_id_user'] = current_app.config[
                 'GOOGLE_TRACKING_ID_USER']
-            result['addthis_user_id'] = current_app.config['ADDTHIS_USER_ID']
-            return jsonify(result)
         except BaseException:
-            return jsonify({})
+            pass
+        try:
+            result['addthis_user_id'] = current_app.config['ADDTHIS_USER_ID']
+        except BaseException:
+            pass
+        return jsonify(result)
     result['copy_right'] = site_info.copy_right
     result['description'] = site_info.description
     result['keyword'] = site_info.keyword
@@ -531,11 +534,15 @@ def get_site_info():
         result['google_tracking_id_user'] = site_info.google_tracking_id_user \
             if site_info.google_tracking_id_user \
             else current_app.config['GOOGLE_TRACKING_ID_USER']
+    except BaseException:
+        result['google_tracking_id_user'] = ""
+
+    try:
         result['addthis_user_id'] = site_info.addthis_user_id if \
             site_info.addthis_user_id else current_app.config['ADDTHIS_USER_ID']
     except BaseException:
-        result['google_tracking_id_user'] = ""
         result['addthis_user_id'] = ""
+
     if site_info.ogp_image and site_info.ogp_image_name:
         ts = time.time()
         result['ogp_image'] = request.host_url + \
