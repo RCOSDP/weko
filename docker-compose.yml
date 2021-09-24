@@ -159,6 +159,11 @@ services:
     build:
       context: .
       dockerfile: ./elasticsearch/Dockerfile
+      args:
+        - ELASTICSEARCH_S3_ACCESS_KEY=${ELASTICSEARCH_S3_ACCESS_KEY}
+        - ELASTICSEARCH_S3_SECRET_KEY=${ELASTICSEARCH_S3_SECRET_KEY}
+        - ELASTICSEARCH_S3_ENDPOINT=${ELASTICSEARCH_S3_ENDPOINT}
+        - ELASTICSEARCH_S3_BUCKET=${ELASTICSEARCH_S3_BUCKET}
     volumes:
       - es-data:/usr/share/elasticsearch/data
     environment:
