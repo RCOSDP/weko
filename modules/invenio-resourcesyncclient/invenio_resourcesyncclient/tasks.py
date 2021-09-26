@@ -20,11 +20,14 @@
 
 """WEKO3 module docstring."""
 import json
+import os
 import signal
 import ssl
+import traceback
 from datetime import datetime
 from urllib.parse import urlparse
 
+import pytz
 import requests
 from celery import shared_task
 from celery.utils.log import get_task_logger
@@ -36,7 +39,8 @@ from lxml import etree
 
 from .api import ResyncHandler
 from .config import INVENIO_RESYNC_INDEXES_MODE, \
-    INVENIO_RESYNC_INDEXES_STATUS, INVENIO_RESYNC_LOGS_STATUS
+    INVENIO_RESYNC_INDEXES_STATUS, INVENIO_RESYNC_LOGS_STATUS, \
+    INVENIO_RESYNC_MODE, INVENIO_RESYNC_SAVE_PATH
 from .models import ResyncIndexes, ResyncLogs
 from .utils import get_list_records, process_item, process_sync
 
@@ -53,6 +57,16 @@ def is_running_task(id):
         return True
     else:
         return False
+
+
+def filelist(resource_list):
+    filelist = []
+    for rc in resource_list:
+        if 'ln' in rc:
+            for l in rc['ln']:
+                if (l['rel'] == 'file'):
+                    filelist.append(l['href'])
+    return filelist
 
 
 @shared_task
@@ -90,36 +104,45 @@ def run_sync_import(id):
             # for record_id in records:
             try:
                 hostname = urlparse(resync.base_url)
-                records_id = get_list_records(resync.id)
+                records = get_list_records(resync.id)
                 successful = []
                 try:
-                    for i in records_id:
-                        current_app.logger.debug('{0} {1} {2}: {3}'.format(__file__,'run_sync_import()','record_id',i))
-                        record = get_record(
-                            url='{}://{}/oai'.format(
-                                hostname.scheme,
-                                hostname.netloc
-                            ),
-                            record_id=i,
-                            metadata_prefix='jpcoar_1.0',
-                        )
-                        if len(record)==1 :
-                            current_app.logger.debug('{0} {1} {2}: {3}'.format(__file__,'run_sync_import()','record',record))
+                    for i in records:
+                        current_app.logger.debug('{0} {1} {2}: {3}'.format(
+                            __file__, 'run_sync_import()', 'record_id', i))
+
+                        if INVENIO_RESYNC_MODE:
+                            record = get_record_from_file(i)
+                        else:
+                            record = get_record(
+                                url='{}://{}/oai'.format(
+                                    hostname.scheme,
+                                    hostname.netloc
+                                ),
+                                record_id=i,
+                                metadata_prefix='jpcoar_1.0',
+                            )
+
+                        if len(record) == 1:
+                            current_app.logger.debug('{0} {1} {2}: {3}'.format(
+                                __file__, 'run_sync_import()', 'record', record))
                             process_item(record[0], resync, counter)
                             successful.append(i)
 
                     for item in successful:
-                        records_id.remove(item)
+                        records.remove(item)
                     resync_index.update({
-                        'result': json.dumps(records_id)
+                        'result': json.dumps(records)
                     })
                 except Exception as ex:
+                    current_app.logger.error(traceback.format_exc())
                     current_app.logger.error(
                         'Error occurred while importing item\n' + str(
                             ex))
                     current_app.logger.info('Continue importing')
                     continue
             except Exception as ex:
+                current_app.logger.error(traceback.format_exc())
                 current_app.logger.error(
                     'Error occurred while processing harvesting item\n' + str(
                         ex))
@@ -132,6 +155,7 @@ def run_sync_import(id):
             ).get('successful')
             break
     except Exception as ex:
+        current_app.logger.error(traceback.format_exc())
         resync_log.status = current_app.config.get(
             "INVENIO_RESYNC_LOGS_STATUS",
             INVENIO_RESYNC_LOGS_STATUS
@@ -149,6 +173,26 @@ def run_sync_import(id):
         )
 
 
+def get_record_from_file(rc):
+    """Get records """
+    record = etree.Element('record')
+    header = etree.SubElement(record, 'header')
+    identifier = etree.SubElement(header, 'identifier')
+    identifier.text = rc['uri']
+    datestamp = etree.SubElement(header, 'datestamp')
+    datestamp.text = (datetime.fromtimestamp(
+        rc['timestamp'], tz=pytz.utc)).strftime("%Y/%m/%dT%H:%M:%SZ")
+    metadata = etree.SubElement(record, 'metadata')
+    filename = ''
+    for l in rc['ln']:
+        if (l['rel'] == 'file'):
+            filename = l['href']
+    et = etree.parse(filename)
+    metadata.extend(et.findall('.'))
+    records = [record]
+    return records
+
+
 def get_record(
         url,
         record_id=None,
@@ -162,21 +206,26 @@ def get_record(
         'verb': 'GetRecord',
         'metadataPrefix': metadata_prefix,
         'identifier': 'oai:weko3.example.org:{}'.format('%08d' % int(record_id))
-        #'identifier': 'oai:invenio:{}'.format('%08d' % int(record_id))
-        
+        # 'identifier': 'oai:invenio:{}'.format('%08d' % int(record_id))
+
     }
     records = None
-    payload_str = "&".join("%s=%s" % (k,v) for k,v in payload.items())
-    current_app.logger.debug('{0} {1} {2}: {3}'.format(__file__,'get_record()','url',url))
-    current_app.logger.debug('{0} {1} {2}: {3}'.format(__file__,'get_record()','payload_str',payload_str))
-    
+    payload_str = "&".join("%s=%s" % (k, v) for k, v in payload.items())
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        __file__, 'get_record()', 'url', url))
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        __file__, 'get_record()', 'payload_str', payload_str))
+
     response = requests.get(url, params=payload_str, verify=False)
     et = etree.XML(response.text.encode(encoding))
-    current_app.logger.debug('{0} {1} {2}: {3}'.format(__file__,'get_record()','et',esponse.text.encode(encoding)))
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        __file__, 'get_record()', 'et', esponse.text.encode(encoding)))
     records = et.findall('./GetRecord/record', namespaces=et.nsmap)
-    current_app.logger.debug('{0} {1} {2}: {3}'.format(__file__,'get_record()','et',records))
-    
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        __file__, 'get_record()', 'et', records))
+
     return records
+
 
 @shared_task()
 def resync_sync(id):

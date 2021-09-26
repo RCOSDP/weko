@@ -81,6 +81,9 @@ header-icons/*
 combined-pdfs/*
 !.gitkeep
 
+#resync
+.resync-client-status.cfg
+
 # pyenv
 .python-version
 # celery
