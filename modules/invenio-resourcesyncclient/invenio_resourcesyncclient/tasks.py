@@ -59,16 +59,6 @@ def is_running_task(id):
         return False
 
 
-def filelist(resource_list):
-    filelist = []
-    for rc in resource_list:
-        if 'ln' in rc:
-            for l in rc['ln']:
-                if (l['rel'] == 'file'):
-                    filelist.append(l['href'])
-    return filelist
-
-
 @shared_task
 def run_sync_import(id):
     if is_running_task(id):
