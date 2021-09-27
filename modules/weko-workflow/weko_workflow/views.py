@@ -59,10 +59,10 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
 from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
     get_workflows
-from weko_user_profiles.config import \
-    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_search_ui.utils import check_import_items, import_items_to_system, \
+    remove_temp_dir
+from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
-from werkzeug.utils import secure_filename
 
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
@@ -77,10 +77,9 @@ from .romeo import search_romeo_issn, search_romeo_jtitles
 from .scopes import activity_scope
 from .utils import IdentifierHandle, auto_fill_title, \
     check_authority_by_admin, check_continue, check_doi_validation_not_pass, \
-    check_existed_doi, check_register_item, \
-    create_onetime_download_url_to_guest, delete_cache_data, \
-    delete_guest_activity, filter_all_condition, get_account_info, \
-    get_actionid, get_activity_display_info, \
+    check_existed_doi, create_onetime_download_url_to_guest, \
+    delete_cache_data, delete_guest_activity, filter_all_condition, \
+    get_account_info, get_actionid, get_activity_display_info, \
     get_activity_id_of_record_without_version, \
     get_application_and_approved_date, get_approval_keys, get_cache_data, \
     get_files_and_thumbnail, get_identifier_setting, get_main_record_detail, \
@@ -1786,13 +1785,19 @@ class ActivityActionResource(ContentNegotiatedMethodView):
         if not item_type_id or not itemmetadata:
             raise InvalidInputRESTError()
 
-        # TODO: Check itemmetadata input from file.
-        file_name = secure_filename(
-            request.form.get('name') or itemmetadata.filename
-        )
-        result = check_register_item(itemmetadata)
-        if not file_name or not result or result.get('error') is not False:
+        # checking the metadata
+        check_result = check_import_items(itemmetadata, False, True)
+        item = check_result.get('list_record')[0] \
+            if check_result.get('list_record') else None
+        if check_result.get('error') or not item or item.get('errors'):
             raise InvalidInputRESTError()
+
+        # register new item
+        item['root_path'] = check_result.get('data_path') + '/data'
+        import_result = import_items_to_system(item, None, True)
+        remove_temp_dir(check_result.get('data_path'))
+        if not import_result['success']:
+            raise RegisteredActivityNotFoundRESTError()
 
         _default = current_app.config.get('WEKO_WORKFLOW_GAKUNINRDM_DATA')[0]
         post_activity = {
@@ -1801,17 +1806,20 @@ class ActivityActionResource(ContentNegotiatedMethodView):
             'workflow_id': _default.get('workflow_id')
         }
 
-        if not post_activity:
-            raise InvalidInputRESTError()
         try:
             activity = None
-            activity = self.activity.init_activity(post_activity)
+            pid = PersistentIdentifier.query.filter_by(
+                pid_type='recid',
+                pid_value=import_result.get('recid')
+            ).first()
+            activity = self.activity.init_activity(
+                post_activity, item_id=pid.object_uuid)
             # TODO: Parse itemmetadata on Item Registration Flow.
-        except Exception:
-            raise InvalidInputRESTError()
+        except Exception as ex:
+            raise RegisteredActivityNotFoundRESTError
         finally:
             if not activity or not activity.activity_id:
-                raise InvalidInputRESTError()
+                raise RegisteredActivityNotFoundRESTError
 
         return make_response(jsonify(self.activity_information(activity)), 200)
 

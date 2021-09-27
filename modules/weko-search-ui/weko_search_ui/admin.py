@@ -243,16 +243,16 @@ class ItemImportView(BaseView):
     @expose('/check', methods=['POST'])
     def check(self) -> jsonify:
         """Validate item import."""
-        data = request.get_json()
+        data = request.form
+        file = request.files['file'] if request.files else None
         list_record = []
         data_path = ''
         remove_temp_dir_task_id = None
 
         if data:
             result = check_import_items(
-                data.get('file_name'),
-                data.get('file').split(",")[-1],
-                data.get('is_change_identifier')
+                file,
+                data.get('is_change_identifier') == 'true'
             )
             if isinstance(result, dict):
                 data_path = result.get('data_path', '')
