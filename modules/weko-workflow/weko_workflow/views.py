@@ -61,7 +61,8 @@ from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
     get_workflows
 from weko_search_ui.utils import check_import_items, import_items_to_system, \
     remove_temp_dir
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 
 from .api import Action, Flow, GetCommunity, WorkActivity, \
@@ -1797,7 +1798,7 @@ class ActivityActionResource(ContentNegotiatedMethodView):
         import_result = import_items_to_system(item, None, True)
         remove_temp_dir(check_result.get('data_path'))
         if not import_result['success']:
-            raise RegisteredActivityNotFoundRESTError()
+            raise InvalidInputRESTError()
 
         _default = current_app.config.get('WEKO_WORKFLOW_GAKUNINRDM_DATA')[0]
         post_activity = {
@@ -1814,12 +1815,14 @@ class ActivityActionResource(ContentNegotiatedMethodView):
             ).first()
             activity = self.activity.init_activity(
                 post_activity, item_id=pid.object_uuid)
-            # TODO: Parse itemmetadata on Item Registration Flow.
-        except Exception as ex:
-            raise RegisteredActivityNotFoundRESTError
+            self.activity.update_title(
+                activity.activity_id,
+                item.get('item_title'))
+        except Exception:
+            raise InvalidInputRESTError()
         finally:
             if not activity or not activity.activity_id:
-                raise RegisteredActivityNotFoundRESTError
+                raise InvalidInputRESTError()
 
         return make_response(jsonify(self.activity_information(activity)), 200)
 
