@@ -25,6 +25,7 @@ import os
 import sys
 from collections import OrderedDict
 from copy import deepcopy
+from datetime import datetime
 from functools import wraps
 
 import redis
@@ -1591,7 +1592,6 @@ def lock_activity(activity_id=0):
             )
     else:
         # create new lock cache
-        from datetime import datetime
         locked_value = str(current_user.get_id()) + '-' + \
             str(int(datetime.timestamp(datetime.now()) * 10 ** 3))
         update_cache_data(
@@ -1765,7 +1765,35 @@ class ActivityActionResource(ContentNegotiatedMethodView):
                 ActionStatusPolicy.ACTION_CANCELED)
         response['status'] = _(status)
 
+        current_app.logger.info('{}_{}_{}_{}_FINISH_{}'.format(
+            self._prefix, request.method,
+            current_user.email, self._time,
+            activity.activity_id))
         return response
+
+    def logging_error(self, name, detail):
+        """Logging error.
+
+        Args:
+            error ([type]): [description]
+            detail ([type]): [description]
+
+        """
+        current_app.logger.info('{}_{}_{}_{}_ERROR_{}: {}'.format(
+            self._prefix, request.method,
+            current_user.email, self._time,
+            name,
+            detail))
+
+    def __init__(self, *args, **kwargs):
+        """Constructor."""
+        super(ActivityActionResource, self).__init__(
+            *args,
+            **kwargs
+        )
+        self._prefix = current_app.config.get(
+            'WEKO_WORKFLOW_GAKUNINRDM_PREFIX')
+        self._time = datetime.now().timestamp()
 
     @require_api_auth()
     @require_oauth_scopes(activity_scope.id)
@@ -1781,9 +1809,14 @@ class ActivityActionResource(ContentNegotiatedMethodView):
             [type]: [description]
 
         """
+        current_app.logger.info('{}_{}_{}_{}_REQUEST'.format(
+            self._prefix, request.method,
+            current_user.email, self._time))
+
         item_type_id = request.form.get('item_type_id')
         itemmetadata = request.files.get('file')
         if not item_type_id or not itemmetadata:
+            self.logging_error('missing_input', 'missing_input')
             raise InvalidInputRESTError()
 
         # checking the metadata
@@ -1791,6 +1824,13 @@ class ActivityActionResource(ContentNegotiatedMethodView):
         item = check_result.get('list_record')[0] \
             if check_result.get('list_record') else None
         if check_result.get('error') or not item or item.get('errors'):
+            if check_result.get('error'):
+                self.logging_error('check_import_items',
+                                   check_result.get('error'))
+            elif item.get('errors'):
+                self.logging_error('check_import_items', item.get('errors'))
+            else:
+                self.logging_error('check_import_items', 'item_missing')
             raise InvalidInputRESTError()
 
         # register new item
@@ -1798,6 +1838,8 @@ class ActivityActionResource(ContentNegotiatedMethodView):
         import_result = import_items_to_system(item, None, True)
         remove_temp_dir(check_result.get('data_path'))
         if not import_result['success']:
+            self.logging_error('import_items_to_system',
+                               import_result['success'])
             raise InvalidInputRESTError()
 
         _default = current_app.config.get('WEKO_WORKFLOW_GAKUNINRDM_DATA')[0]
@@ -1818,10 +1860,12 @@ class ActivityActionResource(ContentNegotiatedMethodView):
             self.activity.update_title(
                 activity.activity_id,
                 item.get('item_title'))
-        except Exception:
+        except Exception as ex:
+            self.logging_error('init_activity', str(ex))
             raise InvalidInputRESTError()
         finally:
             if not activity or not activity.activity_id:
+                self.logging_error('init_activity', 'activity_error')
                 raise InvalidInputRESTError()
 
         return make_response(jsonify(self.activity_information(activity)), 200)
@@ -1842,11 +1886,17 @@ class ActivityActionResource(ContentNegotiatedMethodView):
             [type]: [description]
 
         """
+        current_app.logger.info('{}_{}_{}_{}_REQUEST'.format(
+            self._prefix, request.method,
+            current_user.email, self._time))
+
         if not activity_id:
+            self.logging_error('missing_input', 'missing_input')
             raise ActivityBaseRESTError()
 
         activity = self.activity.get_activity_by_id(activity_id)
         if not activity:
+            self.logging_error('get_activity_by_id', str(activity_id))
             raise ActivityNotFoundRESTError()
 
         return make_response(jsonify(self.activity_information(activity)), 200)
@@ -1869,13 +1919,20 @@ class ActivityActionResource(ContentNegotiatedMethodView):
             [type]: [description]
 
         """
+        current_app.logger.info('{}_{}_{}_{}_REQUEST'.format(
+            self._prefix, request.method,
+            current_user.email, self._time))
+
         if not activity_id:
+            self.logging_error('missing_input', 'missing_input')
             raise ActivityBaseRESTError()
 
         activity = self.activity.get_activity_by_id(activity_id)
         if not activity:
+            self.logging_error('get_activity_by_id', str(activity_id))
             raise RegisteredActivityNotFoundRESTError()
         elif activity.activity_status != ActionStatusPolicy.ACTION_DOING:
+            self.logging_error('get_activity_by_id', 'action_not_doing')
             raise DeleteActivityFailedRESTError()
 
         _activity = dict(
@@ -1887,6 +1944,7 @@ class ActivityActionResource(ContentNegotiatedMethodView):
 
         result = self.activity.quit_activity(_activity)
         if not result:
+            self.logging_error('quit_activity', 'action_not_doing')
             raise DeleteActivityFailedRESTError()
         else:
             self.activity.upt_activity_action_status(
@@ -1897,6 +1955,7 @@ class ActivityActionResource(ContentNegotiatedMethodView):
 
         status = 200
         message = '登録アクティビティを削除'
+        self.activity_information(activity)
         return make_response(message, status)
 
 

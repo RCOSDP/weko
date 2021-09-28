@@ -337,3 +337,6 @@ WEKO_WORKFLOW_GAKUNINRDM_DATA = [
     }
 ]
 """GakuninRDM information to create flow and workflow"""
+
+WEKO_WORKFLOW_GAKUNINRDM_PREFIX = 'GakuninRDM'
+"""GekuninRDM prefix for logging."""
