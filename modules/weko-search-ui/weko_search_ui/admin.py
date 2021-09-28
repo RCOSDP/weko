@@ -28,8 +28,7 @@ from urllib.parse import urlencode
 from blinker import Namespace
 from celery import chord
 from celery.task.control import revoke
-from flask import Response, abort, current_app, jsonify, make_response, \
-    request, send_file
+from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_files_rest.models import FileInstance
@@ -47,8 +46,7 @@ from weko_search_ui.api import get_search_detail_keyword
 from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
     WEKO_EXPORT_TEMPLATE_BASIC_NAME, WEKO_EXPORT_TEMPLATE_BASIC_OPTION, \
     WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
-    WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE, \
-    WEKO_SEARCH_UI_BULK_EXPORT_TASK, WEKO_SEARCH_UI_BULK_EXPORT_URI
+    WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE
 from .tasks import export_all_task, import_item, is_import_running, \
     remove_temp_dir_task
 from .utils import cancel_export_all, check_import_items, \

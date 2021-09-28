@@ -20,7 +20,6 @@
 
 """Weko Search-UI admin."""
 
-import base64
 import csv
 import json
 import os
@@ -39,7 +38,6 @@ from operator import getitem
 
 import bagit
 import redis
-import sqlalchemy as sa
 from celery.result import AsyncResult
 from celery.task.control import revoke
 from elasticsearch.exceptions import NotFoundError
