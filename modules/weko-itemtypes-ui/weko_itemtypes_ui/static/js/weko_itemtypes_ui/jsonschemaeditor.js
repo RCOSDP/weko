@@ -404,7 +404,7 @@
 			showList: { optionKey: "isShowList", disableKey: "showListDisable" },
 			specifyNewline: { optionKey: "isSpecifyNewline", disableKey: "specifyNLDisable" },
 			hide: { optionKey: "isHide", disableKey: "hideDisable" },
-                        nonDisplay: { optionKey: "isNonDisplay", disableKey: "nonDisplayDisable" }
+			nonDisplay: { optionKey: "isNonDisplay", disableKey: "nonDisplayDisable" }
 		},
 		jsonDeepCopy: function jsonDeepCopy(src_json) {
 			return JSON.parse(JSON.stringify(src_json));
@@ -731,7 +731,7 @@
 			//this.state = this.propsToState(this.export());
 			this.setState(this.state);
 		},
-                changeNonDisplay: function changeNonDisplay(event) {
+		changeNonDisplay: function changeNonDisplay(event) {
 			let index = event.target.dataset.index;
 			this.state.propertyNames[index].isNonDisplay = event.target.checked;
 			let propertyItem = this.state.propertyItems[index];
@@ -763,7 +763,7 @@
 				this.handleOptionDisable(this.state.properties[propertyItem], this.state.propertyNames[index].isNonDisplay || false, this.defaultDict.nonDisplay)
 			}
 			this.setState(this.state);
-                },
+        },
 		onChange: function onChange() {
 			//if(undefined != this.props.onChange) {
 			//  this.props.onChange();
