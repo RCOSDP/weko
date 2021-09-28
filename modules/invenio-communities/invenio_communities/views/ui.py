@@ -174,6 +174,20 @@ def view(community):
 
     detail_condition = get_search_detail_keyword('')
 
+    # Get Facet search setting.
+    display_facet_search = get_search_setting().get("display_control", {})\
+        .get('display_facet_search', {}).get('status', False)
+    ctx.update({
+        "display_facet_search": display_facet_search,
+    })
+
+    # Get index tree setting.
+    display_index_tree = get_search_setting().get("display_control", {})\
+        .get('display_index_tree', {}).get('status', False)
+    ctx.update({
+        "display_index_tree": display_index_tree,
+    })
+
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
         sort_option=sort_options, detail_condition=detail_condition, community_id=community_id, width=width, height=height, ** ctx
