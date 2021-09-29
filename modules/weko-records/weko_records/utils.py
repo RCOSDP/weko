@@ -735,7 +735,8 @@ async def sort_meta_data_by_options(
                                        )
             elif not (bibliographic_key and bibliographic_key in s['key']) and \
                     value and value not in _ignore_items and \
-                    not is_hide and is_show_list and s['key'] \
+                    ((not is_hide and is_show_list) or \
+                     s['title'] in ['Language', '言語']) and s['key'] \
                     and s['title'] != 'Title':
                 data_result, stt_key = get_value_and_lang_by_key(
                     s['key'], solst_dict_array, data_result, stt_key)
