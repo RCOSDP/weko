@@ -718,3 +718,12 @@ msgstr "This DOI was withdrawn. Please input another DOI."
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:50
 msgid "Go to"
 msgstr "Go to"
+
+msgid "The following item(s) cannot be deleted."
+msgstr ""
+
+msgid "DOI granting item(s):"
+msgstr ""
+
+msgid "Editing item(s):"
+msgstr ""

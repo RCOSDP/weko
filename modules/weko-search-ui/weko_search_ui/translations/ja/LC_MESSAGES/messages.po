@@ -754,3 +754,12 @@ msgstr "{}に指定されたファイル名と{}が一致しません。"
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:50
 msgid "Go to"
 msgstr "移動"
+
+msgid "The following item(s) cannot be deleted."
+msgstr "以下のアイテムを削除することはできませんでした。"
+
+msgid "DOI granting item(s):"
+msgstr "DOI付与済みのアイテム："
+
+msgid "Editing item(s):"
+msgstr "編集中のアイテム："

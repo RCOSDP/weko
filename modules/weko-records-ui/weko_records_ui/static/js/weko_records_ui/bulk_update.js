@@ -335,9 +335,6 @@ require([
 
           } else {
             alert('All selected items have been updated successfully.');
-            //var modalcontent =  "All selected items have been updated successfully.";
-            //$("#inputModal").html(modalcontent);
-            //$("#allModal").modal("show");
           }
         },
         error: function(status, error){
@@ -346,9 +343,47 @@ require([
       });
     });
 
+    $("#bulk_delete_confirmation_button").click(function () {
+      $("#bulk_delete_confirmation_button").attr('disabled', true);
+      var data = {
+        'q': GetUrlParam("q"),
+        'recursively': $("#recursively").prop('checked'),
+        'sort': 'custom_sort'
+      }
+
+      // Update
+      $.ajax({
+        method: 'GET',
+        url: '/admin/items/bulk/delete/check',
+        async: false,
+        cache: false,
+        data: data,
+        success: function (data, status, xhr) {
+          if (data.status == 1) {
+            $("#bulk_delete_confirmation_continue").attr('disabled', false);
+            $("#bulk_delete_confirmation_message").html(data.msg);
+            $("#bulk_delete_confirmation_message").addClass('text-info');
+            $("#bulk_delete_confirmation").modal("show");
+          } else {
+            $("#bulk_delete_confirmation_message").html(data.msg);
+            $("#bulk_delete_confirmation_message").addClass('text-danger');
+            $("#bulk_delete_confirmation").modal("show");
+          }
+          $("#bulk_delete_confirmation_button").attr('disabled', false);
+        },
+        error: function (status, error) {
+          $("#bulk_delete_confirmation_message").html(error);
+          $("#bulk_delete_confirmation").modal("show");
+          $("#bulk_delete_confirmation_button").attr('disabled', false);
+        }
+      });
+    });
+
     // For bulk delete's actions
-    $("#bulk_delete_confirmation_continue").click(function(){
-      $('#bulk_delete_confirmation').trigger('click');
+    $("#bulk_delete_confirmation_continue").click(function () {
+      $("#bulk_delete_confirmation_continue").attr('disabled', true);
+      $("#bulk_delete_confirmation_cancel").attr('disabled', true);
+
       // Do submit data
       // Get index id
       var data = {
@@ -364,25 +399,27 @@ require([
         async: false,
         cache: false,
         data: data,
-        success: function(data, status, xhr){
+        success: function (data, status, xhr) {
           console.log(xhr.status);
 
           if (data.status == 1) {
-            setTimeout(function() {
-              location.reload();
-            }, 1000)
+            $("#bulk_delete_confirmation").modal("hide");
+            $("#recursively").prop("checked", false);
+            addError(data.msg)
           } else {
-            //alert(data.msg)
             var modalcontent = data.msg;
             $("#inputModal").html(modalcontent);
             $("#allModal").modal("show");
           }
+          $("#bulk_delete_confirmation_continue").attr('disabled', false);
+          $("#bulk_delete_confirmation_cancel").attr('disabled', false);
         },
-        error: function(status, error){
-          //alert(error);
-            var modalcontent = error;
-            $("#inputModal").html(modalcontent);
-            $("#allModal").modal("show");
+        error: function (status, error) {
+          var modalcontent = error;
+          $("#inputModal").html(modalcontent);
+          $("#allModal").modal("show");
+          $("#bulk_delete_confirmation_continue").attr('disabled', false);
+          $("#bulk_delete_confirmation_cancel").attr('disabled', false);
         }
       });
     });
@@ -475,5 +512,12 @@ require([
             }
         }
         return false;
+    }
+
+    function addError(message) {
+      $('#errors').append(
+        '<div class="alert alert-danger alert-dismissable">' +
+        '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
+        '&times;</button>' + message + '</div>');
     }
 });

@@ -31,11 +31,10 @@ from flask import Markup, current_app, session
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_cache import current_cache
-from invenio_db import db
 from invenio_i18n.ext import current_i18n
+from invenio_pidstore.models import PersistentIdentifier
 from invenio_search import RecordsSearch
 from simplekv.memory.redisstore import RedisStore
-from sqlalchemy import MetaData, Table
 from weko_admin.utils import is_exists_key_in_redis
 from weko_groups.models import Group
 
@@ -132,7 +131,8 @@ def get_tree_json(index_list, root_id):
         return session.get(key, [])
 
     def generate_index_dict(index_element, is_root):
-        """Formats an index_element, which is a tuple, into a nicely formatted dictionary."""
+        """Formats an index_element, which is a tuple, into a \
+        nicely formatted dictionary."""
         index_dict = index_element._asdict()
         index_name = str(index_element.name).replace("&EMPTY&", "")
         index_name = Markup.escape(index_name)
@@ -957,3 +957,40 @@ def perform_delete_index(index_id, record_class, action: str):
         if is_unlock:
             unlock_index(locked_key)
     return msg, errors
+
+
+def get_doi_items_in_index(index_id):
+    """Check if any item in the index is locked by import process.
+
+    @param index_id:
+    @return:
+    """
+    records = check_doi_in_index_and_child_index(index_id)
+    result = []
+    for record in records:
+        item_id = record.get('_source', {}).get('control_number', 0)
+        if len(record.get('_source', {}).get('path', [])):
+            result.append(item_id)
+
+    return result
+
+
+def get_editing_items_in_index(index_id):
+    """Check if any item in the index is locked by import process.
+
+    @param index_id:
+    @return:
+    """
+    from weko_items_ui.utils import check_item_is_being_edit
+    from weko_workflow.utils import check_an_item_is_locked
+    records = get_record_in_es_of_index(index_id)
+    result = []
+    for record in records:
+        item_id = record.get('_source', {}).get('control_number', 0)
+        if check_an_item_is_locked(int(item_id)) or \
+            check_item_is_being_edit(PersistentIdentifier.get(
+                'recid',
+                item_id)):
+            result.append(item_id)
+
+    return result

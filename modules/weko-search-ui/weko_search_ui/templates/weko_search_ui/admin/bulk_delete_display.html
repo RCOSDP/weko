@@ -40,11 +40,11 @@
         <div class="panel-body">
           <div id="index_item_list">
             {%- if not page_id %}
-            {%- if index_id %}
-            <invenio-search-results
-              template="{{ url_for('static', filename=config.WEKO_ITEM_MANAGEMENT_JSTEMPLATE_BREAD) }}">
-            </invenio-search-results>
-            {%- endif %}
+              {%- if index_id %}
+              <invenio-search-results
+                template="{{ url_for('static', filename=config.WEKO_ITEM_MANAGEMENT_JSTEMPLATE_BREAD) }}">
+              </invenio-search-results>
+              {%- endif %}
             <br/>
             <input type="checkbox" id="recursively" name="recursively" style="margin: 0 10px">{{_('Delete items of child recursively')}}
             {%- endif %}
@@ -53,17 +53,17 @@
 
         {%- set delete_button_class = 'disabled' -%}
         {%- if has_items or has_child_trees -%}
-        {%- set delete_button_class = '' -%}
+          {%- set delete_button_class = '' -%}
         {%- endif -%}
         <div class="row text-center">
           <p></p>
-         <!-- <a data-toggle="modal" href="#bulk_delete_confirmation"
-             class="btn btn-primary btn-md {{delete_button_class}}">{{ _('Delete') }}</a>-->
-            <a data-toggle="modal" href="#bulk_delete_confirmation"
+            <a id="bulk_delete_confirmation_button"
              class="btn btn-danger pull-right ten-pixel-margin">
                 <span class="glyphicon glyphicon-trash"></span>&nbsp
                    {{ _('Delete') }}</a>
         </div>
+
+        {%- block delete_confirm_dialog -%}
         <div id="bulk_delete_confirmation" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="deleteHeader"
              aria-hidden="true">
           <div class="modal-dialog modal-dialog-centered" role="document" style="display: table; width: auto;">
@@ -76,16 +76,19 @@
               </div>
               <div class="modal-body" style="overflow-x: auto;">
                 <span class="glyphicon glyphicon-question-sign fa-3x" style="vertical-align: middle; margin: 0 10px"></span>
-                {{_('Are you sure you want to delete it?')}}
+                <span id="bulk_delete_confirmation_message">One fine body&hellip;</span>
               </div>
+              
               <div class="modal-footer">
-                <button type="button" class="btn btn-primary action-button" id="bulk_delete_confirmation_continue">{{_('Continue')}}
+                <button type="button" class="btn btn-primary action-button" id="bulk_delete_confirmation_continue" disabled>{{_('Continue')}}
                 </button>
-                <button type="button" class="btn btn-default cancel-button" data-dismiss="modal">{{_('Cancel')}}</button>
+                <button type="button" class="btn btn-default cancel-button" id="bulk_delete_confirmation_cancel" data-dismiss="modal">{{_('Cancel')}}</button>
               </div>
             </div>
           </div>
         </div>
+        {%- endblock delete_confirm_dialog -%}
+
       </div>
     </div>
   </div>

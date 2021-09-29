@@ -28,8 +28,7 @@ from urllib.parse import urlencode
 from blinker import Namespace
 from celery import chord
 from celery.task.control import revoke
-from flask import Response, abort, current_app, jsonify, make_response, \
-    request, send_file
+from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_files_rest.models import FileInstance
@@ -37,6 +36,8 @@ from invenio_i18n.ext import current_i18n
 from weko_admin.utils import reset_redis_cache
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
+from weko_index_tree.utils import get_doi_items_in_index, \
+    get_editing_items_in_index, is_index_locked
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
 from weko_workflow.utils import delete_cache_data, get_cache_data, \
@@ -47,8 +48,7 @@ from weko_search_ui.api import get_search_detail_keyword
 from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
     WEKO_EXPORT_TEMPLATE_BASIC_NAME, WEKO_EXPORT_TEMPLATE_BASIC_OPTION, \
     WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
-    WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE, \
-    WEKO_SEARCH_UI_BULK_EXPORT_TASK, WEKO_SEARCH_UI_BULK_EXPORT_URI
+    WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE
 from .tasks import export_all_task, import_item, is_import_running, \
     remove_temp_dir_task
 from .utils import cancel_export_all, check_import_items, \
@@ -75,10 +75,14 @@ class ItemManagementBulkDelete(BaseView):
                 current_tree = Indexes.get_index(q)
                 recursive_tree = Indexes.get_recursive_tree(q)
 
-                if current_tree is not None:
+                doi_items = get_doi_items_in_index(current_tree.id)
+                edt_items = get_editing_items_in_index(current_tree.id)
+                totals = []
+                ignore_items = list(set(doi_items + edt_items))
 
+                if current_tree:
                     # Delete items in current_tree
-                    delete_records(current_tree.id)
+                    totals += delete_records(current_tree.id, ignore_items)
 
                     # If recursively, then delete items of child indices
                     if request.values.get('recursively') == 'true'\
@@ -90,13 +94,31 @@ class ItemManagementBulkDelete(BaseView):
                                 child_tree = Indexes.get_index(obj[1])
 
                                 # Do delete items in child_tree
-                                delete_records(child_tree.id)
+                                totals += delete_records(
+                                    child_tree.id,
+                                    ignore_items)
 
                                 # Add the level 1 child into the current_tree
                                 if obj[0] == current_tree.id:
                                     direct_child_trees.append(child_tree.id)
 
-                    return jsonify({'status': 1})
+                    if ignore_items:
+                        msg = '{}<br/>'.format(
+                            _('The following item(s) cannot be deleted.'))
+                        if doi_items:
+                            _item = ['recid: {}'.format(i) for i in doi_items]
+                            msg += '<br/>{}<br/>{}'.format(
+                                _('DOI granting item(s):'),
+                                (', ').join(_item)
+                            )
+                        if edt_items:
+                            _item = ['recid: {}'.format(i) for i in edt_items]
+                            msg += '<br/>{}<br/>{}'.format(
+                                _('Editing item(s):'),
+                                (', ').join(_item)
+                            )
+                        return jsonify({'status': 1, 'msg': msg})
+                    return jsonify({'status': 1, 'msg': _('OK')})
             else:
                 return jsonify({'status': 0, 'msg': 'Invalid tree'})
 
@@ -107,6 +129,25 @@ class ItemManagementBulkDelete(BaseView):
             management_type='delete',
             detail_condition=detail_condition
         )
+
+    @expose('/check', methods=['GET'])
+    def check(self):
+        """Get list."""
+        q = request.values.get('q')
+        status = 0
+        msg = None
+        if q and q.isdigit() and Indexes.get_index(q):
+            if is_index_locked(q):
+                status = 0
+                msg = _('Index Delete is in progress on another device.')
+            else:
+                status = 1
+                msg = _('Are you sure you want to delete it?')
+        else:
+            status = 0
+            msg = _('No such index.')
+
+        return jsonify({'status': status, 'msg': msg})
 
 
 class ItemManagementCustomSort(BaseView):

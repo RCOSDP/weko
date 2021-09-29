@@ -39,7 +39,6 @@ from operator import getitem
 
 import bagit
 import redis
-import sqlalchemy as sa
 from celery.result import AsyncResult
 from celery.task.control import revoke
 from elasticsearch.exceptions import NotFoundError
@@ -175,13 +174,17 @@ def get_tree_items(index_tree_id):
     return rd.get('hits').get('hits')
 
 
-def delete_records(index_tree_id):
+def delete_records(index_tree_id, ignore_items):
     """Bulk delete records."""
     hits = get_tree_items(index_tree_id)
+    result = []
+
     for hit in hits:
         recid = hit.get('_id')
         record = Record.get_record(recid)
-        if record is not None and record['path'] is not None:
+        pid = hit.get('_source', {}).get('control_number', 0)
+
+        if record and record['path'] and pid not in ignore_items:
             paths = record['path']
             if len(paths) > 0:
                 # Remove the element which matches the index_tree_id
@@ -202,10 +205,13 @@ def delete_records(index_tree_id):
                 indexer.update_path(record, update_revision=False)
 
                 if len(paths) == 0 and removed_path is not None:
-                    from weko_deposit.api import WekoDeposit
                     WekoDeposit.delete_by_index_tree_id(removed_path)
                     Record.get_record(recid).delete()  # flag as deleted
                     db.session.commit()  # terminate the transaction
+
+                result.append(pid)
+
+    return result
 
 
 def get_journal_info(index_id=0):
