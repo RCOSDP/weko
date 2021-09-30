@@ -1030,7 +1030,7 @@ def register_item_metadata(item, root_path):
                 if file.is_thumbnail is True:
                     subitem_thumbnail.append({
                         'thumbnail_label': file.key,
-                        'thumbnail_uri':
+                        'thumbnail_url':
                             current_app.config['DEPOSIT_FILES_API']
                             + u'/{bucket}/{key}?versionId={version_id}'.format(
                                 bucket=file.bucket_id,
