@@ -10,6 +10,9 @@ $(document).ready(function () {
   function isApproval(action){
     return action && action.name == 'Approval';
   }
+  function isItemReg(action){
+    return action && action.name == 'Item Registration';
+  }
   $('.btn_apply').on('click', function () {
     let actionId = $(this).data('action-id');
     let actionName = $('#action_name_' + actionId).text();
@@ -29,7 +32,7 @@ $(document).ready(function () {
         role: 0,
         role_deny: false,
         workflow_flow_action_id: -1,
-        send_mail_setting : {"inform_reject": false, "inform_approval": false, "request_approval": false},
+        send_mail_setting : {"inform_reject": false, "inform_approval": false, "request_approval": false, "inform_itemReg": false},
         action: 'ADD'
       };
       apply_action_list.push(apply_action);
@@ -257,7 +260,8 @@ $(document).ready(function () {
       send_mail_setting: {
         "request_approval": $tr.find('#td_action_request_approval_' + actionId).is(':checked'),
         "inform_approval": $tr.find('#td_action_approval_done_' + actionId).is(':checked'),
-        "inform_reject": $tr.find('#td_action_approval_reject_' + actionId).is(':checked')
+        "inform_reject": $tr.find('#td_action_approval_reject_' + actionId).is(':checked'),
+        "inform_itemReg": $tr.find('#td_action_item_reg_done_' + actionId).is(':checked')
       },
       action: 'ADD'
     });
@@ -285,7 +289,10 @@ $(document).ready(function () {
       if(!isApproval(apply_action)){
         new_row = new_row.replaceAll('specify-property-option', 'hide');
         new_row = new_row.replaceAll('<span class="approval-order"></span>', '');
-        new_row = new_row.replaceAll('mail_setting_options', 'hide');
+        new_row = new_row.replaceAll('mail_setting_for_approval', 'hide');
+      }
+      if(!isItemReg(apply_action)){
+        new_row = new_row.replaceAll('mail_setting_for_itemReg', 'hide');
       }
       $('#tb_action_list').append(new_row);
     }
@@ -326,7 +333,8 @@ $(document).ready(function () {
         send_mail_setting: {
             "request_approval": $tr.find('#td_action_request_approval_' + actionId).is(':checked'),
             "inform_approval":  $tr.find('#td_action_approval_done_' + actionId).is(':checked'),
-            "inform_reject":  $tr.find('#td_action_approval_reject_' + actionId).is(':checked')
+            "inform_reject":  $tr.find('#td_action_approval_reject_' + actionId).is(':checked'),
+            "inform_itemReg": $tr.find('#td_action_item_reg_done_' + actionId).is(':checked')
         },
         action: 'ADD'
       });

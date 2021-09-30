@@ -176,7 +176,7 @@
                   </div>
                   <br>
                   {% if action.action.action_name == 'Approval'%}
-                    <div class="mail_setting_options">
+                    <div class="mail_setting_for_approval">
                       <div class="form-inline">
                         <label style="font-weight: unset;">
                           <input type="checkbox" class="pointer" id="td_action_request_approval_{{action.action_id}}" {% if action.send_mail_setting.request_approval %}checked{% endif %} >
@@ -193,7 +193,15 @@
                           {{_('Approval Notification Email')}}</label>
                       </div>
                     </div>
-                {% endif %}
+                  {% elif action.action.action_name == 'Item Registration' %}
+                    <div class="mail_setting_for_itemReg">
+                      <div class="form-inline">
+                        <label style="font-weight: unset;">
+                          <input type="checkbox" class="pointer" id="td_action_item_reg_done_{{action.action_id}}" {% if action.send_mail_setting.inform_itemReg %}checked{% endif %}>
+                          {{_('Send an email to the registrant')}}</label>
+                      </div>
+                    </div>
+                  {% endif %}
               </td>
               <td class="hide">{{_(action.action_status.value)}}</td>
               <td class="hide"><span id="td_action_date_{{action.action_id}}">{{action.action_date.date()}}</span></td>
@@ -263,7 +271,7 @@
           <input type="checkbox" class="td_action_user_deny" id="td_action_user_deny_apply_action.id" data-action-id="apply_action.id">
           {{_("Deny")}}
         </div>
-        <div class="mail_setting_options">
+        <div class="mail_setting_for_approval">
           <div class="form-inline">
             <label style="font-weight: unset;">
               <input type="checkbox" class="pointer" id="td_action_request_approval_apply_action.id">
@@ -280,6 +288,14 @@
             <label style="font-weight: unset;">
               <input type="checkbox" class="pointer" id="td_action_approval_done_apply_action.id">
               {{_('Approval Notification Email')}}</label>
+            </label>
+          </div>
+        </div>
+        <div class="mail_setting_for_itemReg">
+          <div class="form-inline">
+            <label style="font-weight: unset;">
+              <input type="checkbox" class="pointer" id="td_action_item_reg_done_apply_action.id">
+              {{_('Send an email to the registrant')}}</label>
             </label>
           </div>
         </div>

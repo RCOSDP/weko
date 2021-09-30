@@ -555,3 +555,6 @@ msgstr ""
 
 msgid "Approval Rejection Notification Email"
 msgstr ""
+
+msgid "Send an email to the registrant"
+msgstr ""
