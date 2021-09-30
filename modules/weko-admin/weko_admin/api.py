@@ -21,15 +21,16 @@
 
 from __future__ import absolute_import, print_function
 
+import ast
+
+import redis
 import requests
 from flask import current_app, render_template
 from flask_babelex import lazy_gettext as _
 from invenio_db import db
 from invenio_mail.api import send_mail
-from invenio_stats.utils import QueryCommonReportsHelper
-from sqlalchemy import text
 
-from .models import AdminLangSettings, LogAnalysisRestrictedCrawlerList, \
+from .models import LogAnalysisRestrictedCrawlerList, \
     LogAnalysisRestrictedIpAddress
 from .utils import get_system_default_language
 
@@ -97,3 +98,67 @@ def send_site_license_mail(organization_name, mail_list, agg_date, data):
                         lang_code=default_lang)))
     except Exception as ex:
         current_app.logger.error(ex)
+
+
+class TempDirInfo(object):
+    """Handle's collection of storage Temporary Directory Information."""
+
+    def __init__(cls, key=None) -> None:
+        """Tempdirinfo initialization.
+
+        Args:
+            key (str, optional): Cache key. Defaults to None.
+        """
+        if not key:
+            key = current_app.config[
+                'WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT']
+        cls.key = key
+        cls.redis = redis.StrictRedis.from_url(
+            current_app.config['CACHE_REDIS_URL'])
+
+    def set(cls, temp_path, extra_info=None):
+        """Add or update data.
+
+        Args:
+            temp_path (str): Path of temporary directory.
+            extra_info (dict, optional): Extra information. Defaults to None.
+
+        Returns:
+            int: Action status.
+        """
+        return cls.redis.hset(cls.key, temp_path, extra_info)
+
+    def delete(cls, temp_path):
+        """Delete data.
+
+        Args:
+            temp_path (str): Path of temporary directory.
+
+        Returns:
+            int: Action status.
+        """
+        return cls.redis.hdel(cls.key, temp_path)
+
+    def get(cls, temp_path):
+        """Get data by temp_path.
+
+        Args:
+            temp_path (str): Path of temporary directory.
+
+        Returns:
+            dict: Extended information according temp_path.
+        """
+        val = cls.redis.hget(cls.key, temp_path)
+        return ast.literal_eval(val.decode("UTF-8")) if val else None
+
+    def get_all(cls):
+        """Get all data.
+
+        Returns:
+            dict: All data.
+        """
+        result = {}
+        for idx, val in cls.redis.hgetall(cls.key).items():
+            path = idx.decode("UTF-8")
+            result[path] = ast.literal_eval(val.decode("UTF-8") or '{}')
+        return result

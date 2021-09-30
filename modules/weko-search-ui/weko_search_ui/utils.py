@@ -1355,17 +1355,6 @@ def import_items_to_system(item: dict, request_info: dict):
     }
 
 
-def remove_temp_dir(path):
-    """Validation importing zip file.
-
-    :argument
-        path     -- {string} path temp_dir.
-    :return
-
-    """
-    shutil.rmtree(path)
-
-
 def handle_item_title(list_record):
     """Prepare item title.
 
