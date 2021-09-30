@@ -736,8 +736,10 @@ async def sort_meta_data_by_options(
             elif not (bibliographic_key and bibliographic_key in s['key']) and \
                     value and value not in _ignore_items and \
                     ((not is_hide and is_show_list) or \
-                     s['title'] in ['Language', '言語']) and s['key'] \
-                    and s['title'] != 'Title':
+                     s['title'] in current_app.config[
+                         'WEKO_RECORDS_LANGUAGE_TITLES']) and s['key'] \
+                    and s['title'] != current_app.config[
+                        'WEKO_RECORDS_TITLE_TITLE']:
                 data_result, stt_key = get_value_and_lang_by_key(
                     s['key'], solst_dict_array, data_result, stt_key)
                 is_specify_newline_array.append(
@@ -1097,24 +1099,15 @@ def get_attribute_value_all_items(
             if k in name_mapping:
                 item_name = name_mapping[k]['item_name']
                 flag = name_mapping[k]['non_display']
-            if item_name in ['言語', 'Language']:
+            if item_name in current_app.config[
+                    'WEKO_RECORDS_LANGUAGE_TITLES']:
                 lang_key = k
-            elif item_name in [
-                    '調査開始／終了',
-                    'イベント',
-                    'Event',
-                    '開始時点/終了時点',
-                    'Time Period Event']:
+            elif item_name in current_app.config[
+                    'WEKO_RECORDS_EVENT_TITLES']:
                 event_key = k
-            elif not flag and \
-                    item_name in [
-                        '時間的範囲',
-                        'Time Period',
-                        '調査日',
-                        'Date',
-                        '対象時期',
-                        'TimePeriod',
-                        'Time Period(s)']:
+            elif not flag and item_name in \
+                    current_app.config[
+                        'WEKO_RECORDS_TIME_PERIOD_TITLES']:
                 date_key = k
             elif not flag:
                 if value_key:

@@ -83,6 +83,22 @@ WEKO_RECORDS_ALTERNATIVE_NAME_KEYS = ['creatorAlternative',
 WEKO_RECORDS_AFFILIATION_NAME_KEYS = ['affiliationName', 'affiliationNameLang']
 """List affiliation name key."""
 
+WEKO_RECORDS_TITLE_TITLE = 'Title'
+"""Title."""
+
+WEKO_RECORDS_LANGUAGE_TITLES = ['Language', '言語']
+"""List language titles."""
+
+WEKO_RECORDS_EVENT_TITLES = ['調査開始／終了', 'イベント',
+                             'Event', '開始時点/終了時点',
+                             'Time Period Event']
+"""List event titles."""
+
+WEKO_RECORDS_TIME_PERIOD_TITLES = ['時間的範囲', 'Time Period',
+                                   '調査日', 'Date', '対象時期',
+                                   'TimePeriod', 'Time Period(s)']
+"""List time period titles."""
+
 """
 WEKO_TEST_FIELD = {
     "1" : {
