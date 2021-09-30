@@ -125,6 +125,7 @@ class TempDirInfo(object):
 
         Returns:
             int: Action status.
+
         """
         return cls.redis.hset(cls.key, temp_path, extra_info)
 
@@ -136,6 +137,7 @@ class TempDirInfo(object):
 
         Returns:
             int: Action status.
+
         """
         return cls.redis.hdel(cls.key, temp_path)
 
@@ -147,6 +149,7 @@ class TempDirInfo(object):
 
         Returns:
             dict: Extended information according temp_path.
+
         """
         val = cls.redis.hget(cls.key, temp_path)
         return ast.literal_eval(val.decode("UTF-8")) if val else None
@@ -156,6 +159,7 @@ class TempDirInfo(object):
 
         Returns:
             dict: All data.
+
         """
         result = {}
         for idx, val in cls.redis.hgetall(cls.key).items():

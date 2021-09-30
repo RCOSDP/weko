@@ -62,8 +62,7 @@ from weko_records.models import ItemType
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
 from weko_records_ui.utils import create_onetime_download_url, \
     generate_one_time_download_url, get_list_licence
-from weko_user_profiles.config import \
-    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
 from werkzeug.utils import import_string
