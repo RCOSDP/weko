@@ -27,7 +27,6 @@ from urllib.parse import urlencode
 
 from blinker import Namespace
 from celery import chord
-from celery.task.control import revoke
 from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _

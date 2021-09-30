@@ -46,6 +46,7 @@ from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
 from invenio_files_rest.models import FileInstance, Location, ObjectVersion
+from invenio_files_rest.proxies import current_files_rest
 from invenio_files_rest.utils import find_and_update_location_size
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
@@ -76,9 +77,9 @@ from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_GRANT_SUFFIX_METHOD
 from weko_workflow.models import FlowDefine, WorkFlow
 from weko_workflow.utils import IdentifierHandle, check_existed_doi, \
-    get_identifier_setting, get_sub_item_value, get_url_root, \
-    item_metadata_validation, register_hdl_by_handle, \
-    register_hdl_by_item_id, saving_doi_pidstore
+    delete_cache_data, get_cache_data, get_identifier_setting, \
+    get_sub_item_value, get_url_root, item_metadata_validation, \
+    register_hdl_by_handle, register_hdl_by_item_id, saving_doi_pidstore
 
 from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     RESOURCE_TYPE_URI, VERSION_TYPE_URI, \
@@ -1148,7 +1149,8 @@ def register_item_metadata(item, root_path, is_gakuninrdm=False):
                 _pid = PIDVersioning(child=pid).last_child
                 _record = WekoDeposit.get_record(_pid.object_uuid)
                 _deposit = WekoDeposit(_record, _record.model)
-                _deposit.merge_data_to_record_without_version(pid, True)
+                _deposit.merge_data_to_record_without_version(
+                    pid, keep_version=True, is_import=True)
                 if not is_gakuninrdm:
                     _deposit.publish_without_commit()
 
@@ -1331,6 +1333,8 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
     if not item:
         return None
     else:
+        bef_metadata = None
+        bef_last_ver_metadata = None
         try:
             root_path = item.get('root_path', '')
             if item.get('status') == 'new':
@@ -1338,6 +1342,13 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                 item['id'] = item_id
             else:
                 handle_check_item_is_locked(item)
+                # cache ES data for rollback
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type='recid', pid_value=item['id']).first()
+                bef_metadata = WekoIndexer().get_metadata_by_item_id(
+                    pid.object_uuid)
+                bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
+                    PIDVersioning(child=pid).last_child.object_uuid)
 
             register_item_metadata(item, root_path, is_gakuninrdm)
             if not is_gakuninrdm:
@@ -1353,9 +1364,24 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                     # Store data to es and db.
                     store_data_to_es_and_db(item, request_info)
             db.session.commit()
+
+            # clean unuse file content in keep mode if import success
+            cache_key = current_app \
+                .config['WEKO_SEARCH_UI_IMPORT_UNUSE_FILES_URI'] \
+                .format(item['id'])
+            list_unuse_uri = get_cache_data(cache_key)
+            if list_unuse_uri:
+                for uri in list_unuse_uri:
+                    file = current_files_rest.storage_factory(
+                        fileurl=uri, size=1)
+                    fs, path = file._get_fs()
+                    if fs.exists(path):
+                        file.delete()
+                delete_cache_data(cache_key)
         except Exception as ex:
             if item.get('id'):
-                handle_remove_es_metadata(item)
+                handle_remove_es_metadata(
+                    item, bef_metadata, bef_last_ver_metadata)
 
             db.session.rollback()
             current_app.logger.error('item id: %s update error.' % item['id'])
@@ -2745,7 +2771,7 @@ def handle_check_item_is_locked(item):
         })
 
 
-def handle_remove_es_metadata(item):
+def handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata):
     """Remove es metadata.
 
     :argument
@@ -2754,15 +2780,39 @@ def handle_remove_es_metadata(item):
     try:
         item_id = item.get('id')
         status = item.get('status')
+        indexer = WekoIndexer()
+        pid = WekoRecord.get_record_by_pid(item_id).pid_recid
         if status == 'new':
-            pid = WekoRecord.get_record_by_pid(item_id).pid_recid
+            # delete temp data in ES
             pid_lastest = WekoRecord.get_record_by_pid(
-                item_id + '.' + str(get_latest_version_id(item_id) - 1)
-            ).pid_recid
-            deposit = WekoDeposit.get_record(pid.object_uuid)
-            deposit.indexer.delete(deposit)
-            deposit = WekoDeposit.get_record(pid_lastest.object_uuid)
-            deposit.indexer.delete(deposit)
+                item_id + '.1').pid_recid
+            indexer.delete_by_id(pid_lastest.object_uuid)
+            indexer.delete_by_id(pid.object_uuid)
+        else:
+            aft_metadata = indexer.get_metadata_by_item_id(
+                pid.object_uuid)
+            aft_last_ver_metadata = indexer.get_metadata_by_item_id(
+                PIDVersioning(child=pid).last_child.object_uuid)
+
+            # revert to previous data in ES
+            if bef_metadata['_version'] < aft_metadata['_version']:
+                indexer.upload_metadata(
+                    bef_metadata['_source'],
+                    bef_metadata['_id'],
+                    0, True)
+            if status == 'keep' \
+                and bef_last_ver_metadata['_version'] \
+                    < aft_last_ver_metadata['_version']:
+                indexer.upload_metadata(
+                    bef_last_ver_metadata['_source'],
+                    bef_last_ver_metadata['_id'],
+                    0, True)
+
+            # delete new version in ES
+            if status == 'upgrade' \
+                and bef_last_ver_metadata['_source']['control_number'] \
+                    < aft_last_ver_metadata['_source']['control_number']:
+                indexer.delete_by_id(aft_last_ver_metadata['_id'])
     except Exception as ex:
         current_app.logger.error(ex)
 
