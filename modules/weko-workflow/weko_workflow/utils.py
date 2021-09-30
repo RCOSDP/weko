@@ -62,7 +62,8 @@ from weko_records.models import ItemType
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
 from weko_records_ui.utils import create_onetime_download_url, \
     generate_one_time_download_url, get_list_licence
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
 from werkzeug.utils import import_string
@@ -743,12 +744,14 @@ class MappingData(object):
         """Return item type data."""
         return ItemTypes.get_by_id(id_=self.record.get('item_type_id'))
 
-    def get_data_by_mapping(self, mapping_key, ignore_empty=False):
+    def get_data_by_mapping(self, mapping_key, ignore_empty=False,
+                            hide_sub_keys=None, hide_parent_key=None):
         """
         Get data by mapping key.
 
         :param mapping_key: mapping key.
         :param ignore_empty: Is ignore empty value.
+        :param ignore_prop_keys: Is ignore by keys.
         :return: properties key and data.
         """
         result = OrderedDict()
@@ -761,6 +764,10 @@ class MappingData(object):
             for key in property_keys:
                 data = []
                 split_key = key.split('.')
+                if hide_parent_key and split_key[0] in hide_parent_key:
+                    continue
+                if hide_sub_keys and key.replace('[]', '') in hide_sub_keys:
+                    continue
                 attribute = self.record.get(split_key[0])
                 if attribute and len(split_key) > 1:
                     data_result = get_item_value_in_deep(

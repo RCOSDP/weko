@@ -55,6 +55,7 @@ from jsonschema import SchemaError, ValidationError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
 from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import check_index_permissions, get_index_id, \
     get_user_roles
@@ -2024,6 +2025,39 @@ def get_hide_list_by_schema_form(item_type_id=None, schemaform=None):
     return ids
 
 
+def get_hide_parent_keys(item_type_id=None, meta_list=None):
+    """Get all hide parent keys.
+
+    :param item_type_id:
+    :param meta_list:
+    :return: hide parent keys
+    """
+    if item_type_id and not meta_list:
+        item_type = ItemTypes.get_by_id(item_type_id).render
+        meta_list = item_type.get('meta_list', {})
+    hide_parent_keys = []
+    for key, val in meta_list.items():
+        hidden = val.get('option', {}).get('hidden')
+        hide_parent_keys.append(key.replace('[]', '')) if hidden else None
+    return hide_parent_keys
+
+
+def get_hide_parent_and_sub_keys(item_type):
+    """Get all hide parent and sub keys.
+
+    :param item_type: item type select from db.
+    :return: hide parent keys, hide sub keys.
+    """
+    # Get parent keys of 'Hide' items.
+    meta_list = item_type.render.get('meta_list', {})
+    hide_parent_key = get_hide_parent_keys(item_type.id, meta_list)
+    # Get sub keys of 'Hide' items.
+    forms = item_type.render.get('table_row_map', {}).get('form', {})
+    hide_sub_keys = get_hide_list_by_schema_form(item_type.id, forms)
+    hide_sub_keys = [prop.replace('[]', '') for prop in hide_sub_keys]
+    return hide_parent_key, hide_sub_keys
+
+
 def get_item_from_option(_item_type_id):
     """Get all keys of properties that is set Hide option on metadata."""
     ignore_list = []
@@ -3052,3 +3086,19 @@ def permission_ranking(result, pid_value_permissions, display_rank, list_name,
         if len(list_result) == display_rank:
             break
     result[list_name] = list_result
+
+
+def has_permission_edit_item(record, recid):
+    """Check current user has permission to edit item.
+
+    @param record: record metadata.
+    @param recid: pid_value of pidstore_pid.
+    @return: True/False
+    """
+    permission = check_created_id(record)
+    pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid',
+        pid_value=recid
+    ).first()
+    can_edit = True if pid == get_record_without_version(pid) else False
+    return can_edit and permission
