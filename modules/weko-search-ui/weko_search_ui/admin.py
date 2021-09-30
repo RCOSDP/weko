@@ -27,6 +27,7 @@ from urllib.parse import urlencode
 
 from blinker import Namespace
 from celery import chord
+from celery.task.control import revoke
 from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
@@ -241,15 +242,15 @@ class ItemImportView(BaseView):
     @expose('/check', methods=['POST'])
     def check(self) -> jsonify:
         """Validate item import."""
-        data = request.get_json()
+        data = request.form
+        file = request.files['file'] if request.files else None
         list_record = []
         data_path = ''
 
         if data:
             result = check_import_items(
-                data.get('file_name'),
-                data.get('file').split(",")[-1],
-                data.get('is_change_identifier')
+                file,
+                data.get('is_change_identifier') == 'true'
             )
             if isinstance(result, dict):
                 data_path = result.get('data_path', '')

@@ -37,7 +37,6 @@ from invenio_accounts.models import Role, User, userrole
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
-from invenio_files_rest.views import delete_file_instance
 from invenio_i18n.ext import current_i18n
 from invenio_mail.admin import MailSettingView
 from invenio_mail.models import MailConfig
@@ -1296,7 +1295,6 @@ def prepare_edit_workflow(post_activity, recid, deposit):
     """
     # ! Check pid's version
     community = post_activity['community']
-    post_workflow = post_activity['post_workflow']
     activity = WorkActivity()
 
     draft_pid = PersistentIdentifier.query.filter_by(
@@ -1984,7 +1982,8 @@ def replace_characters(data, content):
         '[18]': 'output_registration_title',
         '[19]': 'url_guest_user',
         '[restricted_fullname]': 'restricted_fullname',
-        '[restricted_university_institution]': 'restricted_university_institution',
+        '[restricted_university_institution]':
+            'restricted_university_institution',
         '[restricted_activity_id]': 'restricted_activity_id',
         '[restricted_research_title]': 'restricted_research_title',
         '[restricted_data_name]': 'restricted_data_name',
