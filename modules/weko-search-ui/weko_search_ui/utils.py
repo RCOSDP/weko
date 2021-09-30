@@ -20,7 +20,6 @@
 
 """Weko Search-UI admin."""
 
-import base64
 import csv
 import json
 import os
@@ -453,35 +452,31 @@ def parse_to_json_form(data: list,
     return result
 
 
-def check_import_items(file_name: str, file_content: str,
-                       is_change_identifier: bool):
+def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
     """Validation importing zip file.
 
     :argument
         file_name -- file name.
         file_content -- content file's name.
         is_change_identifier -- Change Identifier Mode.
+        is_gakuninrdm -- Is call by gakuninrdm api.
     :return
         return       -- PID object if exist.
 
     """
-    file_content_decoded = base64.b64decode(file_content)
-    tmp_prefix = current_app.config['WEKO_SEARCH_UI_IMPORT_TMP_PREFIX']
-    temp_path = tempfile.TemporaryDirectory(prefix=tmp_prefix)
-    save_path = tempfile.gettempdir()
-    import_path = temp_path.name + '/' + \
-        datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
-    data_path = save_path + '/' + tmp_prefix + \
-        datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
+    if not is_gakuninrdm:
+        tmp_prefix = current_app.config['WEKO_SEARCH_UI_IMPORT_TMP_PREFIX']
+    else:
+        tmp_prefix = 'deposit_activity_'
+    data_path = tempfile.gettempdir() + '/' + tmp_prefix \
+        + datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
     result = {'data_path': data_path}
 
     try:
         # Create temp dir for import data
         os.mkdir(data_path)
 
-        with open(import_path + '.zip', 'wb+') as f:
-            f.write(file_content_decoded)
-        with zipfile.ZipFile(import_path + '.zip') as z:
+        with zipfile.ZipFile(file) as z:
             for info in z.infolist():
                 try:
                     info.filename = info.orig_filename.encode(
@@ -489,9 +484,9 @@ def check_import_items(file_name: str, file_content: str,
                     if os.sep != "/" and os.sep in info.filename:
                         info.filename = info.filename.replace(os.sep, "/")
                 except Exception:
-                    current_app.logger.warn('-' * 60)
+                    current_app.logger.warning('-' * 60)
                     traceback.print_exc(file=sys.stdout)
-                    current_app.logger.warn('-' * 60)
+                    current_app.logger.warning('-' * 60)
                 z.extract(info, path=data_path)
 
         data_path += '/data'
@@ -501,19 +496,25 @@ def check_import_items(file_name: str, file_content: str,
         if not list_tsv:
             raise FileNotFoundError()
         for tsv_entry in list_tsv:
-            list_record.extend(unpackage_import_file(data_path, tsv_entry))
+            list_record.extend(unpackage_import_file(
+                data_path, tsv_entry, is_gakuninrdm))
+        if is_gakuninrdm:
+            list_record = list_record[:1]
+
         list_record = handle_check_exist_record(list_record)
         handle_item_title(list_record)
-        handle_check_and_prepare_publish_status(list_record)
-        handle_check_and_prepare_index_tree(list_record)
-        handle_check_and_prepare_feedback_mail(list_record)
-        handle_set_change_identifier_flag(list_record, is_change_identifier)
-        handle_check_cnri(list_record)
-        handle_check_doi_indexes(list_record)
-        handle_check_file_metadata(list_record, data_path)
-        handle_check_doi_ra(list_record)
-        handle_check_doi(list_record)
         handle_check_date(list_record)
+        handle_check_and_prepare_index_tree(list_record)
+        handle_check_and_prepare_publish_status(list_record)
+        handle_check_and_prepare_feedback_mail(list_record)
+        handle_check_file_metadata(list_record, data_path)
+        if not is_gakuninrdm:
+            handle_set_change_identifier_flag(list_record,
+                                              is_change_identifier)
+            handle_check_cnri(list_record)
+            handle_check_doi_indexes(list_record)
+            handle_check_doi_ra(list_record)
+            handle_check_doi(list_record)
         result['list_record'] = list_record
     except Exception as ex:
         error = _('Internal server error')
@@ -521,11 +522,11 @@ def check_import_items(file_name: str, file_content: str,
             error = _('The format of the specified file {} does not'
                       + ' support import. Please specify one of the'
                       + ' following formats: zip, tar, gztar, bztar,'
-                      + ' xztar.').format(file_name)
+                      + ' xztar.').format(file.filename)
         elif isinstance(ex, FileNotFoundError):
             error = _('The TSV file was not found in the specified file {}.'
                       + ' Check if the directory structure is correct.') \
-                .format(file_name)
+                .format(file.filename)
         elif isinstance(ex, UnicodeDecodeError):
             error = ex.reason
         elif ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
@@ -535,23 +536,28 @@ def check_import_items(file_name: str, file_content: str,
         current_app.logger.error('-' * 60)
         traceback.print_exc(file=sys.stdout)
         current_app.logger.error('-' * 60)
-    finally:
-        temp_path.cleanup()
     return result
 
 
-def unpackage_import_file(data_path: str, tsv_file_name: str) -> list:
+def unpackage_import_file(data_path: str, tsv_file_name: str, force_new=False):
     """Getting record data from TSV file.
 
     :argument
-        file_content -- Content files.
+        data_path -- Path of tsv file.
+        tsv_file_name -- Tsv file name.
+        force_new -- Force to new item.
     :return
-        return       -- PID object if exist.
+        return -- List records.
 
     """
     tsv_file_path = '{}/{}'.format(data_path, tsv_file_name)
     data = read_stats_tsv(tsv_file_path, tsv_file_name)
     list_record = data.get('tsv_data')
+    if force_new:
+        for record in list_record:
+            record['id'] = None
+            record['uri'] = None
+
     handle_fill_system_item(list_record)
     list_record = handle_validate_item_import(list_record, data.get(
         'item_type_schema', {}
@@ -823,7 +829,7 @@ def handle_check_exist_record(list_record) -> list:
         try:
             item_id = item.get('id')
             if item_id:
-                system_url = request.url_root + 'records/' + item_id
+                system_url = request.host_url + 'records/' + item_id
                 if item.get('uri') != system_url:
                     errors.append(_('Specified URI and system'
                                     ' URI do not match.'))
@@ -836,7 +842,7 @@ def handle_check_exist_record(list_record) -> list:
                             errors.append(_('Item already DELETED'
                                             ' in the system'))
                         else:
-                            exist_url = request.url_root + \
+                            exist_url = request.host_url + \
                                 'records/' + item_exist.get('recid')
                             if item.get('uri') == exist_url:
                                 _edit_mode = item.get('edit_mode')
@@ -1004,12 +1010,13 @@ def get_file_name(file_path):
     return file_path.split('/')[-1] if file_path.split('/')[-1] else ''
 
 
-def register_item_metadata(item, root_path):
+def register_item_metadata(item, root_path, is_gakuninrdm=False):
     """Upload file content.
 
     :argument
         item        -- {dict} Information of item need to import.
         root_path   -- {str} path of the folder include files.
+        is_gakuninrdm -- {bool} Is call by gakuninrdm api.
     """
     def clean_file_metadata(item_type_id, data):
         # clear metadata of file information
@@ -1036,7 +1043,7 @@ def register_item_metadata(item, root_path):
                 if file.is_thumbnail is True:
                     subitem_thumbnail.append({
                         'thumbnail_label': file.key,
-                        'thumbnail_uri':
+                        'thumbnail_url':
                             current_app.config['DEPOSIT_FILES_API']
                             + u'/{bucket}/{key}?versionId={version_id}'.format(
                                 bucket=file.bucket_id,
@@ -1125,7 +1132,6 @@ def register_item_metadata(item, root_path):
 
     deposit.update(item_status, new_data)
     deposit.commit()
-    deposit.publish_without_commit()
 
     feedback_mail_list = item['metadata'].get('feedback_mail_list')
     if feedback_mail_list:
@@ -1138,23 +1144,27 @@ def register_item_metadata(item, root_path):
         FeedbackMailList.delete_without_commit(deposit.id)
         deposit.remove_feedback_mail()
 
-    with current_app.test_request_context(get_url_root()):
-        if item['status'] in ['upgrade', 'new']:
-            _deposit = deposit.newversion(pid)
-            _deposit.publish_without_commit()
-        else:
-            _pid = PIDVersioning(child=pid).last_child
-            _record = WekoDeposit.get_record(_pid.object_uuid)
-            _deposit = WekoDeposit(_record, _record.model)
-            _deposit.merge_data_to_record_without_version(pid, True)
-            _deposit.publish_without_commit()
+    if not is_gakuninrdm:
+        deposit.publish_without_commit()
+        # Create first version
+        with current_app.test_request_context(get_url_root()):
+            if item['status'] in ['upgrade', 'new']:
+                _deposit = deposit.newversion(pid)
+                _deposit.publish_without_commit()
+            else:
+                _pid = PIDVersioning(child=pid).last_child
+                _record = WekoDeposit.get_record(_pid.object_uuid)
+                _deposit = WekoDeposit(_record, _record.model)
+                _deposit.merge_data_to_record_without_version(pid, True)
+                if not is_gakuninrdm:
+                    _deposit.publish_without_commit()
 
-        if feedback_mail_list:
-            FeedbackMailList.update(
-                item_id=_deposit.id,
-                feedback_maillist=feedback_mail_list
-            )
-            _deposit.update_feedback_mail()
+            if feedback_mail_list:
+                FeedbackMailList.update(
+                    item_id=_deposit.id,
+                    feedback_maillist=feedback_mail_list
+                )
+                _deposit.update_feedback_mail()
 
 
 def update_publish_status(item_id, status):
@@ -1240,13 +1250,15 @@ def create_flow_define():
                                      WEKO_FLOW_DEFINE_LIST_ACTION)
 
 
-def import_items_to_system(item: dict, request_info: dict):
+def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
     """Validation importing zip file.
 
     :argument
         item        -- Items Metadata.
+        request_info -- Information from request.
+        is_gakuninrdm - Is call by gakuninrdm api.
     :return
-        return      -- PID object if exist.
+        return      -- Json response.
 
     """
     def store_data_to_es_and_db(item, request_info):
@@ -1316,6 +1328,13 @@ def import_items_to_system(item: dict, request_info: dict):
             # Save stats event into Database.
             StatsEvents.save(rtn_data, True)
 
+    if not request_info and request:
+        request_info = {
+            'remote_addr': request.remote_addr,
+            'referrer': request.referrer,
+            'hostname': request.host
+        }
+
     if not item:
         return None
     else:
@@ -1327,18 +1346,19 @@ def import_items_to_system(item: dict, request_info: dict):
             else:
                 handle_check_item_is_locked(item)
 
-            register_item_metadata(item, root_path)
-            if current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
-                register_item_handle(item)
-            register_item_doi(item)
+            register_item_metadata(item, root_path, is_gakuninrdm)
+            if not is_gakuninrdm:
+                if current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
+                    register_item_handle(item)
+                register_item_doi(item)
 
-            status_number = WEKO_IMPORT_PUBLISH_STATUS.index(
-                item.get('publish_status')
-            )
-            register_item_update_publish_status(item, str(status_number))
-            if item.get('status') == 'new':
-                # Store data to es and db.
-                store_data_to_es_and_db(item, request_info)
+                status_number = WEKO_IMPORT_PUBLISH_STATUS.index(
+                    item.get('publish_status')
+                )
+                register_item_update_publish_status(item, str(status_number))
+                if item.get('status') == 'new':
+                    # Store data to es and db.
+                    store_data_to_es_and_db(item, request_info)
             db.session.commit()
         except Exception as ex:
             if item.get('id'):
@@ -1357,19 +1377,9 @@ def import_items_to_system(item: dict, request_info: dict):
                 'error_id': error_id
             }
     return {
-        'success': True
+        'success': True,
+        'recid': item['id']
     }
-
-
-def remove_temp_dir(path):
-    """Validation importing zip file.
-
-    :argument
-        path     -- {string} path temp_dir.
-    :return
-
-    """
-    shutil.rmtree(path)
 
 
 def handle_item_title(list_record):

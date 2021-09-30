@@ -37,7 +37,6 @@ from invenio_accounts.models import Role, User, userrole
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
-from invenio_files_rest.views import delete_file_instance
 from invenio_i18n.ext import current_i18n
 from invenio_mail.admin import MailSettingView
 from invenio_mail.models import MailConfig
@@ -744,12 +743,14 @@ class MappingData(object):
         """Return item type data."""
         return ItemTypes.get_by_id(id_=self.record.get('item_type_id'))
 
-    def get_data_by_mapping(self, mapping_key, ignore_empty=False):
+    def get_data_by_mapping(self, mapping_key, ignore_empty=False,
+                            hide_sub_keys=None, hide_parent_key=None):
         """
         Get data by mapping key.
 
         :param mapping_key: mapping key.
         :param ignore_empty: Is ignore empty value.
+        :param ignore_prop_keys: Is ignore by keys.
         :return: properties key and data.
         """
         result = OrderedDict()
@@ -762,6 +763,10 @@ class MappingData(object):
             for key in property_keys:
                 data = []
                 split_key = key.split('.')
+                if hide_parent_key and split_key[0] in hide_parent_key:
+                    continue
+                if hide_sub_keys and key.replace('[]', '') in hide_sub_keys:
+                    continue
                 attribute = self.record.get(split_key[0])
                 if attribute and len(split_key) > 1:
                     data_result = get_item_value_in_deep(
@@ -1291,7 +1296,6 @@ def prepare_edit_workflow(post_activity, recid, deposit):
     """
     # ! Check pid's version
     community = post_activity['community']
-    post_workflow = post_activity['post_workflow']
     activity = WorkActivity()
 
     draft_pid = PersistentIdentifier.query.filter_by(
@@ -1979,7 +1983,8 @@ def replace_characters(data, content):
         '[18]': 'output_registration_title',
         '[19]': 'url_guest_user',
         '[restricted_fullname]': 'restricted_fullname',
-        '[restricted_university_institution]': 'restricted_university_institution',
+        '[restricted_university_institution]':
+            'restricted_university_institution',
         '[restricted_activity_id]': 'restricted_activity_id',
         '[restricted_research_title]': 'restricted_research_title',
         '[restricted_data_name]': 'restricted_data_name',

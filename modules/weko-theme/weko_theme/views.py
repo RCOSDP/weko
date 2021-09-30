@@ -116,6 +116,9 @@ def get_site_info(site_info):
         prefix = site_info.favicon.split(",")[0] == 'data:image/x-icon;base64'
     if not prefix:
         favicon = site_info.favicon if site_info and site_info.favicon else ''
+    ogp_image = ''
+    if site_info and site_info.ogp_image:
+        ogp_image = request.url_root + 'api/admin/ogp_image?timestamp=' + str(ts)
 
     result = {
         'title': title,
@@ -128,6 +131,7 @@ def get_site_info(site_info):
         and site_info.copy_right else '',
         'keyword': site_info.keyword if site_info and site_info.keyword else '',
         'favicon': favicon,
+        'ogp_image': ogp_image,
         'url': request.url,
         'notify': site_info.notify if site_info
         and site_info.notify else [],

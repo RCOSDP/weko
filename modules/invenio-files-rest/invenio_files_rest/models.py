@@ -869,13 +869,14 @@ class FileInstance(db.Model, Timestamp):
             from.
         :param stream: File-like stream.
         """
+        old_size = self.size if self.size else 0
         self.set_uri(
             *self.storage(**kwargs).save(
                 stream, chunk_size=chunk_size, size=size,
                 size_limit=size_limit, progress_callback=progress_callback))
         if is_set_size_location:
             location = self.get_location_by_file_instance()
-            location.size = location.size + self.size
+            location.size = location.size + self.size - old_size
 
     @ensure_writable()
     def copy_contents(self, fileinstance, progress_callback=None,

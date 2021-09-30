@@ -661,6 +661,9 @@ class WorkFlow(db.Model, TimestampMixin):
     open_restricted = db.Column(db.Boolean(), nullable=False, default=True)
     """Open restricted flag."""
 
+    is_gakuninrdm = db.Column(db.Boolean(), nullable=False, default=False)
+    """GakuninRDM flag."""
+
 
 class Activity(db.Model, TimestampMixin):
     """Define Activity."""
