@@ -26,8 +26,8 @@ import sys
 import time
 from datetime import timedelta
 
-from flask import Blueprint, Response, abort, current_app, \
-    flash, json, jsonify, render_template, request
+from flask import Blueprint, Response, abort, current_app, flash, json, \
+    jsonify, render_template, request
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
