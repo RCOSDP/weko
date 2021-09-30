@@ -344,7 +344,8 @@ RECORDS_REST_DEFAULT_CREATE_PERMISSION_FACTORY = deny_all
 RECORDS_REST_DEFAULT_LIST_PERMISSION_FACTORY = allow_all
 """Default list permission factory: allow all requests"""
 
-RECORDS_REST_DEFAULT_READ_PERMISSION_FACTORY = check_elasticsearch
+RECORDS_REST_DEFAULT_READ_PERMISSION_FACTORY = \
+    'weko_records_ui.permissions:page_permission_factory'
 """Default read permission factory: check if the record exists."""
 
 RECORDS_REST_DEFAULT_UPDATE_PERMISSION_FACTORY = deny_all
