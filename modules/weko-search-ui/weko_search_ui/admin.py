@@ -27,7 +27,6 @@ from urllib.parse import urlencode
 
 from blinker import Namespace
 from celery import chord
-from celery.task.control import revoke
 from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
@@ -107,16 +106,16 @@ class ItemManagementBulkDelete(BaseView):
                         msg = '{}<br/>'.format(
                             _('The following item(s) cannot be deleted.'))
                         if doi_items:
-                            _item = ['recid: {}'.format(i) for i in doi_items]
-                            msg += '<br/>{}<br/>{}'.format(
+                            _item_d = ['recid: {}'.format(i) for i in doi_items]
+                            msg += '<br/>{}<br/>&nbsp;{}'.format(
                                 _('DOI granting item(s):'),
-                                (', ').join(_item)
+                                (', ').join(_item_d)
                             )
                         if edt_items:
-                            _item = ['recid: {}'.format(i) for i in edt_items]
-                            msg += '<br/>{}<br/>{}'.format(
+                            _item_e = ['recid: {}'.format(i) for i in edt_items]
+                            msg += '<br/>{}<br/>&nbsp;{}'.format(
                                 _('Editing item(s):'),
-                                (', ').join(_item)
+                                (', ').join(_item_e)
                             )
                         return jsonify({'status': 1, 'msg': msg})
                     return jsonify({'status': 1, 'msg': _('OK')})

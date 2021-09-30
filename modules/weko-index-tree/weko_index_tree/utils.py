@@ -976,21 +976,40 @@ def get_doi_items_in_index(index_id):
 
 
 def get_editing_items_in_index(index_id):
-    """Check if any item in the index is locked by import process.
+    """Check if any item in the index is locked or being edited.
 
     @param index_id:
     @return:
     """
+    from weko_deposit.api import WekoIndexer
     from weko_items_ui.utils import check_item_is_being_edit
     from weko_workflow.utils import check_an_item_is_locked
-    records = get_record_in_es_of_index(index_id)
+
+    from .api import Indexes
+
+    def _get_records(_index_id):
+        """Get all records belong to index."""
+        _result = []
+        indexer = WekoIndexer()
+        records = next((indexer.get_pid_by_es_scroll(str(_index_id))), [])
+        for recid in records:
+            pid = PersistentIdentifier.get_by_object(
+                pid_type='recid',
+                object_type='rec',
+                object_uuid=recid
+            )
+            if '.' not in pid.pid_value and \
+                (check_an_item_is_locked(int(pid.pid_value)) or
+                    check_item_is_being_edit(pid)):
+                _result.append(pid.pid_value)
+        return _result
+
     result = []
-    for record in records:
-        item_id = record.get('_source', {}).get('control_number', 0)
-        if check_an_item_is_locked(int(item_id)) or \
-            check_item_is_being_edit(PersistentIdentifier.get(
-                'recid',
-                item_id)):
-            result.append(item_id)
+    recursive_tree = Indexes.get_recursive_tree(index_id)
+    result += _get_records(index_id)
+    if recursive_tree is not None:
+        for obj in recursive_tree:
+            if obj[1] != index_id:
+                result += _get_records(obj[1])
 
     return result

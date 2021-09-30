@@ -204,7 +204,7 @@ def delete_records(index_tree_id, ignore_items):
                 indexer.update_path(record, update_revision=False)
 
                 if len(paths) == 0 and removed_path is not None:
-                    WekoDeposit.delete_by_index_tree_id(removed_path)
+                    WekoDeposit.delete_by_index_tree_id(removed_path, ignore_items)
                     Record.get_record(recid).delete()  # flag as deleted
                     db.session.commit()  # terminate the transaction
 

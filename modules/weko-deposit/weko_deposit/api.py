@@ -1116,7 +1116,7 @@ class WekoDeposit(Deposit):
                 self.jrc[geo_location_key] = new_data
 
     @classmethod
-    def delete_by_index_tree_id(cls, index_id: str):
+    def delete_by_index_tree_id(cls, index_id: str, ignore_items: list = []):
         """Delete by index tree id."""
         if index_id:
             index_id = str(index_id)
@@ -1124,6 +1124,8 @@ class WekoDeposit(Deposit):
         try:
             for obj_uuid in obj_ids:
                 r = RecordMetadata.query.filter_by(id=obj_uuid).first()
+                if r.json['recid'].split('.')[0] in ignore_items:
+                    continue
                 try:
                     r.json['path'].remove(index_id)
                     flag_modified(r, 'json')
