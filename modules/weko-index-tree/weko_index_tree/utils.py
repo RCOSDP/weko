@@ -268,8 +268,7 @@ def filter_index_list_by_role(index_list):
                 if index_data.public_state \
                         and (index_data.public_date is None
                              or (isinstance(index_data.public_date, datetime)
-                                 and date.today() >=
-                                 index_data.public_date.date())):
+                                 and date.today() >= index_data.public_date.date())):
                     can_view = True
         return can_view
 
