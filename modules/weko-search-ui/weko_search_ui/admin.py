@@ -113,7 +113,7 @@ class ItemManagementBulkDelete(BaseView):
                                 (', ').join(_item_e)
                             )
                         return jsonify({'status': 1, 'msg': msg})
-                    return jsonify({'status': 1, 'msg': _('OK')})
+                    return jsonify({'status': 1, 'msg': _('Success')})
 
             return jsonify({'status': 0, 'msg': 'Invalid tree'})
 
