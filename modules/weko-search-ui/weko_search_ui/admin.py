@@ -74,19 +74,17 @@ class ItemManagementBulkDelete(BaseView):
             if q is not None and q.isdigit():
                 current_tree = Indexes.get_index(q)
                 recursive_tree = Indexes.get_recursive_tree(q)
-
-                doi_items = get_doi_items_in_index(current_tree.id)
-                edt_items = get_editing_items_in_index(current_tree.id)
-                totals = []
-                ignore_items = list(set(doi_items + edt_items))
+                recursively = request.values.get('recursively') == 'true'
 
                 if current_tree:
+                    doi_items = get_doi_items_in_index(q, recursively)
+                    edt_items = get_editing_items_in_index(q, recursively)
+                    ignore_items = list(set(doi_items + edt_items))
                     # Delete items in current_tree
-                    totals += delete_records(current_tree.id, ignore_items)
+                    delete_records(current_tree.id, ignore_items)
 
                     # If recursively, then delete items of child indices
-                    if request.values.get('recursively') == 'true'\
-                            and recursive_tree is not None:
+                    if recursively:
                         # Delete recursively
                         direct_child_trees = []
                         for obj in recursive_tree:
@@ -94,10 +92,7 @@ class ItemManagementBulkDelete(BaseView):
                                 child_tree = Indexes.get_index(obj[1])
 
                                 # Do delete items in child_tree
-                                totals += delete_records(
-                                    child_tree.id,
-                                    ignore_items)
-
+                                delete_records(child_tree.id, ignore_items)
                                 # Add the level 1 child into the current_tree
                                 if obj[0] == current_tree.id:
                                     direct_child_trees.append(child_tree.id)
@@ -119,8 +114,8 @@ class ItemManagementBulkDelete(BaseView):
                             )
                         return jsonify({'status': 1, 'msg': msg})
                     return jsonify({'status': 1, 'msg': _('OK')})
-            else:
-                return jsonify({'status': 0, 'msg': 'Invalid tree'})
+
+            return jsonify({'status': 0, 'msg': 'Invalid tree'})
 
         """Render view."""
         detail_condition = get_search_detail_keyword('')
@@ -136,11 +131,13 @@ class ItemManagementBulkDelete(BaseView):
         q = request.values.get('q')
         status = 0
         msg = None
+        recursively = request.values.get('recursively') == 'true'
+
         if q and q.isdigit() and Indexes.get_index(q):
             if is_index_locked(q):
                 status = 0
                 msg = _('Index Delete is in progress on another device.')
-            elif get_doi_items_in_index(q):
+            elif get_doi_items_in_index(q, recursively):
                 status = 1
                 msg = _('DOI granting item(s) are including in the '
                         'deletion items.<br/>DOI granting item(s) cannot '

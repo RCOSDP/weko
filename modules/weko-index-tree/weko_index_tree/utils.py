@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 """Module of weko-index-tree utils."""
-import json
+
 from datetime import date, datetime
 from functools import wraps
 from operator import itemgetter
@@ -268,7 +268,8 @@ def filter_index_list_by_role(index_list):
                 if index_data.public_state \
                         and (index_data.public_date is None
                              or (isinstance(index_data.public_date, datetime)
-                                 and date.today() >= index_data.public_date.date())):
+                                 and date.today() >=
+                                 index_data.public_date.date())):
                     can_view = True
         return can_view
 
@@ -570,45 +571,31 @@ def check_doi_in_index(index_id):
         return True
 
 
-def get_record_in_es_of_index(index_id):
-    """Check doi in index.
+def get_record_in_es_of_index(index_id, recursively=True):
+    """Get all records belong to Index ID.
 
     @param index_id:
     @return:
     """
     from .api import Indexes
-    query_q = {
-        "_source": {
-            "excludes": [
-                "content"
-            ]
-        },
-        "query": {
-            "bool": {
-                "must": [
-                    {
-                        "prefix": {
-                            "path.tree": "@index"
-                        }
-                    },
-                    {
-                        "match": {
-                            "relation_version_is_last": "true"
-                        }
-                    }
-                ]
-            }
-        }
-    }
-    fp = Indexes.get_self_path(index_id)
-    query_q = json.dumps(query_q).replace("@index", fp.path)
-    query_q = json.loads(query_q)
-    result = []
-    search = RecordsSearch(index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
-    search = search.update_from_dict(query_q)
-    search_result = search.execute().to_dict()
-    result = search_result.get('hits', {}).get('hits', [])
-    return result
+    if recursively:
+        child_idx = Indexes.get_child_list_recursive(index_id)
+    else:
+        child_idx = [index_id]
+
+    query_string = "relation_version_is_last:true"
+    search = RecordsSearch(
+        index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
+    must_query = [
+        QueryString(query=query_string),
+        Q("terms", path=child_idx)
+    ]
+    search = search.query(
+        Bool(filter=must_query)
+    )
+    records = search.execute().to_dict().get('hits', {}).get('hits', [])
+
+    return records
 
 
 def check_doi_in_list_record_es(index_id):
@@ -657,9 +644,10 @@ def check_has_any_item_in_index_is_locked(index_id):
     @param index_id:
     @return:
     """
+    from weko_workflow.utils import check_an_item_is_locked
+
     list_records_in_es = get_record_in_es_of_index(index_id)
     for record in list_records_in_es:
-        from weko_workflow.utils import check_an_item_is_locked
         item_id = record.get('_source', {}).get(
             '_item_metadata', {}).get('control_number')
         if check_an_item_is_locked(int(item_id)):
@@ -791,14 +779,19 @@ def check_index_permissions(record=None, index_id=None, index_path_list=None,
     return False
 
 
-def check_doi_in_index_and_child_index(index_id):
+def check_doi_in_index_and_child_index(index_id, recursively=True):
     """Check DOI in index and child index.
 
     Args:
         index_id (list): Record list.
     """
     from .api import Indexes
-    child_idx = Indexes.get_child_list_recursive(index_id)
+
+    if recursively:
+        child_idx = Indexes.get_child_list_recursive(index_id)
+    else:
+        child_idx = [index_id]
+
     query_string = "relation_version_is_last:true AND publish_status:0"
     search = RecordsSearch(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
@@ -959,13 +952,13 @@ def perform_delete_index(index_id, record_class, action: str):
     return msg, errors
 
 
-def get_doi_items_in_index(index_id):
+def get_doi_items_in_index(index_id, recursively=False):
     """Check if any item in the index is locked by import process.
 
     @param index_id:
     @return:
     """
-    records = check_doi_in_index_and_child_index(index_id)
+    records = check_doi_in_index_and_child_index(index_id, recursively)
     result = []
     for record in records:
         item_id = record.get('_source', {}).get('control_number', 0)
@@ -975,41 +968,23 @@ def get_doi_items_in_index(index_id):
     return result
 
 
-def get_editing_items_in_index(index_id):
+def get_editing_items_in_index(index_id, recursively=False):
     """Check if any item in the index is locked or being edited.
 
     @param index_id:
     @return:
     """
-    from weko_deposit.api import WekoIndexer
     from weko_items_ui.utils import check_item_is_being_edit
     from weko_workflow.utils import check_an_item_is_locked
 
-    from .api import Indexes
-
-    def _get_records(_index_id):
-        """Get all records belong to index."""
-        _result = []
-        indexer = WekoIndexer()
-        records = next((indexer.get_pid_by_es_scroll(str(_index_id))), [])
-        for recid in records:
-            pid = PersistentIdentifier.get_by_object(
-                pid_type='recid',
-                object_type='rec',
-                object_uuid=recid
-            )
-            if '.' not in pid.pid_value and \
-                (check_an_item_is_locked(int(pid.pid_value)) or
-                    check_item_is_being_edit(pid)):
-                _result.append(pid.pid_value)
-        return _result
-
     result = []
-    recursive_tree = Indexes.get_recursive_tree(index_id)
-    result += _get_records(index_id)
-    if recursive_tree is not None:
-        for obj in recursive_tree:
-            if obj[1] != index_id:
-                result += _get_records(obj[1])
+    records = get_record_in_es_of_index(index_id, recursively)
+    for record in records:
+        item_id = record.get('_source', {}).get(
+            '_item_metadata', {}).get('control_number')
+        if check_item_is_being_edit(
+            PersistentIdentifier.get('recid', item_id)) or \
+                check_an_item_is_locked(int(item_id)):
+            result.append(item_id)
 
     return result
