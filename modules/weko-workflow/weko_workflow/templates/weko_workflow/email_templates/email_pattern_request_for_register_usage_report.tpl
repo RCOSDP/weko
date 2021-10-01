@@ -1,7 +1,12 @@
 Subject: 利用報告の登録のお願い／Request for register Data Usage Report
 
-[restricted_site_name_ja]です。
-現時点で、下記の利用報告が登録されていません
+[restricted_university_institution]
+[restricted_fullname]　様
+
+[restricted_institution_name_ja]です。
+[restricted_site_name_ja]をご利用いただいて、ありがとうございます。
+
+次のデータの利用、[restricted_site_name_ja] の「利用報告」から報告してください。
 
 報告番号：[restricted_activity_id]
 登録者名：[restricted_fullname]
@@ -22,7 +27,11 @@ Subject: 利用報告の登録のお願い／Request for register Data Usage Rep
 
 ----------------------------------------------------------------------------------
 
-This is a message from [restricted_site_name_en].
+Dear [restricted_fullname],
+
+This is a message from [restricted_institution_name_en].
+Thank you for using [restricted_site_name_en].
+
 At this time, the Data Usage Report below has not been registered.
 
 Usage Report No.：[restricted_activity_id]
