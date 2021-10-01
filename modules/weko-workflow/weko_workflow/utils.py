@@ -1816,51 +1816,12 @@ def email_pattern_registration_done(user_role, item_type_name):
     :item_type_name: object
     """
     current_config = current_app.config
-    perfectures_item_type = current_config.get(
-        "WEKO_ITEMS_UI_APPLICATION_FOR_PERFECTURES")
-    location_information_item_type = current_config.get(
-        "WEKO_ITEMS_UI_APPLICATION_FOR_LOCATION_INFORMATION")
-    output_registration_item_type = current_config.get(
-        "WEKO_ITEMS_UI_OUTPUT_REPORT")
-    usage_report_item_type = current_config.get(
-        "WEKO_ITEMS_UI_USAGE_REPORT")
     item_type_list = current_config.get(
         "WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPES_LIST")
-    general_role = current_config.get("WEKO_USERPROFILES_GENERAL_ROLE")
-    student_role = current_config.get("WEKO_USERPROFILES_STUDENT_ROLE")
-    graduated_student_role = current_config.get(
-        "WEKO_USERPROFILES_GRADUATED_STUDENT_ROLE")
+    if item_type_name in item_type_list:
+        return get_mail_data(
+            current_config.get("WEKO_WORKFLOW_NOTIFY_ACCEPT"))
 
-    group = [perfectures_item_type, location_information_item_type]
-    """Check itemtype name"""
-    if item_type_name not in item_type_list:
-        if item_type_name == output_registration_item_type:
-            return get_mail_data(
-                current_config.get("WEKO_WORKFLOW_RECEIVE_OUTPUT_REGISTRATION"))
-        elif item_type_name == usage_report_item_type:
-            return get_mail_data(
-                current_config.get("WEKO_WORKFLOW_RECEIVE_USAGE_REPORT"))
-        return None, None
-    if user_role and user_role == general_role:
-        if item_type_name not in group:
-            return get_mail_data(
-                current_config.get("WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE"
-                                   "_PERFECTURE_AND_LOCATION_DATA_OF"
-                                   "_GENERAL_USER"))
-        elif item_type_name in group:
-            return get_mail_data(
-                current_config.get("WEKO_WORKFLOW_PERFECTURE_OR_LOCATION_DATA"
-                                   "_OF_GENERAL_USER"))
-    elif user_role and user_role in [graduated_student_role, student_role]:
-        if item_type_name not in group:
-            return get_mail_data(
-                current_config.get("WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE"
-                                   "_PERFECTURE_AND_LOCATION_DATA_OF_STUDENT_OR"
-                                   "_GRADUATED_STUDENT"))
-        elif item_type_name in group:
-            return get_mail_data(
-                current_config.get("WEKO_WORKFLOW_PERFECTURE_OR_LOCATION_DATA"
-                                   "_OF_STUDENT_OR_GRADUATED_STUDENT"))
     return None, None
 
 
@@ -1997,6 +1958,8 @@ def replace_characters(data, content):
         '[restricted_approver_name]': 'restricted_approver_name',
         '[restricted_site_name_ja]': 'restricted_site_name_ja',
         '[restricted_site_name_en]': 'restricted_site_name_en',
+        '[restricted_institution_name_ja]': 'restricted_institution_name_ja',
+        '[restricted_institution_name_en]': 'restricted_institution_name_en',
         '[restricted_site_mail]': 'restricted_site_mail',
         '[restricted_site_url]': 'restricted_site_url',
         '[restricted_approver_affiliation]': 'restricted_approver_affiliation',
@@ -2105,6 +2068,8 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
     """
     site_en, site_ja = get_site_info_name()
     site_mail = get_default_mail_sender()
+    institution_name_ja = current_app.config['THEME_INSTITUTION_NAME']['ja']
+    institution_name_en = current_app.config['THEME_INSTITUTION_NAME']['en']
     register_user = register_date = ''
     if not guest_user:
         register_user, register_date = get_register_info(
@@ -2148,6 +2113,8 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
         restricted_approver_affiliation='',
         restricted_site_name_ja=site_ja,
         restricted_site_name_en=site_en,
+        restricted_institution_name_ja=institution_name_ja,
+        restricted_institution_name_en=institution_name_en,
         restricted_site_mail=site_mail,
         restricted_site_url=current_app.config['THEME_SITEURL'],
         mail_recipient=item_info.get('subitem_restricted_access_mail_address'),
@@ -2182,13 +2149,14 @@ def process_send_reminder_mail(activity_detail, mail_template):
         raise ValueError(val)
 
 
-def process_send_notification_mail(
-        activity_detail, action_endpoint, next_action_endpoint):
+def process_send_notification_mail(activity_detail, action_endpoint,
+        next_action_endpoint, action_mails_setting):
     """Process send notification mail.
 
     :activity_detail: object
     :action_endpoint: object
     :next_action_endpoint: object
+    :action_mails_setting: object
     """
     item_info = get_item_info(activity_detail.item_id)
     mail_info = set_mail_info(item_info, activity_detail)
@@ -2201,7 +2169,9 @@ def process_send_notification_mail(
     mail_info['next_step'] = next_action_endpoint
     """ Set registration date to 'mail_info' """
     get_approval_dates(mail_info)
-    if 'item_login' in action_endpoint:
+    if 'item_login' in action_endpoint \
+            and action_mails_setting.get("previous", {}).get(
+                "inform_itemReg", False):
         """ Send mail for register to notify that registration is done"""
         send_mail_registration_done(mail_info)
     if 'approval_' in next_action_endpoint \
@@ -2789,12 +2759,16 @@ def send_usage_application_mail_for_guest_user(guest_mail: str, temp_url: str):
     site_name_en, site_name_ja = get_site_info_name()
     site_mail = get_default_mail_sender()
     site_url = current_app.config['THEME_SITEURL']
+    institution_name_ja = current_app.config['THEME_INSTITUTION_NAME']['ja']
+    institution_name_en = current_app.config['THEME_INSTITUTION_NAME']['en']
     mail_info = {
         'template': current_app.config.get("WEKO_WORKFLOW_ACCESS_ACTIVITY_URL"),
         'mail_address': guest_mail,
         'url_guest_user': temp_url,
         "restricted_site_name_ja": site_name_ja,
         "restricted_site_name_en": site_name_en,
+        "restricted_institution_name_ja": institution_name_ja,
+        "restricted_institution_name_en": institution_name_en,
         "restricted_site_mail": site_mail,
         "restricted_site_url": site_url,
     }

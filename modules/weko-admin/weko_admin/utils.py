@@ -1891,6 +1891,8 @@ class UsageReport:
         site_url = current_app.config['THEME_SITEURL']
         site_name_en, site_name_ja = self.__get_site_info()
         site_mail = self.__get_default_mail_sender()
+        institution_name_ja = current_app.config['THEME_INSTITUTION_NAME']['ja']
+        institution_name_en = current_app.config['THEME_INSTITUTION_NAME']['en']
         if not mail_template:
             mail_template = current_app.config\
                 .get("WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT")
@@ -1910,6 +1912,8 @@ class UsageReport:
                     "restricted_site_url": site_url,
                     "restricted_site_name_ja": site_name_ja,
                     "restricted_site_name_en": site_name_en,
+                    "restricted_institution_name_ja": institution_name_ja,
+                    "restricted_institution_name_en": institution_name_en,
                     "restricted_site_mail": site_mail,
                     "restricted_usage_activity_id": activity.extra_info.get(
                         'usage_activity_id'),
