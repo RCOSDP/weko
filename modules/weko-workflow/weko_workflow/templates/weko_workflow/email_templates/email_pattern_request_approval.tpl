@@ -3,7 +3,7 @@ Subject：　利用申請の承認のお願い／Request for Approval of Applica
 [restricted_institution_name_ja]です。
 [restricted_site_name_ja]をご利用いただいて、ありがとうございます。
 
-下記の方から利用申請がありました。
+[restricted_university_institution][restricted_fullname]様から、下記の利用申請がありました。
 
 申請番号： [restricted_activity_id]
 登録者名： [restricted_fullname]
