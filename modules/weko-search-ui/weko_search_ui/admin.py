@@ -140,6 +140,13 @@ class ItemManagementBulkDelete(BaseView):
             if is_index_locked(q):
                 status = 0
                 msg = _('Index Delete is in progress on another device.')
+            elif get_doi_items_in_index(q):
+                status = 1
+                msg = _('DOI granting item(s) are including in the '
+                        'deletion items.<br/>DOI granting item(s) cannot '
+                        'be deleted without withdrawing the DOI.<br/>'
+                        'Do you want to continue deleting items that are '
+                        'not grant DOI?')
             else:
                 status = 1
                 msg = _('Are you sure you want to delete it?')

@@ -718,3 +718,6 @@ msgstr ""
 
 msgid "Editing item(s):"
 msgstr ""
+
+msgid "DOI granting item(s) are including in the deletion items.<br/>DOI granting item(s) cannot be deleted without withdrawing the DOI.<br/>Do you want to continue deleting items that are not grant DOI?"
+msgstr ""
