@@ -22,6 +22,7 @@
 
 import json
 import os
+import shutil
 import sys
 from collections import OrderedDict
 from copy import deepcopy
@@ -60,8 +61,7 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
 from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
     get_workflows
-from weko_search_ui.utils import check_import_items, import_items_to_system, \
-    remove_temp_dir
+from weko_search_ui.utils import check_import_items, import_items_to_system
 from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 
@@ -1835,7 +1835,7 @@ class ActivityActionResource(ContentNegotiatedMethodView):
         # register new item
         item['root_path'] = check_result.get('data_path') + '/data'
         import_result = import_items_to_system(item, None, True)
-        remove_temp_dir(check_result.get('data_path'))
+        shutil.rmtree(check_result.get('data_path'))
         if not import_result['success']:
             self.logging_error('import_items_to_system',
                                import_result['success'])
