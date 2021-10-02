@@ -1664,6 +1664,10 @@ def handle_check_doi_ra(list_record):
             pid = WekoRecord.get_record_by_pid(item_id).pid_recid
             identifier = IdentifierHandle(pid.object_uuid)
             _value, doi_type = identifier.get_idt_registration_data()
+            current_app.logger.debug(
+                "item_id:{0} doi_ra:{1}".format(item_id, doi_ra))
+            current_app.logger.debug(
+                "doi_type:{0} _value:{1}".format(doi_type, _value))
 
             if (doi_type and doi_type[0] != doi_ra) \
                     or (not doi_type and doi_ra):
@@ -1672,12 +1676,16 @@ def handle_check_doi_ra(list_record):
         except Exception as ex:
             current_app.logger.error('item id: %s not found.' % item_id)
             current_app.logger.error(ex)
+
         return error
 
     for item in list_record:
         errors = []
         item_id = str(item.get('id'))
         doi_ra = item.get('doi_ra')
+
+        current_app.logger.debug(
+            "item_id:{0} doi_ra:{1}".format(item_id, doi_ra))
 
         if item.get('doi') and not doi_ra:
             errors.append(_('Please specify {}.').format('DOI_RA'))
@@ -1689,6 +1697,8 @@ def handle_check_doi_ra(list_record):
             else:
                 validation_errors = handle_doi_required_check(item)
                 if validation_errors:
+                    current_app.logger.error(
+                        "handle_doi_required_check: {0}".format(validation_errors))
                     errors.extend(validation_errors)
                 if not item.get('is_change_identifier') \
                         and item.get('status') != 'new':
@@ -1698,6 +1708,7 @@ def handle_check_doi_ra(list_record):
         elif item.get('status') != 'new':
             error = check_existed(item_id, doi_ra)
             if error:
+                current_app.logger.error("check_existed: ".format(error))
                 errors.append(error)
 
         if errors:
