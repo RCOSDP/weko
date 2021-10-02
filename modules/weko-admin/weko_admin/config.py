@@ -321,6 +321,10 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
         'display_facet_search': {
             'id': 'display_facet_search',
             'status': False
+        },
+        'display_community': {
+            'id': 'display_community',
+            'status': False
         }
     },
     'init_disp_setting': {

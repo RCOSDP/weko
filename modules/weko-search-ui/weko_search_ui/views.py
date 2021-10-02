@@ -210,6 +210,13 @@ def search():
             "display_index_tree": display_index_tree,
         })
 
+        # Get display_community setting.
+        display_community = get_search_setting().get("display_control", {}).get(
+            'display_community', {}).get('status', False)
+        ctx.update({
+            "display_community": display_community
+        })
+
         return render_template(
             current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
             page=page,
