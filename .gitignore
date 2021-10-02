@@ -81,7 +81,7 @@ header-icons/*
 combined-pdfs/*
 !.gitkeep
 
-# resync
+#resync
 .resync-client-status.cfg
 
 # pyenv

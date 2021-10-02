@@ -21,12 +21,13 @@
 """WEKO3 module docstring."""
 import json
 import ssl
-ssl._create_default_https_context = ssl._create_unverified_context
+import traceback
 from datetime import datetime as dt
 from urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
 
 import dateutil
 from flask import current_app, jsonify
+from frozendict import frozendict
 from invenio_db import db
 from invenio_oaiharvester.harvester import DCMapper, DDIMapper, JPCOARMapper
 from invenio_oaiharvester.tasks import event_counter, map_indexes
@@ -44,6 +45,8 @@ from weko_records_ui.utils import soft_delete
 
 from .config import INVENIO_RESYNC_INDEXES_MODE
 
+ssl._create_default_https_context = ssl._create_unverified_context
+
 
 def read_capability(url):
     """Read capability of an url."""
@@ -58,7 +61,7 @@ def read_capability(url):
     return capability
 
 
-def sync_baseline(map, base_url, counter, dryrun=False,
+def sync_baseline(_map, base_url, counter, dryrun=False,
                   from_date=None, to_date=None):
     """Run resync baseline."""
     from .resync import ResourceSyncClient
@@ -76,28 +79,29 @@ def sync_baseline(map, base_url, counter, dryrun=False,
         # be used to validate subitem in resync library
         client.sitemap_name = base_url
         client.dryrun = dryrun
-        client.set_mappings(map)
+        client.set_mappings(_map)
         result = client.baseline_or_audit()
-        current_app.logger.debug('client.baseline_or_audit(): {0}'.format(result))
+        current_app.logger.debug(
+            'client.baseline_or_audit(): {0}'.format(result))
         update_counter(counter, result)
         return True
     except MapperError:
         # if mapper error then remove one element in url and retry
         current_app.logger.info('MapperError')
-        paths = map[0].rsplit('/', 1)
-        map[0] = paths[0]
+        paths = _map[0].rsplit('/', 1)
+        _map[0] = paths[0]
         return False
     except Exception as e:
         current_app.logger.error('Error when Sync :' + str(e))
         return False
 
 
-def sync_audit(map, counter):
+def sync_audit(_map, counter):
     """Run resync audit."""
     client = Client()
     # ignore fail to continue running, log later
     client.ignore_failures = True
-    client.set_mappings(map)
+    client.set_mappings(_map)
     # init_logging(verbose=True)
     src_resource_list = client.find_resource_list()
     rlb = ResourceListBuilder(mapper=client.mapper)
@@ -128,19 +132,19 @@ def sync_audit(map, counter):
     )
 
 
-def sync_incremental(map, counter, base_url, from_date, to_date):
+def sync_incremental(_map, counter, base_url, from_date, to_date):
     """Run resync incremental."""
     # init_logging(verbose=True)
     from .resync import ResourceSyncClient
     client = ResourceSyncClient()
     client.ignore_failures = True
     try:
-        single_sync_incremental(map, counter, base_url, from_date, to_date)
+        single_sync_incremental(_map, counter, base_url, from_date, to_date)
         return True
     except MapperError as e:
         current_app.logger.info(e)
-        paths = map[0].rsplit('/', 1)
-        map[0] = paths[0]
+        paths = _map[0].rsplit('/', 1)
+        _map[0] = paths[0]
     except Exception as e:
         # maybe url contain a list of changelist, instead of changelist
         current_app.logger.info(e)
@@ -159,13 +163,13 @@ def sync_incremental(map, counter, base_url, from_date, to_date):
                 if capability != 'changelist' and capability != 'changedump':
                     raise ('Bad URL, not a changelist/changedump,'
                            ' cannot sync incremental')
-                single_sync_incremental(map, counter,
+                single_sync_incremental(_map, counter,
                                         doc.uri, from_date, to_date)
             return True
         raise e
 
 
-def single_sync_incremental(map, counter, url, from_date, to_date):
+def single_sync_incremental(_map, counter, url, from_date, to_date):
     """Run resync incremental for 1 changelist url only."""
     from .resync import ResourceSyncClient
     if from_date:
@@ -176,12 +180,12 @@ def single_sync_incremental(map, counter, url, from_date, to_date):
         url = set_query_parameter(url, 'to_date', to_date)
     client = ResourceSyncClient()
     client.ignore_failures = True
-    parts = urlsplit(map[0])
+    parts = urlsplit(_map[0])
     uri_host = urlunsplit([parts[0], parts[1], '', '', ''])
     sync_result = False
-    while map[0] != uri_host and not sync_result:
+    while _map[0] != uri_host and not sync_result:
         try:
-            client.set_mappings(map)
+            client.set_mappings(_map)
             result = client.incremental(
                 change_list_uri=url,
                 from_datetime=from_date
@@ -191,8 +195,8 @@ def single_sync_incremental(map, counter, url, from_date, to_date):
         except MapperError as e:
             # if error then remove one element in url and retry
             current_app.logger.info('MapperError')
-            paths = map[0].rsplit('/', 1)
-            map[0] = paths[0]
+            paths = _map[0].rsplit('/', 1)
+            _map[0] = paths[0]
 
 
 def set_query_parameter(url, param_name, param_value):
@@ -221,11 +225,13 @@ def get_list_records(resync_id):
 
 def process_item(record, resync, counter):
     """Process item."""
-    current_app.logger.debug('{0} {1} {2}: {3}'.format(__file__,'process_item()',resync,counter))
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        __file__, 'process_item()', resync, counter))
     event_counter('processed_items', counter)
     event = ItemEvents.INIT
     xml = etree.tostring(record, encoding='utf-8').decode()
-    current_app.logger.debug('{0} {1} {2}: {3}'.format(__file__,'process_item()','xml',xml))
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        __file__, 'process_item()', 'xml', xml))
     mapper = JPCOARMapper(xml)
 
     resyncid = PersistentIdentifier.query.filter_by(
@@ -295,14 +301,15 @@ def process_sync(resync_id, counter):
     capability = read_capability(base_url)
     mode = resync_index.resync_mode
     save_dir = resync_index.resync_save_dir
-    map = [base_url]
+    _map = [base_url]
     if save_dir:
-        map.append(save_dir)
-    parts = urlsplit(map[0])
+        _map.append(save_dir)
+    parts = urlsplit(_map[0])
     uri_host = urlunsplit([parts[0], parts[1], '', '', ''])
     from_date = resync_index.from_date
     to_date = resync_index.to_date
-    current_app.logger.debug('{0} {1} {2}'.format(__file__,'process_sync', map))
+    current_app.logger.debug(
+        '{0} {1} {2}'.format(__file__, 'process_sync', _map))
     try:
         if mode == current_app.config.get(
             'INVENIO_RESYNC_INDEXES_MODE',
@@ -313,16 +320,16 @@ def process_sync(resync_id, counter):
             if capability != 'resourcelist' and capability != 'resourcedump':
                 raise ValueError('Bad URL')
             result = False
-            while map[0] != uri_host and not result:
-                result = sync_baseline(map=map,
+            while _map[0] != uri_host and not result:
+                result = sync_baseline(_map=_map,
                                        base_url=base_url,
                                        counter=counter,
                                        dryrun=False,
                                        from_date=from_date,
                                        to_date=to_date)
-            new_result = list(set(
-                get_list_records(resync_id) + counter.get('list')
-            ))
+            tmp = get_list_records(resync_id)
+            tmp.extend(counter.get('list'))
+            new_result = list(map(json.loads, set(map(json.dumps, tmp))))
             resync_index.update({
                 'result': json.dumps(new_result)
             })
@@ -338,12 +345,12 @@ def process_sync(resync_id, counter):
             # do the same logic with Baseline
             # to make sure right url is used
             result = False
-            while map[0] != uri_host and not result:
-                result = sync_baseline(map=map,
+            while _map[0] != uri_host and not result:
+                result = sync_baseline(_map=_map,
                                        base_url=base_url,
                                        counter=counter,
                                        dryrun=True)
-            audit_result = sync_audit(map, counter)
+            audit_result = sync_audit(_map, counter)
             new_result = list(set(
                 get_list_records(resync_id) + counter.get('list')
             ))
@@ -364,8 +371,8 @@ def process_sync(resync_id, counter):
                     'Bad URL, not a changelist/changedump,'
                     ' cannot sync incremental')
             result = False
-            while map[0] != uri_host and not result:
-                result = sync_incremental(map, counter,
+            while _map[0] != uri_host and not result:
+                result = sync_incremental(_map, counter,
                                           base_url, from_date, to_date)
             new_result = list(
                 set(get_list_records(resync_id) + counter.get('list')))
@@ -374,15 +381,18 @@ def process_sync(resync_id, counter):
             })
             return jsonify({'result': result})
     except Exception as e:
+        current_app.logger.error(traceback.format_exc())
         return jsonify({'status': 'error', 'message': str(e)})
 
 
 def update_counter(counter, result):
     """Update sync result to counter."""
     list_item = []
+    list_resources = []
     counter.update({'created_items': len(result.get('created'))})
     counter.update({'updated_items': len(result.get('updated'))})
     counter.update({'deleted_items': len(result.get('deleted'))})
+    counter.update({'resource_items': len(result.get('resource'))})
     if result.get('created'):
         for item in result.get('created'):
             list_item.append(item)
@@ -392,7 +402,11 @@ def update_counter(counter, result):
     if result.get('deleted'):
         for item in result.get('deleted'):
             list_item.append(item)
-    counter.update({'list': list_item})
+    if result.get('resource'):
+        for rc in result.get('resource'):
+            list_resources.append(rc)
+    #counter.update({'list': list_item})
+    counter.update({'list': list_resources})
 
 
 def get_from_date_from_url(url):

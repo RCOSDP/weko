@@ -47,3 +47,8 @@ INVENIO_RESYNC_LOGS_STATUS = {
     'running': 'Running',
     'failed': 'Failed'
 }
+
+INVENIO_RESYNC_SAVE_PATH = '/tmp/resync/'
+
+INVENIO_RESYNC_MODE = True
+"""    """
