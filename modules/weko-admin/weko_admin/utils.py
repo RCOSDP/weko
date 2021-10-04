@@ -2165,11 +2165,13 @@ def get_title_facets():
             if lang = 'en' : name_en
     """
     lang = current_i18n.language
-    data = {}
+    titles = {}
+    order = {}
     activated_facets = FacetSearchSetting.get_activated_facets()
     for item in activated_facets:
-        data[item.name_en] = item.name_jp if lang == 'ja' else item.name_en
-    return data
+        titles[item.name_en] = item.name_jp if lang == 'ja' else item.name_en
+        order[item.id] = item.name_en
+    return titles, order
 
 
 def is_exits_facet(data, id):
