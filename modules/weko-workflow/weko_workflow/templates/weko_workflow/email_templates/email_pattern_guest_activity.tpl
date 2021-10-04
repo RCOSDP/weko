@@ -1,4 +1,4 @@
-Subject: 利用申請登録のご案内／Register Application for Use
+Subject：利用申請登録のご案内／Register Application for Use
 
 [restricted_site_name_ja]です。
 下記のリンクにアクセスしていただき、利用申請の登録を行ってください。

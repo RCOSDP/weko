@@ -1,4 +1,4 @@
-Subject：　利用申請の承認のお願い／Request for Approval of Application for Use
+Subject：利用申請の承認のお願い／Request for Approval of Application for Use
 
 [restricted_site_name_ja]です。下記の方から利用申請がありました。
 

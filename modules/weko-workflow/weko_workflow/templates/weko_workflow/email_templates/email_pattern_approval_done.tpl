@@ -1,4 +1,4 @@
-Subject：　利用申請の承認のお知らせ／Your application was approved
+Subject：利用申請の承認のお知らせ／Your application was approved
 
 [restricted_site_name_ja]です。
 
