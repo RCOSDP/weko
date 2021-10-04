@@ -22,6 +22,7 @@
 
 
 from flask import current_app, json
+from flask_babelex import gettext as _
 from invenio_db import db
 from weko_admin import config as ad_config
 from weko_admin.models import SearchManagement as sm
@@ -167,7 +168,10 @@ def get_search_detail_keyword(str):
     for k_v in options:
         if k_v.get('id') == 'itemtype':
             k_v['check_val'] = check_val
-            break
+        if k_v.get('check_val'):
+            for val in k_v.get('check_val'):
+                if val.get('contents'):
+                    val['contents'] = _(val['contents'])
 
     key_options['condition_setting'] = options
 

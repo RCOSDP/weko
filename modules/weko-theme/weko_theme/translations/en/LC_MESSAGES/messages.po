@@ -347,8 +347,8 @@ msgstr ""
 #~ msgid "Scival"
 #~ msgstr ""
 
-#~ msgid "Other"
-#~ msgstr ""
+msgid "Other"
+msgstr ""
 
 #~ msgid "Description"
 #~ msgstr ""
