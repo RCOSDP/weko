@@ -573,6 +573,9 @@ msgstr ""
 msgid "Registration Destination Index"
 msgstr ""
 
+msgid "Strage Location"
+msgstr ""
+
 #: weko_workflow/templates/weko_workflow/activity_detail.html:266
 msgid "Quit_Approval"
 msgstr "Quit"
