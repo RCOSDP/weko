@@ -896,10 +896,7 @@ def next_action(activity_id='0', action_id=0):
                                     next_action_handler,
                                     url_and_expired_date)
     if current_app.config.get(
-        'WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL') and \
-        current_user.is_authenticated and \
-        (not activity_detail.extra_info or not
-            activity_detail.extra_info.get('guest_mail')):
+        'WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL'):
         process_send_notification_mail(activity_detail, action_endpoint,
                                        next_action_endpoint, action_mails_setting)
 

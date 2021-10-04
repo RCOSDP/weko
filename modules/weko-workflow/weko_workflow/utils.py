@@ -2066,6 +2066,7 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
     :activity_detail: object
     :guest_user: object
     """
+    mail_address = item_info.get('subitem_mail_address')
     site_en, site_ja = get_site_info_name()
     site_mail = get_default_mail_sender()
     institution_name_ja = current_app.config['THEME_INSTITUTION_NAME']['ja']
@@ -2074,12 +2075,16 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
     if not guest_user:
         register_user, register_date = get_register_info(
             activity_detail.activity_id)
+    if not mail_address and guest_user:
+        mail_address = activity_detail.extra_info.get(
+            "guest_mail", "") if activity_detail.extra_info else ""
+        register_user = mail_address
 
     mail_info = dict(
         university_institution=item_info.get('subitem_university/institution'),
         fullname=item_info.get('subitem_fullname'),
         activity_id=activity_detail.activity_id,
-        mail_address=item_info.get('subitem_mail_address'),
+        mail_address=mail_address,
         research_title=item_info.get('subitem_research_title'),
         dataset_requested=item_info.get('subitem_dataset_usage'),
         register_date=register_date,
@@ -2158,8 +2163,10 @@ def process_send_notification_mail(activity_detail, action_endpoint,
     :next_action_endpoint: object
     :action_mails_setting: object
     """
+    is_guest_user = True if activity_detail.extra_info.get(
+        'guest_mail', None) else False
     item_info = get_item_info(activity_detail.item_id)
-    mail_info = set_mail_info(item_info, activity_detail)
+    mail_info = set_mail_info(item_info, activity_detail, is_guest_user)
 
     workflow = WorkFlow()
     workflow_detail = workflow.get_workflow_by_id(
@@ -2174,14 +2181,15 @@ def process_send_notification_mail(activity_detail, action_endpoint,
                 "inform_itemReg", False):
         """ Send mail for register to notify that registration is done"""
         send_mail_registration_done(mail_info)
-    if 'approval_' in next_action_endpoint \
-            and 'administrator' not in next_action_endpoint:
-        """ Send mail for approver to request approval"""
-        send_mail_request_approval(mail_info)
-    if 'approval_administrator' in action_endpoint:
-        """ Send mail to register to notify
-            that registration is approved by admin """
-        send_mail_approval_done(mail_info)
+    if current_user.is_authenticated and not is_guest_user:
+        if 'approval_' in next_action_endpoint \
+                and 'administrator' not in next_action_endpoint:
+            """ Send mail for approver to request approval"""
+            send_mail_request_approval(mail_info)
+        if 'approval_administrator' in action_endpoint:
+            """ Send mail to register to notify
+                that registration is approved by admin """
+            send_mail_approval_done(mail_info)
 
 
 def get_application_and_approved_date(activities, columns):
