@@ -519,6 +519,10 @@ def import_author_to_system(author):
             author["is_deleted"] = True if author.get("is_deleted") else False
             if not author.get('authorIdInfo'):
                 author["authorIdInfo"] = []
+
+            if not author.get('emailInfo'):
+                author['emailInfo'] = []
+
             if status == 'new':
                 WekoAuthors.create(author)
             else:
