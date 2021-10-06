@@ -49,18 +49,19 @@ def json_loader(data, pid, owner_id=None):
         if isinstance(value, list):
             for v in value:
                 if 'nameIdentifiers' in v \
-                        and len(v['nameIdentifiers']) > 0 \
-                        and 'nameIdentifierScheme' in v['nameIdentifiers'][0] \
-                        and v['nameIdentifiers'][0]['nameIdentifierScheme'] == 'WEKO':
+                    and len(v['nameIdentifiers']) > 0 \
+                    and 'nameIdentifierScheme' in v['nameIdentifiers'][0] \
+                    and v['nameIdentifiers'][0][
+                        'nameIdentifierScheme'] == 'WEKO':
                     author_link.append(
                         v['nameIdentifiers'][0]['nameIdentifier'])
-        elif isinstance(value, dict):
-            if 'nameIdentifiers' in value \
-                    and len(value['nameIdentifiers']) > 0 \
-                    and 'nameIdentifierScheme' in value['nameIdentifiers'][0] \
-                    and value['nameIdentifiers'][0]['nameIdentifierScheme'] == 'WEKO':
-                author_link.append(
-                    value['nameIdentifiers'][0]['nameIdentifier'])
+        elif isinstance(value, dict) and 'nameIdentifiers' in value \
+            and len(value['nameIdentifiers']) > 0 \
+            and 'nameIdentifierScheme' in value['nameIdentifiers'][0] \
+            and value['nameIdentifiers'][0][
+                'nameIdentifierScheme'] == 'WEKO':
+            author_link.append(
+                value['nameIdentifiers'][0]['nameIdentifier'])
 
     dc = OrderedDict()
     jpcoar = OrderedDict()
@@ -520,7 +521,8 @@ async def sort_meta_data_by_options(
                     if 'lang_id' in data_result[key]:
                         lang_id = data_result[key].get('lang_id') \
                             if "[]" not in data_result[key].get('lang_id') \
-                            else data_result[key].get('lang_id').replace("[]", '')
+                            else data_result[key].get(
+                                'lang_id').replace("[]", '')
                     data = ''
                     if "stt" in data_result[key] and data_result[key].get(
                             "stt") is not None:
@@ -622,8 +624,8 @@ async def sort_meta_data_by_options(
                                        data_result, is_specify_newline_array
                                        )
             elif not (bibliographic_key and bibliographic_key in s['key']) and \
-                    value and value not in _ignore_items and \
-                    not is_hide and is_show_list and s['key'] \
+                value and value not in _ignore_items and \
+                not is_hide and is_show_list and s['key'] \
                     and s['title'] != 'Title':
                 data_result, stt_key = get_value_and_lang_by_key(
                     s['key'], solst_dict_array, data_result, stt_key)
@@ -840,7 +842,11 @@ async def sort_meta_data_by_options(
                         s_key = s.get('key')
                         if m.get(s_key):
                             s['value'] = m.get(s_key) if not s['value'] else \
-                                '{}, {}'.format(s['value'], m.get(s_key))
+                                '{}{} {}'.format(
+                                    s['value'],
+                                    current_app.config.get(
+                                        'WEKO_RECORDS_SYSTEM_COMMA', ''),
+                                    m.get(s_key))
                             s['parent_option'] = {
                                 'required': option.get("required"),
                                 'show_list': option.get("showlist"),
@@ -1234,6 +1240,7 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
     @param stt_key:
     @return:
     """
+    sys_comma = current_app.config.get('WEKO_RECORDS_SYSTEM_COMMA', '')
     if (key is not None) and isinstance(key, str) and (data_json is not None) \
             and (data_result is not None):
         save_key = ""
@@ -1255,9 +1262,11 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
                     j["title_ja"].strip() in "Language") \
                     or (j["title_ja"].strip() in "言語") or (
                         j["title"].strip() in "言語"):
-                    data_result[save_key] = {**data_result[save_key],
-                                             **{'lang': j["value"].split(","),
-                                                "lang_id": key}}
+                    data_result[save_key] = {
+                        **data_result[save_key],
+                        **{'lang': j["value"].split(sys_comma),
+                           'lang_id': key}
+                    }
                     flag = True
                 if key not in data_result[save_key] and not flag:
                     if "stt" not in data_result[save_key]:
@@ -1266,7 +1275,7 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
                     if "stt" in data_result[save_key]:
                         data_result[save_key]["stt"].append(key)
                     data_result[save_key] = {**data_result[save_key], **{
-                        key: {'value': j["value"].split(",")}}}
+                        key: {'value': j["value"].split(sys_comma)}}}
         return data_result, stt_key
     else:
         return None
