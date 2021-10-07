@@ -76,11 +76,12 @@ jobs:
           sed -E 's/\/code\///g' requirements-weko-modules.txt | xargs python -m pip install
           python -m pip uninstall -y 'coverage' 'pytest' 'pytest-cov' 'pytest-invenio' 'mock' 'urllib3' 'responses' 'moto'
           python -m pip install 'coverage==4.5.4' 'pytest==5.4.3' 'pytest-cov==2.10.1' 'pytest-invenio==1.3.4' 'mock==3.0.5' 'urllib3==1.21.1' 'responses==0.10.3' 'moto==1.3.5'
-          pip freeze
+
       - name: Run tests
         run: |
           source venv/bin/activate
           cd modules/${{ matrix.module }}
+          pip freeze
           python setup.py test
       - name: Coveralls
         if: ${{ success() || failure() }}
