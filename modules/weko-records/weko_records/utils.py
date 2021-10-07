@@ -1066,6 +1066,7 @@ def get_attribute_value_all_items(
     """
     name_mapping = {}
     def get_name_mapping():
+        """Create key & title mapping."""
         for lst in klst:
             keys = lst[0].replace("[]", "").split('.')
             if keys[0].startswith(root_key):
@@ -1078,6 +1079,7 @@ def get_attribute_value_all_items(
                     'non_display': lst[3].get('non_display', False)}
 
     def get_name(key, multi_lang_flag=True):
+        """Get multi-lang title."""
         if key in name_mapping:
             name = name_mapping[key]['multi_lang'] \
                 if multi_lang_flag else name_mapping[key]['item_name']
@@ -1085,7 +1087,18 @@ def get_attribute_value_all_items(
         else:
             return ''
 
+    def change_date_format(value):
+        """Change date format from yyyy-MM-dd to yyyy/MM/dd."""
+        result = value
+        ym_re = re.compile(r'^\d{4}-(0[1-9]|1[0-2])$')
+        ymd_re = re.compile(
+            r'^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$')
+        if ym_re.match(value) or ymd_re.match(value):
+            result = value.replace('-', '/')
+        return result
+
     def get_value(data):
+        """Get value for display one line flag."""
         temp_data = data.copy()
         lang_key = None
         value_key = None
@@ -1127,14 +1140,15 @@ def get_attribute_value_all_items(
             data_key = date_key
             split_data = data[event_key]
             if event_key in non_display_list:
-                return_data = data[date_key]
+                return_data = change_date_format(data[date_key])
             else:
-                return_data = '{}({})'.format(data[date_key], data[event_key])
+                return_data = '{}({})'.format(
+                    change_date_format(data[date_key]), data[event_key])
         elif date_key and len(list(temp_data.keys())) == 1:
             data_type = 'event'
             data_key = date_key
             split_data = 'none_event'
-            return_data = data[date_key]
+            return_data = change_date_format(data[date_key])
         elif value_key and lang_key:
             data_type = 'lang'
             data_key = value_key
@@ -1188,7 +1202,7 @@ def get_attribute_value_all_items(
                                     data_split['start'] = v
                                 elif l == 'end':
                                     if 'start' in data_split:
-                                        v = '{} / {}'.format(data_split.pop('start'), v)
+                                        v = '{} - {}'.format(data_split.pop('start'), v)
                                     temp.append(v)
                                 else:
                                     if 'start' in data_split:
@@ -1207,7 +1221,7 @@ def get_attribute_value_all_items(
                         elif data_type == 'event':
                             if 'start' in data_split:
                                 data_split['data'].append(data_split.pop('start'))
-                            result.append([{value_key: str.join('\n', data_split['data'])}])
+                            result.append([{value_key: str.join(', ', data_split['data'])}])
                     elif isinstance(alst, dict):
                         data_type, value_key, l, v = get_value(alst)
                         if data_type is not None and value_key:
