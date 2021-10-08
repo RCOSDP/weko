@@ -1319,15 +1319,17 @@ def import_items_to_system(item: dict, request_info: dict):
         return None
     else:
         try:
+            #current_app.logger.debug("item: {0}".format(item))
+            status = item.get('status')
             root_path = item.get('root_path', '')
-            if item.get('status') == 'new':
+            if status == 'new':
                 item_id = create_deposit(item.get('id'))
                 item['id'] = item_id
             else:
                 handle_check_item_is_locked(item)
 
             register_item_metadata(item, root_path)
-            if current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
+            if current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CNRI'):
                 register_item_handle(item)
             register_item_doi(item)
 
@@ -1335,7 +1337,7 @@ def import_items_to_system(item: dict, request_info: dict):
                 item.get('publish_status')
             )
             register_item_update_publish_status(item, str(status_number))
-            if item.get('status') == 'new':
+            if status == 'new':
                 # Store data to es and db.
                 store_data_to_es_and_db(item, request_info)
             db.session.commit()
@@ -1559,7 +1561,7 @@ def handle_check_cnri(list_record):
         error = None
         item_id = str(item.get('id'))
         cnri = item.get('cnri')
-        cnri_set = current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI')
+        cnri_set = current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CNRI')
 
         if item.get('is_change_identifier') and cnri_set:
             if not cnri:
@@ -1809,11 +1811,15 @@ def register_item_handle(item):
         response -- {object} Process status.
 
     """
+    current_app.logger.debug('start register_item_handle(item)')
     item_id = str(item.get('id'))
     record = WekoRecord.get_record_by_pid(item_id)
     pid = record.pid_recid
     pid_hdl = record.pid_cnri
     cnri = item.get('cnri')
+    status = item.get('status')
+    current_app.logger.debug(
+        "item_id:{0} pid:{1} pid_hdl:{2} cnri:{3} status:{4}".format(item_id, pid, pid_hdl, cnri, status))
 
     if item.get('is_change_identifier'):
         if item.get('cnri_suffix_not_existed'):
@@ -1831,6 +1837,12 @@ def register_item_handle(item):
     else:
         if item.get('status') == 'new':
             register_hdl_by_item_id(item_id, pid.object_uuid, get_url_root())
+        else:
+            if pid_hdl is None and cnri is None:
+                register_hdl_by_item_id(
+                    item_id, pid.object_uuid, get_url_root())
+
+    current_app.logger.debug('end register_item_handle(item)')
 
 
 def prepare_doi_setting():
