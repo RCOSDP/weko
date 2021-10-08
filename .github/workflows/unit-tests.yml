@@ -55,13 +55,14 @@ jobs:
           source venv/bin/activate
           cd modules/${{ matrix.module }}
           python setup.py test
-          pip freeze
+
       - name: Coveralls
         if: ${{ success() || failure() }}
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
         run: |
           source venv/bin/activate
+          pip freeze
           cp modules/${{ matrix.module }}/.coverage ./
           coveralls
 
