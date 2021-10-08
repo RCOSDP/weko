@@ -54,8 +54,8 @@ jobs:
         run: |
           source venv/bin/activate
           cd modules/${{ matrix.module }}
-          pip freeze
           python setup.py test
+          pip freeze
       - name: Coveralls
         if: ${{ success() || failure() }}
         env:
