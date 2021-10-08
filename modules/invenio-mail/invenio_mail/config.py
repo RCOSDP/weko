@@ -15,3 +15,4 @@ list of configuration variables.
 """
 INVENIO_MAIL_BASE_TEMPLATE = 'invenio_mail/base.html'
 INVENIO_MAIL_SETTING_TEMPLATE = 'invenio_mail/mail_setting.html'
+INVENIO_MAIL_TEMPLATES_TEMPLATE = 'invenio_mail/mail_templates.html'

@@ -58,3 +58,53 @@ class MailConfig(db.Model):
         cfg.mail_password = new_config['mail_password']
         cfg.mail_default_sender = new_config['mail_default_sender']
         db.session.commit()
+
+
+class MailTemplates(db.Model):
+    """Mail templates."""
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    mail_subject = db.Column(db.String(255), default='')
+    mail_body = db.Column(db.Text, nullable=True)
+
+    @classmethod
+    def get_templates(cls):
+        """Get mail templates."""
+        result = []
+        mail_templates = cls.query.order_by(cls.id).all()
+        if mail_templates:
+            for m in mail_templates:
+                result.append({
+                    "key": str(m.id),
+                    "content": {
+                        "subject": m.mail_subject,
+                        "body": m.mail_body
+                    }
+                })
+        return result
+
+    @classmethod
+    def get_by_id(cls, id):
+        """Get mail template by id."""
+        return cls.query.filter_by(id=id).one_or_none()
+
+    @classmethod
+    def save_and_update(cls, data):
+        """Add new mail template."""
+        if data['key']:
+            obj = cls.get_by_id(data['key'])
+        else:
+            obj = cls()
+        obj.mail_subject = data['content']['subject']
+        obj.mail_body = data['content']['body']
+        if data['key']:
+            db.session.merge(obj)
+        else:
+            db.session.add(obj)
+        db.session.commit()
+
+    @classmethod
+    def delete_by_id(cls, id):
+        """Delete mail template."""
+        cls.query.filter_by(id=id).delete()
+        db.session.commit()

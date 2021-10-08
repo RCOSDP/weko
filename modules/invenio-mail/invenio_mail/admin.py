@@ -3,8 +3,9 @@
 """Admin model views for Mail sets."""
 
 import sys
+import json
 
-from flask import abort, current_app, flash, request
+from flask import abort, current_app, flash, request, jsonify
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_mail import Message
@@ -13,6 +14,7 @@ from werkzeug.local import LocalProxy
 from invenio_mail.models import MailConfig
 
 from . import config
+from .models import MailTemplates
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -134,6 +136,45 @@ class MailSettingView(BaseView):
             return False
 
 
+class MailTemplatesView(BaseView):
+    @expose('/', methods=['GET'])
+    def index(self):
+        mts = MailTemplates.get_templates()
+        return self.render(config.INVENIO_MAIL_TEMPLATES_TEMPLATE,
+                           data=json.dumps({"mail_templates": mts}))
+
+    @expose('/save', methods=['POST'])
+    def save_mail_template(self):
+        """Save mail template.
+
+        :return:
+        """
+        result = {
+            "status": True,
+            "msg": _("Mail template was successfully updated.")
+        }
+        mail_templates = request.get_json()['mail_templates']
+        for m in mail_templates:
+            MailTemplates.save_and_update(m)
+        result['data'] = MailTemplates.get_templates()
+        return jsonify(result), 200
+
+    @expose('/delete', methods=['DELETE'])
+    def delete_mail_template(self):
+        """Delete mail template.
+
+        :return:
+        """
+        result = {
+            "status": True,
+            "msg": _("Mail template was successfully deleted.")
+        }
+        template_id = request.get_json()['template_id']
+        MailTemplates.delete_by_id(template_id)
+        result['data'] = MailTemplates.get_templates()
+        return jsonify(result), 200
+
+
 mail_adminview = {
     'view_class': MailSettingView,
     'kwargs': {
@@ -143,7 +184,17 @@ mail_adminview = {
     }
 }
 
+mail_templates_adminview = {
+    'view_class': MailTemplatesView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Mail Templates'),
+        'endpoint': 'mailtemplates'
+    }
+}
+
 
 __all__ = (
     'mail_adminview',
+    'mail_templates_adminview',
 )

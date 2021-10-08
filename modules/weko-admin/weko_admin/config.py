@@ -1122,6 +1122,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'longanalysissetting',
     'site_info',
     'location',
+    'mailtemplates',
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
 

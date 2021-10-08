@@ -79,6 +79,11 @@
   height: auto;
 }
 
+.mail_template_height {
+  min-height: 450px;
+  height: auto;
+}
+
 .padding-top{
   padding-top: 10px;
 }
