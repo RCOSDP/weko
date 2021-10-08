@@ -96,7 +96,7 @@ WEKO_RECORDS_EVENT_TITLES = ['調査開始／終了', 'イベント',
 
 WEKO_RECORDS_TIME_PERIOD_TITLES = ['時間的範囲', 'Time Period',
                                    '調査日', 'Date', '対象時期',
-                                   'TimePeriod', 'Time Period(s)']
+                                   'TimePeriod', 'Time Period(s)', 'Temporal']
 """List time period titles."""
 
 """

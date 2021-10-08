@@ -1086,14 +1086,35 @@ def get_attribute_value_all_items(
             return name
         else:
             return ''
+    
+    def change_temporal_format(value):
+        """Change temporal format."""
+        if '/' in value:
+            result = []
+            temp = value.split('/')
+            for v in temp:
+                r = change_date_format(v)
+                if r:
+                    result.append(r)
+                else:
+                    result = []
+                    break
+            if result:
+                return str.join(' - ', result)
+            else:
+                return value
+        else:
+            result = change_date_format(value)
+            return result if result else value
 
     def change_date_format(value):
         """Change date format from yyyy-MM-dd to yyyy/MM/dd."""
-        result = value
+        result = None
+        y_re = re.compile(r'^\d{4}$')
         ym_re = re.compile(r'^\d{4}-(0[1-9]|1[0-2])$')
         ymd_re = re.compile(
             r'^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$')
-        if ym_re.match(value) or ymd_re.match(value):
+        if y_re.match(value) or ym_re.match(value) or ymd_re.match(value):
             result = value.replace('-', '/')
         return result
 
@@ -1139,16 +1160,17 @@ def get_attribute_value_all_items(
             data_type = 'event'
             data_key = date_key
             split_data = data[event_key]
+            date_value = change_temporal_format(data[date_key])
             if event_key in non_display_list:
-                return_data = change_date_format(data[date_key])
+                return_data = date_value
             else:
-                return_data = '{}({})'.format(
-                    change_date_format(data[date_key]), data[event_key])
-        elif date_key and len(list(temp_data.keys())) == 1:
+                return_data = '{}({})'.format(date_value, data[event_key])
+        elif date_key and \
+                (len(list(temp_data.keys())) == 1 or lang_key):
             data_type = 'event'
             data_key = date_key
             split_data = 'none_event'
-            return_data = change_date_format(data[date_key])
+            return_data = change_temporal_format(data[date_key])
         elif value_key and lang_key:
             data_type = 'lang'
             data_key = value_key
@@ -1236,6 +1258,7 @@ def get_attribute_value_all_items(
                     for lst in klst:
                         key = lst[0].split('.')[-1]
                         val = alst.pop(key, {})
+                        name = get_name(key, False) or ''
                         hide = lst[3].get('hide') or \
                             (non_display_flag and lst[3].get('non_display', False))
 
@@ -1243,6 +1266,9 @@ def get_attribute_value_all_items(
                             hide = hide | hide_email_flag
                         if val and (isinstance(val, str)
                                     or (key == 'nameIdentifier')):
+                            if name in current_app.config[
+                                    'WEKO_RECORDS_TIME_PERIOD_TITLES']:
+                                val = change_temporal_format(val)
                             if not hide:
                                 temp.append({key: val})
                         elif isinstance(val, list) and len(
