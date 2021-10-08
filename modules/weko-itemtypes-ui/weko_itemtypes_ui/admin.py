@@ -25,6 +25,7 @@ import io
 
 from flask import abort, current_app, flash, json, jsonify, redirect, \
     request, session, url_for, make_response, send_file
+from sqlalchemy.sql.expression import null
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
@@ -320,6 +321,15 @@ class ItemTypeMetaDataView(BaseView):
     @expose('/<int:item_type_id>/export', methods=['GET'])
     def export(self,item_type_id):
         item_types = ItemTypes.get_by_id(id_=item_type_id)
+
+        # 存在しないアイテムタイプ、削除済みアイテムタイプ、ハーベスト用アイテムタイプの場合はエクスポート不可。エラー画面を表示する。
+        if item_types is None or item_types.harvesting_type is True :
+            current_app.logger.error('item_type_id={} is cannot export.'.format(item_type_id))
+            return self.render(
+                    current_app.config['WEKO_ITEMTYPE'
+                                       'S_UI_ADMIN_ERROR_TEMPLATE']
+                )
+
         item_type_properties = ItemTypeProps.get_records([])
         item_type_names = ItemTypeNames.get_record(id_=item_types.name_id)
         item_type_mappings = Mapping.get_record(item_type_id)
@@ -329,10 +339,14 @@ class ItemTypeMetaDataView(BaseView):
             new_zip.writestr("ItemType.json", ItemTypeSchema().dumps(item_types).data.encode().decode('unicode-escape').encode())
             new_zip.writestr("ItemTypeName.json", ItemTypeNameSchema().dumps(item_type_names).data.encode().decode('unicode-escape').encode())
             new_zip.writestr("ItemTypeMapping.json", ItemTypeMappingSchema().dumps(item_type_mappings.model).data.encode().decode('unicode-escape').encode())
-            props = []
+            json_str = ""
             for item_type_property in item_type_properties :
-                props.append(ItemTypePropertySchema().dumps(item_type_property).data.encode().decode('unicode-escape').encode())
-            new_zip.writestr("ItemTypeProperty.json", json.dumps(props).encode().decode('unicode-escape').encode())
+                prop_str = ItemTypePropertySchema().dumps(item_type_property).data
+                if len(json_str) > 0:
+                    json_str += ","
+                json_str += prop_str
+            json_str = "[" + json_str + "]"
+            new_zip.writestr("ItemTypeProperty.json", json_str.encode().decode('unicode-escape').encode())
         fp.seek(0)
         return send_file(
             fp ,
@@ -340,6 +354,102 @@ class ItemTypeMetaDataView(BaseView):
             attachment_filename ='ItemType_export.zip' ,
             as_attachment = True
         )
+    
+    @expose('/import', methods=['POST'])
+    @item_type_permission.require(http_exception=403)
+    def item_type_import(self):
+        """Import item type."""
+        item_type_id = 0
+
+        # Get request data
+        item_type_name = request.form['item_type_name']
+        input_file = request.files['file']
+        if len(item_type_name) == 0:
+            return jsonify(msg=_('No item type name Error'))
+        if input_file is None:
+            return jsonify(msg=_('No file Error'))
+        if input_file.mimetype is None:
+            current_app.logger.debug(input_file.mimetype)
+            return jsonify(msg=_('Illegal mimetype Error'))
+        
+        try:
+            readable_files = ["ItemType.json", "ItemTypeName.json", "ItemTypeMapping.json", "ItemTypeProperty.json"]
+            import_data = {
+                "ItemType":null,
+                "ItemTypeName":null,
+                "ItemTypeMapping":null,
+                "ItemTypeProperty":null,
+            }
+            with ZipFile(input_file, 'r') as import_zip:
+                # Check JSON files in ZipFile
+                current_app.logger.debug("Unzip requested file...")
+                for file_name in import_zip.namelist():
+                    current_app.logger.debug("Read file:" + file_name)
+                    if file_name not in readable_files:
+                        current_app.logger.debug(file_name + " is ignored.")
+                    else:
+                        with import_zip.open(file_name, 'r') as json_file:
+                            json_obj = json.load(json_file)
+                            if file_name == "ItemType.json":
+                                import_data["ItemType"] = json_obj
+                                print(file_name)
+                                #print(json_obj)
+                            elif file_name == "ItemTypeName.json":
+                                import_data["ItemTypeName"] = json_obj
+                                print(file_name)
+                                #print(json_obj)
+                            elif file_name == "ItemTypeMapping.json":
+                                import_data["ItemTypeMapping"] = json_obj
+                                print(file_name)
+                                #print(json_obj)
+                            elif file_name == "ItemTypeProperty.json":
+                                import_data["ItemTypeProperty"] = json_obj
+                                print(file_name)
+                                #print(json_obj)
+            
+            # ZIPファイル内に規定のアイテムタイプデータが無ければエラー
+            if import_data["ItemType"] is null or import_data["ItemTypeName"] is null or import_data["ItemTypeMapping"] is null or import_data["ItemTypeProperty"] is null :
+                raise ValueError('Zip file contents invalid.')
+            
+            
+            json_schema = fix_json_schema(import_data["ItemType"].get('schema'))
+            json_form = import_data["ItemType"].get('form')
+            json_schema = update_required_schema_not_exist_in_form(
+                json_schema, json_form)
+            
+            if not json_schema:
+                raise ValueError('Schema is in wrong format.')
+
+            record = ItemTypes.update(id_=0,
+                                      name=item_type_name,
+                                      schema=json_schema,
+                                      form=json_form,
+                                      render=import_data["ItemType"].get('render'))
+            upgrade_version = current_app.config[
+                'WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'
+            ]
+            item_type_id=record.model.id
+            Mapping.create(item_type_id=item_type_id,
+                               mapping=import_data["ItemTypeMapping"].get('mapping'))
+
+            ItemTypeEditHistory.create_or_update(
+                item_type_id=item_type_id,
+                user_id=current_user.get_id(),
+                notes={}
+            )
+
+            db.session.commit()
+        except Exception as ex:
+            db.session.rollback()
+            default_msg = _('Failed to import Item type.')
+            response = jsonify(msg='{} {}'.format(default_msg, str(ex)))
+            response.status_code = 400
+            return response
+        current_app.logger.debug('itemtype import: {}'.format(item_type_id))
+        flash(_('Successfuly import Item type.'))
+        redirect_url = url_for('.index', item_type_id=item_type_id)
+        return jsonify(msg=_('Successfuly import Item type.'),
+                       redirect_url=redirect_url)
 
 class ItemTypeSchema(SQLAlchemyAutoSchema):
     class Meta:

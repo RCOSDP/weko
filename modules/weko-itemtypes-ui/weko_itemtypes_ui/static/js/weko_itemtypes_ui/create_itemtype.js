@@ -128,11 +128,37 @@ $(document).ready(function () {
     window.location.href = '/admin/itemtypes/' + $('#item-type-lists').val();
   });
 
+  //For export
+  if ($("#item-type-lists option:selected").hasClass('normal_type')) {
+    $('#item_type_export').prop('disabled',false);
+  }
+  $('#item_type_export').on('click', function(){
+    let item_type_id = $('#item-type-lists').val();
+    document.location.href = '/admin/itemtypes/'+ item_type_id + '/export';
+  });
+  //For import
+  $('#item_type_import').on('click', function(){
+    $('#importUI').toggleClass('hide');
+  });
+  $('#import_exec_btn').on('click', function(){
+    if($('#import_file').prop("files").length != 1){
+      alert("Please select Zipfile.");
+      return;
+    }
+    if($('#itemtype_name_import').val().length < 1){
+      alert("Please input Type Name.");
+      return;
+    }
+    let fd = new FormData();
+    fd.append("item_type_name", $('#itemtype_name_import').val());
+    fd.append("file", $('#import_file').prop("files")[0])
+    send_file("/admin/itemtypes/import", fd);
+  });
+
   $('input[type=radio][name=item_type]').on ('change', function(){
       if (this.value === 'normal') {
           $('option.normal_type').show()
           $('option.harvesting_type').hide()
-          enable_export();
           disabled_deleted_type();
       } else if (this.value === 'harvesting') {
           $('option.normal_type').hide()
@@ -1957,22 +1983,36 @@ $(document).ready(function () {
     }
   }
 
-});
+  function send_file(url, data){
+    $.ajax({
+      method: 'POST',
+      url: url,
+      async: true,
+      contentType: false,
+      dataType: 'json',
+      processData: false,
+      data: data,
+      success: function(data,textStatus) {
+        if('redirect_url' in data){
+          window.location.href = data.redirect_url
+        }
+        else {
+          $('.modal-body').text(data.msg);
+          $('#myModal').modal('show');
+        }
+      },
+      error: function(textStatus,errorThrown){
+        let message;
+        if (textStatus.status === 400) {
+          let response = JSON.parse(textStatus.responseText);
+          message = response.msg;
+        } else {
+          message = JSON.stringify(textStatus);
+        }
+        $('.modal-body').text('Error: ' + message);
+        $('#myModal').modal('show');
+      }
+    });
+  }
 
-//impot
-$('#item_type_import').on('click', function(){
-  console.log('item_type_import test');
-  $('#importUI').toggleClass('hide');
 });
-
-//export
-$('#item_type_export').on('click', function(){
-  let item_type_id = $('#item-type-lists').val();
-  document.location.href = '/admin/itemtypes/'+ item_type_id + '/export' ;
-});
-
-function enable_export(){
-if ($("#item-type-lists option:selected").hasClass('normal_type')) {
-    $('#item_type_export').prop('disabled',false);
- }
-}
