@@ -62,8 +62,7 @@ from weko_records_ui.models import FilePermission
 from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
     get_workflows
 from weko_search_ui.utils import check_import_items, import_items_to_system
-from weko_user_profiles.config import \
-    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 
 from .api import Action, Flow, GetCommunity, WorkActivity, \
