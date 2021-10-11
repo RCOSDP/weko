@@ -709,3 +709,15 @@ msgstr ""
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:50
 msgid "Go to"
 msgstr "Go to"
+
+msgid "The following item(s) cannot be deleted."
+msgstr ""
+
+msgid "DOI granting item(s):"
+msgstr ""
+
+msgid "Editing item(s):"
+msgstr ""
+
+msgid "DOI granting item(s) are including in the deletion items.<br/>DOI granting item(s) cannot be deleted without withdrawing the DOI.<br/>Do you want to continue deleting items that are not grant DOI?"
+msgstr ""
