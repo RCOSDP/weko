@@ -546,3 +546,7 @@ WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 3
 """Template for the Admin Bulk Export page."""
 
 WEKO_SEARCH_UI_IMPORT_TMP_PREFIX = 'weko_import_'
+"""Import tmp prefix."""
+
+WEKO_SEARCH_UI_IMPORT_UNUSE_FILES_URI = 'import_unuse_files_uri_{}'
+"""Cache key unuse file. uri."""
