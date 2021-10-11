@@ -82,3 +82,6 @@ WEKO_RECORDS_ALTERNATIVE_NAME_KEYS = ['creatorAlternative',
 
 WEKO_RECORDS_AFFILIATION_NAME_KEYS = ['affiliationName', 'affiliationNameLang']
 """List affiliation name key."""
+
+WEKO_RECORDS_SYSTEM_COMMA = "-,-"
+"""The system comma used to break metadata subitems."""
