@@ -1,4 +1,4 @@
-Subject: 利用報告の登録のお願い／Request for register Data Usage Report
+Subject：利用報告の登録のお願い／Request for register Data Usage Report
 
 [restricted_site_name_ja]です。
 下記で申請いただいデータについてダウンロードされたことを確認しました。

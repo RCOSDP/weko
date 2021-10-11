@@ -1,4 +1,4 @@
-Subject：　利用申請の審査結果について／The results of the review of your application
+Subject：利用申請の審査結果について／The results of the review of your application
 
 [restricted_site_name_ja]です。
 
