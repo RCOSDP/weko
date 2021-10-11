@@ -131,8 +131,7 @@ def get_tree_json(index_list, root_id):
         return session.get(key, [])
 
     def generate_index_dict(index_element, is_root):
-        """Formats an index_element, which is a tuple, into a \
-        nicely formatted dictionary."""
+        """Formats an index_element, which is a tuple, into a nicely formatted dictionary."""
         index_dict = index_element._asdict()
         index_name = str(index_element.name).replace("&EMPTY&", "")
         index_name = Markup.escape(index_name)
