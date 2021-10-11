@@ -31,11 +31,9 @@ from flask import Markup, current_app, session
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_cache import current_cache
-from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_search import RecordsSearch
 from simplekv.memory.redisstore import RedisStore
-from sqlalchemy import MetaData, Table
 from weko_admin.utils import is_exists_key_in_redis
 from weko_groups.models import Group
 
@@ -530,16 +528,17 @@ def count_items(indexes_aggr):
         [type]: [description]
 
     """
-    pub_items_count = 0
-    pri_items_count = 0
+    pub_items = 0
+    pri_items = 0
 
     for agg in indexes_aggr:
         if agg.get('public_state'):
-            pub_items_count += agg['doc_count']
+            pub_items += agg['doc_count'] - agg['no_available']
+            pri_items += agg['no_available']
         else:
-            pri_items_count += agg['doc_count']
+            pri_items += agg['doc_count']
 
-    return pri_items_count, pub_items_count
+    return pri_items, pub_items
 
 
 def recorrect_private_items_count(agp):
