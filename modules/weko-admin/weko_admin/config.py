@@ -655,6 +655,8 @@ WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
 
 WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'authors',
+    'authors/export',
+    'authors/import',
     'flowsetting',
     'identify',
     'items/bulk/delete',
@@ -691,6 +693,8 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'longanalysissetting',
     'site_info',
     'location',
+    'facet-search',
+    'restricted_access'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
 
