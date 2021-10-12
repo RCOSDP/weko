@@ -429,6 +429,7 @@ def find_items(form):
                 'show_list': node.get('isShowList', False),
                 'specify_newline': node.get('isSpecifyNewline', False),
                 'hide': node.get('isHide', False),
+                'non_display': node.get('isNonDisplay', False)
             }
             val = ''
             if key:
@@ -738,8 +739,11 @@ async def sort_meta_data_by_options(
                                        )
             elif not (bibliographic_key and bibliographic_key in s['key']) and \
                     value and value not in _ignore_items and \
-                    not is_hide and is_show_list and s['key'] \
-                    and s['title'] != 'Title':
+                    ((not is_hide and is_show_list) or \
+                     s['title'] in current_app.config[
+                         'WEKO_RECORDS_LANGUAGE_TITLES']) and s['key'] \
+                    and s['title'] != current_app.config[
+                        'WEKO_RECORDS_TITLE_TITLE']:
                 data_result, stt_key = get_value_and_lang_by_key(
                     s['key'], solst_dict_array, data_result, stt_key)
                 is_specify_newline_array.append(
@@ -1051,21 +1055,141 @@ def check_has_attribute_value(node):
 
 
 def get_attribute_value_all_items(
-        root_key, nlst, klst, is_author=False, hide_email_flag=True):
+        root_key, nlst, klst, is_author=False, hide_email_flag=True,
+        non_display_flag=False, one_line_flag=False):
     """Convert and sort item list.
 
     :param root_key:
     :param nlst:
     :param klst:
     :param is_author:
+    :param hide_email_flag:
+    :param non_display_flag:
+    :param one_line_flag:
     :return: alst
     """
-    def get_name(key):
+    name_mapping = {}
+    def get_name_mapping():
+        """Create key & title mapping."""
         for lst in klst:
             keys = lst[0].replace("[]", "").split('.')
-            if keys[0].startswith(root_key) and key == keys[-1]:
-                return lst[2] if not is_author else '{}.{}'.format(
-                    key, lst[2])
+            if keys[0].startswith(root_key):
+                key = keys[-1]
+                name = lst[2] if not is_author \
+                    else '{}.{}'.format(key, lst[2])
+                name_mapping[key] = {
+                    'multi_lang': name,
+                    'item_name': lst[1],
+                    'non_display': lst[3].get('non_display', False)}
+
+    def get_name(key, multi_lang_flag=True):
+        """Get multi-lang title."""
+        if key in name_mapping:
+            name = name_mapping[key]['multi_lang'] \
+                if multi_lang_flag else name_mapping[key]['item_name']
+            return name
+        else:
+            return ''
+    
+    def change_temporal_format(value):
+        """Change temporal format."""
+        if '/' in value:
+            result = []
+            temp = value.split('/')
+            for v in temp:
+                r = change_date_format(v)
+                if r:
+                    result.append(r)
+                else:
+                    result = []
+                    break
+            if result:
+                return str.join(' - ', result)
+            else:
+                return value
+        else:
+            result = change_date_format(value)
+            return result if result else value
+
+    def change_date_format(value):
+        """Change date format from yyyy-MM-dd to yyyy/MM/dd."""
+        result = None
+        y_re = re.compile(r'^\d{4}$')
+        ym_re = re.compile(r'^\d{4}-(0[1-9]|1[0-2])$')
+        ymd_re = re.compile(
+            r'^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$')
+        if y_re.match(value) or ym_re.match(value) or ymd_re.match(value):
+            result = value.replace('-', '/')
+        return result
+
+    def get_value(data):
+        """Get value for display one line flag."""
+        temp_data = data.copy()
+        lang_key = None
+        value_key = None
+        event_key = None
+        date_key = None
+        non_display_list = []
+        key_list = list(data.keys())
+        for k in key_list:
+            item_name = ''
+            flag = False
+            if k in name_mapping:
+                item_name = name_mapping[k]['item_name']
+                flag = name_mapping[k]['non_display']
+            if item_name in current_app.config[
+                    'WEKO_RECORDS_LANGUAGE_TITLES']:
+                lang_key = k
+            elif item_name in current_app.config[
+                    'WEKO_RECORDS_EVENT_TITLES']:
+                event_key = k
+            elif not flag and item_name in \
+                    current_app.config[
+                        'WEKO_RECORDS_TIME_PERIOD_TITLES']:
+                date_key = k
+            elif not flag:
+                if value_key:
+                    value_key = None
+                    break
+                value_key = k
+            if flag:
+                non_display_list.append(k)
+                temp_data.pop(k)
+
+        data_type = None
+        data_key = None
+        split_data = 'none'
+        return_data = ''
+        if date_key and event_key:
+            data_type = 'event'
+            data_key = date_key
+            split_data = data[event_key]
+            date_value = change_temporal_format(data[date_key])
+            if event_key in non_display_list:
+                return_data = date_value
+            else:
+                return_data = '{}({})'.format(date_value, data[event_key])
+        elif date_key and \
+                (len(list(temp_data.keys())) == 1 or lang_key):
+            data_type = 'event'
+            data_key = date_key
+            split_data = 'none_event'
+            return_data = change_temporal_format(data[date_key])
+        elif value_key and lang_key:
+            data_type = 'lang'
+            data_key = value_key
+            split_data = data[lang_key]
+            if lang_key in non_display_list:
+                return_data = data[value_key]
+            else:
+                return_data = '{}({})'.format(data[value_key], data[lang_key])
+        elif value_key and len(list(temp_data.keys())) == 1:
+            data_type = 'lang'
+            data_key = value_key
+            split_data = 'none_lang'
+            return_data = data[value_key]
+
+        return data_type, data_key, split_data, return_data
 
     def to_sort_dict(alst, klst):
         """Sort item list.
@@ -1076,6 +1200,60 @@ def get_attribute_value_all_items(
         if isinstance(klst, list):
             result = []
             try:
+                if one_line_flag:
+                    if isinstance(alst, list):
+                        data_split = {}
+                        value_key = None
+                        data_type = None
+                        for a in alst:
+                            t, k, l, v = get_value(a)
+                            if t == 'lang':
+                                if l in data_split:
+                                    temp = data_split[l]
+                                else:
+                                    temp = []
+                                    data_split[l] = temp
+                                data_type = t
+                                value_key = k
+                                temp.append(v)
+                            elif t == 'event':
+                                if 'data' not in data_split:
+                                    temp = []
+                                    data_split['data'] = temp
+                                else:
+                                    temp = data_split['data']
+                                if l == 'start':
+                                    if 'start' in data_split:
+                                        temp.append(data_split.pop('start'))
+                                    data_split['start'] = v
+                                elif l == 'end':
+                                    if 'start' in data_split:
+                                        v = '{} - {}'.format(data_split.pop('start'), v)
+                                    temp.append(v)
+                                else:
+                                    if 'start' in data_split:
+                                        temp.append(data_split.pop('start'))
+                                    temp.append(v)
+                                data_type = t
+                                value_key = k
+                            else:
+                                data_type = None
+                                result = []
+                                break
+                        if data_type == 'lang':
+                            for k, v in data_split.items():
+                                data_split[k] = str.join(', ', v)
+                            result.append([{value_key: str.join('\n', list(data_split.values()))}])
+                        elif data_type == 'event':
+                            if 'start' in data_split:
+                                data_split['data'].append(data_split.pop('start'))
+                            result.append([{value_key: str.join(', ', data_split['data'])}])
+                    elif isinstance(alst, dict):
+                        data_type, value_key, l, v = get_value(alst)
+                        if data_type is not None and value_key:
+                            result.append([{value_key: v}])
+                    if result:
+                        return result
                 if isinstance(alst, list):
                     for a in alst:
                         result.append(to_sort_dict(a, klst))
@@ -1084,11 +1262,17 @@ def get_attribute_value_all_items(
                     for lst in klst:
                         key = lst[0].split('.')[-1]
                         val = alst.pop(key, {})
-                        hide = lst[3].get('hide')
+                        name = get_name(key, False) or ''
+                        hide = lst[3].get('hide') or \
+                            (non_display_flag and lst[3].get('non_display', False))
+
                         if key in ('creatorMail', 'contributorMail', 'mail'):
                             hide = hide | hide_email_flag
                         if val and (isinstance(val, str)
                                     or (key == 'nameIdentifier')):
+                            if name in current_app.config[
+                                    'WEKO_RECORDS_TIME_PERIOD_TITLES']:
+                                val = change_temporal_format(val)
                             if not hide:
                                 temp.append({key: val})
                         elif isinstance(val, list) and len(
@@ -1137,6 +1321,7 @@ def get_attribute_value_all_items(
             current_app.logger.error('Function set_node error: ', e)
             return _list
 
+    get_name_mapping()
     orderdict = to_sort_dict(nlst, klst)
     alst = set_attribute_value(orderdict)
 
@@ -1280,23 +1465,31 @@ def selected_value_by_language(lang_array, value_array, lang_id, val_id,
                                                _item_metadata)
                 if value is not None:
                     return value
-            if "en" in lang_array:  # English
-                if lang_selected == 'ja':
-                    return None
+            if "ja-Latn" in lang_array:  # ja_Latn
+                value = check_info_in_metadata(lang_id, val_id, "ja-Latn",
+                                               _item_metadata)
+                if value is not None:
+                    return value
+            if "en" in lang_array and lang_selected != 'ja':  # English
                 value = check_info_in_metadata(lang_id, val_id, "en",
                                                _item_metadata)
                 if value is not None:
                     return value
             # 1st language when registering items
             if len(lang_array) > 0:
-                if lang_selected == 'en':
-                    return None
+                noreturn = False
                 for idx, lg in enumerate(lang_array):
+                    if (lg == 'ja' and lang_selected == 'en') or \
+                            (lg == 'en' and lang_selected == 'ja'):
+                        noreturn = True
+                        break
                     if len(lg) > 0:
                         value = check_info_in_metadata(lang_id, val_id, lg,
                                                        _item_metadata)
                         if value is not None:
                             return value
+                if noreturn:
+                    return None
             # 1st value when registering without language
             if len(value_array) > 0:
                 return value_array[0]
@@ -1398,6 +1591,8 @@ def result_rule_create_show_list(source_title, current_lang):
     @param current_lang:
     @return:
     """
+    value_en = None
+    value_latn = None
     title_data_langs = []
     title_data_langs_none = []
     for key, value in source_title.items():
@@ -1407,28 +1602,34 @@ def result_rule_create_show_list(source_title, current_lang):
         elif current_lang == key:
             return value
         else:
-            if key == 'None Language':
-                title[key] = value
+            title[key] = value
+            if key == 'en':
+                value_en = value
+            elif key == 'ja-Latn':
+                value_latn = value
+            elif key == 'None Language':
                 title_data_langs_none.append(title)
             elif key:
-                title[key] = value
                 title_data_langs.append(title)
 
-    for title_data_lang in title_data_langs:
-        if title_data_lang.get('en'):
-            if current_lang == 'ja':
-                return None
-            else:
-                return title_data_lang.get('en')
+    if value_latn:
+        return value_latn
+
+    if value_en and current_lang != 'ja':
+        return value_en
 
     if len(title_data_langs) > 0:
         if current_lang == 'en':
-            return None
+            for t in title_data_langs:
+                if list(t)[0] != 'ja':
+                    return list(t.values())[0]
         else:
             return list(title_data_langs[0].values())[0]
 
     if len(title_data_langs_none) > 0:
         return list(title_data_langs_none[0].values())[0]
+    else:
+        return None
 
 
 def get_show_list_author(solst_dict_array, hide_email_flag, author_key,
