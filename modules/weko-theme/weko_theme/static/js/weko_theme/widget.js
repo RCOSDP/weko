@@ -53,7 +53,7 @@ const PageBodyGrid = function () {
     }.bind(this);
 
     this.resizeWidget = function (widget, width, height) {
-      this.grid.resize(widget, width, height);
+       this.grid.resize(widget, width, height);
     };
 
     this.getCellHeight = function () {
@@ -726,12 +726,19 @@ function autoAdjustWidgetHeight(widgetElement, pageBodyGrid, otherElement) {
         if (currentClientHeight > scrollHeight) {
           let height = DEFAULT_WIDGET_HEIGHT > widgetHeight - 1 ? DEFAULT_WIDGET_HEIGHT : widgetHeight - 1;
           pageBodyGrid.resizeWidget(parent, width, height);
+          //pageBodyGrid.resizeWidget(parent, width, height);
+          console.log("currentClientHeight: "+ currentClientHeight);
+          console.log("scrollHeight: "+ scrollHeight);
+
+
         } else {
           let height = DEFAULT_WIDGET_HEIGHT > widgetHeight ? DEFAULT_WIDGET_HEIGHT : widgetHeight;
           pageBodyGrid.resizeWidget(parent, width, height);
         }
+
       } else {
         pageBodyGrid.resizeWidget(parent, width, newHeight - 10);
+
         otherElement.data("isUpdated", true);
       }
       let widgetId = otherElement.attr('id');
@@ -756,6 +763,8 @@ function autoAdjustWidgetHeight(widgetElement, pageBodyGrid, otherElement) {
         pageBodyGrid.resizeWidget(widgetElement, width, newHeight);
       } else if (newHeight === currentHeight) {
         pageBodyGrid.resizeWidget(widgetElement, width, newHeight + 1);
+      } else {
+        pageBodyGrid.resizeWidget(widgetElement, width, newHeight);
       }
     }
   }
@@ -913,6 +922,8 @@ function resizeImage() {
           widgetBodyGrid.resizeWidget(currentWidget, currentWidth, newHeight);
         } else if (newHeight === currentHeight) {
           widgetBodyGrid.resizeWidget(currentWidget, currentWidth, newHeight + 1);
+        }else{
+          widgetBodyGrid.resizeWidget(currentWidget, currentWidth, newHeight);
         }
       }
     }
