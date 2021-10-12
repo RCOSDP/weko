@@ -196,17 +196,51 @@ class WekoIndexer(RecordIndexer):
             body=body
         )
 
-    def update_path(self, record, update_revision=True):
-        """Update path."""
+    def update_path(self, record, update_revision=True,
+                    update_oai=False, is_deleted=False):
+        """Update path.
+
+        Args:
+            record ([type]): [description]
+            update_revision (bool, optional): [description]. Defaults to True.
+            update_oai (bool, optional): [description]. Defaults to False.
+            is_deleted (bool, optional): [description]. Defaults to False.
+
+        Returns:
+            [type]: [description]
+
+        """
         self.get_es_index()
         path = 'path'
-        body = {
-            'doc': {
-                path: record.get(path),
-                '_updated': datetime.utcnow().replace(
-                    tzinfo=timezone.utc).isoformat()
+        _oai = '_oai'
+        sets = 'sets'
+        body = {}
+        if not update_oai:
+            body = {
+                'doc': {
+                    path: record.get(path),
+                    '_updated': datetime.utcnow().replace(
+                        tzinfo=timezone.utc).isoformat()
+                }
             }
-        }
+        else:
+            body = {
+                'doc': {
+                    _oai: {
+                        sets: record.get(_oai, {}).get(sets, []),
+                    } if record.get(_oai) else {},
+                    '_item_metadata': {
+                        _oai: {
+                            sets: record.get(_oai, {}).get(sets, []),
+                        } if record.get(_oai) else {},
+                        path: record.get(path)
+                    },
+                    path: record.get(path) if not is_deleted else [],
+                    '_updated': datetime.utcnow().replace(
+                        tzinfo=timezone.utc).isoformat()
+                }
+            }
+
         if update_revision:
             return self.client.update(
                 index=self.es_index,
@@ -620,7 +654,12 @@ class WekoDeposit(Deposit):
         depid = PersistentIdentifier.get('depid', record_id)
         PIDVersioning(parent=parent_pid).insert_draft_child(child=recid)
         RecordDraft.link(recid, depid)
-
+        # Update this object_uuid for item_id of activity.
+        if session and 'activity_info' in session:
+            activity = session['activity_info']
+            from weko_workflow.api import WorkActivity
+            workactivity = WorkActivity()
+            workactivity.upt_activity_item(activity, str(recid.object_uuid))
         return deposit
 
     @preserve(result=False, fields=PRESERVE_FIELDS)
@@ -714,9 +753,7 @@ class WekoDeposit(Deposit):
                 if 'path' in self.jrc and '_oai' in self.jrc \
                         and ('sets' not in self.jrc['_oai']
                              or not self.jrc['_oai']['sets']):
-                    setspec_list = []
-                    for i in self.jrc['path']:
-                        setspec_list.append(i.replace('/', ':'))
+                    setspec_list = self.jrc['path'] or []
                     if setspec_list:
                         self.jrc['_oai'].update(dict(sets=setspec_list))
                 # upload item metadata to Elasticsearch
@@ -874,13 +911,13 @@ class WekoDeposit(Deposit):
                                     'WEKO_MAX_FILE_SIZE_FOR_ES']
                                 mimetypes = current_app.config[
                                     'WEKO_MIMETYPE_WHITELIST_FOR_ES']
+                                content = lst.copy()
+                                file_content = ""
                                 if file.obj.file.size <= file_size_max and \
                                         file.obj.mimetype in mimetypes:
-
-                                    content = lst.copy()
-                                    content.update(
-                                        {"file": file.obj.file.read_file(lst)})
-                                    contents.append(content)
+                                    file_content = file.obj.file.read_file(lst)
+                                content.update({"file": file_content})
+                                contents.append(content)
 
                             except Exception as e:
                                 import traceback
@@ -986,11 +1023,7 @@ class WekoDeposit(Deposit):
             raise PIDResolveRESTError(
                 description='Any tree index has been deleted')
 
-        index_lst.clear()
-        for lst in plst:
-            index_lst.append(lst.path)
-
-        # convert item meta data
+        # Convert item meta data
         try:
             deposit_owners = self.get('_deposit', {}).get('owners')
             owner_id = str(deposit_owners[0] if deposit_owners else 1)
@@ -1001,7 +1034,7 @@ class WekoDeposit(Deposit):
             self.data = data
             self.jrc = jrc
             self.is_edit = is_edit
-            self._convert_description_to_object()
+            self._convert_jpcoar_data_to_es()
         except RuntimeError:
             raise
         except BaseException:
@@ -1017,8 +1050,6 @@ class WekoDeposit(Deposit):
         for pth in index_lst:
             # es setting
             sub_sort[pth[-13:]] = ""
-        #        jrc.update(dict(custom_sort=sub_sort))
-        #        dc.update(dict(custom_sort=sub_sort))
         dc.update(dict(path=index_lst))
         pubs = '1'
         actions = index_obj.get('actions')
@@ -1050,22 +1081,81 @@ class WekoDeposit(Deposit):
             if _new_description:
                 self.jrc[description_key] = _new_description
 
+    def _convert_jpcoar_data_to_es(self):
+        """Convert data jpcoar to es."""
+        # Convert description to object.
+        self._convert_description_to_object()
+
+        # Convert data for geo location.
+        self._convert_data_for_geo_location()
+
+    def _convert_data_for_geo_location(self):
+        """Convert geo location to object."""
+        def _convert_geo_location(value):
+            _point = []
+            if isinstance(value.get("pointLongitude"), list) and isinstance(
+                    value.get("pointLatitude"), list):
+                lat_len = len(value.get("pointLatitude"))
+                for _idx, _value in enumerate(value.get("pointLongitude")):
+                    _point.append({
+                        "lat": value.get("pointLatitude")[
+                            _idx] if _idx < lat_len else "",
+                        "lon": _value
+                    })
+            return _point
+
+        def _convert_geo_location_box():
+            point_box = {}
+            jpcoar_north_east_point = {
+                "pointLatitude": v.get("northBoundLatitude"),
+                "pointLongitude": v.get("eastBoundLongitude"),
+            }
+            jpcoar_south_west_point = {
+                "pointLatitude": v.get("southBoundLatitude"),
+                "pointLongitude": v.get("westBoundLongitude"),
+            }
+            es_north_east_point = _convert_geo_location(
+                jpcoar_north_east_point)
+            es_south_west_point = _convert_geo_location(
+                jpcoar_south_west_point)
+            if es_north_east_point:
+                point_box['northEastPoint'] = es_north_east_point
+            if es_south_west_point:
+                point_box['southWestPoint'] = es_south_west_point
+            return point_box
+
+        geo_location_key = "geoLocation"
+        if isinstance(self.jrc, dict) and self.jrc.get(geo_location_key):
+            geo_location = self.jrc.get(geo_location_key)
+            new_data = {}
+            for k, v in geo_location.items():
+                if "geoLocationPlace" == k:
+                    new_data[k] = v
+                elif "geoLocationPoint" == k:
+                    point = _convert_geo_location(v)
+                    if point:
+                        new_data[k] = point
+                elif "geoLocationBox" == k:
+                    point = _convert_geo_location_box()
+                    if point:
+                        new_data[k] = point
+            if new_data:
+                self.jrc[geo_location_key] = new_data
+
     @classmethod
-    def delete_by_index_tree_id(cls, path):
+    def delete_by_index_tree_id(cls, index_id: str):
         """Delete by index tree id."""
-        # first update target pid when index tree id was deleted
-        # if cls.update_pid_by_index_tree_id(cls, path):
-        #    from .tasks import delete_items_by_id
-        #    delete_items_by_id.delay(path)
-        obj_ids = next((cls.indexer.get_pid_by_es_scroll(path)), [])
+        if index_id:
+            index_id = str(index_id)
+        obj_ids = next((cls.indexer.get_pid_by_es_scroll(index_id)), [])
         try:
             for obj_uuid in obj_ids:
                 r = RecordMetadata.query.filter_by(id=obj_uuid).first()
                 try:
-                    r.json['path'].remove(path)
+                    r.json['path'].remove(index_id)
                     flag_modified(r, 'json')
-                except BaseException:
-                    pass
+                except BaseException as bex:
+                    current_app.logger.error(bex)
                 if r.json and not r.json['path']:
                     from weko_records_ui.utils import soft_delete
                     soft_delete(obj_uuid)
@@ -1074,15 +1164,9 @@ class WekoDeposit(Deposit):
                     dep.indexer.update_path(dep, update_revision=False)
             db.session.commit()
         except Exception as ex:
+            current_app.logger.error(ex)
             db.session.rollback()
             raise ex
-
-    @classmethod
-    def update_by_index_tree_id(cls, path, target):
-        """Update by index tree id."""
-        # update item path only
-        from .tasks import update_items_by_id
-        update_items_by_id.delay(path, target)
 
     def update_pid_by_index_tree_id(self, path):
         """Update pid by index tree id.
@@ -1375,8 +1459,9 @@ class WekoRecord(Record):
                     'attribute_name')
 
                 if meta_list.get(key, {}).get('input_type') == 'text':
-                    val['attribute_value'] = val[
-                        'attribute_value'].replace("\n", " ")
+                    if 'attribute_value' in val:
+                        val['attribute_value'] = val['attribute_value'].replace(
+                            "\n", " ")
                 items.append(val)
 
         return items
@@ -1557,8 +1642,8 @@ class WekoRecord(Record):
         today = datetime.now().date()
         # Get 'open_date' and convert to datetime.date.
         date_value = self.get_open_date_value(file_metadata)
-        format = '%Y-%m-%d'
-        dt = datetime.strptime(date_value, format)
+        _format = '%Y-%m-%d'
+        dt = datetime.strptime(date_value, _format)
         # Compare open_date with current date.
         is_future = dt.date() > today
         return is_future
@@ -1595,22 +1680,18 @@ class WekoRecord(Record):
     def get_record_with_hps(cls, uuid):
         """Get record with hps."""
         record = cls.get_record(id_=uuid)
-        path = record.get('path')
+        indexes = record.get('path')
         harvest_public_state = True
-        if path:
-            harvest_public_state = Indexes.get_harvest_public_state(path)
+        paths = [Indexes.get_full_path(_id) for _id in indexes]
+        if paths:
+            harvest_public_state = Indexes.get_harvest_public_state(paths)
         return harvest_public_state, record
 
     @classmethod
     def get_record_cvs(cls, uuid):
         """Get record cvs."""
         record = cls.get_record(id_=uuid)
-        path = []
-        path.extend(record.get('path'))
-        coverpage_state = False
-        if path:
-            coverpage_state = Indexes.get_coverpage_state(path)
-        return coverpage_state
+        return Indexes.get_coverpage_state(record.get('path'))
 
     def _get_pid(self, pid_type):
         """Return pid_value from persistent identifier."""
@@ -1733,8 +1814,9 @@ class _FormatSysCreator:
             if len(lst_value) > 0:
                 for i in range(len(lst_value)):
                     if lst_value[i] and lst_value[i].get(lang_key) == language:
-                        lst.append(lst_value[i][name_key])
-                        break
+                        if name_key in lst_value[i]:
+                            lst.append(lst_value[i][name_key])
+                            break
 
     def _get_creator_to_show_popup(self, creators: Union[list, dict],
                                    language: any,
@@ -2236,10 +2318,7 @@ class _FormatSysBibliographicInformation:
             if not value:
                 continue
             elif current_lang == key:
-                if current_lang == 'ja':
-                    return value, current_lang
-                else:
-                    return value, 'en'
+                return value, key
             else:
                 if key:
                     title[key] = value
@@ -2248,11 +2327,17 @@ class _FormatSysBibliographicInformation:
                     title_data_none_lang.append(value)
         for title_data in title_data_lang:
             if title_data.get('en'):
-                return title_data.get('en'), 'en'
+                if current_lang == 'ja':
+                    return None, 'ja'
+                else:
+                    return title_data.get('en'), 'en'
 
         if len(title_data_lang) > 0:
-            return list(title_data_lang[0].values())[0], \
-                'en'
+            if current_lang == 'en':
+                return None, 'en'
+            else:
+                return list(title_data_lang[0].values())[0], \
+                    list(title_data_lang[0])[0]
         return (title_data_none_lang[0], 'ja') if len(
             title_data_none_lang) > 0 else (None, 'ja')
 
@@ -2288,9 +2373,9 @@ class _FormatSysBibliographicInformation:
                     'bibliographicIssueDate') and issued_date.get(
                         'bibliographicIssueDateType') == issue_type:
                     date.append(issued_date.get('bibliographicIssueDate'))
-        elif isinstance(issue_date, dict):
-            if issue_date.get('bibliographicIssueDate') \
-                and issue_date.get('bibliographicIssueDateType') \
-                    == issue_type:
-                date.append(issue_date.get('bibliographicIssueDate'))
+        elif isinstance(issue_date, dict) and \
+            (issue_date.get('bibliographicIssueDate')
+             and issue_date.get('bibliographicIssueDateType')
+                == issue_type):
+            date.append(issue_date.get('bibliographicIssueDate'))
         return date

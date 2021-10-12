@@ -34,12 +34,14 @@
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-12 col-left">
       <pre class="hide">{{record|tojson}}</pre>
+
       <div class="panel_bread" id="panel_bread">
         {%- set record_navs = record.navi -%}
         {%- if record_navs -%}
           {%- for nav in record_navs -%}
             <div style="overflow:hidden;">
-<!--
+              {% if display_index_tree or (current_user.is_authenticated and config.WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER) %}
+
               <ol class="breadcrumb" id="body_indexlink"
                 style="display: inline; padding-left: 0.25em; padding-right: 0.25em; background-color: inherit;">
                 {%- set path = nav.path.split('/') -%}
@@ -67,7 +69,7 @@
                   {%- endif -%}
                 {%- endfor -%}
               </ol>
--->
+              {% endif %}
             </div>
           {%- endfor %}
         {%- endif -%}

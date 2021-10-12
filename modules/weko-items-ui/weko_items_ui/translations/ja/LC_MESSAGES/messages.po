@@ -61,6 +61,12 @@ msgstr "エラーが発生しました"
 msgid "PID does not meet the conditions."
 msgstr "PID付与の条件を満たしていません。"
 
+msgid "The mapping of required items for DOI validation is not set. Please recheck the following mapping settings.<br/>{}"
+msgstr "DOIバリデーションにかかる必須項目のマッピングが設定されません。以下のマッピング設定を再確認して下さい。<br/>{}"
+
+msgid "You cannot change the resource type of items that have been grant a DOI."
+msgstr "DOI付与済みアイテムの資源タイプの変更はできません。"
+
 #: weko_items_ui/views.py:1189
 msgid "Since PMID is not subject to DOI registration, please select another type."
 msgstr "PMIDはDOI登録の対象外のため、他のタイプを選択してください。"
@@ -474,3 +480,6 @@ msgstr "自由入力"
 
 msgid "Can not found the email address of approval."
 msgstr "承認者のメールアドレスを検出できません。"
+
+msgid "The item cannot be copied because you do not have permission to view it."
+msgstr "該当アイテムの参照権限がないため流用できません。"

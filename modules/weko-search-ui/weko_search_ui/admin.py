@@ -305,7 +305,11 @@ class ItemImportView(BaseView):
     def import_items(self) -> jsonify:
         """Import item into System."""
         data = request.get_json() or {}
-
+        request_info = {
+            'remote_addr': request.remote_addr,
+            'referrer': request.referrer,
+            'hostname': request.host
+        }
         # terminate remove_temp_dir_task in schedule
         remove_temp_dir_task_id = data.get('remove_temp_dir_task_id')
         if remove_temp_dir_task_id:
@@ -322,7 +326,7 @@ class ItemImportView(BaseView):
                 item['root_path'] = data.get('root_path', '') + '/data'
                 create_flow_define()
                 handle_workflow(item)
-                group_tasks.append(import_item.s(item))
+                group_tasks.append(import_item.s(item, request_info))
 
             # handle import tasks
             import_task = chord(group_tasks)(

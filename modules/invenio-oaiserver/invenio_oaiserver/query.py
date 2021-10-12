@@ -12,7 +12,6 @@ from datetime import datetime
 
 import six
 from elasticsearch_dsl import Q
-from elasticsearch_dsl.query import QueryString
 from flask import current_app
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.models import RecordMetadata
@@ -63,7 +62,7 @@ def get_affected_records(spec=None, search_pattern=None):
     queries = []
 
     if spec is not None:
-        queries.append(Q('match', **{'_oai.sets': spec}))
+        queries.append(Q('match', **{'_oai.sets': spec.split(':')[-1]}))
 
     if search_pattern:
         queries.append(query_string_parser(search_pattern=search_pattern))
@@ -85,7 +84,8 @@ def get_records(**kwargs):
             Index.public_date > datetime.now(),
             Index.harvest_public_state.is_(True)
         )
-        indexes = query.all() or []
+        indexes = []
+        indexes = query.yield_per(1000)
         index_ids = [index.id for index in indexes]
         return index_ids
 
@@ -123,9 +123,10 @@ def get_records(**kwargs):
     size_ = current_app.config['OAISERVER_PAGE_SIZE']
     scroll = current_app.config['OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME']
     scroll_id = kwargs.get('resumptionToken', {}).get('scroll_id')
-    indexes = Indexes.get_harverted_index_list()
 
     if not scroll_id:
+        indexes = Indexes.get_harverted_index_list()
+
         search = OAIServerSearch(
             index=current_app.config['INDEXER_DEFAULT_INDEX'],
         ).params(
@@ -137,6 +138,7 @@ def get_records(**kwargs):
         )[(page_ - 1) * size_:page_ * size_]
 
         if 'set' in kwargs:
+            #search = search.query('match', **{'path': kwargs['set']})
             search = search.query('match', **{'_oai.sets': kwargs['set']})
 
         time_range = {}
@@ -148,31 +150,27 @@ def get_records(**kwargs):
             search = search.filter('range', **{'_updated': time_range})
 
         search = search.query('match', **{'relation_version_is_last': 'true'})
-        query_filter = [
-            # script get deleted items.
-            {"bool": {"must_not": {"exists": {"field": "path"}}}}
-        ]
-
+        query_filter = []
         if indexes:
             indexes_num = len(indexes)
-            max_clause_count = 1024
+            div_indexes = []
+            max_clause_count = current_app.config.get(
+                'OAISERVER_ES_MAX_CLAUSE_COUNT', 1024)
             for div in range(0, int(indexes_num / max_clause_count) + 1):
                 e_right = div * max_clause_count
                 e_left = (div + 1) * max_clause_count \
                     if indexes_num > (div + 1) * max_clause_count \
                     else indexes_num
-                div_indexes = []
-                for index in indexes[e_right:e_left]:
-                    div_indexes.append({
-                        "wildcard": {
-                            "path": str(index)
-                        }
-                    })
-                query_filter.append({
-                    "bool": {
-                        "should": div_indexes
+                div_indexes.append({
+                    "terms": {
+                        "_item_metadata.path.raw": indexes[e_right:e_left]
                     }
                 })
+            query_filter.append({
+                "bool": {
+                    "should": div_indexes
+                }
+            })
 
         search = search.query(
             'bool', **{'must': [{'bool': {'should': query_filter}}]})
@@ -184,24 +182,6 @@ def get_records(**kwargs):
             scroll_id=scroll_id,
             scroll='{0}s'.format(scroll),
         )
-
-    # remove deleted items link to private harvest index.
-    if indexes:
-        filter_data = []
-        for rec in response['hits']['hits']:
-            if not rec['_source'].get('path'):
-                allow_show = False
-                paths = rec['_source']['_item_metadata'].get('path')
-                for path in paths:
-                    if path in indexes:
-                        allow_show = True
-                        break
-                if allow_show:
-                    filter_data.append(rec)
-            else:
-                filter_data.append(rec)
-        response['hits']['total'] = len(filter_data)
-        response['hits']['hits'] = filter_data
 
     class Pagination(object):
         """Dummy pagination class."""

@@ -169,7 +169,7 @@ def agg_bucket_sort(agg_sort, buckets):
     :param buckets: list of dicts to be ordered.
     """
     if agg_sort:
-        order = True if agg_sort['order'] is 'desc' else False
+        order = True if agg_sort['order'] == 'desc' else False
         buckets = sorted(buckets,
                          key=lambda x: x[agg_sort['key_name']],
                          reverse=order)
@@ -813,10 +813,12 @@ class QueryRecordViewReportHelper(object):
                 query_date = start_date + '-' + end_date
             params = {'start_date': start_date,
                       'end_date': end_date + 'T23:59:59'}
+            if not kwargs.get('ranking', False):
+                # Limit size
+                params.update({'agg_size': kwargs.get('agg_size', 0)})
             all_query_cfg = current_stats.queries['get-record-view-report']
             all_query = all_query_cfg.query_class(**all_query_cfg.query_config)
-            # Limit size
-            params.update({'agg_size': kwargs.get('agg_size', 0)})
+
             params.update({'agg_sort': kwargs.get('agg_sort',
                                                   {'value': 'desc'})})
             all_res = all_query.run(**params)
@@ -914,10 +916,16 @@ class QueryItemRegReportHelper(object):
                         total_results = (end_date - start_date).days + 1
                         delta = timedelta(days=1)
                         for i in range(total_results):
-                            if page_index * \
-                                    reports_per_page <= i < (page_index + 1) * reports_per_page:
-                                start_date_string = d.strftime('%Y-%m-%d')
-                                end_date_string = d.strftime('%Y-%m-%d')
+                            if page_index * reports_per_page <= i < (
+                                    page_index + 1) * reports_per_page:
+                                d_start = d.replace(hour=0, minute=0, second=0,
+                                                    microsecond=0)
+                                d_end = d.replace(hour=23, minute=59, second=59,
+                                                  microsecond=9999)
+                                start_date_string = d_start.strftime(
+                                    '%Y-%m-%d %H:%M:%S')
+                                end_date_string = d_end.strftime(
+                                    '%Y-%m-%d %H:%M:%S')
                                 params = {'interval': 'day',
                                           'start_date': start_date_string,
                                           'end_date': end_date_string,
@@ -1066,8 +1074,11 @@ class QueryItemRegReportHelper(object):
                     if end_date is not None:
                         end_date_string = end_date.strftime('%Y-%m-%d')
                         params.update({'end_date': end_date_string})
-                    # Limit size
-                    params.update({'agg_size': kwargs.get('agg_size', 0)})
+                    if not kwargs.get('ranking', False):
+                        # Limit size
+                        params.update({'agg_size': kwargs.get('agg_size', 0)})
+                    else:
+                        params.update({'agg_sort': kwargs.get('agg_sort', {'_count': 'desc'})})
                     res_total = query_total.run(**params)  # pass args
                     i = 0
                     for item in res_total['buckets']:
@@ -1078,10 +1089,11 @@ class QueryItemRegReportHelper(object):
                         # })
                         pid_value = item['key']
                         for h in item['buckets']:
-                            if page_index * \
-                                    reports_per_page <= i < (page_index + 1) * reports_per_page:
-                                record_name = h['key'] if h['key'] != 'None' else ''
-
+                            if kwargs.get('ranking', False) \
+                                or (page_index * reports_per_page <= i < (
+                                    page_index + 1) * reports_per_page):
+                                record_name = h['key'] if h['key'] != 'None'\
+                                    else ''
                                 # TODO: Set appropriate column names
                                 result.append({
                                     'col1': pid_value,
@@ -1091,7 +1103,8 @@ class QueryItemRegReportHelper(object):
                             i += 1
                             # total results
                             total_results += 1
-
+                    if result:
+                        result = sorted(result, key=lambda k: k['col3'], reverse=True)
                 elif unit == 'Host':
                     start_date_string = ''
                     end_date_string = ''

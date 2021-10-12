@@ -26,7 +26,7 @@ from operator import itemgetter
 
 import redis
 from elasticsearch.exceptions import NotFoundError
-from elasticsearch_dsl.query import Bool, Exists, Prefix, Q, QueryString
+from elasticsearch_dsl.query import Bool, Exists, Q, QueryString
 from flask import Markup, current_app, session
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
@@ -94,13 +94,10 @@ def reset_tree(tree, path=None, more_ids=None, ignore_more=False):
     groups = get_user_groups()
     if path is not None:
         id_tp = []
-        if isinstance(path, list):
-            for lp in path:
-                index_id = lp.split('/')[-1]
-                id_tp.append(index_id)
+        if not isinstance(path, list):
+            id_tp = [path]
         else:
-            index_id = path.split('/')[-1]
-            id_tp.append(index_id)
+            id_tp = path
 
         reduce_index_by_role(tree, roles, groups, False, id_tp)
     else:
@@ -210,7 +207,6 @@ def get_user_roles():
     """Get user roles."""
     def _check_admin():
         result = False
-        users = current_app.config['WEKO_PERMISSION_ROLE_USER']
         for lst in list(current_user.roles or []):
             # if is administrator
             if 'Administrator' in lst.name:
@@ -237,7 +233,7 @@ def get_user_groups():
 def check_roles(user_role, roles):
     """Check roles."""
     is_can = True
-    if isinstance(roles, type("")):
+    if isinstance(roles, str):
         roles = roles.split(',')
     if not user_role[0]:
         if current_user.is_authenticated:
@@ -245,7 +241,7 @@ def check_roles(user_role, roles):
                     if str(x) in (roles or [])]
             if not role and (user_role[1] or "-98" not in roles):
                 is_can = False
-        elif "-99" not in roles:
+        elif roles and "-99" not in roles:
             is_can = False
     return is_can
 
@@ -423,16 +419,13 @@ def reduce_index_by_more(tree, more_ids=None):
 
 def get_admin_coverpage_setting():
     """Get 'avail' value from pdfcoverpage_set table."""
+    from weko_records_ui.models import PDFCoverPageSettings
     avail = 'disable'
     try:
-        metadata = MetaData()
-        metadata.reflect(bind=db.engine)
-        table_name = 'pdfcoverpage_set'
+        setting = PDFCoverPageSettings.find(1)
 
-        pdfcoverpage_table = Table(table_name, metadata)
-        record = db.session.query(pdfcoverpage_table)
-
-        avail = record.first()[1]
+        if setting:
+            avail = setting.avail
     except Exception as ex:
         current_app.logger.debug(ex)
     return avail == 'enable'
@@ -528,71 +521,26 @@ def sanitize(s):
     return esc_str
 
 
-def count_items(target_check_key, indexes_aggr, all_indexes):
+def count_items(indexes_aggr):
     """
     Count public and private items of a target index based on index state.
 
-    :param target_check_key: id of target index
-    :param indexes_aggr: indexes aggregation returned from ES
-    :param all_indexes:
-    :return:
+    Args:
+        indexes_aggr ([type]): [description]
+
+    Returns:
+        [type]: [description]
+
     """
-    def get_child_agg_by_key():
-        """Get all child indexes of target index."""
-        lst_result = []
-        for index_aggr in indexes_aggr:
-            if index_aggr['key'].startswith(target_check_key + '/') \
-                    or index_aggr['key'] == target_check_key:
-                lst_result.append(index_aggr)
-        return lst_result
-
-    def set_private_index_count(target_index, lst_deleted):
-        """Set private count of index based on index and parent index state.
-
-        :param target_index: in of target index
-        :param lst_deleted: lst deleted indexes
-        :return:
-        """
-        temp = target_index.copy()
-        list_parent_key = temp['key'].split('/')
-        is_parent_private = False
-        while list_parent_key:
-            nearest_parent_key = list_parent_key.pop()
-            if lst_indexes_state.get(nearest_parent_key) is None:
-                lst_deleted.add(nearest_parent_key)
-                current_app.logger.warning(
-                    "Index {} is existed in ElasticSearch but not "
-                    "in DataBase".format(str(nearest_parent_key)))
-                continue
-            if lst_indexes_state[nearest_parent_key] is False:
-                is_parent_private = True
-                break
-        if is_parent_private:
-            target_index['no_available'] = target_index['doc_count']
-
-    def get_indexes_state():
-        """Get indexes state."""
-        lst_result = {}
-        for index in all_indexes:
-            lst_result[str(index.id)] = index.public_state
-        return lst_result
-
     pub_items_count = 0
     pri_items_count = 0
-    lst_child_agg = get_child_agg_by_key()
-    lst_indexes_state = get_indexes_state()
-    # list indexes existed in ES but deleted in DB
-    lst_indexes_deleted = set()
-    # Modify counts of index based on index and parent indexes state
-    for agg in lst_child_agg:
-        set_private_index_count(agg, lst_indexes_deleted)
-    for agg in lst_child_agg:
-        for index_deleted in lst_indexes_deleted:
-            if str(agg['key']).endswith(str(index_deleted)):
-                agg['no_available'] = 0
-                agg['doc_count'] = 0
-        pri_items_count += agg['no_available']
-        pub_items_count += agg['doc_count'] - agg['no_available']
+
+    for agg in indexes_aggr:
+        if agg.get('public_state'):
+            pub_items_count += agg['doc_count']
+        else:
+            pri_items_count += agg['doc_count']
+
     return pri_items_count, pub_items_count
 
 
@@ -620,7 +568,7 @@ def check_doi_in_index(index_id):
         if check_doi_in_list_record_es(index_id):
             return True
         return False
-    except Exception as e:
+    except Exception:
         return True
 
 
@@ -721,7 +669,7 @@ def check_has_any_item_in_index_is_locked(index_id):
     return False
 
 
-def check_index_permissions(record, index_id=None, index_path_list=None,
+def check_index_permissions(record=None, index_id=None, index_path_list=None,
                             is_check_doi=False) -> bool:
     """Check indexes of record is private.
 
@@ -797,7 +745,7 @@ def check_index_permissions(record, index_id=None, index_path_list=None,
             list_index (list): Index path list.
         """
         for _index in list_index:
-            _indexes = str(_index).split('/')
+            _indexes = Indexes.get_full_path(int(_index)).split('/')
             index_lst.extend(_indexes)
             index_groups.append(_indexes)
 
@@ -852,13 +800,13 @@ def check_doi_in_index_and_child_index(index_id):
         index_id (list): Record list.
     """
     from .api import Indexes
-    tree_path = Indexes.get_full_path(index_id)
+    child_idx = Indexes.get_child_list_recursive(index_id)
     query_string = "relation_version_is_last:true AND publish_status:0"
     search = RecordsSearch(
         index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
     must_query = [
         QueryString(query=query_string),
-        Prefix(**{"path.tree": tree_path}),
+        Q("terms", path=child_idx),
         Q("nested", path="identifierRegistration",
           query=Exists(field="identifierRegistration"))
     ]
@@ -1002,7 +950,7 @@ def perform_delete_index(index_id, record_class, action: str):
                 raise IndexDeletedRESTError()
             if action in ('move', 'all'):
                 result = record_class. \
-                    delete_by_action(action, index_id, res.path)
+                    delete_by_action(action, index_id)
                 if result is None:
                     raise IndexBaseRESTError(
                         description='Could not delete data.')

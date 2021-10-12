@@ -39,6 +39,7 @@ from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore.resolver import Resolver
 from invenio_records.api import Record
+from weko_admin.utils import get_search_setting
 from weko_index_tree.models import IndexStyle
 from weko_search_ui.api import SearchSetting, get_search_detail_keyword
 
@@ -109,38 +110,38 @@ def mycommunities_ctx():
     }
 
 
-@blueprint.route('/', methods=['GET', ])
-def index():
-    """Index page with uploader and list of existing depositions."""
-    ctx = mycommunities_ctx()
+# @blueprint.route('/', methods=['GET', ])
+# def index():
+#     """Index page with uploader and list of existing depositions."""
+#     ctx = mycommunities_ctx()
 
-    p = request.args.get('p', type=str)
-    so = request.args.get('so', type=str)
-    page = request.args.get('page', type=int, default=1)
+#     p = request.args.get('p', type=str)
+#     so = request.args.get('so', type=str)
+#     page = request.args.get('page', type=int, default=1)
 
-    so = so or current_app.config.get('COMMUNITIES_DEFAULT_SORTING_OPTION')
+#     so = so or current_app.config.get('COMMUNITIES_DEFAULT_SORTING_OPTION')
 
-    communities = Community.filter_communities(p, so)
-    featured_community = FeaturedCommunity.get_featured_or_none()
-    form = SearchForm(p=p)
-    per_page = 10
-    page = max(page, 1)
-    p = Pagination(page, per_page, communities.count())
+#     communities = Community.filter_communities(p, so)
+#     featured_community = FeaturedCommunity.get_featured_or_none()
+#     form = SearchForm(p=p)
+#     per_page = 10
+#     page = max(page, 1)
+#     p = Pagination(page, per_page, communities.count())
 
-    ctx.update({
-        'r_from': max(p.per_page * (p.page - 1), 0),
-        'r_to': min(p.per_page * p.page, p.total_count),
-        'r_total': p.total_count,
-        'pagination': p,
-        'form': form,
-        'title': _('Communities'),
-        'communities': communities.slice(
-            per_page * (page - 1), per_page * page).all(),
-        'featured_community': featured_community,
-    })
+#     ctx.update({
+#         'r_from': max(p.per_page * (p.page - 1), 0),
+#         'r_to': min(p.per_page * p.page, p.total_count),
+#         'r_total': p.total_count,
+#         'pagination': p,
+#         'form': form,
+#         'title': _('Communities'),
+#         'communities': communities.slice(
+#             per_page * (page - 1), per_page * page).all(),
+#         'featured_community': featured_community,
+#     })
 
-    return render_template(
-        current_app.config['COMMUNITIES_INDEX_TEMPLATE'], **ctx)
+#     return render_template(
+#         current_app.config['COMMUNITIES_INDEX_TEMPLATE'], **ctx)
 
 
 @blueprint.route('/<string:community_id>/', methods=['GET'])
@@ -172,6 +173,20 @@ def view(community):
     sort_options, display_number = SearchSetting.get_results_setting()
 
     detail_condition = get_search_detail_keyword('')
+
+    # Get Facet search setting.
+    display_facet_search = get_search_setting().get("display_control", {})\
+        .get('display_facet_search', {}).get('status', False)
+    ctx.update({
+        "display_facet_search": display_facet_search,
+    })
+
+    # Get index tree setting.
+    display_index_tree = get_search_setting().get("display_control", {})\
+        .get('display_index_tree', {}).get('status', False)
+    ctx.update({
+        "display_index_tree": display_index_tree,
+    })
 
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
@@ -644,6 +659,7 @@ def community_list():
     """Index page with uploader and list of existing depositions."""
     ctx = mycommunities_ctx()
     from weko_theme.utils import get_design_layout
+
     # Get the design for widget rendering
     render_page, render_widgets = get_design_layout(
         current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
@@ -670,6 +686,13 @@ def community_list():
         'communities': communities.slice(
             per_page * (page - 1), per_page * page).all(),
         'featured_community': featured_community,
+    })
+
+    # Get display_community setting.
+    display_community = get_search_setting().get("display_control", {}).get(
+        'display_community', {}).get('status', False)
+    ctx.update({
+        "display_community": display_community
     })
 
     return render_template(

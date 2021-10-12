@@ -123,14 +123,11 @@ class ItemTypeMetaDataView(BaseView):
                     name_id=record.model.name_id)
                 # Check that item type is already registered to an item or not
                 for item in all_records:
-                    metaDataRecords = ItemsMetadata.get_by_item_type_id(
+                    items = ItemsMetadata.get_registered_item_metadata(
                         item_type_id=item.id)
-                    if len(metaDataRecords) > 0:
-                        flash(
-                            _(
-                                'Cannot delete due to child'
-                                ' existing item types.'),
-                            'error')
+                    if len(items) > 0:
+                        flash(_('Cannot delete due to child'
+                                ' existing item types.'), 'error')
                         return jsonify(code=-1)
                 # Get item type name
                 item_type_name = ItemTypeNames.get_record(

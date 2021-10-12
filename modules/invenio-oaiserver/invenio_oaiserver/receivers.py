@@ -24,7 +24,7 @@ class OAIServerUpdater(object):
 
         :param record: The record data.
         """
-        if '_oai' in record and 'id' in record['_oai']:
+        if record.get('_oai', {}).get('id'):
             new_sets = set(get_record_sets(record=record))
             # Update only if old and new sets differ
             if set(record['_oai'].get('sets', [])) != new_sets:

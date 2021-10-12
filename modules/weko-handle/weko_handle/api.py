@@ -20,6 +20,9 @@
 
 """WEKO3 module docstring."""
 
+import sys
+import traceback
+
 from b2handle.clientcredentials import PIDClientCredentials
 from b2handle.handleclient import EUDATHandleClient
 from b2handle.handleexceptions import CredentialsFormatError, \
@@ -32,7 +35,8 @@ class Handle(object):
 
     def __init__(self):
         """Bind to current bucket."""
-        self.credential_path = current_app.config.get('WEKO_HANDLE_CREDS_JSON_PATH')
+        self.credential_path = current_app.config.get(
+            'WEKO_HANDLE_CREDS_JSON_PATH')
 
     def retrieve_handle(self, handle):
         """Retrieve a handle."""
@@ -49,31 +53,37 @@ class Handle(object):
 
     def register_handle(self, location):
         """Register a handle."""
+        current_app.logger.debug(
+            "location: {0}".format(location.split('/records/')))
         pid = ''
         try:
             credential = PIDClientCredentials.load_from_JSON(
                 self.credential_path)
             client = EUDATHandleClient.instantiate_with_credentials(credential)
-            pid = credential.get_prefix() + '/' \
-                + "{:010d}".format(int(location.split('/records/')[1]))
+            pid = credential.get_prefix() + '/' + \
+                "{:010d}".format(int(location.split('/records/')[1]))
+            current_app.logger.debug(
+                'call register_handle({0}, {1})'.format(pid, location))
             handle = client.register_handle(pid, location)
             current_app.logger.info(
-                'Registered successfully handle {}'.format(pid))
+                'Registered successfully handle pid:{0} handle:{1}'.format(pid, handle))
             return handle
         except (FileNotFoundError, CredentialsFormatError,
                 HandleAuthenticationError, GenericHandleError) as e:
             current_app.logger.error(
-                'Registration failed of handle {}. {} in '
+                'Registration failed of handle {0}. {1} in '
                 'HandleClient.register_handle'.format(pid, e))
+            current_app.logger.error(traceback.format_exc())
             return None
         except AttributeError:
             current_app.logger.error('Missing Private Key!')
+            current_app.logger.error(traceback.format_exc())
             return None
         except Exception as e:
+            current_app.logger.error(traceback.format_exc())
             current_app.logger.error(e)
             return None
 
     def get_prefix(self):
         """Get Handle prefix."""
-        return PIDClientCredentials.load_from_JSON(self.credential_path) \
-            .get_prefix()
+        return PIDClientCredentials.load_from_JSON(self.credential_path).get_prefix()

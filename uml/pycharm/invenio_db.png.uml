@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>Python</ID>
+  <OriginalElement>#/Users/mhaya/git/mhaya/vagrant-weko_org/multi/tmp/weko3_b/modules/invenio-db/invenio_db</OriginalElement>
+  <nodes>
+    <node x="0.0" y="80.0">invenio_db.ext.InvenioDB</node>
+    <node x="95.0" y="313.0">FlaskSQLAlchemy</node>
+    <node x="0.0" y="393.0">invenio_db.shared.SQLAlchemy</node>
+    <node x="187.5" y="0.0">object</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="invenio_db.ext.InvenioDB" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-94.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_db.shared.SQLAlchemy" target="FlaskSQLAlchemy" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic" zoom="1.0" showDependencies="false" x="230.5" y="235.0" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Fields</Category>
+    <Category>Inner Classes</Category>
+    <Category>Methods</Category>
+  </Categories>
+</Diagram>
+

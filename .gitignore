@@ -66,6 +66,7 @@ target/
 
 # Vagrant
 .vagrant
+.DS_Store
 
 # backup
 scripts/demo/contents/
@@ -80,6 +81,9 @@ header-icons/*
 combined-pdfs/*
 !.gitkeep
 
+#resync
+.resync-client-status.cfg
+
 # pyenv
 .python-version
 # celery
@@ -89,3 +93,5 @@ celeryd.pid
 weko-demodata/
 test/data
 test/import.zip
+test/dummyfile/import.zip
+test/dummyfile/data

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>Python</ID>
+  <OriginalElement>#/Users/mhaya/git/mhaya/vagrant-weko_org/multi/tmp/weko3_b/modules/invenio-records/invenio_records</OriginalElement>
+  <nodes>
+    <node x="0.0" y="362.0">invenio_records.models.RecordMetadataBase</node>
+    <node x="376.0" y="80.0">invenio_records.api.RevisionsIterator</node>
+    <node x="231.25" y="780.0">invenio_records.api.RecordBase</node>
+    <node x="142.16666666666663" y="555.0">invenio_records.models.RecordMetadata</node>
+    <node x="1342.0" y="102.0">invenio_records.ext._RecordsState</node>
+    <node x="1371.0" y="700.0">Exception</node>
+    <node x="1245.0" y="860.0">invenio_records.errors.MissingModelError</node>
+    <node x="764.0" y="780.0">invenio_records.admin.RecordMetadataModelView</node>
+    <node x="402.0" y="1161.5">invenio_records.api.RecordRevision</node>
+    <node x="724.0" y="135.0">invenio_records.ext.InvenioRecords</node>
+    <node x="41.0" y="157.5">invenio_records.models.Timestamp</node>
+    <node x="920.5" y="700.0">ModelView</node>
+    <node x="417.0" y="418.5">Model</node>
+    <node x="342.25" y="700.0">dict</node>
+    <node x="1267.0" y="780.0">invenio_records.errors.RecordsError</node>
+    <node x="0.0" y="1062.0">invenio_records.api.Record</node>
+    <node x="738.5" y="0.0">object</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="invenio_records.api.Record" target="invenio_records.api.RecordBase" relationship="REALIZATION">
+      <point x="0.0" y="-127.0" />
+      <point x="191.0" y="1037.0" />
+      <point x="375.75" y="1037.0" />
+      <point x="0.0" y="116.0" />
+    </edge>
+    <edge source="invenio_records.api.RevisionsIterator" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-116.0" />
+      <point x="540.0" y="55.0" />
+      <point x="781.5" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records.models.Timestamp" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="198.5" y="55.0" />
+      <point x="781.5" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records.api.RecordBase" target="dict" relationship="REALIZATION">
+      <point x="0.0" y="-116.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records.models.RecordMetadata" target="Model" relationship="REALIZATION">
+      <point x="0.0" y="-50.0" />
+      <point x="321.66666666666663" y="530.0" />
+      <point x="459.5" y="530.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records.ext._RecordsState" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-94.0" />
+      <point x="1496.5" y="55.0" />
+      <point x="781.5" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records.models.RecordMetadata" target="invenio_records.models.RecordMetadataBase" relationship="REALIZATION">
+      <point x="0.0" y="-50.0" />
+      <point x="321.66666666666663" y="530.0" />
+      <point x="198.5" y="530.0" />
+      <point x="0.0" y="71.5" />
+    </edge>
+    <edge source="invenio_records.api.RecordRevision" target="invenio_records.api.RecordBase" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="560.5" y="1037.0" />
+      <point x="375.75" y="1037.0" />
+      <point x="0.0" y="116.0" />
+    </edge>
+    <edge source="invenio_records.errors.RecordsError" target="Exception" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records.errors.MissingModelError" target="invenio_records.errors.RecordsError" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records.ext.InvenioRecords" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-61.0" />
+      <point x="1023.0" y="55.0" />
+      <point x="781.5" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records.admin.RecordMetadataModelView" target="ModelView" relationship="REALIZATION">
+      <point x="0.0" y="-204.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records.models.RecordMetadataBase" target="invenio_records.models.Timestamp" relationship="REALIZATION">
+      <point x="0.0" y="-71.5" />
+      <point x="0.0" y="38.5" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic" zoom="1.0" showDependencies="false" x="825.5" y="658.0" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Fields</Category>
+    <Category>Inner Classes</Category>
+    <Category>Methods</Category>
+  </Categories>
+</Diagram>
+

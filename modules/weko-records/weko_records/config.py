@@ -133,6 +133,7 @@ WEKO_TEST_FIELD = {
             }
 
         },
+
         "date_range1":{
             "input_type":"range",
             "path":{

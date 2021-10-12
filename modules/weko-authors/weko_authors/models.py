@@ -25,10 +25,9 @@ from datetime import datetime
 
 from flask import current_app
 from invenio_db import db
-from sqlalchemy.dialects import mysql, postgresql
-from sqlalchemy.event import listen
-# from sqlalchemy_utils.types import UUIDType
-from sqlalchemy_utils.types import JSONType, UUIDType
+from sqlalchemy import Sequence
+from sqlalchemy.dialects import postgresql
+from sqlalchemy_utils.types import JSONType
 from weko_records.models import Timestamp
 
 # from invenio_records.models import RecordMetadata
@@ -54,6 +53,12 @@ class Authors(db.Model, Timestamp):
         default=0)
     """gather_flg of the authors."""
 
+    is_deleted = db.Column(
+        db.Boolean(name='is_deleted'),
+        nullable=False,
+        default=False)
+    """Delete status of the authors."""
+
     json = db.Column(
         db.JSON().with_variant(
             postgresql.JSONB(none_as_null=True),
@@ -69,6 +74,19 @@ class Authors(db.Model, Timestamp):
         nullable=True
     )
     """json for author info"""
+
+    @classmethod
+    def get_sequence(cls, session):
+        """Get author id next sequence.
+
+        :param session: Session
+        :return: Next sequence.
+        """
+        if not session:
+            session = db.session
+        seq = Sequence('authors_id_seq')
+        next_id = session.execute(seq)
+        return next_id
 
     @classmethod
     def get_first_email_by_id(cls, author_id):

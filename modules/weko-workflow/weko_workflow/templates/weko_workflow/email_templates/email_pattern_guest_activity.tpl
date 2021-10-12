@@ -1,6 +1,10 @@
 Subject: 利用申請登録のご案内／Register Application for Use
 
-[restricted_site_name_ja]です。
+[restricted_mail_address]様
+
+[restricted_institution_name_ja]です。
+[restricted_site_name_ja]をご利用いただいて、ありがとうございます。
+
 下記のリンクにアクセスしていただき、利用申請の登録を行ってください。
 
 [19]
@@ -13,8 +17,8 @@ Subject: 利用申請登録のご案内／Register Application for Use
 
 ----------------------------------------------------------------------------------
 
-This is a message from [restricted_site_name_en].
-Please access the link below and register your Application.
+This is a message from [restricted_institution_name_en].
+Thank you for using [restricted_site_name_en].
 
 [19]
 
