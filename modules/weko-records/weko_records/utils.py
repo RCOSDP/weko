@@ -177,16 +177,10 @@ def json_loader(data, pid, owner_id=None):
         dc.update(dict(item_title=title))
         dc.update(dict(item_type_id=item_type_id))
         dc.update(dict(control_number=pid))
-
-
-<< << << < HEAD
-
         dc.update(dict(author_link=author_link))
 
         if COPY_NEW_FIELD:
             copy_field_test(dc, WEKO_TEST_FIELD, jrc)
-== == == =
->>>>>> > origin/release
 
         # check oai id value
         is_edit = False
