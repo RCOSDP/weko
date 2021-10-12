@@ -40,7 +40,7 @@ from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_files_rest.views import delete_file_instance
 from invenio_i18n.ext import current_i18n
 from invenio_mail.admin import MailSettingView
-from invenio_mail.models import MailConfig
+from invenio_mail.models import MailConfig, MailTemplates
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, \
@@ -78,6 +78,14 @@ from .config import DOI_VALIDATION_INFO, IDENTIFIER_GRANT_SELECT_DICT, \
     WEKO_SERVER_CNRI_HOST_LINK
 from .models import Action as _Action
 from .models import ActionStatusPolicy, ActivityStatusPolicy, GuestActivity
+
+
+def _check_mail_setting(setting):
+    """Check setting."""
+    if setting and setting.get("send", False) and setting.get("mail", ""):
+        return True
+    else:
+        return False
 
 
 def get_current_language():
@@ -1738,7 +1746,7 @@ def send_mail_reminder(mail_info):
 
     :mail_info: object
     """
-    subject, body = get_mail_data(mail_info.get('template'))
+    subject, body = get_mail_data(mail_info.get('mail_id'))
     if not body:
         raise ValueError('Cannot get email template')
     body = replace_characters(mail_info, body)
@@ -1758,15 +1766,16 @@ def send_mail_approval_done(mail_info):
         send_mail(subject, mail_info.get('register_user_mail'), body)
 
 
-def send_mail_registration_done(mail_info):
+def send_mail_registration_done(mail_info, mail_id):
     """Send mail registration done.
 
     :mail_info: object
+    :mail_id: mail template id
     """
     from weko_items_ui.utils import get_current_user_role
     role = get_current_user_role()
     item_type_name = mail_info.get('item_type_name')
-    subject, body = email_pattern_registration_done(role, item_type_name)
+    subject, body = email_pattern_registration_done(role, item_type_name, mail_id)
     if body and subject:
         body = replace_characters(mail_info, body)
         send_mail(subject, mail_info.get('register_user_mail'), body)
@@ -1809,18 +1818,18 @@ def send_mail(subject, recipient, body):
         return MailSettingView.send_statistic_mail(rf)
 
 
-def email_pattern_registration_done(user_role, item_type_name):
+def email_pattern_registration_done(user_role, item_type_name, mail_id):
     """Email pattern registration done.
 
     :user_role: object
     :item_type_name: object
+    :mail_id: mail template id
     """
     current_config = current_app.config
     item_type_list = current_config.get(
         "WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPES_LIST")
     if item_type_name in item_type_list:
-        return get_mail_data(
-            current_config.get("WEKO_WORKFLOW_NOTIFY_ACCEPT"))
+        return get_mail_data(mail_id)
 
     return None, None
 
@@ -1867,55 +1876,16 @@ def email_pattern_approval_done(item_type_name):
             "WEKO_WORKFLOW_APPROVE_LOCATION_DATA"))
 
 
-def get_mail_data(file_name):
-    """Get data of a email.
+def get_mail_data(mail_id):
+    """Get subject, body of a email.
 
-    :file_name: file name template
+    :mail_id: mail template id in db
     """
-    file_path = get_file_path(file_name)
-    return get_subject_and_content(file_path)
-
-
-def get_subject_and_content(file_path):
-    """Get mail subject and content from template file.
-
-    :file_path: this is a full path
-    """
-    import os
-    if not os.path.exists(file_path):
-        return None, None
-    file = open(file_path, 'r')
-    subject = body = ''
-    index = 0
-    """ Get subject and content body from template file """
-    """ The first line is mail subject """
-    """ Exclude the first line is mail content """
-    for line in file:
-        if index == 0:
-            subject = line
-        else:
-            body += line
-        index += 1
-    """ Custom subject (remove 'Subject：' from subject) """
-    subject = subject.replace('Subject：', '')
-    subject = subject.replace('\n', '')
-    return subject, body
-
-
-def get_file_path(file_name):
-    """Get file path from file name.
-
-    :file_name: file name
-    """
-    config = current_app.config
-    template_folder_path = \
-        config.get("WEKO_WORKFLOW_MAIL_TEMPLATE_FOLDER_PATH")
-
-    # Get file path (template path + file name)
-    if template_folder_path is not None and file_name is not None:
-        return os.path.join(template_folder_path, file_name)
+    mt = MailTemplates.get_by_id(mail_id)
+    if mt:
+        return mt.mail_subject, mt.mail_body
     else:
-        return ""
+        return "", ""
 
 
 def replace_characters(data, content):
@@ -2129,11 +2099,11 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
     return mail_info
 
 
-def process_send_reminder_mail(activity_detail, mail_template):
+def process_send_reminder_mail(activity_detail, mail_id):
     """Process send reminder mail.
 
     :activity_detail: object
-    :mail_template: string
+    :mail_id: string
     """
     item_info = get_item_info(activity_detail.item_id)
     mail_info = set_mail_info(item_info, activity_detail)
@@ -2147,7 +2117,7 @@ def process_send_reminder_mail(activity_detail, mail_template):
 
     if update_user.get('fullname') != '':
         mail_info['fullname'] = update_user.get('fullname')
-    mail_info['template'] = mail_template
+    mail_info['mail_id'] = mail_id
     try:
         send_mail_reminder(mail_info)
     except ValueError as val:
@@ -2177,10 +2147,12 @@ def process_send_notification_mail(activity_detail, action_endpoint,
     """ Set registration date to 'mail_info' """
     get_approval_dates(mail_info)
     if 'item_login' in action_endpoint \
-            and action_mails_setting.get("previous", {}).get(
-                "inform_itemReg", False):
+            and action_mails_setting.get("previous", {}):
         """ Send mail for register to notify that registration is done"""
-        send_mail_registration_done(mail_info)
+        setting = action_mails_setting.get("previous") \
+            .get("inform_itemReg", {})
+        if _check_mail_setting(setting):
+            send_mail_registration_done(mail_info, setting["mail"])
     if current_user.is_authenticated and not is_guest_user:
         if 'approval_' in next_action_endpoint \
                 and 'administrator' not in next_action_endpoint:
@@ -2655,7 +2627,7 @@ def send_mail_url_guest_user(mail_info: dict) -> bool:
 
     :mail_info: object
     """
-    subject, body = get_mail_data(mail_info.get('template'))
+    subject, body = get_mail_data(mail_info.get('mail_id'))
     if not body:
         return False
     body = replace_characters(mail_info, body)
@@ -2770,7 +2742,7 @@ def send_usage_application_mail_for_guest_user(guest_mail: str, temp_url: str):
     institution_name_ja = current_app.config['THEME_INSTITUTION_NAME']['ja']
     institution_name_en = current_app.config['THEME_INSTITUTION_NAME']['en']
     mail_info = {
-        'template': current_app.config.get("WEKO_WORKFLOW_ACCESS_ACTIVITY_URL"),
+        'mail_id': current_app.config.get("WEKO_WORKFLOW_ACCESS_ACTIVITY_URL"),
         'mail_address': guest_mail,
         'url_guest_user': temp_url,
         "restricted_site_name_ja": site_name_ja,
@@ -3158,16 +3130,17 @@ def get_approval_keys():
     return approval_keys
 
 
-def process_send_mail(mail_info, mail_pattern_name):
+def process_send_mail(mail_info, mail_id):
     """Send mail approval rejected.
 
     :mail_info: object
+    :mail_id: mail template id
     """
     if not mail_info.get("mail_recipient"):
         current_app.logger.error('Mail address is not defined')
         return
 
-    subject, body = get_mail_data(mail_pattern_name)
+    subject, body = get_mail_data(mail_id)
     if body and subject:
         body = replace_characters(mail_info, body)
         return send_mail(subject, mail_info['mail_recipient'], body)
@@ -3208,29 +3181,30 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
             'guest_mail')
 
     if actions_mail_setting["approval"]:
-        if actions_mail_setting.get("previous", {}).get(
-                "inform_approval", False):
-            process_send_mail(
-                mail_info,
-                current_app.config["WEKO_WORKFLOW_APPROVE_DONE"])
+        if actions_mail_setting.get("previous", {}):
+            setting = actions_mail_setting.get("previous") \
+                .get("inform_approval", {})
+            if _check_mail_setting(setting):
+                process_send_mail(mail_info, setting["mail"])
 
-        if actions_mail_setting.get('next', {}).get("request_approval", False):
-            approval_user = db.session.query(User).filter_by(
-                id=int(next_step_appover_id)).first()
-            if not approval_user:
-                current_app.logger.error("Does not have approval data")
-            else:
-                mail_info['mail_recipient'] = approval_user.email
-                process_send_mail(
-                    mail_info,
-                    current_app.config["WEKO_WORKFLOW_REQUEST_APPROVAL"])
+        if actions_mail_setting.get('next', {}):
+            setting = actions_mail_setting.get("next") \
+                .get("request_approval", {})
+            if _check_mail_setting(setting):
+                approval_user = db.session.query(User).filter_by(
+                    id=int(next_step_appover_id)).first()
+                if not approval_user:
+                    current_app.logger.error("Does not have approval data")
+                else:
+                    mail_info['mail_recipient'] = approval_user.email
+                    process_send_mail(mail_info, setting["mail"])
 
     if actions_mail_setting["reject"]:
-        if actions_mail_setting.get(
-                "previous", {}).get("inform_reject", False):
-            process_send_mail(
-                mail_info,
-                current_app.config["WEKO_WORKFLOW_APPROVE_REJECTED"])
+        if actions_mail_setting.get("previous", {}):
+            setting = actions_mail_setting.get("previous") \
+                .get("inform_reject", {})
+            if _check_mail_setting(setting):
+                process_send_mail(mail_info, setting["mail"])
 
 
 def get_usage_data(item_type_id, activity_detail, user_profile=None):

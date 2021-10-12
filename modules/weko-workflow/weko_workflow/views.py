@@ -1624,21 +1624,21 @@ def check_approval(activity_id='0'):
     return jsonify(response)
 
 
-@blueprint.route('/send_mail/<string:activity_id>/<string:mail_template>',
+@blueprint.route('/send_mail/<string:activity_id>/<string:mail_id>',
                  methods=['POST'])
 @login_required
-def send_mail(activity_id='0', mail_template=''):
+def send_mail(activity_id='0', mail_id=''):
     """Send mail.
 
     :param activity_id:
-    :param mail_template:
+    :param mail_id:
     :return:
     """
     try:
         work_activity = WorkActivity()
         activity_detail = work_activity.get_activity_detail(activity_id)
         if current_app.config.get('WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL'):
-            process_send_reminder_mail(activity_detail, mail_template)
+            process_send_reminder_mail(activity_detail, mail_id)
     except ValueError:
         return jsonify(code=-1, msg='Error')
     return jsonify(code=1, msg='Success')
