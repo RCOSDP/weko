@@ -64,6 +64,7 @@ services:
       - INVENIO_DB_POOL_CLASS=QueuePool
       - GOOGLE_TRACKING_ID_SYSTEM=
       - GOOGLE_TRACKING_ID_USER=
+      - TMPDIR=/tmp
     volumes:
       - weko3_data:/var/tmp
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
@@ -126,6 +127,10 @@ services:
         max-size: "10m"
     ports:
       - "5001:5000"
+    #privileged: true
+    # pscap apt-get install libcap-ng-utils
+    #cap_add:
+    #  - SYS_ADMIN
     deploy:
       resources:
         limits:

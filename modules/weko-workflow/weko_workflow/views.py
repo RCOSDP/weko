@@ -1144,14 +1144,23 @@ def next_action(activity_id='0', action_id=0):
     # delete session value
     if session.get('itemlogin_id'):
         del session['itemlogin_id']
+    if session.get('itemlogin_activity'):
         del session['itemlogin_activity']
+    if session.get('itemlogin_item'):
         del session['itemlogin_item']
+    if session.get('itemlogin_steps'):
         del session['itemlogin_steps']
+    if session.get('itemlogin_action_id'):
         del session['itemlogin_action_id']
+    if session.get('itemlogin_cur_step'):
         del session['itemlogin_cur_step']
+    if session.get('itemlogin_record'):
         del session['itemlogin_record']
+    if session.get('itemlogin_res_check'):
         del session['itemlogin_res_check']
+    if session.get('itemlogin_pid'):
         del session['itemlogin_pid']
+    if session.get('itemlogin_community_id'):
         del session['itemlogin_community_id']
     return jsonify(code=0, msg=_('success'))
 

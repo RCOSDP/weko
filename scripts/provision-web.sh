@@ -59,7 +59,8 @@ provision_web_common_ubuntu14 () {
          rlwrap \
          screen \
          vim \
-         gnupg
+         gnupg \
+	 libpcre3-dev
     # sphinxdoc-install-useful-system-tools-ubuntu14-end
 
     # sphinxdoc-add-nodejs-external-repository-ubuntu14-begin
@@ -186,7 +187,7 @@ setup_nginx_ubuntu14 () {
     # sphinxdoc-install-web-nginx-ubuntu14-begin
     # install Nginx web server:
     $sudo apt-get install -y nginx
-
+    
     # configure Nginx web server:
     $sudo cp -f "$scriptpathname/../nginx/weko.conf" /etc/nginx/sites-available/
     $sudo sed -i "s,/home/invenio/,/home/$(whoami)/,g" /etc/nginx/sites-available/weko.conf
