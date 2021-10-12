@@ -4,6 +4,7 @@ const SAVE_LABEL = document.getElementById('save_label').value;
 const MESSAGE_MISSING_DATA = document.getElementById('message_miss_data').value;
 const EMPTY_TERM = {
   key: "",
+  flag: false,
   content: {
     "subject": "",
     "body": ""
@@ -88,10 +89,14 @@ function TermsList({termList, setTermList, currentTerm, setCurrentTerm}) {
                     onClick={handleOnTermClick}
                     id={term.key}>{term.content.subject}
                   </a>
-                  <a
-                    className="glyphicon glyphicon-remove glyphicon-remove-term pull-right"
-                    id={term.key}
-                    key={term.key} onClick={handleRemoveTerm}/>
+                  {term.flag === false ? (
+                    <a
+                      className="glyphicon glyphicon-remove glyphicon-remove-term pull-right"
+                      id={term.key}
+                      key={term.key} onClick={handleRemoveTerm}/>
+                  ) : (
+                    ""
+                  )}
                 </li>
               ))
             }
@@ -167,28 +172,23 @@ function MailTemplateLayout({mail_templates}) {
 
   function handleApply() {
     let termListClone = [...termList];
-    if (currentTerm['key'] === '') {
-      if (currentTerm['content'] && currentTerm['content']['subject'] && currentTerm['content']['body']) {
-        return {
-          "valid": true,
-          "data": [currentTerm]
-        }
-      } else {
-        return {
-          "valid": false,
-          "data": null
-        }
-      }
-    } else {
+    if (currentTerm['key'] !== '') {
       // for existed term
       termListClone.map((term) => {
         if (term.key === currentTerm.key)
           term["content"] = JSON.parse(JSON.stringify(currentTerm)).content
       });
       setTermList(termListClone)
+    }
+    if (currentTerm['content'] && currentTerm['content']['subject'].trim() && currentTerm['content']['body'].trim()) {
       return {
         "valid": true,
         "data": [currentTerm]
+      }
+    } else {
+      return {
+        "valid": false,
+        "data": null
       }
     }
   }

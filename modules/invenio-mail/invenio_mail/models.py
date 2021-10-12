@@ -66,6 +66,7 @@ class MailTemplates(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     mail_subject = db.Column(db.String(255), default='')
     mail_body = db.Column(db.Text, nullable=True)
+    default_mail = db.Column(db.Boolean, default=False)
 
     @classmethod
     def get_templates(cls):
@@ -76,6 +77,7 @@ class MailTemplates(db.Model):
             for m in mail_templates:
                 result.append({
                     "key": str(m.id),
+                    "flag": m.default_mail,
                     "content": {
                         "subject": m.mail_subject,
                         "body": m.mail_body
