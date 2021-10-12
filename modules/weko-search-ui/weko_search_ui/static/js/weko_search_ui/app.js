@@ -154,7 +154,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
             descOrEsc = "-";
             key_sort = key_sort.replace("_desc", "");
           }
-         
+
           // Default param
           let param = {
             page: 1,
@@ -195,9 +195,9 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     var q = url.searchParams.get("q");
     let result = 'item';
     if (q === "0") {
-      return 'root'
+      return 'root';
     }
-    return result
+    return result;
   }
 
   $rootScope.isCommunityRootIndex = function() {
