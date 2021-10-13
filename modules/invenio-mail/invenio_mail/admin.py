@@ -156,14 +156,23 @@ class MailTemplatesView(BaseView):
 
         :return:
         """
-        result = {
-            "status": True,
-            "msg": _("Mail template was successfully updated.")
-        }
+        
         mail_templates = request.get_json()['mail_templates']
+        status = True
         for m in mail_templates:
-            MailTemplates.save_and_update(m)
-        result['data'] = MailTemplates.get_templates()
+            status = status and MailTemplates.save_and_update(m)
+        if status:
+            result = {
+                "status": status,
+                "msg": _("Mail template was successfully updated."),
+                "data": MailTemplates.get_templates()
+            }
+        else:
+            result = {
+                "status": status,
+                "msg": _("Mail template update failed."),
+                "data": MailTemplates.get_templates()
+            }
         return jsonify(result), 200
 
     @expose('/delete', methods=['DELETE'])
@@ -172,13 +181,21 @@ class MailTemplatesView(BaseView):
 
         :return:
         """
-        result = {
-            "status": True,
-            "msg": _("Mail template was successfully deleted.")
-        }
+        
         template_id = request.get_json()['template_id']
-        MailTemplates.delete_by_id(template_id)
-        result['data'] = MailTemplates.get_templates()
+        status = MailTemplates.delete_by_id(template_id)
+        if status:
+            result = {
+                "status": status,
+                "msg": _("Mail template was successfully deleted."),
+                "data": MailTemplates.get_templates()
+            }
+        else:
+            result = {
+                "status": status,
+                "msg": _("Mail template delete failed."),
+                "data": MailTemplates.get_templates()
+            }
         return jsonify(result), 200
 
 

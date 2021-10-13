@@ -20,6 +20,7 @@
 
 """Database models for mail."""
 
+from flask import current_app
 from invenio_db import db
 
 
@@ -72,23 +73,30 @@ class MailTemplates(db.Model):
     def get_templates(cls):
         """Get mail templates."""
         result = []
-        mail_templates = cls.query.order_by(cls.id).all()
-        if mail_templates:
-            for m in mail_templates:
-                result.append({
-                    "key": str(m.id),
-                    "flag": m.default_mail,
-                    "content": {
-                        "subject": m.mail_subject,
-                        "body": m.mail_body
-                    }
-                })
+        try:
+            mail_templates = cls.query.order_by(cls.id).all()
+            if mail_templates:
+                for m in mail_templates:
+                    result.append({
+                        "key": str(m.id),
+                        "flag": m.default_mail,
+                        "content": {
+                            "subject": m.mail_subject,
+                            "body": m.mail_body
+                        }
+                    })
+        except Exception as ex:
+            current_app.logger.error(ex)
         return result
 
     @classmethod
     def get_by_id(cls, id):
         """Get mail template by id."""
-        return cls.query.filter_by(id=id).one_or_none()
+        try:
+            return cls.query.filter_by(id=id).one_or_none()
+        except Exception as ex:
+            current_app.logger.error(ex)
+            return None
 
     @classmethod
     def save_and_update(cls, data):
@@ -99,14 +107,26 @@ class MailTemplates(db.Model):
             obj = cls()
         obj.mail_subject = data['content']['subject']
         obj.mail_body = data['content']['body']
-        if data['key']:
-            db.session.merge(obj)
-        else:
-            db.session.add(obj)
-        db.session.commit()
+        try:
+            if data['key']:
+                db.session.merge(obj)
+            else:
+                db.session.add(obj)
+            db.session.commit()
+            return True
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            return False
 
     @classmethod
     def delete_by_id(cls, id):
         """Delete mail template."""
-        cls.query.filter_by(id=id).delete()
-        db.session.commit()
+        try:
+            cls.query.filter_by(id=id).delete()
+            db.session.commit()
+            return True
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            return False
