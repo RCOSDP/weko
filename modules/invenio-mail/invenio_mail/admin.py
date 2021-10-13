@@ -139,9 +139,16 @@ class MailSettingView(BaseView):
 class MailTemplatesView(BaseView):
     @expose('/', methods=['GET'])
     def index(self):
+        """Mail template top page."""
         mts = MailTemplates.get_templates()
         return self.render(config.INVENIO_MAIL_TEMPLATES_TEMPLATE,
                            data=json.dumps({"mail_templates": mts}))
+
+    @expose('help', methods=['GET'])
+    def help(self):
+        """Get help of mail template."""
+        return self.render(config.INVENIO_MAIL_HELP_TEMPLATE,
+                           data=config.INVENIO_MAIL_VARIABLE_HELP)
 
     @expose('/save', methods=['POST'])
     def save_mail_template(self):
