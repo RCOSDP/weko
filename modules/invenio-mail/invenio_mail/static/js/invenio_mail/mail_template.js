@@ -71,7 +71,7 @@ function TermsList({termList, setTermList, currentTerm, setCurrentTerm}) {
       },
       error: function (error) {
         console.log(error);
-        addAlert(error, 1);
+        addAlert('Mail template delete failed.', 1);
       }
     });
   }
@@ -225,7 +225,7 @@ function MailTemplateLayout({mail_templates}) {
       },
       error: function (error) {
         console.log(error);
-        addAlert(error, 1);
+        addAlert('Mail template update failed.', 1);
       }
     });
   }
