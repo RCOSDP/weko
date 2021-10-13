@@ -1913,7 +1913,7 @@ def replace_characters(data, content):
         '[16]': 'report_number',
         '[17]': 'registration_number',
         '[18]': 'output_registration_title',
-        '[19]': 'url_guest_user',
+        '[url_guest_user]': 'url_guest_user',
         '[restricted_fullname]': 'restricted_fullname',
         '[restricted_university_institution]': 'restricted_university_institution',
         '[restricted_activity_id]': 'restricted_activity_id',
