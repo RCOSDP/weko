@@ -80,9 +80,9 @@ weko_admin_item_export_css = Bundle(
 )
 
 weko_facet_search_js = Bundle(
-    'js/weko_search_ui/facket.runtime-main.js',
+    'js/weko_search_ui/facet.runtime-main.js',
     'js/weko_search_ui/facet.chunk.js',
-    'js/weko_search_ui/facket.main.chunk.js',
+    'js/weko_search_ui/facet.main.chunk.js',
     output="gen/facet_search.js"
 )
 
