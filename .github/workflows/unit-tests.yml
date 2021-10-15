@@ -41,14 +41,10 @@ jobs:
           source venv/bin/activate
           python -m pip install -U setuptools wheel 'pip==20.2.4' coveralls PyYAML
           python -m pip install -r packages.txt
-          python -m pip install 'invenio-base==1.0.2'
           python -m pip install -r packages-invenio.txt
-          python -m pip install 'invenio-db==1.0.4'
           sed -E 's/\/code\///g' requirements-weko-modules.txt | xargs python -m pip install
           python -m pip uninstall -y 'coverage' 'pytest' 'pytest-cov' 'pytest-invenio' 'mock' 'urllib3' 'responses' 'moto'
           python -m pip install 'coverage==4.5.4' 'pytest==5.4.3' 'pytest-cov==2.10.1' 'pytest-invenio==1.3.4' 'mock==3.0.5' 'urllib3==1.21.1' 'responses==0.10.3' 'moto==1.3.5'
-          python -m pip uninstall -y invenio-base
-          python -m pip install 'invenio-base==1.0.2'
 
       - name: Run tests
         run: |
@@ -56,8 +52,9 @@ jobs:
           cd modules/${{ matrix.module }}
           python -m pip install .
           pip freeze
-          ls -ld ./.eggs
+          ls -ld ./.eggs/
           python setup.py test
+          pip freeze
 
       - name: Coveralls
         if: ${{ success() || failure() }}
