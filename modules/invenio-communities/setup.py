@@ -34,7 +34,7 @@ readme = open('README.rst').read()
 history = open('CHANGES.rst').read()
 
 tests_require = [
-    'pytest-invenio==1.3.4',
+    # 'pytest-invenio==1.3.4',
 ]
 
 invenio_search_version = '1.2.2'
