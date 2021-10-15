@@ -54,6 +54,8 @@ jobs:
         run: |
           source venv/bin/activate
           cd modules/${{ matrix.module }}
+          pip freeze
+          ls -ld ./.eggs
           python setup.py test
 
       - name: Coveralls
