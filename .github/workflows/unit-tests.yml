@@ -53,8 +53,9 @@ jobs:
           cd modules/${{ matrix.module }}
           #python -m pip install .
           #pip freeze
-          python -m pip install pipdeptree
-          pipdeptree
+          #python -m pip install pipdeptree
+          #pipdeptree
+          python -m pip install .
           python setup.py test
 
       - name: Coveralls
