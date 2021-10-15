@@ -611,8 +611,18 @@ class WekoDeposit(Deposit):
         """
         if '$schema' in data:
             data.pop('$schema')
+        
+        # Get workflow storage location
+        location_name = None
+        if session and 'activity_info' in session:
+            activity_info = session['activity_info']
+            from weko_workflow.api import WorkActivity
+            activity = WorkActivity.get_activity_by_id(activity_info['activity_id'])
+            if activity and activity.workflow and activity.workflow.location:
+                location_name = activity.workflow.location.name
 
         bucket = Bucket.create(
+            location=location_name,
             quota_size=current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
             max_file_size=current_app.config['WEKO_MAX_FILE_SIZE'],
         )
