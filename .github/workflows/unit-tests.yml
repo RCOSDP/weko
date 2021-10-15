@@ -54,6 +54,7 @@ jobs:
         run: |
           source venv/bin/activate
           cd modules/${{ matrix.module }}
+          python -m pip install .
           pip freeze
           ls -ld ./.eggs
           python setup.py test
