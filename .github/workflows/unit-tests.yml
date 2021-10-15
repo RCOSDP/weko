@@ -50,11 +50,11 @@ jobs:
         run: |
           source venv/bin/activate
           cd modules/${{ matrix.module }}
-          python -m pip install .
-          pip freeze
-          ls -ld ./.eggs/
+          #python -m pip install .
+          #pip freeze
+          python -m pip install pipdeptree
+          pipdeptree
           python setup.py test
-          pip freeze
 
       - name: Coveralls
         if: ${{ success() || failure() }}
