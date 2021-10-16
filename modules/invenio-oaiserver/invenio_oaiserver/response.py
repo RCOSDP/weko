@@ -472,12 +472,17 @@ def listidentifiers(**kwargs):
                 deleted=True
             )
         else:
-            _sets = r['json']['_source'].get('path', [])
-            _sets = record['json']['_source']['_oai'].get('sets', [])
+            _sets = []
+            if 'json' in record:
+                if '_source' in record['json']:
+                    if '_oai' in record['json']['_source']:
+                        _sets = record['json']['_source']['_oai'].get(
+                            'sets', [])
             header(
                 e_listidentifiers,
                 identifier=pid.pid_value,
-                datestamp=r['updated'],
+                # datestamp=r['updated'],
+                datestamp=record.updated,
                 sets=_sets
             )
 
@@ -546,7 +551,8 @@ def listrecords(**kwargs):
             header(
                 e_record,
                 identifier=pid.pid_value,
-                datestamp=record['updated'],
+                # datestamp=record['updated'],
+                datestamp=rec.updated,
                 sets=_sets
             )
             e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
