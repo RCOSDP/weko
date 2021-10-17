@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>Python</ID>
+  <OriginalElement>#/Users/mhaya/git/mhaya/vagrant-weko_org/multi/tmp/weko3_b/modules/invenio-mail/invenio_mail</OriginalElement>
+  <nodes>
+    <node x="0.0" y="683.0">invenio_mail.api.TemplatedMessage</node>
+    <node x="0.0" y="459.0">invenio_mail.admin.MailSettingView</node>
+    <node x="243.5" y="603.0">Message</node>
+    <node x="100.0" y="0.0">Model</node>
+    <node x="103.0" y="379.0">BaseView</node>
+    <node x="330.0" y="80.0">invenio_mail.ext.InvenioMail</node>
+    <node x="426.5" y="0.0">object</node>
+    <node x="0.0" y="80.0">invenio_mail.models.MailConfig</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="invenio_mail.admin.MailSettingView" target="BaseView" relationship="REALIZATION">
+      <point x="0.0" y="-49.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_mail.ext.InvenioMail" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-72.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_mail.models.MailConfig" target="Model" relationship="REALIZATION">
+      <point x="0.0" y="-127.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_mail.api.TemplatedMessage" target="Message" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic" zoom="1.0" showDependencies="false" x="304.5" y="369.0" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Fields</Category>
+    <Category>Inner Classes</Category>
+    <Category>Methods</Category>
+  </Categories>
+</Diagram>
+

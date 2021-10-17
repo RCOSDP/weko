@@ -45,7 +45,7 @@ from sqlalchemy.sql.expression import cast
 from weko_accounts.api import ShibUser
 from weko_accounts.utils import login_required_customize
 from weko_authors.models import Authors
-from weko_deposit.api import WekoDeposit
+from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_deposit.links import base_factory
 from weko_deposit.pidstore import get_record_identifier, \
     get_record_without_version
@@ -57,7 +57,8 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
 from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
     get_workflows
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 
 from .api import Action, Flow, GetCommunity, WorkActivity, \
@@ -840,11 +841,14 @@ def next_action(activity_id='0', action_id=0):
         if deposit:
             pid_without_ver = get_record_without_version(current_pid)
 
-    if action_endpoint in ['item_login',
-                           'item_login_application'] and current_pid and \
-        current_pid is pid_without_ver and \
-            current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
+    current_app.logger.debug("action_endpoint: {0}, current_pid: {1}, item_id: {2}".format(
+        action_endpoint, current_pid, pid_without_ver.pid_value))
+    record = WekoRecord.get_record_by_pid(pid_without_ver.pid_value)
+    current_app.logger.debug("record: {0}".format(record.pid_cnri))
+
+    if action_endpoint in ['item_login', 'item_login_application'] and (record.pid_cnri is None) and current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CNRI'):
         register_hdl(activity_id)
+
     flow = Flow()
     next_flow_action = flow.get_next_flow_action(
         activity_detail.flow_define.flow_id, action_id, action_order)
@@ -1140,14 +1144,23 @@ def next_action(activity_id='0', action_id=0):
     # delete session value
     if session.get('itemlogin_id'):
         del session['itemlogin_id']
+    if session.get('itemlogin_activity'):
         del session['itemlogin_activity']
+    if session.get('itemlogin_item'):
         del session['itemlogin_item']
+    if session.get('itemlogin_steps'):
         del session['itemlogin_steps']
+    if session.get('itemlogin_action_id'):
         del session['itemlogin_action_id']
+    if session.get('itemlogin_cur_step'):
         del session['itemlogin_cur_step']
+    if session.get('itemlogin_record'):
         del session['itemlogin_record']
+    if session.get('itemlogin_res_check'):
         del session['itemlogin_res_check']
+    if session.get('itemlogin_pid'):
         del session['itemlogin_pid']
+    if session.get('itemlogin_community_id'):
         del session['itemlogin_community_id']
     return jsonify(code=0, msg=_('success'))
 
@@ -1410,7 +1423,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
                            msg=_('Password not provided'))
         wekouser = ShibUser()
         if password == 'DELETE':
-        #if wekouser.check_weko_user(current_user.email, password):
+            # if wekouser.check_weko_user(current_user.email, password):
             activity = WorkActivity()
             item_id = activity.get_activity_detail(activity_id).item_id
             identifier_actionid = get_actionid('identifier_grant')

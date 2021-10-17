@@ -1319,15 +1319,17 @@ def import_items_to_system(item: dict, request_info: dict):
         return None
     else:
         try:
+            #current_app.logger.debug("item: {0}".format(item))
+            status = item.get('status')
             root_path = item.get('root_path', '')
-            if item.get('status') == 'new':
+            if status == 'new':
                 item_id = create_deposit(item.get('id'))
                 item['id'] = item_id
             else:
                 handle_check_item_is_locked(item)
 
             register_item_metadata(item, root_path)
-            if current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
+            if current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CNRI'):
                 register_item_handle(item)
             register_item_doi(item)
 
@@ -1335,7 +1337,7 @@ def import_items_to_system(item: dict, request_info: dict):
                 item.get('publish_status')
             )
             register_item_update_publish_status(item, str(status_number))
-            if item.get('status') == 'new':
+            if status == 'new':
                 # Store data to es and db.
                 store_data_to_es_and_db(item, request_info)
             db.session.commit()
@@ -1559,7 +1561,7 @@ def handle_check_cnri(list_record):
         error = None
         item_id = str(item.get('id'))
         cnri = item.get('cnri')
-        cnri_set = current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI')
+        cnri_set = current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CNRI')
 
         if item.get('is_change_identifier') and cnri_set:
             if not cnri:
@@ -1664,6 +1666,10 @@ def handle_check_doi_ra(list_record):
             pid = WekoRecord.get_record_by_pid(item_id).pid_recid
             identifier = IdentifierHandle(pid.object_uuid)
             _value, doi_type = identifier.get_idt_registration_data()
+            current_app.logger.debug(
+                "item_id:{0} doi_ra:{1}".format(item_id, doi_ra))
+            current_app.logger.debug(
+                "doi_type:{0} _value:{1}".format(doi_type, _value))
 
             if (doi_type and doi_type[0] != doi_ra) \
                     or (not doi_type and doi_ra):
@@ -1672,12 +1678,16 @@ def handle_check_doi_ra(list_record):
         except Exception as ex:
             current_app.logger.error('item id: %s not found.' % item_id)
             current_app.logger.error(ex)
+
         return error
 
     for item in list_record:
         errors = []
         item_id = str(item.get('id'))
         doi_ra = item.get('doi_ra')
+
+        current_app.logger.debug(
+            "item_id:{0} doi_ra:{1}".format(item_id, doi_ra))
 
         if item.get('doi') and not doi_ra:
             errors.append(_('Please specify {}.').format('DOI_RA'))
@@ -1689,6 +1699,8 @@ def handle_check_doi_ra(list_record):
             else:
                 validation_errors = handle_doi_required_check(item)
                 if validation_errors:
+                    current_app.logger.error(
+                        "handle_doi_required_check: {0}".format(validation_errors))
                     errors.extend(validation_errors)
                 if not item.get('is_change_identifier') \
                         and item.get('status') != 'new':
@@ -1698,6 +1710,7 @@ def handle_check_doi_ra(list_record):
         elif item.get('status') != 'new':
             error = check_existed(item_id, doi_ra)
             if error:
+                current_app.logger.error("check_existed: ".format(error))
                 errors.append(error)
 
         if errors:
@@ -1798,11 +1811,15 @@ def register_item_handle(item):
         response -- {object} Process status.
 
     """
+    current_app.logger.debug('start register_item_handle(item)')
     item_id = str(item.get('id'))
     record = WekoRecord.get_record_by_pid(item_id)
     pid = record.pid_recid
     pid_hdl = record.pid_cnri
     cnri = item.get('cnri')
+    status = item.get('status')
+    current_app.logger.debug(
+        "item_id:{0} pid:{1} pid_hdl:{2} cnri:{3} status:{4}".format(item_id, pid, pid_hdl, cnri, status))
 
     if item.get('is_change_identifier'):
         if item.get('cnri_suffix_not_existed'):
@@ -1820,6 +1837,12 @@ def register_item_handle(item):
     else:
         if item.get('status') == 'new':
             register_hdl_by_item_id(item_id, pid.object_uuid, get_url_root())
+        else:
+            if pid_hdl is None and cnri is None:
+                register_hdl_by_item_id(
+                    item_id, pid.object_uuid, get_url_root())
+
+    current_app.logger.debug('end register_item_handle(item)')
 
 
 def prepare_doi_setting():

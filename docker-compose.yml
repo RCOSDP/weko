@@ -64,6 +64,7 @@ services:
       - INVENIO_DB_POOL_CLASS=QueuePool
       - GOOGLE_TRACKING_ID_SYSTEM=
       - GOOGLE_TRACKING_ID_USER=
+      - TMPDIR=/tmp
     volumes:
       - weko3_data:/var/tmp
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
@@ -126,6 +127,10 @@ services:
         max-size: "10m"
     ports:
       - "5001:5000"
+    #privileged: true
+    # pscap apt-get install libcap-ng-utils
+    #cap_add:
+    #  - SYS_ADMIN
     deploy:
       resources:
         limits:
@@ -159,6 +164,11 @@ services:
     build:
       context: .
       dockerfile: ./elasticsearch/Dockerfile
+      args:
+        - ELASTICSEARCH_S3_ACCESS_KEY=${ELASTICSEARCH_S3_ACCESS_KEY}
+        - ELASTICSEARCH_S3_SECRET_KEY=${ELASTICSEARCH_S3_SECRET_KEY}
+        - ELASTICSEARCH_S3_ENDPOINT=${ELASTICSEARCH_S3_ENDPOINT}
+        - ELASTICSEARCH_S3_BUCKET=${ELASTICSEARCH_S3_BUCKET}
     volumes:
       - es-data:/usr/share/elasticsearch/data
     environment:

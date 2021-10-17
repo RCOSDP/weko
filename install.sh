@@ -2,6 +2,7 @@
 
 
 docker-compose down -v
+docker volume rm $(docker volume ls -f name=weko -q)
 #docker-compose build
 docker-compose up -d
 docker-compose exec web ./scripts/populate-instance.sh

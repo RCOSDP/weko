@@ -624,6 +624,13 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         "display_index_tree": display_index_tree
     })
 
+    # Get display_community setting.
+    display_community = get_search_setting().get("display_control", {}).get(
+        'display_community', {}).get('status', False)
+    ctx.update({
+        "display_community": display_community
+    })
+
     return render_template(
         template,
         pid=pid,

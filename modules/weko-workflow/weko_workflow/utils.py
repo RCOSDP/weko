@@ -62,7 +62,8 @@ from weko_records.models import ItemType
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
 from weko_records_ui.utils import create_onetime_download_url, \
     generate_one_time_download_url, get_list_licence
-from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
+from weko_user_profiles.config import \
+    WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
 from weko_user_profiles.utils import get_user_profile_info
 from werkzeug.utils import import_string
@@ -214,6 +215,8 @@ def register_hdl(activity_id):
     """
     activity = WorkActivity().get_activity_detail(activity_id)
     item_uuid = activity.item_id
+    current_app.logger.debug(
+        "register_hdl: {0} {1}".format(activity_id, item_uuid))
     record = WekoRecord.get_record(item_uuid)
 
     if record.pid_cnri:
@@ -245,6 +248,8 @@ def register_hdl_by_item_id(deposit_id, item_uuid, url_root):
     :param url_root: url_root
     :return handle: HDL handle
     """
+    current_app.logger.debug(
+        "start register_hdl_by_item_id(deposit_id, item_uuid, url_root):")
     record_url = url_root \
         + 'records/' + str(deposit_id)
 
@@ -258,6 +263,8 @@ def register_hdl_by_item_id(deposit_id, item_uuid, url_root):
     else:
         current_app.logger.info('Cannot connect Handle server!')
 
+    current_app.logger.debug(
+        "end register_hdl_by_item_id(deposit_id, item_uuid, url_root):")
     return handle
 
 
@@ -268,10 +275,15 @@ def register_hdl_by_handle(handle, item_uuid):
     :param handle: HDL handle
     :param item_uuid: Item uuid
     """
+    current_app.logger.debug(
+        "start register_hdl_by_handle(handle, item_uuid):")
+    current_app.logger.debug(
+        "handle:{0} item_uuid:{1}".format(handle, item_uuid))
     if handle:
         handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
         identifier = IdentifierHandle(item_uuid)
         identifier.register_pidstore('hdl', handle)
+    current_app.logger.debug("end register_hdl_by_handle(handle, item_uuid):")
 
 
 def item_metadata_validation(item_id, identifier_type, record=None,
