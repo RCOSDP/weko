@@ -5,6 +5,22 @@
 -- Dumped from database version 12.6 (Debian 12.6-1.pgdg100+1)
 -- Dumped by pg_dump version 12.6 (Debian 12.6-1.pgdg100+1)
 
+-- public.facet_search_setting definition
+
+-- Drop table
+
+-- DROP TABLE public.facet_search_setting;
+
+CREATE TABLE IF NOT EXISTS facet_search_setting (
+	id serial4 NOT NULL,
+	name_en varchar(255) NOT NULL,
+	name_jp varchar(255) NULL,
+	"mapping" varchar(255) NOT NULL,
+	aggregations jsonb NULL,
+	active bool NULL,
+	CONSTRAINT pk_facet_search_setting PRIMARY KEY (id)
+);
+
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
