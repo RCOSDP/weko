@@ -29,7 +29,7 @@ jobs:
       - name: Install system packages
         run: |
           sudo apt-get update
-          #sudo apt-get install python3-setuptools libpq-dev libedit-dev libsqlite3-dev
+          sudo apt-get install python3-setuptools libpq-dev libedit-dev libsqlite3-dev
       - name: Setup python
         uses: actions/setup-python@v2
         with:
