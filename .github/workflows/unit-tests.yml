@@ -50,11 +50,8 @@ jobs:
         run: |
           source venv/bin/activate
           cd modules/${{ matrix.module }}
-          #python -m pip install .
-          #pip freeze
-          #python -m pip install pipdeptree
-          #pipdeptree
           python -m pip install .
+          pip list
           python setup.py test
 
       - name: Coveralls
