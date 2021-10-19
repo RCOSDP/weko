@@ -12,9 +12,41 @@ jobs:
         module:
           - invenio-communities
           - invenio-deposit
-          - invenio-db
           - invenio-files-rest
           - invenio-mail
+          - invenio-oaiharvester
+          - invenio-oaiserver
+          - invenio-oauth2server
+          - invenio-previewer
+          - invenio-records
+          - invenio-records-rest
+          - invenio-resourcesyncclient
+          - invenio-resourcesyncserver
+          - invenio-s3
+          - invenio-stats
+          - weko-accounts
+          - weko-admin
+          - weko-authors
+          - weko-bulkupdate
+          - weko-deposit
+          - weko-gridlayout
+          - weko-groups
+          - weko-handle
+          - weko-index-tree
+          - weko-indextree-journal
+          - weko-items-autofill
+          - weko-items-ui
+          - weko-itemtypes-ui
+          - weko-logging
+          - weko-plugins
+          - weko-records
+          - weko-records-ui
+          - weko-schema-ui
+          - weko-search-ui
+          - weko-sitemap
+          - weko-theme
+          - weko-user-profiles
+          - weko-workflow
           
     steps:
       - name: Checkout
