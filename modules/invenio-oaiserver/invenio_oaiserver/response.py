@@ -29,7 +29,8 @@ from .models import OAISet
 from .provider import OAIIDProvider
 from .query import get_records
 from .resumption_token import serialize
-from .utils import datetime_to_datestamp, handle_license_free, serializer
+from .utils import datetime_to_datestamp, handle_license_free, \
+    serializer, has_guest_role
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
 NS_OAIPMH_XSD = 'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
@@ -402,6 +403,8 @@ def getrecord(**kwargs):
     # Harvest is private
     _is_private_index = is_private_index(record)
     _is_private_workflow = is_private_workflow(record)
+    _has_guest_role = has_guest_role(record.get('path')) \
+        if 'path' in record else False
     if (not harvest_public_state
         or not identify
         or not identify.outPutSetting
@@ -411,7 +414,9 @@ def getrecord(**kwargs):
     # Item is deleted
     # or Harvest is public & Item is private
     # or Harvest is public & Index is private
+    # or Harvest is public & There is no guest role in the index Browsing Privilege
     elif is_deleted_workflow(pid) \
+            or not _has_guest_role \
             or _is_private_index or _is_private_workflow \
             or is_pubdate_in_future(record):
         header(
@@ -468,6 +473,8 @@ def listidentifiers(**kwargs):
         # Harvest is private
         _is_private_index = is_private_index_by_public_list(
             record.get('path'), public_index_ids)
+        _has_guest_role = has_guest_role(record.get('path')) \
+            if 'path' in record else False
         if not harvest_public_state or\
                 (_is_private_index
                     and harvest_public_state and is_exists_doi(record)):
@@ -475,9 +482,12 @@ def listidentifiers(**kwargs):
         # Item is deleted
         # or Harvest is public & Item is private
         # or Harvest is public & Index is private
+        # or Harvest is public & There is no guest role in the index Browsing Privilege
         elif is_deleted_workflow(pid_object) or (
-            harvest_public_state and is_private_workflow(record)) or (
-                harvest_public_state and _is_private_index):
+            harvest_public_state and (
+                is_private_workflow(record) or 
+                _is_private_index or
+                not _has_guest_role)):
             header(
                 e_listidentifiers,
                 identifier=pid.pid_value,
@@ -544,7 +554,9 @@ def listrecords(**kwargs):
         # Check output delete, noRecordsMatch
         is_link_private_index = is_private_index_by_public_list(
             rec.get('path', []), public_index_ids)
-        if not is_link_private_index:
+        _has_guest_role = has_guest_role(rec.get('path')) \
+            if 'path' in rec else False
+        if not is_link_private_index and _has_guest_role:
             if is_deleted_workflow(pid_object) \
                     or is_private_workflow(rec) \
                     or is_pubdate_in_future(rec):

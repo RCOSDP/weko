@@ -17,6 +17,7 @@ from lxml import etree
 from lxml.builder import E
 from lxml.etree import Element
 from weko_schema_ui.schema import get_oai_metadata_formats
+from weko_index_tree.api import Indexes
 from werkzeug.utils import import_string
 
 try:
@@ -201,3 +202,24 @@ def handle_license_free(record_metadata):
                         del attr[_license_type]
 
     return record_metadata
+
+
+def has_guest_role(item_path):
+    def _check_guest_role(index_id, has_guest):
+        if index_id in has_guest:
+            if has_guest[index_id] != '0':
+                return _check_guest_role(has_guest[index_id], has_guest)
+            else:
+                return True
+        else:
+            return False
+
+    ids = Indexes.get_browsing_info()
+    has_guest = {}
+    for i, v in ids.items():
+        if 'browsing_role' in v and '-99' in v['browsing_role']:
+            has_guest[i] = v['parent']
+    result = False
+    for path in item_path:
+        result = result or _check_guest_role(path, has_guest)
+    return result
