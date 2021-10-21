@@ -43,7 +43,8 @@ from resync.sitemap import Sitemap
 from weko_deposit.api import WekoDeposit
 from weko_records_ui.utils import soft_delete
 
-from .config import INVENIO_RESYNC_INDEXES_MODE
+from .config import INVENIO_RESYNC_ENABLE_ITEM_VERSIONING, \
+    INVENIO_RESYNC_INDEXES_MODE
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -239,13 +240,13 @@ def process_item(record, resync, counter):
             resync,
             mapper.identifier()
         )).first()
+    current_app.logger.debug(resyncid)
     if resyncid:
         r = RecordMetadata.query.filter_by(id=resyncid.object_uuid).first()
         recid = PersistentIdentifier.query.filter_by(
             pid_type='recid', object_uuid=resyncid.object_uuid).first()
         recid.status = PIDStatus.REGISTERED
-        pubdate = dateutil.parser.parse(
-            r.json['pubdate']['attribute_value']).date()
+        current_app.logger.debug('json: {0}'.format(r.json))
         dep = WekoDeposit(r.json, r)
         indexes = dep['path'].copy()
         event = ItemEvents.UPDATE
@@ -279,9 +280,10 @@ def process_item(record, resync, counter):
         # add item versioning
         pid = PersistentIdentifier.query.filter_by(
             pid_type='recid', pid_value=dep.pid.pid_value).first()
-        with current_app.test_request_context() as ctx:
-            first_ver = dep.newversion(pid)
-            first_ver.publish()
+        if INVENIO_RESYNC_ENABLE_ITEM_VERSIONING or (event == ItemEvents.CREATE):
+            with current_app.test_request_context() as ctx:
+                first_ver = dep.newversion(pid)
+                first_ver.publish()
     db.session.commit()
     if event == ItemEvents.CREATE:
         event_counter('created_items', counter)

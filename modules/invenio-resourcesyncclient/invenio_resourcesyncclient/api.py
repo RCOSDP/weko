@@ -115,7 +115,11 @@ class ResyncHandler(object):
                 db.session.add(resync)
             db.session.commit()
             return ResyncHandler.from_modal(resync).update({
-                'resync_save_dir': '{0}{1}'.format(INVENIO_RESYNC_SAVE_PATH, resync.id)
+                'resync_save_dir': '{0}{1}'.format(
+                    current_app.config.get(
+                        'INVENIO_RESYNC_SAVE_PATH',
+                        INVENIO_RESYNC_SAVE_PATH
+                    ), resync.id)
             })
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)

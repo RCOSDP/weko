@@ -14,6 +14,7 @@ from datetime import MINYEAR, datetime, timedelta
 from flask import current_app, request, url_for
 from flask_babelex import get_locale, to_user_timezone, to_utc
 from invenio_communities import config as invenio_communities_config
+from invenio_communities.models import Community
 from invenio_db import db
 from invenio_records.models import RecordMetadata
 from lxml import etree
@@ -200,20 +201,19 @@ def resumption_token(parent, pagination, **kwargs):
 
 def listsets(**kwargs):
     """Create OAI-PMH response for ListSets verb."""
-    from weko_index_tree.api import Indexes
-
     e_tree, e_listsets = verb(**kwargs)
     page = kwargs.get('resumptionToken', {}).get('page', 1)
     size = current_app.config['OAISERVER_PAGE_SIZE']
     oai_sets = OAISet.query.paginate(page=page, per_page=size, error_out=False)
 
     for oai_set in oai_sets.items:
-        index_path = [oai_set.spec.replace(':', '/')]
-        if Indexes.is_public_state([str(oai_set.id)]) is not None \
-                and (not Indexes.is_public_state(index_path.copy())
-                     or not Indexes.get_harvest_public_state(
-                    index_path.copy())):
-            continue
+        if Indexes.is_index(str(oai_set.spec)) is True:
+            index_path = [oai_set.spec.replace(':', '/')]
+            if Indexes.is_public_state([str(oai_set.id)]) is not None \
+                    and (not Indexes.is_public_state(index_path.copy())
+                         or not Indexes.get_harvest_public_state(
+                        index_path.copy())):
+                continue
 
         e_set = SubElement(e_listsets, etree.QName(NS_OAIPMH, 'set'))
         e_setSpec = SubElement(e_set, etree.QName(NS_OAIPMH, 'setSpec'))
@@ -277,13 +277,7 @@ def header(parent, identifier, datestamp, sets=[], deleted=False):
     e_datestamp = SubElement(e_header, etree.QName(NS_OAIPMH, 'datestamp'))
     e_datestamp.text = datetime_to_datestamp(datestamp)
     if sets:
-        _paths = []
-        _sets = []
-        for set in sets:
-            if invenio_communities_config.COMMUNITIES_OAI_FORMAT.replace("{community_id}", "") in set:
-                _sets.append(set)
-            else:
-                _paths.append(set)
+        _paths, _sets = extract_paths_from_sets(sets)
 
         paths = Indexes.get_path_name(_paths)
         for path in paths:
@@ -296,6 +290,26 @@ def header(parent, identifier, datestamp, sets=[], deleted=False):
             e.text = set
 
     return e_header
+
+
+def extract_paths_from_sets(sets):
+    """Extract the paths in the set
+
+    Args:
+        sets (list): list of sets
+
+    Returns:
+        list,list: list of paths and list of sets
+    """
+    _paths = []
+    _sets = []
+    for set in sets:
+        if Indexes.is_index(set):
+            _paths.append(set)
+        else:
+            _sets.append(set)
+
+    return _paths, _sets
 
 
 def is_deleted_workflow(pid):
@@ -408,8 +422,7 @@ def getrecord(**kwargs):
         )
         return e_tree
 
-    _sets = record.get('path', [])
-    _sets = record['_oai'].get('sets', [])
+    _sets = list(set(record.get('path', [])+record['_oai'].get('sets', [])))
     header(
         e_record,
         identifier=pid.pid_value,
@@ -472,12 +485,17 @@ def listidentifiers(**kwargs):
                 deleted=True
             )
         else:
-            _sets = r['json']['_source'].get('path', [])
-            _sets = record['json']['_source']['_oai'].get('sets', [])
+            _sets = []
+            if 'json' in record:
+                if '_source' in record['json']:
+                    if '_oai' in record['json']['_source']:
+                        _sets = record['json']['_source']['_oai'].get(
+                            'sets', [])
             header(
                 e_listidentifiers,
                 identifier=pid.pid_value,
-                datestamp=r['updated'],
+                # datestamp=r['updated'],
+                datestamp=record.updated,
                 sets=_sets
             )
 
@@ -519,46 +537,42 @@ def listrecords(**kwargs):
         [record['id'] for record in result.items])
     db_records = {str(record.id): record for record in db_records}
     for record in result.items:
-        try:
-            pid = oaiid_fetcher(record['id'], record['json']['_source'])
-            pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
-            rec = db_records.get(record['id'])
-            set_identifier(record, rec)
-            # Check output delete, noRecordsMatch
-            is_link_private_index = is_private_index_by_public_list(
-                rec.get('path', []), public_index_ids)
-            if not is_link_private_index:
-                if is_deleted_workflow(pid_object) \
-                        or is_private_workflow(rec) \
-                        or is_pubdate_in_future(rec):
-                    if not (is_pubdate_in_future(rec)
-                            and is_exists_doi(record)):
-                        append_deleted_record(e_listrecords, pid_object, rec)
-                    continue
-            else:
-                if not is_exists_doi(record):
+        pid = oaiid_fetcher(record['id'], record['json']['_source'])
+        pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
+        rec = db_records.get(record['id'])
+        set_identifier(record, rec)
+        # Check output delete, noRecordsMatch
+        is_link_private_index = is_private_index_by_public_list(
+            rec.get('path', []), public_index_ids)
+        if not is_link_private_index:
+            if is_deleted_workflow(pid_object) \
+                    or is_private_workflow(rec) \
+                    or is_pubdate_in_future(rec):
+                if not (is_pubdate_in_future(rec)
+                        and is_exists_doi(record)):
                     append_deleted_record(e_listrecords, pid_object, rec)
                 continue
-            e_record = SubElement(
-                e_listrecords, etree.QName(NS_OAIPMH, 'record'))
-            _sets = record['json']['_source'].get('path', [])
-            _sets = record['json']['_source']['_oai'].get('sets', [])
-            header(
-                e_record,
-                identifier=pid.pid_value,
-                datestamp=record['updated'],
-                sets=_sets
-            )
-            e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
-                                                          'metadata'))
-            etree_record = copy.deepcopy(record['json'])
-            # Merge licensetype and licensefree
-            handle_license_free(etree_record['_source']['_item_metadata'])
-            e_metadata.append(record_dumper(pid, etree_record))
-        except Exception:
-            current_app.logger.error(traceback.print_exc())
-            current_app.logger.error('Error when exporting item id '
-                                     + str(record['id']))
+        else:
+            if not is_exists_doi(record):
+                append_deleted_record(e_listrecords, pid_object, rec)
+            continue
+        e_record = SubElement(
+            e_listrecords, etree.QName(NS_OAIPMH, 'record'))
+        _sets = list(set(record['json']['_source'].get(
+            'path', []) + record['json']['_source']['_oai'].get('sets', [])))
+        header(
+            e_record,
+            identifier=pid.pid_value,
+            # datestamp=record['updated'],
+            datestamp=rec.updated,
+            sets=_sets
+        )
+        e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
+                                                      'metadata'))
+        etree_record = copy.deepcopy(record['json'])
+        # Merge licensetype and licensefree
+        handle_license_free(etree_record['_source']['_item_metadata'])
+        e_metadata.append(record_dumper(pid, etree_record))
     # Check <record> tag not exist.
     if len(e_listrecords) == 0:
         return error(get_error_code_msg(), **kwargs)

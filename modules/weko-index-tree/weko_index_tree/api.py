@@ -1220,6 +1220,26 @@ class Indexes(object):
             return False
 
     @classmethod
+    def is_index(cls, path):
+        ret = False
+
+        if ":" in path:
+            ret = True
+        else:
+            try:
+                _n = int(path)
+                current_app.logger.debug(path)
+                _idx = cls.get_index(_n)
+                if _idx is not None:
+                    ret = True
+                else:
+                    ret = False
+            except ValueError:
+                ret = False
+
+        return ret
+
+    @classmethod
     def is_public_state(cls, paths):
         """Check have public state."""
         def _query(path):

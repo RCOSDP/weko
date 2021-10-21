@@ -45,7 +45,7 @@ def load_records(app, filename, schema, tries=5):
                     record_id = uuid.uuid4()
                     item_dict = dict(marc21.do(item))
                     item_dict['$schema'] = schema
-                    recid_minter(record_id, item_dict)
+                    recid = recid_minter(record_id, item_dict)
                     oaiid_minter(record_id, item_dict)
                     record = Record.create(item_dict, id_=record_id)
                     indexer.index(record)
@@ -89,7 +89,7 @@ def create_record(app, item_dict, mint_oaiid=True):
     indexer = RecordIndexer()
     with app.test_request_context():
         record_id = uuid.uuid4()
-        recid_minter(record_id, item_dict)
+        recid = recid_minter(record_id, item_dict)
         if mint_oaiid:
             oaiid_minter(record_id, item_dict)
         record = Record.create(item_dict, id_=record_id)

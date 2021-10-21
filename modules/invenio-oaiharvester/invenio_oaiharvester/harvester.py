@@ -628,6 +628,16 @@ def add_file(schema, mapping, res, metadata):
     parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
+def add_identifier(schema, mapping, res, metadata):
+    """Add identifier."""
+    patterns = [
+        ('identifier.@value', TEXT),
+        ('identifier.@attributes.identifierType', '@identifierType'),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
+
+
 def add_source_title(schema, mapping, res, metadata):
     """Add source title."""
     patterns = [
@@ -1446,6 +1456,8 @@ class JPCOARMapper(BaseMapper):
                 partial(add_rights_holder, *args),
             'jpcoar:file':
                 partial(add_file, *args),
+            'jpcoar:identifier':
+                partial(add_identifier, *args),
         }
 
         tags = self.json['record']['metadata']['jpcoar:jpcoar']

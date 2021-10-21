@@ -51,4 +51,7 @@ INVENIO_RESYNC_LOGS_STATUS = {
 INVENIO_RESYNC_SAVE_PATH = '/tmp/resync/'
 
 INVENIO_RESYNC_MODE = True
-"""    """
+"""  If True, fetch files collected by resync.   """
+
+INVENIO_RESYNC_ENABLE_ITEM_VERSIONING = False
+""" If True, the version of the item will be updated upon import.  """
