@@ -19,14 +19,17 @@
 # MA 02111-1307, USA.
 
 """Weko Deposit celery tasks."""
+from time import sleep
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
-from elasticsearch.exceptions import TransportError
 from flask import current_app
 from invenio_db import db
-from invenio_records.models import RecordMetadata
+from invenio_indexer.api import RecordIndexer
+from invenio_pidstore.models import PersistentIdentifier
+from invenio_search import RecordsSearch
 from sqlalchemy.exc import SQLAlchemyError
+from weko_authors.models import AuthorsPrefixSettings
 
 from .api import WekoDeposit
 
