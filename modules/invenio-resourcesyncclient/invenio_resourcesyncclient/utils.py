@@ -299,7 +299,8 @@ def process_item(record, resync, counter):
             dep = WekoDeposit(r.json, r)
             current_app.logger.debug('{0} {1} {2}: {3}'.format(
                 __file__, 'process_item()', 'WekoDeposit', dep))
-            indexes = dep['path'].copy()
+            if 'path' in dep:
+                indexes = dep['path'].copy()
             indexes.append(str(resync.index_id)) if str(
                 resync.index_id) not in indexes else None
             json = mapper.map()
