@@ -35,6 +35,8 @@ from invenio_records_rest.utils import obj_or_import_string
 from invenio_records_rest.views import pass_record
 from invenio_rest import ContentNegotiatedMethodView
 from simplekv.memory.redisstore import RedisStore
+from sqlalchemy.exc import SQLAlchemyError
+from elasticsearch import ElasticsearchException s
 
 from .api import WekoDeposit
 
@@ -206,9 +208,9 @@ class ItemResource(ContentNegotiatedMethodView):
                 pid = PersistentIdentifier.get('recid', pid_value.split(".")[0])
                 deposit = WekoDeposit.get_record(pid.object_uuid)
 
-                upgrade_record = deposit.newversion(pid)
-
+                
                 with db.session.begin_nested():
+
                     if upgrade_record and ".0" in pid_value:
                         _upgrade_record = WekoDeposit(
                             upgrade_record,
@@ -227,6 +229,8 @@ class ItemResource(ContentNegotiatedMethodView):
                     object_uuid=upgrade_record.model.id).one_or_none()
                 pid_value = pid.pid_value if pid else pid_value
 
+                upgrade_record = deposit.newversion(pid)
+
             # Saving ItemMetadata cached on Redis by pid
             datastore = RedisStore(redis.StrictRedis.from_url(
                 current_app.config['CACHE_REDIS_URL']))
@@ -237,8 +241,30 @@ class ItemResource(ContentNegotiatedMethodView):
                 cache_key,
                 json.dumps(data).encode('utf-8'),
                 ttl_secs=ttl_sec)
-        except BaseException:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        except SQLAlchemyError as ex:
+            current_app.logger.error('sqlalchemy error: ', ex)
+            db.session.rollback()
+            abort(400, "Failed to register item!")
+
+        except ElasticsearchException as ex:
+            current_app.logger.error('elasticsearch error: ', ex)
+            db.session.rollback()
+
+            #elasticseacrh remove 
+            #dammy()
+
+
+            abort(400, "Failed to register item!")
+        except redis.RedisError as ex:
+            current_app.logger.error('redis error: ', ex)
+            db.session.rollback()
+
+            #elasticseacrh remove 
+            #dammy()
+
+            abort(400, "Failed to register item!")
+        except BaseException as ex:
+            current_app.logger.error('Unexpected error: ', ex)
             db.session.rollback()
             abort(400, "Failed to register item!")
 

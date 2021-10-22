@@ -795,7 +795,7 @@ class WorkActivity(object):
         max_id = db.session.query(func.count(_Activity.id)).filter(
             _Activity.created >= '{}'.format(current_date_start),
             _Activity.created < '{}'.format(next_date_start),
-        ).scalar()
+        ).scalar().with_lockmode("update")
 
         if max_id:
             # Calculate aid
