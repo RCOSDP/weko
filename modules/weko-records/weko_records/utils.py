@@ -253,39 +253,42 @@ def json_loader(data, pid, owner_id=None):
 
 def copy_field_test(dc, map, jrc, iid=None):
     for k_v in map:
-        if k_v.get('item_value'):
-            if dc["item_type_id"] in k_v.get('item_value').keys():
-                for key, val in k_v.get('item_value').items():
-                    if dc["item_type_id"] == key:
-                        if k_v.get('input_Type') == 'text':
-                            if get_value_from_dict(dc, val["path"], val["path_type"], iid):
-                                jrc[key] = get_value_from_dict(
-                                    dc, val["path"], val["path_type"], iid)
-                            elif k_v.get('input_Type') == "range":
-                                value_range = {key: {"gte": "", "lte": ""}}
-                                value_range[key]["gte"] = get_value_from_dict(
-                                    dc, val["path"]["gte"], val["path_type"]["gte"], iid)
-                                value_range[key]["lte"] = get_value_from_dict(
-                                    dc, val["path"]["lte"], val["path_type"]["lte"], iid)
-                                if value_range[key]["gte"] and value_range[key]["lte"]:
-                                    jrc.update(value_range)
-                            elif k_v.get('input_Type') == "geo_point":
-                                geo_point = {key: {"lat": "", "lon": ""}}
-                                geo_point[key]["lat"] = get_value_from_dict(
-                                    dc, val["path"]["lat"], val["path_type"]["lat"], iid)
-                                geo_point[key]["lon"] = get_value_from_dict(
-                                    dc, val["path"]["lon"], val["path_type"]["lon"], iid)
-                                if geo_point[key]["lat"] and geo_point[key]["lon"]:
-                                    jrc.update(geo_point)
-                            elif k_v.get('input_Type') == "geo_shape":
-                                geo_shape = {
-                                    key: {"type": "", "coordinates": ""}}
-                                geo_shape[key]["type"] = get_value_from_dict(
-                                    dc, val["path"]["type"], val["path_type"]["type"], iid)
-                                geo_shape[key]["coordinates"] = get_value_from_dict(
-                                    dc, val["path"]["coordinates"], val["path_type"]["coordinates"], iid)
-                                if geo_shape[key]["type"] and geo_shape[key]["coordinates"]:
-                                    jrc.update(geo_shape)
+        current_app.logger.debug('{0} {1} {2}: {3}'.format(
+            __file__, 'copy_field_test()', 'k_v', k_v))
+        if type(k_v) is dict:
+            if k_v.get('item_value'):
+                if dc["item_type_id"] in k_v.get('item_value').keys():
+                    for key, val in k_v.get('item_value').items():
+                        if dc["item_type_id"] == key:
+                            if k_v.get('input_Type') == 'text':
+                                if get_value_from_dict(dc, val["path"], val["path_type"], iid):
+                                    jrc[key] = get_value_from_dict(
+                                        dc, val["path"], val["path_type"], iid)
+                                elif k_v.get('input_Type') == "range":
+                                    value_range = {key: {"gte": "", "lte": ""}}
+                                    value_range[key]["gte"] = get_value_from_dict(
+                                        dc, val["path"]["gte"], val["path_type"]["gte"], iid)
+                                    value_range[key]["lte"] = get_value_from_dict(
+                                        dc, val["path"]["lte"], val["path_type"]["lte"], iid)
+                                    if value_range[key]["gte"] and value_range[key]["lte"]:
+                                        jrc.update(value_range)
+                                elif k_v.get('input_Type') == "geo_point":
+                                    geo_point = {key: {"lat": "", "lon": ""}}
+                                    geo_point[key]["lat"] = get_value_from_dict(
+                                        dc, val["path"]["lat"], val["path_type"]["lat"], iid)
+                                    geo_point[key]["lon"] = get_value_from_dict(
+                                        dc, val["path"]["lon"], val["path_type"]["lon"], iid)
+                                    if geo_point[key]["lat"] and geo_point[key]["lon"]:
+                                        jrc.update(geo_point)
+                                elif k_v.get('input_Type') == "geo_shape":
+                                    geo_shape = {
+                                        key: {"type": "", "coordinates": ""}}
+                                    geo_shape[key]["type"] = get_value_from_dict(
+                                        dc, val["path"]["type"], val["path_type"]["type"], iid)
+                                    geo_shape[key]["coordinates"] = get_value_from_dict(
+                                        dc, val["path"]["coordinates"], val["path_type"]["coordinates"], iid)
+                                    if geo_shape[key]["type"] and geo_shape[key]["coordinates"]:
+                                        jrc.update(geo_shape)
 
 
 def get_value_from_dict(dc, path, path_type, iid=None):
