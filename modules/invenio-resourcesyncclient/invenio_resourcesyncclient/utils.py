@@ -44,7 +44,7 @@ from weko_deposit.api import WekoDeposit
 from weko_records_ui.utils import soft_delete
 
 from .config import INVENIO_RESYNC_ENABLE_ITEM_VERSIONING, \
-    INVENIO_RESYNC_INDEXES_MODE
+    INVENIO_RESYNC_INDEXES_MODE, INVENIO_RESYNC_MODE
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -227,50 +227,42 @@ def get_list_records(resync_id):
 def process_item(record, resync, counter):
     """Process item."""
     current_app.logger.debug('{0} {1} {2}: {3}'.format(
-        __file__, 'process_item()', resync, counter))
+        __file__, 'start process_item()', record, counter))
     event_counter('processed_items', counter)
     event = ItemEvents.INIT
     xml = etree.tostring(record, encoding='utf-8').decode()
     current_app.logger.debug('{0} {1} {2}: {3}'.format(
         __file__, 'process_item()', 'xml', xml))
+
     mapper = JPCOARMapper(xml)
+
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        __file__, 'process_item()', 'mapper.identifier()', mapper.identifier()))
 
     resyncid = PersistentIdentifier.query.filter_by(
         pid_type='syncid', pid_value=gen_resync_pid_value(
             resync,
             mapper.identifier()
-        )).first()
-    current_app.logger.debug(resyncid)
-    if resyncid:
-        r = RecordMetadata.query.filter_by(id=resyncid.object_uuid).first()
-        recid = PersistentIdentifier.query.filter_by(
-            pid_type='recid', object_uuid=resyncid.object_uuid).first()
-        recid.status = PIDStatus.REGISTERED
-        current_app.logger.debug('json: {0}'.format(r.json))
-        dep = WekoDeposit(r.json, r)
-        indexes = dep['path'].copy()
-        event = ItemEvents.UPDATE
-    elif mapper.is_deleted():
-        return
-    else:
-        dep = WekoDeposit.create({})
-        PersistentIdentifier.create(pid_type='syncid',
-                                    pid_value=gen_resync_pid_value(
-                                        resync,
-                                        mapper.identifier()
-                                    ),
-                                    status=PIDStatus.REGISTERED,
-                                    object_type=dep.pid.object_type,
-                                    object_uuid=dep.pid.object_uuid)
-        indexes = []
-        event = ItemEvents.CREATE
-    indexes.append(str(resync.index_id)) if str(
-        resync.index_id) not in indexes else None
+        )).with_lockmode('update').one_or_none()
 
-    if mapper.is_deleted():
-        soft_delete(recid.pid_value)
-        event = ItemEvents.DELETE
-    else:
+    indexes = []
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        __file__, 'process_item()', 'resyncid', resyncid))
+
+    if resyncid is None:
+        dep = WekoDeposit.create({})
+        pid = PersistentIdentifier.create(pid_type='syncid',
+                                          pid_value=gen_resync_pid_value(
+                                              resync,
+                                              mapper.identifier()
+                                          ),
+                                          status=PIDStatus.REGISTERED,
+                                          object_type=dep.pid.object_type,
+                                          object_uuid=dep.pid.object_uuid)
+        current_app.logger.debug('{0} {1} {2}: {3}'.format(
+            __file__, 'process_item()', 'Create pid', pid))
+        indexes.append(str(resync.index_id)) if str(
+            resync.index_id) not in indexes else None
         json = mapper.map()
         json['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
         dep['_deposit']['status'] = 'draft'
@@ -278,19 +270,61 @@ def process_item(record, resync, counter):
         dep.commit()
         dep.publish()
         # add item versioning
-        pid = PersistentIdentifier.query.filter_by(
-            pid_type='recid', pid_value=dep.pid.pid_value).first()
-        if INVENIO_RESYNC_ENABLE_ITEM_VERSIONING or (event == ItemEvents.CREATE):
-            with current_app.test_request_context() as ctx:
-                first_ver = dep.newversion(pid)
-                first_ver.publish()
+        recid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', pid_value=dep.pid.pid_value).one_or_none()
+        current_app.logger.debug('{0} {1} {2}: {3}'.format(
+            __file__, 'process_item()', 'recid', recid))
+        with current_app.test_request_context() as ctx:
+            first_ver = dep.newversion(recid)
+            first_ver.publish()
+        event = ItemEvents.CREATE
+    else:
+        if mapper.is_deleted():
+            recid = PersistentIdentifier.query.filter_by(
+                pid_type='recid', object_uuid=resyncid.object_uuid).one_or_none()
+            current_app.logger.debug('{0} {1} {2}: {3}'.format(
+                __file__, 'process_item()', 'Delete recid', recid))
+            soft_delete(recid.pid_value)
+            event = ItemEvents.DELETE
+        else:
+            r = RecordMetadata.query.filter_by(
+                id=resyncid.object_uuid).one_or_none()
+            recid = PersistentIdentifier.query.filter_by(
+                pid_type='recid', object_uuid=resyncid.object_uuid).one_or_none()
+            current_app.logger.debug('{0} {1} {2}: {3}'.format(
+                __file__, 'process_item()', 'Update recid', recid))
+            current_app.logger.debug('{0} {1} {2}: {3}'.format(
+                __file__, 'process_item()', 'RecordMetadata', r))
+            recid.status = PIDStatus.REGISTERED
+            dep = WekoDeposit(r.json, r)
+            current_app.logger.debug('{0} {1} {2}: {3}'.format(
+                __file__, 'process_item()', 'WekoDeposit', dep))
+            indexes = dep['path'].copy()
+            indexes.append(str(resync.index_id)) if str(
+                resync.index_id) not in indexes else None
+            json = mapper.map()
+            json['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
+            dep['_deposit']['status'] = 'draft'
+            dep.update({'actions': 'publish', 'index': indexes}, json)
+            dep.commit()
+            dep.publish()
+            # add item versioning
+            if INVENIO_RESYNC_ENABLE_ITEM_VERSIONING:
+                with current_app.test_request_context() as ctx:
+                    first_ver = dep.newversion(recid)
+                    first_ver.publish()
+            event = ItemEvents.UPDATE
+
     db.session.commit()
+
     if event == ItemEvents.CREATE:
         event_counter('created_items', counter)
     elif event == ItemEvents.UPDATE:
         event_counter('updated_items', counter)
     elif event == ItemEvents.DELETE:
         event_counter('deleted_items', counter)
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        __file__, 'end process_item()', record, counter))
 
 
 def process_sync(resync_id, counter):
@@ -429,10 +463,15 @@ def get_from_date_from_url(url):
 
 def gen_resync_pid_value(resync, pid):
     """Get resync pid value."""
-    hostname = urlparse(resync.base_url)
-    result = '{}://{}-{}'.format(
-        hostname.scheme,
-        hostname.netloc,
-        pid
-    )
+    if INVENIO_RESYNC_MODE:
+        result = pid
+    else:
+        hostname = urlparse(resync.base_url)
+        result = '{}://{}-{}'.format(
+            hostname.scheme,
+            hostname.netloc,
+            pid
+        )
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        __file__, 'gen_resync_pid_value()', 'result', result))
     return result

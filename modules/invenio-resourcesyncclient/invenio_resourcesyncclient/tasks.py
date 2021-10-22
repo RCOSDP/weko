@@ -53,7 +53,9 @@ logger = get_task_logger(__name__)
 def is_running_task(id):
     """Check harvest running."""
     resync = ResyncHandler.get_resync(id)
-    if resync and resync.task_id:
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        __file__, 'is_running_task()', 'resync', resync))
+    if resync and resync.task_id and resync.resync_mode != 'Baseline':
         return True
     else:
         return False
@@ -61,7 +63,12 @@ def is_running_task(id):
 
 @shared_task
 def run_sync_import(id):
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        __file__, 'start run_sync_import()', 'id', id))
+
     if is_running_task(id):
+        current_app.logger.debug('{0} {1} {2}: {3}'.format(
+            __file__, 'end run_sync_import()', 'id', id))
         return (
             {
                 'task_state': 'SUCCESS',
@@ -99,8 +106,7 @@ def run_sync_import(id):
                 try:
                     for i in records:
                         current_app.logger.debug('{0} {1} {2}: {3}'.format(
-                            __file__, 'run_sync_import()', 'record_id', i))
-
+                            __file__, 'run_sync_import()', 'resource', i))
                         if INVENIO_RESYNC_MODE:
                             record = get_record_from_file(i)
                         else:
@@ -114,16 +120,16 @@ def run_sync_import(id):
                             )
 
                         if len(record) == 1:
-                            current_app.logger.debug('{0} {1} {2}: {3}'.format(
-                                __file__, 'run_sync_import()', 'record', record))
                             process_item(record[0], resync, counter)
                             successful.append(i)
 
                     for item in successful:
                         records.remove(item)
+
                     resync_index.update({
                         'result': json.dumps(records)
                     })
+
                 except Exception as ex:
                     current_app.logger.error(traceback.format_exc())
                     current_app.logger.error(
@@ -131,6 +137,7 @@ def run_sync_import(id):
                             ex))
                     current_app.logger.info('Continue importing')
                     continue
+
             except Exception as ex:
                 current_app.logger.error(traceback.format_exc())
                 current_app.logger.error(
@@ -138,11 +145,14 @@ def run_sync_import(id):
                         ex))
                 db.session.rollback()
                 event_counter('error_items', counter)
+
             db.session.commit()
+
             resync_log.status = current_app.config.get(
                 "INVENIO_RESYNC_LOGS_STATUS",
                 INVENIO_RESYNC_LOGS_STATUS
             ).get('successful')
+
             break
     except Exception as ex:
         current_app.logger.error(traceback.format_exc())
@@ -152,15 +162,17 @@ def run_sync_import(id):
         ).get('failed')
         current_app.logger.error(str(ex))
         resync_log.errmsg = str(ex)[:255]
-    finally:
-        return finish(
-            resync,
-            resync_log,
-            counter,
-            start_time,
-            run_sync_import.request.id,
-            log_type='import'
-        )
+
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        __file__, 'end run_sync_import()', 'id', id))
+    return finish(
+        resync,
+        resync_log,
+        counter,
+        start_time,
+        run_sync_import.request.id,
+        log_type='import'
+    )
 
 
 def get_record_from_file(rc):
@@ -177,9 +189,14 @@ def get_record_from_file(rc):
     for l in rc['ln']:
         if (l['rel'] == 'file'):
             filename = l['href']
-    et = etree.parse(filename)
-    metadata.extend(et.findall('.'))
-    records = [record]
+    try:
+        et = etree.parse(filename)
+        metadata.extend(et.findall('.'))
+        records = [record]
+    except Exception as e:
+        current_app.logger.error(e)
+        records = []
+
     return records
 
 
