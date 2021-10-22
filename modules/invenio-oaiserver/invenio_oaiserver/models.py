@@ -108,6 +108,11 @@ class OAISet(db.Model, Timestamp):
         """
         return self.spec in record.get('_oai', {}).get('sets', [])
 
+    @classmethod
+    def get_set_by_spec(cls, spec):
+        """Get OAISet object by spec info."""
+        return cls.query.filter_by(spec=spec).one_or_none()
+
 
 def oaiset_removed_or_inserted(mapper, connection, target):
     """Invalidate cache on collection insert or delete."""

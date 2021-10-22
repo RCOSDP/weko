@@ -30,7 +30,8 @@ from .provider import OAIIDProvider
 from .query import get_records
 from .resumption_token import serialize
 from .utils import datetime_to_datestamp, handle_license_free, \
-    serializer, has_guest_role
+    serializer, get_index_state, is_output_harvest, \
+    PRIVATE_INDEX, HARVEST_PRIVATE, OUTPUT_HARVEST
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
 NS_OAIPMH_XSD = 'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
@@ -375,53 +376,38 @@ def is_exists_doi(param_record):
 
 def getrecord(**kwargs):
     """Create OAI-PMH response for verb GetRecord."""
-    def get_error_code_msg():
-        """Get error by type."""
-        code = current_app.config.get('OAISERVER_CODE_NO_RECORDS_MATCH')
-        msg = current_app.config.get('OAISERVER_MESSAGE_NO_RECORDS_MATCH')
-        return [(code, msg)]
-
-    def get_no_match_error_msg():
-        """Get no match error."""
-        code = 'noRecordsMatch'
-        msg = 'The combination of the values of the from, until, ' \
-              'set and metadataPrefix arguments results in an empty list.'
-        return [(code, msg)]
+    identify = OaiIdentify.get_all()
+    if not identify or not identify.outPutSetting:
+        return error(get_error_code_msg(), **kwargs)
 
     record_dumper = serializer(kwargs['metadataPrefix'])
-    pid = OAIIDProvider.get(pid_value=kwargs['identifier']).pid
-
-    identify = OaiIdentify.get_all()
-    if not identify:
-        return error(get_no_match_error_msg(), **kwargs)
-    harvest_public_state, record = WekoRecord.get_record_with_hps(
-        pid.object_uuid)
+    pid_object = OAIIDProvider.get(pid_value=kwargs['identifier']).pid
+    record = WekoRecord.get_record_by_uuid(pid_object.object_uuid)
+    set_identifier(record, record)
 
     e_tree, e_getrecord = verb(**kwargs)
     e_record = SubElement(e_getrecord, etree.QName(NS_OAIPMH, 'record'))
-    set_identifier(record, record)
+
+    index_state = get_index_state()
+    path_list = record.get('path') if 'path' in record else []
+    _is_output = is_output_harvest(path_list, index_state)
     # Harvest is private
-    _is_private_index = is_private_index(record)
-    _is_private_workflow = is_private_workflow(record)
-    _has_guest_role = has_guest_role(record.get('path')) \
-        if 'path' in record else False
-    if (not harvest_public_state
-        or not identify
-        or not identify.outPutSetting
-        or (is_exists_doi(record)
-            and (_is_private_index or is_pubdate_in_future(record)))):
+    if path_list and (_is_output == HARVEST_PRIVATE or
+            (is_exists_doi(record) and
+             (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record)))):
         return error(get_error_code_msg(), **kwargs)
     # Item is deleted
     # or Harvest is public & Item is private
     # or Harvest is public & Index is private
     # or Harvest is public & There is no guest role in the index Browsing Privilege
-    elif is_deleted_workflow(pid) \
-            or not _has_guest_role \
-            or _is_private_index or _is_private_workflow \
-            or is_pubdate_in_future(record):
+    elif _is_output == PRIVATE_INDEX or \
+            not path_list or \
+            is_deleted_workflow(pid_object) or \
+            is_private_workflow(record) or \
+            is_pubdate_in_future(record):
         header(
             e_record,
-            identifier=pid.pid_value,
+            identifier=pid_object.pid_value,
             datestamp=record.updated,
             deleted=True
         )
@@ -430,7 +416,7 @@ def getrecord(**kwargs):
     _sets = list(set(record.get('path', [])+record['_oai'].get('sets', [])))
     header(
         e_record,
-        identifier=pid.pid_value,
+        identifier=pid_object.pid_value,
         datestamp=record.updated,
         sets=_sets
     )
@@ -445,7 +431,7 @@ def getrecord(**kwargs):
     # Merge licensetype and licensefree
     etree_record = handle_license_free(etree_record)
 
-    root = record_dumper(pid, {'_source': etree_record})
+    root = record_dumper(pid_object, {'_source': etree_record})
 
     e_metadata.append(root)
     return e_tree
@@ -458,36 +444,44 @@ def listidentifiers(**kwargs):
     if not identify or not identify.outPutSetting:
         return error(get_error_code_msg(), **kwargs)
 
+    index_state = get_index_state()
+    set_is_output = 0
+    if 'set' in kwargs:
+        set_obj = OAISet.get_set_by_spec(kwargs['set'])
+        if not set_obj:
+            return error(get_error_code_msg(), **kwargs)
+        path = kwargs['set'].replace(':', '/')
+        set_is_output = is_output_harvest([path], index_state)
+        if set_is_output == HARVEST_PRIVATE:
+            return error(get_error_code_msg(), **kwargs)
+
     result = get_records(**kwargs)
     if not result.total:
         return error(get_error_code_msg(), **kwargs)
 
-    public_index_ids = Indexes.get_public_indexes_list()
     for r in result.items:
         pid = oaiid_fetcher(r['id'], r['json']['_source'])
         pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
-        harvest_public_state, record = WekoRecord.get_record_with_hps(
-            pid_object.object_uuid)
-
+        record = WekoRecord.get_record_by_uuid(pid_object.object_uuid)
         set_identifier(record, record)
+
+        path_list = record.get('path') if 'path' in record else []
+        _is_output = is_output_harvest(path_list, index_state) \
+            if 'set' not in kwargs else set_is_output
         # Harvest is private
-        _is_private_index = is_private_index_by_public_list(
-            record.get('path'), public_index_ids)
-        _has_guest_role = has_guest_role(record.get('path')) \
-            if 'path' in record else False
-        if not harvest_public_state or\
-                (_is_private_index
-                    and harvest_public_state and is_exists_doi(record)):
+        if path_list and (_is_output == HARVEST_PRIVATE or
+                (is_exists_doi(record) and
+                 (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record)))):
             continue
         # Item is deleted
         # or Harvest is public & Item is private
         # or Harvest is public & Index is private
         # or Harvest is public & There is no guest role in the index Browsing Privilege
-        elif is_deleted_workflow(pid_object) or (
-            harvest_public_state and (
-                is_private_workflow(record) or 
-                _is_private_index or
-                not _has_guest_role)):
+        elif _is_output == PRIVATE_INDEX or \
+                not path_list or \
+                is_deleted_workflow(pid_object) or \
+                is_private_workflow(record) or \
+                is_pubdate_in_future(record):
             header(
                 e_listidentifiers,
                 identifier=pid.pid_value,
@@ -509,28 +503,15 @@ def listidentifiers(**kwargs):
                 sets=_sets
             )
 
+    if len(e_listidentifiers) == 0:
+        return error(get_error_code_msg(), **kwargs)
+
     resumption_token(e_listidentifiers, result, **kwargs)
     return e_tree
 
 
 def listrecords(**kwargs):
     """Create OAI-PMH response for verb ListRecords."""
-    def get_error_code_msg():
-        """Get error by type."""
-        code = current_app.config.get('OAISERVER_CODE_NO_RECORDS_MATCH')
-        msg = current_app.config.get('OAISERVER_MESSAGE_NO_RECORDS_MATCH')
-        return [(code, msg)]
-
-    def append_deleted_record(e_listrecords, pid_object, rec):
-        """Append attribute [status="deleted] for 'header' tag."""
-        e_record = SubElement(e_listrecords, etree.QName(NS_OAIPMH, 'record'))
-        header(
-            e_record,
-            identifier=pid_object.pid_value,
-            datestamp=rec.updated,
-            deleted=True
-        )
-
     record_dumper = serializer(kwargs['metadataPrefix'])
     e_tree, e_listrecords = verb(**kwargs)
 
@@ -538,64 +519,88 @@ def listrecords(**kwargs):
     if not identify or not identify.outPutSetting:
         return error(get_error_code_msg(), **kwargs)
 
+    index_state = get_index_state()
+    set_is_output = 0
+    if 'set' in kwargs:
+        set_obj = OAISet.get_set_by_spec(kwargs['set'])
+        if not set_obj:
+            return error(get_error_code_msg(), **kwargs)
+        path = kwargs['set'].replace(':', '/')
+        set_is_output = is_output_harvest([path], index_state)
+        if set_is_output == HARVEST_PRIVATE:
+            return error(get_error_code_msg(), **kwargs)
+
     result = get_records(**kwargs)
     if not result.total:
         return error(get_error_code_msg(), **kwargs)
 
-    public_index_ids = Indexes.get_public_indexes_list()
-    db_records = WekoRecord.get_records(
-        [record['id'] for record in result.items])
-    db_records = {str(record.id): record for record in db_records}
-    for record in result.items:
-        pid = oaiid_fetcher(record['id'], record['json']['_source'])
+    for r in result.items:
+        pid = oaiid_fetcher(r['id'], r['json']['_source'])
         pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
-        rec = db_records.get(record['id'])
-        set_identifier(record, rec)
-        # Check output delete, noRecordsMatch
-        is_link_private_index = is_private_index_by_public_list(
-            rec.get('path', []), public_index_ids)
-        _has_guest_role = has_guest_role(rec.get('path')) \
-            if 'path' in rec else False
-        if not is_link_private_index and _has_guest_role:
-            if is_deleted_workflow(pid_object) \
-                    or is_private_workflow(rec) \
-                    or is_pubdate_in_future(rec):
-                if not (is_pubdate_in_future(rec)
-                        and is_exists_doi(record)):
-                    append_deleted_record(e_listrecords, pid_object, rec)
-                continue
-        else:
-            if not is_exists_doi(record):
-                append_deleted_record(e_listrecords, pid_object, rec)
+        record = WekoRecord.get_record_by_uuid(pid_object.object_uuid)
+        set_identifier(record, record)
+        
+        path_list = record.get('path') if 'path' in record else []
+        _is_output = is_output_harvest(path_list, index_state) \
+            if 'set' not in kwargs else set_is_output
+        # Harvest is private
+        if path_list and (_is_output == HARVEST_PRIVATE or
+                (is_exists_doi(record) and
+                 (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record)))):
             continue
-        e_record = SubElement(
-            e_listrecords, etree.QName(NS_OAIPMH, 'record'))
-        _sets = list(set(record['json']['_source'].get(
-            'path', []) + record['json']['_source']['_oai'].get('sets', [])))
-        header(
-            e_record,
-            identifier=pid.pid_value,
-            # datestamp=record['updated'],
-            datestamp=rec.updated,
-            sets=_sets
-        )
-        e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
-                                                      'metadata'))
-        etree_record = copy.deepcopy(record['json'])
-        # Merge licensetype and licensefree
-        handle_license_free(etree_record['_source']['_item_metadata'])
-        e_metadata.append(record_dumper(pid, etree_record))
+        # Item is deleted
+        # or Harvest is public & Item is private
+        # or Harvest is public & Index is private
+        # or Harvest is public & There is no guest role in the index Browsing Privilege
+        elif _is_output == PRIVATE_INDEX or \
+                not path_list or \
+                is_deleted_workflow(pid_object) or \
+                is_private_workflow(record) or \
+                is_pubdate_in_future(record):
+            header(
+                e_listrecords,
+                identifier=pid.pid_value,
+                datestamp=r['updated'],
+                deleted=True
+            )
+        else:
+            e_record = SubElement(
+                e_listrecords, etree.QName(NS_OAIPMH, 'record'))
+            _sets = []
+            if 'json' in record:
+                if '_source' in record['json']:
+                    if '_oai' in record['json']['_source']:
+                        _sets = record['json']['_source']['_oai'].get(
+                            'sets', [])
+            header(
+                e_record,
+                identifier=pid.pid_value,
+                datestamp=record.updated,
+                sets=_sets
+            )
+            e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
+                                                          'metadata'))
+            etree_record = copy.deepcopy(record)
+            if not etree_record.get('system_identifier_doi', None):
+                etree_record['system_identifier_doi'] = get_identifier(record)
+            
+            # Merge licensetype and licensefree
+            etree_record = handle_license_free(etree_record)
+            e_metadata.append(record_dumper(pid, {'_source': etree_record}))
+
     # Check <record> tag not exist.
     if len(e_listrecords) == 0:
         return error(get_error_code_msg(), **kwargs)
+
     resumption_token(e_listrecords, result, **kwargs)
     return e_tree
 
 
-def get_error_code_msg(code='noRecordsMatch'):
+def get_error_code_msg(code=''):
     """Return list error message."""
-    msg = 'The combination of the values of the from, until, ' \
-          'set and metadataPrefix arguments results in an empty list.'
+    if code == '':
+        code = current_app.config.get('OAISERVER_CODE_NO_RECORDS_MATCH')
+        msg = current_app.config.get('OAISERVER_MESSAGE_NO_RECORDS_MATCH')
 
     if code == 'noMetadataFormats':
         msg = 'There is no metadata format available.'
