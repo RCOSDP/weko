@@ -1277,6 +1277,29 @@ def get_actionid(endpoint):
             return None
 
 
+def convert_record_to_item_metadata(record_metadata):
+    """Convert record_metadata to item_metadata."""
+    item_metadata = {
+        'id': record_metadata['recid'],
+        '$schema': record_metadata['item_type_id'],
+        'pubdate': record_metadata['publish_date'],
+        'title': record_metadata['item_title'],
+        'weko_shared_id': record_metadata['weko_shared_id']
+    }
+    item_type = ItemTypes.get_by_id(record_metadata['item_type_id']).render
+
+    for key, meta in item_type.get('meta_list', {}).items():
+        if key in record_metadata:
+            if meta.get('option', {}).get('multiple'):
+                item_metadata[key] = \
+                    record_metadata[key]['attribute_value_mlt']
+            else:
+                item_metadata[key] = \
+                    record_metadata[key]['attribute_value_mlt'][0]
+
+    return item_metadata
+
+
 def prepare_edit_workflow(post_activity, recid, deposit):
     """
     Prepare Workflow Activity for draft record.
@@ -1327,9 +1350,9 @@ def prepare_edit_workflow(post_activity, recid, deposit):
             db.session.add(sync_bucket)
 
             # update metadata
-            _metadata = deposit.item_metadata
+            _metadata = convert_record_to_item_metadata(deposit)
             _metadata['deleted_items'] = {}
-            _cur_keys = [_key for _key in deposit.item_metadata.keys()
+            _cur_keys = [_key for _key in _metadata.keys()
                          if 'item_' in _key]
             _drf_keys = [_key for _key in _deposit.item_metadata.keys()
                          if 'item_' in _key]
