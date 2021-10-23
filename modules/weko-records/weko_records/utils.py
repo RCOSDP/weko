@@ -255,47 +255,60 @@ def copy_field_test(dc, map, jrc, iid=None):
     for k_v in map:
         current_app.logger.debug('{0} {1} {2}: {3}'.format(
             __file__, 'copy_field_test()', 'k_v', k_v))
+        current_app.logger.debug('{0} {1} {2}: {3}'.format(
+            __file__, 'copy_field_test()', 'type(k_v)', type(k_v)))
         if type(k_v) is dict:
             if k_v.get('item_value'):
                 if dc["item_type_id"] in k_v.get('item_value').keys():
+
                     for key, val in k_v.get('item_value').items():
+                        current_app.logger.debug('{0} {1} {2}: {3}'.format(
+                            __file__, 'copy_field_test()', 'key', key))
+                        current_app.logger.debug('{0} {1} {2}: {3}'.format(
+                            __file__, 'copy_field_test()', 'val', val))
                         if dc["item_type_id"] == key:
                             if k_v.get('input_Type') == 'text':
                                 if get_value_from_dict(dc, val["path"], val["path_type"], iid):
-                                    jrc[key] = get_value_from_dict(
+                                    jrc[k_v.get('id')] = get_value_from_dict(
                                         dc, val["path"], val["path_type"], iid)
                                 elif k_v.get('input_Type') == "range":
-                                    value_range = {key: {"gte": "", "lte": ""}}
-                                    value_range[key]["gte"] = get_value_from_dict(
+                                    value_range = {k_v.get('id'): {
+                                        "gte": "", "lte": ""}}
+                                    value_range[k_v.get('id')]["gte"] = get_value_from_dict(
                                         dc, val["path"]["gte"], val["path_type"]["gte"], iid)
-                                    value_range[key]["lte"] = get_value_from_dict(
+                                    value_range[k_v.get('id')]["lte"] = get_value_from_dict(
                                         dc, val["path"]["lte"], val["path_type"]["lte"], iid)
-                                    if value_range[key]["gte"] and value_range[key]["lte"]:
+                                    if value_range[k_v.get('id')]["gte"] and value_range[k_v.get('id')]["lte"]:
                                         jrc.update(value_range)
                                 elif k_v.get('input_Type') == "geo_point":
-                                    geo_point = {key: {"lat": "", "lon": ""}}
-                                    geo_point[key]["lat"] = get_value_from_dict(
+                                    geo_point = {k_v.get('id'): {
+                                        "lat": "", "lon": ""}}
+                                    geo_point[k_v.get('id')]["lat"] = get_value_from_dict(
                                         dc, val["path"]["lat"], val["path_type"]["lat"], iid)
-                                    geo_point[key]["lon"] = get_value_from_dict(
+                                    geo_point[k_v.get('id')]["lon"] = get_value_from_dict(
                                         dc, val["path"]["lon"], val["path_type"]["lon"], iid)
-                                    if geo_point[key]["lat"] and geo_point[key]["lon"]:
+                                    if geo_point[k_v.get('id')]["lat"] and geo_point[k_v.get('id')]["lon"]:
                                         jrc.update(geo_point)
                                 elif k_v.get('input_Type') == "geo_shape":
                                     geo_shape = {
-                                        key: {"type": "", "coordinates": ""}}
-                                    geo_shape[key]["type"] = get_value_from_dict(
+                                        k_v.get('id'): {"type": "", "coordinates": ""}}
+                                    geo_shape[k_v.get('id')]["type"] = get_value_from_dict(
                                         dc, val["path"]["type"], val["path_type"]["type"], iid)
-                                    geo_shape[key]["coordinates"] = get_value_from_dict(
+                                    geo_shape[k_v.get('id')]["coordinates"] = get_value_from_dict(
                                         dc, val["path"]["coordinates"], val["path_type"]["coordinates"], iid)
-                                    if geo_shape[key]["type"] and geo_shape[key]["coordinates"]:
+                                    if geo_shape[k_v.get('id')]["type"] and geo_shape[k_v.get('id')]["coordinates"]:
                                         jrc.update(geo_shape)
 
 
 def get_value_from_dict(dc, path, path_type, iid=None):
+    ret = None
     if path_type == "xml":
-        return copy_value_xml_path(dc, path, iid)
+        ret = copy_value_xml_path(dc, path, iid)
     elif path_type == "json":
-        return copy_value_json_path(dc, path)
+        ret = copy_value_json_path(dc, path)
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        __file__, 'get_value_from_dict()', 'ret', ret))
+    return ret
 
 
 def copy_value_xml_path(dc, xml_path, iid=None):
