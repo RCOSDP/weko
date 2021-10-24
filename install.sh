@@ -3,7 +3,7 @@
 
 docker-compose down -v
 docker volume rm $(docker volume ls -f name=weko -q)
-#docker-compose build
+docker-compose build
 docker-compose up -d
 docker-compose exec web ./scripts/populate-instance.sh
 docker cp scripts/demo/item_type2.sql $(docker-compose ps -q postgresql):/tmp/item_type.sql

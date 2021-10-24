@@ -38,6 +38,8 @@ def get_remote_addr():
     if not request:
         return None
 
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        __file__, 'get_remote_addr()', 'request.headers', request.headers))
     address = request.headers.get('X-Real-IP', None)
 
     if address is None:
