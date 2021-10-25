@@ -284,34 +284,36 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
                     subitems = mapping[0].split('.')[1:]
 
                 if subitems:
-                    submetadata = subitem_recs(
-                        item_schema[subitems[0]],
-                        subitems[1:],
-                        value,
-                        it
-                    )
+                    if subitems[0] in item_schema:
+                        submetadata = subitem_recs(
+                            item_schema[subitems[0]],
+                            subitems[1:],
+                            value,
+                            it
+                        )
 
-                    if submetadata:
-                        if isinstance(submetadata, list):
-                            if items.get(subitems[0]):
-                                if len(items[subitems[0]]) != len(submetadata):
-                                    items[subitems[0]].extend(submetadata)
-                                    continue
+                        if submetadata:
+                            if isinstance(submetadata, list):
+                                if items.get(subitems[0]):
+                                    if len(items[subitems[0]]) != len(submetadata):
+                                        items[subitems[0]].extend(submetadata)
+                                        continue
 
-                                for idx, meta in enumerate(submetadata):
-                                    if isinstance(meta, dict):
-                                        items[subitems[0]][idx].update(meta)
-                                    else:
-                                        items[subitems[0]].extend(meta)
+                                    for idx, meta in enumerate(submetadata):
+                                        if isinstance(meta, dict):
+                                            items[subitems[0]][idx].update(
+                                                meta)
+                                        else:
+                                            items[subitems[0]].extend(meta)
+                                else:
+                                    items[subitems[0]] = submetadata
+                            elif isinstance(submetadata, dict):
+                                if items.get(subitems[0]):
+                                    items[subitems[0]].update(submetadata)
+                                else:
+                                    items[subitems[0]] = submetadata
                             else:
                                 items[subitems[0]] = submetadata
-                        elif isinstance(submetadata, dict):
-                            if items.get(subitems[0]):
-                                items[subitems[0]].update(submetadata)
-                            else:
-                                items[subitems[0]] = submetadata
-                        else:
-                            items[subitems[0]] = submetadata
                 else:
                     continue
             if items:

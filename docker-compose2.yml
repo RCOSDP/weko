@@ -64,6 +64,7 @@ services:
       - INVENIO_DB_POOL_CLASS=QueuePool
       - GOOGLE_TRACKING_ID_SYSTEM=
       - GOOGLE_TRACKING_ID_USER=
+      - TMPDIR=/tmp
     volumes:
       - weko3_data:/var/tmp
       - weko3_tmp:/tmp
