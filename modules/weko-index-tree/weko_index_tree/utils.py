@@ -529,16 +529,17 @@ def count_items(indexes_aggr):
         [type]: [description]
 
     """
-    pub_items_count = 0
-    pri_items_count = 0
+    pub_items = 0
+    pri_items = 0
 
     for agg in indexes_aggr:
         if agg.get('public_state'):
-            pub_items_count += agg['doc_count']
+            pub_items += agg['doc_count'] - agg['no_available']
+            pri_items += agg['no_available']
         else:
-            pri_items_count += agg['doc_count']
+            pri_items += agg['doc_count']
 
-    return pri_items_count, pub_items_count
+    return pri_items, pub_items
 
 
 def recorrect_private_items_count(agp):
