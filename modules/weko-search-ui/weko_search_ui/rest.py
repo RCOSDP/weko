@@ -235,6 +235,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         except BaseException:
             paths = []
         agp = rd["aggregations"]["path"]["buckets"]
+        rd["aggregations"]["aggregations"] = copy.deepcopy(agp)
         nlst = []
         items_count = dict()
         all_indexes = Indexes.get_all_indexes()
