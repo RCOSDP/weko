@@ -870,8 +870,12 @@ class WekoDeposit(Deposit):
                      'actions': self.get('publish_status')}
             if 'activity_info' in session:
                 del session['activity_info']
-            item_metadata = ItemsMetadata.get_record(
-                pid.object_uuid).dumps()
+            if is_draft:
+                from weko_workflow.utils import convert_record_to_item_metadata
+                item_metadata = convert_record_to_item_metadata(record)
+            else:
+                item_metadata = ItemsMetadata.get_record(
+                    pid.object_uuid).dumps()
             item_metadata.pop('id', None)
             args = [index, item_metadata]
             deposit.update(*args)
