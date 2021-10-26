@@ -162,13 +162,6 @@ def run_sync_import(id):
         ).get('failed')
         current_app.logger.error(str(ex))
         resync_log.errmsg = str(ex)[:255]
-    finally:
-        # 暫定対応。
-        if resync.resync_mode == 'Baseline':
-            resync_index.update({
-                'result': json.dumps(base)
-            })
-            db.session.commit()
 
     current_app.logger.debug('{0} {1} {2}: {3}'.format(
         __file__, 'end run_sync_import()', 'id', id))
