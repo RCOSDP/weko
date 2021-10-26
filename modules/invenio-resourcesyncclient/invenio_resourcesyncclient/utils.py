@@ -23,6 +23,7 @@ import json
 import ssl
 import traceback
 from datetime import datetime as dt
+from sys import path
 from urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
 
 import dateutil
@@ -272,6 +273,7 @@ def process_item(record, resync, counter):
         dep.update({'actions': 'publish', 'index': indexes}, json)
         dep.commit()
         dep.publish()
+
         # add item versioning
         recid = PersistentIdentifier.query.filter_by(
             pid_type='recid', pid_value=dep.pid.pid_value).one_or_none()
@@ -300,8 +302,6 @@ def process_item(record, resync, counter):
                 __file__, 'process_item()', 'RecordMetadata', r))
             recid.status = PIDStatus.REGISTERED
             dep = WekoDeposit(r.json, r)
-            current_app.logger.debug('{0} {1} {2}: {3}'.format(
-                __file__, 'process_item()', 'WekoDeposit', dep))
             if 'path' in dep:
                 indexes = dep['path'].copy()
             indexes.append(str(resync.index_id)) if str(
@@ -312,6 +312,8 @@ def process_item(record, resync, counter):
             dep.update({'actions': 'publish', 'index': indexes}, json)
             dep.commit()
             dep.publish()
+            current_app.logger.debug('{0} {1} {2}: {3}'.format(
+                __file__, 'process_item()', 'WekoDeposit', dep))
             # add item versioning
             if INVENIO_RESYNC_ENABLE_ITEM_VERSIONING:
                 with current_app.test_request_context() as ctx:

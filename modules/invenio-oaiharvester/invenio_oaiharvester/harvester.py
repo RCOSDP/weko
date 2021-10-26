@@ -253,6 +253,16 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
         [type]: [description]
 
     """
+    # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+    #     __file__, 'parsing_metadata()', 'mappin', mappin))
+    # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+    #     __file__, 'parsing_metadata()', 'props', props))
+    # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+    #     __file__, 'parsing_metadata()', 'patterns', patterns))
+    # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+    #     __file__, 'parsing_metadata()', 'metadata', metadata))
+    # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+    #     __file__, 'parsing_metadata()', 'res', res))
     mapping = mappin.get(patterns[0][0])
     if not mapping:
         return None, None
@@ -267,11 +277,11 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
         else:
             item_schema = props[item_key]['properties']
 
+        current_app.logger.debug('{0} {1} {2}: {3}'.format(
+            __file__, 'parsing_metadata()', 'item_schema', item_schema))
         ret = []
         for it in metadata:
             items = {}
-            current_app.logger.debug('{0} {1} {2}: {3}'.format(
-                __file__, 'parsing_metadata()', 'it', it))
             for elem, value in patterns:
                 mapping = mappin.get(elem)
                 if not mappin.get(elem) or not value:
@@ -327,6 +337,10 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
             else:
                 res[item_key] = ret
 
+        # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        #     __file__, 'parsing_metadata()', 'item_key', item_key))
+        # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        #     __file__, 'parsing_metadata()', 'ret', ret))
         return item_key, ret
     else:
         return None, None
@@ -416,7 +430,7 @@ def add_contributor_jpcoar(schema, mapping, res, metadata):
     """
     patterns = [
         ('contributor.@attributes.contributorType',
-         'jpcoar:contributor.@contributorType'),
+         '@contributorType'),
         # ('contributor.nameIdentifier.@value',
         #     'jpcoar:nameIdentifier.#text'),
         # ('contributor.nameIdentifier.@attributes.nameIdentifierURI',
