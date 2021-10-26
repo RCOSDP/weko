@@ -25,6 +25,8 @@ import ssl
 from flask import current_app
 from resync.client import Client
 
+from .config import INVENIO_RESYNC_MODE
+
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
@@ -49,8 +51,12 @@ class ResourceSyncClient(Client):
         current_create = self.result.get('created')
         current_update = self.result.get('updated')
         current_resource = self.result.get('resource')
-        #record_id = filename.rsplit('/', 1)[1]
-        record_id = filename
+
+        if INVENIO_RESYNC_MODE:
+            record_id = filename
+        else:
+            record_id = filename.rsplit('/', 1)[1]
+
         if change == 'created':
             current_create.append(record_id)
         elif change == 'updated':
@@ -61,6 +67,7 @@ class ResourceSyncClient(Client):
         self.result.update({'created': current_create})
         self.result.update({'updated': current_update})
         self.result.update({'resource': current_resource})
+
         return num_updated
 
     def delete_resource(self, resource, filename, change=None):
@@ -80,6 +87,7 @@ class ResourceSyncClient(Client):
         try:
             super(ResourceSyncClient, self).baseline_or_audit(allow_deletion,
                                                               audit_only)
+            current_app.logger.debug(self)
         except PermissionError:
             pass
         return self.result
@@ -94,3 +102,6 @@ class ResourceSyncClient(Client):
         except PermissionError:
             pass
         return self.result
+
+    def build_resource_list(self, paths=None, set_path=False):
+        return super(ResourceSyncClient, self).build_resource_list(paths, set_path)

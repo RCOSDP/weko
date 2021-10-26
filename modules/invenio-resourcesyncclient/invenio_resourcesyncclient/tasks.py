@@ -53,9 +53,7 @@ logger = get_task_logger(__name__)
 def is_running_task(id):
     """Check harvest running."""
     resync = ResyncHandler.get_resync(id)
-    current_app.logger.debug('{0} {1} {2}: {3}'.format(
-        __file__, 'is_running_task()', 'resync', resync))
-    if resync and resync.task_id and resync.resync_mode != 'Baseline':
+    if resync and resync.task_id:
         return True
     else:
         return False
@@ -95,6 +93,7 @@ def run_sync_import(id):
             pause = True
 
         signal.signal(signal.SIGTERM, sigterm_handler)
+        base = get_list_records(resync.id)
         while True:
             current_app.logger.info('[{0}] [{1}]'.format(
                 0, 'Processing records'))
@@ -154,6 +153,7 @@ def run_sync_import(id):
             ).get('successful')
 
             break
+
     except Exception as ex:
         current_app.logger.error(traceback.format_exc())
         resync_log.status = current_app.config.get(
@@ -162,6 +162,13 @@ def run_sync_import(id):
         ).get('failed')
         current_app.logger.error(str(ex))
         resync_log.errmsg = str(ex)[:255]
+    finally:
+        # 暫定対応。
+        if resync.resync_mode == 'Baseline':
+            resync_index.update({
+                'result': json.dumps(base)
+            })
+            db.session.commit()
 
     current_app.logger.debug('{0} {1} {2}: {3}'.format(
         __file__, 'end run_sync_import()', 'id', id))
