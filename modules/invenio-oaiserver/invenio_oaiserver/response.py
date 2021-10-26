@@ -489,12 +489,7 @@ def listidentifiers(**kwargs):
                 deleted=True
             )
         else:
-            _sets = []
-            if 'json' in record:
-                if '_source' in record['json']:
-                    if '_oai' in record['json']['_source']:
-                        _sets = record['json']['_source']['_oai'].get(
-                            'sets', [])
+            _sets = list(set(record.get('path', [])+record['_oai'].get('sets', [])))
             header(
                 e_listidentifiers,
                 identifier=pid.pid_value,
@@ -566,12 +561,7 @@ def listrecords(**kwargs):
         else:
             e_record = SubElement(
                 e_listrecords, etree.QName(NS_OAIPMH, 'record'))
-            _sets = []
-            if 'json' in record:
-                if '_source' in record['json']:
-                    if '_oai' in record['json']['_source']:
-                        _sets = record['json']['_source']['_oai'].get(
-                            'sets', [])
+            _sets = list(set(record.get('path', [])+record['_oai'].get('sets', [])))
             header(
                 e_record,
                 identifier=pid.pid_value,
