@@ -270,6 +270,8 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
         ret = []
         for it in metadata:
             items = {}
+            current_app.logger.debug('{0} {1} {2}: {3}'.format(
+                __file__, 'parsing_metadata()', 'it', it))
             for elem, value in patterns:
                 mapping = mappin.get(elem)
                 if not mappin.get(elem) or not value:
@@ -413,8 +415,8 @@ def add_contributor_jpcoar(schema, mapping, res, metadata):
         metadata ([type]): [description]
     """
     patterns = [
-        # ('contributor.@attributes.contributorType',
-        #     None),
+        ('contributor.@attributes.contributorType',
+         'jpcoar:contributor.@contributorType'),
         # ('contributor.nameIdentifier.@value',
         #     'jpcoar:nameIdentifier.#text'),
         # ('contributor.nameIdentifier.@attributes.nameIdentifierURI',

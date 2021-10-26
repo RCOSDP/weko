@@ -82,8 +82,8 @@ def sync_baseline(_map, base_url, counter, dryrun=False,
         client.dryrun = dryrun
         client.set_mappings(_map)
         result = client.baseline_or_audit()
-        current_app.logger.debug(
-            'client.baseline_or_audit(): {0}'.format(result))
+        current_app.logger.debug('{0} {1} {2}: {3}'.format(
+            __file__, 'sync_baseline()', 'result', result))
         update_counter(counter, result)
         return True
     except MapperError:
@@ -221,7 +221,10 @@ def get_list_records(resync_id):
     records = []
     if not resync_index.result:
         return records
-    return json.loads(resync_index.result)
+    records = json.loads(resync_index.result)
+    current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        __file__, 'get_list_records()', 'records', records))
+    return records
 
 
 def process_item(record, resync, counter):
