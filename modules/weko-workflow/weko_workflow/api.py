@@ -719,13 +719,14 @@ class WorkActivity(object):
                 action_order=next_action_order
             )
             db.session.add(db_activity)
-        except Exception as ex:
-            db.session.rollback()
-            current_app.logger.exception(str(ex))
-            return None
-        else:
             db.session.commit()
-
+        except IndexError as ex:
+            raise ex
+        except SQLAlchemyError as ex:
+            raise ex
+        except BaseException as ex:
+            raise ex
+        else:
             try:
                 # Update the activity with calculated activity_id
                 PersistentIdentifier.create(
@@ -765,20 +766,11 @@ class WorkActivity(object):
                         )
                         db.session.add(db_activity_action)
 
-            except IndexError as ex:
-                current_app.logger.exception(str(ex))
-
-                return None
-
-            except Exception as ex:
-                db.session.rollback()
-                current_app.logger.exception(str(ex))
-
-                return None
-
+            except SQLAlchemyError as ex:
+                raise ex
+            except BaseException as ex:
+                raise ex
             else:
-                db.session.commit()
-
                 return db_activity
 
     def get_new_activity_id(self, utc_now=datetime.utcnow()):

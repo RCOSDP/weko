@@ -41,6 +41,7 @@ from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import cast
 from weko_accounts.api import ShibUser
 from weko_accounts.utils import login_required_customize
@@ -297,23 +298,33 @@ def new_activity():
 @blueprint.route('/activity/init', methods=['POST'])
 @login_required
 def init_activity():
-    """Init activity."""
-    post_activity = request.get_json()
-    activity = WorkActivity()
-    getargs = request.args
-    if 'community' in getargs:
-        rtn = activity.init_activity(
-            post_activity, request.args.get('community'))
-    else:
-        rtn = activity.init_activity(post_activity)
-    if rtn is None:
-        return jsonify(code=-1, msg='error')
-    url = url_for('weko_workflow.display_activity',
-                  activity_id=rtn.activity_id)
-    if 'community' in getargs and request.args.get('community') != 'undefined':
-        comm = GetCommunity.get_community_by_id(request.args.get('community'))
+    try:
+        """Init activity."""
+        post_activity = request.get_json()
+        activity = WorkActivity()
+        getargs = request.args
+        if 'community' in getargs:
+            rtn = activity.init_activity(
+                post_activity, request.args.get('community'))
+        else:
+            rtn = activity.init_activity(post_activity)
+        if rtn is None:
+            return jsonify(code=-1, msg='error')
         url = url_for('weko_workflow.display_activity',
-                      activity_id=rtn.activity_id, community=comm.id)
+                    activity_id=rtn.activity_id)
+        if 'community' in getargs and request.args.get('community') != 'undefined':
+            comm = GetCommunity.get_community_by_id(request.args.get('community'))
+            url = url_for('weko_workflow.display_activity',
+                        activity_id=rtn.activity_id, community=comm.id)
+    except SQLAlchemyError as ex:
+        current_app.logger.error('sqlalchemy error: ', ex)
+        db.session.rollback()
+        return jsonify(code=-1, msg='Failed to init activity!')
+    except BaseException as ex:
+        current_app.logger.error('Unexpected error: ', ex)
+        db.session.rollback()
+        return jsonify(code=-1, msg='Failed to init activity!')
+
     return jsonify(code=0, msg='success',
                    data={'redirect': url})
 

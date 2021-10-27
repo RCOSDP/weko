@@ -1354,9 +1354,8 @@ def prepare_edit_workflow(post_activity, recid, deposit):
             _deposit.update(*args)
             _deposit.commit()
         except SQLAlchemyError as ex:
-            current_app.logger.error(ex)
-            db.session.rollback()
-        db.session.commit()
+            raise ex
+
         rtn = activity.init_activity(post_activity,
                                      community,
                                      draft_pid.object_uuid)
