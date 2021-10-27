@@ -28,13 +28,14 @@ readme = open('README.rst').read()
 history = open('CHANGES.rst').read()
 
 tests_require = [
-    'coverage>=4.5.3,<5.0.0',
-    'mock>=3.0.0,<4.0.0',
-    'pytest>=4.6.4,<5.0.0',
+    'coverage>=4.5.3',
+    'mock>=3.0.0',
+    'pytest>=4.6.4',
     'pytest-cache',
     'pytest-cov',
     'pytest-pep8',
     'pytest-invenio',
+    'pytest-pycodestyle',
     'responses',
 ]
 
