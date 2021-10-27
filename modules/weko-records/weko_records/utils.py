@@ -265,26 +265,16 @@ def copy_field_test(dc, map, jrc, iid=None):
     #     __file__, 'copy_field_test()', 'iid', iid))
 
     for k_v in map:
-        # current_app.logger.debug('{0} {1} {2}: {3}'.format(
-        #     __file__, 'copy_field_test()', 'k_v', k_v))
-        # current_app.logger.debug('{0} {1} {2}: {3}'.format(
-        #     __file__, 'copy_field_test()', 'type(k_v)', type(k_v)))
         if type(k_v) is dict:
             if k_v.get('item_value'):
                 if dc["item_type_id"] in k_v.get('item_value').keys():
                     for key, val in k_v.get('item_value').items():
-                        # current_app.logger.debug('{0} {1} {2}: {3}'.format(
-                        #     __file__, 'copy_field_test()', 'key', key))
-                        # current_app.logger.debug('{0} {1} {2}: {3}'.format(
-                        #     __file__, 'copy_field_test()', 'val', val))
                         if dc["item_type_id"] == key:
                             if k_v.get('input_Type') == 'text':
-                                txt = get_value_from_dict(
+                                txt = get_values_from_dict(
                                     dc, val["path"], val["path_type"], iid)
                                 if txt:
                                     jrc[k_v.get('id')] = txt
-                                current_app.logger.debug('{0} {1} {2}: {3}'.format(
-                                    __file__, 'copy_field_test()', 'txt', txt))
                             elif k_v.get('input_Type') == "range":
                                 value_range = {k_v.get('id'): {
                                     "gte": "", "lte": ""}}
@@ -319,6 +309,15 @@ def get_value_from_dict(dc, path, path_type, iid=None):
     if path_type == "xml":
         ret = copy_value_xml_path(dc, path, iid)
     elif path_type == "json":
+        ret = copy_value_json_path(dc, path)
+    return ret
+
+
+def get_values_from_dict(dc, path, path_type, iid=None):
+    ret = None
+    if path_type == "xml":
+        ret = copy_value_xml_path(dc, path, iid)
+    elif path_type == "json":
         ret = copy_values_json_path(dc, path)
     return ret
 
@@ -346,31 +345,38 @@ def copy_value_xml_path(dc, xml_path, iid=None):
         return None
 
 
-def copy_value_json_path(dc, path):
-    try:
-        matches = parse(path).find(dc)
-        match_value = [match.value for match in matches]
-        if len(match_value) > 0:
-            return match_value[0]
-        else:
-            return None
-    except Exception:
-        return None
-
-
-def copy_values_json_path(dc, path):
-    """[summary]
+def copy_value_json_path(meta, jsonpath):
+    """extract a value from metadata using jsonpath
 
     Args:
-        dc ([type]): [description]
-        path ([type]): [description]
+        meta (OrderedDict): item metadata
+        jsonpath (string): jsonpath for values extraction
 
     Returns:
-        [type]: [description]
+        string: extracted value from metadata
     """
     match_value = None
     try:
-        matches = parse(path).find(dc)
+        matches = parse(jsonpath).find(meta)
+        match_value = [match.value for match in matches]
+        return match_value[0]
+    except Exception:
+        return match_value
+
+
+def copy_values_json_path(meta, jsonpath):
+    """extract values from metadata using jsonpath
+
+    Args:
+        meta (OrderedDict): item metadata
+        jsonpath (string): jsonpath for values extraction
+
+    Returns:
+        list: extracted values from metadata
+    """
+    match_value = None
+    try:
+        matches = parse(jsonpath).find(meta)
         match_value = [match.value for match in matches]
         return match_value
     except Exception:
