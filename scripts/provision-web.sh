@@ -193,7 +193,7 @@ setup_nginx_ubuntu14 () {
     # sphinxdoc-install-web-nginx-ubuntu14-begin
     # install Nginx web server:
     $sudo apt-get install -y nginx
-    
+
     # configure Nginx web server:
     $sudo cp -f "$scriptpathname/../nginx/weko.conf" /etc/nginx/sites-available/
     $sudo sed -i "s,/home/invenio/,/home/$(whoami)/,g" /etc/nginx/sites-available/weko.conf
@@ -300,8 +300,8 @@ main () {
         provision_web_libpostgresql_ubuntu14
         setup_npm_and_css_js_filters
         setup_virtualenvwrapper
-        cleanup_web_ubuntu14
         setup_libreoffice_ubuntu14
+        cleanup_web_ubuntu14
     elif [ "$os_distribution" = "Ubuntu" ]; then
         if [ "$os_release" = "14" ]; then
             provision_web_common_ubuntu14
@@ -310,6 +310,7 @@ main () {
             setup_virtualenvwrapper
             setup_nginx_ubuntu14
             setup_libreoffice_ubuntu14
+            cleanup_web_ubuntu14
         else
             echo "[ERROR] Sorry, unsupported release ${os_release}."
             exit 1
@@ -322,6 +323,7 @@ main () {
             setup_virtualenvwrapper
             setup_nginx_centos7
             setup_libreoffice_centos7
+            cleanup_web_centos7
         else
             echo "[ERROR] Sorry, unsupported release ${os_release}."
             exit 1

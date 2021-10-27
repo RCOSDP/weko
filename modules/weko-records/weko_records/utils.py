@@ -215,6 +215,9 @@ def json_loader(data, pid, owner_id=None):
             else:
                 copy_field_test(dc, detail_condition, jrc)
 
+        # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        #     __file__, 'detail_condition()', 'detail_condition', detail_condition))
+
         jrc.update(dict(control_number=pid))
         jrc.update(dict(_oai={"id": oai_value}))
         jrc.update(dict(_item_metadata=dc))
@@ -256,52 +259,63 @@ def json_loader(data, pid, owner_id=None):
 
 
 def copy_field_test(dc, map, jrc, iid=None):
+    # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+    #     __file__, 'copy_field_test()', 'dc', dc))
+    # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+    #     __file__, 'copy_field_test()', 'map', map))
+    # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+    #     __file__, 'copy_field_test()', 'jrc', jrc))
+    # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+    #     __file__, 'copy_field_test()', 'iid', iid))
+
     for k_v in map:
-        current_app.logger.debug('{0} {1} {2}: {3}'.format(
-            __file__, 'copy_field_test()', 'k_v', k_v))
-        current_app.logger.debug('{0} {1} {2}: {3}'.format(
-            __file__, 'copy_field_test()', 'type(k_v)', type(k_v)))
+        # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        #     __file__, 'copy_field_test()', 'k_v', k_v))
+        # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        #     __file__, 'copy_field_test()', 'type(k_v)', type(k_v)))
         if type(k_v) is dict:
             if k_v.get('item_value'):
                 if dc["item_type_id"] in k_v.get('item_value').keys():
-
                     for key, val in k_v.get('item_value').items():
-                        current_app.logger.debug('{0} {1} {2}: {3}'.format(
-                            __file__, 'copy_field_test()', 'key', key))
-                        current_app.logger.debug('{0} {1} {2}: {3}'.format(
-                            __file__, 'copy_field_test()', 'val', val))
+                        # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+                        #     __file__, 'copy_field_test()', 'key', key))
+                        # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+                        #     __file__, 'copy_field_test()', 'val', val))
                         if dc["item_type_id"] == key:
                             if k_v.get('input_Type') == 'text':
-                                if get_value_from_dict(dc, val["path"], val["path_type"], iid):
-                                    jrc[k_v.get('id')] = get_value_from_dict(
-                                        dc, val["path"], val["path_type"], iid)
-                                elif k_v.get('input_Type') == "range":
-                                    value_range = {k_v.get('id'): {
-                                        "gte": "", "lte": ""}}
-                                    value_range[k_v.get('id')]["gte"] = get_value_from_dict(
-                                        dc, val["path"]["gte"], val["path_type"]["gte"], iid)
-                                    value_range[k_v.get('id')]["lte"] = get_value_from_dict(
-                                        dc, val["path"]["lte"], val["path_type"]["lte"], iid)
-                                    if value_range[k_v.get('id')]["gte"] and value_range[k_v.get('id')]["lte"]:
-                                        jrc.update(value_range)
-                                elif k_v.get('input_Type') == "geo_point":
-                                    geo_point = {k_v.get('id'): {
-                                        "lat": "", "lon": ""}}
-                                    geo_point[k_v.get('id')]["lat"] = get_value_from_dict(
-                                        dc, val["path"]["lat"], val["path_type"]["lat"], iid)
-                                    geo_point[k_v.get('id')]["lon"] = get_value_from_dict(
-                                        dc, val["path"]["lon"], val["path_type"]["lon"], iid)
-                                    if geo_point[k_v.get('id')]["lat"] and geo_point[k_v.get('id')]["lon"]:
-                                        jrc.update(geo_point)
-                                elif k_v.get('input_Type') == "geo_shape":
-                                    geo_shape = {
-                                        k_v.get('id'): {"type": "", "coordinates": ""}}
-                                    geo_shape[k_v.get('id')]["type"] = get_value_from_dict(
-                                        dc, val["path"]["type"], val["path_type"]["type"], iid)
-                                    geo_shape[k_v.get('id')]["coordinates"] = get_value_from_dict(
-                                        dc, val["path"]["coordinates"], val["path_type"]["coordinates"], iid)
-                                    if geo_shape[k_v.get('id')]["type"] and geo_shape[k_v.get('id')]["coordinates"]:
-                                        jrc.update(geo_shape)
+                                txt = get_value_from_dict(
+                                    dc, val["path"], val["path_type"], iid)
+                                if txt:
+                                    jrc[k_v.get('id')] = txt
+                                current_app.logger.debug('{0} {1} {2}: {3}'.format(
+                                    __file__, 'copy_field_test()', 'txt', txt))
+                            elif k_v.get('input_Type') == "range":
+                                value_range = {k_v.get('id'): {
+                                    "gte": "", "lte": ""}}
+                                value_range[k_v.get('id')]["gte"] = get_value_from_dict(
+                                    dc, val["path"]["gte"], val["path_type"]["gte"], iid)
+                                value_range[k_v.get('id')]["lte"] = get_value_from_dict(
+                                    dc, val["path"]["lte"], val["path_type"]["lte"], iid)
+                                if value_range[k_v.get('id')]["gte"] and value_range[k_v.get('id')]["lte"]:
+                                    jrc.update(value_range)
+                            elif k_v.get('input_Type') == "geo_point":
+                                geo_point = {k_v.get('id'): {
+                                    "lat": "", "lon": ""}}
+                                geo_point[k_v.get('id')]["lat"] = get_value_from_dict(
+                                    dc, val["path"]["lat"], val["path_type"]["lat"], iid)
+                                geo_point[k_v.get('id')]["lon"] = get_value_from_dict(
+                                    dc, val["path"]["lon"], val["path_type"]["lon"], iid)
+                                if geo_point[k_v.get('id')]["lat"] and geo_point[k_v.get('id')]["lon"]:
+                                    jrc.update(geo_point)
+                            elif k_v.get('input_Type') == "geo_shape":
+                                geo_shape = {
+                                    k_v.get('id'): {"type": "", "coordinates": ""}}
+                                geo_shape[k_v.get('id')]["type"] = get_value_from_dict(
+                                    dc, val["path"]["type"], val["path_type"]["type"], iid)
+                                geo_shape[k_v.get('id')]["coordinates"] = get_value_from_dict(
+                                    dc, val["path"]["coordinates"], val["path_type"]["coordinates"], iid)
+                                if geo_shape[k_v.get('id')]["type"] and geo_shape[k_v.get('id')]["coordinates"]:
+                                    jrc.update(geo_shape)
 
 
 def get_value_from_dict(dc, path, path_type, iid=None):
@@ -309,9 +323,7 @@ def get_value_from_dict(dc, path, path_type, iid=None):
     if path_type == "xml":
         ret = copy_value_xml_path(dc, path, iid)
     elif path_type == "json":
-        ret = copy_value_json_path(dc, path)
-    current_app.logger.debug('{0} {1} {2}: {3}'.format(
-        __file__, 'get_value_from_dict()', 'ret', ret))
+        ret = copy_values_json_path(dc, path)
     return ret
 
 
@@ -351,15 +363,22 @@ def copy_value_json_path(dc, path):
 
 
 def copy_values_json_path(dc, path):
+    """[summary]
+
+    Args:
+        dc ([type]): [description]
+        path ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+    match_value = None
     try:
         matches = parse(path).find(dc)
         match_value = [match.value for match in matches]
-        if len(match_value) > 0:
-            return match_value
-        else:
-            return None
+        return match_value
     except Exception:
-        return None
+        return match_value
 
 
 def set_timestamp(jrc, created, updated):
