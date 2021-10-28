@@ -20,6 +20,8 @@
 
 """Task for sending scheduled report emails."""
 
+import os
+import shutil
 from datetime import datetime, timedelta
 
 from celery import shared_task
@@ -31,6 +33,8 @@ from invenio_mail.api import send_mail
 from invenio_stats.utils import QueryCommonReportsHelper, \
     QueryFileReportsHelper, QueryRecordViewPerIndexReportHelper, \
     QueryRecordViewReportHelper, QuerySearchReportHelper
+
+from weko_admin.api import TempDirInfo
 
 from .models import AdminSettings, StatisticsEmail
 from .utils import StatisticMail, get_user_report_data, package_reports
@@ -145,3 +149,23 @@ def check_send_site_access_report():
         # send mail api
         manual_send_site_license_mail(start_month=start_month,
                                       end_month=end_month)
+
+
+@shared_task(ignore_results=True)
+def clean_temp_info():
+    """A schedule task for clean temporary information."""
+    temp_dir_api = TempDirInfo()
+    datas = temp_dir_api.get_all()
+    for temp_path, extra_info in datas.items():
+        can_delete = False
+        if not os.path.exists(temp_path):
+            can_delete = True
+        else:
+            expire = extra_info.get('expire', '')
+            if not expire:
+                continue
+            if expire < datetime.now().strftime('%Y-%m-%d %H:%M:%S'):
+                can_delete = True
+                shutil.rmtree(temp_path)
+        if can_delete:
+            temp_dir_api.delete(temp_path)

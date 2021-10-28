@@ -129,6 +129,9 @@ setup(
         'invenio_db.alembic': [
             'weko_workflow = weko_workflow:alembic',
         ],
+        'invenio_oauth2server.scopes': [
+            'weko_workflow = weko_workflow.scopes:activity_scope',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

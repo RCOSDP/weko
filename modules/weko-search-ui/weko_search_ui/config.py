@@ -111,6 +111,7 @@ RECORDS_REST_ENDPOINTS['opensearch']['search_serializers'] = {
 
 RECORDS_REST_ENDPOINTS['recid']['record_class'] = 'weko_records.api:WekoRecord'
 RECORDS_REST_ENDPOINTS['recid']['record_serializers'] = {
+    'application/json': ('invenio_records_rest.serializers:json_v1_response'),
     'application/vnd.citationstyles.csl+json': (
         'weko_records.serializers:csl_v1_response'),
     'text/x-bibliography': ('weko_records.serializers:citeproc_v1_response')
