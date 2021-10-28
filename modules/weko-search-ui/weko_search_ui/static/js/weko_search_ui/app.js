@@ -154,7 +154,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
             descOrEsc = "-";
             key_sort = key_sort.replace("_desc", "");
           }
-         
+
           // Default param
           let param = {
             page: 1,
