@@ -110,3 +110,25 @@ def edit(ids):
 @click.option('-i', '--id', 'ids', multiple=True)
 def discard(ids):
     """Discard selected deposits."""
+
+
+@deposit.command('reindex')
+@click.option('-r', '--recid', required=True)
+@with_appcontext
+def init_queue(recid):
+    """Initialize indexing queue."""
+    from invenio_oaiserver.tasks import update_records_sets
+    from invenio_pidstore.errors import PIDDoesNotExistError
+    from invenio_pidstore.models import PersistentIdentifier
+
+    click.secho('Indexing records...', fg='green')
+    try:
+        pid = PersistentIdentifier.get('recid', str(recid))
+
+        if pid:
+            update_records_sets([str(pid.object_uuid)])
+    except PIDDoesNotExistError:
+        click.secho('Chosen record doesn\'t exist', fg='red')
+    except Exception as e:
+        click.secho(e, fg='red')
+    click.secho('Reindex process finished!', fg='green')

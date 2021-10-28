@@ -50,7 +50,8 @@ def append_file_content(sender, json=None, record=None, index=None, **kwargs):
             if pid == get_record_without_version(pid) else False
         dep._convert_jpcoar_data_to_es()
         im.pop('recid')
-        dep.get_content_files()
+        # Temping disable content file when reindex.
+        # dep.get_content_files()
 
         # Updated metadata's path
         if record_metadata.status == PIDStatus.REGISTERED:
