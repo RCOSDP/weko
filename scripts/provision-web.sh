@@ -247,6 +247,7 @@ setup_libreoffice_ubuntu14 () {
     $sudo mkdir -p /usr/share/man/man1
     $sudo apt-get install default-jre libreoffice-java-common
     $sudo apt-get install -y libreoffice
+    #$sudo apt-get install -y libreoffice-core --no-install-recommends
     $sudo apt-get install -y fonts-ipafont fonts-ipaexfont # japanese fonts
     set -o errexit
     # sphinxdoc-install-web-libreoffice-ubuntu14-end

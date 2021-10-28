@@ -263,7 +263,6 @@ def copy_field_test(dc, map, jrc, iid=None):
     #     __file__, 'copy_field_test()', 'jrc', jrc))
     # current_app.logger.debug('{0} {1} {2}: {3}'.format(
     #     __file__, 'copy_field_test()', 'iid', iid))
-
     for k_v in map:
         if type(k_v) is dict:
             if k_v.get('item_value'):
