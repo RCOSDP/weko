@@ -72,12 +72,10 @@
         <div class="panel-group" style="padding-top: 10px;">
           <h2 style="display: inline;">
             <!-- temporary fix for display of title -->
-            {%- if title_name_dict[current_i18n.language] and title_name_dict[current_i18n.language]!='' -%}
-            <div style="margin-left: 0.05em;">{{ title_name_dict[current_i18n.language] | escape_str }}</div>
-            {%- elif title_name_dict['en'] and title_name_dict['en']!='' -%}
-	    <div style="margin-left: 0.05em;">{{ title_name_dict['en'] | escape_str }}</div>
+            {%- if title_name -%}
+              <div style="margin-left: 0.05em;">{{ title_name | escape_str }}</div>
             {%- else -%}
-            <div style="margin-left: 0.05em;">{{ record.get('item_title', _('No title')) | escape_str }}</div>
+              <div style="margin-left: 0.05em;">{{ record.get('item_title', _('No title')) | escape_str }}</div>
             {%- endif -%}
             <!--
               <div style="margin-left: 0.05em;">{{ record.get('item_title', _('No title')) | escape_str }}</div>
