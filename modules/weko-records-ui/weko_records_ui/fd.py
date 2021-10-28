@@ -26,10 +26,13 @@ import unicodedata
 from flask import abort, current_app, render_template, request
 from flask_babelex import gettext as _
 from flask_login import current_user
+from invenio_db import db
 from invenio_files_rest import signals
 from invenio_files_rest.models import FileInstance
 from invenio_files_rest.views import ObjectResource
 from invenio_records_files.utils import record_file_factory
+from requests.sessions import session
+from sqlalchemy.exc import SQLAlchemyError
 from weko_accounts.views import _redirect_method
 from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
@@ -227,7 +230,17 @@ def file_ui(
 
     # Check and create usage report
     if not is_preview:
-        check_and_create_usage_report(record, fileobj)
+        try:
+            check_and_create_usage_report(record, fileobj)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.error('sqlalchemy error: ', ex)
+            db.session.rollback()
+            abort(500)
+        except BaseException as ex:
+            current_app.logger.error('Unexpected error: ', ex)
+            db.session.rollback()
+            abort(500)
 
     # #Check permissions
     # ObjectResource.check_object_permission(obj)
@@ -436,9 +449,20 @@ def file_download_onetime(pid, record, _record_file_factory=None, **kwargs):
     if onetime_download.extra_info and 'open_restricted' == file_object.get(
             'accessrole'):
         extra_info = onetime_download.extra_info
-        error_msg = check_and_send_usage_report(extra_info, user_mail)
-        if error_msg:
-            return render_template(error_template, error=error_msg)
+        try:
+            error_msg = check_and_send_usage_report(extra_info, user_mail)
+            if error_msg:
+                return render_template(error_template, error=error_msg)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.error('sqlalchemy error: ', ex)
+            db.session.rollback()
+            return render_template(error_template, error=_("Unexpected error occurred."))
+        except BaseException as ex:
+            current_app.logger.error('Unexpected error: ', ex)
+            db.session.rollback()
+            return render_template(error_template, error=_("Unexpected error occurred."))
+
         update_data['extra_info'] = extra_info
 
     # Update download data

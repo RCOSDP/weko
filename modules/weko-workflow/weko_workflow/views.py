@@ -316,6 +316,7 @@ def init_activity():
             comm = GetCommunity.get_community_by_id(request.args.get('community'))
             url = url_for('weko_workflow.display_activity',
                         activity_id=rtn.activity_id, community=comm.id)
+        db.session.commit()
     except SQLAlchemyError as ex:
         current_app.logger.error('sqlalchemy error: ', ex)
         db.session.rollback()
@@ -369,21 +370,31 @@ def init_activity_guest():
     post_data = request.get_json()
 
     if post_data.get('guest_mail'):
-        # Prepare activity data.
-        data = {
-            'itemtype_id': post_data.get('item_type_id'),
-            'workflow_id': post_data.get('workflow_id'),
-            'flow_id': post_data.get('flow_id'),
-            'activity_confirm_term_of_use': True,
-            'extra_info': {
-                "guest_mail": post_data.get('guest_mail'),
-                "record_id": post_data.get('record_id'),
-                "related_title": post_data.get('guest_item_title'),
-                "file_name": post_data.get('file_name'),
-                "is_restricted_access": True,
+        try:
+            # Prepare activity data.
+            data = {
+                'itemtype_id': post_data.get('item_type_id'),
+                'workflow_id': post_data.get('workflow_id'),
+                'flow_id': post_data.get('flow_id'),
+                'activity_confirm_term_of_use': True,
+                'extra_info': {
+                    "guest_mail": post_data.get('guest_mail'),
+                    "record_id": post_data.get('record_id'),
+                    "related_title": post_data.get('guest_item_title'),
+                    "file_name": post_data.get('file_name'),
+                    "is_restricted_access": True,
+                }
             }
-        }
-        __, tmp_url = init_activity_for_guest_user(data)
+            __, tmp_url = init_activity_for_guest_user(data)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.error('sqlalchemy error: ', ex)
+            db.session.rollback()
+            return jsonify(msg='Cannot send mail')
+        except BaseException as ex:
+            current_app.logger.error('Unexpected error: ', ex)
+            db.session.rollback()
+            return jsonify(msg='Cannot send mail')
 
         if send_usage_application_mail_for_guest_user(
                 post_data.get('guest_mail'), tmp_url):

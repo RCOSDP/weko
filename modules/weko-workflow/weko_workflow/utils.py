@@ -2412,7 +2412,6 @@ def create_record_metadata(
     update_activity_action(activity.get('activity_id'), owner_id)
 
     WorkActivity().update_activity(activity.get('activity_id'), activity)
-    db.session.commit()
     return new_usage_report_activity.activity_id
 
 

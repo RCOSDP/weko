@@ -32,11 +32,13 @@ from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
+from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.resolver import Resolver
 from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
+from sqlalchemy.exc import SQLAlchemyError
 from weko_accounts.utils import login_required_customize
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoRecord
@@ -863,7 +865,23 @@ def prepare_edit_item():
         post_activity['community'] = community
         post_activity['post_workflow'] = post_workflow
 
-        rtn = prepare_edit_workflow(post_activity, recid, deposit)
+        try:
+            rtn = prepare_edit_workflow(post_activity, recid, deposit)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.error('sqlalchemy error: ', ex)
+            db.session.rollback()
+            return jsonify(
+                code=err_code,
+                msg=_('An error has occurred.')
+            )
+        except BaseException as ex:
+            current_app.logger.error('Unexpected error: ', ex)
+            db.session.rollback()
+            return jsonify(
+                code=err_code,
+                msg=_('An error has occurred.')
+            )
 
         if community:
             comm = GetCommunity.get_community_by_id(community)

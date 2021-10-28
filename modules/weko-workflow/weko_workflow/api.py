@@ -720,10 +720,6 @@ class WorkActivity(object):
             )
             db.session.add(db_activity)
             db.session.commit()
-        except IndexError as ex:
-            raise ex
-        except SQLAlchemyError as ex:
-            raise ex
         except BaseException as ex:
             raise ex
         else:
@@ -746,9 +742,9 @@ class WorkActivity(object):
                     action_comment=ActionCommentPolicy.BEGIN_ACTION_COMMENT,
                     action_order=1
                 )
+                db.session.add(db_history)
 
                 with db.session.begin_nested():
-                    db.session.add(db_history)
                     # set action handler for all the action except approval
                     # actions
                     for flow_action in flow_actions:
@@ -765,9 +761,7 @@ class WorkActivity(object):
                             action_order=flow_action.action_order
                         )
                         db.session.add(db_activity_action)
-
-            except SQLAlchemyError as ex:
-                raise ex
+                        
             except BaseException as ex:
                 raise ex
             else:
