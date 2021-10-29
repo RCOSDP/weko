@@ -42,6 +42,7 @@ import redis
 import sqlalchemy as sa
 from celery.result import AsyncResult
 from celery.task.control import revoke
+from elasticsearch import ElasticsearchException
 from elasticsearch.exceptions import NotFoundError
 from flask import abort, current_app, request
 from flask_babelex import gettext as _
@@ -62,6 +63,7 @@ from invenio_stats.models import StatsEvents
 from invenio_stats.processors import anonymize_user, flag_restricted, \
     flag_robots, hash_id
 from jsonschema import Draft4Validator
+from sqlalchemy.exc import SQLAlchemyError
 from weko_admin.models import SessionLifetime
 from weko_admin.utils import get_redis_cache
 from weko_authors.utils import check_email_existed
@@ -1341,11 +1343,59 @@ def import_items_to_system(item: dict, request_info: dict):
                 # Store data to es and db.
                 store_data_to_es_and_db(item, request_info)
             db.session.commit()
-        except Exception as ex:
+        except SQLAlchemyError as ex:
+            current_app.logger.error('sqlalchemy error: ', ex)
+            db.session.rollback()
             if item.get('id'):
                 handle_remove_es_metadata(item)
+            current_app.logger.error('item id: %s update error.' % item['id'])
+            traceback.print_exc(file=sys.stdout)
+            error_id = None
+            if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                    and ex.args[0].get('error_id'):
+                error_id = ex.args[0].get('error_id')
 
+            return {
+                'success': False,
+                'error_id': error_id
+            }
+        except ElasticsearchException as ex:
+            current_app.logger.error('elasticsearch  error: ', ex)
             db.session.rollback()
+            if item.get('id'):
+                handle_remove_es_metadata(item)
+            current_app.logger.error('item id: %s update error.' % item['id'])
+            traceback.print_exc(file=sys.stdout)
+            error_id = None
+            if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                    and ex.args[0].get('error_id'):
+                error_id = ex.args[0].get('error_id')
+
+            return {
+                'success': False,
+                'error_id': error_id
+            }
+        except redis.RedisError as ex:
+            current_app.logger.error('redis  error: ', ex)
+            db.session.rollback()
+            if item.get('id'):
+                handle_remove_es_metadata(item)
+            current_app.logger.error('item id: %s update error.' % item['id'])
+            traceback.print_exc(file=sys.stdout)
+            error_id = None
+            if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                    and ex.args[0].get('error_id'):
+                error_id = ex.args[0].get('error_id')
+
+            return {
+                'success': False,
+                'error_id': error_id
+            }
+        except BaseException as ex:
+            current_app.logger.error('Unexpected error: ', ex)
+            db.session.rollback()
+            if item.get('id'):
+                handle_remove_es_metadata(item)
             current_app.logger.error('item id: %s update error.' % item['id'])
             traceback.print_exc(file=sys.stdout)
             error_id = None

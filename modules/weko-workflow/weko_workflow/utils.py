@@ -2528,12 +2528,8 @@ def get_shema_dict(properties, data_dict):
 
 def create_deposit(item_id):
     """Create deposit."""
-    try:
-        deposit = WekoDeposit.create({}, recid=int(item_id))
-        db.session.commit()
-        return deposit
-    except Exception:
-        db.session.rollback()
+    deposit = WekoDeposit.create({}, recid=int(item_id))
+    return deposit
 
 
 def update_activity_action(activity_id, owner_id):
