@@ -1554,7 +1554,8 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
             str_key_lang = str_key_lang.split('.')
         if '.' in str_key_val:
             str_key_val = str_key_val.split('.')
-        metadata = metadata.get("_item_metadata")
+        metadata = metadata.get("_item_metadata") \
+            if "_item_metadata" in metadata else metadata
         if str_key_lang[0] in metadata:
             obj = metadata.get(str_key_lang[0]).get('attribute_value_mlt')
             save = obj
