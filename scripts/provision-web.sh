@@ -303,7 +303,7 @@ main () {
             provision_web_libpostgresql_ubuntu14
             setup_npm_and_css_js_filters
             setup_virtualenvwrapper
-            setup_nginx_ubuntu14
+            #setup_nginx_ubuntu14
             setup_libreoffice_ubuntu14
             cleanup_web_ubuntu14
         else
@@ -316,7 +316,7 @@ main () {
             provision_web_libpostgresql_centos7
             setup_npm_and_css_js_filters
             setup_virtualenvwrapper
-            setup_nginx_centos7
+            #setup_nginx_centos7
             setup_libreoffice_centos7
             cleanup_web_centos7
         else
