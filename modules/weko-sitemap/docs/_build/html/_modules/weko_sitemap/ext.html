@@ -1,0 +1,319 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>weko_sitemap.ext &#8212; weko-sitemap 1.0.0.dev20190000 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for weko_sitemap.ext</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1">#</span>
+<span class="c1"># This file is part of WEKO3.</span>
+<span class="c1"># Copyright (C) 2017 National Institute of Informatics.</span>
+<span class="c1">#</span>
+<span class="c1"># WEKO3 is free software; you can redistribute it</span>
+<span class="c1"># and/or modify it under the terms of the GNU General Public License as</span>
+<span class="c1"># published by the Free Software Foundation; either version 2 of the</span>
+<span class="c1"># License, or (at your option) any later version.</span>
+<span class="c1">#</span>
+<span class="c1"># WEKO3 is distributed in the hope that it will be</span>
+<span class="c1"># useful, but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c1"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</span>
+<span class="c1"># General Public License for more details.</span>
+<span class="c1">#</span>
+<span class="c1"># You should have received a copy of the GNU General Public License</span>
+<span class="c1"># along with WEKO3; if not, write to the</span>
+<span class="c1"># Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,</span>
+<span class="c1"># MA 02111-1307, USA.</span>
+
+<span class="sd">&quot;&quot;&quot;Module of weko-sitemap.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">print_function</span>
+
+<span class="kn">import</span> <span class="nn">gzip</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">wraps</span>
+<span class="kn">from</span> <span class="nn">io</span> <span class="k">import</span> <span class="n">BytesIO</span>
+
+<span class="kn">from</span> <span class="nn">flask</span> <span class="k">import</span> <span class="n">Blueprint</span><span class="p">,</span> <span class="n">Response</span><span class="p">,</span> <span class="n">current_app</span><span class="p">,</span> <span class="n">render_template</span><span class="p">,</span> <span class="n">url_for</span>
+<span class="kn">from</span> <span class="nn">flask_sitemap</span> <span class="k">import</span> <span class="n">Sitemap</span><span class="p">,</span> <span class="n">sitemap_page_needed</span>
+<span class="kn">from</span> <span class="nn">invenio_cache</span> <span class="k">import</span> <span class="n">current_cache</span>
+<span class="kn">from</span> <span class="nn">invenio_db</span> <span class="k">import</span> <span class="n">db</span>
+<span class="kn">from</span> <span class="nn">invenio_pidstore.models</span> <span class="k">import</span> <span class="n">PersistentIdentifier</span><span class="p">,</span> <span class="n">PIDStatus</span>
+<span class="kn">from</span> <span class="nn">invenio_records.models</span> <span class="k">import</span> <span class="n">RecordMetadata</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="k">import</span> <span class="n">Float</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">config</span>
+
+
+<div class="viewcode-block" id="WekoSitemap"><a class="viewcode-back" href="../../api.html#weko_sitemap.ext.WekoSitemap">[docs]</a><span class="k">class</span> <span class="nc">WekoSitemap</span><span class="p">(</span><span class="n">Sitemap</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Weko-sitemap extension.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="WekoSitemap.create_page"><a class="viewcode-back" href="../../api.html#weko_sitemap.ext.WekoSitemap.create_page">[docs]</a>    <span class="nd">@sitemap_page_needed</span><span class="o">.</span><span class="n">connect</span>
+    <span class="k">def</span> <span class="nf">create_page</span><span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="n">page</span><span class="p">,</span> <span class="n">urlset</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create sitemap page and save to cache.&quot;&quot;&quot;</span>
+        <span class="n">page_name</span> <span class="o">=</span> <span class="s1">&#39;sitemap_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">page</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>  <span class="c1"># Cache key</span>
+        <span class="n">page_dic</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">page</span><span class="o">=</span><span class="n">current_app</span><span class="o">.</span><span class="n">extensions</span><span class="p">[</span><span class="s1">&#39;sitemap&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">render_page</span><span class="p">(</span><span class="n">urlset</span><span class="o">=</span><span class="n">urlset</span><span class="p">),</span>
+            <span class="n">lastmod</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">T%H:%M:%S%z&#39;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">current_app</span><span class="o">.</span><span class="n">extensions</span><span class="p">[</span><span class="s1">&#39;weko-sitemap&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_cache_page</span><span class="p">(</span>
+            <span class="n">page_name</span><span class="p">,</span> <span class="n">page_dic</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WekoSitemap.load_page"><a class="viewcode-back" href="../../api.html#weko_sitemap.ext.WekoSitemap.load_page">[docs]</a>    <span class="k">def</span> <span class="nf">load_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Load sitemap page.&quot;&quot;&quot;</span>
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">loader</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">page</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;page&#39;</span><span class="p">)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">current_cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sitemap_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">page</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+            <span class="c1"># current_app.extensions[&#39;sitemap&#39;].gzip_response(data[&#39;page&#39;])</span>
+            <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;page&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">data</span> <span class="k">else</span> <span class="n">fn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">loader</span></div>
+
+<div class="viewcode-block" id="WekoSitemap.clear_cache_pages"><a class="viewcode-back" href="../../api.html#weko_sitemap.ext.WekoSitemap.clear_cache_pages">[docs]</a>    <span class="k">def</span> <span class="nf">clear_cache_pages</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Clear all cached pages.&quot;&quot;&quot;</span>
+        <span class="n">page_keys</span> <span class="o">=</span> <span class="n">current_cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cached_pages_set_key</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">page</span> <span class="ow">in</span> <span class="n">page_keys</span><span class="p">:</span>
+            <span class="n">current_cache</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">page</span><span class="p">)</span>
+        <span class="n">current_cache</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cached_pages_set_key</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WekoSitemap.set_cache_page"><a class="viewcode-back" href="../../api.html#weko_sitemap.ext.WekoSitemap.set_cache_page">[docs]</a>    <span class="k">def</span> <span class="nf">set_cache_page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the page into the cache.&quot;&quot;&quot;</span>
+        <span class="c1"># Check if there is a set of keys, if not create one_or_none</span>
+        <span class="n">current_key_set</span> <span class="o">=</span> <span class="n">current_cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cached_pages_set_key</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">current_key_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">current_cache</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cached_pages_set_key</span><span class="p">,</span>
+            <span class="n">current_key_set</span><span class="p">,</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;WEKO_SITEMAP_CACHE_TIMEOUT&#39;</span><span class="p">])</span>
+        <span class="n">current_cache</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+            <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;WEKO_SITEMAP_CACHE_TIMEOUT&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="WekoSitemap.get_cache_page"><a class="viewcode-back" href="../../api.html#weko_sitemap.ext.WekoSitemap.get_cache_page">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_cache_page</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get page from cache.&quot;&quot;&quot;</span>
+        <span class="n">current_cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WekoSitemap.sitemap"><a class="viewcode-back" href="../../api.html#weko_sitemap.ext.WekoSitemap.sitemap">[docs]</a>    <span class="k">def</span> <span class="nf">sitemap</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Override - Render sitemap from cache sitemap.xml.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">render_template</span><span class="p">(</span><span class="s1">&#39;flask_sitemap/sitemapindex.xml&#39;</span><span class="p">,</span>
+                               <span class="n">sitemaps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_load_cache_pages</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="WekoSitemap.page"><a class="viewcode-back" href="../../api.html#weko_sitemap.ext.WekoSitemap.page">[docs]</a>    <span class="k">def</span> <span class="nf">page</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">page</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Override to get sitemap page from cache if it exists.&quot;&quot;&quot;</span>
+        <span class="n">sitemap_page</span> <span class="o">=</span> <span class="n">current_cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sitemap_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">page</span><span class="p">)</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">sitemap_page</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">gzip_response</span><span class="p">(</span><span class="n">sitemap_page</span><span class="p">[</span><span class="s1">&#39;page&#39;</span><span class="p">])</span>
+            <span class="c1"># return sitemap_page[&#39;page&#39;]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">render_page</span><span class="p">(</span><span class="n">urlset</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="WekoSitemap.gzip_response"><a class="viewcode-back" href="../../api.html#weko_sitemap.ext.WekoSitemap.gzip_response">[docs]</a>    <span class="k">def</span> <span class="nf">gzip_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Override - Gzip response data and create new Response instance.&quot;&quot;&quot;</span>
+        <span class="n">gzip_buffer</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">()</span>
+        <span class="n">gzip_file</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">GzipFile</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;wb&#39;</span><span class="p">,</span> <span class="n">fileobj</span><span class="o">=</span><span class="n">gzip_buffer</span><span class="p">)</span>
+        <span class="n">gzip_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+        <span class="n">gzip_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">Response</span><span class="p">()</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">gzip_buffer</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;application/x-gzip&#39;</span>
+        <span class="c1"># response.headers[&#39;Content-Encoding&#39;] = &#39;gzip&#39; # Breaks Chrome if set</span>
+        <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Content-Length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">response</span></div>
+
+    <span class="k">def</span> <span class="nf">_generate_all_item_urls</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Make url set for all items.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear_cache_pages</span><span class="p">()</span>  <span class="c1"># Clear cache</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">session</span>
+               <span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">PersistentIdentifier</span><span class="p">,</span> <span class="n">RecordMetadata</span><span class="p">)</span>
+               <span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">RecordMetadata</span><span class="p">,</span>
+                     <span class="n">RecordMetadata</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">PersistentIdentifier</span><span class="o">.</span><span class="n">object_uuid</span><span class="p">)</span>
+               <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">PersistentIdentifier</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">PIDStatus</span><span class="o">.</span><span class="n">REGISTERED</span><span class="p">,</span>
+                       <span class="n">PersistentIdentifier</span><span class="o">.</span><span class="n">pid_type</span> <span class="o">==</span> <span class="s1">&#39;recid&#39;</span><span class="p">)</span>
+               <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">PersistentIdentifier</span><span class="o">.</span><span class="n">pid_value</span><span class="p">,</span> <span class="n">Float</span><span class="p">)</span><span class="o">.</span><span class="n">asc</span><span class="p">())</span>
+               <span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;WEKO_SITEMAP_TOTAL_MAX_URL_COUNT&#39;</span><span class="p">]))</span>
+
+        <span class="k">for</span> <span class="n">recid</span><span class="p">,</span> <span class="n">rm</span> <span class="ow">in</span> <span class="n">q</span><span class="o">.</span><span class="n">yield_per</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="p">{</span>
+                <span class="s1">&#39;loc&#39;</span><span class="p">:</span> <span class="n">url_for</span><span class="p">(</span><span class="s1">&#39;invenio_records_ui.recid&#39;</span><span class="p">,</span>
+                               <span class="n">pid_value</span><span class="o">=</span><span class="n">recid</span><span class="o">.</span><span class="n">pid_value</span><span class="p">,</span>
+                               <span class="n">_external</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+                <span class="s1">&#39;lastmod&#39;</span><span class="p">:</span> <span class="n">rm</span><span class="o">.</span><span class="n">updated</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">T%H:%M:%S%z&#39;</span><span class="p">)</span>
+            <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">_load_cache_pages</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get pages from cache instead of re-creating them.&quot;&quot;&quot;</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">_external</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">_scheme</span><span class="o">=</span><span class="n">current_app</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;WEKO_SITEMAP_URL_SCHEME&#39;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;page&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">page_keys</span> <span class="o">=</span> <span class="n">current_cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cached_pages_set_key</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">page_number</span> <span class="ow">in</span> <span class="n">page_keys</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;page&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">page</span> <span class="o">=</span> <span class="n">current_cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">page_number</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">page</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="p">{</span><span class="s1">&#39;loc&#39;</span><span class="p">:</span> <span class="n">url_for</span><span class="p">(</span><span class="s1">&#39;flask_sitemap.page&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+                       <span class="s1">&#39;lastmod&#39;</span><span class="p">:</span> <span class="n">page</span><span class="p">[</span><span class="s1">&#39;lastmod&#39;</span><span class="p">]}</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Extension initialization.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">app</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_app</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+
+<div class="viewcode-block" id="WekoSitemap.init_app"><a class="viewcode-back" href="../../api.html#weko_sitemap.ext.WekoSitemap.init_app">[docs]</a>    <span class="k">def</span> <span class="nf">init_app</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Flask application initialization.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_config</span><span class="p">(</span><span class="n">app</span><span class="p">)</span>
+        <span class="c1"># Keep track of cached pages</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cached_pages_set_key</span> <span class="o">=</span> <span class="s1">&#39;sitemap_page_keys&#39;</span>
+        <span class="n">app</span><span class="o">.</span><span class="n">extensions</span><span class="p">[</span><span class="s1">&#39;weko-sitemap&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;SITEMAP_VIEW_DECORATORS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">load_page</span><span class="p">]</span>
+
+        <span class="n">ext</span> <span class="o">=</span> <span class="n">Sitemap</span><span class="p">(</span><span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">)</span>
+        <span class="n">ext</span><span class="o">.</span><span class="n">register_generator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_generate_all_item_urls</span><span class="p">)</span>
+
+        <span class="n">ext</span><span class="o">.</span><span class="n">blueprint</span> <span class="o">=</span> <span class="n">Blueprint</span><span class="p">(</span><span class="s1">&#39;flask_sitemap&#39;</span><span class="p">,</span>
+                                  <span class="s1">&#39;flask_sitemap&#39;</span><span class="p">,</span> <span class="n">template_folder</span><span class="o">=</span><span class="s1">&#39;templates&#39;</span><span class="p">)</span>
+        <span class="n">ext</span><span class="o">.</span><span class="n">blueprint</span><span class="o">.</span><span class="n">add_url_rule</span><span class="p">(</span>  <span class="c1"># Return cached sitemap or update it</span>
+            <span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SITEMAP_ENDPOINT_URL&#39;</span><span class="p">),</span>
+            <span class="s1">&#39;sitemap&#39;</span><span class="p">,</span>
+            <span class="n">ext</span><span class="o">.</span><span class="n">_decorate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sitemap</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">ext</span><span class="o">.</span><span class="n">blueprint</span><span class="o">.</span><span class="n">add_url_rule</span><span class="p">(</span>
+            <span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SITEMAP_ENDPOINT_PAGE_URL&#39;</span><span class="p">),</span>
+            <span class="s1">&#39;page&#39;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">page</span>  <span class="c1"># Do not decorate</span>
+        <span class="p">)</span>
+        <span class="n">app</span><span class="o">.</span><span class="n">register_blueprint</span><span class="p">(</span>
+            <span class="n">ext</span><span class="o">.</span><span class="n">blueprint</span><span class="p">,</span>
+            <span class="n">url_prefix</span><span class="o">=</span><span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SITEMAP_BLUEPRINT_URL_PREFIX&#39;</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="WekoSitemap.init_config"><a class="viewcode-back" href="../../api.html#weko_sitemap.ext.WekoSitemap.init_config">[docs]</a>    <span class="k">def</span> <span class="nf">init_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">app</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize configuration.&quot;&quot;&quot;</span>
+        <span class="c1"># Use theme&#39;s base template if theme is installed</span>
+        <span class="k">if</span> <span class="s1">&#39;BASE_TEMPLATE&#39;</span> <span class="ow">in</span> <span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="p">:</span>
+            <span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
+                <span class="s1">&#39;WEKO_SITEMAP_BASE_TEMPLATE&#39;</span><span class="p">,</span>
+                <span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;BASE_TEMPLATE&#39;</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;WEKO_SITEMAP_&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;SITEMAP_&#39;</span><span class="p">):</span>
+                <span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">weko-sitemap</a></h1>
+
+
+
+<p class="blurb">Module of weko-sitemap.</p>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examplesapp.html">Example application</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Docs</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authors.html">Authors</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://github.com/RCOSDP/weko-sitemap">weko-sitemap@GitHub</a></li>
+    
+    <li class="toctree-l1"><a href="https://pypi.python.org/pypi/weko-sitemap/">weko-sitemap@PyPI</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, National Institute of Informatics.
+      
+    </div>
+
+    
+    <a href="https://github.com/inveniosoftware/weko-sitemap" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>
