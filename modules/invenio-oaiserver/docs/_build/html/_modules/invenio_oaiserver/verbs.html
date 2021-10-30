@@ -1,0 +1,326 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>invenio_oaiserver.verbs &#8212; Invenio-OAIServer 1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for invenio_oaiserver.verbs</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1">#</span>
+<span class="c1"># This file is part of Invenio.</span>
+<span class="c1"># Copyright (C) 2015-2018 CERN.</span>
+<span class="c1">#</span>
+<span class="c1"># Invenio is free software; you can redistribute it and/or modify it</span>
+<span class="c1"># under the terms of the MIT License; see LICENSE file for more details.</span>
+
+<span class="sd">&quot;&quot;&quot;OAI-PMH verbs.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
+
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+
+<span class="kn">from</span> <span class="nn">flask</span> <span class="k">import</span> <span class="n">current_app</span><span class="p">,</span> <span class="n">request</span>
+<span class="kn">from</span> <span class="nn">marshmallow</span> <span class="k">import</span> <span class="n">Schema</span><span class="p">,</span> <span class="n">ValidationError</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">validates_schema</span>
+<span class="kn">from</span> <span class="nn">marshmallow.fields</span> <span class="k">import</span> <span class="n">DateTime</span> <span class="k">as</span> <span class="n">_DateTime</span>
+<span class="kn">from</span> <span class="nn">weko_schema_ui.schema</span> <span class="k">import</span> <span class="n">get_oai_metadata_formats</span>
+
+<span class="kn">from</span> <span class="nn">.resumption_token</span> <span class="k">import</span> <span class="n">ResumptionTokenSchema</span>
+
+
+<div class="viewcode-block" id="validate_metadata_prefix"><a class="viewcode-back" href="../../api.html#invenio_oaiserver.verbs.validate_metadata_prefix">[docs]</a><span class="k">def</span> <span class="nf">validate_metadata_prefix</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check metadataPrefix.</span>
+
+<span class="sd">    :param value: One of the metadata identifiers configured in</span>
+<span class="sd">        ``OAISERVER_METADATA_FORMATS``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">metadata_formats</span> <span class="o">=</span> <span class="n">get_oai_metadata_formats</span><span class="p">(</span><span class="n">current_app</span><span class="p">)</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="s1">&#39;The metadataPrefix &quot;</span><span class="si">{0}</span><span class="s1">&quot; is not supported &#39;</span> \
+              <span class="s1">&#39;by this repository.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">&quot;jpcoar&quot;</span> <span class="ow">in</span> <span class="n">metadata_formats</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">del</span> <span class="n">metadata_formats</span><span class="p">[</span><span class="s2">&quot;jpcoar&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">metadata_formats</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">({</span><span class="s1">&#39;cannotDisseminateFormat&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">message</span><span class="p">]},</span>
+                              <span class="n">field_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;metadataPrefix&#39;</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="validate_duplicate_argument"><a class="viewcode-back" href="../../api.html#invenio_oaiserver.verbs.validate_duplicate_argument">[docs]</a><span class="k">def</span> <span class="nf">validate_duplicate_argument</span><span class="p">(</span><span class="n">field_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check duplicate of argument.</span>
+
+<span class="sd">    :param field_name: name of field.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">all_verbs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">getlist</span><span class="p">(</span><span class="n">field_name</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_verbs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+            <span class="s1">&#39;Illegal duplicate of argument &quot;</span><span class="si">{0}</span><span class="s1">&quot;.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">field_name</span><span class="p">),</span>
+            <span class="n">field_names</span><span class="o">=</span><span class="p">[</span><span class="n">field_name</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="DateTime"><a class="viewcode-back" href="../../api.html#invenio_oaiserver.verbs.DateTime">[docs]</a><span class="k">class</span> <span class="nc">DateTime</span><span class="p">(</span><span class="n">_DateTime</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;DateTime with a permissive deserializer.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="DateTime.from_iso_permissive"><a class="viewcode-back" href="../../api.html#invenio_oaiserver.verbs.DateTime.from_iso_permissive">[docs]</a>    <span class="k">def</span> <span class="nf">from_iso_permissive</span><span class="p">(</span><span class="n">datestring</span><span class="p">,</span> <span class="n">use_dateutil</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse an ISO8601-formatted datetime and return a datetime object.</span>
+
+<span class="sd">        Inspired by the marshmallow.utils.from_iso function, but also accepts</span>
+<span class="sd">        datestrings that don&#39;t contain the time.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dateutil_available</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">dateutil</span> <span class="k">import</span> <span class="n">parser</span>
+            <span class="n">dateutil_available</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="n">dateutil_available</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="kn">import</span> <span class="nn">datetime</span>
+
+        <span class="c1"># Use dateutil&#39;s parser if possible</span>
+        <span class="k">if</span> <span class="n">dateutil_available</span> <span class="ow">and</span> <span class="n">use_dateutil</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">datestring</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Strip off timezone info.</span>
+            <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">datestring</span><span class="p">[:</span><span class="mi">19</span><span class="p">],</span>
+                                              <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">T%H:%M:%S&#39;</span><span class="p">)</span></div>
+
+    <span class="n">DATEFORMAT_DESERIALIZATION_FUNCS</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">_DateTime</span><span class="o">.</span><span class="n">DATEFORMAT_DESERIALIZATION_FUNCS</span><span class="p">,</span>
+        <span class="n">permissive</span><span class="o">=</span><span class="n">from_iso_permissive</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OAISchema"><a class="viewcode-back" href="../../api.html#invenio_oaiserver.verbs.OAISchema">[docs]</a><span class="k">class</span> <span class="nc">OAISchema</span><span class="p">(</span><span class="n">Schema</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base OAI argument schema.&quot;&quot;&quot;</span>
+
+    <span class="n">verb</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Str</span><span class="p">(</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">load_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">error_messages</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;required&#39;</span><span class="p">:</span> <span class="s1">&#39;Missing data for required field &quot;verb&quot;.&#39;</span><span class="p">})</span>
+
+<div class="viewcode-block" id="OAISchema.Meta"><a class="viewcode-back" href="../../api.html#invenio_oaiserver.verbs.OAISchema.Meta">[docs]</a>    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Schema configuration.&quot;&quot;&quot;</span>
+
+        <span class="n">strict</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="OAISchema.validate"><a class="viewcode-back" href="../../api.html#invenio_oaiserver.verbs.OAISchema.validate">[docs]</a>    <span class="nd">@validates_schema</span>
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check range between dates under keys ``from_`` and ``until``.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s1">&#39;verb&#39;</span> <span class="ow">in</span> <span class="n">data</span> <span class="ow">and</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;verb&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="c1"># FIXME encode data</span>
+                <span class="s1">&#39;This is not a valid OAI-PMH verb:</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;verb&#39;</span><span class="p">]),</span>
+                <span class="n">field_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;verb&#39;</span><span class="p">],</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;from_&#39;</span> <span class="ow">in</span> <span class="n">data</span> <span class="ow">and</span> <span class="s1">&#39;until&#39;</span> <span class="ow">in</span> <span class="n">data</span> <span class="ow">and</span> \
+                <span class="n">data</span><span class="p">[</span><span class="s1">&#39;from_&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;until&#39;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s1">&#39;Date &quot;from&quot; must be before &quot;until&quot;.&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Set &#39;until&#39; time to 23:59:59 when &#39;until&#39; time is 00:00:00</span>
+        <span class="k">if</span> <span class="s1">&#39;until&#39;</span> <span class="ow">in</span> <span class="n">data</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;until&#39;</span><span class="p">],</span> <span class="n">datetime</span><span class="p">)</span> <span class="ow">and</span> \
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;until&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">hour</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;until&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">minute</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> \
+                <span class="n">data</span><span class="p">[</span><span class="s1">&#39;until&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">second</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;until&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;until&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">23</span><span class="p">,</span>
+                                                      <span class="n">minutes</span><span class="o">=</span><span class="mi">59</span><span class="p">,</span>
+                                                      <span class="n">seconds</span><span class="o">=</span><span class="mi">59</span><span class="p">)</span>
+
+        <span class="n">list_argument</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">load_from</span> <span class="ow">or</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+        <span class="n">extra</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">list_argument</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">extra</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s1">&#39;You have passed too many arguments.&#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">list_argument</span><span class="p">:</span>
+            <span class="n">validate_duplicate_argument</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Verbs"><a class="viewcode-back" href="../../api.html#invenio_oaiserver.verbs.Verbs">[docs]</a><span class="k">class</span> <span class="nc">Verbs</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;List valid verbs and its arguments.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Verbs.GetRecord"><a class="viewcode-back" href="../../api.html#invenio_oaiserver.verbs.Verbs.GetRecord">[docs]</a>    <span class="k">class</span> <span class="nc">GetRecord</span><span class="p">(</span><span class="n">OAISchema</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Arguments for GetRecord verb.&quot;&quot;&quot;</span>
+
+        <span class="n">identifier</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Str</span><span class="p">(</span>
+            <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">error_messages</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;required&#39;</span><span class="p">:</span>
+                            <span class="s1">&#39;Missing data for required field &quot;identifier&quot;.&#39;</span><span class="p">})</span>
+        <span class="n">metadataPrefix</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Str</span><span class="p">(</span>
+            <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">validate</span><span class="o">=</span><span class="n">validate_metadata_prefix</span><span class="p">,</span>
+            <span class="n">error_messages</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;required&#39;</span><span class="p">:</span> <span class="s1">&#39;Missing data for required&#39;</span>
+                            <span class="s1">&#39; field &quot;metadataPrefix&quot;.&#39;</span><span class="p">})</span></div>
+
+<div class="viewcode-block" id="Verbs.GetMetadata"><a class="viewcode-back" href="../../api.html#invenio_oaiserver.verbs.Verbs.GetMetadata">[docs]</a>    <span class="k">class</span> <span class="nc">GetMetadata</span><span class="p">(</span><span class="n">OAISchema</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Arguments for GetMetadata verb.&quot;&quot;&quot;</span>
+
+        <span class="n">identifier</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Str</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">metadataPrefix</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Str</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                    <span class="n">validate</span><span class="o">=</span><span class="n">validate_metadata_prefix</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Verbs.Identify"><a class="viewcode-back" href="../../api.html#invenio_oaiserver.verbs.Verbs.Identify">[docs]</a>    <span class="k">class</span> <span class="nc">Identify</span><span class="p">(</span><span class="n">OAISchema</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Arguments for Identify verb.&quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="Verbs.ListIdentifiers"><a class="viewcode-back" href="../../api.html#invenio_oaiserver.verbs.Verbs.ListIdentifiers">[docs]</a>    <span class="k">class</span> <span class="nc">ListIdentifiers</span><span class="p">(</span><span class="n">OAISchema</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Arguments for ListIdentifiers verb.&quot;&quot;&quot;</span>
+
+        <span class="n">from_</span> <span class="o">=</span> <span class="n">DateTime</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s1">&#39;permissive&#39;</span><span class="p">,</span> <span class="n">load_from</span><span class="o">=</span><span class="s1">&#39;from&#39;</span><span class="p">,</span> <span class="n">dump_to</span><span class="o">=</span><span class="s1">&#39;from&#39;</span><span class="p">)</span>
+        <span class="n">until</span> <span class="o">=</span> <span class="n">DateTime</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s1">&#39;permissive&#39;</span><span class="p">)</span>
+        <span class="nb">set</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Str</span><span class="p">()</span>
+        <span class="n">metadataPrefix</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Str</span><span class="p">(</span>
+            <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">validate</span><span class="o">=</span><span class="n">validate_metadata_prefix</span><span class="p">,</span>
+            <span class="n">error_messages</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;required&#39;</span><span class="p">:</span> <span class="s1">&#39;Missing data for required&#39;</span>
+                            <span class="s1">&#39; field &quot;metadataPrefix&quot;.&#39;</span><span class="p">})</span></div>
+
+<div class="viewcode-block" id="Verbs.ListMetadataFormats"><a class="viewcode-back" href="../../api.html#invenio_oaiserver.verbs.Verbs.ListMetadataFormats">[docs]</a>    <span class="k">class</span> <span class="nc">ListMetadataFormats</span><span class="p">(</span><span class="n">OAISchema</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Arguments for ListMetadataFormats verb.&quot;&quot;&quot;</span>
+
+        <span class="n">identifier</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Str</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Verbs.ListRecords"><a class="viewcode-back" href="../../api.html#invenio_oaiserver.verbs.Verbs.ListRecords">[docs]</a>    <span class="k">class</span> <span class="nc">ListRecords</span><span class="p">(</span><span class="n">ListIdentifiers</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Arguments for ListRecords verb.&quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="Verbs.ListSets"><a class="viewcode-back" href="../../api.html#invenio_oaiserver.verbs.Verbs.ListSets">[docs]</a>    <span class="k">class</span> <span class="nc">ListSets</span><span class="p">(</span><span class="n">OAISchema</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Arguments for ListSets verb.&quot;&quot;&quot;</span></div></div>
+
+
+<div class="viewcode-block" id="ResumptionVerbs"><a class="viewcode-back" href="../../api.html#invenio_oaiserver.verbs.ResumptionVerbs">[docs]</a><span class="k">class</span> <span class="nc">ResumptionVerbs</span><span class="p">(</span><span class="n">Verbs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;List valid verbs when resumption token is defined.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ResumptionVerbs.ListIdentifiers"><a class="viewcode-back" href="../../api.html#invenio_oaiserver.verbs.ResumptionVerbs.ListIdentifiers">[docs]</a>    <span class="k">class</span> <span class="nc">ListIdentifiers</span><span class="p">(</span><span class="n">OAISchema</span><span class="p">,</span> <span class="n">ResumptionTokenSchema</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Arguments for ListIdentifiers verb.&quot;&quot;&quot;</span>
+
+        <span class="n">metadataPrefix</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Str</span><span class="p">(</span><span class="n">load_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                    <span class="n">validate</span><span class="o">=</span><span class="n">validate_metadata_prefix</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ResumptionVerbs.ListRecords"><a class="viewcode-back" href="../../api.html#invenio_oaiserver.verbs.ResumptionVerbs.ListRecords">[docs]</a>    <span class="k">class</span> <span class="nc">ListRecords</span><span class="p">(</span><span class="n">OAISchema</span><span class="p">,</span> <span class="n">ResumptionTokenSchema</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Arguments for ListRecords verb.&quot;&quot;&quot;</span>
+
+        <span class="n">metadataPrefix</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Str</span><span class="p">(</span><span class="n">load_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                    <span class="n">validate</span><span class="o">=</span><span class="n">validate_metadata_prefix</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ResumptionVerbs.ListSets"><a class="viewcode-back" href="../../api.html#invenio_oaiserver.verbs.ResumptionVerbs.ListSets">[docs]</a>    <span class="k">class</span> <span class="nc">ListSets</span><span class="p">(</span><span class="n">OAISchema</span><span class="p">,</span> <span class="n">ResumptionTokenSchema</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Arguments for ListSets verb.&quot;&quot;&quot;</span></div></div>
+
+
+<div class="viewcode-block" id="make_request_validator"><a class="viewcode-back" href="../../api.html#invenio_oaiserver.verbs.make_request_validator">[docs]</a><span class="k">def</span> <span class="nf">make_request_validator</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Validate arguments in incomming request.&quot;&quot;&quot;</span>
+    <span class="n">verb</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;verb&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">resumption_token</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;resumptionToken&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="n">schema</span> <span class="o">=</span> <span class="n">Verbs</span> <span class="k">if</span> <span class="n">resumption_token</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">ResumptionVerbs</span>
+    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">verb</span><span class="p">,</span> <span class="n">OAISchema</span><span class="p">)(</span><span class="n">partial</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Invenio-OAIServer</a></h1>
+
+
+
+<p class="blurb">Invenio module that implements OAI-PMH server.</p>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examplesapp.html">Example application</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Docs</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authors.html">Contributors</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://github.com/inveniosoftware/invenio-oaiserver">invenio-oaiserver@GitHub</a></li>
+    
+    <li class="toctree-l1"><a href="https://pypi.python.org/pypi/invenio-oaiserver/">invenio-oaiserver@PyPI</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, CERN.
+      
+    </div>
+
+    
+    <a href="https://github.com/inveniosoftware/invenio-oaiserver" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,309 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>invenio_oaiserver.models &#8212; Invenio-OAIServer 1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for invenio_oaiserver.models</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1">#</span>
+<span class="c1"># This file is part of Invenio.</span>
+<span class="c1"># Copyright (C) 2015-2018 CERN.</span>
+<span class="c1">#</span>
+<span class="c1"># Invenio is free software; you can redistribute it and/or modify it</span>
+<span class="c1"># under the terms of the MIT License; see LICENSE file for more details.</span>
+
+<span class="sd">&quot;&quot;&quot;Models for storing information about OAIServer state.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+
+<span class="kn">import</span> <span class="nn">sqlalchemy</span> <span class="k">as</span> <span class="nn">sa</span>
+<span class="kn">from</span> <span class="nn">flask_babelex</span> <span class="k">import</span> <span class="n">lazy_gettext</span> <span class="k">as</span> <span class="n">_</span>
+<span class="kn">from</span> <span class="nn">invenio_db</span> <span class="k">import</span> <span class="n">db</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.event</span> <span class="k">import</span> <span class="n">listen</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.orm</span> <span class="k">import</span> <span class="n">validates</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy_utils</span> <span class="k">import</span> <span class="n">Timestamp</span>
+
+<span class="kn">from</span> <span class="nn">.errors</span> <span class="k">import</span> <span class="n">OAISetSpecUpdateError</span>
+<span class="kn">from</span> <span class="nn">.proxies</span> <span class="k">import</span> <span class="n">current_oaiserver</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">datetime_to_datestamp</span>
+
+
+<span class="k">class</span> <span class="nc">OAISet</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span> <span class="n">Timestamp</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Information about OAI set.&quot;&quot;&quot;</span>
+
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;oaiserver_set&#39;</span>
+
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">BigInteger</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">spec</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span>
+        <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">unique</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">info</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">label</span><span class="o">=</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;Identifier&#39;</span><span class="p">),</span>
+            <span class="n">description</span><span class="o">=</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;Identifier of the set.&#39;</span><span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;Set identifier.&quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span>
+        <span class="n">info</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">label</span><span class="o">=</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;Long name&#39;</span><span class="p">),</span>
+            <span class="n">description</span><span class="o">=</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;Long name of the set.&#39;</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;Human readable name of the set.&quot;&quot;&quot;</span>
+
+    <span class="n">description</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">Text</span><span class="p">,</span>
+        <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">info</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">label</span><span class="o">=</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;Description&#39;</span><span class="p">),</span>
+            <span class="n">description</span><span class="o">=</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;Description of the set.&#39;</span><span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;Human readable description.&quot;&quot;&quot;</span>
+
+    <span class="n">search_pattern</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">Text</span><span class="p">,</span>
+        <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">info</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">label</span><span class="o">=</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;Search pattern&#39;</span><span class="p">),</span>
+            <span class="n">description</span><span class="o">=</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;Search pattern to select records&#39;</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;Search pattern to get records.&quot;&quot;&quot;</span>
+
+    <span class="c1"># @validates(&#39;spec&#39;)</span>
+    <span class="c1"># def validate_spec(self, key, value):</span>
+    <span class="c1">#    &quot;&quot;&quot;Forbit updates of set identifier.&quot;&quot;&quot;</span>
+    <span class="c1">#    if self.spec and self.spec != value:</span>
+    <span class="c1">#        raise OAISetSpecUpdateError(&quot;Updating spec is not allowed.&quot;)</span>
+    <span class="c1">#    return value</span>
+
+    <span class="k">def</span> <span class="nf">add_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add a record to the OAISet.</span>
+
+<span class="sd">        :param record: Record to be added.</span>
+<span class="sd">        :type record: `invenio_records.api.Record` or derivative.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">record</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;_oai&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;sets&#39;</span><span class="p">,</span> <span class="p">[])</span>
+
+        <span class="k">assert</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_record</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+
+        <span class="n">record</span><span class="p">[</span><span class="s1">&#39;_oai&#39;</span><span class="p">][</span><span class="s1">&#39;sets&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">remove_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove a record from the OAISet.</span>
+
+<span class="sd">        :param record: Record to be removed.</span>
+<span class="sd">        :type record: `invenio_records.api.Record` or derivative.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_record</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+
+        <span class="n">record</span><span class="p">[</span><span class="s1">&#39;_oai&#39;</span><span class="p">][</span><span class="s1">&#39;sets&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">record</span><span class="p">[</span><span class="s1">&#39;_oai&#39;</span><span class="p">][</span><span class="s1">&#39;sets&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">s</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">has_record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check if the record blongs to the OAISet.</span>
+
+<span class="sd">        :param record: Record to be checked.</span>
+<span class="sd">        :type record: `invenio_records.api.Record` or derivative.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span> <span class="ow">in</span> <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;_oai&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sets&#39;</span><span class="p">,</span> <span class="p">[])</span>
+
+
+<span class="k">def</span> <span class="nf">oaiset_removed_or_inserted</span><span class="p">(</span><span class="n">mapper</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Invalidate cache on collection insert or delete.&quot;&quot;&quot;</span>
+    <span class="n">current_oaiserver</span><span class="o">.</span><span class="n">sets</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="k">def</span> <span class="nf">oaiset_attribute_changed</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">oldvalue</span><span class="p">,</span> <span class="n">initiator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Invalidate cache if dbquery change.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="o">!=</span> <span class="n">oldvalue</span><span class="p">:</span>
+        <span class="n">current_oaiserver</span><span class="o">.</span><span class="n">sets</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="c1"># update cache with list of collections</span>
+<span class="n">listen</span><span class="p">(</span><span class="n">OAISet</span><span class="p">,</span> <span class="s1">&#39;after_insert&#39;</span><span class="p">,</span> <span class="n">oaiset_removed_or_inserted</span><span class="p">)</span>
+<span class="n">listen</span><span class="p">(</span><span class="n">OAISet</span><span class="p">,</span> <span class="s1">&#39;after_delete&#39;</span><span class="p">,</span> <span class="n">oaiset_removed_or_inserted</span><span class="p">)</span>
+<span class="n">listen</span><span class="p">(</span><span class="n">OAISet</span><span class="o">.</span><span class="n">search_pattern</span><span class="p">,</span> <span class="s1">&#39;set&#39;</span><span class="p">,</span> <span class="n">oaiset_attribute_changed</span><span class="p">)</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;OAISet&#39;</span><span class="p">,</span> <span class="p">)</span>
+
+<span class="c1"># OAI-PMH</span>
+
+
+<div class="viewcode-block" id="Identify"><a class="viewcode-back" href="../../api.html#invenio_oaiserver.models.Identify">[docs]</a><span class="k">class</span> <span class="nc">Identify</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span> <span class="n">Timestamp</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Information about OAI set.&quot;&quot;&quot;</span>
+
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;oaiserver_identify&#39;</span>
+
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">outPutSetting</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;outPutSetting&#39;</span><span class="p">),</span>
+        <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">unique</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">info</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">label</span><span class="o">=</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;OutPut Setting&#39;</span><span class="p">),</span>
+            <span class="n">description</span><span class="o">=</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;output setting of OAI-PMH&#39;</span><span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;Set output of OAI-PMH.&quot;&quot;&quot;</span>
+
+    <span class="n">emails</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span>
+        <span class="n">info</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">label</span><span class="o">=</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;Emails&#39;</span><span class="p">),</span>
+            <span class="n">description</span><span class="o">=</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;Emails of OAI-PMH.&#39;</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;Set Emails of OAI-PMH.&quot;&quot;&quot;</span>
+
+    <span class="n">repositoryName</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span>
+        <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">info</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">label</span><span class="o">=</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;Repository Name&#39;</span><span class="p">),</span>
+            <span class="n">description</span><span class="o">=</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;Repository Name of OAI-PMH&#39;</span><span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;Set Repository Name of OAI-PMH.&quot;&quot;&quot;</span>
+
+    <span class="n">earliestDatastamp</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span>
+        <span class="n">sa</span><span class="o">.</span><span class="n">DateTime</span><span class="p">,</span>
+        <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">,</span>
+        <span class="n">info</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">label</span><span class="o">=</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;Earliest Data&#39;</span><span class="p">),</span>
+            <span class="n">description</span><span class="o">=</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;The earliest data of OAI-PMH&#39;</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="sd">&quot;&quot;&quot;The earliest data of OAI-PMH.&quot;&quot;&quot;</span></div>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Identify&#39;</span><span class="p">,</span> <span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Invenio-OAIServer</a></h1>
+
+
+
+<p class="blurb">Invenio module that implements OAI-PMH server.</p>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examplesapp.html">Example application</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Docs</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authors.html">Contributors</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://github.com/inveniosoftware/invenio-oaiserver">invenio-oaiserver@GitHub</a></li>
+    
+    <li class="toctree-l1"><a href="https://pypi.python.org/pypi/invenio-oaiserver/">invenio-oaiserver@PyPI</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, CERN.
+      
+    </div>
+
+    
+    <a href="https://github.com/inveniosoftware/invenio-oaiserver" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>
