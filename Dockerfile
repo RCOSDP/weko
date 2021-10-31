@@ -82,7 +82,7 @@ FROM stage_6 AS stage_7
 # Make given VENV default:
 ENV PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENV VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
-RUN echo "source /usr/local/bin/virtualenvwrapper.sh" >> ~/.bashrc
+RUN echo "source /home/invenio/.virtualenvs/invenio/bin/virtualenvwrapper.sh" >> ~/.bashrc
 RUN echo "workon invenio" >> ~/.bashrc
 #RUN mv /home/invenio/.virtualenvs/invenio/var/instance/static /home/invenio/.virtualenvs/invenio/var/instance/static.org
 
@@ -117,20 +117,18 @@ ENV SEARCH_INDEX_PREFIX=tenant1
 # see: https://docs.sqlalchemy.org/en/12/core/pooling.html#api-documentation-available-pool-implementations
 ENV INVENIO_DB_POOL_CLASS=QueuePool
 
-RUN apt-get -y update && apt-get -y install libxml2 default-jre libreoffice-java-common libreoffice fonts-ipafont fonts-ipaexfont --no-install-recommends
-
-COPY --from=stage_8 /code/modules /code/modules
-
-RUN adduser --uid 1000 --disabled-password --gecos '' invenio && \
-    chown -R invenio:invenio /code
+#RUN apt-get -y update && apt-get -y install libxml2 default-jre libreoffice-java-common libreoffice fonts-ipafont fonts-ipaexfont vim --no-install-recommends
+RUN apt-get -y update && apt-get -y install nano default-jre libreoffice libreoffice-java-common fonts-ipafont fonts-ipaexfont --no-install-recommends && apt-get -y clean && pip install -U setuptools pip virtualenvwrapper && adduser --uid 1000 --disabled-password --gecos '' invenio
+#&& chown -R invenio:invenio /code
 USER invenio
-WORKDIR /code
+
 COPY --from=stage_8 /home/invenio/.virtualenvs /home/invenio/.virtualenvs
 
 ENV PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ENV VIRTUALENVWRAPPER_PYTHON=/home/invenio/.virtualenvs/invenio/bin/python
-RUN echo "source /home/invenio/.virtualenvs/invenio/bin/virtualenvwrapper.sh" >> ~/.bashrc
-RUN echo "workon invenio" >> ~/.bashrc
+ENV VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
+RUN echo "source /usr/local/bin/virtualenvwrapper.sh" >> ~/.bashrc && echo "workon invenio" >> ~/.bashrc
+
+WORKDIR /code
 
 CMD ["/bin/bash", "-c", "invenio run -h 0.0.0.0"]
 

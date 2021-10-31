@@ -1348,7 +1348,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
 
             register_item_metadata(item, root_path, is_gakuninrdm)
             if not is_gakuninrdm:
-                if current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
+                if current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CNRI'):
                     register_item_handle(item)
                 register_item_doi(item)
 

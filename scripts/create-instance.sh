@@ -125,7 +125,6 @@ set -o nounset
 # fix build error (weko#23031)
 pip install pip==20.2.4
 pip install setuptools==57.5.0
-pip install virtualenvwrapper
 
 if [[ "$@" != *"--devel"* ]]; then
 # sphinxdoc-install-invenio-full-begin
