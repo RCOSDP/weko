@@ -11,15 +11,18 @@ jobs:
       matrix:
         module:
           - invenio-communities
+          - invenio-db
           - invenio-deposit
           - invenio-files-rest
+          - invenio-iiif
           - invenio-mail
           - invenio-oaiharvester
           - invenio-oaiserver
           - invenio-oauth2server
           - invenio-previewer
-          - invenio-records
+          - invenio-queues
           - invenio-records-rest
+          - invenio-records
           - invenio-resourcesyncclient
           - invenio-resourcesyncserver
           - invenio-s3
