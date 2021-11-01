@@ -33,7 +33,7 @@ history = open('CHANGES.rst').read()
 
 tests_require = [
     'pytest-invenio==1.3.4',
-    'pydocstyle>=1.0.0',
+    'pytest-cache>=1.0',
 ]
 
 extras_require = {
