@@ -64,7 +64,6 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
 from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission, check_publish_status
-from weko_records_ui.utils import hide_item_metadata, replace_license_free
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
@@ -1494,9 +1493,11 @@ def _custom_export_metadata(record_metadata: dict, hide_item: bool = True,
     """
     # Hide private metadata
     if hide_item:
+        from weko_records_ui.utils import hide_item_metadata
         hide_item_metadata(record_metadata)
     # Change the item name 'licensefree' to 'license_note'.
     if replace_license:
+        from weko_records_ui.utils import replace_license_free
         replace_license_free(record_metadata, False)
 
     for k, v in record_metadata.items():
@@ -2230,7 +2231,8 @@ def make_bibtex_data(record_ids):
     for record_id in record_ids:
         record = WekoRecord.get_record_by_pid(record_id)
         pid = record.pid_recid
-
+ 
+        from weko_records_ui.utils import hide_item_metadata
         hide_item_metadata(record)
 
         serializer = WekoBibTexSerializer()
