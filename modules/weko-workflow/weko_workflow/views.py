@@ -41,6 +41,7 @@ from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import cast
 from weko_accounts.api import ShibUser
 from weko_accounts.utils import login_required_customize
@@ -297,23 +298,34 @@ def new_activity():
 @blueprint.route('/activity/init', methods=['POST'])
 @login_required
 def init_activity():
-    """Init activity."""
-    post_activity = request.get_json()
-    activity = WorkActivity()
-    getargs = request.args
-    if 'community' in getargs:
-        rtn = activity.init_activity(
-            post_activity, request.args.get('community'))
-    else:
-        rtn = activity.init_activity(post_activity)
-    if rtn is None:
-        return jsonify(code=-1, msg='error')
-    url = url_for('weko_workflow.display_activity',
-                  activity_id=rtn.activity_id)
-    if 'community' in getargs and request.args.get('community') != 'undefined':
-        comm = GetCommunity.get_community_by_id(request.args.get('community'))
+    try:
+        """Init activity."""
+        post_activity = request.get_json()
+        activity = WorkActivity()
+        getargs = request.args
+        if 'community' in getargs:
+            rtn = activity.init_activity(
+                post_activity, request.args.get('community'))
+        else:
+            rtn = activity.init_activity(post_activity)
+        if rtn is None:
+            return jsonify(code=-1, msg='error')
         url = url_for('weko_workflow.display_activity',
-                      activity_id=rtn.activity_id, community=comm.id)
+                    activity_id=rtn.activity_id)
+        if 'community' in getargs and request.args.get('community') != 'undefined':
+            comm = GetCommunity.get_community_by_id(request.args.get('community'))
+            url = url_for('weko_workflow.display_activity',
+                        activity_id=rtn.activity_id, community=comm.id)
+        db.session.commit()
+    except SQLAlchemyError as ex:
+        current_app.logger.error('sqlalchemy error: ', ex)
+        db.session.rollback()
+        return jsonify(code=-1, msg='Failed to init activity!')
+    except BaseException as ex:
+        current_app.logger.error('Unexpected error: ', ex)
+        db.session.rollback()
+        return jsonify(code=-1, msg='Failed to init activity!')
+
     return jsonify(code=0, msg='success',
                    data={'redirect': url})
 
@@ -358,21 +370,31 @@ def init_activity_guest():
     post_data = request.get_json()
 
     if post_data.get('guest_mail'):
-        # Prepare activity data.
-        data = {
-            'itemtype_id': post_data.get('item_type_id'),
-            'workflow_id': post_data.get('workflow_id'),
-            'flow_id': post_data.get('flow_id'),
-            'activity_confirm_term_of_use': True,
-            'extra_info': {
-                "guest_mail": post_data.get('guest_mail'),
-                "record_id": post_data.get('record_id'),
-                "related_title": post_data.get('guest_item_title'),
-                "file_name": post_data.get('file_name'),
-                "is_restricted_access": True,
+        try:
+            # Prepare activity data.
+            data = {
+                'itemtype_id': post_data.get('item_type_id'),
+                'workflow_id': post_data.get('workflow_id'),
+                'flow_id': post_data.get('flow_id'),
+                'activity_confirm_term_of_use': True,
+                'extra_info': {
+                    "guest_mail": post_data.get('guest_mail'),
+                    "record_id": post_data.get('record_id'),
+                    "related_title": post_data.get('guest_item_title'),
+                    "file_name": post_data.get('file_name'),
+                    "is_restricted_access": True,
+                }
             }
-        }
-        __, tmp_url = init_activity_for_guest_user(data)
+            __, tmp_url = init_activity_for_guest_user(data)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.error('sqlalchemy error: ', ex)
+            db.session.rollback()
+            return jsonify(msg='Cannot send mail')
+        except BaseException as ex:
+            current_app.logger.error('Unexpected error: ', ex)
+            db.session.rollback()
+            return jsonify(msg='Cannot send mail')
 
         if send_usage_application_mail_for_guest_user(
                 post_data.get('guest_mail'), tmp_url):

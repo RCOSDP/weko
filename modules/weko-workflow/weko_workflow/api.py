@@ -719,13 +719,10 @@ class WorkActivity(object):
                 action_order=next_action_order
             )
             db.session.add(db_activity)
-        except Exception as ex:
-            db.session.rollback()
-            current_app.logger.exception(str(ex))
-            return None
-        else:
             db.session.commit()
-
+        except BaseException as ex:
+            raise ex
+        else:
             try:
                 # Update the activity with calculated activity_id
                 PersistentIdentifier.create(
@@ -745,9 +742,9 @@ class WorkActivity(object):
                     action_comment=ActionCommentPolicy.BEGIN_ACTION_COMMENT,
                     action_order=1
                 )
+                db.session.add(db_history)
 
                 with db.session.begin_nested():
-                    db.session.add(db_history)
                     # set action handler for all the action except approval
                     # actions
                     for flow_action in flow_actions:
@@ -764,21 +761,10 @@ class WorkActivity(object):
                             action_order=flow_action.action_order
                         )
                         db.session.add(db_activity_action)
-
-            except IndexError as ex:
-                current_app.logger.exception(str(ex))
-
-                return None
-
-            except Exception as ex:
-                db.session.rollback()
-                current_app.logger.exception(str(ex))
-
-                return None
-
+                        
+            except BaseException as ex:
+                raise ex
             else:
-                db.session.commit()
-
                 return db_activity
 
     def get_new_activity_id(self, utc_now=datetime.utcnow()):

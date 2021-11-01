@@ -24,6 +24,7 @@ import json
 import sys
 
 import redis
+from elasticsearch import ElasticsearchException
 from flask import Blueprint, abort, current_app, jsonify, request
 from invenio_db import db
 from invenio_pidstore import current_pidstore
@@ -36,7 +37,6 @@ from invenio_records_rest.views import pass_record
 from invenio_rest import ContentNegotiatedMethodView
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
-from elasticsearch import ElasticsearchException s
 
 from .api import WekoDeposit
 
