@@ -31,7 +31,6 @@ from flask_login import current_user
 from invenio_communities.forms import SearchForm
 from invenio_communities.models import Community, FeaturedCommunity
 from invenio_communities.utils import Pagination
-from invenio_communities.views.ui import mycommunities_ctx
 from invenio_i18n.ext import current_i18n
 from invenio_search import RecordsSearch
 from weko_admin.models import AdminSettings, RankingSettings, SearchManagement
@@ -197,6 +196,7 @@ class MainScreenInitDisplaySetting:
 
     @classmethod
     def __communities(cls, main_screen_display_setting):
+        from invenio_communities.views.ui import mycommunities_ctx
         ctx = mycommunities_ctx()
         p = request.args.get('p', type=str)
         so = request.args.get('so', type=str)
