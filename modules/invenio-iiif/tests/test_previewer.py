@@ -16,6 +16,7 @@ from invenio_iiif.utils import ui_iiif_image_url
 
 class MockPreviewFile(object):
     """Mock of a preview file object."""
+
     def __init__(self, obj, ext):
         self.file = obj
         self.ext = '.{}'.format(ext)
