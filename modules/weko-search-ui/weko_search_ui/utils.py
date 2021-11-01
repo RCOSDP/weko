@@ -1818,6 +1818,7 @@ def register_item_handle(item):
     pid_hdl = record.pid_cnri
     cnri = item.get('cnri')
     status = item.get('status')
+    uri = item.get('uri')
     current_app.logger.debug(
         "item_id:{0} pid:{1} pid_hdl:{2} cnri:{3} status:{4}".format(item_id, pid, pid_hdl, cnri, status))
 
@@ -1827,13 +1828,13 @@ def register_item_handle(item):
             cnri = cnri[:-1] if cnri[-1] == '/' else cnri
             cnri += '/' + suffix
         if item.get('status') == 'new':
-            register_hdl_by_handle(cnri, pid.object_uuid)
+            register_hdl_by_handle(cnri, pid.object_uuid, uri)
         else:
             if pid_hdl and not pid_hdl.pid_value.endswith(cnri):
                 pid_hdl.delete()
-                register_hdl_by_handle(cnri, pid.object_uuid)
+                register_hdl_by_handle(cnri, pid.object_uuid, uri)
             elif not pid_hdl:
-                register_hdl_by_handle(cnri, pid.object_uuid)
+                register_hdl_by_handle(cnri, pid.object_uuid, uri)
     else:
         if item.get('status') == 'new':
             register_hdl_by_item_id(item_id, pid.object_uuid, get_url_root())

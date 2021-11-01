@@ -268,17 +268,21 @@ def register_hdl_by_item_id(deposit_id, item_uuid, url_root):
     return handle
 
 
-def register_hdl_by_handle(handle, item_uuid):
+def register_hdl_by_handle(hdl, item_uuid, item_uri):
     """
     Register HDL into Persistent Identifiers.
 
-    :param handle: HDL handle
+    :param hdl: HDL handle
     :param item_uuid: Item uuid
     """
     current_app.logger.debug(
         "start register_hdl_by_handle(handle, item_uuid):")
     current_app.logger.debug(
-        "handle:{0} item_uuid:{1}".format(handle, item_uuid))
+        "handle:{0} item_uuid:{1}".format(hdl, item_uuid))
+
+    weko_handle = Handle()
+    handle = weko_handle.register_handle(location=item_uri, hdl=hdl, overwrite=True)
+
     if handle:
         handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
         identifier = IdentifierHandle(item_uuid)
