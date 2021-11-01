@@ -301,6 +301,35 @@ def copy_field_test(dc, map, jrc, iid=None):
                                     dc, val["path"]["coordinates"], val["path_type"]["coordinates"], iid)
                                 if geo_shape[k_v.get('id')]["type"] and geo_shape[k_v.get('id')]["coordinates"]:
                                     jrc.update(geo_shape)
+                            elif k_v.get('input_Type') == "dateRange":
+                                id = k_v.get('id')
+                                value_range = {id: {"gte": "", "lte": ""}}
+                                _tmp = get_value_from_dict(
+                                    dc, val["path"]["gte"], val["path_type"]["gte"], iid)
+                                if _tmp is not None:
+                                    val = convert_date_range_value(_tmp)
+                                    if val is not None:
+                                        value_range['id'] = val
+                                        jrc.update(value_range)
+
+
+def convert_date_range_value(dateRange):
+    """Convert date interval format(yyyy-mm-dd/yyyy-mm-dd or yyyy-mm/yyyy-mm or yyyy/yyyy) to date_range of Elasticsearch
+
+    Args:
+        dateRange (str):
+
+    Returns:
+        str: date_range
+    """
+    ret = None
+    pattern = r'^((\d{4}-\d{2}-\d{2})/(\d{4}-\d{2}-\d{2}))|((\d{4}-\d{2})/(\d{4}-\d{2}))|((\d{4})/(\d{4}))$'
+    p = re.compile(pattern)
+    if p.match(dateRange) is not None:
+        _tmp = dateRange.split('/')
+        ret = {'gte': _tmp[0],
+               'lte': _tmp[1]}
+    return ret
 
 
 def get_value_from_dict(dc, path, path_type, iid=None):
