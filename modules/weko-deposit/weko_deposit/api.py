@@ -880,7 +880,8 @@ class WekoDeposit(Deposit):
             deposit.update(*args)
             deposit.commit()
         except SQLAlchemyError as ex:
-            raise ex
+            current_app.logger.debug(ex)
+            db.session.rollback()
         return deposit
 
     def get_content_files(self):

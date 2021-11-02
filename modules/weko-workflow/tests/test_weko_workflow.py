@@ -24,7 +24,6 @@ from flask import Flask
 
 from weko_workflow import WekoWorkflow
 
-
 def test_version():
     """Test version import."""
     from weko_workflow import __version__
