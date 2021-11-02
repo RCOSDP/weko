@@ -97,8 +97,7 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_SEARCH_UI_BULK_EXPORT_URI, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
-err_msg_suffix = 'Suffix of {} can only be used with half-width' \
-    + ' alphanumeric characters and half-width symbols "_-.; () /".'
+err_msg_suffix = 'Suffix of {} is too long.'
 
 
 class DefaultOrderedDict(OrderedDict):
@@ -1573,8 +1572,8 @@ def handle_check_cnri(list_record):
                 else:
                     split_cnri = cnri.split('/')
                     if len(split_cnri) > 1:
-                        prefix = '/'.join(split_cnri[0:-1])
-                        suffix = split_cnri[-1]
+                        prefix = split_cnri[0]
+                        suffix = '/'.join(split_cnri[1:])
                     else:
                         prefix = cnri
                         suffix = ''
@@ -1747,8 +1746,8 @@ def handle_check_doi(list_record):
                     else:
                         split_doi = doi.split('/')
                         if len(split_doi) > 1:
-                            prefix = '/'.join(split_doi[0:-1])
-                            suffix = split_doi[-1]
+                            prefix = split_doi[0]
+                            suffix = '/'.join(split_doi[1:])
                         else:
                             prefix = doi
                             suffix = ''
