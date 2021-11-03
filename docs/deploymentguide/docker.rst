@@ -1,2 +1,0 @@
-Deploying with Docker
-=====================

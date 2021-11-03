@@ -155,6 +155,8 @@ class WekoIndexer(RecordIndexer):
         if 'content' in jrc and not skip_files:
             full_body['pipeline'] = 'item-file-pipeline'
 
+        current_app.logger.debug(full_body)
+
         self.client.index(**full_body)
 
     def delete_file_index(self, body, parent_id):

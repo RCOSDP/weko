@@ -1,0 +1,6 @@
+type: postgresql
+db: invenio
+host: localhost
+user: invenio
+passwd: dbpass123
+port: 25401 

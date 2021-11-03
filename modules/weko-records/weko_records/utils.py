@@ -255,35 +255,39 @@ def json_loader(data, pid, owner_id=None):
 
 
 def copy_field_test(dc, map, jrc, iid=None):
-    # current_app.logger.debug('{0} {1} {2}: {3}'.format(
-    #     __file__, 'copy_field_test()', 'dc', dc))
-    # current_app.logger.debug('{0} {1} {2}: {3}'.format(
-    #     __file__, 'copy_field_test()', 'map', map))
-    # current_app.logger.debug('{0} {1} {2}: {3}'.format(
-    #     __file__, 'copy_field_test()', 'jrc', jrc))
-    # current_app.logger.debug('{0} {1} {2}: {3}'.format(
-    #     __file__, 'copy_field_test()', 'iid', iid))
     for k_v in map:
         if type(k_v) is dict:
             if k_v.get('item_value'):
                 if dc["item_type_id"] in k_v.get('item_value').keys():
                     for key, val in k_v.get('item_value').items():
                         if dc["item_type_id"] == key:
-                            if k_v.get('input_Type') == 'text':
+                            _id = k_v.get('id')
+                            _inputType = k_v.get('inputType')
+                            current_app.logger.debug(
+                                'id: {0} , inputType: {1} '.format(_id, _inputType))
+                            if _inputType == 'text':
                                 txt = get_values_from_dict(
                                     dc, val["path"], val["path_type"], iid)
                                 if txt:
                                     jrc[k_v.get('id')] = txt
-                            elif k_v.get('input_Type') == "range":
-                                value_range = {k_v.get('id'): {
-                                    "gte": "", "lte": ""}}
-                                value_range[k_v.get('id')]["gte"] = get_value_from_dict(
+                            elif _inputType == "range":
+                                id = k_v.get('id')
+                                dateRanges = []
+                                _gte = get_values_from_dict(
                                     dc, val["path"]["gte"], val["path_type"]["gte"], iid)
-                                value_range[k_v.get('id')]["lte"] = get_value_from_dict(
+                                _lte = get_values_from_dict(
                                     dc, val["path"]["lte"], val["path_type"]["lte"], iid)
-                                if value_range[k_v.get('id')]["gte"] and value_range[k_v.get('id')]["lte"]:
+                                for idx in range(len(_gte)):
+                                    a = _gte[idx]
+                                    b = None
+                                    if idx < len(_lte):
+                                        b = _lte[idx]
+                                    dateRanges.append(
+                                        convert_date_range_value(a, b))
+                                if len(dateRanges) > 0:
+                                    value_range = {id: dateRanges}
                                     jrc.update(value_range)
-                            elif k_v.get('input_Type') == "geo_point":
+                            elif _inputType == "geo_point":
                                 geo_point = {k_v.get('id'): {
                                     "lat": "", "lon": ""}}
                                 geo_point[k_v.get('id')]["lat"] = get_value_from_dict(
@@ -292,7 +296,7 @@ def copy_field_test(dc, map, jrc, iid=None):
                                     dc, val["path"]["lon"], val["path_type"]["lon"], iid)
                                 if geo_point[k_v.get('id')]["lat"] and geo_point[k_v.get('id')]["lon"]:
                                     jrc.update(geo_point)
-                            elif k_v.get('input_Type') == "geo_shape":
+                            elif _inputType == "geo_shape":
                                 geo_shape = {
                                     k_v.get('id'): {"type": "", "coordinates": ""}}
                                 geo_shape[k_v.get('id')]["type"] = get_value_from_dict(
@@ -301,34 +305,35 @@ def copy_field_test(dc, map, jrc, iid=None):
                                     dc, val["path"]["coordinates"], val["path_type"]["coordinates"], iid)
                                 if geo_shape[k_v.get('id')]["type"] and geo_shape[k_v.get('id')]["coordinates"]:
                                     jrc.update(geo_shape)
-                            elif k_v.get('input_Type') == "dateRange":
-                                id = k_v.get('id')
-                                value_range = {id: {"gte": "", "lte": ""}}
-                                _tmp = get_value_from_dict(
-                                    dc, val["path"]["gte"], val["path_type"]["gte"], iid)
-                                if _tmp is not None:
-                                    val = convert_date_range_value(_tmp)
-                                    if val is not None:
-                                        value_range['id'] = val
-                                        jrc.update(value_range)
 
 
-def convert_date_range_value(dateRange):
-    """Convert date interval format(yyyy-mm-dd/yyyy-mm-dd or yyyy-mm/yyyy-mm or yyyy/yyyy) to date_range of Elasticsearch
+def convert_date_range_value(start, end=None):
+    """ Convert to dateRange value for Elasticsearch
 
     Args:
-        dateRange (str):
+        start ([str]): [description]
+        end ([str], optional): [description]. Defaults to None.
 
     Returns:
-        str: date_range
+        [dict]: dateRange value for Elasticsearch
     """
     ret = None
+    _start = 'gte'
+    _end = 'lte'
     pattern = r'^((\d{4}-\d{2}-\d{2})/(\d{4}-\d{2}-\d{2}))|((\d{4}-\d{2})/(\d{4}-\d{2}))|((\d{4})/(\d{4}))$'
     p = re.compile(pattern)
-    if p.match(dateRange) is not None:
-        _tmp = dateRange.split('/')
-        ret = {'gte': _tmp[0],
-               'lte': _tmp[1]}
+    if start is not None:
+        start = start.strip()
+        ret = {_start: start,
+               _end: start}
+        if p.match(start) is not None:
+            _tmp = start.split('/')
+            ret = {_start: _tmp[0],
+                   _end: _tmp[1]}
+        elif end is not None:
+            end = end.strip()
+            ret = {_start: start,
+                   _end: end}
     return ret
 
 

@@ -223,8 +223,8 @@ def get_list_records(resync_id):
     if not resync_index.result:
         return records
     records = json.loads(resync_index.result)
-    current_app.logger.debug('{0} {1} {2}: {3}'.format(
-        __file__, 'get_list_records()', 'records', records))
+    # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+    #     __file__, 'get_list_records()', 'records', records))
     return records
 
 

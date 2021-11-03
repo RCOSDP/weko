@@ -117,9 +117,11 @@ ENV SEARCH_INDEX_PREFIX=tenant1
 # see: https://docs.sqlalchemy.org/en/12/core/pooling.html#api-documentation-available-pool-implementations
 ENV INVENIO_DB_POOL_CLASS=QueuePool
 
-RUN apt-get -y update && apt-get -y install nano default-jre libreoffice libreoffice-java-common fonts-ipafont fonts-ipaexfont --no-install-recommends && apt-get -y clean && pip install -U setuptools pip virtualenvwrapper && adduser --uid 1000 --disabled-password --gecos '' invenio
+RUN apt-get -y update && apt-get -y install curl nano default-jre libreoffice libreoffice-java-common fonts-ipafont fonts-ipaexfont --no-install-recommends && apt-get -y clean && pip install -U setuptools pip virtualenvwrapper && adduser --uid 1000 --disabled-password --gecos '' invenio
 USER invenio
-COPY --from=build-env /home/invenio/.virtualenvs /home/invenio/.virtualenvs
+COPY --from=build-env --chown=invenio:invenio /home/invenio/.virtualenvs /home/invenio/.virtualenvs
+COPY --from=build-env --chown=invenio:invenio /code /code
+
 ENV PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENV VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
 RUN echo "source /usr/local/bin/virtualenvwrapper.sh" >> ~/.bashrc && echo "workon invenio" >> ~/.bashrc

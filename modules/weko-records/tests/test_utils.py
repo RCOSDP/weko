@@ -40,7 +40,7 @@ def jsonpath():
 
 @pytest.fixture
 def meta():
-    return OrderedDict(
+    return [OrderedDict(
         [('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2021-10-26'}),
          ('item_1551264308487', {'attribute_name': 'Title', 'attribute_value_mlt': [
              {'subitem_1551255647225': 'タイトル日本語', 'subitem_1551255648112': 'ja'},
@@ -76,25 +76,40 @@ def meta():
          ('item_1551265302120', {'attribute_name': 'Temporal', 'attribute_value_mlt': [
           {'subitem_1551256918211': '2000-01-01/2021-03-30'}]}),
          ('item_title', 'タイトル日本語'),
-         ('item_type_id', '12'), ('control_number', '870')])
+         ('item_type_id', '12'), ('control_number', '870')])]
 
 
 def test_copy_value_json_path(meta, jsonpath):
-    assert copy_value_json_path(meta, jsonpath[0]) == '寄与者'
-    assert copy_value_json_path(meta, jsonpath[1]) == '2000-01-01/2021-03-30'
+    assert copy_value_json_path(meta[0], jsonpath[0]) == '寄与者'
+    assert copy_value_json_path(
+        meta[0], jsonpath[1]) == '2000-01-01/2021-03-30'
 
 
 def test_copy_values_json_path(meta, jsonpath):
-    assert copy_values_json_path(meta, jsonpath[0]) == [
+    assert copy_values_json_path(meta[0], jsonpath[0]) == [
         '寄与者', 'Contributor']
-    assert copy_values_json_path(meta, jsonpath[1]) == [
+    assert copy_values_json_path(meta[0], jsonpath[1]) == [
         '2000-01-01/2021-03-30']
 
 
-def test_convert_date_range_value(meta, k_v):
+def test_convert_date_range_value():
+    assert convert_date_range_value('1762-01-26/1762-02-23') == {'gte': '1762-01-26',
+                                                                 'lte': '1762-02-23'}
     assert convert_date_range_value('2000-01-01/2021-03-30') == {'gte': '2000-01-01',
                                                                  'lte': '2021-03-30'}
+
+    assert convert_date_range_value(' 1762-01-26/1762-02-23 ') == {'gte': '1762-01-26',
+                                                                   'lte': '1762-02-23'}
+
     assert convert_date_range_value('2000-01/2021-03') == {'gte': '2000-01',
                                                            'lte': '2021-03'}
     assert convert_date_range_value('2000/2021') == {'gte': '2000',
                                                      'lte': '2021'}
+    assert convert_date_range_value('2000-01-01') == {'gte': '2000-01-01',
+                                                      'lte': '2000-01-01'}
+    assert convert_date_range_value('2000-01') == {'gte': '2000-01',
+                                                   'lte': '2000-01'}
+    assert convert_date_range_value('2000') == {'gte': '2000',
+                                                'lte': '2000'}
+    assert convert_date_range_value('2000-01-01', '2000-12-01') == {'gte': '2000-01-01',
+                                                                    'lte': '2000-12-01'}
