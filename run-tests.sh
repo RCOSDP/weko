@@ -21,6 +21,9 @@
 
 trap "exit" INT
 
+pip install -U pytest && pip install coverage==4.5.4 pytest==5.4.3 pytest-cov==2.10.1 pytest-invenio==1.3.4 mock==3.0.5 urllib3==1.21.1 responses==0.10.3 moto==1.3.5
+
+
 for module_path in modules/*/; do
   if [[ ${module_path} =~ ^modules/(invenio-|weko-).+$ ]] && [[ -d ${module_path}tests ]]; then
     echo "### Running tests for ${module_path%?} ###"
