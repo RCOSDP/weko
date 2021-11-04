@@ -938,14 +938,19 @@ class IdentifierHandle(object):
 
         """
         try:
-            if not pid_value:
-                pid_value = self.get_pidstore().pid_value
-            doi_pidstore = self.check_pidstore_exist('doi', pid_value)
+            pids = []
+            record = WekoRecord.get_record(self.item_uuid)
+            with db.session.no_autoflush:
+                pids = PersistentIdentifier.query.filter_by(
+                    pid_type='doi',
+                    status=PIDStatus.REGISTERED,
+                    object_uuid=record.pid_parent.object_uuid).all()
 
-            if doi_pidstore and doi_pidstore.status == PIDStatus.REGISTERED:
-                doi_pidstore.delete()
+            if pids:
+                for _item in pids:
+                    _item.delete()
                 self.remove_idt_registration_metadata()
-                return doi_pidstore.status == PIDStatus.DELETED
+                return True
         except PIDDoesNotExistError as pidNotEx:
             current_app.logger.error(pidNotEx)
             return False
