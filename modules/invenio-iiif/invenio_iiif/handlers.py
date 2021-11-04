@@ -36,6 +36,7 @@ def protect_api(uuid=None, **kwargs):
     g.obj = ObjectResource.get_object(bucket, key, version_id)
     return g.obj
 
+
 def image_opener(key):
     """Handler to locate file based on key.
 
