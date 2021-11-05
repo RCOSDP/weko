@@ -42,6 +42,7 @@ from weko_items_autofill.utils import get_workflow_journal
 from weko_records.api import ItemsMetadata, Mapping
 from weko_records.serializers.feed import WekoFeedGenerator
 from weko_records.serializers.utils import get_mapping
+from weko_records.utils import result_rule_create_show_list
 from weko_workflow.api import WorkActivity
 
 from weko_records_ui.utils import get_record_permalink, \
@@ -316,6 +317,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         lang = None
 
     try:
+        multi_lang_value = {}
         publisher_item_id = item_map[publisher_attr_lang].split('.')[0]
         publisher_lang_ids = item_map[publisher_attr_lang].split('.')[1:]
         publisher_text_ids = item_map[publisher_value].split('.')[1:]
@@ -325,8 +327,12 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
                                                       publisher_lang_ids,
                                                       publishers)
         for publisher_name, publisher_lang in pair_name_language_publisher:
-            if publisher_lang == lang_user:
-                publisher.append(publisher_name)
+            if not publisher_lang:
+                publisher_lang == 'None Language'
+            multi_lang_value[publisher_lang] = publisher_name
+        value = result_rule_create_show_list(multi_lang_value, cur_lang)
+        if value:
+            publisher.append(value)
     except (KeyError, IndexError):
         publisher = []
 
@@ -377,26 +383,27 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
 
         # Get creator name
         creator_names = creator_item.get('creatorNames', [])
-
+        creator_names_multi_lang = {}
         for creator_name in creator_names:
             name = creator_name.get('creatorName', '')
-            name_lang = creator_name.get('creatorNameLang', '')
-
-            if name_lang == lang_user:
-                creator_name_list.append(name)
+            name_lang = creator_name.get('creatorNameLang', 'None Language')
+            creator_names_multi_lang[name_lang] = name
+        creator_name = result_rule_create_show_list(creator_names_multi_lang, cur_lang)
+        if creator_name:
+            creator_name_list.append(creator_name)
 
         # Get creator affiliation
         creator_affiliations = creator_item.get('creatorAffiliations', [])
-
         for creator_affiliation in creator_affiliations:
+            affiliations_multi_lang = {}
             affiliation_names = creator_affiliation.get('affiliationNames', [])
-
             for affiliation_name in affiliation_names:
                 name = affiliation_name.get('affiliationName', '')
-                name_lang = affiliation_name.get('affiliationNameLang', '')
-
-                if name_lang == lang_user:
-                    creator_affiliation_list.append(name)
+                name_lang = affiliation_name.get('affiliationNameLang', 'None Language')
+                affiliations_multi_lang[name_lang] = name
+            affiliation_name = result_rule_create_show_list(affiliations_multi_lang, cur_lang)
+            if affiliation_name:
+                creator_affiliation_list.append(affiliation_name)
 
     seperator = ', '
     metadata_dict = {
