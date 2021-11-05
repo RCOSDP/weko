@@ -42,7 +42,7 @@ from weko_items_autofill.utils import get_workflow_journal
 from weko_records.api import ItemsMetadata, Mapping
 from weko_records.serializers.feed import WekoFeedGenerator
 from weko_records.serializers.utils import get_mapping
-from weko_records.utils import result_rule_create_show_list
+from weko_records.utils import get_value_by_selected_lang
 from weko_workflow.api import WorkActivity
 
 from weko_records_ui.utils import get_record_permalink, \
@@ -330,7 +330,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
             if not publisher_lang:
                 publisher_lang == 'None Language'
             multi_lang_value[publisher_lang] = publisher_name
-        value = result_rule_create_show_list(multi_lang_value, cur_lang)
+        value = get_value_by_selected_lang(multi_lang_value, cur_lang)
         if value:
             publisher.append(value)
     except (KeyError, IndexError):
@@ -388,7 +388,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
             name = creator_name.get('creatorName', '')
             name_lang = creator_name.get('creatorNameLang', 'None Language')
             creator_names_multi_lang[name_lang] = name
-        creator_name = result_rule_create_show_list(creator_names_multi_lang, cur_lang)
+        creator_name = get_value_by_selected_lang(creator_names_multi_lang, cur_lang)
         if creator_name:
             creator_name_list.append(creator_name)
 
@@ -401,7 +401,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
                 name = affiliation_name.get('affiliationName', '')
                 name_lang = affiliation_name.get('affiliationNameLang', 'None Language')
                 affiliations_multi_lang[name_lang] = name
-            affiliation_name = result_rule_create_show_list(affiliations_multi_lang, cur_lang)
+            affiliation_name = get_value_by_selected_lang(affiliations_multi_lang, cur_lang)
             if affiliation_name:
                 creator_affiliation_list.append(affiliation_name)
 

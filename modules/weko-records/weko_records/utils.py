@@ -1628,12 +1628,12 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
         return None
 
 
-def result_rule_create_show_list(source_title, current_lang):
-    """Result rules create show list.
+def get_value_by_selected_lang(source_title, current_lang):
+    """Get value by selected lang.
 
-    @param source_title:
-    @param current_lang:
-    @return:
+    @param source_title: e.g. {'None Language': 'test', 'ja': 'テスト'}
+    @param current_lang: e.g. 'ja'
+    @return: e.g. 'テスト'
     """
     value_en = None
     value_latn = None
@@ -1762,7 +1762,7 @@ def get_creator(create, result_end, hide_creator_keys, current_lang):
             if creates_key:
                 del creates_key[key]
     result = get_creator_by_languages(creates_key, create)
-    creator = result_rule_create_show_list(result, current_lang)
+    creator = get_value_by_selected_lang(result, current_lang)
     if creator:
         for key, value in creates_key.items():
             if key in creator:
@@ -1842,7 +1842,7 @@ def get_author_has_language(creator, result_end, current_lang, map_keys):
             else:
                 result[key_data].append(value_data)
                 is_added.append(key_data)
-    alternative = result_rule_create_show_list(result, current_lang)
+    alternative = get_value_by_selected_lang(result, current_lang)
     if alternative:
         if map_keys[0] not in result_end:
             result_end[map_keys[0]] = []
