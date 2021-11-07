@@ -130,11 +130,8 @@ def run_sync_import(id):
                     })
 
                 except Exception as ex:
-                    current_app.logger.error(traceback.format_exc())
-                    current_app.logger.error(
-                        'Error occurred while importing item\n' + str(
-                            ex))
-                    current_app.logger.info('Continue importing')
+                    current_app.logger.exception(
+                        'Error occurred while importing item')
                     continue
 
             except Exception as ex:

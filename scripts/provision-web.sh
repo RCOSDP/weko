@@ -167,7 +167,7 @@ setup_virtualenvwrapper () {
     set +o nounset
 
     # sphinxdoc-install-virtualenvwrapper-begin
-    $sudo pip install -U setuptools==57.5.0 pip
+    $sudo pip install -U setuptools pip
     $sudo pip install -U virtualenvwrapper
     if ! grep -q virtualenvwrapper ~/.bashrc; then
         mkdir -p "$HOME/.virtualenvs"
@@ -253,6 +253,7 @@ setup_libreoffice_ubuntu14 () {
     $sudo mkdir -p /usr/share/man/man1
     $sudo apt-get install default-jre libreoffice-java-common
     $sudo apt-get install -y libreoffice
+    #$sudo apt-get install -y libreoffice-core --no-install-recommends
     $sudo apt-get install -y fonts-ipafont fonts-ipaexfont # japanese fonts
     set -o errexit
     # sphinxdoc-install-web-libreoffice-ubuntu14-end
@@ -308,7 +309,7 @@ main () {
             provision_web_libpostgresql_ubuntu14
             setup_npm_and_css_js_filters
             setup_virtualenvwrapper
-            setup_nginx_ubuntu14
+            #setup_nginx_ubuntu14
             setup_libreoffice_ubuntu14
             cleanup_web_ubuntu14
         else
@@ -321,7 +322,7 @@ main () {
             provision_web_libpostgresql_centos7
             setup_npm_and_css_js_filters
             setup_virtualenvwrapper
-            setup_nginx_centos7
+            #setup_nginx_centos7
             setup_libreoffice_centos7
             cleanup_web_centos7
         else

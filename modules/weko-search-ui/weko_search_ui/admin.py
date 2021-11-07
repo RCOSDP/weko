@@ -22,18 +22,18 @@
 
 import copy
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 from blinker import Namespace
 from celery import chord
 from celery.task.control import revoke
-from flask import Response, abort, current_app, jsonify, make_response, \
-    request, send_file
+from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_files_rest.models import FileInstance
 from invenio_i18n.ext import current_i18n
+from weko_admin.api import TempDirInfo
 from weko_admin.utils import reset_redis_cache
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
@@ -47,8 +47,7 @@ from weko_search_ui.api import get_search_detail_keyword
 from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
     WEKO_EXPORT_TEMPLATE_BASIC_NAME, WEKO_EXPORT_TEMPLATE_BASIC_OPTION, \
     WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
-    WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE, \
-    WEKO_SEARCH_UI_BULK_EXPORT_TASK, WEKO_SEARCH_UI_BULK_EXPORT_URI
+    WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE
 from .tasks import export_all_task, import_item, is_import_running, \
     remove_temp_dir_task
 from .utils import cancel_export_all, check_import_items, \
@@ -243,16 +242,15 @@ class ItemImportView(BaseView):
     @expose('/check', methods=['POST'])
     def check(self) -> jsonify:
         """Validate item import."""
-        data = request.get_json()
+        data = request.form
+        file = request.files['file'] if request.files else None
         list_record = []
         data_path = ''
-        remove_temp_dir_task_id = None
 
         if data:
             result = check_import_items(
-                data.get('file_name'),
-                data.get('file').split(",")[-1],
-                data.get('is_change_identifier')
+                file,
+                data.get('is_change_identifier') == 'true'
             )
             if isinstance(result, dict):
                 data_path = result.get('data_path', '')
@@ -266,12 +264,13 @@ class ItemImportView(BaseView):
                     if len(list_record) == num_record_err:
                         remove_temp_dir_task.apply_async((data_path,))
                     else:
-                        remove_temp_dir_task_id = remove_temp_dir_task. \
-                            apply_async(
-                                (data_path,), countdown=get_lifetime()).task_id
-        return jsonify(
-            code=1, list_record=list_record, data_path=data_path,
-            remove_temp_dir_task_id=remove_temp_dir_task_id)
+                        expire = datetime.now() + \
+                            timedelta(seconds=get_lifetime())
+                        TempDirInfo().set(
+                            data_path,
+                            {'expire': expire.strftime('%Y-%m-%d %H:%M:%S')}
+                        )
+        return jsonify(code=1, list_record=list_record, data_path=data_path)
 
     @expose('/download_check', methods=['POST'])
     def download_check(self):
@@ -305,15 +304,18 @@ class ItemImportView(BaseView):
     def import_items(self) -> jsonify:
         """Import item into System."""
         data = request.get_json() or {}
+        data_path = data.get('data_path')
         request_info = {
             'remote_addr': request.remote_addr,
             'referrer': request.referrer,
             'hostname': request.host
         }
-        # terminate remove_temp_dir_task in schedule
-        remove_temp_dir_task_id = data.get('remove_temp_dir_task_id')
-        if remove_temp_dir_task_id:
-            revoke(remove_temp_dir_task_id, terminate=True)
+        # update temp dir expire to 1 day from now
+        expire = datetime.now() + timedelta(days=1)
+        TempDirInfo().set(
+            data_path,
+            {'expire': expire.strftime('%Y-%m-%d %H:%M:%S')}
+        )
 
         tasks = []
         list_record = [item for item in data.get(
@@ -323,14 +325,14 @@ class ItemImportView(BaseView):
         if list_record:
             group_tasks = []
             for item in list_record:
-                item['root_path'] = data.get('root_path', '') + '/data'
+                item['root_path'] = data_path + '/data'
                 create_flow_define()
                 handle_workflow(item)
                 group_tasks.append(import_item.s(item, request_info))
 
             # handle import tasks
             import_task = chord(group_tasks)(
-                remove_temp_dir_task.si(data.get('root_path')))
+                remove_temp_dir_task.si(data_path))
             for idx, task in enumerate(import_task.parent.results):
                 tasks.append({
                     'task_id': task.task_id,

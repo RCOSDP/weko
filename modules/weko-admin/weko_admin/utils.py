@@ -1593,6 +1593,10 @@ def format_site_info_data(site_info):
     result['favicon'] = site_info.get('favicon')
     result['favicon_name'] = site_info.get('favicon_name')
     result['notify'] = notify
+    result['google_tracking_id_user'] = site_info.get('google_tracking_id_user')
+    result['addthis_user_id'] = site_info.get('addthis_user_id')
+    result['ogp_image'] = site_info.get('ogp_image')
+    result['ogp_image_name'] = site_info.get('ogp_image_name')
     return result
 
 
@@ -2189,3 +2193,22 @@ def is_exits_facet(data, id):
         if (facet_by_name is None) and (facet_by_mapping is None):
             return False
     return True
+
+
+def overwrite_the_memory_config_with_db(app, site_info):
+    """Overwrite the memory Config values with the DB values."""
+    if site_info:
+        if site_info.google_tracking_id_user:
+            if 'GOOGLE_TRACKING_ID_USER' in app.config:
+                del app.config['GOOGLE_TRACKING_ID_USER']
+            app.config.setdefault(
+                'GOOGLE_TRACKING_ID_USER',
+                site_info.google_tracking_id_user,
+            )
+        if site_info.addthis_user_id:
+            if 'ADDTHIS_USER_ID' in app.config:
+                del app.config['ADDTHIS_USER_ID']
+            app.config.setdefault(
+                'ADDTHIS_USER_ID',
+                site_info.addthis_user_id,
+            )

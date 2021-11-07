@@ -277,8 +277,8 @@ def parsing_metadata(mappin, props, patterns, metadata, res):
         else:
             item_schema = props[item_key]['properties']
 
-        current_app.logger.debug('{0} {1} {2}: {3}'.format(
-            __file__, 'parsing_metadata()', 'item_schema', item_schema))
+        # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+        #     __file__, 'parsing_metadata()', 'item_schema', item_schema))
         ret = []
         for it in metadata:
             items = {}

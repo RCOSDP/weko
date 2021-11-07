@@ -109,13 +109,14 @@ def get_records(**kwargs):
         index_ids = index_ids_has_future_date()
         records = get_records_has_doi()
         for record in records:
-            paths = record.json.get('path', [])
-            for path in paths:
-                if path in index_ids:
-                    query = query.post_filter(
-                        'bool',
-                        **{'must_not': [
-                            {'term': {'_id': str(record.id)}}]})
+            if record is RecordMetadata:
+                paths = record.json.get('path', [])
+                for path in paths:
+                    if path in index_ids:
+                        query = query.post_filter(
+                            'bool',
+                            **{'must_not': [
+                                {'term': {'_id': str(record.id)}}]})
 
     from weko_index_tree.api import Indexes
 

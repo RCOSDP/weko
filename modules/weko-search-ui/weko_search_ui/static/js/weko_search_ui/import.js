@@ -142,7 +142,7 @@ class MainLayout extends React.Component {
   }
 
   updateShowMessage(state) {
-    this.setState({isShowMessage: state})
+    this.setState({ isShowMessage: state })
   }
 
   handleChangeTab(tab) {
@@ -170,15 +170,15 @@ class MainLayout extends React.Component {
     this.handleCheckImportAvailable();
   }
 
-  handleCheck(data) {
+  handleCheck(formData) {
     const that = this
     closeError();
     $.ajax({
       url: urlCheck,
       type: 'POST',
-      data: JSON.stringify(data),
-      contentType: "application/json; charset=utf-8",
-      dataType: "json",
+      data: formData,
+      contentType: false,
+      processData: false,
       success: function (response) {
         if (response.code) {
           const is_import = response.list_record.filter(item => {
@@ -187,8 +187,7 @@ class MainLayout extends React.Component {
           that.setState(() => {
             return {
               list_record: response.list_record,
-              root_path: response.data_path,
-              remove_temp_dir_task_id: response.remove_temp_dir_task_id,
+              data_path: response.data_path,
               is_import,
               step: step.IMPORT_STEP
             }
@@ -235,7 +234,7 @@ class MainLayout extends React.Component {
   }
 
   handleImport() {
-    const { list_record, root_path, is_import, remove_temp_dir_task_id } = this.state;
+    const { list_record, data_path, is_import } = this.state;
     const that = this;
     if (is_import || !this.handleCheckImportAvailable()) {
       return;
@@ -248,8 +247,7 @@ class MainLayout extends React.Component {
       type: 'POST',
       data: JSON.stringify({
         list_record: list_record.filter(item => !item.errors),
-        root_path,
-        remove_temp_dir_task_id
+        data_path
       }),
       contentType: "application/json; charset=utf-8",
       dataType: "json",
@@ -275,13 +273,12 @@ class MainLayout extends React.Component {
 
   getStatus() {
     const that = this
-    const { tasks, root_path } = this.state
+    const { tasks } = this.state
     $.ajax({
       url: urlCheckStatus,
       method: 'POST',
       data: JSON.stringify({
-        tasks,
-        root_path
+        tasks
       }),
       contentType: "application/json; charset=utf-8",
       dataType: "json",
@@ -307,7 +304,7 @@ class MainLayout extends React.Component {
   }
 
   render() {
-    const { tab, tabs, list_record, is_import, tasks, import_status, isShowMessage} = this.state
+    const { tab, tabs, list_record, is_import, tasks, import_status, isShowMessage } = this.state
     return (
       <div>
         <ul className="nav nav-tabs">
@@ -366,8 +363,8 @@ class ImportComponent extends React.Component {
       show: false,
       is_agree_doi: false,
       is_change_identifier: false,
-      change_identifier_mode_content:[],
-      disabled_checkbox:false
+      change_identifier_mode_content: [],
+      disabled_checkbox: false
     }
     this.handleChangefile = this.handleChangefile.bind(this)
     this.handleClickFile = this.handleClickFile.bind(this)
@@ -403,24 +400,17 @@ class ImportComponent extends React.Component {
   }
 
   handleChangefile(e) {
-    const file = e.target.files[0],
-      reader = new FileReader();
-    const file_name = this.getLastString(e.target.value, "\\")
+    const file = e.target.files[0];
+    const file_name = this.getLastString(e.target.value, "\\");
     if (this.getLastString(file_name, ".") !== 'zip') {
-      return false
+      return false;
     }
 
     this.setState({
-      file_name: file_name,
+      file,
+      file_name,
       disabled_checkbox: false
     });
-
-    reader.onload = (e) => {
-      this.setState({
-        file: reader.result,
-      });
-    }
-    reader.readAsDataURL(file);
   }
 
   handleClickFile() {
@@ -486,13 +476,12 @@ class ImportComponent extends React.Component {
   }
 
   handleSubmit() {
-    const { file, file_name, is_change_identifier } = this.state
-    const { handleCheck, updateShowMessage } = this.props
-    const data = {
-      file,
-      file_name,
-      is_change_identifier,
-    }
+    const { file, is_change_identifier } = this.state;
+    const { handleCheck, updateShowMessage } = this.props;
+    let formData = new FormData();
+    formData.append('file', file);
+    formData.append('is_change_identifier', is_change_identifier);
+
     if (is_change_identifier) {
       this.setState({
         disabled_checkbox: true,
@@ -500,7 +489,7 @@ class ImportComponent extends React.Component {
       });
     } else {
       updateShowMessage(false);
-      handleCheck(data)
+      handleCheck(formData);
     }
 
   }
@@ -549,19 +538,18 @@ class ImportComponent extends React.Component {
     });
   }
   handleConfirm() {
-    const {file, file_name, is_change_identifier} = this.state
-    const { handleCheck, updateShowMessage } = this.props
-    const data = {
-      file,
-      file_name,
-      is_change_identifier,
-    }
+    const { file, is_change_identifier } = this.state;
+    const { handleCheck, updateShowMessage } = this.props;
+    let formData = new FormData();
+    formData.append('file', file);
+    formData.append('is_change_identifier', is_change_identifier);
+
     this.setState({
       show: false,
       is_agree_doi: false
     });
     updateShowMessage(true);
-    handleCheck(data)
+    handleCheck(formData);
   }
 
   render() {
@@ -638,12 +626,12 @@ class ImportComponent extends React.Component {
             <h4 className="modal-title in_line">{change_identifier_mode}</h4>
           </ReactBootstrap.Modal.Header>
           <ReactBootstrap.Modal.Body>
-          {change_identifier_mode_content.map((item, index) => (
-            <div className="row">{item} </div>
-          ))}
+            {change_identifier_mode_content.map((item, index) => (
+              <div className="row">{item} </div>
+            ))}
           </ReactBootstrap.Modal.Body>
           <ReactBootstrap.Modal.Footer>
-            <br/>
+            <br />
             <div className="col-12">
               <div className="row">
                 <div className="form-check pull-left">
@@ -656,8 +644,8 @@ class ImportComponent extends React.Component {
                   <label className="form-check-label margin_left" htmlFor="is_agree_doi">{i_agree}</label>
                 </div>
               </div>
-              <br/>
-              <br/>
+              <br />
+              <br />
               <div className="row text-center">
                 <button variant="primary" type="button" className="btn btn-default" disabled={!is_agree_doi} onClick={this.handleConfirm}>OK</button>
                 <button variant="secondary" type="button" className="btn btn-default" onClick={this.handleClose}>{cancel}</button>
@@ -859,10 +847,10 @@ class CheckComponent extends React.Component {
           document.body.appendChild(tempLink);
           tempLink.click();
 
-          setTimeout(function() {
+          setTimeout(function () {
             document.body.removeChild(tempLink);
             window.URL.revokeObjectURL(url);
-        }, 200)
+          }, 200)
         }
       },
       error: function (error) {
@@ -878,9 +866,9 @@ class CheckComponent extends React.Component {
     return (
       <div className="check-component">
         <div className="row">
-          { isShowMessage && (<div className="col-md-12 text-center"><div className="message">{register_with}</div></div>)}
-          <br/>
-          <br/>
+          {isShowMessage && (<div className="col-md-12 text-center"><div className="message">{register_with}</div></div>)}
+          <br />
+          <br />
           <div className="col-md-12 text-center">
             <button
               className="btn btn-primary"
@@ -953,12 +941,12 @@ class CheckComponent extends React.Component {
                         <td>
                           {
                             item['errors'] ? item['errors'].map(e => {
-                              return <div dangerouslySetInnerHTML={{__html: error + ': ' + e}}></div>
+                              return <div dangerouslySetInnerHTML={{ __html: error + ': ' + e }}></div>
                             }) : item.status === 'new' ? register : item.status === 'keep' ? keep : item.status === 'upgrade' ? upgrade : ''
                           }
                           {
                             item['warnings'] && item['warnings'].map(e => {
-                              return <div dangerouslySetInnerHTML={{__html: warning + ': ' + e}}></div>
+                              return <div dangerouslySetInnerHTML={{ __html: warning + ': ' + e }}></div>
                             })
                           }
                         </td>
@@ -1137,7 +1125,7 @@ class ItemTypeComponent extends React.Component {
     $.ajax({
       url: urlDownloadTemplate,
       type: 'POST',
-      data: JSON.stringify({item_type_id: selected_item_type}),
+      data: JSON.stringify({ item_type_id: selected_item_type }),
       contentType: "application/json; charset=utf-8",
       success: function (response, status, xhr) {
         var fileName = "";

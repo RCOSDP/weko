@@ -200,6 +200,16 @@ def get_search_detail_keyword(str):
 
 
 def get_childinfo(index_tree, result_list=[], parename=""):
+    """Get childinfo.
+
+    Args:
+        index_tree (type): description
+        result_list (list, optional): description. Defaults to [].
+        parename (str, optional): description. Defaults to "".
+
+    Returns:
+        [type]: [description]
+    """
     #current_app.logger.debug("index_tree: {0}".format(index_tree))
     if isinstance(index_tree, dict):
         if 'pid' in index_tree.keys():
