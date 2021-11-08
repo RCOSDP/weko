@@ -379,6 +379,7 @@ class ItemTypes(RecordBase):
         old_render = deepcopy(result[0].render)
         new_render = deepcopy(render)
 
+        updated_name = False
         tag = result[0].tag + 1
         # Check if the name has been changed
         item_type_name = result[0].item_type_name
@@ -391,6 +392,7 @@ class ItemTypes(RecordBase):
                     'Invalid name: {}'.format(name))
                 raise ValueError(_('Invalid name.'))
             item_type_name.name = name
+            updated_name = True
 
         upgrade_version = current_app.config[
             'WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'
