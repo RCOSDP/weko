@@ -77,7 +77,7 @@ class ResyncIndexes(db.Model, Timestamp):
     """To Date."""
 
     resync_save_dir = db.Column(
-        db.String(50),
+        db.String(4096),
         nullable=False
     )
     """Path directory save."""

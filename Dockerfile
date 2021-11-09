@@ -82,7 +82,7 @@ FROM stage_6 AS stage_7
 # Make given VENV default:
 ENV PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENV VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
-RUN echo "source /home/invenio/.virtualenvs/invenio/bin/virtualenvwrapper.sh" >> ~/.bashrc
+RUN echo "source /usr/local/bin/virtualenvwrapper.sh" >> ~/.bashrc
 RUN echo "workon invenio" >> ~/.bashrc
 #RUN mv /home/invenio/.virtualenvs/invenio/var/instance/static /home/invenio/.virtualenvs/invenio/var/instance/static.org
 
@@ -121,6 +121,7 @@ CMD ["/bin/bash", "-c", "invenio run -h 0.0.0.0"]
 # USER invenio
 # COPY --from=build-env --chown=invenio:invenio /home/invenio/.virtualenvs /home/invenio/.virtualenvs
 # COPY --from=build-env --chown=invenio:invenio /code /code
+# COPY --from=build-env /usr/bin /usr/bin
 
 # ENV PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 # ENV VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
