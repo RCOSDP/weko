@@ -64,7 +64,6 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
 from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission, check_publish_status
-from weko_records_ui.utils import hide_item_metadata, replace_license_free
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
@@ -1492,6 +1491,8 @@ def _custom_export_metadata(record_metadata: dict, hide_item: bool = True,
         hide_item (bool): Hide item flag.
         replace_license (bool): Replace license flag.
     """
+    from weko_records_ui.utils import hide_item_metadata, replace_license_free
+
     # Hide private metadata
     if hide_item:
         hide_item_metadata(record_metadata)
@@ -2224,6 +2225,8 @@ def make_bibtex_data(record_ids):
     @param record_ids:
     @return:
     """
+    from weko_records_ui.utils import hide_item_metadata
+
     result = ''
     err_msg = _('Please input all required item.')
     from weko_schema_ui.serializers import WekoBibTexSerializer

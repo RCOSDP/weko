@@ -27,7 +27,6 @@ from flask import Blueprint, abort, current_app, jsonify, make_response, \
     request
 from flask_babelex import gettext as _
 from flask_login import current_user
-from invenio_communities.models import Community
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
 
@@ -295,6 +294,8 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
 
     def get(self, **kwargs):
         """Get tree json."""
+        from invenio_communities.models import Community
+
         try:
             action = request.values.get('action')
             comm_id = request.values.get('community')

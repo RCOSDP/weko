@@ -40,7 +40,6 @@ from weko_gridlayout.utils import get_widget_design_page_with_main, \
     main_design_has_main_widget
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index, IndexStyle
-from weko_items_ui.utils import get_ranking
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_search_ui.api import SearchSetting, get_search_detail_keyword
 from weko_search_ui.utils import check_permission, get_journal_info
@@ -224,6 +223,8 @@ class MainScreenInitDisplaySetting:
 
     @classmethod
     def __ranking(cls, main_screen_display_setting):
+        from weko_items_ui.utils import get_ranking
+
         ranking_settings = RankingSettings.get()
         # get statistical period
         end_date = date.today()
