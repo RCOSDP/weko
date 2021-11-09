@@ -108,7 +108,7 @@ N	2021-03-20 07:30:09.523561	2021-03-20 07:30:16.89222	31002	cc3aa348-f0da-4cef-
 --
 
 COPY public.workflow_workflow (status, created, updated, id, flows_id, flows_name, itemtype_id, index_tree_id, flow_id, is_deleted, open_restricted, is_gakuninrdm) FROM stdin;
-N	2021-03-20 07:31:06.962251	2021-03-20 07:31:06.962297	31001		cc3aa348-f0da-4cef-b404-ffaabb1d5894    利用報告/Data Usage Report	31003	\N	31001	f	f	f
+N	2021-03-20 07:31:06.962251	2021-03-20 07:31:06.962297	31001	cc3aa348-f0da-4cef-b404-ffaabb1d5894	利用報告/Data Usage Report	31003	\N	31001	f	f	f
 \.
 
 
