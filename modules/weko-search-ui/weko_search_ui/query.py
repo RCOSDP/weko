@@ -21,6 +21,7 @@
 """Query factories for REST API."""
 
 import json
+import re
 import sys
 from datetime import datetime
 from functools import partial
@@ -331,10 +332,15 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 if not date_from or not date_to:
                     return
 
-                date_from = datetime.strptime(
-                    date_from, '%Y%m%d').strftime('%Y-%m-%d')
-                date_to = datetime.strptime(
-                    date_to, '%Y%m%d').strftime('%Y-%m-%d')
+                pattern = r'^(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})|(\d{4})|(\d{8})$'
+                p = re.compile(pattern)
+                if p.match(date_from) and p.match(date_to):
+                    if len(date_from)==8:
+                        date_from = datetime.strptime(date_from, '%Y%m%d').strftime('%Y-%m-%d')
+                    if len(date_to)==8:
+                        date_to = datetime.strptime(date_to, '%Y%m%d').strftime('%Y-%m-%d')
+                else:
+                    return
 
                 qv = {}
                 qv.update(dict(gte=date_from))
