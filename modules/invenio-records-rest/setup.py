@@ -25,6 +25,9 @@ tests_require = [
     'pytest-pep8',
     'pytest-invenio',
     'responses',
+    'dcxml>=0.1.0',
+    'pyld>=0.7.1',
+    'frozendict>=1.0.0',
 ]
 
 invenio_search_version = '1.0.0'

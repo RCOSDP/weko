@@ -22,7 +22,7 @@
 
 from flask import Flask
 
-from weko_plugins import wekoplugins
+from weko_plugins import WekoPlugins
 
 
 def test_version():
@@ -34,11 +34,11 @@ def test_version():
 def test_init():
     """Test extension initialization."""
     app = Flask('testapp', root_path='/code')
-    ext = wekoplugins(app)
+    ext = WekoPlugins(app)
     assert 'weko-plugins' in app.extensions
 
     app = Flask('testapp', root_path='/code')
-    ext = wekoplugins()
+    ext = WekoPlugins()
     assert 'weko-plugins' not in app.extensions
     ext.init_app(app)
     assert 'weko-plugins' in app.extensions
@@ -46,7 +46,7 @@ def test_init():
 
 def test_view(app):
     """Test view."""
-    wekoplugins(app)
+    WekoPlugins(app)
     with app.test_client() as client:
         res = client.get("/plugins/")
         assert res.status_code == 200

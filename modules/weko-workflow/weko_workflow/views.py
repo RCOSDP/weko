@@ -59,8 +59,6 @@ from weko_records.api import FeedbackMailList, ItemLink
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
-from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
-    get_workflows
 from weko_search_ui.utils import check_import_items, import_items_to_system
 from weko_user_profiles.config import WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
@@ -608,6 +606,7 @@ def display_activity(activity_id="0"):
     if user_id:
         from weko_user_profiles.views import get_user_profile_info
         user_profile['results'] = get_user_profile_info(int(user_id))
+    from weko_records_ui.utils import get_list_licence
     from weko_theme.utils import get_design_layout
 
     # Get the design for widget rendering
@@ -1719,6 +1718,7 @@ def usage_report():
 @login_required
 def get_data_init():
     """Init data."""
+    from weko_records_ui.utils import get_roles, get_terms, get_workflows
     init_workflows = get_workflows()
     init_roles = get_roles()
     init_terms = get_terms()
