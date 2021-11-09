@@ -440,7 +440,7 @@ class SchemaTree:
                     key = list_key[0]
                     if key.startswith("="):
                         # mapping by fixed value
-                        yield key[1:],id(key)
+                        yield key[1:], id(key)
                     elif isinstance(atr_vm, dict):
                         if atr_vm.get(key) is None:
                             yield None, id(key)
@@ -712,9 +712,9 @@ class SchemaTree:
                                     for key, val in v.get(self._atr,
                                                           {}).items():
                                         if(type(val[0]) is not str):
-                                          val[0] = [val for idx, val
-                                                  in enumerate(val[0])
-                                                  if idx in lst_val_idx]
+                                            val[0] = [val for idx, val
+                                                      in enumerate(val[0])
+                                                      if idx in lst_val_idx]
                             else:
                                 if not v.get(self._atr, {}).items():
                                     lst_val_idx = \
@@ -1281,8 +1281,10 @@ class SchemaTree:
                 len_name = _child[jpcoar_affname]
                 if len_name > 0:
                     _data = _value[jpcoar_affname][self._v][0]
-                    _lang = _value[jpcoar_affname][self._atr].get(
-                        "xml:lang", [])
+                    _lang = None
+                    if self._atr in _value[jpcoar_affname]:
+                        _lang = _value[jpcoar_affname][self._atr].get(
+                            "xml:lang", [])
                     _max_len_name = len(_data) \
                         if len(_data) < count_name + len_name \
                         else count_name + len_name
