@@ -92,41 +92,42 @@ CMD ["/bin/bash", "-c", "invenio run -h 0.0.0.0"]
 # CMD ["/bin/bash", "-c", "gunicorn invenio_app.wsgi --workers=4 --worker-class=meinheld.gmeinheld.MeinheldWorker -b 0.0.0.0:5000 "]
 #CMD ["/bin/bash","-c","uwsgi --ini /code/scripts/uwsgi.ini"]
 
-FROM python:3.6-slim-buster as product-env
+# FROM python:3.6-slim-buster as product-env
 
-# Configure Weko instance:
-ENV INVENIO_WEB_HOST=127.0.0.1
-ENV INVENIO_WEB_INSTANCE=invenio
-ENV INVENIO_WEB_VENV=invenio
-ENV INVENIO_WEB_HOST_NAME=invenio
-ENV INVENIO_USER_EMAIL=wekosoftware@nii.ac.jp
-ENV INVENIO_USER_PASS=uspass123
-ENV INVENIO_POSTGRESQL_HOST=postgresql
-ENV INVENIO_POSTGRESQL_DBNAME=invenio
-ENV INVENIO_POSTGRESQL_DBUSER=invenio
-ENV INVENIO_POSTGRESQL_DBPASS=dbpass123
-ENV INVENIO_REDIS_HOST=redis
-ENV INVENIO_ELASTICSEARCH_HOST=elasticsearch
-ENV INVENIO_RABBITMQ_HOST=rabbitmq
-ENV INVENIO_RABBITMQ_USER=guest
-ENV INVENIO_RABBITMQ_PASS=guest
-ENV INVENIO_RABBITMQ_VHOST=/
-ENV INVENIO_WORKER_HOST=127.0.0.1
-ENV SEARCH_INDEX_PREFIX=tenant1
-# Configure SQLAlchemy connection pool
-# see: https://docs.sqlalchemy.org/en/12/core/pooling.html#api-documentation-available-pool-implementations
-ENV INVENIO_DB_POOL_CLASS=QueuePool
+# # Configure Weko instance:
+# ENV INVENIO_WEB_HOST=127.0.0.1
+# ENV INVENIO_WEB_INSTANCE=invenio
+# ENV INVENIO_WEB_VENV=invenio
+# ENV INVENIO_WEB_HOST_NAME=invenio
+# ENV INVENIO_USER_EMAIL=wekosoftware@nii.ac.jp
+# ENV INVENIO_USER_PASS=uspass123
+# ENV INVENIO_POSTGRESQL_HOST=postgresql
+# ENV INVENIO_POSTGRESQL_DBNAME=invenio
+# ENV INVENIO_POSTGRESQL_DBUSER=invenio
+# ENV INVENIO_POSTGRESQL_DBPASS=dbpass123
+# ENV INVENIO_REDIS_HOST=redis
+# ENV INVENIO_ELASTICSEARCH_HOST=elasticsearch
+# ENV INVENIO_RABBITMQ_HOST=rabbitmq
+# ENV INVENIO_RABBITMQ_USER=guest
+# ENV INVENIO_RABBITMQ_PASS=guest
+# ENV INVENIO_RABBITMQ_VHOST=/
+# ENV INVENIO_WORKER_HOST=127.0.0.1
+# ENV SEARCH_INDEX_PREFIX=tenant1
+# # Configure SQLAlchemy connection pool
+# # see: https://docs.sqlalchemy.org/en/12/core/pooling.html#api-documentation-available-pool-implementations
+# ENV INVENIO_DB_POOL_CLASS=QueuePool
 
-RUN apt-get -y update && apt-get -y install curl nano default-jre libreoffice libreoffice-java-common fonts-ipafont fonts-ipaexfont --no-install-recommends && apt-get -y clean && pip install -U setuptools pip virtualenvwrapper && adduser --uid 1000 --disabled-password --gecos '' invenio
-USER invenio
-COPY --from=build-env --chown=invenio:invenio /home/invenio/.virtualenvs /home/invenio/.virtualenvs
-COPY --from=build-env --chown=invenio:invenio /code /code
+# RUN apt-get -y update && apt-get -y install curl nano default-jre libreoffice libreoffice-java-common fonts-ipafont fonts-ipaexfont --no-install-recommends && apt-get -y clean && pip install -U setuptools pip virtualenvwrapper && adduser --uid 1000 --disabled-password --gecos '' invenio
+# USER invenio
+# COPY --from=build-env --chown=invenio:invenio /home/invenio/.virtualenvs /home/invenio/.virtualenvs
+# COPY --from=build-env --chown=invenio:invenio /code /code
+# COPY --from=build-env /usr/bin /usr/bin
 
-ENV PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ENV VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
-RUN echo "source /usr/local/bin/virtualenvwrapper.sh" >> ~/.bashrc && echo "workon invenio" >> ~/.bashrc
-WORKDIR /code
+# ENV PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+# ENV VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
+# RUN echo "source /usr/local/bin/virtualenvwrapper.sh" >> ~/.bashrc && echo "workon invenio" >> ~/.bashrc
+# WORKDIR /code
 
-CMD ["/bin/bash", "-c", "invenio run -h 0.0.0.0"]
+# CMD ["/bin/bash", "-c", "invenio run -h 0.0.0.0"]
 
 
