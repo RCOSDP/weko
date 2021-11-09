@@ -1281,7 +1281,7 @@ class SchemaTree:
                 len_name = _child[jpcoar_affname]
                 if len_name > 0:
                     _data = _value[jpcoar_affname][self._v][0]
-                    _lang = None
+                    _lang = None 
                     if self._atr in _value[jpcoar_affname]:
                         _lang = _value[jpcoar_affname][self._atr].get(
                             "xml:lang", [])
@@ -1290,7 +1290,7 @@ class SchemaTree:
                         else count_name + len_name
                     _value[jpcoar_affname][self._v][0] = _data[
                         count_name:_max_len_name]
-                    if _lang:
+                    if _lang and len(_lang)>0:
                         _value[jpcoar_affname][self._atr]["xml:lang"][0] \
                             = _lang[0][count_name:_max_len_name]
                     count_name += _max_len_name
