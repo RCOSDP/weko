@@ -132,6 +132,7 @@ class MainLayout extends React.Component {
       is_import: true,
       import_status: false,
       isShowMessage: false,
+      disabled_select_file: false
     }
     this.handleChangeTab = this.handleChangeTab.bind(this)
     this.handleCheck = this.handleCheck.bind(this)
@@ -208,6 +209,7 @@ class MainLayout extends React.Component {
   handleCheckImportAvailable() {
     closeError();
     const import_start_time = localStorage.getItem('import_start_time');
+    const me = this
     let result = false;
     $.ajax({
       url: urlCheckImportAvailable,
@@ -219,6 +221,9 @@ class MainLayout extends React.Component {
           let error_msg = import_start_time === response.start_time ? not_available_error : not_available_error_another;
           if (response.error_id === 'celery_not_run') {
             error_msg = celery_not_run;
+            me.setState({
+              disabled_select_file: true
+            });
           }
           showErrorMsg(error_msg);
         } else {
@@ -304,7 +309,7 @@ class MainLayout extends React.Component {
   }
 
   render() {
-    const { tab, tabs, list_record, is_import, tasks, import_status, isShowMessage } = this.state
+    const { tab, tabs, list_record, is_import, tasks, import_status, isShowMessage, disabled_select_file } = this.state
     return (
       <div>
         <ul className="nav nav-tabs">
@@ -320,6 +325,7 @@ class MainLayout extends React.Component {
           <ImportComponent
             handleCheck={this.handleCheck}
             updateShowMessage={this.updateShowMessage}
+            disabled_select_file={disabled_select_file}
           />
         </div>
         <div className={`${tab === tabs[1].tab_key ? '' : 'hide'}`}>
@@ -561,6 +567,7 @@ class ImportComponent extends React.Component {
       change_identifier_mode_content,
       disabled_checkbox
     } = this.state
+    const { disabled_select_file } = this.props
     return (
       <div className="import_component">
         <div className="row layout">
@@ -571,7 +578,7 @@ class ImportComponent extends React.Component {
               </div>
               <div className="col-md-8">
                 <div>
-                  <button className="btn btn-primary" onClick={this.handleClickFile}>{select_file}</button>
+                  <button disabled={disabled_select_file} className="btn btn-primary" onClick={this.handleClickFile}>{select_file}</button>
                   <input
                     type="file"
                     className="input-file"

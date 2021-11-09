@@ -49,7 +49,7 @@ from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
     WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
     WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE
 from .tasks import export_all_task, import_item, is_import_running, \
-    remove_temp_dir_task
+    remove_temp_dir_task, check_celery_is_run
 from .utils import cancel_export_all, check_import_items, \
     check_sub_item_is_system, create_flow_define, delete_records, \
     get_change_identifier_mode_content, get_content_workflow, \
@@ -592,10 +592,12 @@ class ItemBulkExport(BaseView):
     @expose('/check_export_status', methods=['GET'])
     def check_export_status(self):
         """Check export status."""
+        check = check_celery_is_run()
         export_status, download_uri = get_export_status()
         return jsonify(data={
             'export_status': export_status,
-            'uri_status': True if download_uri else False
+            'uri_status': True if download_uri else False,
+            'celery_is_run': check
         })
 
     @expose('/cancel_export', methods=['GET'])
