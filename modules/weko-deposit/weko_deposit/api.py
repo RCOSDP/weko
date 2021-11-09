@@ -2340,11 +2340,13 @@ class _FormatSysBibliographicInformation:
         if value_latn:
             return value_latn, 'ja-Latn'
 
-        if value_en and current_lang != 'ja':
+        if value_en and (current_lang != 'ja' or
+                not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)):
             return value_en, 'en'
 
         if len(title_data_lang) > 0:
-            if current_lang != 'en':
+            if current_lang != 'en' or \
+                    not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False):
                 return list(title_data_lang[0].values())[0], \
                     list(title_data_lang[0])[0]
             else:
