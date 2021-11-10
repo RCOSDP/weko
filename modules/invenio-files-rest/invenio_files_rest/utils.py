@@ -7,12 +7,12 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """Implementation of various utility functions."""
-import mimetypes
-
 import base64
+import mimetypes
+import tempfile
+
 import six
 import sqlalchemy as sa
-import tempfile
 from flask import current_app
 from invenio_db import db
 from sqlalchemy.exc import SQLAlchemyError
