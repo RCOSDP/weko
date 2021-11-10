@@ -46,19 +46,19 @@ from .errors import IndexBaseRESTError, IndexDeletedRESTError
 from .models import Index
 
 
-def get_index_link_list(lang='en'):
+def get_index_link_list(pid=0):
     """Get index link list."""
-    visables = Index.query.filter_by(
-        index_link_enabled=True, public_state=True).all()
-    if lang == 'jp':
-        res = []
-        for i in visables:
-            if i.index_link_name:
-                res.append((i.id, i.index_link_name))
-            else:
-                res.append((i.id, i.index_link_name_english))
-        return res
-    return [(i.id, i.index_link_name_english) for i in visables]
+    def _get_index_link(res, tree):
+        for node in tree:
+            if node['index_link_enabled']:
+                res.append((int(node['id']), node['link_name']))
+            if node['children']:
+                _get_index_link(res, node['children'])
+    from .api import Indexes
+    tree = Indexes.get_browsing_tree_ignore_more(pid)
+    res = []
+    _get_index_link(res, tree)
+    return res
 
 
 def is_index_tree_updated():
@@ -139,6 +139,9 @@ def get_tree_json(index_list, root_id):
         index_name = str(index_element.name).replace("&EMPTY&", "")
         index_name = Markup.escape(index_name)
         index_name = index_name.replace("\n", r"<br\>")
+        
+        index_link_name = str(index_element.link_name).replace("&EMPTY&", "")
+        index_link_name = index_link_name.replace("\n", r"<br\>")
 
         if not is_root:
             pid = str(index_element.pid)
@@ -154,6 +157,8 @@ def get_tree_json(index_list, root_id):
             'id': str(index_element.cid),
             'value': index_name,
             'name': index_name,
+            'link_name': index_link_name,
+            'index_link_enabled': index_element.index_link_enabled,
             'position': index_element.position,
             'emitLoadNextLevel': False,
             'settings': {

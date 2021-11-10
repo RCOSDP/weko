@@ -587,11 +587,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         request.args.get('community') or current_app.config[
             'WEKO_THEME_DEFAULT_COMMUNITY'])
 
-    if hasattr(current_i18n, 'language'):
-        index_link_list = get_index_link_list(current_i18n.language)
-    else:
-        index_link_list = get_index_link_list()
-
+    index_link_list = get_index_link_list()
     files_thumbnail = []
     if record.files:
         files_thumbnail = ObjectVersion.get_by_bucket(
