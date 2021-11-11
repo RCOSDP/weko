@@ -16,8 +16,8 @@ def identifiers():
 
 @pytest.fixture
 def k_v():
-    k_v = [{'id': 'date_range1', 'mapping': [], 'contents': '', 'inputType': 'dateRange', 'input_Type': 'range', 'item_value':{'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}, '12': {'path': {'gte': '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211',
-                                                                                                                                                                                                                                   'lte': '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211'}, 'path_type': {'gte': 'json', 'lte': 'json'}}}, 'mappingFlg': False, 'inputVal_to': '', 'mappingName': '', 'inputVal_from': '', 'contents_value': {'en': 'date_EN_1', 'ja': 'date_JA_1'}, 'useable_status': True, 'default_display': True}]
+    k_v = [{'id': 'date_range1', 'mapping': [], 'contents': '', 'inputType': 'dateRange', 'input_Type': 'range', 'item_value':{'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}, '12': {'path': {'gte': '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211', 'lte': '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211'}, 'path_type': {'gte': 'json', 'lte': 'json'}}}, 'mappingFlg': False, 'inputVal_to': '', 'mappingName': '', 'inputVal_from': '', 'contents_value': {'en': 'date_EN_1', 'ja': 'date_JA_1'}, 'useable_status': True, 'default_display': True}, {"id": "text3", "mapping": [], "contents": "", "inputVal": "", "inputType": "text", "input_Type": "text", "item_value":  {"1": {"path": "", "path_type": "json"}, "12": {"path": "$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890", "path_type": "json"}, "20": {"path": "$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890", "path_type": "json"}}, "mappingFlg": False, "mappingName": "", "contents_value": {"en": "Summary", "ja": "概要"}, "useable_status": True, "default_display": True}
+           ]
     return k_v
 
 
@@ -35,7 +35,7 @@ def search_mapping():
 
 @pytest.fixture
 def jsonpath():
-    return ['$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108', '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211']
+    return ['$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108', '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211', '$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890']
 
 
 @pytest.fixture
@@ -83,6 +83,8 @@ def test_copy_value_json_path(meta, jsonpath):
     assert copy_value_json_path(meta[0], jsonpath[0]) == '寄与者'
     assert copy_value_json_path(
         meta[0], jsonpath[1]) == '2000-01-01/2021-03-30'
+    assert copy_value_json_path(
+        meta[0], jsonpath[2]) == '概要'
 
 
 def test_copy_values_json_path(meta, jsonpath):
@@ -90,6 +92,8 @@ def test_copy_values_json_path(meta, jsonpath):
         '寄与者', 'Contributor']
     assert copy_values_json_path(meta[0], jsonpath[1]) == [
         '2000-01-01/2021-03-30']
+    assert copy_values_json_path(meta[0], jsonpath[2]) == [
+        '概要', 'その他', 'materials: text']
 
 
 def test_convert_date_range_value():

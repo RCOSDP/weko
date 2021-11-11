@@ -235,8 +235,8 @@ def process_item(record, resync, counter):
     event_counter('processed_items', counter)
     event = ItemEvents.INIT
     xml = etree.tostring(record, encoding='utf-8').decode()
-    current_app.logger.debug('{0} {1} {2}: {3}'.format(
-        __file__, 'process_item()', 'xml', xml))
+    # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+    #     __file__, 'process_item()', 'xml', xml))
 
     mapper = JPCOARMapper(xml)
 
@@ -315,9 +315,23 @@ def process_item(record, resync, counter):
             current_app.logger.debug('{0} {1} {2}: {3}'.format(
                 __file__, 'process_item()', 'WekoDeposit', dep))
             # add item versioning
+            pid = PersistentIdentifier.query.filter_by(
+                pid_type='recid', pid_value=dep.pid.pid_value).first()
+            idt_list = mapper.identifiers
+            from weko_workflow.utils import IdentifierHandle
+            idt = IdentifierHandle(pid.object_uuid)
+            for it in idt_list:
+                if not it.get('type'):
+                    continue
+                pid_type = it['type'].lower()
+                pid_obj = idt.get_pidstore(pid_type)
+                if not pid_obj:
+                    idt.register_pidstore(pid_type, it['identifier'])
+
+            # add item versioning
             if INVENIO_RESYNC_ENABLE_ITEM_VERSIONING:
                 with current_app.test_request_context() as ctx:
-                    first_ver = dep.newversion(recid)
+                    first_ver = dep.newversion(pid)
                     first_ver.publish()
             event = ItemEvents.UPDATE
 
