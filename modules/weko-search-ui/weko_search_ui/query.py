@@ -322,6 +322,16 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             return Q('bool', should=shuld) if shuld else None
 
         def _get_date_query(k, v):
+            """[summary]
+
+            Args:
+                k ([string]): 'date_range1'
+                v ([type]): [('from', 'to'), 'date_range1']
+
+            Returns:
+                [type]: query
+            """
+
             # text value
             qry = None
 
@@ -332,13 +342,21 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 if not date_from or not date_to:
                     return
 
-                pattern = r'^(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})|(\d{4})|(\d{8})$'
+                pattern = r'^(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})|(\d{4})|(\d{6})|(\d{8})$'
                 p = re.compile(pattern)
                 if p.match(date_from) and p.match(date_to):
-                    if len(date_from)==8:
-                        date_from = datetime.strptime(date_from, '%Y%m%d').strftime('%Y-%m-%d')
-                    if len(date_to)==8:
-                        date_to = datetime.strptime(date_to, '%Y%m%d').strftime('%Y-%m-%d')
+                    if len(date_from) == 8:
+                        date_from = datetime.strptime(
+                            date_from, '%Y%m%d').strftime('%Y-%m-%d')
+                    if len(date_to) == 8:
+                        date_to = datetime.strptime(
+                            date_to, '%Y%m%d').strftime('%Y-%m-%d')
+                    if len(date_from) == 6:
+                        date_from = datetime.strptime(
+                            date_from, '%Y%m').strftime('%Y-%m')
+                    if len(date_to) == 6:
+                        date_to = datetime.strptime(
+                            date_to, '%Y%m').strftime('%Y-%m')
                 else:
                     return
 

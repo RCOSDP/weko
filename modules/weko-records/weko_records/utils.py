@@ -21,6 +21,7 @@
 """Item API."""
 import copy
 import re
+import time
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
 
@@ -276,6 +277,23 @@ def copy_field_test(dc, map, jrc, iid=None):
                                     jrc[k_v.get('id')] = txt
                             elif _inputType == "range":
                                 id = k_v.get('id')
+                                ranges = []
+                                _gte = get_values_from_dict(
+                                    dc, val["path"]["gte"], val["path_type"]["gte"], iid)
+                                _lte = get_values_from_dict(
+                                    dc, val["path"]["lte"], val["path_type"]["lte"], iid)
+                                for idx in range(len(_gte)):
+                                    a = _gte[idx]
+                                    b = None
+                                    if idx < len(_lte):
+                                        b = _lte[idx]
+                                    ranges.append(
+                                        convert_range_value(a, b))
+                                if len(ranges) > 0:
+                                    value_range = {id: ranges}
+                                    jrc.update(value_range)
+                            elif _inputType == "dateRange":
+                                id = k_v.get('id')
                                 dateRanges = []
                                 _gte = get_values_from_dict(
                                     dc, val["path"]["gte"], val["path_type"]["gte"], iid)
@@ -311,6 +329,52 @@ def copy_field_test(dc, map, jrc, iid=None):
                                     jrc.update(geo_shape)
 
 
+def convert_range_value(start, end=None):
+    """ Convert to range value for Elasticsearch
+
+    Args:
+        start ([str]): [description]
+        end ([str], optional): [description]. Defaults to None.
+
+    Returns:
+        [dict]: range value for Elasticsearch
+    """
+    ret = None
+    _start = 'gte'
+    _end = 'lte'
+    if end is None:
+        start = start.strip()
+        ret = {_start: start,
+               _end: start}
+    elif start is None:
+        end = end.strip()
+        ret = {_start: end,
+               _end: end}
+    else:
+        start = start.strip()
+        end = end.strip()
+        if start.isdecimal() and end.isdecimal():
+            a = int(start)
+            b = int(end)
+            if a < b:
+                ret = {_start: start, _end: end}
+            else:
+                ret = {_start: end, _end: start}
+        else:
+            try:
+                a = float(start)
+                b = float(end)
+
+                if a < b:
+                    ret = {_start: start, _end: end}
+                else:
+                    ret = {_start: end, _end: start}
+            except ValueError:
+                current_app.logger.exception(
+                    "can not convert to range value. start:{0} end:{1}".format(start, end))
+    return ret
+
+
 def convert_date_range_value(start, end=None):
     """ Convert to dateRange value for Elasticsearch
 
@@ -332,12 +396,57 @@ def convert_date_range_value(start, end=None):
                _end: start}
         if p.match(start) is not None:
             _tmp = start.split('/')
-            ret = {_start: _tmp[0],
-                   _end: _tmp[1]}
+            if len(_tmp) == 2:
+                ret = makeDateRangeValue(_tmp[0], _tmp[1])
         elif end is not None:
-            end = end.strip()
+            ret = makeDateRangeValue(start, end)
+        else:
+            ret = {_start: end,
+                   _end: end}
+    return ret
+
+
+def makeDateRangeValue(start, end):
+    """make dataRange value
+
+    Args:
+        start ([string]): start date string
+        end ([string]): end date string
+
+    Returns:
+        [dict]: dateRange value
+    """
+    _start = 'gte'
+    _end = 'lte'
+    start = start.strip()
+    end = end.strip()
+    ret = None
+
+    p2 = re.compile(r'^(\d{4}-\d{2}-\d{2})$')
+    p3 = re.compile(r'^(\d{4}-\d{2})$')
+    p4 = re.compile(r'^(\d{4})$')
+
+    a = None
+    b = None
+    if p2.match(start):
+        a = time.strptime(start, "%Y-%m-%d")
+        b = time.strptime(end, "%Y-%m-%d")
+
+    elif p3.match(start):
+        a = time.strptime(start, "%Y-%m")
+        b = time.strptime(end, "%Y-%m")
+    elif p4.match(start):
+        a = time.strptime(start, "%Y")
+        b = time.strptime(end, "%Y")
+
+    if a is not None and b is not None:
+        if a < b:
             ret = {_start: start,
                    _end: end}
+        else:
+            ret = {_start: end,
+                   _end: start}
+
     return ret
 
 
@@ -347,6 +456,7 @@ def get_value_from_dict(dc, path, path_type, iid=None):
         ret = copy_value_xml_path(dc, path, iid)
     elif path_type == "json":
         ret = copy_value_json_path(dc, path)
+    current_app.logger.debug("get_value_from_dict: {0}".format(ret))
     return ret
 
 
@@ -356,6 +466,8 @@ def get_values_from_dict(dc, path, path_type, iid=None):
         ret = copy_value_xml_path(dc, path, iid)
     elif path_type == "json":
         ret = copy_values_json_path(dc, path)
+
+    current_app.logger.debug("get_values_from_dict: {0}".format(ret))
     return ret
 
 
