@@ -101,6 +101,8 @@ def run_sync_import(id):
             try:
                 hostname = urlparse(resync.base_url)
                 records = get_list_records(resync.id)
+                current_app.logger.debug(
+                    "len(records):{0}".format(len(records)))
                 successful = []
                 try:
                     for i in records:
@@ -223,7 +225,7 @@ def get_record(
     response = requests.get(url, params=payload_str, verify=False)
     et = etree.XML(response.text.encode(encoding))
     current_app.logger.debug('{0} {1} {2}: {3}'.format(
-        __file__, 'get_record()', 'et', esponse.text.encode(encoding)))
+        __file__, 'get_record()', 'et', response.text.encode(encoding)))
     records = et.findall('./GetRecord/record', namespaces=et.nsmap)
     current_app.logger.debug('{0} {1} {2}: {3}'.format(
         __file__, 'get_record()', 'et', records))

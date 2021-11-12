@@ -298,8 +298,8 @@ def process_item(record, resync, counter):
                 pid_type='recid', object_uuid=resyncid.object_uuid).one_or_none()
             current_app.logger.debug('{0} {1} {2}: {3}'.format(
                 __file__, 'process_item()', 'Update recid', recid))
-            current_app.logger.debug('{0} {1} {2}: {3}'.format(
-                __file__, 'process_item()', 'RecordMetadata', r))
+            # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+            #     __file__, 'process_item()', 'RecordMetadata', r))
             recid.status = PIDStatus.REGISTERED
             dep = WekoDeposit(r.json, r)
             if 'path' in dep:
@@ -312,8 +312,8 @@ def process_item(record, resync, counter):
             dep.update({'actions': 'publish', 'index': indexes}, json)
             dep.commit()
             dep.publish()
-            current_app.logger.debug('{0} {1} {2}: {3}'.format(
-                __file__, 'process_item()', 'WekoDeposit', dep))
+            # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+            #     __file__, 'process_item()', 'WekoDeposit', dep))
             # add item versioning
             pid = PersistentIdentifier.query.filter_by(
                 pid_type='recid', pid_value=dep.pid.pid_value).first()

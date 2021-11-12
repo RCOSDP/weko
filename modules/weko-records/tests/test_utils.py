@@ -4,8 +4,8 @@ from collections import OrderedDict
 
 import pytest
 
-from weko_records.utils import convert_date_range_value, \
-    copy_value_json_path, copy_values_json_path
+from weko_records.utils import convert_date_range_value, convert_range_value, \
+    copy_value_json_path, copy_values_json_path, makeDateRangeValue
 
 
 @pytest.fixture
@@ -117,3 +117,26 @@ def test_convert_date_range_value():
                                                 'lte': '2000'}
     assert convert_date_range_value('2000-01-01', '2000-12-01') == {'gte': '2000-01-01',
                                                                     'lte': '2000-12-01'}
+
+
+def test_convert_range_value():
+    assert convert_range_value('1', '2') == {'gte': '1', 'lte': '2'}
+
+
+def test_convert_date_range_value():
+    assert convert_date_range_value(
+        '1979-01-01/1960-01-01') == {'gte': '1960-01-01', 'lte': '1979-01-01'}
+
+
+def test_makeDateRangeValue():
+    assert makeDateRangeValue('1979', '1960') == {
+        'gte': '1960', 'lte': '1979'}
+    assert makeDateRangeValue('1979-01-01', '1960-01-01') == {
+        'gte': '1960-01-01', 'lte': '1979-01-01'}
+    assert makeDateRangeValue('1979-01', '1960-01') == {
+        'gte': '1960-01', 'lte': '1979-01'}
+    assert makeDateRangeValue('1979-01-01', '1979-12-30') == {
+        'gte': '1979-01-01', 'lte': '1979-12-30'}
+    assert makeDateRangeValue('1979-01-01', '1979-01-01') == {
+        'gte': '1979-01-01', 'lte': '1979-01-01'}
+    assert makeDateRangeValue('1979/01/01', '1979/12/30') == None

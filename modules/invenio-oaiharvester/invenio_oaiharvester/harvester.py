@@ -235,7 +235,7 @@ def subitem_recs(schema, keys, value, metadata):
             elif isinstance(metadata, OrderedDict):
                 subitems = metadata.get(value, "")
     else:
-        current_app.logger.debug(item_key)
+        current_app.logger.debug("item_key: {0}".format(item_key))
 
     return subitems
 
