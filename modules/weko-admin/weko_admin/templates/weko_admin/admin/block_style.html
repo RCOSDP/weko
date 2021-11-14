@@ -24,8 +24,10 @@
 {{ super() }}
 {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 <link href="{{ url_for('static', filename='css/weko_admin/quill.snow.css') }}" rel="stylesheet">
-<link href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.css" rel="stylesheet">
-<link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai-sublime.min.css" rel="stylesheet">
+  <!--<link href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.css" rel="stylesheet">-->
+  <!--<link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai-sublime.min.css" rel="stylesheet">-->
+  <link href="{{ url_for('static', filename='css/KaTeX/katex.min.css') }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/highlight.js/monokai-sublime.min.css') }}" rel="stylesheet">
 <style>
   .fileupload-buttonbar .btn,
   .fileupload-buttonbar .toggle {
@@ -115,7 +117,7 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.js"></script>
 <script src="{{ url_for('static', filename='js/weko_admin/quill.min.js') }}"></script>
 
-<script> 
+<script>
  $(document).ready(function() {
     var quill_header = new Quill('#editor-container-header', {
       modules: {
@@ -136,7 +138,7 @@
       placeholder: '',
       theme: 'snow'
     });
-    
+
     function addAlert(message) {
         $('#alerts').append(
             '<div class="alert alert-light" id="alert-style">' +
@@ -156,7 +158,7 @@
         contentType: 'application/json; charset=UTF-8',
         data: JSON.stringify({'content': content, 'temp': 'header', 'isEmpty': isEmpty}),
         success: function(data){
-            addAlert("Successfully update header.");    
+            addAlert("Successfully update header.");
         }
       });
     });
