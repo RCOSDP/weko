@@ -980,7 +980,7 @@ def add_identifier_dc(schema, mapping, res, metadata):
     parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-def add_description_dc(sschema, mapping, res, metadata):
+def add_description_dc(schema, mapping, res, metadata):
     """Add description."""
     patterns = [
         ('description.@value', TEXT),
@@ -1000,7 +1000,7 @@ def add_subject_dc(schema, mapping, res, metadata):
     parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-def add_title_dc(sschema, mapping, res, metadata):
+def add_title_dc(schema, mapping, res, metadata):
     """Add title."""
     #    if 'title_en' not in res:
     #        res['title_en'] = title
