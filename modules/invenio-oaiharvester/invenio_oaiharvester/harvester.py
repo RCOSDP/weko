@@ -1632,8 +1632,9 @@ class DDIMapper(BaseMapper):
                             last_key = sub_keys.pop()
                             sub_keys_clone = copy.deepcopy(sub_keys)
                             if mapping_key.split(".@")[1] == "value":
-                                if val_obj.get('#text'):
-                                    value = val_obj['#text'].replace(
+                                if val_obj.get(TEXT):
+                                    # remove newline code and html tags
+                                    value = val_obj[TEXT].replace(
                                         '\n', '$NEWLINE')
                                     soup = BeautifulSoup(value, "html.parser")
                                     for tag in soup.find_all():
@@ -1641,8 +1642,6 @@ class DDIMapper(BaseMapper):
                                     value = soup.get_text(strip=True). \
                                         replace('$NEWLINE', '\n').replace(
                                             '\xa0', ' ')
-                                if val_obj.get(TEXT):
-                                    value = val_obj[TEXT]
                                     if mapping_key == DDI_MAPPING_KEY_TITLE:
                                         self.record_title = value
                                     if mapping_key == DDI_MAPPING_KEY_URI:
