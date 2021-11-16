@@ -940,6 +940,7 @@ def add_format_dc(schema, mapping, res, metadata):
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
 
+
 def add_contributor_dc(schema, mapping, res, metadata):
     """Add contributor."""
     patterns = [
@@ -1017,6 +1018,7 @@ def add_title_dc(schema, mapping, res, metadata):
         elif isinstance(metadata[0], OrderedDict):
             res['title'] = metadata[0].get(TEXT)
 
+
 def add_language_dc(schema, mapping, res, metadata):
     """Add language."""
     patterns = [
@@ -1035,7 +1037,6 @@ def add_date_dc(schema, mapping, res, metadata):
     ]
 
     parsing_metadata(mapping, schema, patterns, metadata, res)
-
 
 
 def add_publisher_dc(schema, mapping, res, metadata):
@@ -1572,8 +1573,8 @@ class DDIMapper(BaseMapper):
                             last_key = sub_keys.pop()
                             sub_keys_clone = copy.deepcopy(sub_keys)
                             if mapping_key.split(".@")[1] == "value":
-                                if val_obj.get('#text'):
-                                    value = val_obj['#text'].replace(
+                                if val_obj.get(TEXT):
+                                    value = val_obj[TEXT].replace(
                                         '\n', '$NEWLINE')
                                     soup = BeautifulSoup(value, "html.parser")
                                     for tag in soup.find_all():
@@ -1581,8 +1582,6 @@ class DDIMapper(BaseMapper):
                                     value = soup.get_text(strip=True). \
                                         replace('$NEWLINE', '\n').replace(
                                             '\xa0', ' ')
-                                if val_obj.get(TEXT):
-                                    value = val_obj[TEXT]
                                     if mapping_key == DDI_MAPPING_KEY_TITLE:
                                         self.record_title = value
                                     if mapping_key == DDI_MAPPING_KEY_URI:
