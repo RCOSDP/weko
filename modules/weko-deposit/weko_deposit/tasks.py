@@ -19,14 +19,19 @@
 # MA 02111-1307, USA.
 
 """Weko Deposit celery tasks."""
+from time import sleep
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from elasticsearch.exceptions import TransportError
 from flask import current_app
 from invenio_db import db
+from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.models import RecordMetadata
+from invenio_search import RecordsSearch
+from invenio_indexer.api import RecordIndexer
 from sqlalchemy.exc import SQLAlchemyError
+from weko_authors.models import AuthorsPrefixSettings
 
 from .api import WekoDeposit
 
@@ -89,7 +94,7 @@ def update_items_by_authorInfo(origin_list, target):
                             url = prefix_info['url'].replace(
                                 '##', id['authorId'])
                         else:
-                            url = prefix_info['url'] + id['authorId']
+                            url = prefix_info['url']
                         id_info.update({key_map['id_uri_key']: url})
                     identifiers.append(id_info)
 
@@ -181,13 +186,6 @@ def update_items_by_authorInfo(origin_list, target):
         query_q = {
             "query": {
                 "bool": {
-                    "must_not": [{
-                        "wildcard": {
-                            "_oai.id": {
-                                "value": "*.*"
-                            }
-                        }
-                    }],
                     "must": [{
                         "terms": {
                             "author_link": origin_list
@@ -207,6 +205,7 @@ def update_items_by_authorInfo(origin_list, target):
         update_es_authorinfo = []
         for item in search['hits']['hits']:
             item_id = item['_source']['control_number']
+            if '.' in item_id: continue
             pid = PersistentIdentifier.get('recid', item_id)
             dep = WekoDeposit.get_record(pid.object_uuid)
             author_link = set()
