@@ -305,7 +305,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                     'doctoral thesis']
     report_types = ['technical report', 'research report', 'report',
                     'book', 'book part']
-    elearning_type = ['learning material']
+    elearning_type = ['learning object']
     dataset_type = ['software', 'dataset']
     datageneral_types = ['internal report', 'policy report', 'report part',
                          'working paper', 'interactive resource',

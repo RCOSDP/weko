@@ -1177,7 +1177,7 @@ RESOURCE_TYPE_MAP = {
 RESOURCE_TYPE_URI = {
     'interactive resource':
         "http://purl.org/coar/resource_type/c_e9a0",
-    'learning material':
+    'learning object':
         "http://purl.org/coar/resource_type/c_1843",
     'musical notation':
         "http://purl.org/coar/resource_type/c_18cw",
