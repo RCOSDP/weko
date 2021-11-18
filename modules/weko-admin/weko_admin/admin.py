@@ -531,8 +531,12 @@ class RankingSettingsView(BaseView):
                     settings.new_item_period = new_item_period
                     settings.statistical_period = \
                         request.form.get('statistical_period', 365)
-                    settings.display_rank = \
-                        request.form.get('display_rank', 10)
+                    new_display_rank = int(request.form.get('display_rank',
+                                                           10))
+                    if new_display_rank < 1 or new_display_rank > 100:
+                        current_app.logger.debug(new_display_rank)
+                        raise
+                    settings.display_rank = new_display_rank
                     most_reviewed_items_flag = True \
                         if request.form.get('most_reviewed_items') else False
                     most_downloaded_items_flag = True \
