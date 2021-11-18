@@ -323,12 +323,16 @@ def get_path_name_dict(path_str=''):
     return jsonify(path_name_dict)
 
 
-@blueprint.route("/facet-search/get-title", methods=['POST'])
+@blueprint.route("/facet-search/get-title-and-order", methods=['POST'])
 def gettitlefacet():
     """Soft getname Facet Search."""
     from weko_admin.utils import get_title_facets
+    titles, order = get_title_facets()
     result = {
         "status": True,
-        "data": get_title_facets()
+        "data": {
+            "titles": titles,
+            "order": order
+        }
     }
     return jsonify(result), 200

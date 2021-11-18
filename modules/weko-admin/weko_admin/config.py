@@ -640,26 +640,24 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'check_val':[],
          'inputVal':'',
          'default_display': True, 'inputType': 'checkbox_list', 'inputVal': '', 'mappingFlg': False, 'mappingName': ''},
-        {'id': 'rights', 'contents': '', 'contents_value': {'en': 'Rights', 'ja': '権利'}, 'useable_status': True,
-         'mapping': ['CC', 'BY', 'CC', 'BY-SA', 'CC', 'BY-ND', 'CC', 'BY-NC', 'CC',
-                     'BY-NC-SA', 'ANY', 'CC0', 'licensefree', 'CC', 'BY-NC-ND'],
+        {'id': 'license', 'contents': 'License', 'contents_value': {'en': 'License', 'ja': 'ライセンス'}, 'useable_status': True,
+         'mapping': [],
          'check_val':[
-             {'id': 'CC BY 3.0', 'contents': 'CC BY 3.0'},
-             {'id': 'CC BY-SA 3.0', 'contents': 'CC BY-SA 3.0'},
-             {'id': 'CC BY-ND 3.0', 'contents': 'CC BY-ND 3.0'},
-             {'id': 'CC BY-NC 3.0', 'contents': 'CC BY-NC 3.0'},
-             {'id': 'CC BY-NC-SA 3.0', 'contents': 'CC BY-NC-SA 3.0'},
-             {'id': 'CC BY-NC-ND 3.0', 'contents': 'CC BY-NC-ND 3.0'},
-             {'id': 'CC BY 4.0', 'contents': 'CC BY 4.0'},
-             {'id': 'CC BY-SA 4.0', 'contents': 'CC BY-SA 4.0'},
-             {'id': 'CC BY-ND 4.0', 'contents': 'CC BY-ND 4.0'},
-             {'id': 'CC BY-NC 4.0', 'contents': 'CC BY-NC 4.0'},
-             {'id': 'CC BY-NC-SA 4.0', 'contents': 'CC BY-NC-SA 4.0'},
-             {'id': 'CC0', 'contents': 'CC0'},
-             {'id': 'licensefree', 'contents': 'licensefree'},
-             {'id': 'CC BY-NC-ND 4.0', 'contents': 'CC BY-NC-ND 4.0'},
+             {'id': 'license_12', 'contents': 'CC0'},
+             {'id': 'license_6', 'contents': 'CC BY 3.0'},
+             {'id': 'license_7', 'contents': 'CC BY-SA 3.0'},
+             {'id': 'license_8', 'contents': 'CC BY-ND 3.0'},
+             {'id': 'license_9', 'contents': 'CC BY-NC 3.0'},
+             {'id': 'license_10', 'contents': 'CC BY-NC-SA 3.0'},
+             {'id': 'license_11', 'contents': 'CC BY-NC-ND 3.0'},
+             {'id': 'license_0', 'contents': 'CC BY 4.0'},
+             {'id': 'license_1', 'contents': 'CC BY-SA 4.0'},
+             {'id': 'license_2', 'contents': 'CC BY-ND 4.0'},
+             {'id': 'license_3', 'contents': 'CC BY-NC 4.0'},
+             {'id': 'license_4', 'contents': 'CC BY-NC-SA 4.0'},
+             {'id': 'license_5', 'contents': 'CC BY-NC-ND 4.0'},
+             {'id': 'license_free', 'contents': 'Other'},
         ], 'default_display': True, 'inputType': 'checkbox_list', 'inputVal': '', 'mappingFlg': False, 'mappingName': ''},
-
         {'id': 'text1',
          'contents': '',
          'contents_value': {'en': 'text1', 'ja': 'テキスト1'},
@@ -1063,7 +1061,7 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'mappingName':'',
          'item_value':{'1': {'path': {'type': '', 'coordinates': ''}, 'path_type': {'type': 'json', 'coordinates': 'json'}}
                        }
-         },
+         }
     ]
 }
 
@@ -1090,6 +1088,8 @@ WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
 
 WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'authors',
+    'authors/export',
+    'authors/import',
     'flowsetting',
     'identify',
     'items/bulk/delete',
@@ -1126,6 +1126,8 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'longanalysissetting',
     'site_info',
     'location',
+    'facet-search',
+    'restricted_access'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
 
@@ -1221,8 +1223,7 @@ WEKO_ADMIN_ITEMS_PER_PAGE_USAGE_REPORT_REMINDER = 25
 WEKO_ADMIN_FEEDBACK_MAIL_DEFAULT_SUBJECT = "No Site Name"
 """Default subject of feedback email."""
 
-WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE = \
-    'weko_admin/admin/facet_search_setting.html'
+WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE = 'weko_admin/admin/facet_search_setting.html'
 """Facet search setting template."""
 
 WEKO_ADMIN_FACET_SEARCH_SETTING = {
@@ -1234,12 +1235,10 @@ WEKO_ADMIN_FACET_SEARCH_SETTING = {
 }
 """Default Facet Search settings."""
 
-WEKO_ADMIN_FACET_SEARCH_SETTING_QUERY_KEY_HAS_PERMISSION = \
-    'facet_search_query_has_permission'
+WEKO_ADMIN_FACET_SEARCH_SETTING_QUERY_KEY_HAS_PERMISSION = 'facet_search_query_has_permission'
 """Default Facet Search query has permission settings."""
 
-WEKO_ADMIN_FACET_SEARCH_SETTING_QUERY_KEY_NO_PERMISSION = \
-    'facet_search_query_no_permission'
+WEKO_ADMIN_FACET_SEARCH_SETTING_QUERY_KEY_NO_PERMISSION = 'facet_search_query_no_permission'
 """Default Facet Search query has no permission settings."""
 
 WEKO_ADMIN_FACET_SEARCH_SETTING_BUCKET_SIZE = 1000

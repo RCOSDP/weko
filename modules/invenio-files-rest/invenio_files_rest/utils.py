@@ -15,7 +15,6 @@ import six
 import sqlalchemy as sa
 from flask import current_app
 from invenio_db import db
-from invenio_records_files.models import RecordsBuckets
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.utils import import_string
 
@@ -95,6 +94,8 @@ def remove_file_cancel_action(bucket_id):
     Args:
         bucket_id: Bucket ID.
     """
+    from invenio_records_files.models import RecordsBuckets
+
     if bucket_id:
         _bucket = Bucket.get(bucket_id)
         if _bucket.id:

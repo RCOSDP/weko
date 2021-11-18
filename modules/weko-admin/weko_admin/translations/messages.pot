@@ -1524,6 +1524,18 @@ msgstr ""
 msgid "Set lifetime for"
 msgstr ""
 
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html
+msgid "Please select one aggregation mapping."
+msgstr "Please select one aggregation mapping."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html
+msgid "Already exists."
+msgstr "Already exists."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
+msgid "Failed to create due to server error."
+msgstr "Failed to create due to server error."
+
 #: weko_admin/templates/weko_admin/settings/lifetime.html:42
 msgid "Current"
 msgstr ""

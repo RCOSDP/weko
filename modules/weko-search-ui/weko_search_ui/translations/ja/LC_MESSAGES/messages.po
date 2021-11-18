@@ -811,3 +811,15 @@ msgstr "{}に指定されたファイル名と{}が一致しません。"
 #: weko_search_ui/templates/weko_search_ui/body_facet_search.html:50
 msgid "Go to"
 msgstr "移動"
+
+msgid "The following item(s) cannot be deleted."
+msgstr "以下のアイテムを削除することはできませんでした。"
+
+msgid "DOI granting item(s):"
+msgstr "DOI付与済みのアイテム："
+
+msgid "Editing item(s):"
+msgstr "編集中のアイテム："
+
+msgid "DOI granting item(s) are including in the deletion items.<br/>DOI granting item(s) cannot be deleted without withdrawing the DOI.<br/>Do you want to continue deleting items that are not grant DOI?"
+msgstr "削除対象にDOI付与済みアイテムが含まれています。<br/>DOI付与済みアイテムはDOI取下げを行わないと削除できません。<br/>DOI付与済み以外のアイテム削除を続行しますか？"

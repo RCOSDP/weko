@@ -510,6 +510,17 @@ def is_exists_key_in_redis(key):
     return False
 
 
+def is_exists_key_or_empty_in_redis(key):
+    """Check key exist in redis."""
+    try:
+        datastore = RedisStore(
+            redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
+        return datastore.redis.exists(key) and datastore.redis.get(key) != b''
+    except Exception as e:
+        current_app.logger.error('Could get value for ' + key, e)
+    return False
+
+
 def get_redis_cache(cache_key):
     """Check and then retrieve the value of a Redis cache key."""
     try:
@@ -2146,7 +2157,10 @@ def get_facet_search_query(has_permission=True):
     search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
     key = get_query_key_by_permission(has_permission)
     # Check query exists in redis.
-    if not is_exists_key_in_redis(key):
+    query = json.loads(get_redis_cache(key) or '{}')
+    if not is_exists_key_or_empty_in_redis(key) \
+            or query.get(search_index, {}).get('post_filters', {}) == {} \
+            or query.get(search_index, {}).get('aggs', {}) == {}:
         store_facet_search_query_in_redis()
     # Get query on redis.
     result = json.loads(get_redis_cache(key)) or {}
@@ -2167,11 +2181,13 @@ def get_title_facets():
             if lang = 'en' : name_en
     """
     lang = current_i18n.language
-    data = {}
+    titles = {}
+    order = {}
     activated_facets = FacetSearchSetting.get_activated_facets()
     for item in activated_facets:
-        data[item.name_en] = item.name_jp if lang == 'ja' else item.name_en
-    return data
+        titles[item.name_en] = item.name_jp if lang == 'ja' else item.name_en
+        order[item.id] = item.name_en
+    return titles, order
 
 
 def is_exits_facet(data, id):

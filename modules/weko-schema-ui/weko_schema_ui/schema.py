@@ -71,6 +71,9 @@ class SchemaConverter:
                                 -1] if ":" in self.rootname else self.rootname
                         return element_name.replace("{" + nsp + "}",
                                                     k + ":")
+            version_type = current_app.config['WEKO_SCHEMA_VERSION_TYPE']
+            if element_name == version_type['original']:
+                element_name = version_type['modified']
             return element_name
 
         def get_element_type(type):

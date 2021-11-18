@@ -1,4 +1,4 @@
-Subject: 利用申請登録のご案内／Register Application for Use
+Subject：利用申請登録のご案内／Register Application for Use
 
 [restricted_mail_address]様
 

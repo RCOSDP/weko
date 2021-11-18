@@ -50,20 +50,23 @@
 {%- endblock javascript %}
 
 {%- block body %}
-<div class="hide" id="cur_index_id">{{index_id}}</div>
-<div class="row content-font">
-  <div class="col-sm-3 col-md-3 col-lg-3">
-    {% include "weko_theme/body_index.html" %}
+  {% autoescape false %}
+  <div id="errors"></div>
+  {% endautoescape %}
+  <div class="hide" id="cur_index_id">{{index_id}}</div>
+  <div class="row content-font">
+    <div class="col-sm-3 col-md-3 col-lg-3">
+      {% include "weko_theme/body_index.html" %}
+    </div>
+    <div class="col-sm-7 col-md-7 col-lg-7">
+      {%- if management_type == "sort" %}
+        {% include "weko_search_ui/admin/item_list_display.html" %}
+      {%- elif management_type == "update" %}
+        {% include "weko_records_ui/admin/bulk_update_display.html" %}
+      {%- elif management_type == "delete" %}
+        {% include "weko_search_ui/admin/bulk_delete_display.html" %}
+      {%- endif %}
+    </div>
   </div>
-  <div class="col-sm-7 col-md-7 col-lg-7">
-    {%- if management_type == "sort" %}
-      {% include "weko_search_ui/admin/item_list_display.html" %}
-    {%- elif management_type == "update" %}
-      {% include "weko_records_ui/admin/bulk_update_display.html" %}
-    {%- elif management_type == "delete" %}
-      {% include "weko_search_ui/admin/bulk_delete_display.html" %}
-    {%- endif %}
-  </div>
-</div>
 {%- endblock body %}
 

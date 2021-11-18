@@ -139,25 +139,25 @@ class WekoIndexer(RecordIndexer):
         :param jrc:
         :param item_id: item id.
         """
-        # delete the item when it is exist
-        # if self.client.exists(id=str(item_id), index=self.es_index,
-        #                       doc_type=self.es_doc_type):
-        #     self.client.delete(id=str(item_id), index=self.es_index,
-        #                        doc_type=self.es_doc_type)
-        full_body = dict(id=str(item_id),
-                         index=self.es_index,
-                         doc_type=self.es_doc_type,
-                         version=revision_id + 1,
-                         version_type=self._version_type,
-                         body=jrc)
+        es_info = dict(id=str(item_id),
+                       index=self.es_index,
+                       doc_type=self.es_doc_type)
+        body = dict(version=revision_id + 1,
+                    version_type=self._version_type,
+                    body=jrc)
 
         # Only pass through pipeline if file exists
         if 'content' in jrc and not skip_files:
-            full_body['pipeline'] = 'item-file-pipeline'
+            body['pipeline'] = 'item-file-pipeline'
+        if self.client.exists(**es_info):
+            del body['version']
+            del body['version_type']
 
-        current_app.logger.debug(full_body)
+        # hfix merge
+        # current_app.logger.debug(full_body)
+        # self.client.index(**full_body)
 
-        self.client.index(**full_body)
+        self.client.index(**{**es_info, **body})
 
     def delete_file_index(self, body, parent_id):
         """Delete file index in Elastic search.
@@ -279,6 +279,19 @@ class WekoIndexer(RecordIndexer):
                            index=self.es_index,
                            doc_type=self.es_doc_type)
 
+    def delete_by_id(self, uuid):
+        """Delete a record by id.
+
+        :param uuid: Record ID.
+        """
+        try:
+            self.get_es_index()
+            self.client.delete(id=str(uuid),
+                               index=self.es_index,
+                               doc_type=self.es_doc_type)
+        except Exception as ex:
+            current_app.logger.error(ex)
+
     def get_count_by_index_id(self, tree_path):
         """Get count by index id.
 
@@ -336,6 +349,17 @@ class WekoIndexer(RecordIndexer):
                     yield res
 
             self.client.clear_scroll(scroll_id=scroll_id)
+
+    def get_metadata_by_item_id(self, item_id):
+        """Get metadata of item by id from ES.
+
+        :param item_id: Item ID (UUID).
+        :return: Metadata.
+        """
+        self.get_es_index()
+        return self.client.get(index=self.es_index,
+                               doc_type=self.es_doc_type,
+                               id=str(item_id))
 
     def update_feedback_mail_list(self, feedback_mail):
         """Update feedback mail info.
@@ -871,8 +895,12 @@ class WekoDeposit(Deposit):
                      'actions': self.get('publish_status')}
             if 'activity_info' in session:
                 del session['activity_info']
-            item_metadata = ItemsMetadata.get_record(
-                pid.object_uuid).dumps()
+            if is_draft:
+                from weko_workflow.utils import convert_record_to_item_metadata
+                item_metadata = convert_record_to_item_metadata(record)
+            else:
+                item_metadata = ItemsMetadata.get_record(
+                    pid.object_uuid).dumps()
             item_metadata.pop('id', None)
             args = [index, item_metadata]
             deposit.update(*args)
@@ -1144,7 +1172,7 @@ class WekoDeposit(Deposit):
                 self.jrc[geo_location_key] = new_data
 
     @classmethod
-    def delete_by_index_tree_id(cls, index_id: str):
+    def delete_by_index_tree_id(cls, index_id: str, ignore_items: list = []):
         """Delete by index tree id."""
         if index_id:
             index_id = str(index_id)
@@ -1152,6 +1180,8 @@ class WekoDeposit(Deposit):
         try:
             for obj_uuid in obj_ids:
                 r = RecordMetadata.query.filter_by(id=obj_uuid).first()
+                if r.json['recid'].split('.')[0] in ignore_items:
+                    continue
                 try:
                     r.json['path'].remove(index_id)
                     flag_modified(r, 'json')
@@ -1236,28 +1266,40 @@ class WekoDeposit(Deposit):
         }
         self.indexer.update_feedback_mail_list(feedback_mail)
 
-    def clean_unuse_file_contents(self, pre_object_versions,
-                                  new_object_versions):
+    def clean_unuse_file_contents(self, item_id, pre_object_versions,
+                                  new_object_versions, is_import=False):
         """Remove file not used after replaced in keep version mode."""
+        from weko_workflow.utils import update_cache_data
         pre_file_ids = [obv.file_id for obv in pre_object_versions]
         new_file_ids = [obv.file_id for obv in new_object_versions]
         diff_list = list(set(pre_file_ids) - set(new_file_ids))
         unuse_file_ids = [data[0] for data in
                           ObjectVersion.num_version_link_to_files(diff_list)
                           if data[1] <= 1]
+        list_unuse_uri = []
         for obv in pre_object_versions:
             if obv.file_id in unuse_file_ids:
                 obv.remove()
                 obv.file.delete()
-                obv.file.storage().delete()
+                if is_import:
+                    list_unuse_uri.append(obv.file.uri)
+                else:
+                    obv.file.storage().delete()
+        if list_unuse_uri:
+            cache_key = current_app \
+                .config['WEKO_SEARCH_UI_IMPORT_UNUSE_FILES_URI'] \
+                .format(item_id)
+            update_cache_data(cache_key, list_unuse_uri, 0)
 
-    def merge_data_to_record_without_version(self, pid, keep_version=False):
+    def merge_data_to_record_without_version(self, pid, keep_version=False,
+                                             is_import=False):
         """Update changes to current record by record from PID."""
         with db.session.begin_nested():
             # update item_metadata
             index = {'index': self.get('path', []),
                      'actions': self.get('publish_status')}
             item_metadata = ItemsMetadata.get_record(pid.object_uuid).dumps()
+            item_id = item_metadata.get('id')
             item_metadata.pop('id', None)
             item_metadata.pop('control_number', None)
 
@@ -1271,8 +1313,8 @@ class WekoDeposit(Deposit):
                 _deposit.files.bucket.id).snapshot(lock=False)
             bucket = Bucket.get(sync_bucket.bucket_id)
             if keep_version:
-                self.clean_unuse_file_contents(
-                    bucket.objects, snapshot.objects)
+                self.clean_unuse_file_contents(item_id, bucket.objects,
+                                               snapshot.objects, is_import)
             snapshot.locked = False
             sync_bucket.bucket = snapshot
             bucket.locked = False

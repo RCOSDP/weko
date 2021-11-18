@@ -198,5 +198,13 @@
     "Err_File_Ext": [
         null,
         "Files other than image files (gif, jpg, jpe, jpeg, png, bmp) cannot be uploaded."
+    ],
+    "Enter_Required_Fields": [
+      null,
+      "Please enter the required fields."
+    ],
+    "Required_Input": [
+      null,
+      "English is required input."
     ]
 }

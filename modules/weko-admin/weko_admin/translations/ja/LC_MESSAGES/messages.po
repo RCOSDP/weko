@@ -1854,6 +1854,14 @@ msgstr "ファセット検索一覧"
 msgid "Please input all required item."
 msgstr "必須項目は全て入力して下さい。"
 
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html
+msgid "Please select one aggregation mapping."
+msgstr "集計マッピングを１つ選択してください。"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html
+msgid "Already exists."
+msgstr "既に存在しています。"
+
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
 msgid "Failed to create due to server error."
 msgstr "サーバーエラーのため、作成に失敗しました。"

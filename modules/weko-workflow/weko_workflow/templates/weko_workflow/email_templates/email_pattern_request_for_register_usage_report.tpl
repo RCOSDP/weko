@@ -1,4 +1,4 @@
-Subject: 利用報告の登録のお願い／Request for register Data Usage Report
+Subject：利用報告の登録のお願い／Request for register Data Usage Report
 
 [restricted_university_institution]
 [restricted_fullname]　様

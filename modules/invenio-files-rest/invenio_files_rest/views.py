@@ -17,7 +17,6 @@ from flask import Blueprint, abort, current_app, jsonify, request, session
 from flask_login import current_user
 from invenio_db import db
 from invenio_records.models import RecordMetadata
-from invenio_records_files.models import RecordsBuckets
 from invenio_rest import ContentNegotiatedMethodView
 from marshmallow import missing
 from six.moves.urllib.parse import parse_qsl
@@ -26,8 +25,8 @@ from webargs.flaskparser import use_kwargs
 
 from .errors import DuplicateTagError, ExhaustedStreamError, FileSizeError, \
     InvalidTagError, MissingQueryParameter, MultipartInvalidChunkSize
-from .models import Bucket, FileInstance, Location, MultipartObject, \
-    ObjectVersion, ObjectVersionTag, Part
+from .models import Bucket, Location, MultipartObject, ObjectVersion, \
+    ObjectVersionTag, Part
 from .proxies import current_files_rest, current_permission_factory
 from .serializer import json_serializer
 from .signals import file_downloaded, file_previewed
@@ -594,6 +593,7 @@ class ObjectResource(ContentNegotiatedMethodView):
         :param version_id: The version ID.
         :returns: A :class:`invenio_files_rest.models.ObjectVersion` instance.
         """
+        from invenio_records_files.models import RecordsBuckets
         from weko_records_ui.permissions import check_file_download_permission
 
         from invenio_files_rest.models import as_bucket_id

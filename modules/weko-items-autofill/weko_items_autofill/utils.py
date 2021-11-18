@@ -26,10 +26,8 @@ from flask import current_app
 from flask_babelex import gettext as _
 from invenio_cache import current_cache
 from invenio_db import db
-from invenio_oaiserver.provider import OAIIDProvider
+from invenio_pidstore.models import PersistentIdentifier
 from lxml import etree
-from weko_items_ui.utils import get_hide_parent_and_sub_keys, \
-    has_permission_edit_item
 from weko_records.api import ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_workflow.models import ActionJournal
@@ -1285,10 +1283,11 @@ def get_wekoid_record_data(recid, item_type_id):
 
     @param search_data: recid
     """
+    from weko_items_ui.utils import get_hide_parent_and_sub_keys, \
+        has_permission_edit_item
     ignore_mapping = current_app.config['WEKO_ITEMS_AUTOFILL_IGNORE_MAPPING']
     # Get item id.
-    identifier = 'oai:invenio:{}'.format('%08d' % int(recid))
-    pid = OAIIDProvider.get(pid_value=identifier).pid
+    pid = PersistentIdentifier.get('recid', recid)
     # Get source mapping info.
     mapping_src = MappingData(pid.object_uuid)
     record_src = mapping_src.record
