@@ -199,6 +199,10 @@ def soft_delete(recid):
         return item_id in ids
 
     try:
+        if current_user:
+            current_user_id = current_user.get_id()
+        else:
+            current_user_id = '1'
         pid = PersistentIdentifier.query.filter_by(
             pid_type='recid', pid_value=recid).first()
         if not pid:
@@ -245,7 +249,7 @@ def soft_delete(recid):
             db.session.commit()
 
         current_app.logger.info(
-            'user({0}) deleted record id({1}).'.format(current_user.id, recid))
+            'user({0}) deleted record id({1}).'.format(current_user_id, recid))
     except Exception as ex:
         db.session.rollback()
         raise ex
