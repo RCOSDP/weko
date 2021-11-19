@@ -529,8 +529,12 @@ class RankingSettingsView(BaseView):
                         current_app.logger.debug(new_item_period)
                         raise
                     settings.new_item_period = new_item_period
-                    settings.statistical_period = \
-                        request.form.get('statistical_period', 365)
+                    new_statistical_period = int(request.form.get('statistical_period',
+                                                           365))
+                    if new_statistical_period < 1 or new_statistical_period > 3650:
+                        current_app.logger.debug(new_statistical_period)
+                        raise
+                    settings.statistical_period = new_statistical_period
                     new_display_rank = int(request.form.get('display_rank',
                                                            10))
                     if new_display_rank < 1 or new_display_rank > 100:
