@@ -40,6 +40,8 @@ from weko_gridlayout.utils import get_widget_design_page_with_main, \
     main_design_has_main_widget
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index, IndexStyle
+from weko_index_tree.utils import get_index_link_list
+from weko_items_ui.utils import get_ranking
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_search_ui.api import SearchSetting, get_search_detail_keyword
 from weko_search_ui.utils import check_permission, get_journal_info
@@ -63,19 +65,7 @@ def get_weko_contents(getargs):
     height = style.height
     index_link_enabled = style.index_link_enabled
 
-    index_link_list = []
-    for index in Index.query.all():
-        if index.index_link_enabled and index.public_state:
-            if hasattr(current_i18n, 'language'):
-                if current_i18n.language == 'ja' and index.index_link_name:
-                    index_link_list.append((index.id, index.index_link_name))
-                else:
-                    index_link_list.append(
-                        (index.id, index.index_link_name_english))
-            else:
-                index_link_list.append(
-                    (index.id, index.index_link_name_english))
-
+    index_link_list = get_index_link_list()
     detail_condition = get_search_detail_keyword('')
     check_site_license_permission()
 
@@ -289,7 +279,7 @@ class MainScreenInitDisplaySetting:
                 "search_hidden_params": {
                     "search_type": current_app.config['WEKO_SEARCH_TYPE_DICT'][
                         'INDEX'],
-                    "q":init_disp_index,
+                    "q": init_disp_index,
                     "size": display_number,
                     "timestamp": time.time(),
                 },

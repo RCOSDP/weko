@@ -191,11 +191,7 @@ def search():
                     if index_display_format == '2':
                         disply_setting = dict(size=100, timestamp=ts)
 
-        if hasattr(current_i18n, 'language'):
-            index_link_list = get_index_link_list(current_i18n.language)
-        else:
-            index_link_list = get_index_link_list()
-
+        index_link_list = get_index_link_list()
         # Get Facet search setting.
         display_facet_search = get_search_setting().get("display_control", {})\
             .get('display_facet_search', {}).get('status', False)

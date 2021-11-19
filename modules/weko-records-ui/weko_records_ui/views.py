@@ -888,11 +888,13 @@ def escape_newline(s):
     :return: result
     """
     br_char = '<br/>'
-    s=s.replace('\r\n', br_char).replace('\r', br_char).replace('\n', br_char)
-    s='<br />'.join(s.splitlines())
+    s = s.replace('\r\n', br_char).replace(
+        '\r', br_char).replace('\n', br_char)
+    s = '<br />'.join(s.splitlines())
     # temp fix for JDCat
-    s=s.replace('\\n',br_char)
+    s = s.replace('\\n', br_char)
     return s
+
 
 @blueprint.app_template_filter('preview_able')
 def preview_able(file_json):
