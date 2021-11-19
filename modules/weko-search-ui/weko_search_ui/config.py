@@ -429,6 +429,9 @@ WEKO_SEARCH_TYPE_KEYWORD = 'keyword'
 
 WEKO_SEARCH_TYPE_INDEX = 'index'
 
+WEKO_SEARCH_MAX_RESULT = 10000
+"""Maximum total number of records retrieved from a ES query."""
+
 WEKO_SEARCH_MAX_FEEDBACK_MAIL = 10000
 """Maximum number of feedback mail could be send."""
 
