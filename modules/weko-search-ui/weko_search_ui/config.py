@@ -97,7 +97,7 @@ RECORDS_REST_ENDPOINTS['recid']['search_serializers'] = {
 
 RECORDS_REST_ENDPOINTS['recid']['search_index'] = '{}-weko'.format(
     index_prefix)
-RECORDS_REST_ENDPOINTS['recid']['search_type'] = 'item-v1.0.0'
+RECORDS_REST_ENDPOINTS['recid']['search_type'] = 'item-v1.0.1'
 
 # Opensearch endpoint
 RECORDS_REST_ENDPOINTS['opensearch'] = copy.deepcopy(
@@ -119,10 +119,10 @@ RECORDS_REST_ENDPOINTS['recid']['record_serializers'] = {
 
 # RECORDS_REST_ENDPOINTS['recid']['read_permission_factory_imp'] = allow_all
 
-INDEXER_DEFAULT_INDEX = '{}-weko-item-v1.0.0'.format(
+INDEXER_DEFAULT_INDEX = '{}-weko-item-v1.0.1'.format(
     index_prefix)  # Use direct index
-INDEXER_DEFAULT_DOCTYPE = 'item-v1.0.0'
-INDEXER_DEFAULT_DOC_TYPE = 'item-v1.0.0'
+INDEXER_DEFAULT_DOCTYPE = 'item-v1.0.1'
+INDEXER_DEFAULT_DOC_TYPE = 'item-v1.0.1'
 INDEXER_FILE_DOC_TYPE = 'content'
 
 SEARCH_UI_SEARCH_INDEX = '{}-weko'.format(index_prefix)
@@ -214,7 +214,7 @@ WEKO_SEARCH_REST_ENDPOINTS = dict(
         pid_fetcher='recid',
         search_class=RecordsSearch,
         search_index=SEARCH_UI_SEARCH_INDEX,
-        search_type='item-v1.0.0',
+        search_type='item-v1.0.1',
         search_factory_imp='weko_search_ui.query.weko_search_factory',
         # record_class='',
         record_serializers={
@@ -378,7 +378,27 @@ WEKO_SEARCH_KEYWORDS_DICT = {
         "text7": "text7",
         "text8": "text8",
         "text9": "text9",
-        "text10": "text10"
+        "text10": "text10",
+        "text11": "text11",
+        "text12": "text12",
+        "text13": "text13",
+        "text14": "text14",
+        "text15": "text15",
+        "text16": "text16",
+        "text17": "text17",
+        "text18": "text18",
+        "text19": "text19",
+        "text20": "text20",
+        "text21": "text21",
+        "text22": "text22",
+        "text23": "text23",
+        "text24": "text24",
+        "text25": "text25",
+        "text26": "text26",
+        "text27": "text27",
+        "text28": "text28",
+        "text29": "text29",
+        "text30": "text30"
     },
 
     "range": {

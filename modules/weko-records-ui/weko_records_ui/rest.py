@@ -128,7 +128,6 @@ class WekoRecordsCitesResource(ContentNegotiatedMethodView):
         try:
             pid = PersistentIdentifier.get('depid', pid_value)
             record = WekoRecord.get_record(pid.object_uuid)
-
             result = citeproc_v1.serialize(pid, record, style=style,
                                            locale=locale)
             result = escape_str(result)

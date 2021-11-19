@@ -183,7 +183,7 @@ def search():
                     info=send_info
                 )
             if search_type == WEKO_SEARCH_TYPE_DICT['INDEX']:
-                cur_index_id = request.args.get('q', '0')
+                cur_index_id = request.args.get('q', '')
                 journal_info = get_journal_info(cur_index_id)
                 index_info = Indexes.get_index(cur_index_id)
                 if index_info:

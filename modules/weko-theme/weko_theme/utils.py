@@ -289,7 +289,7 @@ class MainScreenInitDisplaySetting:
                 "search_hidden_params": {
                     "search_type": current_app.config['WEKO_SEARCH_TYPE_DICT'][
                         'INDEX'],
-                    "q": init_disp_index,
+                    "q":init_disp_index,
                     "size": display_number,
                     "timestamp": time.time(),
                 },

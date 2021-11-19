@@ -588,11 +588,11 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
 
         {'id': 'version', 'contents': '', 'contents_value': {'en': 'Author Version Flag', 'ja': '著者版フラグ'}, 'useable_status': True, 'mapping': [],
          'options':[
-            {'id': 'accepted', 'contents': 'accepted'},
-            {'id': 'published', 'contents': 'published'},
-            {'id': 'draft', 'contents': 'draft'},
-            {'id': 'submitted', 'contents': 'submitted'},
-            {'id': 'updated', 'contents': 'updated'}
+             {'id': 'accepted', 'contents': 'accepted'},
+             {'id': 'published', 'contents': 'published'},
+             {'id': 'draft', 'contents': 'draft'},
+             {'id': 'submitted', 'contents': 'submitted'},
+             {'id': 'updated', 'contents': 'updated'}
         ], 'default_display': True, 'inputType': 'selectbox', 'inputVal': '', 'mappingFlg': False, 'mappingName': ''},
         {'id': 'dissno',
          'contents': '',
@@ -805,7 +805,7 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'contents_value': {'en': 'integer_EN_1', 'ja': 'integer_JA_1'},
          'useable_status': True,
          'mapping': [],
-         'default_display':True,
+         'default_display':False,
          'inputType':'range',
          'input_Type':'range',
          'inputVal_from':'',
@@ -958,7 +958,7 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'contents_value': {'en': 'date_EN_1', 'ja': 'date_JA_1'},
          'useable_status': True,
          'mapping': [],
-         'default_display':True,
+         'default_display':False,
          'inputType':'dateRange',
          'input_Type':'range',
          'inputVal_from':'',
@@ -1051,7 +1051,7 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
          'contents_value': {'en': 'geoshape_EN_1', 'ja': 'geoshape_JA_1'},
          'useable_status': True,
          'mapping': [],
-         'default_display':True,
+         'default_display':False,
          'inputType':'geo_distance',
          'input_Type':'geo_shape',
          'inputVal_lat':'',
