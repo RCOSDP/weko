@@ -873,20 +873,14 @@ def add_resource_type(schema, mapping, res, metadata):
     parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-def add_creator_dc(schema, res, creator_name, lang=''):
+def add_creator_dc(schema, mapping, res, metadata):
     """Add creator."""
-    creator_field = map_field(schema)['Creator']
-    subitems = map_field(schema['properties'][creator_field]['items'])
-    creator_name_array_name = subitems['Creator Name']
-    creator_name_array_subitems = \
-        map_field(schema['properties'][creator_field]['items']
-                  ['properties'][creator_name_array_name]['items'])
-    item = {subitems['Creator Name']: {
-        creator_name_array_subitems['Creator Name']: creator_name,
-        creator_name_array_subitems['Language']: lang}}
-    if creator_field not in res:
-        res[creator_field] = []
-    res[creator_field].append(item)
+    patterns = [
+        ('creator.@value', TEXT),
+        ('creaotr.@attributes.xml:lang', LANG),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
 def add_data_by_key(schema, res, resource_list, key):
@@ -918,205 +912,151 @@ def add_data_by_key(schema, res, resource_list, key):
 
 
 def add_source_dc(schema, res, source_list):
-    """Add description."""
-    add_data_by_key(schema, res, source_list, 'Description')
+    """Add source."""
+    patterns = [
+        ('source.@value', TEXT),
+        ('source.@attributes.xml:lang', LANG),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
 def add_coverage_dc(schema, res, coverage_list):
-    """Add temporal."""
-    add_data_by_key(schema, res, coverage_list, 'Temporal')
+    """Add coverage."""
+    patterns = [
+        ('coverage.@value', TEXT),
+        ('coverage.@attributes.xml:lang', LANG),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-def add_format_dc(schema, res, file_list):
+def add_format_dc(schema, mapping, res, metadata):
     """Add file."""
-    if not isinstance(file_list, list):
-        file_list = [file_list]
-    root_key = map_field(schema).get('File')
-    if not res.get(root_key):
-        res[root_key] = []
-    format_key = map_field(schema['properties'][root_key]['items'])['Format']
-    for it in file_list:
-        item = {}
-        if isinstance(it, str):
-            item[format_key] = it
-        elif isinstance(it, OrderedDict):
-            item[format_key] = it.get(TEXT)
-        res[root_key].append(item)
+    patterns = [
+        ('format.@value', TEXT),
+        ('format.@attributes.xml:lang', LANG),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-def add_contributor_dc(schema, res, contributor_name, lang=''):
+def add_contributor_dc(schema, mapping, res, metadata):
     """Add contributor."""
-    contributor_field = map_field(schema)['Contributor']
-    subitems = map_field(schema['properties'][contributor_field]['items'])
-    contributor_name_array_name = subitems['Contributor Name']
-    contributor_name_array_subitems = \
-        map_field(schema['properties'][contributor_field]['items']
-                  ['properties'][contributor_name_array_name]['items'])
-    item = {subitems['Affiliation']: [],
-            subitems['Contributor Alternative']: [],
-            subitems['Contributor Name Identifier']: [],
-            subitems['Family Name']: [],
-            subitems['Given Name']: [],
-            subitems['Contributor Name']: {
-                contributor_name_array_subitems['Contributor Name']:
-                    contributor_name,
-                contributor_name_array_subitems['Language']: lang}}
-    if contributor_field not in res:
-        res[contributor_field] = []
-    res[contributor_field].append(item)
+    patterns = [
+        ('contributor.@value', TEXT),
+        ('contributor.@attributes.xml:lang', LANG),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-def add_relation_dc(schema, res, relation, relation_type=''):
+def add_relation_dc(schema, mapping, res, metadata):
     """Add relation."""
-    relation_field = map_field(schema)['Relation']
-    subitems = map_field(schema['properties'][relation_field]['items'])
-    related_identifier_array_name = subitems['Related Identifier']
-    related_identifier_array_subitems = \
-        map_field(schema['properties'][relation_field]['items']
-                  ['properties'][related_identifier_array_name]['items'])
-    related_title_array_name = subitems['Related Title']
-    related_title_array_subitems = \
-        map_field(schema['properties'][relation_field]['items']
-                  ['properties'][related_title_array_name]['items'])
-    item = {subitems['Relation']: relation,
-            subitems['Relation Type']: relation_type,
-            subitems['Related Identifier']: {
-                related_identifier_array_subitems['Related Identifier']: '',
-                related_identifier_array_subitems['Related Identifier Type']:
-                    ''},
-            subitems['Related Title']: {
-                related_title_array_subitems['Related Title']: '',
-                related_title_array_subitems['Language']: ''}}
-    if relation_field not in res:
-        res[relation_field] = []
-    res[relation_field].append(item)
+    patterns = [
+        ('relation.@value', TEXT),
+        ('relation.@attributes.xml:lang', LANG),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
 def add_rights_dc(schema, res, rights, lang='', rights_resource=''):
     """Add rights."""
-    rights_field = map_field(schema)['Rights']
-    subitems = map_field(schema['properties'][rights_field]['items'])
-    rights_array_name = subitems['Rights']
-    rights_array_subitems = \
-        map_field(schema['properties'][rights_field]['items']
-                  ['properties'][rights_array_name]['items'])
-    item = {subitems['Rights Resource']: rights_resource,
-            subitems['Rights']: {
-                rights_array_subitems['Rights']: rights,
-                rights_array_subitems['Language']: lang}}
-    if rights_field not in res:
-        res[rights_field] = []
-    res[rights_field].append(item)
+    patterns = [
+        ('rights.@value', TEXT),
+        ('rights.@attributes.xml:lang', LANG),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-def add_identifier_dc(schema, res, self_identifier, identifier):
+def add_identifier_dc(schema, mapping, res, metadata):
     """Add identifier."""
-    self_identifier.clear()
-    if identifier.startswith(OAIHARVESTER_DOI_PREFIX):
-        self_identifier.append({'type': 'DOI', 'identifier': identifier})
-    elif identifier.startswith(OAIHARVESTER_HDL_PREFIX):
-        self_identifier.append({'type': 'HDL', 'identifier': identifier})
-    else:
-        res['system_identifier_doi'] = []
-        res['system_identifier_doi'].append(
-            {'subitem_systemidt_identifier': identifier})
+    patterns = [
+        ('identifier.@value', TEXT),
+        ('identifier.@attributes.xml:lang', LANG),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-def add_description_dc(schema, res, description, description_type='', lang=''):
+def add_description_dc(schema, mapping, res, metadata):
     """Add description."""
-    description_field = map_field(schema)['Description']
-    subitems = map_field(schema['properties'][description_field]['items'])
-    description_item_name = subitems['Description']
-    description_type_item_name = subitems['Description Type']
-    language_item_name = subitems['Language']
-    if description_field not in res:
-        res[description_field] = []
-    res[description_field].append({
-        description_item_name: description,
-        description_type_item_name: description_type,
-        language_item_name: lang})
+    patterns = [
+        ('description.@value', TEXT),
+        ('description.@attributes.xml:lang', LANG),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-def add_subject_dc(schema, res, subject, subject_uri='',
-                   subject_scheme='', lang=''):
+def add_subject_dc(schema, mapping, res, metadata):
     """Add subject."""
-    subject_field = map_field(schema)['Subject']
-    subitems = map_field(schema['properties'][subject_field]['items'])
-    subject_item_name = subitems['Subject']
-    subject_uri_item_name = subitems['Subject URI']
-    subject_scheme_item_name = subitems['Subject Scheme']
-    language_item_name = subitems['Language']
-    if subject_field not in res:
-        res[subject_field] = []
-    res[subject_field].append({
-        subject_item_name: subject,
-        subject_uri_item_name: subject_uri,
-        subject_scheme_item_name: subject_scheme,
-        language_item_name: lang})
+    patterns = [
+        ('subject.@value', TEXT),
+        ('subject.@attributes.xml:lang', LANG),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-def add_title_dc(schema, res, title, lang=''):
+def add_title_dc(schema, mapping, res, metadata):
     """Add title."""
     #    if 'title_en' not in res:
     #        res['title_en'] = title
-    if 'title' not in res:
-        res['title'] = title
-    title_field = map_field(schema)['Title']
-    subitems = map_field(schema['properties'][title_field]['items'])
-    title_item_name = subitems['Title']
-    language_item_name = subitems['Language']
-    if title_field not in res:
-        res[title_field] = []
-    res[title_field].append({title_item_name: title, language_item_name: lang})
+    patterns = [
+        ('title.@value', TEXT),
+        ('title.@attributes.xml:lang', LANG)
+    ]
+
+    item_key, ret = parsing_metadata(mapping, schema, patterns, metadata, res)
+
+    if item_key and ret:
+        if isinstance(metadata[0], str):
+            res['title'] = metadata[0]
+        elif isinstance(metadata[0], OrderedDict):
+            res['title'] = metadata[0].get(TEXT)
 
 
-def add_language_dc(schema, res, lang):
+def add_language_dc(schema, mapping, res, metadata):
     """Add language."""
-    if 'lang' not in res:
-        res['lang'] = lang
-    language_field = map_field(schema)['Language']
-    subitems = map_field(schema['properties'][language_field]['items'])
-    language_item_name = subitems['Language']
-    if language_field not in res:
-        res[language_field] = []
-    res[language_field].append({language_item_name: lang})
+    patterns = [
+        ('language.@value', TEXT),
+        ('language.@attributes.xml:lang', LANG),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-def add_date_dc(schema, res, date, date_type=''):
+def add_date_dc(schema, mapping, res, metadata):
     """Add date."""
-    date_field = map_field(schema)['Date']
-    subitems = map_field(schema['properties'][date_field]['items'])
-    date_item_name = subitems['Date']
-    date_type_item_name = subitems['Date Type']
-    if date_field not in res:
-        res[date_field] = []
-    res[date_field].append(
-        {date_item_name: date, date_type_item_name: date_type})
+    patterns = [
+        ('date.@value', TEXT),
+        ('date.@attributes.xml:lang', LANG),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-def add_publisher_dc(schema, res, publisher, lang=''):
+def add_publisher_dc(schema, mapping, res, metadata):
     """Add publisher."""
-    publisher_field = map_field(schema)['Publisher']
-    subitems = map_field(schema['properties'][publisher_field]['items'])
-    publisher_item_name = subitems['Publisher']
-    language_item_name = subitems['Language']
-    if publisher_field not in res:
-        res[publisher_field] = []
-    res[publisher_field].append(
-        {publisher_item_name: publisher, language_item_name: lang})
+    patterns = [
+        ('publisher.@value', TEXT),
+        ('publisher.@attributes.xml:lang', LANG),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-def add_resource_type_dc(schema, res, dc_type):
-    """Add publisher."""
-    resource_type_field = map_field(schema)['Resource Type']
-    subitems = map_field(schema['properties'][resource_type_field])
-    type_item = subitems['Type']
-    resource_item = subitems['Resource']
-    if resource_type_field not in res:
-        res[resource_type_field] = []
-    res[resource_type_field].append(
-        {type_item: dc_type, resource_item: RESOURCE_TYPE_URI.get(dc_type,
-                                                                  '')})
+def add_resource_type_dc(schema, mapping, res, metadata):
+    """Add resoruce_type."""
+    patterns = [
+        ('type.@value', TEXT),
+        ('type.@attributes.xml:lang', LANG),
+    ]
+
+    parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
 def to_dict(input_ordered_dict):
@@ -1349,39 +1289,40 @@ class DCMapper(BaseMapper):
         if self.is_deleted():
             return {}
         self.map_itemtype('oai_dc:dc')
+        self.identifiers = []
         res = {'$schema': self.itemtype.id,
                'pubdate': str(self.datestamp())}
-        dc_tags = {
-            'title': [], 'creator': [], 'contributor': [], 'rights': [],
-            'subject': [], 'description': [], 'publisher': [], 'date': [],
-            'type': [], 'format': [], 'identifier': [], 'source': [],
-            'language': [], 'relation': [], 'coverage': []}
+        item_type_mapping = Mapping.get_record(self.itemtype.id)
+        item_map = get_full_mapping(item_type_mapping, "oai_dc_mapping")
+
+        args = [self.itemtype.schema.get('properties'), item_map, res]
+
         add_funcs = {
-            'creator': partial(add_creator_dc, self.itemtype.schema, res),
-            'contributor': partial(add_contributor_dc, self.itemtype.schema,
-                                   res),
-            'title': partial(add_title_dc, self.itemtype.schema, res),
-            'subject': partial(add_subject_dc, self.itemtype.schema, res),
-            'description': partial(add_description_dc, self.itemtype.schema,
-                                   res),
-            'publisher': partial(add_publisher_dc, self.itemtype.schema, res),
-            'type': partial(add_resource_type_dc, self.itemtype.schema, res),
-            'date': partial(add_date_dc, self.itemtype.schema, res),
-            'identifier': partial(add_identifier_dc, self.itemtype.schema, res,
-                                  self.identifiers),
-            'language': partial(add_language_dc, self.itemtype.schema, res),
-            'relation': partial(add_relation_dc, self.itemtype.schema, res),
-            'rights': partial(add_rights_dc, self.itemtype.schema, res),
-            'coverage': partial(add_coverage_dc, self.itemtype.schema, res),
-            'source': partial(add_description_dc, self.itemtype.schema, res),
-            'format': partial(add_format_dc, self.itemtype.schema, res)
+            'dc:creator': partial(add_creator_dc, *args),
+            'dc:contributor': partial(add_contributor_dc, *args),
+            'dc:title': partial(add_title_dc, *args),
+            'dc:subject': partial(add_subject_dc, *args),
+            'dc:description': partial(add_description_dc, *args),
+            'dc:publisher': partial(add_publisher_dc, *args),
+            'dc:type': partial(add_resource_type_dc, *args),
+            'dc:date': partial(add_date_dc, *args),
+            'dc:identifier': partial(add_identifier_dc, *args),
+            'dc:language': partial(add_language_dc, *args),
+            'dc:relation': partial(add_relation_dc, *args),
+            'dc:rights': partial(add_rights_dc, *args),
+            'dc:coverage': partial(add_coverage_dc, *args),
+            'dc:source': partial(add_source_dc, *args),
+            'dc:format': partial(add_format_dc, *args)
         }
-        for tag in dc_tags:
-            if tag in add_funcs:
-                m = '<dc:{0}.*>(.+?)</dc:{0}>'.format(tag)
-                dc_tags[tag] = re.findall(m, self.xml)
-                for value in dc_tags[tag]:
-                    add_funcs[tag](value)
+
+        tags = self.json['record']['metadata']['oai_dc:dc']
+        for t in tags:
+            if t in add_funcs:
+                if not isinstance(tags[t], list):
+                    metadata = [tags[t]]
+                else:
+                    metadata = tags[t]
+                add_funcs[t](metadata)
         return res
 
 
@@ -1633,7 +1574,6 @@ class DDIMapper(BaseMapper):
                             sub_keys_clone = copy.deepcopy(sub_keys)
                             if mapping_key.split(".@")[1] == "value":
                                 if val_obj.get(TEXT):
-                                    # remove newline code and html tags
                                     value = val_obj[TEXT].replace(
                                         '\n', '$NEWLINE')
                                     soup = BeautifulSoup(value, "html.parser")
