@@ -73,7 +73,7 @@ def delete_exported_task(uri, cache_key):
 
 def is_import_running():
     """Check import is running."""
-    if not inspect().ping():
+    if not check_celery_is_run():
         return 'celery_not_run'
 
     active = inspect().active()
@@ -87,3 +87,11 @@ def is_import_running():
         for task in reserved[worker]:
             if task['name'] == 'weko_search_ui.tasks.import_item':
                 return 'is_import_running'
+
+
+def check_celery_is_run():
+    """Check celery is running, or not."""
+    if not inspect().ping():
+        return False
+    else:
+        return True
