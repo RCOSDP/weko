@@ -1720,15 +1720,10 @@ class WekoRecord(Record):
         return cls.get_record(id_=pid.object_uuid)
 
     @classmethod
-    def get_record_with_hps(cls, uuid):
-        """Get record with hps."""
+    def get_record_by_uuid(cls, uuid):
+        """Get record by uuid."""
         record = cls.get_record(id_=uuid)
-        indexes = record.get('path')
-        harvest_public_state = True
-        paths = [Indexes.get_full_path(_id) for _id in indexes]
-        if paths:
-            harvest_public_state = Indexes.get_harvest_public_state(paths)
-        return harvest_public_state, record
+        return record
 
     @classmethod
     def get_record_cvs(cls, uuid):
