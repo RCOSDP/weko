@@ -1074,7 +1074,7 @@ class WekoDeposit(Deposit):
 
         # Save Index Path on ES
         jrc.update(dict(path=index_lst))
-        #current_app.logger.debug(jrc)
+        # current_app.logger.debug(jrc)
         # add at 20181121 start
         sub_sort = {}
         for pth in index_lst:
@@ -2378,7 +2378,7 @@ class _FormatSysBibliographicInformation:
             return value_latn, 'ja-Latn'
 
         if value_en and (current_lang != 'ja' or
-                not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)):
+                         not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)):
             return value_en, 'en'
 
         if len(title_data_lang) > 0:
