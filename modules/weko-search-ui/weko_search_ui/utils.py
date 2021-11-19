@@ -96,8 +96,7 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_SEARCH_UI_BULK_EXPORT_URI, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
-err_msg_suffix = 'Suffix of {} can only be used with half-width' \
-    + ' alphanumeric characters and half-width symbols "_-.; () /".'
+err_msg_suffix = 'Suffix of {} is too long.'
 
 
 class DefaultOrderedDict(OrderedDict):
@@ -1615,8 +1614,8 @@ def handle_check_cnri(list_record):
                 else:
                     split_cnri = cnri.split('/')
                     if len(split_cnri) > 1:
-                        prefix = '/'.join(split_cnri[0:-1])
-                        suffix = split_cnri[-1]
+                        prefix = split_cnri[0]
+                        suffix = '/'.join(split_cnri[1:])
                     else:
                         prefix = cnri
                         suffix = ''
@@ -1789,8 +1788,8 @@ def handle_check_doi(list_record):
                     else:
                         split_doi = doi.split('/')
                         if len(split_doi) > 1:
-                            prefix = '/'.join(split_doi[0:-1])
-                            suffix = split_doi[-1]
+                            prefix = split_doi[0]
+                            suffix = '/'.join(split_doi[1:])
                         else:
                             prefix = doi
                             suffix = ''
@@ -1860,6 +1859,7 @@ def register_item_handle(item):
     pid_hdl = record.pid_cnri
     cnri = item.get('cnri')
     status = item.get('status')
+    uri = item.get('uri')
     current_app.logger.debug(
         "item_id:{0} pid:{1} pid_hdl:{2} cnri:{3} status:{4}".format(item_id, pid, pid_hdl, cnri, status))
 
@@ -1869,13 +1869,13 @@ def register_item_handle(item):
             cnri = cnri[:-1] if cnri[-1] == '/' else cnri
             cnri += '/' + suffix
         if item.get('status') == 'new':
-            register_hdl_by_handle(cnri, pid.object_uuid)
+            register_hdl_by_handle(cnri, pid.object_uuid, uri)
         else:
             if pid_hdl and not pid_hdl.pid_value.endswith(cnri):
                 pid_hdl.delete()
-                register_hdl_by_handle(cnri, pid.object_uuid)
+                register_hdl_by_handle(cnri, pid.object_uuid, uri)
             elif not pid_hdl:
-                register_hdl_by_handle(cnri, pid.object_uuid)
+                register_hdl_by_handle(cnri, pid.object_uuid, uri)
     else:
         if item.get('status') == 'new':
             register_hdl_by_item_id(item_id, pid.object_uuid, get_url_root())
