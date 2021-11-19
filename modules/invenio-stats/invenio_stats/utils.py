@@ -1097,7 +1097,9 @@ class QueryItemRegReportHelper(object):
                             # total results
                             total_results += 1
                     if result:
-                        result = sorted(result, key=lambda k: k['col3'], reverse=True)
+                        result = cls.merge_items_results(result)
+                        result = sorted(result, key=lambda k: k['col3'],
+                                        reverse=True)
                 elif unit == 'Host':
                     start_date_string = ''
                     end_date_string = ''
@@ -1149,6 +1151,9 @@ class QueryItemRegReportHelper(object):
                                 else:
                                     index = index_list[user['key']]
                                     result[index]['count'] += user['count']
+                    if result:
+                        result = sorted(result, key=lambda k: k['count'],
+                                        reverse=True)
                 else:
                     result = []
             except es_exceptions.NotFoundError as e:
@@ -1164,6 +1169,25 @@ class QueryItemRegReportHelper(object):
             'data': result
         }
         return response
+
+    @classmethod
+    def merge_items_results(cls, results):
+        """
+        Merge items results after query.
+
+        @param results:
+        """
+        new_result = []
+        for i in results:
+            index = -1
+            for j in range(len(new_result)):
+                if int(float(i['col1'])) == int(float(new_result[j]['col1'])):
+                    index = j
+            if index > -1:
+                new_result[index]['col3'] += i['col3']
+            else:
+                new_result.append(i)
+        return new_result if new_result else []
 
 
 class StatsCliUtil:

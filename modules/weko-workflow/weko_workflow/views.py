@@ -1136,9 +1136,11 @@ def next_action(activity_id='0', action_id=0):
             # Call signal to push item data to ES.
             try:
                 if '.' not in current_pid.pid_value and has_request_context():
+                    user_id = activity_detail.activity_login_user if \
+                        activity and activity_detail.activity_login_user else -1
                     item_created.send(
                         current_app._get_current_object(),
-                        user_id=current_user.get_id() if current_user else -1,
+                        user_id=user_id,
                         item_id=current_pid,
                         item_title=activity_detail.title
                     )
