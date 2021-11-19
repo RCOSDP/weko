@@ -52,7 +52,7 @@ def link_success_handler(retval):
 def link_error_handler(request, exc, traceback):
     """Register task stats into invenio-stats for failure."""
     args = make_tuple(request.argsrepr)  # Cannot access original args
-    start_time = datetime.strptime(args[1], '%Y-%m-%dT%H:%M:%S')
+    start_time = datetime.strptime(args[0], '%Y-%m-%dT%H:%M:%S')
     end_time = datetime.now()
     sitemap_finished.send(current_app._get_current_object(),
                           exec_data={
@@ -65,7 +65,7 @@ def link_error_handler(request, exc, traceback):
         'repository_name': 'weko',  # TODO: Grab from config
         'task_id': request.id
     },
-        user_data=args[2])
+        user_data=args[1])
 
 
 @shared_task(ignore_results=True)
