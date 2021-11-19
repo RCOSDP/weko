@@ -262,7 +262,7 @@ class Indexes(object):
                     db.session.commit()
                     p_lst = [o.id for o in obj_list]
                     cls.delete_set_info('move', index_id, p_lst)
-                    return dct
+                    return p_lst
             else:
                 with db.session.no_autoflush:
                     recursive_t = cls.recs_query(pid=index_id)
@@ -296,7 +296,7 @@ class Indexes(object):
                                 delete(synchronize_session='fetch')
                     db.session.commit()
                     cls.delete_set_info('delete', index_id, p_lst)
-                    return dct
+                    return p_lst
         except Exception as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
@@ -318,9 +318,10 @@ class Indexes(object):
             result = cls.delete(index_id, True)
         else:
             result = cls.delete(index_id)
-            if result is not None:
+            if result:
                 # delete indexes all
-                WekoDeposit.delete_by_index_tree_id(index_id)
+                for i in result:
+                    WekoDeposit.delete_by_index_tree_id(i)
         return result
 
     @classmethod

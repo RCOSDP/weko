@@ -943,7 +943,7 @@ def perform_delete_index(index_id, record_class, action: str):
             if action in ('move', 'all'):
                 result = record_class. \
                     delete_by_action(action, index_id)
-                if result is None:
+                if not result:
                     raise IndexBaseRESTError(
                         description='Could not delete data.')
             msg = 'Index deleted successfully.'
