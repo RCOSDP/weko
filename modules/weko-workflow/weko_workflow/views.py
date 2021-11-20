@@ -834,6 +834,8 @@ def next_action(activity_id='0', action_id=0):
     action = Action().get_action_detail(action_id)
     action_endpoint = action.action_endpoint
 
+    current_app.logger.debug('action_endpoint: {0}'.format(action_endpoint))
+
     if action_endpoint == 'begin_action':
         return jsonify(code=0, msg=_('success'))
 
@@ -958,6 +960,8 @@ def next_action(activity_id='0', action_id=0):
             if deposit and pid_without_ver and not recid:
                 record_without_version = pid_without_ver.object_uuid
 
+            current_app.logger.debug(
+                'last_idt_setting: {0}'.format(last_idt_setting))
             saving_doi_pidstore(
                 item_id,
                 record_without_version,

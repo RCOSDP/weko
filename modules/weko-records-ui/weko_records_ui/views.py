@@ -592,10 +592,12 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         request.args.get('community') or current_app.config[
             'WEKO_THEME_DEFAULT_COMMUNITY'])
 
-    if current_lang:
-        index_link_list = get_index_link_list(current_lang)
-    else:
-        index_link_list = get_index_link_list()
+    # if current_lang:
+    #     index_link_list = get_index_link_list(current_lang)
+    # else:
+    #     index_link_list = get_index_link_list()
+
+    index_link_list = get_index_link_list()
 
     files_thumbnail = []
     if record.files:

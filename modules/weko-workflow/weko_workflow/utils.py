@@ -142,6 +142,15 @@ def saving_doi_pidstore(item_id,
     :param item_id: object uuid
     :param record_without_version: object uuid
     """
+    current_app.logger.debug('item_id: {0}'.format(item_id))
+    current_app.logger.debug(
+        'record_without_version: {0}'.format(record_without_version))
+    current_app.logger.debug('data: {0}'.format(data))
+    current_app.logger.debug('doi_select: {0}'.format(doi_select))
+    current_app.logger.debug(
+        'is_feature_import: {0}'.format(is_feature_import))
+    current_app.logger.debug('temporal_saving: {0}'.format(temporal_saving))
+
     flag_del_pidstore = False
     identifier_val = ''
     doi_register_val = ''
@@ -280,7 +289,8 @@ def register_hdl_by_handle(hdl, item_uuid, item_uri):
         "handle:{0} item_uuid:{1}".format(hdl, item_uuid))
 
     weko_handle = Handle()
-    handle = weko_handle.register_handle(location=item_uri, hdl=hdl, overwrite=True)
+    handle = weko_handle.register_handle(
+        location=item_uri, hdl=hdl, overwrite=True)
 
     if handle:
         handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
@@ -3751,6 +3761,14 @@ def prepare_doi_link_workflow(item_id, doi_input):
     data = request.get_json() or {}
     community_id = data['community'] if data.get('community') else 'Root Index'
     identifier_setting = get_identifier_setting(community_id)
+    ret = {}
+
+    current_app.logger.debug('item_id: {0}'.format(item_id))
+    current_app.logger.debug('doi_input: {0}'.format(doi_input))
+    current_app.logger.debug('data: {0}'.format(data))
+    current_app.logger.debug('community_id: {0}'.format(community_id))
+    current_app.logger.debug(
+        'identifier_setting: {0}'.format(identifier_setting))
 
     # valid date pidstore_identifier data
     if identifier_setting:
@@ -3764,9 +3782,13 @@ def prepare_doi_link_workflow(item_id, doi_input):
         if not identifier_setting.ndl_jalc_doi:
             identifier_setting.ndl_jalc_doi = text_empty
         # Semi-automatic suffix
-        suffix_method = IDENTIFIER_GRANT_SUFFIX_METHOD
+        suffix_method = current_app.config.get(
+            'IDENTIFIER_GRANT_SUFFIX_METHOD', IDENTIFIER_GRANT_SUFFIX_METHOD)
         if not identifier_setting.suffix:
             identifier_setting.suffix = ''
+
+        current_app.logger.debug(
+            'suffix_method: {0}'.format(suffix_method))
 
         if suffix_method == 0:
             url_format = '{}/{}/{}'
@@ -3827,17 +3849,15 @@ def prepare_doi_link_workflow(item_id, doi_input):
                 IDENTIFIER_GRANT_LIST[4][2],
                 identifier_setting.ndl_jalc_doi,
                 doi_input.get('action_identifier_jalc_doi'))
-        else:
-            return {}
 
-        return {
+        ret = {
             'identifier_grant_jalc_doi_link': _jalc_doi_link,
             'identifier_grant_jalc_cr_doi_link': _jalc_cr_doi_link,
             'identifier_grant_jalc_dc_doi_link': _jalc_dc_doi_link,
             'identifier_grant_ndl_jalc_doi_link': _ndl_jalc_doi_link
         }
-    else:
-        return {}
+
+    return ret
 
 
 def get_pid_value_by_activity_detail(activity_detail):

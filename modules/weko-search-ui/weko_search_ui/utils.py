@@ -204,7 +204,8 @@ def delete_records(index_tree_id, ignore_items):
                 indexer.update_path(record, update_revision=False)
 
                 if len(paths) == 0 and removed_path is not None:
-                    WekoDeposit.delete_by_index_tree_id(removed_path, ignore_items)
+                    WekoDeposit.delete_by_index_tree_id(
+                        removed_path, ignore_items)
                     Record.get_record(recid).delete()  # flag as deleted
                     db.session.commit()  # terminate the transaction
 
@@ -1983,6 +1984,12 @@ def register_item_doi(item):
     is_change_identifier = item.get('is_change_identifier')
     doi_ra = item.get('doi_ra')
     doi = item.get('doi')
+
+    current_app.logger.debug('item_id: {0}'.format(item_id))
+    current_app.logger.debug(
+        'is_change_identifier: {0}'.format(is_change_identifier))
+    current_app.logger.debug('doi_ra: {0}'.format(doi_ra))
+    current_app.logger.debug('doi: {0}'.format(doi))
 
     record_without_version = WekoRecord.get_record_by_pid(item_id)
     pid = record_without_version.pid_recid

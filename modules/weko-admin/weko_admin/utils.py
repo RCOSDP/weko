@@ -2060,10 +2060,10 @@ def get_item_mapping_list():
     import weko_schema_ui
     current_path = os.path.dirname(os.path.abspath(weko_schema_ui.__file__))
     file_path = os.path.join(current_path, 'mappings', 'v6', 'weko',
-                             'item-v1.0.1.json')
+                             'item-v1.0.0.json')
     with open(file_path) as json_file:
         mappings = json.load(json_file).get('mappings')
-        properties = mappings.get('item-v1.0.1').get('properties')
+        properties = mappings.get('item-v1.0.0').get('properties')
     result = [""]
     for k, v in properties.items():
         mapping_list = []
