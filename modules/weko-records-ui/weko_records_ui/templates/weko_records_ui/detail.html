@@ -44,8 +44,14 @@
   {% assets "weko_records_ui_preview_carousel_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 
   <!-- start demo block-->
-  <script type="text/javascript">var addthis_config = {"data_track_addressbar": true};</script>
-  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid={{ config.ADDTHIS_USER_ID }}"></script>
+  <script type="text/javascript">
+    //see https://www.addthis.com/academy/the-addthis_config-variable/
+  var addthis_config = {
+    data_track_addressbar: false,
+    pubid: {{ config.ADDTHIS_USER_ID }},
+  };
+  </script>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
   <!-- end demo block -->
   {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_records_ui_bootstrap_popover_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
