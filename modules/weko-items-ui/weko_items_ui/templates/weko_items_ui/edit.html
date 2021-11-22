@@ -29,10 +29,16 @@
 {%- endblock css %}
 
 {%- block javascript %}
-  <script src="https://unpkg.com/react@16/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>
-  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <!--<script src="https://unpkg.com/react@16/umd/react.production.min.js" crossorigin></script>-->
+  <!--<script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>-->
+  <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>-->
+  <!--<script src="https://unpkg.com/axios/dist/axios.min.js"></script>-->
+
+  <script src="{{ url_for('static', filename='js/react/react.production.min.js') }}" crossorigin></script>
+  <script src="{{ url_for('static', filename='js/react/react-dom.production.min.js') }}" crossorigin></script>
+  <script src="{{ url_for('static', filename='js/babel-cores/browser.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/axios/axios.min.js') }}"></script>
+
   <script src="{{ url_for('static', filename='js/weko_items_ui/item.autofill.js') }}" type="text/babel"></script>
   {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}

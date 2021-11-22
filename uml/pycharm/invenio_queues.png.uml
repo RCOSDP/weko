@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>Python</ID>
+  <OriginalElement>#/Users/mhaya/git/mhaya/vagrant-weko_org/multi/tmp/weko3_b/modules/invenio-queues/invenio_queues</OriginalElement>
+  <nodes>
+    <node x="999.0" y="124.0">invenio_queues.ext._InvenioQueuesState</node>
+    <node x="454.0" y="80.0">invenio_queues.queue.Queue</node>
+    <node x="0.0" y="190.5">invenio_queues.ext.InvenioQueues</node>
+    <node x="133.5" y="467.0">Exception</node>
+    <node x="673.5" y="0.0">object</node>
+    <node x="0.0" y="547.0">invenio_queues.errors.DuplicateQueueError</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="invenio_queues.errors.DuplicateQueueError" target="Exception" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_queues.ext._InvenioQueuesState" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-127.0" />
+      <point x="1187.5" y="55.0" />
+      <point x="716.5" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_queues.queue.Queue" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-171.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_queues.ext.InvenioQueues" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-60.5" />
+      <point x="217.0" y="55.0" />
+      <point x="716.5" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic" zoom="1.0" showDependencies="false" x="688.0" y="288.5" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Fields</Category>
+    <Category>Inner Classes</Category>
+    <Category>Methods</Category>
+  </Categories>
+</Diagram>
+

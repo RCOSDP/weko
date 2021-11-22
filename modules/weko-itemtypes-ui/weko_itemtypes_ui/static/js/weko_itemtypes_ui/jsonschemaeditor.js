@@ -403,7 +403,8 @@
 			required: { optionKey: "isRequired", disableKey: "requiredDisable" },
 			showList: { optionKey: "isShowList", disableKey: "showListDisable" },
 			specifyNewline: { optionKey: "isSpecifyNewline", disableKey: "specifyNLDisable" },
-			hide: { optionKey: "isHide", disableKey: "hideDisable" }
+			hide: { optionKey: "isHide", disableKey: "hideDisable" },
+			nonDisplay: { optionKey: "isNonDisplay", disableKey: "nonDisplayDisable" }
 		},
 		jsonDeepCopy: function jsonDeepCopy(src_json) {
 			return JSON.parse(JSON.stringify(src_json));
@@ -419,7 +420,7 @@
 						this.handleOptionDisable(item.items.properties[key], true, option)
 					}
 					else {
-						if((option == this.defaultDict.showList || option == this.defaultDict.specifyNewline) && item.items.properties[key][this.defaultDict.hide.optionKey] == true){
+						if((option == this.defaultDict.showList || option == this.defaultDict.specifyNewline || option == this.defaultDict.nonDisplay) && item.items.properties[key][this.defaultDict.hide.optionKey] == true){
 							item.items.properties[key][option.disableKey] = true;
 						}else{
 							item.items.properties[key][option.disableKey] = false;
@@ -434,7 +435,7 @@
 						this.handleOptionDisable(item.properties[key], true, option)
 					}
 					else {
-						if((option == this.defaultDict.showList || option == this.defaultDict.specifyNewline) && item.properties[key][this.defaultDict.hide.optionKey] == true){
+						if((option == this.defaultDict.showList || option == this.defaultDict.specifyNewline || option == this.defaultDict.nonDisplay) && item.properties[key][this.defaultDict.hide.optionKey] == true){
 							item.properties[key][option.disableKey] = true;
 						}else{
 							item.properties[key][option.disableKey] = false;
@@ -479,6 +480,7 @@
 				for (var key in data.properties) {
 					this.setChildShowAndNewline(data.properties[key], "isShowList", "parent_isShowList", data.properties[key]["isShowList"] == true || false)
 					this.setChildShowAndNewline(data.properties[key], "isSpecifyNewline", "parent_isSpecifyNewline", data.properties[key]["isSpecifyNewline"] == true || false)
+					this.setChildShowAndNewline(data.properties[key], "isNonDisplay", "parent_isNonDisplay", data.properties[key]["isNonDisplay"] == true || false)
 					for (var option in this.defaultDict) {
 						this.handleOptionDisable(data.properties[key], data.properties[key][this.defaultDict[option].disableKey], this.defaultDict[option])
 					}
@@ -678,6 +680,7 @@
 		handleHideChangedEffect: function handleHideChangedEffect(item) {
 			item[this.defaultDict.specifyNewline.disableKey] = true ? item.isHide == true : false;
 			item[this.defaultDict.showList.disableKey] = true ? item.isHide == true : false;
+			item[this.defaultDict.nonDisplay.disableKey] = true ? item.isHide == true : false;
 			if (item.hasOwnProperty("items")) {
 				for (var key in item.items.properties) {
 					this.handleHideChangedEffect(item.items.properties[key])
@@ -690,12 +693,16 @@
 			let propertyItem = this.state.propertyItems[index];
 			this.state.properties[propertyItem][this.defaultDict.showList.disableKey] = true ? event.target.checked == true : false;
 			this.state.properties[propertyItem][this.defaultDict.specifyNewline.disableKey] = true ? event.target.checked == true : false;
+			this.state.properties[propertyItem][this.defaultDict.nonDisplay.disableKey] = true ? event.target.checked == true : false;
 			if (event.target.checked == false) {
 				if (this.state.properties[propertyItem]["parent_isSpecifyNewline"] == true) {
 					this.state.properties[propertyItem][this.defaultDict.specifyNewline.disableKey] = true
 				}
 				if (this.state.properties[propertyItem]["parent_isShowList"] == true) {
 					this.state.properties[propertyItem][this.defaultDict.showList.disableKey] = true
+				}
+				if (this.state.properties[propertyItem]["parent_isNonDisplay"] == true) {
+					this.state.properties[propertyItem][this.defaultDict.nonDisplay.disableKey] = true
 				}
 			}
 			if (this.state.propertyNames[index].format != "checkboxes") {
@@ -724,6 +731,39 @@
 			//this.state = this.propsToState(this.export());
 			this.setState(this.state);
 		},
+		changeNonDisplay: function changeNonDisplay(event) {
+			let index = event.target.dataset.index;
+			this.state.propertyNames[index].isNonDisplay = event.target.checked;
+			let propertyItem = this.state.propertyItems[index];
+			if (this.state.propertyNames[index].format != "checkboxes") {
+				if (this.state.propertyNames[index].hasOwnProperty("items")) {
+					if (event.target.checked === true) {
+						for (let key in this.state.propertyNames[index].items.properties) {
+							this.state.propertyNames[index].items.properties[key]["parent_isNonDisplay"] = true
+							this.handleOptionChange(this.state.propertyNames[index].items.properties[key], this.defaultDict.nonDisplay)
+						}
+					}
+					else {
+						for (let key in this.state.propertyNames[index].items.properties) {
+							this.state.propertyNames[index].items.properties[key]["parent_isNonDisplay"] = false
+						}
+					}
+				} else if (this.state.propertyNames[index].hasOwnProperty("properties")) {
+					if (event.target.checked === true) {
+						for (let key in this.state.propertyNames[index].properties) {
+							this.state.propertyNames[index].properties[key]["parent_isNonDisplay"] = true
+							this.handleOptionChange(this.state.propertyNames[index].properties[key], this.defaultDict.nonDisplay)
+						}
+					} else {
+						for (let key in this.state.propertyNames[index].properties) {
+							this.state.propertyNames[index].properties[key]["parent_isNonDisplay"] = false
+						}
+					}
+				}
+				this.handleOptionDisable(this.state.properties[propertyItem], this.state.propertyNames[index].isNonDisplay || false, this.defaultDict.nonDisplay)
+			}
+			this.setState(this.state);
+        },
 		onChange: function onChange() {
 			//if(undefined != this.props.onChange) {
 			//  this.props.onChange();
@@ -816,7 +856,7 @@
 			return form;
 		},
 		removeRedundantAtt: function removeRedundantAtt(item) {
-			var redundantAttt = ["requiredDisable", "showListDisable", "specifyNLDisable", "hideDisable", "parent_isShowList", "parent_isSpecifyNewline"]
+			var redundantAttt = ["requiredDisable", "showListDisable", "specifyNLDisable", "hideDisable", "nonDisplayDisable", "parent_isShowList", "parent_isSpecifyNewline", "parent_isNonDisplay"]
 			for (var option in redundantAttt) {
 				if(item.hasOwnProperty(redundantAttt[option])){
 					delete item[redundantAttt[option]]
@@ -1036,6 +1076,15 @@
 											onChange: self.changeHide, checked: value.isHide
 										}),
 										' Hide  '
+									)
+								),
+								React.createElement('div', { className: 'checkbox  media-right' + isEditor},
+									React.createElement('label', null,
+										React.createElement('input', {
+											type: 'checkbox', name: itemKey, disabled: value[self.defaultDict.nonDisplay.disableKey], 'data-index': index,
+											onChange: self.changeNonDisplay, checked: value.isNonDisplay
+										}),
+										' Non Display on Detail  '
 									)
 								),
 								React.createElement('div', { className: self.state.editor ? "form-group media-right" : "hide", 'data-index': index},

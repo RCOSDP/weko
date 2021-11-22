@@ -1,0 +1,8268 @@
+tools/recoverVersionID.py
+    LOC: 46
+    LLOC: 38
+    SLOC: 40
+    Comments: 1
+    Single comments: 1
+    Multi: 0
+    Blank: 5
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 2%
+        (C + M % L): 2%
+tools/oaisetutil.py
+    LOC: 174
+    LLOC: 103
+    SLOC: 121
+    Comments: 22
+    Single comments: 22
+    Multi: 8
+    Blank: 23
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 18%
+        (C + M % L): 17%
+tools/elasticsearchTool.py
+    LOC: 49
+    LLOC: 34
+    SLOC: 38
+    Comments: 0
+    Single comments: 0
+    Multi: 2
+    Blank: 9
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 4%
+tools/oaiListRecord.py
+    LOC: 25
+    LLOC: 19
+    SLOC: 21
+    Comments: 0
+    Single comments: 0
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+tools/deleteItem.py
+    LOC: 143
+    LLOC: 106
+    SLOC: 119
+    Comments: 0
+    Single comments: 1
+    Multi: 0
+    Blank: 23
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+test/selenium/checkitem/test_checkitem.py
+    LOC: 110
+    LLOC: 83
+    SLOC: 82
+    Comments: 9
+    Single comments: 9
+    Multi: 0
+    Blank: 19
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 11%
+        (C + M % L): 8%
+test/invenio_shell/countRegisteredItemsQuery.py
+    LOC: 68
+    LLOC: 42
+    SLOC: 47
+    Comments: 0
+    Single comments: 2
+    Multi: 7
+    Blank: 12
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 10%
+test/invenio_shell/countRegisteredItems.py
+    LOC: 98
+    LLOC: 63
+    SLOC: 66
+    Comments: 0
+    Single comments: 7
+    Multi: 7
+    Blank: 18
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 7%
+test/CREATE_TEST_DATA/create_item_reg_event.py
+    LOC: 89
+    LLOC: 41
+    SLOC: 76
+    Comments: 0
+    Single comments: 1
+    Multi: 0
+    Blank: 12
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+test/CREATE_TEST_DATA/create_page_layout.py
+    LOC: 124
+    LLOC: 89
+    SLOC: 113
+    Comments: 0
+    Single comments: 0
+    Multi: 0
+    Blank: 11
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+test/CREATE_TEST_DATA/create_top_view_event.py
+    LOC: 76
+    LLOC: 43
+    SLOC: 62
+    Comments: 0
+    Single comments: 1
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+test/CREATE_TEST_DATA/create_file_event.py
+    LOC: 119
+    LLOC: 73
+    SLOC: 103
+    Comments: 0
+    Single comments: 1
+    Multi: 0
+    Blank: 15
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+test/CREATE_TEST_DATA/create_record_view_event.py
+    LOC: 108
+    LLOC: 62
+    SLOC: 92
+    Comments: 0
+    Single comments: 1
+    Multi: 0
+    Blank: 15
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+test/CREATE_TEST_DATA/create_authors.py
+    LOC: 66
+    LLOC: 32
+    SLOC: 58
+    Comments: 0
+    Single comments: 0
+    Multi: 0
+    Blank: 8
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+test/CREATE_TEST_DATA/settings.py
+    LOC: 148
+    LLOC: 35
+    SLOC: 132
+    Comments: 3
+    Single comments: 3
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 2%
+        (C + M % L): 2%
+test/CREATE_TEST_DATA/create_search_event.py
+    LOC: 82
+    LLOC: 46
+    SLOC: 66
+    Comments: 0
+    Single comments: 1
+    Multi: 0
+    Blank: 15
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+handle/handle/build.py
+    LOC: 91
+    LLOC: 43
+    SLOC: 68
+    Comments: 10
+    Single comments: 7
+    Multi: 2
+    Blank: 14
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 15%
+        (C + M % L): 13%
+plugins/__init__.py
+    LOC: 0
+    LLOC: 0
+    SLOC: 0
+    Comments: 0
+    Single comments: 0
+    Multi: 0
+    Blank: 0
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+plugins/plugin/__init__.py
+    LOC: 0
+    LLOC: 0
+    SLOC: 0
+    Comments: 0
+    Single comments: 0
+    Multi: 0
+    Blank: 0
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+plugins/plugin/new_plugin/__init__.py
+    LOC: 73
+    LLOC: 39
+    SLOC: 41
+    Comments: 0
+    Single comments: 1
+    Multi: 7
+    Blank: 24
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 10%
+plugins/plugin/workflow_plugin/__init__.py
+    LOC: 96
+    LLOC: 40
+    SLOC: 41
+    Comments: 19
+    Single comments: 21
+    Multi: 7
+    Blank: 27
+    - Comment Stats
+        (C % L): 20%
+        (C % S): 46%
+        (C + M % L): 27%
+plugins/plugin/hello_plugin/__init__.py
+    LOC: 73
+    LLOC: 39
+    SLOC: 41
+    Comments: 0
+    Single comments: 1
+    Multi: 7
+    Blank: 24
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 10%
+plugins/plugin/hello_world/__init__.py
+    LOC: 73
+    LLOC: 39
+    SLOC: 41
+    Comments: 0
+    Single comments: 1
+    Multi: 7
+    Blank: 24
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 10%
+invenio/version.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 19
+    Single comments: 19
+    Multi: 4
+    Blank: 3
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1900%
+        (C + M % L): 85%
+invenio/__init__.py
+    LOC: 25
+    LLOC: 3
+    SLOC: 2
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 76%
+        (C % S): 950%
+        (C + M % L): 76%
+scripts/widget/fix_widget_url_script.py
+    LOC: 135
+    LLOC: 75
+    SLOC: 73
+    Comments: 24
+    Single comments: 27
+    Multi: 14
+    Blank: 21
+    - Comment Stats
+        (C % L): 18%
+        (C % S): 33%
+        (C + M % L): 28%
+scripts/translations/update-msg.py
+    LOC: 200
+    LLOC: 121
+    SLOC: 162
+    Comments: 4
+    Single comments: 4
+    Multi: 14
+    Blank: 20
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 2%
+        (C + M % L): 9%
+modules/weko-sitemap/setup.py
+    LOC: 117
+    LLOC: 20
+    SLOC: 96
+    Comments: 16
+    Single comments: 8
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 17%
+        (C + M % L): 14%
+modules/weko-sitemap/weko_sitemap/signals.py
+    LOC: 29
+    LLOC: 5
+    SLOC: 3
+    Comments: 18
+    Single comments: 19
+    Multi: 3
+    Blank: 4
+    - Comment Stats
+        (C % L): 62%
+        (C % S): 600%
+        (C + M % L): 72%
+modules/weko-sitemap/weko_sitemap/tasks.py
+    LOC: 146
+    LLOC: 65
+    SLOC: 103
+    Comments: 29
+    Single comments: 28
+    Multi: 0
+    Blank: 15
+    - Comment Stats
+        (C % L): 20%
+        (C % S): 28%
+        (C + M % L): 20%
+modules/weko-sitemap/weko_sitemap/config.py
+    LOC: 36
+    LLOC: 16
+    SLOC: 10
+    Comments: 8
+    Single comments: 14
+    Multi: 0
+    Blank: 12
+    - Comment Stats
+        (C % L): 22%
+        (C % S): 80%
+        (C + M % L): 22%
+modules/weko-sitemap/weko_sitemap/version.py
+    LOC: 16
+    LLOC: 3
+    SLOC: 2
+    Comments: 6
+    Single comments: 6
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 38%
+        (C % S): 300%
+        (C + M % L): 62%
+modules/weko-sitemap/weko_sitemap/bundles.py
+    LOC: 34
+    LLOC: 4
+    SLOC: 10
+    Comments: 20
+    Single comments: 20
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 59%
+        (C % S): 200%
+        (C + M % L): 59%
+modules/weko-sitemap/weko_sitemap/__init__.py
+    LOC: 15
+    LLOC: 5
+    SLOC: 4
+    Comments: 6
+    Single comments: 7
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 40%
+        (C % S): 150%
+        (C + M % L): 40%
+modules/weko-sitemap/weko_sitemap/admin.py
+    LOC: 83
+    LLOC: 40
+    SLOC: 57
+    Comments: 10
+    Single comments: 14
+    Multi: 0
+    Blank: 12
+    - Comment Stats
+        (C % L): 12%
+        (C % S): 18%
+        (C + M % L): 12%
+modules/weko-sitemap/weko_sitemap/views.py
+    LOC: 32
+    LLOC: 11
+    SLOC: 16
+    Comments: 9
+    Single comments: 10
+    Multi: 0
+    Blank: 6
+    - Comment Stats
+        (C % L): 28%
+        (C % S): 56%
+        (C + M % L): 28%
+modules/weko-sitemap/weko_sitemap/ext.py
+    LOC: 194
+    LLOC: 107
+    SLOC: 131
+    Comments: 29
+    Single comments: 40
+    Multi: 0
+    Blank: 23
+    - Comment Stats
+        (C % L): 15%
+        (C % S): 22%
+        (C + M % L): 15%
+modules/invenio-records/setup.py
+    LOC: 134
+    LLOC: 22
+    SLOC: 112
+    Comments: 8
+    Single comments: 9
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 7%
+        (C + M % L): 6%
+modules/invenio-records/invenio_records/signals.py
+    LOC: 99
+    LLOC: 19
+    SLOC: 10
+    Comments: 7
+    Single comments: 8
+    Multi: 51
+    Blank: 30
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 70%
+        (C + M % L): 59%
+modules/invenio-records/invenio_records/config.py
+    LOC: 15
+    LLOC: 3
+    SLOC: 1
+    Comments: 7
+    Single comments: 8
+    Multi: 4
+    Blank: 2
+    - Comment Stats
+        (C % L): 47%
+        (C % S): 700%
+        (C + M % L): 73%
+modules/invenio-records/invenio_records/version.py
+    LOC: 17
+    LLOC: 3
+    SLOC: 2
+    Comments: 7
+    Single comments: 7
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 41%
+        (C % S): 350%
+        (C + M % L): 65%
+modules/invenio-records/invenio_records/models.py
+    LOC: 114
+    LLOC: 40
+    SLOC: 62
+    Comments: 8
+    Single comments: 14
+    Multi: 13
+    Blank: 25
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 13%
+        (C + M % L): 18%
+modules/invenio-records/invenio_records/validators.py
+    LOC: 18
+    LLOC: 5
+    SLOC: 2
+    Comments: 7
+    Single comments: 8
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 39%
+        (C % S): 350%
+        (C + M % L): 61%
+modules/invenio-records/invenio_records/__init__.py
+    LOC: 426
+    LLOC: 6
+    SLOC: 9
+    Comments: 7
+    Single comments: 7
+    Multi: 300
+    Blank: 110
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 78%
+        (C + M % L): 72%
+modules/invenio-records/invenio_records/api.py
+    LOC: 423
+    LLOC: 165
+    SLOC: 160
+    Comments: 10
+    Single comments: 27
+    Multi: 137
+    Blank: 99
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 6%
+        (C + M % L): 35%
+modules/invenio-records/invenio_records/admin.py
+    LOC: 98
+    LLOC: 62
+    SLOC: 74
+    Comments: 7
+    Single comments: 12
+    Multi: 0
+    Blank: 12
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 9%
+        (C + M % L): 7%
+modules/invenio-records/invenio_records/errors.py
+    LOC: 19
+    LLOC: 6
+    SLOC: 3
+    Comments: 7
+    Single comments: 10
+    Multi: 0
+    Blank: 6
+    - Comment Stats
+        (C % L): 37%
+        (C % S): 233%
+        (C + M % L): 37%
+modules/invenio-records/invenio_records/views.py
+    LOC: 14
+    LLOC: 6
+    SLOC: 9
+    Comments: 1
+    Single comments: 2
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 11%
+        (C + M % L): 7%
+modules/invenio-records/invenio_records/ext.py
+    LOC: 80
+    LLOC: 45
+    SLOC: 42
+    Comments: 7
+    Single comments: 14
+    Multi: 8
+    Blank: 16
+    - Comment Stats
+        (C % L): 9%
+        (C % S): 17%
+        (C + M % L): 19%
+modules/invenio-records/invenio_records/alembic/07fb52561c5c_alter_column_from_json_to_jsonb.py
+    LOC: 40
+    LLOC: 15
+    SLOC: 22
+    Comments: 8
+    Single comments: 11
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 20%
+        (C % S): 36%
+        (C + M % L): 20%
+modules/invenio-records/invenio_records/alembic/862037093962_create_records_tables.py
+    LOC: 82
+    LLOC: 22
+    SLOC: 64
+    Comments: 8
+    Single comments: 11
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 12%
+        (C + M % L): 10%
+modules/invenio-records/invenio_records/alembic/1095cdf9f350_create_records_branch.py
+    LOC: 26
+    LLOC: 11
+    SLOC: 8
+    Comments: 8
+    Single comments: 11
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 31%
+        (C % S): 100%
+        (C + M % L): 31%
+modules/weko-user-profiles/setup.py
+    LOC: 150
+    LLOC: 24
+    SLOC: 116
+    Comments: 20
+    Single comments: 21
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 17%
+        (C + M % L): 13%
+modules/weko-user-profiles/weko_user_profiles/config.py
+    LOC: 170
+    LLOC: 52
+    SLOC: 98
+    Comments: 19
+    Single comments: 45
+    Multi: 0
+    Blank: 27
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 19%
+        (C + M % L): 11%
+modules/weko-user-profiles/weko_user_profiles/version.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 19
+    Single comments: 19
+    Multi: 4
+    Blank: 3
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1900%
+        (C + M % L): 85%
+modules/weko-user-profiles/weko_user_profiles/models.py
+    LOC: 212
+    LLOC: 102
+    SLOC: 87
+    Comments: 19
+    Single comments: 52
+    Multi: 27
+    Blank: 46
+    - Comment Stats
+        (C % L): 9%
+        (C % S): 22%
+        (C + M % L): 22%
+modules/weko-user-profiles/weko_user_profiles/validators.py
+    LOC: 47
+    LLOC: 11
+    SLOC: 9
+    Comments: 19
+    Single comments: 21
+    Multi: 7
+    Blank: 10
+    - Comment Stats
+        (C % L): 40%
+        (C % S): 211%
+        (C + M % L): 55%
+modules/weko-user-profiles/weko_user_profiles/__init__.py
+    LOC: 29
+    LLOC: 6
+    SLOC: 6
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 66%
+        (C % S): 317%
+        (C + M % L): 66%
+modules/weko-user-profiles/weko_user_profiles/forms.py
+    LOC: 393
+    LLOC: 128
+    SLOC: 241
+    Comments: 50
+    Single comments: 53
+    Multi: 32
+    Blank: 67
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 21%
+        (C + M % L): 21%
+modules/weko-user-profiles/weko_user_profiles/api.py
+    LOC: 73
+    LLOC: 32
+    SLOC: 32
+    Comments: 19
+    Single comments: 22
+    Multi: 6
+    Blank: 13
+    - Comment Stats
+        (C % L): 26%
+        (C % S): 59%
+        (C + M % L): 34%
+modules/weko-user-profiles/weko_user_profiles/admin.py
+    LOC: 447
+    LLOC: 198
+    SLOC: 337
+    Comments: 41
+    Single comments: 49
+    Multi: 0
+    Blank: 61
+    - Comment Stats
+        (C % L): 9%
+        (C % S): 12%
+        (C + M % L): 9%
+modules/weko-user-profiles/weko_user_profiles/utils.py
+    LOC: 173
+    LLOC: 93
+    SLOC: 121
+    Comments: 25
+    Single comments: 28
+    Multi: 8
+    Blank: 16
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 21%
+        (C + M % L): 19%
+modules/weko-user-profiles/weko_user_profiles/views.py
+    LOC: 172
+    LLOC: 68
+    SLOC: 115
+    Comments: 23
+    Single comments: 29
+    Multi: 3
+    Blank: 25
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 20%
+        (C + M % L): 15%
+modules/weko-user-profiles/weko_user_profiles/ext.py
+    LOC: 84
+    LLOC: 27
+    SLOC: 39
+    Comments: 20
+    Single comments: 22
+    Multi: 9
+    Blank: 14
+    - Comment Stats
+        (C % L): 24%
+        (C % S): 51%
+        (C + M % L): 35%
+modules/weko-accounts/setup.py
+    LOC: 126
+    LLOC: 20
+    SLOC: 92
+    Comments: 20
+    Single comments: 21
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 16%
+        (C % S): 22%
+        (C + M % L): 16%
+modules/weko-accounts/weko_accounts/sessions.py
+    LOC: 64
+    LLOC: 19
+    SLOC: 14
+    Comments: 19
+    Single comments: 20
+    Multi: 18
+    Blank: 12
+    - Comment Stats
+        (C % L): 30%
+        (C % S): 136%
+        (C + M % L): 58%
+modules/weko-accounts/weko_accounts/config.py
+    LOC: 103
+    LLOC: 47
+    SLOC: 39
+    Comments: 23
+    Single comments: 42
+    Multi: 0
+    Blank: 22
+    - Comment Stats
+        (C % L): 22%
+        (C % S): 59%
+        (C + M % L): 22%
+modules/weko-accounts/weko_accounts/version.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 19
+    Single comments: 19
+    Multi: 4
+    Blank: 3
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1900%
+        (C + M % L): 85%
+modules/weko-accounts/weko_accounts/models.py
+    LOC: 104
+    LLOC: 42
+    SLOC: 43
+    Comments: 19
+    Single comments: 33
+    Multi: 5
+    Blank: 23
+    - Comment Stats
+        (C % L): 18%
+        (C % S): 44%
+        (C + M % L): 23%
+modules/weko-accounts/weko_accounts/bundles.py
+    LOC: 49
+    LLOC: 8
+    SLOC: 22
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 39%
+        (C % S): 86%
+        (C + M % L): 39%
+modules/weko-accounts/weko_accounts/__init__.py
+    LOC: 26
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/weko-accounts/weko_accounts/api.py
+    LOC: 298
+    LLOC: 154
+    SLOC: 161
+    Comments: 12
+    Single comments: 17
+    Multi: 56
+    Blank: 64
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 7%
+        (C + M % L): 23%
+modules/weko-accounts/weko_accounts/admin.py
+    LOC: 77
+    LLOC: 33
+    SLOC: 42
+    Comments: 20
+    Single comments: 23
+    Multi: 0
+    Blank: 12
+    - Comment Stats
+        (C % L): 26%
+        (C % S): 48%
+        (C + M % L): 26%
+modules/weko-accounts/weko_accounts/utils.py
+    LOC: 156
+    LLOC: 72
+    SLOC: 71
+    Comments: 19
+    Single comments: 22
+    Multi: 33
+    Blank: 30
+    - Comment Stats
+        (C % L): 12%
+        (C % S): 27%
+        (C + M % L): 33%
+modules/weko-accounts/weko_accounts/views.py
+    LOC: 335
+    LLOC: 194
+    SLOC: 221
+    Comments: 23
+    Single comments: 26
+    Multi: 22
+    Blank: 66
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 10%
+        (C + M % L): 13%
+modules/weko-accounts/weko_accounts/ext.py
+    LOC: 107
+    LLOC: 40
+    SLOC: 43
+    Comments: 27
+    Single comments: 29
+    Multi: 16
+    Blank: 19
+    - Comment Stats
+        (C % L): 25%
+        (C % S): 63%
+        (C + M % L): 40%
+modules/invenio-iiif/setup.py
+    LOC: 124
+    LLOC: 20
+    SLOC: 101
+    Comments: 12
+    Single comments: 10
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 12%
+        (C + M % L): 10%
+modules/invenio-iiif/invenio_iiif/tasks.py
+    LOC: 22
+    LLOC: 9
+    SLOC: 7
+    Comments: 9
+    Single comments: 10
+    Multi: 0
+    Blank: 5
+    - Comment Stats
+        (C % L): 41%
+        (C % S): 129%
+        (C + M % L): 41%
+modules/invenio-iiif/invenio_iiif/config.py
+    LOC: 36
+    LLOC: 15
+    SLOC: 13
+    Comments: 8
+    Single comments: 15
+    Multi: 0
+    Blank: 8
+    - Comment Stats
+        (C % L): 22%
+        (C % S): 62%
+        (C + M % L): 22%
+modules/invenio-iiif/invenio_iiif/version.py
+    LOC: 17
+    LLOC: 3
+    SLOC: 2
+    Comments: 7
+    Single comments: 7
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 41%
+        (C % S): 350%
+        (C + M % L): 65%
+modules/invenio-iiif/invenio_iiif/manifest.py
+    LOC: 167
+    LLOC: 98
+    SLOC: 108
+    Comments: 21
+    Single comments: 30
+    Multi: 0
+    Blank: 29
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 19%
+        (C + M % L): 13%
+modules/invenio-iiif/invenio_iiif/handlers.py
+    LOC: 64
+    LLOC: 33
+    SLOC: 30
+    Comments: 13
+    Single comments: 14
+    Multi: 8
+    Blank: 12
+    - Comment Stats
+        (C % L): 20%
+        (C % S): 43%
+        (C + M % L): 33%
+modules/invenio-iiif/invenio_iiif/__init__.py
+    LOC: 16
+    LLOC: 5
+    SLOC: 4
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 44%
+        (C % S): 175%
+        (C + M % L): 44%
+modules/invenio-iiif/invenio_iiif/utils.py
+    LOC: 49
+    LLOC: 19
+    SLOC: 32
+    Comments: 7
+    Single comments: 10
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 22%
+        (C + M % L): 14%
+modules/invenio-iiif/invenio_iiif/previewer.py
+    LOC: 48
+    LLOC: 18
+    SLOC: 26
+    Comments: 7
+    Single comments: 11
+    Multi: 0
+    Blank: 11
+    - Comment Stats
+        (C % L): 15%
+        (C % S): 27%
+        (C + M % L): 15%
+modules/invenio-iiif/invenio_iiif/views.py
+    LOC: 162
+    LLOC: 60
+    SLOC: 111
+    Comments: 10
+    Single comments: 13
+    Multi: 12
+    Blank: 26
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 9%
+        (C + M % L): 14%
+modules/invenio-iiif/invenio_iiif/ext.py
+    LOC: 50
+    LLOC: 31
+    SLOC: 24
+    Comments: 7
+    Single comments: 14
+    Multi: 0
+    Blank: 12
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 29%
+        (C + M % L): 14%
+modules/invenio-mail/setup.py
+    LOC: 117
+    LLOC: 20
+    SLOC: 96
+    Comments: 8
+    Single comments: 9
+    Multi: 0
+    Blank: 12
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 8%
+        (C + M % L): 7%
+modules/invenio-mail/invenio_mail/tasks.py
+    LOC: 30
+    LLOC: 11
+    SLOC: 9
+    Comments: 7
+    Single comments: 8
+    Multi: 6
+    Blank: 7
+    - Comment Stats
+        (C % L): 23%
+        (C % S): 78%
+        (C + M % L): 43%
+modules/invenio-mail/invenio_mail/config.py
+    LOC: 17
+    LLOC: 3
+    SLOC: 2
+    Comments: 7
+    Single comments: 7
+    Multi: 6
+    Blank: 2
+    - Comment Stats
+        (C % L): 41%
+        (C % S): 350%
+        (C + M % L): 76%
+modules/invenio-mail/invenio_mail/version.py
+    LOC: 17
+    LLOC: 3
+    SLOC: 2
+    Comments: 7
+    Single comments: 7
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 41%
+        (C % S): 350%
+        (C + M % L): 65%
+modules/invenio-mail/invenio_mail/models.py
+    LOC: 60
+    LLOC: 34
+    SLOC: 30
+    Comments: 19
+    Single comments: 23
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 32%
+        (C % S): 63%
+        (C + M % L): 32%
+modules/invenio-mail/invenio_mail/__init__.py
+    LOC: 106
+    LLOC: 5
+    SLOC: 4
+    Comments: 7
+    Single comments: 7
+    Multi: 70
+    Blank: 25
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 175%
+        (C + M % L): 73%
+modules/invenio-mail/invenio_mail/api.py
+    LOC: 64
+    LLOC: 30
+    SLOC: 33
+    Comments: 7
+    Single comments: 10
+    Multi: 10
+    Blank: 11
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 21%
+        (C + M % L): 27%
+modules/invenio-mail/invenio_mail/admin.py
+    LOC: 149
+    LLOC: 97
+    SLOC: 116
+    Comments: 3
+    Single comments: 4
+    Multi: 6
+    Blank: 23
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 3%
+        (C + M % L): 6%
+modules/invenio-mail/invenio_mail/views.py
+    LOC: 14
+    LLOC: 6
+    SLOC: 9
+    Comments: 1
+    Single comments: 2
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 11%
+        (C + M % L): 7%
+modules/invenio-mail/invenio_mail/ext.py
+    LOC: 88
+    LLOC: 40
+    SLOC: 35
+    Comments: 7
+    Single comments: 9
+    Multi: 24
+    Blank: 20
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 20%
+        (C + M % L): 35%
+modules/cookiecutter-weko-module/{ cookiecutter.project_shortname }/setup.py
+    LOC: 102
+    LLOC: 21
+    SLOC: 88
+    Comments: 12
+    Single comments: 2
+    Multi: 0
+    Blank: 12
+    - Comment Stats
+        (C % L): 12%
+        (C % S): 14%
+        (C + M % L): 12%
+modules/cookiecutter-weko-module/{ cookiecutter.project_shortname }/misc/header.py
+    LOC: 5
+    LLOC: 2
+    SLOC: 2
+    Comments: 3
+    Single comments: 3
+    Multi: 0
+    Blank: 0
+    - Comment Stats
+        (C % L): 60%
+        (C % S): 150%
+        (C + M % L): 60%
+modules/cookiecutter-weko-module/{ cookiecutter.project_shortname }/{ cookiecutter.package_name }/config.py
+    LOC: 11
+    LLOC: 6
+    SLOC: 3
+    Comments: 2
+    Single comments: 5
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 18%
+        (C % S): 67%
+        (C + M % L): 18%
+modules/cookiecutter-weko-module/{ cookiecutter.project_shortname }/{ cookiecutter.package_name }/version.py
+    LOC: 10
+    LLOC: 4
+    SLOC: 3
+    Comments: 0
+    Single comments: 0
+    Multi: 4
+    Blank: 3
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 40%
+modules/cookiecutter-weko-module/{ cookiecutter.project_shortname }/{ cookiecutter.package_name }/__init__.py
+    LOC: 9
+    LLOC: 6
+    SLOC: 5
+    Comments: 0
+    Single comments: 1
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+modules/cookiecutter-weko-module/{ cookiecutter.project_shortname }/{ cookiecutter.package_name }/views.py
+    LOC: 25
+    LLOC: 10
+    SLOC: 15
+    Comments: 2
+    Single comments: 4
+    Multi: 0
+    Blank: 6
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 13%
+        (C + M % L): 8%
+modules/cookiecutter-weko-module/{ cookiecutter.project_shortname }/{ cookiecutter.package_name }/ext.py
+    LOC: 38
+    LLOC: 23
+    SLOC: 21
+    Comments: 4
+    Single comments: 9
+    Multi: 0
+    Blank: 8
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 19%
+        (C + M % L): 11%
+modules/cookiecutter-weko-module/scripts/repocheck.py
+    LOC: 192
+    LLOC: 72
+    SLOC: 117
+    Comments: 25
+    Single comments: 32
+    Multi: 10
+    Blank: 33
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 21%
+        (C + M % L): 18%
+modules/weko-items-ui/setup.py
+    LOC: 131
+    LLOC: 20
+    SLOC: 97
+    Comments: 20
+    Single comments: 21
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 15%
+        (C % S): 21%
+        (C + M % L): 15%
+modules/weko-items-ui/weko_items_ui/config.py
+    LOC: 190
+    LLOC: 85
+    SLOC: 102
+    Comments: 19
+    Single comments: 42
+    Multi: 0
+    Blank: 46
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 19%
+        (C + M % L): 10%
+modules/weko-items-ui/weko_items_ui/version.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 19
+    Single comments: 19
+    Multi: 4
+    Blank: 3
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1900%
+        (C + M % L): 85%
+modules/weko-items-ui/weko_items_ui/bundles.py
+    LOC: 88
+    LLOC: 14
+    SLOC: 56
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 12
+    - Comment Stats
+        (C % L): 22%
+        (C % S): 34%
+        (C + M % L): 22%
+modules/weko-items-ui/weko_items_ui/__init__.py
+    LOC: 27
+    LLOC: 5
+    SLOC: 4
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 475%
+        (C + M % L): 70%
+modules/weko-items-ui/weko_items_ui/api.py
+    LOC: 87
+    LLOC: 51
+    SLOC: 58
+    Comments: 14
+    Single comments: 15
+    Multi: 3
+    Blank: 11
+    - Comment Stats
+        (C % L): 16%
+        (C % S): 24%
+        (C + M % L): 20%
+modules/weko-items-ui/weko_items_ui/utils.py
+    LOC: 3066
+    LLOC: 1860
+    SLOC: 2200
+    Comments: 66
+    Single comments: 92
+    Multi: 373
+    Blank: 401
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 3%
+        (C + M % L): 14%
+modules/weko-items-ui/weko_items_ui/proxies.py
+    LOC: 28
+    LLOC: 6
+    SLOC: 4
+    Comments: 19
+    Single comments: 21
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 68%
+        (C % S): 475%
+        (C + M % L): 68%
+modules/weko-items-ui/weko_items_ui/permissions.py
+    LOC: 34
+    LLOC: 11
+    SLOC: 8
+    Comments: 19
+    Single comments: 21
+    Multi: 0
+    Blank: 5
+    - Comment Stats
+        (C % L): 56%
+        (C % S): 238%
+        (C + M % L): 56%
+modules/weko-items-ui/weko_items_ui/views.py
+    LOC: 1149
+    LLOC: 620
+    SLOC: 832
+    Comments: 36
+    Single comments: 49
+    Multi: 110
+    Blank: 158
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 4%
+        (C + M % L): 13%
+modules/weko-items-ui/weko_items_ui/ext.py
+    LOC: 76
+    LLOC: 30
+    SLOC: 26
+    Comments: 20
+    Single comments: 23
+    Multi: 13
+    Blank: 14
+    - Comment Stats
+        (C % L): 26%
+        (C % S): 77%
+        (C + M % L): 43%
+modules/invenio-files-rest/setup.py
+    LOC: 169
+    LLOC: 22
+    SLOC: 146
+    Comments: 12
+    Single comments: 9
+    Multi: 0
+    Blank: 14
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 8%
+        (C + M % L): 7%
+modules/invenio-files-rest/invenio_files_rest/signals.py
+    LOC: 22
+    LLOC: 7
+    SLOC: 5
+    Comments: 7
+    Single comments: 8
+    Multi: 3
+    Blank: 6
+    - Comment Stats
+        (C % L): 32%
+        (C % S): 140%
+        (C + M % L): 45%
+modules/invenio-files-rest/invenio_files_rest/tasks.py
+    LOC: 314
+    LLOC: 156
+    SLOC: 189
+    Comments: 21
+    Single comments: 27
+    Multi: 50
+    Blank: 48
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 11%
+        (C + M % L): 23%
+modules/invenio-files-rest/invenio_files_rest/config.py
+    LOC: 142
+    LLOC: 58
+    SLOC: 43
+    Comments: 10
+    Single comments: 30
+    Multi: 32
+    Blank: 37
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 23%
+        (C + M % L): 30%
+modules/invenio-files-rest/invenio_files_rest/version.py
+    LOC: 17
+    LLOC: 3
+    SLOC: 2
+    Comments: 7
+    Single comments: 7
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 41%
+        (C % S): 350%
+        (C + M % L): 65%
+modules/invenio-files-rest/invenio_files_rest/models.py
+    LOC: 1907
+    LLOC: 901
+    SLOC: 1026
+    Comments: 37
+    Single comments: 160
+    Multi: 354
+    Blank: 367
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 4%
+        (C + M % L): 21%
+modules/invenio-files-rest/invenio_files_rest/__init__.py
+    LOC: 17
+    LLOC: 6
+    SLOC: 5
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 41%
+        (C % S): 140%
+        (C + M % L): 41%
+modules/invenio-files-rest/invenio_files_rest/formparser.py
+    LOC: 49
+    LLOC: 20
+    SLOC: 20
+    Comments: 9
+    Single comments: 11
+    Multi: 8
+    Blank: 10
+    - Comment Stats
+        (C % L): 18%
+        (C % S): 45%
+        (C + M % L): 35%
+modules/invenio-files-rest/invenio_files_rest/api.py
+    LOC: 54
+    LLOC: 23
+    SLOC: 28
+    Comments: 18
+    Single comments: 20
+    Multi: 0
+    Blank: 6
+    - Comment Stats
+        (C % L): 33%
+        (C % S): 64%
+        (C + M % L): 33%
+modules/invenio-files-rest/invenio_files_rest/admin.py
+    LOC: 317
+    LLOC: 157
+    SLOC: 263
+    Comments: 11
+    Single comments: 21
+    Multi: 0
+    Blank: 33
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 4%
+        (C + M % L): 3%
+modules/invenio-files-rest/invenio_files_rest/cli.py
+    LOC: 70
+    LLOC: 44
+    SLOC: 40
+    Comments: 10
+    Single comments: 16
+    Multi: 0
+    Blank: 14
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 25%
+        (C + M % L): 14%
+modules/invenio-files-rest/invenio_files_rest/utils.py
+    LOC: 136
+    LLOC: 77
+    SLOC: 83
+    Comments: 7
+    Single comments: 12
+    Multi: 15
+    Blank: 26
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 8%
+        (C + M % L): 16%
+modules/invenio-files-rest/invenio_files_rest/wrappers.py
+    LOC: 21
+    LLOC: 7
+    SLOC: 5
+    Comments: 7
+    Single comments: 9
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 33%
+        (C % S): 140%
+        (C + M % L): 33%
+modules/invenio-files-rest/invenio_files_rest/proxies.py
+    LOC: 22
+    LLOC: 10
+    SLOC: 7
+    Comments: 7
+    Single comments: 10
+    Multi: 0
+    Blank: 5
+    - Comment Stats
+        (C % L): 32%
+        (C % S): 100%
+        (C + M % L): 32%
+modules/invenio-files-rest/invenio_files_rest/app.py
+    LOC: 34
+    LLOC: 7
+    SLOC: 5
+    Comments: 7
+    Single comments: 8
+    Multi: 12
+    Blank: 9
+    - Comment Stats
+        (C % L): 21%
+        (C % S): 140%
+        (C + M % L): 56%
+modules/invenio-files-rest/invenio_files_rest/permissions.py
+    LOC: 159
+    LLOC: 80
+    SLOC: 69
+    Comments: 13
+    Single comments: 37
+    Multi: 13
+    Blank: 40
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 19%
+        (C + M % L): 16%
+modules/invenio-files-rest/invenio_files_rest/serializer.py
+    LOC: 366
+    LLOC: 180
+    SLOC: 248
+    Comments: 12
+    Single comments: 26
+    Multi: 29
+    Blank: 63
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 5%
+        (C + M % L): 11%
+modules/invenio-files-rest/invenio_files_rest/errors.py
+    LOC: 166
+    LLOC: 90
+    SLOC: 65
+    Comments: 7
+    Single comments: 31
+    Multi: 3
+    Blank: 67
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 11%
+        (C + M % L): 6%
+modules/invenio-files-rest/invenio_files_rest/helpers.py
+    LOC: 294
+    LLOC: 124
+    SLOC: 146
+    Comments: 28
+    Single comments: 30
+    Multi: 70
+    Blank: 48
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 19%
+        (C + M % L): 33%
+modules/invenio-files-rest/invenio_files_rest/limiters.py
+    LOC: 73
+    LLOC: 33
+    SLOC: 37
+    Comments: 7
+    Single comments: 12
+    Multi: 11
+    Blank: 13
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 19%
+        (C + M % L): 25%
+modules/invenio-files-rest/invenio_files_rest/views.py
+    LOC: 1075
+    LLOC: 418
+    SLOC: 696
+    Comments: 65
+    Single comments: 81
+    Multi: 162
+    Blank: 136
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 9%
+        (C + M % L): 21%
+modules/invenio-files-rest/invenio_files_rest/ext.py
+    LOC: 126
+    LLOC: 73
+    SLOC: 72
+    Comments: 7
+    Single comments: 21
+    Multi: 10
+    Blank: 23
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 10%
+        (C + M % L): 13%
+modules/invenio-files-rest/invenio_files_rest/storage/pyfs.py
+    LOC: 236
+    LLOC: 141
+    SLOC: 146
+    Comments: 15
+    Single comments: 25
+    Multi: 20
+    Blank: 45
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 10%
+        (C + M % L): 15%
+modules/invenio-files-rest/invenio_files_rest/storage/__init__.py
+    LOC: 20
+    LLOC: 5
+    SLOC: 8
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 35%
+        (C % S): 88%
+        (C + M % L): 35%
+modules/invenio-files-rest/invenio_files_rest/storage/base.py
+    LOC: 227
+    LLOC: 106
+    SLOC: 121
+    Comments: 16
+    Single comments: 25
+    Multi: 38
+    Blank: 43
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 13%
+        (C + M % L): 24%
+modules/invenio-files-rest/invenio_files_rest/alembic/52ce868f33c3_create_files_rest_branch.py
+    LOC: 26
+    LLOC: 11
+    SLOC: 8
+    Comments: 8
+    Single comments: 11
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 31%
+        (C % S): 100%
+        (C + M % L): 31%
+modules/invenio-files-rest/invenio_files_rest/alembic/8ae99b034410_create_files_objecttags_table.py
+    LOC: 81
+    LLOC: 27
+    SLOC: 59
+    Comments: 12
+    Single comments: 15
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 15%
+        (C % S): 20%
+        (C + M % L): 15%
+modules/invenio-files-rest/invenio_files_rest/alembic/2e97565eba72_create_files_rest_tables.py
+    LOC: 226
+    LLOC: 41
+    SLOC: 199
+    Comments: 9
+    Single comments: 16
+    Multi: 0
+    Blank: 11
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 5%
+        (C + M % L): 4%
+modules/invenio-files-rest/invenio_files_rest/alembic/f741aa746a7d_alter_files_files_last_check_column_to_.py
+    LOC: 30
+    LLOC: 13
+    SLOC: 12
+    Comments: 8
+    Single comments: 11
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 27%
+        (C % S): 67%
+        (C + M % L): 27%
+modules/weko-plugins/setup.py
+    LOC: 112
+    LLOC: 20
+    SLOC: 78
+    Comments: 20
+    Single comments: 21
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 18%
+        (C % S): 26%
+        (C + M % L): 18%
+modules/weko-plugins/misc/header.py
+    LOC: 19
+    LLOC: 0
+    SLOC: 0
+    Comments: 19
+    Single comments: 19
+    Multi: 0
+    Blank: 0
+    - Comment Stats
+        (C % L): 100%
+        (C % S): 1900%
+        (C + M % L): 100%
+modules/weko-plugins/weko_plugins/config.py
+    LOC: 24
+    LLOC: 3
+    SLOC: 1
+    Comments: 19
+    Single comments: 21
+    Multi: 0
+    Blank: 2
+    - Comment Stats
+        (C % L): 79%
+        (C % S): 1900%
+        (C + M % L): 79%
+modules/weko-plugins/weko_plugins/version.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 19
+    Single comments: 19
+    Multi: 4
+    Blank: 3
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1900%
+        (C + M % L): 85%
+modules/weko-plugins/weko_plugins/__init__.py
+    LOC: 26
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/weko-plugins/weko_plugins/admin.py
+    LOC: 139
+    LLOC: 52
+    SLOC: 64
+    Comments: 21
+    Single comments: 22
+    Multi: 28
+    Blank: 25
+    - Comment Stats
+        (C % L): 15%
+        (C % S): 33%
+        (C + M % L): 35%
+modules/weko-plugins/weko_plugins/proxies.py
+    LOC: 26
+    LLOC: 5
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/weko-plugins/weko_plugins/views.py
+    LOC: 58
+    LLOC: 14
+    SLOC: 23
+    Comments: 19
+    Single comments: 21
+    Multi: 5
+    Blank: 9
+    - Comment Stats
+        (C % L): 33%
+        (C % S): 83%
+        (C + M % L): 41%
+modules/weko-plugins/weko_plugins/ext.py
+    LOC: 90
+    LLOC: 40
+    SLOC: 38
+    Comments: 21
+    Single comments: 23
+    Multi: 13
+    Blank: 16
+    - Comment Stats
+        (C % L): 23%
+        (C % S): 55%
+        (C + M % L): 38%
+modules/weko-groups/setup.py
+    LOC: 144
+    LLOC: 24
+    SLOC: 109
+    Comments: 20
+    Single comments: 21
+    Multi: 0
+    Blank: 14
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 18%
+        (C + M % L): 14%
+modules/weko-groups/weko_groups/version.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 19
+    Single comments: 19
+    Multi: 4
+    Blank: 3
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1900%
+        (C + M % L): 85%
+modules/weko-groups/weko_groups/models.py
+    LOC: 947
+    LLOC: 423
+    SLOC: 465
+    Comments: 34
+    Single comments: 80
+    Multi: 222
+    Blank: 180
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 7%
+        (C + M % L): 27%
+modules/weko-groups/weko_groups/bundles.py
+    LOC: 36
+    LLOC: 5
+    SLOC: 12
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 53%
+        (C % S): 158%
+        (C + M % L): 53%
+modules/weko-groups/weko_groups/__init__.py
+    LOC: 27
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 633%
+        (C + M % L): 70%
+modules/weko-groups/weko_groups/widgets.py
+    LOC: 47
+    LLOC: 20
+    SLOC: 18
+    Comments: 19
+    Single comments: 23
+    Multi: 0
+    Blank: 6
+    - Comment Stats
+        (C % L): 40%
+        (C % S): 106%
+        (C + M % L): 40%
+modules/weko-groups/weko_groups/forms.py
+    LOC: 92
+    LLOC: 39
+    SLOC: 41
+    Comments: 19
+    Single comments: 24
+    Multi: 9
+    Blank: 18
+    - Comment Stats
+        (C % L): 21%
+        (C % S): 46%
+        (C + M % L): 30%
+modules/weko-groups/weko_groups/api.py
+    LOC: 27
+    LLOC: 3
+    SLOC: 4
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 475%
+        (C + M % L): 70%
+modules/weko-groups/weko_groups/views.py
+    LOC: 544
+    LLOC: 241
+    SLOC: 355
+    Comments: 22
+    Single comments: 27
+    Multi: 69
+    Blank: 93
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 6%
+        (C + M % L): 17%
+modules/weko-groups/weko_groups/ext.py
+    LOC: 58
+    LLOC: 16
+    SLOC: 14
+    Comments: 19
+    Single comments: 21
+    Multi: 12
+    Blank: 11
+    - Comment Stats
+        (C % L): 33%
+        (C % S): 136%
+        (C + M % L): 53%
+modules/weko-bulkupdate/setup.py
+    LOC: 109
+    LLOC: 20
+    SLOC: 88
+    Comments: 18
+    Single comments: 8
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 17%
+        (C % S): 20%
+        (C + M % L): 17%
+modules/weko-bulkupdate/weko_bulkupdate/config.py
+    LOC: 17
+    LLOC: 5
+    SLOC: 2
+    Comments: 8
+    Single comments: 11
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 47%
+        (C % S): 400%
+        (C + M % L): 47%
+modules/weko-bulkupdate/weko_bulkupdate/version.py
+    LOC: 16
+    LLOC: 3
+    SLOC: 2
+    Comments: 6
+    Single comments: 6
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 38%
+        (C % S): 300%
+        (C + M % L): 62%
+modules/weko-bulkupdate/weko_bulkupdate/__init__.py
+    LOC: 15
+    LLOC: 5
+    SLOC: 4
+    Comments: 6
+    Single comments: 7
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 40%
+        (C % S): 150%
+        (C + M % L): 40%
+modules/weko-bulkupdate/weko_bulkupdate/views.py
+    LOC: 32
+    LLOC: 9
+    SLOC: 15
+    Comments: 8
+    Single comments: 10
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 25%
+        (C % S): 53%
+        (C + M % L): 25%
+modules/weko-bulkupdate/weko_bulkupdate/ext.py
+    LOC: 44
+    LLOC: 22
+    SLOC: 20
+    Comments: 10
+    Single comments: 15
+    Multi: 0
+    Blank: 9
+    - Comment Stats
+        (C % L): 23%
+        (C % S): 50%
+        (C + M % L): 23%
+modules/invenio-db/setup.py
+    LOC: 111
+    LLOC: 20
+    SLOC: 90
+    Comments: 8
+    Single comments: 9
+    Multi: 0
+    Blank: 12
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 9%
+        (C + M % L): 7%
+modules/invenio-db/invenio_db/config.py
+    LOC: 17
+    LLOC: 6
+    SLOC: 3
+    Comments: 7
+    Single comments: 10
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 41%
+        (C % S): 233%
+        (C + M % L): 41%
+modules/invenio-db/invenio_db/version.py
+    LOC: 17
+    LLOC: 3
+    SLOC: 2
+    Comments: 7
+    Single comments: 7
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 41%
+        (C % S): 350%
+        (C + M % L): 65%
+modules/invenio-db/invenio_db/__init__.py
+    LOC: 101
+    LLOC: 6
+    SLOC: 9
+    Comments: 7
+    Single comments: 7
+    Multi: 62
+    Blank: 23
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 78%
+        (C + M % L): 68%
+modules/invenio-db/invenio_db/shared.py
+    LOC: 136
+    LLOC: 66
+    SLOC: 65
+    Comments: 15
+    Single comments: 21
+    Multi: 19
+    Blank: 31
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 23%
+        (C + M % L): 25%
+modules/invenio-db/invenio_db/cli.py
+    LOC: 105
+    LLOC: 68
+    SLOC: 68
+    Comments: 12
+    Single comments: 18
+    Multi: 0
+    Blank: 19
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 18%
+        (C + M % L): 11%
+modules/invenio-db/invenio_db/utils.py
+    LOC: 91
+    LLOC: 57
+    SLOC: 56
+    Comments: 8
+    Single comments: 13
+    Multi: 5
+    Blank: 17
+    - Comment Stats
+        (C % L): 9%
+        (C % S): 14%
+        (C + M % L): 14%
+modules/invenio-db/invenio_db/ext.py
+    LOC: 150
+    LLOC: 83
+    SLOC: 99
+    Comments: 20
+    Single comments: 24
+    Multi: 0
+    Blank: 27
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 20%
+        (C + M % L): 13%
+modules/invenio-db/invenio_db/alembic/dbdbc1b19cf2_create_transaction_table.py
+    LOC: 39
+    LLOC: 19
+    SLOC: 21
+    Comments: 8
+    Single comments: 11
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 21%
+        (C % S): 38%
+        (C + M % L): 21%
+modules/invenio-db/invenio_db/alembic/96e796392533_create_database_migrations.py
+    LOC: 26
+    LLOC: 11
+    SLOC: 8
+    Comments: 8
+    Single comments: 11
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 31%
+        (C % S): 100%
+        (C + M % L): 31%
+modules/invenio-db/invenio_db/alembic/35c1075e6360_force_naming_convention.py
+    LOC: 102
+    LLOC: 61
+    SLOC: 75
+    Comments: 11
+    Single comments: 14
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 15%
+        (C + M % L): 11%
+modules/invenio-deposit/setup.py
+    LOC: 180
+    LLOC: 22
+    SLOC: 140
+    Comments: 25
+    Single comments: 25
+    Multi: 0
+    Blank: 15
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 18%
+        (C + M % L): 14%
+modules/invenio-deposit/invenio_deposit/scopes.py
+    LOC: 50
+    LLOC: 13
+    SLOC: 13
+    Comments: 23
+    Single comments: 28
+    Multi: 0
+    Blank: 9
+    - Comment Stats
+        (C % L): 46%
+        (C % S): 177%
+        (C + M % L): 46%
+modules/invenio-deposit/invenio_deposit/receivers.py
+    LOC: 44
+    LLOC: 8
+    SLOC: 6
+    Comments: 23
+    Single comments: 24
+    Multi: 7
+    Blank: 7
+    - Comment Stats
+        (C % L): 52%
+        (C % S): 383%
+        (C + M % L): 68%
+modules/invenio-deposit/invenio_deposit/signals.py
+    LOC: 52
+    LLOC: 5
+    SLOC: 3
+    Comments: 23
+    Single comments: 24
+    Multi: 13
+    Blank: 12
+    - Comment Stats
+        (C % L): 44%
+        (C % S): 767%
+        (C + M % L): 69%
+modules/invenio-deposit/invenio_deposit/config.py
+    LOC: 225
+    LLOC: 61
+    SLOC: 116
+    Comments: 23
+    Single comments: 44
+    Multi: 32
+    Blank: 33
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 20%
+        (C + M % L): 24%
+modules/invenio-deposit/invenio_deposit/version.py
+    LOC: 33
+    LLOC: 3
+    SLOC: 2
+    Comments: 23
+    Single comments: 23
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1150%
+        (C + M % L): 82%
+modules/invenio-deposit/invenio_deposit/fetchers.py
+    LOC: 46
+    LLOC: 7
+    SLOC: 9
+    Comments: 23
+    Single comments: 24
+    Multi: 6
+    Blank: 7
+    - Comment Stats
+        (C % L): 50%
+        (C % S): 256%
+        (C + M % L): 63%
+modules/invenio-deposit/invenio_deposit/bundles.py
+    LOC: 139
+    LLOC: 20
+    SLOC: 103
+    Comments: 24
+    Single comments: 24
+    Multi: 0
+    Blank: 12
+    - Comment Stats
+        (C % L): 17%
+        (C % S): 23%
+        (C + M % L): 17%
+modules/invenio-deposit/invenio_deposit/serializers.py
+    LOC: 110
+    LLOC: 30
+    SLOC: 30
+    Comments: 23
+    Single comments: 25
+    Multi: 34
+    Blank: 21
+    - Comment Stats
+        (C % L): 21%
+        (C % S): 77%
+        (C + M % L): 52%
+modules/invenio-deposit/invenio_deposit/__init__.py
+    LOC: 32
+    LLOC: 5
+    SLOC: 4
+    Comments: 23
+    Single comments: 24
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 72%
+        (C % S): 575%
+        (C + M % L): 72%
+modules/invenio-deposit/invenio_deposit/links.py
+    LOC: 80
+    LLOC: 23
+    SLOC: 28
+    Comments: 23
+    Single comments: 25
+    Multi: 13
+    Blank: 14
+    - Comment Stats
+        (C % L): 29%
+        (C % S): 82%
+        (C + M % L): 45%
+modules/invenio-deposit/invenio_deposit/api.py
+    LOC: 549
+    LLOC: 280
+    SLOC: 272
+    Comments: 28
+    Single comments: 45
+    Multi: 114
+    Blank: 118
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 10%
+        (C + M % L): 26%
+modules/invenio-deposit/invenio_deposit/providers.py
+    LOC: 60
+    LLOC: 18
+    SLOC: 13
+    Comments: 23
+    Single comments: 27
+    Multi: 9
+    Blank: 11
+    - Comment Stats
+        (C % L): 38%
+        (C % S): 177%
+        (C + M % L): 53%
+modules/invenio-deposit/invenio_deposit/cli.py
+    LOC: 112
+    LLOC: 48
+    SLOC: 47
+    Comments: 27
+    Single comments: 34
+    Multi: 9
+    Blank: 22
+    - Comment Stats
+        (C % L): 24%
+        (C % S): 57%
+        (C + M % L): 32%
+modules/invenio-deposit/invenio_deposit/utils.py
+    LOC: 117
+    LLOC: 35
+    SLOC: 27
+    Comments: 23
+    Single comments: 25
+    Multi: 38
+    Blank: 27
+    - Comment Stats
+        (C % L): 20%
+        (C % S): 85%
+        (C + M % L): 52%
+modules/invenio-deposit/invenio_deposit/proxies.py
+    LOC: 34
+    LLOC: 7
+    SLOC: 6
+    Comments: 22
+    Single comments: 24
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 65%
+        (C % S): 367%
+        (C + M % L): 65%
+modules/invenio-deposit/invenio_deposit/permissions.py
+    LOC: 48
+    LLOC: 12
+    SLOC: 10
+    Comments: 23
+    Single comments: 24
+    Multi: 6
+    Blank: 8
+    - Comment Stats
+        (C % L): 48%
+        (C % S): 230%
+        (C + M % L): 60%
+modules/invenio-deposit/invenio_deposit/search.py
+    LOC: 68
+    LLOC: 24
+    SLOC: 22
+    Comments: 23
+    Single comments: 26
+    Multi: 7
+    Blank: 13
+    - Comment Stats
+        (C % L): 34%
+        (C % S): 105%
+        (C + M % L): 44%
+modules/invenio-deposit/invenio_deposit/errors.py
+    LOC: 50
+    LLOC: 15
+    SLOC: 11
+    Comments: 23
+    Single comments: 27
+    Multi: 0
+    Blank: 12
+    - Comment Stats
+        (C % L): 46%
+        (C % S): 209%
+        (C + M % L): 46%
+modules/invenio-deposit/invenio_deposit/minters.py
+    LOC: 70
+    LLOC: 10
+    SLOC: 14
+    Comments: 23
+    Single comments: 24
+    Multi: 19
+    Blank: 13
+    - Comment Stats
+        (C % L): 33%
+        (C % S): 164%
+        (C + M % L): 60%
+modules/invenio-deposit/invenio_deposit/ext.py
+    LOC: 171
+    LLOC: 75
+    SLOC: 88
+    Comments: 26
+    Single comments: 35
+    Multi: 19
+    Blank: 29
+    - Comment Stats
+        (C % L): 15%
+        (C % S): 30%
+        (C + M % L): 26%
+modules/invenio-deposit/invenio_deposit/jsonschemas/__init__.py
+    LOC: 25
+    LLOC: 1
+    SLOC: 0
+    Comments: 23
+    Single comments: 24
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 92%
+        (C % S): 2300%
+        (C + M % L): 92%
+modules/invenio-deposit/invenio_deposit/mappings/__init__.py
+    LOC: 25
+    LLOC: 1
+    SLOC: 0
+    Comments: 23
+    Single comments: 24
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 92%
+        (C % S): 2300%
+        (C + M % L): 92%
+modules/invenio-deposit/invenio_deposit/mappings/v6/__init__.py
+    LOC: 25
+    LLOC: 1
+    SLOC: 0
+    Comments: 23
+    Single comments: 24
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 92%
+        (C % S): 2300%
+        (C + M % L): 92%
+modules/invenio-deposit/invenio_deposit/mappings/v2/__init__.py
+    LOC: 25
+    LLOC: 1
+    SLOC: 0
+    Comments: 23
+    Single comments: 24
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 92%
+        (C % S): 2300%
+        (C + M % L): 92%
+modules/invenio-deposit/invenio_deposit/mappings/v5/__init__.py
+    LOC: 25
+    LLOC: 1
+    SLOC: 0
+    Comments: 23
+    Single comments: 24
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 92%
+        (C % S): 2300%
+        (C + M % L): 92%
+modules/invenio-deposit/invenio_deposit/views/ui.py
+    LOC: 112
+    LLOC: 39
+    SLOC: 57
+    Comments: 23
+    Single comments: 27
+    Multi: 8
+    Blank: 20
+    - Comment Stats
+        (C % L): 21%
+        (C % S): 40%
+        (C + M % L): 28%
+modules/invenio-deposit/invenio_deposit/views/rest.py
+    LOC: 425
+    LLOC: 186
+    SLOC: 256
+    Comments: 30
+    Single comments: 39
+    Multi: 62
+    Blank: 68
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 12%
+        (C + M % L): 22%
+modules/invenio-deposit/invenio_deposit/views/__init__.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 23
+    Single comments: 24
+    Multi: 0
+    Blank: 2
+    - Comment Stats
+        (C % L): 85%
+        (C % S): 2300%
+        (C + M % L): 85%
+modules/invenio-accounts/setup.py
+    LOC: 163
+    LLOC: 24
+    SLOC: 142
+    Comments: 10
+    Single comments: 9
+    Multi: 0
+    Blank: 12
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 7%
+        (C + M % L): 6%
+modules/invenio-accounts/invenio_accounts/sessions.py
+    LOC: 158
+    LLOC: 69
+    SLOC: 70
+    Comments: 12
+    Single comments: 14
+    Multi: 38
+    Blank: 36
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 17%
+        (C + M % L): 32%
+modules/invenio-accounts/invenio_accounts/tasks.py
+    LOC: 57
+    LLOC: 22
+    SLOC: 19
+    Comments: 7
+    Single comments: 8
+    Multi: 17
+    Blank: 13
+    - Comment Stats
+        (C % L): 12%
+        (C % S): 37%
+        (C + M % L): 42%
+modules/invenio-accounts/invenio_accounts/config.py
+    LOC: 225
+    LLOC: 88
+    SLOC: 45
+    Comments: 10
+    Single comments: 41
+    Multi: 70
+    Blank: 69
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 22%
+        (C + M % L): 36%
+modules/invenio-accounts/invenio_accounts/version.py
+    LOC: 17
+    LLOC: 3
+    SLOC: 2
+    Comments: 7
+    Single comments: 7
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 41%
+        (C % S): 350%
+        (C + M % L): 65%
+modules/invenio-accounts/invenio_accounts/models.py
+    LOC: 155
+    LLOC: 88
+    SLOC: 65
+    Comments: 11
+    Single comments: 39
+    Multi: 7
+    Blank: 44
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 17%
+        (C + M % L): 12%
+modules/invenio-accounts/invenio_accounts/testutils.py
+    LOC: 130
+    LLOC: 46
+    SLOC: 43
+    Comments: 11
+    Single comments: 11
+    Multi: 47
+    Blank: 29
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 26%
+        (C + M % L): 45%
+modules/invenio-accounts/invenio_accounts/__init__.py
+    LOC: 48
+    LLOC: 6
+    SLOC: 11
+    Comments: 7
+    Single comments: 7
+    Multi: 18
+    Blank: 12
+    - Comment Stats
+        (C % L): 15%
+        (C % S): 64%
+        (C + M % L): 52%
+modules/invenio-accounts/invenio_accounts/hash.py
+    LOC: 134
+    LLOC: 71
+    SLOC: 61
+    Comments: 7
+    Single comments: 16
+    Multi: 25
+    Blank: 32
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 11%
+        (C + M % L): 24%
+modules/invenio-accounts/invenio_accounts/forms.py
+    LOC: 69
+    LLOC: 32
+    SLOC: 28
+    Comments: 7
+    Single comments: 12
+    Multi: 7
+    Blank: 22
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 25%
+        (C + M % L): 20%
+modules/invenio-accounts/invenio_accounts/admin.py
+    LOC: 239
+    LLOC: 135
+    SLOC: 178
+    Comments: 11
+    Single comments: 17
+    Multi: 0
+    Blank: 44
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 6%
+        (C + M % L): 5%
+modules/invenio-accounts/invenio_accounts/cli.py
+    LOC: 144
+    LLOC: 111
+    SLOC: 102
+    Comments: 7
+    Single comments: 17
+    Multi: 0
+    Blank: 25
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 7%
+        (C + M % L): 5%
+modules/invenio-accounts/invenio_accounts/utils.py
+    LOC: 87
+    LLOC: 33
+    SLOC: 42
+    Comments: 12
+    Single comments: 14
+    Multi: 16
+    Blank: 15
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 29%
+        (C + M % L): 32%
+modules/invenio-accounts/invenio_accounts/proxies.py
+    LOC: 17
+    LLOC: 6
+    SLOC: 5
+    Comments: 7
+    Single comments: 9
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 41%
+        (C % S): 140%
+        (C + M % L): 41%
+modules/invenio-accounts/invenio_accounts/errors.py
+    LOC: 21
+    LLOC: 7
+    SLOC: 3
+    Comments: 7
+    Single comments: 11
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 33%
+        (C % S): 233%
+        (C + M % L): 33%
+modules/invenio-accounts/invenio_accounts/datastore.py
+    LOC: 31
+    LLOC: 12
+    SLOC: 10
+    Comments: 7
+    Single comments: 9
+    Multi: 4
+    Blank: 8
+    - Comment Stats
+        (C % L): 23%
+        (C % S): 70%
+        (C + M % L): 35%
+modules/invenio-accounts/invenio_accounts/ext.py
+    LOC: 321
+    LLOC: 143
+    SLOC: 160
+    Comments: 25
+    Single comments: 32
+    Multi: 60
+    Blank: 69
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 16%
+        (C + M % L): 26%
+modules/invenio-accounts/invenio_accounts/context_processors/__init__.py
+    LOC: 11
+    LLOC: 2
+    SLOC: 1
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 2
+    - Comment Stats
+        (C % L): 64%
+        (C % S): 700%
+        (C + M % L): 64%
+modules/invenio-accounts/invenio_accounts/context_processors/jwt.py
+    LOC: 36
+    LLOC: 15
+    SLOC: 18
+    Comments: 7
+    Single comments: 11
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 19%
+        (C % S): 39%
+        (C + M % L): 19%
+modules/invenio-accounts/invenio_accounts/alembic/e12419831262_add_new_columns_on_sessionactivity.py
+    LOC: 45
+    LLOC: 25
+    SLOC: 27
+    Comments: 8
+    Single comments: 11
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 18%
+        (C % S): 30%
+        (C + M % L): 18%
+modules/invenio-accounts/invenio_accounts/alembic/843bc79c426f_create_accounts_branch.py
+    LOC: 26
+    LLOC: 11
+    SLOC: 8
+    Comments: 8
+    Single comments: 11
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 31%
+        (C % S): 100%
+        (C + M % L): 31%
+modules/invenio-accounts/invenio_accounts/alembic/9848d0149abd_create_accounts_tables.py
+    LOC: 106
+    LLOC: 32
+    SLOC: 86
+    Comments: 8
+    Single comments: 11
+    Multi: 0
+    Blank: 9
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 9%
+        (C + M % L): 8%
+modules/invenio-accounts/invenio_accounts/views/security.py
+    LOC: 71
+    LLOC: 40
+    SLOC: 50
+    Comments: 10
+    Single comments: 12
+    Multi: 0
+    Blank: 9
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 20%
+        (C + M % L): 14%
+modules/invenio-accounts/invenio_accounts/views/__init__.py
+    LOC: 13
+    LLOC: 3
+    SLOC: 2
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 54%
+        (C % S): 350%
+        (C + M % L): 54%
+modules/invenio-accounts/invenio_accounts/views/settings.py
+    LOC: 90
+    LLOC: 33
+    SLOC: 62
+    Comments: 11
+    Single comments: 14
+    Multi: 0
+    Blank: 14
+    - Comment Stats
+        (C % L): 12%
+        (C % S): 18%
+        (C + M % L): 12%
+modules/invenio-resourcesyncserver/setup.py
+    LOC: 131
+    LLOC: 20
+    SLOC: 109
+    Comments: 19
+    Single comments: 9
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 15%
+        (C % S): 17%
+        (C + M % L): 15%
+modules/invenio-resourcesyncserver/invenio_resourcesyncserver/config.py
+    LOC: 48
+    LLOC: 22
+    SLOC: 15
+    Comments: 9
+    Single comments: 20
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 19%
+        (C % S): 60%
+        (C + M % L): 19%
+modules/invenio-resourcesyncserver/invenio_resourcesyncserver/version.py
+    LOC: 17
+    LLOC: 3
+    SLOC: 2
+    Comments: 7
+    Single comments: 7
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 41%
+        (C % S): 350%
+        (C + M % L): 65%
+modules/invenio-resourcesyncserver/invenio_resourcesyncserver/models.py
+    LOC: 127
+    LLOC: 47
+    SLOC: 60
+    Comments: 19
+    Single comments: 34
+    Multi: 6
+    Blank: 27
+    - Comment Stats
+        (C % L): 15%
+        (C % S): 32%
+        (C + M % L): 20%
+modules/invenio-resourcesyncserver/invenio_resourcesyncserver/query.py
+    LOC: 330
+    LLOC: 110
+    SLOC: 264
+    Comments: 25
+    Single comments: 29
+    Multi: 11
+    Blank: 26
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 9%
+        (C + M % L): 11%
+modules/invenio-resourcesyncserver/invenio_resourcesyncserver/bundles.py
+    LOC: 45
+    LLOC: 6
+    SLOC: 19
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 6
+    - Comment Stats
+        (C % L): 42%
+        (C % S): 100%
+        (C + M % L): 42%
+modules/invenio-resourcesyncserver/invenio_resourcesyncserver/__init__.py
+    LOC: 16
+    LLOC: 5
+    SLOC: 4
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 44%
+        (C % S): 175%
+        (C + M % L): 44%
+modules/invenio-resourcesyncserver/invenio_resourcesyncserver/api.py
+    LOC: 1345
+    LLOC: 700
+    SLOC: 1042
+    Comments: 36
+    Single comments: 46
+    Multi: 141
+    Blank: 116
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 3%
+        (C + M % L): 13%
+modules/invenio-resourcesyncserver/invenio_resourcesyncserver/admin.py
+    LOC: 205
+    LLOC: 96
+    SLOC: 103
+    Comments: 19
+    Single comments: 22
+    Multi: 44
+    Blank: 36
+    - Comment Stats
+        (C % L): 9%
+        (C % S): 18%
+        (C + M % L): 31%
+modules/invenio-resourcesyncserver/invenio_resourcesyncserver/utils.py
+    LOC: 221
+    LLOC: 131
+    SLOC: 144
+    Comments: 21
+    Single comments: 28
+    Multi: 16
+    Blank: 33
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 15%
+        (C + M % L): 17%
+modules/invenio-resourcesyncserver/invenio_resourcesyncserver/views.py
+    LOC: 193
+    LLOC: 126
+    SLOC: 129
+    Comments: 12
+    Single comments: 27
+    Multi: 0
+    Blank: 37
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 9%
+        (C + M % L): 6%
+modules/invenio-resourcesyncserver/invenio_resourcesyncserver/ext.py
+    LOC: 45
+    LLOC: 22
+    SLOC: 20
+    Comments: 11
+    Single comments: 16
+    Multi: 0
+    Blank: 9
+    - Comment Stats
+        (C % L): 24%
+        (C % S): 55%
+        (C + M % L): 24%
+modules/weko-workflow/setup.py
+    LOC: 149
+    LLOC: 20
+    SLOC: 115
+    Comments: 20
+    Single comments: 21
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 17%
+        (C + M % L): 13%
+modules/weko-workflow/misc/header.py
+    LOC: 20
+    LLOC: 1
+    SLOC: 0
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 0
+    - Comment Stats
+        (C % L): 95%
+        (C % S): 1900%
+        (C + M % L): 95%
+modules/weko-workflow/weko_workflow/sessions.py
+    LOC: 47
+    LLOC: 14
+    SLOC: 13
+    Comments: 19
+    Single comments: 20
+    Multi: 7
+    Blank: 7
+    - Comment Stats
+        (C % L): 40%
+        (C % S): 146%
+        (C + M % L): 55%
+modules/weko-workflow/weko_workflow/romeo.py
+    LOC: 91
+    LLOC: 28
+    SLOC: 39
+    Comments: 21
+    Single comments: 21
+    Multi: 13
+    Blank: 18
+    - Comment Stats
+        (C % L): 23%
+        (C % S): 54%
+        (C + M % L): 37%
+modules/weko-workflow/weko_workflow/tasks.py
+    LOC: 33
+    LLOC: 9
+    SLOC: 7
+    Comments: 19
+    Single comments: 21
+    Multi: 0
+    Blank: 5
+    - Comment Stats
+        (C % L): 58%
+        (C % S): 271%
+        (C + M % L): 58%
+modules/weko-workflow/weko_workflow/config.py
+    LOC: 320
+    LLOC: 154
+    SLOC: 149
+    Comments: 19
+    Single comments: 86
+    Multi: 6
+    Blank: 79
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 13%
+        (C + M % L): 8%
+modules/weko-workflow/weko_workflow/version.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 19
+    Single comments: 19
+    Multi: 4
+    Blank: 3
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1900%
+        (C + M % L): 85%
+modules/weko-workflow/weko_workflow/models.py
+    LOC: 1171
+    LLOC: 492
+    SLOC: 646
+    Comments: 20
+    Single comments: 182
+    Multi: 81
+    Blank: 262
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 3%
+        (C + M % L): 9%
+modules/weko-workflow/weko_workflow/bundles.py
+    LOC: 93
+    LLOC: 14
+    SLOC: 59
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 14
+    - Comment Stats
+        (C % L): 20%
+        (C % S): 32%
+        (C + M % L): 20%
+modules/weko-workflow/weko_workflow/__init__.py
+    LOC: 26
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/weko-workflow/weko_workflow/api.py
+    LOC: 2680
+    LLOC: 1360
+    SLOC: 1897
+    Comments: 59
+    Single comments: 78
+    Multi: 426
+    Blank: 279
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 3%
+        (C + M % L): 18%
+modules/weko-workflow/weko_workflow/admin.py
+    LOC: 470
+    LLOC: 265
+    SLOC: 352
+    Comments: 19
+    Single comments: 29
+    Multi: 35
+    Blank: 54
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 5%
+        (C + M % L): 11%
+modules/weko-workflow/weko_workflow/cli.py
+    LOC: 308
+    LLOC: 97
+    SLOC: 267
+    Comments: 22
+    Single comments: 29
+    Multi: 0
+    Blank: 12
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 8%
+        (C + M % L): 7%
+modules/weko-workflow/weko_workflow/utils.py
+    LOC: 3850
+    LLOC: 2016
+    SLOC: 2618
+    Comments: 104
+    Single comments: 126
+    Multi: 561
+    Blank: 545
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 4%
+        (C + M % L): 17%
+modules/weko-workflow/weko_workflow/views.py
+    LOC: 1714
+    LLOC: 902
+    SLOC: 1415
+    Comments: 77
+    Single comments: 96
+    Multi: 32
+    Blank: 171
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 5%
+        (C + M % L): 6%
+modules/weko-workflow/weko_workflow/ext.py
+    LOC: 64
+    LLOC: 24
+    SLOC: 22
+    Comments: 20
+    Single comments: 22
+    Multi: 9
+    Blank: 11
+    - Comment Stats
+        (C % L): 31%
+        (C % S): 91%
+        (C + M % L): 45%
+modules/weko-gridlayout/setup.py
+    LOC: 149
+    LLOC: 20
+    SLOC: 128
+    Comments: 15
+    Single comments: 8
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 12%
+        (C + M % L): 10%
+modules/weko-gridlayout/weko_gridlayout/services.py
+    LOC: 1183
+    LLOC: 708
+    SLOC: 861
+    Comments: 44
+    Single comments: 42
+    Multi: 149
+    Blank: 131
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 5%
+        (C + M % L): 16%
+modules/weko-gridlayout/weko_gridlayout/config.py
+    LOC: 111
+    LLOC: 62
+    SLOC: 42
+    Comments: 7
+    Single comments: 37
+    Multi: 0
+    Blank: 32
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 17%
+        (C + M % L): 6%
+modules/weko-gridlayout/weko_gridlayout/version.py
+    LOC: 16
+    LLOC: 3
+    SLOC: 2
+    Comments: 6
+    Single comments: 6
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 38%
+        (C % S): 300%
+        (C + M % L): 62%
+modules/weko-gridlayout/weko_gridlayout/models.py
+    LOC: 735
+    LLOC: 392
+    SLOC: 430
+    Comments: 23
+    Single comments: 42
+    Multi: 138
+    Blank: 125
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 5%
+        (C + M % L): 22%
+modules/weko-gridlayout/weko_gridlayout/bundles.py
+    LOC: 113
+    LLOC: 16
+    SLOC: 78
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 15
+    - Comment Stats
+        (C % L): 17%
+        (C % S): 24%
+        (C + M % L): 17%
+modules/weko-gridlayout/weko_gridlayout/__init__.py
+    LOC: 15
+    LLOC: 5
+    SLOC: 4
+    Comments: 6
+    Single comments: 7
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 40%
+        (C % S): 150%
+        (C + M % L): 40%
+modules/weko-gridlayout/weko_gridlayout/api.py
+    LOC: 270
+    LLOC: 164
+    SLOC: 159
+    Comments: 19
+    Single comments: 22
+    Multi: 52
+    Blank: 37
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 12%
+        (C + M % L): 26%
+modules/weko-gridlayout/weko_gridlayout/admin.py
+    LOC: 502
+    LLOC: 222
+    SLOC: 355
+    Comments: 38
+    Single comments: 34
+    Multi: 27
+    Blank: 86
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 11%
+        (C + M % L): 13%
+modules/weko-gridlayout/weko_gridlayout/cli.py
+    LOC: 60
+    LLOC: 32
+    SLOC: 26
+    Comments: 19
+    Single comments: 24
+    Multi: 0
+    Blank: 10
+    - Comment Stats
+        (C % L): 32%
+        (C % S): 73%
+        (C + M % L): 32%
+modules/weko-gridlayout/weko_gridlayout/utils.py
+    LOC: 1081
+    LLOC: 609
+    SLOC: 691
+    Comments: 32
+    Single comments: 38
+    Multi: 181
+    Blank: 171
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 5%
+        (C + M % L): 20%
+modules/weko-gridlayout/weko_gridlayout/views.py
+    LOC: 546
+    LLOC: 282
+    SLOC: 338
+    Comments: 20
+    Single comments: 28
+    Multi: 82
+    Blank: 98
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 6%
+        (C + M % L): 19%
+modules/weko-gridlayout/weko_gridlayout/ext.py
+    LOC: 53
+    LLOC: 29
+    SLOC: 28
+    Comments: 9
+    Single comments: 13
+    Multi: 0
+    Blank: 12
+    - Comment Stats
+        (C % L): 17%
+        (C % S): 32%
+        (C + M % L): 17%
+modules/weko-deposit/setup.py
+    LOC: 120
+    LLOC: 20
+    SLOC: 86
+    Comments: 20
+    Single comments: 21
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 17%
+        (C % S): 23%
+        (C + M % L): 17%
+modules/weko-deposit/weko_deposit/receivers.py
+    LOC: 79
+    LLOC: 56
+    SLOC: 57
+    Comments: 10
+    Single comments: 12
+    Multi: 0
+    Blank: 10
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 18%
+        (C + M % L): 13%
+modules/weko-deposit/weko_deposit/signals.py
+    LOC: 30
+    LLOC: 4
+    SLOC: 3
+    Comments: 20
+    Single comments: 21
+    Multi: 0
+    Blank: 6
+    - Comment Stats
+        (C % L): 67%
+        (C % S): 667%
+        (C + M % L): 67%
+modules/weko-deposit/weko_deposit/tasks.py
+    LOC: 277
+    LLOC: 142
+    SLOC: 239
+    Comments: 20
+    Single comments: 22
+    Multi: 0
+    Blank: 16
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 8%
+        (C + M % L): 7%
+modules/weko-deposit/weko_deposit/config.py
+    LOC: 202
+    LLOC: 45
+    SLOC: 144
+    Comments: 28
+    Single comments: 35
+    Multi: 0
+    Blank: 23
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 19%
+        (C + M % L): 14%
+modules/weko-deposit/weko_deposit/version.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 19
+    Single comments: 19
+    Multi: 4
+    Blank: 3
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1900%
+        (C + M % L): 85%
+modules/weko-deposit/weko_deposit/rest.py
+    LOC: 277
+    LLOC: 129
+    SLOC: 195
+    Comments: 35
+    Single comments: 31
+    Multi: 12
+    Blank: 39
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 18%
+        (C + M % L): 17%
+modules/weko-deposit/weko_deposit/__init__.py
+    LOC: 26
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/weko-deposit/weko_deposit/links.py
+    LOC: 50
+    LLOC: 19
+    SLOC: 18
+    Comments: 19
+    Single comments: 22
+    Multi: 0
+    Blank: 10
+    - Comment Stats
+        (C % L): 38%
+        (C % S): 106%
+        (C + M % L): 38%
+modules/weko-deposit/weko_deposit/pidstore.py
+    LOC: 111
+    LLOC: 49
+    SLOC: 69
+    Comments: 20
+    Single comments: 26
+    Multi: 0
+    Blank: 16
+    - Comment Stats
+        (C % L): 18%
+        (C % S): 29%
+        (C + M % L): 18%
+modules/weko-deposit/weko_deposit/api.py
+    LOC: 2380
+    LLOC: 1506
+    SLOC: 1723
+    Comments: 96
+    Single comments: 151
+    Multi: 226
+    Blank: 280
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 6%
+        (C + M % L): 14%
+modules/weko-deposit/weko_deposit/storage.py
+    LOC: 123
+    LLOC: 62
+    SLOC: 63
+    Comments: 25
+    Single comments: 29
+    Multi: 11
+    Blank: 20
+    - Comment Stats
+        (C % L): 20%
+        (C % S): 40%
+        (C + M % L): 29%
+modules/weko-deposit/weko_deposit/serializer.py
+    LOC: 79
+    LLOC: 33
+    SLOC: 43
+    Comments: 21
+    Single comments: 22
+    Multi: 5
+    Blank: 9
+    - Comment Stats
+        (C % L): 27%
+        (C % S): 49%
+        (C + M % L): 33%
+modules/weko-deposit/weko_deposit/views.py
+    LOC: 30
+    LLOC: 3
+    SLOC: 7
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 63%
+        (C % S): 271%
+        (C + M % L): 63%
+modules/weko-deposit/weko_deposit/ext.py
+    LOC: 92
+    LLOC: 36
+    SLOC: 33
+    Comments: 20
+    Single comments: 23
+    Multi: 17
+    Blank: 19
+    - Comment Stats
+        (C % L): 22%
+        (C % S): 61%
+        (C + M % L): 40%
+modules/weko-theme/setup.py
+    LOC: 123
+    LLOC: 20
+    SLOC: 89
+    Comments: 20
+    Single comments: 21
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 16%
+        (C % S): 22%
+        (C + M % L): 16%
+modules/weko-theme/weko_theme/config.py
+    LOC: 476
+    LLOC: 50
+    SLOC: 401
+    Comments: 19
+    Single comments: 41
+    Multi: 6
+    Blank: 28
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 5%
+        (C + M % L): 5%
+modules/weko-theme/weko_theme/version.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 19
+    Single comments: 19
+    Multi: 4
+    Blank: 3
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1900%
+        (C + M % L): 85%
+modules/weko-theme/weko_theme/bundles.py
+    LOC: 118
+    LLOC: 18
+    SLOC: 67
+    Comments: 23
+    Single comments: 27
+    Multi: 8
+    Blank: 16
+    - Comment Stats
+        (C % L): 19%
+        (C % S): 34%
+        (C + M % L): 26%
+modules/weko-theme/weko_theme/__init__.py
+    LOC: 26
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/weko-theme/weko_theme/utils.py
+    LOC: 354
+    LLOC: 204
+    SLOC: 262
+    Comments: 33
+    Single comments: 36
+    Multi: 15
+    Blank: 41
+    - Comment Stats
+        (C % L): 9%
+        (C % S): 13%
+        (C + M % L): 14%
+modules/weko-theme/weko_theme/views.py
+    LOC: 149
+    LLOC: 61
+    SLOC: 95
+    Comments: 20
+    Single comments: 24
+    Multi: 7
+    Blank: 23
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 21%
+        (C + M % L): 18%
+modules/weko-theme/weko_theme/ext.py
+    LOC: 69
+    LLOC: 27
+    SLOC: 27
+    Comments: 19
+    Single comments: 21
+    Multi: 9
+    Blank: 12
+    - Comment Stats
+        (C % L): 28%
+        (C % S): 70%
+        (C + M % L): 41%
+modules/weko-authors/setup.py
+    LOC: 146
+    LLOC: 20
+    SLOC: 112
+    Comments: 20
+    Single comments: 21
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 18%
+        (C + M % L): 14%
+modules/weko-authors/weko_authors/tasks.py
+    LOC: 94
+    LLOC: 59
+    SLOC: 57
+    Comments: 19
+    Single comments: 23
+    Multi: 0
+    Blank: 14
+    - Comment Stats
+        (C % L): 20%
+        (C % S): 33%
+        (C + M % L): 20%
+modules/weko-authors/weko_authors/config.py
+    LOC: 214
+    LLOC: 38
+    SLOC: 162
+    Comments: 19
+    Single comments: 32
+    Multi: 0
+    Blank: 20
+    - Comment Stats
+        (C % L): 9%
+        (C % S): 12%
+        (C + M % L): 9%
+modules/weko-authors/weko_authors/version.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 19
+    Single comments: 19
+    Multi: 4
+    Blank: 3
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1900%
+        (C + M % L): 85%
+modules/weko-authors/weko_authors/models.py
+    LOC: 210
+    LLOC: 114
+    SLOC: 118
+    Comments: 20
+    Single comments: 35
+    Multi: 21
+    Blank: 36
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 17%
+        (C + M % L): 20%
+modules/weko-authors/weko_authors/bundles.py
+    LOC: 93
+    LLOC: 13
+    SLOC: 62
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 11
+    - Comment Stats
+        (C % L): 20%
+        (C % S): 31%
+        (C + M % L): 20%
+modules/weko-authors/weko_authors/__init__.py
+    LOC: 26
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/weko-authors/weko_authors/api.py
+    LOC: 282
+    LLOC: 174
+    SLOC: 222
+    Comments: 22
+    Single comments: 31
+    Multi: 0
+    Blank: 29
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 10%
+        (C + M % L): 8%
+modules/weko-authors/weko_authors/admin.py
+    LOC: 317
+    LLOC: 175
+    SLOC: 237
+    Comments: 28
+    Single comments: 39
+    Multi: 0
+    Blank: 41
+    - Comment Stats
+        (C % L): 9%
+        (C % S): 12%
+        (C + M % L): 9%
+modules/weko-authors/weko_authors/utils.py
+    LOC: 564
+    LLOC: 319
+    SLOC: 401
+    Comments: 33
+    Single comments: 48
+    Multi: 29
+    Blank: 86
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 8%
+        (C + M % L): 11%
+modules/weko-authors/weko_authors/permissions.py
+    LOC: 26
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/weko-authors/weko_authors/views.py
+    LOC: 523
+    LLOC: 322
+    SLOC: 414
+    Comments: 26
+    Single comments: 39
+    Multi: 0
+    Blank: 70
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 6%
+        (C + M % L): 5%
+modules/weko-authors/weko_authors/ext.py
+    LOC: 58
+    LLOC: 19
+    SLOC: 17
+    Comments: 20
+    Single comments: 22
+    Multi: 9
+    Blank: 10
+    - Comment Stats
+        (C % L): 34%
+        (C % S): 118%
+        (C + M % L): 50%
+modules/weko-authors/weko_authors/contrib/validation.py
+    LOC: 146
+    LLOC: 65
+    SLOC: 60
+    Comments: 19
+    Single comments: 20
+    Multi: 37
+    Blank: 29
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 32%
+        (C + M % L): 38%
+modules/weko-authors/weko_authors/mappings/__init__.py
+    LOC: 21
+    LLOC: 1
+    SLOC: 0
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 90%
+        (C % S): 1900%
+        (C + M % L): 90%
+modules/weko-authors/weko_authors/mappings/v6/__init__.py
+    LOC: 21
+    LLOC: 1
+    SLOC: 0
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 90%
+        (C % S): 1900%
+        (C + M % L): 90%
+modules/weko-authors/weko_authors/mappings/v2/__init__.py
+    LOC: 21
+    LLOC: 1
+    SLOC: 0
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 90%
+        (C % S): 1900%
+        (C + M % L): 90%
+modules/invenio-previewer/setup.py
+    LOC: 157
+    LLOC: 22
+    SLOC: 119
+    Comments: 25
+    Single comments: 25
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 16%
+        (C % S): 21%
+        (C + M % L): 16%
+modules/invenio-previewer/invenio_previewer/config.py
+    LOC: 75
+    LLOC: 26
+    SLOC: 25
+    Comments: 23
+    Single comments: 36
+    Multi: 0
+    Blank: 14
+    - Comment Stats
+        (C % L): 31%
+        (C % S): 92%
+        (C + M % L): 31%
+modules/invenio-previewer/invenio_previewer/version.py
+    LOC: 33
+    LLOC: 3
+    SLOC: 2
+    Comments: 23
+    Single comments: 23
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1150%
+        (C + M % L): 82%
+modules/invenio-previewer/invenio_previewer/bundles.py
+    LOC: 134
+    LLOC: 29
+    SLOC: 88
+    Comments: 23
+    Single comments: 33
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 17%
+        (C % S): 26%
+        (C + M % L): 17%
+modules/invenio-previewer/invenio_previewer/__init__.py
+    LOC: 313
+    LLOC: 6
+    SLOC: 5
+    Comments: 23
+    Single comments: 23
+    Multi: 225
+    Blank: 60
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 460%
+        (C + M % L): 79%
+modules/invenio-previewer/invenio_previewer/api.py
+    LOC: 209
+    LLOC: 105
+    SLOC: 134
+    Comments: 25
+    Single comments: 36
+    Multi: 8
+    Blank: 31
+    - Comment Stats
+        (C % L): 12%
+        (C % S): 19%
+        (C + M % L): 16%
+modules/invenio-previewer/invenio_previewer/utils.py
+    LOC: 55
+    LLOC: 19
+    SLOC: 18
+    Comments: 24
+    Single comments: 25
+    Multi: 6
+    Blank: 6
+    - Comment Stats
+        (C % L): 44%
+        (C % S): 133%
+        (C + M % L): 55%
+modules/invenio-previewer/invenio_previewer/proxies.py
+    LOC: 33
+    LLOC: 6
+    SLOC: 5
+    Comments: 23
+    Single comments: 24
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 460%
+        (C + M % L): 70%
+modules/invenio-previewer/invenio_previewer/_compat.py
+    LOC: 38
+    LLOC: 10
+    SLOC: 9
+    Comments: 23
+    Single comments: 24
+    Multi: 0
+    Blank: 5
+    - Comment Stats
+        (C % L): 61%
+        (C % S): 256%
+        (C + M % L): 61%
+modules/invenio-previewer/invenio_previewer/views.py
+    LOC: 94
+    LLOC: 29
+    SLOC: 39
+    Comments: 26
+    Single comments: 29
+    Multi: 12
+    Blank: 14
+    - Comment Stats
+        (C % L): 28%
+        (C % S): 67%
+        (C + M % L): 40%
+modules/invenio-previewer/invenio_previewer/ext.py
+    LOC: 162
+    LLOC: 100
+    SLOC: 96
+    Comments: 23
+    Single comments: 37
+    Multi: 0
+    Blank: 29
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 24%
+        (C + M % L): 14%
+modules/invenio-previewer/invenio_previewer/extensions/mistune.py
+    LOC: 54
+    LLOC: 18
+    SLOC: 16
+    Comments: 23
+    Single comments: 27
+    Multi: 0
+    Blank: 11
+    - Comment Stats
+        (C % L): 43%
+        (C % S): 144%
+        (C + M % L): 43%
+modules/invenio-previewer/invenio_previewer/extensions/csv_dthreejs.py
+    LOC: 80
+    LLOC: 31
+    SLOC: 39
+    Comments: 24
+    Single comments: 28
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 30%
+        (C % S): 62%
+        (C + M % L): 30%
+modules/invenio-previewer/invenio_previewer/extensions/pdfjs.py
+    LOC: 51
+    LLOC: 11
+    SLOC: 16
+    Comments: 23
+    Single comments: 26
+    Multi: 0
+    Blank: 9
+    - Comment Stats
+        (C % L): 45%
+        (C % S): 144%
+        (C + M % L): 45%
+modules/invenio-previewer/invenio_previewer/extensions/simple_image.py
+    LOC: 53
+    LLOC: 15
+    SLOC: 16
+    Comments: 23
+    Single comments: 27
+    Multi: 0
+    Blank: 10
+    - Comment Stats
+        (C % L): 43%
+        (C % S): 144%
+        (C + M % L): 43%
+modules/invenio-previewer/invenio_previewer/extensions/__init__.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 23
+    Single comments: 24
+    Multi: 0
+    Blank: 2
+    - Comment Stats
+        (C % L): 85%
+        (C % S): 2300%
+        (C + M % L): 85%
+modules/invenio-previewer/invenio_previewer/extensions/iiif_presentation.py
+    LOC: 79
+    LLOC: 37
+    SLOC: 38
+    Comments: 23
+    Single comments: 27
+    Multi: 0
+    Blank: 14
+    - Comment Stats
+        (C % L): 29%
+        (C % S): 61%
+        (C + M % L): 29%
+modules/invenio-previewer/invenio_previewer/extensions/zip.py
+    LOC: 115
+    LLOC: 66
+    SLOC: 70
+    Comments: 24
+    Single comments: 29
+    Multi: 0
+    Blank: 16
+    - Comment Stats
+        (C % L): 21%
+        (C % S): 34%
+        (C + M % L): 21%
+modules/invenio-previewer/invenio_previewer/extensions/default.py
+    LOC: 41
+    LLOC: 10
+    SLOC: 7
+    Comments: 23
+    Single comments: 26
+    Multi: 0
+    Blank: 8
+    - Comment Stats
+        (C % L): 56%
+        (C % S): 329%
+        (C + M % L): 56%
+modules/invenio-previewer/invenio_previewer/extensions/xml_prismjs.py
+    LOC: 78
+    LLOC: 31
+    SLOC: 35
+    Comments: 23
+    Single comments: 28
+    Multi: 0
+    Blank: 15
+    - Comment Stats
+        (C % L): 29%
+        (C % S): 66%
+        (C + M % L): 29%
+modules/invenio-previewer/invenio_previewer/extensions/ipynb.py
+    LOC: 62
+    LLOC: 23
+    SLOC: 24
+    Comments: 23
+    Single comments: 27
+    Multi: 0
+    Blank: 11
+    - Comment Stats
+        (C % L): 37%
+        (C % S): 96%
+        (C + M % L): 37%
+modules/invenio-previewer/invenio_previewer/extensions/threejs.py
+    LOC: 24
+    LLOC: 10
+    SLOC: 14
+    Comments: 0
+    Single comments: 2
+    Multi: 0
+    Blank: 8
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+modules/invenio-previewer/invenio_previewer/extensions/json_prismjs.py
+    LOC: 78
+    LLOC: 31
+    SLOC: 35
+    Comments: 23
+    Single comments: 28
+    Multi: 0
+    Blank: 15
+    - Comment Stats
+        (C % L): 29%
+        (C % S): 66%
+        (C + M % L): 29%
+modules/invenio-queues/setup.py
+    LOC: 122
+    LLOC: 20
+    SLOC: 84
+    Comments: 24
+    Single comments: 25
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 20%
+        (C % S): 29%
+        (C + M % L): 20%
+modules/invenio-queues/invenio_queues/queue.py
+    LOC: 131
+    LLOC: 66
+    SLOC: 73
+    Comments: 23
+    Single comments: 34
+    Multi: 6
+    Blank: 18
+    - Comment Stats
+        (C % L): 18%
+        (C % S): 32%
+        (C + M % L): 22%
+modules/invenio-queues/invenio_queues/config.py
+    LOC: 29
+    LLOC: 3
+    SLOC: 2
+    Comments: 23
+    Single comments: 24
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 79%
+        (C % S): 1150%
+        (C + M % L): 79%
+modules/invenio-queues/invenio_queues/version.py
+    LOC: 33
+    LLOC: 3
+    SLOC: 2
+    Comments: 23
+    Single comments: 23
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1150%
+        (C + M % L): 82%
+modules/invenio-queues/invenio_queues/__init__.py
+    LOC: 36
+    LLOC: 5
+    SLOC: 8
+    Comments: 23
+    Single comments: 24
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 64%
+        (C % S): 288%
+        (C + M % L): 64%
+modules/invenio-queues/invenio_queues/cli.py
+    LOC: 95
+    LLOC: 47
+    SLOC: 52
+    Comments: 23
+    Single comments: 29
+    Multi: 0
+    Blank: 14
+    - Comment Stats
+        (C % L): 24%
+        (C % S): 44%
+        (C + M % L): 24%
+modules/invenio-queues/invenio_queues/utils.py
+    LOC: 43
+    LLOC: 7
+    SLOC: 10
+    Comments: 25
+    Single comments: 24
+    Multi: 4
+    Blank: 5
+    - Comment Stats
+        (C % L): 58%
+        (C % S): 250%
+        (C + M % L): 67%
+modules/invenio-queues/invenio_queues/proxies.py
+    LOC: 33
+    LLOC: 6
+    SLOC: 5
+    Comments: 23
+    Single comments: 24
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 460%
+        (C + M % L): 70%
+modules/invenio-queues/invenio_queues/errors.py
+    LOC: 31
+    LLOC: 4
+    SLOC: 2
+    Comments: 23
+    Single comments: 25
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 74%
+        (C % S): 1150%
+        (C + M % L): 74%
+modules/invenio-queues/invenio_queues/views.py
+    LOC: 47
+    LLOC: 8
+    SLOC: 13
+    Comments: 25
+    Single comments: 27
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 53%
+        (C % S): 192%
+        (C + M % L): 53%
+modules/invenio-queues/invenio_queues/ext.py
+    LOC: 108
+    LLOC: 57
+    SLOC: 55
+    Comments: 24
+    Single comments: 34
+    Multi: 0
+    Blank: 19
+    - Comment Stats
+        (C % L): 22%
+        (C % S): 44%
+        (C + M % L): 22%
+modules/weko-records/setup.py
+    LOC: 120
+    LLOC: 20
+    SLOC: 86
+    Comments: 20
+    Single comments: 21
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 17%
+        (C % S): 23%
+        (C + M % L): 17%
+modules/weko-records/weko_records/config.py
+    LOC: 235
+    LLOC: 25
+    SLOC: 104
+    Comments: 29
+    Single comments: 34
+    Multi: 71
+    Blank: 26
+    - Comment Stats
+        (C % L): 12%
+        (C % S): 28%
+        (C + M % L): 43%
+modules/weko-records/weko_records/version.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 19
+    Single comments: 19
+    Multi: 4
+    Blank: 3
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1900%
+        (C + M % L): 85%
+modules/weko-records/weko_records/fetchers.py
+    LOC: 47
+    LLOC: 9
+    SLOC: 14
+    Comments: 23
+    Single comments: 26
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 49%
+        (C % S): 164%
+        (C + M % L): 49%
+modules/weko-records/weko_records/models.py
+    LOC: 728
+    LLOC: 217
+    SLOC: 443
+    Comments: 28
+    Single comments: 73
+    Multi: 83
+    Blank: 129
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 6%
+        (C + M % L): 15%
+modules/weko-records/weko_records/__init__.py
+    LOC: 26
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/weko-records/weko_records/api.py
+    LOC: 2283
+    LLOC: 1028
+    SLOC: 1128
+    Comments: 69
+    Single comments: 89
+    Multi: 626
+    Blank: 440
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 6%
+        (C + M % L): 30%
+modules/weko-records/weko_records/utils.py
+    LOC: 1731
+    LLOC: 1126
+    SLOC: 1243
+    Comments: 71
+    Single comments: 82
+    Multi: 208
+    Blank: 198
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 6%
+        (C + M % L): 16%
+modules/weko-records/weko_records/ext.py
+    LOC: 58
+    LLOC: 19
+    SLOC: 17
+    Comments: 20
+    Single comments: 22
+    Multi: 9
+    Blank: 10
+    - Comment Stats
+        (C % L): 34%
+        (C % S): 118%
+        (C + M % L): 50%
+modules/weko-records/weko_records/serializers/opensearchresponse.py
+    LOC: 82
+    LLOC: 36
+    SLOC: 39
+    Comments: 7
+    Single comments: 7
+    Multi: 16
+    Blank: 20
+    - Comment Stats
+        (C % L): 9%
+        (C % S): 18%
+        (C + M % L): 28%
+modules/weko-records/weko_records/serializers/depositschema.py
+    LOC: 56
+    LLOC: 25
+    SLOC: 21
+    Comments: 20
+    Single comments: 25
+    Multi: 0
+    Blank: 10
+    - Comment Stats
+        (C % L): 36%
+        (C % S): 95%
+        (C + M % L): 36%
+modules/weko-records/weko_records/serializers/rss.py
+    LOC: 43
+    LLOC: 9
+    SLOC: 9
+    Comments: 19
+    Single comments: 21
+    Multi: 6
+    Blank: 7
+    - Comment Stats
+        (C % L): 44%
+        (C % S): 211%
+        (C + M % L): 58%
+modules/weko-records/weko_records/serializers/dc.py
+    LOC: 134
+    LLOC: 60
+    SLOC: 56
+    Comments: 19
+    Single comments: 22
+    Multi: 32
+    Blank: 24
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 34%
+        (C + M % L): 38%
+modules/weko-records/weko_records/serializers/opensearch.py
+    LOC: 164
+    LLOC: 75
+    SLOC: 61
+    Comments: 20
+    Single comments: 25
+    Multi: 45
+    Blank: 33
+    - Comment Stats
+        (C % L): 12%
+        (C % S): 33%
+        (C + M % L): 40%
+modules/weko-records/weko_records/serializers/pidrelations.py
+    LOC: 112
+    LLOC: 40
+    SLOC: 45
+    Comments: 49
+    Single comments: 51
+    Multi: 4
+    Blank: 12
+    - Comment Stats
+        (C % L): 44%
+        (C % S): 109%
+        (C + M % L): 47%
+modules/weko-records/weko_records/serializers/prism.py
+    LOC: 334
+    LLOC: 155
+    SLOC: 144
+    Comments: 20
+    Single comments: 25
+    Multi: 104
+    Blank: 61
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 14%
+        (C + M % L): 37%
+modules/weko-records/weko_records/serializers/searchserializer.py
+    LOC: 32
+    LLOC: 7
+    SLOC: 6
+    Comments: 19
+    Single comments: 22
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 59%
+        (C % S): 317%
+        (C + M % L): 59%
+modules/weko-records/weko_records/serializers/__init__.py
+    LOC: 57
+    LLOC: 21
+    SLOC: 22
+    Comments: 26
+    Single comments: 27
+    Multi: 0
+    Blank: 8
+    - Comment Stats
+        (C % L): 46%
+        (C % S): 118%
+        (C + M % L): 46%
+modules/weko-records/weko_records/serializers/feed.py
+    LOC: 1285
+    LLOC: 625
+    SLOC: 653
+    Comments: 57
+    Single comments: 56
+    Multi: 422
+    Blank: 154
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 9%
+        (C + M % L): 37%
+modules/weko-records/weko_records/serializers/csl.py
+    LOC: 126
+    LLOC: 75
+    SLOC: 72
+    Comments: 19
+    Single comments: 27
+    Multi: 11
+    Blank: 16
+    - Comment Stats
+        (C % L): 15%
+        (C % S): 26%
+        (C + M % L): 24%
+modules/weko-records/weko_records/serializers/opensearchserializer.py
+    LOC: 69
+    LLOC: 28
+    SLOC: 35
+    Comments: 19
+    Single comments: 21
+    Multi: 5
+    Blank: 8
+    - Comment Stats
+        (C % L): 28%
+        (C % S): 54%
+        (C + M % L): 35%
+modules/weko-records/weko_records/serializers/utils.py
+    LOC: 810
+    LLOC: 519
+    SLOC: 558
+    Comments: 73
+    Single comments: 75
+    Multi: 45
+    Blank: 132
+    - Comment Stats
+        (C % L): 9%
+        (C % S): 13%
+        (C + M % L): 15%
+modules/weko-records/weko_records/serializers/jpcoar.py
+    LOC: 94
+    LLOC: 39
+    SLOC: 42
+    Comments: 25
+    Single comments: 27
+    Multi: 5
+    Blank: 20
+    - Comment Stats
+        (C % L): 27%
+        (C % S): 60%
+        (C + M % L): 32%
+modules/weko-records/weko_records/serializers/entry.py
+    LOC: 812
+    LLOC: 431
+    SLOC: 430
+    Comments: 50
+    Single comments: 55
+    Multi: 239
+    Blank: 88
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 12%
+        (C + M % L): 36%
+modules/weko-records/weko_records/serializers/json.py
+    LOC: 105
+    LLOC: 49
+    SLOC: 54
+    Comments: 24
+    Single comments: 31
+    Multi: 4
+    Blank: 16
+    - Comment Stats
+        (C % L): 23%
+        (C % S): 44%
+        (C + M % L): 27%
+modules/weko-records/weko_records/serializers/atom.py
+    LOC: 43
+    LLOC: 9
+    SLOC: 9
+    Comments: 19
+    Single comments: 21
+    Multi: 6
+    Blank: 7
+    - Comment Stats
+        (C % L): 44%
+        (C % S): 211%
+        (C + M % L): 58%
+modules/weko-records/weko_records/serializers/schemas/__init__.py
+    LOC: 8
+    LLOC: 1
+    SLOC: 0
+    Comments: 6
+    Single comments: 7
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 75%
+        (C % S): 600%
+        (C + M % L): 75%
+modules/weko-records/weko_records/serializers/schemas/csl.py
+    LOC: 205
+    LLOC: 159
+    SLOC: 148
+    Comments: 24
+    Single comments: 36
+    Multi: 0
+    Blank: 21
+    - Comment Stats
+        (C % L): 12%
+        (C % S): 16%
+        (C + M % L): 12%
+modules/weko-handle/setup.py
+    LOC: 112
+    LLOC: 20
+    SLOC: 91
+    Comments: 18
+    Single comments: 8
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 16%
+        (C % S): 20%
+        (C + M % L): 16%
+modules/weko-handle/weko_handle/config.py
+    LOC: 19
+    LLOC: 7
+    SLOC: 3
+    Comments: 7
+    Single comments: 11
+    Multi: 0
+    Blank: 5
+    - Comment Stats
+        (C % L): 37%
+        (C % S): 233%
+        (C + M % L): 37%
+modules/weko-handle/weko_handle/version.py
+    LOC: 16
+    LLOC: 3
+    SLOC: 2
+    Comments: 6
+    Single comments: 6
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 38%
+        (C % S): 300%
+        (C + M % L): 62%
+modules/weko-handle/weko_handle/__init__.py
+    LOC: 15
+    LLOC: 5
+    SLOC: 4
+    Comments: 6
+    Single comments: 7
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 40%
+        (C % S): 150%
+        (C + M % L): 40%
+modules/weko-handle/weko_handle/api.py
+    LOC: 89
+    LLOC: 48
+    SLOC: 55
+    Comments: 19
+    Single comments: 25
+    Multi: 0
+    Blank: 9
+    - Comment Stats
+        (C % L): 21%
+        (C % S): 35%
+        (C + M % L): 21%
+modules/weko-handle/weko_handle/views.py
+    LOC: 71
+    LLOC: 36
+    SLOC: 45
+    Comments: 8
+    Single comments: 12
+    Multi: 0
+    Blank: 14
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 18%
+        (C + M % L): 11%
+modules/weko-handle/weko_handle/ext.py
+    LOC: 47
+    LLOC: 24
+    SLOC: 22
+    Comments: 10
+    Single comments: 15
+    Multi: 0
+    Blank: 10
+    - Comment Stats
+        (C % L): 21%
+        (C % S): 45%
+        (C + M % L): 21%
+modules/invenio-records-rest/setup.py
+    LOC: 151
+    LLOC: 23
+    SLOC: 127
+    Comments: 9
+    Single comments: 10
+    Multi: 0
+    Blank: 14
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 7%
+        (C + M % L): 6%
+modules/invenio-records-rest/invenio_records_rest/config.py
+    LOC: 407
+    LLOC: 45
+    SLOC: 116
+    Comments: 7
+    Single comments: 19
+    Multi: 198
+    Blank: 74
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 6%
+        (C + M % L): 50%
+modules/invenio-records-rest/invenio_records_rest/version.py
+    LOC: 17
+    LLOC: 3
+    SLOC: 2
+    Comments: 7
+    Single comments: 7
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 41%
+        (C % S): 350%
+        (C + M % L): 65%
+modules/invenio-records-rest/invenio_records_rest/query.py
+    LOC: 57
+    LLOC: 29
+    SLOC: 29
+    Comments: 7
+    Single comments: 9
+    Multi: 5
+    Blank: 14
+    - Comment Stats
+        (C % L): 12%
+        (C % S): 24%
+        (C + M % L): 21%
+modules/invenio-records-rest/invenio_records_rest/__init__.py
+    LOC: 704
+    LLOC: 6
+    SLOC: 5
+    Comments: 7
+    Single comments: 7
+    Multi: 561
+    Blank: 131
+    - Comment Stats
+        (C % L): 1%
+        (C % S): 140%
+        (C + M % L): 81%
+modules/invenio-records-rest/invenio_records_rest/links.py
+    LOC: 48
+    LLOC: 16
+    SLOC: 17
+    Comments: 7
+    Single comments: 7
+    Multi: 13
+    Blank: 11
+    - Comment Stats
+        (C % L): 15%
+        (C % S): 41%
+        (C + M % L): 42%
+modules/invenio-records-rest/invenio_records_rest/sorter.py
+    LOC: 148
+    LLOC: 70
+    SLOC: 73
+    Comments: 13
+    Single comments: 13
+    Multi: 37
+    Blank: 25
+    - Comment Stats
+        (C % L): 9%
+        (C % S): 18%
+        (C + M % L): 34%
+modules/invenio-records-rest/invenio_records_rest/utils.py
+    LOC: 214
+    LLOC: 106
+    SLOC: 115
+    Comments: 7
+    Single comments: 12
+    Multi: 44
+    Blank: 43
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 6%
+        (C + M % L): 24%
+modules/invenio-records-rest/invenio_records_rest/proxies.py
+    LOC: 18
+    LLOC: 7
+    SLOC: 5
+    Comments: 7
+    Single comments: 9
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 39%
+        (C % S): 140%
+        (C + M % L): 39%
+modules/invenio-records-rest/invenio_records_rest/errors.py
+    LOC: 197
+    LLOC: 99
+    SLOC: 81
+    Comments: 22
+    Single comments: 48
+    Multi: 5
+    Blank: 63
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 27%
+        (C + M % L): 14%
+modules/invenio-records-rest/invenio_records_rest/_compat.py
+    LOC: 26
+    LLOC: 14
+    SLOC: 12
+    Comments: 9
+    Single comments: 10
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 35%
+        (C % S): 75%
+        (C + M % L): 35%
+modules/invenio-records-rest/invenio_records_rest/facets.py
+    LOC: 149
+    LLOC: 79
+    SLOC: 72
+    Comments: 12
+    Single comments: 16
+    Multi: 21
+    Blank: 40
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 17%
+        (C + M % L): 22%
+modules/invenio-records-rest/invenio_records_rest/views.py
+    LOC: 870
+    LLOC: 357
+    SLOC: 508
+    Comments: 31
+    Single comments: 44
+    Multi: 163
+    Blank: 155
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 6%
+        (C + M % L): 22%
+modules/invenio-records-rest/invenio_records_rest/ext.py
+    LOC: 108
+    LLOC: 63
+    SLOC: 63
+    Comments: 9
+    Single comments: 24
+    Multi: 0
+    Blank: 21
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 14%
+        (C + M % L): 8%
+modules/invenio-records-rest/invenio_records_rest/schemas/__init__.py
+    LOC: 21
+    LLOC: 4
+    SLOC: 9
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 33%
+        (C % S): 78%
+        (C + M % L): 33%
+modules/invenio-records-rest/invenio_records_rest/schemas/json.py
+    LOC: 94
+    LLOC: 57
+    SLOC: 52
+    Comments: 8
+    Single comments: 17
+    Multi: 3
+    Blank: 22
+    - Comment Stats
+        (C % L): 9%
+        (C % S): 15%
+        (C + M % L): 12%
+modules/invenio-records-rest/invenio_records_rest/schemas/fields/trimmedstring.py
+    LOC: 22
+    LLOC: 9
+    SLOC: 6
+    Comments: 7
+    Single comments: 10
+    Multi: 0
+    Blank: 6
+    - Comment Stats
+        (C % L): 32%
+        (C % S): 117%
+        (C + M % L): 32%
+modules/invenio-records-rest/invenio_records_rest/schemas/fields/generated.py
+    LOC: 56
+    LLOC: 23
+    SLOC: 26
+    Comments: 8
+    Single comments: 14
+    Multi: 0
+    Blank: 16
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 31%
+        (C + M % L): 14%
+modules/invenio-records-rest/invenio_records_rest/schemas/fields/marshmallow_contrib.py
+    LOC: 134
+    LLOC: 40
+    SLOC: 39
+    Comments: 7
+    Single comments: 9
+    Multi: 57
+    Blank: 29
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 18%
+        (C + M % L): 48%
+modules/invenio-records-rest/invenio_records_rest/schemas/fields/__init__.py
+    LOC: 29
+    LLOC: 9
+    SLOC: 18
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 24%
+        (C % S): 39%
+        (C + M % L): 24%
+modules/invenio-records-rest/invenio_records_rest/schemas/fields/sanitizedunicode.py
+    LOC: 44
+    LLOC: 19
+    SLOC: 21
+    Comments: 10
+    Single comments: 13
+    Multi: 0
+    Blank: 10
+    - Comment Stats
+        (C % L): 23%
+        (C % S): 48%
+        (C + M % L): 23%
+modules/invenio-records-rest/invenio_records_rest/schemas/fields/persistentidentifier.py
+    LOC: 32
+    LLOC: 12
+    SLOC: 10
+    Comments: 7
+    Single comments: 10
+    Multi: 3
+    Blank: 9
+    - Comment Stats
+        (C % L): 22%
+        (C % S): 70%
+        (C + M % L): 31%
+modules/invenio-records-rest/invenio_records_rest/schemas/fields/sanitizedhtml.py
+    LOC: 63
+    LLOC: 16
+    SLOC: 43
+    Comments: 7
+    Single comments: 11
+    Multi: 0
+    Blank: 9
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 16%
+        (C + M % L): 11%
+modules/invenio-records-rest/invenio_records_rest/schemas/fields/datetime.py
+    LOC: 32
+    LLOC: 16
+    SLOC: 14
+    Comments: 7
+    Single comments: 11
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 22%
+        (C % S): 50%
+        (C + M % L): 22%
+modules/invenio-records-rest/invenio_records_rest/serializers/dc.py
+    LOC: 62
+    LLOC: 21
+    SLOC: 25
+    Comments: 7
+    Single comments: 9
+    Multi: 14
+    Blank: 14
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 28%
+        (C + M % L): 34%
+modules/invenio-records-rest/invenio_records_rest/serializers/citeproc.py
+    LOC: 132
+    LLOC: 73
+    SLOC: 68
+    Comments: 7
+    Single comments: 14
+    Multi: 22
+    Blank: 28
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 10%
+        (C + M % L): 22%
+modules/invenio-records-rest/invenio_records_rest/serializers/jsonld.py
+    LOC: 80
+    LLOC: 42
+    SLOC: 39
+    Comments: 9
+    Single comments: 15
+    Multi: 10
+    Blank: 16
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 23%
+        (C + M % L): 24%
+modules/invenio-records-rest/invenio_records_rest/serializers/marshmallow.py
+    LOC: 47
+    LLOC: 25
+    SLOC: 21
+    Comments: 8
+    Single comments: 15
+    Multi: 0
+    Blank: 11
+    - Comment Stats
+        (C % L): 17%
+        (C % S): 38%
+        (C + M % L): 17%
+modules/invenio-records-rest/invenio_records_rest/serializers/__init__.py
+    LOC: 24
+    LLOC: 11
+    SLOC: 7
+    Comments: 7
+    Single comments: 11
+    Multi: 0
+    Blank: 6
+    - Comment Stats
+        (C % L): 29%
+        (C % S): 100%
+        (C + M % L): 29%
+modules/invenio-records-rest/invenio_records_rest/serializers/response.py
+    LOC: 167
+    LLOC: 74
+    SLOC: 97
+    Comments: 7
+    Single comments: 7
+    Multi: 33
+    Blank: 30
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 7%
+        (C + M % L): 24%
+modules/invenio-records-rest/invenio_records_rest/serializers/datacite.py
+    LOC: 142
+    LLOC: 61
+    SLOC: 63
+    Comments: 7
+    Single comments: 20
+    Multi: 26
+    Blank: 33
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 11%
+        (C + M % L): 23%
+modules/invenio-records-rest/invenio_records_rest/serializers/json.py
+    LOC: 71
+    LLOC: 22
+    SLOC: 37
+    Comments: 7
+    Single comments: 11
+    Multi: 10
+    Blank: 13
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 19%
+        (C + M % L): 24%
+modules/invenio-records-rest/invenio_records_rest/serializers/base.py
+    LOC: 236
+    LLOC: 104
+    SLOC: 105
+    Comments: 18
+    Single comments: 25
+    Multi: 64
+    Blank: 42
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 17%
+        (C + M % L): 35%
+modules/invenio-records-rest/invenio_records_rest/loaders/marshmallow.py
+    LOC: 102
+    LLOC: 57
+    SLOC: 52
+    Comments: 8
+    Single comments: 16
+    Multi: 9
+    Blank: 25
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 15%
+        (C + M % L): 17%
+modules/invenio-records-rest/invenio_records_rest/loaders/__init__.py
+    LOC: 26
+    LLOC: 9
+    SLOC: 10
+    Comments: 7
+    Single comments: 10
+    Multi: 0
+    Blank: 6
+    - Comment Stats
+        (C % L): 27%
+        (C % S): 70%
+        (C + M % L): 27%
+modules/weko-indextree-journal/setup.py
+    LOC: 136
+    LLOC: 20
+    SLOC: 114
+    Comments: 20
+    Single comments: 9
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 15%
+        (C % S): 18%
+        (C + M % L): 15%
+modules/weko-indextree-journal/weko_indextree_journal/tasks.py
+    LOC: 246
+    LLOC: 96
+    SLOC: 164
+    Comments: 34
+    Single comments: 35
+    Multi: 14
+    Blank: 33
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 21%
+        (C + M % L): 20%
+modules/weko-indextree-journal/weko_indextree_journal/config.py
+    LOC: 57
+    LLOC: 19
+    SLOC: 28
+    Comments: 12
+    Single comments: 15
+    Multi: 0
+    Blank: 14
+    - Comment Stats
+        (C % L): 21%
+        (C % S): 43%
+        (C + M % L): 21%
+modules/weko-indextree-journal/weko_indextree_journal/version.py
+    LOC: 17
+    LLOC: 3
+    SLOC: 2
+    Comments: 7
+    Single comments: 7
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 41%
+        (C % S): 350%
+        (C + M % L): 65%
+modules/weko-indextree-journal/weko_indextree_journal/models.py
+    LOC: 345
+    LLOC: 154
+    SLOC: 102
+    Comments: 23
+    Single comments: 76
+    Multi: 104
+    Blank: 63
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 23%
+        (C + M % L): 37%
+modules/weko-indextree-journal/weko_indextree_journal/bundles.py
+    LOC: 43
+    LLOC: 6
+    SLOC: 18
+    Comments: 20
+    Single comments: 20
+    Multi: 0
+    Blank: 5
+    - Comment Stats
+        (C % L): 47%
+        (C % S): 111%
+        (C + M % L): 47%
+modules/weko-indextree-journal/weko_indextree_journal/rest.py
+    LOC: 249
+    LLOC: 104
+    SLOC: 145
+    Comments: 47
+    Single comments: 54
+    Multi: 9
+    Blank: 41
+    - Comment Stats
+        (C % L): 19%
+        (C % S): 32%
+        (C + M % L): 22%
+modules/weko-indextree-journal/weko_indextree_journal/__init__.py
+    LOC: 13
+    LLOC: 4
+    SLOC: 3
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 2
+    - Comment Stats
+        (C % L): 54%
+        (C % S): 233%
+        (C + M % L): 54%
+modules/weko-indextree-journal/weko_indextree_journal/api.py
+    LOC: 290
+    LLOC: 161
+    SLOC: 201
+    Comments: 24
+    Single comments: 26
+    Multi: 30
+    Blank: 33
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 12%
+        (C + M % L): 19%
+modules/weko-indextree-journal/weko_indextree_journal/admin.py
+    LOC: 224
+    LLOC: 106
+    SLOC: 153
+    Comments: 22
+    Single comments: 25
+    Multi: 14
+    Blank: 32
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 14%
+        (C + M % L): 16%
+modules/weko-indextree-journal/weko_indextree_journal/permissions.py
+    LOC: 26
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/weko-indextree-journal/weko_indextree_journal/errors.py
+    LOC: 78
+    LLOC: 30
+    SLOC: 22
+    Comments: 24
+    Single comments: 32
+    Multi: 0
+    Blank: 24
+    - Comment Stats
+        (C % L): 31%
+        (C % S): 109%
+        (C + M % L): 31%
+modules/weko-indextree-journal/weko_indextree_journal/views.py
+    LOC: 86
+    LLOC: 40
+    SLOC: 40
+    Comments: 26
+    Single comments: 30
+    Multi: 0
+    Blank: 16
+    - Comment Stats
+        (C % L): 30%
+        (C % S): 65%
+        (C + M % L): 30%
+modules/weko-indextree-journal/weko_indextree_journal/ext.py
+    LOC: 85
+    LLOC: 42
+    SLOC: 37
+    Comments: 11
+    Single comments: 17
+    Multi: 11
+    Blank: 20
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 30%
+        (C + M % L): 26%
+modules/weko-logging/setup.py
+    LOC: 111
+    LLOC: 20
+    SLOC: 77
+    Comments: 20
+    Single comments: 21
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 18%
+        (C % S): 26%
+        (C + M % L): 18%
+modules/weko-logging/weko_logging/config.py
+    LOC: 80
+    LLOC: 13
+    SLOC: 6
+    Comments: 22
+    Single comments: 26
+    Multi: 31
+    Blank: 17
+    - Comment Stats
+        (C % L): 28%
+        (C % S): 367%
+        (C + M % L): 66%
+modules/weko-logging/weko_logging/version.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 19
+    Single comments: 19
+    Multi: 4
+    Blank: 3
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1900%
+        (C + M % L): 85%
+modules/weko-logging/weko_logging/__init__.py
+    LOC: 97
+    LLOC: 3
+    SLOC: 4
+    Comments: 19
+    Single comments: 19
+    Multi: 51
+    Blank: 23
+    - Comment Stats
+        (C % L): 20%
+        (C % S): 475%
+        (C + M % L): 72%
+modules/weko-logging/weko_logging/fs.py
+    LOC: 124
+    LLOC: 45
+    SLOC: 62
+    Comments: 26
+    Single comments: 27
+    Multi: 16
+    Blank: 19
+    - Comment Stats
+        (C % L): 21%
+        (C % S): 42%
+        (C + M % L): 34%
+modules/weko-logging/weko_logging/ext.py
+    LOC: 56
+    LLOC: 19
+    SLOC: 14
+    Comments: 20
+    Single comments: 22
+    Multi: 10
+    Blank: 10
+    - Comment Stats
+        (C % L): 36%
+        (C % S): 143%
+        (C + M % L): 54%
+modules/weko-index-tree/setup.py
+    LOC: 141
+    LLOC: 20
+    SLOC: 107
+    Comments: 20
+    Single comments: 21
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 19%
+        (C + M % L): 14%
+modules/weko-index-tree/weko_index_tree/scopes.py
+    LOC: 46
+    LLOC: 11
+    SLOC: 11
+    Comments: 23
+    Single comments: 27
+    Multi: 0
+    Blank: 8
+    - Comment Stats
+        (C % L): 50%
+        (C % S): 209%
+        (C + M % L): 50%
+modules/weko-index-tree/weko_index_tree/tasks.py
+    LOC: 79
+    LLOC: 50
+    SLOC: 52
+    Comments: 19
+    Single comments: 22
+    Multi: 0
+    Blank: 5
+    - Comment Stats
+        (C % L): 24%
+        (C % S): 37%
+        (C + M % L): 24%
+modules/weko-index-tree/weko_index_tree/config.py
+    LOC: 94
+    LLOC: 37
+    SLOC: 38
+    Comments: 19
+    Single comments: 35
+    Multi: 0
+    Blank: 21
+    - Comment Stats
+        (C % L): 20%
+        (C % S): 50%
+        (C + M % L): 20%
+modules/weko-index-tree/weko_index_tree/version.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 19
+    Single comments: 19
+    Multi: 4
+    Blank: 3
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1900%
+        (C + M % L): 85%
+modules/weko-index-tree/weko_index_tree/models.py
+    LOC: 307
+    LLOC: 161
+    SLOC: 166
+    Comments: 23
+    Single comments: 68
+    Multi: 11
+    Blank: 62
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 14%
+        (C + M % L): 11%
+modules/weko-index-tree/weko_index_tree/bundles.py
+    LOC: 43
+    LLOC: 6
+    SLOC: 18
+    Comments: 20
+    Single comments: 20
+    Multi: 0
+    Blank: 5
+    - Comment Stats
+        (C % L): 47%
+        (C % S): 111%
+        (C + M % L): 47%
+modules/weko-index-tree/weko_index_tree/rest.py
+    LOC: 357
+    LLOC: 190
+    SLOC: 269
+    Comments: 21
+    Single comments: 32
+    Multi: 8
+    Blank: 48
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 8%
+        (C + M % L): 8%
+modules/weko-index-tree/weko_index_tree/__init__.py
+    LOC: 26
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/weko-index-tree/weko_index_tree/api.py
+    LOC: 1659
+    LLOC: 874
+    SLOC: 1277
+    Comments: 38
+    Single comments: 56
+    Multi: 158
+    Blank: 168
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 3%
+        (C + M % L): 12%
+modules/weko-index-tree/weko_index_tree/admin.py
+    LOC: 134
+    LLOC: 62
+    SLOC: 93
+    Comments: 20
+    Single comments: 25
+    Multi: 0
+    Blank: 16
+    - Comment Stats
+        (C % L): 15%
+        (C % S): 22%
+        (C + M % L): 15%
+modules/weko-index-tree/weko_index_tree/utils.py
+    LOC: 961
+    LLOC: 543
+    SLOC: 602
+    Comments: 34
+    Single comments: 53
+    Multi: 133
+    Blank: 173
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 6%
+        (C + M % L): 17%
+modules/weko-index-tree/weko_index_tree/permissions.py
+    LOC: 26
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/weko-index-tree/weko_index_tree/errors.py
+    LOC: 80
+    LLOC: 31
+    SLOC: 23
+    Comments: 24
+    Single comments: 32
+    Multi: 0
+    Blank: 25
+    - Comment Stats
+        (C % L): 30%
+        (C % S): 104%
+        (C + M % L): 30%
+modules/weko-index-tree/weko_index_tree/views.py
+    LOC: 180
+    LLOC: 102
+    SLOC: 133
+    Comments: 19
+    Single comments: 22
+    Multi: 4
+    Blank: 21
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 14%
+        (C + M % L): 13%
+modules/weko-index-tree/weko_index_tree/ext.py
+    LOC: 96
+    LLOC: 39
+    SLOC: 34
+    Comments: 20
+    Single comments: 23
+    Multi: 20
+    Blank: 19
+    - Comment Stats
+        (C % L): 21%
+        (C % S): 59%
+        (C + M % L): 42%
+modules/weko-search-ui/setup.py
+    LOC: 163
+    LLOC: 20
+    SLOC: 129
+    Comments: 20
+    Single comments: 21
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 12%
+        (C % S): 16%
+        (C + M % L): 12%
+modules/weko-search-ui/weko_search_ui/tasks.py
+    LOC: 87
+    LLOC: 48
+    SLOC: 46
+    Comments: 19
+    Single comments: 25
+    Multi: 0
+    Blank: 16
+    - Comment Stats
+        (C % L): 22%
+        (C % S): 41%
+        (C + M % L): 22%
+modules/weko-search-ui/weko_search_ui/config.py
+    LOC: 597
+    LLOC: 112
+    SLOC: 495
+    Comments: 35
+    Single comments: 38
+    Multi: 0
+    Blank: 64
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 7%
+        (C + M % L): 6%
+modules/weko-search-ui/weko_search_ui/version.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 19
+    Single comments: 19
+    Multi: 4
+    Blank: 3
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1900%
+        (C + M % L): 85%
+modules/weko-search-ui/weko_search_ui/query.py
+    LOC: 1324
+    LLOC: 659
+    SLOC: 974
+    Comments: 59
+    Single comments: 60
+    Multi: 78
+    Blank: 212
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 6%
+        (C + M % L): 10%
+modules/weko-search-ui/weko_search_ui/bundles.py
+    LOC: 111
+    LLOC: 21
+    SLOC: 72
+    Comments: 20
+    Single comments: 21
+    Multi: 0
+    Blank: 18
+    - Comment Stats
+        (C % L): 18%
+        (C % S): 28%
+        (C + M % L): 18%
+modules/weko-search-ui/weko_search_ui/rest.py
+    LOC: 408
+    LLOC: 233
+    SLOC: 324
+    Comments: 33
+    Single comments: 37
+    Multi: 9
+    Blank: 38
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 10%
+        (C + M % L): 10%
+modules/weko-search-ui/weko_search_ui/__init__.py
+    LOC: 26
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/weko-search-ui/weko_search_ui/links.py
+    LOC: 37
+    LLOC: 6
+    SLOC: 8
+    Comments: 19
+    Single comments: 20
+    Multi: 4
+    Blank: 5
+    - Comment Stats
+        (C % L): 51%
+        (C % S): 238%
+        (C + M % L): 62%
+modules/weko-search-ui/weko_search_ui/api.py
+    LOC: 226
+    LLOC: 148
+    SLOC: 166
+    Comments: 20
+    Single comments: 28
+    Multi: 0
+    Blank: 32
+    - Comment Stats
+        (C % L): 9%
+        (C % S): 12%
+        (C + M % L): 9%
+modules/weko-search-ui/weko_search_ui/admin.py
+    LOC: 675
+    LLOC: 364
+    SLOC: 531
+    Comments: 36
+    Single comments: 58
+    Multi: 11
+    Blank: 75
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 7%
+        (C + M % L): 7%
+modules/weko-search-ui/weko_search_ui/utils.py
+    LOC: 3054
+    LLOC: 1825
+    SLOC: 2122
+    Comments: 65
+    Single comments: 97
+    Multi: 397
+    Blank: 438
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 3%
+        (C + M % L): 15%
+modules/weko-search-ui/weko_search_ui/permissions.py
+    LOC: 26
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/weko-search-ui/weko_search_ui/views.py
+    LOC: 334
+    LLOC: 159
+    SLOC: 243
+    Comments: 31
+    Single comments: 38
+    Multi: 3
+    Blank: 50
+    - Comment Stats
+        (C % L): 9%
+        (C % S): 13%
+        (C + M % L): 10%
+modules/weko-search-ui/weko_search_ui/ext.py
+    LOC: 112
+    LLOC: 37
+    SLOC: 50
+    Comments: 21
+    Single comments: 24
+    Multi: 17
+    Blank: 21
+    - Comment Stats
+        (C % L): 19%
+        (C % S): 42%
+        (C + M % L): 34%
+modules/invenio-stats/setup.py
+    LOC: 153
+    LLOC: 21
+    SLOC: 129
+    Comments: 8
+    Single comments: 9
+    Multi: 0
+    Blank: 15
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 6%
+        (C + M % L): 5%
+modules/invenio-stats/invenio_stats/receivers.py
+    LOC: 63
+    LLOC: 34
+    SLOC: 39
+    Comments: 8
+    Single comments: 13
+    Multi: 0
+    Blank: 11
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 21%
+        (C + M % L): 13%
+modules/invenio-stats/invenio_stats/queues.py
+    LOC: 18
+    LLOC: 5
+    SLOC: 5
+    Comments: 7
+    Single comments: 9
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 39%
+        (C % S): 140%
+        (C + M % L): 39%
+modules/invenio-stats/invenio_stats/tasks.py
+    LOC: 42
+    LLOC: 24
+    SLOC: 24
+    Comments: 7
+    Single comments: 10
+    Multi: 0
+    Blank: 8
+    - Comment Stats
+        (C % L): 17%
+        (C % S): 29%
+        (C + M % L): 17%
+modules/invenio-stats/invenio_stats/config.py
+    LOC: 212
+    LLOC: 42
+    SLOC: 127
+    Comments: 10
+    Single comments: 18
+    Multi: 34
+    Blank: 33
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 8%
+        (C + M % L): 21%
+modules/invenio-stats/invenio_stats/version.py
+    LOC: 17
+    LLOC: 3
+    SLOC: 2
+    Comments: 7
+    Single comments: 7
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 41%
+        (C % S): 350%
+        (C + M % L): 65%
+modules/invenio-stats/invenio_stats/models.py
+    LOC: 244
+    LLOC: 123
+    SLOC: 161
+    Comments: 7
+    Single comments: 15
+    Multi: 30
+    Blank: 38
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 4%
+        (C + M % L): 15%
+modules/invenio-stats/invenio_stats/__init__.py
+    LOC: 435
+    LLOC: 6
+    SLOC: 9
+    Comments: 7
+    Single comments: 7
+    Multi: 321
+    Blank: 98
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 78%
+        (C + M % L): 75%
+modules/invenio-stats/invenio_stats/templates.py
+    LOC: 24
+    LLOC: 7
+    SLOC: 11
+    Comments: 7
+    Single comments: 9
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 29%
+        (C % S): 64%
+        (C + M % L): 29%
+modules/invenio-stats/invenio_stats/cli.py
+    LOC: 406
+    LLOC: 169
+    SLOC: 321
+    Comments: 7
+    Single comments: 17
+    Multi: 20
+    Blank: 48
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 2%
+        (C + M % L): 7%
+modules/invenio-stats/invenio_stats/utils.py
+    LOC: 1478
+    LLOC: 1022
+    SLOC: 1143
+    Comments: 47
+    Single comments: 77
+    Multi: 91
+    Blank: 167
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 4%
+        (C + M % L): 9%
+modules/invenio-stats/invenio_stats/proxies.py
+    LOC: 17
+    LLOC: 6
+    SLOC: 5
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 41%
+        (C % S): 140%
+        (C + M % L): 41%
+modules/invenio-stats/invenio_stats/permissions.py
+    LOC: 26
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/invenio-stats/invenio_stats/queries.py
+    LOC: 452
+    LLOC: 266
+    SLOC: 313
+    Comments: 11
+    Single comments: 30
+    Multi: 39
+    Blank: 70
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 4%
+        (C + M % L): 11%
+modules/invenio-stats/invenio_stats/errors.py
+    LOC: 74
+    LLOC: 30
+    SLOC: 19
+    Comments: 16
+    Single comments: 26
+    Multi: 3
+    Blank: 26
+    - Comment Stats
+        (C % L): 22%
+        (C % S): 84%
+        (C + M % L): 26%
+modules/invenio-stats/invenio_stats/processors.py
+    LOC: 236
+    LLOC: 108
+    SLOC: 125
+    Comments: 20
+    Single comments: 26
+    Multi: 48
+    Blank: 37
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 16%
+        (C + M % L): 29%
+modules/invenio-stats/invenio_stats/views.py
+    LOC: 581
+    LLOC: 345
+    SLOC: 427
+    Comments: 15
+    Single comments: 44
+    Multi: 8
+    Blank: 102
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 4%
+        (C + M % L): 4%
+modules/invenio-stats/invenio_stats/aggregations.py
+    LOC: 464
+    LLOC: 209
+    SLOC: 320
+    Comments: 25
+    Single comments: 36
+    Multi: 47
+    Blank: 61
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 8%
+        (C + M % L): 16%
+modules/invenio-stats/invenio_stats/ext.py
+    LOC: 240
+    LLOC: 130
+    SLOC: 183
+    Comments: 12
+    Single comments: 25
+    Multi: 0
+    Blank: 32
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 7%
+        (C + M % L): 5%
+modules/invenio-stats/invenio_stats/contrib/event_builders.py
+    LOC: 354
+    LLOC: 136
+    SLOC: 265
+    Comments: 33
+    Single comments: 28
+    Multi: 3
+    Blank: 58
+    - Comment Stats
+        (C % L): 9%
+        (C % S): 12%
+        (C + M % L): 10%
+modules/invenio-stats/invenio_stats/contrib/__init__.py
+    LOC: 9
+    LLOC: 1
+    SLOC: 0
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 78%
+        (C % S): 700%
+        (C + M % L): 78%
+modules/invenio-stats/invenio_stats/contrib/registrations.py
+    LOC: 819
+    LLOC: 19
+    SLOC: 800
+    Comments: 10
+    Single comments: 11
+    Multi: 0
+    Blank: 8
+    - Comment Stats
+        (C % L): 1%
+        (C % S): 1%
+        (C + M % L): 1%
+modules/invenio-stats/invenio_stats/contrib/item_create/__init__.py
+    LOC: 9
+    LLOC: 1
+    SLOC: 0
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 78%
+        (C % S): 700%
+        (C + M % L): 78%
+modules/invenio-stats/invenio_stats/contrib/record_view/__init__.py
+    LOC: 9
+    LLOC: 1
+    SLOC: 0
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 78%
+        (C % S): 700%
+        (C + M % L): 78%
+modules/invenio-stats/invenio_stats/contrib/search/__init__.py
+    LOC: 9
+    LLOC: 1
+    SLOC: 0
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 78%
+        (C % S): 700%
+        (C + M % L): 78%
+modules/invenio-stats/invenio_stats/contrib/celery_task/__init__.py
+    LOC: 9
+    LLOC: 1
+    SLOC: 0
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 78%
+        (C % S): 700%
+        (C + M % L): 78%
+modules/invenio-stats/invenio_stats/contrib/file_download/__init__.py
+    LOC: 9
+    LLOC: 1
+    SLOC: 0
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 78%
+        (C % S): 700%
+        (C + M % L): 78%
+modules/invenio-stats/invenio_stats/contrib/top_view/__init__.py
+    LOC: 9
+    LLOC: 1
+    SLOC: 0
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 78%
+        (C % S): 700%
+        (C + M % L): 78%
+modules/invenio-stats/invenio_stats/contrib/aggregations/__init__.py
+    LOC: 9
+    LLOC: 1
+    SLOC: 0
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 78%
+        (C % S): 700%
+        (C + M % L): 78%
+modules/invenio-stats/invenio_stats/contrib/aggregations/aggr_search/__init__.py
+    LOC: 9
+    LLOC: 1
+    SLOC: 0
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 78%
+        (C % S): 700%
+        (C + M % L): 78%
+modules/invenio-stats/invenio_stats/contrib/aggregations/aggr_record_view/__init__.py
+    LOC: 9
+    LLOC: 1
+    SLOC: 0
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 78%
+        (C % S): 700%
+        (C + M % L): 78%
+modules/invenio-stats/invenio_stats/contrib/aggregations/aggr_item_create/__init__.py
+    LOC: 9
+    LLOC: 1
+    SLOC: 0
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 78%
+        (C % S): 700%
+        (C + M % L): 78%
+modules/invenio-stats/invenio_stats/contrib/aggregations/aggr_top_view/__init__.py
+    LOC: 9
+    LLOC: 1
+    SLOC: 0
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 78%
+        (C % S): 700%
+        (C + M % L): 78%
+modules/invenio-stats/invenio_stats/contrib/aggregations/aggr_file_download/__init__.py
+    LOC: 9
+    LLOC: 1
+    SLOC: 0
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 78%
+        (C % S): 700%
+        (C + M % L): 78%
+modules/invenio-stats/invenio_stats/contrib/aggregations/aggr_celery_task/__init__.py
+    LOC: 9
+    LLOC: 1
+    SLOC: 0
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 78%
+        (C % S): 700%
+        (C + M % L): 78%
+modules/invenio-stats/invenio_stats/contrib/aggregations/aggr_file_preview/__init__.py
+    LOC: 9
+    LLOC: 1
+    SLOC: 0
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 78%
+        (C % S): 700%
+        (C + M % L): 78%
+modules/invenio-stats/invenio_stats/contrib/file_preview/__init__.py
+    LOC: 9
+    LLOC: 1
+    SLOC: 0
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 78%
+        (C % S): 700%
+        (C + M % L): 78%
+modules/invenio-s3/setup.py
+    LOC: 99
+    LLOC: 20
+    SLOC: 78
+    Comments: 8
+    Single comments: 8
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 10%
+        (C + M % L): 8%
+modules/invenio-s3/invenio_s3/config.py
+    LOC: 47
+    LLOC: 9
+    SLOC: 4
+    Comments: 6
+    Single comments: 7
+    Multi: 27
+    Blank: 9
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 150%
+        (C + M % L): 70%
+modules/invenio-s3/invenio_s3/version.py
+    LOC: 16
+    LLOC: 3
+    SLOC: 2
+    Comments: 6
+    Single comments: 6
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 38%
+        (C % S): 300%
+        (C + M % L): 62%
+modules/invenio-s3/invenio_s3/__init__.py
+    LOC: 34
+    LLOC: 6
+    SLOC: 10
+    Comments: 6
+    Single comments: 6
+    Multi: 11
+    Blank: 7
+    - Comment Stats
+        (C % L): 18%
+        (C % S): 60%
+        (C + M % L): 50%
+modules/invenio-s3/invenio_s3/storage.py
+    LOC: 172
+    LLOC: 103
+    SLOC: 125
+    Comments: 7
+    Single comments: 16
+    Multi: 4
+    Blank: 27
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 6%
+        (C + M % L): 6%
+modules/invenio-s3/invenio_s3/helpers.py
+    LOC: 113
+    LLOC: 54
+    SLOC: 68
+    Comments: 24
+    Single comments: 25
+    Multi: 4
+    Blank: 16
+    - Comment Stats
+        (C % L): 21%
+        (C % S): 35%
+        (C + M % L): 25%
+modules/invenio-s3/invenio_s3/ext.py
+    LOC: 54
+    LLOC: 34
+    SLOC: 32
+    Comments: 6
+    Single comments: 12
+    Multi: 0
+    Blank: 10
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 19%
+        (C + M % L): 11%
+modules/weko-itemtypes-ui/setup.py
+    LOC: 139
+    LLOC: 20
+    SLOC: 105
+    Comments: 20
+    Single comments: 21
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 19%
+        (C + M % L): 14%
+modules/weko-itemtypes-ui/weko_itemtypes_ui/config.py
+    LOC: 67
+    LLOC: 25
+    SLOC: 22
+    Comments: 20
+    Single comments: 32
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 30%
+        (C % S): 91%
+        (C + M % L): 30%
+modules/weko-itemtypes-ui/weko_itemtypes_ui/version.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 19
+    Single comments: 19
+    Multi: 4
+    Blank: 3
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1900%
+        (C + M % L): 85%
+modules/weko-itemtypes-ui/weko_itemtypes_ui/bundles.py
+    LOC: 74
+    LLOC: 12
+    SLOC: 44
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 10
+    - Comment Stats
+        (C % L): 26%
+        (C % S): 43%
+        (C + M % L): 26%
+modules/weko-itemtypes-ui/weko_itemtypes_ui/__init__.py
+    LOC: 26
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/weko-itemtypes-ui/weko_itemtypes_ui/admin.py
+    LOC: 593
+    LLOC: 360
+    SLOC: 480
+    Comments: 38
+    Single comments: 48
+    Multi: 7
+    Blank: 58
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 8%
+        (C + M % L): 8%
+modules/weko-itemtypes-ui/weko_itemtypes_ui/utils.py
+    LOC: 469
+    LLOC: 289
+    SLOC: 283
+    Comments: 21
+    Single comments: 26
+    Multi: 89
+    Blank: 71
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 7%
+        (C + M % L): 23%
+modules/weko-itemtypes-ui/weko_itemtypes_ui/permissions.py
+    LOC: 26
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/weko-itemtypes-ui/weko_itemtypes_ui/views.py
+    LOC: 96
+    LLOC: 34
+    SLOC: 56
+    Comments: 19
+    Single comments: 22
+    Multi: 4
+    Blank: 14
+    - Comment Stats
+        (C % L): 20%
+        (C % S): 34%
+        (C + M % L): 24%
+modules/weko-itemtypes-ui/weko_itemtypes_ui/ext.py
+    LOC: 62
+    LLOC: 23
+    SLOC: 21
+    Comments: 20
+    Single comments: 22
+    Multi: 9
+    Blank: 10
+    - Comment Stats
+        (C % L): 32%
+        (C % S): 95%
+        (C + M % L): 47%
+modules/weko-admin/setup.py
+    LOC: 183
+    LLOC: 20
+    SLOC: 149
+    Comments: 20
+    Single comments: 21
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 13%
+        (C + M % L): 11%
+modules/weko-admin/weko_admin/tasks.py
+    LOC: 147
+    LLOC: 74
+    SLOC: 100
+    Comments: 25
+    Single comments: 30
+    Multi: 0
+    Blank: 17
+    - Comment Stats
+        (C % L): 17%
+        (C % S): 25%
+        (C + M % L): 17%
+modules/weko-admin/weko_admin/config.py
+    LOC: 1246
+    LLOC: 131
+    SLOC: 1084
+    Comments: 22
+    Single comments: 76
+    Multi: 0
+    Blank: 86
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 2%
+        (C + M % L): 2%
+modules/weko-admin/weko_admin/version.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 19
+    Single comments: 19
+    Multi: 4
+    Blank: 3
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1900%
+        (C + M % L): 85%
+modules/weko-admin/weko_admin/models.py
+    LOC: 1909
+    LLOC: 1065
+    SLOC: 1237
+    Comments: 21
+    Single comments: 107
+    Multi: 244
+    Blank: 321
+    - Comment Stats
+        (C % L): 1%
+        (C % S): 2%
+        (C + M % L): 14%
+modules/weko-admin/weko_admin/bundles.py
+    LOC: 163
+    LLOC: 27
+    SLOC: 119
+    Comments: 21
+    Single comments: 20
+    Multi: 0
+    Blank: 24
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 18%
+        (C + M % L): 13%
+modules/weko-admin/weko_admin/__init__.py
+    LOC: 26
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/weko-admin/weko_admin/api.py
+    LOC: 99
+    LLOC: 44
+    SLOC: 53
+    Comments: 21
+    Single comments: 23
+    Multi: 8
+    Blank: 15
+    - Comment Stats
+        (C % L): 21%
+        (C % S): 40%
+        (C + M % L): 29%
+modules/weko-admin/weko_admin/admin.py
+    LOC: 1365
+    LLOC: 691
+    SLOC: 1111
+    Comments: 47
+    Single comments: 72
+    Multi: 32
+    Blank: 150
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 4%
+        (C + M % L): 6%
+modules/weko-admin/weko_admin/cli.py
+    LOC: 257
+    LLOC: 166
+    SLOC: 160
+    Comments: 19
+    Single comments: 35
+    Multi: 16
+    Blank: 46
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 12%
+        (C + M % L): 14%
+modules/weko-admin/weko_admin/utils.py
+    LOC: 2187
+    LLOC: 1205
+    SLOC: 1476
+    Comments: 64
+    Single comments: 87
+    Multi: 316
+    Blank: 308
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 4%
+        (C + M % L): 17%
+modules/weko-admin/weko_admin/permissions.py
+    LOC: 54
+    LLOC: 17
+    SLOC: 16
+    Comments: 19
+    Single comments: 21
+    Multi: 8
+    Blank: 9
+    - Comment Stats
+        (C % L): 35%
+        (C % S): 119%
+        (C + M % L): 50%
+modules/weko-admin/weko_admin/views.py
+    LOC: 672
+    LLOC: 381
+    SLOC: 437
+    Comments: 24
+    Single comments: 31
+    Multi: 98
+    Blank: 106
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 5%
+        (C + M % L): 18%
+modules/weko-admin/weko_admin/ext.py
+    LOC: 178
+    LLOC: 103
+    SLOC: 109
+    Comments: 26
+    Single comments: 28
+    Multi: 20
+    Blank: 21
+    - Comment Stats
+        (C % L): 15%
+        (C % S): 24%
+        (C + M % L): 26%
+modules/invenio-oaiharvester/setup.py
+    LOC: 139
+    LLOC: 22
+    SLOC: 101
+    Comments: 24
+    Single comments: 25
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 17%
+        (C % S): 24%
+        (C + M % L): 17%
+modules/invenio-oaiharvester/requirements.py
+    LOC: 189
+    LLOC: 93
+    SLOC: 121
+    Comments: 36
+    Single comments: 39
+    Multi: 0
+    Blank: 29
+    - Comment Stats
+        (C % L): 19%
+        (C % S): 30%
+        (C + M % L): 19%
+modules/invenio-oaiharvester/invenio_oaiharvester/signals.py
+    LOC: 37
+    LLOC: 5
+    SLOC: 3
+    Comments: 18
+    Single comments: 19
+    Multi: 8
+    Blank: 7
+    - Comment Stats
+        (C % L): 49%
+        (C % S): 600%
+        (C + M % L): 70%
+modules/invenio-oaiharvester/invenio_oaiharvester/tasks.py
+    LOC: 488
+    LLOC: 300
+    SLOC: 355
+    Comments: 49
+    Single comments: 56
+    Multi: 22
+    Blank: 55
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 14%
+        (C + M % L): 15%
+modules/invenio-oaiharvester/invenio_oaiharvester/config.py
+    LOC: 63
+    LLOC: 27
+    SLOC: 22
+    Comments: 18
+    Single comments: 28
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 29%
+        (C % S): 82%
+        (C + M % L): 29%
+modules/invenio-oaiharvester/invenio_oaiharvester/version.py
+    LOC: 33
+    LLOC: 3
+    SLOC: 2
+    Comments: 23
+    Single comments: 23
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1150%
+        (C + M % L): 82%
+modules/invenio-oaiharvester/invenio_oaiharvester/models.py
+    LOC: 156
+    LLOC: 67
+    SLOC: 99
+    Comments: 18
+    Single comments: 25
+    Multi: 0
+    Blank: 32
+    - Comment Stats
+        (C % L): 12%
+        (C % S): 18%
+        (C + M % L): 12%
+modules/invenio-oaiharvester/invenio_oaiharvester/__init__.py
+    LOC: 91
+    LLOC: 6
+    SLOC: 8
+    Comments: 22
+    Single comments: 22
+    Multi: 34
+    Blank: 27
+    - Comment Stats
+        (C % L): 24%
+        (C % S): 275%
+        (C + M % L): 62%
+modules/invenio-oaiharvester/invenio_oaiharvester/api.py
+    LOC: 223
+    LLOC: 101
+    SLOC: 118
+    Comments: 32
+    Single comments: 33
+    Multi: 38
+    Blank: 34
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 27%
+        (C + M % L): 31%
+modules/invenio-oaiharvester/invenio_oaiharvester/admin.py
+    LOC: 237
+    LLOC: 140
+    SLOC: 182
+    Comments: 19
+    Single comments: 31
+    Multi: 0
+    Blank: 24
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 10%
+        (C + M % L): 8%
+modules/invenio-oaiharvester/invenio_oaiharvester/cli.py
+    LOC: 160
+    LLOC: 73
+    SLOC: 106
+    Comments: 23
+    Single comments: 26
+    Multi: 9
+    Blank: 19
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 22%
+        (C + M % L): 20%
+modules/invenio-oaiharvester/invenio_oaiharvester/utils.py
+    LOC: 243
+    LLOC: 113
+    SLOC: 128
+    Comments: 19
+    Single comments: 22
+    Multi: 42
+    Blank: 51
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 15%
+        (C + M % L): 25%
+modules/invenio-oaiharvester/invenio_oaiharvester/harvester.py
+    LOC: 1717
+    LLOC: 873
+    SLOC: 1312
+    Comments: 59
+    Single comments: 104
+    Multi: 65
+    Blank: 236
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 4%
+        (C + M % L): 7%
+modules/invenio-oaiharvester/invenio_oaiharvester/errors.py
+    LOC: 46
+    LLOC: 14
+    SLOC: 7
+    Comments: 18
+    Single comments: 25
+    Multi: 0
+    Blank: 14
+    - Comment Stats
+        (C % L): 39%
+        (C % S): 257%
+        (C + M % L): 39%
+modules/invenio-oaiharvester/invenio_oaiharvester/views.py
+    LOC: 14
+    LLOC: 6
+    SLOC: 9
+    Comments: 1
+    Single comments: 2
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 11%
+        (C + M % L): 7%
+modules/invenio-oaiharvester/invenio_oaiharvester/ext.py
+    LOC: 53
+    LLOC: 22
+    SLOC: 17
+    Comments: 23
+    Single comments: 28
+    Multi: 0
+    Blank: 8
+    - Comment Stats
+        (C % L): 43%
+        (C % S): 135%
+        (C + M % L): 43%
+modules/invenio-resourcesyncclient/setup.py
+    LOC: 128
+    LLOC: 20
+    SLOC: 106
+    Comments: 19
+    Single comments: 9
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 15%
+        (C % S): 18%
+        (C + M % L): 15%
+modules/invenio-resourcesyncclient/invenio_resourcesyncclient/tasks.py
+    LOC: 374
+    LLOC: 189
+    SLOC: 304
+    Comments: 25
+    Single comments: 31
+    Multi: 0
+    Blank: 39
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 8%
+        (C + M % L): 7%
+modules/invenio-resourcesyncclient/invenio_resourcesyncclient/config.py
+    LOC: 54
+    LLOC: 22
+    SLOC: 26
+    Comments: 10
+    Single comments: 17
+    Multi: 0
+    Blank: 11
+    - Comment Stats
+        (C % L): 19%
+        (C % S): 38%
+        (C + M % L): 19%
+modules/invenio-resourcesyncclient/invenio_resourcesyncclient/version.py
+    LOC: 17
+    LLOC: 3
+    SLOC: 2
+    Comments: 7
+    Single comments: 7
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 41%
+        (C % S): 350%
+        (C + M % L): 65%
+modules/invenio-resourcesyncclient/invenio_resourcesyncclient/models.py
+    LOC: 185
+    LLOC: 59
+    SLOC: 111
+    Comments: 19
+    Single comments: 35
+    Multi: 3
+    Blank: 36
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 17%
+        (C + M % L): 12%
+modules/invenio-resourcesyncclient/invenio_resourcesyncclient/bundles.py
+    LOC: 34
+    LLOC: 4
+    SLOC: 10
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 56%
+        (C % S): 190%
+        (C + M % L): 56%
+modules/invenio-resourcesyncclient/invenio_resourcesyncclient/__init__.py
+    LOC: 16
+    LLOC: 5
+    SLOC: 4
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 44%
+        (C % S): 175%
+        (C + M % L): 44%
+modules/invenio-resourcesyncclient/invenio_resourcesyncclient/api.py
+    LOC: 353
+    LLOC: 180
+    SLOC: 282
+    Comments: 20
+    Single comments: 29
+    Multi: 16
+    Blank: 26
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 7%
+        (C + M % L): 10%
+modules/invenio-resourcesyncclient/invenio_resourcesyncclient/admin.py
+    LOC: 209
+    LLOC: 92
+    SLOC: 156
+    Comments: 19
+    Single comments: 29
+    Multi: 4
+    Blank: 20
+    - Comment Stats
+        (C % L): 9%
+        (C % S): 12%
+        (C + M % L): 11%
+modules/invenio-resourcesyncclient/invenio_resourcesyncclient/utils.py
+    LOC: 436
+    LLOC: 306
+    SLOC: 353
+    Comments: 35
+    Single comments: 47
+    Multi: 3
+    Blank: 33
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 10%
+        (C + M % L): 9%
+modules/invenio-resourcesyncclient/invenio_resourcesyncclient/resync.py
+    LOC: 96
+    LLOC: 56
+    SLOC: 58
+    Comments: 21
+    Single comments: 28
+    Multi: 0
+    Blank: 10
+    - Comment Stats
+        (C % L): 22%
+        (C % S): 36%
+        (C + M % L): 22%
+modules/invenio-resourcesyncclient/invenio_resourcesyncclient/views.py
+    LOC: 35
+    LLOC: 11
+    SLOC: 16
+    Comments: 9
+    Single comments: 11
+    Multi: 0
+    Blank: 8
+    - Comment Stats
+        (C % L): 26%
+        (C % S): 56%
+        (C + M % L): 26%
+modules/invenio-resourcesyncclient/invenio_resourcesyncclient/ext.py
+    LOC: 49
+    LLOC: 24
+    SLOC: 22
+    Comments: 12
+    Single comments: 17
+    Multi: 0
+    Blank: 10
+    - Comment Stats
+        (C % L): 24%
+        (C % S): 55%
+        (C + M % L): 24%
+modules/weko-items-autofill/setup.py
+    LOC: 109
+    LLOC: 20
+    SLOC: 89
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 12
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 8%
+        (C + M % L): 6%
+modules/weko-items-autofill/weko_items_autofill/config.py
+    LOC: 111
+    LLOC: 32
+    SLOC: 73
+    Comments: 6
+    Single comments: 20
+    Multi: 0
+    Blank: 18
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 8%
+        (C + M % L): 5%
+modules/weko-items-autofill/weko_items_autofill/version.py
+    LOC: 16
+    LLOC: 3
+    SLOC: 2
+    Comments: 6
+    Single comments: 6
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 38%
+        (C % S): 300%
+        (C + M % L): 62%
+modules/weko-items-autofill/weko_items_autofill/__init__.py
+    LOC: 15
+    LLOC: 5
+    SLOC: 4
+    Comments: 6
+    Single comments: 7
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 40%
+        (C % S): 150%
+        (C + M % L): 40%
+modules/weko-items-autofill/weko_items_autofill/api.py
+    LOC: 186
+    LLOC: 102
+    SLOC: 100
+    Comments: 21
+    Single comments: 26
+    Multi: 32
+    Blank: 28
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 21%
+        (C + M % L): 28%
+modules/weko-items-autofill/weko_items_autofill/utils.py
+    LOC: 1496
+    LLOC: 921
+    SLOC: 945
+    Comments: 36
+    Single comments: 38
+    Multi: 308
+    Blank: 205
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 4%
+        (C + M % L): 23%
+modules/weko-items-autofill/weko_items_autofill/permissions.py
+    LOC: 26
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/weko-items-autofill/weko_items_autofill/views.py
+    LOC: 129
+    LLOC: 66
+    SLOC: 83
+    Comments: 6
+    Single comments: 8
+    Multi: 14
+    Blank: 24
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 7%
+        (C + M % L): 16%
+modules/weko-items-autofill/weko_items_autofill/ext.py
+    LOC: 44
+    LLOC: 22
+    SLOC: 20
+    Comments: 10
+    Single comments: 15
+    Multi: 0
+    Blank: 9
+    - Comment Stats
+        (C % L): 23%
+        (C % S): 50%
+        (C + M % L): 23%
+modules/weko-schema-ui/setup.py
+    LOC: 128
+    LLOC: 20
+    SLOC: 94
+    Comments: 20
+    Single comments: 21
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 16%
+        (C % S): 21%
+        (C + M % L): 16%
+modules/weko-schema-ui/weko_schema_ui/config.py
+    LOC: 111
+    LLOC: 39
+    SLOC: 48
+    Comments: 26
+    Single comments: 41
+    Multi: 0
+    Blank: 22
+    - Comment Stats
+        (C % L): 23%
+        (C % S): 54%
+        (C + M % L): 23%
+modules/weko-schema-ui/weko_schema_ui/version.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 19
+    Single comments: 19
+    Multi: 4
+    Blank: 3
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1900%
+        (C + M % L): 85%
+modules/weko-schema-ui/weko_schema_ui/models.py
+    LOC: 141
+    LLOC: 38
+    SLOC: 87
+    Comments: 20
+    Single comments: 28
+    Multi: 4
+    Blank: 22
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 23%
+        (C + M % L): 17%
+modules/weko-schema-ui/weko_schema_ui/bundles.py
+    LOC: 29
+    LLOC: 3
+    SLOC: 6
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 66%
+        (C % S): 317%
+        (C + M % L): 66%
+modules/weko-schema-ui/weko_schema_ui/rest.py
+    LOC: 340
+    LLOC: 151
+    SLOC: 195
+    Comments: 62
+    Single comments: 69
+    Multi: 16
+    Blank: 60
+    - Comment Stats
+        (C % L): 18%
+        (C % S): 32%
+        (C + M % L): 23%
+modules/weko-schema-ui/weko_schema_ui/__init__.py
+    LOC: 26
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/weko-schema-ui/weko_schema_ui/api.py
+    LOC: 174
+    LLOC: 68
+    SLOC: 66
+    Comments: 31
+    Single comments: 30
+    Multi: 48
+    Blank: 30
+    - Comment Stats
+        (C % L): 18%
+        (C % S): 47%
+        (C + M % L): 45%
+modules/weko-schema-ui/weko_schema_ui/admin.py
+    LOC: 82
+    LLOC: 31
+    SLOC: 39
+    Comments: 26
+    Single comments: 31
+    Multi: 0
+    Blank: 12
+    - Comment Stats
+        (C % L): 32%
+        (C % S): 67%
+        (C + M % L): 32%
+modules/weko-schema-ui/weko_schema_ui/utils.py
+    LOC: 158
+    LLOC: 66
+    SLOC: 84
+    Comments: 20
+    Single comments: 25
+    Multi: 19
+    Blank: 30
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 24%
+        (C + M % L): 25%
+modules/weko-schema-ui/weko_schema_ui/permissions.py
+    LOC: 26
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/weko-schema-ui/weko_schema_ui/views.py
+    LOC: 30
+    LLOC: 3
+    SLOC: 7
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 63%
+        (C % S): 271%
+        (C + M % L): 63%
+modules/weko-schema-ui/weko_schema_ui/ext.py
+    LOC: 97
+    LLOC: 39
+    SLOC: 35
+    Comments: 20
+    Single comments: 23
+    Multi: 20
+    Blank: 19
+    - Comment Stats
+        (C % L): 21%
+        (C % S): 57%
+        (C + M % L): 41%
+modules/weko-schema-ui/weko_schema_ui/schema.py
+    LOC: 1770
+    LLOC: 1255
+    SLOC: 1411
+    Comments: 100
+    Single comments: 114
+    Multi: 85
+    Blank: 160
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 7%
+        (C + M % L): 10%
+modules/weko-schema-ui/weko_schema_ui/serializers/WekoBibTexSerializer.py
+    LOC: 766
+    LLOC: 409
+    SLOC: 548
+    Comments: 27
+    Single comments: 32
+    Multi: 98
+    Blank: 88
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 5%
+        (C + M % L): 16%
+modules/weko-schema-ui/weko_schema_ui/serializers/__init__.py
+    LOC: 58
+    LLOC: 18
+    SLOC: 21
+    Comments: 25
+    Single comments: 26
+    Multi: 0
+    Blank: 11
+    - Comment Stats
+        (C % L): 43%
+        (C % S): 119%
+        (C + M % L): 43%
+modules/weko-schema-ui/weko_schema_ui/serializers/wekoxml.py
+    LOC: 75
+    LLOC: 18
+    SLOC: 18
+    Comments: 19
+    Single comments: 21
+    Multi: 22
+    Blank: 14
+    - Comment Stats
+        (C % L): 25%
+        (C % S): 106%
+        (C + M % L): 55%
+modules/weko-schema-ui/weko_schema_ui/mappings/__init__.py
+    LOC: 21
+    LLOC: 1
+    SLOC: 0
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 90%
+        (C % S): 1900%
+        (C + M % L): 90%
+modules/weko-schema-ui/weko_schema_ui/mappings/v6/__init__.py
+    LOC: 21
+    LLOC: 1
+    SLOC: 0
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 90%
+        (C % S): 1900%
+        (C + M % L): 90%
+modules/weko-schema-ui/weko_schema_ui/mappings/v2/__init__.py
+    LOC: 21
+    LLOC: 1
+    SLOC: 0
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 90%
+        (C % S): 1900%
+        (C + M % L): 90%
+modules/invenio-oaiserver/setup.py
+    LOC: 158
+    LLOC: 23
+    SLOC: 136
+    Comments: 10
+    Single comments: 9
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 7%
+        (C + M % L): 6%
+modules/invenio-oaiserver/invenio_oaiserver/receivers.py
+    LOC: 61
+    LLOC: 30
+    SLOC: 31
+    Comments: 8
+    Single comments: 13
+    Multi: 3
+    Blank: 14
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 26%
+        (C + M % L): 18%
+modules/invenio-oaiserver/invenio_oaiserver/tasks.py
+    LOC: 74
+    LLOC: 35
+    SLOC: 42
+    Comments: 9
+    Single comments: 10
+    Multi: 7
+    Blank: 15
+    - Comment Stats
+        (C % L): 12%
+        (C % S): 21%
+        (C + M % L): 22%
+modules/invenio-oaiserver/invenio_oaiserver/config.py
+    LOC: 216
+    LLOC: 48
+    SLOC: 59
+    Comments: 8
+    Single comments: 20
+    Multi: 81
+    Blank: 56
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 14%
+        (C + M % L): 41%
+modules/invenio-oaiserver/invenio_oaiserver/version.py
+    LOC: 17
+    LLOC: 3
+    SLOC: 2
+    Comments: 7
+    Single comments: 7
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 41%
+        (C % S): 350%
+        (C + M % L): 65%
+modules/invenio-oaiserver/invenio_oaiserver/fetchers.py
+    LOC: 33
+    LLOC: 11
+    SLOC: 13
+    Comments: 7
+    Single comments: 8
+    Multi: 5
+    Blank: 7
+    - Comment Stats
+        (C % L): 21%
+        (C % S): 54%
+        (C + M % L): 36%
+modules/invenio-oaiserver/invenio_oaiserver/models.py
+    LOC: 184
+    LLOC: 59
+    SLOC: 103
+    Comments: 15
+    Single comments: 28
+    Multi: 12
+    Blank: 41
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 15%
+        (C + M % L): 15%
+modules/invenio-oaiserver/invenio_oaiserver/query.py
+    LOC: 230
+    LLOC: 133
+    SLOC: 154
+    Comments: 18
+    Single comments: 31
+    Multi: 5
+    Blank: 40
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 12%
+        (C + M % L): 10%
+modules/invenio-oaiserver/invenio_oaiserver/provider.py
+    LOC: 43
+    LLOC: 20
+    SLOC: 15
+    Comments: 7
+    Single comments: 12
+    Multi: 4
+    Blank: 12
+    - Comment Stats
+        (C % L): 16%
+        (C % S): 47%
+        (C + M % L): 26%
+modules/invenio-oaiserver/invenio_oaiserver/__init__.py
+    LOC: 175
+    LLOC: 6
+    SLOC: 5
+    Comments: 7
+    Single comments: 7
+    Multi: 118
+    Blank: 45
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 140%
+        (C + M % L): 71%
+modules/invenio-oaiserver/invenio_oaiserver/response.py
+    LOC: 717
+    LLOC: 425
+    SLOC: 532
+    Comments: 31
+    Single comments: 57
+    Multi: 10
+    Blank: 118
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 6%
+        (C + M % L): 6%
+modules/invenio-oaiserver/invenio_oaiserver/api.py
+    LOC: 48
+    LLOC: 17
+    SLOC: 13
+    Comments: 20
+    Single comments: 23
+    Multi: 4
+    Blank: 8
+    - Comment Stats
+        (C % L): 42%
+        (C % S): 154%
+        (C + M % L): 50%
+modules/invenio-oaiserver/invenio_oaiserver/percolator.py
+    LOC: 145
+    LLOC: 80
+    SLOC: 95
+    Comments: 14
+    Single comments: 20
+    Multi: 5
+    Blank: 25
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 15%
+        (C + M % L): 13%
+modules/invenio-oaiserver/invenio_oaiserver/admin.py
+    LOC: 99
+    LLOC: 46
+    SLOC: 67
+    Comments: 7
+    Single comments: 14
+    Multi: 0
+    Blank: 18
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 10%
+        (C + M % L): 7%
+modules/invenio-oaiserver/invenio_oaiserver/utils.py
+    LOC: 203
+    LLOC: 107
+    SLOC: 116
+    Comments: 10
+    Single comments: 10
+    Multi: 39
+    Blank: 38
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 9%
+        (C + M % L): 24%
+modules/invenio-oaiserver/invenio_oaiserver/proxies.py
+    LOC: 19
+    LLOC: 7
+    SLOC: 6
+    Comments: 7
+    Single comments: 9
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 37%
+        (C % S): 117%
+        (C + M % L): 37%
+modules/invenio-oaiserver/invenio_oaiserver/errors.py
+    LOC: 22
+    LLOC: 6
+    SLOC: 3
+    Comments: 7
+    Single comments: 9
+    Multi: 3
+    Blank: 7
+    - Comment Stats
+        (C % L): 32%
+        (C % S): 233%
+        (C + M % L): 45%
+modules/invenio-oaiserver/invenio_oaiserver/resumption_token.py
+    LOC: 72
+    LLOC: 37
+    SLOC: 42
+    Comments: 7
+    Single comments: 14
+    Multi: 0
+    Blank: 16
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 17%
+        (C + M % L): 10%
+modules/invenio-oaiserver/invenio_oaiserver/minters.py
+    LOC: 49
+    LLOC: 21
+    SLOC: 27
+    Comments: 8
+    Single comments: 9
+    Multi: 5
+    Blank: 8
+    - Comment Stats
+        (C % L): 16%
+        (C % S): 30%
+        (C + M % L): 27%
+modules/invenio-oaiserver/invenio_oaiserver/verbs.py
+    LOC: 201
+    LLOC: 105
+    SLOC: 112
+    Comments: 11
+    Single comments: 28
+    Multi: 11
+    Blank: 50
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 10%
+        (C + M % L): 11%
+modules/invenio-oaiserver/invenio_oaiserver/ext.py
+    LOC: 139
+    LLOC: 75
+    SLOC: 80
+    Comments: 11
+    Single comments: 20
+    Multi: 12
+    Blank: 27
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 14%
+        (C + M % L): 17%
+modules/invenio-oaiserver/invenio_oaiserver/schemas/__init__.py
+    LOC: 9
+    LLOC: 1
+    SLOC: 0
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 78%
+        (C % S): 700%
+        (C + M % L): 78%
+modules/invenio-oaiserver/invenio_oaiserver/alembic/759d47cbdba7_create_oaiserver_branch.py
+    LOC: 28
+    LLOC: 13
+    SLOC: 10
+    Comments: 8
+    Single comments: 11
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 29%
+        (C % S): 80%
+        (C + M % L): 29%
+modules/invenio-oaiserver/invenio_oaiserver/alembic/e655021de0de_create_oiaserver_tables.py
+    LOC: 46
+    LLOC: 15
+    SLOC: 28
+    Comments: 8
+    Single comments: 11
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 17%
+        (C % S): 29%
+        (C + M % L): 17%
+modules/invenio-oaiserver/invenio_oaiserver/views/server.py
+    LOC: 101
+    LLOC: 60
+    SLOC: 69
+    Comments: 7
+    Single comments: 13
+    Multi: 0
+    Blank: 19
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 10%
+        (C + M % L): 7%
+modules/invenio-oaiserver/invenio_oaiserver/views/__init__.py
+    LOC: 9
+    LLOC: 1
+    SLOC: 0
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 78%
+        (C % S): 700%
+        (C + M % L): 78%
+modules/weko-records-ui/setup.py
+    LOC: 144
+    LLOC: 20
+    SLOC: 110
+    Comments: 20
+    Single comments: 21
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 18%
+        (C + M % L): 14%
+modules/weko-records-ui/weko_records_ui/preview.py
+    LOC: 146
+    LLOC: 69
+    SLOC: 91
+    Comments: 23
+    Single comments: 27
+    Multi: 12
+    Blank: 16
+    - Comment Stats
+        (C % L): 16%
+        (C % S): 25%
+        (C + M % L): 24%
+modules/weko-records-ui/weko_records_ui/config.py
+    LOC: 506
+    LLOC: 70
+    SLOC: 406
+    Comments: 68
+    Single comments: 54
+    Multi: 0
+    Blank: 46
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 17%
+        (C + M % L): 13%
+modules/weko-records-ui/weko_records_ui/version.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 19
+    Single comments: 19
+    Multi: 4
+    Blank: 3
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1900%
+        (C + M % L): 85%
+modules/weko-records-ui/weko_records_ui/models.py
+    LOC: 404
+    LLOC: 228
+    SLOC: 239
+    Comments: 19
+    Single comments: 64
+    Multi: 27
+    Blank: 74
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 8%
+        (C + M % L): 11%
+modules/weko-records-ui/weko_records_ui/bundles.py
+    LOC: 102
+    LLOC: 13
+    SLOC: 73
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 9
+    - Comment Stats
+        (C % L): 19%
+        (C % S): 26%
+        (C + M % L): 19%
+modules/weko-records-ui/weko_records_ui/rest.py
+    LOC: 140
+    LLOC: 54
+    SLOC: 86
+    Comments: 26
+    Single comments: 26
+    Multi: 5
+    Blank: 23
+    - Comment Stats
+        (C % L): 19%
+        (C % S): 30%
+        (C + M % L): 22%
+modules/weko-records-ui/weko_records_ui/__init__.py
+    LOC: 26
+    LLOC: 4
+    SLOC: 3
+    Comments: 19
+    Single comments: 20
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 73%
+        (C % S): 633%
+        (C + M % L): 73%
+modules/weko-records-ui/weko_records_ui/pdf.py
+    LOC: 629
+    LLOC: 350
+    SLOC: 468
+    Comments: 74
+    Single comments: 67
+    Multi: 7
+    Blank: 87
+    - Comment Stats
+        (C % L): 12%
+        (C % S): 16%
+        (C + M % L): 13%
+modules/weko-records-ui/weko_records_ui/admin.py
+    LOC: 251
+    LLOC: 137
+    SLOC: 190
+    Comments: 20
+    Single comments: 30
+    Multi: 0
+    Blank: 31
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 11%
+        (C + M % L): 8%
+modules/weko-records-ui/weko_records_ui/ipaddr.py
+    LOC: 80
+    LLOC: 39
+    SLOC: 37
+    Comments: 19
+    Single comments: 20
+    Multi: 8
+    Blank: 15
+    - Comment Stats
+        (C % L): 24%
+        (C % S): 51%
+        (C + M % L): 34%
+modules/weko-records-ui/weko_records_ui/utils.py
+    LOC: 1089
+    LLOC: 626
+    SLOC: 712
+    Comments: 39
+    Single comments: 47
+    Multi: 166
+    Blank: 164
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 5%
+        (C + M % L): 19%
+modules/weko-records-ui/weko_records_ui/permissions.py
+    LOC: 470
+    LLOC: 311
+    SLOC: 313
+    Comments: 55
+    Single comments: 64
+    Multi: 32
+    Blank: 61
+    - Comment Stats
+        (C % L): 12%
+        (C % S): 18%
+        (C + M % L): 19%
+modules/weko-records-ui/weko_records_ui/fd.py
+    LOC: 450
+    LLOC: 181
+    SLOC: 248
+    Comments: 57
+    Single comments: 58
+    Multi: 73
+    Blank: 71
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 23%
+        (C + M % L): 29%
+modules/weko-records-ui/weko_records_ui/views.py
+    LOC: 907
+    LLOC: 542
+    SLOC: 646
+    Comments: 52
+    Single comments: 59
+    Multi: 82
+    Blank: 120
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 8%
+        (C + M % L): 15%
+modules/weko-records-ui/weko_records_ui/ext.py
+    LOC: 101
+    LLOC: 41
+    SLOC: 39
+    Comments: 20
+    Single comments: 23
+    Multi: 20
+    Blank: 19
+    - Comment Stats
+        (C % L): 20%
+        (C % S): 51%
+        (C + M % L): 40%
+modules/invenio-communities/setup.py
+    LOC: 186
+    LLOC: 24
+    SLOC: 146
+    Comments: 24
+    Single comments: 25
+    Multi: 0
+    Blank: 15
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 16%
+        (C + M % L): 13%
+modules/invenio-communities/invenio_communities/receivers.py
+    LOC: 73
+    LLOC: 29
+    SLOC: 32
+    Comments: 23
+    Single comments: 28
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 32%
+        (C % S): 72%
+        (C + M % L): 32%
+modules/invenio-communities/invenio_communities/signals.py
+    LOC: 47
+    LLOC: 6
+    SLOC: 4
+    Comments: 23
+    Single comments: 24
+    Multi: 9
+    Blank: 10
+    - Comment Stats
+        (C % L): 49%
+        (C % S): 575%
+        (C + M % L): 68%
+modules/invenio-communities/invenio_communities/tasks.py
+    LOC: 52
+    LLOC: 17
+    SLOC: 16
+    Comments: 24
+    Single comments: 27
+    Multi: 0
+    Blank: 9
+    - Comment Stats
+        (C % L): 46%
+        (C % S): 150%
+        (C + M % L): 46%
+modules/invenio-communities/invenio_communities/config.py
+    LOC: 166
+    LLOC: 73
+    SLOC: 81
+    Comments: 25
+    Single comments: 52
+    Multi: 0
+    Blank: 33
+    - Comment Stats
+        (C % L): 15%
+        (C % S): 31%
+        (C + M % L): 15%
+modules/invenio-communities/invenio_communities/version.py
+    LOC: 33
+    LLOC: 3
+    SLOC: 2
+    Comments: 23
+    Single comments: 23
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 1150%
+        (C + M % L): 82%
+modules/invenio-communities/invenio_communities/models.py
+    LOC: 540
+    LLOC: 258
+    SLOC: 294
+    Comments: 37
+    Single comments: 82
+    Multi: 63
+    Blank: 101
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 13%
+        (C + M % L): 19%
+modules/invenio-communities/invenio_communities/bundles.py
+    LOC: 76
+    LLOC: 12
+    SLOC: 43
+    Comments: 22
+    Single comments: 23
+    Multi: 0
+    Blank: 10
+    - Comment Stats
+        (C % L): 29%
+        (C % S): 51%
+        (C + M % L): 29%
+modules/invenio-communities/invenio_communities/__init__.py
+    LOC: 32
+    LLOC: 5
+    SLOC: 4
+    Comments: 23
+    Single comments: 24
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 72%
+        (C % S): 575%
+        (C + M % L): 72%
+modules/invenio-communities/invenio_communities/links.py
+    LOC: 63
+    LLOC: 16
+    SLOC: 27
+    Comments: 23
+    Single comments: 26
+    Multi: 0
+    Blank: 10
+    - Comment Stats
+        (C % L): 37%
+        (C % S): 85%
+        (C + M % L): 37%
+modules/invenio-communities/invenio_communities/forms.py
+    LOC: 217
+    LLOC: 85
+    SLOC: 131
+    Comments: 32
+    Single comments: 44
+    Multi: 3
+    Blank: 39
+    - Comment Stats
+        (C % L): 15%
+        (C % S): 24%
+        (C + M % L): 16%
+modules/invenio-communities/invenio_communities/admin.py
+    LOC: 266
+    LLOC: 107
+    SLOC: 158
+    Comments: 22
+    Single comments: 29
+    Multi: 32
+    Blank: 47
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 14%
+        (C + M % L): 20%
+modules/invenio-communities/invenio_communities/cli.py
+    LOC: 106
+    LLOC: 63
+    SLOC: 59
+    Comments: 27
+    Single comments: 33
+    Multi: 0
+    Blank: 14
+    - Comment Stats
+        (C % L): 25%
+        (C % S): 46%
+        (C + M % L): 25%
+modules/invenio-communities/invenio_communities/utils.py
+    LOC: 237
+    LLOC: 110
+    SLOC: 114
+    Comments: 25
+    Single comments: 32
+    Multi: 46
+    Blank: 45
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 22%
+        (C + M % L): 30%
+modules/invenio-communities/invenio_communities/proxies.py
+    LOC: 33
+    LLOC: 6
+    SLOC: 5
+    Comments: 23
+    Single comments: 24
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 460%
+        (C + M % L): 70%
+modules/invenio-communities/invenio_communities/permissions.py
+    LOC: 63
+    LLOC: 19
+    SLOC: 15
+    Comments: 23
+    Single comments: 26
+    Multi: 10
+    Blank: 12
+    - Comment Stats
+        (C % L): 37%
+        (C % S): 153%
+        (C + M % L): 52%
+modules/invenio-communities/invenio_communities/errors.py
+    LOC: 61
+    LLOC: 22
+    SLOC: 13
+    Comments: 23
+    Single comments: 32
+    Multi: 0
+    Blank: 16
+    - Comment Stats
+        (C % L): 38%
+        (C % S): 177%
+        (C + M % L): 38%
+modules/invenio-communities/invenio_communities/ext.py
+    LOC: 82
+    LLOC: 41
+    SLOC: 38
+    Comments: 25
+    Single comments: 32
+    Multi: 0
+    Blank: 12
+    - Comment Stats
+        (C % L): 30%
+        (C % S): 66%
+        (C + M % L): 30%
+modules/invenio-communities/invenio_communities/serializers/__init__.py
+    LOC: 33
+    LLOC: 5
+    SLOC: 5
+    Comments: 23
+    Single comments: 24
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 460%
+        (C + M % L): 70%
+modules/invenio-communities/invenio_communities/serializers/response.py
+    LOC: 94
+    LLOC: 33
+    SLOC: 49
+    Comments: 24
+    Single comments: 27
+    Multi: 4
+    Blank: 14
+    - Comment Stats
+        (C % L): 26%
+        (C % S): 49%
+        (C + M % L): 30%
+modules/invenio-communities/invenio_communities/serializers/schemas/__init__.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 23
+    Single comments: 24
+    Multi: 0
+    Blank: 2
+    - Comment Stats
+        (C % L): 85%
+        (C % S): 2300%
+        (C + M % L): 85%
+modules/invenio-communities/invenio_communities/serializers/schemas/community.py
+    LOC: 90
+    LLOC: 39
+    SLOC: 47
+    Comments: 23
+    Single comments: 28
+    Multi: 0
+    Blank: 15
+    - Comment Stats
+        (C % L): 26%
+        (C % S): 49%
+        (C + M % L): 26%
+modules/invenio-communities/invenio_communities/alembic/2d9884d0e3fa_create_community_tables.py
+    LOC: 94
+    LLOC: 18
+    SLOC: 60
+    Comments: 24
+    Single comments: 27
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 26%
+        (C % S): 40%
+        (C + M % L): 26%
+modules/invenio-communities/invenio_communities/alembic/21e13cb1eff2_create_communities_branch.py
+    LOC: 42
+    LLOC: 11
+    SLOC: 8
+    Comments: 24
+    Single comments: 27
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 57%
+        (C % S): 300%
+        (C + M % L): 57%
+modules/invenio-communities/invenio_communities/views/ui.py
+    LOC: 702
+    LLOC: 111
+    SLOC: 142
+    Comments: 492
+    Single comments: 500
+    Multi: 3
+    Blank: 57
+    - Comment Stats
+        (C % L): 70%
+        (C % S): 346%
+        (C + M % L): 71%
+modules/invenio-communities/invenio_communities/views/__init__.py
+    LOC: 27
+    LLOC: 2
+    SLOC: 1
+    Comments: 23
+    Single comments: 24
+    Multi: 0
+    Blank: 2
+    - Comment Stats
+        (C % L): 85%
+        (C % S): 2300%
+        (C + M % L): 85%
+modules/invenio-communities/invenio_communities/views/api.py
+    LOC: 210
+    LLOC: 46
+    SLOC: 98
+    Comments: 23
+    Single comments: 28
+    Multi: 57
+    Blank: 27
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 23%
+        (C + M % L): 38%
+modules/invenio-oauth2server/setup.py
+    LOC: 157
+    LLOC: 22
+    SLOC: 136
+    Comments: 8
+    Single comments: 9
+    Multi: 0
+    Blank: 12
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 6%
+        (C + M % L): 5%
+modules/invenio-oauth2server/invenio_oauth2server/scopes.py
+    LOC: 22
+    LLOC: 6
+    SLOC: 8
+    Comments: 7
+    Single comments: 9
+    Multi: 0
+    Blank: 5
+    - Comment Stats
+        (C % L): 32%
+        (C % S): 88%
+        (C + M % L): 32%
+modules/invenio-oauth2server/invenio_oauth2server/config.py
+    LOC: 85
+    LLOC: 26
+    SLOC: 18
+    Comments: 7
+    Single comments: 14
+    Multi: 29
+    Blank: 24
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 39%
+        (C + M % L): 42%
+modules/invenio-oauth2server/invenio_oauth2server/version.py
+    LOC: 17
+    LLOC: 3
+    SLOC: 2
+    Comments: 7
+    Single comments: 7
+    Multi: 4
+    Blank: 4
+    - Comment Stats
+        (C % L): 41%
+        (C % S): 350%
+        (C + M % L): 65%
+modules/invenio-oauth2server/invenio_oauth2server/models.py
+    LOC: 434
+    LLOC: 205
+    SLOC: 254
+    Comments: 9
+    Single comments: 55
+    Multi: 38
+    Blank: 87
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 4%
+        (C + M % L): 11%
+modules/invenio-oauth2server/invenio_oauth2server/provider.py
+    LOC: 140
+    LLOC: 56
+    SLOC: 73
+    Comments: 14
+    Single comments: 14
+    Multi: 26
+    Blank: 27
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 19%
+        (C + M % L): 29%
+modules/invenio-oauth2server/invenio_oauth2server/validators.py
+    LOC: 63
+    LLOC: 32
+    SLOC: 28
+    Comments: 7
+    Single comments: 10
+    Multi: 11
+    Blank: 14
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 25%
+        (C + M % L): 29%
+modules/invenio-oauth2server/invenio_oauth2server/__init__.py
+    LOC: 126
+    LLOC: 7
+    SLOC: 13
+    Comments: 7
+    Single comments: 7
+    Multi: 75
+    Blank: 31
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 54%
+        (C + M % L): 65%
+modules/invenio-oauth2server/invenio_oauth2server/forms.py
+    LOC: 171
+    LLOC: 66
+    SLOC: 112
+    Comments: 18
+    Single comments: 28
+    Multi: 0
+    Blank: 31
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 16%
+        (C + M % L): 11%
+modules/invenio-oauth2server/invenio_oauth2server/admin.py
+    LOC: 77
+    LLOC: 29
+    SLOC: 48
+    Comments: 7
+    Single comments: 11
+    Multi: 0
+    Blank: 18
+    - Comment Stats
+        (C % L): 9%
+        (C % S): 15%
+        (C + M % L): 9%
+modules/invenio-oauth2server/invenio_oauth2server/utils.py
+    LOC: 70
+    LLOC: 33
+    SLOC: 35
+    Comments: 14
+    Single comments: 15
+    Multi: 9
+    Blank: 11
+    - Comment Stats
+        (C % L): 20%
+        (C % S): 40%
+        (C + M % L): 33%
+modules/invenio-oauth2server/invenio_oauth2server/proxies.py
+    LOC: 17
+    LLOC: 6
+    SLOC: 5
+    Comments: 7
+    Single comments: 9
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 41%
+        (C % S): 140%
+        (C + M % L): 41%
+modules/invenio-oauth2server/invenio_oauth2server/errors.py
+    LOC: 100
+    LLOC: 53
+    SLOC: 42
+    Comments: 7
+    Single comments: 20
+    Multi: 3
+    Blank: 35
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 17%
+        (C + M % L): 10%
+modules/invenio-oauth2server/invenio_oauth2server/ext.py
+    LOC: 279
+    LLOC: 129
+    SLOC: 137
+    Comments: 12
+    Single comments: 20
+    Multi: 68
+    Blank: 54
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 9%
+        (C + M % L): 29%
+modules/invenio-oauth2server/invenio_oauth2server/decorators.py
+    LOC: 75
+    LLOC: 42
+    SLOC: 38
+    Comments: 12
+    Single comments: 15
+    Multi: 9
+    Blank: 13
+    - Comment Stats
+        (C % L): 16%
+        (C % S): 32%
+        (C + M % L): 28%
+modules/invenio-oauth2server/invenio_oauth2server/alembic/12a88921ada2_create_oauth2server_tables.py
+    LOC: 110
+    LLOC: 22
+    SLOC: 92
+    Comments: 8
+    Single comments: 11
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 9%
+        (C + M % L): 7%
+modules/invenio-oauth2server/invenio_oauth2server/alembic/4e57407b8e4a_add_on_delete_cascade.py
+    LOC: 70
+    LLOC: 28
+    SLOC: 52
+    Comments: 8
+    Single comments: 11
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 15%
+        (C + M % L): 11%
+modules/invenio-oauth2server/invenio_oauth2server/alembic/aa546f2a8d2f_create_oauth2server_branch.py
+    LOC: 28
+    LLOC: 13
+    SLOC: 10
+    Comments: 8
+    Single comments: 11
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 29%
+        (C % S): 80%
+        (C + M % L): 29%
+modules/invenio-oauth2server/invenio_oauth2server/views/server.py
+    LOC: 159
+    LLOC: 93
+    SLOC: 105
+    Comments: 17
+    Single comments: 26
+    Multi: 0
+    Blank: 28
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 16%
+        (C + M % L): 11%
+modules/invenio-oauth2server/invenio_oauth2server/views/__init__.py
+    LOC: 19
+    LLOC: 5
+    SLOC: 7
+    Comments: 7
+    Single comments: 8
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 37%
+        (C % S): 100%
+        (C + M % L): 37%
+modules/invenio-oauth2server/invenio_oauth2server/views/settings.py
+    LOC: 277
+    LLOC: 139
+    SLOC: 198
+    Comments: 18
+    Single comments: 26
+    Multi: 4
+    Blank: 49
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 9%
+        (C + M % L): 8%
+elasticsearch/dic/conversion.py
+    LOC: 54
+    LLOC: 23
+    SLOC: 22
+    Comments: 22
+    Single comments: 23
+    Multi: 0
+    Blank: 9
+    - Comment Stats
+        (C % L): 41%
+        (C % S): 100%
+        (C + M % L): 41%
+** Total **
+    LOC: 132344
+    LLOC: 60317
+    SLOC: 81693
+    Comments: 12863
+    Single comments: 16548
+    Multi: 14424
+    Blank: 19679
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 16%
+        (C + M % L): 21%

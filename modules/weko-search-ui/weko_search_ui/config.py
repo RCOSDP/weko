@@ -111,6 +111,7 @@ RECORDS_REST_ENDPOINTS['opensearch']['search_serializers'] = {
 
 RECORDS_REST_ENDPOINTS['recid']['record_class'] = 'weko_records.api:WekoRecord'
 RECORDS_REST_ENDPOINTS['recid']['record_serializers'] = {
+    'application/json': ('invenio_records_rest.serializers:json_v1_response'),
     'application/vnd.citationstyles.csl+json': (
         'weko_records.serializers:csl_v1_response'),
     'text/x-bibliography': ('weko_records.serializers:citeproc_v1_response')
@@ -344,11 +345,11 @@ WEKO_SEARCH_KEYWORDS_DICT = {
                                    "Updated",
                                    "Valid"]}})],
         "dategranted": [('from', 'to'), "dateGranted"],
-                "date_range1":[('from', 'to'), "date_range1"],
-        "date_range2":[('from', 'to'), "date_range2"],
-        "date_range3":[('from', 'to'), "date_range3"],
-        "date_range4":[('from', 'to'), "date_range4"],
-        "date_range5":[('from', 'to'), "date_range5"]
+        "date_range1": [('from', 'to'), "date_range1"],
+        "date_range2": [('from', 'to'), "date_range2"],
+        "date_range3": [('from', 'to'), "date_range3"],
+        "date_range4": [('from', 'to'), "date_range4"],
+        "date_range5": [('from', 'to'), "date_range5"]
     },
     "object": {
         "subject": ("subject", {"sbjscheme": {
@@ -367,7 +368,7 @@ WEKO_SEARCH_KEYWORDS_DICT = {
             ]
         }})
     },
-    "text":{
+    "text": {
         "text1": "text1",
         "text2": "text2",
         "text3": "text3",
@@ -377,28 +378,48 @@ WEKO_SEARCH_KEYWORDS_DICT = {
         "text7": "text7",
         "text8": "text8",
         "text9": "text9",
-        "text10": "text10"
+        "text10": "text10",
+        "text11": "text11",
+        "text12": "text12",
+        "text13": "text13",
+        "text14": "text14",
+        "text15": "text15",
+        "text16": "text16",
+        "text17": "text17",
+        "text18": "text18",
+        "text19": "text19",
+        "text20": "text20",
+        "text21": "text21",
+        "text22": "text22",
+        "text23": "text23",
+        "text24": "text24",
+        "text25": "text25",
+        "text26": "text26",
+        "text27": "text27",
+        "text28": "text28",
+        "text29": "text29",
+        "text30": "text30"
     },
 
-    "range":{
-        "integer_range1":[('from', 'to'), "integer_range1"],
-        "integer_range2":[('from', 'to'), "integer_range2"],
-        "integer_range3":[('from', 'to'), "integer_range3"],
-        "integer_range4":[('from', 'to'), "integer_range4"],
-        "integer_range5":[('from', 'to'), "integer_range5"],
-        "float_range1":[('from', 'to'), "float_range1"],
-        "float_range2":[('from', 'to'), "float_range2"],
-        "float_range3":[('from', 'to'), "float_range3"],
-        "float_range4":[('from', 'to'), "float_range4"],
-        "float_range5":[('from', 'to'), "float_range5"]
+    "range": {
+        "integer_range1": [('from', 'to'), "integer_range1"],
+        "integer_range2": [('from', 'to'), "integer_range2"],
+        "integer_range3": [('from', 'to'), "integer_range3"],
+        "integer_range4": [('from', 'to'), "integer_range4"],
+        "integer_range5": [('from', 'to'), "integer_range5"],
+        "float_range1": [('from', 'to'), "float_range1"],
+        "float_range2": [('from', 'to'), "float_range2"],
+        "float_range3": [('from', 'to'), "float_range3"],
+        "float_range4": [('from', 'to'), "float_range4"],
+        "float_range5": [('from', 'to'), "float_range5"]
     },
 
-    "geo_distance":{
-        "geo_point1":[('lat', 'lon', 'distance'), "geo_point1"]
+    "geo_distance": {
+        "geo_point1": [('lat', 'lon', 'distance'), "geo_point1"]
     },
 
-    "geo_shape":{
-        "geo_shape1":[('lat', 'lon', 'distance'), "geo_shape1"]
+    "geo_shape": {
+        "geo_shape1": [('lat', 'lon', 'distance'), "geo_shape1"]
     }
 
 
@@ -407,6 +428,9 @@ WEKO_SEARCH_KEYWORDS_DICT = {
 WEKO_SEARCH_TYPE_KEYWORD = 'keyword'
 
 WEKO_SEARCH_TYPE_INDEX = 'index'
+
+WEKO_SEARCH_MAX_RESULT = 10000
+"""Maximum total number of records retrieved from a ES query."""
 
 WEKO_SEARCH_MAX_FEEDBACK_MAIL = 10000
 """Maximum number of feedback mail could be send."""
@@ -471,7 +495,7 @@ WEKO_IMPORT_EMAIL_PATTERN = \
     r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
 WEKO_IMPORT_PUBLISH_STATUS = ['public', 'private']
 WEKO_IMPORT_DOI_TYPE = ['JaLC', 'Crossref', 'DataCite', 'NDL JaLC']
-WEKO_IMPORT_SUFFIX_PATTERN = r"^([a-zA-Z0-9.\s_\-;\(\)/]){0,290}$"
+WEKO_IMPORT_SUFFIX_PATTERN = r"^.{0,290}$"
 
 WEKO_IMPORT_SUBITEM_DATE_ISO = "subitem_1582683677698"
 """Subitem ID of property Date (ISO-8601)."""
@@ -594,4 +618,7 @@ WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 3
 
 
 WEKO_SEARCH_UI_IMPORT_TMP_PREFIX = 'weko_import_'
+"""Import tmp prefix."""
 
+WEKO_SEARCH_UI_IMPORT_UNUSE_FILES_URI = 'import_unuse_files_uri_{}'
+"""Cache key unuse file. uri."""

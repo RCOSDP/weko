@@ -24,13 +24,12 @@ from flask import url_for
 from flask_admin import Admin, menu
 from flask_plugins import get_plugin
 
-from weko_plugins import wekoplugins
-from weko_plugins.admin import plugin_adminview
-
 
 def test_admin(app):
     """Test Weko-Plugin interace."""
-    wekoplugins(app)
+    from weko_plugins import WekoPlugins
+    from weko_plugins.admin import plugin_adminview
+    WekoPlugins(app)
     admin = Admin(app, name='Test')
 
     assert 'view_class' in plugin_adminview

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>Python</ID>
+  <OriginalElement>#/Users/mhaya/git/mhaya/vagrant-weko_org/multi/tmp/weko3_b/modules/invenio-iiif/invenio_iiif</OriginalElement>
+  <nodes>
+    <node x="105.5" y="577.0">PrezyManifestFactory</node>
+    <node x="12.5" y="91.5">invenio_iiif.ext.InvenioIIIF</node>
+    <node x="0.0" y="657.0">invenio_iiif.manifest.ManifestFactory</node>
+    <node x="0.0" y="252.0">invenio_iiif.ext.InvenioIIIFAPI</node>
+    <node x="266.5" y="80.0">invenio_iiif.manifest.IIIFManifest</node>
+    <node x="340.0" y="432.0">invenio_iiif.manifest.Image</node>
+    <node x="0.0" y="432.0">invenio_iiif.manifest.IIIFMetadata</node>
+    <node x="114.0" y="352.0">dict</node>
+    <node x="400.5" y="352.0">PreziImage</node>
+    <node x="270.75" y="0.0">object</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="invenio_iiif.ext.InvenioIIIFAPI" target="invenio_iiif.ext.InvenioIIIF" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="0.0" y="49.5" />
+    </edge>
+    <edge source="invenio_iiif.manifest.IIIFManifest" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-61.0" />
+      <point x="498.0" y="55.0" />
+      <point x="313.75" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_iiif.manifest.ManifestFactory" target="PrezyManifestFactory" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_iiif.ext.InvenioIIIF" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-49.5" />
+      <point x="129.5" y="55.0" />
+      <point x="313.75" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_iiif.manifest.IIIFMetadata" target="dict" relationship="REALIZATION">
+      <point x="0.0" y="-50.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_iiif.manifest.Image" target="PreziImage" relationship="REALIZATION">
+      <point x="0.0" y="-50.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic" zoom="1.0" showDependencies="false" x="365.0" y="356.0" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Fields</Category>
+    <Category>Inner Classes</Category>
+    <Category>Methods</Category>
+  </Categories>
+</Diagram>
+

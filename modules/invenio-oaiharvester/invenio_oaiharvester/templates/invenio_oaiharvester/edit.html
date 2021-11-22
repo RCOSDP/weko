@@ -125,7 +125,8 @@ is free software; you can redistribute it
                  title=_('Confirmation'),
                  body=_('Are you sure you want to save changes?'))}}
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>-->
+<script src="{{ url_for('static', filename='js/jquery/jquery.min.js') }}"></script>
 <script>
 function _(x) {
     return x

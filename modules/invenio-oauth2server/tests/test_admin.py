@@ -6,13 +6,15 @@
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-from flask import Flask, url_for
-from flask.ext.admin import Admin
+"""Module tests."""
+
+from flask import url_for
+from flask_admin import Admin
 from invenio_db import db
 
 from invenio_oauth2server import InvenioOAuth2Server
-from invenio_oauth2server.admin import ClientView, TokenView, \
-    oauth2server_clients_adminview, oauth2server_tokens_adminview
+from invenio_oauth2server.admin import oauth2server_clients_adminview, \
+    oauth2server_tokens_adminview
 
 
 def test_admin(models_fixture):

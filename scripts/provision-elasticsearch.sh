@@ -66,6 +66,10 @@ provision_elasticsearch_ubuntu14 () {
          /etc/elasticsearch/elasticsearch.yml; then
         echo "network.host: ${INVENIO_ELASTICSEARCH_HOST}" | \
             sudo tee -a /etc/elasticsearch/elasticsearch.yml
+        if [ "${ELASTICSEARCH_S3_ENDPOINT}" != "" ]; then
+          echo "s3.client.default.endpoint: ${ELASTICSEARCH_S3_ENDPOINT}" | \
+            sudo tee -a /etc/elasticsearch/elasticsearch.yml
+        fi
     fi
 
     # enable Elasticsearch upon reboot:
@@ -106,6 +110,10 @@ enabled=1" | \
          /etc/elasticsearch/elasticsearch.yml; then
         echo "network.host: ${INVENIO_ELASTICSEARCH_HOST}" | \
             sudo tee -a /etc/elasticsearch/elasticsearch.yml
+        if [ "${ELASTICSEARCH_S3_ENDPOINT}" != "" ]; then
+            echo "s3.client.default.endpoint: ${ELASTICSEARCH_S3_ENDPOINT}" | \
+                sudo tee -a /etc/elasticsearch/elasticsearch.yml
+	fi
     fi
 
     # open firewall ports:
@@ -127,12 +135,24 @@ provision_elasticsearch_docker () {
     # register the shared file system repository:
     echo 'path.repo: "/usr/share/elasticsearch/backups"' | \
         tee -a /usr/share/elasticsearch/config/elasticsearch.yml
+    if [ "${ELASTICSEARCH_S3_ENDPOINT}" != "" ]; then
+        echo "s3.client.default.endpoint: ${ELASTICSEARCH_S3_ENDPOINT}" | \
+            tee -a /usr/share/elasticsearch/config/elasticsearch.yml
+    fi
 }
 
 install_plugins () {
     # sphinxdoc-install-elasticsearch-plugins-begin
     $sudo /usr/share/elasticsearch/bin/elasticsearch-plugin install --batch ingest-attachment
     $sudo /usr/share/elasticsearch/bin/elasticsearch-plugin install analysis-kuromoji
+    $sudo /usr/share/elasticsearch/bin/elasticsearch-plugin install repository-s3
+    $sudo /usr/share/elasticsearch/bin/elasticsearch-keystore create
+    if [ "${ELASTICSEARCH_S3_ACCESS_KEY}" != "" ]; then
+      echo ${ELASTICSEARCH_S3_ACCESS_KEY} | $sudo /usr/share/elasticsearch/bin/elasticsearch-keystore add s3.client.default.access_key
+    fi
+    if [ "${ELASTICSEARCH_S3_SECRET_KEY}" != "" ]; then
+      echo ${ELASTICSEARCH_S3_SECRET_KEY} | $sudo /usr/share/elasticsearch/bin/elasticsearch-keystore add s3.client.default.secret_key
+    fi
     # sphinxdoc-install-elasticsearch-plugins-end
 }
 

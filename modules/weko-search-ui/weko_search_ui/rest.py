@@ -51,9 +51,6 @@ from weko_records.models import ItemType
 from werkzeug.utils import secure_filename
 
 
-from . import config
-
-
 def create_blueprint(app, endpoints):
     """Create Invenio-Deposit-REST blueprint.
 
@@ -228,7 +225,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                                     page=page + 1, **urlkwargs)
         # aggs result identify
         rd = search_result.to_dict()
-        q = request.values.get('q') or '0'
+        q = request.values.get('q') or ''
         lang = current_i18n.language
 
         try:
@@ -236,19 +233,17 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         except BaseException:
             paths = []
         agp = rd["aggregations"]["path"]["buckets"]
+        rd["aggregations"]["aggregations"] = copy.deepcopy(agp)
         nlst = []
         items_count = dict()
-        all_indexes = Indexes.get_all_indexes()
-        indexes_state = dict()
-        for index in all_indexes:
-            indexes_state[str(index.id)] = index.public_state
+        public_indexes = Indexes.get_public_indexes_list()
         recorrect_private_items_count(agp)
         for i in agp:
             items_count[i["key"]] = {
                 "key": i["key"],
                 "doc_count": i["doc_count"],
                 "no_available": i["no_available"]["doc_count"],
-                "public_state": indexes_state.get(i["key"], False)
+                "public_state": True if i['key'] in public_indexes else False
             }
 
         is_perm_paths = qs_kwargs.get('is_perm_paths', [])

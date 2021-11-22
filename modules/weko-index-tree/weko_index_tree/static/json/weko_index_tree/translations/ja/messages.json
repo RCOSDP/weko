@@ -199,5 +199,13 @@
     "Err_File_Ext": [
         null,
         "画像ファイル（gif, jpg, jpe, jpeg, png, bmp）以外のファイルはアップロードできません。"
+    ],
+    "Enter_Required_Fields": [
+      null,
+      "必須入力項目を入力してください。"
+    ],
+    "Required_Input": [
+      null,
+      "英語で入力は必要です。"
     ]
 }

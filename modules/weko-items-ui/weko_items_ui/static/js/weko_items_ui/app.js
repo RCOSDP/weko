@@ -3119,13 +3119,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 }
                 for (var i = 0; i < value.familyNames.length; i++) {
                   let subCreatorName = { "creatorName": "", "creatorNameLang": "" };
-                  let familyName = value.familyNames[i].familyName.trim();
-                  let givenName = value.givenNames[i].givenName.trim();
-                  if (familyName.indexOf(',', familyName.length - 1) > 0) {
-                    subCreatorName.creatorName = familyName + " " + givenName;
-                  } else {
-                    subCreatorName.creatorName = familyName + ", " + givenName;
-                  }
+                  let familyName = value.familyNames[i].familyName ? value.familyNames[i].familyName.trim() : '';
+                  let givenName = value.givenNames[i].givenName ? value.givenNames[i].givenName.trim() : '';
+                  const showComma = (familyName && givenName) && familyName.indexOf(',', familyName.length - 1) === -1 ? ', ' : '';
+                  subCreatorName.creatorName = familyName + showComma + givenName;
                   subCreatorName.creatorNameLang = value.familyNames[i].familyNameLang;
                   subCreatorName = JSON.parse(JSON.stringify(subCreatorName).replace('creatorName', v[0]).replace('creatorNameLang', v[1]));
                   creatorModel[k].push(subCreatorName);

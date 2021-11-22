@@ -1,0 +1,140 @@
+#!/bin/bash
+
+# pip install pylint
+# apt-get install graphviz
+
+# ls ../modules|egrep -v 'cookiecutter|resources'|awk 'begin{pkg=""}{pkg=$1;gsub("-","_",pkg);print "pyreverse -o svg -p "$1" -AS ../modules/"$1"/"pkg}'
+# ls ../modules|egrep -v 'cookiecutter|resources'|awk 'begin{pkg=""}{pkg=$1;gsub("-","_",pkg);print "pyreverse -o dot -p "$1" -AS ../modules/"$1"/"pkg}'
+# ls ../modules|egrep -v 'cookiecutter|resources'|awk 'begin{pkg=""}{pkg=$1;gsub("-","_",pkg);print "pyreverse -o png -p "$1" -AS ../modules/"$1"/"pkg}'
+
+
+pyreverse -o svg -p invenio-accounts -AS ../modules/invenio-accounts/invenio_accounts
+pyreverse -o svg -p invenio-admin -AS ../modules/invenio-admin/invenio_admin
+pyreverse -o svg -p invenio-app -AS ../modules/invenio-app/invenio_app
+pyreverse -o svg -p invenio-communities -AS ../modules/invenio-communities/invenio_communities
+pyreverse -o svg -p invenio-db -AS ../modules/invenio-db/invenio_db
+pyreverse -o svg -p invenio-deposit -AS ../modules/invenio-deposit/invenio_deposit
+pyreverse -o svg -p invenio-files-rest -AS ../modules/invenio-files-rest/invenio_files_rest
+pyreverse -o svg -p invenio-iiif -AS ../modules/invenio-iiif/invenio_iiif
+pyreverse -o svg -p invenio-mail -AS ../modules/invenio-mail/invenio_mail
+pyreverse -o svg -p invenio-oaiharvester -AS ../modules/invenio-oaiharvester/invenio_oaiharvester
+pyreverse -o svg -p invenio-oaiserver -AS ../modules/invenio-oaiserver/invenio_oaiserver
+pyreverse -o svg -p invenio-oauth2server -AS ../modules/invenio-oauth2server/invenio_oauth2server
+pyreverse -o svg -p invenio-previewer -AS ../modules/invenio-previewer/invenio_previewer
+pyreverse -o svg -p invenio-queues -AS ../modules/invenio-queues/invenio_queues
+pyreverse -o svg -p invenio-records -AS ../modules/invenio-records/invenio_records
+pyreverse -o svg -p invenio-records-rest -AS ../modules/invenio-records-rest/invenio_records_rest
+pyreverse -o svg -p invenio-resourcesyncclient -AS ../modules/invenio-resourcesyncclient/invenio_resourcesyncclient
+pyreverse -o svg -p invenio-resourcesyncserver -AS ../modules/invenio-resourcesyncserver/invenio_resourcesyncserver
+pyreverse -o svg -p invenio-s3 -AS ../modules/invenio-s3/invenio_s3
+pyreverse -o svg -p invenio-stats -AS ../modules/invenio-stats/invenio_stats
+pyreverse -o svg -p weko-accounts -AS ../modules/weko-accounts/weko_accounts
+pyreverse -o svg -p weko-admin -AS ../modules/weko-admin/weko_admin
+pyreverse -o svg -p weko-authors -AS ../modules/weko-authors/weko_authors
+pyreverse -o svg -p weko-bulkupdate -AS ../modules/weko-bulkupdate/weko_bulkupdate
+pyreverse -o svg -p weko-deposit -AS ../modules/weko-deposit/weko_deposit
+pyreverse -o svg -p weko-gridlayout -AS ../modules/weko-gridlayout/weko_gridlayout
+pyreverse -o svg -p weko-groups -AS ../modules/weko-groups/weko_groups
+pyreverse -o svg -p weko-handle -AS ../modules/weko-handle/weko_handle
+pyreverse -o svg -p weko-index-tree -AS ../modules/weko-index-tree/weko_index_tree
+pyreverse -o svg -p weko-indextree-journal -AS ../modules/weko-indextree-journal/weko_indextree_journal
+pyreverse -o svg -p weko-items-autofill -AS ../modules/weko-items-autofill/weko_items_autofill
+pyreverse -o svg -p weko-items-ui -AS ../modules/weko-items-ui/weko_items_ui
+pyreverse -o svg -p weko-itemtypes-ui -AS ../modules/weko-itemtypes-ui/weko_itemtypes_ui
+pyreverse -o svg -p weko-logging -AS ../modules/weko-logging/weko_logging
+pyreverse -o svg -p weko-plugins -AS ../modules/weko-plugins/weko_plugins
+pyreverse -o svg -p weko-records -AS ../modules/weko-records/weko_records
+pyreverse -o svg -p weko-records-ui -AS ../modules/weko-records-ui/weko_records_ui
+pyreverse -o svg -p weko-schema-ui -AS ../modules/weko-schema-ui/weko_schema_ui
+pyreverse -o svg -p weko-search-ui -AS ../modules/weko-search-ui/weko_search_ui
+pyreverse -o svg -p weko-sitemap -AS ../modules/weko-sitemap/weko_sitemap
+pyreverse -o svg -p weko-theme -AS ../modules/weko-theme/weko_theme
+pyreverse -o svg -p weko-user-profiles -AS ../modules/weko-user-profiles/weko_user_profiles
+pyreverse -o svg -p weko-workflow -AS ../modules/weko-workflow/weko_workflow
+
+pyreverse -o dot -p invenio-accounts -AS ../modules/invenio-accounts/invenio_accounts
+pyreverse -o dot -p invenio-admin -AS ../modules/invenio-admin/invenio_admin
+pyreverse -o dot -p invenio-app -AS ../modules/invenio-app/invenio_app
+pyreverse -o dot -p invenio-communities -AS ../modules/invenio-communities/invenio_communities
+pyreverse -o dot -p invenio-db -AS ../modules/invenio-db/invenio_db
+pyreverse -o dot -p invenio-deposit -AS ../modules/invenio-deposit/invenio_deposit
+pyreverse -o dot -p invenio-files-rest -AS ../modules/invenio-files-rest/invenio_files_rest
+pyreverse -o dot -p invenio-iiif -AS ../modules/invenio-iiif/invenio_iiif
+pyreverse -o dot -p invenio-mail -AS ../modules/invenio-mail/invenio_mail
+pyreverse -o dot -p invenio-oaiharvester -AS ../modules/invenio-oaiharvester/invenio_oaiharvester
+pyreverse -o dot -p invenio-oaiserver -AS ../modules/invenio-oaiserver/invenio_oaiserver
+pyreverse -o dot -p invenio-oauth2server -AS ../modules/invenio-oauth2server/invenio_oauth2server
+pyreverse -o dot -p invenio-previewer -AS ../modules/invenio-previewer/invenio_previewer
+pyreverse -o dot -p invenio-queues -AS ../modules/invenio-queues/invenio_queues
+pyreverse -o dot -p invenio-records -AS ../modules/invenio-records/invenio_records
+pyreverse -o dot -p invenio-records-rest -AS ../modules/invenio-records-rest/invenio_records_rest
+pyreverse -o dot -p invenio-resourcesyncclient -AS ../modules/invenio-resourcesyncclient/invenio_resourcesyncclient
+pyreverse -o dot -p invenio-resourcesyncserver -AS ../modules/invenio-resourcesyncserver/invenio_resourcesyncserver
+pyreverse -o dot -p invenio-s3 -AS ../modules/invenio-s3/invenio_s3
+pyreverse -o dot -p invenio-stats -AS ../modules/invenio-stats/invenio_stats
+pyreverse -o dot -p weko-accounts -AS ../modules/weko-accounts/weko_accounts
+pyreverse -o dot -p weko-admin -AS ../modules/weko-admin/weko_admin
+pyreverse -o dot -p weko-authors -AS ../modules/weko-authors/weko_authors
+pyreverse -o dot -p weko-bulkupdate -AS ../modules/weko-bulkupdate/weko_bulkupdate
+pyreverse -o dot -p weko-deposit -AS ../modules/weko-deposit/weko_deposit
+pyreverse -o dot -p weko-gridlayout -AS ../modules/weko-gridlayout/weko_gridlayout
+pyreverse -o dot -p weko-groups -AS ../modules/weko-groups/weko_groups
+pyreverse -o dot -p weko-handle -AS ../modules/weko-handle/weko_handle
+pyreverse -o dot -p weko-index-tree -AS ../modules/weko-index-tree/weko_index_tree
+pyreverse -o dot -p weko-indextree-journal -AS ../modules/weko-indextree-journal/weko_indextree_journal
+pyreverse -o dot -p weko-items-autofill -AS ../modules/weko-items-autofill/weko_items_autofill
+pyreverse -o dot -p weko-items-ui -AS ../modules/weko-items-ui/weko_items_ui
+pyreverse -o dot -p weko-itemtypes-ui -AS ../modules/weko-itemtypes-ui/weko_itemtypes_ui
+pyreverse -o dot -p weko-logging -AS ../modules/weko-logging/weko_logging
+pyreverse -o dot -p weko-plugins -AS ../modules/weko-plugins/weko_plugins
+pyreverse -o dot -p weko-records -AS ../modules/weko-records/weko_records
+pyreverse -o dot -p weko-records-ui -AS ../modules/weko-records-ui/weko_records_ui
+pyreverse -o dot -p weko-schema-ui -AS ../modules/weko-schema-ui/weko_schema_ui
+pyreverse -o dot -p weko-search-ui -AS ../modules/weko-search-ui/weko_search_ui
+pyreverse -o dot -p weko-sitemap -AS ../modules/weko-sitemap/weko_sitemap
+pyreverse -o dot -p weko-theme -AS ../modules/weko-theme/weko_theme
+pyreverse -o dot -p weko-user-profiles -AS ../modules/weko-user-profiles/weko_user_profiles
+pyreverse -o dot -p weko-workflow -AS ../modules/weko-workflow/weko_workflow
+
+pyreverse -o png -p invenio-accounts -AS ../modules/invenio-accounts/invenio_accounts
+pyreverse -o png -p invenio-admin -AS ../modules/invenio-admin/invenio_admin
+pyreverse -o png -p invenio-app -AS ../modules/invenio-app/invenio_app
+pyreverse -o png -p invenio-communities -AS ../modules/invenio-communities/invenio_communities
+pyreverse -o png -p invenio-db -AS ../modules/invenio-db/invenio_db
+pyreverse -o png -p invenio-deposit -AS ../modules/invenio-deposit/invenio_deposit
+pyreverse -o png -p invenio-files-rest -AS ../modules/invenio-files-rest/invenio_files_rest
+pyreverse -o png -p invenio-iiif -AS ../modules/invenio-iiif/invenio_iiif
+pyreverse -o png -p invenio-mail -AS ../modules/invenio-mail/invenio_mail
+pyreverse -o png -p invenio-oaiharvester -AS ../modules/invenio-oaiharvester/invenio_oaiharvester
+pyreverse -o png -p invenio-oaiserver -AS ../modules/invenio-oaiserver/invenio_oaiserver
+pyreverse -o png -p invenio-oauth2server -AS ../modules/invenio-oauth2server/invenio_oauth2server
+pyreverse -o png -p invenio-previewer -AS ../modules/invenio-previewer/invenio_previewer
+pyreverse -o png -p invenio-queues -AS ../modules/invenio-queues/invenio_queues
+pyreverse -o png -p invenio-records -AS ../modules/invenio-records/invenio_records
+pyreverse -o png -p invenio-records-rest -AS ../modules/invenio-records-rest/invenio_records_rest
+pyreverse -o png -p invenio-s3 -AS ../modules/invenio-s3/invenio_s3
+pyreverse -o png -p invenio-stats -AS ../modules/invenio-stats/invenio_stats
+pyreverse -o png -p weko-accounts -AS ../modules/weko-accounts/weko_accounts
+pyreverse -o png -p weko-admin -AS ../modules/weko-admin/weko_admin
+pyreverse -o png -p weko-authors -AS ../modules/weko-authors/weko_authors
+pyreverse -o png -p weko-bulkupdate -AS ../modules/weko-bulkupdate/weko_bulkupdate
+pyreverse -o png -p weko-deposit -AS ../modules/weko-deposit/weko_deposit
+pyreverse -o png -p weko-gridlayout -AS ../modules/weko-gridlayout/weko_gridlayout
+pyreverse -o png -p weko-groups -AS ../modules/weko-groups/weko_groups
+pyreverse -o png -p weko-handle -AS ../modules/weko-handle/weko_handle
+pyreverse -o png -p weko-index-tree -AS ../modules/weko-index-tree/weko_index_tree
+pyreverse -o png -p weko-indextree-journal -AS ../modules/weko-indextree-journal/weko_indextree_journal
+pyreverse -o png -p weko-items-autofill -AS ../modules/weko-items-autofill/weko_items_autofill
+pyreverse -o png -p weko-items-ui -AS ../modules/weko-items-ui/weko_items_ui
+pyreverse -o png -p weko-itemtypes-ui -AS ../modules/weko-itemtypes-ui/weko_itemtypes_ui
+pyreverse -o png -p weko-logging -AS ../modules/weko-logging/weko_logging
+pyreverse -o png -p weko-plugins -AS ../modules/weko-plugins/weko_plugins
+pyreverse -o png -p weko-records -AS ../modules/weko-records/weko_records
+pyreverse -o png -p weko-records-ui -AS ../modules/weko-records-ui/weko_records_ui
+pyreverse -o png -p weko-schema-ui -AS ../modules/weko-schema-ui/weko_schema_ui
+pyreverse -o png -p weko-search-ui -AS ../modules/weko-search-ui/weko_search_ui
+pyreverse -o png -p weko-sitemap -AS ../modules/weko-sitemap/weko_sitemap
+pyreverse -o png -p weko-theme -AS ../modules/weko-theme/weko_theme
+pyreverse -o png -p weko-user-profiles -AS ../modules/weko-user-profiles/weko_user_profiles
+pyreverse -o png -p weko-workflow -AS ../modules/weko-workflow/weko_workflow
+

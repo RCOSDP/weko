@@ -78,7 +78,7 @@ COPY public.item_type_property (created, updated, id, name, schema, form, forms,
 --
 
 COPY public.index (created, updated, id, parent, "position", index_name, index_name_english, index_link_name, index_link_name_english, harvest_spec, index_link_enabled, comment, more_check, display_no, harvest_public_state, display_format, image_name, public_state, public_date, recursive_public_state, rss_status, coverpage_state, recursive_coverpage_check, browsing_role, recursive_browsing_role, contribute_role, recursive_contribute_role, browsing_group, recursive_browsing_group, contribute_group, recursive_contribute_group, owner_user_id, item_custom_sort, biblio_flag, online_issn) FROM stdin;
-2021-03-20 07:15:32.798837	2021-03-20 07:15:55.192712	1616224532673	0	-1	利用報告	Data Usage Report		New Index		f		f	5	t	1		f	\N	f	f	f	f	3,-98,-99	f	1,2,3,4,-98,-99	f		f		f	1	{}	f	
+2021-03-20 07:15:32.798837	2021-03-20 07:15:55.192712	1616224532673	0	-1	利用報告	Data Usage Report		New Index		f		f	5	t	1		f	\N	f	f	f	f	3,-98,-99	f	1,2,3,4,-98,-99	f		f		f	1	{}	f	f
 \.
 
 
@@ -107,8 +107,8 @@ N	2021-03-20 07:30:09.523561	2021-03-20 07:30:16.89222	31002	cc3aa348-f0da-4cef-
 -- Data for Name: workflow_workflow; Type: TABLE DATA; Schema: public; Owner: invenio
 --
 
-COPY public.workflow_workflow (status, created, updated, id, flows_id, flows_name, itemtype_id, index_tree_id, flow_id, is_deleted, open_restricted) FROM stdin;
-N	2021-03-20 07:31:06.962251	2021-03-20 07:31:06.962297	31001	7deb0cc1-cd0f-4287-953a-c208f6957cfb	利用報告/Data Usage Report	31003	\N	31001	f	f
+COPY public.workflow_workflow (status, created, updated, id, flows_id, flows_name, itemtype_id, index_tree_id, flow_id, is_deleted, open_restricted, is_gakuninrdm) FROM stdin;
+N	2021-03-20 07:31:06.962251	2021-03-20 07:31:06.962297	31001	cc3aa348-f0da-4cef-b404-ffaabb1d5894	利用報告/Data Usage Report	31003	\N	31001	f	f	f
 \.
 
 

@@ -25,7 +25,7 @@ services:
     restart: "always"
     build:
       context: .
-      #target: stage_7
+      #target: stage_1
     sysctls:
       net.core.somaxconn: 1024
     #command: /bin/bash -c "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO -B -D -f /code/celeryd.log && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
@@ -64,6 +64,8 @@ services:
       - INVENIO_DB_POOL_CLASS=QueuePool
       - GOOGLE_TRACKING_ID_SYSTEM=
       - GOOGLE_TRACKING_ID_USER=
+      - ADDTHIS_USER_ID=ra-5d8af23e9a3a2633
+      - TMPDIR=/tmp
     volumes:
       - weko3_data:/var/tmp
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
@@ -126,6 +128,10 @@ services:
         max-size: "10m"
     ports:
       - "5001:5000"
+    #privileged: true
+    # pscap apt-get install libcap-ng-utils
+    #cap_add:
+    #  - SYS_ADMIN
     deploy:
       resources:
         limits:
@@ -159,6 +165,11 @@ services:
     build:
       context: .
       dockerfile: ./elasticsearch/Dockerfile
+      args:
+        - ELASTICSEARCH_S3_ACCESS_KEY=${ELASTICSEARCH_S3_ACCESS_KEY}
+        - ELASTICSEARCH_S3_SECRET_KEY=${ELASTICSEARCH_S3_SECRET_KEY}
+        - ELASTICSEARCH_S3_ENDPOINT=${ELASTICSEARCH_S3_ENDPOINT}
+        - ELASTICSEARCH_S3_BUCKET=${ELASTICSEARCH_S3_BUCKET}
     volumes:
       - es-data:/usr/share/elasticsearch/data
     environment:

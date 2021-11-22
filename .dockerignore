@@ -7,6 +7,8 @@
 *.swp
 *.swo
 *.~
+*.log
+*.sh
 
 .dockerignore
 Dockerfile
@@ -14,3 +16,7 @@ docker-compose.yml
 docker-compose-dev.yml
 
 Procfile*
+
+test
+uml
+
