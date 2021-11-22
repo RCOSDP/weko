@@ -1,22 +1,9 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
+# Copyright (C) 2019 National Institute of Informatics.
 #
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
+# weko-sitemap is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 """Module of weko-sitemap."""
 
@@ -28,12 +15,13 @@ from functools import wraps
 from io import BytesIO
 
 from flask import Blueprint, Response, current_app, render_template, url_for
+from flask_babelex import format_datetime
 from flask_sitemap import Sitemap, sitemap_page_needed
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
-from sqlalchemy import Float, cast
+from sqlalchemy import Float, Integer, cast, not_
 
 from . import config
 
@@ -47,7 +35,9 @@ class WekoSitemap(Sitemap):
         page_name = 'sitemap_' + str(page).zfill(4)  # Cache key
         page_dic = dict(
             page=current_app.extensions['sitemap'].render_page(urlset=urlset),
-            lastmod=datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z')
+            # W3C Datetime format YYYY-MM-DDThh:mmTZD
+            lastmod=format_datetime(
+                datetime.now(), 'yyyy-MM-ddTHH:mm:ssz', 'full')
         )
         current_app.extensions['weko-sitemap'].set_cache_page(
             page_name, page_dic)
@@ -117,20 +107,23 @@ class WekoSitemap(Sitemap):
         """Make url set for all items."""
         self.clear_cache_pages()  # Clear cache
         q = (db.session
-               .query(PersistentIdentifier, RecordMetadata)
-               .join(RecordMetadata,
-                     RecordMetadata.id == PersistentIdentifier.object_uuid)
-               .filter(PersistentIdentifier.status == PIDStatus.REGISTERED,
-                       PersistentIdentifier.pid_type == 'recid')
-               .order_by(cast(PersistentIdentifier.pid_value, Float).asc())
-               .limit(current_app.config['WEKO_SITEMAP_TOTAL_MAX_URL_COUNT']))
+             .query(PersistentIdentifier, RecordMetadata)
+             .join(RecordMetadata,
+                   RecordMetadata.id == PersistentIdentifier.object_uuid)
+             .filter(PersistentIdentifier.status == PIDStatus.REGISTERED,
+                     PersistentIdentifier.pid_type == 'parent')
+             .order_by(PersistentIdentifier.id)
+             .limit(current_app.config['WEKO_SITEMAP_TOTAL_MAX_URL_COUNT']))
 
         for recid, rm in q.yield_per(1000):
             yield {
                 'loc': url_for('invenio_records_ui.recid',
-                               pid_value=recid.pid_value,
+                               pid_value=(recid.pid_value).replace(
+                                   'parent:', ''),
                                _external=True),
-                'lastmod': rm.updated.strftime('%Y-%m-%dT%H:%M:%S%z')
+                # W3C Datetime format YYYY-MM-DDThh:mmTZD
+                'lastmod': format_datetime(
+                    rm.updated, 'yyyy-MM-ddTHH:mm:ssz', 'full')
             }
 
     def _load_cache_pages(self):

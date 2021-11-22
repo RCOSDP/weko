@@ -5,6 +5,7 @@ const export_messaage = document.getElementById("export_messaage").value;
 const cancel_messaage = document.getElementById("cancel_messaage").value;
 const run_label = document.getElementById("run").value;
 const cancel_label = document.getElementById("cancel").value;
+const celery_not_run = document.getElementById("celery_not_run").value;
 
 const urlExportAll = window.location.origin + '/admin/items/bulk-export/export_all'
 const urlExportStatus = window.location.origin + '/admin/items/bulk-export/check_export_status'
@@ -22,6 +23,12 @@ class MainLayout extends React.Component {
   }
 
   componentDidMount() {
+    const header = document.getElementsByClassName('content-header')[0];
+    if (header) {
+      const errorElement = document.createElement('div');
+      errorElement.setAttribute('id', 'errors');
+      header.insertBefore(errorElement, header.firstChild);
+    }
   }
 
   render() {
@@ -145,9 +152,15 @@ class ExportComponent extends React.Component {
           me.setState({
             exportStatus: response.data.export_status,
             uriStatus: response.data.uri_status,
-            isDisableExport: response.data.export_status,
+            isDisableExport: response.data.export_status || !response.data.celery_is_run,
             isDisableCancel: !response.data.export_status
           });
+          if (!response.data.celery_is_run) {
+            $('#errors').append(
+              '<div class="alert alert-danger alert-dismissable">' +
+              '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
+              '&times;</button>' + celery_not_run + '</div>');
+          }
         }
       },
       error: function () {

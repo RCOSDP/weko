@@ -11,7 +11,7 @@
 import tempfile
 from datetime import timedelta
 
-MAX_CONTENT_LENGTH = 16 * 1024 * 1024
+MAX_CONTENT_LENGTH = 64424509440 
 """Maximum allowed content length for form data.
 
 This value limits the maximum file upload size via multipart-formdata and is

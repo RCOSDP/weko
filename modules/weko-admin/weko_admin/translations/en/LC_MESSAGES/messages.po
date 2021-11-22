@@ -659,6 +659,18 @@ msgstr ""
 msgid "Maximum length of instruction is 1000 characters. "
 msgstr ""
 
+#: weko_admin/template/weko_admin/admin/site_info.html:64
+msgid "Tracking ID"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:65
+msgid "AddThis ID"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:66
+msgid "OGP Image"
+msgstr ""
+
 #: weko_admin/template/weko_admin/admin/search_management_setting.html
 msgid "Main Screen Initial Display Setting"
 msgstr ""
@@ -790,6 +802,14 @@ msgstr "Facet Search List"
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:70
 msgid "Please input all required item."
 msgstr "Please input all required item."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html
+msgid "Please select one aggregation mapping."
+msgstr "Please select one aggregation mapping."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html
+msgid "Already exists."
+msgstr "Already exists."
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
 msgid "Failed to create due to server error."

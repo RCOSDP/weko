@@ -154,7 +154,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
             descOrEsc = "-";
             key_sort = key_sort.replace("_desc", "");
           }
-         
+
           // Default param
           let param = {
             page: 1,
@@ -195,9 +195,9 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
     var q = url.searchParams.get("q");
     let result = 'item';
     if (q === "0") {
-      return 'root'
+      return 'root';
     }
-    return result
+    return result;
   }
 
   $rootScope.isCommunityRootIndex = function() {
@@ -215,9 +215,9 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
   $rootScope.is_login = $("#is_login").val() === 'True' ? true : false
 
   $rootScope.display_comment_jounal = function () {
-    if ($rootScope.vm.invenioSearchResults.aggregations.path) {
-      $('#index_comment').append(format_comment($rootScope.vm.invenioSearchResults.aggregations.path.buckets[0][0].comment))
-
+    let aggregations = $rootScope.vm.invenioSearchResults.aggregations || {};
+    if (aggregations['path']) {
+      $('#index_comment').append(format_comment(aggregations.path.buckets[0][0].comment))
     }
   }
 
@@ -330,7 +330,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
 
   //Get path and name to dict.
   $scope.getPathName = function () {
-    let aggregations = $rootScope.vm.invenioSearchResults.aggregations;
+    let aggregations = $rootScope.vm.invenioSearchResults.aggregations || {};
     let path_str = "";
     if (aggregations.hasOwnProperty("path") && aggregations.path.hasOwnProperty("buckets")) {
       path_str = aggregations.path.buckets[0][0].key;

@@ -243,7 +243,7 @@ msgstr "識別子の付与"
 
 #: weko_workflow/templates/weko_workflow/identifier_grant.html:66
 msgid "Its able to input only haft-width alphanumeric or half-width symbol."
-msgstr "半角英数字または半角記号「_-.;()/」のみ入力できます"
+msgstr "半角英数字または半角記号のみ入力できます"
 
 #: weko_workflow/templates/weko_workflow/identifier_grant.html:67
 msgid "Input value exceeds 255 characters."

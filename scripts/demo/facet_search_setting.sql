@@ -5,6 +5,22 @@
 -- Dumped from database version 12.6 (Debian 12.6-1.pgdg100+1)
 -- Dumped by pg_dump version 12.6 (Debian 12.6-1.pgdg100+1)
 
+-- public.facet_search_setting definition
+
+-- Drop table
+
+-- DROP TABLE public.facet_search_setting;
+
+CREATE TABLE IF NOT EXISTS facet_search_setting (
+	id serial4 NOT NULL,
+	name_en varchar(255) NOT NULL,
+	name_jp varchar(255) NULL,
+	"mapping" varchar(255) NOT NULL,
+	aggregations jsonb NULL,
+	active bool NULL,
+	CONSTRAINT pk_facet_search_setting PRIMARY KEY (id)
+);
+
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
@@ -21,20 +37,26 @@ SET row_security = off;
 -- Delete data: facet_search_setting; Type: TABLE DATA; Schema: public; Owner: invenio
 --
 
-DELETE FROM public.facet_search_setting WHERE id >= 1 and id <= 7;
+DELETE FROM public.facet_search_setting WHERE name_en='Data Language';
+DELETE FROM public.facet_search_setting WHERE name_en='Access';
+DELETE FROM public.facet_search_setting WHERE name_en='Location';
+DELETE FROM public.facet_search_setting WHERE name_en='Temporal';
+DELETE FROM public.facet_search_setting WHERE name_en='Topic';
+DELETE FROM public.facet_search_setting WHERE name_en='Distributor';
+DELETE FROM public.facet_search_setting WHERE name_en='Data Type';
 
 --
 -- Data for Name: facet_search_setting; Type: TABLE DATA; Schema: public; Owner: invenio
 --
 
-COPY public.facet_search_setting (id, name_en, name_jp, mapping, aggregations, active) FROM stdin;
-1	Data Language	デ一タの言語	language	[]	t
-2	Access	アクセス制限	accessRights	[]	t
-3	Location	地域	geoLocation.geoLocationPlace	[]	t
-4	Temporal	時間的範囲	temporal	[]	t
-5	Topic	トピック	subject.value	[]	t
-6	Distributor	配布者	contributor.contributorName	[{"agg_value": "Distributor", "agg_mapping": "contributor.@attributes.contributorType"}]	t
-7	Data Type	デ一タタイプ	description.value	[{"agg_value": "Other", "agg_mapping": "description.descriptionType"}]	t
+COPY public.facet_search_setting (name_en, name_jp, mapping, aggregations, active) FROM stdin;
+Data Language	デ一タの言語	language	[]	t
+Access	アクセス制限	accessRights	[]	t
+Location	地域	geoLocation.geoLocationPlace	[]	t
+Temporal	時間的範囲	temporal	[]	t
+Topic	トピック	subject.value	[]	t
+Distributor	配布者	contributor.contributorName	[{"agg_value": "Distributor", "agg_mapping": "contributor.@attributes.contributorType"}]	t
+Data Type	デ一タタイプ	description.value	[{"agg_value": "Other", "agg_mapping": "description.descriptionType"}]	t
 \.
 
 

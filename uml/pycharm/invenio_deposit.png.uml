@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>Python</ID>
+  <OriginalElement>#/Users/mhaya/git/mhaya/vagrant-weko_org/multi/tmp/weko3_b/modules/invenio-deposit/invenio_deposit</OriginalElement>
+  <nodes>
+    <node x="457.0" y="1247.0">RESTException</node>
+    <node x="1055.0" y="1080.0">invenio_deposit.providers.DepositProvider</node>
+    <node x="518.0" y="709.0">ContentNegotiatedMethodView</node>
+    <node x="371.0" y="1327.0">invenio_deposit.errors.MergeConflict</node>
+    <node x="698.0" y="1091.5">invenio_deposit.ext.InvenioDeposit</node>
+    <node x="0.0" y="80.0">invenio_deposit.api.Deposit</node>
+    <node x="374.0" y="1080.0">invenio_deposit.ext._DepositState</node>
+    <node x="1060.0" y="1327.0">invenio_deposit.search.DepositSearch</node>
+    <node x="455.0" y="789.0">invenio_deposit.views.rest.DepositFileResource</node>
+    <node x="720.0" y="1327.0">invenio_deposit.errors.WrongFile</node>
+    <node x="0.0" y="1091.5">invenio_deposit.ext.InvenioDepositREST</node>
+    <node x="0.0" y="1529.0">invenio_deposit.scopes.DepositScope</node>
+    <node x="0.0" y="1327.0">invenio_deposit.errors.FileAlreadyExists</node>
+    <node x="1192.0" y="1000.0">BaseProvider</node>
+    <node x="125.5" y="1449.0">Scope</node>
+    <node x="887.0" y="800.0">invenio_deposit.views.rest.DepositFilesResource</node>
+    <node x="0.0" y="822.0">invenio_deposit.views.rest.DepositActionResource</node>
+    <node x="1151.5" y="1247.0">RecordsSearch</node>
+    <node x="97.5" y="0.0">Record</node>
+    <node x="483.0" y="1000.0">object</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="invenio_deposit.ext._DepositState" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-61.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_deposit.ext.InvenioDeposit" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-49.5" />
+      <point x="854.0" y="1055.0" />
+      <point x="526.0" y="1055.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_deposit.errors.WrongFile" target="RESTException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="867.5" y="1302.0" />
+      <point x="535.5" y="1302.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_deposit.scopes.DepositScope" target="Scope" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_deposit.search.DepositSearch" target="RecordsSearch" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_deposit.errors.FileAlreadyExists" target="RESTException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="175.5" y="1302.0" />
+      <point x="535.5" y="1302.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_deposit.views.rest.DepositActionResource" target="ContentNegotiatedMethodView" relationship="REALIZATION">
+      <point x="0.0" y="-50.0" />
+      <point x="217.5" y="764.0" />
+      <point x="661.0" y="764.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_deposit.ext.InvenioDepositREST" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-49.5" />
+      <point x="177.0" y="1055.0" />
+      <point x="526.0" y="1055.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_deposit.views.rest.DepositFilesResource" target="ContentNegotiatedMethodView" relationship="REALIZATION">
+      <point x="0.0" y="-72.0" />
+      <point x="1097.5" y="764.0" />
+      <point x="661.0" y="764.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_deposit.api.Deposit" target="Record" relationship="REALIZATION">
+      <point x="0.0" y="-292.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_deposit.errors.MergeConflict" target="RESTException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_deposit.views.rest.DepositFileResource" target="ContentNegotiatedMethodView" relationship="REALIZATION">
+      <point x="0.0" y="-83.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_deposit.providers.DepositProvider" target="BaseProvider" relationship="REALIZATION">
+      <point x="0.0" y="-61.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic" zoom="0.5305486284289277" showDependencies="false" x="735.0" y="792.0" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Fields</Category>
+    <Category>Inner Classes</Category>
+    <Category>Methods</Category>
+  </Categories>
+</Diagram>
+

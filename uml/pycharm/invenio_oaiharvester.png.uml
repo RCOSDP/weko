@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>Python</ID>
+  <OriginalElement>#/Users/mhaya/git/mhaya/vagrant-weko_org/multi/tmp/weko3_b/modules/invenio-oaiharvester/invenio_oaiharvester</OriginalElement>
+  <nodes>
+    <node x="798.0" y="168.0">invenio_oaiharvester.models.OAIHarvestConfig</node>
+    <node x="1914.0" y="1296.0">invenio_oaiharvester.errors.NameOrUrlMissing</node>
+    <node x="385.0" y="80.0">invenio_oaiharvester.models.HarvestSettings</node>
+    <node x="0.0" y="179.5">invenio_oaiharvester.models.HarvestLogs</node>
+    <node x="384.0" y="577.0">invenio_oaiharvester.harvester.BaseMapper</node>
+    <node x="778.0" y="958.0">invenio_oaiharvester.harvester.JPCOARMapper</node>
+    <node x="1152.0" y="1136.0">Exception</node>
+    <node x="1346.5" y="577.0">IntEnum</node>
+    <node x="1232.0" y="657.0">invenio_oaiharvester.utils.ItemEvents</node>
+    <node x="566.9999999999999" y="1296.0">invenio_oaiharvester.errors.IdentifiersOrDates</node>
+    <node x="1249.0" y="80.0">invenio_oaiharvester.admin.HarvestSettingView</node>
+    <node x="980.9999999999999" y="1216.0">invenio_oaiharvester.errors.InvenioOAIHarvesterError</node>
+    <node x="986.9999999999999" y="1296.0">invenio_oaiharvester.errors.InvenioOAIRequestError</node>
+    <node x="1451.0" y="1296.0">invenio_oaiharvester.errors.WrongDateCombination</node>
+    <node x="1393.5" y="0.0">ModelView</node>
+    <node x="0.0" y="1451.0">invenio_oaiharvester.ext.InvenioOAIHarvester</node>
+    <node x="539.0" y="0.0">Model</node>
+    <node x="391.0" y="969.5">invenio_oaiharvester.harvester.DCMapper</node>
+    <node x="0.0" y="925.0">invenio_oaiharvester.harvester.DDIMapper</node>
+    <node x="0.0" y="1296.0">invenio_oaiharvester.errors.InvenioOAIHarvesterConfigNotFound</node>
+    <node x="154.5" y="1371.0">object</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="invenio_oaiharvester.harvester.DDIMapper" target="invenio_oaiharvester.harvester.BaseMapper" relationship="REALIZATION">
+      <point x="0.0" y="-83.0" />
+      <point x="185.5" y="900.0" />
+      <point x="574.5" y="900.0" />
+      <point x="0.0" y="149.0" />
+    </edge>
+    <edge source="invenio_oaiharvester.errors.InvenioOAIRequestError" target="invenio_oaiharvester.errors.InvenioOAIHarvesterError" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiharvester.errors.IdentifiersOrDates" target="invenio_oaiharvester.errors.InvenioOAIHarvesterError" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="766.9999999999999" y="1271.0" />
+      <point x="1209.0" y="1271.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiharvester.models.HarvestLogs" target="Model" relationship="REALIZATION">
+      <point x="0.0" y="-126.5" />
+      <point x="182.5" y="55.0" />
+      <point x="581.5" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiharvester.utils.ItemEvents" target="IntEnum" relationship="REALIZATION">
+      <point x="0.0" y="-71.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiharvester.models.HarvestSettings" target="Model" relationship="REALIZATION">
+      <point x="0.0" y="-226.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiharvester.models.OAIHarvestConfig" target="Model" relationship="REALIZATION">
+      <point x="0.0" y="-138.0" />
+      <point x="1001.0" y="55.0" />
+      <point x="581.5" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiharvester.admin.HarvestSettingView" target="ModelView" relationship="REALIZATION">
+      <point x="0.0" y="-226.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiharvester.errors.NameOrUrlMissing" target="invenio_oaiharvester.errors.InvenioOAIHarvesterError" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="2116.0" y="1271.0" />
+      <point x="1209.0" y="1271.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiharvester.errors.InvenioOAIHarvesterConfigNotFound" target="invenio_oaiharvester.errors.InvenioOAIHarvesterError" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="273.5" y="1271.0" />
+      <point x="1209.0" y="1271.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiharvester.ext.InvenioOAIHarvester" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-49.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiharvester.errors.WrongDateCombination" target="invenio_oaiharvester.errors.InvenioOAIHarvesterError" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="1672.5" y="1271.0" />
+      <point x="1209.0" y="1271.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiharvester.harvester.DCMapper" target="invenio_oaiharvester.harvester.BaseMapper" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="0.0" y="149.0" />
+    </edge>
+    <edge source="invenio_oaiharvester.harvester.JPCOARMapper" target="invenio_oaiharvester.harvester.BaseMapper" relationship="REALIZATION">
+      <point x="0.0" y="-50.0" />
+      <point x="982.5" y="900.0" />
+      <point x="574.5" y="900.0" />
+      <point x="0.0" y="149.0" />
+    </edge>
+    <edge source="invenio_oaiharvester.errors.InvenioOAIHarvesterError" target="Exception" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic" zoom="1.0" showDependencies="false" x="1159.0" y="774.9999999999999" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Fields</Category>
+    <Category>Inner Classes</Category>
+    <Category>Methods</Category>
+  </Categories>
+</Diagram>
+

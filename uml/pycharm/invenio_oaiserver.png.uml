@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>Python</ID>
+  <OriginalElement>#/Users/mhaya/git/mhaya/vagrant-weko_org/multi/tmp/weko3_b/modules/invenio-oaiserver/invenio_oaiserver</OriginalElement>
+  <nodes>
+    <node x="120.5" y="1176.0">_DateTime</node>
+    <node x="391.0" y="619.0">invenio_oaiserver.admin.IdentifyModelView</node>
+    <node x="0.0" y="1009.0">invenio_oaiserver.provider.OAIIDProvider</node>
+    <node x="892.75" y="929.0">Schema</node>
+    <node x="476.0" y="1459.0">invenio_oaiserver.errors.OAISetSpecUpdateError</node>
+    <node x="902.5" y="528.0">Timestamp</node>
+    <node x="0.0" y="384.0">invenio_oaiserver.verbs.ResumptionVerbs</node>
+    <node x="645.0" y="179.5">invenio_oaiserver.receivers.OAIServerUpdater</node>
+    <node x="597.5" y="1176.0">Field</node>
+    <node x="321.25" y="528.0">ModelView</node>
+    <node x="47.0" y="113.5">invenio_oaiserver.verbs.Verbs</node>
+    <node x="911.0" y="1256.0">invenio_oaiserver.query.OAIServerSearch</node>
+    <node x="1005.0" y="1009.0">invenio_oaiserver.verbs.OAISchema</node>
+    <node x="460.0" y="1020.5">invenio_oaiserver.resumption_token.ResumptionTokenSchema</node>
+    <node x="941.0" y="1379.0">invenio_oaiserver.api.OaiIdentify</node>
+    <node x="404.0" y="1256.0">invenio_oaiserver.resumption_token.ResumptionToken</node>
+    <node x="337.0" y="80.0">invenio_oaiserver.ext._AppState</node>
+    <node x="400.0" y="1379.0">Exception</node>
+    <node x="1135.0" y="608.0">invenio_oaiserver.models.OAISet</node>
+    <node x="814.0" y="641.5">invenio_oaiserver.models.Identify</node>
+    <node x="1064.0" y="157.5">invenio_oaiserver.ext.InvenioOAIServer</node>
+    <node x="137.0" y="929.0">BaseProvider</node>
+    <node x="0.0" y="1459.0">invenio_oaiserver.errors.OAIBadMetadataFormatError</node>
+    <node x="0.0" y="1256.0">invenio_oaiserver.verbs.DateTime</node>
+    <node x="1013.0" y="1176.0">RecordsSearch</node>
+    <node x="1239.5" y="528.0">Model</node>
+    <node x="0.0" y="608.0">invenio_oaiserver.admin.OAISetModelView</node>
+    <node x="619.75" y="0.0">object</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="invenio_oaiserver.verbs.Verbs" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-93.5" />
+      <point x="182.0" y="55.0" />
+      <point x="662.75" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiserver.errors.OAISetSpecUpdateError" target="Exception" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="686.0" y="1434.0" />
+      <point x="457.0" y="1434.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiserver.admin.OAISetModelView" target="ModelView" relationship="REALIZATION">
+      <point x="0.0" y="-138.0" />
+      <point x="185.5" y="583.0" />
+      <point x="382.75" y="583.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiserver.verbs.OAISchema" target="Schema" relationship="REALIZATION">
+      <point x="0.0" y="-50.5" />
+      <point x="1163.0" y="984.0" />
+      <point x="942.75" y="984.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiserver.receivers.OAIServerUpdater" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="844.5" y="55.0" />
+      <point x="662.75" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiserver.models.OAISet" target="Model" relationship="REALIZATION">
+      <point x="0.0" y="-116.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiserver.verbs.ResumptionVerbs" target="invenio_oaiserver.verbs.Verbs" relationship="REALIZATION">
+      <point x="0.0" y="-49.5" />
+      <point x="0.0" y="93.5" />
+    </edge>
+    <edge source="invenio_oaiserver.provider.OAIIDProvider" target="BaseProvider" relationship="REALIZATION">
+      <point x="0.0" y="-61.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiserver.errors.OAIBadMetadataFormatError" target="Exception" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="228.0" y="1434.0" />
+      <point x="457.0" y="1434.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiserver.models.Identify" target="Model" relationship="REALIZATION">
+      <point x="0.0" y="-82.5" />
+      <point x="964.5" y="588.0" />
+      <point x="1282.0" y="588.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiserver.admin.IdentifyModelView" target="ModelView" relationship="REALIZATION">
+      <point x="0.0" y="-127.0" />
+      <point x="580.0" y="583.0" />
+      <point x="382.75" y="583.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiserver.models.Identify" target="Timestamp" relationship="REALIZATION">
+      <point x="0.0" y="-82.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiserver.models.OAISet" target="Timestamp" relationship="REALIZATION">
+      <point x="0.0" y="-116.0" />
+      <point x="1282.0" y="578.0" />
+      <point x="964.5" y="578.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiserver.ext.InvenioOAIServer" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-49.5" />
+      <point x="1236.0" y="55.0" />
+      <point x="662.75" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiserver.ext._AppState" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-127.0" />
+      <point x="481.0" y="55.0" />
+      <point x="662.75" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiserver.query.OAIServerSearch" target="RecordsSearch" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiserver.resumption_token.ResumptionTokenSchema" target="Schema" relationship="REALIZATION">
+      <point x="0.0" y="-39.0" />
+      <point x="722.5" y="984.0" />
+      <point x="942.75" y="984.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiserver.resumption_token.ResumptionToken" target="Field" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oaiserver.verbs.DateTime" target="_DateTime" relationship="REALIZATION">
+      <point x="0.0" y="-39.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic" zoom="1.0" showDependencies="false" x="714.5" y="744.5000000000001" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Fields</Category>
+    <Category>Inner Classes</Category>
+    <Category>Methods</Category>
+  </Categories>
+</Diagram>
+

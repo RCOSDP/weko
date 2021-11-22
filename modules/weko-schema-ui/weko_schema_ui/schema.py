@@ -71,6 +71,9 @@ class SchemaConverter:
                                 -1] if ":" in self.rootname else self.rootname
                         return element_name.replace("{" + nsp + "}",
                                                     k + ":")
+            version_type = current_app.config['WEKO_SCHEMA_VERSION_TYPE']
+            if element_name == version_type['original']:
+                element_name = version_type['modified']
             return element_name
 
         def get_element_type(type):
@@ -440,7 +443,7 @@ class SchemaTree:
                     key = list_key[0]
                     if key.startswith("="):
                         # mapping by fixed value
-                        yield key[1:],id(key)
+                        yield key[1:], id(key)
                     elif isinstance(atr_vm, dict):
                         if atr_vm.get(key) is None:
                             yield None, id(key)
@@ -712,9 +715,9 @@ class SchemaTree:
                                     for key, val in v.get(self._atr,
                                                           {}).items():
                                         if(type(val[0]) is not str):
-                                          val[0] = [val for idx, val
-                                                  in enumerate(val[0])
-                                                  if idx in lst_val_idx]
+                                            val[0] = [val for idx, val
+                                                      in enumerate(val[0])
+                                                      if idx in lst_val_idx]
                             else:
                                 if not v.get(self._atr, {}).items():
                                     lst_val_idx = \
@@ -1204,7 +1207,8 @@ class SchemaTree:
                         index_remove_items.extend([
                             lst_name_identifier_scheme.index(identifior_item)])
                 if len(index_remove_items) == total_remove_items:
-                    del v[jpcoar_nameidt]
+                    if jpcoar_nameidt in v:
+                        del v[jpcoar_nameidt]
                 else:
                     for index in index_remove_items[::-1]:
                         lst_name_identifier_scheme.pop(index)
@@ -1281,14 +1285,16 @@ class SchemaTree:
                 len_name = _child[jpcoar_affname]
                 if len_name > 0:
                     _data = _value[jpcoar_affname][self._v][0]
-                    _lang = _value[jpcoar_affname][self._atr].get(
-                        "xml:lang", [])
+                    _lang = None
+                    if self._atr in _value[jpcoar_affname]:
+                        _lang = _value[jpcoar_affname][self._atr].get(
+                            "xml:lang", [])
                     _max_len_name = len(_data) \
                         if len(_data) < count_name + len_name \
                         else count_name + len_name
                     _value[jpcoar_affname][self._v][0] = _data[
                         count_name:_max_len_name]
-                    if _lang:
+                    if _lang and len(_lang) > 0:
                         _value[jpcoar_affname][self._atr]["xml:lang"][0] \
                             = _lang[0][count_name:_max_len_name]
                     count_name += _max_len_name

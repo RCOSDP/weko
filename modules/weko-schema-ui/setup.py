@@ -51,13 +51,13 @@ for reqs in extras_require.values():
 
 setup_requires = [
     'Babel>=1.3',
-    'pytest-runner>=2.6.2',
-    'xmlschema>=0.9.30',
+    'pytest-runner>=3.0.0,<5',
+    'xmlschema==0.9.30',
 ]
 
 install_requires = [
     'Flask-BabelEx>=0.9.2',
-    'xmlschema>=0.9.30',
+    'xmlschema==0.9.30',
     'bibtexparser>=1.0.1',
 ]
 

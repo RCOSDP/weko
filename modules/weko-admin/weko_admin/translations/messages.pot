@@ -886,7 +886,7 @@ msgid "Rankings"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:91
-msgid "The Most Reviewed Items"
+msgid "The Most Viewed Items"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:102
@@ -1385,10 +1385,20 @@ msgstr ""
 msgid "Maximum length of instruction is 1000 characters. "
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:37
-msgid ""
-"Please classify a check into the organization send a use of site license "
-"statistics eamil."
+#: weko_admin/template/weko_admin/admin/site_info.html:64
+msgid "Tracking ID"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:65
+msgid "AddThis ID"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:66
+msgid "OGP Image"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/search_management_setting.html
+msgid "Index Tree/Facet Display Setting"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:42
@@ -1513,6 +1523,18 @@ msgstr ""
 #: weko_admin/templates/weko_admin/settings/lifetime.html:49
 msgid "Set lifetime for"
 msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html
+msgid "Please select one aggregation mapping."
+msgstr "Please select one aggregation mapping."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html
+msgid "Already exists."
+msgstr "Already exists."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
+msgid "Failed to create due to server error."
+msgstr "Failed to create due to server error."
 
 #: weko_admin/templates/weko_admin/settings/lifetime.html:42
 msgid "Current"

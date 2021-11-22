@@ -25,6 +25,7 @@ from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
 from typing import NoReturn, Tuple
+from urllib.parse import urlparse
 
 from flask import abort, current_app, request, url_for
 from flask_babelex import get_locale
@@ -650,8 +651,10 @@ def get_file_info_list(record):
                     set_message_for_file(f)
                     # Check show preview area.
                     # If f is uploaded in this system => show 'Preview' area.
-                    base_url = "{}record/{}/files/{}".format(
-                        request.url_root,
+                    # remove port number from url_root
+                    o = urlparse(request.url_root)
+                    base_url = "{}/record/{}/files/{}".format(
+                        o.hostname,
                         record.get('recid'),
                         f.get("filename")
                     )
@@ -662,6 +665,7 @@ def get_file_info_list(record):
                         f['url']['url'] = url
                     if base_url in url:
                         is_display_file_preview = True
+
                     # Get file size and convert to byte.
                     f['size'] = get_file_size(f)
                     f['mimetype'] = f.get('format', '')

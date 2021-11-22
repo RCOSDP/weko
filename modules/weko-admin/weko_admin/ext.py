@@ -33,7 +33,8 @@ from invenio_i18n.ext import current_i18n
 from invenio_i18n.views import set_lang
 
 from . import config
-from .models import AdminLangSettings, SessionLifetime
+from .models import AdminLangSettings, SessionLifetime, SiteInfo
+from .utils import overwrite_the_memory_config_with_db
 from .views import blueprint
 
 
@@ -140,6 +141,10 @@ class WekoAdmin(object):
                 'WEKO_ADMIN_BASE_TEMPLATE',
                 app.config['BASE_EDIT_TEMPLATE'],
             )
+        # Overwrite the memory Config values
+        # (GOOGLE_TRACKING_ID_USER and ADDTHIS_USER_ID) with the DB values.
+        self.overwrite_the_memory_config(app)
+
         for k in dir(config):
             if k.startswith('WEKO_ADMIN_') and k not in excludes:
                 app.config.setdefault(k, getattr(config, k))
@@ -176,3 +181,10 @@ class WekoAdmin(object):
                 db_lifetime.create()
             app.permanent_session_lifetime = timedelta(
                 minutes=db_lifetime.lifetime)
+
+    def overwrite_the_memory_config(self, app):
+        """Init Overwrite the memory Config values with the DB values."""
+        @app.before_first_request
+        def overwrite_the_memory_config():
+            site_info = SiteInfo.get()
+            overwrite_the_memory_config_with_db(app, site_info)
