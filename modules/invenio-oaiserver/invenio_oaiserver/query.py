@@ -13,7 +13,7 @@ from datetime import datetime
 import six
 from elasticsearch_dsl import Q
 from flask import current_app
-from invenio_pidstore.models import PersistentIdentifier
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch, current_search_client
 from weko_index_tree.models import Index
@@ -93,7 +93,8 @@ def get_records(**kwargs):
         """Get object_uuid of PersistentIdentifier."""
         # Get object_uuid of PersistentIdentifier
         query = PersistentIdentifier.query.filter(
-            PersistentIdentifier.pid_type == 'doi'
+            PersistentIdentifier.pid_type == 'doi',
+            PersistentIdentifier.status == PIDStatus.REGISTERED
         )
         pids = query.all() or []
         object_uuids = [pid.object_uuid for pid in pids]
@@ -149,6 +150,8 @@ def get_records(**kwargs):
             search = search.filter('range', **{'_updated': time_range})
 
         search = search.query('match', **{'relation_version_is_last': 'true'})
+        search = search.query('match', **{'publish_status': '0'})
+        search = search.query('range', **{'publish_date': {'lte': 'now/d'}})
         query_filter = []
         if indexes:
             indexes_num = len(indexes)

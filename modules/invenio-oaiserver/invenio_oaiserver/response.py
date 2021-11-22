@@ -13,13 +13,14 @@ from datetime import MINYEAR, datetime, timedelta
 
 from flask import current_app, request, url_for
 from invenio_db import db
+from invenio_pidstore.models import PIDStatus
 from invenio_records.models import RecordMetadata
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
 from weko_deposit.api import WekoRecord
 from weko_index_tree.api import Indexes
 from weko_schema_ui.schema import get_oai_metadata_formats
-
+from invenio_pidstore.models import PIDStatus
 from .api import OaiIdentify
 from .fetchers import oaiid_fetcher
 from .models import OAISet
@@ -283,8 +284,7 @@ def header(parent, identifier, datestamp, sets=[], deleted=False):
 
 def is_deleted_workflow(pid):
     """Check workflow is deleted."""
-    deleted_status = "D"
-    return pid.status == deleted_status
+    return pid.status == PIDStatus.DELETED
 
 
 def is_private_workflow(record):
@@ -427,8 +427,17 @@ def listidentifiers(**kwargs):
     for r in result.items:
         pid = oaiid_fetcher(r['id'], r['json']['_source'])
         pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
-        harvest_public_state, record = WekoRecord.get_record_with_hps(
-            pid_object.object_uuid)
+        if pid_object.status == PIDStatus.DELETED:
+            header(
+                e_listidentifiers,
+                identifier=pid.pid_value,
+                datestamp=r['updated'],
+                deleted=True
+            )
+            continue
+        else:
+            harvest_public_state, record = WekoRecord.get_record_with_hps(
+                pid_object.object_uuid)
 
         set_identifier(record, record)
         # Harvest is private
@@ -476,7 +485,7 @@ def listrecords(**kwargs):
         header(
             e_record,
             identifier=pid_object.pid_value,
-            datestamp=rec.updated,
+            datestamp=rec.updated if rec else pid_object.updated,
             deleted=True
         )
 
@@ -500,7 +509,11 @@ def listrecords(**kwargs):
             pid = oaiid_fetcher(record['id'], record['json']['_source'])
             pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
             rec = db_records.get(record['id'])
-            set_identifier(record, rec)
+            if not rec:
+                append_deleted_record(e_listrecords, pid_object, rec)
+                continue
+            else:
+                set_identifier(record, rec)
             # Check output delete, noRecordsMatch
             is_link_private_index = is_private_index_by_public_list(
                 rec.get('path', []), public_index_ids)
