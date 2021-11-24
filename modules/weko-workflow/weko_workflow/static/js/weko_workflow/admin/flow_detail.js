@@ -10,6 +10,9 @@ $(document).ready(function () {
   function isApproval(action){
     return action && action.name == 'Approval';
   }
+  function isItemReg(action){
+    return action && action.name == 'Item Registration';
+  }
   $('.btn_apply').on('click', function () {
     let actionId = $(this).data('action-id');
     let actionName = $('#action_name_' + actionId).text();
@@ -29,7 +32,12 @@ $(document).ready(function () {
         role: 0,
         role_deny: false,
         workflow_flow_action_id: -1,
-        send_mail_setting : {"inform_reject": false, "inform_approval": false, "request_approval": false},
+        send_mail_setting : {
+          "inform_reject": {"send": false, "mail": "0"},
+          "inform_approval": {"send": false, "mail": "0"},
+          "request_approval": {"send": false, "mail": "0"},
+          "inform_itemReg": {"send": false, "mail": "0"}
+        },
         action: 'ADD'
       };
       apply_action_list.push(apply_action);
@@ -73,6 +81,21 @@ $(document).ready(function () {
     }
     init_action_list(apply_action);
     $('#myModal').modal('hide');
+  });
+  $('#tb_action_list').on('click', '.checkbox_change', function () {
+    let obj_id = $(this).context.id;
+    let id_list = obj_id.split('_');
+    let action_id = id_list.pop();
+    id_list.push('mail');
+    id_list.push(action_id);
+    let mail_control_id = id_list.join('_');
+    let cur_row = $(this).parents('tr');
+    if ($(this).context.checked) {
+      cur_row.find('#' + mail_control_id).removeAttr('disabled');
+    } else {
+      cur_row.find('#' + mail_control_id).attr("disabled", "disabled");
+      cur_row.find('#' + mail_control_id)[0][0].selected = true;
+    }
   });
   $('#tb_action_list').on('click', '.sortable_up', function () {
     let cur_row = $(this).parents('tr');
@@ -244,6 +267,22 @@ $(document).ready(function () {
     }
     $('#flow_action_ver_' + actionId).text($('#td_action_ver_' + actionId).text());
     $('#flow_action_date_' + actionId).text($('#td_action_date_' + actionId).text());
+    let request_approval_mail = "0";
+    let inform_approval_mail = "0";
+    let inform_reject_mail = "0";
+    let inform_itemReg_mail = "0";
+    if ($tr.find('#td_action_request_approval_mail_' + actionId)[0]) {
+      request_approval_mail = $tr.find('#td_action_request_approval_mail_' + actionId)[0].value;
+    }
+    if ($tr.find('#td_action_approval_done_mail_' + actionId)[0]) {
+      inform_approval_mail = $tr.find('#td_action_approval_done_mail_' + actionId)[0].value;
+    }
+    if ($tr.find('#td_action_approval_reject_mail_' + actionId)[0]) {
+      inform_reject_mail = $tr.find('#td_action_approval_reject_mail_' + actionId)[0].value;
+    }
+    if ($tr.find('#td_action_item_reg_done_mail_' + actionId)[0]) {
+      inform_itemReg_mail = $tr.find('#td_action_item_reg_done_mail_' + actionId)[0].value;
+    }
     action_list.push({
       id: actionId,
       name: $tr.find('#td_action_name_' + actionId).text(),
@@ -255,9 +294,22 @@ $(document).ready(function () {
       role_deny: $tr.find('#td_action_role_deny_' + actionId).is(':checked'),
       workflow_flow_action_id: $(this).data('workflow-flow-action-id'),
       send_mail_setting: {
-        "request_approval": $tr.find('#td_action_request_approval_' + actionId).is(':checked'),
-        "inform_approval": $tr.find('#td_action_approval_done_' + actionId).is(':checked'),
-        "inform_reject": $tr.find('#td_action_approval_reject_' + actionId).is(':checked')
+        "request_approval": {
+          "send": $tr.find('#td_action_request_approval_' + actionId).is(':checked'),
+          "mail": request_approval_mail
+        },
+        "inform_approval": {
+          "send": $tr.find('#td_action_approval_done_' + actionId).is(':checked'),
+          "mail": inform_approval_mail
+        },
+        "inform_reject": {
+          "send": $tr.find('#td_action_approval_reject_' + actionId).is(':checked'),
+          "mail": inform_reject_mail
+        },
+        "inform_itemReg": {
+          "send": $tr.find('#td_action_item_reg_done_' + actionId).is(':checked'),
+          "mail": inform_itemReg_mail
+        }
       },
       action: 'ADD'
     });
@@ -285,7 +337,10 @@ $(document).ready(function () {
       if(!isApproval(apply_action)){
         new_row = new_row.replaceAll('specify-property-option', 'hide');
         new_row = new_row.replaceAll('<span class="approval-order"></span>', '');
-        new_row = new_row.replaceAll('mail_setting_options', 'hide');
+        new_row = new_row.replaceAll('mail_setting_for_approval', 'hide');
+      }
+      if(!isItemReg(apply_action)){
+        new_row = new_row.replaceAll('mail_setting_for_itemReg', 'hide');
       }
       $('#tb_action_list').append(new_row);
     }
@@ -313,6 +368,22 @@ $(document).ready(function () {
       let $tr = $(this).parents('tr');
 
       let actionId = $(this).text();
+      let request_approval_mail = "0";
+      let inform_approval_mail = "0";
+      let inform_reject_mail = "0";
+      let inform_itemReg_mail = "0";
+      if ($tr.find('#td_action_request_approval_mail_' + actionId)[0]) {
+        request_approval_mail = $tr.find('#td_action_request_approval_mail_' + actionId)[0].value;
+      }
+      if ($tr.find('#td_action_approval_done_mail_' + actionId)[0]) {
+        inform_approval_mail = $tr.find('#td_action_approval_done_mail_' + actionId)[0].value;
+      }
+      if ($tr.find('#td_action_approval_reject_mail_' + actionId)[0]) {
+        inform_reject_mail = $tr.find('#td_action_approval_reject_mail_' + actionId)[0].value;
+      }
+      if ($tr.find('#td_action_item_reg_done_mail_' + actionId)[0]) {
+        inform_itemReg_mail = $tr.find('#td_action_item_reg_done_mail_' + actionId)[0].value;
+      }
       action_list.push({
         id: actionId,
         name: $tr.find('#td_action_name_' + actionId).text(),
@@ -324,9 +395,22 @@ $(document).ready(function () {
         role_deny: $tr.find('#td_action_role_deny_' + actionId).is(':checked'),
         workflow_flow_action_id: $(this).data('workflow-flow-action-id'),
         send_mail_setting: {
-            "request_approval": $tr.find('#td_action_request_approval_' + actionId).is(':checked'),
-            "inform_approval":  $tr.find('#td_action_approval_done_' + actionId).is(':checked'),
-            "inform_reject":  $tr.find('#td_action_approval_reject_' + actionId).is(':checked')
+            "request_approval": {
+              "send": $tr.find('#td_action_request_approval_' + actionId).is(':checked'),
+              "mail": request_approval_mail
+            },
+            "inform_approval": {
+              "send": $tr.find('#td_action_approval_done_' + actionId).is(':checked'),
+              "mail": inform_approval_mail
+            },
+            "inform_reject": {
+              "send": $tr.find('#td_action_approval_reject_' + actionId).is(':checked'),
+              "mail": inform_reject_mail
+            },
+            "inform_itemReg": {
+              "send": $tr.find('#td_action_item_reg_done_' + actionId).is(':checked'),
+              "mail": inform_itemReg_mail
+            }
         },
         action: 'ADD'
       });

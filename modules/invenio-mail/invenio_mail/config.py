@@ -15,3 +15,108 @@ list of configuration variables.
 """
 INVENIO_MAIL_BASE_TEMPLATE = 'invenio_mail/base.html'
 INVENIO_MAIL_SETTING_TEMPLATE = 'invenio_mail/mail_setting.html'
+INVENIO_MAIL_TEMPLATES_TEMPLATE = 'invenio_mail/mail_templates.html'
+INVENIO_MAIL_HELP_TEMPLATE = 'invenio_mail/mail_help.html'
+
+INVENIO_MAIL_VARIABLE_HELP = [
+    {
+        "key": "[url_guest_user]",
+        "comment": "ゲスト用の利用申請登録の案内URL"
+    },
+    {
+        "key": "[restricted_fullname]",
+        "comment": "登録者名"
+    },
+    {
+        "key": "[restricted_university_institution]",
+        "comment": "登録者の所属機関"
+    },
+    {
+        "key": "[restricted_activity_id]",
+        "comment": "利用申請の申請番号"
+    },
+    {
+        "key": "[restricted_research_title]",
+        "comment": "登録者の研究題目"
+    },
+    {
+        "key": "[restricted_data_name]",
+        "comment": "申請データ"
+    },
+    {
+        "key": "[restricted_application_date]",
+        "comment": "申請年月日"
+    },
+    {
+        "key": "[restricted_mail_address]",
+        "comment": "登録者のメールアドレス"
+    },
+    {
+        "key": "[restricted_download_link]",
+        "comment": "ファイルのダウンロードURL"
+    },
+    {
+        "key": "[restricted_expiration_date]",
+        "comment": "ダウンロードURLの有効期限日数"
+    },
+    {
+        "key": "[restricted_expiration_date_ja]",
+        "comment": "日本語のダウンロード回数説明"
+    },
+    {
+        "key": "[restricted_expiration_date_en]",
+        "comment": "英語のダウンロード回数説明"
+    },
+    {
+        "key": "[restricted_approver_name]",
+        "comment": ""
+    },
+    {
+        "key": "[restricted_site_name_ja]",
+        "comment": "日本語のサイト名"
+    },
+    {
+        "key": "[restricted_site_name_en]",
+        "comment": "英語のサイト名"
+    },
+    {
+        "key": "[restricted_institution_name_ja]",
+        "comment": "日本語のサイト機関名"
+    },
+    {
+        "key": "[restricted_institution_name_en]",
+        "comment": "英語のサイト機関名"
+    },
+    {
+        "key": "[restricted_site_mail]",
+        "comment": "サイトの連絡メール"
+    },
+    {
+        "key": "[restricted_site_url]",
+        "comment": "サイトのURL"
+    },
+    {
+        "key": "[restricted_approver_affiliation]",
+        "comment": ""
+    },
+    {
+        "key": "[restricted_supervisor]",
+        "comment": ""
+    },
+    {
+        "key": "[restricted_reference]",
+        "comment": ""
+    },
+    {
+        "key": "[data_download_date]",
+        "comment": "データダウンロード日"
+    },
+    {
+        "key": "[usage_report_url]",
+        "comment": "利用報告登録の案内URL"
+    },
+    {
+        "key": "[restricted_usage_activity_id]",
+        "comment": "利用報告の申請番号"
+    }
+]

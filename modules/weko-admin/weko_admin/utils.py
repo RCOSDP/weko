@@ -1891,12 +1891,12 @@ class UsageReport:
         return activities
 
     def send_reminder_mail(self, activities_id: list,
-                           mail_template: str = None, activities: list = None):
+                           mail_id: str = None, activities: list = None):
         """Send reminder email to user.
 
         Args:
             activities_id (list): Activity identifier list.
-            mail_template (str, optional): Mail template.
+            mail_id (str, optional): Mail template id.
             activities (list, optional): Activities list.
         """
         if not activities:
@@ -1906,8 +1906,10 @@ class UsageReport:
         site_url = current_app.config['THEME_SITEURL']
         site_name_en, site_name_ja = self.__get_site_info()
         site_mail = self.__get_default_mail_sender()
-        if not mail_template:
-            mail_template = current_app.config\
+        institution_name_ja = current_app.config['THEME_INSTITUTION_NAME']['ja']
+        institution_name_en = current_app.config['THEME_INSTITUTION_NAME']['en']
+        if not mail_id:
+            mail_id = current_app.config\
                 .get("WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT")
 
         for activity in activities:
@@ -1925,6 +1927,8 @@ class UsageReport:
                     "restricted_site_url": site_url,
                     "restricted_site_name_ja": site_name_ja,
                     "restricted_site_name_en": site_name_en,
+                    "restricted_institution_name_ja": institution_name_ja,
+                    "restricted_institution_name_en": institution_name_en,
                     "restricted_site_mail": site_mail,
                     "restricted_usage_activity_id": activity.extra_info.get(
                         'usage_activity_id'),
@@ -1939,7 +1943,7 @@ class UsageReport:
                 self.__mail_info_lst[-1]['restricted_mail_address']
         is_sendmail_success = True
         for mail_info in self.__mail_info_lst:
-            if not self.__process_send_mail(mail_info, mail_template):
+            if not self.__process_send_mail(mail_info, mail_id):
                 is_sendmail_success = False
                 break
         return is_sendmail_success
