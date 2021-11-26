@@ -1828,7 +1828,8 @@ def send_mail_registration_done(mail_info, mail_id):
     from weko_items_ui.utils import get_current_user_role
     role = get_current_user_role()
     item_type_name = mail_info.get('item_type_name')
-    subject, body = email_pattern_registration_done(role, item_type_name, mail_id)
+    subject, body = email_pattern_registration_done(
+        role, item_type_name, mail_id)
     if body and subject:
         body = replace_characters(mail_info, body)
         send_mail(subject, mail_info.get('register_user_mail'), body)
@@ -2179,7 +2180,7 @@ def process_send_reminder_mail(activity_detail, mail_id):
 
 
 def process_send_notification_mail(activity_detail, action_endpoint,
-        next_action_endpoint, action_mails_setting):
+                                   next_action_endpoint, action_mails_setting):
     """Process send notification mail.
 
     :activity_detail: object
@@ -3534,14 +3535,19 @@ def check_authority_by_admin(activity):
     # and the user who created activity is member of community
     # role -> has permission:
     community_role_name = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-    # Get the list of users who has the community role
-    community_users = User.query.outerjoin(userrole).outerjoin(Role) \
-        .filter(community_role_name == Role.name) \
-        .filter(userrole.c.role_id == Role.id) \
-        .filter(User.id == userrole.c.user_id) \
-        .all()
-    community_user_ids = [
-        community_user.id for community_user in community_users]
+    community_user_ids = []
+    if isinstance(community_role_name, str):
+        community_role_name = (community_role_name,)
+    for name in community_role_name:
+        # Get the list of users who has the community role
+        community_users = User.query.outerjoin(userrole).outerjoin(Role) \
+            .filter(name == Role.name) \
+            .filter(userrole.c.role_id == Role.id) \
+            .filter(User.id == userrole.c.user_id) \
+            .all()
+        tmp = [community_user.id for community_user in community_users]
+        community_user_ids.extend(tmp)
+
     for role in list(current_user.roles or []):
         if role.name in community_role_name:
             # User has community role

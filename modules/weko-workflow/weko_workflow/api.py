@@ -1708,16 +1708,20 @@ class WorkActivity(object):
 
         @return:
         """
+        community_user_ids = []
         community_role_name = current_app.config[
             'WEKO_PERMISSION_ROLE_COMMUNITY']
-        community_users = User.query.outerjoin(userrole).outerjoin(
-            Role) \
-            .filter(community_role_name == Role.name) \
-            .filter(userrole.c.role_id == Role.id) \
-            .filter(User.id == userrole.c.user_id) \
-            .all()
-        community_user_ids = [community_user.id for community_user in
-                              community_users]
+        if isinstance(community_role_name, str):
+            community_role_name = (community_role_name,)
+        for name in community_role_name:
+            community_users = User.query.outerjoin(userrole).outerjoin(Role) \
+                .filter(name == Role.name) \
+                .filter(userrole.c.role_id == Role.id) \
+                .filter(User.id == userrole.c.user_id) \
+                .all()
+            tmp = [community_user.id for community_user in community_users]
+            community_user_ids.extend(tmp)
+
         return community_user_ids
 
     def get_activity_list(self, community_id=None, conditions=None,
