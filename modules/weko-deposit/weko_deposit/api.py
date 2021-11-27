@@ -1640,10 +1640,7 @@ class WekoRecord(Record):
             is_ok = True
         # Check super users
         else:
-            super_users = current_app.config[
-                'WEKO_PERMISSION_SUPER_ROLE_USER'] +
-            current_app.config[
-                'WEKO_PERMISSION_ROLE_COMMUNITY']
+            super_users = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
             for role in list(current_user.roles or []):
                 if role.name in super_users:
                     is_ok = True
