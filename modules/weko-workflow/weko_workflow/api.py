@@ -648,11 +648,11 @@ class WorkActivity(object):
         :param item_id:
         :return:
         """
-        utc_now = datetime.utcnow()
         try:
             action_id = 0
             next_action_id = 0
             action_has_term_of_use = False
+            next_action_order = 0
             with db.session.no_autoflush:
                 action = _Action.query.filter_by(
                     action_endpoint='begin_action').one_or_none()
@@ -703,7 +703,7 @@ class WorkActivity(object):
                 activity_update_user = current_user.get_id()
 
             db_activity = _Activity(
-                activity_id=self.get_new_activity_id(utc_now),
+                activity_id=self.get_new_activity_id(),
                 item_id=item_id,
                 workflow_id=activity.get('workflow_id'),
                 flow_id=activity.get('flow_id'),
@@ -767,21 +767,24 @@ class WorkActivity(object):
             else:
                 return db_activity
 
-    def get_new_activity_id(self, utc_now=datetime.utcnow()):
+    def get_new_activity_id(self):
         """Get new an activity ID.
 
-        :param utc_now: UTC now.
         :return: activity ID.
         """
+        # Table lock for calculate new activity id
+        db.session.execute('LOCK TABLE ' + _Activity.__tablename__ + ' IN EXCLUSIVE MODE')
+        
         # Calculate activity_id based on id
+        utc_now=datetime.utcnow()
         current_date_start = utc_now.strftime("%Y-%m-%d 00:00:00")
         next_date_start = (utc_now + timedelta(1)).\
             strftime("%Y-%m-%d 00:00:00")
-
+        
         max_id = db.session.query(func.count(_Activity.id)).filter(
             _Activity.created >= '{}'.format(current_date_start),
             _Activity.created < '{}'.format(next_date_start),
-        ).scalar().with_lockmode("update")
+        ).scalar() # Cannot use '.with_for_update()'. FOR UPDATE is not allowed with aggregate functions
 
         if max_id:
             # Calculate aid
