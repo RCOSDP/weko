@@ -62,7 +62,7 @@ from invenio_stats.processors import anonymize_user, flag_restricted, \
     flag_robots, hash_id
 from jsonschema import Draft4Validator
 from weko_admin.models import SessionLifetime
-from weko_admin.utils import get_redis_cache
+from weko_admin.utils import get_redis_cache, reset_redis_cache
 from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
@@ -71,6 +71,7 @@ from weko_index_tree.utils import check_index_permissions, \
     check_restrict_doi_with_indexes
 from weko_indextree_journal.api import Journals
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
+from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_mapping
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
@@ -93,7 +94,8 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_IMPORT_SUFFIX_PATTERN, WEKO_IMPORT_SYSTEM_ITEMS, \
     WEKO_IMPORT_THUMBNAIL_FILE_TYPE, WEKO_IMPORT_VALIDATE_MESSAGE, \
     WEKO_REPO_USER, WEKO_SEARCH_TYPE_DICT, WEKO_SEARCH_UI_BULK_EXPORT_TASK, \
-    WEKO_SEARCH_UI_BULK_EXPORT_URI, WEKO_SYS_USER
+    WEKO_SEARCH_UI_BULK_EXPORT_URI, WEKO_SEARCH_UI_BULK_EXPORT_MSG, \
+    WEKO_SEARCH_UI_BULK_EXPORT_LIMIT, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
 err_msg_suffix = 'Suffix of {} is too long.'
@@ -2626,10 +2628,10 @@ def export_all(root_url):
         """Check a list of allowed characters in filenames."""
         return re.sub(r'[\/:*"<>|\s]', '_', name)
 
-    def _write_tsv_files(item_types_data, export_path):
+    def _write_tsv_files(item_datas, export_path):
         """Write TSV data to files.
 
-        @param item_types_data:
+        @param item_datas:
         @param export_path:
         @param list_item_role:
         @return:
@@ -2640,31 +2642,33 @@ def export_all(root_url):
             hide_meta_data_for_role=lambda a: True,
             current_language=lambda: True
         )
-        for item_type_id in item_types_data:
-            try:
-                headers, records = make_stats_tsv_with_permission(
-                    item_type_id,
-                    item_types_data[item_type_id]['recids'],
-                    item_types_data[item_type_id]['data'],
-                    permissions)
-                keys, labels, is_systems, options = headers
-                item_types_data[item_type_id]['recids'].sort()
-                item_types_data[item_type_id]['keys'] = keys
-                item_types_data[item_type_id]['labels'] = labels
-                item_types_data[item_type_id]['is_systems'] = is_systems
-                item_types_data[item_type_id]['options'] = options
-                item_types_data[item_type_id]['data'] = records
-                item_type_data = item_types_data[item_type_id]
+        try:
+            headers, records = make_stats_tsv_with_permission(
+                item_datas['item_type_id'],
+                item_datas['recids'],
+                item_datas['data'],
+                permissions)
+            keys, labels, is_systems, options = headers
+            item_datas['recids'].sort()
+            item_datas['keys'] = keys
+            item_datas['labels'] = labels
+            item_datas['is_systems'] = is_systems
+            item_datas['options'] = options
+            item_datas['data'] = records
+            item_type_data = item_datas
 
-                tsv_full_path = '{}/{}.tsv'.format(export_path,
-                                                   item_type_data.get('name'))
-                with open(tsv_full_path, 'w') as file:
-                    tsv_output = package_export_file(item_type_data)
-                    file.write(tsv_output.getvalue())
-            except Exception as ex:
-                current_app.logger.error(ex)
-                continue
+            tsv_full_path = '{}/{}.tsv'.format(export_path,
+                                                item_type_data.get('name'))
+            with open(tsv_full_path, 'w') as file:
+                tsv_output = package_export_file(item_type_data)
+                file.write(tsv_output.getvalue())
+        except Exception as ex:
+            current_app.logger.error(ex)
 
+    _cache_prefix = current_app.config['WEKO_ADMIN_CACHE_PREFIX']
+    _msg_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_MSG']
+    _msg_key = _cache_prefix.format(name=_msg_config)
+    reset_redis_cache(_msg_key, '')
     temp_path = tempfile.TemporaryDirectory(
         prefix=current_app.config['WEKO_ITEMS_UI_EXPORT_TMP_PREFIX'])
     try:
@@ -2672,44 +2676,77 @@ def export_all(root_url):
             datetime.utcnow().strftime("%Y%m%d%H%M%S")
         os.makedirs(export_path, exist_ok=True)
 
-        # get all record id
-        recids = PersistentIdentifier.query.filter_by(
-            pid_type='recid',
-            status=PIDStatus.REGISTERED).all()
+        # get all item type
+        item_types = ItemTypes.get_all()
+        for item_type in item_types:
+            item_datas = {}
+            counter = 0
+            file_part = 1
+            item_type_id = str(item_type.id)
+            item_type_name = _itemtype_name(
+                item_type.item_type_name.name)
+            current_app.logger.info(
+                'Start processing item type {}({}).'
+                .format(item_type_name, item_type_id))
+            # get all record id
+            recids = (db.session
+                      .query(PersistentIdentifier.pid_value,
+                             PersistentIdentifier.object_uuid)
+                      .join(ItemMetadata,
+                            PersistentIdentifier.object_uuid==ItemMetadata.id)
+                     .filter(PersistentIdentifier.pid_type=='recid',
+                             PersistentIdentifier.status==PIDStatus.REGISTERED,
+                             ItemMetadata.item_type_id==item_type_id)).all()
 
-        record_ids = [
-            recid.pid_value for recid in recids if recid.pid_value.isdigit()]
-        item_types_data = {}
-
-        for recid in record_ids:
-            record = WekoRecord.get_record_by_pid(recid)
-            item_type = ItemTypes.get_by_id(record.get('item_type_id'))
-            item_type_id = str(record.get('item_type_id'))
-
-            if not item_type:
-                current_app.logger.error('Corrupted Item: {}'.format(recid))
+            if len(recids) == 0:
                 continue
-            elif not item_types_data.get(item_type_id):
-                item_type_name = _itemtype_name(
-                    item_type.item_type_name.name)
-                item_types_data[item_type_id] = {
-                    'item_type_id': item_type_id,
-                    'name': '{}({})'.format(
-                        item_type_name,
-                        item_type_id),
-                    'root_url': root_url,
-                    'jsonschema': 'items/jsonschema/' + item_type_id,
-                    'keys': [],
-                    'labels': [],
-                    'recids': [],
-                    'data': {},
-                }
 
-            item_types_data[item_type_id]['recids'].append(recid)
-            item_types_data[item_type_id]['data'][recid] = record
+            record_ids = [(recid.pid_value, recid.object_uuid) for recid in recids
+                          if recid.pid_value.isdigit()]
 
-        # Create export info file
-        _write_tsv_files(item_types_data, export_path)
+            for recid, uuid in record_ids:
+                if counter % WEKO_SEARCH_UI_BULK_EXPORT_LIMIT == 0 and item_datas:
+                    # Create export info file
+                    item_datas['name'] = '{}.part{}'.format(
+                        item_datas['name'], file_part)
+                    _write_tsv_files(item_datas, export_path)
+                    current_app.logger.info(
+                        '{}.tsv has been created.'
+                        .format(item_datas['name']))
+                    item_datas = {}
+                    file_part += 1
+
+                record = WekoRecord.get_record_by_uuid(uuid)
+
+                if not item_datas:
+                    item_datas = {
+                        'item_type_id': item_type_id,
+                        'name': '{}({})'.format(
+                            item_type_name,
+                            item_type_id),
+                        'root_url': root_url,
+                        'jsonschema': 'items/jsonschema/' + item_type_id,
+                        'keys': [],
+                        'labels': [],
+                        'recids': [],
+                        'data': {},
+                    }
+
+                item_datas['recids'].append(recid)
+                item_datas['data'][recid] = record
+                counter += 1
+
+            if file_part != 1:
+                item_datas['name'] = '{}.part{}'.format(
+                    item_datas['name'], file_part)
+            # Create export info file
+            _write_tsv_files(item_datas, export_path)
+            current_app.logger.info(
+                '{}.tsv has been created.'
+                .format(item_datas['name']))
+            current_app.logger.info(
+                'Processed {} items of item type {}.'
+                .format(counter, item_type_name))
 
         # Create bag
         bagit.make_bag(export_path)
@@ -2722,15 +2759,16 @@ def export_all(root_url):
 
         # Delete old file
         _task_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_URI']
-        _cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-            format(name=_task_config)
-        prev_uri = get_redis_cache(_cache_key)
+        _uri_key = _cache_prefix.format(name=_task_config)
+        prev_uri = get_redis_cache(_uri_key)
         if (prev_uri):
-            delete_exported(prev_uri, _cache_key)
-        return src.uri if src else None
+            delete_exported(prev_uri, _uri_key)
+        return src.uri if src else ''
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error(ex)
+        reset_redis_cache(_msg_key, 'Export failed.')
+        return ''
 
 
 def delete_exported(uri, cache_key):
@@ -2780,11 +2818,15 @@ def get_export_status():
         format(name=WEKO_SEARCH_UI_BULK_EXPORT_TASK)
     cache_uri = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
         format(name=WEKO_SEARCH_UI_BULK_EXPORT_URI)
+    cache_msg = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+        format(name=WEKO_SEARCH_UI_BULK_EXPORT_MSG)
     export_status = False
     download_uri = None
+    message = None
     try:
         task_id = get_redis_cache(cache_key)
         download_uri = get_redis_cache(cache_uri)
+        message = get_redis_cache(cache_msg)
         if (task_id):
             task = AsyncResult(task_id)
             status_cond = (task.successful() or task.failed()
@@ -2793,7 +2835,7 @@ def get_export_status():
     except Exception as ex:
         current_app.logger.error(ex)
         export_status = False
-    return export_status, download_uri
+    return export_status, download_uri, message
 
 
 def handle_check_item_is_locked(item):

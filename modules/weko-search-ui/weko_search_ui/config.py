@@ -613,9 +613,14 @@ WEKO_SEARCH_UI_BULK_EXPORT_TASK = 'KEY_EXPORT_ALL'
 WEKO_SEARCH_UI_BULK_EXPORT_URI = 'URI_EXPORT_ALL'
 """Template for the Admin Bulk Export page."""
 
+WEKO_SEARCH_UI_BULK_EXPORT_MSG = 'MSG_EXPORT_ALL'
+"""Template for the Admin Bulk Export page."""
+
 WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 3
 """Template for the Admin Bulk Export page."""
 
+WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 10000
+"""The number of items exported to tsv file each once."""
 
 WEKO_SEARCH_UI_IMPORT_TMP_PREFIX = 'weko_import_'
 """Import tmp prefix."""

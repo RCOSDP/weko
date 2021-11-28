@@ -614,6 +614,10 @@ class ItemBulkExport(BaseView):
         :param
         :return: The rendered template.
         """
+        _cache_prefix = current_app.config['WEKO_ADMIN_CACHE_PREFIX']
+        _msg_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_MSG']
+        _msg_key = _cache_prefix.format(name=_msg_config)
+        reset_redis_cache(_msg_key, '')
         return self.render(
             WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE
         )
@@ -624,7 +628,7 @@ class ItemBulkExport(BaseView):
         _task_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_TASK']
         _cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
             format(name=_task_config)
-        export_status, download_uri = get_export_status()
+        export_status, download_uri, message = get_export_status()
 
         if (not export_status):
             export_task = export_all_task.apply_async(
@@ -639,11 +643,12 @@ class ItemBulkExport(BaseView):
     def check_export_status(self):
         """Check export status."""
         check = check_celery_is_run()
-        export_status, download_uri = get_export_status()
+        export_status, download_uri, message = get_export_status()
         return jsonify(data={
             'export_status': export_status,
             'uri_status': True if download_uri else False,
-            'celery_is_run': check
+            'celery_is_run': check,
+            'error_message': message
         })
 
     @expose('/cancel_export', methods=['GET'])
@@ -659,7 +664,7 @@ class ItemBulkExport(BaseView):
 
         path: it was load from FileInstance
         """
-        export_status, download_uri = get_export_status()
+        export_status, download_uri, message = get_export_status()
         if not export_status and download_uri is not None:
             file_instance = FileInstance.get_by_uri(download_uri)
             return file_instance.send_file(
