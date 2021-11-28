@@ -200,6 +200,10 @@ def soft_delete(recid):
         return item_id in ids
 
     try:
+        if current_user:
+            current_user_id = current_user.get_id()
+        else:
+            current_user_id = '1'
         pid = PersistentIdentifier.query.filter_by(
             pid_type='recid', pid_value=recid).first()
         if not pid:
@@ -239,6 +243,7 @@ def soft_delete(recid):
                 dep.indexer.update_path(dep, update_revision=False)
                 FeedbackMailList.delete(ver.object_uuid)
                 dep.remove_feedback_mail()
+                dep.commit()
             pids = PersistentIdentifier.query.filter_by(
                 object_uuid=ver.object_uuid)
             for p in pids:
@@ -246,7 +251,7 @@ def soft_delete(recid):
             db.session.commit()
 
         current_app.logger.info(
-            'user({0}) deleted record id({1}).'.format(current_user.id, recid))
+            'user({0}) deleted record id({1}).'.format(current_user_id, recid))
     except Exception as ex:
         db.session.rollback()
         raise ex
@@ -266,7 +271,7 @@ def restore(recid):
         versioning = PIDVersioning(child=pid)
         if not versioning.exists:
             return
-        all_ver = versioning.children.all()
+        all_ver = versioning.get_children(pid_status=PIDStatus.DELETED, ordered=True).all()
         draft_pid = PersistentIdentifier.query.filter_by(
             pid_type='recid',
             pid_value="{}.0".format(pid.pid_value.split(".")[0])
@@ -285,6 +290,7 @@ def restore(recid):
                     id=ver.object_uuid).first()
                 dep = WekoDeposit(rec.json, rec)
                 dep.indexer.update_path(dep, update_revision=False)
+                dep.commit()
             pids = PersistentIdentifier.query.filter_by(
                 object_uuid=ver.object_uuid)
             for p in pids:
