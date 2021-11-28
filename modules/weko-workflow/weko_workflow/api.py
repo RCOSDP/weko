@@ -1542,15 +1542,13 @@ class WorkActivity(object):
         # Super admin roles
         supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
         # Community admin roles
-        community_role_name = current_app.config[
+        community_roles = current_app.config[
             'WEKO_PERMISSION_ROLE_COMMUNITY']
-        if isinstance(community_role_name, str):
-            community_role_name = (community_role_name,)
         for role in list(current_user.roles or []):
             if role.name in supers:
                 is_admin = True
                 break
-            elif role.name in community_role_name:
+            elif role.name in community_roles:
                 is_community_admin = True
 
         return is_admin, is_community_admin
@@ -1708,16 +1706,19 @@ class WorkActivity(object):
 
         @return:
         """
-        community_role_name = current_app.config[
+        community_roles = current_app.config[
             'WEKO_PERMISSION_ROLE_COMMUNITY']
-        community_users = User.query.outerjoin(userrole).outerjoin(
-            Role) \
-            .filter(community_role_name == Role.name) \
-            .filter(userrole.c.role_id == Role.id) \
-            .filter(User.id == userrole.c.user_id) \
-            .all()
-        community_user_ids = [community_user.id for community_user in
-                              community_users]
+        community_user_ids = []
+        for role_name in list(community_roles):
+            community_users = User.query.outerjoin(userrole).outerjoin(Role) \
+                .filter(role_name == Role.name) \
+                .filter(userrole.c.role_id == Role.id) \
+                .filter(User.id == userrole.c.user_id) \
+                .all()
+            _tmp = [community_user.id for community_user in
+                    community_users]
+            community_user_ids.extend(_tmp)
+
         return community_user_ids
 
     def get_activity_list(self, community_id=None, conditions=None,

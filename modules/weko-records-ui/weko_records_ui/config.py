@@ -31,18 +31,18 @@ WEKO_RECORDS_UI_BASE_TEMPLATE = 'weko_theme/page.html'
 
 WEKO_PERMISSION_REQUIRED_TEMPLATE = 'weko_workflow/permission_required.html'
 
-WEKO_PERMISSION_ROLE_USER = ('System Administrator',
+WEKO_PERMISSION_ROLE_USER = ['System Administrator',
                              'Repository Administrator',
                              'Contributor',
                              'General',
-                             'Community Administrator')
+                             'Community Administrator']
 
-WEKO_PERMISSION_SUPER_ROLE_USER = ('System Administrator',
-                                   'Repository Administrator')
+WEKO_PERMISSION_SUPER_ROLE_USER = ['System Administrator',
+                                   'Repository Administrator']
 
-WEKO_PERMISSION_ROLE_COMMUNITY = 'Community Administrator'
+WEKO_PERMISSION_ROLE_COMMUNITY = ['Community Administrator']
 
-WEKO_PERMISSION_ROLE_GENERAL = 'General'
+WEKO_PERMISSION_ROLE_GENERAL = ['General']
 
 WEKO_RECORDS_UI_BULK_UPDATE_FIELDS = {
     'fields': [{'id': '1', 'name': 'Access Type'},
@@ -230,15 +230,15 @@ WEKO_RECORDS_UI_CITES_REST_ENDPOINTS = {
 }
 
 OAISERVER_METADATA_FORMATS = {
-#    'junii2': {
-#        'serializer': (
-#            'weko_schema_ui.utils:dumps_oai_etree', {
-#                'schema_type': 'junii2',
-#            }
-#        ),
-#        'schema': 'http://irdb.nii.ac.jp/oai/junii2-3-1.xsd',
-#        'namespace': 'http://irdb.nii.ac.jp/oai',
-#    },
+    #    'junii2': {
+    #        'serializer': (
+    #            'weko_schema_ui.utils:dumps_oai_etree', {
+    #                'schema_type': 'junii2',
+    #            }
+    #        ),
+    #        'schema': 'http://irdb.nii.ac.jp/oai/junii2-3-1.xsd',
+    #        'namespace': 'http://irdb.nii.ac.jp/oai',
+    #    },
     'jpcoar_1.0': {
         'serializer': (
             'weko_schema_ui.utils:dumps_oai_etree', {
@@ -502,5 +502,5 @@ WEKO_RECORDS_UI_EMAIL_ITEM_KEYS = ['creatorMails', 'contributorMails', 'mails']
 RECORDS_UI_TOMBSTONE_TEMPLATE = 'weko_records_ui/tombstone.html'
 # Setting the template of showing deleted record
 
-WEKO_RECORDS_UI_LANG_DISP_FLG = True 
+WEKO_RECORDS_UI_LANG_DISP_FLG = True
 """ Enable function of switching metadata by language of metadata """
