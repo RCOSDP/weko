@@ -24,7 +24,7 @@ import json
 import os
 import sys
 from copy import deepcopy
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import redis
 from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
@@ -208,7 +208,8 @@ def iframe_save_model():
     except Exception as ex:
         current_app.logger.exception(str(ex))
         return jsonify(code=1, msg='Model save error')
-    return jsonify(code=0, msg='Model save success')
+    return jsonify(code=0, msg='Model save success at {} (utc)'.format(
+        datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
 
 
 @blueprint.route('/iframe/success', methods=['GET'])
