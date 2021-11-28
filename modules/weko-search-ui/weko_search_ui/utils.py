@@ -91,14 +91,12 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_ADMIN_LIFETIME_DEFAULT, WEKO_FLOW_DEFINE, \
     WEKO_FLOW_DEFINE_LIST_ACTION, WEKO_IMPORT_DOI_TYPE, \
     WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, \
-    WEKO_IMPORT_SUFFIX_PATTERN, WEKO_IMPORT_SYSTEM_ITEMS, \
+    WEKO_IMPORT_SYSTEM_ITEMS, \
     WEKO_IMPORT_THUMBNAIL_FILE_TYPE, WEKO_IMPORT_VALIDATE_MESSAGE, \
     WEKO_REPO_USER, WEKO_SEARCH_TYPE_DICT, WEKO_SEARCH_UI_BULK_EXPORT_TASK, \
     WEKO_SEARCH_UI_BULK_EXPORT_URI, WEKO_SEARCH_UI_BULK_EXPORT_MSG, \
     WEKO_SEARCH_UI_BULK_EXPORT_LIMIT, WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
-
-err_msg_suffix = 'Suffix of {} is too long.'
 
 
 class DefaultOrderedDict(OrderedDict):
@@ -1628,8 +1626,6 @@ def handle_check_cnri(list_record):
                     if prefix != Handle().get_prefix():
                         error = _('Specified Prefix of {} is incorrect.') \
                             .format('CNRI')
-                    if not re.search(WEKO_IMPORT_SUFFIX_PATTERN, suffix):
-                        error = _(err_msg_suffix).format('CNRI')
         else:
             if item.get('status') == 'new' \
                     or item.get('is_change_identifier') or not cnri_set:
@@ -1804,8 +1800,6 @@ def handle_check_doi(list_record):
                         elif not suffix:
                             error = _('Please specify {}.').format(
                                 'DOI suffix')
-                        elif not re.search(WEKO_IMPORT_SUFFIX_PATTERN, suffix):
-                            error = _(err_msg_suffix).format('DOI')
             else:
                 if item.get('status') == 'new':
                     if doi:
