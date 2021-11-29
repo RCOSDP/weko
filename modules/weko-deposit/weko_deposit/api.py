@@ -1394,7 +1394,6 @@ class WekoRecord(Record):
         item_type = ItemTypes.get_by_id(self.get('item_type_id'))
         return '{}({})'.format(item_type.item_type_name.name, item_type.tag)
 
-
     @staticmethod
     def switching_language(data):
         """Switching language."""
