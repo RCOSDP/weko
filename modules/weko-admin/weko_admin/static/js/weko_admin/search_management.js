@@ -551,6 +551,7 @@ const SPECIFIC_INDEX_VALUE = '1';
 
         var item_type_id = $("#item-type-lists").val();
 
+        $('#tr_lists0 > #item_id > #search_item').empty()
         for (labelcnt = 0; labelcnt < $scope.dataJson.detail_condition.length; labelcnt++ ) {
 
           if($scope.dataJson.detail_condition[labelcnt].item_value){
