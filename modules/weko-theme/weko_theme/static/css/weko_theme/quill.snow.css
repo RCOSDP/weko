@@ -645,7 +645,8 @@
   color: #444;
   display: inline-block;
   float: left;
-  font-size: 14px;
+  /* font-size: 14px; */
+  font-size: 15px;
   font-weight: 500;
   height: 24px;
   position: relative;
@@ -834,7 +835,7 @@
   font-size: 10px;
 }
 .ql-snow .ql-picker.ql-size .ql-picker-item[data-value=large]::before {
-  font-size: 18px;
+  font-size: 15px;
 }
 .ql-snow .ql-picker.ql-size .ql-picker-item[data-value=huge]::before {
   font-size: 32px;
