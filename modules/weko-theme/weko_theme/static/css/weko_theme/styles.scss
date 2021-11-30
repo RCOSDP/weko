@@ -284,9 +284,9 @@ ng\:form {
 .row-50 >div{ padding-right:25px;  padding-left:25px}
 
 .panel-default-2{ margin-bottom: 2px;}
-.container-fluid2 {padding-left: 15px; padding-right: 15px;}
+
 .panel-body2 {padding: 2px 2px;}
-.navbar-form2 {margin-top: 0px; margin-bottom: 0px;}
+
 .well2 {margin-bottom: 0px;}
 
 
@@ -295,3 +295,38 @@ ng\:form {
 // a:visited { color: #000080; }
 // a:hover { color: #ff0000; }
 // a:active { color: #ff8000; }
+
+// login, sign up button
+.navbar-form2 {
+    margin-top: 0px; margin-bottom: 0px;
+    padding: 0px;
+}
+.navbar-form2 > a {
+    font-size: 12px;
+    padding-left: 10px;
+    padding-right: 10px;
+    width: auto;
+}
+
+// language selector
+.form-group2 {
+    height: auto !important;
+    font-size: 12px !important;
+}
+.form-group2 > .form-control {
+    height: auto !important;
+    font-size: 12px !important;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+
+.container-fluid2 {padding-left: 15px; padding-right: 15px;}
+
+.navbar-nav > a {
+    padding-bottom: 15px !important;
+    padding-top: 15px !important;
+}
+
