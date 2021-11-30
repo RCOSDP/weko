@@ -654,25 +654,29 @@ class WekoDeposit(Deposit):
                     'email': current_user.email
                 }
 
-        if recid:
-            deposit = super(WekoDeposit, cls).create(
-                data,
-                id_=id_,
-                recid=recid
+        try:
+            if recid:
+                deposit = super(WekoDeposit, cls).create(
+                    data,
+                    id_=id_,
+                    recid=recid
+                )
+            else:
+                deposit = super(WekoDeposit, cls).create(data, id_=id_)
+            
+            record_id = 0
+            if data.get('_deposit'):
+                record_id = str(data['_deposit']['id'])
+            parent_pid = PersistentIdentifier.create(
+                'parent',
+                'parent:{0}'.format(record_id),
+                object_type='rec',
+                object_uuid=deposit.id,
+                status=PIDStatus.REGISTERED
             )
-        else:
-            deposit = super(WekoDeposit, cls).create(data, id_=id_)
-
-        record_id = 0
-        if data.get('_deposit'):
-            record_id = str(data['_deposit']['id'])
-        parent_pid = PersistentIdentifier.create(
-            'parent',
-            'parent:{0}'.format(record_id),
-            object_type='rec',
-            object_uuid=deposit.id,
-            status=PIDStatus.REGISTERED
-        )
+            db.session.commit()
+        except BaseException as ex:
+            raise ex
 
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
 

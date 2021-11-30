@@ -40,6 +40,7 @@ import bagit
 import redis
 from celery.result import AsyncResult
 from celery.task.control import revoke
+from elasticsearch import ElasticsearchException
 from elasticsearch.exceptions import NotFoundError
 from flask import abort, current_app, request
 from flask_babelex import gettext as _
@@ -61,6 +62,7 @@ from invenio_stats.models import StatsEvents
 from invenio_stats.processors import anonymize_user, flag_restricted, \
     flag_robots, hash_id
 from jsonschema import Draft4Validator
+from sqlalchemy.exc import SQLAlchemyError
 from weko_admin.models import SessionLifetime
 from weko_admin.utils import get_redis_cache, reset_redis_cache
 from weko_authors.utils import check_email_existed
@@ -91,11 +93,11 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_ADMIN_LIFETIME_DEFAULT, WEKO_FLOW_DEFINE, \
     WEKO_FLOW_DEFINE_LIST_ACTION, WEKO_IMPORT_DOI_TYPE, \
     WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, \
-    WEKO_IMPORT_SYSTEM_ITEMS, \
-    WEKO_IMPORT_THUMBNAIL_FILE_TYPE, WEKO_IMPORT_VALIDATE_MESSAGE, \
-    WEKO_REPO_USER, WEKO_SEARCH_TYPE_DICT, WEKO_SEARCH_UI_BULK_EXPORT_TASK, \
-    WEKO_SEARCH_UI_BULK_EXPORT_URI, WEKO_SEARCH_UI_BULK_EXPORT_MSG, \
-    WEKO_SEARCH_UI_BULK_EXPORT_LIMIT, WEKO_SYS_USER
+    WEKO_IMPORT_SYSTEM_ITEMS, WEKO_IMPORT_THUMBNAIL_FILE_TYPE, \
+    WEKO_IMPORT_VALIDATE_MESSAGE, WEKO_REPO_USER, WEKO_SEARCH_TYPE_DICT, \
+    WEKO_SEARCH_UI_BULK_EXPORT_LIMIT, WEKO_SEARCH_UI_BULK_EXPORT_MSG, \
+    WEKO_SEARCH_UI_BULK_EXPORT_TASK, WEKO_SEARCH_UI_BULK_EXPORT_URI, \
+    WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
 
 
@@ -1392,12 +1394,60 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                     if fs.exists(path):
                         file.delete()
                 delete_cache_data(cache_key)
-        except Exception as ex:
-            if item.get('id'):
-                handle_remove_es_metadata(
-                    item, bef_metadata, bef_last_ver_metadata)
 
+        except SQLAlchemyError as ex:
+            current_app.logger.error('sqlalchemy error: ', ex)
             db.session.rollback()
+            if item.get('id'):
+                handle_remove_es_metadata(item)
+            current_app.logger.error('item id: %s update error.' % item['id'])
+            traceback.print_exc(file=sys.stdout)
+            error_id = None
+            if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                    and ex.args[0].get('error_id'):
+                error_id = ex.args[0].get('error_id')
+
+            return {
+                'success': False,
+                'error_id': error_id
+            }
+        except ElasticsearchException as ex:
+            current_app.logger.error('elasticsearch  error: ', ex)
+            db.session.rollback()
+            if item.get('id'):
+                handle_remove_es_metadata(item)
+            current_app.logger.error('item id: %s update error.' % item['id'])
+            traceback.print_exc(file=sys.stdout)
+            error_id = None
+            if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                    and ex.args[0].get('error_id'):
+                error_id = ex.args[0].get('error_id')
+
+            return {
+                'success': False,
+                'error_id': error_id
+            }
+        except redis.RedisError as ex:
+            current_app.logger.error('redis  error: ', ex)
+            db.session.rollback()
+            if item.get('id'):
+                handle_remove_es_metadata(item)
+            current_app.logger.error('item id: %s update error.' % item['id'])
+            traceback.print_exc(file=sys.stdout)
+            error_id = None
+            if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                    and ex.args[0].get('error_id'):
+                error_id = ex.args[0].get('error_id')
+
+            return {
+                'success': False,
+                'error_id': error_id
+            }
+        except BaseException as ex:
+            current_app.logger.error('Unexpected error: ', ex)
+            db.session.rollback()
+            if item.get('id'):
+                handle_remove_es_metadata(item)
             current_app.logger.error('item id: %s update error.' % item['id'])
             traceback.print_exc(file=sys.stdout)
             error_id = None
@@ -2652,7 +2702,7 @@ def export_all(root_url):
             item_type_data = item_datas
 
             tsv_full_path = '{}/{}.tsv'.format(export_path,
-                                                item_type_data.get('name'))
+                                               item_type_data.get('name'))
             with open(tsv_full_path, 'w') as file:
                 tsv_output = package_export_file(item_type_data)
                 file.write(tsv_output.getvalue())
@@ -2687,10 +2737,10 @@ def export_all(root_url):
                       .query(PersistentIdentifier.pid_value,
                              PersistentIdentifier.object_uuid)
                       .join(ItemMetadata,
-                            PersistentIdentifier.object_uuid==ItemMetadata.id)
-                     .filter(PersistentIdentifier.pid_type=='recid',
-                             PersistentIdentifier.status==PIDStatus.REGISTERED,
-                             ItemMetadata.item_type_id==item_type_id)).all()
+                            PersistentIdentifier.object_uuid == ItemMetadata.id)
+                      .filter(PersistentIdentifier.pid_type == 'recid',
+                              PersistentIdentifier.status == PIDStatus.REGISTERED,
+                              ItemMetadata.item_type_id == item_type_id)).all()
 
             if len(recids) == 0:
                 continue
