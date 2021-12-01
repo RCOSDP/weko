@@ -308,6 +308,10 @@ ng\:form {
     width: auto;
 }
 
+.navbar-form2 > .login-button, .signup-button {
+    height: auto !important;
+}
+
 // language selector
 .form-group2 {
     height: auto !important;
