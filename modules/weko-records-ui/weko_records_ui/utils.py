@@ -271,7 +271,8 @@ def restore(recid):
         versioning = PIDVersioning(child=pid)
         if not versioning.exists:
             return
-        all_ver = versioning.get_children(pid_status=PIDStatus.DELETED, ordered=True).all()
+        all_ver = versioning.get_children(
+            pid_status=PIDStatus.DELETED, ordered=True).all()
         draft_pid = PersistentIdentifier.query.filter_by(
             pid_type='recid',
             pid_value="{}.0".format(pid.pid_value.split(".")[0])
@@ -671,6 +672,11 @@ def get_file_info_list(record):
                         f['url']['url'] = url
                     if base_url in url:
                         is_display_file_preview = True
+
+                    # current_app.logger.debug("base_url: {0}".format(base_url))
+                    # current_app.logger.debug("url: {0}".format(url))
+                    # current_app.logger.debug(
+                    #     "is_display_file_preview: {0}".format(is_display_file_preview))
 
                     # Get file size and convert to byte.
                     f['size'] = get_file_size(f)
