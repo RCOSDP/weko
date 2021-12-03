@@ -621,6 +621,9 @@ WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 3
 WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 1000
 """The number of items exported to tsv file each once."""
 
+WEKO_SEARCH_UI_BULK_EXPORT_RETRY = 5
+"""Number of export retries."""
+
 WEKO_SEARCH_UI_IMPORT_TMP_PREFIX = 'weko_import_'
 """Import tmp prefix."""
 

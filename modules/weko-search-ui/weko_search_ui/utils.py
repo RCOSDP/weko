@@ -62,7 +62,7 @@ from invenio_stats.models import StatsEvents
 from invenio_stats.processors import anonymize_user, flag_restricted, \
     flag_robots, hash_id
 from jsonschema import Draft4Validator
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, OperationalError
 from weko_admin.models import SessionLifetime
 from weko_admin.utils import get_redis_cache, reset_redis_cache
 from weko_authors.utils import check_email_existed
@@ -2709,6 +2709,105 @@ def export_all(root_url):
         except Exception as ex:
             current_app.logger.error(ex)
 
+    def _get_export_data(export_path, finish_item_types, retrys, retry_info={}):
+        try:
+            # get all item type
+            item_type_all = ItemTypes.get_all()
+            item_types = [(str(it.id),
+                          _itemtype_name(it.item_type_name.name)) for it in item_type_all
+                          if str(it.id) not in finish_item_types]
+            for item_type_id, item_type_name in item_types:
+                item_datas = {}
+                if item_type_id in retry_info:
+                    counter = retry_info[item_type_id]['counter']
+                    file_part = retry_info[item_type_id]['part']
+                    max_pid = retry_info[item_type_id]['max']
+                else:
+                    counter = 0
+                    file_part = 1
+                    max_pid = '1'
+                current_app.logger.info(
+                    'Start processing item type {}({}).'
+                    .format(item_type_name, item_type_id))
+                # get all record id
+                recids = (db.session
+                        .query(PersistentIdentifier.pid_value,
+                                PersistentIdentifier.object_uuid)
+                        .join(ItemMetadata,
+                                PersistentIdentifier.object_uuid == ItemMetadata.id)
+                        .filter(PersistentIdentifier.pid_type == 'recid',
+                                PersistentIdentifier.status == PIDStatus.REGISTERED,
+                                PersistentIdentifier.pid_value.notlike('%.%'),
+                                PersistentIdentifier.pid_value >= max_pid,
+                                ItemMetadata.item_type_id == item_type_id)
+                        .order_by(PersistentIdentifier.pid_value)).all()
+
+                if len(recids) == 0:
+                    finish_item_types.append(item_type_id)
+                    continue
+
+                record_ids = [(recid.pid_value, recid.object_uuid) for recid in recids]
+                for recid, uuid in record_ids:
+                    if counter % WEKO_SEARCH_UI_BULK_EXPORT_LIMIT == 0 and item_datas:
+                        # Create export info file
+                        item_datas['name'] = '{}.part{}'.format(
+                            item_datas['name'], file_part)
+                        _write_tsv_files(item_datas, export_path)
+                        current_app.logger.info(
+                            '{}.tsv has been created.'
+                            .format(item_datas['name']))
+                        item_datas = {}
+                        file_part += 1
+                        retry_info[item_type_id] = {
+                            'part': file_part,
+                            'counter': counter,
+                            'max': recid
+                        }
+
+                    record = WekoRecord.get_record_by_uuid(uuid)
+
+                    if not item_datas:
+                        item_datas = {
+                            'item_type_id': item_type_id,
+                            'name': '{}({})'.format(
+                                item_type_name,
+                                item_type_id),
+                            'root_url': root_url,
+                            'jsonschema': 'items/jsonschema/' + item_type_id,
+                            'keys': [],
+                            'labels': [],
+                            'recids': [],
+                            'data': {},
+                        }
+
+                    item_datas['recids'].append(recid)
+                    item_datas['data'][recid] = record
+                    counter += 1
+
+                if file_part != 1:
+                    item_datas['name'] = '{}.part{}'.format(
+                        item_datas['name'], file_part)
+                # Create export info file
+                _write_tsv_files(item_datas, export_path)
+                finish_item_types.append(item_type_id)
+                current_app.logger.info(
+                    '{}.tsv has been created.'
+                    .format(item_datas['name']))
+                current_app.logger.info(
+                    'Processed {} items of item type {}.'
+                    .format(counter, item_type_name))
+            return True
+        except OperationalError as ex:
+            current_app.logger.error(ex)
+            _num_retry = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_RETRY']
+            if retrys < _num_retry:
+                retrys += 1
+                current_app.logger.info('retry count: {}'.format(retrys))
+                result = _get_export_data(export_path, finish_item_types, retrys, retry_info)
+                return result
+            else:
+                return False
+
     _cache_prefix = current_app.config['WEKO_ADMIN_CACHE_PREFIX']
     _msg_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_MSG']
     _msg_key = _cache_prefix.format(name=_msg_config)
@@ -2716,98 +2815,32 @@ def export_all(root_url):
     temp_path = tempfile.TemporaryDirectory(
         prefix=current_app.config['WEKO_ITEMS_UI_EXPORT_TMP_PREFIX'])
     try:
-        export_path = temp_path.name + '/' + \
-            datetime.utcnow().strftime("%Y%m%d%H%M%S")
-        os.makedirs(export_path, exist_ok=True)
-
-        # get all item type
-        item_types = ItemTypes.get_all()
-        for item_type in item_types:
-            item_datas = {}
-            counter = 0
-            file_part = 1
-            item_type_id = str(item_type.id)
-            item_type_name = _itemtype_name(
-                item_type.item_type_name.name)
-            current_app.logger.info(
-                'Start processing item type {}({}).'
-                .format(item_type_name, item_type_id))
-            # get all record id
-            recids = (db.session
-                      .query(PersistentIdentifier.pid_value,
-                             PersistentIdentifier.object_uuid)
-                      .join(ItemMetadata,
-                            PersistentIdentifier.object_uuid == ItemMetadata.id)
-                      .filter(PersistentIdentifier.pid_type == 'recid',
-                              PersistentIdentifier.status == PIDStatus.REGISTERED,
-                              ItemMetadata.item_type_id == item_type_id)).all()
-
-            if len(recids) == 0:
-                continue
-
-            record_ids = [(recid.pid_value, recid.object_uuid) for recid in recids
-                          if recid.pid_value.isdigit()]
-
-            for recid, uuid in record_ids:
-                if counter % WEKO_SEARCH_UI_BULK_EXPORT_LIMIT == 0 and item_datas:
-                    # Create export info file
-                    item_datas['name'] = '{}.part{}'.format(
-                        item_datas['name'], file_part)
-                    _write_tsv_files(item_datas, export_path)
-                    current_app.logger.info(
-                        '{}.tsv has been created.'
-                        .format(item_datas['name']))
-                    item_datas = {}
-                    file_part += 1
-
-                record = WekoRecord.get_record_by_uuid(uuid)
-
-                if not item_datas:
-                    item_datas = {
-                        'item_type_id': item_type_id,
-                        'name': '{}({})'.format(
-                            item_type_name,
-                            item_type_id),
-                        'root_url': root_url,
-                        'jsonschema': 'items/jsonschema/' + item_type_id,
-                        'keys': [],
-                        'labels': [],
-                        'recids': [],
-                        'data': {},
-                    }
-
-                item_datas['recids'].append(recid)
-                item_datas['data'][recid] = record
-                counter += 1
-
-            if file_part != 1:
-                item_datas['name'] = '{}.part{}'.format(
-                    item_datas['name'], file_part)
-            # Create export info file
-            _write_tsv_files(item_datas, export_path)
-            current_app.logger.info(
-                '{}.tsv has been created.'
-                .format(item_datas['name']))
-            current_app.logger.info(
-                'Processed {} items of item type {}.'
-                .format(counter, item_type_name))
-
-        # Create bag
-        bagit.make_bag(export_path)
-        shutil.make_archive(export_path, 'zip', export_path)
-        with open(export_path + '.zip', 'rb') as file:
-            src = FileInstance.create()
-            src.set_contents(
-                file, default_location=Location.get_default().uri)
-        db.session.commit()
-
         # Delete old file
         _task_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_URI']
         _uri_key = _cache_prefix.format(name=_task_config)
         prev_uri = get_redis_cache(_uri_key)
         if (prev_uri):
             delete_exported(prev_uri, _uri_key)
-        return src.uri if src else ''
+
+        export_path = temp_path.name + '/' + \
+            datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        os.makedirs(export_path, exist_ok=True)
+
+        finish_item_types = []
+        result = _get_export_data(export_path, finish_item_types, 0)
+
+        if result:
+            # Create bag
+            bagit.make_bag(export_path)
+            shutil.make_archive(export_path, 'zip', export_path)
+            with open(export_path + '.zip', 'rb') as file:
+                src = FileInstance.create()
+                src.set_contents(
+                    file, default_location=Location.get_default().uri)
+            db.session.commit()
+        else:
+            reset_redis_cache(_msg_key, 'Export failed.')
+        return src.uri if result and src else ''
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error(ex)
