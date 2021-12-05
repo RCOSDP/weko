@@ -629,3 +629,6 @@ WEKO_SEARCH_UI_IMPORT_TMP_PREFIX = 'weko_import_'
 
 WEKO_SEARCH_UI_IMPORT_UNUSE_FILES_URI = 'import_unuse_files_uri_{}'
 """Cache key unuse file. uri."""
+
+WEKO_SEARCH_UI_BULK_EXPORT_RETRY_INTERVAL = 1
+""" retry interval(sec) """

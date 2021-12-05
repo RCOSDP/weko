@@ -29,9 +29,9 @@ from .models import OAISet
 from .provider import OAIIDProvider
 from .query import get_records
 from .resumption_token import serialize
-from .utils import datetime_to_datestamp, handle_license_free, \
-    serializer, get_index_state, is_output_harvest, \
-    PRIVATE_INDEX, HARVEST_PRIVATE, OUTPUT_HARVEST
+from .utils import HARVEST_PRIVATE, OUTPUT_HARVEST, PRIVATE_INDEX, \
+    datetime_to_datestamp, get_index_state, handle_license_free, \
+    is_output_harvest, serializer
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
 NS_OAIPMH_XSD = 'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
@@ -99,6 +99,9 @@ def error(errors, **kwargs):
 
 def verb(**kwargs):
     """Create OAI-PMH envelope for response with verb."""
+    # current_app.logger.debug("kwargs:{0}".format(kwargs))
+    # kwargs:{'metadataPrefix': 'jpcoar_1.0', 'identifier': 'oai:weko3.example.org:00000003', 'verb': 'GetRecord'}
+
     e_tree, e_oaipmh = envelope(**kwargs)
     e_element = SubElement(e_oaipmh, etree.QName(NS_OAIPMH, kwargs['verb']))
     return e_tree, e_element
@@ -376,6 +379,9 @@ def is_exists_doi(param_record):
 
 def getrecord(**kwargs):
     """Create OAI-PMH response for verb GetRecord."""
+    # current_app.logger.debug("kwargs:{0}".format(kwargs))
+    # kwargs:{'metadataPrefix': 'jpcoar_1.0', 'identifier': 'oai:weko3.example.org:00000003', 'verb': 'GetRecord'}
+
     identify = OaiIdentify.get_all()
     if not identify or not identify.outPutSetting:
         return error(get_error_code_msg(), **kwargs)
@@ -393,8 +399,8 @@ def getrecord(**kwargs):
     _is_output = is_output_harvest(path_list, index_state)
     # Harvest is private
     if path_list and (_is_output == HARVEST_PRIVATE or
-            (is_exists_doi(record) and
-             (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record)))):
+                      (is_exists_doi(record) and
+                       (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record)))):
         return error(get_error_code_msg(), **kwargs)
     # Item is deleted
     # or Harvest is public & Item is private
@@ -470,8 +476,8 @@ def listidentifiers(**kwargs):
             if 'set' not in kwargs else set_is_output
         # Harvest is private
         if path_list and (_is_output == HARVEST_PRIVATE or
-                (is_exists_doi(record) and
-                 (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record)))):
+                          (is_exists_doi(record) and
+                           (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record)))):
             continue
         # Item is deleted
         # or Harvest is public & Item is private
@@ -489,7 +495,8 @@ def listidentifiers(**kwargs):
                 deleted=True
             )
         else:
-            _sets = list(set(record.get('path', [])+record['_oai'].get('sets', [])))
+            _sets = list(set(record.get('path', []) +
+                         record['_oai'].get('sets', [])))
             header(
                 e_listidentifiers,
                 identifier=pid.pid_value,
@@ -534,14 +541,14 @@ def listrecords(**kwargs):
         pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
         record = WekoRecord.get_record_by_uuid(pid_object.object_uuid)
         set_identifier(record, record)
-        
+
         path_list = record.get('path') if 'path' in record else []
         _is_output = is_output_harvest(path_list, index_state) \
             if 'set' not in kwargs else set_is_output
         # Harvest is private
         if path_list and (_is_output == HARVEST_PRIVATE or
-                (is_exists_doi(record) and
-                 (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record)))):
+                          (is_exists_doi(record) and
+                           (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record)))):
             continue
         # Item is deleted
         # or Harvest is public & Item is private
@@ -561,7 +568,8 @@ def listrecords(**kwargs):
         else:
             e_record = SubElement(
                 e_listrecords, etree.QName(NS_OAIPMH, 'record'))
-            _sets = list(set(record.get('path', [])+record['_oai'].get('sets', [])))
+            _sets = list(set(record.get('path', []) +
+                         record['_oai'].get('sets', [])))
             header(
                 e_record,
                 identifier=pid.pid_value,
@@ -573,7 +581,7 @@ def listrecords(**kwargs):
             etree_record = copy.deepcopy(record)
             if not etree_record.get('system_identifier_doi', None):
                 etree_record['system_identifier_doi'] = get_identifier(record)
-            
+
             # Merge licensetype and licensefree
             etree_record = handle_license_free(etree_record)
             e_metadata.append(record_dumper(pid, {'_source': etree_record}))
