@@ -35,6 +35,7 @@ from datetime import datetime
 from functools import partial, reduce, wraps
 from io import StringIO
 from operator import getitem
+from time import sleep
 
 import bagit
 import redis
@@ -62,7 +63,7 @@ from invenio_stats.models import StatsEvents
 from invenio_stats.processors import anonymize_user, flag_restricted, \
     flag_robots, hash_id
 from jsonschema import Draft4Validator
-from sqlalchemy.exc import SQLAlchemyError, OperationalError
+from sqlalchemy.exc import SQLAlchemyError, OperationalError, InvalidRequestError
 from weko_admin.models import SessionLifetime
 from weko_admin.utils import get_redis_cache, reset_redis_cache
 from weko_authors.utils import check_email_existed
@@ -2783,6 +2784,7 @@ def export_all(root_url):
                     item_datas['recids'].append(recid)
                     item_datas['data'][recid] = record
                     counter += 1
+                    db.session.close()
 
                 if file_part != 1:
                     item_datas['name'] = '{}.part{}'.format(
@@ -2797,12 +2799,13 @@ def export_all(root_url):
                     'Processed {} items of item type {}.'
                     .format(counter, item_type_name))
             return True
-        except OperationalError as ex:
+        except (OperationalError, InvalidRequestError) as ex:
             current_app.logger.error(ex)
             _num_retry = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_RETRY']
             if retrys < _num_retry:
                 retrys += 1
                 current_app.logger.info('retry count: {}'.format(retrys))
+                sleep(5)
                 result = _get_export_data(export_path, finish_item_types, retrys, retry_info)
                 return result
             else:
