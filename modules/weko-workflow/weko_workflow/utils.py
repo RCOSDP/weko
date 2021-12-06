@@ -1825,11 +1825,7 @@ def send_mail_registration_done(mail_info, mail_id):
     :mail_info: object
     :mail_id: mail template id
     """
-    from weko_items_ui.utils import get_current_user_role
-    role = get_current_user_role()
-    item_type_name = mail_info.get('item_type_name')
-    subject, body = email_pattern_registration_done(
-        role, item_type_name, mail_id)
+    subject, body = get_mail_data(mail_id)
     if body and subject:
         body = replace_characters(mail_info, body)
         send_mail(subject, mail_info.get('register_user_mail'), body)
@@ -1870,22 +1866,6 @@ def send_mail(subject, recipient, body):
             'recipient': recipient
         }
         return MailSettingView.send_statistic_mail(rf)
-
-
-def email_pattern_registration_done(user_role, item_type_name, mail_id):
-    """Email pattern registration done.
-
-    :user_role: object
-    :item_type_name: object
-    :mail_id: mail template id
-    """
-    current_config = current_app.config
-    item_type_list = current_config.get(
-        "WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPES_LIST")
-    if item_type_name in item_type_list:
-        return get_mail_data(mail_id)
-
-    return None, None
 
 
 def email_pattern_request_approval(item_type_name, next_action):
