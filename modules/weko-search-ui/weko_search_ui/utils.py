@@ -27,7 +27,6 @@ import re
 import shutil
 import sys
 import tempfile
-import time
 import traceback
 import uuid
 import zipfile
@@ -63,7 +62,7 @@ from invenio_stats.models import StatsEvents
 from invenio_stats.processors import anonymize_user, flag_restricted, \
     flag_robots, hash_id
 from jsonschema import Draft4Validator
-from sqlalchemy.exc import OperationalError, SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, OperationalError
 from weko_admin.models import SessionLifetime
 from weko_admin.utils import get_redis_cache, reset_redis_cache
 from weko_authors.utils import check_email_existed
@@ -2732,24 +2731,22 @@ def export_all(root_url):
                     .format(item_type_name, item_type_id))
                 # get all record id
                 recids = (db.session
-                          .query(PersistentIdentifier.pid_value,
-                                 PersistentIdentifier.object_uuid)
-                          .join(ItemMetadata,
+                        .query(PersistentIdentifier.pid_value,
+                                PersistentIdentifier.object_uuid)
+                        .join(ItemMetadata,
                                 PersistentIdentifier.object_uuid == ItemMetadata.id)
-                          .filter(PersistentIdentifier.pid_type == 'recid',
-                                  PersistentIdentifier.status == PIDStatus.REGISTERED,
-                                  PersistentIdentifier.pid_value.notlike(
-                                      '%.%'),
-                                  PersistentIdentifier.pid_value >= max_pid,
-                                  ItemMetadata.item_type_id == item_type_id)
-                          .order_by(PersistentIdentifier.pid_value)).all()
+                        .filter(PersistentIdentifier.pid_type == 'recid',
+                                PersistentIdentifier.status == PIDStatus.REGISTERED,
+                                PersistentIdentifier.pid_value.notlike('%.%'),
+                                PersistentIdentifier.pid_value >= max_pid,
+                                ItemMetadata.item_type_id == item_type_id)
+                        .order_by(PersistentIdentifier.pid_value)).all()
 
                 if len(recids) == 0:
                     finish_item_types.append(item_type_id)
                     continue
 
-                record_ids = [(recid.pid_value, recid.object_uuid)
-                              for recid in recids]
+                record_ids = [(recid.pid_value, recid.object_uuid) for recid in recids]
                 for recid, uuid in record_ids:
                     if counter % WEKO_SEARCH_UI_BULK_EXPORT_LIMIT == 0 and item_datas:
                         # Create export info file
@@ -2766,19 +2763,8 @@ def export_all(root_url):
                             'counter': counter,
                             'max': recid
                         }
-                    _retry = 0
-                    while _retry < current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_RETRY']:
-                        try:
-                            _retry = _retry + 1
-                            record = WekoRecord.get_record_by_uuid(uuid)
-                            break
-                        except OperationalError as ex:
-                            current_app.logger.debug(
-                                'retry: {0}'.format(_retry))
-                            current_app.logger.error(ex)
-                            time.sleep(
-                                current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_RETRY_INTERVAL'])
-                            continue
+
+                    record = WekoRecord.get_record_by_uuid(uuid)
 
                     if not item_datas:
                         item_datas = {
@@ -2817,8 +2803,7 @@ def export_all(root_url):
             if retrys < _num_retry:
                 retrys += 1
                 current_app.logger.info('retry count: {}'.format(retrys))
-                result = _get_export_data(
-                    export_path, finish_item_types, retrys, retry_info)
+                result = _get_export_data(export_path, finish_item_types, retrys, retry_info)
                 return result
             else:
                 return False
