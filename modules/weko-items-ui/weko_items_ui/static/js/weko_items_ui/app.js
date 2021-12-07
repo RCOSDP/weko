@@ -3528,10 +3528,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         var result = true;
         var subItemPosition = '';
         var subItemPositionOther = '';
-        var subItemAdvisorPosition = 'subitem_advisor_position';
-        var subItemAdvisorPositionOther = 'subitem_advisor_position(other)';
-        var subItemGuarantorPosition = 'subitem_guarantor_position';
-        var subItemGuarantorPositionOther = 'subitem_guarantor_position(other)';
+        var subItemAdvisorPosition = 'subitem_restricted_access_advisor_position';
+        var subItemAdvisorPositionOther = 'subitem_restricted_access_advisor_position(other)';
+        var subItemGuarantorPosition = 'subitem_restricted_access_guarantor_position';
+        var subItemGuarantorPositionOther = 'subitem_restricted_access_guarantor_position(other)';
         var otherChoice = "Others (Input Detail)";
         for (let key in $rootScope.recordsVM.invenioRecordsSchema.properties) {
             if (result) {

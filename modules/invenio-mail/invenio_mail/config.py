@@ -52,6 +52,22 @@ INVENIO_MAIL_VARIABLE_HELP = [
         "comment": "登録者のメールアドレス"
     },
     {
+        "key": "[advisor_fullname]",
+        "comment": "指導教員の姓名"
+    },
+    {
+        "key": "[advisor_university_institution]",
+        "comment": "指導教員の所属機関"
+    },
+    {
+        "key": "[guarantor_fullname]",
+        "comment": "保証人の姓名"
+    },
+    {
+        "key": "[guarantor_university_institution]",
+        "comment": "保証人の所属機関"
+    },
+    {
         "key": "[restricted_download_link]",
         "comment": "ファイルのダウンロードURL"
     },
@@ -66,10 +82,6 @@ INVENIO_MAIL_VARIABLE_HELP = [
     {
         "key": "[restricted_expiration_date_en]",
         "comment": "英語のダウンロード回数説明"
-    },
-    {
-        "key": "[restricted_approver_name]",
-        "comment": ""
     },
     {
         "key": "[restricted_site_name_ja]",
@@ -94,18 +106,6 @@ INVENIO_MAIL_VARIABLE_HELP = [
     {
         "key": "[restricted_site_url]",
         "comment": "サイトのURL"
-    },
-    {
-        "key": "[restricted_approver_affiliation]",
-        "comment": ""
-    },
-    {
-        "key": "[restricted_supervisor]",
-        "comment": ""
-    },
-    {
-        "key": "[restricted_reference]",
-        "comment": ""
     },
     {
         "key": "[data_download_date]",

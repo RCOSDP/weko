@@ -1840,9 +1840,9 @@ def send_mail_request_approval(mail_info):
         approver_mail = subject = body = None
         next_step = mail_info.get('next_step')
         if next_step == 'approval_advisor':
-            approver_mail = mail_info.get('advisor_mail')
+            approver_mail = mail_info.get('advisor_mail_address')
         elif next_step == 'approval_guarantor':
-            approver_mail = mail_info.get('guarantor_mail')
+            approver_mail = mail_info.get('guarantor_mail_address')
         if approver_mail:
             subject, body = email_pattern_request_approval(
                 mail_info.get('item_type_name'), next_step)
@@ -1936,11 +1936,11 @@ def replace_characters(data, content):
         '[5]': 'research_title',
         '[6]': 'dataset_requested',
         '[7]': 'register_date',
-        '[8]': 'advisor_name',
-        '[9]': 'guarantor_name',
+        '[advisor_fullname]': 'advisor_fullname',
+        '[guarantor_fullname]': 'guarantor_fullname',
         '[10]': 'url',
-        '[11]': 'advisor_affilication',
-        '[12]': 'guarantor_affilication',
+        '[advisor_university_institution]': 'advisor_university_institution',
+        '[guarantor_university_institution]': 'guarantor_university_institution',
         '[13]': 'approval_date',
         '[14]': 'approval_date_after_7_days',
         '[15]': '31_march_corresponding_year',
@@ -2093,13 +2093,13 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
         research_title=item_info.get('subitem_research_title'),
         dataset_requested=item_info.get('subitem_dataset_usage'),
         register_date=register_date,
-        advisor_name=item_info.get('subitem_advisor_fullname'),
-        guarantor_name=item_info.get('subitem_guarantor_fullname'),
+        advisor_fullname=item_info.get('subitem_restricted_access_advisor_name'),
+        guarantor_fullname=item_info.get('subitem_restricted_access_guarantor_name'),
         url=request.url_root,
-        advisor_affilication=item_info.get('subitem_advisor_affiliation'),
-        guarantor_affilication=item_info.get('subitem_guarantor_affiliation'),
-        advisor_mail=item_info.get('subitem_advisor_mail_address'),
-        guarantor_mail=item_info.get('subitem_guarantor_mail_address'),
+        advisor_university_institution=item_info.get('subitem_restricted_access_advisor_university/institution'),
+        guarantor_university_institution=item_info.get('subitem_restricted_access_guarantor_university/institution'),
+        advisor_mail_address=item_info.get('subitem_restricted_access_advisor_mail_address'),
+        guarantor_mail_address=item_info.get('subitem_restricted_access_guarantor_mail_address'),
         register_user_mail=register_user,
         report_number=activity_detail.activity_id,
         registration_number=activity_detail.activity_id,
@@ -2328,8 +2328,8 @@ def create_record_metadata(
                 for data in attribute:
                     for key in data:
                         if key.startswith("subitem") and \
-                                key not in ['subitem_advisor_mail_address',
-                                            'subitem_guarantor_mail_address']:
+                                key not in ['subitem_restricted_access_advisor_mail_address',
+                                            'subitem_restricted_access_guarantor_mail_address']:
                             data_dict[key] = data.get(key)
 
     item_type_id = usage_report_workflow.itemtype_id
@@ -2432,10 +2432,10 @@ def modify_item_metadata(
     for data in item:
         cur_data = item[data]
         if isinstance(cur_data, dict) and \
-                'subitem_advisor_mail_address' in cur_data:
+                'subitem_restricted_access_advisor_mail_address' in cur_data:
             item_approval1 = data
         if isinstance(cur_data, dict) and \
-                'subitem_guarantor_mail_address' in cur_data:
+                'subitem_restricted_access_guarantor_mail_address' in cur_data:
             item_approval2 = data
         for key in schema_dict:
             if isinstance(cur_data, dict) and key in cur_data:
