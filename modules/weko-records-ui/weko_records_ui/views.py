@@ -365,42 +365,54 @@ def _get_google_scholar_meta(record):
             verb='getrecord'))
     et = etree.fromstring(recstr)
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
+    if mtdata is None:
+        return
+
+    # Check to outputable resource type by config
+    resource_type_allowed = False
+    for resource_type in mtdata.findall('dc:type', namespaces=mtdata.nsmap):
+        if resource_type.text in current_app.config['WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE']:
+            resource_type_allowed = True
+            break
+    if not resource_type_allowed:
+        return
+
     res = []
-    if mtdata is not None:
-        for target in target_map:
-            found = mtdata.find(target, namespaces=mtdata.nsmap)
-            if found is not None:
-                res.append({'name': target_map[target], 'data': found.text})
-        for date in mtdata.findall('datacite:date', namespaces=mtdata.nsmap):
-            if date.attrib.get('dateType') == 'Available':
-                res.append({'name': 'citation_online_date', 'data': date.text})
-            elif date.attrib.get('dateType') == 'Issued':
-                res.append(
-                    {'name': 'citation_publication_date', 'data': date.text})
-        for relatedIdentifier in mtdata.findall(
-                'jpcoar:relation/jpcoar:relatedIdentifier',
-                namespaces=mtdata.nsmap):
-            if 'identifierType' in relatedIdentifier.attrib and \
-                relatedIdentifier.attrib[
-                    'identifierType'] == 'DOI':
-                res.append({'name': 'citation_doi',
-                            'data': relatedIdentifier.text})
-        for creator in mtdata.findall(
-                'jpcoar:creator/jpcoar:creatorName',
-                namespaces=mtdata.nsmap):
-            res.append({'name': 'citation_author', 'data': creator.text})
-        for sourceIdentifier in mtdata.findall(
-                'jpcoar:sourceIdentifier',
-                namespaces=mtdata.nsmap):
-            if 'identifierType' in sourceIdentifier.attrib and \
-                sourceIdentifier.attrib[
-                    'identifierType'] == 'ISSN':
-                res.append({'name': 'citation_issn',
-                            'data': sourceIdentifier.text})
-        for pdf_url in mtdata.findall('jpcoar:file/jpcoar:URI',
-                                      namespaces=mtdata.nsmap):
-            res.append({'name': 'citation_pdf_url',
-                        'data': pdf_url.text})
+    for target in target_map:
+        found = mtdata.find(target, namespaces=mtdata.nsmap)
+        if found is not None:
+            res.append({'name': target_map[target], 'data': found.text})
+    for date in mtdata.findall('datacite:date', namespaces=mtdata.nsmap):
+        if date.attrib.get('dateType') == 'Available':
+            res.append({'name': 'citation_online_date', 'data': date.text})
+        elif date.attrib.get('dateType') == 'Issued':
+            res.append(
+                {'name': 'citation_publication_date', 'data': date.text})
+    for relatedIdentifier in mtdata.findall(
+            'jpcoar:relation/jpcoar:relatedIdentifier',
+            namespaces=mtdata.nsmap):
+        if 'identifierType' in relatedIdentifier.attrib and \
+            relatedIdentifier.attrib[
+                'identifierType'] == 'DOI':
+            res.append({'name': 'citation_doi',
+                        'data': relatedIdentifier.text})
+    for creator in mtdata.findall(
+            'jpcoar:creator/jpcoar:creatorName',
+            namespaces=mtdata.nsmap):
+        res.append({'name': 'citation_author', 'data': creator.text})
+    for sourceIdentifier in mtdata.findall(
+            'jpcoar:sourceIdentifier',
+            namespaces=mtdata.nsmap):
+        if 'identifierType' in sourceIdentifier.attrib and \
+            sourceIdentifier.attrib[
+                'identifierType'] == 'ISSN':
+            res.append({'name': 'citation_issn',
+                        'data': sourceIdentifier.text})
+    for pdf_url in mtdata.findall('jpcoar:file/jpcoar:URI',
+                                    namespaces=mtdata.nsmap):
+        res.append({'name': 'citation_pdf_url',
+                    'data': pdf_url.text})
+
     res.append({'name': 'citation_dissertation_institution',
                 'data': InstitutionName.get_institution_name()})
     record_route = current_app.config['RECORDS_UI_ENDPOINTS']['recid']['route']
