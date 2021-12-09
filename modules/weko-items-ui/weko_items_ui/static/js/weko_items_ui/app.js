@@ -2048,7 +2048,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.autoFillUsageApplication = function () {
         let properties = [
           'subitem_restricted_access_dataset_usage',
-          'subitem_mail_address',
           'subitem_restricted_access_usage_report_id',
           'subitem_restricted_access_wf_issued_date',
           'subitem_restricted_access_application_date',
