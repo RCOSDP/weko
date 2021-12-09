@@ -20,6 +20,7 @@
 
 """Weko Deposit API."""
 import copy
+import inspect
 import sys
 import uuid
 from collections import OrderedDict
@@ -663,7 +664,7 @@ class WekoDeposit(Deposit):
                 )
             else:
                 deposit = super(WekoDeposit, cls).create(data, id_=id_)
-            
+
             record_id = 0
             if data.get('_deposit'):
                 record_id = str(data['_deposit']['id'])

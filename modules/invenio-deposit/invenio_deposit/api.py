@@ -24,6 +24,7 @@
 
 """Deposit API."""
 
+import inspect
 import uuid
 from contextlib import contextmanager
 from copy import deepcopy
