@@ -57,7 +57,7 @@
 
 {%- block page_body_main %}
   {%- if not pid %}
-    <div class="row">
+    <div class="row row2">
       <div class="col-sm-12 col-md-12 col-lg-10">
         <div class="form-inline h6">
           <div class="form-group">
@@ -74,7 +74,7 @@
       </div>
     </div>
   {%- endif %}
-  <div class="row">
+  <div class="row row2">
     <div class="col-md-12">
       <div id="weko-records">
         {%- if need_file or need_billing_file %}
@@ -95,7 +95,7 @@
             <invenio-records-alert
               template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/alert.html') }}">
             </invenio-records-alert>
-            <div class="row" ng-hide="false">
+            <div class="row row-4" ng-hide="false">
               <div class="col-sm-9" ng-show="true">
                 <ul class="list-inline text-right">
                   <li>
@@ -123,7 +123,7 @@
               </div>
             </div>
             {%- if need_file %}
-            <div class="row" ng-hide="false">
+            <div class="row row-4" ng-hide="false">
               <div class="col-sm-9" ng-show="true">
                 <invenio-files-error
                   template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
@@ -140,7 +140,7 @@
 
             {%- if need_billing_file %}
             This is billing file area
-            <div class="row" ng-hide="false">
+            <div class="row row-4" ng-hide="false">
               <div class="col-sm-9" ng-show="true">
                 <invenio-files-error
                   template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
@@ -156,7 +156,7 @@
             {%- endif %}
 
             <div ng-controller="WekoRecordsCtrl">
-              <div class="row" ng-hide="false">
+              <div class="row row-4" ng-hide="false">
                 <div class="col-sm-9" ng-show="true">
                   <p class="text-center">
                     <button class="btn btn-primary automatic-metadata-input-button" ng-click="getItemMetadata()">
@@ -175,15 +175,15 @@
               <button ng-show="false" id="btn_setAuthorInfo" class="btn btn-default" type="button"
                 ng-click="setAuthorInfo()"></button>
               <!--add by ryuu. end 20180410-->
-              <div class="row hidden" id="contributor-panel">
+              <div class="row row-4 hidden" id="contributor-panel">
                 <div class="col-sm-9">
 
                   <div class="panel panel-default">
                     <div class="panel-heading">
                       <h3 class="panel-title">Contributor</h3>
                     </div>
-                    <div class="panel-body">    
-                      <div class="row" id="radio_form_share">
+                    <div class="panel-body panel-body2">    
+                      <div class="row row-4" id="radio_form_share">
                         <div class="radio">
                           <label>
                             <input type="radio" name="checkedSharePermiss" id="input" class="input_contributor"
@@ -195,7 +195,7 @@
                         </div>
                       </div>
                       <div class="form_share_permission">     
-                        <div class="row" id="pd_username">
+                        <div class="row row-4" id="pd_username">
 
                           <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_username">
                             <label for="share_username">Username </label>
@@ -210,7 +210,7 @@
                             </div>
                           </div>
                         </div>
-                        <div class="row">
+                        <div class="row row-4">
                           <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_email">
                             <label for="share_email">Email </label>
                           </div>
@@ -243,7 +243,7 @@
                 <input id="duplicate-error-message" type="hidden" value="{{_('Duplicate Email Addresses.')}}" />
                 <input id="invalid-email-format" type="hidden" value="{{_('Invalid email format.')}}" />
               {%- endblock feedback_mail_list %}
-              <div class="row" ng-hide="false">
+              <div class="row row-4" ng-hide="false">
                 <div class="col-sm-9" ng-show="true">
                   <ul class="list-inline text-right">
                     <li>

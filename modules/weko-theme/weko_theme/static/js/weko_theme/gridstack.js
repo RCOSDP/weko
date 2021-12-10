@@ -576,7 +576,7 @@
             placeholderText: '',
             handle: '.grid-stack-item-content',
             handleClass: null,
-            cellHeight: 60,
+            cellHeight: 10,
             verticalMargin: 20,
             auto: true,
             minWidth: 768,

@@ -55,13 +55,13 @@ class Handle(object):
     def register_handle(self, location, hdl="", overwrite=False):
         """Register a handle."""
         current_app.logger.debug(
-            "location:{0} hdl:{1}".format(location.split('/records/'), hdl))
+            "location:{0} hdl:{1}".format(location, hdl))
         pid = hdl
         try:
             credential = PIDClientCredentials.load_from_JSON(
                 self.credential_path)
             client = EUDATHandleClient.instantiate_with_credentials(credential)
-            if pid == '':
+            if pid == '' and location:
                 pid = credential.get_prefix() + '/' + \
                     "{:010d}".format(int(location.split('/records/')[1]))
             current_app.logger.debug(

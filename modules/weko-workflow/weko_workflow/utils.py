@@ -1403,9 +1403,8 @@ def prepare_edit_workflow(post_activity, recid, deposit):
             _deposit.update(*args)
             _deposit.commit()
         except SQLAlchemyError as ex:
-            current_app.logger.error(ex)
-            db.session.rollback()
-        db.session.commit()
+            raise ex
+
         rtn = activity.init_activity(post_activity,
                                      community,
                                      draft_pid.object_uuid)
@@ -2386,7 +2385,6 @@ def create_record_metadata(
     update_activity_action(activity.get('activity_id'), owner_id)
 
     WorkActivity().update_activity(activity.get('activity_id'), activity)
-    db.session.commit()
     return new_usage_report_activity.activity_id
 
 
@@ -2503,12 +2501,8 @@ def get_shema_dict(properties, data_dict):
 
 def create_deposit(item_id):
     """Create deposit."""
-    try:
-        deposit = WekoDeposit.create({}, recid=int(item_id))
-        db.session.commit()
-        return deposit
-    except Exception:
-        db.session.rollback()
+    deposit = WekoDeposit.create({}, recid=int(item_id))
+    return deposit
 
 
 def update_activity_action(activity_id, owner_id):

@@ -649,11 +649,11 @@ class WorkActivity(object):
         :param item_id:
         :return:
         """
-        utc_now = datetime.utcnow()
         try:
             action_id = 0
             next_action_id = 0
             action_has_term_of_use = False
+            next_action_order = 0
             with db.session.no_autoflush:
                 action = _Action.query.filter_by(
                     action_endpoint='begin_action').one_or_none()
@@ -704,7 +704,7 @@ class WorkActivity(object):
                 activity_update_user = current_user.get_id()
 
             db_activity = _Activity(
-                activity_id=self.get_new_activity_id(utc_now),
+                activity_id=self.get_new_activity_id(),
                 item_id=item_id,
                 workflow_id=activity.get('workflow_id'),
                 flow_id=activity.get('flow_id'),
@@ -720,13 +720,10 @@ class WorkActivity(object):
                 action_order=next_action_order
             )
             db.session.add(db_activity)
-        except Exception as ex:
-            db.session.rollback()
-            current_app.logger.exception(str(ex))
-            return None
-        else:
             db.session.commit()
-
+        except BaseException as ex:
+            raise ex
+        else:
             try:
                 # Update the activity with calculated activity_id
                 PersistentIdentifier.create(
@@ -746,9 +743,9 @@ class WorkActivity(object):
                     action_comment=ActionCommentPolicy.BEGIN_ACTION_COMMENT,
                     action_order=1
                 )
+                db.session.add(db_history)
 
                 with db.session.begin_nested():
-                    db.session.add(db_history)
                     # set action handler for all the action except approval
                     # actions
                     for flow_action in flow_actions:
@@ -765,38 +762,30 @@ class WorkActivity(object):
                             action_order=flow_action.action_order
                         )
                         db.session.add(db_activity_action)
-
-            except IndexError as ex:
-                current_app.logger.exception(str(ex))
-
-                return None
-
-            except Exception as ex:
-                db.session.rollback()
-                current_app.logger.exception(str(ex))
-
-                return None
-
+                        
+            except BaseException as ex:
+                raise ex
             else:
-                db.session.commit()
-
                 return db_activity
 
-    def get_new_activity_id(self, utc_now=datetime.utcnow()):
+    def get_new_activity_id(self):
         """Get new an activity ID.
 
-        :param utc_now: UTC now.
         :return: activity ID.
         """
+        # Table lock for calculate new activity id
+        db.session.execute('LOCK TABLE ' + _Activity.__tablename__ + ' IN EXCLUSIVE MODE')
+        
         # Calculate activity_id based on id
+        utc_now=datetime.utcnow()
         current_date_start = utc_now.strftime("%Y-%m-%d 00:00:00")
         next_date_start = (utc_now + timedelta(1)).\
             strftime("%Y-%m-%d 00:00:00")
-
+        
         max_id = db.session.query(func.count(_Activity.id)).filter(
             _Activity.created >= '{}'.format(current_date_start),
             _Activity.created < '{}'.format(next_date_start),
-        ).scalar()
+        ).scalar() # Cannot use '.with_for_update()'. FOR UPDATE is not allowed with aggregate functions
 
         if max_id:
             # Calculate aid
@@ -1542,15 +1531,13 @@ class WorkActivity(object):
         # Super admin roles
         supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
         # Community admin roles
-        community_role_name = current_app.config[
+        community_roles = current_app.config[
             'WEKO_PERMISSION_ROLE_COMMUNITY']
-        if isinstance(community_role_name, str):
-            community_role_name = (community_role_name,)
         for role in list(current_user.roles or []):
             if role.name in supers:
                 is_admin = True
                 break
-            elif role.name in community_role_name:
+            elif role.name in community_roles:
                 is_community_admin = True
 
         return is_admin, is_community_admin
@@ -1708,6 +1695,7 @@ class WorkActivity(object):
 
         @return:
         """
+<<<<<<< HEAD
         community_user_ids = []
         community_role_name = current_app.config[
             'WEKO_PERMISSION_ROLE_COMMUNITY']
@@ -1721,6 +1709,20 @@ class WorkActivity(object):
                 .all()
             tmp = [community_user.id for community_user in community_users]
             community_user_ids.extend(tmp)
+=======
+        community_roles = current_app.config[
+            'WEKO_PERMISSION_ROLE_COMMUNITY']
+        community_user_ids = []
+        for role_name in list(community_roles):
+            community_users = User.query.outerjoin(userrole).outerjoin(Role) \
+                .filter(role_name == Role.name) \
+                .filter(userrole.c.role_id == Role.id) \
+                .filter(User.id == userrole.c.user_id) \
+                .all()
+            _tmp = [community_user.id for community_user in
+                    community_users]
+            community_user_ids.extend(_tmp)
+>>>>>>> origin/release
 
         return community_user_ids
 

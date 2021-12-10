@@ -33,7 +33,7 @@
 {% endif %}
   {%- block navbar %}
   <nav class="navbar-default navbar-static-top full-height">
-    <div class="container-fluid" id="fixed_header">
+    <div class="container-fluid container-fluid2" id="fixed_header">
       {%- block navbar_header %}
         {% if not render_widgets and not page and not render_header_footer %}
           {% include "weko_theme/header_wysiwyg.html" %}
@@ -41,7 +41,7 @@
       {%- block navbar_right %}
         {%- include config.THEME_HEADER_LOGIN_TEMPLATE %}
       {%- endblock navbar_right %}
-      <div class="navbar-form navbar-right">
+      <div class="navbar-form navbar-right navbar-form2">
         {%- if config.I18N_LANGUAGES %}
         {% from "weko_theme/macros/language_selector.html" import language_selector_dropdown %}
         {{ language_selector_dropdown() }}
@@ -51,7 +51,7 @@
       {%- endblock navbar_header %}
     </div>
     {% if render_widgets or page or render_header_footer %}
-      <div class="container-fluid" id="header_nav">
+      <div class="container-fluid container-fluid2" id="header_nav">
         <div id="header_content" class="ql-editor">
         </div>
       </div>

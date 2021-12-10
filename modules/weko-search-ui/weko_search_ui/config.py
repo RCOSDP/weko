@@ -495,7 +495,6 @@ WEKO_IMPORT_EMAIL_PATTERN = \
     r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
 WEKO_IMPORT_PUBLISH_STATUS = ['public', 'private']
 WEKO_IMPORT_DOI_TYPE = ['JaLC', 'Crossref', 'DataCite', 'NDL JaLC']
-WEKO_IMPORT_SUFFIX_PATTERN = r"^.{0,290}$"
 
 WEKO_IMPORT_SUBITEM_DATE_ISO = "subitem_1582683677698"
 """Subitem ID of property Date (ISO-8601)."""
@@ -613,12 +612,23 @@ WEKO_SEARCH_UI_BULK_EXPORT_TASK = 'KEY_EXPORT_ALL'
 WEKO_SEARCH_UI_BULK_EXPORT_URI = 'URI_EXPORT_ALL'
 """Template for the Admin Bulk Export page."""
 
+WEKO_SEARCH_UI_BULK_EXPORT_MSG = 'MSG_EXPORT_ALL'
+"""Template for the Admin Bulk Export page."""
+
 WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 3
 """Template for the Admin Bulk Export page."""
 
+WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 1000
+"""The number of items exported to tsv file each once."""
+
+WEKO_SEARCH_UI_BULK_EXPORT_RETRY = 5
+"""Number of export retries."""
 
 WEKO_SEARCH_UI_IMPORT_TMP_PREFIX = 'weko_import_'
 """Import tmp prefix."""
 
 WEKO_SEARCH_UI_IMPORT_UNUSE_FILES_URI = 'import_unuse_files_uri_{}'
 """Cache key unuse file. uri."""
+
+WEKO_SEARCH_UI_BULK_EXPORT_RETRY_INTERVAL = 1
+""" retry interval(sec) """
