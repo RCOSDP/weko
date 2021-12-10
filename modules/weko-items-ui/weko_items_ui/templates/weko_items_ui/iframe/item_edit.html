@@ -65,8 +65,8 @@
   {% from "weko_theme/macros/modal_page.html" import all_modal %}
   {{ all_modal() }}
   <div id="alerts"></div>
-  <div class="container-fluid">
-    <div class="row">
+  <div class="container-fluid container-fluid2">
+    <div class="row row-4">
       <div class="col-md-12">
         {% if endpoints %}
         <div class="hide" id="hide_endpoints">{{ endpoints|tojson }}</div>
@@ -110,7 +110,7 @@
               <invenio-records-alert
                 template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/alert.html') }}">
               </invenio-records-alert>
-              <div class="row" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+              <div class="row row-4" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                 <div class="col-sm-12">
                   <ul class="list-inline text-right">
                       <!-- <li>
@@ -136,14 +136,14 @@
               </div>
               {%- if need_thumbnail %}
                 <div ng-controller='UploadController' ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                <div class="row">
+                <div class="row row-4">
                   <div class="col-sm-12">
                     <div class="panel panel-default">
                       <div class="panel-heading">
                         <h3 class="panel-title">{{_('Thumbnail')}}</h3>
                       </div>
-                      <div class="panel-body">
-                        <div class="row">
+                      <div class="panel-body panel-body2">
+                        <div class="row row-4">
                           <div class="col-sm-12" id="app">
                             <div class="well" ngf-drag-over-class="'dragover'" ngf-drop="" ngf-change="dragoverThumbnail($files)"
                               ngf-max-size="20GB" ngf-multiple="true">
@@ -176,7 +176,7 @@
               {%- endif %}
               <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                 {%- if is_show_autofill_metadata %}
-                <div class="row">
+                <div class="row row-4">
                   <div class="col-sm-12">
                   <p class="text-center">
                     <button class="btn btn-success"
@@ -197,14 +197,14 @@
                 <button ng-show="false" id="btn_setAuthorInfo" class="btn btn-default" type="button" ng-click="setAuthorInfo()"></button>
                 <!--add by ryuu. end 20180410-->
                 {%- if enable_contributor %}
-                <div class="row">
+                <div class="row row-4">
                   <div class="col-sm-12" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                     <div class="panel panel-default" >
                       <div class="panel-heading">
                         <h3 class="panel-title">Contributor</h3>
                       </div>
-                      <div class="panel-body">    
-                          <div class="row" id="radio_form_share">
+                      <div class="panel-body panel-body2">    
+                          <div class="row row-4" id="radio_form_share">
                             <div class="radio">
                               <label>
                                 <input type="radio" role="presentation" name="checkedSharePermiss" id="input" class="input_contributor" value="this_user" checked="checked" onchange="handleSharePermission(this.value)">This user</label>
@@ -212,7 +212,7 @@
                             </div>
                           </div>
                           <div class="form_share_permission">     
-                            <div class="row" id="pd_username">
+                            <div class="row row-4" id="pd_username">
                               <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_username">
                                 <label for="share_username">Username </label>
                               </div>
@@ -223,7 +223,7 @@
                                   </div>
                               </div>
                             </div>
-                            <div class="row">
+                            <div class="row row-4">
                               <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_email">
                                 <label for="share_email">Email </label>
                               </div>
@@ -243,7 +243,7 @@
                 <button ng-show="false" id="btn_setItemMetadata" class="btn btn-default" type="button" ng-click="setItemMetadata()"></button>
                 <div ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                   {%- if need_file %}
-                  <div id="file_upload" class="row" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                  <div id="file_upload" class="row row-4" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                     <div class="col-sm-12">
                       <invenio-files-error
                         template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
@@ -258,7 +258,7 @@
                   </div>
                   {%- endif %}
                   {%- if need_billing_file %}
-                  <div id="billing_file_upload" class="row" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                  <div id="billing_file_upload" class="row row-4" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                     <div class="col-sm-12">
                       <invenio-files-error
                         template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
@@ -295,7 +295,7 @@
                   {% if record|length %} <!-- Check Item Registration is edit mode then show version_management -->
                     {%- block radio_version_management %}
                     <div id="react-component-version">
-                      <div class="row">
+                      <div class="row row-4">
                         <div class="form-group">
                           <label id="component-version-label" class="control-label col-sm-3 text-right field-required">
                             {{_('Version Management')}}
@@ -316,7 +316,7 @@
                     {%- endblock radio_version_management %}
                   {% endif %}
                 </div>
-                <div class="row">
+                <div class="row row-4">
                   <div class="col-sm-12">
                     <div class="col-sm-offset-3 col-sm-6">
                       <div class="list-inline text-center" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
@@ -431,6 +431,8 @@
           {% if list_license %}
             {% set list_license_data = list_license|tojson %}
           {% endif %}
+          <input type="hidden" id="item_save_uri" name="item_save_uri" value='{{item_save_uri}}'>
+          <input type="hidden" id="item_save_frequency" name="item_save_frequency" value='{{config.WEKO_ITEMS_UI_SAVE_FREQUENCY}}'>
           <input type="hidden" id="auto_fill_title" name="auto_fill_title" value='{{title}}'>
           <input type="hidden" id="data_type_title" name="data_type_title" value='{{data_type}}'>
           <input type="hidden" id="out_put_report_title" name="out_put_report_title" value='{{out_put_report}}'>

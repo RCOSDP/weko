@@ -41,7 +41,7 @@ from lxml import etree
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.models import Index
 from weko_records.models import ItemMetadata
-from weko_records_ui.utils import soft_delete
+from weko_records_ui.utils import soft_delete, restore
 
 from .api import get_records, list_records, send_run_status_mail
 from .config import OAIHARVESTER_ENABLE_ITEM_VERSIONING
@@ -212,6 +212,9 @@ def process_item(record, harvesting, counter):
         soft_delete(recid.pid_value)
         event = ItemEvents.DELETE
     else:
+        if dep.pid.status == PIDStatus.DELETED:
+            recid.status = PIDStatus.DELETED
+            restore(recid.pid_value)
         json_data = mapper.map()
         if not json_data:
             return

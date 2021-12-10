@@ -1388,8 +1388,7 @@ def export_items(post_data):
 def _get_max_export_items():
     """Get max amount of items to export."""
     max_table = current_app.config['WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE']
-    non_user_max = max_table[current_app.config[
-        'WEKO_PERMISSION_ROLE_GENERAL']]
+    non_user_max = current_app.config['WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM']
     current_user_id = current_user.get_id()
 
     if not current_user_id:  # Non-logged in users

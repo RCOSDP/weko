@@ -20,7 +20,7 @@
 
 """Module tests."""
 
-from flask import Flask
+from flask import Flask, url_for, json
 
 from weko_items_ui import WekoItemsUI
 
@@ -52,3 +52,16 @@ def test_view(app):
         assert res.status_code == 200
         res = client.get("/items/schemaform/0")
         assert res.status_code == 200
+
+
+def test_prepare_edit_item(app):
+    app.login_manager._login_disabled = True
+    WekoItemsUI(app)
+    with app.test_request_context():
+        url = url_for('weko_items_ui.prepare_edit_item')
+
+    with app.test_client() as client:
+        res = client.post(url, json={})
+        json_response = json.loads(res.get_data())
+        assert json_response.get('code') == 0
+        assert json_response.get('msg') == 'success'
