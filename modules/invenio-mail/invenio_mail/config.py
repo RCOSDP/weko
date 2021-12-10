@@ -24,6 +24,10 @@ INVENIO_MAIL_VARIABLE_HELP = [
         "comment": "ゲスト用の利用申請登録の案内URL"
     },
     {
+        "key": "[register_date]",
+        "comment": "登録年月日、報告年月日"
+    },
+    {
         "key": "[restricted_fullname]",
         "comment": "登録者名"
     },
@@ -41,11 +45,11 @@ INVENIO_MAIL_VARIABLE_HELP = [
     },
     {
         "key": "[restricted_data_name]",
-        "comment": "申請データ"
+        "comment": "利用申請データ"
     },
     {
         "key": "[restricted_application_date]",
-        "comment": "申請年月日"
+        "comment": "利用申請年月日"
     },
     {
         "key": "[restricted_mail_address]",
@@ -118,5 +122,13 @@ INVENIO_MAIL_VARIABLE_HELP = [
     {
         "key": "[restricted_usage_activity_id]",
         "comment": "利用報告の申請番号"
+    },
+    {
+        "key": "[output_report_activity_id]",
+        "comment": "成果物登録の申請番号"
+    },
+    {
+        "key": "[output_report_title]",
+        "comment": "成果物登録のタイトル"
     }
 ]

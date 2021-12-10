@@ -1933,9 +1933,8 @@ def replace_characters(data, content):
         '[2]': 'fullname',
         '[3]': 'activity_id',
         '[4]': 'mail_address',
-        '[5]': 'research_title',
         '[6]': 'dataset_requested',
-        '[7]': 'register_date',
+        '[register_date]': 'register_date',
         '[advisor_fullname]': 'advisor_fullname',
         '[guarantor_fullname]': 'guarantor_fullname',
         '[10]': 'url',
@@ -1945,8 +1944,8 @@ def replace_characters(data, content):
         '[14]': 'approval_date_after_7_days',
         '[15]': '31_march_corresponding_year',
         '[16]': 'report_number',
-        '[17]': 'registration_number',
-        '[18]': 'output_registration_title',
+        '[output_report_activity_id]': 'output_report_activity_id',
+        '[output_report_title]': 'output_report_title',
         '[url_guest_user]': 'url_guest_user',
         '[restricted_fullname]': 'restricted_fullname',
         '[restricted_university_institution]':
@@ -2071,6 +2070,21 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
     :activity_detail: object
     :guest_user: object
     """
+    def _get_restricted_data_name():
+        result = item_info.get('subitem_restricted_access_dataset_usage', '')
+        if not result:
+            apply_id = item_info.get('subitem_corresponding_usage_application_id', '')
+            if apply_id:
+                apply_detail = WorkActivity.get_activity_detail(apply_id)
+                result = apply_detail.title
+        return result
+
+    def _get_restricted_research_title():
+        result = item_info.get('subitem_restricted_access_research_title', '')
+        if not result:
+            result = item_info.get('subitem_research_title', '')
+        return result
+
     mail_address = item_info.get('subitem_mail_address')
     site_en, site_ja = get_site_info_name()
     site_mail = get_default_mail_sender()
@@ -2090,7 +2104,6 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
         fullname=item_info.get('subitem_fullname'),
         activity_id=activity_detail.activity_id,
         mail_address=mail_address,
-        research_title=item_info.get('subitem_research_title'),
         dataset_requested=item_info.get('subitem_dataset_usage'),
         register_date=register_date,
         advisor_fullname=item_info.get('subitem_advisor_fullname'),
@@ -2102,17 +2115,15 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
         guarantor_mail_address=item_info.get('subitem_guarantor_mail_address'),
         register_user_mail=register_user,
         report_number=activity_detail.activity_id,
-        registration_number=activity_detail.activity_id,
-        output_registration_title=item_info.get('subitem_title'),
+        output_report_activity_id=activity_detail.activity_id,
+        output_report_title=item_info.get('subitem_title'),
         # Restricted data newly supported
         restricted_fullname=item_info.get('subitem_fullname'),
         restricted_university_institution=item_info.get(
             'subitem_university/institution'),
         restricted_activity_id=activity_detail.activity_id,
-        restricted_research_title=item_info.get(
-            'subitem_restricted_access_research_title'),
-        restricted_data_name=item_info.get(
-            'subitem_restricted_access_dataset_usage'),
+        restricted_research_title=_get_restricted_research_title(),
+        restricted_data_name=_get_restricted_data_name(),
         restricted_application_date=item_info.get(
             'subitem_restricted_access_application_date'),
         restricted_mail_address=item_info.get(
@@ -2129,7 +2140,8 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
         restricted_site_url=current_app.config['THEME_SITEURL'],
         mail_recipient=item_info.get('subitem_mail_address'),
         restricted_supervisor='',
-        restricted_reference=''
+        restricted_reference='',
+        restricted_usage_activity_id=activity_detail.activity_id
     )
     return mail_info
 
