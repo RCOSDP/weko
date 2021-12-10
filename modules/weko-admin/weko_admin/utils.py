@@ -1809,9 +1809,9 @@ class UsageReport:
         self.__page_number = 1
         self.__usage_report_activities_data = []
         self.__mail_key = {
-            "subitem_restricted_access_name": "restricted_fullname",
-            "subitem_restricted_access_mail_address": "restricted_mail_address",
-            "subitem_restricted_access_university/institution":
+            "subitem_fullname": "restricted_fullname",
+            "subitem_mail_address": "restricted_mail_address",
+            "subitem_university/institution":
                 "restricted_university_institution",
             "subitem_restricted_access_dataset_usage": "restricted_data_name",
             "subitem_restricted_access_application_date":

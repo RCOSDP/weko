@@ -2093,21 +2093,21 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
         research_title=item_info.get('subitem_research_title'),
         dataset_requested=item_info.get('subitem_dataset_usage'),
         register_date=register_date,
-        advisor_fullname=item_info.get('subitem_restricted_access_advisor_name'),
-        guarantor_fullname=item_info.get('subitem_restricted_access_guarantor_name'),
+        advisor_fullname=item_info.get('subitem_advisor_fullname'),
+        guarantor_fullname=item_info.get('subitem_guarantor_fullname'),
         url=request.url_root,
-        advisor_university_institution=item_info.get('subitem_restricted_access_advisor_university/institution'),
-        guarantor_university_institution=item_info.get('subitem_restricted_access_guarantor_university/institution'),
-        advisor_mail_address=item_info.get('subitem_restricted_access_advisor_mail_address'),
-        guarantor_mail_address=item_info.get('subitem_restricted_access_guarantor_mail_address'),
+        advisor_university_institution=item_info.get('subitem_advisor_university/institution'),
+        guarantor_university_institution=item_info.get('subitem_guarantor_university/institution'),
+        advisor_mail_address=item_info.get('subitem_advisor_mail_address'),
+        guarantor_mail_address=item_info.get('subitem_guarantor_mail_address'),
         register_user_mail=register_user,
         report_number=activity_detail.activity_id,
         registration_number=activity_detail.activity_id,
         output_registration_title=item_info.get('subitem_title'),
         # Restricted data newly supported
-        restricted_fullname=item_info.get('subitem_restricted_access_name'),
+        restricted_fullname=item_info.get('subitem_fullname'),
         restricted_university_institution=item_info.get(
-            'subitem_restricted_access_university/institution'),
+            'subitem_university/institution'),
         restricted_activity_id=activity_detail.activity_id,
         restricted_research_title=item_info.get(
             'subitem_restricted_access_research_title'),
@@ -2116,7 +2116,7 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
         restricted_application_date=item_info.get(
             'subitem_restricted_access_application_date'),
         restricted_mail_address=item_info.get(
-            'subitem_restricted_access_mail_address'),
+            'subitem_mail_address'),
         restricted_download_link='',
         restricted_expiration_date='',
         restricted_approver_name='',
@@ -2127,7 +2127,7 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
         restricted_institution_name_en=institution_name_en,
         restricted_site_mail=site_mail,
         restricted_site_url=current_app.config['THEME_SITEURL'],
-        mail_recipient=item_info.get('subitem_restricted_access_mail_address'),
+        mail_recipient=item_info.get('subitem_mail_address'),
         restricted_supervisor='',
         restricted_reference=''
     )
@@ -2328,8 +2328,8 @@ def create_record_metadata(
                 for data in attribute:
                     for key in data:
                         if key.startswith("subitem") and \
-                                key not in ['subitem_restricted_access_advisor_mail_address',
-                                            'subitem_restricted_access_guarantor_mail_address']:
+                                key not in ['subitem_advisor_mail_address',
+                                            'subitem_guarantor_mail_address']:
                             data_dict[key] = data.get(key)
 
     item_type_id = usage_report_workflow.itemtype_id
@@ -2432,10 +2432,10 @@ def modify_item_metadata(
     for data in item:
         cur_data = item[data]
         if isinstance(cur_data, dict) and \
-                'subitem_restricted_access_advisor_mail_address' in cur_data:
+                'subitem_advisor_mail_address' in cur_data:
             item_approval1 = data
         if isinstance(cur_data, dict) and \
-                'subitem_restricted_access_guarantor_mail_address' in cur_data:
+                'subitem_guarantor_mail_address' in cur_data:
             item_approval2 = data
         for key in schema_dict:
             if isinstance(cur_data, dict) and key in cur_data:
@@ -3300,15 +3300,15 @@ def get_usage_data(item_type_id, activity_detail, user_profile=None):
     elif item_type_id in cfg.get('WEKO_WORKFLOW_USAGE_REPORT_ITEM_TYPES_LIST'):
         usage_record_id = extra_info.get('usage_record_id')
         usage_report_data_key = {
-            "subitem_restricted_access_name": "usage_data_name",
-            "subitem_restricted_access_mail_address": "mail_address",
-            "subitem_restricted_access_university/institution":
+            "subitem_fullname": "usage_data_name",
+            "subitem_mail_address": "mail_address",
+            "subitem_university/institution":
                 "university_institution",
-            "subitem_restricted_access_affiliated_division/department":
+            "subitem_affiliated_division/department":
                 "affiliated_division_department",
-            "subitem_restricted_access_position": "position",
-            "subitem_restricted_access_position(others)": "position_other",
-            "subitem_restricted_access_phone_number": "phone_number",
+            "subitem_position": "position",
+            "subitem_position(others)": "position_other",
+            "subitem_phone_number": "phone_number",
         }
         result = dict(
             usage_type='Report',
