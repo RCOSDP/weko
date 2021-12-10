@@ -1780,7 +1780,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         // Key for detecting user profile info
         // These 2 keys is unique for User Information so use these to detect user_information obj
         var affiliatedDivision = 'subitem_affiliated_division/department';
-        var affiliatedInstitution = 'subitem_affiliated_institution';
         // Key for dectecting affiliated institution
         var affiliatedInstitutionName = 'subitem_affiliated_institution_name';
         var affiliatedInstitutionPosition = 'subitem_affiliated_institution_position';
@@ -1789,8 +1788,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           var currentInvenioRecordsSchema = $rootScope.recordsVM.invenioRecordsSchema.properties[key];
           if (currentInvenioRecordsSchema.properties) {
             let containAffiliatedDivision = currentInvenioRecordsSchema.properties.hasOwnProperty(affiliatedDivision);
-            let containAffiliatedInstitution = currentInvenioRecordsSchema.properties.hasOwnProperty(affiliatedInstitution);
-            if (containAffiliatedDivision && containAffiliatedInstitution) {
+            if (containAffiliatedDivision) {
               // Store key of user info to disable this form later
               userInfoKey = key;
               $rootScope.recordsVM.invenioRecordsModel[key] = {};
