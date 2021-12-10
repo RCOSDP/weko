@@ -144,22 +144,17 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
             return is_can
 
         # Super users
-<< << << < HEAD
-   supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
-       current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-== == == =
-   supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
-        current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
->>>>>> > origin/release
-   for role in list(current_user.roles or []):
-        if role.name in supers:
-            return is_can
+        supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
+            current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+        for role in list(current_user.roles or []):
+            if role.name in supers:
+                return is_can
 
     try:
         # can access
         if 'open_access' in acsrole:
             if is_display_file_info:
-                   # Always display the file info area in 'Detail' screen.
+                # Always display the file info area in 'Detail' screen.
                 is_can = True
             else:
                 date = fjson.get('date')
