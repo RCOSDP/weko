@@ -13,15 +13,9 @@ fixtures are available.
 
 from __future__ import absolute_import, print_function
 
-import shutil
-import tempfile
-
 import pytest
 from flask import Flask
 from flask_babelex import Babel
-
-from weko_items_autofill import WekoItemsAutofill
-from weko_items_autofill.views import blueprint
 
 
 @pytest.fixture(scope='module')
@@ -37,6 +31,8 @@ def celery_config():
 def create_app(instance_path):
     """Application factory fixture."""
     def factory(**config):
+        from weko_items_autofill import WekoItemsAutofill
+        from weko_items_autofill.views import blueprint
         app = Flask('testapp', instance_path=instance_path)
         app.config.update(**config)
         Babel(app)

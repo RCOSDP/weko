@@ -19,83 +19,24 @@
 # MA 02111-1307, USA.
 
 """Weko Deposit celery tasks."""
+from time import sleep
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
-from elasticsearch.exceptions import TransportError
 from flask import current_app
 from invenio_db import db
+from invenio_indexer.api import RecordIndexer
+from invenio_pidstore.errors import PIDDoesNotExistError
+from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.models import RecordMetadata
+from invenio_search import RecordsSearch
 from sqlalchemy.exc import SQLAlchemyError
+from weko_authors.models import AuthorsPrefixSettings
+from weko_records.api import ItemsMetadata
 
 from .api import WekoDeposit
 
 logger = get_task_logger(__name__)
-
-
-@shared_task(ignore_result=True)
-def delete_items_by_id(p_path):
-    """
-    Delete item Index on ES and update item json column to None.
-
-    :param p_path:
-
-    """
-    current_app.logger.debug('index delete task is running.')
-    try:
-        result = db.session.query(RecordMetadata). filter(
-            RecordMetadata.json.op('->>')('path').contains(p_path)).yield_per(1000)
-        with db.session.begin_nested():
-            for r in result:
-                try:
-                    WekoDeposit(r.json, r).delete()
-                except TransportError:
-                    current_app.logger.exception(
-                        'Could not deleted index {0}.'.format(result))
-        db.session.commit()
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        current_app.logger. \
-            exception('Failed to remove items for index delete. err:{0}'.
-                      format(e))
-        delete_items_by_id.retry(countdown=5, exc=e, max_retries=1)
-
-
-@shared_task(ignore_result=True)
-def update_items_by_id(p_path, target):
-    """Update item by id."""
-    current_app.logger.debug('index update task is running.')
-    try:
-        result = db.session.query(RecordMetadata). filter(
-            RecordMetadata.json.op('->>')('path').contains(p_path)).yield_per(1000)
-        with db.session.begin_nested():
-            for r in result:
-                obj = WekoDeposit(r.json, r)
-                path = obj.get('path')
-                if isinstance(path, list):
-                    new_path_lst = []
-                    for p in path:
-                        if p_path in p:
-                            p = p.replace(p_path, target)
-                            p = p[1:] if p.startswith('/') else p
-                            new_path_lst.append(p)
-                        else:
-                            new_path_lst.append(p)
-                    del path
-                    obj['path'] = new_path_lst
-                obj.update_item_by_task()
-                try:
-                    obj.indexer.update_path(obj, False)
-                except TransportError:
-                    current_app.logger.exception(
-                        'Could not updated index {0}.'.format(result))
-        db.session.commit()
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        current_app.logger. \
-            exception('Failed to update items for index update. err:{0}'.
-                      format(e))
-        update_items_by_id.retry(countdown=5, exc=e, max_retries=1)
 
 
 @shared_task(ignore_result=True)
@@ -154,7 +95,7 @@ def update_items_by_authorInfo(origin_list, target):
                             url = prefix_info['url'].replace(
                                 '##', id['authorId'])
                         else:
-                            url = prefix_info['url'] + id['authorId']
+                            url = prefix_info['url']
                         id_info.update({key_map['id_uri_key']: url})
                     identifiers.append(id_info)
 
@@ -186,6 +127,118 @@ def update_items_by_authorInfo(origin_list, target):
                     key_map['mails_key']: mails
                 })
         return target_id, meta
+
+    def _update_author_data(item_id, record_ids):
+        try:
+            pid = PersistentIdentifier.get('recid', item_id)
+            dep = WekoDeposit.get_record(pid.object_uuid)
+            author_link = set()
+            author_data = {}
+            for k, v in dep.items():
+                if isinstance(v, dict) \
+                        and 'attribute_value_mlt' in v \
+                        and isinstance(v['attribute_value_mlt'], list):
+                    data_list = v['attribute_value_mlt']
+                    prop_type = None
+                    for index, data in enumerate(data_list):
+                        if isinstance(data, dict) \
+                                and 'nameIdentifiers' in data:
+                            if 'creatorNames' in data:
+                                prop_type = 'creator'
+                            elif 'contributorNames' in data:
+                                prop_type = 'contributor'
+                            elif 'names' in data:
+                                prop_type = 'full_name'
+                            else:
+                                continue
+                            origin_id = -1
+                            change_flag = False
+                            for id in data['nameIdentifiers']:
+                                if id['nameIdentifierScheme'] == 'WEKO':
+                                    author_link.add(id['nameIdentifier'])
+                                    if id['nameIdentifier'] in origin_list:
+                                        origin_id = id['nameIdentifier']
+                                        change_flag = True
+                                        record_ids.append(pid.object_uuid)
+                                        break
+                                else:
+                                    continue
+                            if change_flag:
+                                target_id, new_meta = _change_to_meta(
+                                    target, author_prefix, key_map[prop_type])
+                                dep[k]['attribute_value_mlt'][index].update(
+                                    new_meta)
+                                author_data.update(
+                                    {k: dep[k]['attribute_value_mlt']})
+                                if origin_id != target_id:
+                                    author_link.remove(origin_id)
+                                    author_link.add(target_id)
+
+            dep['author_link'] = list(author_link)
+            dep.update_item_by_task()
+            obj = ItemsMetadata.get_record(pid.object_uuid)
+            obj.update(author_data)
+            obj.commit()
+            return pid.object_uuid, author_link
+        except PIDDoesNotExistError as pid_error:
+            current_app.logger.error("PID {} does not exist.".format(item_id))
+            return None, set()
+        except Exception as ex:
+            current_app.logger.error(ex)
+            return None, set()
+
+    def _process(data_size, data_from):
+        res = False
+        query_q = {
+            "query": {
+                "bool": {
+                    "must": [{
+                        "terms": {
+                            "author_link": origin_list
+                        }
+                    }]
+                }
+            },
+            "_source": [
+                "control_number"
+            ],
+            "size": data_size,
+            "from": data_from
+        }
+        search = RecordsSearch(
+            index=current_app.config['INDEXER_DEFAULT_INDEX'],). \
+            update_from_dict(query_q).execute().to_dict()
+
+        record_ids = []
+        update_es_authorinfo = []
+        for item in search['hits']['hits']:
+            item_id = item['_source']['control_number']
+            object_uuid, author_link = _update_author_data(item_id, record_ids)
+            update_es_authorinfo.append({
+                'id': object_uuid, 'author_link': list(author_link)})
+        db.session.commit()
+        # update record to ES
+        if record_ids:
+            sleep(20)
+            query = (x[0] for x in PersistentIdentifier.query.filter(
+                PersistentIdentifier.object_uuid.in_(record_ids)
+            ).values(
+                PersistentIdentifier.object_uuid
+            ))
+            RecordIndexer().bulk_index(query)
+            RecordIndexer().process_bulk_queue(
+                es_bulk_kwargs={'raise_on_error': True})
+        if update_es_authorinfo:
+            sleep(20)
+            for d in update_es_authorinfo:
+                dep = WekoDeposit.get_record(d['id'])
+                dep.update_author_link(d['author_link'])
+
+        data_total = search['hits']['total']
+        if data_total > data_size + data_from:
+            return len(update_es_authorinfo), True
+        else:
+            return len(update_es_authorinfo), False
 
     key_map = {
         "creator": {
@@ -243,97 +296,18 @@ def update_items_by_authorInfo(origin_list, target):
     author_prefix = _get_author_prefix()
 
     try:
-        query_q = {
-            "query": {
-                "bool": {
-                    "must_not": [{
-                        "wildcard": {
-                            "_oai.id": {
-                                "value": "*.*"
-                            }
-                        }
-                    }],
-                    "must": [{
-                        "terms": {
-                            "author_link": origin_list
-                        }
-                    }]
-                }
-            },
-            "_source": [
-                "control_number"
-            ]
-        }
-        search = RecordsSearch(
-            index=current_app.config['INDEXER_DEFAULT_INDEX'],). \
-            update_from_dict(query_q).execute().to_dict()
-
-        record_ids = []
-        update_es_authorinfo = []
-        for item in search['hits']['hits']:
-            item_id = item['_source']['control_number']
-            pid = PersistentIdentifier.get('recid', item_id)
-            dep = WekoDeposit.get_record(pid.object_uuid)
-            author_link = set()
-            for k, v in dep.items():
-                if isinstance(v, dict) \
-                        and 'attribute_value_mlt'in v \
-                        and isinstance(v['attribute_value_mlt'], list):
-                    data_list = v['attribute_value_mlt']
-                    prop_type = None
-                    for index, data in enumerate(data_list):
-                        if isinstance(data, dict) \
-                                and 'nameIdentifiers' in data:
-                            if 'creatorNames' in data:
-                                prop_type = 'creator'
-                            elif 'contributorNames' in data:
-                                prop_type = 'contributor'
-                            elif 'names' in data:
-                                prop_type = 'full_name'
-                            else:
-                                continue
-                            origin_id = -1
-                            change_flag = False
-                            for id in data['nameIdentifiers']:
-                                if id['nameIdentifierScheme'] == 'WEKO':
-                                    author_link.add(id['nameIdentifier'])
-                                    if id['nameIdentifier'] in origin_list:
-                                        origin_id = id['nameIdentifier']
-                                        change_flag = True
-                                        record_ids.append(pid.object_uuid)
-                                        break
-                                else:
-                                    continue
-                            if change_flag:
-                                target_id, new_meta = _change_to_meta(
-                                    target, author_prefix, key_map[prop_type])
-                                dep[k]['attribute_value_mlt'][index].update(
-                                    new_meta)
-                                if origin_id != target_id:
-                                    author_link.remove(origin_id)
-                                    author_link.add(target_id)
-
-            dep['author_link'] = list(author_link)
-            dep.update_item_by_task()
-            update_es_authorinfo.append({
-                'id': pid.object_uuid, 'author_link': list(author_link)})
-        db.session.commit()
-        # update record to ES
-        if record_ids:
-            sleep(20)
-            query = (x[0] for x in PersistentIdentifier.query.filter(
-                PersistentIdentifier.object_uuid.in_(record_ids)
-            ).values(
-                PersistentIdentifier.object_uuid
-            ))
-            RecordIndexer().bulk_index(query)
-            RecordIndexer().process_bulk_queue(
-                es_bulk_kwargs={'raise_on_error': True})
-        if update_es_authorinfo:
-            sleep(20)
-            for d in update_es_authorinfo:
-                dep = WekoDeposit.get_record(d['id'])
-                dep.update_author_link(d['author_link'])
+        data_from = 0
+        data_size = current_app.config['WEKO_SEARCH_MAX_RESULT']
+        counter = 0
+        while True:
+            current_app.logger.debug("process data from {}.".format(data_from))
+            c, next = _process(data_size, data_from)
+            counter += c
+            data_from += data_size
+            if not next:
+                break
+        current_app.logger.debug(
+            "Total {} items have been updated.".format(counter))
     except SQLAlchemyError as e:
         db.session.rollback()
         current_app.logger. \

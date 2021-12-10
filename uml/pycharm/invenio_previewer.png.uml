@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>Python</ID>
+  <OriginalElement>#/Users/mhaya/git/mhaya/vagrant-weko_org/multi/tmp/weko3_b/modules/invenio-previewer/invenio_previewer</OriginalElement>
+  <nodes>
+    <node x="416.0" y="91.0">invenio_previewer.api.PreviewFile</node>
+    <node x="0.0" y="525.0">invenio_previewer.api.LibreOfficeError</node>
+    <node x="784.0" y="168.0">invenio_previewer.ext.InvenioPreviewer</node>
+    <node x="112.5" y="445.0">Exception</node>
+    <node x="547.0" y="0.0">object</node>
+    <node x="0.0" y="80.0">invenio_previewer.ext._InvenioPreviewerState</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="invenio_previewer.api.LibreOfficeError" target="Exception" relationship="REALIZATION">
+      <point x="0.0" y="-39.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_previewer.ext.InvenioPreviewer" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-72.0" />
+      <point x="1020.5" y="55.0" />
+      <point x="590.0" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_previewer.api.PreviewFile" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-149.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_previewer.ext._InvenioPreviewerState" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-160.0" />
+      <point x="198.0" y="55.0" />
+      <point x="590.0" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic" zoom="1.0" showDependencies="false" x="628.5" y="301.50000000000006" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Fields</Category>
+    <Category>Inner Classes</Category>
+    <Category>Methods</Category>
+  </Categories>
+</Diagram>
+

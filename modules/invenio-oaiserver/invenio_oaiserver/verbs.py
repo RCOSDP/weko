@@ -10,6 +10,8 @@
 
 from __future__ import absolute_import
 
+from datetime import datetime, timedelta
+
 from flask import current_app, request
 from marshmallow import Schema, ValidationError, fields, validates_schema
 from marshmallow.fields import DateTime as _DateTime
@@ -25,12 +27,12 @@ def validate_metadata_prefix(value):
     :param value: One of the metadata identifiers configured in
         ``OAISERVER_METADATA_FORMATS``.
     """
-    metadataFormats = get_oai_metadata_formats(current_app)
+    metadata_formats = get_oai_metadata_formats(current_app)
     message = 'The metadataPrefix "{0}" is not supported ' \
               'by this repository.'.format(value)
-    if "jpcoar" in metadataFormats.keys():
-        del metadataFormats["jpcoar"]
-    if value not in metadataFormats:
+    if "jpcoar" in metadata_formats.keys():
+        del metadata_formats["jpcoar"]
+    if value not in metadata_formats:
         raise ValidationError({'cannotDisseminateFormat': [message]},
                               field_names=['metadataPrefix'])
 
@@ -109,6 +111,14 @@ class OAISchema(Schema):
             if (data['until'].hour == 0 and data['until'].minute == 0 and data['until'].second == 0):
                 data['until'] = data['until'] + timedelta(hours=23, minutes=59, seconds=59)
 
+        # Set 'until' time to 23:59:59 when 'until' time is 00:00:00
+        if 'until' in data and isinstance(data['until'], datetime) and \
+            data['until'].hour == 0 and data['until'].minute == 0 and \
+                data['until'].second == 0:
+            data['until'] = data['until'] + timedelta(hours=23,
+                                                      minutes=59,
+                                                      seconds=59)
+
         list_argument = [f.load_from or f.name for f in self.fields.values()]
         extra = set(request.values.keys()) - set(list_argument)
         if extra:
@@ -126,11 +136,13 @@ class Verbs(object):
 
         identifier = fields.Str(
             required=True,
-            error_messages={'required': 'Missing data for required field "identifier".'})
+            error_messages={'required':
+                            'Missing data for required field "identifier".'})
         metadataPrefix = fields.Str(
             required=True,
             validate=validate_metadata_prefix,
-            error_messages={'required': 'Missing data for required field "metadataPrefix".'})
+            error_messages={'required': 'Missing data for required'
+                            ' field "metadataPrefix".'})
 
     class GetMetadata(OAISchema):
         """Arguments for GetMetadata verb."""
@@ -151,7 +163,8 @@ class Verbs(object):
         metadataPrefix = fields.Str(
             required=True,
             validate=validate_metadata_prefix,
-            error_messages={'required': 'Missing data for required field "metadataPrefix".'})
+            error_messages={'required': 'Missing data for required'
+                            ' field "metadataPrefix".'})
 
     class ListMetadataFormats(OAISchema):
         """Arguments for ListMetadataFormats verb."""
@@ -170,6 +183,9 @@ class ResumptionVerbs(Verbs):
 
     class ListIdentifiers(OAISchema, ResumptionTokenSchema):
         """Arguments for ListIdentifiers verb."""
+
+        metadataPrefix = fields.Str(load_only=True,
+                                    validate=validate_metadata_prefix)
 
     class ListRecords(OAISchema, ResumptionTokenSchema):
         """Arguments for ListRecords verb."""

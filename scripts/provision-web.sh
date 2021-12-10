@@ -59,7 +59,8 @@ provision_web_common_ubuntu14 () {
          rlwrap \
          screen \
          vim \
-         gnupg
+         gnupg \
+	 libpcre3-dev
     # sphinxdoc-install-useful-system-tools-ubuntu14-end
 
     # sphinxdoc-add-nodejs-external-repository-ubuntu14-begin
@@ -246,6 +247,7 @@ setup_libreoffice_ubuntu14 () {
     $sudo mkdir -p /usr/share/man/man1
     $sudo apt-get install default-jre libreoffice-java-common
     $sudo apt-get install -y libreoffice
+    #$sudo apt-get install -y libreoffice-core --no-install-recommends
     $sudo apt-get install -y fonts-ipafont fonts-ipaexfont # japanese fonts
     set -o errexit
     # sphinxdoc-install-web-libreoffice-ubuntu14-end
@@ -293,16 +295,17 @@ main () {
         provision_web_libpostgresql_ubuntu14
         setup_npm_and_css_js_filters
         setup_virtualenvwrapper
-        cleanup_web_ubuntu14
         setup_libreoffice_ubuntu14
+        cleanup_web_ubuntu14
     elif [ "$os_distribution" = "Ubuntu" ]; then
         if [ "$os_release" = "14" ]; then
             provision_web_common_ubuntu14
             provision_web_libpostgresql_ubuntu14
             setup_npm_and_css_js_filters
             setup_virtualenvwrapper
-            setup_nginx_ubuntu14
+            #setup_nginx_ubuntu14
             setup_libreoffice_ubuntu14
+            cleanup_web_ubuntu14
         else
             echo "[ERROR] Sorry, unsupported release ${os_release}."
             exit 1
@@ -313,8 +316,9 @@ main () {
             provision_web_libpostgresql_centos7
             setup_npm_and_css_js_filters
             setup_virtualenvwrapper
-            setup_nginx_centos7
+            #setup_nginx_centos7
             setup_libreoffice_centos7
+            cleanup_web_centos7
         else
             echo "[ERROR] Sorry, unsupported release ${os_release}."
             exit 1

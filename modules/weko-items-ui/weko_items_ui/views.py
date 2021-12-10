@@ -23,7 +23,8 @@
 import json
 import os
 import sys
-from datetime import date, timedelta
+from copy import deepcopy
+from datetime import date, datetime, timedelta
 
 import redis
 from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
@@ -31,6 +32,7 @@ from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
+from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.resolver import Resolver
@@ -38,6 +40,7 @@ from invenio_records_ui.signals import record_viewed
 from invenio_stats.utils import QueryItemRegReportHelper, \
     QueryRecordViewReportHelper, QuerySearchReportHelper
 from simplekv.memory.redisstore import RedisStore
+from sqlalchemy.exc import SQLAlchemyError
 from weko_accounts.utils import login_required_customize
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoRecord
@@ -192,6 +195,13 @@ def iframe_save_model():
     """
     try:
         data = request.get_json()
+        # remove either check temp data
+        if data and data.get('metainfo'):
+            metainfo = deepcopy(data.get('metainfo'))
+            for key in metainfo.keys():
+                if key.startswith('either_valid_'):
+                    del data['metainfo'][key]
+
         activity_session = session['activity_info']
         activity_id = activity_session.get('activity_id', None)
         if activity_id:
@@ -202,7 +212,8 @@ def iframe_save_model():
     except Exception as ex:
         current_app.logger.exception(str(ex))
         return jsonify(code=1, msg='Model save error')
-    return jsonify(code=0, msg='Model save success')
+    return jsonify(code=0, msg='Model save success at {} (utc)'.format(
+        datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
 
 
 @blueprint.route('/iframe/success', methods=['GET'])
@@ -426,7 +437,8 @@ def iframe_items_index(pid_value='0'):
             if pid_value and '.' in pid_value:
                 root_record, files = get_record_by_root_ver(pid_value)
                 if root_record and root_record.get('title'):
-                    session['itemlogin_item']['title'] = root_record['title'][0]
+                    session['itemlogin_item']['title'] = \
+                        root_record['title'][0]
                     files_thumbnail = get_thumbnails(files, None)
             else:
                 root_record = session['itemlogin_record']
@@ -435,8 +447,8 @@ def iframe_items_index(pid_value='0'):
                 files = set_files_display_type(root_record, files)
 
             from weko_workflow.utils import get_main_record_detail
-            record_detail_alt = get_main_record_detail(cur_activity.activity_id,
-                                                       cur_activity)
+            record_detail_alt = get_main_record_detail(
+                cur_activity.activity_id, cur_activity)
             ctx.update(
                 dict(
                     record_org=record_detail_alt.get('record'),
@@ -857,7 +869,23 @@ def prepare_edit_item():
         post_activity['community'] = community
         post_activity['post_workflow'] = post_workflow
 
-        rtn = prepare_edit_workflow(post_activity, recid, deposit)
+        try:
+            rtn = prepare_edit_workflow(post_activity, recid, deposit)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.error('sqlalchemy error: ', ex)
+            db.session.rollback()
+            return jsonify(
+                code=err_code,
+                msg=_('An error has occurred.')
+            )
+        except BaseException as ex:
+            current_app.logger.error('Unexpected error: ', ex)
+            db.session.rollback()
+            return jsonify(
+                code=err_code,
+                msg=_('An error has occurred.')
+            )
 
         if community:
             comm = GetCommunity.get_community_by_id(community)
@@ -1046,28 +1074,16 @@ def check_validation_error_msg(activity_id):
         session_data = sessionstore.get(
             'updated_json_schema_{}'.format(activity_id))
         error_list = json.loads(session_data.decode('utf-8'))
-        msg = []
-        if error_list.get('error_type'):
-            if error_list.get('error_type') == 'no_resource_type':
-                msg.append(_(error_list.get('msg', '')))
-
-        else:
-            msg.append(_('PID does not meet the conditions.'))
-        if error_list.get('pmid'):
-            msg.append(_(
-                'Since PMID is not subject to DOI registration, please '
-                'select another type.'
-            ))
-        if error_list.get('doi'):
-            msg.append(_(
-                'Prefix/Suffix of Identifier is not consistency with'
-                ' content of Identifier Registration.'))
-        if error_list.get('url'):
-            msg.append(_(
-                'Please input location information (URL) for Identifier.'))
-        return jsonify(code=1,
-                       msg=msg,
-                       error_list=error_list)
+        msg = [_('PID does not meet the conditions.')]
+        if error_list.get('mapping'):
+            mapping_err_msg = _('The mapping of required items for DOI '
+                                'validation is not set. Please recheck the '
+                                'following mapping settings.<br/>{}')
+            keys = [k for k in error_list.get('mapping')]
+            msg.append(mapping_err_msg.format('<br/>'.join(keys)))
+        if error_list.get('other'):
+            msg.append(_(error_list.get('other')))
+        return jsonify(code=1, msg=msg, error_list=error_list)
     else:
         return jsonify(code=0)
 

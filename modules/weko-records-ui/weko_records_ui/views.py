@@ -22,7 +22,6 @@
 
 import os
 
-import redis
 import six
 import werkzeug
 from flask import Blueprint, abort, current_app, escape, flash, jsonify, \
@@ -42,18 +41,19 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records_ui.signals import record_viewed
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
-from simplekv.memory.redisstore import RedisStore
 from weko_accounts.views import _redirect_method
+from weko_admin.models import AdminSettings
 from weko_admin.utils import get_search_setting
 from weko_deposit.api import WekoRecord
 from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
-from weko_records.api import ItemLink
+from weko_records.api import ItemLink, Mapping
 from weko_records.serializers import citeproc_v1
+from weko_records.serializers.utils import get_mapping
 from weko_records.utils import custom_record_medata_for_export, \
-    remove_weko2_special_character
+    remove_weko2_special_character, selected_value_by_language
 from weko_search_ui.api import get_search_detail_keyword
 from weko_workflow.api import WorkFlow
 
@@ -528,26 +528,30 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     google_scholar_meta = _get_google_scholar_meta(record)
 
-    # start: experimental implementation 20210502
-    title_name_dict = {'ja': {}, 'en': {}}
-    recstr = etree.tostring(getrecord(
-        identifier=record['_oai'].get('id'),
-        metadataPrefix='jpcoar',
-        verb='getrecord'))
-    et = etree.fromstring(recstr)
-    if et is not None:
-        mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
-        if mtdata is not None:
-            for e in mtdata.findall('dc:title', namespaces=mtdata.nsmap):
-                # print(etree.tostring(e))
-                title_name_dict[e.attrib.get(
-                    '{http://www.w3.org/XML/1998/namespace}lang')] = e.text
-        else:
-            # if jpcoar mapping is unavilable
-            title_name_dict['ja'] = record['title'][0]
-            title_name_dict['en'] = record['title'][0]
-
-    # end: experimental implementation 20210502
+    current_lang = current_i18n.language \
+        if hasattr(current_i18n, 'language') else None
+    # get title name
+    from weko_search_ui.utils import get_data_by_property
+    title_name = ''
+    item_type_mapping = Mapping.get_record(record.get('item_type_id'))
+    item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
+    suffixes = '.@attributes.xml:lang'
+    for key in item_map:
+        prefix = key.replace(suffixes, '')
+        if prefix == 'title' and key.find(suffixes) != -1:
+            # get language
+            title_languages, _title_key = get_data_by_property(
+                record, item_map, key)
+            # get value
+            title_values, _title_key1 = get_data_by_property(
+                record, item_map, prefix + '.@value')
+            title_name = selected_value_by_language(
+                title_languages,
+                title_values,
+                _title_key,
+                _title_key1,
+                current_lang,
+                record)
 
     pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
     # Check if user has the permission to download original pdf file
@@ -574,13 +578,10 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     can_update_version = has_update_version_role(current_user)
 
-    datastore = RedisStore(redis.StrictRedis.from_url(
-        current_app.config['CACHE_REDIS_URL']))
-    cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-        format(name='display_stats')
-    if datastore.redis.exists(cache_key):
-        curr_display_setting = datastore.get(cache_key).decode('utf-8')
-        display_stats = True if curr_display_setting == 'True' else False
+    display_setting = AdminSettings.get(name='display_stats_settings',
+                                        dict_to_object=False)
+    if display_setting:
+        display_stats = display_setting.get('display_stats')
     else:
         display_stats = True
 
@@ -598,10 +599,12 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         request.args.get('community') or current_app.config[
             'WEKO_THEME_DEFAULT_COMMUNITY'])
 
-    if hasattr(current_i18n, 'language'):
-        index_link_list = get_index_link_list(current_i18n.language)
-    else:
-        index_link_list = get_index_link_list()
+    # if current_lang:
+    #     index_link_list = get_index_link_list(current_lang)
+    # else:
+    #     index_link_list = get_index_link_list()
+
+    index_link_list = get_index_link_list()
 
     files_thumbnail = []
     if record.files:
@@ -635,6 +638,13 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         "display_index_tree": display_index_tree
     })
 
+    # Get display_community setting.
+    display_community = get_search_setting().get("display_control", {}).get(
+        'display_community', {}).get('status', False)
+    ctx.update({
+        "display_community": display_community
+    })
+
     return render_template(
         template,
         pid=pid,
@@ -665,7 +675,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         path_name_dict=path_name_dict,
         is_display_file_preview=is_display_file_preview,
         # experimental implementation 20210502
-        title_name_dict=title_name_dict,
+        title_name=title_name,
         **ctx,
         **kwargs
     )
@@ -887,7 +897,12 @@ def escape_newline(s):
     :return: result
     """
     br_char = '<br/>'
-    return s.replace('\r\n', br_char).replace('\r', br_char).replace('\n', br_char)
+    s = s.replace('\r\n', br_char).replace(
+        '\r', br_char).replace('\n', br_char)
+    s = '<br />'.join(s.splitlines())
+    # temp fix for JDCat
+    s = s.replace('\\n', br_char)
+    return s
 
 
 @blueprint.app_template_filter('preview_able')

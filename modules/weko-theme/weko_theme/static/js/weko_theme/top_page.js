@@ -238,7 +238,7 @@ require([
         var isDetailSearch = Array.from(urlParams.keys()).length > 6  // 6は簡易検索の際のクエリの数
         var SearchType = GetUrlParam('search_type');
 
-        if (isDetailSearch && SearchType && SearchType != '2') {  // インデックスの検索に開かない
+        if (isDetailSearch && SearchType && SearchType != '2' && !urlParams.has('is_facet_search')) {  // インデックスの検索に開かない
             $('#search_detail_metadata').collapse('show');
             $('.detail-search-open').hide();
             $('.detail-search-close').show();

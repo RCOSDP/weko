@@ -46,6 +46,7 @@ from functools import wraps
 from os.path import basename
 
 import six
+import sqlalchemy as sa
 from flask import current_app, flash, redirect, request, url_for
 from flask_login import current_user
 from invenio_db import db
@@ -64,7 +65,6 @@ from .errors import BucketLockedError, FileInstanceAlreadySetError, \
     MultipartInvalidChunkSize, MultipartInvalidPartNumber, \
     MultipartInvalidSize, MultipartMissingParts, MultipartNotCompleted
 from .proxies import current_files_rest
-from .utils import ENCODING_MIMETYPES, guess_mimetype
 
 slug_pattern = re.compile('^[a-z][a-z0-9-]+$')
 
@@ -746,6 +746,14 @@ class FileInstance(db.Model, Timestamp):
         return cls.query.filter_by(uri=uri).one_or_none()
 
     @classmethod
+    def get_location_by_file_instance(cls):
+        """Get a file instance by URI."""
+        return db.session.query(Location).filter(
+            FileInstance.uri.like(sa.func.concat(Location.uri, '%'))) \
+            .filter(FileInstance.id == cls.id) \
+            .first()
+
+    @classmethod
     def create(cls):
         """Create a file instance.
 
@@ -772,6 +780,8 @@ class FileInstance(db.Model, Timestamp):
            Normally you should use the Celery task to delete a file instance,
            as this method will not remove the file on disk.
         """
+        location = self.get_location_by_file_instance()
+        location.size = location.size - self.size
         self.query.filter_by(id=self.id).delete()
         return self
 
@@ -851,17 +861,22 @@ class FileInstance(db.Model, Timestamp):
 
     @ensure_writable()
     def set_contents(self, stream, chunk_size=None, size=None, size_limit=None,
-                     progress_callback=None, **kwargs):
+                     progress_callback=None, is_set_size_location=True,
+                     **kwargs):
         """Save contents of stream to this file.
 
         :param obj: ObjectVersion instance from where this file is accessed
             from.
         :param stream: File-like stream.
         """
+        old_size = self.size if self.size else 0
         self.set_uri(
             *self.storage(**kwargs).save(
                 stream, chunk_size=chunk_size, size=size,
                 size_limit=size_limit, progress_callback=progress_callback))
+        if is_set_size_location:
+            location = self.get_location_by_file_instance()
+            location.size = location.size + self.size - old_size
 
     @ensure_writable()
     def copy_contents(self, fileinstance, progress_callback=None,
@@ -1081,6 +1096,7 @@ class ObjectVersion(db.Model, Timestamp):
     @hybrid_property
     def mimetype(self):
         """Get MIME type of object."""
+        from .utils import guess_mimetype
         return self._mimetype if self._mimetype else guess_mimetype(self.key)
 
     @mimetype.setter
@@ -1102,7 +1118,7 @@ class ObjectVersion(db.Model, Timestamp):
     @update_bucket_size
     def set_contents(self, stream, chunk_size=None, size=None, size_limit=None,
                      replace_version_id=None, root_file_id=None,
-                     progress_callback=None):
+                     progress_callback=None, is_set_size_location=True):
         """Save contents of stream to file instance.
 
         If a file instance has already been set, this methods raises an
@@ -1126,6 +1142,7 @@ class ObjectVersion(db.Model, Timestamp):
             progress_callback=progress_callback,
             default_location=self.bucket.location.uri,
             default_storage_class=self.bucket.default_storage_class,
+            is_set_size_location=is_set_size_location
         )
 
         if root_file_id:

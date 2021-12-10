@@ -58,6 +58,12 @@ msgstr ""
 msgid "PID does not meet the conditions."
 msgstr ""
 
+msgid "The mapping of required items for DOI validation is not set. Please recheck the following mapping settings.<br/>{}"
+msgstr ""
+
+msgid "You cannot change the resource type of items that have been grant a DOI."
+msgstr ""
+
 #: weko_items_ui/views.py:1189
 msgid "Since PMID is not subject to DOI registration, please select another type."
 msgstr ""
@@ -396,4 +402,7 @@ msgid "Item cannot be deleted because the import is in progress."
 msgstr ""
 
 msgid "Can not found the email address of approval."
+msgstr ""
+
+msgid "The item cannot be copied because you do not have permission to view it."
 msgstr ""

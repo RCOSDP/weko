@@ -63,3 +63,31 @@ author_prefix_js = Bundle(
     filters='jsmin',
     output="gen/authorPrefix.%(version)s.js",
 )
+
+author_export_css = Bundle(
+    'css/weko_authors/app-author-export.main.chunk.css',
+    filters='jsmin',
+    output="gen/authorExport.%(version)s.css",
+)
+
+author_export_js = Bundle(
+    'js/weko_authors/app-author-export.runtime-main.js',
+    'js/weko_authors/app-author-export.chunk.js',
+    'js/weko_authors/app-author-export.main.chunk.js',
+    filters='jsmin',
+    output="gen/authorExport.%(version)s.js",
+)
+
+author_import_css = Bundle(
+    'css/weko_authors/app-author-import.main.chunk.css',
+    filters='jsmin',
+    output="gen/authorImport.%(version)s.css",
+)
+
+author_import_js = Bundle(
+    'js/weko_authors/app-author-import.runtime-main.js',
+    'js/weko_authors/app-author-import.chunk.js',
+    'js/weko_authors/app-author-import.main.chunk.js',
+    filters='jsmin',
+    output="gen/authorImport.%(version)s.js",
+)

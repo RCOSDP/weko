@@ -22,6 +22,8 @@
 
 import copy
 
+from invenio_records_rest.utils import deny_all
+
 WEKO_BUCKET_QUOTA_SIZE = 50 * 1024 * 1024 * 1024  # 50 GB
 """Maximum quota per bucket."""
 
@@ -91,7 +93,7 @@ DEPOSIT_REST_ENDPOINTS = dict(
         # create_permission_factory_imp='',
         # read_permission_factory_imp='',
         # update_permission_factory_imp='',
-        # delete_permission_factory_imp='',
+        delete_permission_factory_imp=deny_all,
     )
 )
 
@@ -123,7 +125,6 @@ DEPOSIT_RECORDS_UI_ENDPOINTS = {
 
 RECORDS_REST_DEFAULT_CREATE_PERMISSION_FACTORY = None
 RECORDS_REST_DEFAULT_UPDATE_PERMISSION_FACTORY = None
-RECORDS_REST_DEFAULT_DELETE_PERMISSION_FACTORY = None
 DEPOSIT_JSONSCHEMAS_PREFIX = ''
 
 WEKO_DEPOSIT_SYS_CREATOR_KEY = {

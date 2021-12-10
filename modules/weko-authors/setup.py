@@ -51,7 +51,7 @@ for reqs in extras_require.values():
 
 setup_requires = [
     'Babel>=1.3',
-    'pytest-runner>=2.6.2',
+    'pytest-runner>=3.0.0,<5',
 ]
 
 install_requires = [
@@ -88,6 +88,10 @@ setup(
         'invenio_admin.views': [
             'weko_authors_management = '
             'weko_authors.admin:authors_list_adminview',
+            'weko_authors_export = '
+            'weko_authors.admin:authors_export_adminview',
+            'weko_authors_import = '
+            'weko_authors.admin:authors_import_adminview',
         ],
         'invenio_base.blueprints': [
             'weko_authors = weko_authors.views:blueprint',
@@ -114,6 +118,10 @@ setup(
             'weko_authors_search_js = weko_authors.bundles:author_search_js',
             'weko_authors_prefix_css = weko_authors.bundles:author_prefix_css',
             'weko_authors_prefix_js = weko_authors.bundles:author_prefix_js',
+            'weko_authors_export_css = weko_authors.bundles:author_export_css',
+            'weko_authors_export_js = weko_authors.bundles:author_export_js',
+            'weko_authors_import_css = weko_authors.bundles:author_import_css',
+            'weko_authors_import_js = weko_authors.bundles:author_import_js',
         ],
         'invenio_access.actions': [
             'author_access = weko_authors.permissions:action_author_access',

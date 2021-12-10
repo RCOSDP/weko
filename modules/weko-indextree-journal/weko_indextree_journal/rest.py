@@ -236,7 +236,7 @@ class JournalActionResource(ContentNegotiatedMethodView):
 
         if action in ('move', 'all'):
             result = self.record_class.\
-                delete_by_action(action, journal_id, res.path)
+                delete_by_action(action, journal_id)
             if not result:
                 raise JournalBaseRESTError(
                     description='Could not delete data.')

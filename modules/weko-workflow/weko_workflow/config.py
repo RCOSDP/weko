@@ -50,7 +50,7 @@ IDENTIFIER_GRANT_LIST = [(0, 'Not Grant', ''),
                          ]
 """Options list for Identifier Grant action."""
 
-IDENTIFIER_GRANT_SUFFIX_METHOD = 0
+IDENTIFIER_GRANT_SUFFIX_METHOD = 0 
 """
     Suffix input method for Identifier Grant action
 
@@ -72,12 +72,41 @@ WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID = 3
 
 IDENTIFIER_GRANT_SELECT_DICT = {
     'NotGrant': '0',
-    'JaLCDOI': '1',
-    'CrossRefDOI': '2',
-    'DataCiteDOI': '3',
-    'NDLJaLCDOI': '4'
+    'JaLC': '1',
+    'Crossref': '2',
+    'DataCite': '3',
+    'NDL JaLC': '4'
 }
 """Identifier grant selected enum."""
+
+DOI_VALIDATION_INFO = {
+    'jpcoar:URI': [['file.URI.@value', None]],
+    'dc:title': [['title.@value', None], ['title.@attributes.xml:lang', None]],
+    'jpcoar:givenName': [['creator.givenName.@value', None]],
+    'jpcoar:sourceIdentifier': [
+        ['sourceIdentifier.@value', None],
+        ['sourceIdentifier.@attributes.identifierType', None]],
+    'jpcoar:sourceTitle': [
+        ['sourceTitle.@value', None],
+        ['sourceTitle.@attributes.xml:lang', 'en']],
+    'dc:publisher': [
+        ['publisher.@value', None],
+        ['publisher.@attributes.xml:lang', 'en']],
+    'datacite:geoLocationPoint': [
+        ['geoLocation.geoLocationPoint.pointLatitude.@value', None],
+        ['geoLocation.geoLocationPoint.pointLongitude.@value', None]],
+    'datacite:geoLocationBox': [
+        ['geoLocation.geoLocationBox.eastBoundLongitude.@value', None],
+        ['geoLocation.geoLocationBox.northBoundLatitude.@value', None],
+        ['geoLocation.geoLocationBox.southBoundLatitude.@value', None],
+        ['geoLocation.geoLocationBox.westBoundLongitude.@value', None]],
+    'datacite:geoLocationPlace': [['geoLocation.geoLocationPlace.@value', None]],
+    'jpcoar:mimeType': [['file.mimeType.@value', None]],
+    'datacite:version': [['version.@value', None]],
+    'oaire:version': [['versiontype.@value', None],
+                      ['versiontype.@attributes.rdf:resource', None]]
+}
+"""List of DOI validation information."""
 
 WEKO_SERVER_CNRI_HOST_LINK = 'http://hdl.handle.net/'
 """Host server of CNRI"""
@@ -124,7 +153,6 @@ WEKO_WORKFLOW_ACTIONS = [
     WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,
     WEKO_WORKFLOW_ACTION_APPROVAL,
     WEKO_WORKFLOW_ACTION_ITEM_LINK,
-    WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,
     WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT
 ]
 """Action list"""
@@ -289,3 +317,25 @@ WEKO_WORKFLOW_USAGE_REPORT_ITEM_TITLE = '利用報告'
 WEKO_WORKFLOW_RESTRICTED_ACCESS_APPROVAL_DATE = 'subitem_restricted_access_approval_date'
 
 WEKO_WORKFLOW_RESTRICTED_ACCESS_USAGE_REPORT_ID = 'subitem_restricted_access_usage_report_id'
+
+WEKO_WORKFLOW_GAKUNINRDM_DATA = [
+    {
+        'workflow_id': -1,
+        'workflow_name': 'GRDM_デフォルトワークフロー',
+        'item_type_id': 15,
+        'flow_id': -1,
+        'flow_name': 'GRDM_デフォルトフロー',
+        'action_endpoint_list': [
+            'begin_action',
+            'item_login',
+            'item_link',
+            'identifier_grant',
+            'approval',
+            'end_action'
+        ]
+    }
+]
+"""GakuninRDM information to create flow and workflow"""
+
+WEKO_WORKFLOW_GAKUNINRDM_PREFIX = 'GakuninRDM'
+"""GekuninRDM prefix for logging."""

@@ -21,10 +21,6 @@
 """Blueprint for Index Search rest."""
 
 import copy
-import json
-import os.path
-import shutil
-import uuid
 from functools import partial
 
 from flask import Blueprint, abort, current_app, jsonify, redirect, request, \
@@ -53,9 +49,6 @@ from weko_index_tree.api import Indexes
 from weko_index_tree.utils import count_items, recorrect_private_items_count
 from weko_records.models import ItemType
 from werkzeug.utils import secure_filename
-
-
-from . import config
 
 
 def create_blueprint(app, endpoints):
@@ -220,9 +213,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             size=size,
             _external=True,
         )
-        # endpoint = '.{0}_index'.format(
-        #     current_records_rest.default_endpoint_prefixes[self.pid_type])
-
         links = dict(self=url_for('weko_search_rest.recid_index', page=page,
                                   **urlkwargs))
         if page > 1:
@@ -234,7 +224,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                                     page=page + 1, **urlkwargs)
         # aggs result identify
         rd = search_result.to_dict()
-        q = request.values.get('q') or '0'
+        q = request.values.get('q') or ''
         lang = current_i18n.language
 
         try:
@@ -242,14 +232,20 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         except BaseException:
             paths = []
         agp = rd["aggregations"]["path"]["buckets"]
+        rd["aggregations"]["aggregations"] = copy.deepcopy(agp)
         nlst = []
-        items_count = []
-        all_indexes = Indexes.get_all_indexes()
+        items_count = dict()
+        public_indexes = Indexes.get_public_indexes_list()
         recorrect_private_items_count(agp)
         for i in agp:
-            items_count.append({"key": i["key"], "doc_count": i["doc_count"],
-                                "no_available": i["no_available"]["doc_count"]})
+            items_count[i["key"]] = {
+                "key": i["key"],
+                "doc_count": i["doc_count"],
+                "no_available": i["no_available"]["doc_count"],
+                "public_state": True if i['key'] in public_indexes else False
+            }
 
+        is_perm_paths = qs_kwargs.get('is_perm_paths', [])
         for p in paths:
             m = 0
             current_idx = {}
@@ -266,8 +262,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     m = 1
                     break
             if m == 0:
-                index_id = p.path if '/' not in p.path \
-                    else p.path.split('/').pop()
+                index_id = p.cid
                 index_info = Indexes.get_index(index_id=index_id)
                 rss_status = index_info.rss_status
                 nd = {
@@ -281,16 +276,20 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     'comment': p.comment,
                 }
                 current_idx = nd
-            private_count, public_count = count_items((str(p.path)), items_count, all_indexes)
+            _child_indexes = []
+            for _path in is_perm_paths:
+                if (_path.startswith(str(p.path) + '/') or _path == p.path) \
+                        and items_count.get(str(_path.split('/')[-1])):
+                    _child_indexes.append(
+                        items_count[str(_path.split('/')[-1])])
+            private_count, public_count = count_items(_child_indexes)
             current_idx["date_range"]["pub_cnt"] = public_count
             current_idx["date_range"]["un_pub_cnt"] = private_count
             nlst.append(current_idx)
         agp.clear()
         # process index tree image info
         if len(nlst):
-            index_id = nlst[0].get('key')
-            index_id = index_id if '/' not in index_id \
-                else index_id.split('/').pop()
+            index_id = nlst[0].get('key').split('/')[-1]
             index_info = Indexes.get_index(index_id=index_id)
             # update by weko_dev17 at 2019/04/04
             if len(index_info.image_name) > 0:
@@ -299,9 +298,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             nlst[0]['rss_status'] = index_info.rss_status
         # Update rss_status for index child
         for idx in range(0, len(nlst)):
-            index_id = nlst[idx].get('key')
-            index_id = index_id if '/' not in index_id \
-                else index_id.split('/').pop()
+            index_id = nlst[idx].get('key').split('/')[-1]
             index_info = Indexes.get_index(index_id=index_id)
             nlst[idx]['rss_status'] = index_info.rss_status
         agp.append(nlst)

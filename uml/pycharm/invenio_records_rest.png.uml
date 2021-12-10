@@ -1,0 +1,455 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>Python</ID>
+  <OriginalElement>#/Users/mhaya/git/mhaya/vagrant-weko_org/multi/tmp/weko3_b/modules/invenio-records-rest/invenio_records_rest</OriginalElement>
+  <nodes>
+    <node x="3533.0" y="2127.0">RESTException</node>
+    <node x="706.0" y="1709.0">Schema</node>
+    <node x="2590.0" y="2617.0">PathConverter</node>
+    <node x="961.0" y="2357.0">invenio_records_rest.errors.PIDMissingObjectRESTError</node>
+    <node x="5452.0" y="1176.0">String</node>
+    <node x="1905.0" y="2368.5">invenio_records_rest.errors.PIDUnregisteredRESTError</node>
+    <node x="2775.4534883720935" y="1054.0">invenio_records_rest.serializers.datacite.DataCite31Serializer</node>
+    <node x="3337.0" y="1300.0">invenio_records_rest.views.RecordResource</node>
+    <node x="2896.5" y="2218.5">invenio_records_rest.errors.MaxResultWindowRESTError</node>
+    <node x="3254.0" y="2582.0">invenio_records_rest.schemas.fields.datetime.DateString</node>
+    <node x="5215.0" y="1256.0">invenio_records_rest.schemas.fields.trimmedstring.TrimmedString</node>
+    <node x="5332.5" y="2218.5">invenio_records_rest.errors.UnhandledElasticsearchError</node>
+    <node x="998.5" y="2218.0">invenio_records_rest.errors.PIDRESTException</node>
+    <node x="4282.7034883720935" y="694.5">invenio_records_rest.schemas.fields.persistentidentifier.PersistentIdentifier</node>
+    <node x="1614.4534883720933" y="148.0">invenio_records_rest.serializers.datacite.OAIDataCiteSerializer</node>
+    <node x="0.0" y="1256.0">invenio_records_rest.views.RecordsListResource</node>
+    <node x="2807.0" y="1176.0">ContentNegotiatedMethodView</node>
+    <node x="536.0" y="1833.0">invenio_records_rest.schemas.json.StrictKeysMixin</node>
+    <node x="1459.0" y="2368.5">invenio_records_rest.errors.PIDDeletedRESTError</node>
+    <node x="5399.4534883720935" y="205.0">invenio_records_rest.schemas.fields.generated.GeneratedValue</node>
+    <node x="4810.4534883720935" y="181.5">invenio_records_rest.schemas.fields.marshmallow_contrib.Function</node>
+    <node x="1224.75" y="454.5">invenio_records_rest.serializers.base.SerializerMixinInterface</node>
+    <node x="996.0" y="1789.0">invenio_records_rest.schemas.json.RecordSchemaJSONV1</node>
+    <node x="2218.4534883720935" y="181.5">invenio_records_rest.serializers.base.PreprocessorMixinInterface</node>
+    <node x="3398.5" y="2207.0">invenio_records_rest.errors.PIDResolveRESTError</node>
+    <node x="3543.7034883720935" y="489.0">invenio_records_rest.schemas.fields.generated.GenMethod</node>
+    <node x="2633.25" y="2732.0">invenio_records_rest.utils.PIDPathConverter</node>
+    <node x="0.0" y="181.5">invenio_records_rest.serializers.base.TransformerMixinInterface</node>
+    <node x="3206.4534883720935" y="192.5">invenio_records_rest.schemas.fields.marshmallow_contrib.Method</node>
+    <node x="2253.9534883720935" y="443.0">invenio_records_rest.serializers.base.PreprocessorMixin</node>
+    <node x="1080.0" y="2615.0">invenio_records_rest.views.SuggestResource</node>
+    <node x="1966.5" y="2218.5">invenio_records_rest.errors.InvalidQueryRESTError</node>
+    <node x="505.21802325581393" y="1077.5">invenio_records_rest.serializers.jsonld.JSONLDSerializer</node>
+    <node x="59.0" y="1833.0">invenio_records_rest.schemas.json.OriginalKeysMixin</node>
+    <node x="2152.7034883720935" y="0.0">object</node>
+    <node x="470.0" y="2368.5">invenio_records_rest.errors.PIDDoesNotExistRESTError</node>
+    <node x="3786.0" y="2502.0">invenio_records_rest.schemas.json.Nested</node>
+    <node x="2761.0" y="2582.0">invenio_records_rest.utils.PIDConverter</node>
+    <node x="898.4186046511632" y="672.5">invenio_records_rest.serializers.json.JSONSerializerMixin</node>
+    <node x="5191.0" y="1361.0">invenio_records_rest.schemas.fields.sanitizedunicode.SanitizedUnicode</node>
+    <node x="4441.4534883720935" y="159.0">invenio_records_rest.utils.LazyPIDValue</node>
+    <node x="2908.0" y="2502.0">BaseConverter</node>
+    <node x="5214.5" y="1511.0">invenio_records_rest.schemas.fields.sanitizedhtml.SanitizedHTML</node>
+    <node x="0.0" y="2582.0">invenio_records_rest.views.RecordsListOptionsResource</node>
+    <node x="2695.9534883720935" y="858.0">invenio_records_rest.serializers.datacite.BaseDataCiteSerializer</node>
+    <node x="3844.5" y="2218.5">invenio_records_rest.errors.PatchJSONFailureRESTError</node>
+    <node x="0.0" y="1982.0">invenio_records_rest.schemas.json.RecordMetadataSchemaJSONV1</node>
+    <node x="1945.5" y="2502.0">RESTValidationError</node>
+    <node x="1205.75" y="93.0">invenio_records_rest.ext._RecordRESTState</node>
+    <node x="3314.4534883720935" y="1054.0">invenio_records_rest.serializers.datacite.DataCite40Serializer</node>
+    <node x="5838.5" y="2207.0">invenio_records_rest.errors.UnsupportedMediaRESTError</node>
+    <node x="1421.5" y="2207.0">invenio_records_rest.errors.SuggestMissingContextRESTError</node>
+    <node x="1375.4534883720933" y="915.0">invenio_records_rest.serializers.json.JSONSerializer</node>
+    <node x="2789.4534883720935" y="170.5">invenio_records_rest.ext.InvenioRecordsREST</node>
+    <node x="4343.5" y="2218.5">invenio_records_rest.errors.InvalidDataRESTError</node>
+    <node x="2033.4534883720933" y="650.0">invenio_records_rest.serializers.marshmallow.MarshmallowMixin</node>
+    <node x="686.75" y="82.0">invenio_records_rest.serializers.citeproc.CiteprocSerializer</node>
+    <node x="3787.4534883720935" y="192.5">invenio_records_rest.schemas.fields.generated.ForcedFieldDeserializeMixin</node>
+    <node x="4343.7034883720935" y="489.0">invenio_records_rest.schemas.fields.generated.GenFunction</node>
+    <node x="2065.0" y="2637.0">invenio_records_rest.errors.JSONSchemaValidationError</node>
+    <node x="3461.0" y="2502.0">Date</node>
+    <node x="1517.0" y="2582.0">invenio_records_rest.loaders.marshmallow.MarshmallowErrors</node>
+    <node x="0.0" y="410.0">invenio_records_rest.serializers.jsonld.JSONLDTransformerMixin</node>
+    <node x="2422.5" y="2207.0">invenio_records_rest.errors.StyleNotFoundRESTError</node>
+    <node x="1824.5" y="1054.0">invenio_records_rest.serializers.datacite.DataCite41Serializer</node>
+    <node x="0.0" y="2357.0">invenio_records_rest.errors.PIDRedirectedRESTError</node>
+    <node x="4788.5" y="2207.0">invenio_records_rest.errors.SuggestNoCompletionsRESTError</node>
+    <node x="835.5" y="2502.0">MethodView</node>
+    <node x="1997.9534883720933" y="880.5">invenio_records_rest.serializers.dc.DublinCoreSerializer</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="invenio_records_rest.serializers.dc.DublinCoreSerializer" target="invenio_records_rest.serializers.base.SerializerMixinInterface" relationship="REALIZATION">
+      <point x="0.0" y="-49.5" />
+      <point x="2336.9534883720935" y="816.0" />
+      <point x="1948.468023255814" y="816.0" />
+      <point x="1948.468023255814" y="629.0" />
+      <point x="1596.25" y="629.0" />
+      <point x="0.0" y="49.5" />
+    </edge>
+    <edge source="invenio_records_rest.utils.PIDPathConverter" target="PathConverter" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="2825.25" y="2707.0" />
+      <point x="2665.5" y="2707.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.serializers.datacite.DataCite41Serializer" target="invenio_records_rest.serializers.datacite.BaseDataCiteSerializer" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="2084.0" y="1028.0" />
+      <point x="3034.9534883720935" y="1028.0" />
+      <point x="0.0" y="72.0" />
+    </edge>
+    <edge source="invenio_records_rest.schemas.json.StrictKeysMixin" target="Schema" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.errors.InvalidDataRESTError" target="RESTException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="4556.0" y="2182.0" />
+      <point x="3611.5" y="2182.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.views.RecordsListOptionsResource" target="MethodView" relationship="REALIZATION">
+      <point x="0.0" y="-105.0" />
+      <point x="530.0" y="2557.0" />
+      <point x="903.0" y="2557.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.schemas.fields.sanitizedunicode.SanitizedUnicode" target="invenio_records_rest.schemas.fields.trimmedstring.TrimmedString" relationship="REALIZATION">
+      <point x="0.0" y="-50.0" />
+      <point x="0.0" y="27.5" />
+    </edge>
+    <edge source="invenio_records_rest.loaders.marshmallow.MarshmallowErrors" target="RESTValidationError" relationship="REALIZATION">
+      <point x="0.0" y="-105.0" />
+      <point x="1781.0" y="2557.0" />
+      <point x="2043.0" y="2557.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.errors.PIDDeletedRESTError" target="invenio_records_rest.errors.PIDRESTException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="1672.0" y="2332.0" />
+      <point x="1200.0" y="2332.0" />
+      <point x="0.0" y="39.0" />
+    </edge>
+    <edge source="invenio_records_rest.errors.PIDResolveRESTError" target="RESTException" relationship="REALIZATION">
+      <point x="0.0" y="-50.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.schemas.json.OriginalKeysMixin" target="Schema" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="287.5" y="1764.0" />
+      <point x="756.0" y="1764.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.errors.StyleNotFoundRESTError" target="RESTException" relationship="REALIZATION">
+      <point x="0.0" y="-50.0" />
+      <point x="2649.5" y="2182.0" />
+      <point x="3611.5" y="2182.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.errors.PIDDoesNotExistRESTError" target="invenio_records_rest.errors.PIDRESTException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="705.5" y="2332.0" />
+      <point x="1200.0" y="2332.0" />
+      <point x="0.0" y="39.0" />
+    </edge>
+    <edge source="invenio_records_rest.schemas.fields.persistentidentifier.PersistentIdentifier" target="invenio_records_rest.schemas.fields.generated.GenFunction" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.errors.SuggestNoCompletionsRESTError" target="RESTException" relationship="REALIZATION">
+      <point x="0.0" y="-50.0" />
+      <point x="5050.5" y="2182.0" />
+      <point x="3611.5" y="2182.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.serializers.dc.DublinCoreSerializer" target="invenio_records_rest.serializers.base.PreprocessorMixin" relationship="REALIZATION">
+      <point x="0.0" y="-49.5" />
+      <point x="2336.9534883720935" y="816.0" />
+      <point x="2768.468023255814" y="816.0" />
+      <point x="2768.468023255814" y="619.0" />
+      <point x="2493.9534883720935" y="619.0" />
+      <point x="0.0" y="61.0" />
+    </edge>
+    <edge source="invenio_records_rest.errors.PatchJSONFailureRESTError" target="RESTException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="4084.0" y="2182.0" />
+      <point x="3611.5" y="2182.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.errors.UnsupportedMediaRESTError" target="RESTException" relationship="REALIZATION">
+      <point x="0.0" y="-50.0" />
+      <point x="6082.5" y="2182.0" />
+      <point x="3611.5" y="2182.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.serializers.base.TransformerMixinInterface" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="303.5" y="56.0" />
+      <point x="2195.7034883720935" y="56.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.serializers.datacite.BaseDataCiteSerializer" target="invenio_records_rest.serializers.base.PreprocessorMixin" relationship="REALIZATION">
+      <point x="0.0" y="-72.0" />
+      <point x="3034.9534883720935" y="619.0" />
+      <point x="2493.9534883720935" y="619.0" />
+      <point x="0.0" y="61.0" />
+    </edge>
+    <edge source="invenio_records_rest.schemas.fields.generated.GeneratedValue" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="5668.4534883720935" y="56.0" />
+      <point x="2195.7034883720935" y="56.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.serializers.base.SerializerMixinInterface" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-49.5" />
+      <point x="1596.25" y="56.0" />
+      <point x="2195.7034883720935" y="56.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.serializers.json.JSONSerializerMixin" target="invenio_records_rest.serializers.base.SerializerMixinInterface" relationship="REALIZATION">
+      <point x="0.0" y="-49.5" />
+      <point x="1269.9186046511632" y="629.0" />
+      <point x="1596.25" y="629.0" />
+      <point x="0.0" y="49.5" />
+    </edge>
+    <edge source="invenio_records_rest.serializers.datacite.DataCite40Serializer" target="invenio_records_rest.serializers.datacite.BaseDataCiteSerializer" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="3575.4534883720935" y="1028.0" />
+      <point x="3034.9534883720935" y="1028.0" />
+      <point x="0.0" y="72.0" />
+    </edge>
+    <edge source="invenio_records_rest.ext._RecordRESTState" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-127.0" />
+      <point x="1395.75" y="56.0" />
+      <point x="2195.7034883720935" y="56.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.utils.LazyPIDValue" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-61.0" />
+      <point x="4615.9534883720935" y="56.0" />
+      <point x="2195.7034883720935" y="56.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.views.RecordResource" target="ContentNegotiatedMethodView" relationship="REALIZATION">
+      <point x="0.0" y="-160.0" />
+      <point x="4241.5" y="1231.0" />
+      <point x="2950.0" y="1231.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.serializers.marshmallow.MarshmallowMixin" target="invenio_records_rest.serializers.base.PreprocessorMixin" relationship="REALIZATION">
+      <point x="0.0" y="-72.0" />
+      <point x="2336.9534883720935" y="619.0" />
+      <point x="2493.9534883720935" y="619.0" />
+      <point x="0.0" y="61.0" />
+    </edge>
+    <edge source="invenio_records_rest.errors.SuggestMissingContextRESTError" target="RESTException" relationship="REALIZATION">
+      <point x="0.0" y="-50.0" />
+      <point x="1684.0" y="2182.0" />
+      <point x="3611.5" y="2182.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.errors.PIDRedirectedRESTError" target="invenio_records_rest.errors.PIDRESTException" relationship="REALIZATION">
+      <point x="0.0" y="-50.0" />
+      <point x="225.0" y="2332.0" />
+      <point x="1200.0" y="2332.0" />
+      <point x="0.0" y="39.0" />
+    </edge>
+    <edge source="invenio_records_rest.serializers.citeproc.CiteprocSerializer" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-138.0" />
+      <point x="936.25" y="56.0" />
+      <point x="2195.7034883720935" y="56.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.schemas.json.RecordMetadataSchemaJSONV1" target="invenio_records_rest.schemas.json.OriginalKeysMixin" relationship="REALIZATION">
+      <point x="0.0" y="-50.0" />
+      <point x="0.0" y="27.5" />
+    </edge>
+    <edge source="invenio_records_rest.schemas.fields.generated.GenMethod" target="invenio_records_rest.schemas.fields.generated.ForcedFieldDeserializeMixin" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="3795.7034883720935" y="389.0" />
+      <point x="4104.4534883720935" y="389.0" />
+      <point x="0.0" y="27.5" />
+    </edge>
+    <edge source="invenio_records_rest.serializers.datacite.BaseDataCiteSerializer" target="invenio_records_rest.serializers.marshmallow.MarshmallowMixin" relationship="REALIZATION">
+      <point x="0.0" y="-72.0" />
+      <point x="3034.9534883720935" y="826.0" />
+      <point x="2336.9534883720935" y="826.0" />
+      <point x="0.0" y="72.0" />
+    </edge>
+    <edge source="invenio_records_rest.views.RecordsListResource" target="ContentNegotiatedMethodView" relationship="REALIZATION">
+      <point x="0.0" y="-204.0" />
+      <point x="1658.5" y="1231.0" />
+      <point x="2950.0" y="1231.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.serializers.json.JSONSerializer" target="invenio_records_rest.serializers.json.JSONSerializerMixin" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="1598.4534883720933" y="826.0" />
+      <point x="1269.9186046511632" y="826.0" />
+      <point x="0.0" y="49.5" />
+    </edge>
+    <edge source="invenio_records_rest.utils.PIDPathConverter" target="invenio_records_rest.utils.PIDConverter" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="2825.25" y="2707.0" />
+      <point x="2985.0" y="2707.0" />
+      <point x="0.0" y="50.0" />
+    </edge>
+    <edge source="invenio_records_rest.schemas.fields.generated.ForcedFieldDeserializeMixin" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="4104.4534883720935" y="56.0" />
+      <point x="2195.7034883720935" y="56.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.serializers.json.JSONSerializer" target="invenio_records_rest.serializers.base.PreprocessorMixin" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="1598.4534883720933" y="826.0" />
+      <point x="1789.4534883720933" y="826.0" />
+      <point x="1789.4534883720933" y="619.0" />
+      <point x="2493.9534883720935" y="619.0" />
+      <point x="0.0" y="61.0" />
+    </edge>
+    <edge source="invenio_records_rest.errors.PIDRESTException" target="RESTException" relationship="REALIZATION">
+      <point x="0.0" y="-39.0" />
+      <point x="1200.0" y="2182.0" />
+      <point x="3611.5" y="2182.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.errors.PIDMissingObjectRESTError" target="invenio_records_rest.errors.PIDRESTException" relationship="REALIZATION">
+      <point x="0.0" y="-50.0" />
+      <point x="0.0" y="39.0" />
+    </edge>
+    <edge source="invenio_records_rest.utils.PIDConverter" target="BaseConverter" relationship="REALIZATION">
+      <point x="0.0" y="-50.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.serializers.json.JSONSerializer" target="invenio_records_rest.serializers.marshmallow.MarshmallowMixin" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="1598.4534883720933" y="836.0" />
+      <point x="2336.9534883720935" y="836.0" />
+      <point x="0.0" y="72.0" />
+    </edge>
+    <edge source="invenio_records_rest.errors.PIDUnregisteredRESTError" target="invenio_records_rest.errors.PIDRESTException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="2138.5" y="2332.0" />
+      <point x="1200.0" y="2332.0" />
+      <point x="0.0" y="39.0" />
+    </edge>
+    <edge source="invenio_records_rest.errors.MaxResultWindowRESTError" target="RESTException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="3137.5" y="2182.0" />
+      <point x="3611.5" y="2182.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.errors.UnhandledElasticsearchError" target="RESTException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="5575.5" y="2182.0" />
+      <point x="3611.5" y="2182.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.serializers.base.PreprocessorMixinInterface" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="2493.9534883720935" y="56.0" />
+      <point x="2195.7034883720935" y="56.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.schemas.fields.generated.GenFunction" target="invenio_records_rest.schemas.fields.marshmallow_contrib.Function" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="4599.7034883720935" y="389.0" />
+      <point x="5094.9534883720935" y="389.0" />
+      <point x="0.0" y="38.5" />
+    </edge>
+    <edge source="invenio_records_rest.schemas.json.RecordSchemaJSONV1" target="Schema" relationship="REALIZATION">
+      <point x="0.0" y="-71.5" />
+      <point x="1246.5" y="1764.0" />
+      <point x="756.0" y="1764.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.schemas.fields.trimmedstring.TrimmedString" target="String" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.serializers.datacite.DataCite31Serializer" target="invenio_records_rest.serializers.datacite.BaseDataCiteSerializer" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="0.0" y="72.0" />
+    </edge>
+    <edge source="invenio_records_rest.serializers.datacite.OAIDataCiteSerializer" target="object" relationship="REALIZATION">
+      <point x="2.2737367544323206E-13" y="-72.0" />
+      <point x="1903.4534883720935" y="56.0" />
+      <point x="2195.7034883720935" y="56.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.schemas.fields.sanitizedhtml.SanitizedHTML" target="invenio_records_rest.schemas.fields.sanitizedunicode.SanitizedUnicode" relationship="REALIZATION">
+      <point x="0.0" y="-61.0" />
+      <point x="0.0" y="50.0" />
+    </edge>
+    <edge source="invenio_records_rest.errors.InvalidQueryRESTError" target="RESTException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="2184.5" y="2182.0" />
+      <point x="3611.5" y="2182.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.serializers.base.PreprocessorMixin" target="invenio_records_rest.serializers.base.PreprocessorMixinInterface" relationship="REALIZATION">
+      <point x="0.0" y="-61.0" />
+      <point x="0.0" y="38.5" />
+    </edge>
+    <edge source="invenio_records_rest.views.SuggestResource" target="MethodView" relationship="REALIZATION">
+      <point x="0.0" y="-72.0" />
+      <point x="1276.0" y="2557.0" />
+      <point x="903.0" y="2557.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.schemas.fields.generated.GenMethod" target="invenio_records_rest.schemas.fields.marshmallow_contrib.Method" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="3795.7034883720935" y="379.0" />
+      <point x="3486.9534883720935" y="379.0" />
+      <point x="0.0" y="27.5" />
+    </edge>
+    <edge source="invenio_records_rest.serializers.jsonld.JSONLDSerializer" target="invenio_records_rest.serializers.jsonld.JSONLDTransformerMixin" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="746.7180232558139" y="1028.0" />
+      <point x="303.5" y="1028.0" />
+      <point x="0.0" y="94.0" />
+    </edge>
+    <edge source="invenio_records_rest.ext.InvenioRecordsREST" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-49.5" />
+      <point x="2987.9534883720935" y="56.0" />
+      <point x="2195.7034883720935" y="56.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.errors.JSONSchemaValidationError" target="RESTValidationError" relationship="REALIZATION">
+      <point x="0.0" y="-50.0" />
+      <point x="2305.0" y="2557.0" />
+      <point x="2043.0" y="2557.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.serializers.jsonld.JSONLDTransformerMixin" target="invenio_records_rest.serializers.base.TransformerMixinInterface" relationship="REALIZATION">
+      <point x="0.0" y="-94.0" />
+      <point x="0.0" y="38.5" />
+    </edge>
+    <edge source="invenio_records_rest.schemas.fields.generated.GenFunction" target="invenio_records_rest.schemas.fields.generated.ForcedFieldDeserializeMixin" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="4599.7034883720935" y="379.0" />
+      <point x="4104.4534883720935" y="379.0" />
+      <point x="0.0" y="27.5" />
+    </edge>
+    <edge source="invenio_records_rest.serializers.dc.DublinCoreSerializer" target="invenio_records_rest.serializers.marshmallow.MarshmallowMixin" relationship="REALIZATION">
+      <point x="0.0" y="-49.5" />
+      <point x="0.0" y="72.0" />
+    </edge>
+    <edge source="invenio_records_rest.serializers.jsonld.JSONLDSerializer" target="invenio_records_rest.serializers.json.JSONSerializer" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="746.7180232558139" y="1028.0" />
+      <point x="1598.4534883720933" y="1028.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_records_rest.schemas.fields.datetime.DateString" target="Date" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic" zoom="1.0" showDependencies="false" x="3163.4999999999995" y="1396.0" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Fields</Category>
+    <Category>Inner Classes</Category>
+    <Category>Methods</Category>
+  </Categories>
+</Diagram>
+

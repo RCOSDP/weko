@@ -19,22 +19,23 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
+import shutil
 from datetime import datetime
 
 from celery import shared_task
 from celery.task.control import inspect
 from flask import current_app
+from weko_admin.api import TempDirInfo
 
-from .utils import delete_exported, export_all, import_items_to_system, \
-    remove_temp_dir
+from .utils import delete_exported, export_all, import_items_to_system
 
 
-@shared_task
-def import_item(item):
+@shared_task(ignore_results=False)
+def import_item(item, request_info):
     """Import Item ."""
     try:
         start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        result = import_items_to_system(item) or dict()
+        result = import_items_to_system(item, request_info) or dict()
         result['start_date'] = start_date
         return result
     except Exception as ex:
@@ -44,7 +45,8 @@ def import_item(item):
 @shared_task
 def remove_temp_dir_task(path):
     """Import Item ."""
-    remove_temp_dir(path)
+    shutil.rmtree(path)
+    TempDirInfo().delete(path)
 
 
 @shared_task
@@ -71,7 +73,7 @@ def delete_exported_task(uri, cache_key):
 
 def is_import_running():
     """Check import is running."""
-    if not inspect().ping():
+    if not check_celery_is_run():
         return 'celery_not_run'
 
     active = inspect().active()
@@ -85,3 +87,11 @@ def is_import_running():
         for task in reserved[worker]:
             if task['name'] == 'weko_search_ui.tasks.import_item':
                 return 'is_import_running'
+
+
+def check_celery_is_run():
+    """Check celery is running, or not."""
+    if not inspect().ping():
+        return False
+    else:
+        return True

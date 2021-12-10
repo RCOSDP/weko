@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>Python</ID>
+  <OriginalElement>#/Users/mhaya/git/mhaya/vagrant-weko_org/multi/tmp/weko3_b/modules/invenio-oauth2server/invenio_oauth2server</OriginalElement>
+  <nodes>
+    <node x="987.0000000000001" y="797.0">HTTPException</node>
+    <node x="901.0" y="2030.0">invenio_oauth2server.forms.RedirectURIField</node>
+    <node x="1915.5" y="1950.0">Form</node>
+    <node x="1319.0" y="1093.0">invenio_oauth2server.errors.JWTExpiredToken</node>
+    <node x="366.0" y="1328.0">invenio_oauth2server.admin.TokenView</node>
+    <node x="621.0000000000001" y="1772.5">invenio_oauth2server.forms.RedirectURIValidator</node>
+    <node x="841.5000000000001" y="877.0">invenio_oauth2server.errors.JWTExtendedException</node>
+    <node x="2334.0" y="1950.0">URL</node>
+    <node x="8.0" y="2030.0">invenio_oauth2server.errors.OAuth2ServerError</node>
+    <node x="472.0" y="1950.0">invenio_oauth2server.forms.ClientFormBase</node>
+    <node x="294.25" y="1215.0">ModelView</node>
+    <node x="1781.0" y="2030.0">invenio_oauth2server.forms.TokenForm</node>
+    <node x="1339.0" y="2030.0">invenio_oauth2server.models.NoneAesEngine</node>
+    <node x="337.0" y="190.0">invenio_oauth2server.models.Token</node>
+    <node x="2347.0" y="1695.0">invenio_oauth2server.models.OAuthUserProxy</node>
+    <node x="1484.0" y="1739.5">invenio_oauth2server.ext.InvenioOAuth2ServerREST</node>
+    <node x="0.0" y="2110.0">invenio_oauth2server.errors.ScopeDoesNotExists</node>
+    <node x="1742.0" y="1093.0">invenio_oauth2server.errors.JWTInvalidHeaderError</node>
+    <node x="1953.0" y="1728.0">invenio_oauth2server.models.Scope</node>
+    <node x="0.0" y="1295.0">invenio_oauth2server.admin.ClientView</node>
+    <node x="156.5" y="1950.0">Exception</node>
+    <node x="2172.0" y="2030.0">invenio_oauth2server.validators.URLValidator</node>
+    <node x="834.0000000000001" y="1093.0">invenio_oauth2server.errors.JWTNoAuthorizationError</node>
+    <node x="1477.5" y="1950.0">AesEngine</node>
+    <node x="0.0" y="80.0">invenio_oauth2server.models.Client</node>
+    <node x="417.0000000000001" y="1093.0">invenio_oauth2server.errors.JWTDecodeError</node>
+    <node x="491.5" y="2055.0">invenio_oauth2server.forms.ClientForm</node>
+    <node x="322.25" y="0.0">Model</node>
+    <node x="1065.0" y="1695.0">invenio_oauth2server.ext._OAuth2ServerState</node>
+    <node x="0.0" y="1728.0">invenio_oauth2server.ext.InvenioOAuth2Server</node>
+    <node x="1025.5" y="1950.0">TextAreaField</node>
+    <node x="0.0" y="1093.0">invenio_oauth2server.errors.JWTInvalidIssuer</node>
+    <node x="1443.5" y="1615.0">object</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="invenio_oauth2server.forms.TokenForm" target="Form" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oauth2server.errors.JWTExtendedException" target="HTTPException" relationship="REALIZATION">
+      <point x="0.0" y="-83.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oauth2server.models.OAuthUserProxy" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-105.0" />
+      <point x="2548.0" y="1670.0" />
+      <point x="1486.5" y="1670.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oauth2server.errors.OAuth2ServerError" target="Exception" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oauth2server.errors.JWTNoAuthorizationError" target="invenio_oauth2server.errors.JWTExtendedException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="0.0" y="83.0" />
+    </edge>
+    <edge source="invenio_oauth2server.errors.ScopeDoesNotExists" target="invenio_oauth2server.errors.OAuth2ServerError" relationship="REALIZATION">
+      <point x="0.0" y="-39.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oauth2server.forms.RedirectURIValidator" target="object" relationship="REALIZATION">
+      <point x="-1.1368683772161603E-13" y="-27.5" />
+      <point x="833.0" y="1670.0" />
+      <point x="1486.5" y="1670.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oauth2server.models.Scope" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-72.0" />
+      <point x="2140.0" y="1670.0" />
+      <point x="1486.5" y="1670.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oauth2server.models.Client" target="Model" relationship="REALIZATION">
+      <point x="0.0" y="-336.0" />
+      <point x="158.5" y="55.0" />
+      <point x="364.75" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oauth2server.admin.ClientView" target="ModelView" relationship="REALIZATION">
+      <point x="0.0" y="-137.5" />
+      <point x="173.0" y="1270.0" />
+      <point x="355.75" y="1270.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oauth2server.errors.JWTInvalidIssuer" target="invenio_oauth2server.errors.JWTExtendedException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="198.5" y="1068.0" />
+      <point x="1066.5" y="1068.0" />
+      <point x="0.0" y="83.0" />
+    </edge>
+    <edge source="invenio_oauth2server.ext.InvenioOAuth2ServerREST" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-60.5" />
+      <point x="1708.5" y="1670.0" />
+      <point x="1486.5" y="1670.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oauth2server.errors.JWTDecodeError" target="invenio_oauth2server.errors.JWTExtendedException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="615.5000000000001" y="1068.0" />
+      <point x="1066.5" y="1068.0" />
+      <point x="0.0" y="83.0" />
+    </edge>
+    <edge source="invenio_oauth2server.models.NoneAesEngine" target="AesEngine" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oauth2server.forms.RedirectURIField" target="TextAreaField" relationship="REALIZATION">
+      <point x="0.0" y="-50.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oauth2server.models.Token" target="Model" relationship="REALIZATION">
+      <point x="0.0" y="-226.0" />
+      <point x="571.0" y="55.0" />
+      <point x="364.75" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oauth2server.validators.URLValidator" target="URL" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oauth2server.admin.TokenView" target="ModelView" relationship="REALIZATION">
+      <point x="0.0" y="-104.5" />
+      <point x="538.5" y="1270.0" />
+      <point x="355.75" y="1270.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oauth2server.errors.JWTExpiredToken" target="invenio_oauth2server.errors.JWTExtendedException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="1520.5" y="1068.0" />
+      <point x="1066.5" y="1068.0" />
+      <point x="0.0" y="83.0" />
+    </edge>
+    <edge source="invenio_oauth2server.ext.InvenioOAuth2Server" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-72.0" />
+      <point x="300.5" y="1670.0" />
+      <point x="1486.5" y="1670.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_oauth2server.forms.ClientForm" target="invenio_oauth2server.forms.ClientFormBase" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="0.0" y="27.5" />
+    </edge>
+    <edge source="invenio_oauth2server.errors.JWTInvalidHeaderError" target="invenio_oauth2server.errors.JWTExtendedException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="1964.5" y="1068.0" />
+      <point x="1066.5" y="1068.0" />
+      <point x="0.0" y="83.0" />
+    </edge>
+    <edge source="invenio_oauth2server.ext._OAuth2ServerState" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-105.0" />
+      <point x="1264.5" y="1670.0" />
+      <point x="1486.5" y="1670.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic" zoom="1.0" showDependencies="false" x="1374.5" y="1094.0" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Fields</Category>
+    <Category>Inner Classes</Category>
+    <Category>Methods</Category>
+  </Categories>
+</Diagram>
+

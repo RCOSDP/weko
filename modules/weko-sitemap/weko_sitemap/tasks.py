@@ -1,22 +1,9 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
+# Copyright (C) 2019 National Institute of Informatics.
 #
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
+# weko-sitemap is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 
 """Task for updating sitemap cache."""
 
@@ -52,7 +39,7 @@ def link_success_handler(retval):
 def link_error_handler(request, exc, traceback):
     """Register task stats into invenio-stats for failure."""
     args = make_tuple(request.argsrepr)  # Cannot access original args
-    start_time = datetime.strptime(args[1], '%Y-%m-%dT%H:%M:%S')
+    start_time = datetime.strptime(args[0], '%Y-%m-%dT%H:%M:%S')
     end_time = datetime.now()
     sitemap_finished.send(current_app._get_current_object(),
                           exec_data={
@@ -65,7 +52,7 @@ def link_error_handler(request, exc, traceback):
         'repository_name': 'weko',  # TODO: Grab from config
         'task_id': request.id
     },
-        user_data=args[2])
+        user_data=args[1])
 
 
 @shared_task(ignore_results=True)

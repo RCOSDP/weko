@@ -28,21 +28,21 @@ import tempfile
 import unicodedata
 from datetime import datetime
 
-from flask import current_app, flash, redirect, request, send_file, url_for
+from flask import current_app, flash, redirect, request, send_file
 from flask_babelex import gettext as _
 from fpdf import FPDF
-from invenio_db import db
 from invenio_files_rest.views import ObjectResource
 from invenio_i18n.ext import current_i18n
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from PyPDF2 import PdfFileReader, PdfFileWriter, utils
+from PyPDF2 import PdfFileReader, PdfFileWriter
 from weko_deposit.api import WekoRecord
 from weko_items_autofill.utils import get_workflow_journal
-from weko_records.api import ItemMetadata, ItemsMetadata, ItemType, Mapping
+from weko_records.api import ItemsMetadata, Mapping
 from weko_records.serializers.feed import WekoFeedGenerator
-from weko_records.serializers.utils import get_mapping, get_metadata_from_map
+from weko_records.serializers.utils import get_mapping
+from weko_records.utils import get_value_by_selected_lang
 from weko_workflow.api import WorkActivity
 
 from weko_records_ui.utils import get_record_permalink, \
@@ -105,6 +105,19 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         # Get position x, y.
         position_x = (pdf_w - width_image) / 2
         position_y = (pdf_w - df_height) / 2
+
+        return position_x, position_y
+
+    def get_right_position(imgFilename):
+        pdf_w, pdf_h = pdf.w, pdf.h
+        im_w, im_h = resize_to_fit(imgFilename)
+        # Width to height ratio of uploaded image.
+        w_to_h_ratio = im_w / im_h
+        # Get width image by default height.
+        width_image = df_height * w_to_h_ratio
+        # Get position x, y.
+        position_x = pdf_w - width_image - 20
+        position_y = pdf_w - df_height
 
         return position_x, position_y
 
@@ -223,11 +236,14 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         positions['str_position'] = 'C'
         x = 0
         if header_output_image_name:
-            x, _ = get_center_position(header_output_image_name)
+            x, __ = get_center_position(header_output_image_name)
         positions['img_position'] = x
     elif header_display_position == 'right':
         positions['str_position'] = 'R'
-        positions['img_position'] = 150
+        x = 0
+        if header_output_image_name:
+            x, __ = get_right_position(header_output_image_name)
+        positions['img_position'] = x
 
     # Show header(string or image)
     if header_display_type == 'string':
@@ -286,11 +302,6 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     pdf.set_font('Arial', '', 14)
     pdf.set_font('IPAexg', '', 14)
 
-    if item_metadata_json['lang'] == 'en':
-        item_metadata_json['lang'] = 'English'
-    elif item_metadata_json['lang'] == 'ja':
-        item_metadata_json['lang'] = 'Japanese'
-
     try:
         lang_field = item_map['language.@value'].split('.')
         if item_metadata_json[lang_field[0]][lang_field[1]] == 'eng':
@@ -306,6 +317,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         lang = None
 
     try:
+        multi_lang_value = {}
         publisher_item_id = item_map[publisher_attr_lang].split('.')[0]
         publisher_lang_ids = item_map[publisher_attr_lang].split('.')[1:]
         publisher_text_ids = item_map[publisher_value].split('.')[1:]
@@ -315,8 +327,12 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
                                                       publisher_lang_ids,
                                                       publishers)
         for publisher_name, publisher_lang in pair_name_language_publisher:
-            if publisher_lang == lang_user:
-                publisher.append(publisher_name)
+            if not publisher_lang:
+                publisher_lang == 'None Language'
+            multi_lang_value[publisher_lang] = publisher_name
+        value = get_value_by_selected_lang(multi_lang_value, cur_lang)
+        if value:
+            publisher.append(value)
     except (KeyError, IndexError):
         publisher = []
 
@@ -337,13 +353,14 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
                                                     keyword_base)
 
         for name, keyword_lang in pair_name_language_keyword:
-            if keyword_lang == 'ja':
+            if keyword_lang == 'ja' and name:
                 keywords_ja.append(name)
-            elif keyword_lang == 'en':
+            elif keyword_lang == 'en' and name:
                 keywords_en.append(name)
 
     except (KeyError, IndexError):
-        pass
+        keywords_ja = []
+        keywords_en = []
 
     creator_items = item_metadata_json.get(_creator_item_id, [])
 
@@ -366,26 +383,27 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
 
         # Get creator name
         creator_names = creator_item.get('creatorNames', [])
-
+        creator_names_multi_lang = {}
         for creator_name in creator_names:
             name = creator_name.get('creatorName', '')
-            name_lang = creator_name.get('creatorNameLang', '')
-
-            if name_lang == lang_user:
-                creator_name_list.append(name)
+            name_lang = creator_name.get('creatorNameLang', 'None Language')
+            creator_names_multi_lang[name_lang] = name
+        creator_name = get_value_by_selected_lang(creator_names_multi_lang, cur_lang)
+        if creator_name:
+            creator_name_list.append(creator_name)
 
         # Get creator affiliation
         creator_affiliations = creator_item.get('creatorAffiliations', [])
-
         for creator_affiliation in creator_affiliations:
+            affiliations_multi_lang = {}
             affiliation_names = creator_affiliation.get('affiliationNames', [])
-
             for affiliation_name in affiliation_names:
                 name = affiliation_name.get('affiliationName', '')
-                name_lang = affiliation_name.get('affiliationNameLang', '')
-
-                if name_lang == lang_user:
-                    creator_affiliation_list.append(name)
+                name_lang = affiliation_name.get('affiliationNameLang', 'None Language')
+                affiliations_multi_lang[name_lang] = name
+            affiliation_name = get_value_by_selected_lang(affiliations_multi_lang, cur_lang)
+            if affiliation_name:
+                creator_affiliation_list.append(affiliation_name)
 
     seperator = ', '
     metadata_dict = {
@@ -429,45 +447,57 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
             metadata_dict["affiliation"])
     ]
     metadata = '\n'.join(metadata_list)
-    metadata_lfnum = int(metadata.count('\n'))
-
-    for item in metadata_list:
-        metadata_lfnum += int(get_east_asian_width_count(item)
-                              ) // max_letters_num
 
     # Get url
     url = get_url(pid.pid_value)
-    url_lfnum = int(get_east_asian_width_count(url)) // max_letters_num
+
+    # Calculate x position of next cell
+    offset = pdf.x + w1
 
     # Save top coordinate
     top = pdf.y
-    # Calculate x position of next cell
-    offset = pdf.x + w1
-    pdf.multi_cell(w1,
-                   meta_h,
-                   lang_data["Title"]["METADATA"]
-                   + '\n' * (metadata_lfnum + 1),
-                   1,
-                   'C',
-                   True)
     # Reset y coordinate
     pdf.y = top
     # Move to computed offset
     pdf.x = offset
     pdf.multi_cell(w2, meta_h, metadata, 1, 'L', False)
-    top = pdf.y
+    # Get height w2 and calculate line number of metadata
+    metadata_lfnum = 0
+    height = pdf.y - top
+    if height > 0:
+        metadata_lfnum = int(height / meta_h)
+    # Reset y coordinate
+    pdf.y = top
     pdf.multi_cell(w1,
-                   url_oapolicy_h,
-                   lang_data["Title"]["URL"] + '\n' * (url_lfnum + 1),
+                   meta_h,
+                   lang_data["Title"]["METADATA"] + '\n' * metadata_lfnum,
                    1,
                    'C',
                    True)
+
+    # Save top coordinate
+    top = pdf.y
+    # Reset y coordinate
     pdf.y = top
+    # Move to computed offset
     pdf.x = offset
     pdf.multi_cell(w2, url_oapolicy_h, url, 1, 'L', False)
+    # Get height w2 and calculate line number of url
+    url_lfnum = 0
+    height = pdf.y - top
+    if height > 0:
+        url_lfnum = int(height / url_oapolicy_h)
+    # Reset y coordinate
+    pdf.y = top
+    pdf.multi_cell(w1,
+                   url_oapolicy_h,
+                   lang_data["Title"]["URL"] + '\n' * url_lfnum,
+                   1,
+                   'C',
+                   True)
 
     # Footer
-    pdf.set_font('Courier', '', 10)
+    pdf.set_font('IPAexm', '', 10)
     pdf.set_x(108)
 
     try:

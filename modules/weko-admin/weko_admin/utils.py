@@ -510,6 +510,17 @@ def is_exists_key_in_redis(key):
     return False
 
 
+def is_exists_key_or_empty_in_redis(key):
+    """Check key exist in redis."""
+    try:
+        datastore = RedisStore(
+            redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
+        return datastore.redis.exists(key) and datastore.redis.get(key) != b''
+    except Exception as e:
+        current_app.logger.error('Could get value for ' + key, e)
+    return False
+
+
 def get_redis_cache(cache_key):
     """Check and then retrieve the value of a Redis cache key."""
     try:
@@ -995,7 +1006,11 @@ class FeedbackMail:
         :return: author mail
         """
         search_key = request_data.get('searchKey') or ''
-        match = [{"term": {"gather_flg": 0}}]
+        should = [
+            {"bool": {"must": [{"term": {"is_deleted": {"value": "false"}}}]}},
+            {"bool": {"must_not": {"exists": {"field": "is_deleted"}}}}
+        ]
+        match = [{"term": {"gather_flg": 0}}, {"bool": {"should": should}}]
 
         if search_key:
             match.append(
@@ -1589,6 +1604,10 @@ def format_site_info_data(site_info):
     result['favicon'] = site_info.get('favicon')
     result['favicon_name'] = site_info.get('favicon_name')
     result['notify'] = notify
+    result['google_tracking_id_user'] = site_info.get('google_tracking_id_user')
+    result['addthis_user_id'] = site_info.get('addthis_user_id')
+    result['ogp_image'] = site_info.get('ogp_image')
+    result['ogp_image_name'] = site_info.get('ogp_image_name')
     return result
 
 
@@ -2025,6 +2044,7 @@ def get_item_mapping_list():
     def handle_prefix_key(pre_key, key):
         if key == 'properties':
             return pre_key
+        pre_key = pre_key.replace('.fields','')
         return "{}.{}".format(pre_key, key) if pre_key else key
 
     def get_mapping(pre_key, key, value, mapping_list):
@@ -2089,6 +2109,9 @@ def create_facet_search_query():
         """Create post filters query."""
         post_filters_query = dict()
         for facet in facets:
+            if "fields.raw" in facet.mapping:
+                """ remove "fields" when using multi-field """
+                facet.mapping = facet.mapping.replace(".fields.raw", ".raw")
             post_filters_query.update({facet.name_en: facet.mapping})
         return post_filters_query
 
@@ -2138,7 +2161,10 @@ def get_facet_search_query(has_permission=True):
     search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
     key = get_query_key_by_permission(has_permission)
     # Check query exists in redis.
-    if not is_exists_key_in_redis(key):
+    query = json.loads(get_redis_cache(key) or '{}')
+    if not is_exists_key_or_empty_in_redis(key) \
+            or query.get(search_index, {}).get('post_filters', {}) == {} \
+            or query.get(search_index, {}).get('aggs', {}) == {}:
         store_facet_search_query_in_redis()
     # Get query on redis.
     result = json.loads(get_redis_cache(key)) or {}
@@ -2159,11 +2185,13 @@ def get_title_facets():
             if lang = 'en' : name_en
     """
     lang = current_i18n.language
-    data = {}
+    titles = {}
+    order = {}
     activated_facets = FacetSearchSetting.get_activated_facets()
     for item in activated_facets:
-        data[item.name_en] = item.name_jp if lang == 'ja' else item.name_en
-    return data
+        titles[item.name_en] = item.name_jp if lang == 'ja' else item.name_en
+        order[item.id] = item.name_en
+    return titles, order
 
 
 def is_exits_facet(data, id):
@@ -2181,3 +2209,22 @@ def is_exits_facet(data, id):
         if (facet_by_name is None) and (facet_by_mapping is None):
             return False
     return True
+
+
+def overwrite_the_memory_config_with_db(app, site_info):
+    """Overwrite the memory Config values with the DB values."""
+    if site_info:
+        if site_info.google_tracking_id_user:
+            if 'GOOGLE_TRACKING_ID_USER' in app.config:
+                del app.config['GOOGLE_TRACKING_ID_USER']
+            app.config.setdefault(
+                'GOOGLE_TRACKING_ID_USER',
+                site_info.google_tracking_id_user,
+            )
+        if site_info.addthis_user_id:
+            if 'ADDTHIS_USER_ID' in app.config:
+                del app.config['ADDTHIS_USER_ID']
+            app.config.setdefault(
+                'ADDTHIS_USER_ID',
+                site_info.addthis_user_id,
+            )

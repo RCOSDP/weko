@@ -1,5 +1,5 @@
-<div class="{{'hidden' if not display_stats else ''}} well stats">
-  <!--
+<div class="{{'hidden' if not display_stats else ''}} well well2 stats">
+<!--
   <div class="row">
     <div class="col-sm-6 pull-left">
       <h4>{{_('Stats')}}</h4>
@@ -25,10 +25,11 @@
     </div>
   </div>
 <div class="row" style="text-align:center;">
-  <label for="record_view_period" hidden>{{_('Choose stats period')}}</label>
-  <select id="record_view_period" class="btn btn-default btn-sm" onchange="period_change(this)">
-    <option value="total">total</option>
-  </select>
+ <label for="record_view_period" hidden>{{_('Choose stats period')}}</label>
+ <select id="record_view_period" class="btn btn-default btn-sm"
+        onchange="period_change(this)">
+        <option value="total">total</option>
+    </select>
 </div>
 <div class="row" style="text-align:center;" ng-init="statsCollapse = false">
   <div class="col-sm-6 col-sm-offset-3">

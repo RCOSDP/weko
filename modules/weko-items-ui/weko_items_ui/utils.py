@@ -55,6 +55,7 @@ from jsonschema import SchemaError, ValidationError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import MetaData, Table
 from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_deposit.pidstore import get_record_without_version
 from weko_index_tree.api import Indexes
 from weko_index_tree.utils import check_index_permissions, get_index_id, \
     get_user_roles
@@ -63,7 +64,6 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
 from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission, check_publish_status
-from weko_records_ui.utils import hide_item_metadata, replace_license_free
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_search_ui.query import item_search_factory, item_search_with_limit
 from weko_search_ui.utils import check_sub_item_is_system, \
@@ -76,7 +76,6 @@ from weko_workflow.models import ActionStatusPolicy as ASP
 from weko_workflow.models import Activity, FlowAction, FlowActionRole, \
     FlowDefine
 from weko_workflow.utils import IdentifierHandle
-
 
 
 def get_list_username():
@@ -361,24 +360,6 @@ def find_hidden_items(item_id_list, idx_paths=None):
     return hidden_list
 
 
-def get_hidden_flag_for_ranking(index_info, index_id):
-    """Check if item is hidden in the ranking."""
-    if index_id in index_info:
-        cur_date = datetime.now()
-        if index_info[index_id]['public_date'] \
-                and index_info[index_id]['public_date'] > cur_date:
-            return True
-        if "-99" not in index_info[index_id]['browsing_role']:
-            return True
-        if index_info[index_id]['parent'] != '0':
-            return get_hidden_flag_for_ranking(
-                index_info, index_info[index_id]['parent'])
-        else:
-            return False
-    else:
-        return True
-
-
 def parse_ranking_results(index_info,
                           results,
                           display_rank,
@@ -403,34 +384,11 @@ def parse_ranking_results(index_info,
         results = dict()
         results['all'] = data_list
 
-    hidden_items = []
-    for item in results[list_name]:
-        record_id = item.get('record_id')
-        if record_id:
-            record = WekoRecord.get_record(record_id)
-            if record['publish_status'] != '0' \
-                    or datetime.strptime(record['publish_date'],
-                                         '%Y-%m-%d') > datetime.now():
-                hidden_items.append(str(record.id))
-                continue
-            is_hidden = True
-            for path in record['path']:
-                index_id = path.split('/')[-1]
-                is_hidden = is_hidden \
-                    and get_hidden_flag_for_ranking(index_info, index_id)
-            if is_hidden:
-                hidden_items.append(str(record.id))
-
     if results and list_name in results:
         rank = 1
         count = 0
         date = ''
         for item in results[list_name]:
-            # Skip hidden items
-            record_id = item.get('record_id')
-            if record_id and record_id in hidden_items:
-                continue
-
             t = {}
             if count_key:
                 if not count == int(item[count_key]):
@@ -454,11 +412,12 @@ def parse_ranking_results(index_info,
                     title = 'None'
             t['title'] = title
             t['url'] = url.format(item[key]) if url and key in item else None
-            if(title != ''):  # Do not add empty searches
+            if title != '':  # Do not add empty searches
                 ranking_list.append(t)
             if len(ranking_list) == display_rank:
                 break
     return ranking_list
+
 
 def parse_ranking_new_items(result_data):
     """Parse ranking new items.
@@ -481,6 +440,21 @@ def parse_ranking_new_items(result_data):
             item_title = meta_data.get('item_title')
         data['record_name'] = item_title
         data_list.append(data)
+    return data_list
+
+
+def parse_ranking_record(result_data):
+    """Parse ranking record.
+
+    :param result_data: result data
+    """
+    data_list = list()
+    if not result_data or not result_data.get('hits') \
+            or not result_data.get('hits').get('hits'):
+        return data_list
+    for item_data in result_data.get('hits').get('hits'):
+        if item_data.get('_source', {}).get('control_number'):
+            data_list.append(item_data.get('_source').get('control_number'))
     return data_list
 
 
@@ -626,35 +600,6 @@ def update_schema_form_by_activity_id(schema_form, activity_id):
     return schema_form
 
 
-def prepare_either_condition_required(either_required_list):
-    """Prepare either condition required list.
-
-    :param either_required_list: List return from
-    recursive_prepare_either_required_list
-    """
-    condition_required = []
-    condition_not_required = []
-    for item in either_required_list:
-        if isinstance(item, list):
-            sub_condition_required = []
-            sub_condition_not_required = []
-            for sub_item in item:
-                sub_condition_required.append('!model.' + sub_item)
-                sub_condition_not_required.append('model.' + sub_item)
-
-            condition_required.append(
-                '(' + (' || '.join(sub_condition_required)) + ')')
-            condition_not_required.append(
-                '(' + (' && '.join(sub_condition_not_required)) + ')')
-        else:
-            condition_required.append('!model.' + item)
-            condition_not_required.append('model.' + item)
-
-    return [
-        ' && '.join(condition_required).replace('[]', '[arrayIndex]'),
-        ' || '.join(condition_not_required).replace('[]', '[arrayIndex]')]
-
-
 def recursive_prepare_either_required_list(schema_form, either_required_list):
     """Recursive prepare either required list.
 
@@ -667,16 +612,17 @@ def recursive_prepare_either_required_list(schema_form, either_required_list):
                 elem.get('items'), either_required_list)
         else:
             if elem.get('key') and '[]' in elem['key']:
-                for i, ids in enumerate(either_required_list):
-                    if isinstance(ids, list):
-                        for y, _id in enumerate(ids):
-                            if elem['key'].replace('[]', '') == _id:
-                                either_required_list[i][y] = elem['key']
+                for x, group in enumerate(either_required_list):
+                    for i, ids in enumerate(group):
+                        if isinstance(ids, list):
+                            for y, _id in enumerate(ids):
+                                if elem['key'].replace('[]', '') == _id:
+                                    either_required_list[x][i][y] = elem['key']
+                                    break
+                        elif isinstance(ids, str):
+                            if elem['key'].replace('[]', '') == ids:
+                                either_required_list[x][i] = elem['key']
                                 break
-                    elif isinstance(ids, str):
-                        if elem['key'].replace('[]', '') == ids:
-                            either_required_list[i] = elem['key']
-                            break
 
 
 def recursive_update_schema_form_with_condition(
@@ -686,6 +632,26 @@ def recursive_update_schema_form_with_condition(
     :param schema_form: The schema form
     :param either_required_list: Either required list
     """
+    def prepare_either_condition_required(group_idx, key):
+        """Prepare either condition required list."""
+        _key = key.replace('[]', '')
+        cond_1 = 'model.either_valid_' + str(group_idx)
+        cond_2 = cond_1 + ".indexOf('" + _key + "')"
+        return ["!{} || {} !== -1".format(cond_1, cond_2),
+                "{} && {} === -1".format(cond_1, cond_2)]
+
+    def set_on_change(elem):
+        """Set onChange event."""
+        calback_func_name = None
+        if elem.get('onChange'):
+            calback_func_name = elem.get('onChange').split('(')[0]
+            elem['onChange'] = \
+                "onChangeEitherField(this, form, modelValue, '" \
+                + calback_func_name + "')"
+        else:
+            elem['onChange'] = \
+                "onChangeEitherField(this, form, modelValue, undefined)"
+
     schema_form_condition = []
     for index, elem in enumerate(schema_form):
         if elem.get('items'):
@@ -693,42 +659,45 @@ def recursive_update_schema_form_with_condition(
                 elem.get('items'), either_required_list)
         else:
             if elem.get('key'):
-                for ids in either_required_list:
-                    condition_required, condition_not_required = \
-                        prepare_either_condition_required(list(
-                            filter(
-                                lambda x: x != ids,
-                                either_required_list
-                            )
-                        ))
-                    if isinstance(ids, list):
-                        for _id in ids:
-                            if elem['key'] == _id:
-                                if len(either_required_list) != 1:
+                for group_idx, group in enumerate(either_required_list):
+                    for ids in group:
+                        if isinstance(ids, list):
+                            for _id in ids:
+                                if elem['key'] == _id:
+                                    set_on_change(elem)
+                                    if len(group) != 1:
+                                        cond_required, cond_not_required = \
+                                            prepare_either_condition_required(
+                                                group_idx, _id)
+                                        condition_item = copy.deepcopy(elem)
+                                        condition_item['required'] = True
+                                        condition_item['condition'] \
+                                            = cond_required
+                                        schema_form_condition.append(
+                                            {'index': index, 'item':
+                                                condition_item})
+
+                                        elem['condition'] = cond_not_required
+                                    else:
+                                        elem['required'] = True
+                        elif isinstance(ids, str):
+                            if elem['key'] == ids:
+                                set_on_change(elem)
+                                if len(group) != 1:
+                                    cond_required, cond_not_required = \
+                                        prepare_either_condition_required(
+                                            group_idx, ids)
                                     condition_item = copy.deepcopy(elem)
                                     condition_item['required'] = True
-                                    condition_item['condition'] \
-                                        = condition_required
-                                    schema_form_condition.append(
-                                        {'index': index, 'item':
-                                            condition_item})
+                                    condition_item['condition'] = \
+                                        cond_required
+                                    schema_form_condition.append({
+                                        'index': index,
+                                        'item': condition_item})
 
-                                    elem['condition'] = condition_not_required
+                                    elem['condition'] = cond_not_required
                                 else:
                                     elem['required'] = True
-                    elif isinstance(ids, str):
-                        if elem['key'] == ids:
-                            if len(either_required_list) != 1:
-                                condition_item = copy.deepcopy(elem)
-                                condition_item['required'] = True
-                                condition_item['condition'] = \
-                                    condition_required
-                                schema_form_condition.append(
-                                    {'index': index, 'item': condition_item})
-
-                                elem['condition'] = condition_not_required
-                            else:
-                                elem['required'] = True
 
     for index, condition_item in enumerate(schema_form_condition):
         schema_form.insert(
@@ -1419,8 +1388,7 @@ def export_items(post_data):
 def _get_max_export_items():
     """Get max amount of items to export."""
     max_table = current_app.config['WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE']
-    non_user_max = max_table[current_app.config[
-        'WEKO_PERMISSION_ROLE_GENERAL']]
+    non_user_max = current_app.config['WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM']
     current_user_id = current_user.get_id()
 
     if not current_user_id:  # Non-logged in users
@@ -1527,6 +1495,8 @@ def _custom_export_metadata(record_metadata: dict, hide_item: bool = True,
         hide_item (bool): Hide item flag.
         replace_license (bool): Replace license flag.
     """
+    from weko_records_ui.utils import hide_item_metadata, replace_license_free
+
     # Hide private metadata
     if hide_item:
         hide_item_metadata(record_metadata)
@@ -1539,11 +1509,12 @@ def _custom_export_metadata(record_metadata: dict, hide_item: bool = True,
             replace_fqdn_of_file_metadata(v.get("attribute_value_mlt", []))
 
 
-def get_new_items_by_date(start_date: str, end_date: str) -> dict:
+def get_new_items_by_date(start_date: str, end_date: str, ranking=False) -> dict:
     """Get ranking new item by date.
 
     :param start_date:
     :param end_date:
+    :param ranking:
     :return:
     """
     record_search = RecordsSearch(
@@ -1551,10 +1522,15 @@ def get_new_items_by_date(start_date: str, end_date: str) -> dict:
     result = dict()
 
     try:
+        indexes = Indexes.get_public_indexes_list()
+        if len(indexes) == 0:
+            return result
         search_instance, _qs_kwargs = item_search_factory(None,
                                                           record_search,
                                                           start_date,
-                                                          end_date)
+                                                          end_date,
+                                                          indexes,
+                                                          ranking=ranking)
         search_result = search_instance.execute()
         result = search_result.to_dict()
     except NotFoundError as e:
@@ -1562,7 +1538,8 @@ def get_new_items_by_date(start_date: str, end_date: str) -> dict:
 
     return result
 
-def get_latest_items(size: int ) -> dict:
+
+def get_latest_items(size: int) -> dict:
     """Get latest publication items.
 
     :param start_date:
@@ -1574,7 +1551,8 @@ def get_latest_items(size: int ) -> dict:
     result = dict()
 
     try:
-        search_instance, _qs_kwargs = item_search_with_limit(None,record_search,None,size)
+        search_instance, _qs_kwargs = item_search_with_limit(
+            None, record_search, None, size)
         search_result = search_instance.execute()
         result = search_result.to_dict()
     except NotFoundError as e:
@@ -2074,6 +2052,39 @@ def get_hide_list_by_schema_form(item_type_id=None, schemaform=None):
     return ids
 
 
+def get_hide_parent_keys(item_type_id=None, meta_list=None):
+    """Get all hide parent keys.
+
+    :param item_type_id:
+    :param meta_list:
+    :return: hide parent keys
+    """
+    if item_type_id and not meta_list:
+        item_type = ItemTypes.get_by_id(item_type_id).render
+        meta_list = item_type.get('meta_list', {})
+    hide_parent_keys = []
+    for key, val in meta_list.items():
+        hidden = val.get('option', {}).get('hidden')
+        hide_parent_keys.append(key.replace('[]', '')) if hidden else None
+    return hide_parent_keys
+
+
+def get_hide_parent_and_sub_keys(item_type):
+    """Get all hide parent and sub keys.
+
+    :param item_type: item type select from db.
+    :return: hide parent keys, hide sub keys.
+    """
+    # Get parent keys of 'Hide' items.
+    meta_list = item_type.render.get('meta_list', {})
+    hide_parent_key = get_hide_parent_keys(item_type.id, meta_list)
+    # Get sub keys of 'Hide' items.
+    forms = item_type.render.get('table_row_map', {}).get('form', {})
+    hide_sub_keys = get_hide_list_by_schema_form(item_type.id, forms)
+    hide_sub_keys = [prop.replace('[]', '') for prop in hide_sub_keys]
+    return hide_parent_key, hide_sub_keys
+
+
 def get_item_from_option(_item_type_id):
     """Get all keys of properties that is set Hide option on metadata."""
     ignore_list = []
@@ -2240,6 +2251,8 @@ def make_bibtex_data(record_ids):
     @param record_ids:
     @return:
     """
+    from weko_records_ui.utils import hide_item_metadata
+
     result = ''
     err_msg = _('Please input all required item.')
     from weko_schema_ui.serializers import WekoBibTexSerializer
@@ -2303,13 +2316,20 @@ def get_ranking(settings):
     rankings = {}
     start_date = start_date_original.strftime('%Y-%m-%d')
     end_date = end_date_original.strftime('%Y-%m-%d')
+    pid_value_permissions = []
     # most_reviewed_items
     if settings.rankings['most_reviewed_items']:
         result = QueryRecordViewReportHelper.get(
             start_date=start_date,
             end_date=end_date,
             agg_size=settings.display_rank,
-            agg_sort={'value': 'desc'})
+            agg_sort={'value': 'desc'},
+            ranking=True)
+        if not pid_value_permissions:
+            pid_value_permissions = parse_ranking_record(
+                get_new_items_by_date(start_date, end_date, ranking=True))
+        permission_ranking(result, pid_value_permissions, settings.display_rank,
+                           'all', 'pid_value')
         rankings['most_reviewed_items'] = \
             parse_ranking_results(index_info, result, settings.display_rank,
                                   list_name='all',
@@ -2324,16 +2344,17 @@ def get_ranking(settings):
             target_report='3',
             unit='Item',
             agg_size=settings.display_rank,
-            agg_sort={'_count': 'desc'})
-        # temp sort
-        l = result['data']
-        result['data']=sorted(l, key=lambda x: x['col3'],reverse=True)
-        # end temp sort
+            agg_sort={'_count': 'desc'},
+            ranking=True)
+        if not pid_value_permissions:
+            pid_value_permissions = parse_ranking_record(
+                get_new_items_by_date(start_date, end_date, ranking=True))
+        permission_ranking(result, pid_value_permissions, settings.display_rank,
+                           'data', 'col1')
         rankings['most_downloaded_items'] = \
             parse_ranking_results(index_info, result, settings.display_rank,
                                   list_name='data', title_key='col2',
                                   count_key='col3', pid_key='col1')
-
 
     # created_most_items_user
     if settings.rankings['created_most_items_user']:
@@ -2354,7 +2375,7 @@ def get_ranking(settings):
         result = QuerySearchReportHelper.get(
             start_date=start_date,
             end_date=end_date,
-            agg_size=settings.display_rank,
+            agg_size=settings.display_rank + 1,
             agg_sort={'value': 'desc'}
         )
         rankings['most_searched_keywords'] = \
@@ -2363,7 +2384,7 @@ def get_ranking(settings):
                                   title_key='search_key', count_key='count')
 
     # new_items
-    #if settings.rankings['new_items']:
+    # if settings.rankings['new_items']:
     #    new_item_start_date = (
     #        end_date_original
     #        - timedelta(
@@ -2598,13 +2619,6 @@ def make_stats_tsv_with_permission(item_type_id, recids,
         return _id, _name, _option
 
     item_type = ItemTypes.get_by_id(item_type_id).render
-    list_hide = get_item_from_option(item_type_id)
-    hide_permission = permissions['permission_show_hide'](item_type_id)
-    if hide_permission and item_type and item_type.get('table_row'):
-        for it in list_hide:
-            if it in item_type.get('table_row'):
-                item_type['table_row'].remove(it)
-
     table_row_properties = item_type['table_row_map']['schema'].get(
         'properties')
 
@@ -3020,17 +3034,9 @@ def make_stats_tsv_with_permission(item_type_id, recids,
             if not sub_options:
                 ret_option.append(', '.join(root_option))
             else:
-                if hide_permission and 'Hide' in sub_options:
-                    del ret[index - del_num]
-                    del ret_label[index - del_num]
-                    del ret_system[index - del_num]
-                    for recid in recids:
-                        del records.attr_output[recid][index - del_num - 2]
-                    del_num += 1
-                else:
-                    ret_option.append(
-                        ', '.join(list(set(root_option + sub_options)))
-                    )
+                ret_option.append(
+                    ', '.join(list(set(root_option + sub_options)))
+                )
         elif key == '#.id':
             ret_system.append('#')
             ret_option.append('#')
@@ -3066,6 +3072,8 @@ def check_item_is_being_edit(
         post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
     if post_workflow and post_workflow.action_status \
             in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]:
+        current_app.logger.debug("post_workflow: {0} status: {1}".format(
+            item_uuid, post_workflow.action_status))
         return True
 
     draft_pid = PersistentIdentifier.query.filter_by(
@@ -3078,6 +3086,8 @@ def check_item_is_being_edit(
         if draft_workflow and \
             draft_workflow.action_status in [ASP.ACTION_BEGIN,
                                              ASP.ACTION_DOING]:
+            current_app.logger.debug("draft_workflow: {0} status: {1}".format(
+                draft_pid.object_uuid, draft_workflow.action_status))
             return True
 
         pv = PIDVersioning(child=recid)
@@ -3090,6 +3100,8 @@ def check_item_is_being_edit(
         if latest_workflow and \
             latest_workflow.action_status in [ASP.ACTION_BEGIN,
                                               ASP.ACTION_DOING]:
+            current_app.logger.debug("latest_workflow: {0} status: {1}".format(
+                latest_pid.object_uuid, latest_workflow.action_status))
             return True
     return False
 
@@ -3106,3 +3118,31 @@ def check_item_is_deleted(recid):
         pid = PersistentIdentifier.query.filter_by(
             pid_type='recid', object_uuid=recid).first()
     return pid and pid.status == PIDStatus.DELETED
+
+
+def permission_ranking(result, pid_value_permissions, display_rank, list_name,
+                       pid_value):
+    """Permission ranking."""
+    list_result = list()
+    for data in result.get(list_name, []):
+        if data.get(pid_value, '') in pid_value_permissions:
+            list_result.append(data)
+        if len(list_result) == display_rank:
+            break
+    result[list_name] = list_result
+
+
+def has_permission_edit_item(record, recid):
+    """Check current user has permission to edit item.
+
+    @param record: record metadata.
+    @param recid: pid_value of pidstore_pid.
+    @return: True/False
+    """
+    permission = check_created_id(record)
+    pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid',
+        pid_value=recid
+    ).first()
+    can_edit = True if pid == get_record_without_version(pid) else False
+    return can_edit and permission

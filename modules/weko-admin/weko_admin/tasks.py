@@ -20,12 +20,13 @@
 
 """Task for sending scheduled report emails."""
 
-import json
+import os
+import shutil
 from datetime import datetime, timedelta
 
-from celery import shared_task, task
+from celery import shared_task
 from celery.utils.log import get_task_logger
-from flask import current_app, render_template, url_for
+from flask import current_app, render_template
 from flask_babelex import gettext as _
 from flask_mail import Attachment
 from invenio_mail.api import send_mail
@@ -33,10 +34,10 @@ from invenio_stats.utils import QueryCommonReportsHelper, \
     QueryFileReportsHelper, QueryRecordViewPerIndexReportHelper, \
     QueryRecordViewReportHelper, QuerySearchReportHelper
 
-from . import config
+from weko_admin.api import TempDirInfo
+
 from .models import AdminSettings, StatisticsEmail
-from .utils import StatisticMail, get_redis_cache, get_user_report_data, \
-    package_reports
+from .utils import StatisticMail, get_user_report_data, package_reports
 from .views import manual_send_site_license_mail
 
 logger = get_task_logger(__name__)
@@ -102,12 +103,10 @@ def send_all_reports(report_type=None, year=None, month=None):
 def check_send_all_reports():
     """Check Redis periodically for when to run a task."""
     with current_app.app_context():
-        schedule = None
-
-        cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-            format(name='email_schedule')
-        schedule = get_redis_cache(cache_key)  # Schedule set in the view
-        schedule = json.loads(schedule) if schedule else None
+        # Schedule set in the view
+        schedule = AdminSettings.get(name='report_email_schedule_settings',
+                                     dict_to_object=False)
+        schedule = schedule if schedule else None
         if schedule and _due_to_run(schedule):
             send_all_reports.delay()
 
@@ -150,3 +149,23 @@ def check_send_site_access_report():
         # send mail api
         manual_send_site_license_mail(start_month=start_month,
                                       end_month=end_month)
+
+
+@shared_task(ignore_results=True)
+def clean_temp_info():
+    """A schedule task for clean temporary information."""
+    temp_dir_api = TempDirInfo()
+    datas = temp_dir_api.get_all()
+    for temp_path, extra_info in datas.items():
+        can_delete = False
+        if not os.path.exists(temp_path):
+            can_delete = True
+        else:
+            expire = extra_info.get('expire', '')
+            if not expire:
+                continue
+            if expire < datetime.now().strftime('%Y-%m-%d %H:%M:%S'):
+                can_delete = True
+                shutil.rmtree(temp_path)
+        if can_delete:
+            temp_dir_api.delete(temp_path)

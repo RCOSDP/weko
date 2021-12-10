@@ -1,0 +1,421 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>Python</ID>
+  <OriginalElement>#/Users/mhaya/git/mhaya/vagrant-weko_org/multi/tmp/weko3_b/modules/invenio-files-rest/invenio_files_rest</OriginalElement>
+  <nodes>
+    <node x="2262.0" y="2911.0">RESTException</node>
+    <node x="654.0" y="1687.0">invenio_files_rest.serializer.BaseSchema</node>
+    <node x="2967.75" y="157.0">invenio_files_rest.limiters.FileSizeLimit</node>
+    <node x="2517.0" y="1786.5">invenio_files_rest.admin.MultipartObjectModelView</node>
+    <node x="1299.0" y="1980.0">invenio_files_rest.serializer.PartSchema</node>
+    <node x="1939.0592105263158" y="201.0">invenio_files_rest.models.ObjectVersionError</node>
+    <node x="5966.0" y="945.0">invenio_files_rest.models.BucketTag</node>
+    <node x="559.0" y="3412.0">RequestBase</node>
+    <node x="435.0" y="2590.5">invenio_files_rest.views.LocationResource</node>
+    <node x="3040.0" y="3290.0">invenio_files_rest.errors.MultipartInvalidSize</node>
+    <node x="3277.0" y="879.0">invenio_files_rest.models.Location</node>
+    <node x="5133.0" y="3290.0">invenio_files_rest.errors.DuplicateTagError</node>
+    <node x="686.75" y="2312.0">ContentNegotiatedMethodView</node>
+    <node x="2412.0" y="769.0">invenio_files_rest.models.MultipartObject</node>
+    <node x="5522.0" y="3290.0">invenio_files_rest.errors.InvalidTagError</node>
+    <node x="2978.0" y="1687.0">invenio_files_rest.admin.LocationModelView</node>
+    <node x="1682.0" y="3290.0">invenio_files_rest.errors.MultipartNotCompleted</node>
+    <node x="1215.0" y="3290.0">invenio_files_rest.errors.MultipartInvalidPartNumber</node>
+    <node x="2151.0" y="3153.0">invenio_files_rest.errors.MultipartException</node>
+    <node x="197.75" y="3140.5">invenio_files_rest.errors.StorageError</node>
+    <node x="349.0" y="3290.0">invenio_files_rest.errors.UnexpectedFileSizeError</node>
+    <node x="5322.0" y="3140.5">invenio_files_rest.errors.ExhaustedStreamError</node>
+    <node x="716.0" y="1607.0">InvenioRestBaseSchema</node>
+    <node x="2584.0" y="3290.0">invenio_files_rest.errors.MultipartInvalidChunkSize</node>
+    <node x="3383.0" y="1764.5">invenio_files_rest.admin.ObjectModelView</node>
+    <node x="1278.0" y="2392.0">invenio_files_rest.views.ObjectResource</node>
+    <node x="3094.75" y="0.0">object</node>
+    <node x="2125.0" y="1753.5">invenio_files_rest.admin.BucketModelView</node>
+    <node x="2168.5" y="2991.0">invenio_files_rest.errors.FilesException</node>
+    <node x="5145.0" y="813.0">invenio_files_rest.models.Bucket</node>
+    <node x="1693.0" y="1764.0">invenio_files_rest.admin.FileInstanceModelView</node>
+    <node x="2016.0" y="879.0">invenio_files_rest.models.Part</node>
+    <node x="793.0" y="3290.0">invenio_files_rest.errors.MultipartMissingParts</node>
+    <node x="4190.0" y="3290.0">invenio_files_rest.errors.FileInstanceUnreadableError</node>
+    <node x="5570.0" y="934.0">invenio_files_rest.models.ObjectVersionTag</node>
+    <node x="0.0" y="3301.0">invenio_files_rest.errors.FileSizeError</node>
+    <node x="823.0" y="2590.5">invenio_files_rest.views.LocationUsageAmountInfo</node>
+    <node x="1233.171875" y="3096.0">invenio_files_rest.errors.MissingQueryParameter</node>
+    <node x="3446.0" y="3290.0">invenio_files_rest.errors.MultipartNoPart</node>
+    <node x="838.0" y="1936.0">invenio_files_rest.serializer.MultipartObjectSchema</node>
+    <node x="2117.0" y="3290.0">invenio_files_rest.errors.MultipartAlreadyCompleted</node>
+    <node x="91.0" y="3412.0">WerkzeugFormDataParser</node>
+    <node x="2676.0" y="1607.0">ModelView</node>
+    <node x="3844.0" y="582.0">invenio_files_rest.models.ObjectVersion</node>
+    <node x="469.0" y="3492.0">invenio_files_rest.wrappers.Request</node>
+    <node x="0.0" y="3492.0">invenio_files_rest.formparser.FormDataParser</node>
+    <node x="5889.0" y="3290.0">invenio_files_rest.errors.BucketLockedError</node>
+    <node x="391.00000000000006" y="1859.0">invenio_files_rest.serializer.ObjectVersionSchema</node>
+    <node x="142.0" y="912.0">invenio_files_rest.storage.pyfs.PyFSFileStorage</node>
+    <node x="0.0" y="80.0">invenio_files_rest.storage.base.FileStorage</node>
+    <node x="4664.0" y="3313.5">invenio_files_rest.errors.FileInstanceAlreadySetError</node>
+    <node x="0.0" y="1980.0">invenio_files_rest.serializer.BucketSchema</node>
+    <node x="3681.75" y="201.0">invenio_files_rest.models.BucketError</node>
+    <node x="3821.0" y="3290.0">invenio_files_rest.errors.InvalidKeyError</node>
+    <node x="0.0" y="2546.0">invenio_files_rest.views.BucketResource</node>
+    <node x="834.0" y="3492.0">invenio_files_rest.app.Flask</node>
+    <node x="4904.0" y="3140.5">invenio_files_rest.errors.InvalidOperationError</node>
+    <node x="4139.75" y="201.5">invenio_files_rest.ext.InvenioFilesREST</node>
+    <node x="902.5" y="3412.0">FlaskBase</node>
+    <node x="4034.75" y="236.0">Model</node>
+    <node x="3327.75" y="124.0">invenio_files_rest.ext._FilesRESTState</node>
+    <node x="890.0" y="626.0">invenio_files_rest.models.FileInstance</node>
+    <node x="2621.75" y="212.5">invenio_files_rest.models.Timestamp</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="invenio_files_rest.errors.ExhaustedStreamError" target="invenio_files_rest.errors.FilesException" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="5525.5" y="3071.0" />
+      <point x="2340.5" y="3071.0" />
+      <point x="0.0" y="27.5" />
+    </edge>
+    <edge source="invenio_files_rest.models.FileInstance" target="invenio_files_rest.models.Timestamp" relationship="REALIZATION">
+      <point x="0.0" y="-446.0" />
+      <point x="1443.0" y="502.0" />
+      <point x="2784.75" y="502.0" />
+      <point x="0.0" y="38.5" />
+    </edge>
+    <edge source="invenio_files_rest.models.ObjectVersionTag" target="Model" relationship="REALIZATION">
+      <point x="0.0" y="-138.0" />
+      <point x="5758.0" y="442.0" />
+      <point x="4077.25" y="442.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.storage.base.FileStorage" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-171.0" />
+      <point x="506.0" y="55.0" />
+      <point x="3137.75" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.ext.InvenioFilesREST" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-49.5" />
+      <point x="4310.75" y="55.0" />
+      <point x="3137.75" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.models.Bucket" target="Model" relationship="REALIZATION">
+      <point x="0.0" y="-259.0" />
+      <point x="5347.5" y="452.0" />
+      <point x="4077.25" y="452.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.serializer.BucketSchema" target="invenio_files_rest.serializer.BaseSchema" relationship="REALIZATION">
+      <point x="0.0" y="-83.0" />
+      <point x="185.5" y="1834.0" />
+      <point x="831.5" y="1834.0" />
+      <point x="0.0" y="61.0" />
+    </edge>
+    <edge source="invenio_files_rest.serializer.BaseSchema" target="InvenioRestBaseSchema" relationship="REALIZATION">
+      <point x="0.0" y="-61.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.errors.MultipartInvalidSize" target="invenio_files_rest.errors.MultipartException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="3233.0" y="3265.0" />
+      <point x="2340.5" y="3265.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.ext._FilesRESTState" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-127.0" />
+      <point x="3494.75" y="55.0" />
+      <point x="3137.75" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.models.FileInstance" target="Model" relationship="REALIZATION">
+      <point x="0.0" y="-446.0" />
+      <point x="1443.0" y="532.0" />
+      <point x="4077.25" y="532.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.models.Bucket" target="invenio_files_rest.models.Timestamp" relationship="REALIZATION">
+      <point x="0.0" y="-259.0" />
+      <point x="5347.5" y="462.0" />
+      <point x="2784.75" y="462.0" />
+      <point x="0.0" y="38.5" />
+    </edge>
+    <edge source="invenio_files_rest.admin.FileInstanceModelView" target="ModelView" relationship="REALIZATION">
+      <point x="0.0" y="-171.0" />
+      <point x="1899.0" y="1662.0" />
+      <point x="2737.5" y="1662.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.models.Part" target="invenio_files_rest.models.Timestamp" relationship="REALIZATION">
+      <point x="0.0" y="-193.0" />
+      <point x="2204.0" y="512.0" />
+      <point x="2784.75" y="512.0" />
+      <point x="0.0" y="38.5" />
+    </edge>
+    <edge source="invenio_files_rest.storage.pyfs.PyFSFileStorage" target="invenio_files_rest.storage.base.FileStorage" relationship="REALIZATION">
+      <point x="0.0" y="-160.0" />
+      <point x="0.0" y="171.0" />
+    </edge>
+    <edge source="invenio_files_rest.formparser.FormDataParser" target="WerkzeugFormDataParser" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.models.Timestamp" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="2784.75" y="55.0" />
+      <point x="3137.75" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.models.Part" target="Model" relationship="REALIZATION">
+      <point x="0.0" y="-193.0" />
+      <point x="2204.0" y="542.0" />
+      <point x="4077.25" y="542.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.admin.MultipartObjectModelView" target="ModelView" relationship="REALIZATION">
+      <point x="0.0" y="-148.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.models.ObjectVersionError" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-50.0" />
+      <point x="2133.559210526316" y="55.0" />
+      <point x="3137.75" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.wrappers.Request" target="RequestBase" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.errors.FileSizeError" target="invenio_files_rest.errors.StorageError" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="164.5" y="3265.0" />
+      <point x="362.75" y="3265.0" />
+      <point x="0.0" y="27.5" />
+    </edge>
+    <edge source="invenio_files_rest.admin.ObjectModelView" target="ModelView" relationship="REALIZATION">
+      <point x="0.0" y="-170.5" />
+      <point x="3567.0" y="1662.0" />
+      <point x="2737.5" y="1662.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.errors.MultipartInvalidPartNumber" target="invenio_files_rest.errors.MultipartException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="1438.5" y="3265.0" />
+      <point x="2340.5" y="3265.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.errors.MultipartInvalidChunkSize" target="invenio_files_rest.errors.MultipartException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="2802.0" y="3265.0" />
+      <point x="2340.5" y="3265.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.admin.BucketModelView" target="ModelView" relationship="REALIZATION">
+      <point x="0.0" y="-181.5" />
+      <point x="2311.0" y="1662.0" />
+      <point x="2737.5" y="1662.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.serializer.PartSchema" target="invenio_files_rest.serializer.BaseSchema" relationship="REALIZATION">
+      <point x="0.0" y="-83.0" />
+      <point x="1473.5" y="1834.0" />
+      <point x="831.5" y="1834.0" />
+      <point x="0.0" y="61.0" />
+    </edge>
+    <edge source="invenio_files_rest.errors.UnexpectedFileSizeError" target="invenio_files_rest.errors.StorageError" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="561.0" y="3265.0" />
+      <point x="362.75" y="3265.0" />
+      <point x="0.0" y="27.5" />
+    </edge>
+    <edge source="invenio_files_rest.views.LocationUsageAmountInfo" target="ContentNegotiatedMethodView" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="1040.5" y="2367.0" />
+      <point x="829.75" y="2367.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.errors.InvalidOperationError" target="invenio_files_rest.errors.FilesException" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="5103.0" y="3071.0" />
+      <point x="2340.5" y="3071.0" />
+      <point x="0.0" y="27.5" />
+    </edge>
+    <edge source="invenio_files_rest.errors.MultipartNotCompleted" target="invenio_files_rest.errors.MultipartException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="1889.5" y="3265.0" />
+      <point x="2340.5" y="3265.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.limiters.FileSizeLimit" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-94.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.errors.FileInstanceAlreadySetError" target="invenio_files_rest.errors.InvalidOperationError" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="4888.5" y="3265.0" />
+      <point x="5103.0" y="3265.0" />
+      <point x="0.0" y="27.5" />
+    </edge>
+    <edge source="invenio_files_rest.admin.LocationModelView" target="ModelView" relationship="REALIZATION">
+      <point x="0.0" y="-248.0" />
+      <point x="3170.5" y="1662.0" />
+      <point x="2737.5" y="1662.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.views.BucketResource" target="ContentNegotiatedMethodView" relationship="REALIZATION">
+      <point x="0.0" y="-83.0" />
+      <point x="207.5" y="2367.0" />
+      <point x="829.75" y="2367.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.errors.MultipartMissingParts" target="invenio_files_rest.errors.MultipartException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="994.0" y="3265.0" />
+      <point x="2340.5" y="3265.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.errors.MultipartException" target="invenio_files_rest.errors.FilesException" relationship="REALIZATION">
+      <point x="0.0" y="-15.0" />
+      <point x="0.0" y="27.5" />
+    </edge>
+    <edge source="invenio_files_rest.views.ObjectResource" target="ContentNegotiatedMethodView" relationship="REALIZATION">
+      <point x="0.0" y="-237.0" />
+      <point x="1959.0" y="2367.0" />
+      <point x="829.75" y="2367.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.errors.InvalidKeyError" target="invenio_files_rest.errors.InvalidOperationError" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="3995.5" y="3265.0" />
+      <point x="5103.0" y="3265.0" />
+      <point x="0.0" y="27.5" />
+    </edge>
+    <edge source="invenio_files_rest.errors.MultipartAlreadyCompleted" target="invenio_files_rest.errors.MultipartException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.app.Flask" target="FlaskBase" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.models.BucketError" target="object" relationship="REALIZATION">
+      <point x="0.0" y="-50.0" />
+      <point x="3848.25" y="55.0" />
+      <point x="3137.75" y="55.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.errors.FileInstanceUnreadableError" target="invenio_files_rest.errors.InvalidOperationError" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="4417.0" y="3265.0" />
+      <point x="5103.0" y="3265.0" />
+      <point x="0.0" y="27.5" />
+    </edge>
+    <edge source="invenio_files_rest.errors.MultipartNoPart" target="invenio_files_rest.errors.MultipartException" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="3623.5" y="3265.0" />
+      <point x="2340.5" y="3265.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.serializer.MultipartObjectSchema" target="invenio_files_rest.serializer.BaseSchema" relationship="REALIZATION">
+      <point x="0.0" y="-127.0" />
+      <point x="1058.5" y="1834.0" />
+      <point x="831.5" y="1834.0" />
+      <point x="0.0" y="61.0" />
+    </edge>
+    <edge source="invenio_files_rest.errors.MissingQueryParameter" target="invenio_files_rest.errors.FilesException" relationship="REALIZATION">
+      <point x="0.0" y="-72.0" />
+      <point x="1442.171875" y="3071.0" />
+      <point x="2340.5" y="3071.0" />
+      <point x="0.0" y="27.5" />
+    </edge>
+    <edge source="invenio_files_rest.errors.BucketLockedError" target="invenio_files_rest.errors.InvalidOperationError" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="6079.0" y="3265.0" />
+      <point x="5103.0" y="3265.0" />
+      <point x="0.0" y="27.5" />
+    </edge>
+    <edge source="invenio_files_rest.models.Location" target="invenio_files_rest.models.Timestamp" relationship="REALIZATION">
+      <point x="0.0" y="-193.0" />
+      <point x="3431.0" y="492.0" />
+      <point x="2784.75" y="492.0" />
+      <point x="0.0" y="38.5" />
+    </edge>
+    <edge source="invenio_files_rest.models.ObjectVersion" target="invenio_files_rest.models.Timestamp" relationship="REALIZATION">
+      <point x="0.0" y="-490.0" />
+      <point x="4484.5" y="482.0" />
+      <point x="2784.75" y="482.0" />
+      <point x="0.0" y="38.5" />
+    </edge>
+    <edge source="invenio_files_rest.views.LocationResource" target="ContentNegotiatedMethodView" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="619.0" y="2367.0" />
+      <point x="829.75" y="2367.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.errors.FilesException" target="RESTException" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.models.MultipartObject" target="Model" relationship="REALIZATION">
+      <point x="0.0" y="-303.0" />
+      <point x="2602.5" y="552.0" />
+      <point x="4077.25" y="552.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.errors.InvalidTagError" target="invenio_files_rest.errors.InvalidOperationError" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="5695.5" y="3265.0" />
+      <point x="5103.0" y="3265.0" />
+      <point x="0.0" y="27.5" />
+    </edge>
+    <edge source="invenio_files_rest.models.BucketTag" target="Model" relationship="REALIZATION">
+      <point x="0.0" y="-127.0" />
+      <point x="6126.5" y="442.0" />
+      <point x="4077.25" y="442.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.models.MultipartObject" target="invenio_files_rest.models.Timestamp" relationship="REALIZATION">
+      <point x="0.0" y="-303.0" />
+      <point x="2602.5" y="522.0" />
+      <point x="2784.75" y="522.0" />
+      <point x="0.0" y="38.5" />
+    </edge>
+    <edge source="invenio_files_rest.serializer.ObjectVersionSchema" target="invenio_files_rest.serializer.BaseSchema" relationship="REALIZATION">
+      <point x="0.0" y="-204.0" />
+      <point x="604.5" y="1834.0" />
+      <point x="831.5" y="1834.0" />
+      <point x="0.0" y="61.0" />
+    </edge>
+    <edge source="invenio_files_rest.models.Location" target="Model" relationship="REALIZATION">
+      <point x="0.0" y="-193.0" />
+      <point x="3431.0" y="562.0" />
+      <point x="4077.25" y="562.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.models.ObjectVersion" target="Model" relationship="REALIZATION">
+      <point x="0.0" y="-490.0" />
+      <point x="4484.5" y="472.0" />
+      <point x="4077.25" y="472.0" />
+      <point x="0.0" y="15.0" />
+    </edge>
+    <edge source="invenio_files_rest.errors.StorageError" target="invenio_files_rest.errors.FilesException" relationship="REALIZATION">
+      <point x="0.0" y="-27.5" />
+      <point x="362.75" y="3071.0" />
+      <point x="2340.5" y="3071.0" />
+      <point x="0.0" y="27.5" />
+    </edge>
+    <edge source="invenio_files_rest.errors.DuplicateTagError" target="invenio_files_rest.errors.InvalidOperationError" relationship="REALIZATION">
+      <point x="0.0" y="-38.5" />
+      <point x="5317.5" y="3265.0" />
+      <point x="5103.0" y="3265.0" />
+      <point x="0.0" y="27.5" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic" zoom="1.0090501597852606" showDependencies="false" x="848.5420506605667" y="1850.2829165578307" />
+  <SelectedNodes />
+  <Categories>
+    <Category>Fields</Category>
+    <Category>Inner Classes</Category>
+    <Category>Methods</Category>
+  </Categories>
+</Diagram>
+

@@ -46,7 +46,7 @@ function FacetSearchLayout(
 
     let errorMessage = "";
     if  ( (_nameEN === "") || (_nameJP === "") || (_mapping === "") ){
-      errorMessage = (LABELS['lblRequired']);
+      errorMessage = (LABELS['lblMsgRequired']);
     }
     if (errorMessage){
       showErrorMessage(errorMessage);
@@ -263,8 +263,11 @@ function CustomAggregations({aggregations, setAggregations, mappingList}) {
         isExist = true;
       }
     });
-    if (isExist) {
-      alert("Item exist.");
+    if (!aggMapping) {
+      alert(LABELS['lblMsgAggMapping']);
+      return;
+    } else if (isExist) {
+      alert(LABELS['lblMsgExist']);
       return;
     }
     // Add new item to 'Aggregations List'.

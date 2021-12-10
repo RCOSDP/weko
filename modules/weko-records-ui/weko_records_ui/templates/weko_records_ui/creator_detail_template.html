@@ -27,7 +27,7 @@
 {%- set index = index + loop.index -%}
 {%- if 'name' in  attribute_data -%}
   {%- if config.WEKO_RECORDS_UI_LANG_DISP_FLG -%}
-    {%- if ('order_lang' in  attribute_data) and (attribute_data['order_lang'][0][current_i18n.language]) -%}
+    {%- if ('order_lang' in  attribute_data)  -%}
       <a class='creator-name' href="javascript:void(0)" data-toggle="popover-x" data-target="#creator_{{ index }}"
         data-placement="auto" data-toggle="popover">
       {%- for name in attribute_data['name'] -%}

@@ -312,28 +312,3 @@ def check_file_storage_time():
         tLog = os.path.getmtime(d)
         if (now - datetime.utcfromtimestamp(tLog)).total_seconds() >= ttl:
             remove_dir_with_file(d)
-
-
-@shared_task(ignore_result=True)
-def check_location_size():
-    """Set default location size by total FileInstances size."""
-    try:
-        ret = db.session.query(
-            Location.id,
-            sa.func.sum(FileInstance.size),
-            Location.size
-        ).filter(
-            FileInstance.uri.like(sa.func.concat(Location.uri, '%'))
-        ).group_by(Location.id)
-
-        for row in ret:
-            if row[1] != row[2]:
-                with db.session.begin_nested():
-                    loc = db.session.query(Location).filter(
-                        Location.id == row[0]).one()
-                    loc.size = row[1]
-        db.session.commit()
-    except SQLAlchemyError:
-        db.session.rollback()
-    finally:
-        db.session.close()

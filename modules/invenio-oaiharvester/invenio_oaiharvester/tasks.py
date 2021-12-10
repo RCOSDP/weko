@@ -23,6 +23,7 @@ from __future__ import absolute_import, print_function
 
 import json
 import signal
+import traceback
 from ast import literal_eval as make_tuple
 from collections import OrderedDict
 from datetime import datetime
@@ -40,7 +41,7 @@ from lxml import etree
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.models import Index
 from weko_records.models import ItemMetadata
-from weko_records_ui.utils import soft_delete
+from weko_records_ui.utils import soft_delete, restore
 
 from .api import get_records, list_records, send_run_status_mail
 from .config import OAIHARVESTER_ENABLE_ITEM_VERSIONING
@@ -139,7 +140,7 @@ def map_indexes(index_specs, parent_id):
     for spec in index_specs:
         idx = Index.query.filter_by(
             harvest_spec=spec, parent=parent_id).first()
-        res.append(idx.id)
+        res.append(idx.id) if idx else None
     return res
 
 
@@ -183,7 +184,7 @@ def process_item(record, harvesting, counter):
             r.json['pubdate']['attribute_value']).date()
         # dep = WekoDeposit(r.json, r)
         dep = WekoDeposit.get_record(hvstid.object_uuid)
-        indexes = dep['path'].copy()
+        indexes = dep.get("path", []).copy()
         event = ItemEvents.UPDATE
     elif mapper.is_deleted():
         return
@@ -199,7 +200,7 @@ def process_item(record, harvesting, counter):
     if int(harvesting.auto_distribution):
         for i in map_indexes(mapper.specs(), harvesting.index_id):
             indexes.append(str(i)) if i not in indexes else None
-    else:
+    if not indexes or len(indexes) == 0:
         indexes.append(str(harvesting.index_id)) if str(
             harvesting.index_id) not in indexes else None
 
@@ -211,7 +212,12 @@ def process_item(record, harvesting, counter):
         soft_delete(recid.pid_value)
         event = ItemEvents.DELETE
     else:
+        if dep.pid.status == PIDStatus.DELETED:
+            recid.status = PIDStatus.DELETED
+            restore(recid.pid_value)
         json_data = mapper.map()
+        if not json_data:
+            return
 
         # START: temporary fix for JDCat
         # merge creatorNames
@@ -236,7 +242,7 @@ def process_item(record, harvesting, counter):
 
                             del json_data['item_1593074267803'][n:]
 
-        #for e in json_data:
+        # for e in json_data:
         #    current_app.logger.debug('[{0}] [{1}] Processing json_data[e]: {2}'.format(
         #        0, 'Harvesting', json_data[e]))
         #    current_app.logger.debug('[{0}] [{1}] Processing json_data[e] type: {2}'.format(
@@ -433,8 +439,7 @@ def run_harvesting(id, start_time, user_data):
                 try:
                     process_item(record, harvesting, counter)
                 except Exception as ex:
-                    import traceback
-                    current_app.logger.error(traceback.format_exc())
+                    current_app.logger.debug(traceback.format_exc())
                     current_app.logger.error(
                         'Error occurred while processing harvesting item\n' + str(ex))
                     db.session.rollback()

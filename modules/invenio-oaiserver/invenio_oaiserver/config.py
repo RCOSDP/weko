@@ -211,3 +211,6 @@ OAISERVER_MESSAGE_NO_RECORDS_MATCH = "The combination of the values of the " \
                                      "from, until, set and metadataPrefix " \
                                      "arguments results in an empty list."
 """Message of error when output xml error"""
+
+OAISERVER_ES_MAX_CLAUSE_COUNT = 1024
+"""The number of clauses a Lucene BooleanQuery can have."""

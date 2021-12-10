@@ -51,7 +51,7 @@ for reqs in extras_require.values():
 
 setup_requires = [
     'Babel>=1.3',
-    'pytest-runner>=2.6.2',
+    'pytest-runner>=3.0.0,<5',
 ]
 
 install_requires = [
@@ -117,6 +117,9 @@ setup(
         ],
         'invenio_celery.tasks': [
             'weko_index_tree = weko_index_tree.tasks',
+        ],
+        'invenio_oauth2server.scopes': [
+            'weko_index_tree_create = weko_index_tree.scopes:create_index_scope',
         ],
     },
     extras_require=extras_require,

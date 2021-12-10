@@ -108,7 +108,7 @@ class ComponentExclusionTarget extends React.Component {
 
     componentDidMount(){
       document.addEventListener('mousedown', this.handleClickOutside);
-      fetch(GET_FEEDBACK_MAIL_URL)
+      fetch(GET_FEEDBACK_MAIL_URL, { method: 'POST' })
         .then(res => res.json())
         .then((result) => {
           let mailData = result.data || [];
@@ -683,7 +683,12 @@ const TableResendErrorComponent = function(props){
   const [currentIndex, setIndex] = useState(0);
 
   useEffect(() => {
-    fetch(GET_FAILED_MAIL_URL + "?page=1&id=" + props.bindID)
+    fetch(GET_FAILED_MAIL_URL,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page: 1, id: props.bindID })
+      })
       .then(res => res.json())
       .then(
         (result) => {
@@ -772,11 +777,12 @@ const PaginationResendLogsTable = function(props){
       }
     }
     setCurrentPage(pageNumber);
-    let extendData = "";
-    if(props.bindID){
-      extendData +="&id=" + props.bindID;
-    }
-    fetch(props.bindURL + "?page=" + pageNumber + extendData)
+    fetch(props.bindURL,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page: pageNumber, id: props.bindID })
+      })
       .then(res => res.json())
       .then((result) => {
         if (result.error) {

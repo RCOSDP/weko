@@ -1,3 +1,6 @@
+const ITEM_SAVE_URL = $("#item_save_uri").val();
+const ITEM_SAVE_FREQUENCY = $("#item_save_frequency").val();
+
 require([
   'jquery',
   'bootstrap'
@@ -523,6 +526,7 @@ function toObject(arr) {
       class_style = 'alert-light'
       id_alert = 'alert-style'
     }
+    $('#alerts').empty();
     $('#alerts').append(
       '<div class="alert ' + class_style + '" id="' + id_alert + '">' +
       '<button type="button" class="close" data-dismiss="alert">' +
@@ -627,6 +631,9 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.item_tile_key = "";
       $scope.corresponding_usage_data_type = {};
       $scope.original_title = {};
+      let saveTimer = setInterval(function () {
+        $scope.saveDataJsonCallback(ITEM_SAVE_URL, true)
+      }, ITEM_SAVE_FREQUENCY);
 
       $scope.listFileNeedRemoveAfterReplace = [];
       $scope.onBtnReplaceFileContentClick = function (fileKey) {
@@ -2215,10 +2222,9 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               if (cnt === 3) {
                 if ($scope.error_list['required'].length > 0) {
                   angular.forEach($scope.error_list['required'], function (value, key) {
-                    let id = value.split('.')[1]
-                    if (id) {
-                      $scope.depositionForm[id].$viewValue = '';
-                      $scope.depositionForm[id].$commitViewValue();
+                    if (value && $scope.depositionForm[value]) {
+                      $scope.depositionForm[value].$viewValue = '';
+                      $scope.depositionForm[value].$commitViewValue();
                     }
                   });
                   $scope.$broadcast('schemaFormValidate');
@@ -2327,7 +2333,18 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           "endpoints": JSON.stringify($rootScope.filesVM.invenioFilesEndpoints),
           "recordsModel": JSON.stringify($rootScope.recordsVM.invenioRecordsModel),
         }
+        //Add pid_value to sessionStorage when uploaded processing done
         sessionStorage.setItem(actionID, JSON.stringify(data))
+        if ($rootScope.filesVM.invenioFilesEndpoints.self) {
+          let pid_value = $rootScope.filesVM.invenioFilesEndpoints.self.split("/")
+          if (pid_value.length > 0) {
+            let pid_value_data = {
+              "activity_id": actionID,
+              "pid_value_temp": pid_value[pid_value.length - 1]
+            }
+            sessionStorage.setItem("pid_value_data", JSON.stringify(pid_value_data))
+          }
+        }
       }
 
       $scope.setFilesModel = function (recordsModel) {
@@ -2745,9 +2762,13 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       //Set data for model base on input control.
       $scope.setValueForModelByInputControl = function (inputControl) {
         let ngModel = $(inputControl).attr('ng-model');
+        const formKey = ngModel.replace('model', '').replace('][', '.').replace(/[\'\[\]]/g, '');
         ngModel = ngModel.replace('model', '$rootScope.recordsVM.invenioRecordsModel');
         let strSetModel = ngModel + '=$(inputControl).val();';
         eval(strSetModel);
+        $scope.depositionForm[formKey].$setViewValue($(inputControl).val());
+        $scope.depositionForm[formKey].$render();
+        $scope.depositionForm[formKey].$commitViewValue();
       }
 
       // This is callback function - Please do NOT change function name
@@ -3032,12 +3053,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           if (itemData.length === 1) {
             $scope.setRecordData(model[0], itemData[0]);
           } else {
-            let cloneData = model[0];
             for (let key in itemData) {
               if (model[key]) {
                 $scope.setRecordData(model[key], itemData[key]);
               } else {
-                model.push(JSON.parse(JSON.stringify(cloneData)));
+                model.push({});
                 $scope.setRecordData(model[key], itemData[key]);
               }
             }
@@ -3109,13 +3129,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 }
                 for (var i = 0; i < value.familyNames.length; i++) {
                   let subCreatorName = { "creatorName": "", "creatorNameLang": "" };
-                  let familyName = value.familyNames[i].familyName.trim();
-                  let givenName = value.givenNames[i].givenName.trim();
-                  if (familyName.indexOf(',', familyName.length - 1) > 0) {
-                    subCreatorName.creatorName = familyName + " " + givenName;
-                  } else {
-                    subCreatorName.creatorName = familyName + ", " + givenName;
-                  }
+                  let familyName = value.familyNames[i].familyName ? value.familyNames[i].familyName.trim() : '';
+                  let givenName = value.givenNames[i].givenName ? value.givenNames[i].givenName.trim() : '';
+                  const showComma = (familyName && givenName) && familyName.indexOf(',', familyName.length - 1) === -1 ? ', ' : '';
+                  subCreatorName.creatorName = familyName + showComma + givenName;
                   subCreatorName.creatorNameLang = value.familyNames[i].familyNameLang;
                   subCreatorName = JSON.parse(JSON.stringify(subCreatorName).replace('creatorName', v[0]).replace('creatorNameLang', v[1]));
                   creatorModel[k].push(subCreatorName);
@@ -3719,18 +3736,81 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         return result;
       }
 
-      $scope.checkDataIndepositionForm = function (sub_item_key) {
+      /**
+       * Check and prepare condition value for either required.
+       * @param modelValue Input value.
+       * @param form Curent form.
+       */
+      let eitherInputTypingTimeout = null;
+      $scope.onChangeEitherField = function ($event, form, modelValue, callback) {
+        $rootScope.recordsVM.removeValidationMessage(modelValue, form);
+        if (form.type === 'text') {
+          clearTimeout(eitherInputTypingTimeout);
+          eitherInputTypingTimeout = setTimeout(function () {
+            $scope.behaviorEitherInput($event, form, modelValue, callback);
+          }, 500);
+        } else {
+          $scope.behaviorEitherInput($event, form, modelValue, callback);
+        }
+      }
+
+      $scope.behaviorEitherInput = function ($event, form, modelValue, callback) {
+        if (callback) {
+          this[callback]($event, modelValue);
+        }
+
+        const model = $rootScope.recordsVM.invenioRecordsModel;
+        const current_elem = form.key.filter((e) => isNaN(e)).join('.');
+
+        const eitherRequireds = $scope.error_list['either'];
+        for (let i = 0; i < eitherRequireds.length; i++) {
+          const eitherGroup = eitherRequireds[i];
+          for (let x = 0; x < eitherGroup.length; x++) {
+            if (eitherGroup[x] instanceof Array) {
+              if (eitherGroup[x].indexOf(current_elem) === -1) {
+                continue;
+              }
+              let check = true;
+              for (let y = 0; y < eitherGroup[x].length; y++) {
+                const keys = form.key.slice(0, form.key.length - 1);
+                keys.push(eitherGroup[x][y].split('.').pop());
+                if ($scope.checkDataIndepositionForm(keys.join('.'))) {
+                  check = check && true;
+                } else {
+                  check = check && false;
+                }
+              }
+
+              if (check) {
+                model['either_valid_' + i] = eitherGroup[x];
+              } else if (model['either_valid_' + i] == eitherGroup[x]) {
+                delete model['either_valid_' + i];
+              }
+            } else {
+              const keys = form.key.slice(0, form.key.length - 1);
+              keys.push(eitherGroup[x].split('.').pop());
+              if ($scope.checkDataIndepositionForm(keys.join('.'))) {
+                model['either_valid_' + i] = eitherGroup[x];
+              } else if (model['either_valid_' + i] == eitherGroup[x]) {
+                delete model['either_valid_' + i];
+              }
+            }
+          }
+        }
+      }
+
+      $scope.checkDataIndepositionForm = function (item_key) {
         const keys = Object.keys($scope.depositionForm);
         for (let idx = 0; idx < keys.length; idx++) {
           const key = keys[idx];
-          if (key.endsWith(sub_item_key) && $scope.depositionForm[key].$viewValue) {
+          if ((key === item_key || key.endsWith(item_key)) && $scope.depositionForm[key].$viewValue) {
             return true;
           }
         }
         return false;
       }
 
-      $scope.checkEitherRequired = function() {
+      $scope.checkEitherRequired = function () {
         let eitherRequireds = [];
         if ($scope.error_list) {
           eitherRequireds = $scope.error_list['either'];
@@ -3741,24 +3821,27 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
 
         for (let i = 0; i < eitherRequireds.length; i++) {
-          if (eitherRequireds[i] instanceof Array) {
-            let check = true;
-            for (let y = 0; y < eitherRequireds[i].length; y++) {
-              let sub_item_key = eitherRequireds[i][y].split('.').pop();
-              if ($scope.checkDataIndepositionForm(sub_item_key)) {
-                check = check && true;
-              } else {
-                check = check && false;
+          const eitherGroup = eitherRequireds[i];
+          for (let x = 0; x < eitherGroup.length; x++) {
+            if (eitherGroup[x] instanceof Array) {
+              let check = true;
+              for (let y = 0; y < eitherGroup[x].length; y++) {
+                let sub_item_key = eitherGroup[x][y].split('.').pop();
+                if ($scope.checkDataIndepositionForm(sub_item_key)) {
+                  check = check && true;
+                } else {
+                  check = check && false;
+                }
               }
-            }
 
-            if (check) {
-              return true;
-            }
-          } else {
-            let sub_item_key = eitherRequireds[i].split('.').pop();
-            if ($scope.checkDataIndepositionForm(sub_item_key)) {
-              return true;
+              if (check) {
+                return true;
+              }
+            } else {
+              let sub_item_key = eitherGroup[x].split('.').pop();
+              if ($scope.checkDataIndepositionForm(sub_item_key)) {
+                return true;
+              }
             }
           }
         }
@@ -3774,14 +3857,16 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let noEitherError = $scope.checkEitherRequired();
         if (noEitherError && $scope.error_list && $scope.error_list['either']) {
           eitherRequired = [];
-          $scope.error_list['either'].forEach(function(item) {
-            if (item instanceof Array) {
-              item.forEach(function(i) {
-                eitherRequired.push(i.split('.').pop());
-              });
-            } else {
-              eitherRequired.push(item.split('.').pop());
-            }
+          $scope.error_list['either'].forEach(function (group) {
+            group.forEach(function (item) {
+              if (item instanceof Array) {
+                item.forEach(function (i) {
+                  eitherRequired.push(i.split('.').pop());
+                });
+              } else {
+                eitherRequired.push(item.split('.').pop());
+              }
+            });
           });
         }
         for (let i = 0; i < schemaForm.length; i++) {
@@ -4156,7 +4241,14 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             //When save: date fields data is lost, so this will fill data.
             let model = $rootScope.recordsVM.invenioRecordsModel;
             CustomBSDatePicker.setDataFromFieldToModel(model, true);
-            addAlert(response.data.msg);
+            message = response.data.msg
+            class_style = undefined
+            if (typeof message === 'undefined') {
+              class_style = 'alert-danger';
+              message = 'Your session has timed out. Please login again.';
+              clearInterval(saveTimer);
+            }
+            addAlert(message, class_style);
           },
           function error(response) {
             if (startLoading) {
