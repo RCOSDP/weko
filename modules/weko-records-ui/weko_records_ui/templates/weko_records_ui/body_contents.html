@@ -36,12 +36,12 @@
     <div class="panel-heading clearfix">
       <h3 class="panel-title">{{_('Item')}}</h3>
     </div>
-    <div class="panel-body">
+    <div class="panel-body panel-body2">
       {%- include "weko_records_ui/box/head.html" %}
     </div>
-    <div class="panel-body" style="padding-top: 10px;">
-      <div class="row">
-        <div id="detail-item" class="col-sm-8 col-md-8 col-lg-8 col-left">
+    <div class="panel-body panel-body2" style="padding-top: 10px;">
+      <div class="row row-4">
+        <div id="detail-item" class="col-sm-9 col-md-9 col-lg-9 col-left">
           <div id="record_id" class="hide">{{ record.id }}</div>
           {%- block record_author %}
           {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
@@ -193,7 +193,7 @@
                           {%- endif -%}
                           <!-- Show future open date message -->
                           {%- if file.future_date_message -%}
-                            <div class="panel-body">
+                            <div class="panel-body panel-body2">
                               <span class="fa fa-key"
                                 style="font-size:18px;font-weight:bold">&nbsp;{{file.future_date_message}}</span>
                             </div>
@@ -203,7 +203,7 @@
                           {%- else -%}
                             <!-- Show 'Restricted Access' message -->
                             {%- if not file.future_date_message -%}
-                              <div class="panel-body">
+                              <div class="panel-body panel-body2">
                                 <span class="fa fa-key"
                                   style="font-size:18px;font-weight:bold">&nbsp;{{_('Restricted Access')}}</span>
                               </div>
@@ -377,7 +377,7 @@
               value="{{_('The item cannot be deleted because it has a DOI.')}}" />
             <input id="change_publish_message" type="hidden"
               value="{{_('You cannot keep an item private because it has a DOI.')}}" />
-            <div class="row">
+            <div class="row row-4">
               <p class="alert alert-danger alert-dismissible text-middle collapse" role="alert"
                 style="min-width: 330px;">
                 <button type="button" class="close" id="btn_close_alert" aria-label="Close"><span
@@ -406,7 +406,7 @@
             {% endif %}
           </div>
         </div>
-        <div id="invenio-csl" class="col-sm-4 col-md-4 col-lg-4 col-right">
+        <div id="invenio-csl" class="col-sm-3 col-md-3 col-lg-3 col-right">
           <!-- start demo block -->
           {%- include "weko_records_ui/box/stats.html" %}
           {%- include "weko_records_ui/box/versions.html" %}

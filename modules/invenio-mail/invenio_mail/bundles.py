@@ -1,4 +1,5 @@
-{#
+# -*- coding: utf-8 -*-
+#
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
 #
@@ -16,25 +17,12 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
-#}
-{%- extends config.THEME_BODY_TEMPLATE %}
 
-{%- block body_title_right %}
-{%- endblock body_title_right %}
+"""Bundles for invenio-mail-ui."""
 
-{%- block body_center %}
-<ul class="nav nav-tabs">
-  {%- block page_body_tabs %}
-    {% from "weko_theme/macros/tabs_selector.html" import tabs_selector with context %}
-  {%- endblock page_body_tabs%}
- </ul>
+from invenio_assets import NpmBundle
 
-  <div class="row row-4" style="height: 100%">
-    <div class="col-sm-12 col-md-12" style="height: 100%">
-      <div id="myTabContent" class="tab-content" style="height: 100%">
-        {%- block page_body_main %}
-        {%- endblock page_body_main %}
-      </div>
-    </div>
-  </div>
-{%- endblock body_center %}
+invenio_mail_template_js = NpmBundle(
+    'js/invenio_mail/mail_template.js',
+    output='gen/mail_template.%(version)s.js',
+)

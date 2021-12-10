@@ -32,6 +32,7 @@ from flask import Blueprint, abort, current_app, flash, redirect, \
     render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user
+from flask_menu import current_menu
 from flask_security import url_for_security
 from invenio_admin.proxies import current_admin
 from simplekv.memory.redisstore import RedisStore
@@ -55,6 +56,19 @@ def _has_admin_access():
     """Use to check if a user has any admin access."""
     return current_user.is_authenticated and current_admin \
         .permission_factory(current_admin.admin.index_view).can()
+
+
+@blueprint.before_app_first_request
+def init_menu():
+    """Initialize menu before first request."""
+    # current_app.logger.debug(current_menu)
+    item = current_menu.submenu('settings.admin')
+    item.register(
+        "admin.index",
+        # NOTE: Menu item text (icon replaced by a cogs icon).
+        _('%(icon)s Administration', icon='<i class="fa fa-cogs fa-fw"></i>'),
+        visible_when=_has_admin_access,
+        order=100)
 
 
 def _redirect_method(has_next=False):

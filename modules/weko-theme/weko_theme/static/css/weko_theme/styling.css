@@ -71,7 +71,7 @@
   width: auto;
   min-width: 100px;
   height: 40px;
-  font-size:15px;
+  font-size: 15px;
 }
 
 .add-button {
@@ -110,7 +110,7 @@ button#btn_quit.done-button {
 .ok-button {
   width: 70px;
   height: 40px;
-  font-size:15px
+  font-size: 15px;
 }
 
 .send-button{
@@ -131,7 +131,7 @@ button#btn_quit.done-button {
 .action-big-button, .update-profile-button, .mapping-button, .property-button {
   width: 150px;
   height: 40px;
-  font-size:15px
+  font-size: 15px;
 }
 
 .ten-pixel-margin {
