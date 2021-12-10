@@ -116,7 +116,8 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
             is_ok = True
         # Check super users
         else:
-            super_users = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+            super_users = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
+                current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
             for role in list(current_user.roles or []):
                 if role.name in super_users:
                     is_ok = True
@@ -143,7 +144,8 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
             return is_can
 
         # Super users
-        supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+        supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
+            current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
         for role in list(current_user.roles or []):
             if role.name in supers:
                 return is_can

@@ -70,12 +70,6 @@ THEME_SITENAME = 'WEKO3'
 THEME_SITEURL = 'https://localhost'
 """The URL displayed in the sitemap. Change it to self domain name."""
 
-THEME_INSTITUTION_NAME = {
-    "ja": "",
-    "en": ""
-}
-"""The institution name."""
-
 THEME_SEARCHBAR = True
 """Enable or disable the search bar."""
 
@@ -354,28 +348,24 @@ WEKO_THEME_ADMIN_MENU = [
                 'order': 16
             },
             {
-                'name': 'Mail Templates',
+                'name': 'WebAPI Account',
                 'order': 17
             },
             {
-                'name': 'WebAPI Account',
+                'name': 'File Preview',
                 'order': 18
             },
             {
-                'name': 'File Preview',
+                'name': 'Shibboleth',
                 'order': 19
             },
             {
-                'name': 'Shibboleth',
+                'name': 'Restricted Access',
                 'order': 20
             },
             {
-                'name': 'Restricted Access',
-                'order': 21
-            },
-            {
                 'name': 'Others',
-                'order': 22
+                'order': 21
             }
         ]
     },

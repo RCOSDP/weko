@@ -85,7 +85,6 @@ setup(
         ],
         'invenio_admin.views': [
             'invenio_mail = invenio_mail.admin:mail_adminview',
-            'invenio_mail_templates = invenio_mail.admin:mail_templates_adminview',
         ],
         'invenio_db.models': [
             'invenio_mail = invenio_mail.models',
@@ -95,10 +94,7 @@ setup(
         ],
         'invenio_i18n.translations': [
             'messages = invenio_mail',
-        ],
-        'invenio_assets.bundles': [
-            'invenio_mail_template = invenio_mail.bundles:invenio_mail_template_js',
-        ],
+        ]
     },
     extras_require=extras_require,
     install_requires=install_requires,

@@ -45,6 +45,7 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_rest import ContentNegotiatedMethodView
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import cast
 from weko_accounts.api import ShibUser
 from weko_accounts.utils import login_required_customize
@@ -312,23 +313,34 @@ def new_activity():
 @blueprint.route('/activity/init', methods=['POST'])
 @login_required
 def init_activity():
-    """Init activity."""
-    post_activity = request.get_json()
-    activity = WorkActivity()
-    getargs = request.args
-    if 'community' in getargs:
-        rtn = activity.init_activity(
-            post_activity, request.args.get('community'))
-    else:
-        rtn = activity.init_activity(post_activity)
-    if rtn is None:
-        return jsonify(code=-1, msg='error')
-    url = url_for('weko_workflow.display_activity',
-                  activity_id=rtn.activity_id)
-    if 'community' in getargs and request.args.get('community') != 'undefined':
-        comm = GetCommunity.get_community_by_id(request.args.get('community'))
+    try:
+        """Init activity."""
+        post_activity = request.get_json()
+        activity = WorkActivity()
+        getargs = request.args
+        if 'community' in getargs:
+            rtn = activity.init_activity(
+                post_activity, request.args.get('community'))
+        else:
+            rtn = activity.init_activity(post_activity)
+        if rtn is None:
+            return jsonify(code=-1, msg='error')
         url = url_for('weko_workflow.display_activity',
-                      activity_id=rtn.activity_id, community=comm.id)
+                    activity_id=rtn.activity_id)
+        if 'community' in getargs and request.args.get('community') != 'undefined':
+            comm = GetCommunity.get_community_by_id(request.args.get('community'))
+            url = url_for('weko_workflow.display_activity',
+                        activity_id=rtn.activity_id, community=comm.id)
+        db.session.commit()
+    except SQLAlchemyError as ex:
+        current_app.logger.error('sqlalchemy error: ', ex)
+        db.session.rollback()
+        return jsonify(code=-1, msg='Failed to init activity!')
+    except BaseException as ex:
+        current_app.logger.error('Unexpected error: ', ex)
+        db.session.rollback()
+        return jsonify(code=-1, msg='Failed to init activity!')
+
     return jsonify(code=0, msg='success',
                    data={'redirect': url})
 
@@ -373,21 +385,31 @@ def init_activity_guest():
     post_data = request.get_json()
 
     if post_data.get('guest_mail'):
-        # Prepare activity data.
-        data = {
-            'itemtype_id': post_data.get('item_type_id'),
-            'workflow_id': post_data.get('workflow_id'),
-            'flow_id': post_data.get('flow_id'),
-            'activity_confirm_term_of_use': True,
-            'extra_info': {
-                "guest_mail": post_data.get('guest_mail'),
-                "record_id": post_data.get('record_id'),
-                "related_title": post_data.get('guest_item_title'),
-                "file_name": post_data.get('file_name'),
-                "is_restricted_access": True,
+        try:
+            # Prepare activity data.
+            data = {
+                'itemtype_id': post_data.get('item_type_id'),
+                'workflow_id': post_data.get('workflow_id'),
+                'flow_id': post_data.get('flow_id'),
+                'activity_confirm_term_of_use': True,
+                'extra_info': {
+                    "guest_mail": post_data.get('guest_mail'),
+                    "record_id": post_data.get('record_id'),
+                    "related_title": post_data.get('guest_item_title'),
+                    "file_name": post_data.get('file_name'),
+                    "is_restricted_access": True,
+                }
             }
-        }
-        __, tmp_url = init_activity_for_guest_user(data)
+            __, tmp_url = init_activity_for_guest_user(data)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.error('sqlalchemy error: ', ex)
+            db.session.rollback()
+            return jsonify(msg='Cannot send mail')
+        except BaseException as ex:
+            current_app.logger.error('Unexpected error: ', ex)
+            db.session.rollback()
+            return jsonify(msg='Cannot send mail')
 
         if send_usage_application_mail_for_guest_user(
                 post_data.get('guest_mail'), tmp_url):
@@ -868,25 +890,16 @@ def next_action(activity_id='0', action_id=0):
         register_hdl(activity_id)
 
     flow = Flow()
-    current_flow_action = flow.get_flow_action_detail(
-        activity_detail.flow_define.flow_id, action_id, action_order)
     next_flow_action = flow.get_next_flow_action(
         activity_detail.flow_define.flow_id, action_id, action_order)
     next_action_endpoint = next_flow_action[0].action.action_endpoint
     next_action_id = next_flow_action[0].action_id
     next_action_order = next_flow_action[
         0].action_order if action_order else None
-    action_mails_setting = {"previous":
-                            current_flow_action.send_mail_setting
-                            if current_flow_action.send_mail_setting
-                            else {},
-                            "next": next_flow_action[0].send_mail_setting
-                            if next_flow_action[0].send_mail_setting
-                            else {},
-                            "approval": False,
-                            "reject": False}
     # Start to send mail
     if 'approval' in [action_endpoint, next_action_endpoint]:
+        current_flow_action = flow.get_flow_action_detail(
+            activity_detail.flow_define.flow_id, action_id, action_order)
         next_action_detail = work_activity.get_activity_action_comment(
             activity_id, next_action_id,
             next_action_order)
@@ -901,7 +914,15 @@ def next_action(activity_id='0', action_id=0):
                 activity_detail.extra_info)
             if not url_and_expired_date:
                 url_and_expired_date = {}
-        action_mails_setting['approval'] = True
+        action_mails_setting = {"previous":
+                                current_flow_action.send_mail_setting
+                                if current_flow_action.send_mail_setting
+                                else {},
+                                "next": next_flow_action[0].send_mail_setting
+                                if next_flow_action[0].send_mail_setting
+                                else {},
+                                "approval": True,
+                                "reject": False}
 
         next_action_handler = next_action_detail.action_handler
         # in case of current action has action user
@@ -918,9 +939,12 @@ def next_action(activity_id='0', action_id=0):
                                     next_action_handler,
                                     url_and_expired_date)
     if current_app.config.get(
-        'WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL'):
-        process_send_notification_mail(activity_detail, action_endpoint,
-                                       next_action_endpoint, action_mails_setting)
+        'WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL') and \
+        current_user.is_authenticated and \
+        (not activity_detail.extra_info or not
+            activity_detail.extra_info.get('guest_mail')):
+        process_send_notification_mail(activity_detail,
+                                       action_endpoint, next_action_endpoint)
 
     if post_json.get('temporary_save') == 1 \
             and action_endpoint not in ['identifier_grant', 'item_link']:
@@ -1659,21 +1683,21 @@ def check_approval(activity_id='0'):
     return jsonify(response)
 
 
-@blueprint.route('/send_mail/<string:activity_id>/<string:mail_id>',
+@blueprint.route('/send_mail/<string:activity_id>/<string:mail_template>',
                  methods=['POST'])
 @login_required
-def send_mail(activity_id='0', mail_id=''):
+def send_mail(activity_id='0', mail_template=''):
     """Send mail.
 
     :param activity_id:
-    :param mail_id:
+    :param mail_template:
     :return:
     """
     try:
         work_activity = WorkActivity()
         activity_detail = work_activity.get_activity_detail(activity_id)
         if current_app.config.get('WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL'):
-            process_send_reminder_mail(activity_detail, mail_id)
+            process_send_reminder_mail(activity_detail, mail_template)
     except ValueError:
         return jsonify(code=-1, msg='Error')
     return jsonify(code=1, msg='Success')

@@ -39,7 +39,7 @@ from invenio_db import db
 from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_i18n.ext import current_i18n
 from invenio_mail.admin import MailSettingView
-from invenio_mail.models import MailConfig, MailTemplates
+from invenio_mail.models import MailConfig
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.models import PersistentIdentifier, \
@@ -78,14 +78,6 @@ from .config import DOI_VALIDATION_INFO, IDENTIFIER_GRANT_SELECT_DICT, \
     WEKO_SERVER_CNRI_HOST_LINK
 from .models import Action as _Action
 from .models import ActionStatusPolicy, ActivityStatusPolicy, GuestActivity
-
-
-def _check_mail_setting(setting):
-    """Check setting."""
-    if setting and setting.get("send", False) and setting.get("mail", ""):
-        return True
-    else:
-        return False
 
 
 def get_current_language():
@@ -1403,9 +1395,8 @@ def prepare_edit_workflow(post_activity, recid, deposit):
             _deposit.update(*args)
             _deposit.commit()
         except SQLAlchemyError as ex:
-            current_app.logger.error(ex)
-            db.session.rollback()
-        db.session.commit()
+            raise ex
+
         rtn = activity.init_activity(post_activity,
                                      community,
                                      draft_pid.object_uuid)
@@ -1799,7 +1790,7 @@ def send_mail_reminder(mail_info):
 
     :mail_info: object
     """
-    subject, body = get_mail_data(mail_info.get('mail_id'))
+    subject, body = get_mail_data(mail_info.get('template'))
     if not body:
         raise ValueError('Cannot get email template')
     body = replace_characters(mail_info, body)
@@ -1819,17 +1810,15 @@ def send_mail_approval_done(mail_info):
         send_mail(subject, mail_info.get('register_user_mail'), body)
 
 
-def send_mail_registration_done(mail_info, mail_id):
+def send_mail_registration_done(mail_info):
     """Send mail registration done.
 
     :mail_info: object
-    :mail_id: mail template id
     """
     from weko_items_ui.utils import get_current_user_role
     role = get_current_user_role()
     item_type_name = mail_info.get('item_type_name')
-    subject, body = email_pattern_registration_done(
-        role, item_type_name, mail_id)
+    subject, body = email_pattern_registration_done(role, item_type_name)
     if body and subject:
         body = replace_characters(mail_info, body)
         send_mail(subject, mail_info.get('register_user_mail'), body)
@@ -1872,19 +1861,58 @@ def send_mail(subject, recipient, body):
         return MailSettingView.send_statistic_mail(rf)
 
 
-def email_pattern_registration_done(user_role, item_type_name, mail_id):
+def email_pattern_registration_done(user_role, item_type_name):
     """Email pattern registration done.
 
     :user_role: object
     :item_type_name: object
-    :mail_id: mail template id
     """
     current_config = current_app.config
+    perfectures_item_type = current_config.get(
+        "WEKO_ITEMS_UI_APPLICATION_FOR_PERFECTURES")
+    location_information_item_type = current_config.get(
+        "WEKO_ITEMS_UI_APPLICATION_FOR_LOCATION_INFORMATION")
+    output_registration_item_type = current_config.get(
+        "WEKO_ITEMS_UI_OUTPUT_REPORT")
+    usage_report_item_type = current_config.get(
+        "WEKO_ITEMS_UI_USAGE_REPORT")
     item_type_list = current_config.get(
         "WEKO_ITEMS_UI_USAGE_APPLICATION_ITEM_TYPES_LIST")
-    if item_type_name in item_type_list:
-        return get_mail_data(mail_id)
+    general_role = current_config.get("WEKO_USERPROFILES_GENERAL_ROLE")
+    student_role = current_config.get("WEKO_USERPROFILES_STUDENT_ROLE")
+    graduated_student_role = current_config.get(
+        "WEKO_USERPROFILES_GRADUATED_STUDENT_ROLE")
 
+    group = [perfectures_item_type, location_information_item_type]
+    """Check itemtype name"""
+    if item_type_name not in item_type_list:
+        if item_type_name == output_registration_item_type:
+            return get_mail_data(
+                current_config.get("WEKO_WORKFLOW_RECEIVE_OUTPUT_REGISTRATION"))
+        elif item_type_name == usage_report_item_type:
+            return get_mail_data(
+                current_config.get("WEKO_WORKFLOW_RECEIVE_USAGE_REPORT"))
+        return None, None
+    if user_role and user_role == general_role:
+        if item_type_name not in group:
+            return get_mail_data(
+                current_config.get("WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE"
+                                   "_PERFECTURE_AND_LOCATION_DATA_OF"
+                                   "_GENERAL_USER"))
+        elif item_type_name in group:
+            return get_mail_data(
+                current_config.get("WEKO_WORKFLOW_PERFECTURE_OR_LOCATION_DATA"
+                                   "_OF_GENERAL_USER"))
+    elif user_role and user_role in [graduated_student_role, student_role]:
+        if item_type_name not in group:
+            return get_mail_data(
+                current_config.get("WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE"
+                                   "_PERFECTURE_AND_LOCATION_DATA_OF_STUDENT_OR"
+                                   "_GRADUATED_STUDENT"))
+        elif item_type_name in group:
+            return get_mail_data(
+                current_config.get("WEKO_WORKFLOW_PERFECTURE_OR_LOCATION_DATA"
+                                   "_OF_STUDENT_OR_GRADUATED_STUDENT"))
     return None, None
 
 
@@ -1930,16 +1958,55 @@ def email_pattern_approval_done(item_type_name):
             "WEKO_WORKFLOW_APPROVE_LOCATION_DATA"))
 
 
-def get_mail_data(mail_id):
-    """Get subject, body of a email.
+def get_mail_data(file_name):
+    """Get data of a email.
 
-    :mail_id: mail template id in db
+    :file_name: file name template
     """
-    mt = MailTemplates.get_by_id(mail_id)
-    if mt:
-        return mt.mail_subject, mt.mail_body
+    file_path = get_file_path(file_name)
+    return get_subject_and_content(file_path)
+
+
+def get_subject_and_content(file_path):
+    """Get mail subject and content from template file.
+
+    :file_path: this is a full path
+    """
+    import os
+    if not os.path.exists(file_path):
+        return None, None
+    file = open(file_path, 'r')
+    subject = body = ''
+    index = 0
+    """ Get subject and content body from template file """
+    """ The first line is mail subject """
+    """ Exclude the first line is mail content """
+    for line in file:
+        if index == 0:
+            subject = line
+        else:
+            body += line
+        index += 1
+    """ Custom subject (remove 'Subject：' from subject) """
+    subject = subject.replace('Subject：', '')
+    subject = subject.replace('\n', '')
+    return subject, body
+
+
+def get_file_path(file_name):
+    """Get file path from file name.
+
+    :file_name: file name
+    """
+    config = current_app.config
+    template_folder_path = \
+        config.get("WEKO_WORKFLOW_MAIL_TEMPLATE_FOLDER_PATH")
+
+    # Get file path (template path + file name)
+    if template_folder_path is not None and file_name is not None:
+        return os.path.join(template_folder_path, file_name)
     else:
-        return "", ""
+        return ""
 
 
 def replace_characters(data, content):
@@ -1967,7 +2034,7 @@ def replace_characters(data, content):
         '[16]': 'report_number',
         '[17]': 'registration_number',
         '[18]': 'output_registration_title',
-        '[url_guest_user]': 'url_guest_user',
+        '[19]': 'url_guest_user',
         '[restricted_fullname]': 'restricted_fullname',
         '[restricted_university_institution]':
             'restricted_university_institution',
@@ -1983,8 +2050,6 @@ def replace_characters(data, content):
         '[restricted_approver_name]': 'restricted_approver_name',
         '[restricted_site_name_ja]': 'restricted_site_name_ja',
         '[restricted_site_name_en]': 'restricted_site_name_en',
-        '[restricted_institution_name_ja]': 'restricted_institution_name_ja',
-        '[restricted_institution_name_en]': 'restricted_institution_name_en',
         '[restricted_site_mail]': 'restricted_site_mail',
         '[restricted_site_url]': 'restricted_site_url',
         '[restricted_approver_affiliation]': 'restricted_approver_affiliation',
@@ -2091,25 +2156,18 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
     :activity_detail: object
     :guest_user: object
     """
-    mail_address = item_info.get('subitem_mail_address')
     site_en, site_ja = get_site_info_name()
     site_mail = get_default_mail_sender()
-    institution_name_ja = current_app.config['THEME_INSTITUTION_NAME']['ja']
-    institution_name_en = current_app.config['THEME_INSTITUTION_NAME']['en']
     register_user = register_date = ''
     if not guest_user:
         register_user, register_date = get_register_info(
             activity_detail.activity_id)
-    if not mail_address and guest_user:
-        mail_address = activity_detail.extra_info.get(
-            "guest_mail", "") if activity_detail.extra_info else ""
-        register_user = mail_address
 
     mail_info = dict(
         university_institution=item_info.get('subitem_university/institution'),
         fullname=item_info.get('subitem_fullname'),
         activity_id=activity_detail.activity_id,
-        mail_address=mail_address,
+        mail_address=item_info.get('subitem_mail_address'),
         research_title=item_info.get('subitem_research_title'),
         dataset_requested=item_info.get('subitem_dataset_usage'),
         register_date=register_date,
@@ -2143,8 +2201,6 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
         restricted_approver_affiliation='',
         restricted_site_name_ja=site_ja,
         restricted_site_name_en=site_en,
-        restricted_institution_name_ja=institution_name_ja,
-        restricted_institution_name_en=institution_name_en,
         restricted_site_mail=site_mail,
         restricted_site_url=current_app.config['THEME_SITEURL'],
         mail_recipient=item_info.get('subitem_restricted_access_mail_address'),
@@ -2154,11 +2210,11 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
     return mail_info
 
 
-def process_send_reminder_mail(activity_detail, mail_id):
+def process_send_reminder_mail(activity_detail, mail_template):
     """Process send reminder mail.
 
     :activity_detail: object
-    :mail_id: string
+    :mail_template: string
     """
     item_info = get_item_info(activity_detail.item_id)
     mail_info = set_mail_info(item_info, activity_detail)
@@ -2172,26 +2228,23 @@ def process_send_reminder_mail(activity_detail, mail_id):
 
     if update_user.get('fullname') != '':
         mail_info['fullname'] = update_user.get('fullname')
-    mail_info['mail_id'] = mail_id
+    mail_info['template'] = mail_template
     try:
         send_mail_reminder(mail_info)
     except ValueError as val:
         raise ValueError(val)
 
 
-def process_send_notification_mail(activity_detail, action_endpoint,
-                                   next_action_endpoint, action_mails_setting):
+def process_send_notification_mail(
+        activity_detail, action_endpoint, next_action_endpoint):
     """Process send notification mail.
 
     :activity_detail: object
     :action_endpoint: object
     :next_action_endpoint: object
-    :action_mails_setting: object
     """
-    is_guest_user = True if activity_detail.extra_info.get(
-        'guest_mail', None) else False
     item_info = get_item_info(activity_detail.item_id)
-    mail_info = set_mail_info(item_info, activity_detail, is_guest_user)
+    mail_info = set_mail_info(item_info, activity_detail)
 
     workflow = WorkFlow()
     workflow_detail = workflow.get_workflow_by_id(
@@ -2201,22 +2254,17 @@ def process_send_notification_mail(activity_detail, action_endpoint,
     mail_info['next_step'] = next_action_endpoint
     """ Set registration date to 'mail_info' """
     get_approval_dates(mail_info)
-    if 'item_login' in action_endpoint \
-            and action_mails_setting.get("previous", {}):
+    if 'item_login' in action_endpoint:
         """ Send mail for register to notify that registration is done"""
-        setting = action_mails_setting.get("previous") \
-            .get("inform_itemReg", {})
-        if _check_mail_setting(setting):
-            send_mail_registration_done(mail_info, setting["mail"])
-    if current_user.is_authenticated and not is_guest_user:
-        if 'approval_' in next_action_endpoint \
-                and 'administrator' not in next_action_endpoint:
-            """ Send mail for approver to request approval"""
-            send_mail_request_approval(mail_info)
-        if 'approval_administrator' in action_endpoint:
-            """ Send mail to register to notify
-                that registration is approved by admin """
-            send_mail_approval_done(mail_info)
+        send_mail_registration_done(mail_info)
+    if 'approval_' in next_action_endpoint \
+            and 'administrator' not in next_action_endpoint:
+        """ Send mail for approver to request approval"""
+        send_mail_request_approval(mail_info)
+    if 'approval_administrator' in action_endpoint:
+        """ Send mail to register to notify
+            that registration is approved by admin """
+        send_mail_approval_done(mail_info)
 
 
 def get_application_and_approved_date(activities, columns):
@@ -2406,7 +2454,6 @@ def create_record_metadata(
     update_activity_action(activity.get('activity_id'), owner_id)
 
     WorkActivity().update_activity(activity.get('activity_id'), activity)
-    db.session.commit()
     return new_usage_report_activity.activity_id
 
 
@@ -2523,12 +2570,8 @@ def get_shema_dict(properties, data_dict):
 
 def create_deposit(item_id):
     """Create deposit."""
-    try:
-        deposit = WekoDeposit.create({}, recid=int(item_id))
-        db.session.commit()
-        return deposit
-    except Exception:
-        db.session.rollback()
+    deposit = WekoDeposit.create({}, recid=int(item_id))
+    return deposit
 
 
 def update_activity_action(activity_id, owner_id):
@@ -2682,7 +2725,7 @@ def send_mail_url_guest_user(mail_info: dict) -> bool:
 
     :mail_info: object
     """
-    subject, body = get_mail_data(mail_info.get('mail_id'))
+    subject, body = get_mail_data(mail_info.get('template'))
     if not body:
         return False
     body = replace_characters(mail_info, body)
@@ -2794,16 +2837,12 @@ def send_usage_application_mail_for_guest_user(guest_mail: str, temp_url: str):
     site_name_en, site_name_ja = get_site_info_name()
     site_mail = get_default_mail_sender()
     site_url = current_app.config['THEME_SITEURL']
-    institution_name_ja = current_app.config['THEME_INSTITUTION_NAME']['ja']
-    institution_name_en = current_app.config['THEME_INSTITUTION_NAME']['en']
     mail_info = {
-        'mail_id': current_app.config.get("WEKO_WORKFLOW_ACCESS_ACTIVITY_URL"),
+        'template': current_app.config.get("WEKO_WORKFLOW_ACCESS_ACTIVITY_URL"),
         'mail_address': guest_mail,
         'url_guest_user': temp_url,
         "restricted_site_name_ja": site_name_ja,
         "restricted_site_name_en": site_name_en,
-        "restricted_institution_name_ja": institution_name_ja,
-        "restricted_institution_name_en": institution_name_en,
         "restricted_site_mail": site_mail,
         "restricted_site_url": site_url,
     }
@@ -3186,17 +3225,16 @@ def get_approval_keys():
     return approval_keys
 
 
-def process_send_mail(mail_info, mail_id):
+def process_send_mail(mail_info, mail_pattern_name):
     """Send mail approval rejected.
 
     :mail_info: object
-    :mail_id: mail template id
     """
     if not mail_info.get("mail_recipient"):
         current_app.logger.error('Mail address is not defined')
         return
 
-    subject, body = get_mail_data(mail_id)
+    subject, body = get_mail_data(mail_pattern_name)
     if body and subject:
         body = replace_characters(mail_info, body)
         return send_mail(subject, mail_info['mail_recipient'], body)
@@ -3237,30 +3275,29 @@ def process_send_approval_mails(activity_detail, actions_mail_setting,
             'guest_mail')
 
     if actions_mail_setting["approval"]:
-        if actions_mail_setting.get("previous", {}):
-            setting = actions_mail_setting.get("previous") \
-                .get("inform_approval", {})
-            if _check_mail_setting(setting):
-                process_send_mail(mail_info, setting["mail"])
+        if actions_mail_setting.get("previous", {}).get(
+                "inform_approval", False):
+            process_send_mail(
+                mail_info,
+                current_app.config["WEKO_WORKFLOW_APPROVE_DONE"])
 
-        if actions_mail_setting.get('next', {}):
-            setting = actions_mail_setting.get("next") \
-                .get("request_approval", {})
-            if _check_mail_setting(setting):
-                approval_user = db.session.query(User).filter_by(
-                    id=int(next_step_appover_id)).first()
-                if not approval_user:
-                    current_app.logger.error("Does not have approval data")
-                else:
-                    mail_info['mail_recipient'] = approval_user.email
-                    process_send_mail(mail_info, setting["mail"])
+        if actions_mail_setting.get('next', {}).get("request_approval", False):
+            approval_user = db.session.query(User).filter_by(
+                id=int(next_step_appover_id)).first()
+            if not approval_user:
+                current_app.logger.error("Does not have approval data")
+            else:
+                mail_info['mail_recipient'] = approval_user.email
+                process_send_mail(
+                    mail_info,
+                    current_app.config["WEKO_WORKFLOW_REQUEST_APPROVAL"])
 
     if actions_mail_setting["reject"]:
-        if actions_mail_setting.get("previous", {}):
-            setting = actions_mail_setting.get("previous") \
-                .get("inform_reject", {})
-            if _check_mail_setting(setting):
-                process_send_mail(mail_info, setting["mail"])
+        if actions_mail_setting.get(
+                "previous", {}).get("inform_reject", False):
+            process_send_mail(
+                mail_info,
+                current_app.config["WEKO_WORKFLOW_APPROVE_REJECTED"])
 
 
 def get_usage_data(item_type_id, activity_detail, user_profile=None):
@@ -3535,19 +3572,14 @@ def check_authority_by_admin(activity):
     # and the user who created activity is member of community
     # role -> has permission:
     community_role_name = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-    community_user_ids = []
-    if isinstance(community_role_name, str):
-        community_role_name = (community_role_name,)
-    for name in community_role_name:
-        # Get the list of users who has the community role
-        community_users = User.query.outerjoin(userrole).outerjoin(Role) \
-            .filter(name == Role.name) \
-            .filter(userrole.c.role_id == Role.id) \
-            .filter(User.id == userrole.c.user_id) \
-            .all()
-        tmp = [community_user.id for community_user in community_users]
-        community_user_ids.extend(tmp)
-
+    # Get the list of users who has the community role
+    community_users = User.query.outerjoin(userrole).outerjoin(Role) \
+        .filter(community_role_name == Role.name) \
+        .filter(userrole.c.role_id == Role.id) \
+        .filter(User.id == userrole.c.user_id) \
+        .all()
+    community_user_ids = [
+        community_user.id for community_user in community_users]
     for role in list(current_user.roles or []):
         if role.name in community_role_name:
             # User has community role

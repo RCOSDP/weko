@@ -29,7 +29,6 @@ from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
-from invenio_mail.models import MailTemplates
 from weko_index_tree.models import Index
 from weko_records.api import ItemTypes
 from weko_records.models import ItemTypeProperty
@@ -64,7 +63,6 @@ class FlowSettingView(BaseView):
         users = User.query.filter_by(active=True).all()
         roles = Role.query.all()
         actions = self.get_actions()
-        mail_templates = MailTemplates.get_templates()
         if '0' == flow_id:
             flow = None
             return self.render(
@@ -75,8 +73,7 @@ class FlowSettingView(BaseView):
                 users=users,
                 roles=roles,
                 actions=None,
-                action_list=actions,
-                mail_templates=mail_templates
+                action_list=actions
             )
         UUID_PATTERN = re.compile(r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$',
                                   re.IGNORECASE)
@@ -94,8 +91,7 @@ class FlowSettingView(BaseView):
             roles=roles,
             actions=flow.flow_actions,
             action_list=actions,
-            specifed_properties=specified_properties,
-            mail_templates=mail_templates
+            specifed_properties=specified_properties
         )
 
     @staticmethod
