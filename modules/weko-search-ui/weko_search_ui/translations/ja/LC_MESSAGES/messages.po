@@ -768,13 +768,6 @@ msgstr "削除対象にDOI付与済みアイテムが含まれています。<br
 #~ msgid "Update"
 #~ msgstr "更新"
 
-#~ msgid ""
-#~ "Suffix of {} can only be used "
-#~ "with half-width alphanumeric characters "
-#~ "and half-width symbols \"_-.; () "
-#~ "/\"."
-#~ msgstr "{}のSuffixは半角英数字、半角記号「_-.;()/」以外使用できません。"
-
 #~ msgid "\"<\" and \">\" are cannot be used for searching"
 #~ msgstr ""
 

@@ -406,7 +406,7 @@ class ItemTypes(RecordBase):
         upgrade_version = True if \
             check_to_upgrade_version(old_render, new_render) else False
 
-        if upgrade_version or updated_name:
+        if upgrade_version:
             return cls.create(item_type_name=item_type_name, name=name,
                               schema=schema, form=form, render=render,
                               tag=tag)

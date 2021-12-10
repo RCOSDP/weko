@@ -20,6 +20,7 @@
 
 """Weko Deposit API."""
 import copy
+import inspect
 import sys
 import uuid
 from collections import OrderedDict
@@ -654,25 +655,29 @@ class WekoDeposit(Deposit):
                     'email': current_user.email
                 }
 
-        if recid:
-            deposit = super(WekoDeposit, cls).create(
-                data,
-                id_=id_,
-                recid=recid
-            )
-        else:
-            deposit = super(WekoDeposit, cls).create(data, id_=id_)
+        try:
+            if recid:
+                deposit = super(WekoDeposit, cls).create(
+                    data,
+                    id_=id_,
+                    recid=recid
+                )
+            else:
+                deposit = super(WekoDeposit, cls).create(data, id_=id_)
 
-        record_id = 0
-        if data.get('_deposit'):
-            record_id = str(data['_deposit']['id'])
-        parent_pid = PersistentIdentifier.create(
-            'parent',
-            'parent:{0}'.format(record_id),
-            object_type='rec',
-            object_uuid=deposit.id,
-            status=PIDStatus.REGISTERED
-        )
+            record_id = 0
+            if data.get('_deposit'):
+                record_id = str(data['_deposit']['id'])
+            parent_pid = PersistentIdentifier.create(
+                'parent',
+                'parent:{0}'.format(record_id),
+                object_type='rec',
+                object_uuid=deposit.id,
+                status=PIDStatus.REGISTERED
+            )
+            db.session.commit()
+        except BaseException as ex:
+            raise ex
 
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
 
@@ -1640,10 +1645,8 @@ class WekoRecord(Record):
             is_ok = True
         # Check super users
         else:
-            super_users = current_app.config[
-                'WEKO_PERMISSION_SUPER_ROLE_USER'] + (
-                current_app.config[
-                    'WEKO_PERMISSION_ROLE_COMMUNITY'],)
+            super_users = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
+                current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
             for role in list(current_user.roles or []):
                 if role.name in super_users:
                     is_ok = True
