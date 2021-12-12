@@ -11,6 +11,8 @@
 from __future__ import absolute_import, print_function
 
 import copy
+import inspect
+import traceback
 import uuid
 from collections import defaultdict
 from functools import partial, wraps
@@ -368,7 +370,8 @@ def pass_record(f):
         try:
             pid, record = request.view_args['pid_value'].data
             return f(self, pid=pid, record=record, *args, **kwargs)
-        except SQLAlchemyError:
+        except SQLAlchemyError as ex:
+            current_app.logger.error('sqlalchemy error: ', ex)
             raise PIDResolveRESTError(pid)
 
     return inner
@@ -792,10 +795,15 @@ class RecordResource(ContentNegotiatedMethodView):
 
         self.check_etag(str(record.revision_id))
 
-        record.clear()
-        record.update(data)
-        record.commit()
-        db.session.commit()
+        try:
+            current_app.logger.debug(type(record))
+            record.clear()
+            record.update(data)
+            record.commit()
+            db.session.commit()
+        except BaseException as e:
+            current_app.logger.error(traceback.format_exc())
+
         if self.indexer_class:
             self.indexer_class().index(record)
         return self.make_response(

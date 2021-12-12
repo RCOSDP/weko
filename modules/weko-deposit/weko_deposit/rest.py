@@ -164,6 +164,7 @@ class ItemResource(ContentNegotiatedMethodView):
                  default_media_type=None,
                  **kwargs):
         """Constructor."""
+
         super(ItemResource, self).__init__(
             method_serializers={
                 # 'GET': search_serializers,
@@ -178,6 +179,7 @@ class ItemResource(ContentNegotiatedMethodView):
             default_media_type=default_media_type,
             **kwargs
         )
+        current_app.logger.debug('kwargs: {0}'.format(kwargs))
         for key, value in ctx.items():
             setattr(self, key, value)
 
@@ -204,10 +206,10 @@ class ItemResource(ContentNegotiatedMethodView):
             if edit_mode and edit_mode == 'upgrade':
                 data.pop('edit_mode')
                 cur_pid = PersistentIdentifier.get('recid', pid_value)
-                pid = PersistentIdentifier.get('recid', pid_value.split(".")[0])
+                pid = PersistentIdentifier.get(
+                    'recid', pid_value.split(".")[0])
                 deposit = WekoDeposit.get_record(pid.object_uuid)
 
-                
                 with db.session.begin_nested():
 
                     if upgrade_record and ".0" in pid_value:
@@ -249,17 +251,16 @@ class ItemResource(ContentNegotiatedMethodView):
             current_app.logger.error('elasticsearch error: ', ex)
             db.session.rollback()
 
-            #elasticseacrh remove 
-            #dammy()
-
+            # elasticseacrh remove
+            # dammy()
 
             abort(400, "Failed to register item!")
         except redis.RedisError as ex:
             current_app.logger.error('redis error: ', ex)
             db.session.rollback()
 
-            #elasticseacrh remove 
-            #dammy()
+            # elasticseacrh remove
+            # dammy()
 
             abort(400, "Failed to register item!")
         except BaseException as ex:

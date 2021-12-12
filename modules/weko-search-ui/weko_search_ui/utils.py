@@ -35,6 +35,7 @@ from datetime import datetime
 from functools import partial, reduce, wraps
 from io import StringIO
 from operator import getitem
+from time import sleep
 
 import bagit
 import redis
@@ -62,7 +63,7 @@ from invenio_stats.models import StatsEvents
 from invenio_stats.processors import anonymize_user, flag_restricted, \
     flag_robots, hash_id
 from jsonschema import Draft4Validator
-from sqlalchemy.exc import SQLAlchemyError, OperationalError
+from sqlalchemy.exc import SQLAlchemyError
 from weko_admin.models import SessionLifetime
 from weko_admin.utils import get_redis_cache, reset_redis_cache
 from weko_authors.utils import check_email_existed
@@ -2731,22 +2732,24 @@ def export_all(root_url):
                     .format(item_type_name, item_type_id))
                 # get all record id
                 recids = (db.session
-                        .query(PersistentIdentifier.pid_value,
-                                PersistentIdentifier.object_uuid)
-                        .join(ItemMetadata,
+                          .query(PersistentIdentifier.pid_value,
+                                 PersistentIdentifier.object_uuid)
+                          .join(ItemMetadata,
                                 PersistentIdentifier.object_uuid == ItemMetadata.id)
-                        .filter(PersistentIdentifier.pid_type == 'recid',
-                                PersistentIdentifier.status == PIDStatus.REGISTERED,
-                                PersistentIdentifier.pid_value.notlike('%.%'),
-                                PersistentIdentifier.pid_value >= max_pid,
-                                ItemMetadata.item_type_id == item_type_id)
-                        .order_by(PersistentIdentifier.pid_value)).all()
+                          .filter(PersistentIdentifier.pid_type == 'recid',
+                                  PersistentIdentifier.status == PIDStatus.REGISTERED,
+                                  PersistentIdentifier.pid_value.notlike(
+                                      '%.%'),
+                                  PersistentIdentifier.pid_value >= max_pid,
+                                  ItemMetadata.item_type_id == item_type_id)
+                          .order_by(PersistentIdentifier.pid_value)).all()
 
                 if len(recids) == 0:
                     finish_item_types.append(item_type_id)
                     continue
 
-                record_ids = [(recid.pid_value, recid.object_uuid) for recid in recids]
+                record_ids = [(recid.pid_value, recid.object_uuid)
+                              for recid in recids]
                 for recid, uuid in record_ids:
                     if counter % WEKO_SEARCH_UI_BULK_EXPORT_LIMIT == 0 and item_datas:
                         # Create export info file
@@ -2797,13 +2800,15 @@ def export_all(root_url):
                     'Processed {} items of item type {}.'
                     .format(counter, item_type_name))
             return True
-        except OperationalError as ex:
+        except SQLAlchemyError as ex:
             current_app.logger.error(ex)
             _num_retry = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_RETRY']
             if retrys < _num_retry:
                 retrys += 1
                 current_app.logger.info('retry count: {}'.format(retrys))
-                result = _get_export_data(export_path, finish_item_types, retrys, retry_info)
+                sleep(5)
+                result = _get_export_data(
+                    export_path, finish_item_types, retrys, retry_info)
                 return result
             else:
                 return False
