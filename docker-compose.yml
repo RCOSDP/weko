@@ -202,7 +202,11 @@ services:
 
   nginx:
     restart: "always"
-    build: ./nginx
+    #build: ./nginx
+    build:
+      context: ./nginx
+      #dockerfile: ./nginx/Dockerfile
+      #target: nginx-stage_1 
     ports:
       - "80:80"
       - "443:443"
