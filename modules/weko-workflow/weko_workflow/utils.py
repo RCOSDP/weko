@@ -2998,7 +2998,7 @@ def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
         'subitem_affiliated_division/department': '',
         'subitem_position': '',
         'subitem_phone_number': '',
-        'subitem_position(other)': '',
+        'subitem_position(others)': '',
         'subitem_affiliated_institution': [],
     }
     user_profile = {"results": profile}

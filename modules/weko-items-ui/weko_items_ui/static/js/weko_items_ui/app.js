@@ -4167,6 +4167,12 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             $scope.updateTitleForOutputReport()
           }
 
+          if (!model['item_dataset_usage']) {
+            $rootScope.recordsVM.invenioRecordsModel['item_dataset_usage'] = {
+              subitem_dataset_usage : $("#data_type_title").val()
+            };
+          }
+
           var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
           let permission = false;
           $scope.$broadcast('schemaFormValidate');
