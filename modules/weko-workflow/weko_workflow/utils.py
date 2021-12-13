@@ -2072,10 +2072,7 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
     def _get_restricted_data_name():
         result = item_info.get('subitem_restricted_access_dataset_usage', '')
         if not result:
-            apply_id = item_info.get('subitem_corresponding_usage_application_id', '')
-            if apply_id:
-                apply_detail = WorkActivity.get_activity_detail(apply_id)
-                result = apply_detail.title
+            result = item_info.get('subitem_dataset_usage', '')
         return result
 
     def _get_restricted_research_title():
