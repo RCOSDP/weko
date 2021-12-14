@@ -1817,7 +1817,8 @@ class UsageReport:
             "subitem_restricted_access_application_date":
                 "restricted_application_date",
             "subitem_restricted_access_research_title":
-                "restricted_research_title"
+                "restricted_research_title",
+            "subitem_research_title": "restricted_research_title"
         }
         self.__mail_info_lst = []
 
