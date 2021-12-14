@@ -442,7 +442,7 @@ def _get_google_detaset_meta(record):
         return
 
     # Check resource type is 'datasets'
-    resource_type_allowed = True #False
+    resource_type_allowed = False
     for resource_type in mtdata.findall('dc:type', namespaces=mtdata.nsmap):
         if resource_type.text == "datasets":
             resource_type_allowed = True
