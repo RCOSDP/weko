@@ -554,3 +554,7 @@ WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE = [
     "workflow",
     "other"
 ]
+"""Define of resouce types list will be used for google scholar output."""
+
+WEKO_RECORDS_UI_GOOGLE_DATASET_DISP_FLG = True
+"""Enable function of google dataset metadata output."""

@@ -25,7 +25,7 @@ import os
 import six
 import werkzeug
 from flask import Blueprint, abort, current_app, escape, flash, jsonify, \
-    make_response, redirect, render_template, request, url_for
+    make_response, redirect, render_template, request, url_for, json
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
@@ -425,6 +425,140 @@ def _get_google_scholar_meta(record):
     return res
 
 
+def _get_google_detaset_meta(record):
+    if not current_app.config['WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE']:
+       return
+
+    if '_oai' not in record:
+        return
+    recstr = etree.tostring(
+        getrecord(
+            identifier=record['_oai'].get('id'),
+            metadataPrefix='jpcoar',
+            verb='getrecord'))
+    et = etree.fromstring(recstr)
+    mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
+    if mtdata is None:
+        return
+
+    # Check resource type is 'datasets'
+    resource_type_allowed = True #False
+    for resource_type in mtdata.findall('dc:type', namespaces=mtdata.nsmap):
+        if resource_type.text == "datasets":
+            resource_type_allowed = True
+            break
+    if not resource_type_allowed:
+        return
+
+    res_data = {'@context':'https://schema.org/', '@type':'Dataset'}
+    
+    # Required property check
+    for title in mtdata.findall('dc:title', namespaces=mtdata.nsmap):
+        res_data['name'] = title.text
+    for description in mtdata.findall('datacite:description', namespaces=mtdata.nsmap):
+        description_text = description.text
+        if len(description_text) >= 50:
+            if len(description_text) > 5000:
+                description_text = description_text[:5000]
+            res_data['description'] = description_text
+    if 'name' not in res_data or 'description' not in res_data:
+        return
+
+    # includedInDataCatalog
+    repository_url = current_app.config['THEME_SITEURL']
+    res_data['includedInDataCatalog'] = {'@type': 'DataCatalog', 'name': repository_url}
+
+    # jpcoar:creator
+    creators_data = []
+    for creator in mtdata.findall('jpcoar:creator', namespaces=mtdata.nsmap):
+        givenName = creator.find('jpcoar:givenName', namespaces=creator.nsmap)
+        familyName = creator.find('jpcoar:familyName', namespaces=creator.nsmap)
+        name = creator.find('jpcoar:creatorName', namespaces=creator.nsmap)
+        identifier = creator.find('jpcoar:nameIdentifier', namespaces=creator.nsmap)
+        alternateName = creator.find('jpcoar:creatorAlternative', namespaces=creator.nsmap)
+        affiliations = []
+        for affiliation in mtdata.findall('jpcoar:affiliation', namespaces=mtdata.nsmap):
+            affiliation_data = {'@type': 'Organization'}
+            affiliationNameIdentifier = affiliation.find('jpcoar:nameIdentifier', namespaces=affiliation.nsmap)
+            affiliationName = affiliation.find('jpcoar:nameIdentifier', namespaces=affiliation.nsmap)
+            if affiliationNameIdentifier is not None and len(affiliationNameIdentifier.text) > 0:
+                affiliation_data['identifier'] = affiliationNameIdentifier.text
+            if affiliationName is not None and len(affiliationName.text) > 0:
+                affiliation_data['name'] = affiliationName.text
+            affiliations.append(affiliation_data)
+
+        creator_data = {'@type': 'Person'}
+        if givenName is not None and len(givenName.text) > 0:
+            creator_data['givenName'] = givenName.text
+        if familyName is not None and len(familyName.text) > 0:
+            creator_data['familyName'] = familyName.text
+        if name is not None and len(name.text) > 0:
+            creator_data['name'] = name.text
+        if identifier is not None and len(identifier.text) > 0:
+            creator_data['identifier'] = identifier.text
+        if alternateName is not None and len(alternateName.text) > 0:
+            creator_data['alternateName'] = alternateName.text
+        if len(affiliations) > 0:
+            creator_data['affiliation'] = affiliations
+        
+        creators_data.append(creator_data)
+
+    if len(creators_data) > 0:
+        res_data['creator'] = creators_data
+        
+    # jpcoar:identifier
+    identifiers = []
+    for identifier in mtdata.findall('jpcoar:identifier', namespaces=mtdata.nsmap):
+        identifiers.append(identifier.text)
+    if len(identifiers) > 0:
+        res_data['citation'] = identifiers
+
+    # jpcoar:subject
+    subjects = []
+    for subject in mtdata.findall('jpcoar:subject', namespaces=mtdata.nsmap):
+        subjects.append(subject.text)
+    if len(subjects) > 0:
+        res_data['keywords'] = subjects
+
+    # dc:rights
+    rights_list = []
+    for rights in mtdata.findall('dc:rights', namespaces=mtdata.nsmap):
+        rights_list.append(rights.text)
+    if len(rights_list) > 0:
+        res_data['license'] = rights_list
+
+    # datacite:geoLocation
+    geo_locations = []
+    for geo_location in mtdata.findall('datacite:geoLocation', namespaces=mtdata.nsmap):
+        geo_locations.append(geo_location.text)
+    if len(geo_locations) > 0:
+        res_data['spatialCoverage'] = geo_locations
+    
+    # dcterms:temporal
+    temporal_coverages = []
+    for temporal_coverage in mtdata.findall('dcterms:temporal', namespaces=mtdata.nsmap):
+        temporal_coverages.append(temporal_coverage.text)
+    if len(temporal_coverages) > 0:
+        res_data['temporalCoverage'] = temporal_coverages
+    
+    # jpcoar:file
+    distributions = []
+    for file in mtdata.findall('jpcoar:file', namespaces=mtdata.nsmap):
+        uri = file.find('jpcoar:URI', namespaces=file.nsmap)
+        mime_type = file.find('jpcoar:mimeType', namespaces=file.nsmap)
+
+        distribution = {'@type': 'DataDownload'}
+        if uri is not None and len(uri.text) > 0:
+            distribution['contentUrl'] = uri.text
+        if mime_type is not None and len(mime_type.text) > 0:
+            distribution['encodingFormat'] = mime_type.text
+        distributions.append(distribution)
+    if len(distributions) > 0:
+        res_data['distribution'] = distributions
+    
+    return json.dumps(res_data, ensure_ascii=False)
+
+
 def default_view_method(pid, record, filename=None, template=None, **kwargs):
     """Display default view.
 
@@ -532,6 +666,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         record["relation"] = {}
 
     google_scholar_meta = _get_google_scholar_meta(record)
+    google_dataset_meta = _get_google_detaset_meta(record)
 
     current_lang = current_i18n.language \
         if hasattr(current_i18n, 'language') else None
@@ -672,6 +807,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         index_link_enabled=style.index_link_enabled,
         index_link_list=index_link_list,
         google_scholar_meta=google_scholar_meta,
+        google_dataset_meta=google_dataset_meta,
         billing_files_permission=billing_files_permission,
         billing_files_prices=billing_files_prices,
         files_thumbnail=files_thumbnail,
