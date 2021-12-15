@@ -530,7 +530,45 @@ def _get_google_detaset_meta(record):
     # datacite:geoLocation
     geo_locations = []
     for geo_location in mtdata.findall('datacite:geoLocation', namespaces=mtdata.nsmap):
-        geo_locations.append(geo_location.text)
+        # geoLocationPoint
+        point_longitude = geo_location.find('datacite:geoLocationPoint/datacite:pointLongitude', namespaces=geo_location.nsmap)
+        point_latitude = geo_location.find('datacite:geoLocationPoint/datacite:pointLatitude', namespaces=geo_location.nsmap)
+        if point_longitude is not None and len(point_longitude.text) > 0 and point_latitude is not None and len(point_latitude.text) > 0:
+            geo_locations.append({
+                '@type': 'Place',
+                'geo': {
+                    '@type': 'GeoCoordinates',
+                    'latitude': point_longitude.text,
+                    'longitude': point_latitude.text,
+                }
+            })
+
+        # geoLocationBox
+        box_west_bound_longitude = geo_location.find('datacite:geoLocationBox/datacite:westBoundLongitude', namespaces=geo_location.nsmap)
+        box_east_bound_longitude = geo_location.find('datacite:geoLocationBox/datacite:eastBoundLongitude', namespaces=geo_location.nsmap)
+        box_south_bound_latitude = geo_location.find('datacite:geoLocationBox/datacite:southBoundLatitude', namespaces=geo_location.nsmap)
+        box_north_bound_latitude = geo_location.find('datacite:geoLocationBox/datacite:northBoundLatitude', namespaces=geo_location.nsmap)
+        if box_west_bound_longitude is not None and len(box_west_bound_longitude.text) > 0 \
+            and box_east_bound_longitude is not None and len(box_east_bound_longitude.text) > 0 \
+            and box_south_bound_latitude is not None and len(box_south_bound_latitude.text) > 0 \
+            and box_north_bound_latitude is not None and len(box_north_bound_latitude.text) > 0:
+            geo_locations.append({
+                '@type': 'Place',
+                'geo': {
+                    '@type': 'GeoShape',
+                    'box': '{} {} {} {}'.format(
+                        box_west_bound_longitude.text,
+                        box_south_bound_latitude.text,
+                        box_east_bound_longitude.text,
+                        box_north_bound_latitude.text)
+                }
+            })
+
+        # geoLocationPlace
+        for geo_location_place in geo_location.findall('datacite:geoLocationPlace', namespaces=geo_location.nsmap):
+            if len(geo_location_place.text) > 0:
+                geo_locations.append(geo_location_place.text)
+
     if len(geo_locations) > 0:
         res_data['spatialCoverage'] = geo_locations
     
