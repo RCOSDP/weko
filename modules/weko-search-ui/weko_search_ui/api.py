@@ -24,6 +24,7 @@
 from operator import index
 
 from flask import current_app, json
+from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from weko_admin import config as ad_config
@@ -181,14 +182,18 @@ def get_search_detail_keyword(str):
     for k_v in options:
         if k_v.get('id') == 'itemtype':
             k_v['check_val'] = check_val
-        elif k_v.get('id') == 'iid':
-            k_v['check_val'] = check_val2
+    #    elif k_v.get('id') == 'iid':
+    #        k_v['check_val'] = check_val2
         elif k_v.get('contents') == '':
             contents_value = k_v.get('contents_value')
             k_v['contents'] = contents_value['en']
             for key_lang in contents_value.keys():
                 if key_lang == current_i18n.language:
                     k_v['contents'] = contents_value[key_lang]
+        if k_v.get('check_val'):
+            for val in k_v.get('check_val'):
+                if val.get('contents'):
+                    val['contents'] = _(val['contents'])
 
     key_options['condition_setting'] = options
 
@@ -200,6 +205,16 @@ def get_search_detail_keyword(str):
 
 
 def get_childinfo(index_tree, result_list=[], parename=""):
+    """Get childinfo.
+
+    Args:
+        index_tree (type): description
+        result_list (list, optional): description. Defaults to [].
+        parename (str, optional): description. Defaults to "".
+
+    Returns:
+        [type]: [description]
+    """
     #current_app.logger.debug("index_tree: {0}".format(index_tree))
     if isinstance(index_tree, dict):
         if 'pid' in index_tree.keys():

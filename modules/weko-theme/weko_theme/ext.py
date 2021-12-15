@@ -64,3 +64,6 @@ class WekoTheme(object):
             )
         else:
             app.config.setdefault("ADMIN_UI_SKIN", "skin-green")
+
+        app.config.setdefault('WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER',
+                              getattr(config, 'WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER'))

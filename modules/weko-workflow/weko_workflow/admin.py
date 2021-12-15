@@ -326,7 +326,8 @@ class WorkFlowSettingView(BaseView):
             flow_id=json_data.get('flow_id', 0),
             index_tree_id=json_data.get('index_id'),
             location_id=json_data.get('location_id'),
-            open_restricted=json_data.get('open_restricted')
+            open_restricted=json_data.get('open_restricted'),
+            is_gakuninrdm=json_data.get('is_gakuninrdm')
         )
         workflow = WorkFlow()
         if '0' == workflow_id:

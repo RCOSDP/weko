@@ -70,7 +70,7 @@
                     <td>
                         <input type="text" name="statistical_period" style="text-align:center;"
                         value={{statistical_period}} pattern="[1-9][0-9]*">
-                        <label>{{_('Day')}}</label>
+                        <label>{{_('Day　(Range : 1~3650)')}}</label>
                     </td>
                 </tr>
                 <tr>
@@ -79,6 +79,7 @@
                     <td>
                         <input type="text" name="display_rank" style="text-align:center;"
                         value={{display_rank}} pattern="[1-9][0-9]*">
+                        <label>{{_('(Range : 1~100)')}}</label>
                     </td>
                 </tr>
                 <tr>
@@ -88,7 +89,7 @@
                         <label>
                             <input type="checkbox" name="most_reviewed_items"
                             {{ 'checked' if rankings['most_reviewed_items'] else '' }}>
-                            {{_('The Most Reviewed Items')}}
+                            {{_('Most Viewed Items')}}
                         </label>
                     </td>
                 </tr>

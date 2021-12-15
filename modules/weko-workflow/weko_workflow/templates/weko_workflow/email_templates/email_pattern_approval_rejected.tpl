@@ -1,8 +1,11 @@
-Subject：　利用申請の審査結果について／The results of the review of your application
+Subject：利用申請の審査結果について／The results of the review of your application
 
-[restricted_site_name_ja]です。
+[restricted_university_institution]
+[restricted_fullname]　様
+[restricted_institution_name_ja]です。
+[restricted_site_name_ja]をご利用いただいて、ありがとうございます。
 
-下記の利用申請を却下しました。
+下記の利用申請を[restricted_institution_name_ja]で審査した結果、申請データの提供を見送らせていただくことになりました。
 
 申請番号： [restricted_activity_id]
 登録者名： [restricted_fullname]
@@ -20,8 +23,11 @@ Subject：　利用申請の審査結果について／The results of the review
 
 ----------------------------------------------------------------------------------
 
-This is a message from [restricted_site_name_en].
-Your application below has been rejected.
+Dear [restricted_fullname],
+This is a message from [restricted_institution_name_en].
+Thank you for using [restricted_site_name_en].
+
+After reviewing the following application, [restricted_institution_name_en] is sorry to inform you that your application has been rejected.
 
 Application No.：[restricted_activity_id]
 Name：[restricted_fullname]

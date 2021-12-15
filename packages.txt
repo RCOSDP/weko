@@ -1,4 +1,4 @@
-setuptools==57.5.0
+setuptools==57.5.0 # https://github.com/tikitu/jsmin/issues/33
 alembic==0.9.6
 amqp==2.6.0
 angular-gettext-babel==0.3
@@ -56,6 +56,7 @@ flask-talisman==0.4.1
 Flask-WTF==0.14.3
 flask-sitemap==0.1.0
 Flask-IIIF==0.6.1
+Flask-DebugToolbar==0.11.0
 fs==0.5.4
 future==0.16.0
 html5lib==1.0.1
@@ -89,6 +90,7 @@ marshmallow==2.20.1
 maxminddb==1.5.2
 maxminddb-geolite2==2017.803
 mistune==0.8.3
+more-itertools==8.10.0
 msgpack==0.6.2
 nbconvert==5.3.1
 nbformat==4.4.0

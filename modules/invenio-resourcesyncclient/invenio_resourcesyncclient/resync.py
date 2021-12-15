@@ -19,11 +19,16 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
+import json
+import ssl
+
 from flask import current_app
 from resync.client import Client
 
-import ssl
+from .config import INVENIO_RESYNC_MODE
+
 ssl._create_default_https_context = ssl._create_unverified_context
+
 
 class ResourceSyncClient(Client):
     """Class ResourceSyncClient base on Client."""
@@ -34,7 +39,8 @@ class ResourceSyncClient(Client):
         self.result = dict(
             created=[],
             updated=[],
-            deleted=[]
+            deleted=[],
+            resource=[]
         )
 
     def update_resource(self, resource, filename, change=None):
@@ -44,15 +50,24 @@ class ResourceSyncClient(Client):
                                                                       change)
         current_create = self.result.get('created')
         current_update = self.result.get('updated')
-        #record_id = filename.rsplit('/', 1)[1]
-        record_id = filename
+        current_resource = self.result.get('resource')
+
+        if INVENIO_RESYNC_MODE:
+            record_id = filename
+        else:
+            record_id = filename.rsplit('/', 1)[1]
+
         if change == 'created':
             current_create.append(record_id)
         elif change == 'updated':
             current_update.append(record_id)
-        current_app.logger.info(self.result)
+        resource.link_add(href=record_id, rel='file')
+        _resource = json.loads((repr(resource)).replace('\'', '"'))
+        current_resource.append(_resource)
         self.result.update({'created': current_create})
         self.result.update({'updated': current_update})
+        self.result.update({'resource': current_resource})
+
         return num_updated
 
     def delete_resource(self, resource, filename, change=None):
@@ -72,6 +87,7 @@ class ResourceSyncClient(Client):
         try:
             super(ResourceSyncClient, self).baseline_or_audit(allow_deletion,
                                                               audit_only)
+            current_app.logger.debug(self)
         except PermissionError:
             pass
         return self.result
@@ -86,3 +102,6 @@ class ResourceSyncClient(Client):
         except PermissionError:
             pass
         return self.result
+
+    def build_resource_list(self, paths=None, set_path=False):
+        return super(ResourceSyncClient, self).build_resource_list(paths, set_path)

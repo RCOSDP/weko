@@ -37,6 +37,7 @@ def send_alert_mail(threshold_rate, name, use_rate, used_size, use_limit):
         for user in users:
             mail_list.append(user.email)
 
+        current_app.logger.debug('mail_list:{0}'.format(mail_list))
         with current_app.test_request_context() as ctx:
             default_lang = AdminLangSettings.get_registered_language()[0]
             # setting locale

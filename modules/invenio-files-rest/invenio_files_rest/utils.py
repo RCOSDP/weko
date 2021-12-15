@@ -7,14 +7,14 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """Implementation of various utility functions."""
-
+import base64
 import mimetypes
+import tempfile
 
 import six
 import sqlalchemy as sa
 from flask import current_app
 from invenio_db import db
-from invenio_records_files.models import RecordsBuckets
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.utils import import_string
 
@@ -94,6 +94,8 @@ def remove_file_cancel_action(bucket_id):
     Args:
         bucket_id: Bucket ID.
     """
+    from invenio_records_files.models import RecordsBuckets
+
     if bucket_id:
         _bucket = Bucket.get(bucket_id)
         if _bucket.id:
@@ -134,3 +136,22 @@ def find_and_update_location_size():
                 loc = db.session.query(Location).filter(
                     Location.id == row[0]).one()
                 loc.size = row[1]
+
+
+def update_ogp_image(ogp_image, file_uri):
+    """Update ogp image in FileInstances."""
+    temp_file = tempfile.NamedTemporaryFile(delete=False)
+    base64_files = ogp_image.split(',')
+    file_content = base64_files[-1] if len(base64_files) >= 2 else ''
+    temp_file.write(base64.b64decode(file_content))
+    temp_file.flush()
+    with open(temp_file.name, 'rb') as file:
+        if not file_uri:
+            src = FileInstance.create()
+            src.set_contents(file, default_location=Location.get_default().uri)
+        else:
+            src = FileInstance.get_by_uri(file_uri)
+            src.writable = True
+            src.set_contents(file)
+
+    return src.uri if src else None

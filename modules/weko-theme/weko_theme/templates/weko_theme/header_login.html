@@ -25,7 +25,9 @@
     <input id="current_guest_url" type="hidden"
            value="{{ session['guest_url'] }}"/>
   {% endif %}
-<form class="navbar-form navbar-right">
+
+<form class="navbar-form navbar-right navbar-form2">
+
   <a href="{{url_for_security('login', next=request.path)}}" class="btn
       btn-default btn-primary bg-transparent login-button"><i class="fa fa-sign-in"></i> {{_('Log in')}}</a>
   {% if security.registerable %}<a href="{{url_for_security('register')}}"
@@ -33,7 +35,7 @@
       signup-button"><i class="fa fa-edit"></i> {{_('Sign up')}}</a>{% endif %}
 </form>
 {%- else %}
-<div class="navbar-form navbar-right">
+<div class="navbar-form navbar-right navbar-form2">
 {%- if config.USERPROFILES %}
   <div class="btn-group">
     <a class="btn btn-default btn-primary bg-transparent" href="{{ url_for('weko_user_profiles.profile')}}">

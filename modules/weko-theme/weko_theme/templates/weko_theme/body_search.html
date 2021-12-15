@@ -20,7 +20,7 @@
 
 <div id="search_detail" style="height: 100%" ng-controller="searchDetailCtrl">
   <form id="search-form" action="/search">
-    <div class="row" style="height: 100%">
+    <div class="row row-4" style="height: 100%">
       <div class="col-sm-6 col-md-6 col-lg-6
       col-sm-offset-3 col-md-offset-3 col-lg-offset-3">
         <div id="search_simple" id="simple-search-btn" class="input-group">
@@ -34,19 +34,18 @@
               <span id="simple-search-txt">{{_('Search')}}</span>
             </button>
           </div>
-        </div>
-        <div class="row-line-space"></div>
-        <div id="search_detail" class="input-group pull-right">
-          <button id="detail_search_main" class="btn btn-info" type="button">
-            <i class="fa fa-angle-down fa-lg detail-search-open">&nbsp</i>
-            <span class="detail-search-open">{{_('Advanced')}}</span>
-            <i class="fa fa-angle-up fa-lg detail-search-close">&nbsp</i>
-            <span class="detail-search-close">{{_('Close')}}</span>
-          </button>
+          <div id="search_detail" class="input-group-btn">
+            <button id="detail_search_main" class="btn btn-info" type="button">
+              <i class="fa fa-angle-down fa-lg detail-search-open">&nbsp</i>
+              <span class="detail-search-open">{{_('Advanced')}}</span>
+              <i class="fa fa-angle-up fa-lg detail-search-close">&nbsp</i>
+              <span class="detail-search-close">{{_('Close')}}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
-    <div class="row detail-lable">
+    <div class="row row-4 detail-lable">
       <div class="col-sm-6 col-md-6 col-lg-6 col-lg-offset-3">
         <div id="search_type" class="form-inline ten-pixel-margin">
           <label class="radio-inline">
@@ -63,7 +62,7 @@
   </form>
   <!--Detail search-->
   <div>
-    <div class="row">
+    <div class="row row-4">
       <div id="search_detail_metadata" class="collapse col-sm-12 col-md-12
               col-lg-12">
         {% include "weko_theme/body_search_detail_new.html" %}

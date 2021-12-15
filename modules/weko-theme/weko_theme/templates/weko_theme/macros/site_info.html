@@ -38,5 +38,5 @@
       <meta property="og:locale:alternate" content="en_EN" />
       <meta property="og:url" content="{{ site_info.get('url') }}" />
       <link rel="shortcut icon" href="{{ site_info.get('favicon') or url_for('static', filename='favicon.ico') }}"/>
-      <meta property="og:image" content="{{ site_info.get('favicon') }}" />
+      <meta property="og:image" content="{{ site_info.get('ogp_image') }}" />
 {% endmacro %}

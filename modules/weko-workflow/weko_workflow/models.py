@@ -670,6 +670,9 @@ class WorkFlow(db.Model, TimestampMixin):
         Location,
         backref=db.backref('workflow', lazy='dynamic')
     )
+    
+    is_gakuninrdm = db.Column(db.Boolean(), nullable=False, default=False)
+    """GakuninRDM flag."""
 
 
 class Activity(db.Model, TimestampMixin):

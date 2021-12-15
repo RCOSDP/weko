@@ -71,6 +71,9 @@ class SchemaConverter:
                                 -1] if ":" in self.rootname else self.rootname
                         return element_name.replace("{" + nsp + "}",
                                                     k + ":")
+            version_type = current_app.config['WEKO_SCHEMA_VERSION_TYPE']
+            if element_name == version_type['original']:
+                element_name = version_type['modified']
             return element_name
 
         def get_element_type(type):
@@ -217,6 +220,11 @@ class SchemaTree:
         :param schema_name: schema name
 
         """
+        # current_app.logger.debug("record: {0}".format(record))
+        # record: {'links': {}, 'updated': '2021-12-04T11:56:48.821270+00:00', 'created': '2021-12-04T11:56:36.873504+00:00', 'metadata': {'_oai': {'id': 'oai:weko3.example.org:00000003', 'sets': ['1638615863439']}, 'path': ['1638615863439'], 'owner': '1', 'recid': '3', 'title': ['dd'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2021-12-01'}, '_buckets': {'deposit': 'f60ad379-930c-4808-aee9-3454c707c2ed'}, '_deposit': {'id': '3', 'pid': {'type': 'depid', 'value': '3', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'dd', 'author_link': [], 'item_type_id': '15', 'publish_date': '2021-12-01', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'dd', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'json': {'_source': {'_item_metadata': {'system_identifier_doi': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_systemidt_identifier': 'https://localhost:8443/records/3', 'subitem_systemidt_identifier_type': 'URI'}]}}}}, 'system_identifier_doi': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_systemidt_identifier': 'https://localhost:8443/records/3', 'subitem_systemidt_identifier_type': 'URI'}]}}}
+        # current_app.logger.debug("schema_name: {0}".format(schema_name))
+        # schema_name: jpcoar_mapping
+
         self._record = record["metadata"] \
             if record and record.get("metadata") else None
         self._schema_name = schema_name if schema_name else None
@@ -321,6 +329,8 @@ class SchemaTree:
             :param _alst: attribute type list.
             :return: True if the description type has value.
             """
+            # current_app.logger.debug("_attr:{0}".format(_attr))
+            # current_app.logger.debug("_alst:{0}".format(_alst))
             is_valid = True
             _attr_type = _alst[0]
             if _attr_type == description_type\
@@ -392,22 +402,54 @@ class SchemaTree:
             return exp[0], field.split(exp[0])
 
         def set_value(nd, nv):
+            """
+            set_value [summary]
+
+            [extended_summary]
+
+            Args:
+                nd ([type]): [description]
+                nv ([type]): [description]
+            """
+            # current_app.logger.debug("nd: {0}".format(nd))
+            # nd: {'date': {'@value': '=hogehoge', '@attributes': {'dateType': '=hoge'}}}
+            # current_app.logger.debug("nv: {0}".format(nv))
+            # nv: [['2021-12-01']]
             if isinstance(nd, dict):
                 for ke, va in nd.items():
+                    # current_app.logger.debug("ke:{0}".format(ke))
+                    # ke:@value
+                    # current_app.logger.debug("va:{0}".format(va))
+                    # va:=hogehoge
                     if ke != self._atr:
                         if isinstance(va, str):
                             nd[ke] = nv if ke == self._v else {self._v: nv}
+                            # current_app.logger.debug(
+                            #     "self._v:{0}".format(self._v))
+                            # self._v:@value
+                            # current_app.logger.debug("nv:{0}".format(nv))
+                            # nv:[['2021-12-01']]
+                            # current_app.logger.debug("ke:{0}".format(ke))
+                            # ke:@value
+                            # current_app.logger.debug("nd:{0}".format(nd))
+                            # nd:{'@value': [['2021-12-01']], '@attributes': {'dateType': '=hoge'}}
                             return
                         else:
                             if len(va) == 0 or \
                                 (va.get(self._atr)
                                  and not va.get(self._v) and len(va) == 1):
+                                # current_app.logger.debug(
+                                #     "self._v".format(self._v))
+                                # current_app.logger.debug("nv".format(nv))
                                 va.update({self._v: nv})
                                 return
 
                         set_value(va, nv)
 
         def get_sub_item_value(atr_vm, key, p=None):
+            # current_app.logger.debug("atr_vm:{0}".format(atr_vm))
+            # current_app.logger.debug("key:{0}".format(key))
+            # current_app.logger.debug("p:{0}".format(p))
             if isinstance(atr_vm, dict):
                 for ke, va in atr_vm.items():
                     if key == ke:
@@ -421,6 +463,17 @@ class SchemaTree:
                         yield k, x
 
         def get_value_from_content_by_mapping_key(atr_vm, list_key):
+            # current_app.logger.debug("atr_vm: {0}".format(atr_vm))
+            #atr_vm: {'subitem_systemidt_identifier': 'https://localhost:8443/records/2', 'subitem_systemidt_identifier_type': 'URI'}
+            #atr_vm: {'subitem_1551255647225': 'dd', 'subitem_1551255648112': 'ja'}
+            #atr_vm: {'subitem_1551255647225': 'dd', 'subitem_1551255648112': 'ja'}
+            #atr_vm: {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}
+            # current_app.logger.debug("list_key:{0}".format(list_key))
+            # list_key:['subitem_systemidt_identifier']
+            # list_key:['=dddddd']
+            # list_key:['=ddd']
+            # list_key:['resourcetype']
+
             # In case has more than 1 key
             # for ex:"subitem_1551257025236.subitem_1551257043769"
             if isinstance(list_key, list) and len(list_key) > 1:
@@ -440,7 +493,11 @@ class SchemaTree:
                     key = list_key[0]
                     if key.startswith("="):
                         # mapping by fixed value
-                        yield key[1:],id(key)
+                        # current_app.logger.debug(
+                        #     "key[1:] :{0}".format(key[1:]))
+                        # current_app.logger.debug(
+                        #     "id(key) :{0}".format(id(key)))
+                        yield key[1:], id(key)
                     elif isinstance(atr_vm, dict):
                         if atr_vm.get(key) is None:
                             yield None, id(key)
@@ -463,6 +520,12 @@ class SchemaTree:
                     traceback.print_exc()
 
         def get_url(z, key, val):
+            # current_app.logger.debug("z:{0}".format(z))
+            # z:{'@value': 'resourcetype', '@attributes': {'rdf:resource': 'resourceuri'}}
+            # current_app.logger.debug("key:{0}".format(key))
+            # key:item_1617258105262
+            # current_app.logger.debug("val:{0}".format(val))
+            # val:conference paper
             # If related to file, process, otherwise return row value
             if key and 'filemeta' in key:
                 attr = z.get(self._atr, {})
@@ -483,6 +546,10 @@ class SchemaTree:
                 return val
 
         def get_key_value(nd, key=None):
+            # current_app.logger.debug("nd:{0}".format(nd))
+            # nd:{'@value': '=dddddd', '@attributes': {'xml:lang': '=ddd'}}
+            # current_app.logger.debug("key:{0}".format(key))
+            # key:None
             if isinstance(nd, dict):
                 for ke, va in nd.items():
                     if ke == self._v or isinstance(va, str):
@@ -492,6 +559,7 @@ class SchemaTree:
                             yield z, y
 
         def get_exp_value(atr_list):
+            # current_app.logger.debug("atr_list:{0}".format(atr_list))
             if isinstance(atr_list, list):
                 for lst in atr_list:
                     if isinstance(lst, list):
@@ -501,6 +569,16 @@ class SchemaTree:
                         yield lst, atr_list
 
         def get_items_value_lst(atr_vm, key, rlst, z=None, kn=None):
+            # current_app.logger.debug("atr_vm:{0}".format(atr_vm))
+            # atr_vm:{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}
+            # current_app.logger.debug("key:{0}".format(key))
+            # key:resourceuri
+            # current_app.logger.debug("rlst:{0}".format(rlst))
+            # rlst:['conference paper']
+            # current_app.logger.debug("z:{0}".format(z))
+            # z:None
+            # current_app.logger.debug("kn:{0}".format(kn))
+            # kn:None
             klst = []
             blst = []
             parent_id = 0
@@ -531,6 +609,8 @@ class SchemaTree:
 
         def analyze_value_with_exp(nlst, exp):
             """Get many value with exp."""
+            # current_app.logger.debug("nlst:{0}".format(nlst))
+            # current_app.logger.debug("exp:{0}".format(exp))
             is_next = True
             glst = []
             for lst in nlst:
@@ -563,6 +643,13 @@ class SchemaTree:
             return mlst
 
         def get_atr_value_lst(node, atr_vm, rlst):
+            # current_app.logger.debug("node:{0}".format(node))
+            # node:{'rdf:resource': 'resourceuri'}
+            # current_app.logger.debug('atr_vm:{0}'.format(atr_vm))
+            # atr_vm:{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}
+            # current_app.logger.debug('rlst:{0}'.format(rlst))
+            # rlst:['conference paper']
+
             for k1, v1 in node.items():
                 # if 'item' not in v1:
                 #     continue
@@ -581,6 +668,15 @@ class SchemaTree:
                         node[k1] = analyze_value_with_exp(nlst, exp)
 
         def get_mapping_value(mpdic, atr_vm, k, atr_name):
+            # current_app.logger.debug('mpdic:{0}'.format(mpdic))
+            # mpdic:{'type': {'@value': 'resourcetype', '@attributes': {'rdf:resource': 'resourceuri'}}}
+            # current_app.logger.debug('atr_vm:{0}'.format(atr_vm))
+            # atr_vm:{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}
+            # current_app.logger.debug('k:{0}'.format(k))
+            # k:item_1617258105262
+            # current_app.logger.debug('atr_name:{0}'.format(atr_name))
+            # atr_name:Resource Type
+
             remain_keys = []
 
             def remove_empty_tag(mp):
@@ -685,6 +781,8 @@ class SchemaTree:
                 return vlst[0]['stdyDscr']
 
             def clean_none_value(dct):
+                # current_app.logger.debug("dct:{0}".format(dct))
+                # dct:{'type': {'@value': [['conference paper']], '@attributes': {'rdf:resource': [['http://purl.org/coar/resource_type/c_5794']]}}}
                 clean = {}
                 for k, v in dct.items():
                     if isinstance(v, dict):
@@ -712,9 +810,9 @@ class SchemaTree:
                                     for key, val in v.get(self._atr,
                                                           {}).items():
                                         if(type(val[0]) is not str):
-                                          val[0] = [val for idx, val
-                                                  in enumerate(val[0])
-                                                  if idx in lst_val_idx]
+                                            val[0] = [val for idx, val
+                                                      in enumerate(val[0])
+                                                      if idx in lst_val_idx]
                             else:
                                 if not v.get(self._atr, {}).items():
                                     lst_val_idx = \
@@ -814,6 +912,11 @@ class SchemaTree:
 
         def remove_hide_data(obj, parentkey):
             """Remove all item that is set as hide."""
+            # current_app.logger.debug("obj:{0}".format(obj))
+            # obj:{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}
+            # current_app.logger.debug("parentkey:{0}".format(parentkey))
+            # parentkey:item_1617258105262
+
             if isinstance(obj, dict):
                 for k, v in obj.items():
                     if self._ignore_list_all.get(parentkey + "." + k, None):
@@ -843,12 +946,23 @@ class SchemaTree:
                 atr_vm = value_item_parent.get('attribute_value_mlt')
                 # attr of name
                 atr_name = value_item_parent.get('attribute_name')
+
+                # current_app.logger.debug("mpdic:{0}".format(mpdic))
+                # mpdic:{'date': {'@value': '=hogehoge', '@attributes': {'dateType': '=hoge'}}}
+                # current_app.logger.debug("atr_v:{0}".format(atr_v))
+                # atr_v:2021-12-01
+                # current_app.logger.debug("atr_vm:{0}".format(atr_vm))
+                # atr_vm:None
+                # current_app.logger.debug("atr_name:{0}".format(atr_name))
+                # atr_name:PubDate
+
                 if atr_v:
                     if isinstance(atr_v, list):
                         atr_v = [atr_v]
                     elif isinstance(atr_v, str):
                         atr_v = [[atr_v]]
                     set_value(mpdic, atr_v)
+                    # current_app.logger.debug("mpdic:{0}".format(mpdic))
                     vlst.append(mpdic)
                 elif atr_vm and atr_name and isinstance(atr_vm, list) \
                         and isinstance(mpdic, dict):
@@ -895,6 +1009,19 @@ class SchemaTree:
             return pre
 
         def get_atr_list(node):
+            """
+            get_atr_list [summary]
+
+            [extended_summary]
+
+            Args:
+                node ([type]): [description]
+
+            Returns:
+                [type]: [description]
+            """
+            # current_app.logger.debug("node:{0}".format(node))
+            # node:{'dateType': [['=hoge']]}
             nlst = []
 
             def get_max_count(node):
@@ -913,6 +1040,11 @@ class SchemaTree:
                     attr = OrderedDict()
                     for k, v in node.items():
                         if isinstance(v, list) and len(v) > i:
+                            # current_app.logger.debug("k:{0}".format(k))
+                            # current_app.logger.debug("v[i]:{0}".format(v[i]))
+                            if isinstance(v[i], str):
+                                if (v[i]).startswith("="):
+                                    v[i] = (v[i]).replace("=", "")
                             attr.update({k: v[i]})
                     nlst.append(attr)
 
@@ -934,6 +1066,24 @@ class SchemaTree:
                 creator_idx (int, optional): [description]. Defaults to -1.
                 contributor_idx (int, optional): [description]. Defaults to -1.
             """
+            # current_app.logger.debug("kname:{0}".format(kname))
+            # kname:{https://schema.datacite.org/meta/kernel-4/}date
+            # current_app.logger.debug("node:{0}".format(node))
+            # node:OrderedDict([('type', OrderedDict([('maxOccurs', 'unbounded'), ('minOccurs', 0), ('attributes', [OrderedDict([('use', 'required'), ('name', 'dateType'), ('ref', None), ('restriction', OrderedDict([('enumeration', ['Accepted', 'Available', 'Collected', 'Copyrighted', 'Created', 'Issued', 'Submitted', 'Updated', 'Valid'])]))])])])), ('@value', [['2021-12-01']]), ('@attributes', {'dateType': [['=hoge']]})])
+            # current_app.logger.debug("tree:{0}".format(tree))
+            # tree:<Element {https://github.com/JPCOAR/schema/blob/master/1.0/}jpcoar at 0x7f1e63203dc8>
+            # current_app.logger.debug("parent_keys:{0}".format(parent_keys))
+            # parent_keys:['{https://schema.datacite.org/meta/kernel-4/}date']
+            # current_app.logger.debug("current_lang:{0}".format(current_lang))
+            # current_lang:None
+            # current_app.logger.debug("index:{0}".format(index))
+            # index:0
+            # current_app.logger.debug("creator_idx:{0}".format(creator_idx))
+            # creator_idx:-1
+            # current_app.logger.debug(
+            #     "contributor_idx:{0}".format(contributor_idx))
+            # contributor_idx:-1
+
             if kname == 'type':
                 return
             current_separate_key_node = None
@@ -1116,6 +1266,17 @@ class SchemaTree:
 
         def recorrect_node(val, attr, current_lang, mandatory=True,
                            repeatable=False):
+            # current_app.logger.debug("val:{0}".format(val))
+            # val:['2021-12-01']
+            # current_app.logger.debug("attr:{0}".format(attr))
+            # attr:[OrderedDict([('dateType', '=hoge')])]
+            # current_app.logger.debug("current_lang:{0}".format(current_lang))
+            # current_lang:None
+            # current_app.logger.debug("mandatory:{0}".format(mandatory))
+            # mandatory:False
+            # current_app.logger.debug("repeatable:{0}".format(repeatable))
+            # repeatable:True
+
             if not current_lang:
                 return val, attr
             val_result = []
@@ -1204,7 +1365,8 @@ class SchemaTree:
                         index_remove_items.extend([
                             lst_name_identifier_scheme.index(identifior_item)])
                 if len(index_remove_items) == total_remove_items:
-                    del v[jpcoar_nameidt]
+                    if jpcoar_nameidt in v:
+                        del v[jpcoar_nameidt]
                 else:
                     for index in index_remove_items[::-1]:
                         lst_name_identifier_scheme.pop(index)
@@ -1281,14 +1443,16 @@ class SchemaTree:
                 len_name = _child[jpcoar_affname]
                 if len_name > 0:
                     _data = _value[jpcoar_affname][self._v][0]
-                    _lang = _value[jpcoar_affname][self._atr].get(
-                        "xml:lang", [])
+                    _lang = None
+                    if self._atr in _value[jpcoar_affname]:
+                        _lang = _value[jpcoar_affname][self._atr].get(
+                            "xml:lang", [])
                     _max_len_name = len(_data) \
                         if len(_data) < count_name + len_name \
                         else count_name + len_name
                     _value[jpcoar_affname][self._v][0] = _data[
                         count_name:_max_len_name]
-                    if _lang:
+                    if _lang and len(_lang) > 0:
                         _value[jpcoar_affname][self._atr]["xml:lang"][0] \
                             = _lang[0][count_name:_max_len_name]
                     count_name += _max_len_name

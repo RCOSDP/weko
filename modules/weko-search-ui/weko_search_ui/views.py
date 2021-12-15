@@ -183,7 +183,7 @@ def search():
                     info=send_info
                 )
             if search_type == WEKO_SEARCH_TYPE_DICT['INDEX']:
-                cur_index_id = request.args.get('q', '0')
+                cur_index_id = request.args.get('q', '')
                 journal_info = get_journal_info(cur_index_id)
                 index_info = Indexes.get_index(cur_index_id)
                 if index_info:
@@ -191,11 +191,7 @@ def search():
                     if index_display_format == '2':
                         disply_setting = dict(size=100, timestamp=ts)
 
-        if hasattr(current_i18n, 'language'):
-            index_link_list = get_index_link_list(current_i18n.language)
-        else:
-            index_link_list = get_index_link_list()
-
+        index_link_list = get_index_link_list()
         # Get Facet search setting.
         display_facet_search = get_search_setting().get("display_control", {})\
             .get('display_facet_search', {}).get('status', False)
@@ -208,6 +204,13 @@ def search():
             .get('display_index_tree', {}).get('status', False)
         ctx.update({
             "display_index_tree": display_index_tree,
+        })
+
+        # Get display_community setting.
+        display_community = get_search_setting().get("display_control", {}).get(
+            'display_community', {}).get('status', False)
+        ctx.update({
+            "display_community": display_community
         })
 
         return render_template(
@@ -316,12 +319,16 @@ def get_path_name_dict(path_str=''):
     return jsonify(path_name_dict)
 
 
-@blueprint.route("/facet-search/get-title", methods=['POST'])
+@blueprint.route("/facet-search/get-title-and-order", methods=['POST'])
 def gettitlefacet():
     """Soft getname Facet Search."""
     from weko_admin.utils import get_title_facets
+    titles, order = get_title_facets()
     result = {
         "status": True,
-        "data": get_title_facets()
+        "data": {
+            "titles": titles,
+            "order": order
+        }
     }
     return jsonify(result), 200

@@ -1,3 +1,6 @@
+const ITEM_SAVE_URL = $("#item_save_uri").val();
+const ITEM_SAVE_FREQUENCY = $("#item_save_frequency").val();
+
 require([
   'jquery',
   'bootstrap'
@@ -520,6 +523,7 @@ function toObject(arr) {
       class_style = 'alert-light'
       id_alert = 'alert-style'
     }
+    $('#alerts').empty();
     $('#alerts').append(
       '<div class="alert ' + class_style + '" id="' + id_alert + '">' +
       '<button type="button" class="close" data-dismiss="alert">' +
@@ -624,6 +628,9 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.item_tile_key = "";
       $scope.corresponding_usage_data_type = {};
       $scope.original_title = {};
+      let saveTimer = setInterval(function () {
+        $scope.saveDataJsonCallback(ITEM_SAVE_URL, true)
+      }, ITEM_SAVE_FREQUENCY);
 
       $scope.listFileNeedRemoveAfterReplace = [];
       $scope.onBtnReplaceFileContentClick = function (fileKey) {
@@ -3119,13 +3126,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 }
                 for (var i = 0; i < value.familyNames.length; i++) {
                   let subCreatorName = { "creatorName": "", "creatorNameLang": "" };
-                  let familyName = value.familyNames[i].familyName.trim();
-                  let givenName = value.givenNames[i].givenName.trim();
-                  if (familyName.indexOf(',', familyName.length - 1) > 0) {
-                    subCreatorName.creatorName = familyName + " " + givenName;
-                  } else {
-                    subCreatorName.creatorName = familyName + ", " + givenName;
-                  }
+                  let familyName = value.familyNames[i].familyName ? value.familyNames[i].familyName.trim() : '';
+                  let givenName = value.givenNames[i].givenName ? value.givenNames[i].givenName.trim() : '';
+                  const showComma = (familyName && givenName) && familyName.indexOf(',', familyName.length - 1) === -1 ? ', ' : '';
+                  subCreatorName.creatorName = familyName + showComma + givenName;
                   subCreatorName.creatorNameLang = value.familyNames[i].familyNameLang;
                   subCreatorName = JSON.parse(JSON.stringify(subCreatorName).replace('creatorName', v[0]).replace('creatorNameLang', v[1]));
                   creatorModel[k].push(subCreatorName);
@@ -4234,7 +4238,14 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             //When save: date fields data is lost, so this will fill data.
             let model = $rootScope.recordsVM.invenioRecordsModel;
             CustomBSDatePicker.setDataFromFieldToModel(model, true);
-            addAlert(response.data.msg);
+            message = response.data.msg
+            class_style = undefined
+            if (typeof message === 'undefined') {
+              class_style = 'alert-danger';
+              message = 'Your session has timed out. Please login again.';
+              clearInterval(saveTimer);
+            }
+            addAlert(message, class_style);
           },
           function error(response) {
             if (startLoading) {

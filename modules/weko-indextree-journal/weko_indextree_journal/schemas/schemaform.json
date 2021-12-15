@@ -4,11 +4,11 @@
     "type": "radios",
     "titleMap": [
       {
-        "name": "Ouput",
+        "name": "Output",
         "value": true
       },
       {
-        "name": "Do Not Ouput",
+        "name": "Do Not Output",
         "value": false
       }
     ]

@@ -20,7 +20,6 @@
 
 """Weko Search-UI admin."""
 
-import base64
 import csv
 import json
 import os
@@ -36,18 +35,20 @@ from datetime import datetime
 from functools import partial, reduce, wraps
 from io import StringIO
 from operator import getitem
+from time import sleep
 
 import bagit
 import redis
-import sqlalchemy as sa
 from celery.result import AsyncResult
 from celery.task.control import revoke
+from elasticsearch import ElasticsearchException
 from elasticsearch.exceptions import NotFoundError
 from flask import abort, current_app, request
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
 from invenio_files_rest.models import FileInstance, Location, ObjectVersion
+from invenio_files_rest.proxies import current_files_rest
 from invenio_files_rest.utils import find_and_update_location_size
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
@@ -62,8 +63,9 @@ from invenio_stats.models import StatsEvents
 from invenio_stats.processors import anonymize_user, flag_restricted, \
     flag_robots, hash_id
 from jsonschema import Draft4Validator
+from sqlalchemy.exc import SQLAlchemyError
 from weko_admin.models import SessionLifetime
-from weko_admin.utils import get_redis_cache
+from weko_admin.utils import get_redis_cache, reset_redis_cache
 from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
@@ -72,15 +74,16 @@ from weko_index_tree.utils import check_index_permissions, \
     check_restrict_doi_with_indexes
 from weko_indextree_journal.api import Journals
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
+from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_mapping
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_GRANT_SUFFIX_METHOD
 from weko_workflow.models import FlowDefine, WorkFlow
 from weko_workflow.utils import IdentifierHandle, check_existed_doi, \
-    get_identifier_setting, get_sub_item_value, get_url_root, \
-    item_metadata_validation, register_hdl_by_handle, \
-    register_hdl_by_item_id, saving_doi_pidstore
+    delete_cache_data, get_cache_data, get_identifier_setting, \
+    get_sub_item_value, get_url_root, item_metadata_validation, \
+    register_hdl_by_handle, register_hdl_by_item_id, saving_doi_pidstore
 
 from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     RESOURCE_TYPE_URI, VERSION_TYPE_URI, \
@@ -91,14 +94,12 @@ from .config import ACCESS_RIGHT_TYPE_URI, DATE_ISO_TEMPLATE_URL, \
     WEKO_ADMIN_LIFETIME_DEFAULT, WEKO_FLOW_DEFINE, \
     WEKO_FLOW_DEFINE_LIST_ACTION, WEKO_IMPORT_DOI_TYPE, \
     WEKO_IMPORT_EMAIL_PATTERN, WEKO_IMPORT_PUBLISH_STATUS, \
-    WEKO_IMPORT_SUFFIX_PATTERN, WEKO_IMPORT_SYSTEM_ITEMS, \
-    WEKO_IMPORT_THUMBNAIL_FILE_TYPE, WEKO_IMPORT_VALIDATE_MESSAGE, \
-    WEKO_REPO_USER, WEKO_SEARCH_TYPE_DICT, WEKO_SEARCH_UI_BULK_EXPORT_TASK, \
-    WEKO_SEARCH_UI_BULK_EXPORT_URI, WEKO_SYS_USER
+    WEKO_IMPORT_SYSTEM_ITEMS, WEKO_IMPORT_THUMBNAIL_FILE_TYPE, \
+    WEKO_IMPORT_VALIDATE_MESSAGE, WEKO_REPO_USER, WEKO_SEARCH_TYPE_DICT, \
+    WEKO_SEARCH_UI_BULK_EXPORT_LIMIT, WEKO_SEARCH_UI_BULK_EXPORT_MSG, \
+    WEKO_SEARCH_UI_BULK_EXPORT_TASK, WEKO_SEARCH_UI_BULK_EXPORT_URI, \
+    WEKO_SYS_USER
 from .query import feedback_email_search_factory, item_path_search_factory
-
-err_msg_suffix = 'Suffix of {} can only be used with half-width' \
-    + ' alphanumeric characters and half-width symbols "_-.; () /".'
 
 
 class DefaultOrderedDict(OrderedDict):
@@ -175,13 +176,17 @@ def get_tree_items(index_tree_id):
     return rd.get('hits').get('hits')
 
 
-def delete_records(index_tree_id):
+def delete_records(index_tree_id, ignore_items):
     """Bulk delete records."""
     hits = get_tree_items(index_tree_id)
+    result = []
+
     for hit in hits:
         recid = hit.get('_id')
         record = Record.get_record(recid)
-        if record is not None and record['path'] is not None:
+        pid = hit.get('_source', {}).get('control_number', 0)
+
+        if record and record['path'] and pid not in ignore_items:
             paths = record['path']
             if len(paths) > 0:
                 # Remove the element which matches the index_tree_id
@@ -202,10 +207,14 @@ def delete_records(index_tree_id):
                 indexer.update_path(record, update_revision=False)
 
                 if len(paths) == 0 and removed_path is not None:
-                    from weko_deposit.api import WekoDeposit
-                    WekoDeposit.delete_by_index_tree_id(removed_path)
+                    WekoDeposit.delete_by_index_tree_id(
+                        removed_path, ignore_items)
                     Record.get_record(recid).delete()  # flag as deleted
                     db.session.commit()  # terminate the transaction
+
+                result.append(pid)
+
+    return result
 
 
 def get_journal_info(index_id=0):
@@ -447,35 +456,31 @@ def parse_to_json_form(data: list,
     return result
 
 
-def check_import_items(file_name: str, file_content: str,
-                       is_change_identifier: bool):
+def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
     """Validation importing zip file.
 
     :argument
         file_name -- file name.
         file_content -- content file's name.
         is_change_identifier -- Change Identifier Mode.
+        is_gakuninrdm -- Is call by gakuninrdm api.
     :return
         return       -- PID object if exist.
 
     """
-    file_content_decoded = base64.b64decode(file_content)
-    tmp_prefix = current_app.config['WEKO_SEARCH_UI_IMPORT_TMP_PREFIX']
-    temp_path = tempfile.TemporaryDirectory(prefix=tmp_prefix)
-    save_path = tempfile.gettempdir()
-    import_path = temp_path.name + '/' + \
-        datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
-    data_path = save_path + '/' + tmp_prefix + \
-        datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
+    if not is_gakuninrdm:
+        tmp_prefix = current_app.config['WEKO_SEARCH_UI_IMPORT_TMP_PREFIX']
+    else:
+        tmp_prefix = 'deposit_activity_'
+    data_path = tempfile.gettempdir() + '/' + tmp_prefix \
+        + datetime.utcnow().strftime(r'%Y%m%d%H%M%S')
     result = {'data_path': data_path}
 
     try:
         # Create temp dir for import data
         os.mkdir(data_path)
 
-        with open(import_path + '.zip', 'wb+') as f:
-            f.write(file_content_decoded)
-        with zipfile.ZipFile(import_path + '.zip') as z:
+        with zipfile.ZipFile(file) as z:
             for info in z.infolist():
                 try:
                     info.filename = info.orig_filename.encode(
@@ -483,9 +488,9 @@ def check_import_items(file_name: str, file_content: str,
                     if os.sep != "/" and os.sep in info.filename:
                         info.filename = info.filename.replace(os.sep, "/")
                 except Exception:
-                    current_app.logger.warn('-' * 60)
+                    current_app.logger.warning('-' * 60)
                     traceback.print_exc(file=sys.stdout)
-                    current_app.logger.warn('-' * 60)
+                    current_app.logger.warning('-' * 60)
                 z.extract(info, path=data_path)
 
         data_path += '/data'
@@ -495,19 +500,25 @@ def check_import_items(file_name: str, file_content: str,
         if not list_tsv:
             raise FileNotFoundError()
         for tsv_entry in list_tsv:
-            list_record.extend(unpackage_import_file(data_path, tsv_entry))
+            list_record.extend(unpackage_import_file(
+                data_path, tsv_entry, is_gakuninrdm))
+        if is_gakuninrdm:
+            list_record = list_record[:1]
+
         list_record = handle_check_exist_record(list_record)
         handle_item_title(list_record)
-        handle_check_and_prepare_publish_status(list_record)
-        handle_check_and_prepare_index_tree(list_record)
-        handle_check_and_prepare_feedback_mail(list_record)
-        handle_set_change_identifier_flag(list_record, is_change_identifier)
-        handle_check_cnri(list_record)
-        handle_check_doi_indexes(list_record)
-        handle_check_file_metadata(list_record, data_path)
-        handle_check_doi_ra(list_record)
-        handle_check_doi(list_record)
         handle_check_date(list_record)
+        handle_check_and_prepare_index_tree(list_record)
+        handle_check_and_prepare_publish_status(list_record)
+        handle_check_and_prepare_feedback_mail(list_record)
+        handle_check_file_metadata(list_record, data_path)
+        if not is_gakuninrdm:
+            handle_set_change_identifier_flag(list_record,
+                                              is_change_identifier)
+            handle_check_cnri(list_record)
+            handle_check_doi_indexes(list_record)
+            handle_check_doi_ra(list_record)
+            handle_check_doi(list_record)
         result['list_record'] = list_record
     except Exception as ex:
         error = _('Internal server error')
@@ -515,11 +526,11 @@ def check_import_items(file_name: str, file_content: str,
             error = _('The format of the specified file {} does not'
                       + ' support import. Please specify one of the'
                       + ' following formats: zip, tar, gztar, bztar,'
-                      + ' xztar.').format(file_name)
+                      + ' xztar.').format(file.filename)
         elif isinstance(ex, FileNotFoundError):
             error = _('The TSV file was not found in the specified file {}.'
                       + ' Check if the directory structure is correct.') \
-                .format(file_name)
+                .format(file.filename)
         elif isinstance(ex, UnicodeDecodeError):
             error = ex.reason
         elif ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
@@ -529,23 +540,28 @@ def check_import_items(file_name: str, file_content: str,
         current_app.logger.error('-' * 60)
         traceback.print_exc(file=sys.stdout)
         current_app.logger.error('-' * 60)
-    finally:
-        temp_path.cleanup()
     return result
 
 
-def unpackage_import_file(data_path: str, tsv_file_name: str) -> list:
+def unpackage_import_file(data_path: str, tsv_file_name: str, force_new=False):
     """Getting record data from TSV file.
 
     :argument
-        file_content -- Content files.
+        data_path -- Path of tsv file.
+        tsv_file_name -- Tsv file name.
+        force_new -- Force to new item.
     :return
-        return       -- PID object if exist.
+        return -- List records.
 
     """
     tsv_file_path = '{}/{}'.format(data_path, tsv_file_name)
     data = read_stats_tsv(tsv_file_path, tsv_file_name)
     list_record = data.get('tsv_data')
+    if force_new:
+        for record in list_record:
+            record['id'] = None
+            record['uri'] = None
+
     handle_fill_system_item(list_record)
     list_record = handle_validate_item_import(list_record, data.get(
         'item_type_schema', {}
@@ -822,7 +838,7 @@ def handle_check_exist_record(list_record) -> list:
             item_id = item.get('id')
             current_app.logger.debug(item_id)
             if item_id:
-                system_url = request.url_root + 'records/' + item_id
+                system_url = request.host_url + 'records/' + item_id
                 if item.get('uri') != system_url:
                     errors.append(_('Specified URI and system'
                                     ' URI do not match.'))
@@ -835,7 +851,7 @@ def handle_check_exist_record(list_record) -> list:
                             errors.append(_('Item already DELETED'
                                             ' in the system'))
                         else:
-                            exist_url = request.url_root + \
+                            exist_url = request.host_url + \
                                 'records/' + item_exist.get('recid')
                             if item.get('uri') == exist_url:
                                 _edit_mode = item.get('edit_mode')
@@ -1003,12 +1019,13 @@ def get_file_name(file_path):
     return file_path.split('/')[-1] if file_path.split('/')[-1] else ''
 
 
-def register_item_metadata(item, root_path):
+def register_item_metadata(item, root_path, is_gakuninrdm=False):
     """Upload file content.
 
     :argument
         item        -- {dict} Information of item need to import.
         root_path   -- {str} path of the folder include files.
+        is_gakuninrdm -- {bool} Is call by gakuninrdm api.
     """
     def clean_file_metadata(item_type_id, data):
         # clear metadata of file information
@@ -1035,7 +1052,7 @@ def register_item_metadata(item, root_path):
                 if file.is_thumbnail is True:
                     subitem_thumbnail.append({
                         'thumbnail_label': file.key,
-                        'thumbnail_uri':
+                        'thumbnail_url':
                             current_app.config['DEPOSIT_FILES_API']
                             + u'/{bucket}/{key}?versionId={version_id}'.format(
                                 bucket=file.bucket_id,
@@ -1124,7 +1141,6 @@ def register_item_metadata(item, root_path):
 
     deposit.update(item_status, new_data)
     deposit.commit()
-    deposit.publish_without_commit()
 
     feedback_mail_list = item['metadata'].get('feedback_mail_list')
     if feedback_mail_list:
@@ -1137,23 +1153,28 @@ def register_item_metadata(item, root_path):
         FeedbackMailList.delete_without_commit(deposit.id)
         deposit.remove_feedback_mail()
 
-    with current_app.test_request_context(get_url_root()):
-        if item['status'] in ['upgrade', 'new']:
-            _deposit = deposit.newversion(pid)
-            _deposit.publish_without_commit()
-        else:
-            _pid = PIDVersioning(child=pid).last_child
-            _record = WekoDeposit.get_record(_pid.object_uuid)
-            _deposit = WekoDeposit(_record, _record.model)
-            _deposit.merge_data_to_record_without_version(pid, True)
-            _deposit.publish_without_commit()
+    if not is_gakuninrdm:
+        deposit.publish_without_commit()
+        # Create first version
+        with current_app.test_request_context(get_url_root()):
+            if item['status'] in ['upgrade', 'new']:
+                _deposit = deposit.newversion(pid)
+                _deposit.publish_without_commit()
+            else:
+                _pid = PIDVersioning(child=pid).last_child
+                _record = WekoDeposit.get_record(_pid.object_uuid)
+                _deposit = WekoDeposit(_record, _record.model)
+                _deposit.merge_data_to_record_without_version(
+                    pid, keep_version=True, is_import=True)
+                if not is_gakuninrdm:
+                    _deposit.publish_without_commit()
 
-        if feedback_mail_list:
-            FeedbackMailList.update(
-                item_id=_deposit.id,
-                feedback_maillist=feedback_mail_list
-            )
-            _deposit.update_feedback_mail()
+            if feedback_mail_list:
+                FeedbackMailList.update(
+                    item_id=_deposit.id,
+                    feedback_maillist=feedback_mail_list
+                )
+                _deposit.update_feedback_mail()
 
 
 def update_publish_status(item_id, status):
@@ -1239,13 +1260,15 @@ def create_flow_define():
                                      WEKO_FLOW_DEFINE_LIST_ACTION)
 
 
-def import_items_to_system(item: dict, request_info: dict):
+def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
     """Validation importing zip file.
 
     :argument
         item        -- Items Metadata.
+        request_info -- Information from request.
+        is_gakuninrdm - Is call by gakuninrdm api.
     :return
-        return      -- PID object if exist.
+        return      -- Json response.
 
     """
     def store_data_to_es_and_db(item, request_info):
@@ -1315,35 +1338,117 @@ def import_items_to_system(item: dict, request_info: dict):
             # Save stats event into Database.
             StatsEvents.save(rtn_data, True)
 
+    if not request_info and request:
+        request_info = {
+            'remote_addr': request.remote_addr,
+            'referrer': request.referrer,
+            'hostname': request.host
+        }
+
     if not item:
         return None
     else:
+        bef_metadata = None
+        bef_last_ver_metadata = None
         try:
+            #current_app.logger.debug("item: {0}".format(item))
+            status = item.get('status')
             root_path = item.get('root_path', '')
-            if item.get('status') == 'new':
+            if status == 'new':
                 item_id = create_deposit(item.get('id'))
                 item['id'] = item_id
             else:
                 handle_check_item_is_locked(item)
+                # cache ES data for rollback
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type='recid', pid_value=item['id']).first()
+                bef_metadata = WekoIndexer().get_metadata_by_item_id(
+                    pid.object_uuid)
+                bef_last_ver_metadata = WekoIndexer().get_metadata_by_item_id(
+                    PIDVersioning(child=pid).last_child.object_uuid)
 
-            register_item_metadata(item, root_path)
-            if current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI'):
-                register_item_handle(item)
-            register_item_doi(item)
+            register_item_metadata(item, root_path, is_gakuninrdm)
+            if not is_gakuninrdm:
+                if current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CNRI'):
+                    register_item_handle(item)
+                register_item_doi(item)
 
-            status_number = WEKO_IMPORT_PUBLISH_STATUS.index(
-                item.get('publish_status')
-            )
-            register_item_update_publish_status(item, str(status_number))
-            if item.get('status') == 'new':
-                # Store data to es and db.
-                store_data_to_es_and_db(item, request_info)
+                status_number = WEKO_IMPORT_PUBLISH_STATUS.index(
+                    item.get('publish_status')
+                )
+                register_item_update_publish_status(item, str(status_number))
+                if item.get('status') == 'new':
+                    # Store data to es and db.
+                    store_data_to_es_and_db(item, request_info)
             db.session.commit()
-        except Exception as ex:
+
+            # clean unuse file content in keep mode if import success
+            cache_key = current_app \
+                .config['WEKO_SEARCH_UI_IMPORT_UNUSE_FILES_URI'] \
+                .format(item['id'])
+            list_unuse_uri = get_cache_data(cache_key)
+            if list_unuse_uri:
+                for uri in list_unuse_uri:
+                    file = current_files_rest.storage_factory(
+                        fileurl=uri, size=1)
+                    fs, path = file._get_fs()
+                    if fs.exists(path):
+                        file.delete()
+                delete_cache_data(cache_key)
+
+        except SQLAlchemyError as ex:
+            current_app.logger.error('sqlalchemy error: ', ex)
+            db.session.rollback()
             if item.get('id'):
                 handle_remove_es_metadata(item)
+            current_app.logger.error('item id: %s update error.' % item['id'])
+            traceback.print_exc(file=sys.stdout)
+            error_id = None
+            if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                    and ex.args[0].get('error_id'):
+                error_id = ex.args[0].get('error_id')
 
+            return {
+                'success': False,
+                'error_id': error_id
+            }
+        except ElasticsearchException as ex:
+            current_app.logger.error('elasticsearch  error: ', ex)
             db.session.rollback()
+            if item.get('id'):
+                handle_remove_es_metadata(item)
+            current_app.logger.error('item id: %s update error.' % item['id'])
+            traceback.print_exc(file=sys.stdout)
+            error_id = None
+            if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                    and ex.args[0].get('error_id'):
+                error_id = ex.args[0].get('error_id')
+
+            return {
+                'success': False,
+                'error_id': error_id
+            }
+        except redis.RedisError as ex:
+            current_app.logger.error('redis  error: ', ex)
+            db.session.rollback()
+            if item.get('id'):
+                handle_remove_es_metadata(item)
+            current_app.logger.error('item id: %s update error.' % item['id'])
+            traceback.print_exc(file=sys.stdout)
+            error_id = None
+            if ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
+                    and ex.args[0].get('error_id'):
+                error_id = ex.args[0].get('error_id')
+
+            return {
+                'success': False,
+                'error_id': error_id
+            }
+        except BaseException as ex:
+            current_app.logger.error('Unexpected error: ', ex)
+            db.session.rollback()
+            if item.get('id'):
+                handle_remove_es_metadata(item)
             current_app.logger.error('item id: %s update error.' % item['id'])
             traceback.print_exc(file=sys.stdout)
             error_id = None
@@ -1356,19 +1461,9 @@ def import_items_to_system(item: dict, request_info: dict):
                 'error_id': error_id
             }
     return {
-        'success': True
+        'success': True,
+        'recid': item['id']
     }
-
-
-def remove_temp_dir(path):
-    """Validation importing zip file.
-
-    :argument
-        path     -- {string} path temp_dir.
-    :return
-
-    """
-    shutil.rmtree(path)
 
 
 def handle_item_title(list_record):
@@ -1559,7 +1654,7 @@ def handle_check_cnri(list_record):
         error = None
         item_id = str(item.get('id'))
         cnri = item.get('cnri')
-        cnri_set = current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CRNI')
+        cnri_set = current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CNRI')
 
         if item.get('is_change_identifier') and cnri_set:
             if not cnri:
@@ -1571,8 +1666,8 @@ def handle_check_cnri(list_record):
                 else:
                     split_cnri = cnri.split('/')
                     if len(split_cnri) > 1:
-                        prefix = '/'.join(split_cnri[0:-1])
-                        suffix = split_cnri[-1]
+                        prefix = split_cnri[0]
+                        suffix = '/'.join(split_cnri[1:])
                     else:
                         prefix = cnri
                         suffix = ''
@@ -1582,8 +1677,6 @@ def handle_check_cnri(list_record):
                     if prefix != Handle().get_prefix():
                         error = _('Specified Prefix of {} is incorrect.') \
                             .format('CNRI')
-                    if not re.search(WEKO_IMPORT_SUFFIX_PATTERN, suffix):
-                        error = _(err_msg_suffix).format('CNRI')
         else:
             if item.get('status') == 'new' \
                     or item.get('is_change_identifier') or not cnri_set:
@@ -1664,6 +1757,10 @@ def handle_check_doi_ra(list_record):
             pid = WekoRecord.get_record_by_pid(item_id).pid_recid
             identifier = IdentifierHandle(pid.object_uuid)
             _value, doi_type = identifier.get_idt_registration_data()
+            current_app.logger.debug(
+                "item_id:{0} doi_ra:{1}".format(item_id, doi_ra))
+            current_app.logger.debug(
+                "doi_type:{0} _value:{1}".format(doi_type, _value))
 
             if (doi_type and doi_type[0] != doi_ra) \
                     or (not doi_type and doi_ra):
@@ -1672,12 +1769,16 @@ def handle_check_doi_ra(list_record):
         except Exception as ex:
             current_app.logger.error('item id: %s not found.' % item_id)
             current_app.logger.error(ex)
+
         return error
 
     for item in list_record:
         errors = []
         item_id = str(item.get('id'))
         doi_ra = item.get('doi_ra')
+
+        current_app.logger.debug(
+            "item_id:{0} doi_ra:{1}".format(item_id, doi_ra))
 
         if item.get('doi') and not doi_ra:
             errors.append(_('Please specify {}.').format('DOI_RA'))
@@ -1689,6 +1790,8 @@ def handle_check_doi_ra(list_record):
             else:
                 validation_errors = handle_doi_required_check(item)
                 if validation_errors:
+                    current_app.logger.error(
+                        "handle_doi_required_check: {0}".format(validation_errors))
                     errors.extend(validation_errors)
                 if not item.get('is_change_identifier') \
                         and item.get('status') != 'new':
@@ -1698,6 +1801,7 @@ def handle_check_doi_ra(list_record):
         elif item.get('status') != 'new':
             error = check_existed(item_id, doi_ra)
             if error:
+                current_app.logger.error("check_existed: ".format(error))
                 errors.append(error)
 
         if errors:
@@ -1734,8 +1838,8 @@ def handle_check_doi(list_record):
                     else:
                         split_doi = doi.split('/')
                         if len(split_doi) > 1:
-                            prefix = '/'.join(split_doi[0:-1])
-                            suffix = split_doi[-1]
+                            prefix = split_doi[0]
+                            suffix = '/'.join(split_doi[1:])
                         else:
                             prefix = doi
                             suffix = ''
@@ -1747,8 +1851,6 @@ def handle_check_doi(list_record):
                         elif not suffix:
                             error = _('Please specify {}.').format(
                                 'DOI suffix')
-                        elif not re.search(WEKO_IMPORT_SUFFIX_PATTERN, suffix):
-                            error = _(err_msg_suffix).format('DOI')
             else:
                 if item.get('status') == 'new':
                     if doi:
@@ -1798,11 +1900,16 @@ def register_item_handle(item):
         response -- {object} Process status.
 
     """
+    current_app.logger.debug('start register_item_handle(item)')
     item_id = str(item.get('id'))
     record = WekoRecord.get_record_by_pid(item_id)
     pid = record.pid_recid
     pid_hdl = record.pid_cnri
     cnri = item.get('cnri')
+    status = item.get('status')
+    uri = item.get('uri')
+    current_app.logger.debug(
+        "item_id:{0} pid:{1} pid_hdl:{2} cnri:{3} status:{4}".format(item_id, pid, pid_hdl, cnri, status))
 
     if item.get('is_change_identifier'):
         if item.get('cnri_suffix_not_existed'):
@@ -1810,16 +1917,22 @@ def register_item_handle(item):
             cnri = cnri[:-1] if cnri[-1] == '/' else cnri
             cnri += '/' + suffix
         if item.get('status') == 'new':
-            register_hdl_by_handle(cnri, pid.object_uuid)
+            register_hdl_by_handle(cnri, pid.object_uuid, uri)
         else:
             if pid_hdl and not pid_hdl.pid_value.endswith(cnri):
                 pid_hdl.delete()
-                register_hdl_by_handle(cnri, pid.object_uuid)
+                register_hdl_by_handle(cnri, pid.object_uuid, uri)
             elif not pid_hdl:
-                register_hdl_by_handle(cnri, pid.object_uuid)
+                register_hdl_by_handle(cnri, pid.object_uuid, uri)
     else:
         if item.get('status') == 'new':
             register_hdl_by_item_id(item_id, pid.object_uuid, get_url_root())
+        else:
+            if pid_hdl is None and cnri is None:
+                register_hdl_by_item_id(
+                    item_id, pid.object_uuid, get_url_root())
+
+    current_app.logger.debug('end register_item_handle(item)')
 
 
 def prepare_doi_setting():
@@ -1918,6 +2031,12 @@ def register_item_doi(item):
     is_change_identifier = item.get('is_change_identifier')
     doi_ra = item.get('doi_ra')
     doi = item.get('doi')
+
+    current_app.logger.debug('item_id: {0}'.format(item_id))
+    current_app.logger.debug(
+        'is_change_identifier: {0}'.format(is_change_identifier))
+    current_app.logger.debug('doi_ra: {0}'.format(doi_ra))
+    current_app.logger.debug('doi: {0}'.format(doi))
 
     record_without_version = WekoRecord.get_record_by_pid(item_id)
     pid = record_without_version.pid_recid
@@ -2554,10 +2673,10 @@ def export_all(root_url):
         """Check a list of allowed characters in filenames."""
         return re.sub(r'[\/:*"<>|\s]', '_', name)
 
-    def _write_tsv_files(item_types_data, export_path):
+    def _write_tsv_files(item_datas, export_path):
         """Write TSV data to files.
 
-        @param item_types_data:
+        @param item_datas:
         @param export_path:
         @param list_item_role:
         @return:
@@ -2568,97 +2687,170 @@ def export_all(root_url):
             hide_meta_data_for_role=lambda a: True,
             current_language=lambda: True
         )
-        for item_type_id in item_types_data:
-            try:
-                headers, records = make_stats_tsv_with_permission(
-                    item_type_id,
-                    item_types_data[item_type_id]['recids'],
-                    item_types_data[item_type_id]['data'],
-                    permissions)
-                keys, labels, is_systems, options = headers
-                item_types_data[item_type_id]['recids'].sort()
-                item_types_data[item_type_id]['keys'] = keys
-                item_types_data[item_type_id]['labels'] = labels
-                item_types_data[item_type_id]['is_systems'] = is_systems
-                item_types_data[item_type_id]['options'] = options
-                item_types_data[item_type_id]['data'] = records
-                item_type_data = item_types_data[item_type_id]
+        try:
+            headers, records = make_stats_tsv_with_permission(
+                item_datas['item_type_id'],
+                item_datas['recids'],
+                item_datas['data'],
+                permissions)
+            keys, labels, is_systems, options = headers
+            item_datas['recids'].sort()
+            item_datas['keys'] = keys
+            item_datas['labels'] = labels
+            item_datas['is_systems'] = is_systems
+            item_datas['options'] = options
+            item_datas['data'] = records
+            item_type_data = item_datas
 
-                tsv_full_path = '{}/{}.tsv'.format(export_path,
-                                                   item_type_data.get('name'))
-                with open(tsv_full_path, 'w') as file:
-                    tsv_output = package_export_file(item_type_data)
-                    file.write(tsv_output.getvalue())
-            except Exception as ex:
-                current_app.logger.error(ex)
-                continue
+            tsv_full_path = '{}/{}.tsv'.format(export_path,
+                                               item_type_data.get('name'))
+            with open(tsv_full_path, 'w') as file:
+                tsv_output = package_export_file(item_type_data)
+                file.write(tsv_output.getvalue())
+        except Exception as ex:
+            current_app.logger.error(ex)
 
+    def _get_export_data(export_path, finish_item_types, retrys, retry_info={}):
+        try:
+            # get all item type
+            item_type_all = ItemTypes.get_all()
+            item_types = [(str(it.id),
+                          _itemtype_name(it.item_type_name.name)) for it in item_type_all
+                          if str(it.id) not in finish_item_types]
+            for item_type_id, item_type_name in item_types:
+                item_datas = {}
+                if item_type_id in retry_info:
+                    counter = retry_info[item_type_id]['counter']
+                    file_part = retry_info[item_type_id]['part']
+                    max_pid = retry_info[item_type_id]['max']
+                else:
+                    counter = 0
+                    file_part = 1
+                    max_pid = '1'
+                current_app.logger.info(
+                    'Start processing item type {}({}).'
+                    .format(item_type_name, item_type_id))
+                # get all record id
+                recids = (db.session
+                          .query(PersistentIdentifier.pid_value,
+                                 PersistentIdentifier.object_uuid)
+                          .join(ItemMetadata,
+                                PersistentIdentifier.object_uuid == ItemMetadata.id)
+                          .filter(PersistentIdentifier.pid_type == 'recid',
+                                  PersistentIdentifier.status == PIDStatus.REGISTERED,
+                                  PersistentIdentifier.pid_value.notlike(
+                                      '%.%'),
+                                  PersistentIdentifier.pid_value >= max_pid,
+                                  ItemMetadata.item_type_id == item_type_id)
+                          .order_by(PersistentIdentifier.pid_value)).all()
+
+                if len(recids) == 0:
+                    finish_item_types.append(item_type_id)
+                    continue
+
+                record_ids = [(recid.pid_value, recid.object_uuid)
+                              for recid in recids]
+                for recid, uuid in record_ids:
+                    if counter % WEKO_SEARCH_UI_BULK_EXPORT_LIMIT == 0 and item_datas:
+                        # Create export info file
+                        item_datas['name'] = '{}.part{}'.format(
+                            item_datas['name'], file_part)
+                        _write_tsv_files(item_datas, export_path)
+                        current_app.logger.info(
+                            '{}.tsv has been created.'
+                            .format(item_datas['name']))
+                        item_datas = {}
+                        file_part += 1
+                        retry_info[item_type_id] = {
+                            'part': file_part,
+                            'counter': counter,
+                            'max': recid
+                        }
+
+                    record = WekoRecord.get_record_by_uuid(uuid)
+
+                    if not item_datas:
+                        item_datas = {
+                            'item_type_id': item_type_id,
+                            'name': '{}({})'.format(
+                                item_type_name,
+                                item_type_id),
+                            'root_url': root_url,
+                            'jsonschema': 'items/jsonschema/' + item_type_id,
+                            'keys': [],
+                            'labels': [],
+                            'recids': [],
+                            'data': {},
+                        }
+
+                    item_datas['recids'].append(recid)
+                    item_datas['data'][recid] = record
+                    counter += 1
+
+                if file_part != 1:
+                    item_datas['name'] = '{}.part{}'.format(
+                        item_datas['name'], file_part)
+                # Create export info file
+                _write_tsv_files(item_datas, export_path)
+                finish_item_types.append(item_type_id)
+                current_app.logger.info(
+                    '{}.tsv has been created.'
+                    .format(item_datas['name']))
+                current_app.logger.info(
+                    'Processed {} items of item type {}.'
+                    .format(counter, item_type_name))
+            return True
+        except SQLAlchemyError as ex:
+            current_app.logger.error(ex)
+            _num_retry = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_RETRY']
+            if retrys < _num_retry:
+                retrys += 1
+                current_app.logger.info('retry count: {}'.format(retrys))
+                sleep(5)
+                result = _get_export_data(
+                    export_path, finish_item_types, retrys, retry_info)
+                return result
+            else:
+                return False
+
+    _cache_prefix = current_app.config['WEKO_ADMIN_CACHE_PREFIX']
+    _msg_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_MSG']
+    _msg_key = _cache_prefix.format(name=_msg_config)
+    reset_redis_cache(_msg_key, '')
     temp_path = tempfile.TemporaryDirectory(
         prefix=current_app.config['WEKO_ITEMS_UI_EXPORT_TMP_PREFIX'])
     try:
+        # Delete old file
+        _task_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_URI']
+        _uri_key = _cache_prefix.format(name=_task_config)
+        prev_uri = get_redis_cache(_uri_key)
+        if (prev_uri):
+            delete_exported(prev_uri, _uri_key)
+
         export_path = temp_path.name + '/' + \
             datetime.utcnow().strftime("%Y%m%d%H%M%S")
         os.makedirs(export_path, exist_ok=True)
 
-        # get all record id
-        recids = PersistentIdentifier.query.filter_by(
-            pid_type='recid',
-            status=PIDStatus.REGISTERED).all()
+        finish_item_types = []
+        result = _get_export_data(export_path, finish_item_types, 0)
 
-        record_ids = [
-            recid.pid_value for recid in recids if recid.pid_value.isdigit()]
-        item_types_data = {}
-
-        for recid in record_ids:
-            record = WekoRecord.get_record_by_pid(recid)
-            item_type = ItemTypes.get_by_id(record.get('item_type_id'))
-            item_type_id = str(record.get('item_type_id'))
-
-            if not item_type:
-                current_app.logger.error('Corrupted Item: {}'.format(recid))
-                continue
-            elif not item_types_data.get(item_type_id):
-                item_type_name = _itemtype_name(
-                    item_type.item_type_name.name)
-                item_types_data[item_type_id] = {
-                    'item_type_id': item_type_id,
-                    'name': '{}({})'.format(
-                        item_type_name,
-                        item_type_id),
-                    'root_url': root_url,
-                    'jsonschema': 'items/jsonschema/' + item_type_id,
-                    'keys': [],
-                    'labels': [],
-                    'recids': [],
-                    'data': {},
-                }
-
-            item_types_data[item_type_id]['recids'].append(recid)
-            item_types_data[item_type_id]['data'][recid] = record
-
-        # Create export info file
-        _write_tsv_files(item_types_data, export_path)
-
-        # Create bag
-        bagit.make_bag(export_path)
-        shutil.make_archive(export_path, 'zip', export_path)
-        with open(export_path + '.zip', 'rb') as file:
-            src = FileInstance.create()
-            src.set_contents(
-                file, default_location=Location.get_default().uri)
-        db.session.commit()
-
-        # Delete old file
-        _task_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_URI']
-        _cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-            format(name=_task_config)
-        prev_uri = get_redis_cache(_cache_key)
-        if (prev_uri):
-            delete_exported(prev_uri, _cache_key)
-        return src.uri if src else None
+        if result:
+            # Create bag
+            bagit.make_bag(export_path)
+            shutil.make_archive(export_path, 'zip', export_path)
+            with open(export_path + '.zip', 'rb') as file:
+                src = FileInstance.create()
+                src.set_contents(
+                    file, default_location=Location.get_default().uri)
+            db.session.commit()
+        else:
+            reset_redis_cache(_msg_key, 'Export failed.')
+        return src.uri if result and src else ''
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error(ex)
+        reset_redis_cache(_msg_key, 'Export failed.')
+        return ''
 
 
 def delete_exported(uri, cache_key):
@@ -2708,11 +2900,15 @@ def get_export_status():
         format(name=WEKO_SEARCH_UI_BULK_EXPORT_TASK)
     cache_uri = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
         format(name=WEKO_SEARCH_UI_BULK_EXPORT_URI)
+    cache_msg = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+        format(name=WEKO_SEARCH_UI_BULK_EXPORT_MSG)
     export_status = False
     download_uri = None
+    message = None
     try:
         task_id = get_redis_cache(cache_key)
         download_uri = get_redis_cache(cache_uri)
+        message = get_redis_cache(cache_msg)
         if (task_id):
             task = AsyncResult(task_id)
             status_cond = (task.successful() or task.failed()
@@ -2721,7 +2917,7 @@ def get_export_status():
     except Exception as ex:
         current_app.logger.error(ex)
         export_status = False
-    return export_status, download_uri
+    return export_status, download_uri, message
 
 
 def handle_check_item_is_locked(item):
@@ -2753,7 +2949,7 @@ def handle_check_item_is_locked(item):
         })
 
 
-def handle_remove_es_metadata(item):
+def handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata):
     """Remove es metadata.
 
     :argument
@@ -2762,15 +2958,39 @@ def handle_remove_es_metadata(item):
     try:
         item_id = item.get('id')
         status = item.get('status')
+        indexer = WekoIndexer()
+        pid = WekoRecord.get_record_by_pid(item_id).pid_recid
         if status == 'new':
-            pid = WekoRecord.get_record_by_pid(item_id).pid_recid
+            # delete temp data in ES
             pid_lastest = WekoRecord.get_record_by_pid(
-                item_id + '.' + str(get_latest_version_id(item_id) - 1)
-            ).pid_recid
-            deposit = WekoDeposit.get_record(pid.object_uuid)
-            deposit.indexer.delete(deposit)
-            deposit = WekoDeposit.get_record(pid_lastest.object_uuid)
-            deposit.indexer.delete(deposit)
+                item_id + '.1').pid_recid
+            indexer.delete_by_id(pid_lastest.object_uuid)
+            indexer.delete_by_id(pid.object_uuid)
+        else:
+            aft_metadata = indexer.get_metadata_by_item_id(
+                pid.object_uuid)
+            aft_last_ver_metadata = indexer.get_metadata_by_item_id(
+                PIDVersioning(child=pid).last_child.object_uuid)
+
+            # revert to previous data in ES
+            if bef_metadata['_version'] < aft_metadata['_version']:
+                indexer.upload_metadata(
+                    bef_metadata['_source'],
+                    bef_metadata['_id'],
+                    0, True)
+            if status == 'keep' \
+                and bef_last_ver_metadata['_version'] \
+                    < aft_last_ver_metadata['_version']:
+                indexer.upload_metadata(
+                    bef_last_ver_metadata['_source'],
+                    bef_last_ver_metadata['_id'],
+                    0, True)
+
+            # delete new version in ES
+            if status == 'upgrade' \
+                and bef_last_ver_metadata['_source']['control_number'] \
+                    < aft_last_ver_metadata['_source']['control_number']:
+                indexer.delete_by_id(aft_last_ver_metadata['_id'])
     except Exception as ex:
         current_app.logger.error(ex)
 

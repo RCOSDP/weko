@@ -43,7 +43,8 @@ $(document).ready(function () {
         multiple: false,
         hidden: true,
         showlist: false,
-        crtf: false
+        crtf: false,
+        oneline: false
       }
     },
     system_identifier_hdl: {
@@ -55,7 +56,8 @@ $(document).ready(function () {
         multiple: false,
         hidden: true,
         showlist: false,
-        crtf: false
+        crtf: false,
+        oneline: false
       }
     },
     system_identifier_uri: {
@@ -67,7 +69,8 @@ $(document).ready(function () {
         multiple: false,
         hidden: true,
         showlist: false,
-        crtf: false
+        crtf: false,
+        oneline: false
       }
     },
     system_file: {
@@ -79,7 +82,8 @@ $(document).ready(function () {
         multiple: false,
         hidden: true,
         showlist: false,
-        crtf: false
+        crtf: false,
+        oneline: false
       }
     }
   };
@@ -93,7 +97,8 @@ $(document).ready(function () {
         multiple: false,
         hidden: false,
         showlist: false,
-        crtf: false
+        crtf: false,
+        oneline: false
       }
     }
   };
@@ -460,6 +465,7 @@ $(document).ready(function () {
       tmp.option.hidden = $('#chk_'+row_id+'_4').is(':checked')?true:false;
       tmp.option.showlist = tmp.option.hidden?false:($('#chk_'+row_id+'_2').is(':checked')?true:false);
       tmp.option.crtf = tmp.option.hidden?false:($('#chk_'+row_id+'_3').is(':checked')?true:false);
+      tmp.option.oneline = tmp.option.hidden?false:($('#chk_'+row_id+'_5').is(':checked')?true:false);
 
       // Retrieve notes edited
       page_global.edit_notes[row_id] = $('#edit_notes_' + row_id).val();
@@ -868,6 +874,9 @@ $(document).ready(function () {
         + '  <div class="checkbox" id="chk_prev_' + row_id + '_4">'
         + '    <label><input type="checkbox" id="chk_' + row_id + '_4" value="hidden">' + "Hide" + '</label>'
         + '  </div>'
+        + '  <div class="checkbox" id="chk_prev_' + row_id + '_5">'
+        + '    <label><input type="checkbox" id="chk_' + row_id + '_5" value="displayoneline">' + "Display on one line" + '</label>'
+        + '  </div>'
         + '</td>'
         + '<td>'
         + '  <textarea type="button" class="form-control" rows="5" id="edit_notes_' + row_id + '">' + "" + '</textarea>'
@@ -919,9 +928,13 @@ $(document).ready(function () {
         $('#chk_' + row_id + '_2').attr('disabled', true);
         $('#chk_prev_' + row_id + '_3').addClass('disabled');
         $('#chk_' + row_id + '_3').attr('disabled', true);
+        $('#chk_prev_' + row_id + '_5').addClass('disabled');
+        $('#chk_' + row_id + '_5').attr('disabled', true);
       } else {
         $('#chk_prev_' + row_id + '_2').removeClass('disabled');
         $('#chk_' + row_id + '_2').attr('disabled', false);
+        $('#chk_prev_' + row_id + '_5').removeClass('disabled');
+        $('#chk_' + row_id + '_5').attr('disabled', false);
         if ($('#chk_' + row_id + '_3').attr('isFile') !== 'true') {
           $('#chk_prev_' + row_id + '_3').removeClass('disabled');
           $('#chk_' + row_id + '_3').attr('disabled', false);
@@ -1022,6 +1035,7 @@ $(document).ready(function () {
         if(isFile || product.properties[key]["isHide"] ==true){
           product.properties[key]["showListDisable"] = true
           product.properties[key]["specifyNLDisable"] = true
+          product.properties[key]["nonDisplayDisable"] = true
         }
         if(isFile){
           product.properties[key]["hideDisable"] = true
@@ -1292,6 +1306,7 @@ $(document).ready(function () {
         $('#chk_'+row_id+'_2').attr('checked', data.meta_list[row_id].option.showlist);
         $('#chk_'+row_id+'_3').attr('checked', data.meta_list[row_id].option.crtf);
         $('#chk_'+row_id+'_4').attr('checked', data.meta_list[row_id].option.hidden);
+        $('#chk_'+row_id+'_5').attr('checked', data.meta_list[row_id].option.oneline);
 
         // Add the notes for the row here
         if(row_id in data.edit_notes) {
@@ -1307,6 +1322,8 @@ $(document).ready(function () {
           $('#chk_' + row_id + '_2').attr('disabled', true);
           $('#chk_prev_' + row_id + '_3').addClass('disabled');
           $('#chk_' + row_id + '_3').attr('disabled', true);
+          $('#chk_prev_' + row_id + '_5').addClass('disabled');
+          $('#chk_' + row_id + '_5').attr('disabled', true);
         }
 
         if(data.meta_list[row_id].option.multiple) {
@@ -1344,6 +1361,7 @@ $(document).ready(function () {
             if(isFile || properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["isHide"] ==true){
               properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["showListDisable"] = true
               properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["specifyNLDisable"] = true
+              properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["nonDisplayDisable"] = true
             }
             if(isFile){
               properties_obj[data.meta_list[row_id].input_type.substr(4)].schema.properties[key]["hideDisable"] = true
@@ -1538,6 +1556,7 @@ $(document).ready(function () {
     itpSchema.isShowList = itForm.isShowList;
     itpSchema.isSpecifyNewline = itForm.isSpecifyNewline;
     itpSchema.isHide = itForm.isHide;
+    itpSchema.isNonDisplay = itForm.isNonDisplay;
     // itpSchema.format = itForm.format;
     if(itForm.hasOwnProperty('titleMap')) {
       let titleMapList = itForm['titleMap'];
@@ -1826,6 +1845,7 @@ $(document).ready(function () {
     form.isShowList = property.isShowList;
     form.isSpecifyNewline = property.isSpecifyNewline;
     form.isHide = property.isHide;
+    form.isNonDisplay = property.isNonDisplay;
     //Set TitleMap for form.
     let _enum, editAble;
     editAble = property.hasOwnProperty('editAble') && property['editAble'];
