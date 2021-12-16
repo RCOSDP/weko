@@ -179,7 +179,8 @@ services:
     volumes:
       - es-data:/usr/share/elasticsearch/data
     environment:
-      - "ES_JAVA_OPTS=-XX:-UseParNewGC -XX:-UseConcMarkSweepGC -XX:+UseG1GC -Xms8192m -Xmx8192m"
+      - "discovery.type=single-node"
+      - "ES_JAVA_OPTS=-Xms4192m -Xmx4192m"
     ulimits:
       memlock:
         soft: -1
@@ -207,7 +208,7 @@ services:
     build:
       context: ./nginx
       #dockerfile: ./nginx/Dockerfile
-      #target: nginx-stage_1 
+      #target: nginx-stage_1
     ports:
       - "80:80"
       - "443:443"
