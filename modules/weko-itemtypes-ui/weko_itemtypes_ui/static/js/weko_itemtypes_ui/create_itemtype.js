@@ -1817,6 +1817,7 @@ $(document).ready(function () {
   }
 
   function setTitleI18nFromPropertiesSchemaToSubForm(schemaProperties, subForms, prefixKey) {
+    if(!subForms) return;
     let properties = getPropertiesOrItems(schemaProperties);
     let propertyKey;
     Object.keys(properties).map(function (propKey) {
@@ -1884,7 +1885,7 @@ $(document).ready(function () {
       let list_enum = typeof(_enum) == 'string' ? _enum.split('|') : _enum;
       let titleMap = [];
       $.each(list_enum, function(ind, val) {
-        if(val.length > 0){
+        if(val&&val.length > 0){
           titleMap.push({"name": val, "value": val});
         }
       });
