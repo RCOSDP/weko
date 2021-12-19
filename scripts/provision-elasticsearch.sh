@@ -157,8 +157,8 @@ provision_elasticsearch_docker () {
 install_plugins () {
     # sphinxdoc-install-elasticsearch-plugins-begin
     $sudo /usr/share/elasticsearch/bin/elasticsearch-plugin install --batch ingest-attachment
-    $sudo /usr/share/elasticsearch/bin/elasticsearch-plugin install analysis-kuromoji
-    $sudo /usr/share/elasticsearch/bin/elasticsearch-plugin install repository-s3
+    $sudo /usr/share/elasticsearch/bin/elasticsearch-plugin install --batch analysis-kuromoji
+    $sudo /usr/share/elasticsearch/bin/elasticsearch-plugin install --batch repository-s3
     $sudo /usr/share/elasticsearch/bin/elasticsearch-keystore create
     if [ "${ELASTICSEARCH_S3_ACCESS_KEY}" != "" ]; then
       echo ${ELASTICSEARCH_S3_ACCESS_KEY} | $sudo /usr/share/elasticsearch/bin/elasticsearch-keystore add s3.client.default.access_key

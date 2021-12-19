@@ -326,7 +326,6 @@ ng\:form {
     padding-bottom: 4px;
 }
 
-
 .container-fluid2 {padding-left: 15px; padding-right: 15px;}
 
 .navbar-nav > a {
@@ -334,3 +333,10 @@ ng\:form {
     padding-top: 15px !important;
 }
 
+.detail-table > tbody > tr > th {
+    padding: 2px;
+}
+
+.detail-table > tbody > tr > td {
+    padding: 2px;
+}
