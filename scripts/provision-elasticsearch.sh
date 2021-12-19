@@ -149,9 +149,9 @@ provision_elasticsearch_docker () {
     fi
 
     # disable jndi lookup
-    yum install -y zip
-    sed -i 's/%m%n/%m{nolookups}%n/g' /usr/share/elasticsearch/config/log4j2.properties
-    zip -q -d /usr/share/elasticsearch/lib/log4j-core-*.jar org/apache/logging/log4j/core/lookup/JndiLookup.class
+    #yum install -y zip
+    #sed -i 's/%m%n/%m{nolookups}%n/g' /usr/share/elasticsearch/config/log4j2.properties
+    #zip -q -d /usr/share/elasticsearch/lib/log4j-core-*.jar org/apache/logging/log4j/core/lookup/JndiLookup.class
 }
 
 install_plugins () {
