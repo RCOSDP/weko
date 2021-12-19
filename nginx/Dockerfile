@@ -48,7 +48,7 @@ COPY --from=nginx-with-shib /tmp/nginx-dbg_1.20.1-1~focal_amd64.deb .
 RUN dpkg -i nginx_1.20.1-1~focal_amd64.deb
 
 
-ADD supervisord/supervisord.conf /etc/supervisor/supervisord.conf
+ADD supervisord.conf /etc/supervisor/supervisord.conf
 ADD shibboleth2.xml /etc/shibboleth/shibboleth2.xml
 ADD attribute-map.xml /etc/shibboleth/attribute-map.xml
 ADD attribute-policy.xml /etc/shibboleth/attribute-policy.xml
