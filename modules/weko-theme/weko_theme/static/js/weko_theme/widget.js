@@ -294,7 +294,7 @@ const PageBodyGrid = function () {
     this.buildNewArrivals = function (widgetID, term, rss, id, count) {
         $.ajax({
             method: 'GET',
-            url: '/api/admin/get_new_arrivals/' + widgetID + '?time=' + currentTime,
+            url: '/api/admin/get_new_arrivals/' + widgetID ,
             contentType: 'application/json',
             success: function(response) {
                 var result = response.data;
@@ -506,7 +506,7 @@ const PageBodyGrid = function () {
         }
         var currentTime = new Date().getTime();
         $.ajax({
-            url: '/api/admin/access_counter_record/' + repository_id + '/' + current_language +'?time=' + currentTime,
+            url: '/api/admin/access_counter_record/' + repository_id + '/' + current_language, 
             method: 'GET',
             async: false,
             success: function(response) {
@@ -806,7 +806,7 @@ function getWidgetDesignSetting() {
         let data = {
             repository_id: community_id
         };
-        url = '/api/admin/load_widget_design_setting/' + current_language +'?time=' + currentTime;
+        url = '/api/admin/load_widget_design_setting/' + current_language ;
         request = $.ajax({
             url: url,
             type: "POST",

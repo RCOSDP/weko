@@ -1746,7 +1746,10 @@ class WekoRecord(Record):
             return PersistentIdentifier.query.filter_by(
                 pid_type=pid_type,
                 object_uuid=pid_without_ver.object_uuid,
-                status=PIDStatus.REGISTERED).one_or_none()
+                status=PIDStatus.REGISTERED
+            ).order_by(
+                db.desc(PersistentIdentifier.created)
+            ).first()
         except PIDDoesNotExistError as pid_not_exist:
             current_app.logger.error(pid_not_exist)
         return None

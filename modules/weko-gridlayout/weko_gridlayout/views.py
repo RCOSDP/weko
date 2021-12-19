@@ -16,6 +16,7 @@ from flask import Blueprint, abort, current_app, jsonify, render_template, \
     request
 from flask_babelex import gettext as _
 from flask_login import login_required
+from invenio_cache import cached_unless_authenticated
 from invenio_stats.utils import QueryCommonReportsHelper
 from sqlalchemy.orm.exc import NoResultFound
 from weko_theme.utils import get_community_id, get_weko_contents
@@ -326,6 +327,7 @@ def get_system_lang():
 
 
 @blueprint_api.route('/get_new_arrivals/<int:widget_id>', methods=['GET'])
+@cached_unless_authenticated(timeout=50, key_prefix='new_arrivals')
 def get_new_arrivals_data(widget_id):
     """Get new arrivals data.
 
@@ -461,6 +463,7 @@ def _add_url_rule(url_or_urls):
 
 @blueprint_api.route('/access_counter_record/<string:repository_id>'
                      '/<string:current_language>', methods=['GET'])
+@cached_unless_authenticated(timeout=50, key_prefix='access_counter')
 def get_access_counter_record(repository_id, current_language):
     """Get access Top page value."""
     result = {}

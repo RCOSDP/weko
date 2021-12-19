@@ -546,7 +546,7 @@ def get_site_info():
     if site_info.ogp_image and site_info.ogp_image_name:
         ts = time.time()
         result['ogp_image'] = request.host_url + \
-            'api/admin/ogp_image?timestamp=' + str(ts)
+            'api/admin/ogp_image'
         result['ogp_image_name'] = site_info.ogp_image_name
     return jsonify(result)
 
