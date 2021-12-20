@@ -16,13 +16,14 @@ from flask_babelex import get_locale, to_user_timezone, to_utc
 from invenio_communities import config as invenio_communities_config
 from invenio_communities.models import Community
 from invenio_db import db
+from invenio_pidstore.models import PIDStatus
 from invenio_records.models import RecordMetadata
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
 from weko_deposit.api import WekoRecord
 from weko_index_tree.api import Indexes
 from weko_schema_ui.schema import get_oai_metadata_formats
-
+from invenio_pidstore.models import PIDStatus
 from .api import OaiIdentify
 from .fetchers import oaiid_fetcher
 from .models import OAISet
@@ -319,8 +320,7 @@ def extract_paths_from_sets(sets):
 
 def is_deleted_workflow(pid):
     """Check workflow is deleted."""
-    deleted_status = "D"
-    return pid.status == deleted_status
+    return pid.status == PIDStatus.DELETED
 
 
 def is_private_workflow(record):
