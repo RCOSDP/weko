@@ -109,3 +109,6 @@ WEKO_GRIDLAYOUT_FILE_MAX_SIZE = 1024 * 1024 * 16  # 16 MB
 
 WEKO_GRIDLAYOUT_WIDGET_ITEM_LOCK_KEY = "locked_widget_key_{}"
 """Widget item lock key."""
+
+INVENIO_CACHE_TTL = 50
+""" Page Cache TTL """
