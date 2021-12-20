@@ -65,7 +65,7 @@ def list_sets(url, encoding='utf-8'):
     payload = {
         'verb': 'ListSets'}
     while True:
-        response = requests.get(url, params=payload)
+        response = requests.get(url, params=payload, verify=False)
         et = etree.XML(response.text.encode(encoding))
         sets = sets + et.findall('./ListSets/set', namespaces=et.nsmap)
         resumptionToken = et.find(
@@ -101,7 +101,7 @@ def list_records(
         payload['resumptionToken'] = resumption_token
     records = []
     rtoken = None
-    response = requests.get(url, params=payload)
+    response = requests.get(url, params=payload, verify=False)
     et = etree.XML(response.text.encode(encoding))
     records = records + et.findall('./ListRecords/record', namespaces=et.nsmap)
     resumptionToken = et.find(
@@ -330,7 +330,8 @@ def add_title(schema, mapping, res, metadata):
 
 
 def add_alternative(schema, mapping, res, metadata):
-    """Add titles other than the main title such as the title for a contents page or colophon."""
+    """Add titles other than the main title such as the \
+    title for a contents page or colophon."""
     patterns = [
         ('alternative.@value', TEXT),
         ('alternative.@attributes.xml:lang', LANG)
@@ -340,7 +341,8 @@ def add_alternative(schema, mapping, res, metadata):
 
 
 def add_creator_jpcoar(schema, mapping, res, metadata):
-    """Add individual or organisation that is responsible for the creation of the resource."""
+    """Add individual or organisation that is responsible for \
+    the creation of the resource."""
     patterns = [
         ('creator.givenName.@value',
             'jpcoar:givenName.#text'),
@@ -716,7 +718,8 @@ def add_degree_grantor(schema, mapping, res, metadata):
 
 
 def add_degree_name(schema, mapping, res, metadata):
-    """Add academic degree and field of the degree specified in the Degree Regulation."""
+    """Add academic degree and field of the degree specified in \
+    the Degree Regulation."""
     patterns = [
         ('degreeName.@value',
             TEXT),
@@ -728,7 +731,8 @@ def add_degree_name(schema, mapping, res, metadata):
 
 
 def add_funding_reference(schema, mapping, res, metadata):
-    """Add the grant information if you have received  financial support (funding) to create the resource."""
+    """Add the grant information if you have received \
+    financial support (funding) to create the resource."""
     patterns = [
         ('fundingReference.funderName.@value',
             'jpcoar:funderName.#text'),
@@ -752,7 +756,8 @@ def add_funding_reference(schema, mapping, res, metadata):
 
 
 def add_geo_location(schema, mapping, res, metadata):
-    """Add Spatial region or named place where the resource was gathered or about which the data is focused."""
+    """Add Spatial region or named place where the resource was \
+    gathered or about which the data is focused."""
     patterns = [
         ('geoLocation.geoLocationPoint.pointLongitude.@value',
             None),
@@ -774,7 +779,8 @@ def add_geo_location(schema, mapping, res, metadata):
 
 
 def add_relation(schema, mapping, res, metadata):
-    """Add the relationship between the registering resource and other related resource.
+    """Add the relationship between the registering resource \
+    and other related resource.
 
     Select and enter 'relationType' from the controlled vocabularies.
     If there is no corresponding vocabulary, do not enter 'relationType'.
@@ -796,7 +802,8 @@ def add_relation(schema, mapping, res, metadata):
 
 
 def add_rights_holder(schema, mapping, res, metadata):
-    """Add the information on the rights holder of such as copyright other than the creator or contributor."""
+    """Add the information on the rights holder of such as copyright \
+    other than the creator or contributor."""
     patterns = [
         ('rightsHolder.rightsHolderName.@value',
             'jpcoar:rightsHolderName.#text'),

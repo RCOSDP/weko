@@ -32,10 +32,3 @@ def test_init():
     assert 'invenio-resourcesyncserver' not in app.extensions
     ext.init_app(app)
     assert 'invenio-resourcesyncserver' in app.extensions
-
-
-def test_view(base_client):
-    """Test view."""
-    res = base_client.get("/")
-    assert res.status_code == 200
-    assert 'Welcome to INVENIO-ResourceSyncServer' in str(res.data)

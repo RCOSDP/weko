@@ -42,12 +42,3 @@ def test_init():
     assert 'weko-theme' not in app.extensions
     ext.init_app(app)
     assert 'weko-theme' in app.extensions
-
-
-def test_view(app):
-    """Test view."""
-    WekoTheme(app)
-    with app.test_client() as client:
-        res = client.get("/")
-        assert res.status_code == 200
-        assert 'Welcome to weko-theme' in str(res.data)

@@ -1,11 +1,13 @@
 
-import pytest
+from smtplib import SMTPServerDisconnected
+
 import flask
 import flask_mail
-from smtplib import SMTPServerDisconnected
-from pytest_mock import mocker
+import pytest
 from flask_admin import Admin
 from invenio_db import InvenioDB, db
+from pytest_mock import mocker
+
 from invenio_mail import InvenioMail
 
 
@@ -27,7 +29,7 @@ def test_mail_index_post(email_admin_app):
         'mail_use_ssl': 'on',
         'mail_username': 'nobody',
         'mail_password': 'password',
-        'mail_default_sender': ''}
+        'mail_default_sender': 'admin'}
     with email_admin_app.test_request_context():
         client = email_admin_app.test_client()
         res = client.post(flask.url_for('mail.index'), data=post_data)
@@ -38,7 +40,7 @@ def test_mail_index_post(email_admin_app):
     assert 'use_ssl=True' in str(res.data)
     assert 'username=nobody' in str(res.data)
     assert 'password=password' in str(res.data)
-    assert 'default_sender=\\n' in str(res.data)
+    assert 'default_sender=admin\\n' in str(res.data)
     assert 'Mail settings have been updated.' in str(res.data)
 
 
@@ -53,7 +55,7 @@ def test_mail_index_post_failed(email_admin_app, mocker):
         'mail_use_ssl': 'on',
         'mail_username': 'nobody',
         'mail_password': 'password',
-        'mail_default_sender': ''}
+        'mail_default_sender': 'admin'}
     with email_admin_app.test_request_context():
         client = email_admin_app.test_client()
         res = client.post(flask.url_for('mail.index'), data=post_data)
@@ -68,7 +70,7 @@ def test_send_mail(email_admin_app, mocker):
         'body': 'test body'}
     with email_admin_app.test_request_context():
         client = email_admin_app.test_client()
-        res = client.post(flask.url_for('mail.send_mail'), data=post_data)
+        res = client.post(flask.url_for('mail.send_test_mail'), data=post_data)
     assert flask_mail._Mail.send.called
     assert res.status_code == 200
     assert 'recipient=test@mail.nii.ac.jp' in str(res.data)
@@ -83,7 +85,7 @@ def test_send_mail_failed(email_admin_app, mocker):
         'body': 'test body'}
     with email_admin_app.test_request_context():
         client = email_admin_app.test_client()
-        res = client.post(flask.url_for('mail.send_mail'), data=post_data)
+        res = client.post(flask.url_for('mail.send_test_mail'), data=post_data)
     assert flask_mail._Mail.send.called
     assert res.status_code == 200
     assert 'Failed to send mail.' in str(res.data)

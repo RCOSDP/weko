@@ -34,7 +34,19 @@ import pytest
 from flask import Flask
 from flask.cli import ScriptInfo
 from flask_celeryext import FlaskCeleryExt
+from invenio_accounts import InvenioAccounts
+from invenio_accounts.models import User
+from invenio_accounts.testutils import create_test_user
 from invenio_db import InvenioDB, db
+from invenio_files_rest.models import Location
+from invenio_i18n import InvenioI18N
+from invenio_jsonschemas import InvenioJSONSchemas
+from invenio_pidrelations import InvenioPIDRelations
+from invenio_records import InvenioRecords
+from sqlalchemy_utils.functions import create_database, database_exists
+from weko_index_tree.models import Index
+from weko_search_ui import WekoSearchUI
+from weko_theme import WekoTheme
 
 from invenio_oaiharvester import InvenioOAIHarvester
 from invenio_oaiharvester.models import OAIHarvestConfig
@@ -53,14 +65,29 @@ def app(request):
         SECRET_KEY="CHANGE_ME",
         SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
         SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+            'SQLALCHEMY_DATABASE_URI',
+            'sqlite:///test.db'),
         TESTING=True,
+        INDEX_IMG='indextree/36466818-image.jpg',
+        SEARCH_UI_SEARCH_INDEX='tenant1',
+        INDEXER_DEFAULT_DOCTYPE='item-v1.0.0',
+        INDEXER_FILE_DOC_TYPE='content',
     )
     FlaskCeleryExt(app)
+    InvenioAccounts(app)
     InvenioDB(app)
+    InvenioI18N(app)
+    InvenioJSONSchemas(app)
+    InvenioPIDRelations(app)
+    InvenioRecords(app)
+    WekoSearchUI(app)
+    WekoTheme(app)
     InvenioOAIHarvester(app)
 
     with app.app_context():
+        if str(db.engine.url) != 'sqlite://' and \
+           not database_exists(str(db.engine.url)):
+            create_database(str(db.engine.url))
         db.create_all()
 
     def teardown():
@@ -145,3 +172,24 @@ def sample_list_xml_cs():
         "data/sample_arxiv_response_listrecords_cs.xml"
     )).read()
     return raw_cs_xml
+
+
+@pytest.fixture
+def sample_jpcoar_list_xml():
+    raw_cs_xml = open(os.path.join(
+        os.path.dirname(__file__),
+        "data/oai.xml"
+    )).read()
+    return raw_cs_xml
+
+
+@pytest.fixture()
+def location(app):
+    """Create default location."""
+    tmppath = tempfile.mkdtemp()
+    with db.session.begin_nested():
+        Location.query.delete()
+        loc = Location(name='local', uri=tmppath, default=True)
+        db.session.add(loc)
+    db.session.commit()
+    return location

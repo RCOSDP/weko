@@ -49,12 +49,12 @@ from invenio_records import InvenioRecords
 from invenio_search import InvenioSearch
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
+from weko_index_tree.models import Index
 
 from invenio_communities import InvenioCommunities
 from invenio_communities.models import Community
 from invenio_communities.views.api import blueprint as api_blueprint
 from invenio_communities.views.ui import blueprint as ui_blueprint
-from weko_index_tree.models import Index
 
 
 @pytest.yield_fixture()
@@ -72,7 +72,8 @@ def app(request):
         SECRET_KEY='CHANGE_ME',
         SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
         SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+            'SQLALCHEMY_DATABASE_URI',
+            'sqlite:///test.db'),
         SEARCH_ELASTIC_HOSTS=os.environ.get(
             'SEARCH_ELASTIC_HOSTS', None),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
@@ -124,23 +125,30 @@ def db(app):
 @pytest.fixture()
 def user():
     """Create a example user."""
-    return create_test_user('test@test.org')
+    return create_test_user(email='test@test.org')
 
 
 @pytest.fixture()
 def communities(app, db, user):
     """Create some example communities."""
     user1 = db_.session.merge(user)
+    ds = app.extensions['invenio-accounts'].datastore
+    r = ds.create_role(name='superuser', description='1234')
+    ds.add_role_to_user(user1, r)
+    ds.commit()
 
     index = Index()
     db.session.add(index)
     db.session.commit()
-    comm0 = Community.create(community_id='comm1', user_id=user1.id,
-                             title='Title1', description='Description1',
+    comm0 = Community.create(community_id='comm1', role_id=r.id,
+                             id_user=user1.id, title='Title1',
+                             description='Description1',
                              root_node_id=index.id)
-    comm1 = Community.create(community_id='comm2', user_id=user1.id, title='A',
+    comm1 = Community.create(community_id='comm2', role_id=r.id,
+                             id_user=user1.id, title='A',
                              root_node_id=index.id)
-    comm2 = Community.create(community_id='oth3', user_id=user1.id,
+    comm2 = Community.create(community_id='oth3', role_id=r.id,
+                             id_user=user1.id,
                              root_node_id=index.id)
     return comm0, comm1, comm2
 
@@ -158,22 +166,26 @@ def disable_request_email(app):
 def communities_for_filtering(app, db, user):
     """Create some example communities."""
     user1 = db_.session.merge(user)
+    ds = app.extensions['invenio-accounts'].datastore
+    r = ds.create_role(name='superuser', description='1234')
+    ds.add_role_to_user(user1, r)
+    ds.commit()
 
     index = Index()
     db.session.add(index)
     db.session.commit()
-    comm0 = Community.create(community_id='comm1', user_id=user1.id,
-                             title='Test1',
+    comm0 = Community.create(community_id='comm1', role_id=r.id,
+                             id_user=user1.id, title='Test1',
                              description=('Beautiful is better than ugly. '
                                           'Explicit is better than implicit.'),
                              root_node_id=index.id)
-    comm1 = Community.create(community_id='comm2', user_id=user1.id,
-                             title='Testing case 2',
+    comm1 = Community.create(community_id='comm2', role_id=r.id,
+                             id_user=user1.id, title='Testing case 2',
                              description=('Flat is better than nested. '
                                           'Sparse is better than dense.'),
                              root_node_id=index.id)
-    comm2 = Community.create(community_id='oth3', user_id=user1.id,
-                             title='A word about testing',
+    comm2 = Community.create(community_id='oth3', role_id=r.id,
+                             id_user=user1.id, title='A word about testing',
                              description=('Errors should never pass silently. '
                                           'Unless explicitly silenced.'),
                              root_node_id=index.id)

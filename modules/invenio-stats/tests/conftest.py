@@ -25,6 +25,7 @@ import pytest
 from flask import Flask, appcontext_pushed, g
 from flask.cli import ScriptInfo
 from flask_celeryext import FlaskCeleryExt
+from invenio_access import InvenioAccess
 from invenio_accounts import InvenioAccounts, InvenioAccountsREST
 from invenio_accounts.testutils import create_test_user
 from invenio_cache import InvenioCache
@@ -32,6 +33,7 @@ from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import Bucket, Location, ObjectVersion
+from invenio_marc21 import InvenioMARC21
 from invenio_oauth2server import InvenioOAuth2Server, InvenioOAuth2ServerREST
 from invenio_oauth2server.models import Token
 from invenio_pidstore import InvenioPIDStore
@@ -245,6 +247,7 @@ def base_app():
     InvenioQueues(app_)
     InvenioOAuth2Server(app_)
     InvenioOAuth2ServerREST(app_)
+    InvenioMARC21(app_)
     InvenioSearch(app_, entry_point_group=None)
     with app_.app_context():
         yield app_
@@ -463,13 +466,10 @@ def mock_event_queue(app, mock_datetime, request_headers, objects,
 
 
 def generate_events(app, file_number=5, event_number=100, robot_event_number=0,
-                    start_date=datetime.date(2017, 1, 1),
-                    end_date=datetime.date(2017, 1, 7)):
+                    start_date=datetime.date(2021, 1, 1),
+                    end_date=datetime.date(2021, 1, 7)):
     """Queued events for processing tests."""
     current_queues.declare()
-
-    for t in current_search.put_templates(ignore=[400]):
-        pass
 
     def _unique_ts_gen():
         ts = 0
@@ -524,8 +524,6 @@ def generate_events(app, file_number=5, event_number=100, robot_event_number=0,
 @pytest.yield_fixture()
 def indexed_events(app, es, mock_user_ctx, request):
     """Parametrized pre indexed sample events."""
-    for t in current_search.put_templates(ignore=[400]):
-        pass
     generate_events(app=app, **request.param)
     yield
 
