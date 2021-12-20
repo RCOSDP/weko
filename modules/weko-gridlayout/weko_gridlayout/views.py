@@ -15,8 +15,8 @@ import six
 from flask import Blueprint, abort, current_app, jsonify, render_template, \
     request
 from flask_babelex import gettext as _
-from flask_login import login_required
-from invenio_cache import cached_unless_authenticated, current_cache
+from flask_login import current_user, login_required
+from invenio_cache import current_cache, current_cache_ext
 from invenio_stats.utils import QueryCommonReportsHelper
 from sqlalchemy.orm.exc import NoResultFound
 from weko_theme.utils import get_community_id, get_weko_contents
@@ -334,13 +334,21 @@ def get_new_arrivals_data(widget_id):
         json -- new arrivals data
 
     """
+    _suffix = "guest"
+    if current_user.is_authenticated:
+        _suffix = ""
+        for role in current_user.roles:
+            _suffix = _suffix + str(role.id) + '_'
+        _suffix = _suffix.rstrip('_')
 
-    cached_data = current_cache.get('cache_new_arrivals')
+    # cache by role
+    cache_name = 'cache_new_arrivals'.format(_suffix)
+    cached_data = current_cache.get(cache_name)
     if not cached_data:
         cached_data = jsonify(
             WidgetDataLoaderServices.get_new_arrivals_data(widget_id))
         ttl = current_app.config.get('INVENIO_CACHE_TTL', 50)
-        current_cache.set('cache_new_arrivals', cached_data, timeout=ttl)
+        current_cache.set(cache_name, cached_data, timeout=ttl)
 
     return cached_data
 
