@@ -42,12 +42,3 @@ def test_init():
     assert 'weko-index-tree' not in app.extensions
     ext.init_app(app)
     assert 'weko-index-tree' in app.extensions
-
-
-def test_view(app):
-    """Test view."""
-    WekoIndexTree(app)
-    with app.test_client() as client:
-        res = client.get("/")
-        assert res.status_code == 200
-        assert 'Welcome to weko-index-tree' in str(res.data)

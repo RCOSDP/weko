@@ -26,6 +26,7 @@ import tempfile
 import pytest
 from flask import Flask
 from flask_babelex import Babel
+from invenio_accounts import InvenioAccounts
 
 
 @pytest.yield_fixture()
@@ -44,6 +45,7 @@ def base_app(instance_path):
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
     )
+    InvenioAccounts(app_)
     Babel(app_)
     return app_
 

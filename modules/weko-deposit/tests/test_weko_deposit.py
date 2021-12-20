@@ -42,12 +42,3 @@ def test_init():
     assert 'weko-deposit' not in app.extensions
     ext.init_app(app)
     assert 'weko-deposit' in app.extensions
-
-
-def test_view(app):
-    """Test view."""
-    WekoDeposit(app)
-    with app.test_client() as client:
-        res = client.get("/")
-        assert res.status_code == 200
-        assert 'Welcome to weko-deposit' in str(res.data)

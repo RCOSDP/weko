@@ -42,13 +42,3 @@ def test_init():
     assert 'weko-items-ui' not in app.extensions
     ext.init_app(app)
     assert 'weko-items-ui' in app.extensions
-
-
-def test_view(app):
-    """Test view."""
-    WekoItemsUI(app)
-    with app.test_client() as client:
-        res = client.get("/items/jsonschema/0")
-        assert res.status_code == 200
-        res = client.get("/items/schemaform/0")
-        assert res.status_code == 200

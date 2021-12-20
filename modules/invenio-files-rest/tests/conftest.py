@@ -13,10 +13,9 @@ from __future__ import absolute_import, print_function
 
 import hashlib
 import os
+import pytest
 import shutil
 import tempfile
-
-import pytest
 from flask import Flask, json, url_for
 from flask_babelex import Babel
 from flask_celeryext import FlaskCeleryExt
