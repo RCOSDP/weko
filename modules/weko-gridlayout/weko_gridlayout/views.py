@@ -16,7 +16,7 @@ from flask import Blueprint, abort, current_app, jsonify, render_template, \
     request
 from flask_babelex import gettext as _
 from flask_login import login_required
-from invenio_cache import cached_unless_authenticated
+from invenio_cache import cached_unless_authenticated, current_cache
 from invenio_stats.utils import QueryCommonReportsHelper
 from sqlalchemy.orm.exc import NoResultFound
 from weko_theme.utils import get_community_id, get_weko_contents
@@ -327,7 +327,6 @@ def get_system_lang():
 
 
 @blueprint_api.route('/get_new_arrivals/<int:widget_id>', methods=['GET'])
-@cached_unless_authenticated(timeout=50, key_prefix='new_arrivals')
 def get_new_arrivals_data(widget_id):
     """Get new arrivals data.
 
@@ -335,10 +334,18 @@ def get_new_arrivals_data(widget_id):
         json -- new arrivals data
 
     """
-    return jsonify(WidgetDataLoaderServices.get_new_arrivals_data(widget_id))
+
+    cached_data = current_cache.get('cache_new_arrivals')
+    if not cached_data:
+        cached_data = jsonify(
+            WidgetDataLoaderServices.get_new_arrivals_data(widget_id))
+        ttl = current_app.config.get('INVENIO_CACHE_TTL', 50)
+        current_cache.set('cache_new_arrivals', cached_data, timeout=ttl)
+
+    return cached_data
 
 
-@blueprint_rss.route('/records', methods=['GET'])
+@ blueprint_rss.route('/records', methods=['GET'])
 def get_rss_data():
     """Get rss data based on term.
 
@@ -362,18 +369,18 @@ def get_rss_data():
     return WidgetDataLoaderServices.get_arrivals_rss(rd, term, count)
 
 
-@blueprint_api.route('/get_page_endpoints/<int:widget_id>', methods=['GET'])
-@blueprint_api.route(
+@ blueprint_api.route('/get_page_endpoints/<int:widget_id>', methods=['GET'])
+@ blueprint_api.route(
     '/get_page_endpoints/<int:widget_id>/<string:lang>', methods=['GET'])
 def get_widget_page_endpoints(widget_id, lang=''):
     """Get menu pages urls and data."""
     if request.headers['Content-Type'] == 'application/json':
         lang_default = get_default_language()
         lang_default = lang_default.get('lang_code') if lang_default else None
-        return \
-            jsonify(WidgetDataLoaderServices.get_widget_page_endpoints(
-                widget_id, lang or lang_default)
-            )
+        return
+        jsonify(WidgetDataLoaderServices.get_widget_page_endpoints(
+            widget_id, lang or lang_default)
+        )
     else:
         return abort(403)
 
@@ -461,48 +468,54 @@ def _add_url_rule(url_or_urls):
     current_app._got_first_request = old
 
 
-@blueprint_api.route('/access_counter_record/<string:repository_id>'
-                     '/<string:current_language>', methods=['GET'])
-@cached_unless_authenticated(timeout=50, key_prefix='access_counter')
+@ blueprint_api.route('/access_counter_record/<string:repository_id>'
+                      '/<string:current_language>', methods=['GET'])
 def get_access_counter_record(repository_id, current_language):
     """Get access Top page value."""
-    result = {}
+    cached_data = current_cache.get('access_counter')
+    if not cached_data:
+        widget_design_setting = WidgetDesignServices.get_widget_design_setting(
+            repository_id, current_language or get_default_language())
+        result = {}
+        # need to logic check
+        if widget_design_setting.get('widget-settings'):
+            for widget in widget_design_setting['widget-settings']:
+                if str(widget.get('type')) == \
+                        WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE:
+                    start_date = widget.get('created_date')
 
-    widget_design_setting = WidgetDesignServices.get_widget_design_setting(
-        repository_id, current_language or get_default_language())
+                    if start_date:
+                        end_date = date.today().strftime("%Y-%m-%d")
+                        top_view_total_by_widget_id = QueryCommonReportsHelper.get(
+                            start_date=start_date, end_date=end_date,
+                            event='top_page_access')
+                        count = 0
+                        for item in top_view_total_by_widget_id['all'].values():
+                            count = count + int(item['count'])
+                        top_view_total_by_widget_id['all'].update(
+                            {'count': count})
+                        top_view_total_by_widget_id.update(
+                            {'access_counter': widget.get('access_counter')})
+                        if not result.get(widget.get('widget_id')):
+                            result[widget.get('widget_id')] = {
+                                start_date: top_view_total_by_widget_id}
+                        else:
+                            result[widget.get('widget_id')].update(
+                                {start_date: top_view_total_by_widget_id})
 
-    if widget_design_setting.get('widget-settings'):
-        for widget in widget_design_setting['widget-settings']:
-            if str(widget.get('type')) == \
-                    WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE:
-                start_date = widget.get('created_date')
+        if result and len(result) > 0:
+            cached_data = jsonify(result)
+            ttl = current_app.config.get('INVENIO_CACHE_TTL', 50)
+            current_cache.set('access_counter', cached_data, ttl)
 
-                if start_date:
-                    end_date = date.today().strftime("%Y-%m-%d")
-                    top_view_total_by_widget_id = QueryCommonReportsHelper.get(
-                        start_date=start_date, end_date=end_date,
-                        event='top_page_access')
-                    count = 0
-                    for item in top_view_total_by_widget_id['all'].values():
-                        count = count + int(item['count'])
-                    top_view_total_by_widget_id['all'].update({'count': count})
-                    top_view_total_by_widget_id.update(
-                        {'access_counter': widget.get('access_counter')})
-                    if not result.get(widget.get('widget_id')):
-                        result[widget.get('widget_id')] = \
-                            {start_date: top_view_total_by_widget_id}
-                    else:
-                        result[widget.get('widget_id')].update(
-                            {start_date: top_view_total_by_widget_id})
-
-    return jsonify(result)
+    return cached_data
 
 
-@blueprint.route('/widget/uploads/',
-                 defaults={"community_id": 'Root Index'},
-                 methods=["POST"]
-                 )
-@blueprint.route('/widget/uploads/<string:community_id>', methods=["POST"])
+@ blueprint.route('/widget/uploads/',
+                  defaults={"community_id": 'Root Index'},
+                  methods=["POST"]
+                  )
+@ blueprint.route('/widget/uploads/<string:community_id>', methods=["POST"])
 def upload_file(community_id):
     """Upload widget static file.
 
@@ -519,12 +532,12 @@ def upload_file(community_id):
     ), 200
 
 
-@blueprint.route('/widget/uploaded/<string:filename>',
-                 defaults={"community_id": 0}, methods=["GET"]
-                 )
-@blueprint.route('/widget/uploaded/<string:filename>/<string:community_id>',
-                 methods=["GET"]
-                 )
+@ blueprint.route('/widget/uploaded/<string:filename>',
+                  defaults={"community_id": 0}, methods=["GET"]
+                  )
+@ blueprint.route('/widget/uploaded/<string:filename>/<string:community_id>',
+                  methods=["GET"]
+                  )
 def uploaded_file(filename, community_id=0):
     """Get widget static file.
 
@@ -535,7 +548,7 @@ def uploaded_file(filename, community_id=0):
     return WidgetBucket().get_file(filename, community_id)
 
 
-@blueprint_api.route('/widget/unlock', methods=["POST"])
+@ blueprint_api.route('/widget/unlock', methods=["POST"])
 def unlocked_widget():
     """Get widget static file.
 
