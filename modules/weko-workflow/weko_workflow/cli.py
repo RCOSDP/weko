@@ -21,14 +21,17 @@
 """WEKO3 module docstring."""
 
 import datetime
+import numbers
 import uuid
 
 import click
 from flask import current_app
 from flask.cli import with_appcontext
 from invenio_db import db
+from invenio_records.models import RecordMetadata
 from sqlalchemy import asc
 from weko_records.api import ItemTypes
+from weko_records.models import ItemMetadata, ItemType
 
 from .models import Action, ActionStatus, ActionStatusPolicy, FlowAction, \
     FlowDefine, FlowStatusPolicy, WorkFlow
@@ -276,6 +279,131 @@ def init_workflow_tables(tables):
         ))
         return db_workflow
 
+    def update_incorrect_metadata():
+        """Check consistency and update metadata."""
+        def get_all_item_type():
+            """Get all item type in DB."""
+            return ItemType.query.all() or []
+
+        def get_item_meta_by_item_type_id(_id):
+            """Get all item metadata by item type id."""
+            return ItemMetadata.query.filter_by(item_type_id=_id).all() or []
+
+        def get_record_meta_by_item_meta_id(_id):
+            return RecordMetadata.query.filter_by(id=_id).one()
+
+        def get_item_type_form_keys(_keys, _forms):
+            """Get all keys in form of item type."""
+            for form in _forms:
+                if not form.get('items'):
+                    replaced_key = form.get('key', '').replace('[]', '')
+                    temp_keys = replaced_key.split('.')
+                    temp_key = temp_keys[0] if len(temp_keys) == 1 \
+                        else '{}.{}'.format(temp_keys[0], temp_keys[1])
+                    _keys.append(temp_key)
+                else:
+                    get_item_type_form_keys(_keys, form.get('items'))
+            return _keys
+
+        def iterate_all(_keys, _iterable, parent_key=''):
+            """Get all keys of json metadata."""
+            parent_key = parent_key.replace('.attribute_value_mlt', '')
+            if isinstance(_iterable, dict):
+                for key, value in _iterable.items():
+                    if isinstance(value, (str, numbers.Number)) \
+                            and key != 'attribute_name':
+                        if parent_key:
+                            _keys.append('{}.{}'.format(parent_key, key))
+                        else:
+                            _keys.append(key)
+                    if isinstance(value, dict):
+                        if parent_key:
+                            iterate_all(_keys, value,
+                                        '{}.{}'.format(parent_key, key))
+                        else:
+                            iterate_all(_keys, value, key)
+                    if isinstance(value, list):
+                        for val in value:
+                            if parent_key:
+                                iterate_all(_keys, val,
+                                            '{}.{}'.format(parent_key, key))
+                            else:
+                                iterate_all(_keys, val, key)
+
+        def get_deleted_keys(_form_keys, _item_meta_keys):
+            """Get all keys which do not consistency."""
+            ignore_deleted_keys = [
+                "pid", "owners_ext", "title", "owner", "status", "edit_mode",
+                "lang", "shared_user_id", "created_by", "id", "$schema"]
+            deleted_keys = []
+            for item_meta_key in _item_meta_keys:
+                key_list = item_meta_key.split('.')
+                checked_key = key_list[0] if len(key_list) == 1 \
+                    else '{}.{}'.format(key_list[0], key_list[1])
+                if checked_key not in _form_keys \
+                        and not key_list[0] in ignore_deleted_keys:
+                    deleted_keys.append(checked_key)
+            return deleted_keys
+
+        def delele_json_by_keys(_deleted_keys, _json):
+            """Delele item of json by keys."""
+            for deleted_key in _deleted_keys:
+                deleted_sub_keys = deleted_key.split('.')
+                if len(deleted_sub_keys) == 1:
+                    if _json.get(deleted_sub_keys[0]):
+                        del _json[deleted_sub_keys[0]]
+                elif len(deleted_sub_keys) > 1:
+                    data_key = _json.get(deleted_sub_keys[0])
+                    if isinstance(_json.get(deleted_sub_keys[0], {}), dict) \
+                            and _json.get(deleted_sub_keys[0], {}).get(
+                            'attribute_value_mlt'):
+                        data_key = data_key.get('attribute_value_mlt')
+                    if data_key and isinstance(data_key, dict):
+                        if data_key.get(deleted_sub_keys[1]):
+                            del data_key[deleted_sub_keys[1]]
+                    if data_key and isinstance(data_key, list):
+                        for data in data_key:
+                            if data.get(deleted_sub_keys[1]):
+                                del data[deleted_sub_keys[1]]
+                    if isinstance(_json.get(deleted_sub_keys[0], {}), dict) \
+                            and _json.get(deleted_sub_keys[0], {}).get(
+                            'attribute_value_mlt'):
+                        data_key_result = _json.get(deleted_sub_keys[0], {})
+                        data_key_result['attribute_value_mlt'] = data_key
+                        _json[deleted_sub_keys[0]] = data_key_result
+                    else:
+                        _json[deleted_sub_keys[0]] = data_key
+            return _json
+
+        try:
+            with db.session.begin_nested():
+                for item_type in get_all_item_type():
+                    form_keys = get_item_type_form_keys([], item_type.form)
+                    for item_meta in get_item_meta_by_item_type_id(
+                            item_type.id):
+                        # Update data for item_metadata.
+                        item_meta_keys = []
+                        iterate_all(item_meta_keys, item_meta.json)
+                        deleted_keys = get_deleted_keys(form_keys,
+                                                        item_meta_keys)
+                        item_meta.json = delele_json_by_keys(deleted_keys,
+                                                             item_meta.json)
+                        # Update data for records_metadata.
+                        rec_meta = get_record_meta_by_item_meta_id(item_meta.id)
+                        rec_meta.json = delele_json_by_keys(deleted_keys,
+                                                            rec_meta.json)
+                        ItemMetadata.query.filter_by(id=item_meta.id).update(
+                            {ItemMetadata.json: item_meta.json})
+                        RecordMetadata.query.filter_by(id=rec_meta.id).update(
+                            {RecordMetadata.json: rec_meta.json})
+        except BaseException as ex:
+            db.session.rollback()
+            click.secho('metadata db update failed.', err=ex, fg='red')
+            click.secho(ex, err=ex, fg='red')
+        else:
+            click.secho('metadata db has been updated.', fg='green')
+            db.session.commit()
+
     if len(tables):
         try:
             with db.session.begin_nested():
@@ -306,3 +434,6 @@ def init_workflow_tables(tables):
         else:
             db.session.commit()
             click.secho('workflow db has been initialised.', fg='green')
+
+        if 'item_and_record' in tables.split(','):
+            update_incorrect_metadata()
