@@ -1189,7 +1189,8 @@ def item_search_factory(self,
                         end_date,
                         list_index_id=None,
                         ignore_publish_status=False,
-                        ranking=False):
+                        ranking=False,
+                        size=10000):
     """Factory for opensearch.
 
     :param self:
@@ -1213,7 +1214,7 @@ def item_search_factory(self,
                 start_term, end_term)
 
         query_q = {
-            "size": 10000,
+            "size": size,
             "query": {
                 "bool": {
                     "must": [

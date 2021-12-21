@@ -1090,7 +1090,8 @@ class WidgetDataLoaderServices:
             end_date = current_date.strftime("%Y-%m-%d")
             start_date = (current_date - timedelta(days=term)).strftime(
                 "%Y-%m-%d")
-            rd = get_elasticsearch_result_by_date(start_date, end_date)
+            rd = get_elasticsearch_result_by_date(
+                start_date, end_date, number_result)
             hits = rd.get('hits')
             if not hits:
                 result['error'] = 'Cannot search data'

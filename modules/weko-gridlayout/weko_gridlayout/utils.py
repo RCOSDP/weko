@@ -750,12 +750,13 @@ def get_rss_data_source(source, keyword):
         return ''
 
 
-def get_elasticsearch_result_by_date(start_date, end_date):
+def get_elasticsearch_result_by_date(start_date, end_date, size=10000):
     """Get data from elastic search.
 
     Arguments:
         start_date {string} -- start date
         end_date {string} -- end date
+        size {int} -- size of ES result
 
     Returns:
         dictionary -- elastic search data
@@ -768,7 +769,7 @@ def get_elasticsearch_result_by_date(start_date, end_date):
     result = None
     try:
         search_instance, _qs_kwargs = item_search_factory(
-            None, records_search, start_date, end_date, None, True)
+            None, records_search, start_date, end_date, None, True, size)
         search_result = search_instance.execute()
         result = search_result.to_dict()
     except NotFoundError:
@@ -776,8 +777,9 @@ def get_elasticsearch_result_by_date(start_date, end_date):
 
     return result
 
-
 # Validation
+
+
 def validate_main_widget_insertion(repository_id, new_settings, page_id=0):
     """Validate that no page or main layout contains main widget."""
     # If the main_settings has no main, no need to check anyway
@@ -789,7 +791,8 @@ def validate_main_widget_insertion(repository_id, new_settings, page_id=0):
         WidgetDesignSetting.select_by_repository_id(repository_id or '')
     settings = json.loads(main_design.get('settings', '[]')) if isinstance(
         main_design.get('settings', '[]'), str) else main_design.get('settings')
-    main_has_main = has_main_contents_widget(settings) if main_design else False
+    main_has_main = has_main_contents_widget(
+        settings) if main_design else False
 
     # Get page which has main
     page_with_main = get_widget_design_page_with_main(repository_id)
