@@ -23,7 +23,7 @@ from lxml.etree import Element, ElementTree, SubElement
 from weko_deposit.api import WekoRecord
 from weko_index_tree.api import Indexes
 from weko_schema_ui.schema import get_oai_metadata_formats
-from invenio_pidstore.models import PIDStatus
+
 from .api import OaiIdentify
 from .fetchers import oaiid_fetcher
 from .models import OAISet
