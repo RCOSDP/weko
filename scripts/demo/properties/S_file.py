@@ -5,7 +5,7 @@ from . import property_config as config
 
 property_id = config.S_FILE
 multiple_flag = False
-name = 'S_File'
+name = name_ja = name_en = 'S_File'
 date_type = [
     'Accepted',
     'Available',

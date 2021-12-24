@@ -5,7 +5,7 @@ from . import property_config as config
 
 property_id = config.S_IDENTIFIER
 multiple_flag = False
-name = 'S_Identifier'
+name = name_ja = name_en = 'S_Identifier'
 id_type = [
     'DOI',
     'HDL',

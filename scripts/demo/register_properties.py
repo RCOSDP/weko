@@ -27,7 +27,7 @@ def register_properties_from_folder():
             prop_id = int(prop.property_id)
             prop_list.append(dict(
                 id=prop_id,
-                name=prop.name,
+                name=prop.name_ja,
                 schema=prop.schema(multi_flag=False),
                 form=prop.form(multi_flag=False),
                 forms=prop.form(multi_flag=True),

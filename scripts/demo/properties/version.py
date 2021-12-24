@@ -3,7 +3,7 @@
 from .property_func import get_property_schema, get_property_form, set_post_data
 from . import property_config as config
 
-property_id = config.version
+property_id = config.VERSION
 multiple_flag = False
 name_ja = 'バージョン情報'
 name_en = 'Version'
