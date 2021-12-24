@@ -1206,11 +1206,8 @@ def item_search_factory(self,
             current_app.config["INDEXER_DEFAULT_DOC_TYPE"])
         if not ignore_publish_status:
             query_string += " AND publish_status:0 "
-        if not ranking:
-            query_string += " AND publish_date:[* TO {}] ".format(end_term)
-        else:
-            query_string += " AND publish_date:[{} TO {}]".format(
-                start_term, end_term)
+        query_string += " AND publish_date:[{} TO {}]".format(
+            start_term, end_term)
 
         query_q = {
             "size": 10000,
