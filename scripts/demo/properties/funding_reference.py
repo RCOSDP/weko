@@ -1,7 +1,7 @@
 # coding:utf-8
 """Definition of funding reference property."""
 from .property_func import get_property_schema, get_property_form, set_post_data, get_select_value
-import property_config as config
+from . import property_config as config
 
 property_id = config.FUNDING_REFERENCE
 multiple_flag = True
@@ -17,7 +17,7 @@ id_type = [
 
 
 def add(post_data, key, **kwargs):
-    """Add funding reference to a item type."""
+    """Add to a item type."""
     option = kwargs['option']
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 

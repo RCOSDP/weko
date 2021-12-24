@@ -1,4 +1,4 @@
-from . import (access_right, access, advisor, alternative_title, annual_report, apc, application_date, approval_date, author_name, biblio_info, collection_method, conference, contributor, corresponding_output_id, corresponding_usage_application_id, creator, data_type, dataset_usage, date_granted, date, degree_grantor, degree_name, description, dissertation_number, distributor, end_page, file_price, files, full_name, funding_reference, geocover, geolocation, guarantor, heading, identifier_registration, identifier, issue, item_title, language, link, number_of_pages, output_type, other_language, published_date, published_doi_url, published_media_name, publisher, record_name, related_publications, related_study, relation, research_plan, research_title, resource_type_simple, resource_type, rights_holder, rights, S_file, S_identifier, sampling, series, source_id, source_title, start_page, stop_continue, study_id, subject, summary, temporal, text, textarea, thumbnail, time_period, title, topic, unit_of_analysis, universe, uri, usage_report_id, user_information, version_type, version, volume, wf_issued_date)
+from . import (access_right, access, advisor, alternative_title, annual_report, apc, application_date, approval_date, author_name, biblio_info, collection_method, conference, contributor, corresponding_output_id, corresponding_usage_application_id, creator, data_type, dataset_usage, date_granted, date, degree_grantor, degree_name, description, dissertation_number, distributor, end_page, file_price, files, full_name, funding_reference, geocover, geolocation, guarantor, heading, identifier_registration, identifier, issue, item_title, language, link, number_of_pages, output_type, other_language, published_date, published_doi_url, published_media_name, publisher, related_publications, related_study, relation, research_plan, research_title, resource_type_simple, resource_type, rights_holder, rights, S_file, S_identifier, sampling, series, source_id, source_title, start_page, stop_continue, study_id, subject, summary, temporal, text, textarea, thumbnail, time_period, title, topic, unit_of_analysis, universe, uri, usage_report_id, user_information, version_type, version, volume, wf_issued_date)
 
 
 class AddProperty():
@@ -205,10 +205,6 @@ class AddProperty():
     @classmethod
     def publisher(self):
         return publisher.add
-
-    @classmethod
-    def record_name(self):
-        return record_name.add
 
     @classmethod
     def related_publications(self):

@@ -1,12 +1,12 @@
 # coding:utf-8
 """Definition of time period property."""
 from .property_func import get_property_schema, get_property_form, set_post_data, get_select_value
-import property_config as config
+from . import property_config as config
 
 property_id = config.TIME_PERIOD
 multiple_flag = False
-name_ja = '時間的範囲'
-name_en = 'Time Period'
+name_ja = '開始時点/終了時点'
+name_en = 'Time Period Event'
 event = [
     None,
     "start",
@@ -15,7 +15,7 @@ event = [
 
 
 def add(post_data, key, **kwargs):
-    """Add apc to a item type."""
+    """Add to a item type."""
     option = kwargs['option']
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
@@ -40,14 +40,14 @@ def schema(title='', multi_flag=multiple_flag):
             'properties': {
                 'subitem_time_period': {
                     'format': 'datetime',
-                    'title': '時間的範囲',
+                    'title': '開始時点/終了時点',
                     'type': 'string'
                 },
                 'subitem_time_period_event': {
                     'type': ['null', 'string'],
                     'format': 'select',
                     'enum': event,
-                    'title': '開始時点/終了時点'
+                    'title': 'イベント'
                 }
             }
         }
@@ -66,19 +66,19 @@ def form(key='', title='', title_ja=name_ja, title_en=name_en, multi_flag=multip
                     'format': 'yyyy-MM-dd',
                     'key': '{}.subitem_time_period'.format(key),
                     'templateUrl': config.DATEPICKER_MULTI_FORMAT_URL,
-                    'title': '時間的範囲',
+                    'title': '開始時点/終了時点',
                     'title_i18n': {
-                        'ja': '時間的範囲',
-                        'en': 'Time Period'
+                        'ja': '開始時点/終了時点',
+                        'en': 'Start Time/End Time'
                     },
                     'type': 'template'
                 },
                 {
                     'key': '{}.subitem_time_period_event'.format(key),
-                    'title': '開始時点/終了時点',
+                    'title': 'イベント',
                     'title_i18n': {
-                        'en': 'Time Period Event',
-                        'ja': '開始時点/終了時点'
+                        'en': 'Event',
+                        'ja': 'イベント'
                     },
                     'titleMap': get_select_value(event),
                     'type': 'select'

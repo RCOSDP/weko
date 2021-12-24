@@ -1,7 +1,7 @@
 # coding:utf-8
 """Definition of description and identifier property."""
 from .property_func import get_property_schema, get_property_form, set_post_data, get_select_value
-import property_config as config
+from . import property_config as config
 
 property_id = config.DESCRIPTION
 multiple_flag = True
@@ -17,7 +17,7 @@ description_type = [
 ]
 
 def add(post_data, key, **kwargs):
-    """Add description to a item type."""
+    """Add to a item type."""
     option = kwargs['option']
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
@@ -60,7 +60,7 @@ def schema(title='', multi_flag=multiple_flag):
                     'editAble': True,
                     'type': ['null', 'string'],
                     'format': 'select',
-                    'enum': config.LANGUAGE_VAL2_2,
+                    'enum': config.LANGUAGE_VAL2_1,
                     'title': '言語'
                 },
                 'subitem_description_type': {
@@ -108,7 +108,7 @@ def form(key='', title='', title_ja=name_ja, title_en=name_en, multi_flag=multip
                         'en': 'Language',
                         'ja': '言語'
                     },
-                    'titleMap': get_select_value(config.LANGUAGE_VAL2_2),
+                    'titleMap': get_select_value(config.LANGUAGE_VAL2_1),
                     'type': 'select'
                 }
             ],

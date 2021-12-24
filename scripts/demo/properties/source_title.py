@@ -1,7 +1,7 @@
 # coding:utf-8
-"""Definition of source identifier property."""
+"""Definition of source title property."""
 from .property_func import get_property_schema, get_property_form, set_post_data, get_select_value
-import property_config as config
+from . import property_config as config
 
 property_id = config.SOURCE_TITLE
 multiple_flag = False
@@ -10,17 +10,28 @@ name_en = 'Source Title'
 
 
 def add(post_data, key, **kwargs):
-    """Add creator to a item type."""
+    """Add to a item type."""
     option = kwargs['option']
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
     post_data['table_row_map']['mapping'][key] = {
         'display_lang_type': '',
-        'jpcoar_mapping': '',
+        'jpcoar_mapping': {
+            'sourceTitle': {
+                '@attributes': {
+                    'xml:lang': 'subitem_record_name_language'
+                },
+                '@value': 'subitem_record_name'
+            }
+        },
         'junii2_mapping': '',
         'lido_mapping': '',
         'lom_mapping': '',
-        'oai_dc_mapping': '',
+        'oai_dc_mapping': {
+            'identifier': {
+                '@value': 'subitem_record_name'
+            }
+        },
         'spase_mapping': ''
     }
 

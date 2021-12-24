@@ -1,7 +1,7 @@
 # coding:utf-8
 """Default item type full."""
 from properties import AddProperty
-import item_type_config as config
+from . import item_type_config as config
 
 item_type_id = config.DEFAULT_ITEM_TYPE_FULL
 item_type_name = "デフォルトアイテムタイプ（フル）"

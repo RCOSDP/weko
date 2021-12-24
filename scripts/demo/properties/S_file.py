@@ -1,7 +1,7 @@
 # coding:utf-8
 """Definition of system file property."""
 from .property_func import get_property_schema, get_property_form, set_post_data, get_select_value
-import property_config as config
+from . import property_config as config
 
 property_id = config.S_FILE
 multiple_flag = False
@@ -26,7 +26,7 @@ filename_type = [
 ]
 
 def add(post_data, key, **kwargs):
-    """Add description to a item type."""
+    """Add to a item type."""
     option = {
         "crtf": False,
         "hidden": True,

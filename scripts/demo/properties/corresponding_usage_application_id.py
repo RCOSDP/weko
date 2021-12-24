@@ -1,7 +1,7 @@
 # coding:utf-8
 """Definition of corresponding usage application id property."""
 from .property_func import get_property_schema, get_property_form, set_post_data
-import property_config as config
+from . import property_config as config
 
 property_id = config.CORRESPONDING_USAGE_APPLICATION_ID
 multiple_flag = True
@@ -10,7 +10,7 @@ name_en = 'Corresponding Usage Application ID'
 
 
 def add(post_data, key, **kwargs):
-    """Add apc to a item type."""
+    """Add to a item type."""
     option = kwargs['option']
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 

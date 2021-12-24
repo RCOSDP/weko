@@ -1,7 +1,7 @@
 # coding:utf-8
 """Definition of identifier registration property."""
 from .property_func import get_property_schema, get_property_form, set_post_data, get_select_value
-import property_config as config
+from . import property_config as config
 
 property_id = config.IDENTIFIER_REGISTRATION
 multiple_flag = False
@@ -17,7 +17,7 @@ id_type = [
 
 
 def add(post_data, key, **kwargs):
-    """Add identifier registration to a item type."""
+    """Add to a item type."""
     option = {
         'required': False,
         'multiple': multiple_flag,

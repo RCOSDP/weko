@@ -1,11 +1,11 @@
 # coding:utf-8
 """Definition of Resource Type(Simple) property."""
 from .property_func import get_property_schema, get_property_form, set_post_data, get_select_value
-import property_config as config
+from . import property_config as config
 
 property_id = config.RESOURCE_TYPE_SIMPLE
 multiple_flag = False
-name_ja = '資源タイプ'
+name_ja = '資源タイプ（シンプル）'
 name_en = 'Resource Type(Simple)'
 resource_type = [
     None,
