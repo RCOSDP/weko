@@ -514,11 +514,14 @@ def listidentifiers(**kwargs):
 
 def listrecords(**kwargs):
     """Create OAI-PMH response for verb ListRecords."""
+    current_app.logger.debug("kwargs: {}".format(kwargs))
     record_dumper = serializer(kwargs['metadataPrefix'])
     e_tree, e_listrecords = verb(**kwargs)
 
     identify = OaiIdentify.get_all()
     if not identify or not identify.outPutSetting:
+        current_app.logger.debug(
+            "identify.outPutSetting: {}".format(identify.outPutSetting))
         return error(get_error_code_msg(), **kwargs)
 
     index_state = get_index_state()
@@ -527,8 +530,10 @@ def listrecords(**kwargs):
         set_obj = OAISet.get_set_by_spec(kwargs['set'])
         if not set_obj:
             return error(get_error_code_msg(), **kwargs)
+        current_app.logger.debug("set: {}".format(set_obj.spec))
         path = kwargs['set'].replace(':', '/')
         set_is_output = is_output_harvest([path], index_state)
+        current_app.logger.debug("set_is_output: {}".format(set_is_output))
         if set_is_output == HARVEST_PRIVATE:
             return error(get_error_code_msg(), **kwargs)
 
