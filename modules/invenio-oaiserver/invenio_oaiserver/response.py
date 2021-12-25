@@ -21,6 +21,7 @@ from invenio_pidstore.models import PIDStatus
 from invenio_records.models import RecordMetadata
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
+from sqlalchemy.orm.exc import NoResultFound
 from weko_deposit.api import WekoRecord
 from weko_index_tree.api import Indexes
 from weko_schema_ui.schema import get_oai_metadata_formats
@@ -467,48 +468,59 @@ def listidentifiers(**kwargs):
         return error(get_error_code_msg(), **kwargs)
 
     for r in result.items:
-        pid = oaiid_fetcher(r['id'], r['json']['_source'])
-        pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
-        record = WekoRecord.get_record_by_uuid(pid_object.object_uuid)
-        set_identifier(record, record)
+        try:
+            pid = oaiid_fetcher(r['id'], r['json']['_source'])
+            pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
+            record = WekoRecord.get_record_by_uuid(pid_object.object_uuid)
+            set_identifier(record, record)
 
-        path_list = record.get('path') if 'path' in record else []
-        _is_output = is_output_harvest(path_list, index_state) \
-            if 'set' not in kwargs else set_is_output
-        # Harvest is private
-        if path_list and (_is_output == HARVEST_PRIVATE or
-                          (is_exists_doi(record) and
-                           (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record)))):
-            continue
-        # Item is deleted
-        # or Harvest is public & Item is private
-        # or Harvest is public & Index is private
-        # or Harvest is public & There is no guest role in the index Browsing Privilege
-        elif _is_output == PRIVATE_INDEX or \
-                not path_list or \
-                is_deleted_workflow(pid_object) or \
-                is_private_workflow(record) or \
-                is_pubdate_in_future(record):
-            header(
-                e_listidentifiers,
-                identifier=pid.pid_value,
-                datestamp=r['updated'],
-                deleted=True
-            )
-        else:
-            _sets = list(set(record.get('path', []) +
-                         record['_oai'].get('sets', [])))
-            header(
-                e_listidentifiers,
-                identifier=pid.pid_value,
-                # datestamp=r['updated'],
-                datestamp=record.updated,
-                sets=_sets
-            )
+            path_list = record.get('path') if 'path' in record else []
+            _is_output = is_output_harvest(path_list, index_state) \
+                if 'set' not in kwargs else set_is_output
+            # Harvest is private
+            if path_list and (_is_output == HARVEST_PRIVATE or
+                              (is_exists_doi(record) and
+                               (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record)))):
+                continue
+            # Item is deleted
+            # or Harvest is public & Item is private
+            # or Harvest is public & Index is private
+            # or Harvest is public & There is no guest role in the index Browsing Privilege
+            elif _is_output == PRIVATE_INDEX or \
+                    not path_list or \
+                    is_deleted_workflow(pid_object) or \
+                    is_private_workflow(record) or \
+                    is_pubdate_in_future(record):
+                header(
+                    e_listidentifiers,
+                    identifier=pid.pid_value,
+                    datestamp=r['updated'],
+                    deleted=True
+                )
+            else:
+                _sets = list(set(record.get('path', []) +
+                                 record['_oai'].get('sets', [])))
+                header(
+                    e_listidentifiers,
+                    identifier=pid.pid_value,
+                    # datestamp=r['updated'],
+                    datestamp=record.updated,
+                    sets=_sets
+                )
+        except PIDDoesNotExistError:
+            current_app.logger.error(
+                "PIDDoesNotExistError: pid_value: {}".format(pid.pid_value))
+            current_app.logger.error(
+                "PIDDoesNotExistError: recid: {}".format(r['id']))
+        except NoResultFound:
+            current_app.logger.error(
+                "NoResultFound: object_uuid: {}".format(pid_object.object_uuid))
 
     if len(e_listidentifiers) == 0:
         return error(get_error_code_msg(), **kwargs)
 
+    current_app.logger.debug(
+        "number of identifiers :{}".format(len(e_listidentifiers)))
     resumption_token(e_listidentifiers, result, **kwargs)
     return e_tree
 
@@ -601,16 +613,17 @@ def listrecords(**kwargs):
                 "PIDDoesNotExistError: pid_value: {}".format(pid.pid_value))
             current_app.logger.error(
                 "PIDDoesNotExistError: recid: {}".format(r['id']))
+        except NoResultFound:
+            current_app.logger.error(
+                "NoResultFound: object_uuid: {}".format(pid_object.object_uuid))
 
-            continue
+    # Check <record> tag not exist.
+    if len(e_listrecords) == 0:
+        return error(get_error_code_msg(), **kwargs)
 
-        # Check <record> tag not exist.
-        if len(e_listrecords) == 0:
-            return error(get_error_code_msg(), **kwargs)
-
-        current_app.logger.debug(
-            "number of records :{}".format(len(e_listrecords)))
-        resumption_token(e_listrecords, result, **kwargs)
+    current_app.logger.debug(
+        "number of records :{}".format(len(e_listrecords)))
+    resumption_token(e_listrecords, result, **kwargs)
     return e_tree
 
 
