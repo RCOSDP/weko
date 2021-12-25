@@ -16,6 +16,7 @@ from flask_babelex import get_locale, to_user_timezone, to_utc
 from invenio_communities import config as invenio_communities_config
 from invenio_communities.models import Community
 from invenio_db import db
+from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PIDStatus
 from invenio_records.models import RecordMetadata
 from lxml import etree
@@ -542,60 +543,74 @@ def listrecords(**kwargs):
         return error(get_error_code_msg(), **kwargs)
 
     for r in result.items:
-        pid = oaiid_fetcher(r['id'], r['json']['_source'])
-        pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
-        record = WekoRecord.get_record_by_uuid(pid_object.object_uuid)
-        set_identifier(record, record)
+        try:
+            pid = oaiid_fetcher(r['id'], r['json']['_source'])
+            pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
+            record = WekoRecord.get_record_by_uuid(pid_object.object_uuid)
+            set_identifier(record, record)
 
-        path_list = record.get('path') if 'path' in record else []
-        _is_output = is_output_harvest(path_list, index_state) \
-            if 'set' not in kwargs else set_is_output
-        # Harvest is private
-        if path_list and (_is_output == HARVEST_PRIVATE or
-                          (is_exists_doi(record) and
-                           (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record)))):
+            path_list = record.get('path') if 'path' in record else []
+            _is_output = is_output_harvest(path_list, index_state) \
+                if 'set' not in kwargs else set_is_output
+
+            # Harvest is private
+            if path_list and (_is_output == HARVEST_PRIVATE or
+                              (is_exists_doi(record) and
+                               (_is_output == PRIVATE_INDEX or is_pubdate_in_future(record)))):
+                continue
+            # Item is deleted
+            # or Harvest is public & Item is private
+            # or Harvest is public & Index is private
+            # or Harvest is public & There is no guest role in the index Browsing Privilege
+            elif _is_output == PRIVATE_INDEX or \
+                    not path_list or \
+                    is_deleted_workflow(pid_object) or \
+                    is_private_workflow(record) or \
+                    is_pubdate_in_future(record):
+                header(
+                    e_listrecords,
+                    identifier=pid.pid_value,
+                    datestamp=r['updated'],
+                    deleted=True
+                )
+            else:
+                e_record = SubElement(
+                    e_listrecords, etree.QName(NS_OAIPMH, 'record'))
+                _sets = list(set(record.get('path', []) +
+                                 record['_oai'].get('sets', [])))
+                header(
+                    e_record,
+                    identifier=pid.pid_value,
+                    datestamp=record.updated,
+                    sets=_sets
+                )
+                e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
+                                                              'metadata'))
+                etree_record = copy.deepcopy(record)
+                if not etree_record.get('system_identifier_doi', None):
+                    etree_record['system_identifier_doi'] = get_identifier(
+                        record)
+
+                # Merge licensetype and licensefree
+                etree_record = handle_license_free(etree_record)
+                e_metadata.append(record_dumper(
+                    pid, {'_source': etree_record}))
+
+        except PIDDoesNotExistError:
+            current_app.logger.error(
+                "PIDDoesNotExistError: pid_value: {}".format(pid.pid_value))
+            current_app.logger.error(
+                "PIDDoesNotExistError: recid: {}".format(r['id']))
+
             continue
-        # Item is deleted
-        # or Harvest is public & Item is private
-        # or Harvest is public & Index is private
-        # or Harvest is public & There is no guest role in the index Browsing Privilege
-        elif _is_output == PRIVATE_INDEX or \
-                not path_list or \
-                is_deleted_workflow(pid_object) or \
-                is_private_workflow(record) or \
-                is_pubdate_in_future(record):
-            header(
-                e_listrecords,
-                identifier=pid.pid_value,
-                datestamp=r['updated'],
-                deleted=True
-            )
-        else:
-            e_record = SubElement(
-                e_listrecords, etree.QName(NS_OAIPMH, 'record'))
-            _sets = list(set(record.get('path', []) +
-                         record['_oai'].get('sets', [])))
-            header(
-                e_record,
-                identifier=pid.pid_value,
-                datestamp=record.updated,
-                sets=_sets
-            )
-            e_metadata = SubElement(e_record, etree.QName(NS_OAIPMH,
-                                                          'metadata'))
-            etree_record = copy.deepcopy(record)
-            if not etree_record.get('system_identifier_doi', None):
-                etree_record['system_identifier_doi'] = get_identifier(record)
 
-            # Merge licensetype and licensefree
-            etree_record = handle_license_free(etree_record)
-            e_metadata.append(record_dumper(pid, {'_source': etree_record}))
+        # Check <record> tag not exist.
+        if len(e_listrecords) == 0:
+            return error(get_error_code_msg(), **kwargs)
 
-    # Check <record> tag not exist.
-    if len(e_listrecords) == 0:
-        return error(get_error_code_msg(), **kwargs)
-
-    resumption_token(e_listrecords, result, **kwargs)
+        current_app.logger.debug(
+            "number of records :{}".format(len(e_listrecords)))
+        resumption_token(e_listrecords, result, **kwargs)
     return e_tree
 
 
