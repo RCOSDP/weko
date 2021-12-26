@@ -1916,6 +1916,8 @@ def register_item_handle(item):
             suffix = "{:010d}".format(int(item_id))
             cnri = cnri[:-1] if cnri[-1] == '/' else cnri
             cnri += '/' + suffix
+        if uri is None:
+            uri = get_url_root() + 'records/' + str(item_id)
         if item.get('status') == 'new':
             register_hdl_by_handle(cnri, pid.object_uuid, uri)
         else:
