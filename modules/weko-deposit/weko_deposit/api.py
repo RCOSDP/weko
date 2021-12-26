@@ -42,6 +42,7 @@ from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
     Part
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
+from invenio_oaiserver.models import OAISet
 from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
@@ -785,7 +786,10 @@ class WekoDeposit(Deposit):
                         and ('sets' not in self.jrc['_oai']
                              or not self.jrc['_oai']['sets']):
                     setspec_list = self.jrc['path'] or []
+                    #setspec_list = OAISet.query.filter_by(
+                    #    id=self.jrc['path']).one_or_none()
                     if setspec_list:
+                        #self.jrc['_oai'].update(dict(sets=setspec_list.spec))
                         self.jrc['_oai'].update(dict(sets=setspec_list))
                 # upload item metadata to Elasticsearch
                 set_timestamp(self.jrc, self.created, self.updated)

@@ -560,7 +560,6 @@ def listrecords(**kwargs):
             pid_object = OAIIDProvider.get(pid_value=pid.pid_value).pid
             record = WekoRecord.get_record_by_uuid(pid_object.object_uuid)
             set_identifier(record, record)
-
             path_list = record.get('path') if 'path' in record else []
             _is_output = is_output_harvest(path_list, index_state) \
                 if 'set' not in kwargs else set_is_output
