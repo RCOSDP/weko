@@ -1687,9 +1687,9 @@ def handle_check_cnri(list_record):
                 try:
                     pid_cnri = WekoRecord.get_record_by_pid(item_id).pid_cnri
                     if pid_cnri:
-                        if not cnri:
+                        if not cnri and not pid_cnri.pid_value.endswith(str(item_id)):
                             error = _('Please specify {}.').format('CNRI')
-                        elif not pid_cnri.pid_value.endswith(str(cnri)):
+                        elif cnri and not pid_cnri.pid_value.endswith(str(cnri)):
                             error = _('Specified {} is different from existing'
                                       + ' {}.').format('CNRI', 'CNRI')
                     elif cnri:
