@@ -353,7 +353,7 @@ def get_new_arrivals_data(widget_id):
     return cached_data
 
 
-@ blueprint_rss.route('/records', methods=['GET'])
+@blueprint_rss.route('/records', methods=['GET'])
 def get_rss_data():
     """Get rss data based on term.
 
@@ -377,16 +377,15 @@ def get_rss_data():
     return WidgetDataLoaderServices.get_arrivals_rss(rd, term, count)
 
 
-@ blueprint_api.route('/get_page_endpoints/<int:widget_id>', methods=['GET'])
-@ blueprint_api.route(
+@blueprint_api.route('/get_page_endpoints/<int:widget_id>', methods=['GET'])
+@blueprint_api.route(
     '/get_page_endpoints/<int:widget_id>/<string:lang>', methods=['GET'])
 def get_widget_page_endpoints(widget_id, lang=''):
     """Get menu pages urls and data."""
     if request.headers['Content-Type'] == 'application/json':
         lang_default = get_default_language()
         lang_default = lang_default.get('lang_code') if lang_default else None
-        return
-        jsonify(WidgetDataLoaderServices.get_widget_page_endpoints(
+        return jsonify(WidgetDataLoaderServices.get_widget_page_endpoints(
             widget_id, lang or lang_default)
         )
     else:
@@ -476,8 +475,8 @@ def _add_url_rule(url_or_urls):
     current_app._got_first_request = old
 
 
-@ blueprint_api.route('/access_counter_record/<string:repository_id>'
-                      '/<string:current_language>', methods=['GET'])
+@blueprint_api.route('/access_counter_record/<string:repository_id>'
+                     '/<string:current_language>', methods=['GET'])
 def get_access_counter_record(repository_id, current_language):
     """Get access Top page value."""
     cached_data = current_cache.get('access_counter')
@@ -519,11 +518,11 @@ def get_access_counter_record(repository_id, current_language):
     return cached_data
 
 
-@ blueprint.route('/widget/uploads/',
-                  defaults={"community_id": 'Root Index'},
-                  methods=["POST"]
-                  )
-@ blueprint.route('/widget/uploads/<string:community_id>', methods=["POST"])
+@blueprint.route('/widget/uploads/',
+                 defaults={"community_id": 'Root Index'},
+                 methods=["POST"]
+                 )
+@blueprint.route('/widget/uploads/<string:community_id>', methods=["POST"])
 def upload_file(community_id):
     """Upload widget static file.
 
@@ -540,12 +539,12 @@ def upload_file(community_id):
     ), 200
 
 
-@ blueprint.route('/widget/uploaded/<string:filename>',
-                  defaults={"community_id": 0}, methods=["GET"]
-                  )
-@ blueprint.route('/widget/uploaded/<string:filename>/<string:community_id>',
-                  methods=["GET"]
-                  )
+@blueprint.route('/widget/uploaded/<string:filename>',
+                 defaults={"community_id": 0}, methods=["GET"]
+                 )
+@blueprint.route('/widget/uploaded/<string:filename>/<string:community_id>',
+                 methods=["GET"]
+                 )
 def uploaded_file(filename, community_id=0):
     """Get widget static file.
 
@@ -556,7 +555,7 @@ def uploaded_file(filename, community_id=0):
     return WidgetBucket().get_file(filename, community_id)
 
 
-@ blueprint_api.route('/widget/unlock', methods=["POST"])
+@blueprint_api.route('/widget/unlock', methods=["POST"])
 def unlocked_widget():
     """Get widget static file.
 
