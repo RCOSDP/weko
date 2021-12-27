@@ -1928,10 +1928,10 @@ def hide_meta_data_for_role(record):
             is_hidden = False
             break
     # Community users
-    community_role_name = current_app.config[
+    community_role_names = current_app.config[
         'WEKO_PERMISSION_ROLE_COMMUNITY']
     for role in list(roles):
-        if role.name in community_role_name:
+        if role.name in community_role_names:
             is_hidden = False
             break
 

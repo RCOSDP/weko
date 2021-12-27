@@ -3576,21 +3576,22 @@ def check_authority_by_admin(activity):
     # If user has community role
     # and the user who created activity is member of community
     # role -> has permission:
-    community_role_name = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-    # Get the list of users who has the community role
-    community_users = User.query.outerjoin(userrole).outerjoin(Role) \
-        .filter(community_role_name == Role.name) \
-        .filter(userrole.c.role_id == Role.id) \
-        .filter(User.id == userrole.c.user_id) \
-        .all()
-    community_user_ids = [
-        community_user.id for community_user in community_users]
-    for role in list(current_user.roles or []):
-        if role.name in community_role_name:
-            # User has community role
-            if activity.activity_login_user in community_user_ids:
-                return True
-            break
+    community_role_names = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+    for community_role_name in community_role_names:
+        # Get the list of users who has the community role
+        community_users = User.query.outerjoin(userrole).outerjoin(Role) \
+            .filter(community_role_name == Role.name) \
+            .filter(userrole.c.role_id == Role.id) \
+            .filter(User.id == userrole.c.user_id) \
+            .all()
+        community_user_ids = [
+            community_user.id for community_user in community_users]
+        for role in list(current_user.roles or []):
+            if role.name in community_role_name:
+                # User has community role
+                if activity.activity_login_user in community_user_ids:
+                    return True
+                break
     return False
 
 

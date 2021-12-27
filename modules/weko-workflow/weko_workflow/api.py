@@ -762,7 +762,7 @@ class WorkActivity(object):
                             action_order=flow_action.action_order
                         )
                         db.session.add(db_activity_action)
-                        
+
             except BaseException as ex:
                 raise ex
             else:
@@ -774,18 +774,19 @@ class WorkActivity(object):
         :return: activity ID.
         """
         # Table lock for calculate new activity id
-        db.session.execute('LOCK TABLE ' + _Activity.__tablename__ + ' IN EXCLUSIVE MODE')
-        
+        db.session.execute(
+            'LOCK TABLE ' + _Activity.__tablename__ + ' IN EXCLUSIVE MODE')
+
         # Calculate activity_id based on id
-        utc_now=datetime.utcnow()
+        utc_now = datetime.utcnow()
         current_date_start = utc_now.strftime("%Y-%m-%d 00:00:00")
         next_date_start = (utc_now + timedelta(1)).\
             strftime("%Y-%m-%d 00:00:00")
-        
+
         max_id = db.session.query(func.count(_Activity.id)).filter(
             _Activity.created >= '{}'.format(current_date_start),
             _Activity.created < '{}'.format(next_date_start),
-        ).scalar() # Cannot use '.with_for_update()'. FOR UPDATE is not allowed with aggregate functions
+        ).scalar()  # Cannot use '.with_for_update()'. FOR UPDATE is not allowed with aggregate functions
 
         if max_id:
             # Calculate aid
@@ -1698,7 +1699,7 @@ class WorkActivity(object):
         community_roles = current_app.config[
             'WEKO_PERMISSION_ROLE_COMMUNITY']
         community_user_ids = []
-        for role_name in list(community_roles):
+        for role_name in community_roles:
             community_users = User.query.outerjoin(userrole).outerjoin(Role) \
                 .filter(role_name == Role.name) \
                 .filter(userrole.c.role_id == Role.id) \
