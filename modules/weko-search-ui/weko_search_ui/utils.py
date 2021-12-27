@@ -1687,9 +1687,9 @@ def handle_check_cnri(list_record):
                 try:
                     pid_cnri = WekoRecord.get_record_by_pid(item_id).pid_cnri
                     if pid_cnri:
-                        if not cnri:
+                        if not cnri and not pid_cnri.pid_value.endswith(str(item_id)):
                             error = _('Please specify {}.').format('CNRI')
-                        elif not pid_cnri.pid_value.endswith(str(cnri)):
+                        elif cnri and not pid_cnri.pid_value.endswith(str(cnri)):
                             error = _('Specified {} is different from existing'
                                       + ' {}.').format('CNRI', 'CNRI')
                     elif cnri:
@@ -1916,6 +1916,8 @@ def register_item_handle(item):
             suffix = "{:010d}".format(int(item_id))
             cnri = cnri[:-1] if cnri[-1] == '/' else cnri
             cnri += '/' + suffix
+        if uri is None:
+            uri = get_url_root() + 'records/' + str(item_id)
         if item.get('status') == 'new':
             register_hdl_by_handle(cnri, pid.object_uuid, uri)
         else:
