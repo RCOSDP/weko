@@ -16,6 +16,7 @@ from flask import current_app
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from invenio_search import RecordsSearch, current_search_client
+from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
 from werkzeug.utils import cached_property, import_string
 
@@ -119,8 +120,6 @@ def get_records(**kwargs):
                             **{'must_not': [
                                 {'term': {'_id': str(record.id)}}]})
 
-    from weko_index_tree.api import Indexes
-
     page_ = kwargs.get('resumptionToken', {}).get('page', 1)
     size_ = current_app.config['OAISERVER_PAGE_SIZE']
     scroll = current_app.config['OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME']
@@ -139,9 +138,15 @@ def get_records(**kwargs):
             {'control_number': {'order': 'asc'}}
         )[(page_ - 1) * size_:page_ * size_]
 
+        sets = []
         if 'set' in kwargs:
+            if ":" in kwargs['set']:
+                sets = kwargs['set'].split(':')[-1]
+            else:
+                sets = kwargs['set']
             #search = search.query('match', **{'path': kwargs['set']})
-            search = search.query('match', **{'_oai.sets': kwargs['set']})
+            search = search.query('match', **{'_oai.sets': sets})
+            #search = search.query('terms', **{'_oai.sets': sets})
 
         time_range = {}
         if 'from_' in kwargs:
@@ -155,7 +160,7 @@ def get_records(**kwargs):
         search = search.query('match', **{'publish_status': '0'})
         search = search.query('range', **{'publish_date': {'lte': 'now/d'}})
         query_filter = []
-        if indexes:
+        if indexes and 'set' not in kwargs:
             indexes_num = len(indexes)
             div_indexes = []
             max_clause_count = current_app.config.get(
@@ -175,10 +180,13 @@ def get_records(**kwargs):
                     "should": div_indexes
                 }
             })
+        if len(query_filter) > 0:
+            search = search.query(
+                'bool', **{'must': [{'bool': {'should': query_filter}}]})
 
-        search = search.query(
-            'bool', **{'must': [{'bool': {'should': query_filter}}]})
         add_condition_doi_and_future_date(search)
+
+        current_app.logger.debug("query:{}".format(search.query.to_dict()))
 
         response = search.execute().to_dict()
     else:
@@ -219,7 +227,6 @@ def get_records(**kwargs):
         @property
         def items(self):
             """Return iterator."""
-            from datetime import datetime
             for result in self.response['hits']['hits']:
                 if '_oai' in result['_source']:
                     yield {
