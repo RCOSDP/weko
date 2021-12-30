@@ -19,4 +19,5 @@ Procfile*
 
 test
 uml
-
+weko-migration
+weko-demodata
