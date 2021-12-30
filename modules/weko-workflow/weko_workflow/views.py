@@ -22,6 +22,7 @@
 
 import json
 import os
+import re
 import shutil
 import sys
 from collections import OrderedDict
@@ -326,11 +327,12 @@ def init_activity():
         if rtn is None:
             return jsonify(code=-1, msg='error')
         url = url_for('weko_workflow.display_activity',
-                    activity_id=rtn.activity_id)
+                      activity_id=rtn.activity_id)
         if 'community' in getargs and request.args.get('community') != 'undefined':
-            comm = GetCommunity.get_community_by_id(request.args.get('community'))
+            comm = GetCommunity.get_community_by_id(
+                request.args.get('community'))
             url = url_for('weko_workflow.display_activity',
-                        activity_id=rtn.activity_id, community=comm.id)
+                          activity_id=rtn.activity_id, community=comm.id)
         db.session.commit()
     except SQLAlchemyError as ex:
         current_app.logger.error('sqlalchemy error: ', ex)
@@ -2014,3 +2016,8 @@ activity_blueprint.add_url_rule(
     ),
     methods=['POST']
 )
+
+
+@blueprint.app_template_filter('regex_replace')
+def regex_replace(s, pattern, replace):
+    return re.sub(pattern, replace, s)

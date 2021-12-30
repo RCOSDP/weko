@@ -3043,7 +3043,7 @@ def check_item_is_being_edit(
     if post_workflow and post_workflow.action_status \
             in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]:
         current_app.logger.debug("post_workflow: {0} status: {1}".format(
-            item_uuid, post_workflow.action_status))
+            post_workflow, post_workflow.action_status))
         return True
 
     draft_pid = PersistentIdentifier.query.filter_by(
