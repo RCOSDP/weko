@@ -1372,19 +1372,30 @@ def prepare_edit_workflow(post_activity, recid, deposit):
         try:
             _deposit = WekoDeposit.get_record(draft_pid.object_uuid)
             _bucket = Bucket.get(_deposit.files.bucket.id)
+
+            if not _bucket:
+                _bucket = Bucket.create(
+                    quota_size=current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
+                    max_file_size=current_app.config['WEKO_MAX_FILE_SIZE'],
+                )
+                RecordsBuckets.create(record=_deposit.model, bucket=_bucket)
+                _deposit.files.bucket.id = _bucket
+
             bucket = deposit.files.bucket
 
             sync_bucket = RecordsBuckets.query.filter_by(
                 bucket_id=_deposit.files.bucket.id
             ).first()
+
             snapshot = bucket.snapshot(lock=False)
             snapshot.locked = False
             _bucket.locked = False
 
             sync_bucket.bucket_id = snapshot.id
             _deposit['_buckets']['deposit'] = str(snapshot.id)
-            _bucket.remove()
+
             db.session.add(sync_bucket)
+            _bucket.remove()
 
             # update metadata
             _metadata = convert_record_to_item_metadata(deposit)
