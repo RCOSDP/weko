@@ -1762,8 +1762,7 @@ def handle_check_doi_ra(list_record):
             current_app.logger.debug(
                 "doi_type:{0} _value:{1}".format(doi_type, _value))
 
-            if (doi_type and doi_type[0] != doi_ra) \
-                    or (not doi_type and doi_ra):
+            if (doi_type and doi_type[0] != doi_ra):
                 error = _('Specified {} is different from '
                           + 'existing {}.').format('DOI_RA', 'DOI_RA')
         except Exception as ex:
