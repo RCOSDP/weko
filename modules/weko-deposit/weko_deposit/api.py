@@ -20,6 +20,7 @@
 
 """Weko Deposit API."""
 import copy
+import inspect
 import sys
 import uuid
 from collections import OrderedDict
@@ -41,6 +42,7 @@ from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
     Part
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
+from invenio_oaiserver.models import OAISet
 from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
@@ -663,7 +665,7 @@ class WekoDeposit(Deposit):
                 )
             else:
                 deposit = super(WekoDeposit, cls).create(data, id_=id_)
-            
+
             record_id = 0
             if data.get('_deposit'):
                 record_id = str(data['_deposit']['id'])
@@ -784,7 +786,10 @@ class WekoDeposit(Deposit):
                         and ('sets' not in self.jrc['_oai']
                              or not self.jrc['_oai']['sets']):
                     setspec_list = self.jrc['path'] or []
+                    # setspec_list = OAISet.query.filter_by(
+                    #    id=self.jrc['path']).one_or_none()
                     if setspec_list:
+                        # self.jrc['_oai'].update(dict(sets=setspec_list.spec))
                         self.jrc['_oai'].update(dict(sets=setspec_list))
                 # upload item metadata to Elasticsearch
                 set_timestamp(self.jrc, self.created, self.updated)
@@ -1039,7 +1044,8 @@ class WekoDeposit(Deposit):
                         datastore.delete(cache_key)
                     data = json.loads(data_str.decode('utf-8'))
         except BaseException:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            current_app.logger.error(
+                "Unexpected error: {}".format(sys.exc_info()))
             abort(500, 'Failed to register item!')
         # Get index path
         index_lst = index_obj.get('index', [])
@@ -1745,7 +1751,10 @@ class WekoRecord(Record):
             return PersistentIdentifier.query.filter_by(
                 pid_type=pid_type,
                 object_uuid=pid_without_ver.object_uuid,
-                status=PIDStatus.REGISTERED).one_or_none()
+                status=PIDStatus.REGISTERED
+            ).order_by(
+                db.desc(PersistentIdentifier.created)
+            ).first()
         except PIDDoesNotExistError as pid_not_exist:
             current_app.logger.error(pid_not_exist)
         return None

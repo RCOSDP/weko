@@ -9,16 +9,16 @@
 """Utilities."""
 
 from __future__ import absolute_import, print_function
-from datetime import datetime
 
+from datetime import datetime
 from functools import partial
 
 from flask import current_app
 from lxml import etree
 from lxml.builder import E
 from lxml.etree import Element
-from weko_schema_ui.schema import get_oai_metadata_formats
 from weko_index_tree.api import Indexes
+from weko_schema_ui.schema import get_oai_metadata_formats
 from werkzeug.utils import import_string
 
 try:
@@ -52,6 +52,7 @@ FRIENDS_SCHEMA_LOCATION_XSD = \
 OUTPUT_HARVEST = 3
 HARVEST_PRIVATE = 2
 PRIVATE_INDEX = 1
+
 
 @lru_cache(maxsize=100)
 def serializer(metadata_prefix):
@@ -220,7 +221,7 @@ def get_index_state():
             }
         elif '-99' not in index.browsing_role \
                 or not index.public_state \
-                or (index.public_date and 
+                or (index.public_date and
                     index.public_date > datetime.utcnow()):
             index_state[index_id] = {
                 'parent': None,
@@ -247,6 +248,7 @@ def is_output_harvest(path_list, index_state):
 
     result = 0
     for path in path_list:
+        current_app.logger.debug(path)
         index_id = path.split('/')[-1]
         result = max([result, _check(index_id)])
     return result if result != 0 else HARVEST_PRIVATE

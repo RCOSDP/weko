@@ -59,7 +59,8 @@ services:
       - INVENIO_ROLE_COMMUNITY=Community Administrator
       # production or development
       - FLASK_ENV=development
-      - FLASK_DEBUG=True
+      #- FLASK_ENV=production
+      #- FLASK_DEBUG=True
       - SEARCH_INDEX_PREFIX=tenant1
       - INVENIO_DB_POOL_CLASS=QueuePool
       - GOOGLE_TRACKING_ID_SYSTEM=
@@ -173,6 +174,7 @@ services:
     volumes:
       - es-data:/usr/share/elasticsearch/data
     environment:
+      - "discovery.type=single-node"
       - "ES_JAVA_OPTS=-Xms2048m -Xmx2048m"
     ports:
       - "29201:9200"
