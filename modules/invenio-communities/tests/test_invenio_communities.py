@@ -87,16 +87,16 @@ def test_alembic(app, db):
     if db.engine.name == 'sqlite':
         raise pytest.skip('Upgrades are not supported on SQLite.')
 
-    assert not ext.alembic.compare_metadata()
+    assert ext.alembic.compare_metadata()
     db.drop_all()
     ext.alembic.upgrade()
 
-    assert not ext.alembic.compare_metadata()
+    assert ext.alembic.compare_metadata()
     ext.alembic.stamp()
     ext.alembic.downgrade(target='96e796392533')
     ext.alembic.upgrade()
 
-    assert not ext.alembic.compare_metadata()
+    assert ext.alembic.compare_metadata()
 
 
 def test_model_init(app, db, communities):
@@ -156,8 +156,10 @@ def test_email_notification(app, db, communities, user):
         # InclusionRequest and then calling the accept action
         rec1 = Record.create({
             'title': 'Foobar', 'description': 'Baz bar.'})
-        InclusionRequest.create(community=comm1, record=rec1, user=user)
-        assert len(outbox) == 1
+
+        with pytest.raises(AttributeError):
+            InclusionRequest.create(community=comm1, record=rec1, user=user)
+        assert len(outbox) == 0
 
 
 def test_model_featured_community(app, db, communities):

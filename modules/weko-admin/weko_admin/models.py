@@ -1790,7 +1790,7 @@ class FacetSearchSetting(db.Model):
     )
     """Facet Search Agg."""
 
-    active = db.Column(db.Boolean(), default=True)
+    active = db.Column(db.Boolean(name='active'), default=True)
     """True: display this facet search on screen, else hide this."""
 
     def __init__(self, name_en, name_jp, mapping, aggregations, active):

@@ -22,14 +22,13 @@
 
 import threading
 
-from flask import Flask, url_for, json
+from flask import Flask, json, url_for
 from invenio_db import db
 from sqlalchemy import func
 
+import weko_workflow.utils
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Activity
-
-import weko_workflow.utils
 
 
 def test_version():

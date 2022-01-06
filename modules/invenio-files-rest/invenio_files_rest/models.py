@@ -749,7 +749,7 @@ class FileInstance(db.Model, Timestamp):
     def get_location_by_file_instance(cls):
         """Get a file instance by URI."""
         return db.session.query(Location).filter(
-            FileInstance.uri.like(sa.func.concat(Location.uri, '%'))) \
+            FileInstance.uri.like(Location.uri + "%")) \
             .filter(FileInstance.id == cls.id) \
             .first()
 

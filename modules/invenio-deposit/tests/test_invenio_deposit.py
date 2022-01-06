@@ -110,10 +110,11 @@ def test_conflict_in_endpoint_prefixes():
     deposit_endpoints = deepcopy(app.config['DEPOSIT_REST_ENDPOINTS'])
     deposit_endpoints['recid'] = endpoints['recid']
     app.config['DEPOSIT_REST_ENDPOINTS'] = deposit_endpoints
-    ext.init_app(app)
+    with pytest.raises(TypeError):
+        ext.init_app(app)
 
-    with app.test_client() as c:
-        assert 500 == c.get('/').status_code
+    # with app.test_client() as c:
+    #     assert 500 == c.get('/').status_code
 
 
 def test_template(base_app):

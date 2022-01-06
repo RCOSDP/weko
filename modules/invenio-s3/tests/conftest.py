@@ -8,13 +8,19 @@
 from __future__ import absolute_import, print_function
 
 import hashlib
+import os
+import shutil
+import tempfile
 
 import boto3
 import pytest
 from flask import Flask, current_app
 from invenio_db import InvenioDB
+from invenio_db import db as db_
 from invenio_files_rest import InvenioFilesREST
+from invenio_files_rest.models import Location
 from moto import mock_s3
+from sqlalchemy_utils.functions import create_database, database_exists
 
 from invenio_s3 import InvenioS3, S3FSFileStorage
 
@@ -26,6 +32,10 @@ def app_config(app_config):
     app_config['S3_ENDPOINT_URL'] = None
     app_config['S3_ACCCESS_KEY_ID'] = ''
     app_config['S3_SECRECT_ACCESS_KEY'] = ''
+    app_config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
+        'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db')
+    app_config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+    app_config['TESTING'] = True
     return app_config
 
 
@@ -43,6 +53,28 @@ def create_app():
         return app
 
     return factory
+
+
+@pytest.fixture(scope='module')
+def location_path():
+    """Temporary directory for location path."""
+    tmppath = tempfile.mkdtemp()
+    yield tmppath
+    shutil.rmtree(tmppath)
+
+
+@pytest.fixture(scope='module')
+def location(location_path, database):
+    """File system locations."""
+    loc = Location(
+        name='testloc',
+        uri=location_path,
+        default=True,
+        type='s3'
+    )
+    database.session.add(loc)
+    database.session.commit()
+    return loc
 
 
 @pytest.fixture(scope='function')
