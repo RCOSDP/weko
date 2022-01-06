@@ -122,6 +122,41 @@
               }
             }
           }
+        },
+        "affiliationInfo": {
+          "type": "object",
+          "properties": {
+            "identifierInfo": {
+              "type": "object",
+              "properties": {
+                "affiliationNameIdentifierScheme": {
+                  "type": "text"
+                },
+                "affiliationNameIdentifier": {
+                  "type": "text",
+                  "index": "no"
+                },
+                "identifierShowFlg": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "affiliationNameInfo": {
+              "type": "object",
+              "properties": {
+                "affiliationName": {
+                  "type": "text",
+                  "index": "no"
+                },
+                "affiliationNameLang": {
+                  "type": "text"
+                },
+                "affiliationNameShowFlg": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
         }
       }
     }

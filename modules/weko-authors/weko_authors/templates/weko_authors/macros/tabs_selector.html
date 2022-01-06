@@ -21,6 +21,7 @@ s file is part of WEKO3.
   <ul class="nav nav-tabs">
     <li role="presentation" {% if tab_value=='author_list' %}class="active"{% endif %}><a href="/admin/authors/">{{ _('Author ID') }}</a></li>
     <li role="presentation" {% if tab_value=='prefix_list' %}class="active"{% endif %}><a href="/admin/authors/?tab=prefix">{{ _('ID Prefix') }}</a></li>
+    <li role="presentation" {% if tab_value=='affiliation_list' %}class="active"{% endif %}><a href="/admin/authors/?tab=affiliation">{{ _('Affiliation ID') }}</a></li>
   </ul>
 {% endmacro %}
 
