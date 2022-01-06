@@ -786,10 +786,10 @@ class WekoDeposit(Deposit):
                         and ('sets' not in self.jrc['_oai']
                              or not self.jrc['_oai']['sets']):
                     setspec_list = self.jrc['path'] or []
-                    #setspec_list = OAISet.query.filter_by(
+                    # setspec_list = OAISet.query.filter_by(
                     #    id=self.jrc['path']).one_or_none()
                     if setspec_list:
-                        #self.jrc['_oai'].update(dict(sets=setspec_list.spec))
+                        # self.jrc['_oai'].update(dict(sets=setspec_list.spec))
                         self.jrc['_oai'].update(dict(sets=setspec_list))
                 # upload item metadata to Elasticsearch
                 set_timestamp(self.jrc, self.created, self.updated)
@@ -1044,7 +1044,8 @@ class WekoDeposit(Deposit):
                         datastore.delete(cache_key)
                     data = json.loads(data_str.decode('utf-8'))
         except BaseException:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            current_app.logger.error(
+                "Unexpected error: {}".format(sys.exc_info()))
             abort(500, 'Failed to register item!')
         # Get index path
         index_lst = index_obj.get('index', [])

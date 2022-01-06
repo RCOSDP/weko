@@ -180,8 +180,13 @@ class Flow(object):
                 flow = _Flow.query.filter_by(
                     flow_id=flow_id).one_or_none()
                 if flow:
-                    flow.is_deleted = True
-                    db.session.merge(flow)
+                    # logical delete
+                    #flow.is_deleted = True
+                    # db.session.merge(flow)
+                    # physical delete
+                    _FlowAction.query.filter_by(flow_id=flow_id).delete()
+                    _Flow.query.filter_by(
+                        flow_id=flow_id).delete()
             db.session.commit()
             return {'code': 0, 'msg': ''}
         except Exception as ex:

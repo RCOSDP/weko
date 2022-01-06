@@ -256,7 +256,7 @@ def get_journal_info(index_id=0):
         result.update({'openSearchUrl': open_search_uri})
 
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         abort(500)
     return result
 
@@ -873,8 +873,8 @@ def handle_check_exist_record(list_record) -> list:
             pass
         except BaseException:
             current_app.logger.error(
-                'Unexpected error: ',
-                sys.exc_info()[0]
+                "Unexpected error: {}".format(
+                    sys.exc_info())
             )
         if errors:
             item['errors'] = errors
@@ -1445,7 +1445,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                 'error_id': error_id
             }
         except BaseException as ex:
-            current_app.logger.error('Unexpected error: ', ex)
+            current_app.logger.error("Unexpected error: {}".format(ex))
             db.session.rollback()
             if item.get('id'):
                 handle_remove_es_metadata(item)

@@ -335,11 +335,11 @@ def init_activity():
                           activity_id=rtn.activity_id, community=comm.id)
         db.session.commit()
     except SQLAlchemyError as ex:
-        current_app.logger.error('sqlalchemy error: ', ex)
+        current_app.logger.error("sqlalchemy error: {}".format(ex))
         db.session.rollback()
         return jsonify(code=-1, msg='Failed to init activity!')
     except BaseException as ex:
-        current_app.logger.error('Unexpected error: ', ex)
+        current_app.logger.error("Unexpected error: {}".format(ex))
         db.session.rollback()
         return jsonify(code=-1, msg='Failed to init activity!')
 
@@ -405,11 +405,11 @@ def init_activity_guest():
             __, tmp_url = init_activity_for_guest_user(data)
             db.session.commit()
         except SQLAlchemyError as ex:
-            current_app.logger.error('sqlalchemy error: ', ex)
+            current_app.logger.error("sqlalchemy error: {}".format(ex))
             db.session.rollback()
             return jsonify(msg='Cannot send mail')
         except BaseException as ex:
-            current_app.logger.error('Unexpected error: ', ex)
+            current_app.logger.error('Unexpected error: {}'.format(ex))
             db.session.rollback()
             return jsonify(msg='Cannot send mail')
 
@@ -1413,7 +1413,7 @@ def cancel_action(activity_id='0', action_id=0):
             except Exception:
                 db.session.rollback()
                 current_app.logger.error(
-                    'Unexpected error: {}', sys.exc_info()[0])
+                    'Unexpected error: {}'.format(sys.exc_info()))
                 return jsonify(code=-1,
                                msg=sys.exc_info()[0])
 
@@ -1524,7 +1524,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
         else:
             return jsonify(code=-1, msg=_('Invalid password'))
     except ValueError:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return jsonify(code=-1, msg=_('Error!'))
 
 
@@ -1561,7 +1561,7 @@ def save_feedback_maillist(activity_id='0', action_id='0'):
         )
         return jsonify(code=0, msg=_('Success'))
     except Exception:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return jsonify(code=-1, msg=_('Error'))
 
 
@@ -1596,7 +1596,7 @@ def get_feedback_maillist(activity_id='0'):
         else:
             return jsonify(code=0, msg=_('Empty!'))
     except Exception:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return jsonify(code=-1, msg=_('Error'))
 
 
@@ -1680,7 +1680,7 @@ def check_approval(activity_id='0'):
     try:
         response = check_continue(response, activity_id)
     except Exception:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         response['error'] = -1
     return jsonify(response)
 
