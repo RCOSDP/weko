@@ -142,8 +142,8 @@ class ItemTypeMetaDataView(BaseView):
                         db.session.commit()
                     except BaseException:
                         db.session.rollback()
-                        current_app.logger.error('Unexpected error: ',
-                                                 sys.exc_info()[0])
+                        current_app.logger.error(
+                            "Unexpected error: {}".format(sys.exc_info()))
                         flash(_('Failed to delete Item type.'), 'error')
                         return jsonify(code=-1)
 
@@ -244,8 +244,8 @@ class ItemTypeMetaDataView(BaseView):
                         db.session.commit()
                     except BaseException:
                         db.session.rollback()
-                        current_app.logger.error('Unexpected error: ',
-                                                 sys.exc_info()[0])
+                        current_app.logger.error(
+                            "Unexpected error: {}".format(sys.exc_info()))
                         return jsonify(code=-1,
                                        msg=_('Failed to restore Item type.'))
 
@@ -511,7 +511,8 @@ class ItemTypeMappingView(BaseView):
                 lang_code=session.get('selected_language', 'en')  # Set default
             )
         except BaseException:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            current_app.logger.error(
+                "Unexpected error: {}".format(sys.exc_info()))
         return abort(400)
 
     @expose('', methods=['POST'])
@@ -537,6 +538,8 @@ class ItemTypeMappingView(BaseView):
             db.session.commit()
         except BaseException:
             db.session.rollback()
+            current_app.logger.error(
+                "Unexpected error: {}".format(sys.exc_info()))
             return jsonify(msg=_('Unexpected error occurred.'))
         return jsonify(msg=_('Successfully saved new mapping.'))
 

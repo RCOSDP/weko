@@ -20,25 +20,13 @@
 
 """Module tests."""
 
-from flask import Flask
 
-from weko_theme import WekoTheme
-
-
-def test_version():
-    """Test version import."""
-    from weko_theme import __version__
-    assert __version__
+from weko_deposit.api import WekoDeposit
+from weko_deposit.rest import publish
 
 
-def test_init():
-    """Test extension initialization."""
-    app = Flask('testapp')
-    ext = WekoTheme(app)
-    assert 'weko-theme' in app.extensions
-
-    app = Flask('testapp')
-    ext = WekoTheme()
-    assert 'weko-theme' not in app.extensions
-    ext.init_app(app)
-    assert 'weko-theme' in app.extensions
+def test_publish(app, location):
+    deposit = WekoDeposit.create({})
+    kwargs = {
+        'pid_value': deposit.pid.pid_value
+    }

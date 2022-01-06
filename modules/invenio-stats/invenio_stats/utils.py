@@ -19,8 +19,8 @@ from datetime import datetime, timedelta
 from math import ceil
 from typing import Generator, NoReturn, Union
 
-import netaddr
 import click
+import netaddr
 import six
 from dateutil import parser
 from elasticsearch import VERSION as ES_VERSION
@@ -131,6 +131,7 @@ def default_permission_factory(query_name, params):
 
 def weko_permission_factory(*args, **kwargs):  # All queries have same perms
     """Permission factory for weko queries."""
+
     def can(self):
         return current_user.is_authenticated and stats_api_permission.can()
 
@@ -200,13 +201,14 @@ def is_valid_access():
     Regard all accesses as valid if `STATS_EXCLUDED_ADDRS` is set to `[]`.
     """
     ip_list = current_app.config['STATS_EXCLUDED_ADDRS']
-    if ip_list:
+    ipaddr = get_remote_addr()
+    if ip_list and ipaddr:
         for i in range(len(ip_list)):
             if '/' in ip_list[i]:
-                if netaddr.IPAddress(get_remote_addr()) in netaddr.IPNetwork(ip_list[i]):
+                if netaddr.IPAddress(ipaddr) in netaddr.IPNetwork(ip_list[i]):
                     return False
             else:
-                if get_remote_addr()==ip_list[i]:
+                if ipaddr == ip_list[i]:
                     return False
     return True
 
@@ -743,8 +745,8 @@ class QueryRecordViewReportHelper(object):
         @param lst_id:
         @return:
         """
-        from invenio_records.models import RecordMetadata
         from invenio_db import db
+        from invenio_records.models import RecordMetadata
         with db.session.no_autoflush:
             query = RecordMetadata.query.filter(
                 RecordMetadata.id.in_(lst_id)).with_entities(RecordMetadata.id,
@@ -1078,7 +1080,8 @@ class QueryItemRegReportHelper(object):
                         # Limit size
                         params.update({'agg_size': kwargs.get('agg_size', 0)})
                     else:
-                        params.update({'agg_sort': kwargs.get('agg_sort', {'_count': 'desc'})})
+                        params.update({'agg_sort': kwargs.get(
+                            'agg_sort', {'_count': 'desc'})})
                     res_total = query_total.run(**params)  # pass args
                     i = 0
                     for item in res_total['buckets']:
@@ -1104,7 +1107,9 @@ class QueryItemRegReportHelper(object):
                             # total results
                             total_results += 1
                     if result:
-                        result = sorted(result, key=lambda k: k['col3'], reverse=True)
+                        result = cls.merge_items_results(result)
+                        result = sorted(result, key=lambda k: k['col3'],
+                                        reverse=True)
                 elif unit == 'Host':
                     start_date_string = ''
                     end_date_string = ''
@@ -1156,6 +1161,9 @@ class QueryItemRegReportHelper(object):
                                 else:
                                     index = index_list[user['key']]
                                     result[index]['count'] += user['count']
+                    if result:
+                        result = sorted(result, key=lambda k: k['count'],
+                                        reverse=True)
                 else:
                     result = []
             except es_exceptions.NotFoundError as e:
@@ -1171,6 +1179,25 @@ class QueryItemRegReportHelper(object):
             'data': result
         }
         return response
+
+    @classmethod
+    def merge_items_results(cls, results):
+        """
+        Merge items results after query.
+
+        @param results:
+        """
+        new_result = []
+        for i in results:
+            index = -1
+            for j in range(len(new_result)):
+                if int(float(i['col1'])) == int(float(new_result[j]['col1'])):
+                    index = j
+            if index > -1:
+                new_result[index]['col3'] += i['col3']
+            else:
+                new_result.append(i)
+        return new_result if new_result else []
 
 
 class StatsCliUtil:

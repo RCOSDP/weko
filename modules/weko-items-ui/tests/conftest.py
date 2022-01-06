@@ -28,8 +28,10 @@ from flask import Flask
 from flask_babelex import Babel
 from flask_menu import Menu
 from invenio_accounts import InvenioAccounts
-from invenio_accounts.views.settings import blueprint as invenio_accounts_blueprint
+from invenio_accounts.views.settings import \
+    blueprint as invenio_accounts_blueprint
 from invenio_db import InvenioDB
+
 from weko_items_ui import WekoItemsUI
 from weko_items_ui.views import blueprint as weko_items_ui_blueprint
 
@@ -50,6 +52,7 @@ def base_app(instance_path):
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
     )
+    InvenioAccounts(app_)
     Babel(app_)
     Menu(app_)
     InvenioAccounts(app_)

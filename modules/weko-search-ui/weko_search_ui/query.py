@@ -28,8 +28,6 @@ from functools import partial
 
 from elasticsearch_dsl.query import Bool, Q
 from flask import current_app, request
-from flask.helpers import flash
-from flask_babelex import gettext as _
 from flask_security import current_user
 from invenio_communities.models import Community
 from invenio_records_rest.errors import InvalidQueryRESTError
@@ -717,12 +715,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             .replace(':', r'\:')
             .replace('/', r'\/')
         )
-
-        if '<' in qs or '>' in qs:
-            flash(
-                _('"<" and ">" cannot be used for searching.'),
-                category='warning'
-            )
 
     # full text search
     if search_type == config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']:

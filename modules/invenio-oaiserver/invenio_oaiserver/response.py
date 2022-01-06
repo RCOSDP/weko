@@ -399,6 +399,17 @@ def getrecord(**kwargs):
     index_state = get_index_state()
     path_list = record.get('path') if 'path' in record else []
     _is_output = is_output_harvest(path_list, index_state)
+    current_app.logger.debug("_is_output:{}".format(_is_output))
+    current_app.logger.debug("path_list:{}".format(path_list))
+    current_app.logger.debug(
+        "is_exists_doi(record):{}".format(is_exists_doi(record)))
+    current_app.logger.debug(
+        "is_pubdate_in_future(record):{}".format(is_pubdate_in_future(record)))
+    current_app.logger.debug("is_deleted_workflow(pid_object):{}".format(
+        is_deleted_workflow(pid_object)))
+    current_app.logger.debug(
+        "is_private_workflow(pid_object):{}".format(is_private_workflow(record)))
+
     # Harvest is private
     if path_list and (_is_output == HARVEST_PRIVATE or
                       (is_exists_doi(record) and
@@ -477,6 +488,17 @@ def listidentifiers(**kwargs):
             path_list = record.get('path') if 'path' in record else []
             _is_output = is_output_harvest(path_list, index_state) \
                 if 'set' not in kwargs else set_is_output
+            current_app.logger.debug("pid:{}".format(pid))
+            current_app.logger.debug("_is_output:{}".format(_is_output))
+            current_app.logger.debug("path_list:{}".format(path_list))
+            current_app.logger.debug(
+                "is_exists_doi(record):{}".format(is_exists_doi(record)))
+            current_app.logger.debug(
+                "is_pubdate_in_future(record):{}".format(is_pubdate_in_future(record)))
+            current_app.logger.debug("is_deleted_workflow(pid_object):{}".format(
+                is_deleted_workflow(pid_object)))
+            current_app.logger.debug(
+                "is_private_workflow(pid_object):{}".format(is_private_workflow(record)))
             # Harvest is private
             if path_list and (_is_output == HARVEST_PRIVATE or
                               (is_exists_doi(record) and
@@ -564,6 +586,17 @@ def listrecords(**kwargs):
             _is_output = is_output_harvest(path_list, index_state) \
                 if 'set' not in kwargs else set_is_output
 
+            current_app.logger.debug("pid:{}".format(pid))
+            current_app.logger.debug("_is_output:{}".format(_is_output))
+            current_app.logger.debug("path_list:{}".format(path_list))
+            current_app.logger.debug(
+                "is_exists_doi(record):{}".format(is_exists_doi(record)))
+            current_app.logger.debug(
+                "is_pubdate_in_future(record):{}".format(is_pubdate_in_future(record)))
+            current_app.logger.debug("is_deleted_workflow(pid_object):{}".format(
+                is_deleted_workflow(pid_object)))
+            current_app.logger.debug(
+                "is_private_workflow(pid_object):{}".format(is_private_workflow(record)))
             # Harvest is private
             if path_list and (_is_output == HARVEST_PRIVATE or
                               (is_exists_doi(record) and
@@ -646,7 +679,7 @@ def create_identifier_index(root, **kwargs):
                                   etree.QName(NS_JPCOAR, 'identifier'),
                                   attrib={
                                       'identifierType':
-                                          kwargs['pid_type'].upper()})
+                                      kwargs['pid_type'].upper()})
         e_identifier.text = kwargs['pid_value']
         e_identifier_registration = root.find(
             'jpcoar:identifierRegistration',
@@ -720,20 +753,18 @@ def combine_record_file_urls(record, object_uuid, meta_prefix):
                 if attr.get('filename'):
                     if not attr.get(file_keys[1]):
                         attr[file_keys[1]] = {}
-                    attr[file_keys[1]][file_keys[2]] = \
-                        create_files_url(
-                            request.url_root,
-                            record.get('recid'),
-                            attr.get('filename'))
+                    attr[file_keys[1]][file_keys[2]] = create_files_url(
+                        request.url_root,
+                        record.get('recid'),
+                        attr.get('filename'))
         elif isinstance(attr_mlt, dict) and \
                 attr_mlt.get('filename'):
             if not attr_mlt.get(file_keys[1]):
                 attr_mlt[file_keys[1]] = {}
-            attr_mlt[file_keys[1]][file_keys[2]] = \
-                create_files_url(
-                    request.url_root,
-                    record.get('recid'),
-                    attr_mlt.get('filename'))
+            attr_mlt[file_keys[1]][file_keys[2]] = create_files_url(
+                request.url_root,
+                record.get('recid'),
+                attr_mlt.get('filename'))
 
     return record
 

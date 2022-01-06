@@ -31,10 +31,3 @@ def test_init():
     assert 'weko-sitemap' not in app.extensions
     ext.init_app(app)
     assert 'weko-sitemap' in app.extensions
-
-
-def test_view(base_client):
-    """Test view."""
-    res = base_client.get("/")
-    assert res.status_code == 200
-    assert 'Welcome to weko-sitemap' in str(res.data)

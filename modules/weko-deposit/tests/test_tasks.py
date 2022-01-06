@@ -20,25 +20,12 @@
 
 """Module tests."""
 
-from flask import Flask
+import pytest
+from elasticsearch.exceptions import NotFoundError
 
-from weko_theme import WekoTheme
-
-
-def test_version():
-    """Test version import."""
-    from weko_theme import __version__
-    assert __version__
+from weko_deposit.tasks import update_items_by_authorInfo
 
 
-def test_init():
-    """Test extension initialization."""
-    app = Flask('testapp')
-    ext = WekoTheme(app)
-    assert 'weko-theme' in app.extensions
-
-    app = Flask('testapp')
-    ext = WekoTheme()
-    assert 'weko-theme' not in app.extensions
-    ext.init_app(app)
-    assert 'weko-theme' in app.extensions
+def test_update_authorInfo(app, db):
+    with pytest.raises(NotFoundError):
+        update_items_by_authorInfo([], {})

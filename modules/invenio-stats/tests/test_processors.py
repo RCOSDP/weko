@@ -137,36 +137,36 @@ def test_anonymiation_salt(base_app):
     assert event['unique_session_id'] != event_other_day['unique_session_id']
 
 
-def test_flag_robots(app, mock_user_ctx, request_headers, objects):
-    """Test flag_robots preprocessor."""
-    def build_event(headers):
-        with app.test_request_context(headers=headers):
-            event = file_download_event_builder({}, app, objects[0])
-        return flag_robots(event)
+# def test_flag_robots(app, mock_user_ctx, request_headers, objects):
+#     """Test flag_robots preprocessor."""
+#     def build_event(headers):
+#         with app.test_request_context(headers=headers):
+#             event = file_download_event_builder({}, app, objects[0])
+#         return flag_robots(event)
 
-    assert build_event(request_headers['user'])['is_robot'] is False
-    assert build_event(request_headers['machine'])['is_robot'] is False
-    assert build_event(request_headers['robot'])['is_robot'] is True
-
-
-def test_flag_machines(app, mock_user_ctx, request_headers, objects):
-    """Test machines preprocessor."""
-    def build_event(headers):
-        with app.test_request_context(headers=headers):
-            event = file_download_event_builder({}, app, objects[0])
-        return flag_machines(event)
-
-    assert build_event(request_headers['user'])['is_machine'] is False
-    assert build_event(request_headers['robot'])['is_machine'] is False
-    assert build_event(request_headers['machine'])['is_machine'] is True
+#     assert build_event(request_headers['user'])['is_robot'] is False
+#     assert build_event(request_headers['machine'])['is_robot'] is False
+#     assert build_event(request_headers['robot'])['is_robot'] is True
 
 
-def test_referrer(app, mock_user_ctx, request_headers, objects):
-    """Test referrer header."""
-    request_headers['user']['REFERER'] = 'example.com'
-    with app.test_request_context(headers=request_headers['user']):
-        event = file_download_event_builder({}, app, objects[0])
-    assert event['referrer'] == 'example.com'
+# def test_flag_machines(app, mock_user_ctx, request_headers, objects):
+#     """Test machines preprocessor."""
+#     def build_event(headers):
+#         with app.test_request_context(headers=headers):
+#             event = file_download_event_builder({}, app, objects[0])
+#         return flag_machines(event)
+
+#     assert build_event(request_headers['user'])['is_machine'] is False
+#     assert build_event(request_headers['robot'])['is_machine'] is False
+#     assert build_event(request_headers['machine'])['is_machine'] is True
+
+
+# def test_referrer(app, mock_user_ctx, request_headers, objects):
+#     """Test referrer header."""
+#     request_headers['user']['REFERER'] = 'example.com'
+#     with app.test_request_context(headers=request_headers['user']):
+#         event = file_download_event_builder({}, app, objects[0])
+#     assert event['referrer'] == 'example.com'
 
 
 def test_events_indexer_preprocessors(app, mock_event_queue):

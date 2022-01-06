@@ -27,57 +27,57 @@
 from weko_user_profiles.forms import _update_with_csrf_disabled, \
     confirm_register_form_factory, register_form_factory
 
+# def test_register_form_factory_no_csrf(app):
+#     """Test CSRF token is not in reg. form and not in profile inner form."""
+#     security = app.extensions['security']
+#     rf = _get_form(app, security.register_form, register_form_factory)
 
-def test_register_form_factory_no_csrf(app):
-    """Test CSRF token is not in reg. form and not in profile inner form."""
-    security = app.extensions['security']
-    rf = _get_form(app, security.register_form, register_form_factory)
-
-    _assert_no_csrf_token(rf)
-
-
-def test_register_form_factory_csrf(app_with_csrf):
-    """Test CSRF token is in reg. form but not in profile inner form."""
-    security = app_with_csrf.extensions['security']
-    rf = _get_form(app_with_csrf, security.register_form,
-                   register_form_factory)
-
-    _assert_csrf_token(rf)
+#     _assert_no_csrf_token(rf)
 
 
-def test_force_disable_csrf_register_form(app_with_csrf):
-    """Test force disable CSRF for reg. form."""
-    security = app_with_csrf.extensions['security']
-    rf = _get_form(app_with_csrf, security.register_form,
-                   register_form_factory, force_disable_csrf=True)
-    _assert_no_csrf_token(rf)
+# def test_register_form_factory_csrf(app_with_csrf):
+#     """Test CSRF token is in reg. form but not in profile inner form."""
+#     security = app_with_csrf.extensions['security']
+#     rf = _get_form(app_with_csrf, security.register_form,
+#                    register_form_factory)
+
+#     _assert_csrf_token(rf)
 
 
-def test_confirm_register_form_factory_no_csrf(app):
-    """Test CSRF token is not in confirm form and not in profile inner form."""
-    security = app.extensions['security']
-    rf = _get_form(app, security.confirm_register_form,
-                   confirm_register_form_factory)
-
-    _assert_no_csrf_token(rf)
-
-
-def test_confirm_register_form_factory_csrf(app_with_csrf):
-    """Test CSRF token is in confirm form but not in profile inner form."""
-    security = app_with_csrf.extensions['security']
-    rf = _get_form(app_with_csrf, security.confirm_register_form,
-                   confirm_register_form_factory)
-
-    _assert_csrf_token(rf)
+# def test_force_disable_csrf_register_form(app_with_csrf):
+#     """Test force disable CSRF for reg. form."""
+#     security = app_with_csrf.extensions['security']
+#     rf = _get_form(app_with_csrf, security.register_form,
+#                    register_form_factory, force_disable_csrf=True)
+#     _assert_no_csrf_token(rf)
 
 
-def test_force_disable_csrf_confirm_form(app_with_csrf):
-    """Test force disable CSRF for confirm form."""
-    security = app_with_csrf.extensions['security']
-    rf = _get_form(app_with_csrf, security.confirm_register_form,
-                   confirm_register_form_factory, force_disable_csrf=True)
+# def test_confirm_register_form_factory_no_csrf(app):
+#     """Test CSRF token is not in confirm form and not in \
+#     profile inner form."""
+#     security = app.extensions['security']
+#     rf = _get_form(app, security.confirm_register_form,
+#                    confirm_register_form_factory)
 
-    _assert_no_csrf_token(rf)
+#     _assert_no_csrf_token(rf)
+
+
+# def test_confirm_register_form_factory_csrf(app_with_csrf):
+#     """Test CSRF token is in confirm form but not in profile inner form."""
+#     security = app_with_csrf.extensions['security']
+#     rf = _get_form(app_with_csrf, security.confirm_register_form,
+#                    confirm_register_form_factory)
+
+#     _assert_csrf_token(rf)
+
+
+# def test_force_disable_csrf_confirm_form(app_with_csrf):
+#     """Test force disable CSRF for confirm form."""
+#     security = app_with_csrf.extensions['security']
+#     rf = _get_form(app_with_csrf, security.confirm_register_form,
+#                    confirm_register_form_factory, force_disable_csrf=True)
+
+#     _assert_no_csrf_token(rf)
 
 
 def _assert_csrf_token(form):

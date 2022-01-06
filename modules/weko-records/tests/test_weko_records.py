@@ -20,9 +20,16 @@
 
 """Module tests."""
 
+from datetime import datetime
+
+import dateutil.tz
 from flask import Flask
+from invenio_records_rest.schemas.json import RecordSchemaJSONV1
 
 from weko_records import WekoRecords
+from weko_records.serializers.entry import WekoFeedEntry
+from weko_records.serializers.feed import WekoFeedGenerator
+from weko_records.serializers.rss import RssSerializer
 
 
 def test_version():
@@ -42,3 +49,93 @@ def test_init():
     assert 'weko-records' not in app.extensions
     ext.init_app(app)
     assert 'weko-records' in app.extensions
+
+
+def test_feed_entry(app, db):
+    rss_v1 = RssSerializer(RecordSchemaJSONV1)
+
+    entry = WekoFeedEntry()
+
+    entry.guid('test')
+    entry.title('test')
+    entry.content(
+        content='test',
+        lang='en',
+        type='xhtml'
+    )
+    entry.author({
+        'name': 'test',
+        'lang': 'en',
+        'email': 'email',
+        'uri': 'test'
+    })
+    entry.__atom_link = [{
+        'rel': 'test',
+        'type': 'test',
+        'hreflang': 'en',
+        'title': 'test',
+        'length': 'test'
+    }]
+
+    entry.contributor({
+        'name': 'test',
+        'email': 'test',
+        'uri': 'test'
+    })
+    entry.atom_entry()
+
+    entry.rss_entry()
+
+    entry.itemUrl('test')
+    entry.jpcoar_entry()
+
+
+def test_weko_feed_generator(app, db):
+    fg = WekoFeedGenerator()
+    # fg.add_entry()
+
+    fg.id('1')
+    fg.title('test')
+    fg.updated(datetime.now(dateutil.tz.tzutc()))
+    fg.contributor({
+        'name': 'test',
+        'email': 'test',
+        'uri': 'test'
+    })
+
+    fg.atom_str(pretty=True)
+
+    fg.link({
+        'href': 'test',
+        'rel': 'about',
+        'type': 'test',
+        'hreflang': 'en',
+        'title': 'test',
+        'length': 'test'
+    })
+    fg.image(
+        url='test',
+        title='test',
+        width='test',
+        height='test'
+    )
+    fg.items(['test'])
+    fg._create_rss()
+
+    fg.author({
+        'name': 'John Doe',
+        'email': 'jdoe@example.com'})
+    fg.jpcoar_str(pretty=True)
+
+    fg.category({
+        'term': 'test',
+        'scheme': 'test',
+        'label': 'test'
+    })
+
+    fg.textInput(
+        title='test',
+        description='test',
+        name='test',
+        link='test'
+    )
