@@ -123,7 +123,7 @@ ${INVENIO_WEB_INSTANCE} db create -v
 # sphinxdoc-create-database-end
 
 # sphinxdoc-index-initialisation-begin
-#${INVENIO_WEB_INSTANCE} index destroy --yes-i-know
+${INVENIO_WEB_INSTANCE} index destroy --yes-i-know
 ${INVENIO_WEB_INSTANCE} index init
 sleep 20
 ${INVENIO_WEB_INSTANCE} index queue init
@@ -425,6 +425,17 @@ ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "KAKEN2" "KAKEN2" "https://kaken.nii.ac.jp/"
 # create-default-authors-prefix-settings-end
+
+# create-default-authors-affiliation-settings-begin
+${INVENIO_WEB_INSTANCE} authors_affiliation default_settings \
+       "ISNI" "ISNI" "http://www.isni.org/isni/"
+${INVENIO_WEB_INSTANCE} authors_affiliation default_settings \
+       "GRID" "GRID" "https://www.grid.ac/institutes/"
+${INVENIO_WEB_INSTANCE} authors_affiliation default_settings \
+       "Ringgold" "Ringgold" ""
+${INVENIO_WEB_INSTANCE} authors_affiliation default_settings \
+       "kakenhi" "kakenhi" ""
+# create-default-authors-affiliation-settings-end
 
 # create-widget-bucket-begin
 ${INVENIO_WEB_INSTANCE} widget init
