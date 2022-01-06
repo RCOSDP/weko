@@ -113,7 +113,8 @@ class IndexJournalSettingView(BaseView):
                 journal = '{}'
             return jsonify(journal)
         except BaseException:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            current_app.logger.error(
+                "Unexpected error: {}".format(sys.exc_info()))
         return abort(400)
 
     @expose('/jsonschema', methods=['GET'])
@@ -157,7 +158,8 @@ class IndexJournalSettingView(BaseView):
                     value['validationMessage'] = msg
 
         except BaseException:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            current_app.logger.error(
+                "Unexpected error: {}".format(sys.exc_info()))
             abort(500)
         return jsonify(json_schema)
 
@@ -205,7 +207,8 @@ class IndexJournalSettingView(BaseView):
                                         sub_elem['title'] = sub_elem['title_i18n'][
                                             cur_lang]
         except BaseException:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            current_app.logger.error(
+                "Unexpected error: {}".format(sys.exc_info()))
             abort(500)
         return jsonify(schema_form)
 

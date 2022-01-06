@@ -57,9 +57,7 @@ def app(request):
             SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
             SECURITY_PASSWORD_SCHEMES=['plaintext'],
             SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                              'sqlite:///' +
-                                              os.path.join(instance_path,
-                                                           'test.db')),
+                                              'sqlite:///test.db'),
             SQLALCHEMY_TRACK_MODIFICATIONS=True,
             TESTING=True,
             WTF_CSRF_ENABLED=False,
@@ -94,7 +92,7 @@ def app(request):
     with app.app_context():
         if str(db.engine.url) != 'sqlite://' and \
            not database_exists(str(db.engine.url)):
-                create_database(str(db.engine.url))
+            create_database(str(db.engine.url))
         db.create_all()
 
     def teardown():
@@ -246,6 +244,7 @@ def models_fixture(app):
 def provider_fixture(app):
     """Fixture that contains test data for provider tests."""
     from invenio_oauth2server.proxies import current_oauth2server
+
     # Mock the oauth client calls to prevent them from going online.
     oauth_client = create_oauth_client(app, 'oauth2test')
     oauth_client.http_request = MagicMock(
@@ -348,6 +347,7 @@ def expiration_fixture(provider_fixture):
 def resource_fixture(app, api_app):
     """Fixture that contains the test data for models tests."""
     from flask import g, request
+
     from invenio_oauth2server.proxies import current_oauth2server
 
     # Setup API resources

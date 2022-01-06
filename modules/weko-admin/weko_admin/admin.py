@@ -117,7 +117,8 @@ class StyleSettingView(BaseView):
                         fp.writelines('\n'.join(form_lines))
                     flash(_('Successfully update color.'), category="success")
         except BaseException:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            current_app.logger.error(
+                "Unexpected error: {}".format(sys.exc_info()))
         return self.render(
             current_app.config["WEKO_ADMIN_BlOCK_STYLE_TEMPLATE"],
             body_bg=body_bg,
@@ -161,7 +162,8 @@ class StyleSettingView(BaseView):
             with open(write_path, 'w+', encoding='utf-8') as fp:
                 fp.writelines(wysiwyg_html)
         except Exception:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            current_app.logger.error(
+                "Unexpected error: {}".format(sys.exc_info()))
             abort(500)
         return jsonify({'code': 0, 'msg': 'success'})
 
@@ -173,7 +175,8 @@ class StyleSettingView(BaseView):
                 for line in fp.readlines():
                     array.append(line)
         except Exception:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            current_app.logger.error(
+                "Unexpected error: {}".format(sys.exc_info()))
             abort(500)
         return array
 
@@ -187,7 +190,8 @@ class StyleSettingView(BaseView):
             with open(f_path2, 'rb') as fp2:
                 checksum2 = hashlib.md5(fp2.read()).hexdigest()
         except Exception:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            current_app.logger.error(
+                "Unexpected error: {}".format(sys.exc_info()))
             abort(500)
         return checksum1 == checksum2
 
@@ -307,7 +311,7 @@ class ReportView(BaseView):
                 frequency_options=current_app.config[
                     'WEKO_ADMIN_REPORT_FREQUENCIES'])
         except Exception as e:
-            current_app.logger.error('Unexpected error: ', e)
+            current_app.logger.error("Unexpected error: {}".format(e))
         return abort(400)
 
     @expose('/stats_file_tsv', methods=['POST'])
@@ -351,7 +355,7 @@ class ReportView(BaseView):
                                                       + zip_name
                 return resp
         except Exception as e:
-            current_app.logger.error('Unexpected error: ', e)
+            current_app.logger.error("Unexpected error: {}".format(e))
             flash(_('Unexpected error occurred.'), 'error')
         return redirect(url_for('report.index'))
 
@@ -530,13 +534,13 @@ class RankingSettingsView(BaseView):
                         raise
                     settings.new_item_period = new_item_period
                     new_statistical_period = int(request.form.get('statistical_period',
-                                                           365))
+                                                                  365))
                     if new_statistical_period < 1 or new_statistical_period > 3650:
                         current_app.logger.debug(new_statistical_period)
                         raise
                     settings.statistical_period = new_statistical_period
                     new_display_rank = int(request.form.get('display_rank',
-                                                           10))
+                                                            10))
                     if new_display_rank < 1 or new_display_rank > 100:
                         current_app.logger.debug(new_display_rank)
                         raise

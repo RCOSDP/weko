@@ -20,7 +20,7 @@
 
 """Module tests."""
 
-from flask import Flask, url_for, json
+from flask import Flask, json, url_for
 
 from weko_items_ui import WekoItemsUI
 

@@ -299,7 +299,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     keyword_base = None
     keyword_lang = None
 
-    pdf.set_font('Arial', '', 14)
+    #pdf.set_font('Arial', '', 14)
     pdf.set_font('IPAexg', '', 14)
 
     try:
@@ -388,7 +388,8 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
             name = creator_name.get('creatorName', '')
             name_lang = creator_name.get('creatorNameLang', 'None Language')
             creator_names_multi_lang[name_lang] = name
-        creator_name = get_value_by_selected_lang(creator_names_multi_lang, cur_lang)
+        creator_name = get_value_by_selected_lang(
+            creator_names_multi_lang, cur_lang)
         if creator_name:
             creator_name_list.append(creator_name)
 
@@ -399,9 +400,11 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
             affiliation_names = creator_affiliation.get('affiliationNames', [])
             for affiliation_name in affiliation_names:
                 name = affiliation_name.get('affiliationName', '')
-                name_lang = affiliation_name.get('affiliationNameLang', 'None Language')
+                name_lang = affiliation_name.get(
+                    'affiliationNameLang', 'None Language')
                 affiliations_multi_lang[name_lang] = name
-            affiliation_name = get_value_by_selected_lang(affiliations_multi_lang, cur_lang)
+            affiliation_name = get_value_by_selected_lang(
+                affiliations_multi_lang, cur_lang)
             if affiliation_name:
                 creator_affiliation_list.append(affiliation_name)
 
@@ -520,7 +523,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     b_output = io.BytesIO(output)
 
     # Combine cover page and existing pages
-    cover_page = PdfFileReader(b_output)
+    cover_page = PdfFileReader(b_output, strict=False)
     f = obj.file.storage().open()
     existing_pages = PdfFileReader(f)
 
@@ -620,7 +623,10 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
                     )
                 )
         except Exception as ex:
+            import traceback
+            current_app.logger.error(traceback.print_exc())
             current_app.logger.error(ex)
+
             return redirect(
                 current_app.config['RECORDS_UI_ENDPOINTS']['recid']['route'].replace(
                     '<pid_value>', pid.pid_value

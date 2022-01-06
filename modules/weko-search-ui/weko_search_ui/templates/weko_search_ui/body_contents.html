@@ -188,10 +188,10 @@
                 <div class="form-group">
                   <label for="size">{{_('Display Number')}}</label>
                   <select class="form-control" id="pagesize" onchange="changesize();">
-                    <option value="20" selected="selected">20</option>
-                    <option value="50">50</option>
-                    <option value="75">75</option>
-                    <option value="100">100</option>
+                    <option value="20" {% if request.args.get('size')=='20' %} selected {% endif %} >20</option>
+                    <option value="50" {% if request.args.get('size')=='50' %} selected {% endif %}>50</option>
+                    <option value="75"  {% if request.args.get('size')=='75' %} selected {% endif %} >75</option>
+                    <option value="100"  {% if request.args.get('size')=='100' %} selected {% endif %} >100</option>
                   </select>
                 </div>
               {%- endblock search_sort %}
@@ -258,6 +258,6 @@
       var params = new URLSearchParams(url.search.slice(1));
       params.set('size', pagesize.value);
       location.href=location.pathname+"?"+params;
-    }
+    };
   </script>
 </div>

@@ -77,7 +77,9 @@ def update_items_by_authorInfo(origin_list, target):
                     key_map['gname_lang_key']: name['language']
                 })
                 full_names.append({
-                    key_map['name_key']: "{}, {}".format(name['familyName'], name['firstName']),
+                    key_map['name_key']: "{}, {}".format(
+                        name['familyName'],
+                        name['firstName']),
                     key_map['name_lang_key']: name['language']
                 })
 
@@ -136,7 +138,7 @@ def update_items_by_authorInfo(origin_list, target):
             author_data = {}
             for k, v in dep.items():
                 if isinstance(v, dict) \
-                        and 'attribute_value_mlt' in v \
+                    and v.get('attribute_value_mlt') \
                         and isinstance(v['attribute_value_mlt'], list):
                     data_list = v['attribute_value_mlt']
                     prop_type = None
@@ -192,11 +194,17 @@ def update_items_by_authorInfo(origin_list, target):
         query_q = {
             "query": {
                 "bool": {
-                    "must": [{
-                        "terms": {
-                            "author_link": origin_list
-                        }
-                    }]
+                    "must": [
+                        {
+                            "query_string": {
+                                "query": "publish_status:0 AND "
+                                         "relation_version_is_last:true"
+                            }
+                        }, {
+                            "terms": {
+                                "author_link": origin_list
+                            }
+                        }]
                 }
             },
             "_source": [

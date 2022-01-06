@@ -1372,19 +1372,30 @@ def prepare_edit_workflow(post_activity, recid, deposit):
         try:
             _deposit = WekoDeposit.get_record(draft_pid.object_uuid)
             _bucket = Bucket.get(_deposit.files.bucket.id)
+
+            if not _bucket:
+                _bucket = Bucket.create(
+                    quota_size=current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
+                    max_file_size=current_app.config['WEKO_MAX_FILE_SIZE'],
+                )
+                RecordsBuckets.create(record=_deposit.model, bucket=_bucket)
+                _deposit.files.bucket.id = _bucket
+
             bucket = deposit.files.bucket
 
             sync_bucket = RecordsBuckets.query.filter_by(
                 bucket_id=_deposit.files.bucket.id
             ).first()
+
             snapshot = bucket.snapshot(lock=False)
             snapshot.locked = False
             _bucket.locked = False
 
             sync_bucket.bucket_id = snapshot.id
             _deposit['_buckets']['deposit'] = str(snapshot.id)
-            _bucket.remove()
+
             db.session.add(sync_bucket)
+            _bucket.remove()
 
             # update metadata
             _metadata = convert_record_to_item_metadata(deposit)
@@ -3576,21 +3587,22 @@ def check_authority_by_admin(activity):
     # If user has community role
     # and the user who created activity is member of community
     # role -> has permission:
-    community_role_name = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-    # Get the list of users who has the community role
-    community_users = User.query.outerjoin(userrole).outerjoin(Role) \
-        .filter(community_role_name == Role.name) \
-        .filter(userrole.c.role_id == Role.id) \
-        .filter(User.id == userrole.c.user_id) \
-        .all()
-    community_user_ids = [
-        community_user.id for community_user in community_users]
-    for role in list(current_user.roles or []):
-        if role.name in community_role_name:
-            # User has community role
-            if activity.activity_login_user in community_user_ids:
-                return True
-            break
+    community_role_names = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+    for community_role_name in community_role_names:
+        # Get the list of users who has the community role
+        community_users = User.query.outerjoin(userrole).outerjoin(Role) \
+            .filter(community_role_name == Role.name) \
+            .filter(userrole.c.role_id == Role.id) \
+            .filter(User.id == userrole.c.user_id) \
+            .all()
+        community_user_ids = [
+            community_user.id for community_user in community_users]
+        for role in list(current_user.roles or []):
+            if role.name in community_role_name:
+                # User has community role
+                if activity.activity_login_user in community_user_ids:
+                    return True
+                break
     return False
 
 
