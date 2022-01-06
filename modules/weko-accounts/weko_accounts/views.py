@@ -148,7 +148,7 @@ def shib_auto_login():
         datastore.delete(cache_key)
         return redirect(session['next'] if 'next' in session else '/')
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return abort(400)
 
 
@@ -208,7 +208,7 @@ def confirm_user():
         datastore.delete(cache_key)
         return redirect(session['next'] if 'next' in session else '/')
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return abort(400)
 
 
@@ -260,7 +260,7 @@ def shib_login():
             email=user.email if user else ''
         )
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return abort(400)
 
 
@@ -313,7 +313,7 @@ def shib_sp_login():
         }
         return url_for(next_url, **query_string)
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         return _redirect_method()
 
 

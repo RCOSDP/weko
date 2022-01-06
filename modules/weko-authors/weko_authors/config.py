@@ -24,9 +24,15 @@ from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 
 WEKO_AUTHORS_LIST_SCHEME = ['e-Rad', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID',
                             'kakenhi', 'Ringgold', 'GRID', 'Other']
-""" List of scheme """
+""" List of Author Name Identifier Scheme """
 
 WEKO_AUTHORS_INDEX_ITEM_OTHER = 9
+""" Item other index """
+
+WEKO_AUTHORS_LIST_SCHEME_AFFILIATION = ['ISNI', 'GRID', 'Ringgold', 'kakenhi', 'Other']
+""" List of Affiliation Name Identifier Scheme """
+
+WEKO_AUTHORS_AFFILIATION_IDENTIFIER_ITEM_OTHER = 4
 """ Item other index """
 
 WEKO_AUTHORS_BASE_TEMPLATE = 'weko_authors/base.html'
@@ -40,6 +46,9 @@ WEKO_AUTHORS_ADMIN_EDIT_TEMPLATE = 'weko_authors/admin/author_edit.html'
 
 WEKO_AUTHORS_ADMIN_PREFIX_TEMPLATE = 'weko_authors/admin/prefix_list.html'
 """Template for the id prefix settings page."""
+
+WEKO_AUTHORS_ADMIN_AFFILIATION_TEMPLATE = 'weko_authors/admin/affiliation_list.html'
+"""Template for the id affiliation settings page."""
 
 WEKO_AUTHORS_ADMIN_EXPORT_TEMPLATE = 'weko_authors/admin/author_export.html'
 """Template for the export page."""

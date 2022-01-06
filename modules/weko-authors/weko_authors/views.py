@@ -29,7 +29,7 @@ from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 
 from .config import WEKO_AUTHORS_IMPORT_KEY
-from .models import Authors, AuthorsPrefixSettings
+from .models import Authors, AuthorsAffiliationSettings, AuthorsPrefixSettings
 from .permissions import author_permission
 from .utils import get_author_setting_obj, get_count_item_link
 
@@ -96,7 +96,7 @@ def create():
 @login_required
 @author_permission.require(http_exception=403)
 def update_author():
-    """Add an author."""
+    """Update an author."""
     if request.headers['Content-Type'] != 'application/json':
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg=_('Header Error'))
@@ -129,7 +129,7 @@ def update_author():
 @login_required
 @author_permission.require(http_exception=403)
 def delete_author():
-    """Add an author."""
+    """Delete an author."""
     if request.headers['Content-Type'] != 'application/json':
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg=_('Header Error'))
@@ -312,13 +312,20 @@ def mapping():
     def get_identifier_creator(res, _source):
         def get_info_author_id(idTtype):
             prefix_settings = AuthorsPrefixSettings.query.all()
-            scheme = uri = ''
+            affiliation_settings = AuthorsAffiliationSettings.query.all()
+            prefix_scheme = prefix_uri = ''
+            affiliation_scheme = affiliation_uri = ''
             for prefix in prefix_settings:
                 if prefix.id == idTtype:
-                    scheme = prefix.scheme
-                    uri = prefix.url
-                    return scheme, uri
-            return scheme, uri
+                    prefix_scheme = prefix.prefix_scheme
+                    prefix_uri = prefix.url
+                    return prefix_scheme, prefix_uri
+            for affiliation in affiliation_settings:
+                if affiliation.id == idTtype:
+                    affiliation_scheme = affiliation.affiliation_scheme
+                    affiliation_uri = affiliation.url
+                    return affiliation_scheme, affiliation_uri
+            return prefix_scheme, prefix_uri, affiliation_scheme, affiliation_uri
 
         id_info = _source.get('authorIdInfo')
         for j in id_info:
@@ -469,6 +476,21 @@ def get_prefix_list():
             data.append(tmp)
     return jsonify(data)
 
+@blueprint_api.route("/search_affiliation", methods=['get'])
+@login_required
+@author_permission.require(http_exception=403)
+def get_affiliation_list():
+    """Get all authors affiliation settings."""
+    settings = AuthorsAffiliationSettings.query.order_by(
+        AuthorsAffiliationSettings.id).all()
+    data = []
+    if settings:
+        for s in settings:
+            tmp = s.__dict__
+            if '_sa_instance_state' in tmp:
+                tmp.pop('_sa_instance_state')
+            data.append(tmp)
+    return jsonify(data)
 
 @blueprint_api.route("/list_vocabulary", methods=['get'])
 @login_required
@@ -481,6 +503,16 @@ def get_list_schema():
     }
     return jsonify(data)
 
+@blueprint_api.route("/list_affiliation_scheme", methods=['get'])
+@login_required
+@author_permission.require(http_exception=403)
+def get_list_affiliation_schema():
+    """Get all affiliation scheme items config.py."""
+    data = {
+        "list": current_app.config['WEKO_AUTHORS_LIST_SCHEME_AFFILIATION'],
+        "index": current_app.config['WEKO_AUTHORS_AFFILIATION_IDENTIFIER_ITEM_OTHER']
+    }
+    return jsonify(data)
 
 @blueprint_api.route("/edit_prefix", methods=['post'])
 @login_required
@@ -525,3 +557,48 @@ def create_prefix():
                 {'code': 400, 'msg': 'Specified scheme is already exist.'})
     except Exception:
         return jsonify({'code': 204, 'msg': 'Failed'})
+
+@blueprint_api.route("/edit_affiliation", methods=['post'])
+@login_required
+@author_permission.require(http_exception=403)
+def update_affiliation():
+    """Update authors affiliation settings."""
+    try:
+        data = request.get_json()
+        check = get_author_setting_obj(data['scheme'])
+        if check is None or check.id == data['id']:
+            AuthorsAffiliationSettings.update(**data)
+            return jsonify({'code': 200, 'msg': 'Success'})
+        else:
+            return jsonify(
+                {'code': 400, 'msg': 'Specified scheme is already exist.'})
+    except Exception:
+        return jsonify({'code': 204, 'msg': 'Failed'})
+
+@blueprint_api.route("/delete_affiliation/<id>", methods=['delete'])
+@login_required
+@author_permission.require(http_exception=403)
+def delete_affiliation(id):
+    """Delete authors affiliation settings."""
+    AuthorsAffiliationSettings.delete(id)
+    return jsonify(msg=_('Success'))
+
+@blueprint_api.route("/add_affiliation", methods=['put'])
+@login_required
+@author_permission.require(http_exception=403)
+def create_affiliation():
+    """Add new authors affiliation settings."""
+    try:
+        data = request.get_json()
+        check = get_author_setting_obj(data['scheme'])
+        if check is None:
+            AuthorsAffiliationSettings.create(**data)
+            return jsonify({'code': 200, 'msg': 'Success'})
+        else:
+            return jsonify(
+                {'code': 400, 'msg': 'Specified scheme is already exist.'})
+    except Exception:
+        return jsonify({'code': 204, 'msg': 'Failed'})
+
+
+

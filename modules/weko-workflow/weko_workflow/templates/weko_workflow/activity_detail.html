@@ -368,7 +368,7 @@
        <button class="btn btn-info pull-left back-button" onClick="window.location.href='{{url_for('weko_workflow.index')}}'; $(this).prop('disabled', true)">
          <span class="glyphicon glyphicon-chevron-left"></span> {{_('Back')}}</button>
          {%- if 'F' == activity.activity_status %}
-         <button class="btn btn-info pull-right back-button" onClick="window.location.href='/records/{{ item.get('id')| replace('.1','') }}';$(this).prop('disabled', true)">
+         <button class="btn btn-info pull-right back-button" onClick="window.location.href='/records/{{ item.get('id')| regex_replace('.[0-9]+','') }}';$(this).prop('disabled', true)">
           Access</button>
          {%- endif %}
     {%- endif %}

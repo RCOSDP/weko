@@ -52,6 +52,9 @@ class AuthorManagementView(BaseView):
         if tab_value == 'prefix':
             template = \
                 current_app.config['WEKO_AUTHORS_ADMIN_PREFIX_TEMPLATE']
+        if tab_value == 'affiliation':
+            template = \
+                current_app.config['WEKO_AUTHORS_ADMIN_AFFILIATION_TEMPLATE']
         return self.render(
             template,
             render_widgets=False,  # Moved to admin, no need for widgets
