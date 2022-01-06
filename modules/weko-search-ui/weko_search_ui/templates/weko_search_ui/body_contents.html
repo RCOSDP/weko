@@ -188,7 +188,7 @@
                 <div class="form-group">
                   <label for="size">{{_('Display Number')}}</label>
                   <select class="form-control" id="pagesize" onchange="changesize();">
-                    <option value="20" selected="selected">20</option>
+                    <option value="20">20</option>
                     <option value="50">50</option>
                     <option value="75">75</option>
                     <option value="100">100</option>
@@ -259,5 +259,22 @@
       params.set('size', pagesize.value);
       location.href=location.pathname+"?"+params;
     }
+
+    var set_interval_id = setInterval(setPageSize, 100);
+    function setPageSize() {
+      var pagesize_elements = document.getElementById('pagesize').options;
+      if(pagesize_elements.length > 0) {
+         var url = new URL(location.href);
+         var size = new URLSearchParams(url.search.slice(1)).get('size');
+         var select =  document.getElementById('pagesize').options;
+         for(let i = 0; i < select.length; i++ ){
+             if(select[i].value == size){
+                 select[i].selected = true;
+                 clearInterval(set_interval_id);
+                 break;
+             }
+         }
+      }
+    };
   </script>
 </div>
