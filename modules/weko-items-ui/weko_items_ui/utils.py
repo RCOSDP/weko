@@ -1928,10 +1928,10 @@ def hide_meta_data_for_role(record):
             is_hidden = False
             break
     # Community users
-    community_role_name = current_app.config[
+    community_role_names = current_app.config[
         'WEKO_PERMISSION_ROLE_COMMUNITY']
     for role in list(roles):
-        if role.name in community_role_name:
+        if role.name in community_role_names:
             is_hidden = False
             break
 
@@ -3043,7 +3043,7 @@ def check_item_is_being_edit(
     if post_workflow and post_workflow.action_status \
             in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]:
         current_app.logger.debug("post_workflow: {0} status: {1}".format(
-            item_uuid, post_workflow.action_status))
+            post_workflow, post_workflow.action_status))
         return True
 
     draft_pid = PersistentIdentifier.query.filter_by(
