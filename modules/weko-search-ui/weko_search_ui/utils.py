@@ -468,6 +468,10 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
         return       -- PID object if exist.
 
     """
+    if isinstance(file, str):
+        filename = file.split('/')[-1]
+    else:
+        filename = file.filename
     if not is_gakuninrdm:
         tmp_prefix = current_app.config['WEKO_SEARCH_UI_IMPORT_TMP_PREFIX']
     else:
@@ -526,11 +530,11 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
             error = _('The format of the specified file {} does not'
                       + ' support import. Please specify one of the'
                       + ' following formats: zip, tar, gztar, bztar,'
-                      + ' xztar.').format(file.filename)
+                      + ' xztar.').format(filename)
         elif isinstance(ex, FileNotFoundError):
             error = _('The TSV file was not found in the specified file {}.'
                       + ' Check if the directory structure is correct.') \
-                .format(file.filename)
+                .format(filename)
         elif isinstance(ex, UnicodeDecodeError):
             error = ex.reason
         elif ex.args and len(ex.args) and isinstance(ex.args[0], dict) \

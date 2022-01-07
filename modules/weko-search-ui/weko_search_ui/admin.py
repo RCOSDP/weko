@@ -22,6 +22,8 @@
 
 import copy
 import json
+import os
+import tempfile
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
@@ -49,8 +51,8 @@ from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
     WEKO_EXPORT_TEMPLATE_BASIC_NAME, WEKO_EXPORT_TEMPLATE_BASIC_OPTION, \
     WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
     WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE
-from .tasks import export_all_task, import_item, is_import_running, \
-    remove_temp_dir_task, check_celery_is_run
+from .tasks import check_celery_is_run, check_import_items_task, \
+    export_all_task, import_item, is_import_running, remove_temp_dir_task
 from .utils import cancel_export_all, check_import_items, \
     check_sub_item_is_system, create_flow_define, delete_records, \
     get_change_identifier_mode_content, get_content_workflow, \
@@ -101,13 +103,15 @@ class ItemManagementBulkDelete(BaseView):
                         msg = '{}<br/>'.format(
                             _('The following item(s) cannot be deleted.'))
                         if doi_items:
-                            _item_d = ['recid: {}'.format(i) for i in doi_items]
+                            _item_d = ['recid: {}'.format(i)
+                                       for i in doi_items]
                             msg += '<br/>{}<br/>&nbsp;{}'.format(
                                 _('DOI granting item(s):'),
                                 (', ').join(_item_d)
                             )
                         if edt_items:
-                            _item_e = ['recid: {}'.format(i) for i in edt_items]
+                            _item_e = ['recid: {}'.format(i)
+                                       for i in edt_items]
                             msg += '<br/>{}<br/>&nbsp;{}'.format(
                                 _('Editing item(s):'),
                                 (', ').join(_item_e)
@@ -290,33 +294,38 @@ class ItemImportView(BaseView):
         """Validate item import."""
         data = request.form
         file = request.files['file'] if request.files else None
-        list_record = []
-        data_path = ''
 
-        if data:
-            result = check_import_items(
-                file,
-                data.get('is_change_identifier') == 'true'
-            )
-            if isinstance(result, dict):
-                data_path = result.get('data_path', '')
-                if result.get('error'):
-                    remove_temp_dir_task.apply_async((data_path,))
-                    return jsonify(code=0, error=result.get('error'))
-                else:
-                    list_record = result.get('list_record', [])
-                    num_record_err = len(
-                        [i for i in list_record if i.get('errors')])
-                    if len(list_record) == num_record_err:
-                        remove_temp_dir_task.apply_async((data_path,))
-                    else:
-                        expire = datetime.now() + \
-                            timedelta(seconds=get_lifetime())
-                        TempDirInfo().set(
-                            data_path,
-                            {'expire': expire.strftime('%Y-%m-%d %H:%M:%S')}
-                        )
-        return jsonify(code=1, list_record=list_record, data_path=data_path)
+        if data and file:
+            temp_path = tempfile.gettempdir() + '/' + \
+                current_app.config['WEKO_SEARCH_UI_IMPORT_TMP_PREFIX'] + \
+                datetime.utcnow().strftime(r'%Y%m%d%H%M%S%f')
+            os.mkdir(temp_path)
+            file_path = temp_path + '/' + file.filename
+            file.save(file_path)
+            task = check_import_items_task.apply_async(
+                (file_path, data.get('is_change_identifier') == 'true',
+                 request.host_url, current_i18n.language), )
+        return jsonify(code=1, check_import_task_id=task.task_id)
+
+    @expose('/get_check_status', methods=['POST'])
+    def get_check_status(self) -> jsonify:
+        """Validate item import."""
+        data = request.get_json()
+        result = {}
+
+        if data and data.get('task_id'):
+            task = import_item.AsyncResult(data.get('task_id'))
+            if task and isinstance(task.result, dict):
+                start_date = task.result.get("start_date")
+                end_date = task.result.get("end_date")
+                result.update({
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    **task.result
+                })
+            elif task and task.status != "PENDING":
+                result['error'] = _('Internal server error')
+        return jsonify(**result)
 
     @expose('/download_check', methods=['POST'])
     def download_check(self):

@@ -35,20 +35,20 @@ def test_init():
     assert 'invenio-files-rest' in app.extensions
 
 
-def test_alembic(app, db):
-    """Test alembic recipes."""
-    ext = app.extensions['invenio-db']
+# def test_alembic(app, db):
+#     """Test alembic recipes."""
+#     ext = app.extensions['invenio-db']
 
-    if db.engine.name == 'sqlite':
-        raise pytest.skip('Upgrades are not supported on SQLite.')
+#     if db.engine.name == 'sqlite':
+#         raise pytest.skip('Upgrades are not supported on SQLite.')
 
-    assert not ext.alembic.compare_metadata()
-    db.drop_all()
-    ext.alembic.upgrade()
+#     assert not ext.alembic.compare_metadata()
+#     db.drop_all()
+#     ext.alembic.upgrade()
 
-    assert not ext.alembic.compare_metadata()
-    ext.alembic.stamp()
-    ext.alembic.downgrade(target='96e796392533')
-    ext.alembic.upgrade()
+#     assert not ext.alembic.compare_metadata()
+#     ext.alembic.stamp()
+#     ext.alembic.downgrade(target='96e796392533')
+#     ext.alembic.upgrade()
 
-    assert not ext.alembic.compare_metadata()
+#     assert not ext.alembic.compare_metadata()

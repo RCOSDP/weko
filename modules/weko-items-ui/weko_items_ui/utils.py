@@ -403,14 +403,22 @@ def parse_ranking_results(index_info,
                 else:
                     t['date'] = new_date
                     date = new_date
-            title = item.get(title_key)
+            if pid_key == 'col1':
+                pid_value = item.get(pid_key, '')
+            else:
+                pid_value = item.get('pid_value', '')
+            if pid_value:
+                record = WekoRecord.get_record_by_pid(pid_value)
+                title = record.get_titles
+            else:
+                title = item.get(title_key)
             if title_key == 'user_id':
                 user_info = UserProfile.get_by_userid(title)
                 if user_info:
                     title = user_info.username
                 else:
                     title = 'None'
-            t['title'] = title
+            t['title'] = title if title else 'None'
             t['url'] = url.format(item[key]) if url and key in item else None
             if title != '':  # Do not add empty searches
                 ranking_list.append(t)
