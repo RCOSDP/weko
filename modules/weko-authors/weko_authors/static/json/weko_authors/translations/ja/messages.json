@@ -11,6 +11,18 @@
         null,
         "編集"
     ],
+    "Author_Button_Search": [
+        null,
+        "検索"
+    ],
+    "Author_Button_Back": [
+        null,
+        "戻る"
+    ],
+    "Author_Button_Execute": [
+        null,
+        "実行"
+    ],
     "Author_Control": [
         null,
         "コントロール"
@@ -111,13 +123,33 @@
         null,
         "組織追加"
     ],
+    "Author_Button_Merge": [
+        null,
+        "著者統合"
+    ],
     "Author_Add_Author": [
         null,
         "著者追加"
     ],
+    "Author_Display_Number": [
+        null,
+        "表示件数"
+    ],
+    "Author_Origin": [
+        null,
+        "統合元"
+    ],
+    "Author_Target": [
+        null,
+        "統合先"
+    ],
     "Author_Mail_Address": [
         null,
         "メールアドレス"
+    ],
+    "Author_Item_Count": [
+        null,
+        "アイテム件数"
     ],
     "Author_Search_No_Result": [
         null,

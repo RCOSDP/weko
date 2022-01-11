@@ -11,6 +11,18 @@
         null,
         "Edit"
     ],
+    "Author_Button_Search": [
+        null,
+        "Search"
+    ],
+    "Author_Button_Back": [
+        null,
+        "Back"
+    ],
+    "Author_Button_Execute": [
+        null,
+        "Execute"
+    ],
     "Author_Control": [
         null,
         "Control"
@@ -111,13 +123,33 @@
         null,
         "Add Organization"
     ],
+    "Author_Button_Merge": [
+        null,
+        "Merge"
+    ],
     "Author_Add_Author": [
         null,
         "Add Author"
     ],
+    "Author_Display_Number": [
+        null,
+        "Display Number"
+    ],
+    "Author_Origin": [
+        null,
+        "Origin"
+    ],
+    "Author_Target": [
+        null,
+        "Target"
+    ],
     "Author_Mail_Address": [
         null,
         "Mail Address"
+    ],
+    "Author_Item_Count": [
+        null,
+        "Item Count"
     ],
     "Author_Search_No_Result": [
         null,
