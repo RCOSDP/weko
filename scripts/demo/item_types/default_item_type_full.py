@@ -168,7 +168,7 @@ property_list = [
         multiple=True
     ),
     AddProperty(
-        AddProperty.record_name,
+        AddProperty.source_title,
         '収録物名',
         '収録物名',
         'Source Title',
