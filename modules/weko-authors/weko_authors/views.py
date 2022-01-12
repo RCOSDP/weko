@@ -317,12 +317,12 @@ def mapping():
             affiliation_scheme = affiliation_uri = ''
             for prefix in prefix_settings:
                 if prefix.id == idTtype:
-                    prefix_scheme = prefix.prefix_scheme
+                    prefix_scheme = prefix.scheme
                     prefix_uri = prefix.url
                     return prefix_scheme, prefix_uri
             for affiliation in affiliation_settings:
                 if affiliation.id == idTtype:
-                    affiliation_scheme = affiliation.affiliation_scheme
+                    affiliation_scheme = affiliation.scheme
                     affiliation_uri = affiliation.url
                     return affiliation_scheme, affiliation_uri
             return prefix_scheme, prefix_uri, affiliation_scheme, affiliation_uri
