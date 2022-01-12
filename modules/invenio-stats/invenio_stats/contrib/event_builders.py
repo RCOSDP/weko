@@ -12,6 +12,7 @@ from __future__ import absolute_import, print_function
 
 import datetime
 import uuid
+from socket import gethostbyaddr, herror
 
 from flask import request
 from weko_accounts.utils import get_remote_addr
@@ -270,15 +271,16 @@ def resolve_address(addr):
 
     If no name is found, return None.
     """
-    from socket import gethostbyaddr, herror
+    ret = None
     try:
-        record = gethostbyaddr(addr)
-
+        if addr is not None:
+            record = gethostbyaddr(addr)
+            ret = record[0]
     except herror:
         # print('an error occurred while resolving ', addr, ': ', exc)
-        return None
+        ret = None
 
-    return record[0]
+    return ret
 
 
 def search_event_builder(event, sender_app, search_args=None,
