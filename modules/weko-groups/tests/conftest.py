@@ -54,7 +54,8 @@ def app(request):
         LOGIN_DISABLED=False,
         MAIL_SUPPRESS_SEND=True,
         SECRET_KEY='1qertgyujk345678ijk',
-        SQLALCHEMY_DATABASE_URI='sqlite:///weko_groups.db',
+        SQLALCHEMY_DATABASE_URI=os.environ.get('SQLALCHEMY_DATABASE_URI',
+                                               'sqlite:///test.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         TESTING=True,
         WTF_CSRF_ENABLED=False,
@@ -69,7 +70,7 @@ def app(request):
     with app.app_context():
         if str(db.engine.url) != 'sqlite://' and \
            not database_exists(str(db.engine.url)):
-                create_database(str(db.engine.url))
+            create_database(str(db.engine.url))
         db.create_all()
 
     def teardown():

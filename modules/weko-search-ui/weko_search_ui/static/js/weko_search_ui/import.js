@@ -132,10 +132,11 @@ class MainLayout extends React.Component {
       is_import: true,
       import_status: false,
       isShowMessage: false,
-      disabled_select_file: false
+      isChecking: false
     }
     this.handleChangeTab = this.handleChangeTab.bind(this)
     this.handleCheck = this.handleCheck.bind(this)
+    this.getCheckStatus = this.getCheckStatus.bind(this)
     this.handleImport = this.handleImport.bind(this)
     this.getStatus = this.getStatus.bind(this)
     this.updateShowMessage = this.updateShowMessage.bind(this)
@@ -172,8 +173,9 @@ class MainLayout extends React.Component {
   }
 
   handleCheck(formData) {
-    const that = this
+    const that = this;
     closeError();
+    this.setState({ isChecking: true });
     $.ajax({
       url: urlCheck,
       type: 'POST',
@@ -181,35 +183,63 @@ class MainLayout extends React.Component {
       contentType: false,
       processData: false,
       success: function (response) {
-        if (response.code) {
-          const is_import = response.list_record.filter(item => {
-            return !item.errors || item.errors.length === 0;
-          }).length <= 0;
-          that.setState(() => {
-            return {
-              list_record: response.list_record,
-              data_path: response.data_path,
-              is_import,
-              step: step.IMPORT_STEP
-            }
-          }, () => {
-            that.handleChangeTab('import');
-          })
-        } else {
-          showErrorMsg(response.error);
-        }
+        that.getCheckStatus(response.check_import_task_id);
       },
       error: function (error) {
         console.log(error);
         showErrorMsg(internal_server_error);
+        that.setState({ isChecking: false });
       }
+    });
+  }
+
+  getCheckStatus(taskId) {
+    const that = this;
+
+    $.ajax({
+      url: window.location.origin + '/admin/items/import/get_check_status',
+      method: 'POST',
+      data: JSON.stringify({ task_id: taskId }),
+      contentType: "application/json; charset=utf-8",
+      dataType: "json",
+    }).done((response) => {
+      if (response.error) {
+        showErrorMsg(response.error);
+        that.setState({ isChecking: false });
+        return;
+      }
+
+      if ('list_record' in response) {
+        const is_import = response.list_record.filter(item => {
+          return !item.errors || item.errors.length === 0;
+        }).length <= 0;
+        that.setState(() => {
+          return {
+            list_record: response.list_record,
+            data_path: response.data_path,
+            is_import,
+            step: step.IMPORT_STEP
+          }
+        }, () => {
+          that.handleChangeTab('import');
+          that.setState({ isChecking: false });
+          return;
+        })
+      } else {
+        setTimeout(function () {
+          that.getCheckStatus(taskId);
+        }, 1000);
+      }
+    }).fail((err) => {
+      console.log(err);
+      showErrorMsg(internal_server_error);
+      that.setState({ isChecking: false });
     });
   }
 
   handleCheckImportAvailable() {
     closeError();
     const import_start_time = localStorage.getItem('import_start_time');
-    const me = this
     let result = false;
     $.ajax({
       url: urlCheckImportAvailable,
@@ -221,9 +251,6 @@ class MainLayout extends React.Component {
           let error_msg = import_start_time === response.start_time ? not_available_error : not_available_error_another;
           if (response.error_id === 'celery_not_run') {
             error_msg = celery_not_run;
-            me.setState({
-              disabled_select_file: true
-            });
           }
           showErrorMsg(error_msg);
         } else {
@@ -309,7 +336,7 @@ class MainLayout extends React.Component {
   }
 
   render() {
-    const { tab, tabs, list_record, is_import, tasks, import_status, isShowMessage, disabled_select_file } = this.state
+    const { tab, tabs, list_record, is_import, tasks, import_status, isShowMessage, isChecking } = this.state;
     return (
       <div>
         <ul className="nav nav-tabs">
@@ -325,7 +352,7 @@ class MainLayout extends React.Component {
           <ImportComponent
             handleCheck={this.handleCheck}
             updateShowMessage={this.updateShowMessage}
-            disabled_select_file={disabled_select_file}
+            isChecking={isChecking}
           />
         </div>
         <div className={`${tab === tabs[1].tab_key ? '' : 'hide'}`}>
@@ -566,8 +593,8 @@ class ImportComponent extends React.Component {
       is_change_identifier,
       change_identifier_mode_content,
       disabled_checkbox
-    } = this.state
-    const { disabled_select_file } = this.props
+    } = this.state;
+    const { isChecking } = this.props;
     return (
       <div className="import_component">
         <div className="row layout">
@@ -578,7 +605,7 @@ class ImportComponent extends React.Component {
               </div>
               <div className="col-md-8">
                 <div>
-                  <button disabled={disabled_select_file} className="btn btn-primary" onClick={this.handleClickFile}>{select_file}</button>
+                  <button className="btn btn-primary" onClick={this.handleClickFile}>{select_file}</button>
                   <input
                     type="file"
                     className="input-file"
@@ -616,11 +643,12 @@ class ImportComponent extends React.Component {
               <div className="col-md-2">
                 <button
                   className="btn btn-primary"
-                  disabled={!file}
+                  disabled={!file || isChecking}
                   onClick={() => {
                     file && this.handleSubmit()
                   }}>
-                  <span className="glyphicon glyphicon-download-alt icon"></span>{next}
+                  {isChecking ? <div className="loading" /> : <span className="glyphicon glyphicon-download-alt icon"></span>}
+                  {next}
                 </button>
               </div>
             </div>

@@ -47,6 +47,8 @@ def get_remote_addr():
         if address is not None:
             address = address.encode('utf-8').split(b',')[0].strip().decode()
 
+    current_app.logger.debug("IP Address:{}".format(address))
+
     return address
 
 

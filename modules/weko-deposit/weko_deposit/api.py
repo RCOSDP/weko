@@ -42,6 +42,7 @@ from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
     Part
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
+from invenio_oaiserver.models import OAISet
 from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
@@ -58,7 +59,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
 from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, \
-    ItemTypes
+    ItemTypes, Mapping
 from weko_records.models import ItemMetadata, ItemReference
 from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, remove_weko2_special_character, \
@@ -795,7 +796,10 @@ class WekoDeposit(Deposit):
                         and ('sets' not in self.jrc['_oai']
                              or not self.jrc['_oai']['sets']):
                     setspec_list = self.jrc['path'] or []
+                    # setspec_list = OAISet.query.filter_by(
+                    #    id=self.jrc['path']).one_or_none()
                     if setspec_list:
+                        # self.jrc['_oai'].update(dict(sets=setspec_list.spec))
                         self.jrc['_oai'].update(dict(sets=setspec_list))
                 # upload item metadata to Elasticsearch
                 set_timestamp(self.jrc, self.created, self.updated)
@@ -1050,7 +1054,8 @@ class WekoDeposit(Deposit):
                         datastore.delete(cache_key)
                     data = json.loads(data_str.decode('utf-8'))
         except BaseException:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            current_app.logger.error(
+                "Unexpected error: {}".format(sys.exc_info()))
             abort(500, 'Failed to register item!')
         # Get index path
         index_lst = index_obj.get('index', [])
@@ -1440,6 +1445,74 @@ class WekoRecord(Record):
         item_type = ItemTypes.get_by_id(self.get('item_type_id'))
         return '{}({})'.format(item_type.item_type_name.name, item_type.tag)
 
+    @staticmethod
+    def switching_language(data):
+        """Switching language."""
+        current_lang = current_i18n.language
+        for value in data:
+            if value.get('language', '') == current_lang:
+                return value.get('title', '')
+        else:
+            for value in data:
+                if value.get('language', '') == 'en':
+                    return value.get('title', '')
+            else:
+                for value in data:
+                    if value.get('language', ''):
+                        return value.get('title', '')
+                else:
+                    if len(data) > 0:
+                        return data[0].get('title', '')
+        return ''
+
+    @staticmethod
+    def __get_titles_key(item_type_mapping):
+        """Get title keys in item type mapping.
+
+        :param item_type_mapping: item type mapping.
+        :return:
+        """
+        parent_key = None
+        title_key = None
+        language_key = None
+        for mapping_key in item_type_mapping:
+            property_data = item_type_mapping.get(mapping_key).get(
+                'jpcoar_mapping')
+            if (
+                isinstance(property_data, dict)
+                and property_data.get('title')
+            ):
+                title = property_data.get('title')
+                parent_key = mapping_key
+                title_key = title.get("@value")
+                language_key = title.get("@attributes", {}).get("xml:lang")
+        return parent_key, title_key, language_key
+
+    @property
+    def get_titles(self):
+        """Get titles of record.
+
+        :param record:
+        :return:
+        """
+        item_type_mapping = Mapping.get_record(self.get('item_type_id'))
+        parent_key, title_key, language_key = self.__get_titles_key(
+            item_type_mapping)
+        title_metadata = self.get(parent_key)
+        titles = []
+        if title_metadata:
+            attribute_value = title_metadata.get('attribute_value_mlt')
+            if isinstance(attribute_value, list):
+                for attribute in attribute_value:
+                    tmp = dict()
+                    if attribute.get(title_key):
+                        tmp['title'] = attribute.get(title_key)
+                    if attribute.get(language_key):
+                        tmp['language'] = attribute.get(language_key)
+                    if tmp.get('title'):
+                        titles.append(tmp.copy())
+        return self.switching_language(titles)
+
     @property
     def items_show_list(self):
         """Return the item show list."""
@@ -1756,7 +1829,10 @@ class WekoRecord(Record):
             return PersistentIdentifier.query.filter_by(
                 pid_type=pid_type,
                 object_uuid=pid_without_ver.object_uuid,
-                status=PIDStatus.REGISTERED).one_or_none()
+                status=PIDStatus.REGISTERED
+            ).order_by(
+                db.desc(PersistentIdentifier.created)
+            ).first()
         except PIDDoesNotExistError as pid_not_exist:
             current_app.logger.error(pid_not_exist)
         return None

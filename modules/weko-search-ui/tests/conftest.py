@@ -27,6 +27,8 @@ import pytest
 from flask import Flask
 from flask_babelex import Babel
 
+from weko_search_ui import WekoSearchUI
+
 
 @pytest.yield_fixture()
 def instance_path():
@@ -43,8 +45,11 @@ def base_app(instance_path):
     app_.config.update(
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
+        INDEX_IMG='indextree/36466818-image.jpg',
     )
     Babel(app_)
+    WekoSearchUI(app_)
+
     return app_
 
 

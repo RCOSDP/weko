@@ -17,7 +17,7 @@ def test_version():
     assert __version__
 
 
-def test_init(base_app):
+def test_init(base_app, location):
     """Test extension initialization."""
     assert 'invenio-s3' in base_app.extensions
 

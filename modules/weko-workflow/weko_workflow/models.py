@@ -499,7 +499,7 @@ class FlowDefine(db.Model, TimestampMixin):
     flow_actions = db.relationship('FlowAction', backref=db.backref('flow'))
     """flow action relationship."""
 
-    is_deleted = db.Column(db.Boolean(), nullable=False, default=False)
+    is_deleted = db.Column(db.Boolean(name='is_deleted'), nullable=False, default=False)
     """flow define delete flag."""
 
 
@@ -656,10 +656,10 @@ class WorkFlow(db.Model, TimestampMixin):
         backref=db.backref('workflow', lazy='dynamic')
     )
 
-    is_deleted = db.Column(db.Boolean(), nullable=False, default=False)
+    is_deleted = db.Column(db.Boolean(name='is_deleted'), nullable=False, default=False)
     """workflow delete flag."""
 
-    open_restricted = db.Column(db.Boolean(), nullable=False, default=True)
+    open_restricted = db.Column(db.Boolean(name='open_restricted'), nullable=False, default=True)
     """Open restricted flag."""
 
     location_id = db.Column(db.Integer(), db.ForeignKey(Location.id),
@@ -671,7 +671,7 @@ class WorkFlow(db.Model, TimestampMixin):
         backref=db.backref('workflow', lazy='dynamic')
     )
     
-    is_gakuninrdm = db.Column(db.Boolean(), nullable=False, default=False)
+    is_gakuninrdm = db.Column(db.Boolean(name='is_gakuninrdm'), nullable=False, default=False)
     """GakuninRDM flag."""
 
 
@@ -1069,7 +1069,7 @@ class GuestActivity(db.Model, Timestamp):
     expiration_date = db.Column(db.Integer, nullable=False, default=0)
     """Expiration Date."""
 
-    is_usage_report = db.Column(db.Boolean(), nullable=False, default=False)
+    is_usage_report = db.Column(db.Boolean(name='is_usage_report'), nullable=False, default=False)
     """Is Usage Report."""
 
     def __init__(self, **kwargs):

@@ -33,8 +33,8 @@ def test_init():
     assert 'weko-gridlayout' in app.extensions
 
 
-def test_view(base_client):
-    """Test view."""
-    res = base_client.get("/")
-    assert res.status_code == 200
-    assert 'Welcome to weko-gridlayout' in str(res.data)
+# def test_view(base_client):
+#     """Test view."""
+#     res = base_client.get("/")
+#     assert res.status_code == 200
+#     assert 'Welcome to weko-gridlayout' in str(res.data)

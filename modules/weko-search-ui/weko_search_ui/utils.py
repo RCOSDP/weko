@@ -256,7 +256,7 @@ def get_journal_info(index_id=0):
         result.update({'openSearchUrl': open_search_uri})
 
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         abort(500)
     return result
 
@@ -468,6 +468,10 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
         return       -- PID object if exist.
 
     """
+    if isinstance(file, str):
+        filename = file.split('/')[-1]
+    else:
+        filename = file.filename
     if not is_gakuninrdm:
         tmp_prefix = current_app.config['WEKO_SEARCH_UI_IMPORT_TMP_PREFIX']
     else:
@@ -526,11 +530,11 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
             error = _('The format of the specified file {} does not'
                       + ' support import. Please specify one of the'
                       + ' following formats: zip, tar, gztar, bztar,'
-                      + ' xztar.').format(file.filename)
+                      + ' xztar.').format(filename)
         elif isinstance(ex, FileNotFoundError):
             error = _('The TSV file was not found in the specified file {}.'
                       + ' Check if the directory structure is correct.') \
-                .format(file.filename)
+                .format(filename)
         elif isinstance(ex, UnicodeDecodeError):
             error = ex.reason
         elif ex.args and len(ex.args) and isinstance(ex.args[0], dict) \
@@ -873,8 +877,8 @@ def handle_check_exist_record(list_record) -> list:
             pass
         except BaseException:
             current_app.logger.error(
-                'Unexpected error: ',
-                sys.exc_info()[0]
+                "Unexpected error: {}".format(
+                    sys.exc_info())
             )
         if errors:
             item['errors'] = errors
@@ -1445,7 +1449,7 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                 'error_id': error_id
             }
         except BaseException as ex:
-            current_app.logger.error('Unexpected error: ', ex)
+            current_app.logger.error("Unexpected error: {}".format(ex))
             db.session.rollback()
             if item.get('id'):
                 handle_remove_es_metadata(item)
@@ -1687,9 +1691,9 @@ def handle_check_cnri(list_record):
                 try:
                     pid_cnri = WekoRecord.get_record_by_pid(item_id).pid_cnri
                     if pid_cnri:
-                        if not cnri:
+                        if not cnri and not pid_cnri.pid_value.endswith(str(item_id)):
                             error = _('Please specify {}.').format('CNRI')
-                        elif not pid_cnri.pid_value.endswith(str(cnri)):
+                        elif cnri and not pid_cnri.pid_value.endswith(str(cnri)):
                             error = _('Specified {} is different from existing'
                                       + ' {}.').format('CNRI', 'CNRI')
                     elif cnri:
@@ -1762,8 +1766,7 @@ def handle_check_doi_ra(list_record):
             current_app.logger.debug(
                 "doi_type:{0} _value:{1}".format(doi_type, _value))
 
-            if (doi_type and doi_type[0] != doi_ra) \
-                    or (not doi_type and doi_ra):
+            if (doi_type and doi_type[0] != doi_ra):
                 error = _('Specified {} is different from '
                           + 'existing {}.').format('DOI_RA', 'DOI_RA')
         except Exception as ex:
@@ -1916,6 +1919,8 @@ def register_item_handle(item):
             suffix = "{:010d}".format(int(item_id))
             cnri = cnri[:-1] if cnri[-1] == '/' else cnri
             cnri += '/' + suffix
+        if uri is None:
+            uri = get_url_root() + 'records/' + str(item_id)
         if item.get('status') == 'new':
             register_hdl_by_handle(cnri, pid.object_uuid, uri)
         else:

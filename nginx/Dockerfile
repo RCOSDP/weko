@@ -3,7 +3,7 @@ FROM ubuntu:focal AS nginx-with-shib
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /tmp
 
-RUN apt-get update -y 
+RUN apt-get update -y
 RUN apt-get install -y wget curl gnupg2 ca-certificates lsb-release unzip uuid-dev dpkg-dev
 RUN echo "deb http://nginx.org/packages/ubuntu focal nginx" | tee /etc/apt/sources.list.d/nginx.list
 RUN echo "deb-src http://nginx.org/packages/ubuntu focal nginx" | tee -a /etc/apt/sources.list.d/nginx.list
@@ -48,7 +48,7 @@ COPY --from=nginx-with-shib /tmp/nginx-dbg_1.20.1-1~focal_amd64.deb .
 RUN dpkg -i nginx_1.20.1-1~focal_amd64.deb
 
 
-ADD supervisord/supervisord.conf /etc/supervisor/supervisord.conf
+ADD supervisord.conf /etc/supervisor/supervisord.conf
 ADD shibboleth2.xml /etc/shibboleth/shibboleth2.xml
 ADD attribute-map.xml /etc/shibboleth/attribute-map.xml
 ADD attribute-policy.xml /etc/shibboleth/attribute-policy.xml
