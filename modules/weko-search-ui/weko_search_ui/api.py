@@ -49,9 +49,9 @@ class SearchSetting(object):
         else:
             return current_app.config['RECORDS_REST_SORT_OPTIONS'], display_number
 
-        for x in res:
-            if isinstance(x, dict):
-                key_str = x.get('id')
+        for i in range(0, len(res)):
+            if isinstance(res[i], dict):
+                key_str = res[i].get('id')
                 key = key_str[0:key_str.rfind('_', 1)]
                 val = current_app.config['RECORDS_REST_SORT_OPTIONS'].get(
                     current_app.config['SEARCH_UI_SEARCH_INDEX']).get(key)
@@ -164,19 +164,19 @@ def get_search_detail_keyword(str):
 
     item_type_list = get_keywords_data_load('')
     check_val = []
-    for x in item_type_list:
-        sub = dict(id=x[0], contents=x[0], checkStus=False)
+    for i in range(0, len(item_type_list)):
+        sub = dict(id=item_type_list[i][0], contents=item_type_list[i][0], checkStus=False)
         check_val.append(sub)
 
     check_val2 = []
     index_browsing_tree = Indexes.get_browsing_tree()
-    for indextree in index_browsing_tree:
+    for i in range(0, len(index_browsing_tree)):
         index_parelist = []
-        index_list = get_childinfo(indextree, index_parelist)
+        index_list = get_childinfo(index_browsing_tree[i], index_parelist)
 
-        for idx in index_list:
-            sub2 = dict(id=idx['parent_id'],
-                        contents=idx['parent_name'], checkStus=False)
+        for i in range(0, len(index_list)):
+            sub2 = dict(id=index_list[i]['parent_id'],
+                        contents=index_list[i]['parent_name'], checkStus=False)
             check_val2.append(sub2)
 
     for k_v in options:
@@ -234,8 +234,8 @@ def get_childinfo(index_tree, result_list=[], parename=""):
             result_list.append(data)
 
         if 'children' in index_tree.keys():
-            for childlist in index_tree['children']:
-                if childlist:
-                    get_childinfo(childlist, result_list, pname)
+            for i in range(0, len(index_tree['children'])):
+                if index_tree['children'][i]:
+                    get_childinfo(index_tree['children'][i], result_list, pname)
 
     return result_list

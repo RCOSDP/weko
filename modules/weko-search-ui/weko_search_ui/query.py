@@ -66,7 +66,8 @@ def get_permission_filter(index_id: str = None):
     term_list = []
     mst = []
     is_perm_paths = Indexes.get_browsing_tree_paths()
-    is_perm_indexes = [item.split('/')[-1] for item in is_perm_paths]
+    ###is_perm_indexes = [item.split('/')[-1] for item in is_perm_paths]
+    is_perm_indexes = [is_perm_paths[i].split('/')[-1] for i in range(0, len(is_perm_paths))]
     search_type = request.values.get('search_type')
 
     if index_id:
@@ -205,6 +206,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 # attr keyword in request url
                 attrs = map(lambda x: (x, request.values.get(x)),
                             list(v[1].keys()))
+                """            
                 for attr_key, attr_val_str in attrs:
                     attr_obj = v[1].get(attr_key)
                     if isinstance(attr_obj, dict) and attr_val_str:
@@ -226,6 +228,29 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                             {"terms": {
                                                 attr_key_hit[0]: schemas}}
                                         ])
+                """
+                for i in range(0, len(attrs)):
+                    for attr_key, attr_val_str in attrs[i]:
+                        attr_obj = v[1].get(attr_key)
+                        if isinstance(attr_obj, dict) and attr_val_str:
+                            if isinstance(v[0], str) and len(v[0]):
+                                attr_key_hit = [
+                                    x for x in attr_obj.keys() if v[0] + "." in x]
+                                if attr_key_hit:
+                                    vlst = attr_obj.get(attr_key_hit[0])
+                                    if isinstance(vlst, list):
+                                        attr_val = [
+                                            int(x) for x in attr_val_str.split(',')
+                                            if x.isdecimal() and int(x) < len(vlst)
+                                        ]
+                                        if attr_val:
+                                            name = v[0] + ".value"
+                                            schemas = [vlst[i] for i in attr_val]
+                                            return Bool(must=[
+                                                {"term": {name: kv}},
+                                                {"terms": {
+                                                    attr_key_hit[0]: schemas}}
+                                            ])
             return None
 
         def _get_nested_query(k, v):
@@ -342,19 +367,18 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
                 pattern = r'^(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})|(\d{4})|(\d{6})|(\d{8})$'
                 p = re.compile(pattern)
+                
+                def date_length_checker(date):
+                    if len(date) == 8:
+                        return datetime.strptime(
+                            date, '%Y%m%d').strftime('%Y-%m-%d')
+                    elif len(date) == 6:
+                        return datetime.strptime(
+                            date, '%Y%m').strftime('%Y-%m')
+
                 if p.match(date_from) and p.match(date_to):
-                    if len(date_from) == 8:
-                        date_from = datetime.strptime(
-                            date_from, '%Y%m%d').strftime('%Y-%m-%d')
-                    if len(date_to) == 8:
-                        date_to = datetime.strptime(
-                            date_to, '%Y%m%d').strftime('%Y-%m-%d')
-                    if len(date_from) == 6:
-                        date_from = datetime.strptime(
-                            date_from, '%Y%m').strftime('%Y-%m')
-                    if len(date_to) == 6:
-                        date_to = datetime.strptime(
-                            date_to, '%Y%m').strftime('%Y-%m')
+                    date_from = date_length_checker(date_from)
+                    date_to = date_length_checker(date_to)
                 else:
                     return
 
@@ -434,7 +458,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
                 if isinstance(v[1], str):
                     qry = Q('range', **{v[1]: qv})
-                    print(qry)
             return qry
 
         def _get_geo_distance_query(k, v):
