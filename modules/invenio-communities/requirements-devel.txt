@@ -22,9 +22,9 @@
 # waive the privileges and immunities granted to it by virtue of its status
 # as an Intergovernmental Organization or submit itself to any jurisdiction.
 
--e git+git://github.com/inveniosoftware/invenio-access#egg=invenio-access
--e git+git://github.com/inveniosoftware/invenio-accounts#egg=invenio-accounts
--e git+git://github.com/inveniosoftware/invenio-db#egg=invenio-db
--e git+git://github.com/inveniosoftware/invenio-files-rest#egg=invenio-files-rest
--e git+git://github.com/inveniosoftware/invenio-oaiserver#egg=invenio-oaiserver
--e git+git://github.com/inveniosoftware/invenio-records#egg=invenio-records
+-e git+https://github.com/inveniosoftware/invenio-access#egg=invenio-access
+-e git+https://github.com/inveniosoftware/invenio-accounts#egg=invenio-accounts
+-e git+https://github.com/inveniosoftware/invenio-db#egg=invenio-db
+-e git+https://github.com/inveniosoftware/invenio-files-rest#egg=invenio-files-rest
+-e git+https://github.com/inveniosoftware/invenio-oaiserver#egg=invenio-oaiserver
+-e git+https://github.com/inveniosoftware/invenio-records#egg=invenio-records
