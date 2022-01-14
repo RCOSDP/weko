@@ -25,7 +25,7 @@ from operator import index
 
 from flask import current_app, json
 from flask_babelex import gettext as _
-from invenio_db import db
+# from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from weko_admin import config as ad_config
 from weko_admin.models import SearchManagement as sm

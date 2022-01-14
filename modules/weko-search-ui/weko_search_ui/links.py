@@ -20,7 +20,8 @@
 
 """Link for Index Search rest."""
 
-from flask import request, url_for
+# from flask import request, url_for
+from flask import url_for
 
 
 def default_links_factory(pid, **kwargs):

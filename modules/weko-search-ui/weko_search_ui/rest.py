@@ -23,6 +23,9 @@
 import copy
 from functools import partial
 
+""" 
+* Imports before refactoring
+
 from flask import Blueprint, abort, current_app, jsonify, redirect, request, \
     url_for
 from invenio_db import db
@@ -49,7 +52,20 @@ from weko_index_tree.api import Indexes
 from weko_index_tree.utils import count_items, recorrect_private_items_count
 from weko_records.models import ItemType
 from werkzeug.utils import secure_filename
+"""
 
+# Removed unused imports
+from flask import Blueprint, current_app, request, url_for
+from invenio_i18n.ext import current_i18n
+from invenio_pidstore import current_pidstore
+from invenio_records.api import Record
+from invenio_records_rest.errors import MaxResultWindowRESTError
+from invenio_records_rest.links import default_links_factory
+from invenio_records_rest.utils import obj_or_import_string
+from invenio_rest import ContentNegotiatedMethodView
+from weko_index_tree.api import Indexes
+from weko_index_tree.utils import count_items, recorrect_private_items_count
+from weko_records.models import ItemType
 
 def create_blueprint(app, endpoints):
     """Create Invenio-Deposit-REST blueprint.
@@ -183,10 +199,10 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
         if facets and search_index and 'post_filters' in facets[search_index]:
             post_filters = facets[search_index]['post_filters']
-            for param in post_filters:
-                value = request.args.getlist(param)
+            for i in range(0, len(post_filters)):
+                value = request.args.getlist(post_filters[i])
                 if value:
-                    params[param] = value
+                    params[post_filters[i]] = value
 
         if page * size >= self.max_result_window:
             raise MaxResultWindowRESTError()
@@ -203,9 +219,9 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         # Execute search
         weko_faceted_search_mapping = \
             FacetSearchSetting.get_activated_facets_mapping()
-        for param in params:
-            query_key = weko_faceted_search_mapping[param]
-            search = search.post_filter({'terms': {query_key: params[param]}})
+        for i in range(0, len(params)):
+            query_key = weko_faceted_search_mapping[params[i]]
+            search = search.post_filter({'terms': {query_key: params[params[i]]}})
 
         search_result = search.execute()
 

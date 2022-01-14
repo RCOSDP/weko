@@ -23,8 +23,8 @@
 import copy
 
 from invenio_records_rest.config import RECORDS_REST_ENDPOINTS
-from invenio_records_rest.facets import terms_filter
-from invenio_records_rest.utils import allow_all
+# from invenio_records_rest.facets import terms_filter
+# from invenio_records_rest.utils import allow_all
 from invenio_search import RecordsSearch
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 
