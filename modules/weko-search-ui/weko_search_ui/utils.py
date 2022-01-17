@@ -2701,28 +2701,25 @@ def export_all(root_url):
             hide_meta_data_for_role=lambda a: True,
             current_language=lambda: True
         )
-        try:
-            headers, records = make_stats_tsv_with_permission(
-                item_datas['item_type_id'],
-                item_datas['recids'],
-                item_datas['data'],
-                permissions)
-            keys, labels, is_systems, options = headers
-            item_datas['recids'].sort()
-            item_datas['keys'] = keys
-            item_datas['labels'] = labels
-            item_datas['is_systems'] = is_systems
-            item_datas['options'] = options
-            item_datas['data'] = records
-            item_type_data = item_datas
+        headers, records = make_stats_tsv_with_permission(
+            item_datas['item_type_id'],
+            item_datas['recids'],
+            item_datas['data'],
+            permissions)
+        keys, labels, is_systems, options = headers
+        item_datas['recids'].sort()
+        item_datas['keys'] = keys
+        item_datas['labels'] = labels
+        item_datas['is_systems'] = is_systems
+        item_datas['options'] = options
+        item_datas['data'] = records
+        item_type_data = item_datas
 
-            tsv_full_path = '{}/{}.tsv'.format(export_path,
-                                               item_type_data.get('name'))
-            with open(tsv_full_path, 'w') as file:
-                tsv_output = package_export_file(item_type_data)
-                file.write(tsv_output.getvalue())
-        except Exception as ex:
-            current_app.logger.error(ex)
+        tsv_full_path = '{}/{}.tsv'.format(export_path,
+                                            item_type_data.get('name'))
+        with open(tsv_full_path, 'w') as file:
+            tsv_output = package_export_file(item_type_data)
+            file.write(tsv_output.getvalue())
 
     def _get_export_data(export_path, finish_item_types, retrys, retry_info={}):
         try:
@@ -2820,6 +2817,7 @@ def export_all(root_url):
             if retrys < _num_retry:
                 retrys += 1
                 current_app.logger.info('retry count: {}'.format(retrys))
+                db.session.rollback()
                 sleep(5)
                 result = _get_export_data(
                     export_path, finish_item_types, retrys, retry_info)
