@@ -27,6 +27,7 @@ import os
 import re
 import sys
 import unicodedata
+import ipaddress
 from datetime import datetime, timedelta
 
 from flask import abort, current_app, flash, jsonify, make_response, \
@@ -711,6 +712,12 @@ class SiteLicenseSettingsView(BaseView):
                                         err_addr = True
                                         # break for item addresses
                                         break
+                                    addr_check = '.'.join(item)
+                                    try:
+                                        ip_check = ipaddress.ip_address(addr_check)
+                                    except ValueError:
+                                        err_addr = True
+                                        break    
                                 if err_addr:
                                     # break for addresses
                                     break
@@ -720,7 +727,8 @@ class SiteLicenseSettingsView(BaseView):
                 SiteLicense.update(data)
                 jfy['status'] = 201
                 jfy['message'] = 'Site license was successfully updated.'
-            except BaseException:
+            except BaseException as ex:
+                current_app.logger.error('Failed to update site license', ex)
                 jfy['status'] = 500
                 jfy['message'] = 'Failed to update site license.'
             return make_response(jsonify(jfy), jfy['status'])
