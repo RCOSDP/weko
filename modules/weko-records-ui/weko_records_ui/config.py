@@ -558,3 +558,9 @@ WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE = [
 
 WEKO_RECORDS_UI_GOOGLE_DATASET_DISP_FLG = True
 """Enable function of google dataset metadata output."""
+
+WEKO_RECORDS_UI_DISPLAY_ONLINE_ANALYSIS_FLG = False
+""" Display online analysis button on item detail. """
+
+WEKO_RECORDS_UI_ONLINE_ANALYSIS_URL = ''
+""" URL for online analysis button. """
