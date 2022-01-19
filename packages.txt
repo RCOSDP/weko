@@ -56,6 +56,7 @@ flask-talisman==0.4.1
 Flask-WTF==0.14.3
 flask-sitemap==0.1.0
 Flask-IIIF==0.6.1
+Flask-DebugToolbar==0.11.0
 fs==0.5.4
 future==0.16.0
 html5lib==1.0.1
@@ -89,6 +90,7 @@ marshmallow==2.20.1
 maxminddb==1.5.2
 maxminddb-geolite2==2017.803
 mistune==0.8.3
+more-itertools==8.10.0
 msgpack==0.6.2
 nbconvert==5.3.1
 nbformat==4.4.0
@@ -108,7 +110,8 @@ ptyprocess==0.5.2
 pycparser==2.18
 Pygments==2.2.0
 PyJWT==1.5.3
-PyPDF2==1.26.0
+#PyPDF2==1.26.0
+-e git+https://github.com/RCOSDP/PyPDF2.git@fix/nii#egg=PyPDF2
 pyPEG2==2.15.2
 python-dateutil==2.6.1
 python-editor==1.0.3
@@ -171,4 +174,5 @@ iiif-prezi==0.3.0
 netaddr==0.8.0
 # for sentry
 # raven==6.10.0
-
+marshmallow-sqlalchemy==0.23.1
+flask-marshmallow==0.14.0

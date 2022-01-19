@@ -142,6 +142,15 @@ def saving_doi_pidstore(item_id,
     :param item_id: object uuid
     :param record_without_version: object uuid
     """
+    current_app.logger.debug('item_id: {0}'.format(item_id))
+    current_app.logger.debug(
+        'record_without_version: {0}'.format(record_without_version))
+    current_app.logger.debug('data: {0}'.format(data))
+    current_app.logger.debug('doi_select: {0}'.format(doi_select))
+    current_app.logger.debug(
+        'is_feature_import: {0}'.format(is_feature_import))
+    current_app.logger.debug('temporal_saving: {0}'.format(temporal_saving))
+
     flag_del_pidstore = False
     identifier_val = ''
     doi_register_val = ''
@@ -267,17 +276,22 @@ def register_hdl_by_item_id(deposit_id, item_uuid, url_root):
     return handle
 
 
-def register_hdl_by_handle(handle, item_uuid):
+def register_hdl_by_handle(hdl, item_uuid, item_uri):
     """
     Register HDL into Persistent Identifiers.
 
-    :param handle: HDL handle
+    :param hdl: HDL handle
     :param item_uuid: Item uuid
     """
     current_app.logger.debug(
         "start register_hdl_by_handle(handle, item_uuid):")
     current_app.logger.debug(
-        "handle:{0} item_uuid:{1}".format(handle, item_uuid))
+        "handle:{0} item_uuid:{1}".format(hdl, item_uuid))
+
+    weko_handle = Handle()
+    handle = weko_handle.register_handle(
+        location=item_uri, hdl=hdl, overwrite=True)
+
     if handle:
         handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
         identifier = IdentifierHandle(item_uuid)
@@ -305,7 +319,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                     'doctoral thesis']
     report_types = ['technical report', 'research report', 'report',
                     'book', 'book part']
-    elearning_type = ['learning material']
+    elearning_type = ['learning object']
     dataset_type = ['software', 'dataset']
     datageneral_types = ['internal report', 'policy report', 'report part',
                          'working paper', 'interactive resource',
@@ -956,14 +970,19 @@ class IdentifierHandle(object):
 
         """
         try:
-            if not pid_value:
-                pid_value = self.get_pidstore().pid_value
-            doi_pidstore = self.check_pidstore_exist('doi', pid_value)
+            pids = []
+            record = WekoRecord.get_record(self.item_uuid)
+            with db.session.no_autoflush:
+                pids = PersistentIdentifier.query.filter_by(
+                    pid_type='doi',
+                    status=PIDStatus.REGISTERED,
+                    object_uuid=record.pid_parent.object_uuid).all()
 
-            if doi_pidstore and doi_pidstore.status == PIDStatus.REGISTERED:
-                doi_pidstore.delete()
+            if pids:
+                for _item in pids:
+                    _item.delete()
                 self.remove_idt_registration_metadata()
-                return doi_pidstore.status == PIDStatus.DELETED
+                return True
         except PIDDoesNotExistError as pidNotEx:
             current_app.logger.error(pidNotEx)
             return False
@@ -1295,6 +1314,29 @@ def get_actionid(endpoint):
             return None
 
 
+def convert_record_to_item_metadata(record_metadata):
+    """Convert record_metadata to item_metadata."""
+    item_metadata = {
+        'id': record_metadata['recid'],
+        '$schema': record_metadata['item_type_id'],
+        'pubdate': record_metadata['publish_date'],
+        'title': record_metadata['item_title'],
+        'weko_shared_id': record_metadata['weko_shared_id']
+    }
+    item_type = ItemTypes.get_by_id(record_metadata['item_type_id']).render
+
+    for key, meta in item_type.get('meta_list', {}).items():
+        if key in record_metadata:
+            if meta.get('option', {}).get('multiple'):
+                item_metadata[key] = \
+                    record_metadata[key]['attribute_value_mlt']
+            else:
+                item_metadata[key] = \
+                    record_metadata[key]['attribute_value_mlt'][0]
+
+    return item_metadata
+
+
 def prepare_edit_workflow(post_activity, recid, deposit):
     """
     Prepare Workflow Activity for draft record.
@@ -1330,24 +1372,35 @@ def prepare_edit_workflow(post_activity, recid, deposit):
         try:
             _deposit = WekoDeposit.get_record(draft_pid.object_uuid)
             _bucket = Bucket.get(_deposit.files.bucket.id)
+
+            if not _bucket:
+                _bucket = Bucket.create(
+                    quota_size=current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
+                    max_file_size=current_app.config['WEKO_MAX_FILE_SIZE'],
+                )
+                RecordsBuckets.create(record=_deposit.model, bucket=_bucket)
+                _deposit.files.bucket.id = _bucket
+
             bucket = deposit.files.bucket
 
             sync_bucket = RecordsBuckets.query.filter_by(
                 bucket_id=_deposit.files.bucket.id
             ).first()
+
             snapshot = bucket.snapshot(lock=False)
             snapshot.locked = False
             _bucket.locked = False
 
             sync_bucket.bucket_id = snapshot.id
             _deposit['_buckets']['deposit'] = str(snapshot.id)
-            _bucket.remove()
+
             db.session.add(sync_bucket)
+            _bucket.remove()
 
             # update metadata
-            _metadata = deposit.item_metadata
+            _metadata = convert_record_to_item_metadata(deposit)
             _metadata['deleted_items'] = {}
-            _cur_keys = [_key for _key in deposit.item_metadata.keys()
+            _cur_keys = [_key for _key in _metadata.keys()
                          if 'item_' in _key]
             _drf_keys = [_key for _key in _deposit.item_metadata.keys()
                          if 'item_' in _key]
@@ -1358,9 +1411,8 @@ def prepare_edit_workflow(post_activity, recid, deposit):
             _deposit.update(*args)
             _deposit.commit()
         except SQLAlchemyError as ex:
-            current_app.logger.error(ex)
-            db.session.rollback()
-        db.session.commit()
+            raise ex
+
         rtn = activity.init_activity(post_activity,
                                      community,
                                      draft_pid.object_uuid)
@@ -2418,7 +2470,6 @@ def create_record_metadata(
     update_activity_action(activity.get('activity_id'), owner_id)
 
     WorkActivity().update_activity(activity.get('activity_id'), activity)
-    db.session.commit()
     return new_usage_report_activity.activity_id
 
 
@@ -2535,12 +2586,8 @@ def get_shema_dict(properties, data_dict):
 
 def create_deposit(item_id):
     """Create deposit."""
-    try:
-        deposit = WekoDeposit.create({}, recid=int(item_id))
-        db.session.commit()
-        return deposit
-    except Exception:
-        db.session.rollback()
+    deposit = WekoDeposit.create({}, recid=int(item_id))
+    return deposit
 
 
 def update_activity_action(activity_id, owner_id):
@@ -2975,6 +3022,7 @@ def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
     @param community_id:
     @return:
     """
+    from weko_records_ui.utils import get_list_licence
     action_endpoint, action_id, activity_detail, cur_action, histories, item, \
         steps, temporary_comment, workflow_detail = \
         get_activity_display_info(activity_id)
@@ -3539,21 +3587,22 @@ def check_authority_by_admin(activity):
     # If user has community role
     # and the user who created activity is member of community
     # role -> has permission:
-    community_role_name = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-    # Get the list of users who has the community role
-    community_users = User.query.outerjoin(userrole).outerjoin(Role) \
-        .filter(community_role_name == Role.name) \
-        .filter(userrole.c.role_id == Role.id) \
-        .filter(User.id == userrole.c.user_id) \
-        .all()
-    community_user_ids = [
-        community_user.id for community_user in community_users]
-    for role in list(current_user.roles or []):
-        if role.name in community_role_name:
-            # User has community role
-            if activity.activity_login_user in community_user_ids:
-                return True
-            break
+    community_role_names = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+    for community_role_name in community_role_names:
+        # Get the list of users who has the community role
+        community_users = User.query.outerjoin(userrole).outerjoin(Role) \
+            .filter(community_role_name == Role.name) \
+            .filter(userrole.c.role_id == Role.id) \
+            .filter(User.id == userrole.c.user_id) \
+            .all()
+        community_user_ids = [
+            community_user.id for community_user in community_users]
+        for role in list(current_user.roles or []):
+            if role.name in community_role_name:
+                # User has community role
+                if activity.activity_login_user in community_user_ids:
+                    return True
+                break
     return False
 
 
@@ -3723,6 +3772,14 @@ def prepare_doi_link_workflow(item_id, doi_input):
     data = request.get_json() or {}
     community_id = data['community'] if data.get('community') else 'Root Index'
     identifier_setting = get_identifier_setting(community_id)
+    ret = {}
+
+    current_app.logger.debug('item_id: {0}'.format(item_id))
+    current_app.logger.debug('doi_input: {0}'.format(doi_input))
+    current_app.logger.debug('data: {0}'.format(data))
+    current_app.logger.debug('community_id: {0}'.format(community_id))
+    current_app.logger.debug(
+        'identifier_setting: {0}'.format(identifier_setting))
 
     # valid date pidstore_identifier data
     if identifier_setting:
@@ -3736,9 +3793,13 @@ def prepare_doi_link_workflow(item_id, doi_input):
         if not identifier_setting.ndl_jalc_doi:
             identifier_setting.ndl_jalc_doi = text_empty
         # Semi-automatic suffix
-        suffix_method = IDENTIFIER_GRANT_SUFFIX_METHOD
+        suffix_method = current_app.config.get(
+            'IDENTIFIER_GRANT_SUFFIX_METHOD', IDENTIFIER_GRANT_SUFFIX_METHOD)
         if not identifier_setting.suffix:
             identifier_setting.suffix = ''
+
+        current_app.logger.debug(
+            'suffix_method: {0}'.format(suffix_method))
 
         if suffix_method == 0:
             url_format = '{}/{}/{}'
@@ -3799,17 +3860,15 @@ def prepare_doi_link_workflow(item_id, doi_input):
                 IDENTIFIER_GRANT_LIST[4][2],
                 identifier_setting.ndl_jalc_doi,
                 doi_input.get('action_identifier_jalc_doi'))
-        else:
-            return {}
 
-        return {
+        ret = {
             'identifier_grant_jalc_doi_link': _jalc_doi_link,
             'identifier_grant_jalc_cr_doi_link': _jalc_cr_doi_link,
             'identifier_grant_jalc_dc_doi_link': _jalc_dc_doi_link,
             'identifier_grant_ndl_jalc_doi_link': _ndl_jalc_doi_link
         }
-    else:
-        return {}
+
+    return ret
 
 
 def get_pid_value_by_activity_detail(activity_detail):

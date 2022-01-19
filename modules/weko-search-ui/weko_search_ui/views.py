@@ -24,7 +24,9 @@ import time
 from xml.etree import ElementTree
 
 from blinker import Namespace
-from flask import Blueprint, current_app, jsonify, render_template, request
+from flask import Blueprint, current_app, flash, jsonify, render_template, \
+    request
+from flask_babelex import gettext as _
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import AdminSettings
@@ -105,6 +107,17 @@ def search():
             current_app.config['WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS'])
 
     height = style.height if style else None
+    if request.values.get('search_type') in (
+        WEKO_SEARCH_TYPE_DICT['FULL_TEXT'],
+            WEKO_SEARCH_TYPE_DICT['KEYWORD']):
+        for _key in request.values:
+            _val = request.values.get(_key)
+            if '<' in _val or '>' in _val:
+                flash(
+                    _('"<" and ">" cannot be used for searching.'),
+                    category='warning'
+                )
+                break
     if 'item_link' in get_args:
         from weko_workflow.api import WorkActivity
         from weko_workflow.views import get_main_record_detail
@@ -191,11 +204,7 @@ def search():
                     if index_display_format == '2':
                         disply_setting = dict(size=100, timestamp=ts)
 
-        if hasattr(current_i18n, 'language'):
-            index_link_list = get_index_link_list(current_i18n.language)
-        else:
-            index_link_list = get_index_link_list()
-
+        index_link_list = get_index_link_list()
         # Get Facet search setting.
         display_facet_search = get_search_setting().get("display_control", {})\
             .get('display_facet_search', {}).get('status', False)
@@ -323,12 +332,16 @@ def get_path_name_dict(path_str=''):
     return jsonify(path_name_dict)
 
 
-@blueprint.route("/facet-search/get-title", methods=['POST'])
+@blueprint.route("/facet-search/get-title-and-order", methods=['POST'])
 def gettitlefacet():
     """Soft getname Facet Search."""
     from weko_admin.utils import get_title_facets
+    titles, order = get_title_facets()
     result = {
         "status": True,
-        "data": get_title_facets()
+        "data": {
+            "titles": titles,
+            "order": order
+        }
     }
     return jsonify(result), 200

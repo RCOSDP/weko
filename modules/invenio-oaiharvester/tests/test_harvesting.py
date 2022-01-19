@@ -23,9 +23,15 @@ import time
 
 import pytest
 import responses
+from invenio_db import db
+from weko_index_tree.models import Index
 
 from invenio_oaiharvester import get_records, list_records
 from invenio_oaiharvester.errors import WrongDateCombination
+from invenio_oaiharvester.harvester import list_records as _list_records
+from invenio_oaiharvester.harvester import list_sets
+from invenio_oaiharvester.models import HarvestSettings
+from invenio_oaiharvester.tasks import process_item
 
 
 @responses.activate
@@ -212,3 +218,74 @@ def test_get_from_identifiers_with_prefix(app, sample_record_xml):
                 namespaces={"arXiv": "http://arxiv.org/OAI/arXiv/"}
             )[0].text
             assert identifier_in_request == "1507.03011"
+
+
+@responses.activate
+def test_harvester_list_sets(app, sample_jpcoar_list_xml):
+    """Check harvesting of records from multiple setspecs."""
+    responses.add(
+        responses.GET,
+        'https://jpcoar.repo.nii.ac.jp/oai',
+        body=sample_jpcoar_list_xml,
+        content_type='text/xml'
+    )
+    sets = []
+    try:
+        with app.app_context():
+            sets = list_sets(
+                url='https://jpcoar.repo.nii.ac.jp/oai',
+            )
+    finally:
+        assert len(sets) == 0
+
+
+@responses.activate
+def test_harvester_list_records(app, sample_jpcoar_list_xml, location):
+    """Check harvesting of records from multiple setspecs."""
+    responses.add(
+        responses.GET,
+        'https://jpcoar.repo.nii.ac.jp/oai',
+        body=sample_jpcoar_list_xml,
+        content_type='text/xml'
+    )
+    records = []
+    try:
+        with app.app_context():
+            records = _list_records(
+                metadata_prefix='jpcoar_1.0',
+                url='https://jpcoar.repo.nii.ac.jp/oai',
+            )
+    finally:
+        assert len(records) == 2
+
+    with app.app_context():
+        index = Index()
+        db.session.add(index)
+        db.session.commit()
+
+        app.config['WEKO_BUCKET_QUOTA_SIZE'] = 50 * 1024 * 1024 * 1024
+        app.config['WEKO_MAX_FILE_SIZE'] = 50 * 1024 * 1024 * 1024
+        app.config['FILES_REST_DEFAULT_STORAGE_CLASS'] = 'S'
+        app.config['FILES_REST_STORAGE_CLASS_LIST'] = {
+            'S': 'Standard',
+            'A': 'Archive',
+        }
+        app.config['DEPOSIT_DEFAULT_JSONSCHEMA'] = 'deposits/'
+        'deposit-v1.0.0.json'
+
+        harvesting = HarvestSettings(
+            repository_name='name',
+            base_url='https://jpcoar.repo.nii.ac.jp/oai',
+            metadata_prefix='jpcoar_1.0',
+            index_id=index.id,
+            update_style='0',
+            auto_distribution='0')
+        db.session.add(harvesting)
+        db.session.commit()
+
+        counter = {}
+
+        with pytest.raises(AttributeError):
+            for record in records:
+                for rec in record:
+                    process_item(rec, harvesting, counter)

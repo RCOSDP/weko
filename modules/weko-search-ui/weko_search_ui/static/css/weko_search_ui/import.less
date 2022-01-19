@@ -410,3 +410,28 @@ li {
 .w-725 {
     width: 725px;
 }
+
+.loading {
+    position: relative;
+    display: inline-block;
+    top: 3px;
+    right: 6px;
+    height: 16px;
+    width: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.281);
+    border-top-color: rgb(174, 233, 255);
+    border-radius: 100%;
+    animation: rotation 1.5s infinite linear 0.25s;
+    opacity: 1;
+}
+
+@keyframes rotation {
+    from {
+      opacity: 1;
+      transform: rotate(0deg);
+    }
+    to {
+      opacity: 1;
+      transform: rotate(359deg);
+    }
+}

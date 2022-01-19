@@ -5,6 +5,8 @@
 .header-footer-type {
   left: 0 !important;
   right: 0 !important;
+  padding-left: 15px;
+  padding-right: 15px;
   overflow: hidden !important;
   border-radius: 0% !important;
 }
@@ -13,7 +15,7 @@
   border-radius: 0px !important;
   left: 15px !important;
   right: 15px !important;
-  margin-top: 5px !important;
+  /*margin-top: 5px !important;*/
   overflow-y: hidden !important;
   overflow-x: auto !important;
 }
@@ -99,7 +101,7 @@
 }
 
 .text-access-counter {
-  font-size: 20px;
+  font-size: 15px;
   font-weight: bold;
   margin-bottom: -3px;
 }
@@ -115,7 +117,7 @@
 
 .widget-nav {
   white-space: pre-line !important;
-  margin-top: 25px;
+  /* margin-top: 25px; */
   border-radius: 4px !important;
 }
 
@@ -141,15 +143,18 @@
 } */
 
 .navbar-nav > li > a {
-  font-size: 14px;
+  /* font-size: 14px; */
+  font-size: 15px;
 }
 
 .pull-left > li > a {
-  font-size: 14px;
+  /* font-size: 14px; */
+  font-size: 15px;
 }
 
 .navbar-header > a.navbar-brand {
-  font-size: 14px !important;
+  /* font-size: 14px !important; */
+  font-size: 15px !important;
   padding-top: 20px !important;
   padding-bottom: 20px !important;
   line-height: 20px !important;
@@ -232,4 +237,12 @@
 #header {
   overflow: initial !important;
   overflow: inherit !important;
+}
+
+.widget-header > strong {
+  font-size: 15px;
+}
+
+.nav-tabs > li > a {
+  font-size: 15px;
 }

@@ -21,8 +21,8 @@
 # TODO: Add development versions of some important dependencies here to get a
 #       warning when there are breaking upstream changes, e.g.:
 #
-#     -e git+git://github.com/mitsuhiko/werkzeug.git#egg=Werkzeug
-#     -e git+git://github.com/mitsuhiko/jinja2.git#egg=Jinja2
+#     -e git+https://github.com/mitsuhiko/werkzeug.git#egg=Werkzeug
+#     -e git+https://github.com/mitsuhiko/jinja2.git#egg=Jinja2
 
--e git+git://github.com/inveniosoftware/invenio-accounts#egg=invenio-accounts
--e git+git://github.com/inveniosoftware/invenio-db#egg=invenio-db
+-e git+https://github.com/inveniosoftware/invenio-accounts#egg=invenio-accounts
+-e git+https://github.com/inveniosoftware/invenio-db#egg=invenio-db

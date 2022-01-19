@@ -31,7 +31,6 @@ from flask_login import current_user
 from invenio_communities.forms import SearchForm
 from invenio_communities.models import Community, FeaturedCommunity
 from invenio_communities.utils import Pagination
-from invenio_communities.views.ui import mycommunities_ctx
 from invenio_i18n.ext import current_i18n
 from invenio_search import RecordsSearch
 from weko_admin.models import AdminSettings, RankingSettings, SearchManagement
@@ -41,6 +40,7 @@ from weko_gridlayout.utils import get_widget_design_page_with_main, \
     main_design_has_main_widget
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index, IndexStyle
+from weko_index_tree.utils import get_index_link_list
 from weko_items_ui.utils import get_ranking
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_search_ui.api import SearchSetting, get_search_detail_keyword
@@ -65,19 +65,7 @@ def get_weko_contents(getargs):
     height = style.height
     index_link_enabled = style.index_link_enabled
 
-    index_link_list = []
-    for index in Index.query.all():
-        if index.index_link_enabled and index.public_state:
-            if hasattr(current_i18n, 'language'):
-                if current_i18n.language == 'ja' and index.index_link_name:
-                    index_link_list.append((index.id, index.index_link_name))
-                else:
-                    index_link_list.append(
-                        (index.id, index.index_link_name_english))
-            else:
-                index_link_list.append(
-                    (index.id, index.index_link_name_english))
-
+    index_link_list = get_index_link_list()
     detail_condition = get_search_detail_keyword('')
     check_site_license_permission()
 
@@ -211,6 +199,7 @@ class MainScreenInitDisplaySetting:
 
     @classmethod
     def __communities(cls, main_screen_display_setting):
+        from invenio_communities.views.ui import mycommunities_ctx
         ctx = mycommunities_ctx()
         p = request.args.get('p', type=str)
         so = request.args.get('so', type=str)
@@ -238,6 +227,8 @@ class MainScreenInitDisplaySetting:
 
     @classmethod
     def __ranking(cls, main_screen_display_setting):
+        from weko_items_ui.utils import get_ranking
+
         ranking_settings = RankingSettings.get()
         # get statistical period
         end_date = date.today()
@@ -288,7 +279,7 @@ class MainScreenInitDisplaySetting:
                 "search_hidden_params": {
                     "search_type": current_app.config['WEKO_SEARCH_TYPE_DICT'][
                         'INDEX'],
-                    "q":init_disp_index,
+                    "q": init_disp_index,
                     "size": display_number,
                     "timestamp": time.time(),
                 },

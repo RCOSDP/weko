@@ -345,11 +345,11 @@ WEKO_SEARCH_KEYWORDS_DICT = {
                                    "Updated",
                                    "Valid"]}})],
         "dategranted": [('from', 'to'), "dateGranted"],
-                "date_range1":[('from', 'to'), "date_range1"],
-        "date_range2":[('from', 'to'), "date_range2"],
-        "date_range3":[('from', 'to'), "date_range3"],
-        "date_range4":[('from', 'to'), "date_range4"],
-        "date_range5":[('from', 'to'), "date_range5"]
+        "date_range1": [('from', 'to'), "date_range1"],
+        "date_range2": [('from', 'to'), "date_range2"],
+        "date_range3": [('from', 'to'), "date_range3"],
+        "date_range4": [('from', 'to'), "date_range4"],
+        "date_range5": [('from', 'to'), "date_range5"]
     },
     "object": {
         "subject": ("subject", {"sbjscheme": {
@@ -368,7 +368,7 @@ WEKO_SEARCH_KEYWORDS_DICT = {
             ]
         }})
     },
-    "text":{
+    "text": {
         "text1": "text1",
         "text2": "text2",
         "text3": "text3",
@@ -401,25 +401,25 @@ WEKO_SEARCH_KEYWORDS_DICT = {
         "text30": "text30"
     },
 
-    "range":{
-        "integer_range1":[('from', 'to'), "integer_range1"],
-        "integer_range2":[('from', 'to'), "integer_range2"],
-        "integer_range3":[('from', 'to'), "integer_range3"],
-        "integer_range4":[('from', 'to'), "integer_range4"],
-        "integer_range5":[('from', 'to'), "integer_range5"],
-        "float_range1":[('from', 'to'), "float_range1"],
-        "float_range2":[('from', 'to'), "float_range2"],
-        "float_range3":[('from', 'to'), "float_range3"],
-        "float_range4":[('from', 'to'), "float_range4"],
-        "float_range5":[('from', 'to'), "float_range5"]
+    "range": {
+        "integer_range1": [('from', 'to'), "integer_range1"],
+        "integer_range2": [('from', 'to'), "integer_range2"],
+        "integer_range3": [('from', 'to'), "integer_range3"],
+        "integer_range4": [('from', 'to'), "integer_range4"],
+        "integer_range5": [('from', 'to'), "integer_range5"],
+        "float_range1": [('from', 'to'), "float_range1"],
+        "float_range2": [('from', 'to'), "float_range2"],
+        "float_range3": [('from', 'to'), "float_range3"],
+        "float_range4": [('from', 'to'), "float_range4"],
+        "float_range5": [('from', 'to'), "float_range5"]
     },
 
-    "geo_distance":{
-        "geo_point1":[('lat', 'lon', 'distance'), "geo_point1"]
+    "geo_distance": {
+        "geo_point1": [('lat', 'lon', 'distance'), "geo_point1"]
     },
 
-    "geo_shape":{
-        "geo_shape1":[('lat', 'lon', 'distance'), "geo_shape1"]
+    "geo_shape": {
+        "geo_shape1": [('lat', 'lon', 'distance'), "geo_shape1"]
     }
 
 
@@ -428,6 +428,9 @@ WEKO_SEARCH_KEYWORDS_DICT = {
 WEKO_SEARCH_TYPE_KEYWORD = 'keyword'
 
 WEKO_SEARCH_TYPE_INDEX = 'index'
+
+WEKO_SEARCH_MAX_RESULT = 10000
+"""Maximum total number of records retrieved from a ES query."""
 
 WEKO_SEARCH_MAX_FEEDBACK_MAIL = 10000
 """Maximum number of feedback mail could be send."""
@@ -492,7 +495,6 @@ WEKO_IMPORT_EMAIL_PATTERN = \
     r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
 WEKO_IMPORT_PUBLISH_STATUS = ['public', 'private']
 WEKO_IMPORT_DOI_TYPE = ['JaLC', 'Crossref', 'DataCite', 'NDL JaLC']
-WEKO_IMPORT_SUFFIX_PATTERN = r"^([a-zA-Z0-9.\s_\-;\(\)/]){0,290}$"
 
 WEKO_IMPORT_SUBITEM_DATE_ISO = "subitem_1582683677698"
 """Subitem ID of property Date (ISO-8601)."""
@@ -610,9 +612,23 @@ WEKO_SEARCH_UI_BULK_EXPORT_TASK = 'KEY_EXPORT_ALL'
 WEKO_SEARCH_UI_BULK_EXPORT_URI = 'URI_EXPORT_ALL'
 """Template for the Admin Bulk Export page."""
 
+WEKO_SEARCH_UI_BULK_EXPORT_MSG = 'MSG_EXPORT_ALL'
+"""Template for the Admin Bulk Export page."""
+
 WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 3
 """Template for the Admin Bulk Export page."""
 
+WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 1000
+"""The number of items exported to tsv file each once."""
+
+WEKO_SEARCH_UI_BULK_EXPORT_RETRY = 5
+"""Number of export retries."""
 
 WEKO_SEARCH_UI_IMPORT_TMP_PREFIX = 'weko_import_'
+"""Import tmp prefix."""
 
+WEKO_SEARCH_UI_IMPORT_UNUSE_FILES_URI = 'import_unuse_files_uri_{}'
+"""Cache key unuse file. uri."""
+
+WEKO_SEARCH_UI_BULK_EXPORT_RETRY_INTERVAL = 1
+""" retry interval(sec) """

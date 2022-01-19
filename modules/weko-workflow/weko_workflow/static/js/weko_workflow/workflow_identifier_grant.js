@@ -138,7 +138,8 @@ require([
 
   function isDOISuffixFormat(doi_link, doi_suffix, actionButton) {
 
-    let regexDOI = /^[_\-.;()\/A-Za-z0-9]+$/gi;
+    //let regexDOI = /^[_\-.;()\/A-Za-z0-9]+$/gi;
+    let regexDOI = /^.+$/gi;
     let msg = '';
     let result = true;
 

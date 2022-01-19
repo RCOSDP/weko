@@ -291,7 +291,8 @@ const SPECIFIC_INDEX_VALUE = '1';
           initDispIndex = "0";
         }
         const currentTime = new Date().getTime();
-        let url = "/api/admin/search/init_display_index/" + initDispIndex + "?timestamp=" + currentTime;
+        let url = "/api/admin/search/init_display_index/" + initDispIndex;
+
         $.get(url)
           .done(function (data) {
             let jstree = $scope.treeInstance.jstree(true);
@@ -551,6 +552,7 @@ const SPECIFIC_INDEX_VALUE = '1';
 
         var item_type_id = $("#item-type-lists").val();
 
+        $('#tr_lists0 > #item_id > #search_item').empty()
         for (labelcnt = 0; labelcnt < $scope.dataJson.detail_condition.length; labelcnt++ ) {
 
           if($scope.dataJson.detail_condition[labelcnt].item_value){

@@ -1,24 +1,10 @@
 {# -*- coding: utf-8 -*-
-#
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
 #
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
+# WEKO3 is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
 #}
-
 {% extends config.WEKO_SEARCH_UI_BASE_PAGE_TEMPLATE %}
 
 {%- from "invenio_communities/macros.html" import community_header %}
@@ -44,8 +30,14 @@
   {% assets "weko_records_ui_preview_carousel_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 
   <!-- start demo block-->
-  <script type="text/javascript">var addthis_config = {"data_track_addressbar": true};</script>
-  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5d8af23e9a3a2633"></script>
+  <script type="text/javascript">
+    //see https://www.addthis.com/academy/the-addthis_config-variable/
+  var addthis_config = {
+    data_track_addressbar: false,
+    pubid: {{ config.ADDTHIS_USER_ID }},
+  };
+  </script>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
   <!-- end demo block -->
   {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_records_ui_bootstrap_popover_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
@@ -89,12 +81,12 @@
 {% endblock page_body %}
 
 {%- block page_body_main %}
-  <div class="row no-print">
+  <div class="row row-4 no-print">
     <div class="col-sm-12 col-md-12 col-lg-12">
       {% include "weko_theme/body_search.html" %}
     </div>
   </div>
-  <div class="row" style="height:100%">
+  <div class="row row-4" style="height:100%">
     <div id="detail-index" class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}} no-print" style="height:100%">
       {% if display_index_tree or (current_user.is_authenticated and config.WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER) %}
         {% include "weko_theme/body_index.html" %}

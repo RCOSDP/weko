@@ -22,12 +22,13 @@
 
 import copy
 import json
+import os
+import tempfile
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 from blinker import Namespace
 from celery import chord
-from celery.task.control import revoke
 from flask import Response, abort, current_app, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
@@ -37,6 +38,8 @@ from weko_admin.api import TempDirInfo
 from weko_admin.utils import reset_redis_cache
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
+from weko_index_tree.utils import get_doi_items_in_index, \
+    get_editing_items_in_index, is_index_locked
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
 from weko_workflow.utils import delete_cache_data, get_cache_data, \
@@ -48,8 +51,8 @@ from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
     WEKO_EXPORT_TEMPLATE_BASIC_NAME, WEKO_EXPORT_TEMPLATE_BASIC_OPTION, \
     WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
     WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE
-from .tasks import export_all_task, import_item, is_import_running, \
-    remove_temp_dir_task
+from .tasks import check_celery_is_run, check_import_items_task, \
+    export_all_task, import_item, is_import_running, remove_temp_dir_task
 from .utils import cancel_export_all, check_import_items, \
     check_sub_item_is_system, create_flow_define, delete_records, \
     get_change_identifier_mode_content, get_content_workflow, \
@@ -73,15 +76,17 @@ class ItemManagementBulkDelete(BaseView):
             if q is not None and q.isdigit():
                 current_tree = Indexes.get_index(q)
                 recursive_tree = Indexes.get_recursive_tree(q)
+                recursively = request.values.get('recursively') == 'true'
 
-                if current_tree is not None:
-
+                if current_tree:
+                    doi_items = get_doi_items_in_index(q, recursively)
+                    edt_items = get_editing_items_in_index(q, recursively)
+                    ignore_items = list(set(doi_items + edt_items))
                     # Delete items in current_tree
-                    delete_records(current_tree.id)
+                    delete_records(current_tree.id, ignore_items)
 
                     # If recursively, then delete items of child indices
-                    if request.values.get('recursively') == 'true'\
-                            and recursive_tree is not None:
+                    if recursively:
                         # Delete recursively
                         direct_child_trees = []
                         for obj in recursive_tree:
@@ -89,15 +94,32 @@ class ItemManagementBulkDelete(BaseView):
                                 child_tree = Indexes.get_index(obj[1])
 
                                 # Do delete items in child_tree
-                                delete_records(child_tree.id)
-
+                                delete_records(child_tree.id, ignore_items)
                                 # Add the level 1 child into the current_tree
                                 if obj[0] == current_tree.id:
                                     direct_child_trees.append(child_tree.id)
 
-                    return jsonify({'status': 1})
-            else:
-                return jsonify({'status': 0, 'msg': 'Invalid tree'})
+                    if ignore_items:
+                        msg = '{}<br/>'.format(
+                            _('The following item(s) cannot be deleted.'))
+                        if doi_items:
+                            _item_d = ['recid: {}'.format(i)
+                                       for i in doi_items]
+                            msg += '<br/>{}<br/>&nbsp;{}'.format(
+                                _('DOI granting item(s):'),
+                                (', ').join(_item_d)
+                            )
+                        if edt_items:
+                            _item_e = ['recid: {}'.format(i)
+                                       for i in edt_items]
+                            msg += '<br/>{}<br/>&nbsp;{}'.format(
+                                _('Editing item(s):'),
+                                (', ').join(_item_e)
+                            )
+                        return jsonify({'status': 1, 'msg': msg})
+                    return jsonify({'status': 1, 'msg': _('Success')})
+
+            return jsonify({'status': 0, 'msg': 'Invalid tree'})
 
         """Render view."""
         detail_condition = get_search_detail_keyword('')
@@ -106,6 +128,34 @@ class ItemManagementBulkDelete(BaseView):
             management_type='delete',
             detail_condition=detail_condition
         )
+
+    @expose('/check', methods=['GET'])
+    def check(self):
+        """Get list."""
+        q = request.values.get('q')
+        status = 0
+        msg = None
+        recursively = request.values.get('recursively') == 'true'
+
+        if q and q.isdigit() and Indexes.get_index(q):
+            if is_index_locked(q):
+                status = 0
+                msg = _('Index Delete is in progress on another device.')
+            elif get_doi_items_in_index(q, recursively):
+                status = 1
+                msg = _('DOI granting item(s) are including in the '
+                        'deletion items.<br/>DOI granting item(s) cannot '
+                        'be deleted without withdrawing the DOI.<br/>'
+                        'Do you want to continue deleting items that are '
+                        'not grant DOI?')
+            else:
+                status = 1
+                msg = _('Are you sure you want to delete it?')
+        else:
+            status = 0
+            msg = _('No such index.')
+
+        return jsonify({'status': status, 'msg': msg})
 
 
 class ItemManagementCustomSort(BaseView):
@@ -244,33 +294,38 @@ class ItemImportView(BaseView):
         """Validate item import."""
         data = request.form
         file = request.files['file'] if request.files else None
-        list_record = []
-        data_path = ''
 
-        if data:
-            result = check_import_items(
-                file,
-                data.get('is_change_identifier') == 'true'
-            )
-            if isinstance(result, dict):
-                data_path = result.get('data_path', '')
-                if result.get('error'):
-                    remove_temp_dir_task.apply_async((data_path,))
-                    return jsonify(code=0, error=result.get('error'))
-                else:
-                    list_record = result.get('list_record', [])
-                    num_record_err = len(
-                        [i for i in list_record if i.get('errors')])
-                    if len(list_record) == num_record_err:
-                        remove_temp_dir_task.apply_async((data_path,))
-                    else:
-                        expire = datetime.now() + \
-                            timedelta(seconds=get_lifetime())
-                        TempDirInfo().set(
-                            data_path,
-                            {'expire': expire.strftime('%Y-%m-%d %H:%M:%S')}
-                        )
-        return jsonify(code=1, list_record=list_record, data_path=data_path)
+        if data and file:
+            temp_path = tempfile.gettempdir() + '/' + \
+                current_app.config['WEKO_SEARCH_UI_IMPORT_TMP_PREFIX'] + \
+                datetime.utcnow().strftime(r'%Y%m%d%H%M%S%f')
+            os.mkdir(temp_path)
+            file_path = temp_path + '/' + file.filename
+            file.save(file_path)
+            task = check_import_items_task.apply_async(
+                (file_path, data.get('is_change_identifier') == 'true',
+                 request.host_url, current_i18n.language), )
+        return jsonify(code=1, check_import_task_id=task.task_id)
+
+    @expose('/get_check_status', methods=['POST'])
+    def get_check_status(self) -> jsonify:
+        """Validate item import."""
+        data = request.get_json()
+        result = {}
+
+        if data and data.get('task_id'):
+            task = import_item.AsyncResult(data.get('task_id'))
+            if task and isinstance(task.result, dict):
+                start_date = task.result.get("start_date")
+                end_date = task.result.get("end_date")
+                result.update({
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    **task.result
+                })
+            elif task and task.status != "PENDING":
+                result['error'] = _('Internal server error')
+        return jsonify(**result)
 
     @expose('/download_check', methods=['POST'])
     def download_check(self):
@@ -568,6 +623,10 @@ class ItemBulkExport(BaseView):
         :param
         :return: The rendered template.
         """
+        _cache_prefix = current_app.config['WEKO_ADMIN_CACHE_PREFIX']
+        _msg_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_MSG']
+        _msg_key = _cache_prefix.format(name=_msg_config)
+        reset_redis_cache(_msg_key, '')
         return self.render(
             WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE
         )
@@ -578,7 +637,7 @@ class ItemBulkExport(BaseView):
         _task_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_TASK']
         _cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
             format(name=_task_config)
-        export_status, download_uri = get_export_status()
+        export_status, download_uri, message = get_export_status()
 
         if (not export_status):
             export_task = export_all_task.apply_async(
@@ -592,10 +651,13 @@ class ItemBulkExport(BaseView):
     @expose('/check_export_status', methods=['GET'])
     def check_export_status(self):
         """Check export status."""
-        export_status, download_uri = get_export_status()
+        check = check_celery_is_run()
+        export_status, download_uri, message = get_export_status()
         return jsonify(data={
             'export_status': export_status,
-            'uri_status': True if download_uri else False
+            'uri_status': True if download_uri else False,
+            'celery_is_run': check,
+            'error_message': message
         })
 
     @expose('/cancel_export', methods=['GET'])
@@ -611,7 +673,7 @@ class ItemBulkExport(BaseView):
 
         path: it was load from FileInstance
         """
-        export_status, download_uri = get_export_status()
+        export_status, download_uri, message = get_export_status()
         if not export_status and download_uri is not None:
             file_instance = FileInstance.get_by_uri(download_uri)
             return file_instance.send_file(

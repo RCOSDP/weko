@@ -22,6 +22,7 @@
 
 import json
 import os
+import re
 import shutil
 import sys
 from collections import OrderedDict
@@ -45,6 +46,7 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_rest import ContentNegotiatedMethodView
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import cast
 from weko_accounts.api import ShibUser
 from weko_accounts.utils import login_required_customize
@@ -59,8 +61,6 @@ from weko_records.api import FeedbackMailList, ItemLink
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
-from weko_records_ui.utils import get_list_licence, get_roles, get_terms, \
-    get_workflows
 from weko_search_ui.utils import check_import_items, import_items_to_system
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
@@ -314,23 +314,35 @@ def new_activity():
 @blueprint.route('/activity/init', methods=['POST'])
 @login_required
 def init_activity():
-    """Init activity."""
-    post_activity = request.get_json()
-    activity = WorkActivity()
-    getargs = request.args
-    if 'community' in getargs:
-        rtn = activity.init_activity(
-            post_activity, request.args.get('community'))
-    else:
-        rtn = activity.init_activity(post_activity)
-    if rtn is None:
-        return jsonify(code=-1, msg='error')
-    url = url_for('weko_workflow.display_activity',
-                  activity_id=rtn.activity_id)
-    if 'community' in getargs and request.args.get('community') != 'undefined':
-        comm = GetCommunity.get_community_by_id(request.args.get('community'))
+    try:
+        """Init activity."""
+        post_activity = request.get_json()
+        activity = WorkActivity()
+        getargs = request.args
+        if 'community' in getargs:
+            rtn = activity.init_activity(
+                post_activity, request.args.get('community'))
+        else:
+            rtn = activity.init_activity(post_activity)
+        if rtn is None:
+            return jsonify(code=-1, msg='error')
         url = url_for('weko_workflow.display_activity',
-                      activity_id=rtn.activity_id, community=comm.id)
+                      activity_id=rtn.activity_id)
+        if 'community' in getargs and request.args.get('community') != 'undefined':
+            comm = GetCommunity.get_community_by_id(
+                request.args.get('community'))
+            url = url_for('weko_workflow.display_activity',
+                          activity_id=rtn.activity_id, community=comm.id)
+        db.session.commit()
+    except SQLAlchemyError as ex:
+        current_app.logger.error("sqlalchemy error: {}".format(ex))
+        db.session.rollback()
+        return jsonify(code=-1, msg='Failed to init activity!')
+    except BaseException as ex:
+        current_app.logger.error("Unexpected error: {}".format(ex))
+        db.session.rollback()
+        return jsonify(code=-1, msg='Failed to init activity!')
+
     return jsonify(code=0, msg='success',
                    data={'redirect': url})
 
@@ -375,21 +387,31 @@ def init_activity_guest():
     post_data = request.get_json()
 
     if post_data.get('guest_mail'):
-        # Prepare activity data.
-        data = {
-            'itemtype_id': post_data.get('item_type_id'),
-            'workflow_id': post_data.get('workflow_id'),
-            'flow_id': post_data.get('flow_id'),
-            'activity_confirm_term_of_use': True,
-            'extra_info': {
-                "guest_mail": post_data.get('guest_mail'),
-                "record_id": post_data.get('record_id'),
-                "related_title": post_data.get('guest_item_title'),
-                "file_name": post_data.get('file_name'),
-                "is_restricted_access": True,
+        try:
+            # Prepare activity data.
+            data = {
+                'itemtype_id': post_data.get('item_type_id'),
+                'workflow_id': post_data.get('workflow_id'),
+                'flow_id': post_data.get('flow_id'),
+                'activity_confirm_term_of_use': True,
+                'extra_info': {
+                    "guest_mail": post_data.get('guest_mail'),
+                    "record_id": post_data.get('record_id'),
+                    "related_title": post_data.get('guest_item_title'),
+                    "file_name": post_data.get('file_name'),
+                    "is_restricted_access": True,
+                }
             }
-        }
-        __, tmp_url = init_activity_for_guest_user(data)
+            __, tmp_url = init_activity_for_guest_user(data)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            current_app.logger.error("sqlalchemy error: {}".format(ex))
+            db.session.rollback()
+            return jsonify(msg='Cannot send mail')
+        except BaseException as ex:
+            current_app.logger.error('Unexpected error: {}'.format(ex))
+            db.session.rollback()
+            return jsonify(msg='Cannot send mail')
 
         if send_usage_application_mail_for_guest_user(
                 post_data.get('guest_mail'), tmp_url):
@@ -609,6 +631,7 @@ def display_activity(activity_id="0"):
     if user_id:
         from weko_user_profiles.views import get_user_profile_info
         user_profile['results'] = get_user_profile_info(int(user_id))
+    from weko_records_ui.utils import get_list_licence
     from weko_theme.utils import get_design_layout
 
     # Get the design for widget rendering
@@ -835,6 +858,8 @@ def next_action(activity_id='0', action_id=0):
     action = Action().get_action_detail(action_id)
     action_endpoint = action.action_endpoint
 
+    current_app.logger.debug('action_endpoint: {0}'.format(action_endpoint))
+
     if action_endpoint == 'begin_action':
         return jsonify(code=0, msg=_('success'))
 
@@ -959,6 +984,8 @@ def next_action(activity_id='0', action_id=0):
             if deposit and pid_without_ver and not recid:
                 record_without_version = pid_without_ver.object_uuid
 
+            current_app.logger.debug(
+                'last_idt_setting: {0}'.format(last_idt_setting))
             saving_doi_pidstore(
                 item_id,
                 record_without_version,
@@ -1141,9 +1168,11 @@ def next_action(activity_id='0', action_id=0):
             # Call signal to push item data to ES.
             try:
                 if '.' not in current_pid.pid_value and has_request_context():
+                    user_id = activity_detail.activity_login_user if \
+                        activity and activity_detail.activity_login_user else -1
                     item_created.send(
                         current_app._get_current_object(),
-                        user_id=current_user.get_id() if current_user else -1,
+                        user_id=user_id,
                         item_id=current_pid,
                         item_title=activity_detail.title
                     )
@@ -1386,7 +1415,7 @@ def cancel_action(activity_id='0', action_id=0):
             except Exception:
                 db.session.rollback()
                 current_app.logger.error(
-                    'Unexpected error: {}', sys.exc_info()[0])
+                    'Unexpected error: {}'.format(sys.exc_info()))
                 return jsonify(code=-1,
                                msg=sys.exc_info()[0])
 
@@ -1497,7 +1526,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
         else:
             return jsonify(code=-1, msg=_('Invalid password'))
     except ValueError:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return jsonify(code=-1, msg=_('Error!'))
 
 
@@ -1534,7 +1563,7 @@ def save_feedback_maillist(activity_id='0', action_id='0'):
         )
         return jsonify(code=0, msg=_('Success'))
     except Exception:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return jsonify(code=-1, msg=_('Error'))
 
 
@@ -1569,7 +1598,7 @@ def get_feedback_maillist(activity_id='0'):
         else:
             return jsonify(code=0, msg=_('Empty!'))
     except Exception:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return jsonify(code=-1, msg=_('Error'))
 
 
@@ -1653,7 +1682,7 @@ def check_approval(activity_id='0'):
     try:
         response = check_continue(response, activity_id)
     except Exception:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         response['error'] = -1
     return jsonify(response)
 
@@ -1733,6 +1762,7 @@ def usage_report():
 @login_required
 def get_data_init():
     """Init data."""
+    from weko_records_ui.utils import get_roles, get_terms, get_workflows
     init_workflows = get_workflows()
     init_roles = get_roles()
     init_terms = get_terms()
@@ -1988,3 +2018,8 @@ activity_blueprint.add_url_rule(
     ),
     methods=['POST']
 )
+
+
+@blueprint.app_template_filter('regex_replace')
+def regex_replace(s, pattern, replace):
+    return re.sub(pattern, replace, s)

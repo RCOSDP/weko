@@ -262,7 +262,7 @@ class Indexes(object):
                     db.session.commit()
                     p_lst = [o.id for o in obj_list]
                     cls.delete_set_info('move', index_id, p_lst)
-                    return dct
+                    return p_lst
             else:
                 with db.session.no_autoflush:
                     recursive_t = cls.recs_query(pid=index_id)
@@ -296,7 +296,7 @@ class Indexes(object):
                                 delete(synchronize_session='fetch')
                     db.session.commit()
                     cls.delete_set_info('delete', index_id, p_lst)
-                    return dct
+                    return p_lst
         except Exception as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
@@ -318,9 +318,10 @@ class Indexes(object):
             result = cls.delete(index_id, True)
         else:
             result = cls.delete(index_id)
-            if result is not None:
+            if result:
                 # delete indexes all
-                WekoDeposit.delete_by_index_tree_id(index_id)
+                for i in result:
+                    WekoDeposit.delete_by_index_tree_id(i)
         return result
 
     @classmethod
@@ -582,6 +583,8 @@ class Indexes(object):
                 recursive_t.c.cid,
                 recursive_t.c.position,
                 recursive_t.c.name,
+                recursive_t.c.link_name,
+                recursive_t.c.index_link_enabled,
                 recursive_t.c.public_state,
                 recursive_t.c.public_date,
                 recursive_t.c.browsing_role,
@@ -987,6 +990,10 @@ class Indexes(object):
                 case([(func.length(func.coalesce(Index.index_name, '')) == 0,
                        Index.index_name_english)],
                      else_=Index.index_name).label('name'),
+                case([(func.length(func.coalesce(Index.index_link_name, '')) == 0,
+                       Index.index_link_name_english)],
+                     else_=Index.index_link_name).label('link_name'),
+                Index.index_link_enabled,
                 Index.position,
                 Index.public_state,
                 Index.public_date,
@@ -1020,6 +1027,11 @@ class Indexes(object):
                         func.coalesce(test_alias.index_name, '')) == 0,
                         test_alias.index_name_english)],
                         else_=test_alias.index_name).label('name'),
+                    case([(func.length(
+                        func.coalesce(test_alias.index_link_name, '')) == 0,
+                        test_alias.index_link_name_english)],
+                        else_=test_alias.index_link_name).label('link_name'),
+                    test_alias.index_link_enabled,
                     test_alias.position,
                     test_alias.public_state,
                     test_alias.public_date,
@@ -1040,6 +1052,8 @@ class Indexes(object):
                 Index.id.label("cid"),
                 func.cast(Index.id, db.Text).label("path"),
                 Index.index_name_english.label("name"),
+                Index.index_link_name_english.label("link_name"),
+                Index.index_link_enabled,
                 Index.position,
                 Index.public_state,
                 Index.public_date,
@@ -1063,6 +1077,8 @@ class Indexes(object):
                     test_alias.id,
                     rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
                     test_alias.index_name_english,
+                    test_alias.index_link_name_english,
+                    test_alias.index_link_enabled,
                     test_alias.position,
                     test_alias.public_state,
                     test_alias.public_date,
@@ -1098,6 +1114,10 @@ class Indexes(object):
                 case([(func.length(func.coalesce(Index.index_name, '')) == 0,
                        Index.index_name_english)],
                      else_=Index.index_name).label('name'),
+                case([(func.length(func.coalesce(Index.index_link_name, '')) == 0,
+                       Index.index_link_name_english)],
+                     else_=Index.index_link_name).label('link_name'),
+                Index.index_link_enabled,
                 Index.position,
                 Index.public_state,
                 Index.public_date,
@@ -1131,6 +1151,11 @@ class Indexes(object):
                         test_alias.index_name, '')) == 0,
                         test_alias.index_name_english)],
                         else_=test_alias.index_name),
+                    case([(func.length(func.coalesce(
+                        test_alias.index_link_name, '')) == 0,
+                        test_alias.index_link_name_english)],
+                        else_=test_alias.index_link_name),
+                    test_alias.index_link_enabled,
                     test_alias.position,
                     test_alias.public_state,
                     test_alias.public_date,
@@ -1151,6 +1176,8 @@ class Indexes(object):
                 Index.id.label("cid"),
                 func.cast(Index.id, db.Text).label("path"),
                 Index.index_name_english.label("name"),
+                Index.index_link_name_english.label("link_name"),
+                Index.index_link_enabled,
                 Index.position,
                 Index.public_state,
                 Index.public_date,
@@ -1174,6 +1201,8 @@ class Indexes(object):
                     test_alias.id,
                     rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
                     test_alias.index_name_english,
+                    test_alias.index_link_name_english,
+                    test_alias.index_link_enabled,
                     test_alias.position,
                     test_alias.public_state,
                     test_alias.public_date,

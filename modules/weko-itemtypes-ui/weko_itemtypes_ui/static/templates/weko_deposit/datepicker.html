@@ -12,7 +12,7 @@
         <span class="text-muted pull-right" style="padding-right: 10px;">{{ form.required == true ? "Required" : "Optional" }}</span>
         <div class="help-block" ng-if="form.description" ng-bind-html="form.description"></div>
       </div>
-      <div class="panel-body" ng-hide="collapsed">
+      <div class="panel-body panel-body2" ng-hide="collapsed">
         <div
           class="form-group schema-form-datepicker {{form.htmlClass}}"
           ng-class="{'has-error': hasError()}">

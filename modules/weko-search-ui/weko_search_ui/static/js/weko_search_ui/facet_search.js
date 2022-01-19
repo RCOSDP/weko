@@ -151,20 +151,16 @@ class MainLayout extends React.Component {
                       item.buckets && item.buckets.map(function (subitem, k) {
                         const pattern = encodeURIComponent(name) + "=" + encodeURIComponent(subitem.key);
                         const value = search.indexOf(pattern) >= 0 ? true : false;
-                        // START:temporary fix for JDCat
-		        if((subitem.key).charCodeAt(0)<256 && (subitem.key).charCodeAt(subitem.key.length -1)<256){
-			  return (
-                            <label>
-                              <input type="checkbox" defaultChecked={value}
-                                onChange={function () {
-                                  that.handleCheck(name, subitem.key)
-                                }}
-                              ></input>
-                              {LABELS[subitem.key] || subitem.key}({subitem.doc_count})
-                            </label>
-                          )
-			}
-			// END:temporary fix for JDCat 
+                        return (
+                          <label>
+                            <input type="checkbox" defaultChecked={value}
+                              onChange={function () {
+                                that.handleCheck(name, subitem.key)
+                              }}
+                            ></input>
+                            {LABELS[subitem.key] || subitem.key}({subitem.doc_count})
+                          </label>
+                        )
                       })
                     }
                   </div>

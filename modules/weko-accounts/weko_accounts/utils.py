@@ -38,14 +38,16 @@ def get_remote_addr():
     if not request:
         return None
 
-    current_app.logger.debug('{0} {1} {2}: {3}'.format(
-        __file__, 'get_remote_addr()', 'request.headers', request.headers))
+    # current_app.logger.debug('{0} {1} {2}: {3}'.format(
+    #     __file__, 'get_remote_addr()', 'request.headers', request.headers))
     address = request.headers.get('X-Real-IP', None)
 
     if address is None:
         address = request.headers.get('X-Forwarded-For', request.remote_addr)
         if address is not None:
             address = address.encode('utf-8').split(b',')[0].strip().decode()
+
+    current_app.logger.debug("IP Address:{}".format(address))
 
     return address
 

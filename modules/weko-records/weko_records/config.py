@@ -249,3 +249,6 @@ WEKO_TEST_FIELD = {
 
 
 COPY_NEW_FIELD = True
+
+WEKO_RECORDS_SYSTEM_COMMA = "-,-"
+"""The system comma used to break metadata subitems."""

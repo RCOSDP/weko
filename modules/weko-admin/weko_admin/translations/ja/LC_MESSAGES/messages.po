@@ -906,7 +906,7 @@ msgid "Rankings"
 msgstr "ランキング"
 
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:91
-msgid "The Most Reviewed Items"
+msgid "Most Viewed Items"
 msgstr "最も閲覧されたアイテム"
 
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:102
@@ -1853,6 +1853,14 @@ msgstr "ファセット検索一覧"
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:70
 msgid "Please input all required item."
 msgstr "必須項目は全て入力して下さい。"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html
+msgid "Please select one aggregation mapping."
+msgstr "集計マッピングを１つ選択してください。"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html
+msgid "Already exists."
+msgstr "既に存在しています。"
 
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:
 msgid "Failed to create due to server error."

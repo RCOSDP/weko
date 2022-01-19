@@ -20,19 +20,54 @@
 
 """WEKO3 module docstring."""
 import shutil
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from celery import shared_task
 from celery.task.control import inspect
 from flask import current_app
 from weko_admin.api import TempDirInfo
 
-from .utils import delete_exported, export_all, import_items_to_system
+from .utils import check_import_items, delete_exported, export_all, \
+    get_lifetime, import_items_to_system
+
+
+@shared_task
+def check_import_items_task(file_path, is_change_identifier: bool,
+                            host_url, lang='en'):
+    """Check import items."""
+    result = {'start_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+    with current_app.test_request_context(host_url,
+                                          headers=[('Accept-Language', lang)]):
+        check_result = check_import_items(file_path, is_change_identifier)
+    # remove zip file
+    shutil.rmtree('/'.join(file_path.split('/')[:-1]))
+    data_path = check_result.get('data_path', '')
+    if check_result.get('error'):
+        remove_temp_dir_task.apply_async((data_path,))
+        result['error'] = check_result.get('error')
+    else:
+        list_record = check_result.get('list_record', [])
+        num_record_err = len(
+            [i for i in list_record if i.get('errors')])
+        if len(list_record) == num_record_err:
+            remove_temp_dir_task.apply_async((data_path,))
+        else:
+            expire = datetime.now() + \
+                timedelta(seconds=get_lifetime())
+            TempDirInfo().set(
+                data_path,
+                {'expire': expire.strftime('%Y-%m-%d %H:%M:%S')}
+            )
+        result['data_path'] = data_path
+        result['list_record'] = list_record
+
+    result['end_date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return result
 
 
 @shared_task(ignore_results=False)
 def import_item(item, request_info):
-    """Import Item ."""
+    """Import Item."""
     try:
         start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         result = import_items_to_system(item, request_info) or dict()
@@ -73,7 +108,7 @@ def delete_exported_task(uri, cache_key):
 
 def is_import_running():
     """Check import is running."""
-    if not inspect().ping():
+    if not check_celery_is_run():
         return 'celery_not_run'
 
     active = inspect().active()
@@ -87,3 +122,11 @@ def is_import_running():
         for task in reserved[worker]:
             if task['name'] == 'weko_search_ui.tasks.import_item':
                 return 'is_import_running'
+
+
+def check_celery_is_run():
+    """Check celery is running, or not."""
+    if not inspect().ping():
+        return False
+    else:
+        return True

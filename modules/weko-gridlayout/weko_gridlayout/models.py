@@ -108,7 +108,7 @@ class WidgetItem(db.Model, Timestamp):
     is_deleted = db.Column(db.Boolean(name='deleted'), default=False)
     """Delete flag."""
 
-    locked = db.Column(db.Boolean(), default=False)
+    locked = db.Column(db.Boolean(name='locked'), default=False)
     """Edit locked"""
 
     locked_by_user = db.Column(db.Integer(), db.ForeignKey(User.id),

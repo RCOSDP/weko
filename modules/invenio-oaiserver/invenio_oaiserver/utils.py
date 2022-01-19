@@ -10,12 +10,14 @@
 
 from __future__ import absolute_import, print_function
 
+from datetime import datetime
 from functools import partial
 
 from flask import current_app
 from lxml import etree
 from lxml.builder import E
 from lxml.etree import Element
+from weko_index_tree.api import Indexes
 from weko_schema_ui.schema import get_oai_metadata_formats
 from werkzeug.utils import import_string
 
@@ -46,6 +48,10 @@ NS_FRIENDS = {None: 'http://www.openarchives.org/OAI/2.0/friends/'}
 FRIENDS_SCHEMA_LOCATION = 'http://www.openarchives.org/OAI/2.0/friends/'
 FRIENDS_SCHEMA_LOCATION_XSD = \
     'http://www.openarchives.org/OAI/2.0/friends/.xsd'
+
+OUTPUT_HARVEST = 3
+HARVEST_PRIVATE = 2
+PRIVATE_INDEX = 1
 
 
 @lru_cache(maxsize=100)
@@ -201,3 +207,48 @@ def handle_license_free(record_metadata):
                         del attr[_license_type]
 
     return record_metadata
+
+
+def get_index_state():
+    index_state = {}
+    ids = Indexes.get_all_indexes()
+    for index in ids:
+        index_id = str(index.id)
+        if not index.harvest_public_state:
+            index_state[index_id] = {
+                'parent': None,
+                'msg': HARVEST_PRIVATE
+            }
+        elif '-99' not in index.browsing_role \
+                or not index.public_state \
+                or (index.public_date and
+                    index.public_date > datetime.utcnow()):
+            index_state[index_id] = {
+                'parent': None,
+                'msg': PRIVATE_INDEX
+            }
+        else:
+            index_state[index_id] = {
+                'parent': str(index.parent),
+                'msg': OUTPUT_HARVEST
+            }
+    return index_state
+
+
+def is_output_harvest(path_list, index_state):
+    def _check(index_id):
+        if index_id in index_state:
+            if not index_state[index_id]['parent'] \
+                    or index_state[index_id]['parent'] == '0':
+                return index_state[index_id]['msg']
+            else:
+                return _check(index_state[index_id]['parent'])
+        else:
+            return HARVEST_PRIVATE
+
+    result = 0
+    for path in path_list:
+        current_app.logger.debug(path)
+        index_id = path.split('/')[-1]
+        result = max([result, _check(index_id)])
+    return result if result != 0 else HARVEST_PRIVATE

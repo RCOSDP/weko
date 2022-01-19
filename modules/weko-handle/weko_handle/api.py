@@ -26,7 +26,8 @@ import traceback
 from b2handle.clientcredentials import PIDClientCredentials
 from b2handle.handleclient import EUDATHandleClient
 from b2handle.handleexceptions import CredentialsFormatError, \
-    GenericHandleError, HandleAuthenticationError
+    GenericHandleError, HandleAuthenticationError, \
+    HandleAlreadyExistsException
 from flask import current_app, jsonify
 
 
@@ -51,20 +52,21 @@ class Handle(object):
                 '{} in HandleClient.retrieve_handle_record_json({})'.format(
                     e, handle))
 
-    def register_handle(self, location):
+    def register_handle(self, location, hdl="", overwrite=False):
         """Register a handle."""
         current_app.logger.debug(
-            "location: {0}".format(location.split('/records/')))
-        pid = ''
+            "location:{0} hdl:{1}".format(location, hdl))
+        pid = hdl
         try:
             credential = PIDClientCredentials.load_from_JSON(
                 self.credential_path)
             client = EUDATHandleClient.instantiate_with_credentials(credential)
-            pid = credential.get_prefix() + '/' + \
-                "{:010d}".format(int(location.split('/records/')[1]))
+            if pid == '' and location:
+                pid = credential.get_prefix() + '/' + \
+                    "{:010d}".format(int(location.split('/records/')[1]))
             current_app.logger.debug(
                 'call register_handle({0}, {1})'.format(pid, location))
-            handle = client.register_handle(pid, location)
+            handle = client.register_handle(pid, location, overwrite=overwrite)
             current_app.logger.info(
                 'Registered successfully handle pid:{0} handle:{1}'.format(pid, handle))
             return handle
@@ -74,6 +76,12 @@ class Handle(object):
                 'Registration failed of handle {0}. {1} in '
                 'HandleClient.register_handle'.format(pid, e))
             current_app.logger.error(traceback.format_exc())
+            return None
+        except HandleAlreadyExistsException as e:
+            current_app.logger.error(
+                'Handle: {0} already exists.'.format(pid))
+            current_app.logger.error(traceback.format_exc())
+            current_app.logger.error(e)
             return None
         except AttributeError:
             current_app.logger.error('Missing Private Key!')

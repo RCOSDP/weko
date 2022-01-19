@@ -57,18 +57,19 @@ def json_loader(data, pid, owner_id=None):
         if isinstance(value, list):
             for v in value:
                 if 'nameIdentifiers' in v \
-                        and len(v['nameIdentifiers']) > 0 \
-                        and 'nameIdentifierScheme' in v['nameIdentifiers'][0] \
-                        and v['nameIdentifiers'][0]['nameIdentifierScheme'] == 'WEKO':
+                    and len(v['nameIdentifiers']) > 0 \
+                    and 'nameIdentifierScheme' in v['nameIdentifiers'][0] \
+                    and v['nameIdentifiers'][0][
+                        'nameIdentifierScheme'] == 'WEKO':
                     author_link.append(
                         v['nameIdentifiers'][0]['nameIdentifier'])
-        elif isinstance(value, dict):
-            if 'nameIdentifiers' in value \
-                    and len(value['nameIdentifiers']) > 0 \
-                    and 'nameIdentifierScheme' in value['nameIdentifiers'][0] \
-                    and value['nameIdentifiers'][0]['nameIdentifierScheme'] == 'WEKO':
-                author_link.append(
-                    value['nameIdentifiers'][0]['nameIdentifier'])
+        elif isinstance(value, dict) and 'nameIdentifiers' in value \
+            and len(value['nameIdentifiers']) > 0 \
+            and 'nameIdentifierScheme' in value['nameIdentifiers'][0] \
+            and value['nameIdentifiers'][0][
+                'nameIdentifierScheme'] == 'WEKO':
+            author_link.append(
+                value['nameIdentifiers'][0]['nameIdentifier'])
 
     dc = OrderedDict()
     jpcoar = OrderedDict()
@@ -822,7 +823,8 @@ async def sort_meta_data_by_options(
                     if 'lang_id' in data_result[key]:
                         lang_id = data_result[key].get('lang_id') \
                             if "[]" not in data_result[key].get('lang_id') \
-                            else data_result[key].get('lang_id').replace("[]", '')
+                            else data_result[key].get(
+                                'lang_id').replace("[]", '')
                     data = ''
                     if "stt" in data_result[key] and data_result[key].get(
                             "stt") is not None:
@@ -925,7 +927,7 @@ async def sort_meta_data_by_options(
                                        )
             elif not (bibliographic_key and bibliographic_key in s['key']) and \
                     value and value not in _ignore_items and \
-                    ((not is_hide and is_show_list) or \
+                    ((not is_hide and is_show_list) or
                      s['title'] in current_app.config[
                          'WEKO_RECORDS_LANGUAGE_TITLES']) and s['key'] \
                     and s['title'] != current_app.config[
@@ -1145,7 +1147,11 @@ async def sort_meta_data_by_options(
                         s_key = s.get('key')
                         if m.get(s_key):
                             s['value'] = m.get(s_key) if not s['value'] else \
-                                '{}, {}'.format(s['value'], m.get(s_key))
+                                '{}{} {}'.format(
+                                    s['value'],
+                                    current_app.config.get(
+                                        'WEKO_RECORDS_SYSTEM_COMMA', ''),
+                                    m.get(s_key))
                             s['parent_option'] = {
                                 'required': option.get("required"),
                                 'show_list': option.get("showlist"),
@@ -1255,6 +1261,7 @@ def get_attribute_value_all_items(
     :return: alst
     """
     name_mapping = {}
+
     def get_name_mapping():
         """Create key & title mapping."""
         for lst in klst:
@@ -1276,7 +1283,7 @@ def get_attribute_value_all_items(
             return name
         else:
             return ''
-    
+
     def change_temporal_format(value):
         """Change temporal format."""
         if '/' in value:
@@ -1414,7 +1421,8 @@ def get_attribute_value_all_items(
                                     data_split['start'] = v
                                 elif l == 'end':
                                     if 'start' in data_split:
-                                        v = '{} - {}'.format(data_split.pop('start'), v)
+                                        v = '{} - {}'.format(
+                                            data_split.pop('start'), v)
                                     temp.append(v)
                                 else:
                                     if 'start' in data_split:
@@ -1429,11 +1437,14 @@ def get_attribute_value_all_items(
                         if data_type == 'lang':
                             for k, v in data_split.items():
                                 data_split[k] = str.join(', ', v)
-                            result.append([{value_key: str.join('\n', list(data_split.values()))}])
+                            result.append(
+                                [{value_key: str.join('\n', list(data_split.values()))}])
                         elif data_type == 'event':
                             if 'start' in data_split:
-                                data_split['data'].append(data_split.pop('start'))
-                            result.append([{value_key: str.join(', ', data_split['data'])}])
+                                data_split['data'].append(
+                                    data_split.pop('start'))
+                            result.append(
+                                [{value_key: str.join(', ', data_split['data'])}])
                     elif isinstance(alst, dict):
                         data_type, value_key, l, v = get_value(alst)
                         if data_type is not None and value_key:
@@ -1450,7 +1461,8 @@ def get_attribute_value_all_items(
                         val = alst.pop(key, {})
                         name = get_name(key, False) or ''
                         hide = lst[3].get('hide') or \
-                            (non_display_flag and lst[3].get('non_display', False))
+                            (non_display_flag and lst[3].get(
+                                'non_display', False))
 
                         if key in ('creatorMail', 'contributorMail', 'mail'):
                             hide = hide | hide_email_flag
@@ -1667,7 +1679,7 @@ def selected_value_by_language(lang_array, value_array, lang_id, val_id,
                 noreturn = False
                 for idx, lg in enumerate(lang_array):
                     if current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False) and \
-                            ((lg == 'ja' and lang_selected == 'en') or \
+                            ((lg == 'ja' and lang_selected == 'en') or
                              (lg == 'en' and lang_selected == 'ja')):
                         noreturn = True
                         break
@@ -1735,6 +1747,7 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
     @param stt_key:
     @return:
     """
+    sys_comma = current_app.config.get('WEKO_RECORDS_SYSTEM_COMMA', '')
     if (key is not None) and isinstance(key, str) and (data_json is not None) \
             and (data_result is not None):
         save_key = ""
@@ -1756,9 +1769,11 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
                     j["title_ja"].strip() in "Language") \
                     or (j["title_ja"].strip() in "言語") or (
                         j["title"].strip() in "言語"):
-                    data_result[save_key] = {**data_result[save_key],
-                                             **{'lang': j["value"].split(","),
-                                                "lang_id": key}}
+                    data_result[save_key] = {
+                        **data_result[save_key],
+                        **{'lang': j["value"].split(sys_comma),
+                           'lang_id': key}
+                    }
                     flag = True
                 if key not in data_result[save_key] and not flag:
                     if "stt" not in data_result[save_key]:
@@ -1767,18 +1782,18 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
                     if "stt" in data_result[save_key]:
                         data_result[save_key]["stt"].append(key)
                     data_result[save_key] = {**data_result[save_key], **{
-                        key: {'value': j["value"].split(",")}}}
+                        key: {'value': j["value"].split(sys_comma)}}}
         return data_result, stt_key
     else:
         return None
 
 
-def result_rule_create_show_list(source_title, current_lang):
-    """Result rules create show list.
+def get_value_by_selected_lang(source_title, current_lang):
+    """Get value by selected lang.
 
-    @param source_title:
-    @param current_lang:
-    @return:
+    @param source_title: e.g. {'None Language': 'test', 'ja': 'テスト'}
+    @param current_lang: e.g. 'ja'
+    @return: e.g. 'テスト'
     """
     value_en = None
     value_latn = None
@@ -1907,7 +1922,7 @@ def get_creator(create, result_end, hide_creator_keys, current_lang):
             if creates_key:
                 del creates_key[key]
     result = get_creator_by_languages(creates_key, create)
-    creator = result_rule_create_show_list(result, current_lang)
+    creator = get_value_by_selected_lang(result, current_lang)
     if creator:
         for key, value in creates_key.items():
             if key in creator:
@@ -1987,7 +2002,7 @@ def get_author_has_language(creator, result_end, current_lang, map_keys):
             else:
                 result[key_data].append(value_data)
                 is_added.append(key_data)
-    alternative = result_rule_create_show_list(result, current_lang)
+    alternative = get_value_by_selected_lang(result, current_lang)
     if alternative:
         if map_keys[0] not in result_end:
             result_end[map_keys[0]] = []

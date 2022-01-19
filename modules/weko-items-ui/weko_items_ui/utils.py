@@ -64,7 +64,6 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
 from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission, check_publish_status
-from weko_records_ui.utils import hide_item_metadata, replace_license_free
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
@@ -404,14 +403,22 @@ def parse_ranking_results(index_info,
                 else:
                     t['date'] = new_date
                     date = new_date
-            title = item.get(title_key)
+            if pid_key == 'col1':
+                pid_value = item.get(pid_key, '')
+            else:
+                pid_value = item.get('pid_value', '')
+            if pid_value:
+                record = WekoRecord.get_record_by_pid(pid_value)
+                title = record.get_titles
+            else:
+                title = item.get(title_key)
             if title_key == 'user_id':
                 user_info = UserProfile.get_by_userid(title)
                 if user_info:
                     title = user_info.username
                 else:
                     title = 'None'
-            t['title'] = title
+            t['title'] = title if title else 'None'
             t['url'] = url.format(item[key]) if url and key in item else None
             if title != '':  # Do not add empty searches
                 ranking_list.append(t)
@@ -1389,8 +1396,7 @@ def export_items(post_data):
 def _get_max_export_items():
     """Get max amount of items to export."""
     max_table = current_app.config['WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE']
-    non_user_max = max_table[current_app.config[
-        'WEKO_PERMISSION_ROLE_GENERAL']]
+    non_user_max = current_app.config['WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM']
     current_user_id = current_user.get_id()
 
     if not current_user_id:  # Non-logged in users
@@ -1497,6 +1503,8 @@ def _custom_export_metadata(record_metadata: dict, hide_item: bool = True,
         hide_item (bool): Hide item flag.
         replace_license (bool): Replace license flag.
     """
+    from weko_records_ui.utils import hide_item_metadata, replace_license_free
+
     # Hide private metadata
     if hide_item:
         hide_item_metadata(record_metadata)
@@ -1928,10 +1936,10 @@ def hide_meta_data_for_role(record):
             is_hidden = False
             break
     # Community users
-    community_role_name = current_app.config[
+    community_role_names = current_app.config[
         'WEKO_PERMISSION_ROLE_COMMUNITY']
     for role in list(roles):
-        if role.name in community_role_name:
+        if role.name in community_role_names:
             is_hidden = False
             break
 
@@ -2229,6 +2237,8 @@ def make_bibtex_data(record_ids):
     @param record_ids:
     @return:
     """
+    from weko_records_ui.utils import hide_item_metadata
+
     result = ''
     err_msg = _('Please input all required item.')
     from weko_schema_ui.serializers import WekoBibTexSerializer
@@ -3041,7 +3051,7 @@ def check_item_is_being_edit(
     if post_workflow and post_workflow.action_status \
             in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]:
         current_app.logger.debug("post_workflow: {0} status: {1}".format(
-            item_uuid, post_workflow.action_status))
+            post_workflow, post_workflow.action_status))
         return True
 
     draft_pid = PersistentIdentifier.query.filter_by(
