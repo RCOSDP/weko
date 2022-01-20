@@ -250,6 +250,12 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
         {'id': 'relevance_desc',
          'contents': 'Relevance(desc)',
          'disableFlg': False},
+        {'id': 'temporal_asc',
+         'contents': 'Temporal(asc)',
+         'disableFlg': False},
+        {'id': 'temporal_desc',
+         'contents': 'Temporal(desc)',
+         'disableFlg': False},
     ],
     'dlt_index_sort_selected': 'controlnumber_asc',
     'dlt_keyword_sort_options': [
@@ -297,6 +303,12 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
         {'id': 'relevance_desc',
          'contents': 'Relevance(desc)',
          'disableFlg': False},
+        {'id': 'temporal_asc',
+         'contents': 'Temporal(asc)',
+         'disableFlg': False},
+        {'id': 'temporal_desc',
+         'contents': 'Temporal(desc)',
+         'disableFlg': False},
     ],
     'dlt_keyword_sort_selected': 'createdate_desc',
     'sort_options': {
@@ -311,6 +323,7 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
             {'id': 'pyear_asc', 'contents': 'Date Of Issued(asc/desc)'},
             {'id': 'custom_sort_asc', 'contents': 'Custom(asc/desc)'},
             {'id': 'relevance_asc', 'contents': 'Relevance(asc/desc)'},
+            {'id': 'temporal_asc', 'contents': 'Temporal(asc/desc)'},
         ]
     },
     'display_control': {
