@@ -58,7 +58,8 @@ services:
       - INVENIO_ROLE_CONTRIBUTOR=Contributor
       - INVENIO_ROLE_COMMUNITY=Community Administrator
       # production or development
-      - FLASK_ENV=development
+      #- FLASK_ENV=development
+      - FLASK_ENV=production
       - FLASK_DEBUG=True
       - SEARCH_INDEX_PREFIX=tenant1
       - INVENIO_DB_POOL_CLASS=QueuePool
@@ -127,7 +128,7 @@ services:
       options:
         max-size: "10m"
     ports:
-      - "5001:5000"
+      - "5009:5000"
     deploy:
       resources:
         limits:
@@ -252,13 +253,13 @@ services:
     volumes:
       - pgsql-data:/var/lib/postgresql/data
     ports:
-      - "25401:5432"
+      - "25409:5432"
 
   redis:
     restart: "always"
     image: redis
     ports:
-      - "26301:6379"
+      - "26309:6379"
     deploy:
       resources:
         limits:
@@ -274,22 +275,22 @@ services:
     environment:
       - "ES_JAVA_OPTS=-Xms2048m -Xmx2048m"
     ports:
-      - "29201:9200"
-      - "29301:9300"
+      - "29209:9200"
+      - "29309:9300"
 
   rabbitmq:
     restart: "always"
     image: rabbitmq
     ports:
-      - "24301:4369"
-      - "45601:25672"
+      - "24309:4369"
+      - "45609:25672"
 
   nginx:
     restart: "always"
     build: ./nginx
     ports:
-      - "80:80"
-      - "443:443"
+      - "8009:80"
+      - "4409:443"
     volumes:
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
       - data_data:/home/invenio/.virtualenvs/invenio/var/instance/data
@@ -314,7 +315,7 @@ services:
     image: mher/flower:0.9.5
     command: --broker=amqp://guest:guest@rabbitmq:5672// --broker_api=http://guest:guest@rabbitmq:5671/api/
     ports:
-      - "5501:5555"
+      - "5509:5555"
     links:
       - rabbitmq
 
