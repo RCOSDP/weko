@@ -48,7 +48,7 @@ class WekoSitemap(Sitemap):
         def loader(*args, **kwargs):
             page = kwargs.get('page')
             data = current_cache.get('sitemap_' + str(page).zfill(4))
-            current_app.extensions['sitemap'].gzip_response(data['page'])
+            #current_app.extensions['sitemap'].gzip_response(data['page'])
             return data['page'] if data else fn(*args, **kwargs)
         return loader
 
@@ -99,7 +99,7 @@ class WekoSitemap(Sitemap):
         response = Response()
         response.data = gzip_buffer.getvalue()
         response.headers['Content-Type'] = 'application/x-gzip'
-        response.headers['Content-Encoding'] = 'gzip' # Breaks Chrome if set
+        #response.headers['Content-Encoding'] = 'gzip' # Breaks Chrome if set
         response.headers['Content-Length'] = len(response.data)
         return response
 
