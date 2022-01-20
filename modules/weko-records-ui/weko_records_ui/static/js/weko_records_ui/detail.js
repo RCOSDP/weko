@@ -210,16 +210,9 @@ require([
   $('.next_to_analysis').on('click', function () {
     let analysis_url = $('#analysis_url').text();
     let permalink_uri = $('#permalink_uri').text();
-    $.ajax({
-      url: analysis_url,
-      method: 'POST',
-      contentType: 'application/json',
-      data: JSON.stringify({'url': permalink_uri}),
-      success: function (result) {
-      },
-      error: function (error) {
-      }
-    });
+    let analysis_version = '/HEAD';
+    analysis_url = analysis_url + encodeURIComponent(permalink_uri) + analysis_version;
+    window.open(analysis_url);
   });
 
   $(".term-condtion-modal").on("click", function () {
