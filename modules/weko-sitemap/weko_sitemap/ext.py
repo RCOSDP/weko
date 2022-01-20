@@ -11,7 +11,7 @@ from __future__ import absolute_import, print_function
 
 import gzip
 from datetime import datetime
-from functools import wrapsgzip
+#from functools import wrapsgzip
 from io import BytesIO
 
 from flask import Blueprint, Response, current_app, render_template, url_for
@@ -99,7 +99,7 @@ class WekoSitemap(Sitemap):
         response = Response()
         response.data = gzip_buffer.getvalue()
         response.headers['Content-Type'] = 'application/x-gzip'
-        response.headers['Content-Encoding'] = 'gzip' # Breaks Chrome if set
+        #response.headers['Content-Encoding'] = 'gzip' # Breaks Chrome if set
         response.headers['Content-Length'] = len(response.data)
         return response
 
