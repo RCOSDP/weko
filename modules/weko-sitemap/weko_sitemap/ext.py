@@ -99,7 +99,7 @@ class WekoSitemap(Sitemap):
         response = Response()
         response.data = gzip_buffer.getvalue()
         response.headers['Content-Type'] = 'application/x-gzip'
-        #response.headers['Content-Encoding'] = 'gzip' # Breaks Chrome if set
+        response.headers['Content-Encoding'] = 'gzip' # Breaks Chrome if set
         response.headers['Content-Length'] = len(response.data)
         return response
 
