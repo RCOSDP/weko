@@ -21,13 +21,6 @@
 version: "3.2"
 
 services:
-  traefik:
-    image: traefik:v2.2.7
-    container_name: traefik
-    labels:
-      - "traefik.http.routers.traefik.middlewares=traefik-compress"
-      - "traefik.http.middlewares.traefik-compress.compress=true"
-
   web:
     restart: "always"
     build:
