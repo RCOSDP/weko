@@ -356,6 +356,20 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     :param kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
     """
+    def _get_rights_title(result, rights_key, rights_values, current_lang, meta_options):
+        """Get multi-lang rights title."""
+        item_key = rights_key.split('.')[0]
+        item_title = meta_options[item_key]['title']
+        if meta_options[item_key]['title_i18n'].get(current_lang, None):
+            item_title = meta_options[item_key]['title_i18n'][current_lang]
+        elif meta_options[item_key]['title_i18n'].get('en', None):
+            item_title = meta_options[item_key]['title_i18n']['en']
+        if rights_values:
+            result[item_key] = {
+                'item_title': item_title,
+                'item_values': rights_values
+            }
+
     # Check file permision if request is File Information page.
     if filename:
         check_file = None
@@ -458,7 +472,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         if hasattr(current_i18n, 'language') else None
     # get title name
     from weko_search_ui.utils import get_data_by_property
+    from weko_records.utils import get_options_and_order_list
     title_name = ''
+    rights_values = {}
+    accessRight = ''
+    solst, meta_options = get_options_and_order_list(record.get('item_type_id'))
     item_type_mapping = Mapping.get_record(record.get('item_type_id'))
     item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
     suffixes = '.@attributes.xml:lang'
@@ -478,6 +496,16 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
                 _title_key1,
                 current_lang,
                 record)
+        elif key == 'rights.@value':
+            _rights_values, _rights_key = get_data_by_property(
+                record, item_map, key)
+            if _rights_key:
+                _get_rights_title(rights_values, _rights_key, _rights_values, current_lang, meta_options)
+        elif key == 'accessRights.@value':
+            accessRights, _access_rights_key = get_data_by_property(
+                record, item_map, key)
+            if accessRights and len(accessRights) > 0:
+                accessRight = accessRights[0]
 
     pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
     # Check if user has the permission to download original pdf file
@@ -603,6 +631,9 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         is_display_file_preview=is_display_file_preview,
         # experimental implementation 20210502
         title_name=title_name,
+        rights_values=rights_values,
+        accessRight=accessRight,
+        analysis_url=current_app.config.get('WEKO_RECORDS_UI_ONLINE_ANALYSIS_URL'),
         **ctx,
         **kwargs
     )
