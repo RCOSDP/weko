@@ -18,6 +18,9 @@
     <meta name="{{ metadata.name }}" content="{{ metadata.data }}">
         {%- endfor %}
     {%- endif %}
+    {%- if google_dataset_meta %}
+    <script type="application/ld+json">{% autoescape false %}{{ google_dataset_meta }}{% endautoescape %}</script>
+    {%- endif %}
     {%- if description %}<meta name="description" content="{{ description }}" />{% endif %}
     {%- if keywords %}<meta name="keywords" content="{{ keywords }}" />{% endif %}
     {%- if config.get('THEME_GOOGLE_SITE_VERIFICATION', None) %}

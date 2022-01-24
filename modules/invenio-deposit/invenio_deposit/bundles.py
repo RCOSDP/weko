@@ -57,7 +57,7 @@ js_dependencies_ckeditor = NpmBundle(
     'node_modules/angular-schema-form-ckeditor/bootstrap-ckeditor.js',
     npm={
         'angular-schema-form-ckeditor':
-            'git://github.com/webcanvas/angular-schema-form-ckeditor'
+            'https://github.com/webcanvas/angular-schema-form-ckeditor'
             '.git#b213fa934759a18b1436e23bfcbd9f0f730f1296',
         'ckeditor': '~4.5.10',
         'rr-ng-ckeditor': '~0.2.1',
