@@ -504,6 +504,23 @@ msgstr ""
 msgid " Update"
 msgstr ""
 
+#: weko_records_ui/templates/weko_records_ui/box/analysis.html:27
+#: weko_records_ui/templates/weko_records_ui/box/analysis.html:31
+msgid "Online Analysis"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/analysis.html:42
+msgid "Terms of Use"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/analysis.html:70
+msgid "I have read and agreed to the Terms of Use"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/analysis.html:79
+msgid "Next"
+msgstr ""
+
 #: weko_records_ui/templates/weko_records_ui/box/meta.html:42
 msgid "Publication date"
 msgstr ""

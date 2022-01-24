@@ -500,6 +500,23 @@ msgstr ""
 msgid "Header Settings"
 msgstr ""
 
+#: weko_records_ui/templates/weko_records_ui/box/analysis.html:27
+#: weko_records_ui/templates/weko_records_ui/box/analysis.html:31
+msgid "Online Analysis"
+msgstr "オンライン分析"
+
+#: weko_records_ui/templates/weko_records_ui/box/analysis.html:42
+msgid "Terms of Use"
+msgstr "利用について"
+
+#: weko_records_ui/templates/weko_records_ui/box/analysis.html:70
+msgid "I have read and agreed to the Terms of Use"
+msgstr "上記の条件に同意する"
+
+#: weko_records_ui/templates/weko_records_ui/box/analysis.html:79
+msgid "Next"
+msgstr "次へ"
+
 #: weko_records_ui/templates/weko_records_ui/box/export.html:34
 msgid "Other Formats"
 msgstr ""
