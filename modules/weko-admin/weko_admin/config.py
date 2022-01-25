@@ -1079,6 +1079,7 @@ WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
     'widgetdesign',
     'community',
     'items/custom_sort',
+    'items/search',
     'indexedit',
     'indexjournal',
     'report',
