@@ -79,7 +79,7 @@ from weko_records.serializers.utils import get_mapping
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_GRANT_SUFFIX_METHOD
-from weko_workflow.models import FlowDefine, WorkFlow
+from weko_workflow.models import FlowDefine, WorkFlow, FlowAction
 from weko_workflow.utils import IdentifierHandle, check_existed_doi, \
     delete_cache_data, get_cache_data, get_identifier_setting, \
     get_sub_item_value, get_url_root, item_metadata_validation, \
@@ -1266,8 +1266,14 @@ def create_flow_define():
         flow = the_flow.create_flow(WEKO_FLOW_DEFINE)
 
         if flow and flow.flow_id:
+            flow_actions = WEKO_FLOW_DEFINE_LIST_ACTION
+            start_action = FlowAction.query.filter_by(flow_id=flow.flow_id, action_id=1).first()
+            flow_actions[0]['workflow_flow_action_id'] = start_action.id
+            end_action = FlowAction.query.filter_by(flow_id=flow.flow_id, action_id=2).first()
+            flow_actions[2]['workflow_flow_action_id'] = end_action.id
+            
             the_flow.upt_flow_action(flow.flow_id,
-                                     WEKO_FLOW_DEFINE_LIST_ACTION)
+                                     flow_actions)
 
 
 def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
