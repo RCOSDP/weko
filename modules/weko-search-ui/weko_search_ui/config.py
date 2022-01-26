@@ -205,7 +205,7 @@ RECORDS_REST_SORT_OPTIONS[SEARCH_UI_SEARCH_INDEX] = dict(
         order=11,
     ),
     # add 20210505 end
-    date_range1=dict(
+    temporal=dict(
         title='Temporal',
         fields=['date_range1.gte'],
         default_order='asc',
