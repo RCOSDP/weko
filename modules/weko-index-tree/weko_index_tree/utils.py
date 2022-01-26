@@ -134,13 +134,17 @@ def get_tree_json(index_list, root_id):
 
     def generate_index_dict(index_element, is_root):
         """Formats an index_element, which is a tuple, into a nicely formatted dictionary."""
-        index_dict = index_element._asdict()
-        index_name = str(index_element.name).replace("&EMPTY&", "")
-        index_name = Markup.escape(index_name)
-        index_name = index_name.replace("\n", r"<br\>")
         
-        index_link_name = str(index_element.link_name).replace("&EMPTY&", "")
-        index_link_name = index_link_name.replace("\n", r"<br\>")
+        def test_func(test):
+            index_dict = test._asdict()
+            index_name = str(test.name).replace("&EMPTY&", "")
+            index_name = Markup.escape(index_name)
+            index_name = index_name.replace("\n", r"<br\>")
+            index_link_name = str(test.link_name).replace("&EMPTY&", "")
+            index_link_name = index_link_name.replace("\n", r"<br\>")
+            return (index_dict, index_name, index_link_name)
+
+        index_dict, index_name, index_link_name = test_func(index_element)
 
         if not is_root:
             pid = str(index_element.pid)
