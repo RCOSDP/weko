@@ -218,6 +218,59 @@ WEKO_AUTHORS_IMPORT_KEY = {
         'contributorMails': 'contributorMail',
         'creatorMails': 'creatorMail',
         'mails': 'mail'
+    },
+    'author_affiliation':{
+        'contributorAffiliations':{
+            'names':{
+                'key': 'contributorAffiliationNames',
+                'values':{
+                    'name': 'contributorAffiliationName',
+                    'lang': 'contributorAffiliationNameLang'
+                }
+            },
+            'identifiers':{
+                'key': 'contributorAffiliationNameIdentifiers',
+                'values':{
+                    'identifier': 'contributorAffiliationNameIdentifier',
+                    'uri': 'contributorAffiliationURI',
+                    'scheme': 'contributorAffiliationScheme'
+                }
+            }
+        },
+        'creatorAffiliations':{
+            'names':{
+                'key': 'affiliationNames',
+                'values':{
+                    'name': 'affiliationName',
+                    'lang': 'affiliationNameLang'
+                }
+            },
+            'identifiers':{
+                'key': 'affiliationNameIdentifiers',
+                'values':{
+                    'identifier': 'affiliationNameIdentifier',
+                    'uri': 'affiliationNameIdentifierURI',
+                    'scheme': 'affiliationNameIdentifierScheme'
+                }
+            }
+        },
+        'affiliation':{
+            'names':{
+                'key': 'affiliationNames',
+                'values':{
+                    'name': 'affiliationName',
+                    'lang': 'lang'
+                }
+            },
+            'identifiers':{
+                'key': 'nameIdentifiers',
+                'values':{
+                    'identifier': 'nameIdentifier',
+                    'uri': 'nameIdentifierURI',
+                    'scheme': 'nameIdentifierScheme'
+                }
+            }
+        }
     }
 }
 """Key of author get fill import data."""

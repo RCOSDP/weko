@@ -1899,7 +1899,7 @@ class _FormatSysCreator:
         for creator_affiliation in self.creator.get(
                 WEKO_DEPOSIT_SYS_CREATOR_KEY['creatorAffiliations'], []):
             for affiliation_name in creator_affiliation.get(
-                    WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_names'], []):
+                    WEKO_DEPOSIT_SYS_CREATOR_KEY['affiliation_names'], []):
                 if affiliation_name.get(
                     WEKO_DEPOSIT_SYS_CREATOR_KEY[
                         'affiliation_lang']) not in languages:
