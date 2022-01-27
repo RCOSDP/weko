@@ -312,20 +312,13 @@ def mapping():
     def get_identifier_creator(res, _source):
         def get_info_author_id(idTtype):
             prefix_settings = AuthorsPrefixSettings.query.all()
-            affiliation_settings = AuthorsAffiliationSettings.query.all()
-            prefix_scheme = prefix_uri = ''
-            affiliation_scheme = affiliation_uri = ''
+            scheme = uri = ''
             for prefix in prefix_settings:
                 if prefix.id == idTtype:
-                    prefix_scheme = prefix.scheme
-                    prefix_uri = prefix.url
-                    return prefix_scheme, prefix_uri
-            for affiliation in affiliation_settings:
-                if affiliation.id == idTtype:
-                    affiliation_scheme = affiliation.scheme
-                    affiliation_uri = affiliation.url
-                    return affiliation_scheme, affiliation_uri
-            return prefix_scheme, prefix_uri, affiliation_scheme, affiliation_uri
+                    scheme = prefix.scheme
+                    uri = prefix.url
+                    return scheme, uri
+            return scheme, uri
 
         id_info = _source.get('authorIdInfo')
         for j in id_info:
@@ -350,6 +343,45 @@ def mapping():
 
     data = request.get_json()
 
+    def get_affiliation(res, _source):
+        def get_affiliation_name_identifier(affiliationNameIdentifier):
+            affiliation_settings = AuthorsAffiliationSettings.query.all()
+            affiliation_scheme = affiliation_uri = ''
+            for affiliation in affiliation_settings:
+                if affiliation.id == affiliationNameIdentifier:
+                    affiliation_scheme = affiliation.scheme
+                    affiliation_uri = affiliation.url
+                    return affiliation_scheme, affiliation_uri        
+
+        affiliation_info = _source.get('affiliationInfo')
+        for affiliation_data in affiliation_info:
+            identifier_info = affiliation_data.get('identifierInfo')
+            affiliation_name_info = affiliation_data.get('affiliationNameInfo')
+            affiliation_tmp = {'affiliationNameIdentifiers': [], 'affiliationNames': []}
+            
+            for identifier_data in identifier_info:
+                if identifier_data.get('identifierShowFlg') == 'true':
+                    scheme, uri = get_affiliation_name_identifier(int(identifier_data['affiliationNameIdentifier']))
+                    _affiliation_name_identifier = identifier_data.get('affiliationNameIdentifierScheme')
+                    if _affiliation_name_identifier and uri:
+                        uri = re.sub("#+$", _affiliation_name_identifier, uri, 1)
+                    identifier_tmp = {
+                        'affiliationNameIdentifier': _affiliation_name_identifier,
+                        'affiliationNameIdentifierScheme': scheme,
+                        'affiliationNameIdentifierURI': uri
+                    }
+                    affiliation_tmp['affiliationNameIdentifiers'].append(identifier_tmp) 
+
+            for affiliation_name_data in affiliation_name_info:
+                if affiliation_name_data.get('affiliationNameShowFlg') == 'true':
+                    affiliation_name = affiliation_name_data.get('affiliationName')
+                    affiliation_name_lang = affiliation_name_data.get('affiliationNameLang')
+                    affiliation_name_tmp = {'affiliationName': affiliation_name, 'affiliationNameLang': affiliation_name_lang}
+                    affiliation_tmp ['affiliationNames'].append(affiliation_name_tmp)
+            
+                
+            res['creatorAffiliations'].append(affiliation_tmp)                
+
     # get author data
     author_id = data.get('id', '')
     indexer = RecordIndexer()
@@ -362,11 +394,13 @@ def mapping():
 
     # transfer to JPCOAR format
     res = {'familyNames': [], 'givenNames': [], 'creatorNames': [],
-           'nameIdentifiers': [], 'creatorAlternative': [], 'creatorMails': []}
+           'nameIdentifiers': [], 'creatorAlternative': [], 'creatorMails': [], 'creatorAffiliations':[]
+           } 
 
     get_name_creator(res, _source)
     get_identifier_creator(res, _source)
     get_email_creator(res, _source)
+    get_affiliation(res, _source)
 
     # remove empty element
     last = {}
@@ -376,6 +410,7 @@ def mapping():
 
     last['author_name'] = WEKO_AUTHORS_IMPORT_KEY.get('author_name')
     last['author_mail'] = WEKO_AUTHORS_IMPORT_KEY.get('author_mail')
+    last['author_affiliation'] = WEKO_AUTHORS_IMPORT_KEY.get('author_affiliation')
     current_app.logger.debug([last])
 
     return json.dumps([last])
