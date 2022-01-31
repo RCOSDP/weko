@@ -50,7 +50,8 @@ class ShibUser(object):
         error = None
         roles = Role.query.filter(
             Role.name.in_(roles)).all()
-        roles = list(set(roles) - set(self.user.roles))
+        # fix https://redmine.devops.rcos.nii.ac.jp/issues/29921
+        #roles = list(set(roles) - set(self.user.roles))
 
         try:
             with db.session.begin_nested():
