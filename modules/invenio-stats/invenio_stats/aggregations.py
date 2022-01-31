@@ -345,7 +345,7 @@ class StatAggregator(object):
                             if 'file_id' in doc:
                                 aggregation_data[destination] = doc['file_id']
                         else:
-                            aggregation_data[destination] = doc[source]
+                            aggregation_data[destination] = doc.get(source, '')
                     else:
                         aggregation_data[destination] = source(
                             doc,

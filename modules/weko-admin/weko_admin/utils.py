@@ -1604,7 +1604,8 @@ def format_site_info_data(site_info):
     result['favicon'] = site_info.get('favicon')
     result['favicon_name'] = site_info.get('favicon_name')
     result['notify'] = notify
-    result['google_tracking_id_user'] = site_info.get('google_tracking_id_user')
+    result['google_tracking_id_user'] = site_info.get(
+        'google_tracking_id_user')
     result['addthis_user_id'] = site_info.get('addthis_user_id')
     result['ogp_image'] = site_info.get('ogp_image')
     result['ogp_image_name'] = site_info.get('ogp_image_name')
@@ -2044,7 +2045,7 @@ def get_item_mapping_list():
     def handle_prefix_key(pre_key, key):
         if key == 'properties':
             return pre_key
-        pre_key = pre_key.replace('.fields','')
+        pre_key = pre_key.replace('.fields', '')
         return "{}.{}".format(pre_key, key) if pre_key else key
 
     def get_mapping(pre_key, key, value, mapping_list):
