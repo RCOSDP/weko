@@ -2033,7 +2033,8 @@ def add_author(author_data, stt_key, is_specify_newline_array, s, value,
         'WEKO_RECORDS_AUTHOR_KEYS']
     sub_author_key = s['key'].split('.')[-1]
     if sub_author_key in current_app.config[
-            'WEKO_RECORDS_AUTHOR_NONE_LANG_KEYS']:
+            'WEKO_RECORDS_AUTHOR_NONE_LANG_KEYS'] \
+            and not is_hide and is_show_list:
         stt_key.append(sub_author_key)
         is_specify_newline_array.append(
             {sub_author_key: is_specify_newline})
