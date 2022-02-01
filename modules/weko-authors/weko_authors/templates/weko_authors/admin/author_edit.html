@@ -27,12 +27,6 @@
   {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
-{%- block javascript %}
-  {{ super() }}
-  {% assets "weko_authors_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{%- endblock javascript %}
-
 {%- block body %}
 <div id="alerts"></div>
 {% from "weko_authors/macros/tabs_selector.html" import tabs_selector with context %}
@@ -46,3 +40,9 @@
   <div class="col-sm-1 col-md-1 col-md-1"></div>
 </div>
 {%- endblock body %}
+
+{%- block javascript %}
+  {{ super() }}
+  {% assets "weko_authors_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}

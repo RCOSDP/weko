@@ -24,11 +24,6 @@
   {{ super() }}
 {%- endblock css %}
 
-{%- block javascript %}
-  {{ super() }}
-  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{%- endblock javascript %}
-
 {%- block page_body_tabs %}
   {% from "weko_theme/macros/tabs_selector.html" import tabs_selector with context %}
   {{ tabs_selector('rank') }}
@@ -43,3 +38,8 @@
   {%- include config.WEKO_PERMISSION_REQUIRED_TEMPLATE -%}
 {%- endif %}
 {%- endblock page_body_main %}
+
+{%- block javascript %}
+  {{ super() }}
+  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}

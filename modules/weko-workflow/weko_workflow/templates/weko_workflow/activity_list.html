@@ -27,14 +27,6 @@
 <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
-{%- block javascript %}
-{{ super() }}
-{%- assets "workflow_activity_list_js" %}
-<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{% assets "weko_theme_js_widget" %}
-<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{%- endblock javascript %}
-
 {%- block page_body_tabs %}
 {% from "weko_theme/macros/tabs_selector.html" import tabs_selector with context %}
 {{ tabs_selector('flow',community_id) }}
@@ -458,3 +450,11 @@
     </div>
   </div>
 {%- endblock page_body_main %}
+
+{%- block javascript %}
+{{ super() }}
+{%- assets "workflow_activity_list_js" %}
+<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{% assets "weko_theme_js_widget" %}
+<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}

@@ -15,34 +15,6 @@
   {% assets "weko_records_ui_bootstrap_popover_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
-{%- block javascript %}
-<!--   {% assets "weko_records_ui_dependencies_js" %}<script src="{{ ASSET_URL
-    }}"></script>{% endassets %} -->
-  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-
-  {{ super() }}
-  {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_theme_js_top_page" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_theme_js_detail_search" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_records_ui_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_records_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  <script src="{{ url_for('static', filename='js/weko_records_ui/record_view_stats.js')}}"></script>
-  {% assets "weko_records_ui_preview_carousel_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-
-  <!-- start demo block-->
-  <script type="text/javascript">
-    //see https://www.addthis.com/academy/the-addthis_config-variable/
-  var addthis_config = {
-    data_track_addressbar: false,
-    pubid: {{ config.ADDTHIS_USER_ID }},
-  };
-  </script>
-  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
-  <!-- end demo block -->
-  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_records_ui_bootstrap_popover_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{%- endblock javascript %}
-
 {%- block page_body_tabs %}
   {% from "weko_theme/macros/tabs_selector.html" import tabs_selector with context %}
   {{ tabs_selector('top',community_id) }}
@@ -100,3 +72,31 @@
     </div>
   </div>
 {%- endblock page_body_main %}
+
+{%- block javascript %}
+<!--   {% assets "weko_records_ui_dependencies_js" %}<script src="{{ ASSET_URL
+    }}"></script>{% endassets %} -->
+  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+
+  {{ super() }}
+  {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_theme_js_top_page" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_theme_js_detail_search" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_records_ui_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_records_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  <script src="{{ url_for('static', filename='js/weko_records_ui/record_view_stats.js')}}"></script>
+  {% assets "weko_records_ui_preview_carousel_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+
+  <!-- start demo block-->
+  <script type="text/javascript">
+    //see https://www.addthis.com/academy/the-addthis_config-variable/
+  var addthis_config = {
+    data_track_addressbar: false,
+    pubid: {{ config.ADDTHIS_USER_ID }},
+  };
+  </script>
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
+  <!-- end demo block -->
+  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_records_ui_bootstrap_popover_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}

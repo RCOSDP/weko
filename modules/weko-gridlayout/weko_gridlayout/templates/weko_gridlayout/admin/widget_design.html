@@ -28,6 +28,13 @@
 {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
+{%- block body %}
+<div id="root" class="col-xs-12"></div>
+<div id="alerts"></div>
+{% from "weko_theme/macros/modal_page.html" import all_modal %}
+{{ all_modal() }}
+{% endblock %}
+
 {%- block javascript %}
 {{ super() }}
  {% assets "weko_gridlayout_widget_design_js_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
@@ -37,10 +44,3 @@
  {% assets "weko_gridlayout_prop_types_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
  {% assets "weko_gridlayout_react_quill_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
-
-{%- block body %}
-<div id="root" class="col-xs-12"></div>
-<div id="alerts"></div>
-{% from "weko_theme/macros/modal_page.html" import all_modal %}
-{{ all_modal() }}
-{% endblock %}

@@ -27,12 +27,6 @@
   {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
-{%- block javascript %}
-  {{ super() }}
-  {% assets "weko_authors_export_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{%- endblock javascript %}
-
 {%- block body %}
   <noscript>You need to enable JavaScript to run this app.</noscript>
   <div id="app-author-export"></div>
@@ -51,3 +45,9 @@
 
   <input id="export_authors_entrypoints" type="hidden" value='{{ config.WEKO_AUTHORS_EXPORT_ENTRYPOINTS | tojson }}' />
 {%- endblock body %}
+
+{%- block javascript %}
+  {{ super() }}
+  {% assets "weko_authors_export_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}

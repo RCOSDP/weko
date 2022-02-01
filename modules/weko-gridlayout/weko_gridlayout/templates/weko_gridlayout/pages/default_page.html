@@ -26,11 +26,6 @@
   {{ super() }}
 {%- endblock css %}
 
-{%- block javascript %}
-  {{ super() }}
-  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{%- endblock javascript %}
-
 {%- block page_body_tabs %}
   {% from "weko_theme/macros/tabs_selector.html" import tabs_selector with context %}
   {{ tabs_selector('top',community_id) }}
@@ -69,3 +64,8 @@
   <div class="communities"></div>
   {%- endif%}
 {% endblock page_body %}
+
+{%- block javascript %}
+  {{ super() }}
+  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}

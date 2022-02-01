@@ -28,14 +28,6 @@
   {% assets "weko_theme_css_widget" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
-{%- block javascript %}
-  <script src="/static/node_modules/react/dist/react.js"></script>
-  <script src="/static/node_modules/react-dom/dist/react-dom.js"></script>
-  <script src="/static/js/weko_itemtypes_ui/jsonschemaeditor.js"></script>
-  {{ super() }}
-  {% assets "weko_itemtypes_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{%- endblock javascript %}
-
 {%- block body %}
   <input id="lang-code" type="hidden" value="{{lang_code}}" />
   <div class="row">
@@ -250,3 +242,11 @@
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 {%- endblock body %}
+
+{%- block javascript %}
+  <script src="/static/node_modules/react/dist/react.js"></script>
+  <script src="/static/node_modules/react-dom/dist/react-dom.js"></script>
+  <script src="/static/js/weko_itemtypes_ui/jsonschemaeditor.js"></script>
+  {{ super() }}
+  {% assets "weko_itemtypes_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
