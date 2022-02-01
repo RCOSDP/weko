@@ -1668,8 +1668,8 @@ def selected_value_by_language(lang_array, value_array, lang_id, val_id,
                                                _item_metadata)
                 if value is not None:
                     return value
-            if "en" in lang_array and (lang_selected != 'ja' or 
-                    not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)):  # English
+            if "en" in lang_array and (lang_selected != 'ja' or
+                                       not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)):  # English
                 value = check_info_in_metadata(lang_id, val_id, "en",
                                                _item_metadata)
                 if value is not None:
@@ -1820,7 +1820,7 @@ def get_value_by_selected_lang(source_title, current_lang):
         return value_latn
 
     if value_en and (current_lang != 'ja' or
-            not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)):
+                     not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)):
         return value_en
 
     if len(title_data_langs) > 0:
