@@ -156,6 +156,18 @@ require([
     }
   });
 
+  $('.term_of_use_checked').on('click', function () {
+    let $nextAction = $("#next_to_analysis");
+    if ($('#term_of_use_checked').prop("checked") == true) {
+      $nextAction.removeClass("disabled");
+      $(this).attr("checked");
+      $nextAction.attr("disabled", false);
+    } else {
+      $nextAction.addClass("disabled");
+      $nextAction.attr("disabled", true);
+    }
+  });
+
   $('.btn-start-guest-wf').on('click', function () {
     let $confirmEmailBtn = $("#confirm_email_btn");
     $confirmEmailBtn.data("guest_filename_data", $(this).data("guest_filename_data"));
@@ -193,6 +205,14 @@ require([
       let itemTitle =$btnStartWorkflow.data('itemtitle');
       startWorkflow(workflowId, communityId, recordId, fileName, itemTitle);
     }
+  });
+
+  $('.next_to_analysis').on('click', function () {
+    let analysis_url = $('#analysis_url').text();
+    let permalink_uri = $('#permalink_uri').text();
+    let analysis_version = '/HEAD';
+    analysis_url = analysis_url + encodeURIComponent(permalink_uri) + analysis_version;
+    window.open(analysis_url);
   });
 
   $(".term-condtion-modal").on("click", function () {

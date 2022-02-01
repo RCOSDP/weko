@@ -323,6 +323,7 @@ class ESTermsQuery(ESQuery):
         end_date = self.extract_date(end_date) if end_date else None
         self.validate_arguments(start_date, end_date, **kwargs)
         agg_query = self.build_query(start_date, end_date, **kwargs)
+        current_app.logger.debug(agg_query.to_dict())
         query_result = agg_query.execute().to_dict()
         res = self.process_query_result(query_result, start_date, end_date)
         return res
