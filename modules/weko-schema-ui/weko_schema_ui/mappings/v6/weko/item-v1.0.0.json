@@ -73,8 +73,6 @@
   },
   "mappings": {
     "item-v1.0.0": {
-      "date_detection": false,
-      "numeric_detection": false,
       "properties": {
         "path": {
           "type": "keyword",
@@ -770,7 +768,8 @@
           "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"
         },
         "date_range2":{
-          "type" : "date_range"
+          "type" : "date_range",
+          "format" : "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||yyyy-MM||yyyy||epoch_millis"
         },
         "date_range3":{
           "type" : "date_range",
@@ -1208,8 +1207,8 @@
                 }
               }
             }
-         }
-	}
+          }
+        }
       ]
     }
   }
