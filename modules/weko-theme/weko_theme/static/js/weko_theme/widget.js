@@ -1018,6 +1018,7 @@ function handleAutoAdjustWidget(pageBodyGrid) {
     $('.grid-stack-item-content .panel-body').each(function () {
       let _this = $(this);
       if (!_this.hasClass("no-auto-height")) {
+        console.log("1");
         autoAdjustWidgetHeight(null, pageBodyGrid, _this);
       }
     });
@@ -1026,6 +1027,7 @@ function handleAutoAdjustWidget(pageBodyGrid) {
   // Auto adjust Header widget
   headerSensor = new ResizeSensor($('#header_content'), function () {
     let headerContent = $('#header_content').closest(".grid-stack-item");
+    console.log("2");
     autoAdjustWidgetHeight(headerContent, pageBodyGrid);
   });
 
@@ -1046,6 +1048,7 @@ function createMainContentSensor() {
       isClickMainContent = true;
     });
     if (!(isClickMainContent && isItemRegistrationWorkFlow())) {
+      console.log("3");
       autoAdjustWidgetHeight(mainContent, widgetBodyGrid);
     }
   });
@@ -1079,6 +1082,7 @@ function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
       textLink.text(readMore);
     }
     parentElement.data("isResize", true);
+    console.log("4")
     autoAdjustWidgetHeight(null, widgetBodyGrid, parentElement);
   }
 }
