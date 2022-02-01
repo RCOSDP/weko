@@ -771,86 +771,6 @@ function autoAdjustWidgetHeight(widgetElement, pageBodyGrid, otherElement) {
 }
 
 /**
- * Auto adjust widget height.
- * @param widgetElement: widget element (Main Content widget or Header widget)
- * @param pageBodyGrid: Widget body object.
- * @param otherElement: Other widget element.
- */
- function autoAdjustWidgetHeightTest(widgetElement, pageBodyGrid, otherElement) {
-  if (otherElement) {
-    let isResize = otherElement.data("isResize");
-    if (isResize) {
-      let parent = otherElement.closest(".grid-stack-item");
-      let width = parent.data("gsWidth");
-      pageBodyGrid.resizeWidget(parent, width, DEFAULT_WIDGET_HEIGHT);
-      otherElement.data("isResize", false);
-      otherElement.data("isUpdated", true);
-    }
-    let scrollHeight = otherElement.prop("scrollHeight");
-    let clientHeight = otherElement.prop("clientHeight");
-    if (scrollHeight > clientHeight) {
-      let parent = otherElement.closest(".grid-stack-item");
-      let width = parent.data("gsWidth");
-      let isUpdated = otherElement.data("isUpdated");
-      let newHeight, widgetHeight;
-      widgetHeight = newHeight = getNewWidgetHeight(pageBodyGrid, scrollHeight);
-      // In the case of IE 11, increase the widget height by three unit.
-      if (isIE11()) {
-        widgetHeight = widgetHeight + 3;
-      }
-      // Check whether the widget has been rendered for the first time
-      if (isUpdated) {
-        let cellHeight = pageBodyGrid.getCellHeight();
-        let verticalMargin = pageBodyGrid.getVerticalMargin();
-        let currentClientHeight = newHeight * (cellHeight + verticalMargin);
-        if (currentClientHeight > scrollHeight) {
-          let height = DEFAULT_WIDGET_HEIGHT > widgetHeight - 1 ? DEFAULT_WIDGET_HEIGHT : widgetHeight - 1;
-          pageBodyGrid.resizeWidget(parent, width, height);
-          //pageBodyGrid.resizeWidget(parent, width, height);
-          console.log("currentClientHeight: "+ currentClientHeight);
-          console.log("scrollHeight: "+ scrollHeight);
-
-
-        } else {
-          let height = DEFAULT_WIDGET_HEIGHT > widgetHeight ? DEFAULT_WIDGET_HEIGHT : widgetHeight;
-          pageBodyGrid.resizeWidget(parent, width, height);
-        }
-
-      } else {
-        pageBodyGrid.resizeWidget(parent, width, newHeight - 10);
-
-        otherElement.data("isUpdated", true);
-      }
-      let widgetId = otherElement.attr('id');
-      widgetOtherList[widgetId] = {
-        'parent': parent,
-        'widget': otherElement
-      }
-    }
-  } else {
-    let width = widgetElement.data("gsWidth");
-    let isResize = widgetElement.data("isResize");
-    if (isResize) {
-      pageBodyGrid.resizeWidget(widgetElement, width, DEFAULT_WIDGET_HEIGHT);
-      widgetElement.data("isResize", false);
-    }
-    let scrollHeight = widgetElement.prop("scrollHeight");
-    let clientHeight = widgetElement.prop("clientHeight");
-    let currentHeight = widgetElement.data("gsHeight");
-    if (scrollHeight > clientHeight) {
-      let newHeight = getNewWidgetHeight(pageBodyGrid, scrollHeight);
-      if (newHeight > currentHeight) {
-        pageBodyGrid.resizeWidget(widgetElement, width, newHeight);
-      } else if (newHeight === currentHeight) {
-        pageBodyGrid.resizeWidget(widgetElement, width, newHeight + 1);
-      } else {
-        pageBodyGrid.resizeWidget(widgetElement, width, newHeight);
-      }
-    }
-  }
-}
-
-/**
  * Get Widget design setting.
  */
 function getWidgetDesignSetting() {
@@ -1098,7 +1018,7 @@ function handleAutoAdjustWidget(pageBodyGrid) {
     $('.grid-stack-item-content .panel-body').each(function () {
       let _this = $(this);
       if (!_this.hasClass("no-auto-height")) {
-        autoAdjustWidgetHeightTest(null, pageBodyGrid, _this);
+        autoAdjustWidgetHeight(null, pageBodyGrid, _this);
       }
     });
   });
@@ -1106,7 +1026,7 @@ function handleAutoAdjustWidget(pageBodyGrid) {
   // Auto adjust Header widget
   headerSensor = new ResizeSensor($('#header_content'), function () {
     let headerContent = $('#header_content').closest(".grid-stack-item");
-    autoAdjustWidgetHeightTest(headerContent, pageBodyGrid);
+    autoAdjustWidgetHeight(headerContent, pageBodyGrid);
   });
 
   // Auto adjust Main Content widget
@@ -1126,7 +1046,7 @@ function createMainContentSensor() {
       isClickMainContent = true;
     });
     if (!(isClickMainContent && isItemRegistrationWorkFlow())) {
-      autoAdjustWidgetHeightTest(mainContent, widgetBodyGrid);
+      autoAdjustWidgetHeight(mainContent, widgetBodyGrid);
     }
   });
 }
@@ -1159,7 +1079,7 @@ function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
       textLink.text(readMore);
     }
     parentElement.data("isResize", true);
-    autoAdjustWidgetHeightTest(null, widgetBodyGrid, parentElement);
+    autoAdjustWidgetHeight(null, widgetBodyGrid, parentElement);
   }
 }
 
