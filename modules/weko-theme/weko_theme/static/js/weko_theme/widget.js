@@ -1027,19 +1027,6 @@ function handleAutoAdjustWidget(pageBodyGrid) {
   fixWidgetIE11();
 }
 
-if (document. readyState === 'complete') {
-  // Auto adjust Other widget
-  otherSensor = new ResizeSensor($('.grid-stack-item-content .panel-body'), function () {
-    $('.grid-stack-item-content .panel-body').each(function () {
-      let _this = $(this);
-      if (!_this.hasClass("no-auto-height")) {
-        console.log("1");
-        autoAdjustWidgetHeight(null, pageBodyGrid, _this);
-      }
-    });
-  });
-}
-  
 /**
  * Create Main content sensor.
  */
@@ -1102,3 +1089,27 @@ function escapeHtml(unsafe) {
          .replace(/"/g, "&quot;")
          .replace(/'/g, "&#039;");
  }
+
+//  document.addEventListener("DOMContentLoaded", function(){
+//   // Auto adjust Other widget
+//   otherSensor = new ResizeSensor($('.grid-stack-item-content .panel-body'), function () {
+//     $('.grid-stack-item-content .panel-body').each(function () {
+//       let _this = $(this);
+//       if (!_this.hasClass("no-auto-height")) {
+//         console.log("1");
+//         autoAdjustWidgetHeight(null, pageBodyGrid, _this);
+//       }
+//     });
+//   });
+// });
+
+//Auto adjust Other widget
+otherSensor = new ResizeSensor($('.grid-stack-item-content .panel-body'), function () {
+  $('.grid-stack-item-content .panel-body').each(function () {
+    let _this = $(this);
+    if (!_this.hasClass("no-auto-height")) {
+      console.log("1");
+      autoAdjustWidgetHeight(null, pageBodyGrid, _this);
+    }
+  });
+});
