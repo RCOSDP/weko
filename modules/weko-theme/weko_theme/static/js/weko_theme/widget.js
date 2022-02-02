@@ -1110,7 +1110,7 @@ document.addEventListener("load", function(){
 
 window.onload = function() {
   console.log("cc")
-  Auto adjust Other widget
+  //Auto adjust Other widget
   otherSensor = new ResizeSensor($('.grid-stack-item-content .panel-body'), function () {
     $('.grid-stack-item-content .panel-body').each(function () {
       let _this = $(this);
