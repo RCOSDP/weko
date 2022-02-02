@@ -445,11 +445,17 @@ def parse_to_json_form(data: list,
     for key, value in data:
         if key in item_path_not_existed:
             continue
+        if key is None or key.strip(' ') == '':
+            continue
         key_path = handle_generate_key_path(key)
-        if include_empty or value \
-                or key_path[0] in ['file_path', 'thumbnail_path'] \
-                or key_path[-1] == 'filename':
-            set_nested_item(result, key_path, value)
+        current_app.logger.debug("key:{}".format(key))
+        current_app.logger.debug("value:{}".format(value))
+        current_app.logger.debug("key_path:{}".format(key_path))
+        if key_path is not None:
+            if include_empty or value \
+                    or key_path[0] in ['file_path', 'thumbnail_path'] \
+                    or key_path[-1] == 'filename':
+                set_nested_item(result, key_path, value)
 
     convert_data(result)
     result = json.loads(json.dumps(result))
@@ -1855,7 +1861,10 @@ def handle_check_doi(list_record):
                             error = _('Please specify {}.').format(
                                 'DOI suffix')
             else:
-                if item.get('status') == 'new':
+                pid = WekoRecord.get_record_by_pid(item_id).pid_recid
+                identifier = IdentifierHandle(pid.object_uuid)
+                _value, doi_type = identifier.get_idt_registration_data()
+                if item.get('status') == 'new' or not doi_type:
                     if doi:
                         split_doi = doi.split('/')
                         if len(doi.split('/')) > 1 and not doi.endswith('/'):

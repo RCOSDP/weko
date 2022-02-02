@@ -158,7 +158,8 @@ github3.py==1.1.0
 feedgen==0.7.0
 boto3==1.7.84
 s3fs==0.1.6
-fpdf==1.7.2
+#fpdf==1.7.2
+-e git+https://github.com/RCOSDP/pyfpdf.git@fix/nii#egg=fpdf
 Pillow==5.4.1
 Sickle==0.6.4
 Sphinx==1.8.4
@@ -174,4 +175,5 @@ iiif-prezi==0.3.0
 netaddr==0.8.0
 # for sentry
 # raven==6.10.0
-
+marshmallow-sqlalchemy==0.23.1
+flask-marshmallow==0.14.0

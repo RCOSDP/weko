@@ -1,0 +1,84 @@
+{# -*- coding: utf-8 -*-
+    #
+    # This file is part of WEKO3.
+    # Copyright (C) 2017 National Institute of Informatics.
+    #
+    # WEKO3 is free software; you can redistribute it
+    # and/or modify it under the terms of the GNU General Public License as
+    # published by the Free Software Foundation; either version 2 of the
+    # License, or (at your option) any later version.
+    #
+    # WEKO3 is distributed in the hope that it will be
+    # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+    # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    # General Public License for more details.
+    #
+    # You should have received a copy of the GNU General Public License
+    # along with WEKO3; if not, write to the
+    # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+    # MA 02111-1307, USA.
+    #}
+    
+    <div class="well" style="text-align:center;">
+        <div class="hide" id="analysis_url">{{analysis_url}}</div>
+        {%- if rights_values -%}
+            <button class="term-condtion-modal btn btn-primary" id="btn_analysis"
+                    data-modal-id="#show_rights_info">
+                {{_('Online Analysis')}}
+            </button>
+        {%- else -%}
+            <button class="next_to_analysis term-condtion-modal btn btn-primary" id="btn_analysis">
+                {{_('Online Analysis')}}
+            </button>
+        {%- endif -%}
+    </div>
+    <div class="modal fade" id="show_rights_info"
+         tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title"
+                        id="exampleModalLongTitle">{{ _('Terms of Use') }}</h3>
+                    <button type="button" class="close" data-dismiss="modal"
+                            aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="panel panel-default panel-body"
+                            style="overflow-y: auto; max-height:400px;">
+                        <div class="form-check">
+                            <span class="action-name" style="white-space: pre-wrap;">
+                                {%- if rights_values -%}
+                                    {%- for k, v in rights_values.items() -%}
+                                        <b>{{v['item_title']}}</b><br/>
+                                        {%- for right in v['item_values'] -%}
+                                            <span style="margin-left:10px;">{{right}}</span><br/>
+                                        {%- endfor -%}
+                                        <br/>
+                                    {%- endfor -%}
+                                {%- endif -%}
+                            </span>
+                            <div style="position: relative;">
+                                <input type="checkbox" class="pointer term_of_use_checked"
+                                    id="term_of_use_checked"
+                                    name="term_check">
+                                <label class="form-check-label pointer"
+                                for="term_of_use_checked"
+                                style="position: absolute;top: 1px;left: 20px;">
+                                    {{ _('I have read and agreed to the Terms of Use') }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="next_to_analysis"
+                            type="button" class="next_to_analysis btn btn-primary disabled"
+                            disabled>{{ _('Next') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
