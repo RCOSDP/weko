@@ -1013,7 +1013,7 @@ function handleAutoAdjustWidget(pageBodyGrid) {
     $('.header-footer-type').parent().addClass('widgetIE');
   }
 
-    // Auto adjust Header widget
+  // Auto adjust Header widget
   headerSensor = new ResizeSensor($('#header_content'), function () {
     let headerContent = $('#header_content').closest(".grid-stack-item");
     console.log("2");
@@ -1027,7 +1027,7 @@ function handleAutoAdjustWidget(pageBodyGrid) {
   fixWidgetIE11();
 }
 
-window.onload = function() {
+if (document. readyState === 'complete') {
   // Auto adjust Other widget
   otherSensor = new ResizeSensor($('.grid-stack-item-content .panel-body'), function () {
     $('.grid-stack-item-content .panel-body').each(function () {
@@ -1039,7 +1039,7 @@ window.onload = function() {
     });
   });
 }
-
+  
 /**
  * Create Main content sensor.
  */
