@@ -1012,6 +1012,35 @@ function handleAutoAdjustWidget(pageBodyGrid) {
   if (isIE11()){
     $('.header-footer-type').parent().addClass('widgetIE');
   }
+  
+  // Auto adjust Header widget
+  headerSensor = new ResizeSensor($('#header_content'), function () {
+    let headerContent = $('#header_content').closest(".grid-stack-item");
+    console.log("2");
+    autoAdjustWidgetHeight(headerContent, pageBodyGrid);
+  });
+
+  // Auto adjust Main Content widget
+  createMainContentSensor(pageBodyGrid)
+
+  // Fix widget display on IE 11
+  fixWidgetIE11();
+}
+
+/**
+ * Create Main content sensor.
+ */
+function createMainContentSensor(pageBodyGrid) {
+  mainContentSensor = new ResizeSensor($('#' + MAIN_CONTENTS), function () {
+    let mainContent = $('#' + MAIN_CONTENTS);
+    $("#weko-records").click(function () {
+      isClickMainContent = true;
+    });
+    if (!(isClickMainContent && isItemRegistrationWorkFlow())) {
+      console.log("3");
+      autoAdjustWidgetHeight(mainContent, widgetBodyGrid);
+    }
+  });
 
   if (document.readyState === 'complete') {
     // Auto adjust Other widget
@@ -1025,35 +1054,6 @@ function handleAutoAdjustWidget(pageBodyGrid) {
       });
     });
   }
-
-  // Auto adjust Header widget
-  headerSensor = new ResizeSensor($('#header_content'), function () {
-    let headerContent = $('#header_content').closest(".grid-stack-item");
-    console.log("2");
-    autoAdjustWidgetHeight(headerContent, pageBodyGrid);
-  });
-
-  // Auto adjust Main Content widget
-  createMainContentSensor()
-
-  // Fix widget display on IE 11
-  fixWidgetIE11();
-}
-
-/**
- * Create Main content sensor.
- */
-function createMainContentSensor() {
-  mainContentSensor = new ResizeSensor($('#' + MAIN_CONTENTS), function () {
-    let mainContent = $('#' + MAIN_CONTENTS);
-    $("#weko-records").click(function () {
-      isClickMainContent = true;
-    });
-    if (!(isClickMainContent && isItemRegistrationWorkFlow())) {
-      console.log("3");
-      autoAdjustWidgetHeight(mainContent, widgetBodyGrid);
-    }
-  });
 }
 
 function toggleWidgetUI() {
