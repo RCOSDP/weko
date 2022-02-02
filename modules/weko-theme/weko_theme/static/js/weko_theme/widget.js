@@ -1041,6 +1041,18 @@ function createMainContentSensor() {
       autoAdjustWidgetHeight(mainContent, widgetBodyGrid);
     }
   });
+  if (document.readyState === 'complete') {
+    // Auto adjust Other widget
+    otherSensor = new ResizeSensor($('.grid-stack-item-content .panel-body'), function () {
+      $('.grid-stack-item-content .panel-body').each(function () {
+        let _this = $(this);
+        if (!_this.hasClass("no-auto-height")) {
+          console.log("1");
+          autoAdjustWidgetHeight(null, pageBodyGrid, _this);
+        }
+      });
+    });
+  }
 }
 
 function toggleWidgetUI() {
@@ -1089,7 +1101,7 @@ function escapeHtml(unsafe) {
          .replace(/"/g, "&quot;")
          .replace(/'/g, "&#039;");
  }
-
+/*
  document.addEventListener("DOMContentLoaded", function(){
    console.log("aa")
   // Auto adjust Other widget
@@ -1125,3 +1137,4 @@ window.onload = function() {
 document.onload = function() {
   console.log("dd")
 }
+*/
