@@ -1833,6 +1833,21 @@ def handle_check_doi(list_record):
     :return
 
     """
+    def _check_doi(doi, item):
+        error = None
+        split_doi = doi.split('/')
+        if len(split_doi) > 1 and not doi.endswith('/'):
+            error = _('{} cannot be set.').format('DOI')
+        else:
+            prefix = re.sub('/$', '', doi)
+            item['doi_suffix_not_existed'] = True
+            if not item.get('ignore_check_doi_prefix') \
+                    and prefix != get_doi_prefix(doi_ra):
+                error = \
+                    _('Specified Prefix of {} is incorrect.') \
+                    .format('DOI')
+        return error
+
     for item in list_record:
         error = None
         item_id = str(item.get('id'))
@@ -1867,22 +1882,9 @@ def handle_check_doi(list_record):
                             error = _('Please specify {}.').format(
                                 'DOI suffix')
             else:
-                pid = WekoRecord.get_record_by_pid(item_id).pid_recid
-                identifier = IdentifierHandle(pid.object_uuid)
-                _value, doi_type = identifier.get_idt_registration_data()
-                if item.get('status') == 'new' or not doi_type:
+                if item.get('status') == 'new':
                     if doi:
-                        split_doi = doi.split('/')
-                        if len(doi.split('/')) > 1 and not doi.endswith('/'):
-                            error = _('{} cannot be set.').format('DOI')
-                        else:
-                            prefix = re.sub('/$', '', doi)
-                            item['doi_suffix_not_existed'] = True
-                            if not item.get('ignore_check_doi_prefix') \
-                                    and prefix != get_doi_prefix(doi_ra):
-                                error = \
-                                    _('Specified Prefix of {} is incorrect.') \
-                                    .format('DOI')
+                        error = _check_doi(doi, item)
                 else:
                     pid_doi = None
                     try:
@@ -1900,8 +1902,7 @@ def handle_check_doi(list_record):
                             error = _('Specified {} is different from'
                                       + ' existing {}.').format('DOI', 'DOI')
                     elif doi:
-                        error = _('Specified {} is different from'
-                                  + ' existing {}.').format('DOI', 'DOI')
+                        error = _check_doi(doi, item)
 
         if error:
             item['errors'] = item['errors'] + [error] \
@@ -2265,16 +2266,35 @@ def validation_file_open_date(record):
     :param record: Record
     :return: error or None
     """
-    open_date_values = get_data_in_deep_dict('dateValue',
-                                             record.get('metadata', {}))
-    for data in open_date_values:
-        try:
-            value = data.get('value', '')
-            if value and value != datetime.strptime(value, '%Y-%m-%d') \
-                    .strftime('%Y-%m-%d'):
-                raise Exception
-        except Exception:
-            return _('Please specify Open Access Date with YYYY-MM-DD.')
+    accessrole_values = get_data_in_deep_dict('accessrole', record.get('metadata', {}))
+    open_date_values = get_data_in_deep_dict('dateValue', record.get('metadata', {}))
+
+    flag = False
+    for ar in accessrole_values:
+        ar_value = ar.get('value', '')
+        if ar_value == 'open_date':
+            try:
+                flag = True
+                item_key = ar.get('tree_key', '.').split('.')[0]
+                if open_date_values:
+                    for d in open_date_values:
+                        if item_key and item_key in d.get('tree_key'):
+                            d_value = d.get('value')
+                            if d_value and d_value == datetime.strptime(d_value, '%Y-%m-%d') \
+                                    .strftime('%Y-%m-%d'):
+                                flag = False
+                            else:
+                                raise Exception
+                else:
+                    raise Exception
+            except Exception:
+                flag = True
+                break
+    if flag:
+        result = _('Please specify Open Access Date with YYYY-MM-DD.')
+    else:
+        result = ''
+    return result
 
 
 def validation_date_property(date_str):
