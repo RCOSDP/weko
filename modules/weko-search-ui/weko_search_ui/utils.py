@@ -1827,6 +1827,21 @@ def handle_check_doi(list_record):
     :return
 
     """
+    def _check_doi(doi, item):
+        error = None
+        split_doi = doi.split('/')
+        if len(split_doi) > 1 and not doi.endswith('/'):
+            error = _('{} cannot be set.').format('DOI')
+        else:
+            prefix = re.sub('/$', '', doi)
+            item['doi_suffix_not_existed'] = True
+            if not item.get('ignore_check_doi_prefix') \
+                    and prefix != get_doi_prefix(doi_ra):
+                error = \
+                    _('Specified Prefix of {} is incorrect.') \
+                    .format('DOI')
+        return error
+
     for item in list_record:
         error = None
         item_id = str(item.get('id'))
@@ -1861,22 +1876,9 @@ def handle_check_doi(list_record):
                             error = _('Please specify {}.').format(
                                 'DOI suffix')
             else:
-                pid = WekoRecord.get_record_by_pid(item_id).pid_recid
-                identifier = IdentifierHandle(pid.object_uuid)
-                _value, doi_type = identifier.get_idt_registration_data()
-                if item.get('status') == 'new' or not doi_type:
+                if item.get('status') == 'new':
                     if doi:
-                        split_doi = doi.split('/')
-                        if len(doi.split('/')) > 1 and not doi.endswith('/'):
-                            error = _('{} cannot be set.').format('DOI')
-                        else:
-                            prefix = re.sub('/$', '', doi)
-                            item['doi_suffix_not_existed'] = True
-                            if not item.get('ignore_check_doi_prefix') \
-                                    and prefix != get_doi_prefix(doi_ra):
-                                error = \
-                                    _('Specified Prefix of {} is incorrect.') \
-                                    .format('DOI')
+                        error = _check_doi(doi, item)
                 else:
                     pid_doi = None
                     try:
@@ -1894,8 +1896,7 @@ def handle_check_doi(list_record):
                             error = _('Specified {} is different from'
                                       + ' existing {}.').format('DOI', 'DOI')
                     elif doi:
-                        error = _('Specified {} is different from'
-                                  + ' existing {}.').format('DOI', 'DOI')
+                        error = _check_doi(doi, item)
 
         if error:
             item['errors'] = item['errors'] + [error] \
