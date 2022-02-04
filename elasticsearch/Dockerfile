@@ -20,7 +20,7 @@
 
 # Use Elasticsearch 6.
 #FROM docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.2
-FROM docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.21
+FROM docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.22
 WORKDIR /usr/share/elasticsearch
 ARG ELASTICSEARCH_S3_ACCESS_KEY
 ARG ELASTICSEARCH_S3_SECRET_KEY
