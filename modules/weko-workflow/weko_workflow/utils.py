@@ -533,17 +533,22 @@ def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
         if num_map == 1 and not is_either:
             error_list['required'].append(mapping_key)
         else:
-            filter_root_keys = list(set([
-                key.split('.')[0] for key in keys[:num_map]]))
-            either_list = []
-            for key in filter_root_keys:
-                either_list.append([
-                    k for k in keys if k.split('.')[0] == key])
-            if is_either and not error_list['either']:
-                error_list['either'] = either_list
-            else:
-                error_list['either'].append(either_list)
+            error_list['either'].append(mapping_key)
+            # filter_root_keys = list(set([
+            #     key.split('.')[0] for key in keys[:num_map]]))
+            # either_list = []
+            # for key in filter_root_keys:
+            #     either_list.append([
+            #         k for k in keys if k.split('.')[0] == key])
+            # if is_either and not error_list['either']:
+            #     error_list['either'] = either_list
+            # else:
+            #     error_list['either'].append(either_list)
 
+    current_app.logger.debug("mapping_data: {}".format(mapping_data))
+    current_app.logger.debug("mapping_keys: {}".format(mapping_keys))
+    current_app.logger.debug("error_list: {}".format(error_list))
+    current_app.logger.debug("is_either: {}".format(is_either))
     if empty_list != error_list:
         return error_list
 
@@ -651,30 +656,40 @@ def validattion_item_property_either_required(
 
     # For other resource type
     version = None
+    current_app.logger.debug("properties: {}".format(properties))
     if 'version' in properties:
         # check フォーマット jpcoar:mimeType
-        mapping_keys = ['jpcoar:mimeType']
-        version = handle_check_required_pattern_and_either(
-            mapping_data, mapping_keys, None, True)
+        # mapping_keys = ['jpcoar:mimeType']
+        # version = handle_check_required_pattern_and_either(
+        #    mapping_data, mapping_keys, None, True)
 
         # check バージョン datacite:version
         mapping_keys = ['datacite:version']
-        if version:
-            errors = handle_check_required_pattern_and_either(
-                mapping_data, mapping_keys, None, True)
-            if not errors:
-                version = None
-            else:
-                merge_doi_error_list(version, errors)
+        errors = handle_check_required_pattern_and_either(
+            mapping_data, mapping_keys, None, True)
+        current_app.logger.debug(
+            "mapping_keys: {} errors: {}".format(mapping_keys, errors))
+        if not errors:
+            version = None
+        else:
+            if version is None:
+                version = {'required': [], 'pattern': [],
+                           'either': [], 'mapping': []}
+            merge_doi_error_list(version, errors)
 
-        # check 出版タイプ oaire:version
         if version:
+            # check 出版タイプ oaire:version
             mapping_keys = ['oaire:version']
             errors = handle_check_required_pattern_and_either(
                 mapping_data, mapping_keys, None, True)
+            current_app.logger.debug(
+                "mapping_keys: {} errors: {}".format(mapping_keys, errors))
             if not errors:
                 version = None
             else:
+                if version is None:
+                    version = {'required': [], 'pattern': [],
+                               'either': [], 'mapping': []}
                 merge_doi_error_list(version, errors)
 
         if version:
