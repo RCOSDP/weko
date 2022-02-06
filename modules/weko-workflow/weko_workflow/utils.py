@@ -300,13 +300,20 @@ def register_hdl_by_handle(hdl, item_uuid, item_uri):
 
 
 def item_metadata_validation(item_id, identifier_type, record=None,
-                             is_import=False, without_ver_id=None):
+                             is_import=False, without_ver_id=None, file_path=None):
     """
     Validate item metadata.
 
     :param: item_id, identifier_type, record
     :return: error_list
     """
+    current_app.logger.debug("item_id: {}".format(item_id))
+    current_app.logger.debug("identifier_type: {}".format(identifier_type))
+    current_app.logger.debug("record: {}".format(record))
+    current_app.logger.debug("is_import: {}".format(is_import))
+    current_app.logger.debug("without_ver_id: {}".format(without_ver_id))
+    current_app.logger.debug("file_path: {}".format(file_path))
+
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
         return None
 
@@ -364,6 +371,14 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     # いずれか必須
     either_properties = []
 
+    # 本文URL条件
+    # DDIはスキップ
+    # 新規登録(item_idなし、かつfile_pathがある場合は本文URL:があるとみなす
+    # それ以外はfileURIが必須
+    if item_type.item_type_name.name != ddi_item_type_name:
+        if item_id is not None and len(file_path) == 0:
+            required_properties.append('fileURI')
+
     # JaLC DOI identifier registration
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLC']:
         # 別表2-1 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【ジャーナルアーティクル】
@@ -377,15 +392,11 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 or resource_type in elearning_type \
                 or resource_type in datageneral_types:
             required_properties = ['title']
-            if item_type.item_type_name.name != ddi_item_type_name:
-                required_properties.append('fileURI')
             either_properties = ['version']
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif resource_type in dataset_type:
             required_properties = ['title',
                                    'givenName']
-            if item_type.item_type_name.name != ddi_item_type_name:
-                required_properties.append('fileURI')
             either_properties = ['geoLocation']
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['Crossref']:
@@ -394,21 +405,11 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                                    'publisher',
                                    'sourceIdentifier',
                                    'sourceTitle']
-            if item_type.item_type_name.name != ddi_item_type_name:
-                required_properties.append('fileURI')
         elif resource_type in report_types \
                 or resource_type in thesis_types:
             required_properties = ['title']
-            if item_type.item_type_name.name != ddi_item_type_name:
-                required_properties.append('fileURI')
     # DataCite DOI identifier registration
-    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCite'] \
-            and item_type.item_type_name.name != ddi_item_type_name:
-        required_properties = ['fileURI']
     # NDL JaLC DOI identifier registration
-    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NDL JaLC'] \
-            and item_type.item_type_name.name != ddi_item_type_name:
-        required_properties = ['fileURI']
 
     if required_properties:
         properties['required'] = required_properties
@@ -478,6 +479,9 @@ def handle_check_required_data(mapping_data, mapping_key):
     keys = []
     values = []
     requirements = []
+    current_app.logger.debug("mapping_data: {}".format(mapping_data))
+    current_app.logger.debug("mapping_key: {}".format(mapping_key))
+
     data = mapping_data.get_data_by_mapping(mapping_key)
     for key, value in data.items():
         keys.append(key)
