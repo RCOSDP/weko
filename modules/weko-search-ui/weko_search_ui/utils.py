@@ -895,8 +895,8 @@ def handle_check_exist_record(list_record) -> list:
 def make_tsv_by_line(lines):
     """Make TSV file."""
     tsv_output = StringIO()
-
-    writer = csv.writer(tsv_output, delimiter='\t')
+    writer = csv.writer(tsv_output, delimiter='\t',
+                        lineterminator="\n")
     writer.writerows(lines)
 
     return tsv_output
@@ -2747,7 +2747,7 @@ def export_all(root_url):
 
             tsv_full_path = '{}/{}.tsv'.format(export_path,
                                                item_type_data.get('name'))
-            with open(tsv_full_path, 'w') as file:
+            with open(tsv_full_path, 'w', encoding="utf-8-sig") as file:
                 tsv_output = package_export_file(item_type_data)
                 file.write(tsv_output.getvalue())
         except Exception as ex:

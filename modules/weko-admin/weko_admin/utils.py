@@ -352,7 +352,7 @@ def package_reports(all_stats, year, month):
         report_zip = zipfile.ZipFile(zip_stream, 'w')
         for tsv_file in tsv_files:
             report_zip.writestr(tsv_file['file_name'],
-                                tsv_file['stream'].getvalue())
+                                tsv_file['stream'].getvalue().encode('utf-8-sig'))
         report_zip.close()
     except Exception as e:
         current_app.logger.error('Unexpected error: ', e)
