@@ -1104,8 +1104,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
             doi_type_str,
             doi_str
         ])
-
-        records.attr_output[recid].append('')
+        # .edit Keep/Upgrade default is Keep
+        records.attr_output[recid].append('Keep')
         if has_pubdate:
             pubdate = record.get('pubdate', {}).get('attribute_value', '')
             records.attr_output[recid].append(pubdate)
@@ -1293,7 +1293,6 @@ def write_tsv_files(item_types_data, export_path, list_item_role):
         item_types_data[item_type_id]['options'] = options
         item_types_data[item_type_id]['data'] = records
         item_type_data = item_types_data[item_type_id]
-
         with open('{}/{}.tsv'.format(export_path,
                                      item_type_data.get('name')),
                   'w', encoding="utf-8-sig") as file:
@@ -2934,7 +2933,9 @@ def make_stats_tsv_with_permission(item_type_id, recids,
             doi_str
         ])
 
-        records.attr_output[recid].append('')
+        # .edit Keep or Upgrade. default is Keep
+        records.attr_output[recid].append('Keep')
+
         records.attr_output[recid].append(record[
             'pubdate']['attribute_value'])
 
