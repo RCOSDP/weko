@@ -371,14 +371,6 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     # いずれか必須
     either_properties = []
 
-    # 本文URL条件
-    # DDIはスキップ
-    # 新規登録(item_idなし、かつfile_pathがある場合は本文URL:があるとみなす
-    # それ以外はfileURIが必須
-    if item_type.item_type_name.name != ddi_item_type_name:
-        if item_id is not None and len(file_path) == 0:
-            required_properties.append('fileURI')
-
     # JaLC DOI identifier registration
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLC']:
         # 別表2-1 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【ジャーナルアーティクル】
@@ -410,6 +402,17 @@ def item_metadata_validation(item_id, identifier_type, record=None,
             required_properties = ['title']
     # DataCite DOI identifier registration
     # NDL JaLC DOI identifier registration
+
+    # 本文URL条件
+    # DDIはスキップ
+    # 新規登録(item_idなし、かつfile_pathがある場合は本文URL:があるとみなす
+    # それ以外はfileURIが必須
+    if item_type.item_type_name.name != ddi_item_type_name:
+        if item_id is None:
+            if len(file_path) == 0:
+                required_properties.append('fileURI')
+        else:
+            required_properties.append('fileURI')
 
     if required_properties:
         properties['required'] = required_properties
@@ -528,7 +531,7 @@ def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
 
     if requirements:
         if num_map == 1 and not is_either:
-            error_list['required'].extend(requirements)
+            error_list['required'].append(mapping_key)
         else:
             filter_root_keys = list(set([
                 key.split('.')[0] for key in keys[:num_map]]))

@@ -2156,12 +2156,15 @@ def handle_doi_required_check(record):
     if 'doi_ra' in record and record['doi_ra'] in WEKO_IMPORT_DOI_TYPE:
         root_item_id = None
         file_path = record.get('file_path', [])
+        file_path = [a for a in file_path if a.strip() != '']
+
         if record.get('status') != 'new':
             root_item_id = WekoRecord.get_record_by_pid(
                 str(record.get('id'))).pid_recid.object_uuid
         error_list = item_metadata_validation(
             None, IDENTIFIER_GRANT_SELECT_DICT[record['doi_ra']],
-            record_data, True, root_item_id,file_path)
+            record_data, True, root_item_id, file_path)
+
         if error_list:
             errors = [_('PID does not meet the conditions.')]
             if error_list.get('mapping'):
@@ -2172,6 +2175,11 @@ def handle_doi_required_check(record):
                 errors.append(mapping_err_msg.format('<br/>'.join(keys)))
             if error_list.get('other'):
                 errors.append(_(error_list.get('other')))
+            if error_list.get('required'):
+                mapping_err_msg = _(
+                    'The following metadata are required.<br/>{}')
+                errors.append(mapping_err_msg.format(
+                    '<br/>'.join(error_list.get('required'))))
 
             return errors
 
