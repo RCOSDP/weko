@@ -2166,7 +2166,7 @@ def handle_doi_required_check(record):
             record_data, True, root_item_id, file_path)
 
         if error_list:
-            errors = [_('PID does not meet the conditions.')]
+            errors = [_('PID does not meet the conditions.<br/>')]
             if error_list.get('mapping'):
                 mapping_err_msg = _('The mapping of required items for DOI '
                                     'validation is not set. Please recheck the'
@@ -2175,15 +2175,15 @@ def handle_doi_required_check(record):
                 errors.append(mapping_err_msg.format('<br/>'.join(keys)))
             if error_list.get('other'):
                 errors.append(_(error_list.get('other')))
-            if error_list.get('required'):
+            if error_list.get('required_key'):
                 mapping_err_msg = _(
                     'The following metadata are required.<br/>{}')
                 errors.append(mapping_err_msg.format(
-                    '<br/>'.join(error_list.get('required'))))
-            if error_list.get('either'):
+                    '<br/>'.join(error_list.get('required_key'))))
+            if error_list.get('either_key'):
                 mapping_err_msg = _(
                     'One of the following metadata is required.<br/>{}<br/>')
-                for either in error_list.get('either'):
+                for either in error_list.get('either_key'):
                     errors.append(mapping_err_msg.format(either))
 
             return errors

@@ -344,8 +344,8 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     type_key, resource_type = metadata_item.get_first_data_by_mapping(
         'type.@value')
 
-    error_list = {'required': [], 'pattern': [],
-                  'either': [], 'mapping': [], 'other': ''}
+    error_list = {'required': [], 'required_key': [], 'pattern': [],
+                  'either': [],  'either_key': [], 'mapping': [], 'other': ''}
     # check resource type request
     if not resource_type and not type_key:
         error_list['mapping'].append('dc:type')
@@ -439,8 +439,18 @@ def merge_doi_error_list(current, new):
     """Merge DOI validation error list."""
     if new['required']:
         current['required'].extend(new['required'])
+    if 'required_key' in new and new['required_key']:
+        if 'required_key' in current:
+            current['required_key'].extend(new['required_key'])
+        else:
+            current['required_key'] = new['required_key']
     if new['either']:
         current['either'].extend(new['either'])
+    if 'either_key' in new and new['either_key']:
+        if 'either_key' in current:
+            current['either_key'].extend(new['either_key'])
+        else:
+            current['either_key'] = new['either_key']
     if new['pattern']:
         current['pattern'].extend(new['pattern'])
     if new['mapping']:
@@ -456,7 +466,8 @@ def validation_item_property(mapping_data, properties):
     :param properties: Property's keywords
     :return: error_list or None
     """
-    error_list = {'required': [], 'pattern': [], 'either': [], 'mapping': []}
+    error_list = {'required': [], 'required_key': [],
+                  'pattern': [], 'either': [], 'either_key': [], 'mapping': []}
     empty_list = deepcopy(error_list)
 
     if properties.get('required'):
@@ -505,8 +516,8 @@ def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
     if not (mapping_data and mapping_keys):
         return
     if not error_list:
-        error_list = {'required': [], 'pattern': [],
-                      'either': [], 'mapping': []}
+        error_list = {'required': [], 'required_key': [], 'pattern': [],
+                      'either': [], 'either_key': [], 'mapping': []}
     empty_list = deepcopy(error_list)
     keys = []
     num_map = 0
@@ -531,19 +542,20 @@ def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
 
     if requirements:
         if num_map == 1 and not is_either:
-            error_list['required'].append(mapping_key)
+            error_list['required'].extend(requirements)
+            error_list['required_key'].append(mapping_key)
         else:
-            error_list['either'].append(mapping_key)
-            # filter_root_keys = list(set([
-            #     key.split('.')[0] for key in keys[:num_map]]))
-            # either_list = []
-            # for key in filter_root_keys:
-            #     either_list.append([
-            #         k for k in keys if k.split('.')[0] == key])
-            # if is_either and not error_list['either']:
-            #     error_list['either'] = either_list
-            # else:
-            #     error_list['either'].append(either_list)
+            error_list['either_key'].append(mapping_key)
+            filter_root_keys = list(
+                set([key.split('.')[0] for key in keys[:num_map]]))
+            either_list = []
+            for key in filter_root_keys:
+                either_list.append([
+                    k for k in keys if k.split('.')[0] == key])
+            if is_either and not error_list['either']:
+                error_list['either'] = either_list
+            else:
+                error_list['either'].append(either_list)
 
     current_app.logger.debug("mapping_data: {}".format(mapping_data))
     current_app.logger.debug("mapping_keys: {}".format(mapping_keys))
@@ -562,7 +574,8 @@ def validattion_item_property_required(
     :param properties: Property's keywords
     :return: error_list or None
     """
-    error_list = {'required': [], 'pattern': [], 'either': [], 'mapping': []}
+    error_list = {'required': [], 'required_key': [],
+                  'pattern': [], 'either': [], 'either_key': [], 'mapping': []}
     empty_list = deepcopy(error_list)
 
     # check file jpcoar:URI
