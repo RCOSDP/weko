@@ -385,7 +385,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 or resource_type in datageneral_types:
             required_properties = ['title']
             # remove 20220207
-            # either_properties = ['version']
+            #either_properties = ['version']
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif resource_type in dataset_type:
             required_properties = ['title',
