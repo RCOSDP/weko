@@ -215,6 +215,14 @@ msgstr "公開日はYYYY-MM-DDで指定してください。"
 msgid "Please specify Open Access Date with YYYY-MM-DD."
 msgstr "オープンアクセスの日付はYYYY-MM-DDで指定してください。"
 
+#: weko_search_ui/utils.py:2180
+msgid "The following metadata are required.<br/>{}"
+msgstr "{}は必須項目です。"
+
+#: weko_search_ui/utils.py:2185
+msgid "One of the following metadata is required.<br/>{}<br/>"
+msgstr "{}のいずれかを設定してください。"
+
 #: weko_search_ui/utils.py:2270
 msgid ""
 "Please specify the image file(gif, jpg, jpe, jpeg, png, bmp, tiff, tif) "
