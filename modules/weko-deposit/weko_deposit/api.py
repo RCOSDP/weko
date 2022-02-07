@@ -1765,6 +1765,8 @@ class WekoRecord(Record):
         # Get 'open_date' and convert to datetime.date.
         date_value = self.get_open_date_value(file_metadata)
         _format = '%Y-%m-%d'
+        if date_value is None:
+            date_value = datetime.date.max
         dt = datetime.strptime(date_value, _format)
         # Compare open_date with current date.
         is_future = dt.date() > today

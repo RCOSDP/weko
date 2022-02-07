@@ -456,7 +456,8 @@ WEKO_FLOW_DEFINE_LIST_ACTION = [
         "user_deny": False,
         "role": "0",
         "role_deny": False,
-        "action": "ADD"
+        "action": "ADD",
+        "workflow_flow_action_id": "0"
     },
     {
         "id": "3",
@@ -478,7 +479,8 @@ WEKO_FLOW_DEFINE_LIST_ACTION = [
         "user_deny": False,
         "role": "0",
         "role_deny": False,
-        "action": "ADD"
+        "action": "ADD",
+        "workflow_flow_action_id": "0"
     }
 ]
 

@@ -24,8 +24,8 @@ import os
 
 import six
 import werkzeug
-from flask import Blueprint, abort, current_app, escape, flash, jsonify, \
-    make_response, redirect, render_template, request, url_for
+from flask import Blueprint, abort, current_app, escape, flash, json, \
+    jsonify, make_response, redirect, render_template, request, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
@@ -57,7 +57,6 @@ from weko_records.utils import custom_record_medata_for_export, \
 from weko_search_ui.api import get_search_detail_keyword
 from weko_workflow.api import WorkFlow
 
-from weko_records_ui.models import InstitutionName
 from weko_records_ui.utils import check_items_settings, get_file_info_list
 
 from .ipaddr import check_site_license_permission
@@ -65,7 +64,8 @@ from .models import FilePermission, PDFCoverPageSettings
 from .permissions import check_content_clickable, check_created_id, \
     check_file_download_permission, check_original_pdf_download_permission, \
     check_permission_period, file_permission_factory, get_permission
-from .utils import get_billing_file_download_permission, get_groups_price, \
+from .utils import get_billing_file_download_permission, \
+    get_google_detaset_meta, get_google_scholar_meta, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
     is_show_email_of_creator
 from .utils import restore as restore_imp
@@ -345,74 +345,6 @@ def get_workflow_detail(workflow_id):
         abort(404)
 
 
-def _get_google_scholar_meta(record):
-    target_map = {
-        'dc:title': 'citation_title',
-        'jpcoar:creatorName': 'citation_author',
-        'dc:publisher': 'citation_publisher',
-        'jpcoar:subject': 'citation_keywords',
-        'jpcoar:sourceTitle': 'citation_journal_title',
-        'jpcoar:volume': 'citation_volume',
-        'jpcoar:issue': 'citation_issue',
-        'jpcoar:pageStart': 'citation_firstpage',
-        'jpcoar:pageEnd': 'citation_lastpage', }
-    if '_oai' not in record:
-        return
-    recstr = etree.tostring(
-        getrecord(
-            identifier=record['_oai'].get('id'),
-            metadataPrefix='jpcoar',
-            verb='getrecord'))
-    et = etree.fromstring(recstr)
-    mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
-    res = []
-    if mtdata is not None:
-        for target in target_map:
-            found = mtdata.find(target, namespaces=mtdata.nsmap)
-            if found is not None:
-                res.append({'name': target_map[target], 'data': found.text})
-        for date in mtdata.findall('datacite:date', namespaces=mtdata.nsmap):
-            if date.attrib.get('dateType') == 'Available':
-                res.append({'name': 'citation_online_date', 'data': date.text})
-            elif date.attrib.get('dateType') == 'Issued':
-                res.append(
-                    {'name': 'citation_publication_date', 'data': date.text})
-        for relatedIdentifier in mtdata.findall(
-                'jpcoar:relation/jpcoar:relatedIdentifier',
-                namespaces=mtdata.nsmap):
-            if 'identifierType' in relatedIdentifier.attrib and \
-                relatedIdentifier.attrib[
-                    'identifierType'] == 'DOI':
-                res.append({'name': 'citation_doi',
-                            'data': relatedIdentifier.text})
-        for creator in mtdata.findall(
-                'jpcoar:creator/jpcoar:creatorName',
-                namespaces=mtdata.nsmap):
-            res.append({'name': 'citation_author', 'data': creator.text})
-        for sourceIdentifier in mtdata.findall(
-                'jpcoar:sourceIdentifier',
-                namespaces=mtdata.nsmap):
-            if 'identifierType' in sourceIdentifier.attrib and \
-                sourceIdentifier.attrib[
-                    'identifierType'] == 'ISSN':
-                res.append({'name': 'citation_issn',
-                            'data': sourceIdentifier.text})
-        for pdf_url in mtdata.findall('jpcoar:file/jpcoar:URI',
-                                      namespaces=mtdata.nsmap):
-            res.append({'name': 'citation_pdf_url',
-                        'data': pdf_url.text})
-    res.append({'name': 'citation_dissertation_institution',
-                'data': InstitutionName.get_institution_name()})
-    record_route = current_app.config['RECORDS_UI_ENDPOINTS']['recid']['route']
-    record_url = '{protocol}://{host}{path}'.format(
-        protocol=request.environ['wsgi.url_scheme'],
-        host=request.environ['HTTP_HOST'],
-        path=record_route.replace('<pid_value>', record['recid'])
-    )
-    res.append({'name': 'citation_abstract_html_url', 'data': record_url})
-    return res
-
-
 def default_view_method(pid, record, filename=None, template=None, **kwargs):
     """Display default view.
 
@@ -424,6 +356,20 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     :param kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
     """
+    def _get_rights_title(result, rights_key, rights_values, current_lang, meta_options):
+        """Get multi-lang rights title."""
+        item_key = rights_key.split('.')[0]
+        item_title = meta_options[item_key]['title']
+        if meta_options[item_key]['title_i18n'].get(current_lang, None):
+            item_title = meta_options[item_key]['title_i18n'][current_lang]
+        elif meta_options[item_key]['title_i18n'].get('en', None):
+            item_title = meta_options[item_key]['title_i18n']['en']
+        if rights_values:
+            result[item_key] = {
+                'item_title': item_title,
+                'item_values': rights_values
+            }
+
     # Check file permision if request is File Information page.
     if filename:
         check_file = None
@@ -519,13 +465,19 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     else:
         record["relation"] = {}
 
-    google_scholar_meta = _get_google_scholar_meta(record)
+    google_scholar_meta = get_google_scholar_meta(record)
+    google_dataset_meta = get_google_detaset_meta(record)
 
     current_lang = current_i18n.language \
         if hasattr(current_i18n, 'language') else None
     # get title name
+    from weko_records.utils import get_options_and_order_list
     from weko_search_ui.utils import get_data_by_property
     title_name = ''
+    rights_values = {}
+    accessRight = ''
+    solst, meta_options = get_options_and_order_list(
+        record.get('item_type_id'))
     item_type_mapping = Mapping.get_record(record.get('item_type_id'))
     item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
     suffixes = '.@attributes.xml:lang'
@@ -545,6 +497,17 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
                 _title_key1,
                 current_lang,
                 record)
+        elif key == 'rights.@value':
+            _rights_values, _rights_key = get_data_by_property(
+                record, item_map, key)
+            if _rights_key:
+                _get_rights_title(rights_values, _rights_key,
+                                  _rights_values, current_lang, meta_options)
+        elif key == 'accessRights.@value':
+            accessRights, _access_rights_key = get_data_by_property(
+                record, item_map, key)
+            if accessRights and len(accessRights) > 0:
+                accessRight = accessRights[0]
 
     pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
     # Check if user has the permission to download original pdf file
@@ -660,6 +623,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         index_link_enabled=style.index_link_enabled,
         index_link_list=index_link_list,
         google_scholar_meta=google_scholar_meta,
+        google_dataset_meta=google_dataset_meta,
         billing_files_permission=billing_files_permission,
         billing_files_prices=billing_files_prices,
         files_thumbnail=files_thumbnail,
@@ -669,6 +633,10 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         is_display_file_preview=is_display_file_preview,
         # experimental implementation 20210502
         title_name=title_name,
+        rights_values=rights_values,
+        accessRight=accessRight,
+        analysis_url=current_app.config.get(
+            'WEKO_RECORDS_UI_ONLINE_ANALYSIS_URL'),
         **ctx,
         **kwargs
     )
@@ -893,8 +861,7 @@ def escape_newline(s):
     s = s.replace('\r\n', br_char).replace(
         '\r', br_char).replace('\n', br_char)
     s = '<br />'.join(s.splitlines())
-    # temp fix for JDCat
-    s = s.replace('\\n', br_char)
+
     return s
 
 

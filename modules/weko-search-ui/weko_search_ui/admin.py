@@ -20,6 +20,7 @@
 
 """Weko Search-UI admin."""
 
+import codecs
 import copy
 import json
 import os
@@ -591,9 +592,11 @@ class ItemImportView(BaseView):
                         options_line
                     ])
         return Response(
-            [] if not tsv_file else tsv_file.getvalue(),
+            [] if not tsv_file else codecs.BOM_UTF8.decode(
+                "utf8") + codecs.BOM_UTF8.decode()+tsv_file.getvalue(),
             mimetype="text/tsv",
             headers={
+                "Content-type": "text/tsv; charset=utf-8",
                 "Content-disposition": "attachment; "
                 + ('filename=' if not file_name
                    else urlencode({'filename': file_name}))

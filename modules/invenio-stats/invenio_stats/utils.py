@@ -56,7 +56,7 @@ def get_geoip(ip):
     """Lookup country for IP address."""
     reader = geolite2.reader()
     ip_data = reader.get(ip) or {}
-    return ip_data.get('country', {}).get('iso_code')
+    return ip_data.get('country', {}).get('iso_code', '')
 
 
 def get_user():
@@ -545,6 +545,7 @@ class QueryCommonReportsHelper(object):
                 all_query = all_query_cfg.\
                     query_class(**all_query_cfg.query_config)
                 all_res[query] = all_query.run(**params)
+
             Calculation(all_res, all_list)
 
         except Exception as e:

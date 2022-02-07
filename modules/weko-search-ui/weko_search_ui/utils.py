@@ -79,7 +79,7 @@ from weko_records.serializers.utils import get_mapping
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_GRANT_SUFFIX_METHOD
-from weko_workflow.models import FlowDefine, WorkFlow
+from weko_workflow.models import FlowAction, FlowDefine, WorkFlow
 from weko_workflow.utils import IdentifierHandle, check_existed_doi, \
     delete_cache_data, get_cache_data, get_identifier_setting, \
     get_sub_item_value, get_url_root, item_metadata_validation, \
@@ -445,11 +445,17 @@ def parse_to_json_form(data: list,
     for key, value in data:
         if key in item_path_not_existed:
             continue
+        if key is None or key.strip(' ') == '':
+            continue
         key_path = handle_generate_key_path(key)
-        if include_empty or value \
-                or key_path[0] in ['file_path', 'thumbnail_path'] \
-                or key_path[-1] == 'filename':
-            set_nested_item(result, key_path, value)
+        current_app.logger.debug("key:{}".format(key))
+        current_app.logger.debug("value:{}".format(value))
+        current_app.logger.debug("key_path:{}".format(key_path))
+        if key_path is not None:
+            if include_empty or value \
+                    or key_path[0] in ['file_path', 'thumbnail_path'] \
+                    or key_path[-1] == 'filename':
+                set_nested_item(result, key_path, value)
 
     convert_data(result)
     result = json.loads(json.dumps(result))
@@ -889,8 +895,8 @@ def handle_check_exist_record(list_record) -> list:
 def make_tsv_by_line(lines):
     """Make TSV file."""
     tsv_output = StringIO()
-
-    writer = csv.writer(tsv_output, delimiter='\t')
+    writer = csv.writer(tsv_output, delimiter='\t',
+                        lineterminator="\n")
     writer.writerows(lines)
 
     return tsv_output
@@ -1260,8 +1266,16 @@ def create_flow_define():
         flow = the_flow.create_flow(WEKO_FLOW_DEFINE)
 
         if flow and flow.flow_id:
+            flow_actions = WEKO_FLOW_DEFINE_LIST_ACTION
+            start_action = FlowAction.query.filter_by(
+                flow_id=flow.flow_id, action_id=1).first()
+            flow_actions[0]['workflow_flow_action_id'] = start_action.id
+            end_action = FlowAction.query.filter_by(
+                flow_id=flow.flow_id, action_id=2).first()
+            flow_actions[2]['workflow_flow_action_id'] = end_action.id
+
             the_flow.upt_flow_action(flow.flow_id,
-                                     WEKO_FLOW_DEFINE_LIST_ACTION)
+                                     flow_actions)
 
 
 def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
@@ -1821,6 +1835,22 @@ def handle_check_doi(list_record):
     :return
 
     """
+
+    def _check_doi(doi, item):
+        error = None
+        split_doi = doi.split('/')
+        if len(split_doi) > 1 and not doi.endswith('/'):
+            error = _('{} cannot be set.').format('DOI')
+        else:
+            prefix = re.sub('/$', '', doi)
+            item['doi_suffix_not_existed'] = True
+            if not item.get('ignore_check_doi_prefix') \
+                    and prefix != get_doi_prefix(doi_ra):
+                error = \
+                    _('Specified Prefix of {} is incorrect.') \
+                    .format('DOI')
+        return error
+
     for item in list_record:
         error = None
         item_id = str(item.get('id'))
@@ -1857,17 +1887,7 @@ def handle_check_doi(list_record):
             else:
                 if item.get('status') == 'new':
                     if doi:
-                        split_doi = doi.split('/')
-                        if len(doi.split('/')) > 1 and not doi.endswith('/'):
-                            error = _('{} cannot be set.').format('DOI')
-                        else:
-                            prefix = re.sub('/$', '', doi)
-                            item['doi_suffix_not_existed'] = True
-                            if not item.get('ignore_check_doi_prefix') \
-                                    and prefix != get_doi_prefix(doi_ra):
-                                error = \
-                                    _('Specified Prefix of {} is incorrect.') \
-                                    .format('DOI')
+                        error = _check_doi(doi, item)
                 else:
                     pid_doi = None
                     try:
@@ -1885,8 +1905,7 @@ def handle_check_doi(list_record):
                             error = _('Specified {} is different from'
                                       + ' existing {}.').format('DOI', 'DOI')
                     elif doi:
-                        error = _('Specified {} is different from'
-                                  + ' existing {}.').format('DOI', 'DOI')
+                        error = _check_doi(doi, item)
 
         if error:
             item['errors'] = item['errors'] + [error] \
@@ -2136,14 +2155,18 @@ def handle_doi_required_check(record):
 
     if 'doi_ra' in record and record['doi_ra'] in WEKO_IMPORT_DOI_TYPE:
         root_item_id = None
+        file_path = record.get('file_path', [])
+        file_path = [a for a in file_path if a.strip() != '']
+
         if record.get('status') != 'new':
             root_item_id = WekoRecord.get_record_by_pid(
                 str(record.get('id'))).pid_recid.object_uuid
         error_list = item_metadata_validation(
             None, IDENTIFIER_GRANT_SELECT_DICT[record['doi_ra']],
-            record_data, True, root_item_id)
+            record_data, True, root_item_id, file_path)
+
         if error_list:
-            errors = [_('PID does not meet the conditions.')]
+            errors = [_('PID does not meet the conditions.<br/>')]
             if error_list.get('mapping'):
                 mapping_err_msg = _('The mapping of required items for DOI '
                                     'validation is not set. Please recheck the'
@@ -2152,6 +2175,17 @@ def handle_doi_required_check(record):
                 errors.append(mapping_err_msg.format('<br/>'.join(keys)))
             if error_list.get('other'):
                 errors.append(_(error_list.get('other')))
+            if error_list.get('required_key'):
+                mapping_err_msg = _(
+                    'The following metadata are required.<br/>{}')
+                errors.append(mapping_err_msg.format(
+                    '<br/>'.join(error_list.get('required_key'))))
+            if error_list.get('either_key'):
+                mapping_err_msg = _(
+                    'One of the following metadata is required.<br/>{}<br/>')
+                errors.append(mapping_err_msg.format(
+                    error_list.get('either_key')))
+
             return errors
 
 
@@ -2250,16 +2284,36 @@ def validation_file_open_date(record):
     :param record: Record
     :return: error or None
     """
-    open_date_values = get_data_in_deep_dict('dateValue',
-                                             record.get('metadata', {}))
-    for data in open_date_values:
-        try:
-            value = data.get('value', '')
-            if value and value != datetime.strptime(value, '%Y-%m-%d') \
-                    .strftime('%Y-%m-%d'):
-                raise Exception
-        except Exception:
-            return _('Please specify Open Access Date with YYYY-MM-DD.')
+    accessrole_values = get_data_in_deep_dict(
+        'accessrole', record.get('metadata', {}))
+    open_date_values = get_data_in_deep_dict(
+        'dateValue', record.get('metadata', {}))
+    flag = False
+    for ar in accessrole_values:
+        ar_value = ar.get('value', '')
+        if ar_value == 'open_date':
+            try:
+                flag = True
+                item_key = ar.get('tree_key', '.').split('.')[0]
+                if open_date_values:
+                    for d in open_date_values:
+                        if item_key and item_key in d.get('tree_key'):
+                            d_value = d.get('value')
+                            if d_value and d_value == datetime.strptime(d_value, '%Y-%m-%d') \
+                                    .strftime('%Y-%m-%d'):
+                                flag = False
+                            else:
+                                raise Exception
+                else:
+                    raise Exception
+            except Exception:
+                flag = True
+                break
+    if flag:
+        result = _('Please specify Open Access Date with YYYY-MM-DD.')
+    else:
+        result = ''
+    return result
 
 
 def validation_date_property(date_str):
@@ -2709,7 +2763,7 @@ def export_all(root_url):
 
             tsv_full_path = '{}/{}.tsv'.format(export_path,
                                                item_type_data.get('name'))
-            with open(tsv_full_path, 'w') as file:
+            with open(tsv_full_path, 'w', encoding="utf-8-sig") as file:
                 tsv_output = package_export_file(item_type_data)
                 file.write(tsv_output.getvalue())
         except Exception as ex:
@@ -3226,6 +3280,9 @@ def get_filenames_from_metadata(metadata):
                 del file['filename']
             filenames.append(data)
             count += 1
+
+            if not file.get('accessrole', None):
+                file['accessrole'] = 'open_access'
 
         new_file_metadata = list(filter(lambda x: x, metadata[_id]))
         if new_file_metadata:
