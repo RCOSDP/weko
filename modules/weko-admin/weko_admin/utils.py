@@ -367,7 +367,7 @@ def make_stats_tsv(raw_stats, file_type, year, month):
         file_type)
     tsv_output = StringIO()
 
-    writer = csv.writer(tsv_output, delimiter='\t',
+    writer = csv.writer(tsv_output, delimiter=',',
                         lineterminator="\n")
     writer.writerows([[header_row],
                       [_('Aggregation Month'), year + '-' + month],
