@@ -621,7 +621,7 @@ WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 3
 """Template for the Admin Bulk Export page."""
 
 WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 1000
-"""The number of items exported to tsv file each once."""
+"""The number of items exported to csv file each once."""
 
 WEKO_SEARCH_UI_BULK_EXPORT_RETRY = 5
 """Number of export retries."""

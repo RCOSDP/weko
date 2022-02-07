@@ -302,11 +302,12 @@ def journal_detail(index_id=0):
     return jsonify(result)
 
 
-# @blueprint.route("/search/feedback_mail_list", methods=['GET'])
-# def search_feedback_mail_list():
-#     """Render a check view."""
-#     result = get_feedback_mail_list()
-#     return jsonify(result)
+@blueprint.route("/search/feedback_mail_list", methods=['GET'])
+@login_required
+def search_feedback_mail_list():
+    """Render a check view."""
+    result = get_feedback_mail_list()
+    return jsonify(result)
 
 
 @blueprint.route("/get_child_list/<int:index_id>", methods=['GET'])
