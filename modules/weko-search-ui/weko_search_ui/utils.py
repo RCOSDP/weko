@@ -3281,6 +3281,9 @@ def get_filenames_from_metadata(metadata):
             filenames.append(data)
             count += 1
 
+            if not file.get('accessrole', None):
+                file['accessrole'] = 'open_access'
+
         new_file_metadata = list(filter(lambda x: x, metadata[_id]))
         if new_file_metadata:
             metadata[_id] = new_file_metadata
