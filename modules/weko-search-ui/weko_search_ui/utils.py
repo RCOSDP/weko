@@ -43,7 +43,7 @@ from celery.result import AsyncResult
 from celery.task.control import revoke
 from elasticsearch import ElasticsearchException
 from elasticsearch.exceptions import NotFoundError
-from flask import abort, current_app, request
+from flask import abort, current_app, has_request_context, request
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
@@ -69,6 +69,7 @@ from weko_admin.utils import get_redis_cache, reset_redis_cache
 from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
+from weko_deposit.signals import item_created
 from weko_handle.api import Handle
 from weko_index_tree.utils import check_index_permissions, \
     check_restrict_doi_with_indexes
@@ -1303,10 +1304,27 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
         # Push item to elasticsearch.
         push_item_to_elasticsearch(id, index, doc_type, data)
         # Save item to stats events.
-        save_item_to_stats_events(id, index, doc_type, data)
+        #save_item_to_stats_events(id, index, doc_type, data)
+        try:
+            if has_request_context():
+                if current_user:
+                    user_id = current_user.get_id()
+                else:
+                    user_id = -1
+                item_created.send(
+                    current_app._get_current_object(),
+                    user_id=user_id,
+                    item_id=item.get('id'),
+                    item_title=item.get('item_title')
+                )
+        except BaseException:
+            import traceback
+            current_app.logger.error(traceback.format_exc())
+            abort(500, 'MAPPING_ERROR')
 
     def prepare_stored_data(item, request_info):
         """Prepare stored data."""
+        # TODO: consider to use "weko_deposit.signals.item_created."
         timestamp = datetime.utcnow().replace(microsecond=0)
         doc = {
             'ip_address': request_info.get('remote_addr'),
