@@ -384,12 +384,14 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 or resource_type in elearning_type \
                 or resource_type in datageneral_types:
             required_properties = ['title']
-            either_properties = ['version']
+            # remove 20220207
+            #either_properties = ['version']
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif resource_type in dataset_type:
             required_properties = ['title',
                                    'givenName']
-            either_properties = ['geoLocation']
+            # remove 20220207
+            # either_properties = ['geoLocation']
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['Crossref']:
         if resource_type in journalarticle_type:
@@ -405,7 +407,8 @@ def item_metadata_validation(item_id, identifier_type, record=None,
         if resource_type in dataset_type:
             required_properties = ['title',
                                    'givenName']
-            either_properties = ['geoLocation']
+            # remove 20220207
+            # either_properties = ['geoLocation']
     # NDL JaLC DOI identifier registration
 
     # 本文URL条件

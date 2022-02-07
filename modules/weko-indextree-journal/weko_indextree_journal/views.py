@@ -63,7 +63,7 @@ def export_journals():
         journals = Journals.get_all_journals()
         results = [obj.__dict__ for obj in journals]
         data = numpy.asarray(results)
-        numpy.savetxt("journal.tsv", data, delimiter=",")
+        numpy.savetxt("journal.csv", data, delimiter=",")
 
         # jsonList = json.dumps({"results" : results})
         # Save journals information to file

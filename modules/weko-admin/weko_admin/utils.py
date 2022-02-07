@@ -334,8 +334,8 @@ def get_user_report_data():
 
 
 def package_reports(all_stats, year, month):
-    """Package the .tsv files into one zip file."""
-    tsv_files = []
+    """Package the .csv files into one zip file."""
+    csv_files = []
     zip_stream = BytesIO()
     year = str(year)
     month = str(month)
@@ -343,16 +343,16 @@ def package_reports(all_stats, year, month):
         for stats_type, stats in all_stats.items():
             file_name = current_app.config['WEKO_ADMIN_REPORT_FILE_NAMES'].get(
                 stats_type, '_')
-            file_name = 'logReport_' + file_name + year + '-' + month + '.tsv'
-            tsv_files.append({
+            file_name = 'logReport_' + file_name + year + '-' + month + '.csv'
+            csv_files.append({
                 'file_name': file_name,
-                'stream': make_stats_tsv(stats, stats_type, year, month)})
+                'stream': make_stats_csv(stats, stats_type, year, month)})
 
         # Dynamically create zip from StringIO data into BytesIO
         report_zip = zipfile.ZipFile(zip_stream, 'w')
-        for tsv_file in tsv_files:
-            report_zip.writestr(tsv_file['file_name'],
-                                tsv_file['stream'].getvalue().encode('utf-8-sig'))
+        for csv_file in csv_files:
+            report_zip.writestr(csv_file['file_name'],
+                                csv_file['stream'].getvalue().encode('utf-8-sig'))
         report_zip.close()
     except Exception as e:
         current_app.logger.error('Unexpected error: ', e)
@@ -360,14 +360,14 @@ def package_reports(all_stats, year, month):
     return zip_stream
 
 
-def make_stats_tsv(raw_stats, file_type, year, month):
-    """Make TSV report file for stats."""
+def make_stats_csv(raw_stats, file_type, year, month):
+    """Make CSV report file for stats."""
     header_row = current_app.config['WEKO_ADMIN_REPORT_HEADERS'].get(file_type)
     sub_header_row = current_app.config['WEKO_ADMIN_REPORT_SUB_HEADERS'].get(
         file_type)
-    tsv_output = StringIO()
+    csv_output = StringIO()
 
-    writer = csv.writer(tsv_output, delimiter='\t',
+    writer = csv.writer(csv_output, delimiter=',',
                         lineterminator="\n")
     writer.writerows([[header_row],
                       [_('Aggregation Month'), year + '-' + month],
@@ -387,36 +387,36 @@ def make_stats_tsv(raw_stats, file_type, year, month):
     if file_type == 'index_access':
         writer.writerow([_('Total Detail Views'), raw_stats.get('total')])
     elif file_type in ['billing_file_download', 'billing_file_preview']:
-        write_report_tsv_rows(writer, raw_stats.get('all'), file_type,
+        write_report_csv_rows(writer, raw_stats.get('all'), file_type,
                               raw_stats.get('all_groups'))  # Pass all groups
     elif file_type == 'site_access':
-        write_report_tsv_rows(writer,
+        write_report_csv_rows(writer,
                               raw_stats.get('site_license'),
                               file_type,
                               _('Site license member'))
-        write_report_tsv_rows(writer,
+        write_report_csv_rows(writer,
                               raw_stats.get('other'),
                               file_type,
                               _('Other than site license'))
     else:
-        write_report_tsv_rows(writer, raw_stats.get('all'), file_type)
+        write_report_csv_rows(writer, raw_stats.get('all'), file_type)
 
     # Write open access stats
     if sub_header_row is not None:
         writer.writerows([[''], [sub_header_row]])
         if 'open_access' in raw_stats:
             writer.writerow(cols)
-            write_report_tsv_rows(writer, raw_stats.get('open_access'))
+            write_report_csv_rows(writer, raw_stats.get('open_access'))
         elif 'institution_name' in raw_stats:
             writer.writerows([[_('Institution Name')] + cols])
-            write_report_tsv_rows(writer,
+            write_report_csv_rows(writer,
                                   raw_stats.get('institution_name'),
                                   file_type)
-    return tsv_output
+    return csv_output
 
 
-def write_report_tsv_rows(writer, records, file_type=None, other_info=None):
-    """Write tsv rows for stats."""
+def write_report_csv_rows(writer, records, file_type=None, other_info=None):
+    """Write csv rows for stats."""
     from weko_items_ui.utils import get_user_information
     if not records:
         return
