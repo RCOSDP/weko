@@ -114,6 +114,11 @@ activity_blueprint = Blueprint(
 )
 
 
+@blueprint.app_template_filter('regex_replace')
+def regex_replace(s, pattern, replace):
+    return re.sub(pattern, replace, s)
+
+
 @blueprint.route('/')
 @login_required
 def index():
@@ -673,6 +678,9 @@ def display_activity(activity_id="0"):
             record=approval_record
         )
     )
+    _id = None
+    if recid:
+        _id = re.sub("\.[0-9]+", "", recid.pid_value)
 
     return render_template(
         'weko_workflow/activity_detail.html',
@@ -718,6 +726,7 @@ def display_activity(activity_id="0"):
             'WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE'],
         page=page,
         pid=recid,
+        _id=_id,
         position_list=position_list,
         records=record,
         render_widgets=render_widgets,
@@ -2018,8 +2027,3 @@ activity_blueprint.add_url_rule(
     ),
     methods=['POST']
 )
-
-
-@blueprint.app_template_filter('regex_replace')
-def regex_replace(s, pattern, replace):
-    return re.sub(pattern, replace, s)
