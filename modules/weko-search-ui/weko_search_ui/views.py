@@ -27,6 +27,7 @@ from blinker import Namespace
 from flask import Blueprint, current_app, flash, jsonify, render_template, \
     request
 from flask_babelex import gettext as _
+from flask_login import login_required
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import AdminSettings
@@ -301,11 +302,11 @@ def journal_detail(index_id=0):
     return jsonify(result)
 
 
-@blueprint.route("/search/feedback_mail_list", methods=['GET'])
-def search_feedback_mail_list():
-    """Render a check view."""
-    result = get_feedback_mail_list()
-    return jsonify(result)
+# @blueprint.route("/search/feedback_mail_list", methods=['GET'])
+# def search_feedback_mail_list():
+#     """Render a check view."""
+#     result = get_feedback_mail_list()
+#     return jsonify(result)
 
 
 @blueprint.route("/get_child_list/<int:index_id>", methods=['GET'])

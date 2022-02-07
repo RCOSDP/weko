@@ -2183,8 +2183,8 @@ def handle_doi_required_check(record):
             if error_list.get('either_key'):
                 mapping_err_msg = _(
                     'One of the following metadata is required.<br/>{}<br/>')
-                for either in error_list.get('either_key'):
-                    errors.append(mapping_err_msg.format(either))
+                errors.append(mapping_err_msg.format(
+                    error_list.get('either_key')))
 
             return errors
 

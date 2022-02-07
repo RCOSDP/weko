@@ -632,7 +632,8 @@ def validattion_item_property_either_required(
     :param properties: Property's keywords
     :return: either_list
     """
-    error_list = {'required': [], 'pattern': [], 'either': [], 'mapping': []}
+    error_list = {'required': [], 'required_key': [],
+                  'pattern': [], 'either': [], 'either_key': [], 'mapping': []}
 
     # For Dataset
     geo_location = None
@@ -672,37 +673,28 @@ def validattion_item_property_either_required(
     current_app.logger.debug("properties: {}".format(properties))
     if 'version' in properties:
         # check フォーマット jpcoar:mimeType
-        # mapping_keys = ['jpcoar:mimeType']
-        # version = handle_check_required_pattern_and_either(
-        #    mapping_data, mapping_keys, None, True)
-
-        # check バージョン datacite:version
-        mapping_keys = ['datacite:version']
-        errors = handle_check_required_pattern_and_either(
+        mapping_keys = ['jpcoar:mimeType']
+        version = handle_check_required_pattern_and_either(
             mapping_data, mapping_keys, None, True)
-        current_app.logger.debug(
-            "mapping_keys: {} errors: {}".format(mapping_keys, errors))
-        if not errors:
-            version = None
-        else:
-            if version is None:
-                version = {'required': [], 'pattern': [],
-                           'either': [], 'mapping': []}
-            merge_doi_error_list(version, errors)
+
+        if version:
+            # check バージョン datacite:version
+            mapping_keys = ['datacite:version']
+            errors = handle_check_required_pattern_and_either(
+                mapping_data, mapping_keys, None, True)
+            if not errors:
+                version = None
+            else:
+                merge_doi_error_list(version, errors)
 
         if version:
             # check 出版タイプ oaire:version
             mapping_keys = ['oaire:version']
             errors = handle_check_required_pattern_and_either(
                 mapping_data, mapping_keys, None, True)
-            current_app.logger.debug(
-                "mapping_keys: {} errors: {}".format(mapping_keys, errors))
             if not errors:
                 version = None
             else:
-                if version is None:
-                    version = {'required': [], 'pattern': [],
-                               'either': [], 'mapping': []}
                 merge_doi_error_list(version, errors)
 
         if version:
