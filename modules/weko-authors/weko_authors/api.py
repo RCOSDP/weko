@@ -27,7 +27,7 @@ from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from sqlalchemy.sql.functions import func
 
-from weko_authors.config import WEKO_AUTHORS_TSV_MAPPING
+from weko_authors.config import WEKO_AUTHORS_CSV_MAPPING
 
 from .models import Authors, AuthorsPrefixSettings
 
@@ -191,7 +191,7 @@ class WekoAuthors(object):
         row_data = []
 
         if not mappings:
-            mappings = deepcopy(WEKO_AUTHORS_TSV_MAPPING)
+            mappings = deepcopy(WEKO_AUTHORS_CSV_MAPPING)
         if not authors:
             authors = cls.get_all(with_deleted=False, with_gather=False)
         if not schemes:

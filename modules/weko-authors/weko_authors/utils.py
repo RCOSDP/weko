@@ -42,8 +42,8 @@ from weko_authors.contrib.validation import validate_by_extend_validator, \
     validate_external_author_identifier, validate_map, validate_required
 
 from .api import WekoAuthors
-from .config import WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY, \
-    WEKO_AUTHORS_EXPORT_CACHE_URL_KEY, WEKO_AUTHORS_TSV_MAPPING
+from .config import WEKO_AUTHORS_CSV_MAPPING, \
+    WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY, WEKO_AUTHORS_EXPORT_CACHE_URL_KEY
 from .models import AuthorsPrefixSettings
 
 
@@ -136,7 +136,7 @@ def export_authors():
     """Export all authors."""
     file_uri = None
     try:
-        mappings = deepcopy(WEKO_AUTHORS_TSV_MAPPING)
+        mappings = deepcopy(WEKO_AUTHORS_CSV_MAPPING)
         authors = WekoAuthors.get_all(with_deleted=False, with_gather=False)
         schemes = WekoAuthors.get_identifier_scheme_info()
         row_header, row_label_en, row_label_jp, row_data = \
@@ -144,11 +144,11 @@ def export_authors():
 
         # write csv data to a stream
         csv_io = io.StringIO()
-        writer = csv.writer(csv_io, delimiter='\t',
-                            quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        writer = csv.writer(csv_io, delimiter=',',
+                            quotechar='"', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
         writer.writerows([row_header, row_label_en, row_label_jp, *row_data])
         reader = io.BufferedReader(io.BytesIO(
-            csv_io.getvalue().encode("utf-8")))
+            csv_io.getvalue().encode("utf-8-sig")))
 
         # save data into location
         cache_url = get_export_url()
@@ -172,7 +172,7 @@ def export_authors():
 
 
 def check_import_data(file_name: str, file_content: str):
-    """Validation importing tsv file.
+    """Validation importing csv file.
 
     :argument
         file_name -- file name.
@@ -189,11 +189,11 @@ def check_import_data(file_name: str, file_content: str):
         temp_file.flush()
 
         flat_mapping_all, flat_mapping_ids = flatten_authors_mapping(
-            WEKO_AUTHORS_TSV_MAPPING)
-        tsv_data = unpackage_and_check_import_file(
+            WEKO_AUTHORS_CSV_MAPPING)
+        csv_data = unpackage_and_check_import_file(
             file_name, temp_file.name, flat_mapping_ids)
         result['list_import_data'] = validate_import_data(
-            tsv_data, flat_mapping_ids, flat_mapping_all)
+            csv_data, flat_mapping_ids, flat_mapping_all)
     except Exception as ex:
         error = _('Internal server error')
         if isinstance(ex, UnicodeDecodeError):
@@ -209,11 +209,11 @@ def check_import_data(file_name: str, file_content: str):
     return result
 
 
-def unpackage_and_check_import_file(tsv_file_name, temp_file, mapping_ids):
+def unpackage_and_check_import_file(csv_file_name, temp_file, mapping_ids):
     """Unpackage and check format of import file.
 
     Args:
-        tsv_file_name (str): File uploaded name.
+        csv_file_name (str): File uploaded name.
         temp_file (str): Temp file path.
         mapping_ids (list): List only mapping ids.
 
@@ -224,14 +224,16 @@ def unpackage_and_check_import_file(tsv_file_name, temp_file, mapping_ids):
     from weko_search_ui.utils import handle_check_consistence_with_mapping, \
         handle_check_duplication_item_id, parse_to_json_form
     header = []
-    tsv_data = []
-    with open(temp_file, 'r') as file:
-        csv_reader = csv.reader(file, delimiter='\t')
+    csv_data = []
+    with open(temp_file, 'r', encoding="utf-8-sig") as file:
+        csv_reader = csv.reader(file, delimiter=',', lineterminator='\n')
         try:
             for num, data_row in enumerate(csv_reader, start=1):
                 if num == 1:
                     header = data_row
                     header[0] = header[0].replace('#', '', 1)
+                    # remove BOM
+                    # header[0] = header[0].replace('\ufeff', '')
                     duplication_item_ids = \
                         handle_check_duplication_item_id(header)
                     if duplication_item_ids:
@@ -244,8 +246,8 @@ def unpackage_and_check_import_file(tsv_file_name, temp_file, mapping_ids):
                         })
 
                     not_consistent_list = \
-                        handle_check_consistence_with_mapping(mapping_ids,
-                                                              header)
+                        handle_check_consistence_with_mapping(
+                            mapping_ids, header)
                     if not_consistent_list:
                         msg = _('Specified item does not consistency '
                                 'with DB item.<br/>{}')
@@ -263,31 +265,31 @@ def unpackage_and_check_import_file(tsv_file_name, temp_file, mapping_ids):
 
                     if not data_parse_metadata:
                         raise Exception({
-                            'error_msg': _('Cannot read tsv file correctly.')
+                            'error_msg': _('Cannot read csv file correctly.')
                         })
 
-                    tsv_data.append(dict(**data_parse_metadata))
+                    csv_data.append(dict(**data_parse_metadata))
 
-            if not tsv_data:
+            if not csv_data:
                 raise Exception({
                     'error_msg': _('There is no data to import.')
                 })
         except UnicodeDecodeError as ex:
-            ex.reason = _('The TSV file could not be read. Make sure the file'
-                          + ' format is TSV and that the file is'
-                          + ' UTF-8 encoded.').format(tsv_file_name)
+            ex.reason = _('The CSV file could not be read. Make sure the file'
+                          + ' format is CSV and that the file is'
+                          + ' UTF-8 encoded.').format(csv_file_name)
             raise ex
         except Exception as ex:
             raise ex
 
-    return tsv_data
+    return csv_data
 
 
-def validate_import_data(tsv_data, mapping_ids, mapping):
+def validate_import_data(csv_data, mapping_ids, mapping):
     """Validate import data.
 
     Args:
-        tsv_data (list): Author data from tsv.
+        csv_data (list): Author data from csv.
         mapping_ids (list): List only mapping ids.
         mapping (list): List mapping.
     """
@@ -301,7 +303,7 @@ def validate_import_data(tsv_data, mapping_ids, mapping):
     existed_authors_id, existed_external_authors_id = \
         WekoAuthors.get_author_for_validation()
 
-    for item in tsv_data:
+    for item in csv_data:
         errors = []
         warnings = []
 
@@ -310,7 +312,7 @@ def validate_import_data(tsv_data, mapping_ids, mapping):
         if weko_id and weko_id not in list_import_id:
             list_import_id.append(weko_id)
         elif weko_id:
-            errors.append(_('There is duplicated data in the TSV file.'))
+            errors.append(_('There is duplicated data in the CSV file.'))
 
         # set status
         set_record_status(existed_authors_id, item, errors, warnings)
@@ -379,7 +381,7 @@ def validate_import_data(tsv_data, mapping_ids, mapping):
             item['warnings'] = item['warnings'] + warnings \
                 if item.get('warnings') else warnings
 
-    return tsv_data
+    return csv_data
 
 
 def get_values_by_mapping(keys, data, parent_key=None):
@@ -471,7 +473,7 @@ def set_record_status(list_existed_author_id, item, errors, warnings):
             item['status'] = 'update'
             if not list_existed_author_id.get(pk_id):
                 warnings.append(_('The specified author has been deleted.'
-                                  ' Update author information with tsv content'
+                                  ' Update author information with csv content'
                                   ', but author remains deleted as it is.'))
         else:
             errors.append(err_msg)
@@ -509,7 +511,7 @@ def import_author_to_system(author):
     """Import author to DB and ES.
 
     Args:
-        author (object): Author metadata from tsv.
+        author (object): Author metadata from csv.
     """
     if author:
         try:
