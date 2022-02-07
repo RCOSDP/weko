@@ -16,6 +16,7 @@ from copy import deepcopy
 from functools import wraps
 
 import six
+from celery.utils.log import get_task_logger
 from dateutil import parser
 from elasticsearch import VERSION as ES_VERSION
 from elasticsearch.helpers import bulk
@@ -289,6 +290,8 @@ class StatAggregator(object):
 
     def agg_iter(self, lower_limit=None, upper_limit=None):
         """Aggregate and return dictionary to be indexed in ES."""
+        logger = get_task_logger(__name__)
+
         lower_limit = (
             lower_limit
             or self.bookmark_api.get_bookmark()
@@ -324,8 +327,9 @@ class StatAggregator(object):
         )
         for dst, (metric, src, opts) in self.metric_aggregation_fields.items():
             terms.metric(dst, metric, field=src, **opts)
-
+        logger.debug("agg_query query: {}".format(self.agg_query))
         results = self.agg_query.execute()
+        logger.debug("agg_query result: {}".format(len(results)))
         for interval in results.aggregations['histogram'].buckets:
             interval_date = datetime.datetime.strptime(
                 interval['key_as_string'], '%Y-%m-%dT%H:%M:%S')
@@ -345,7 +349,7 @@ class StatAggregator(object):
                             if 'file_id' in doc:
                                 aggregation_data[destination] = doc['file_id']
                         else:
-                            aggregation_data[destination] = doc[source]
+                            aggregation_data[destination] = doc.get(source, '')
                     else:
                         aggregation_data[destination] = source(
                             doc,
@@ -356,6 +360,7 @@ class StatAggregator(object):
                              format(self.search_index_prefix, self.event,
                                     interval_date.strftime(
                                         self.index_name_suffix))
+                logger.debug("index_name: {}".format(index_name))
                 self.indices.add(index_name)
                 rtn_data = dict(
                     _id='{0}-{1}'.
@@ -378,12 +383,13 @@ class StatAggregator(object):
         # If no events have been indexed there is nothing to aggregate
         if not Index(self.event_index, using=self.client).exists():
             return
-
+        logger = get_task_logger(__name__)
         lower_limit = (
             start_date
             or self.bookmark_api.get_bookmark()
             or self._get_oldest_event_timestamp()
         )
+        logger.debug("lower_limit: {}".format(lower_limit))
         # Stop here if no bookmark could be estimated.
         if lower_limit is None:
             return
@@ -394,6 +400,7 @@ class StatAggregator(object):
                 lower_limit + datetime.timedelta(self.batch_size),
                 datetime.datetime.min.time())
         )
+        logger.debug("upper_limit: {}".format(upper_limit))
         while upper_limit <= datetime.datetime.utcnow():
             self.indices = set()
             bulk(self.client,

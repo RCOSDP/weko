@@ -727,7 +727,7 @@ def package_export_file(item_type_data):
     jsonschema_url = item_type_data.get('root_url') + item_type_data.get(
         'jsonschema')
 
-    tsv_writer = csv.writer(tsv_output, delimiter='\t')
+    tsv_writer = csv.writer(tsv_output, delimiter='\t', lineterminator='\n')
     tsv_writer.writerow(['#ItemType',
                          item_type_data.get('name'),
                          jsonschema_url])
@@ -738,18 +738,18 @@ def package_export_file(item_type_data):
     options = item_type_data['options']
     tsv_metadata_writer = csv.DictWriter(tsv_output,
                                          fieldnames=keys,
-                                         delimiter='\t')
+                                         delimiter='\t', lineterminator='\n')
     tsv_metadata_label_writer = csv.DictWriter(tsv_output,
                                                fieldnames=labels,
-                                               delimiter='\t')
+                                               delimiter='\t', lineterminator='\n')
     tsv_metadata_is_system_writer = csv.DictWriter(tsv_output,
                                                    fieldnames=is_systems,
-                                                   delimiter='\t')
+                                                   delimiter='\t', lineterminator='\n')
     tsv_metadata_option_writer = csv.DictWriter(tsv_output,
                                                 fieldnames=options,
-                                                delimiter='\t')
+                                                delimiter='\t', lineterminator='\n')
     tsv_metadata_data_writer = csv.writer(tsv_output,
-                                          delimiter='\t')
+                                          delimiter='\t', lineterminator='\n')
     tsv_metadata_writer.writeheader()
     tsv_metadata_label_writer.writeheader()
     tsv_metadata_is_system_writer.writeheader()
@@ -1104,8 +1104,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
             doi_type_str,
             doi_str
         ])
-
-        records.attr_output[recid].append('')
+        # .edit Keep/Upgrade default is Keep
+        records.attr_output[recid].append('Keep')
         if has_pubdate:
             pubdate = record.get('pubdate', {}).get('attribute_value', '')
             records.attr_output[recid].append(pubdate)
@@ -1293,10 +1293,9 @@ def write_tsv_files(item_types_data, export_path, list_item_role):
         item_types_data[item_type_id]['options'] = options
         item_types_data[item_type_id]['data'] = records
         item_type_data = item_types_data[item_type_id]
-
         with open('{}/{}.tsv'.format(export_path,
                                      item_type_data.get('name')),
-                  'w') as file:
+                  'w', encoding="utf-8-sig") as file:
             tsv_output = package_export_file(item_type_data)
             file.write(tsv_output.getvalue())
 
@@ -2934,7 +2933,9 @@ def make_stats_tsv_with_permission(item_type_id, recids,
             doi_str
         ])
 
-        records.attr_output[recid].append('')
+        # .edit Keep or Upgrade. default is Keep
+        records.attr_output[recid].append('Keep')
+
         records.attr_output[recid].append(record[
             'pubdate']['attribute_value'])
 
