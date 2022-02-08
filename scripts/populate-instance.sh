@@ -419,18 +419,18 @@ ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "WEKO" "WEKO" ""
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
-       "ORCID" "ORCID" "https://orcid.org/"
+       "ORCID" "ORCID" "https://orcid.org/##"
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
-       "CiNii" "CiNii" "https://ci.nii.ac.jp/"
+       "CiNii" "CiNii" "https://ci.nii.ac.jp/author/##"
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
-       "KAKEN2" "KAKEN2" "https://kaken.nii.ac.jp/"
+       "KAKEN2" "KAKEN2" "https://nrid.nii.ac.jp/nrid/##"
 # create-default-authors-prefix-settings-end
 
 # create-default-authors-affiliation-settings-begin
 ${INVENIO_WEB_INSTANCE} authors_affiliation default_settings \
-       "ISNI" "ISNI" "http://www.isni.org/isni/"
+       "ISNI" "ISNI" "http://www.isni.org/isni/##"
 ${INVENIO_WEB_INSTANCE} authors_affiliation default_settings \
-       "GRID" "GRID" "https://www.grid.ac/institutes/"
+       "GRID" "GRID" "https://www.grid.ac/institutes/##"
 ${INVENIO_WEB_INSTANCE} authors_affiliation default_settings \
        "Ringgold" "Ringgold" ""
 ${INVENIO_WEB_INSTANCE} authors_affiliation default_settings \

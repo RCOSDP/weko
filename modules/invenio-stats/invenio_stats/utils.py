@@ -54,9 +54,8 @@ def get_anonymization_salt(ts):
 
 def get_geoip(ip):
     """Lookup country for IP address."""
-    reader = geolite2.reader()
-    ip_data = reader.get(ip) or {}
-    return ip_data.get('country', {}).get('iso_code',{})
+    match = geolite2.reader().get(ip)
+    return match.get('country', {}).get('iso_code') if match else None
 
 
 def get_user():
