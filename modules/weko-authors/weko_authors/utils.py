@@ -209,6 +209,28 @@ def check_import_data(file_name: str, file_content: str):
     return result
 
 
+def getEncode(filepath):
+    """
+    getEncode [summary]
+
+    [extended_summary]
+
+    Args:
+        filepath ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+    encs = "iso-2022-jp euc-jp shift_jis utf-8".split()
+    for enc in encs:
+        with open(filepath, encoding=enc) as fr:
+            try:
+                fr = fr.read()
+            except UnicodeDecodeError:
+                continue
+        return enc
+
+
 def unpackage_and_check_import_file(csv_file_name, temp_file, mapping_ids):
     """Unpackage and check format of import file.
 
@@ -225,8 +247,11 @@ def unpackage_and_check_import_file(csv_file_name, temp_file, mapping_ids):
         handle_check_duplication_item_id, parse_to_json_form
     header = []
     csv_data = []
-    with open(temp_file, 'r', encoding="utf-8-sig") as file:
-        csv_reader = csv.reader(file, delimiter=',', lineterminator='\n')
+
+    current_app.logger.debug("temp_file:{}".format(temp_file))
+    enc = getEncode(temp_file)
+    with open(temp_file, 'r', newline="", encoding=enc) as file:
+        csv_reader = csv.reader(file, dialect='excel', delimiter=',')
         try:
             for num, data_row in enumerate(csv_reader, start=1):
                 if num == 1:
