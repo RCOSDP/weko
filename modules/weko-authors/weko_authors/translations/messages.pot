@@ -55,10 +55,7 @@ msgstr ""
 msgid "There is no data to import."
 msgstr ""
 
-#: weko_authors/utils.py:276
-msgid ""
-"The TSV file could not be read. Make sure the file format is TSV and that"
-" the file is UTF-8 encoded."
+msgid "The CSV file could not be read. Make sure the file format is CSV and that the file is UTF-8 encoded."
 msgstr ""
 
 #: weko_authors/utils.py:313
@@ -81,10 +78,7 @@ msgstr ""
 msgid "The author is linked to items and cannot be deleted."
 msgstr ""
 
-#: weko_authors/utils.py:473
-msgid ""
-"The specified author has been deleted. Update author information with tsv"
-" content, but author remains deleted as it is."
+msgid "There is duplicated data in the CSV file."
 msgstr ""
 
 #: weko_authors/views.py:59 weko_authors/views.py:102 weko_authors/views.py:135
@@ -114,5 +108,8 @@ msgstr ""
 
 #: weko_authors/templates/weko_authors/macros/tabs_selector.html:24
 msgid "Affiliation ID"
+msgstr ""
+
+msgid "The specified author has been deleted. Update author information with csv content, but author remains deleted as it is."
 msgstr ""
 

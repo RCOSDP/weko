@@ -213,7 +213,7 @@ $(document).ready(function () {
         "display_lang_type": "",
         "oai_dc_mapping": "",
         "jpcoar_mapping": {
-          "system_identifier": {
+          "identifier": {
             "@value": "subitem_systemidt_identifier",
             "@attributes": {
               "identifierType": "subitem_systemidt_identifier_type"
@@ -229,7 +229,7 @@ $(document).ready(function () {
         "display_lang_type": "",
         "oai_dc_mapping": "",
         "jpcoar_mapping": {
-          "system_identifier": {
+          "identifier": {
             "@value": "subitem_systemidt_identifier",
             "@attributes": {
               "identifierType": "subitem_systemidt_identifier_type"
@@ -245,7 +245,7 @@ $(document).ready(function () {
         "display_lang_type": "",
         "oai_dc_mapping": "",
         "jpcoar_mapping": {
-          "system_identifier": {
+          "identifier": {
             "@value": "subitem_systemidt_identifier",
             "@attributes": {
               "identifierType": "subitem_systemidt_identifier_type"

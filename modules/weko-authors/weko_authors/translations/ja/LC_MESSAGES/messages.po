@@ -307,6 +307,9 @@ msgstr ""
 #~ msgid "Error"
 #~ msgstr "エラー"
 
+msgid "The CSV file could not be read. Make sure the file format is CSV and that the file is UTF-8 encoded."
+msgstr "CSVファイルを読み込めませんでした。ファイル形式がCSVであること、またそのファイルがUTF-8でエンコードされているかを確認してください。"
+
 #~ msgid "Warning"
 #~ msgstr "警告"
 
@@ -325,6 +328,9 @@ msgstr ""
 #~ msgid "Import is in progress."
 #~ msgstr "インポートを実行中です。"
 
+msgid "There is duplicated data in the CSV file."
+msgstr "CSVファイルの中に重複するデータがあります。"
+
 #~ msgid "Import is in progress on another device."
 #~ msgstr "他の端末でインポートを実行中です。"
 
@@ -339,4 +345,7 @@ msgstr ""
 
 #~ msgid "Failed to import."
 #~ msgstr "インポートに失敗しました。"
+
+msgid "The specified author has been deleted. Update author information with csv content, but author remains deleted as it is."
+msgstr "指定された著者は削除済です。csvの内容で著者情報を更新しますが、著者は削除されたままです。"
 

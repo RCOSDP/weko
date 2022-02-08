@@ -471,12 +471,13 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     current_lang = current_i18n.language \
         if hasattr(current_i18n, 'language') else None
     # get title name
-    from weko_search_ui.utils import get_data_by_property
     from weko_records.utils import get_options_and_order_list
+    from weko_search_ui.utils import get_data_by_property
     title_name = ''
     rights_values = {}
     accessRight = ''
-    solst, meta_options = get_options_and_order_list(record.get('item_type_id'))
+    solst, meta_options = get_options_and_order_list(
+        record.get('item_type_id'))
     item_type_mapping = Mapping.get_record(record.get('item_type_id'))
     item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
     suffixes = '.@attributes.xml:lang'
@@ -500,7 +501,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             _rights_values, _rights_key = get_data_by_property(
                 record, item_map, key)
             if _rights_key:
-                _get_rights_title(rights_values, _rights_key, _rights_values, current_lang, meta_options)
+                _get_rights_title(rights_values, _rights_key,
+                                  _rights_values, current_lang, meta_options)
         elif key == 'accessRights.@value':
             accessRights, _access_rights_key = get_data_by_property(
                 record, item_map, key)
@@ -633,7 +635,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         title_name=title_name,
         rights_values=rights_values,
         accessRight=accessRight,
-        analysis_url=current_app.config.get('WEKO_RECORDS_UI_ONLINE_ANALYSIS_URL'),
+        analysis_url=current_app.config.get(
+            'WEKO_RECORDS_UI_ONLINE_ANALYSIS_URL'),
         **ctx,
         **kwargs
     )
@@ -858,8 +861,7 @@ def escape_newline(s):
     s = s.replace('\r\n', br_char).replace(
         '\r', br_char).replace('\n', br_char)
     s = '<br />'.join(s.splitlines())
-    # temp fix for JDCat
-    s = s.replace('\\n', br_char)
+
     return s
 
 

@@ -43,7 +43,7 @@ from celery.result import AsyncResult
 from celery.task.control import revoke
 from elasticsearch import ElasticsearchException
 from elasticsearch.exceptions import NotFoundError
-from flask import abort, current_app, request
+from flask import abort, current_app, has_request_context, request
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
@@ -69,6 +69,7 @@ from weko_admin.utils import get_redis_cache, reset_redis_cache
 from weko_authors.utils import check_email_existed
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord
 from weko_deposit.pidstore import get_latest_version_id
+from weko_deposit.signals import item_created
 from weko_handle.api import Handle
 from weko_index_tree.utils import check_index_permissions, \
     check_restrict_doi_with_indexes
@@ -79,7 +80,7 @@ from weko_records.serializers.utils import get_mapping
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_GRANT_SUFFIX_METHOD
-from weko_workflow.models import FlowDefine, WorkFlow
+from weko_workflow.models import FlowAction, FlowDefine, WorkFlow
 from weko_workflow.utils import IdentifierHandle, check_existed_doi, \
     delete_cache_data, get_cache_data, get_identifier_setting, \
     get_sub_item_value, get_url_root, item_metadata_validation, \
@@ -505,13 +506,13 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
 
         data_path += '/data'
         list_record = []
-        list_tsv = list(
-            filter(lambda x: x.endswith('.tsv'), os.listdir(data_path)))
-        if not list_tsv:
+        list_csv = list(
+            filter(lambda x: x.endswith('.csv'), os.listdir(data_path)))
+        if not list_csv:
             raise FileNotFoundError()
-        for tsv_entry in list_tsv:
+        for csv_entry in list_csv:
             list_record.extend(unpackage_import_file(
-                data_path, tsv_entry, is_gakuninrdm))
+                data_path, csv_entry, is_gakuninrdm))
         if is_gakuninrdm:
             list_record = list_record[:1]
 
@@ -538,7 +539,7 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
                       + ' following formats: zip, tar, gztar, bztar,'
                       + ' xztar.').format(filename)
         elif isinstance(ex, FileNotFoundError):
-            error = _('The TSV file was not found in the specified file {}.'
+            error = _('The CSV file was not found in the specified file {}.'
                       + ' Check if the directory structure is correct.') \
                 .format(filename)
         elif isinstance(ex, UnicodeDecodeError):
@@ -553,20 +554,20 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
     return result
 
 
-def unpackage_import_file(data_path: str, tsv_file_name: str, force_new=False):
-    """Getting record data from TSV file.
+def unpackage_import_file(data_path: str, csv_file_name: str, force_new=False):
+    """Getting record data from CSV file.
 
     :argument
-        data_path -- Path of tsv file.
-        tsv_file_name -- Tsv file name.
+        data_path -- Path of csv file.
+        csv_file_name -- Tsv file name.
         force_new -- Force to new item.
     :return
         return -- List records.
 
     """
-    tsv_file_path = '{}/{}'.format(data_path, tsv_file_name)
-    data = read_stats_tsv(tsv_file_path, tsv_file_name)
-    list_record = data.get('tsv_data')
+    csv_file_path = '{}/{}'.format(data_path, csv_file_name)
+    data = read_stats_csv(csv_file_path, csv_file_name)
+    list_record = data.get('csv_data')
     if force_new:
         for record in list_record:
             record['id'] = None
@@ -579,12 +580,12 @@ def unpackage_import_file(data_path: str, tsv_file_name: str, force_new=False):
     return list_record
 
 
-def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
-    """Read importing TSV file.
+def read_stats_csv(csv_file_path: str, csv_file_name: str) -> dict:
+    """Read importing CSV file.
 
     :argument
-        tsv_file_path -- tsv file's url.
-        tsv_file_name -- tsv file name.
+        csv_file_path -- csv file's url.
+        csv_file_name -- csv file name.
     :return
         return       -- PID object if exist.
 
@@ -592,16 +593,16 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
     result = {
         'error': False,
         'error_code': 0,
-        'tsv_data': [],
+        'csv_data': [],
         'item_type_schema': {}
     }
-    tsv_data = []
+    csv_data = []
     item_path = []
     check_item_type = {}
     item_path_not_existed = []
     schema = ''
-    with open(tsv_file_path, 'r') as tsvfile:
-        csv_reader = csv.reader(tsvfile, delimiter='\t')
+    with open(csv_file_path, 'r') as csvfile:
+        csv_reader = csv.reader(csvfile, delimiter=',')
         try:
             for num, data_row in enumerate(csv_reader, start=1):
                 # current_app.logger.debug(num)
@@ -609,7 +610,7 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                 if num == 1:
                     first_line_format_exception = Exception({
                         'error_msg': _('There is an error in the format of the'
-                                       + ' first line of the header of the TSV'
+                                       + ' first line of the header of the CSV'
                                        + ' file.')
                     })
                     if len(data_row) < 3:
@@ -625,7 +626,7 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                         result['item_type_schema'] = {}
                         raise Exception({
                             'error_msg': _('The item type ID specified in'
-                                           + ' the TSV file does not exist.')
+                                           + ' the CSV file does not exist.')
                         })
                     else:
                         result['item_type_schema'] = check_item_type['schema']
@@ -676,12 +677,12 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
 
                     if not data_parse_metadata:
                         raise Exception({
-                            'error_msg': _('Cannot read tsv file correctly.')
+                            'error_msg': _('Cannot read csv file correctly.')
                         })
                     if isinstance(check_item_type, dict):
                         item_type_name = check_item_type.get('name')
                         item_type_id = check_item_type.get('item_type_id')
-                        tsv_item = dict(
+                        csv_item = dict(
                             **data_parse_metadata,
                             **{
                                 'item_type_name': item_type_name or '',
@@ -690,25 +691,25 @@ def read_stats_tsv(tsv_file_path: str, tsv_file_name: str) -> dict:
                             }
                         )
                     else:
-                        tsv_item = dict(**data_parse_metadata)
+                        csv_item = dict(**data_parse_metadata)
                     if item_path_not_existed:
                         str_keys = ', '.join(item_path_not_existed) \
                             .replace('.metadata.', '')
-                        tsv_item['warnings'] = [
+                        csv_item['warnings'] = [
                             _('The following items are not registered because '
                               + 'they do not exist in the specified '
                               + 'item type. {}')
                             .format(str_keys)
                         ]
-                    tsv_data.append(tsv_item)
+                    csv_data.append(csv_item)
         except UnicodeDecodeError as ex:
-            ex.reason = _('The TSV file could not be read. Make sure the file'
-                          + ' format is TSV and that the file is'
-                          + ' UTF-8 encoded.').format(tsv_file_name)
+            ex.reason = _('The CSV file could not be read. Make sure the file'
+                          + ' format is CSV and that the file is'
+                          + ' UTF-8 encoded.').format(csv_file_name)
             raise ex
         except Exception as ex:
             raise ex
-    result['tsv_data'] = tsv_data
+    result['csv_data'] = csv_data
     return result
 
 
@@ -892,21 +893,21 @@ def handle_check_exist_record(list_record) -> list:
     return result
 
 
-def make_tsv_by_line(lines):
-    """Make TSV file."""
-    tsv_output = StringIO()
-
-    writer = csv.writer(tsv_output, delimiter='\t')
+def make_csv_by_line(lines):
+    """Make CSV file."""
+    csv_output = StringIO()
+    writer = csv.writer(csv_output, delimiter=',',
+                        lineterminator="\n")
     writer.writerows(lines)
 
-    return tsv_output
+    return csv_output
 
 
-def make_stats_tsv(raw_stats, list_name):
-    """Make TSV report file for stats."""
-    tsv_output = StringIO()
+def make_stats_csv(raw_stats, list_name):
+    """Make CSV report file for stats."""
+    csv_output = StringIO()
 
-    writer = csv.writer(tsv_output, delimiter='\t',
+    writer = csv.writer(csv_output, delimiter=',',
                         lineterminator="\n")
 
     writer.writerow(list_name)
@@ -916,7 +917,7 @@ def make_stats_tsv(raw_stats, list_name):
             term.append(item.get(name))
         writer.writerow(term)
 
-    return tsv_output
+    return csv_output
 
 
 def create_deposit(item_id):
@@ -1266,8 +1267,16 @@ def create_flow_define():
         flow = the_flow.create_flow(WEKO_FLOW_DEFINE)
 
         if flow and flow.flow_id:
+            flow_actions = WEKO_FLOW_DEFINE_LIST_ACTION
+            start_action = FlowAction.query.filter_by(
+                flow_id=flow.flow_id, action_id=1).first()
+            flow_actions[0]['workflow_flow_action_id'] = start_action.id
+            end_action = FlowAction.query.filter_by(
+                flow_id=flow.flow_id, action_id=2).first()
+            flow_actions[2]['workflow_flow_action_id'] = end_action.id
+
             the_flow.upt_flow_action(flow.flow_id,
-                                     WEKO_FLOW_DEFINE_LIST_ACTION)
+                                     flow_actions)
 
 
 def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
@@ -1295,10 +1304,27 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
         # Push item to elasticsearch.
         push_item_to_elasticsearch(id, index, doc_type, data)
         # Save item to stats events.
-        save_item_to_stats_events(id, index, doc_type, data)
+        #save_item_to_stats_events(id, index, doc_type, data)
+        try:
+            if has_request_context():
+                if current_user:
+                    user_id = current_user.get_id()
+                else:
+                    user_id = -1
+                item_created.send(
+                    current_app._get_current_object(),
+                    user_id=user_id,
+                    item_id=item.get('id'),
+                    item_title=item.get('item_title')
+                )
+        except BaseException:
+            import traceback
+            current_app.logger.error(traceback.format_exc())
+            abort(500, 'MAPPING_ERROR')
 
     def prepare_stored_data(item, request_info):
         """Prepare stored data."""
+        # TODO: consider to use "weko_deposit.signals.item_created."
         timestamp = datetime.utcnow().replace(microsecond=0)
         doc = {
             'ip_address': request_info.get('remote_addr'),
@@ -1827,6 +1853,22 @@ def handle_check_doi(list_record):
     :return
 
     """
+
+    def _check_doi(doi, item):
+        error = None
+        split_doi = doi.split('/')
+        if len(split_doi) > 1 and not doi.endswith('/'):
+            error = _('{} cannot be set.').format('DOI')
+        else:
+            prefix = re.sub('/$', '', doi)
+            item['doi_suffix_not_existed'] = True
+            if not item.get('ignore_check_doi_prefix') \
+                    and prefix != get_doi_prefix(doi_ra):
+                error = \
+                    _('Specified Prefix of {} is incorrect.') \
+                    .format('DOI')
+        return error
+
     for item in list_record:
         error = None
         item_id = str(item.get('id'))
@@ -1861,22 +1903,9 @@ def handle_check_doi(list_record):
                             error = _('Please specify {}.').format(
                                 'DOI suffix')
             else:
-                pid = WekoRecord.get_record_by_pid(item_id).pid_recid
-                identifier = IdentifierHandle(pid.object_uuid)
-                _value, doi_type = identifier.get_idt_registration_data()
-                if item.get('status') == 'new' or not doi_type:
+                if item.get('status') == 'new':
                     if doi:
-                        split_doi = doi.split('/')
-                        if len(doi.split('/')) > 1 and not doi.endswith('/'):
-                            error = _('{} cannot be set.').format('DOI')
-                        else:
-                            prefix = re.sub('/$', '', doi)
-                            item['doi_suffix_not_existed'] = True
-                            if not item.get('ignore_check_doi_prefix') \
-                                    and prefix != get_doi_prefix(doi_ra):
-                                error = \
-                                    _('Specified Prefix of {} is incorrect.') \
-                                    .format('DOI')
+                        error = _check_doi(doi, item)
                 else:
                     pid_doi = None
                     try:
@@ -1894,8 +1923,7 @@ def handle_check_doi(list_record):
                             error = _('Specified {} is different from'
                                       + ' existing {}.').format('DOI', 'DOI')
                     elif doi:
-                        error = _('Specified {} is different from'
-                                  + ' existing {}.').format('DOI', 'DOI')
+                        error = _check_doi(doi, item)
 
         if error:
             item['errors'] = item['errors'] + [error] \
@@ -2145,14 +2173,18 @@ def handle_doi_required_check(record):
 
     if 'doi_ra' in record and record['doi_ra'] in WEKO_IMPORT_DOI_TYPE:
         root_item_id = None
+        file_path = record.get('file_path', [])
+        file_path = [a for a in file_path if a.strip() != '']
+
         if record.get('status') != 'new':
             root_item_id = WekoRecord.get_record_by_pid(
                 str(record.get('id'))).pid_recid.object_uuid
         error_list = item_metadata_validation(
             None, IDENTIFIER_GRANT_SELECT_DICT[record['doi_ra']],
-            record_data, True, root_item_id)
+            record_data, True, root_item_id, file_path)
+
         if error_list:
-            errors = [_('PID does not meet the conditions.')]
+            errors = [_('PID does not meet the conditions.<br/>')]
             if error_list.get('mapping'):
                 mapping_err_msg = _('The mapping of required items for DOI '
                                     'validation is not set. Please recheck the'
@@ -2161,6 +2193,17 @@ def handle_doi_required_check(record):
                 errors.append(mapping_err_msg.format('<br/>'.join(keys)))
             if error_list.get('other'):
                 errors.append(_(error_list.get('other')))
+            if error_list.get('required_key'):
+                mapping_err_msg = _(
+                    'The following metadata are required.<br/>{}')
+                errors.append(mapping_err_msg.format(
+                    '<br/>'.join(error_list.get('required_key'))))
+            if error_list.get('either_key'):
+                mapping_err_msg = _(
+                    'One of the following metadata is required.<br/>{}<br/>')
+                errors.append(mapping_err_msg.format(
+                    error_list.get('either_key')))
+
             return errors
 
 
@@ -2259,16 +2302,36 @@ def validation_file_open_date(record):
     :param record: Record
     :return: error or None
     """
-    open_date_values = get_data_in_deep_dict('dateValue',
-                                             record.get('metadata', {}))
-    for data in open_date_values:
-        try:
-            value = data.get('value', '')
-            if value and value != datetime.strptime(value, '%Y-%m-%d') \
-                    .strftime('%Y-%m-%d'):
-                raise Exception
-        except Exception:
-            return _('Please specify Open Access Date with YYYY-MM-DD.')
+    accessrole_values = get_data_in_deep_dict(
+        'accessrole', record.get('metadata', {}))
+    open_date_values = get_data_in_deep_dict(
+        'dateValue', record.get('metadata', {}))
+    flag = False
+    for ar in accessrole_values:
+        ar_value = ar.get('value', '')
+        if ar_value == 'open_date':
+            try:
+                flag = True
+                item_key = ar.get('tree_key', '.').split('.')[0]
+                if open_date_values:
+                    for d in open_date_values:
+                        if item_key and item_key in d.get('tree_key'):
+                            d_value = d.get('value')
+                            if d_value and d_value == datetime.strptime(d_value, '%Y-%m-%d') \
+                                    .strftime('%Y-%m-%d'):
+                                flag = False
+                            else:
+                                raise Exception
+                else:
+                    raise Exception
+            except Exception:
+                flag = True
+                break
+    if flag:
+        result = _('Please specify Open Access Date with YYYY-MM-DD.')
+    else:
+        result = ''
+    return result
 
 
 def validation_date_property(date_str):
@@ -2634,11 +2697,11 @@ def handle_get_all_id_in_item_type(item_type_id):
 
 
 def handle_check_consistence_with_mapping(mapping_ids, keys):
-    """Check consistence between tsv and mapping.
+    """Check consistence between csv and mapping.
 
     :argument
         mapping_ids - {list} list id from mapping.
-        keys - {list} data from line 2 of tsv file.
+        keys - {list} data from line 2 of csv file.
     :return
         ids - {list} ids is not consistent.
     """
@@ -2658,10 +2721,10 @@ def handle_check_consistence_with_mapping(mapping_ids, keys):
 
 
 def handle_check_duplication_item_id(ids: list):
-    """Check duplication of item id in tsv file.
+    """Check duplication of item id in csv file.
 
     :argument
-        ids - {list} data from line 2 of tsv file.
+        ids - {list} data from line 2 of csv file.
     :return
         ids - {list} ids is duplication.
     """
@@ -2680,15 +2743,15 @@ def export_all(root_url):
         post_data is the data items
     :return: JSON, BIBTEX
     """
-    from weko_items_ui.utils import make_stats_tsv_with_permission, \
+    from weko_items_ui.utils import make_stats_csv_with_permission, \
         package_export_file
 
     def _itemtype_name(name):
         """Check a list of allowed characters in filenames."""
         return re.sub(r'[\/:*"<>|\s]', '_', name)
 
-    def _write_tsv_files(item_datas, export_path):
-        """Write TSV data to files.
+    def _write_csv_files(item_datas, export_path):
+        """Write CSV data to files.
 
         @param item_datas:
         @param export_path:
@@ -2702,7 +2765,7 @@ def export_all(root_url):
             current_language=lambda: True
         )
         try:
-            headers, records = make_stats_tsv_with_permission(
+            headers, records = make_stats_csv_with_permission(
                 item_datas['item_type_id'],
                 item_datas['recids'],
                 item_datas['data'],
@@ -2716,11 +2779,11 @@ def export_all(root_url):
             item_datas['data'] = records
             item_type_data = item_datas
 
-            tsv_full_path = '{}/{}.tsv'.format(export_path,
+            csv_full_path = '{}/{}.csv'.format(export_path,
                                                item_type_data.get('name'))
-            with open(tsv_full_path, 'w') as file:
-                tsv_output = package_export_file(item_type_data)
-                file.write(tsv_output.getvalue())
+            with open(csv_full_path, 'w', encoding="utf-8-sig") as file:
+                csv_output = package_export_file(item_type_data)
+                file.write(csv_output.getvalue())
         except Exception as ex:
             current_app.logger.error(ex)
 
@@ -2769,9 +2832,9 @@ def export_all(root_url):
                         # Create export info file
                         item_datas['name'] = '{}.part{}'.format(
                             item_datas['name'], file_part)
-                        _write_tsv_files(item_datas, export_path)
+                        _write_csv_files(item_datas, export_path)
                         current_app.logger.info(
-                            '{}.tsv has been created.'
+                            '{}.csv has been created.'
                             .format(item_datas['name']))
                         item_datas = {}
                         file_part += 1
@@ -2805,10 +2868,10 @@ def export_all(root_url):
                     item_datas['name'] = '{}.part{}'.format(
                         item_datas['name'], file_part)
                 # Create export info file
-                _write_tsv_files(item_datas, export_path)
+                _write_csv_files(item_datas, export_path)
                 finish_item_types.append(item_type_id)
                 current_app.logger.info(
-                    '{}.tsv has been created.'
+                    '{}.csv has been created.'
                     .format(item_datas['name']))
                 current_app.logger.info(
                     'Processed {} items of item type {}.'
@@ -3095,7 +3158,7 @@ def handle_check_file_path(paths, data_path, is_new=False,
     if idx_warnings:
         warning = _('The file specified in ({}) does not exist.<br/>'
                     'The file will not be updated. '
-                    'Update only the metadata with tsv contents.') \
+                    'Update only the metadata with csv contents.') \
             .format(prepare_idx_msg(idx_warnings, msg_path_idx_type))
 
     return error, warning
@@ -3235,6 +3298,9 @@ def get_filenames_from_metadata(metadata):
                 del file['filename']
             filenames.append(data)
             count += 1
+
+            if not file.get('accessrole', None):
+                file['accessrole'] = 'open_access'
 
         new_file_metadata = list(filter(lambda x: x, metadata[_id]))
         if new_file_metadata:

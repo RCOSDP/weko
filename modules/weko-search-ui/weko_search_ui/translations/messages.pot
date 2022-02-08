@@ -66,18 +66,18 @@ msgstr ""
 
 #: weko_search_ui/utils.py:497
 msgid ""
-"The TSV file was not found in the specified file {}. Check if the "
+"The CSV file was not found in the specified file {}. Check if the "
 "directory structure is correct."
 msgstr ""
 
 #: weko_search_ui/utils.py:560
 msgid ""
 "There is an error in the format of the first line of the header of the "
-"TSV file."
+"CSV file."
 msgstr ""
 
 #: weko_search_ui/utils.py:576
-msgid "The item type ID specified in the TSV file does not exist."
+msgid "The item type ID specified in the CSV file does not exist."
 msgstr ""
 
 #: weko_search_ui/utils.py:583
@@ -93,7 +93,7 @@ msgid "The item does not consistent with the specified item type.<br/>{}"
 msgstr ""
 
 #: weko_search_ui/utils.py:625
-msgid "Cannot read tsv file correctly."
+msgid "Cannot read csv file correctly."
 msgstr ""
 
 #: weko_search_ui/utils.py:644
@@ -104,7 +104,7 @@ msgstr ""
 
 #: weko_search_ui/utils.py:651
 msgid ""
-"The TSV file could not be read. Make sure the file format is TSV and that"
+"The CSV file could not be read. Make sure the file format is CSV and that"
 " the file is UTF-8 encoded."
 msgstr ""
 
@@ -214,6 +214,18 @@ msgstr ""
 msgid "Please specify Open Access Date with YYYY-MM-DD."
 msgstr ""
 
+#: weko_search_ui/utils.py:2169
+msgid "PID does not meet the conditions.<br/>"
+msgstr ""
+
+#: weko_search_ui/utils.py:2180
+msgid "The following metadata are required.<br/>{}"
+msgstr ""
+
+#: weko_search_ui/utils.py:2185
+msgid "One of the following metadata is required.<br/>{}<br/>"
+msgstr ""
+
 #: weko_search_ui/utils.py:2270
 msgid ""
 "Please specify the image file(gif, jpg, jpe, jpeg, png, bmp, tiff, tif) "
@@ -227,7 +239,7 @@ msgstr ""
 #: weko_search_ui/utils.py:2714
 msgid ""
 "The file specified in ({}) does not exist.<br/>The file will not be "
-"updated. Update only the metadata with tsv contents."
+"updated. Update only the metadata with csv contents."
 msgstr ""
 
 #: weko_search_ui/utils.py:2833
@@ -739,7 +751,7 @@ msgstr ""
 msgid "The file specified in ({}) does not exist."
 msgstr ""
 
-msgid "The file specified in ({}) does not exist.<br/>The file will not be updated. Update only the metadata with tsv contents."
+msgid "The file specified in ({}) does not exist.<br/>The file will not be updated. Update only the metadata with csv contents."
 msgstr ""
 
 msgid "The file name specified in {} and {} do not match."

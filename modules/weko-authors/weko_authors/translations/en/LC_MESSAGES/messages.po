@@ -283,6 +283,9 @@ msgstr ""
 #~ msgid "To Do"
 #~ msgstr ""
 
+msgid "The CSV file could not be read. Make sure the file format is CSV and that the file is UTF-8 encoded."
+msgstr ""
+
 #~ msgid "Error"
 #~ msgstr ""
 
@@ -301,6 +304,9 @@ msgstr ""
 #~ msgid "Celery is not running."
 #~ msgstr ""
 
+msgid "There is duplicated data in the CSV file."
+msgstr ""
+
 #~ msgid "Import is in progress."
 #~ msgstr ""
 
@@ -318,4 +324,7 @@ msgstr ""
 
 #~ msgid "Failed to import."
 #~ msgstr ""
+
+msgid "The specified author has been deleted. Update author information with csv content, but author remains deleted as it is."
+msgstr ""
 

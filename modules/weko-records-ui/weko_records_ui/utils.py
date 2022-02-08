@@ -626,6 +626,8 @@ def get_file_info_list(record):
         elif access == "open_date":
             if date and isinstance(date, list) and date[0]:
                 adt = date[0].get('dateValue')
+                if adt is None:
+                    adt = dt.date.max
                 pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
                 if pdt > dt.today():
                     message = "Download is available from {}/{}/{}."
