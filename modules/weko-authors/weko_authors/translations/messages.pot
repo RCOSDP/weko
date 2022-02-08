@@ -1,15 +1,15 @@
 # Translations template for weko-authors.
-# Copyright (C) 2021 National Institute of Informatics
+# Copyright (C) 2022 National Institute of Informatics
 # This file is distributed under the same license as the weko-authors
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: weko-authors 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2021-12-22 01:29+0000\n"
+"POT-Creation-Date: 2022-02-08 06:26+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -39,46 +39,52 @@ msgstr ""
 msgid "Internal server error"
 msgstr ""
 
-#: weko_authors/utils.py:238
+#: weko_authors/utils.py:240
 msgid "The following metadata keys are duplicated.<br/>{}"
 msgstr ""
 
-#: weko_authors/utils.py:250
+#: weko_authors/utils.py:252
 msgid "Specified item does not consistency with DB item.<br/>{}"
 msgstr ""
 
-#: weko_authors/utils.py:266
-msgid "Cannot read tsv file correctly."
+#: weko_authors/utils.py:268
+msgid "Cannot read csv file correctly."
 msgstr ""
 
-#: weko_authors/utils.py:273
+#: weko_authors/utils.py:275
 msgid "There is no data to import."
 msgstr ""
 
-msgid "The CSV file could not be read. Make sure the file format is CSV and that the file is UTF-8 encoded."
+#: weko_authors/utils.py:278
+msgid ""
+"The CSV file could not be read. Make sure the file format is CSV and that"
+" the file is UTF-8 encoded."
 msgstr ""
 
-#: weko_authors/utils.py:313
-msgid "There is duplicated data in the TSV file."
+#: weko_authors/utils.py:315
+msgid "There is duplicated data in the CSV file."
 msgstr ""
 
-#: weko_authors/utils.py:336
+#: weko_authors/utils.py:338
 msgid "{} is required item."
 msgstr ""
 
-#: weko_authors/utils.py:345
+#: weko_authors/utils.py:347
 msgid "{} should be set by one of {}."
 msgstr ""
 
-#: weko_authors/utils.py:460
+#: weko_authors/utils.py:462
 msgid "Specified WEKO ID does not exist."
 msgstr ""
 
-#: weko_authors/utils.py:468 weko_authors/views.py:140
+#: weko_authors/utils.py:470 weko_authors/views.py:140
 msgid "The author is linked to items and cannot be deleted."
 msgstr ""
 
-msgid "There is duplicated data in the CSV file."
+#: weko_authors/utils.py:475
+msgid ""
+"The specified author has been deleted. Update author information with csv"
+" content, but author remains deleted as it is."
 msgstr ""
 
 #: weko_authors/views.py:59 weko_authors/views.py:102 weko_authors/views.py:135
@@ -86,7 +92,7 @@ msgid "Header Error"
 msgstr ""
 
 #: weko_authors/views.py:91 weko_authors/views.py:125 weko_authors/views.py:164
-#: weko_authors/views.py:541 weko_authors/views.py:584
+#: weko_authors/views.py:576 weko_authors/views.py:619
 msgid "Success"
 msgstr ""
 
@@ -108,8 +114,5 @@ msgstr ""
 
 #: weko_authors/templates/weko_authors/macros/tabs_selector.html:24
 msgid "Affiliation ID"
-msgstr ""
-
-msgid "The specified author has been deleted. Update author information with csv content, but author remains deleted as it is."
 msgstr ""
 

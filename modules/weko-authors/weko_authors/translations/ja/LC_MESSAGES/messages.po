@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-authors 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2021-12-22 01:29+0000\n"
+"POT-Creation-Date: 2022-02-08 06:26+0000\n"
 "PO-Revision-Date: 2018-04-12 10:22+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -40,60 +40,60 @@ msgstr "インポート"
 msgid "Internal server error"
 msgstr "サーバ内部エラー"
 
-#: weko_authors/utils.py:238
+#: weko_authors/utils.py:240
 msgid "The following metadata keys are duplicated.<br/>{}"
 msgstr "以下のメタデータキーが重複しています。<br/>{}"
 
-#: weko_authors/utils.py:250
+#: weko_authors/utils.py:252
 msgid "Specified item does not consistency with DB item.<br/>{}"
 msgstr "指定された項目とDBの項目が一致しません。<br/>{}"
 
-#: weko_authors/utils.py:266
-msgid "Cannot read tsv file correctly."
-msgstr ""
+#: weko_authors/utils.py:268
+msgid "Cannot read csv file correctly."
+msgstr "CSVファイルが正しく読み込めません。"
 
-#: weko_authors/utils.py:273
+#: weko_authors/utils.py:275
 msgid "There is no data to import."
 msgstr " インポートのデータがありません。"
 
-#: weko_authors/utils.py:276
+#: weko_authors/utils.py:278
 msgid ""
-"The TSV file could not be read. Make sure the file format is TSV and that"
+"The CSV file could not be read. Make sure the file format is CSV and that"
 " the file is UTF-8 encoded."
-msgstr "TSVファイルを読み込めませんでした。ファイル形式がTSVであること、またそのファイルがUTF-8でエンコードされているかを確認してください。"
+msgstr "CSVファイルを読み込めませんでした。ファイル形式がCSVであること、またそのファイルがUTF-8でエンコードされているかを確認してください。"
 
-#: weko_authors/utils.py:313
-msgid "There is duplicated data in the TSV file."
-msgstr "TSVファイルの中に重複するデータがあります。"
+#: weko_authors/utils.py:315
+msgid "There is duplicated data in the CSV file."
+msgstr "CSVファイルの中に重複するデータがあります。"
 
-#: weko_authors/utils.py:336
+#: weko_authors/utils.py:338
 msgid "{} is required item."
 msgstr "{}は必須項目です。"
 
-#: weko_authors/utils.py:345
+#: weko_authors/utils.py:347
 msgid "{} should be set by one of {}."
 msgstr "{}は{}のいずれかを設定してください。"
 
-#: weko_authors/utils.py:460
+#: weko_authors/utils.py:462
 msgid "Specified WEKO ID does not exist."
 msgstr "指定されたWEKO IDが存在していません。"
 
-#: weko_authors/utils.py:468 weko_authors/views.py:140
+#: weko_authors/utils.py:470 weko_authors/views.py:140
 msgid "The author is linked to items and cannot be deleted."
 msgstr "アイテムがリンクしているため、指定された著者は削除できません。"
 
-#: weko_authors/utils.py:473
+#: weko_authors/utils.py:475
 msgid ""
-"The specified author has been deleted. Update author information with tsv"
+"The specified author has been deleted. Update author information with csv"
 " content, but author remains deleted as it is."
-msgstr "指定された著者は削除済です。tsvの内容で著者情報を更新しますが、著者は削除されたままです。"
+msgstr "指定された著者は削除済です。csvの内容で著者情報を更新しますが、著者は削除されたままです。"
 
 #: weko_authors/views.py:59 weko_authors/views.py:102 weko_authors/views.py:135
 msgid "Header Error"
 msgstr "ヘッダエラー"
 
 #: weko_authors/views.py:91 weko_authors/views.py:125 weko_authors/views.py:164
-#: weko_authors/views.py:541 weko_authors/views.py:584
+#: weko_authors/views.py:576 weko_authors/views.py:619
 msgid "Success"
 msgstr "成功"
 
@@ -307,9 +307,6 @@ msgstr ""
 #~ msgid "Error"
 #~ msgstr "エラー"
 
-msgid "The CSV file could not be read. Make sure the file format is CSV and that the file is UTF-8 encoded."
-msgstr "CSVファイルを読み込めませんでした。ファイル形式がCSVであること、またそのファイルがUTF-8でエンコードされているかを確認してください。"
-
 #~ msgid "Warning"
 #~ msgstr "警告"
 
@@ -328,9 +325,6 @@ msgstr "CSVファイルを読み込めませんでした。ファイル形式が
 #~ msgid "Import is in progress."
 #~ msgstr "インポートを実行中です。"
 
-msgid "There is duplicated data in the CSV file."
-msgstr "CSVファイルの中に重複するデータがあります。"
-
 #~ msgid "Import is in progress on another device."
 #~ msgstr "他の端末でインポートを実行中です。"
 
@@ -346,6 +340,23 @@ msgstr "CSVファイルの中に重複するデータがあります。"
 #~ msgid "Failed to import."
 #~ msgstr "インポートに失敗しました。"
 
-msgid "The specified author has been deleted. Update author information with csv content, but author remains deleted as it is."
-msgstr "指定された著者は削除済です。csvの内容で著者情報を更新しますが、著者は削除されたままです。"
+#~ msgid "Cannot read tsv file correctly."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "The TSV file could not be read."
+#~ " Make sure the file format is "
+#~ "TSV and that the file is UTF-8 "
+#~ "encoded."
+#~ msgstr "TSVファイルを読み込めませんでした。ファイル形式がTSVであること、またそのファイルがUTF-8でエンコードされているかを確認してください。"
+
+#~ msgid "There is duplicated data in the TSV file."
+#~ msgstr "TSVファイルの中に重複するデータがあります。"
+
+#~ msgid ""
+#~ "The specified author has been deleted."
+#~ " Update author information with tsv "
+#~ "content, but author remains deleted as"
+#~ " it is."
+#~ msgstr "指定された著者は削除済です。tsvの内容で著者情報を更新しますが、著者は削除されたままです。"
 
