@@ -129,11 +129,11 @@
             "identifierInfo": {
               "type": "object",
               "properties": {
-                "affiliationNameIdentifierScheme": {
-                  "type": "text"
+                "affiliationId": {
+                  "type": "string"
                 },
-                "affiliationNameIdentifier": {
-                  "type": "text",
+                "affiliationIdType": {
+                  "type": "string",
                   "index": "no"
                 },
                 "identifierShowFlg": {
@@ -145,11 +145,11 @@
               "type": "object",
               "properties": {
                 "affiliationName": {
-                  "type": "text",
+                  "type": "string",
                   "index": "no"
                 },
                 "affiliationNameLang": {
-                  "type": "text"
+                  "type": "string"
                 },
                 "affiliationNameShowFlg": {
                   "type": "boolean"

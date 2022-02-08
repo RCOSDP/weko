@@ -130,10 +130,10 @@
             "identifierInfo": {
               "type": "object",
               "properties": {
-                "affiliationNameIdentifierScheme": {
+                "affiliationId": {
                   "type": "text"
                 },
-                "affiliationNameIdentifier": {
+                "affiliationIdType": {
                   "type": "text",
                   "index": false
                 },

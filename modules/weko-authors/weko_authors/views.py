@@ -344,11 +344,11 @@ def mapping():
     data = request.get_json()
 
     def get_affiliation(res, _source):
-        def get_affiliation_name_identifier(affiliationNameIdentifier):
+        def get_affiliation_name_identifier(affiliationIdType):
             affiliation_settings = AuthorsAffiliationSettings.query.all()
             affiliation_scheme = affiliation_uri = ''
             for affiliation in affiliation_settings:
-                if affiliation.id == affiliationNameIdentifier:
+                if affiliation.id == affiliationIdType:
                     affiliation_scheme = affiliation.scheme
                     affiliation_uri = affiliation.url
                     return affiliation_scheme, affiliation_uri        
@@ -361,8 +361,8 @@ def mapping():
             
             for identifier_data in identifier_info:
                 if identifier_data.get('identifierShowFlg') == 'true':
-                    scheme, uri = get_affiliation_name_identifier(int(identifier_data['affiliationNameIdentifier']))
-                    _affiliation_name_identifier = identifier_data.get('affiliationNameIdentifierScheme')
+                    scheme, uri = get_affiliation_name_identifier(int(identifier_data['affiliationIdType']))
+                    _affiliation_name_identifier = identifier_data.get('affiliationId')
                     if _affiliation_name_identifier and uri:
                         uri = re.sub("#+$", _affiliation_name_identifier, uri, 1)
                     identifier_tmp = {
@@ -443,7 +443,7 @@ def gatherById():
     except Exception as ex:
         current_app.logger.debug(ex)
         db.session.rollback()
-        return jsonify({'code': 204, 'msg': 'Faild'})
+        return jsonify({'code': 204, 'msg': 'Failed'})
 
     update_author_q = {
         "query": {

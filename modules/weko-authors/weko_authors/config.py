@@ -254,7 +254,7 @@ WEKO_AUTHORS_IMPORT_KEY = {
                 }
             }
         },
-        'affiliation':{
+        'affiliations':{
             'names':{
                 'key': 'affiliationNames',
                 'values':{
