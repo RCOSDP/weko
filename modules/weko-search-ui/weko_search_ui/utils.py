@@ -2258,12 +2258,14 @@ def handle_check_date(list_record):
                         if re.match(r'\d{4}/\d{1,2}/\d{1,2}', value):
                             _value = datetime.strptime(
                                 value, '%Y/%m/%d').strftime('%Y-%m-%d')
-                            attribute = json.loads(json.dumps(
-                                attribute).replace(value, _value))
+                            attribute = json.loads((json.dumps(
+                                attribute)).replace(value, _value))
                             record['metadata'][_keys[0]] = attribute
-                            current_app.logger.debug(record)
                             warnings.append(
-                                _('Replace date format from {} to {}. ').format(value, _value))
+                                _('Please specify the date with any format of'
+                                  + ' YYYY-MM-DD, YYYY-MM, YYYY.'))
+                            warnings.append(
+                                _('Replace value of {} from {} to {}.').format(key, value, _value))
                         else:
                             errors.append(
                                 _('Please specify the date with any format of'
@@ -2271,10 +2273,16 @@ def handle_check_date(list_record):
         # validate pubdate
         try:
             pubdate = record.get('metadata').get('pubdate')
-
-            current_app.logger.debug("pubdate: {}".format(pubdate))
-            if pubdate and not re.match(r'\d{4}-\d{1,2}-\d{1,2}', pubdate):
+            if pubdate and re.match(r'\d{4}-\d{1,2}-\d{1,2}', pubdate):
+                pubdate = datetime.strptime(
+                    pubdate, '%Y-%m-%d').strftime('%Y-%m-%d')
+            elif pubdate and re.match(r'\d{4}/\d{1,2}/\d{1,2}', pubdate):
+                pubdate = datetime.strptime(
+                    pubdate, '%Y/%m/%d').strftime('%Y-%m-%d')
+            else:
                 raise Exception
+
+            record['metadata']['pubdate'] = pubdate
         except Exception:
             errors.append(_('Please specify PubDate with YYYY-MM-DD.'))
         # validate file open_date
