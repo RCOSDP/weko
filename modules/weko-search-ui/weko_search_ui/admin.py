@@ -20,6 +20,7 @@
 
 """Weko Search-UI admin."""
 
+import codecs
 import copy
 import json
 import os
@@ -58,7 +59,7 @@ from .utils import cancel_export_all, check_import_items, \
     get_change_identifier_mode_content, get_content_workflow, \
     get_export_status, get_lifetime, get_root_item_option, \
     get_sub_item_option, get_tree_items, handle_get_all_sub_id_and_name, \
-    handle_workflow, make_stats_tsv, make_tsv_by_line
+    handle_workflow, make_stats_csv, make_csv_by_line
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -333,15 +334,15 @@ class ItemImportView(BaseView):
         data = request.get_json()
         now = str(datetime.date(datetime.now()))
 
-        file_name = "check_" + now + ".tsv"
+        file_name = "check_" + now + ".csv"
         if data:
-            tsv_file = make_stats_tsv(
+            csv_file = make_stats_csv(
                 data.get('list_result'),
                 WEKO_IMPORT_CHECK_LIST_NAME
             )
             return Response(
-                tsv_file.getvalue(),
-                mimetype="text/tsv",
+                csv_file.getvalue(),
+                mimetype="text/csv",
                 headers={
                     "Content-disposition": "attachment; filename=" + file_name
                 }
@@ -349,7 +350,7 @@ class ItemImportView(BaseView):
         else:
             return Response(
                 [],
-                mimetype="text/tsv",
+                mimetype="text/csv",
                 headers={
                     "Content-disposition": "attachment; filename=" + file_name
                 }
@@ -443,15 +444,15 @@ class ItemImportView(BaseView):
         data = request.get_json()
         now = str(datetime.date(datetime.now()))
 
-        file_name = "List_Download " + now + ".tsv"
+        file_name = "List_Download " + now + ".csv"
         if data:
-            tsv_file = make_stats_tsv(
+            csv_file = make_stats_csv(
                 data.get('list_result'),
                 WEKO_IMPORT_LIST_NAME
             )
             return Response(
-                tsv_file.getvalue(),
-                mimetype="text/tsv",
+                csv_file.getvalue(),
+                mimetype="text/csv",
                 headers={
                     "Content-disposition": "attachment; filename=" + file_name
                 }
@@ -459,7 +460,7 @@ class ItemImportView(BaseView):
         else:
             return Response(
                 [],
-                mimetype="text/tsv",
+                mimetype="text/csv",
                 headers={
                     "Content-disposition": "attachment; filename=" + file_name
                 }
@@ -475,7 +476,7 @@ class ItemImportView(BaseView):
     def export_template(self):
         """Download item type template."""
         file_name = None
-        tsv_file = None
+        csv_file = None
         data = request.get_json()
         if data:
             item_type_id = int(data.get('item_type_id', 0))
@@ -483,7 +484,7 @@ class ItemImportView(BaseView):
                 item_type = ItemTypes.get_by_id(
                     id_=item_type_id, with_deleted=True)
                 if item_type:
-                    file_name = '{}({}).tsv'.format(
+                    file_name = '{}({}).csv'.format(
                         item_type.item_type_name.name, item_type.id)
                     item_type_line = [
                         '#ItemType',
@@ -583,7 +584,7 @@ class ItemImportView(BaseView):
                                 options_line.append(
                                     ', '.join(list(set(root_option + _option)))
                                 )
-                    tsv_file = make_tsv_by_line([
+                    csv_file = make_csv_by_line([
                         item_type_line,
                         ids_line,
                         names_line,
@@ -591,9 +592,11 @@ class ItemImportView(BaseView):
                         options_line
                     ])
         return Response(
-            [] if not tsv_file else tsv_file.getvalue(),
-            mimetype="text/tsv",
+            [] if not csv_file else codecs.BOM_UTF8.decode(
+                "utf8") + codecs.BOM_UTF8.decode()+csv_file.getvalue(),
+            mimetype="text/csv",
             headers={
+                "Content-type": "text/csv; charset=utf-8",
                 "Content-disposition": "attachment; "
                 + ('filename=' if not file_name
                    else urlencode({'filename': file_name}))

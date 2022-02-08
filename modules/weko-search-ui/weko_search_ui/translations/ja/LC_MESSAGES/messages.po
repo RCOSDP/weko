@@ -67,19 +67,19 @@ msgstr "指定されたファイル{}の形式はインポートに対応して�
 
 #: weko_search_ui/utils.py:497
 msgid ""
-"The TSV file was not found in the specified file {}. Check if the "
+"The CSV file was not found in the specified file {}. Check if the "
 "directory structure is correct."
-msgstr "指定されたファイル{}にTSVファイルが見つかりませんでした。ディレクトリ構成が正しいか確認してください。"
+msgstr "指定されたファイル{}にCSVファイルが見つかりませんでした。ディレクトリ構成が正しいか確認してください。"
 
 #: weko_search_ui/utils.py:560
 msgid ""
 "There is an error in the format of the first line of the header of the "
-"TSV file."
-msgstr "TSVファイルのヘッダ１行目の形式に誤りがあります。"
+"CSV file."
+msgstr "CSVファイルのヘッダ１行目の形式に誤りがあります。"
 
 #: weko_search_ui/utils.py:576
-msgid "The item type ID specified in the TSV file does not exist."
-msgstr "TSVファイルで指定されたアイテムタイプIDは存在しません。"
+msgid "The item type ID specified in the CSV file does not exist."
+msgstr "CSVファイルで指定されたアイテムタイプIDは存在しません。"
 
 #: weko_search_ui/utils.py:583
 msgid "Cannot register because the specified item type is not the latest version."
@@ -94,8 +94,8 @@ msgid "The item does not consistent with the specified item type.<br/>{}"
 msgstr "指定されたアイテムタイプと項目が一致しません。<br/>{}"
 
 #: weko_search_ui/utils.py:625
-msgid "Cannot read tsv file correctly."
-msgstr "TSVファイルが正しく読み込めません。"
+msgid "Cannot read csv file correctly."
+msgstr "CSVファイルが正しく読み込めません。"
 
 #: weko_search_ui/utils.py:644
 msgid ""
@@ -105,9 +105,9 @@ msgstr "次の項目指定されたアイテムタイプに存在しないため
 
 #: weko_search_ui/utils.py:651
 msgid ""
-"The TSV file could not be read. Make sure the file format is TSV and that"
+"The CSV file could not be read. Make sure the file format is CSV and that"
 " the file is UTF-8 encoded."
-msgstr "TSVファイルを読み込めませんでした。ファイル形式がTSVであること、またそのファイルがUTF-8でエンコードされているかを確認してください。"
+msgstr "CSVファイルを読み込めませんでした。ファイル形式がCSVであること、またそのファイルがUTF-8でエンコードされているかを確認してください。"
 
 #: weko_search_ui/utils.py:713
 msgid "Please specify item ID by half-width number."
@@ -215,6 +215,18 @@ msgstr "公開日はYYYY-MM-DDで指定してください。"
 msgid "Please specify Open Access Date with YYYY-MM-DD."
 msgstr "オープンアクセスの日付はYYYY-MM-DDで指定してください。"
 
+#: weko_search_ui/utils.py:2169
+msgid "PID does not meet the conditions.<br/>"
+msgstr "PIDが条件を満たしていません。<br/>"
+
+#: weko_search_ui/utils.py:2180
+msgid "The following metadata are required.<br/>{}"
+msgstr "{}は必須項目です。"
+
+#: weko_search_ui/utils.py:2185
+msgid "One of the following metadata is required.<br/>{}<br/>"
+msgstr "{}のいずれかを設定してください。"
+
 #: weko_search_ui/utils.py:2270
 msgid ""
 "Please specify the image file(gif, jpg, jpe, jpeg, png, bmp, tiff, tif) "
@@ -228,8 +240,8 @@ msgstr "（{}）に指定したファイルが存在しません。"
 #: weko_search_ui/utils.py:2714
 msgid ""
 "The file specified in ({}) does not exist.<br/>The file will not be "
-"updated. Update only the metadata with tsv contents."
-msgstr "（{}）に指定したファイルが存在しません。<br/>ファイルの更新はしません。tsv内容でメタデータのみ更新します。"
+"updated. Update only the metadata with csv contents."
+msgstr "（{}）に指定したファイルが存在しません。<br/>ファイルの更新はしません。csv内容でメタデータのみ更新します。"
 
 #: weko_search_ui/utils.py:2833
 msgid "The file name specified in {} and {} do not match."

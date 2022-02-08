@@ -284,6 +284,15 @@ ${INVENIO_WEB_INSTANCE} access \
 ${INVENIO_WEB_INSTANCE} access \
        allow "stats-api-access" \
        role "${INVENIO_ROLE_REPOSITORY}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "read-style-action" \
+       role "${INVENIO_ROLE_REPOSITORY}
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "update-style-action" \
+       role "${INVENIO_ROLE_REPOSITORY}
+
 # sphinxdoc-set-role-access-end
 
 #### sphinxdoc-create-language-data-begin

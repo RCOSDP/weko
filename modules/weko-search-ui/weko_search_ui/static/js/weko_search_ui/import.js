@@ -868,9 +868,9 @@ class CheckComponent extends React.Component {
       contentType: "application/json; charset=utf-8",
       success: function (response) {
         const date = moment()
-        const fileName = 'check_' + date.format("YYYY-DD-MM") + '.tsv';
+        const fileName = 'check_' + date.format("YYYY-DD-MM") + '.csv';
 
-        const blob = new Blob([response], { type: 'text/tsv' });
+        const blob = new Blob([response], { type: 'text/csv' });
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {
           window.navigator.msSaveOrOpenBlob(blob, fileName);
         } else {
@@ -1033,9 +1033,9 @@ class ResultComponent extends React.Component {
       contentType: "application/json; charset=utf-8",
       success: function (response) {
         const date = moment()
-        const fileName = 'List_Download_' + date.format("YYYY-DD-MM") + '.tsv';
+        const fileName = 'List_Download_' + date.format("YYYY-DD-MM") + '.csv';
 
-        const blob = new Blob([response], { type: 'text/tsv' });
+        const blob = new Blob([response], { type: 'text/csv' });
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {
           window.navigator.msSaveOrOpenBlob(blob, fileName);
         } else {
@@ -1174,7 +1174,7 @@ class ItemTypeComponent extends React.Component {
         }
 
         fileName = decodeURIComponent(fileName.replace(/\+/g, '%20'));
-        const blob = new Blob([response], { type: 'text/tsv' });
+        const blob = new Blob([response], { type: 'text/csv' });
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {
           window.navigator.msSaveOrOpenBlob(blob, fileName);
         } else {

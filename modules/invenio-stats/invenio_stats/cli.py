@@ -228,6 +228,9 @@ def _aggregations_process(aggregation_types=None,
     """Process stats aggregations."""
     aggregation_types = (aggregation_types
                          or list(current_stats.enabled_aggregations))
+    current_app.logger.debug("start_date:{}".format(start_date))
+    current_app.logger.debug("end_date:{}".format(end_date))
+
     if eager:
         aggregate_events.apply(
             (aggregation_types,),

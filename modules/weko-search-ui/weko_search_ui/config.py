@@ -456,7 +456,8 @@ WEKO_FLOW_DEFINE_LIST_ACTION = [
         "user_deny": False,
         "role": "0",
         "role_deny": False,
-        "action": "ADD"
+        "action": "ADD",
+        "workflow_flow_action_id": "0"
     },
     {
         "id": "3",
@@ -478,7 +479,8 @@ WEKO_FLOW_DEFINE_LIST_ACTION = [
         "user_deny": False,
         "role": "0",
         "role_deny": False,
-        "action": "ADD"
+        "action": "ADD",
+        "workflow_flow_action_id": "0"
     }
 ]
 
@@ -619,7 +621,7 @@ WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME = 3
 """Template for the Admin Bulk Export page."""
 
 WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 1000
-"""The number of items exported to tsv file each once."""
+"""The number of items exported to csv file each once."""
 
 WEKO_SEARCH_UI_BULK_EXPORT_RETRY = 5
 """Number of export retries."""
