@@ -771,12 +771,8 @@ function autoAdjustWidgetHeight(widgetElement, pageBodyGrid, otherElement) {
 }
 
 function autoAdjustWidgetHeightArray(widgetElement, pageBodyGrid, otherElements) {
-  console.log("otherElements");
-  console.log(otherElements);
   otherElements.forEach(otherElement => {
-    console.log(otherElement);
     if (otherElement) {
-      console.log(`if ${otherElement}`);
       let isResize = otherElement.data("isResize");
       if (isResize) {
         let parent = otherElement.closest(".grid-stack-item");
@@ -1084,8 +1080,6 @@ function fixWidgetIE11() {
   }, 1000)
 }
 
-
-var x = [];
 /**
  * Handle auto adjust the height of widget
  * @param pageBodyGrid Widget body object.
@@ -1095,19 +1089,19 @@ function handleAutoAdjustWidget(pageBodyGrid) {
     $('.header-footer-type').parent().addClass('widgetIE');
   }
 
+  
   // Auto adjust Other widget
   otherSensor = new ResizeSensor($('.grid-stack-item-content .panel-body'), function () {
+    let x = [];
     $('.grid-stack-item-content .panel-body').each(function () {
       let _this = $(this);
       if (!_this.hasClass("no-auto-height")) {
         x.push(_this);
       }
     });
+    console.log(`FLOW LENGTH: ${x.length}`)
+    autoAdjustWidgetHeightArray(null, pageBodyGrid, x);
   });
-
-  console.log(x);
-
-  autoAdjustWidgetHeightArray(null, pageBodyGrid, x);
 
   // Auto adjust Header widget
   headerSensor = new ResizeSensor($('#header_content'), function () {
@@ -1117,7 +1111,7 @@ function handleAutoAdjustWidget(pageBodyGrid) {
   });
 
   // Auto adjust Main Content widget
-  createMainContentSensor(pageBodyGrid)
+  createMainContentSensor()
 
   // Fix widget display on IE 11
   fixWidgetIE11();
@@ -1190,8 +1184,7 @@ function escapeHtml(unsafe) {
 * Get new widget height
 * @param pageBodyGrid
 */
- 
-/*
+ /*
 document.addEventListener("DOMContentLoaded", function() {
   console.log("aa")
   // Auto adjust Other widget
