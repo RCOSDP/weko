@@ -1089,17 +1089,18 @@ function handleAutoAdjustWidget(pageBodyGrid) {
     $('.header-footer-type').parent().addClass('widgetIE');
   }
 
-  
   // Auto adjust Other widget
   otherSensor = new ResizeSensor($('.grid-stack-item-content .panel-body'), function () {
-    let x = [];
+
+    let testArray = [];
+
     $('.grid-stack-item-content .panel-body').each(function () {
       let _this = $(this);
       if (!_this.hasClass("no-auto-height")) {
-        x.push(_this);
+        testArray.push(_this);
       }
     });
-    console.log(`FLOW LENGTH: ${x.length}`)
+    
     autoAdjustWidgetHeightArray(null, pageBodyGrid, x);
   });
 
