@@ -1100,8 +1100,8 @@ function handleAutoAdjustWidget(pageBodyGrid) {
         testArray.push(_this);
       }
     });
-    
-    autoAdjustWidgetHeightArray(null, pageBodyGrid, x);
+
+    autoAdjustWidgetHeightArray(null, pageBodyGrid, testArray);
   });
 
   // Auto adjust Header widget
