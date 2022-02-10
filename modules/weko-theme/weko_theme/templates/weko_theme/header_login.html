@@ -52,6 +52,7 @@
       <li class="divider"></li>
       <li><a href="{{url_for_security('logout')}}"><i class="fa fa-sign-out"></i> {{_('Log out')}}</a></li>
     </ul>
+    <a class="btn btn-default btn-primary" href="{{ url_for('weko_inbox_consumer.publish')}}">更新</a>
   </div>
 {%- else %}
 <a href=" {{url_for_security('logout')}}" class="btn btn-default logout-button"><i class="fa fa-sign-out"></i> {{_('Log out')}}</a>

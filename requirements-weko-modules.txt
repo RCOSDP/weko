@@ -38,3 +38,7 @@
 -e /code/modules/weko-items-autofill
 -e /code/modules/weko-sitemap
 -e /code/modules/invenio-iiif
+-e /code/modules/weko-inbox-sender
+-e /code/modules/weko-inbox-consumer
+-e /code/modules/weko-signpostingserver
+-e /code/modules/weko-signpostingclient
