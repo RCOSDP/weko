@@ -1,0 +1,21 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2022 National Institute of Informatics.
+#
+# WEKO-Signpostingserver is free software; you can redistribute it and/or
+# modify it under the terms of the MIT License; see LICENSE file for more
+# details.
+
+# TODO: Generate this manifest file by running the following commands:
+# (please sort the lines in this file after running below commands)
+#
+#  git init
+#  git add -A
+#  pip install -e .[all]
+#  check-manifest -u
+
+include .dockerignore
+include .editorconfig
+include .tx/config
+prune docs/_build
+recursive-include weko_signpostingserver/translations *.po *.pot *.mo
