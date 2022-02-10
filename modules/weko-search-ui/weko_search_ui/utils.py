@@ -3342,11 +3342,12 @@ def get_filenames_from_metadata(metadata):
             }
             if not file.get('filename'):
                 del file['filename']
+            else:
+                if not file.get('accessrole', None):
+                    file['accessrole'] = 'open_access'
             filenames.append(data)
             count += 1
 
-            if not file.get('accessrole', None):
-                file['accessrole'] = 'open_access'
 
         new_file_metadata = list(filter(lambda x: x, metadata[_id]))
         if new_file_metadata:
