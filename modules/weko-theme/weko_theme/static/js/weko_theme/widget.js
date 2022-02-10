@@ -771,79 +771,83 @@ function autoAdjustWidgetHeight(widgetElement, pageBodyGrid, otherElement) {
 }
 
 function autoAdjustWidgetHeightArray(widgetElement, pageBodyGrid, otherElements) {
-  otherElements.forEach(otherElement => {
-    if (otherElement) {
-      let isResize = otherElement.data("isResize");
-      if (isResize) {
-        let parent = otherElement.closest(".grid-stack-item");
-        let width = parent.data("gsWidth");
-        pageBodyGrid.resizeWidget(parent, width, DEFAULT_WIDGET_HEIGHT);
-        otherElement.data("isResize", false);
-        otherElement.data("isUpdated", true);
-      }
-      let scrollHeight = otherElement.prop("scrollHeight");
-      let clientHeight = otherElement.prop("clientHeight");
-      if (scrollHeight > clientHeight) {
-        let parent = otherElement.closest(".grid-stack-item");
-        let width = parent.data("gsWidth");
-        let isUpdated = otherElement.data("isUpdated");
-        let newHeight, widgetHeight;
-        widgetHeight = newHeight = getNewWidgetHeight(pageBodyGrid, scrollHeight);
-        // In the case of IE 11, increase the widget height by three unit.
-        if (isIE11()) {
-          widgetHeight = widgetHeight + 3;
-        }
-        // Check whether the widget has been rendered for the first time
-        if (isUpdated) {
-          let cellHeight = pageBodyGrid.getCellHeight();
-          let verticalMargin = pageBodyGrid.getVerticalMargin();
-          let currentClientHeight = newHeight * (cellHeight + verticalMargin);
-          if (currentClientHeight > scrollHeight) {
-            let height = DEFAULT_WIDGET_HEIGHT > widgetHeight - 1 ? DEFAULT_WIDGET_HEIGHT : widgetHeight - 1;
-            pageBodyGrid.resizeWidget(parent, width, height);
-            //pageBodyGrid.resizeWidget(parent, width, height);
-            console.log("currentClientHeight: "+ currentClientHeight);
-            console.log("scrollHeight: "+ scrollHeight);
-
-
-          } else {
-            let height = DEFAULT_WIDGET_HEIGHT > widgetHeight ? DEFAULT_WIDGET_HEIGHT : widgetHeight;
-            pageBodyGrid.resizeWidget(parent, width, height);
-          }
-
-        } else {
-          pageBodyGrid.resizeWidget(parent, width, newHeight - 10);
-
+  if (widgetElement === null) {
+    otherElements.forEach(otherElement => {
+      if (otherElement) {
+        let isResize = otherElement.data("isResize");
+        if (isResize) {
+          let parent = otherElement.closest(".grid-stack-item");
+          let width = parent.data("gsWidth");
+          pageBodyGrid.resizeWidget(parent, width, DEFAULT_WIDGET_HEIGHT);
+          otherElement.data("isResize", false);
           otherElement.data("isUpdated", true);
         }
-        let widgetId = otherElement.attr('id');
-        widgetOtherList[widgetId] = {
-          'parent': parent,
-          'widget': otherElement
+        let scrollHeight = otherElement.prop("scrollHeight");
+        let clientHeight = otherElement.prop("clientHeight");
+        if (scrollHeight > clientHeight) {
+          let parent = otherElement.closest(".grid-stack-item");
+          let width = parent.data("gsWidth");
+          let isUpdated = otherElement.data("isUpdated");
+          let newHeight, widgetHeight;
+          widgetHeight = newHeight = getNewWidgetHeight(pageBodyGrid, scrollHeight);
+          // In the case of IE 11, increase the widget height by three unit.
+          if (isIE11()) {
+            widgetHeight = widgetHeight + 3;
+          }
+          // Check whether the widget has been rendered for the first time
+          if (isUpdated) {
+            let cellHeight = pageBodyGrid.getCellHeight();
+            let verticalMargin = pageBodyGrid.getVerticalMargin();
+            let currentClientHeight = newHeight * (cellHeight + verticalMargin);
+            if (currentClientHeight > scrollHeight) {
+              let height = DEFAULT_WIDGET_HEIGHT > widgetHeight - 1 ? DEFAULT_WIDGET_HEIGHT : widgetHeight - 1;
+              pageBodyGrid.resizeWidget(parent, width, height);
+              //pageBodyGrid.resizeWidget(parent, width, height);
+              console.log("currentClientHeight: "+ currentClientHeight);
+              console.log("scrollHeight: "+ scrollHeight);
+
+
+            } else {
+              let height = DEFAULT_WIDGET_HEIGHT > widgetHeight ? DEFAULT_WIDGET_HEIGHT : widgetHeight;
+              pageBodyGrid.resizeWidget(parent, width, height);
+            }
+
+          } else {
+            pageBodyGrid.resizeWidget(parent, width, newHeight - 10);
+
+            otherElement.data("isUpdated", true);
+          }
+          let widgetId = otherElement.attr('id');
+          widgetOtherList[widgetId] = {
+            'parent': parent,
+            'widget': otherElement
+          }
         }
       }
-    } else {
-      let width = widgetElement.data("gsWidth");
-      let isResize = widgetElement.data("isResize");
+    });
+  } else {
+    widgetElement.forEach(element => {
+      let width = element[0].data("gsWidth");
+      let isResize = element[0].data("isResize");
       if (isResize) {
-        pageBodyGrid.resizeWidget(widgetElement, width, DEFAULT_WIDGET_HEIGHT);
-        widgetElement.data("isResize", false);
+        element[1].resizeWidget(element[0], width, DEFAULT_WIDGET_HEIGHT);
+        element[0].data("isResize", false);
       }
-      let scrollHeight = widgetElement.prop("scrollHeight");
-      let clientHeight = widgetElement.prop("clientHeight");
-      let currentHeight = widgetElement.data("gsHeight");
+      let scrollHeight = element[0].prop("scrollHeight");
+      let clientHeight = element[0].prop("clientHeight");
+      let currentHeight = element[0].data("gsHeight");
       if (scrollHeight > clientHeight) {
-        let newHeight = getNewWidgetHeight(pageBodyGrid, scrollHeight);
+        let newHeight = getNewWidgetHeight(element[1], scrollHeight);
         if (newHeight > currentHeight) {
-          pageBodyGrid.resizeWidget(widgetElement, width, newHeight);
+          element[1].resizeWidget(element[0], width, newHeight);
         } else if (newHeight === currentHeight) {
-          pageBodyGrid.resizeWidget(widgetElement, width, newHeight + 1);
+          element[1].resizeWidget(element[0], width, newHeight + 1);
         } else {
-          pageBodyGrid.resizeWidget(widgetElement, width, newHeight);
+          element[1].resizeWidget(element[0], width, newHeight);
         }
       }
-    }
-  });
+    })
+  }
 }
 
 /**
@@ -1104,6 +1108,34 @@ function handleAutoAdjustWidget(pageBodyGrid) {
     autoAdjustWidgetHeightArray(null, pageBodyGrid, testArray);
   });
 
+  var z = [];
+  // Auto adjust Header widget
+  headerSensor = new ResizeSensor($('#header_content'), function () {
+    var headerContent = $('#header_content').closest(".grid-stack-item");
+    if(headerContent) {
+      // console.log("2");
+      // autoAdjustWidgetHeight(headerContent, pageBodyGrid);
+      z.push([headerContent, pageBodyGrid]);
+    }
+    // console.log(z.length);
+  });
+
+  mainContentSensor = new ResizeSensor($('#' + MAIN_CONTENTS), function () {
+    var mainContent = $('#' + MAIN_CONTENTS);
+    $("#weko-records").click(function () {
+      isClickMainContent = true;
+    });
+    if (!(isClickMainContent && isItemRegistrationWorkFlow())) {
+      // console.log("3");
+      // autoAdjustWidgetHeight(mainContent, widgetBodyGrid);
+      z.push([mainContent, widgetBodyGrid]);
+    }
+    autoAdjustWidgetHeightArray(z);
+  });
+
+
+
+  /*
   // Auto adjust Header widget
   headerSensor = new ResizeSensor($('#header_content'), function () {
     let headerContent = $('#header_content').closest(".grid-stack-item");
@@ -1113,14 +1145,18 @@ function handleAutoAdjustWidget(pageBodyGrid) {
 
   // Auto adjust Main Content widget
   createMainContentSensor()
+  */
 
+  
   // Fix widget display on IE 11
   fixWidgetIE11();
 }
 
+
 /**
  * Create Main content sensor.
  */
+/*
 function createMainContentSensor() {
   mainContentSensor = new ResizeSensor($('#' + MAIN_CONTENTS), function () {
     let mainContent = $('#' + MAIN_CONTENTS);
@@ -1133,6 +1169,7 @@ function createMainContentSensor() {
     }
   });
 }
+*/
 
 function toggleWidgetUI() {
     $("div#page_body").each(function () {
