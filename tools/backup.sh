@@ -79,7 +79,7 @@ docker cp $(docker-compose ps -q postgresql):/weko.sql ${BACKUPDIR}/postgresql/
 
 # elasticsearch-backup-begin
 echo "elasticsearch-backup(1/4)"
-docker-compose exec -T elasticsearch bash -c "rm  -fr /usr/share/elasticsearch/backups"
+#docker-compose exec -T elasticsearch bash -c "rm  -fr /usr/share/elasticsearch/backups"
 docker-compose exec -T elasticsearch \
     curl -X PUT \
     http://localhost:9200/_snapshot/weko_backup \
@@ -109,6 +109,7 @@ docker-compose exec -T elasticsearch \
     }'
 echo ""
 echo "elasticsearch-backup(4/4)"
+
 docker cp $(docker-compose ps -q elasticsearch):/usr/share/elasticsearch/backups ${BACKUPDIR}/elasticsearch/
 chown -R 1000:1000 ${BACKUPDIR}/elasticsearch
 # elasticsearch-restore-end
@@ -116,6 +117,7 @@ chown -R 1000:1000 ${BACKUPDIR}/elasticsearch
 # contents-backup-begin
 docker cp $(docker-compose ps -q web):/var/tmp ${BACKUPDIR}/contents/
 chown -R 1000:1000 ${BACKUPDIR}/contents
+
 # contents-restore-end
 
 
