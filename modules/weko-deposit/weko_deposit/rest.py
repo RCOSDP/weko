@@ -199,7 +199,7 @@ class ItemResource(ContentNegotiatedMethodView):
         from weko_workflow.api import WorkActivity
         try:
             data = request.get_json()
-            self.__sanitize_input_data(data)
+            self._sanitize_input_data(data)
             pid_value = kwargs.get('pid_value').value
             edit_mode = data.get('edit_mode')
 
@@ -271,20 +271,21 @@ class ItemResource(ContentNegotiatedMethodView):
         return jsonify({'status': 'success'})
 
     @staticmethod
-    def __sanitize_string(s: str):
+    def _sanitize_string(s: str):
         """Sanitize string.
 
         :param s:
         :return:
         """
-        s = s.strip()
-        sanitize_str = ""
-        for i in s:
-            if ord(i) in [9, 10, 13] or (31 < ord(i) != 127):
-                sanitize_str += i
-        return sanitize_str
+        s = s.replace('"', '\\"')
+        s = s.replace('\b', '\\b')
+        s = s.replace('\f', '\\f')
+        s = s.replace('\n', '\\n')
+        s = s.replace('\r', '\\r')
+        s = s.replace('\t', '\\t')
+        return s
 
-    def __sanitize_input_data(self, data):
+    def _sanitize_input_data(self, data):
         """Sanitize input data.
 
         :param data: input data.
@@ -292,12 +293,12 @@ class ItemResource(ContentNegotiatedMethodView):
         if isinstance(data, dict):
             for k, v in data.items():
                 if isinstance(v, str):
-                    data[k] = self.__sanitize_string(v)
+                    data[k] = self._sanitize_string(v)
                 else:
-                    self.__sanitize_input_data(v)
+                    self._sanitize_input_data(v)
         elif isinstance(data, list):
             for i in range(len(data)):
                 if isinstance(data[i], str):
-                    data[i] = self.__sanitize_string(data[i])
+                    data[i] = self._sanitize_string(data[i])
                 else:
-                    self.__sanitize_input_data(data[i])
+                    self._sanitize_input_data(data[i])

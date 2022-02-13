@@ -21,6 +21,7 @@
 """Blueprint for weko-records-ui."""
 
 import os
+import re
 
 import six
 import werkzeug
@@ -846,9 +847,17 @@ def escape_str(s):
     :return: result
     """
     if s:
-        s = remove_weko2_special_character(s)
+        s = remove_weko2_special_character2(s)
         s = str(escape(s))
         s = escape_newline(s)
+    return s
+
+
+def remove_weko2_special_character2(s):
+    pattern = r"(^(&EMPTY&,|,&EMPTY&)|(&EMPTY&,|,&EMPTY&)$|&EMPTY&)"
+    s = re.sub(pattern, '', s)
+    if s == ',':
+        return ''
     return s
 
 
@@ -857,12 +866,36 @@ def escape_newline(s):
     :param s: string
     :return: result
     """
-    br_char = '<br/>'
-    s = s.replace('\r\n', br_char).replace(
-        '\r', br_char).replace('\n', br_char)
-    s = '<br />'.join(s.splitlines())
-
+    target = '<br/>'
+    s = re.sub("&lt;br\s*(/)?&gt;", target, s)
+    s = s.replace('\\\\r\\\\n', target)
+    s = s.replace('\\\\n', target)
+    s = target.join(s.splitlines())
     return s
+
+
+def json_string_escape(s):
+    opt = ''
+    if s.endswith('"'):
+        opt = '"'
+    s = json.dumps(s, ensure_ascii=False)
+    s = s.strip('"')
+    return s+opt
+
+
+def xml_string_escape(str):
+    str = str.replace("\x20", "&#xA0;")
+    str = str.replace("\xa0", "&#x20;")
+    str = str.replace("\x0a", "&#x0A;")
+    str = str.replace("\x08", "&#x08;")
+    str = str.replace("\x0d", "&#x0D;")
+    str = str.replace("&", "&amp;")
+    str = str.replace("<", "&lt;")
+    str = str.replace(">", "&gt;")
+    str = str.replace("\"", "&quot;")
+    str = str.replace("'", "&apos;")
+
+    return str
 
 
 @blueprint.app_template_filter('preview_able')

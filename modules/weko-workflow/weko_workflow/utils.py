@@ -59,8 +59,6 @@ from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
     ItemTypes, Mapping
 from weko_records.models import ItemType
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
-from weko_records_ui.utils import create_onetime_download_url, \
-    generate_one_time_download_url, get_list_licence
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
@@ -2956,6 +2954,8 @@ def create_onetime_download_url_to_guest(activity_id: str,
     @param extra_info:
     @return:
     """
+    from weko_records_ui.utils import create_onetime_download_url, \
+        generate_one_time_download_url, get_list_licence
     file_name = extra_info.get('file_name')
     record_id = extra_info.get('record_id')
     user_mail = extra_info.get('user_mail')

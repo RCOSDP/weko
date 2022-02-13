@@ -1654,16 +1654,19 @@ class WekoRecord(Record):
 
         :param metadata:
         """
+        from weko_records_ui.views import json_string_escape
         if isinstance(metadata, dict):
             for k, val in metadata.items():
                 if isinstance(val, str):
-                    metadata[k] = remove_weko2_special_character(val)
+                    metadata[k] = json_string_escape(val)
+                    #metadata[k] = remove_weko2_special_character(val)
                 else:
                     self.__remove_special_character_of_weko2(val)
         elif isinstance(metadata, list):
             for idx, val in enumerate(metadata):
                 if isinstance(val, str):
-                    metadata[idx] = remove_weko2_special_character(val)
+                    metadata[idx] = json_string_escape(val)
+                    #metadata[idx] = remove_weko2_special_character(val)
                 else:
                     self.__remove_special_character_of_weko2(val)
 

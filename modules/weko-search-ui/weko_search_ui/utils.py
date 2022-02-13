@@ -723,6 +723,7 @@ def read_stats_csv(csv_file_path: str, csv_file_name: str) -> dict:
                               + 'item type. {}')
                             .format(str_keys)
                         ]
+                    sanitize_input_data(csv_item)
                     csv_data.append(csv_item)
         except UnicodeDecodeError as ex:
             ex.reason = _('The CSV file could not be read. Make sure the file'
@@ -768,6 +769,33 @@ def handle_convert_validate_msg_to_jp(message: str):
                 result = result.replace('%r', value, 1)
             return result
     return message
+
+
+def sanitize_input_data(data):
+    """Sanitize input data.
+
+    :param data: input data.
+    """
+    def _json_string_escape(s):
+        opt = ''
+        if s.endswith('"'):
+            opt = '"'
+        s = json.dumps(s, ensure_ascii=False)
+        s = s.strip('"')
+        return s+opt
+
+    if isinstance(data, dict):
+        for k, v in data.items():
+            if isinstance(v, str):
+                data[k] = _json_string_escape(v)
+            else:
+                sanitize_input_data(v)
+    elif isinstance(data, list):
+        for i in range(len(data)):
+            if isinstance(data[i], str):
+                data[i] = _json_string_escape(data[i])
+            else:
+                sanitize_input_data(data[i])
 
 
 def handle_validate_item_import(list_record, schema) -> list:

@@ -1642,16 +1642,19 @@ class SchemaTree:
         :param data:
         """
         from weko_records.utils import remove_weko2_special_character
+        from weko_records_ui.views import json_string_escape
         if isinstance(data, dict):
             for k, v in data.items():
                 if isinstance(v, str):
-                    data[k] = remove_weko2_special_character(v)
+                    data[k] = json_string_escape(v)
+                    #data[k] = remove_weko2_special_character(v)
                 else:
                     self.support_for_output_xml(v)
         elif isinstance(data, list):
             for i in range(len(data)):
                 if isinstance(data[i], str):
-                    data[i] = remove_weko2_special_character(data[i])
+                    data[i] = json_string_escape(data[i])
+                    #data[i] = remove_weko2_special_character(data[i])
                 else:
                     self.support_for_output_xml(data[i])
 

@@ -749,16 +749,15 @@ def package_export_file(item_type_data):
                                                 fieldnames=options,
                                                 delimiter=',', lineterminator='\n')
     csv_metadata_data_writer = csv.writer(csv_output,
-                                          delimiter=',', lineterminator='\n')
+                                          delimiter=',', lineterminator='\n', quoting=csv.QUOTE_MINIMAL)
     csv_metadata_writer.writeheader()
     csv_metadata_label_writer.writeheader()
     csv_metadata_is_system_writer.writeheader()
     csv_metadata_option_writer.writeheader()
     for recid in item_type_data.get('recids'):
-        csv_metadata_data_writer.writerow(
-            [recid, item_type_data.get('root_url') + 'records/' + str(recid)]
-            + item_type_data['data'].get(recid)
-        )
+        _rows = [recid, item_type_data.get(
+            'root_url') + 'records/' + str(recid)] + item_type_data['data'].get(recid)
+        csv_metadata_data_writer.writerow(_rows)
 
     return csv_output
 
@@ -775,7 +774,8 @@ def make_stats_csv(item_type_id, recids, list_item_role):
         records.attr_output -- Record data
 
     """
-    from weko_records_ui.views import escape_newline, escape_str
+    from weko_records_ui.views import escape_newline, escape_str, \
+        json_string_escape
 
     item_type = ItemTypes.get_by_id(item_type_id).render
     list_hide = get_item_from_option(item_type_id)
@@ -978,7 +978,11 @@ def make_stats_csv(item_type_id, recids, list_item_role):
                         key_list.append(new_key)
                         key_label.append(new_label)
                         if data and idx < len(data) and data[idx].get(key):
-                            key_data.append(escape_newline(data[idx][key]))
+                            _d = data[idx][key]
+                            _d = _d.replace("\\\\n", "\\n")
+                            key_data.append(_d)
+                            # key_data.append(json_string_escape(data[idx][key]))
+                            # key_data.append(escape_newline(data[idx][key]))
                             # key_data.append(escape_str(data[idx][key]))
                         else:
                             key_data.append('')
@@ -1297,7 +1301,8 @@ def write_csv_files(item_types_data, export_path, list_item_role):
                                      item_type_data.get('name')),
                   'w', encoding="utf-8-sig") as file:
             csv_output = package_export_file(item_type_data)
-            file.write(csv_output.getvalue())
+            line = csv_output.getvalue()
+            file.write(line)
 
 
 def check_item_type_name(name):
@@ -2389,35 +2394,35 @@ def get_ranking(settings):
     return rankings
 
 
-def __sanitize_string(s: str):
-    """Sanitize string.
-
-    :param s:
-    :return:
-    """
-    s = s.strip()
-    sanitize_str = ""
-    for i in s:
-        if ord(i) in [9, 10, 13] or (31 < ord(i) != 127):
-            sanitize_str += i
-    return sanitize_str
-
-
 def sanitize_input_data(data):
     """Sanitize the input data.
 
     :param data: input data.
     """
+    def _sanitize_string(s: str):
+        """Sanitize string.
+
+        :param s:
+        :return:
+        """
+        s = s.replace('"', '\\"')
+        s = s.replace('\b', '\\b')
+        s = s.replace('\f', '\\f')
+        s = s.replace('\n', '\\n')
+        s = s.replace('\r', '\\r')
+        s = s.replace('\t', '\\t')
+        return s
+
     if isinstance(data, dict):
         for k, v in data.items():
             if isinstance(v, str):
-                data[k] = __sanitize_string(v)
+                data[k] = _sanitize_string(v)
             else:
                 sanitize_input_data(v)
     elif isinstance(data, list):
         for i in range(len(data)):
             if isinstance(data[i], str):
-                data[i] = __sanitize_string(data[i])
+                data[i] = _sanitize_string(data[i])
             else:
                 sanitize_input_data(data[i])
 
@@ -2810,7 +2815,9 @@ def make_stats_csv_with_permission(item_type_id, recids,
                         key_list.append(new_key)
                         key_label.append(new_label)
                         if data and idx < len(data) and data[idx].get(key):
-                            key_data.append(escape_newline(data[idx][key]))
+                            key_data.append(data[idx][key])
+                            # key_data.append(json_string_escape(data[idx][key]))
+                            # key_data.append(escape_newline(data[idx][key]))
                             # key_data.append(escape_str(data[idx][key]))
                         else:
                             key_data.append('')

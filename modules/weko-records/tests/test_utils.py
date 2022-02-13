@@ -5,7 +5,8 @@ from collections import OrderedDict
 import pytest
 
 from weko_records.utils import convert_date_range_value, convert_range_value, \
-    copy_value_json_path, copy_values_json_path, makeDateRangeValue
+    copy_value_json_path, copy_values_json_path, makeDateRangeValue, \
+    remove_weko2_special_character
 
 
 @pytest.fixture
@@ -140,3 +141,8 @@ def test_makeDateRangeValue():
     assert makeDateRangeValue('1979-01-01', '1979-01-01') == {
         'gte': '1979-01-01', 'lte': '1979-01-01'}
     assert makeDateRangeValue('1979/01/01', '1979/12/30') == None
+
+
+def test_remove_weko2_special_character():
+    assert remove_weko2_special_character("&EMPTY&") == ""
+    assert remove_weko2_special_character("HELLO&EMPTY&WORLD") == "HELLOWORLD"
