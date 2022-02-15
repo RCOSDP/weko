@@ -8,7 +8,8 @@
 import ldnlib
 import re
 import uuid
-from config import PAYLOAD_TEMPLATE, INBOX_VERIFY_TLS_CERTIFICATE, NOTIFY_ACTION
+from .config import PAYLOAD_TEMPLATE, INBOX_VERIFY_TLS_CERTIFICATE, NOTIFY_ACTION
+from flask import request, current_app
 
 def publish_notification(record):
     """send item publication notification to inbox
@@ -64,7 +65,7 @@ def send_notification_inbox(payload):
 
     :param dict payload: notification payload
     """
-    sender = ldnlib.Sender()
+    sender = ldnlib.Sender(allow_localhost = True)
     inbox = payload['target']['inbox']
     
     sender.send(inbox, payload,verify = INBOX_VERIFY_TLS_CERTIFICATE)
@@ -97,15 +98,18 @@ def get_url_inbox():
     """Create inbox url.
     :return : inbox url
     """
-    # TODO :ポートがnginxとinboxで違うため、root/inboxだと無理
-    # rootのurlから":"以降（ポート）をinboxのポートに置き換え。その後/inboxを追加？
-    # ただしrootの部分はrequestがなかったら設定値のものを使う
-    # :以降のものをどうやって発見するか
-    # 1. 正規表現 ":([0-9]+)/"
-    # 2. 設定値から特定の数値の取得 "800"(それが設定値として与えられているかの要確認)
-    #return get_url_root()+"/inbox"
-    
-    if request:
-        root = request.host_url
+
+    #inbox = str()
+    #if request:
+    #    print("exist request")
+    #    root = request.host_url
+    #    print("exist request:"+root)
+    #    inbox = re.sub(":([0-9]+)/",":8000/",root)+"inbox"
+    #    return inbox
+    #else:
+    #    print("not exist request")
+    #    inbox = current_app.config['THEME_SITEURL']+'/inbox'
+    inbox = current_app.config['INBOX_URL']
+    return inbox
         
         

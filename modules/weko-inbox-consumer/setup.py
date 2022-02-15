@@ -42,6 +42,7 @@ setup_requires = [
 
 install_requires = [
     'Flask-BabelEx>=0.9.3',
+    'py-ldnlib>=0.1.3',
 ]
 
 packages = find_packages()
@@ -73,7 +74,7 @@ setup(
         ],
         'invenio_base.blueprints': [
             'weko_inbox_consumer'
-            '= weko_inbox_consumer.view:blueprint_ui_init'
+            '= weko_inbox_consumer.views:blueprint_ui_init'
             #'= weko_inbox_consumer.views:blueprint',
         ],
         'invenio_i18n.translations': [

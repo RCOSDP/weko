@@ -42,6 +42,7 @@ setup_requires = [
 
 install_requires = [
     'Flask-BabelEx>=0.9.3',
+    'py-ldnlib>=0.1.3',
 ]
 
 packages = find_packages()

@@ -10,12 +10,15 @@ import requests
 import re
 
 def request_signposting(uri):
-    r = requests.head(uri)
+    r = requests.head(make_signposting_url(uri))
     link = r.headers['Link']
     
     data = create_data_from_signposting(link)
     
     return data
+
+def make_signposting_url(uri):
+    return uri+"/signposting"
 
 def create_data_from_signposting(link):
     

@@ -97,9 +97,11 @@ class PAYLOAD_TEMPLATE(Enum):
                 template[p.pro] = p.val
         return template
     
-class Notify_ACTION(Enum):
+class NOTIFY_ACTION(Enum):
     ENDORSEMENT = "coar-notify:EndorsementAction"
     
     
-INBOX_VERIFY_TLS_CERTIFICATE = False
+INBOX_VERIFY_TLS_CERTIFICATE = True
 """ If True, verify the server’s TLS certificate """
+
+INBOX_URL = 'https://172.19.0.7:8000/inbox'

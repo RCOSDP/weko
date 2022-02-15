@@ -8,15 +8,16 @@
 from flask import Blueprint, request, make_response
 from flask_login import current_user
 import ldnlib
+from datetime import datetime,timedelta
 
-from config import DATE_FORMAT, DEFAULT_NOTIFY_RETENTION_DAYS
+from .config import DATE_FORMAT, DEFAULT_NOTIFY_RETENTION_DAYS, INBOX_VERIFY_TLS_CERTIFICATE
 from weko_signpostingclient.api import request_signposting
 from weko_inbox_sender.config import NOTIFY_ACTION
 from weko_inbox_sender.api import get_url_inbox
 
-blueprint_api = Blueprint('check_inbox',
+blueprint_api = Blueprint('weko_inbox_consumer',
                       __name__,
-                      url_prefix='/')
+                      )
 
 @blueprint_api.route('/publish', methods = ['GET'])
 def check_inbox_publish():
@@ -25,33 +26,37 @@ def check_inbox_publish():
     :return: response
     :rtype: Response
     """
-    user_id = current_user.get_id()
-    inbox=get_url_inbox()
-    send_cookie = dict()
-    latest_get = request.cookies.get('LatestGet', None)
-    if latest_get:
-        send_cookie=latest_get
-        latest_get_users = json.loads(latest_get)
-        if user_id in latest_get_users.keys():
-            latest_get = latest_get_users[user_id]
-        else:
-            latest_get = None
-    if (latest_get == None) or ((datetime.now() - datetime.strptime(latest_get, DATE_FORMAT)).days >= DEFAULT_NOTIFY_RETENTION_DAYS):
-        latest_get = (datetime.strptime(latest_get, DATE_FORMAT)-timedelta(days=DEFAULT_NOTIFY_RETENTION_DAYS)).strftime(DATA_FORMAT)
-    notifications = get_notification_in_user_and_action(inbox, user_id, NOTIFY_ACTION.ENDORSEMENT.value, latest_get)
-    send_data = list()
-    for notification in notifications:
-        record_url = notification['object']['id']
-        data = create_push_data(request_signposting(record_url))
-        push_data = dict()
-        push_data["title"] = "notification title"
-        push_data["body"] = "notification body"
-        push_data["data"] = data
-        send_data.append(push_data)
-    response = make_response(jsonify(send_data))
-    send_cookie[user_id]=datetime.now().strftime(DATEFORMAT)
-    response.set_cookie("LatestGet",value=json.dumps(send_cookie))
-    return response
+    
+    r = request_signposting("https://localhost/records/222")
+    print("signposting:"+str(r))
+    
+    #user_id = current_user.get_id()
+    #inbox=get_url_inbox()
+    #send_cookie = dict()
+    #latest_get = request.cookies.get('LatestGet', None)
+    #if latest_get:
+    #    send_cookie=latest_get
+    #    latest_get_users = json.loads(latest_get)
+    #    if user_id in latest_get_users.keys():
+    #        latest_get = latest_get_users[user_id]
+    #    else:
+    #        latest_get = None
+    #if (latest_get == None) or ((datetime.now() - datetime.strptime(latest_get, DATE_FORMAT)).days >= DEFAULT_NOTIFY_RETENTION_DAYS):
+    #    latest_get = (datetime.now()-timedelta(days=DEFAULT_NOTIFY_RETENTION_DAYS)).strftime(DATE_FORMAT)
+    #notifications = get_notification_in_user_and_action(inbox, user_id, NOTIFY_ACTION.ENDORSEMENT.value, latest_get)
+    #send_data = list()
+    #for notification in notifications:
+    #    record_url = notification['object']['id']
+    #    data = create_push_data(request_signposting(record_url))
+    #    push_data = dict()
+    #    push_data["title"] = "notification title"
+    #    push_data["body"] = "notification body"
+    #    push_data["data"] = data
+    #    send_data.append(push_data)
+    #response = make_response(jsonify(send_data))
+    #send_cookie[user_id]=datetime.now().strftime(DATEFORMAT)
+    #response.set_cookie("LatestGet",value=json.dumps(send_cookie))
+    #return response
 
 def get_notification_in_user_and_action(inbox, user, action, latest_get):
     """Create a list of item publication notifications filtered be date and user
@@ -79,7 +84,7 @@ def get_notifications(inbox, latest_get):
     :return: notification list
     :rtype: list
     """
-    consumer = ldnlib.Consumer()
+    consumer = ldnlib.Consumer(allow_localhost=True)
     notifications = consumer.notifications(inbox,headers={"accept":"application/ld+json","LatestGet":latest_get},verify=INBOX_VERIFY_TLS_CERTIFICATE)
     return notifications
 
@@ -90,7 +95,7 @@ def get_notification(uri):
     :return: notification payload
     :rtype: dict
     """
-    consumer = ldnlib.Consumer()
+    consumer = ldnlib.Consumer(allow_localhost=True)
     notification = consumer.notification(uri,headers={"accept":"application/ld+json"},verify=INBOX_VERIFY_TLS_CERTIFICATE)
     return notification
 

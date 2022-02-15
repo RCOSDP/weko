@@ -72,6 +72,9 @@ setup(
         'invenio_base.apps': [
             'weko_signpostingserver = weko_signpostingserver:WekoSignpostingserver',
         ],
+        'invenio_base.api_apps':[
+            'weko_signpostingserver_api = weko_signpostingserver:WekoSignpostingserver',
+        ],
         'invenio_base.blueprints': [
             'weko_signpostingserver = weko_signpostingserver.views:blueprint',
         ],

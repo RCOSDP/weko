@@ -7,19 +7,19 @@
 # details.
 from flask import Blueprint, Response, request, current_app
 
-from invenio_record.api import get_record
+from invenio_records.api import Record
 
-blueprint = Blueprint(
-    'weko_signpostingserver',
+blueprint_signposting_api = Blueprint(
+    'weko_signpostingserver_api',
     __name__
 )
 
 # TODO: recordが存在しない場合の処理
-@blueprint.route('/records/<recid>', methods = ['HEAD'])
+@blueprint_signposting_api.route('/records/<recid>/signposting', methods = ['HEAD'])
 def request(recid):
     resp = Response()
     host_url = request.url_root()
-    record = get_record(record)
+    record = Record.get_record(record)
     link = list()
     
     permalink = get_record_permalink(record)
@@ -43,7 +43,8 @@ def request(recid):
         link.append('<{url}> ; rel="describedby" ; type="application/xml" ; formats={formats}'.\
                     format(url = url,
                            formats = _object['namespace']))
-    resp.headers['Link'] = ','.join(link)
+    link_str=["recid",str(recid)]
+    resp.headers['Link'] = ','.join(link_str)
     return resp
 
 def get_record_permalink(record):
