@@ -1605,9 +1605,10 @@ class DDIMapper(BaseMapper):
                         merge_dict(result_dict, temp_obj['full'],
                                    temp_obj['val'], temp_obj['key'])
                     if result_dict:
-                        if isinstance(result_dict[root_key.replace("[]", "")],
-                                      list):
-                            temp_data = result_dict[root_key.replace("[]", "")][0]
+                        if root_key.replace("[]", "") in result_dict and isinstance(result_dict[root_key.replace("[]", "")],
+                                                                                    list):
+                            temp_data = result_dict[root_key.replace(
+                                "[]", "")][0]
                             if temp_data.values() \
                                     and isinstance(list(temp_data.values())[0], str):
                                 if set(temp_data.values()) not in list_temp:
@@ -1616,7 +1617,7 @@ class DDIMapper(BaseMapper):
                             else:
                                 if temp_data not in list_result:
                                     list_result.append(temp_data)
-                        elif isinstance(
+                        elif root_key.replace("[]", "") in result_dict and isinstance(
                                 result_dict[root_key.replace("[]", "")], dict):
                             temp_data = result_dict[root_key.replace("[]", "")]
                             if set(temp_data.values()) not in list_temp:

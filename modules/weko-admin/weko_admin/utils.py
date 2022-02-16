@@ -2039,7 +2039,7 @@ def get_facet_search(id: int = None):
 
 
 def get_item_mapping_list():
-    """Get Item Mapping list.
+    """Get Item Mapping list in Facet search setting.
 
     Returns:
         object:
