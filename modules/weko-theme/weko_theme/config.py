@@ -70,6 +70,14 @@ THEME_SITENAME = 'WEKO3'
 THEME_SITEURL = 'https://localhost'
 """The URL displayed in the sitemap. Change it to self domain name."""
 
+
+THEME_INSTITUTION_NAME = {
+    "ja": "",
+    "en": ""
+}
+""" Institution name """
+
+
 THEME_SEARCHBAR = True
 """Enable or disable the search bar."""
 
