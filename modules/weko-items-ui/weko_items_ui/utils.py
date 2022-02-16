@@ -714,21 +714,21 @@ def recursive_update_schema_form_with_condition(
 
 
 def package_export_file(item_type_data):
-    """Export TSV Files.
+    """Export CSV Files.
 
     Arguments:
         item_type_data  -- schema's Item Type
 
     Returns:
-        return          -- TSV file
+        return          -- CSV file
 
     """
-    tsv_output = StringIO()
+    csv_output = StringIO()
     jsonschema_url = item_type_data.get('root_url') + item_type_data.get(
         'jsonschema')
 
-    tsv_writer = csv.writer(tsv_output, delimiter='\t')
-    tsv_writer.writerow(['#ItemType',
+    csv_writer = csv.writer(csv_output, delimiter=',', lineterminator='\n')
+    csv_writer.writerow(['#ItemType',
                          item_type_data.get('name'),
                          jsonschema_url])
 
@@ -736,35 +736,35 @@ def package_export_file(item_type_data):
     labels = item_type_data['labels']
     is_systems = item_type_data['is_systems']
     options = item_type_data['options']
-    tsv_metadata_writer = csv.DictWriter(tsv_output,
+    csv_metadata_writer = csv.DictWriter(csv_output,
                                          fieldnames=keys,
-                                         delimiter='\t')
-    tsv_metadata_label_writer = csv.DictWriter(tsv_output,
+                                         delimiter=',', lineterminator='\n')
+    csv_metadata_label_writer = csv.DictWriter(csv_output,
                                                fieldnames=labels,
-                                               delimiter='\t')
-    tsv_metadata_is_system_writer = csv.DictWriter(tsv_output,
+                                               delimiter=',', lineterminator='\n')
+    csv_metadata_is_system_writer = csv.DictWriter(csv_output,
                                                    fieldnames=is_systems,
-                                                   delimiter='\t')
-    tsv_metadata_option_writer = csv.DictWriter(tsv_output,
+                                                   delimiter=',', lineterminator='\n')
+    csv_metadata_option_writer = csv.DictWriter(csv_output,
                                                 fieldnames=options,
-                                                delimiter='\t')
-    tsv_metadata_data_writer = csv.writer(tsv_output,
-                                          delimiter='\t')
-    tsv_metadata_writer.writeheader()
-    tsv_metadata_label_writer.writeheader()
-    tsv_metadata_is_system_writer.writeheader()
-    tsv_metadata_option_writer.writeheader()
+                                                delimiter=',', lineterminator='\n')
+    csv_metadata_data_writer = csv.writer(csv_output,
+                                          delimiter=',', lineterminator='\n')
+    csv_metadata_writer.writeheader()
+    csv_metadata_label_writer.writeheader()
+    csv_metadata_is_system_writer.writeheader()
+    csv_metadata_option_writer.writeheader()
     for recid in item_type_data.get('recids'):
-        tsv_metadata_data_writer.writerow(
+        csv_metadata_data_writer.writerow(
             [recid, item_type_data.get('root_url') + 'records/' + str(recid)]
             + item_type_data['data'].get(recid)
         )
 
-    return tsv_output
+    return csv_output
 
 
-def make_stats_tsv(item_type_id, recids, list_item_role):
-    """Prepare TSV data for each Item Types.
+def make_stats_csv(item_type_id, recids, list_item_role):
+    """Prepare CSV data for each Item Types.
 
     Arguments:
         item_type_id    -- ItemType ID
@@ -783,7 +783,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
         list_item_role.get(item_type_id))
     if no_permission_show_hide and item_type and item_type.get('table_row'):
         for name_hide in list_hide:
-            item_type['table_row'] = hide_table_row_for_tsv(
+            item_type['table_row'] = hide_table_row_for_csv(
                 item_type.get('table_row'), name_hide)
 
     table_row_properties = item_type['table_row_map']['schema'].get(
@@ -1104,8 +1104,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
             doi_type_str,
             doi_str
         ])
-
-        records.attr_output[recid].append('')
+        # .edit Keep/Upgrade default is Keep
+        records.attr_output[recid].append('Keep')
         if has_pubdate:
             pubdate = record.get('pubdate', {}).get('attribute_value', '')
             records.attr_output[recid].append(pubdate)
@@ -1272,8 +1272,8 @@ def write_bibtex_files(item_types_data, export_path):
                 file.write(output)
 
 
-def write_tsv_files(item_types_data, export_path, list_item_role):
-    """Write TSV data to files.
+def write_csv_files(item_types_data, export_path, list_item_role):
+    """Write CSV data to files.
 
     @param item_types_data:
     @param export_path:
@@ -1281,7 +1281,7 @@ def write_tsv_files(item_types_data, export_path, list_item_role):
     @return:
     """
     for item_type_id in item_types_data:
-        headers, records = make_stats_tsv(
+        headers, records = make_stats_csv(
             item_type_id,
             item_types_data[item_type_id]['recids'],
             list_item_role)
@@ -1293,12 +1293,11 @@ def write_tsv_files(item_types_data, export_path, list_item_role):
         item_types_data[item_type_id]['options'] = options
         item_types_data[item_type_id]['data'] = records
         item_type_data = item_types_data[item_type_id]
-
-        with open('{}/{}.tsv'.format(export_path,
+        with open('{}/{}.csv'.format(export_path,
                                      item_type_data.get('name')),
-                  'w') as file:
-            tsv_output = package_export_file(item_type_data)
-            file.write(tsv_output.getvalue())
+                  'w', encoding="utf-8-sig") as file:
+            csv_output = package_export_file(item_type_data)
+            file.write(csv_output.getvalue())
 
 
 def check_item_type_name(name):
@@ -1374,7 +1373,7 @@ def export_items(post_data):
         if export_format == 'BIBTEX':
             write_bibtex_files(item_types_data, export_path)
         else:
-            write_tsv_files(item_types_data, export_path, list_item_role)
+            write_csv_files(item_types_data, export_path, list_item_role)
 
         # Create bag
         bagit.make_bag(export_path)
@@ -2112,7 +2111,7 @@ def get_options_and_order_list(item_type_id, item_type_mapping=None,
     return meta_options, item_type_mapping
 
 
-def hide_table_row_for_tsv(table_row, hide_key):
+def hide_table_row_for_csv(table_row, hide_key):
     """Get Options by item type id.
 
     :param hide_key:
@@ -2562,9 +2561,9 @@ def get_ignore_item(_item_type_id, item_type_mapping=None,
     return ignore_list
 
 
-def make_stats_tsv_with_permission(item_type_id, recids,
+def make_stats_csv_with_permission(item_type_id, recids,
                                    records_metadata, permissions):
-    """Prepare TSV data for each Item Types.
+    """Prepare CSV data for each Item Types.
 
     Arguments:
         item_type_id    -- ItemType ID
@@ -2934,7 +2933,9 @@ def make_stats_tsv_with_permission(item_type_id, recids,
             doi_str
         ])
 
-        records.attr_output[recid].append('')
+        # .edit Keep or Upgrade. default is Keep
+        records.attr_output[recid].append('Keep')
+
         records.attr_output[recid].append(record[
             'pubdate']['attribute_value'])
 

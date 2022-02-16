@@ -50,11 +50,11 @@ WEKO_AUTHORS_EXPORT_ENTRYPOINTS = {
     'check_status': '/admin/authors/export/check_status'
 }
 
-WEKO_AUTHORS_EXPORT_FILE_NAME = 'Creator_export_all.tsv'
+WEKO_AUTHORS_EXPORT_FILE_NAME = 'Creator_export_all.csv'
 WEKO_AUTHORS_EXPORT_CACHE_STATUS_KEY = 'weko_authors_export_status'
 WEKO_AUTHORS_EXPORT_CACHE_URL_KEY = 'weko_authors_exported_url'
 
-WEKO_AUTHORS_TSV_MAPPING = [
+WEKO_AUTHORS_CSV_MAPPING = [
     {
         'label_en': 'WEKO ID',
         'label_jp': 'WEKO ID',

@@ -27,6 +27,7 @@ from blinker import Namespace
 from flask import Blueprint, current_app, flash, jsonify, render_template, \
     request
 from flask_babelex import gettext as _
+from flask_login import login_required
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import AdminSettings
@@ -302,6 +303,7 @@ def journal_detail(index_id=0):
 
 
 @blueprint.route("/search/feedback_mail_list", methods=['GET'])
+@login_required
 def search_feedback_mail_list():
     """Render a check view."""
     result = get_feedback_mail_list()

@@ -170,7 +170,7 @@ msgstr ""
 msgid "Specified item does not consistency with DB item.<br/>{}"
 msgstr ""
 
-msgid "The TSV file could not be read. Make sure the file format is TSV and that the file is UTF-8 encoded."
+msgid "The CSV file could not be read. Make sure the file format is CSV and that the file is UTF-8 encoded."
 msgstr ""
 
 msgid "There is no data to import."
@@ -188,7 +188,7 @@ msgstr ""
 msgid "Specified Identifier Scheme '{}' does not exist."
 msgstr ""
 
-msgid "There is duplicated data in the TSV file."
+msgid "There is duplicated data in the CSV file."
 msgstr ""
 
 msgid "External author identifier exists in DB.<br/>{}"
@@ -206,7 +206,7 @@ msgstr ""
 msgid "Failed to import."
 msgstr ""
 
-msgid "The specified author has been deleted. Update author information with tsv content, but author remains deleted as it is."
+msgid "The specified author has been deleted. Update author information with csv content, but author remains deleted as it is."
 msgstr ""
 
 msgid "The author is linked to items and cannot be deleted."

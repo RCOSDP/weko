@@ -243,8 +243,8 @@ msgstr "以下のメタデータキーが重複しています。<br/>{}"
 msgid "Specified item does not consistency with DB item.<br/>{}"
 msgstr "指定された項目とDBの項目が一致しません。<br/>{}"
 
-msgid "The TSV file could not be read. Make sure the file format is TSV and that the file is UTF-8 encoded."
-msgstr "TSVファイルを読み込めませんでした。ファイル形式がTSVであること、またそのファイルがUTF-8でエンコードされているかを確認してください。"
+msgid "The CSV file could not be read. Make sure the file format is CSV and that the file is UTF-8 encoded."
+msgstr "CSVファイルを読み込めませんでした。ファイル形式がCSVであること、またそのファイルがUTF-8でエンコードされているかを確認してください。"
 
 msgid "There is no data to import."
 msgstr " インポートのデータがありません。"
@@ -261,8 +261,8 @@ msgstr "指定されたWEKO IDが存在していません。"
 msgid "Specified Identifier Scheme '{}' does not exist."
 msgstr "指定された外部著者ID 識別子'{}'が存在していません。"
 
-msgid "There is duplicated data in the TSV file."
-msgstr "TSVファイルの中に重複するデータがあります。"
+msgid "There is duplicated data in the CSV file."
+msgstr "CSVファイルの中に重複するデータがあります。"
 
 msgid "External author identifier exists in DB.<br/>{}"
 msgstr "外部著者識別子がDBに存在しています。<br/>{}"
@@ -279,8 +279,8 @@ msgstr "削除成功"
 msgid "Failed to import."
 msgstr "インポートに失敗しました。"
 
-msgid "The specified author has been deleted. Update author information with tsv content, but author remains deleted as it is."
-msgstr "指定された著者は削除済です。tsvの内容で著者情報を更新しますが、著者は削除されたままです。"
+msgid "The specified author has been deleted. Update author information with csv content, but author remains deleted as it is."
+msgstr "指定された著者は削除済です。csvの内容で著者情報を更新しますが、著者は削除されたままです。"
 
 msgid "The author is linked to items and cannot be deleted."
 msgstr "アイテムがリンクしているため、指定された著者は削除できません。"

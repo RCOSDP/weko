@@ -221,7 +221,7 @@ msgstr ""
 #: weko_theme/templates/weko_theme/footer_editor.html:27
 #: weko_theme/templates/weko_theme/footer_wysiwyg.html:27
 #, python-format
-msgid "<p>Powered by <a href=\"%(link)s\">CERN Data Centre & Invenio</a><p>"
+msgid "<p>Powered by <a href=\"%(link)s\">WEKO3</a><p>"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/header_editor.html:23
