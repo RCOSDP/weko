@@ -24,7 +24,10 @@ import time
 from xml.etree import ElementTree
 
 from blinker import Namespace
-from flask import Blueprint, current_app, jsonify, render_template, request
+from flask import Blueprint, current_app, flash, jsonify, render_template, \
+    request
+from flask_babelex import gettext as _
+from flask_login import login_required
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import AdminSettings
@@ -105,6 +108,17 @@ def search():
             current_app.config['WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS'])
 
     height = style.height if style else None
+    if request.values.get('search_type') in (
+        WEKO_SEARCH_TYPE_DICT['FULL_TEXT'],
+            WEKO_SEARCH_TYPE_DICT['KEYWORD']):
+        for _key in request.values:
+            _val = request.values.get(_key)
+            if '<' in _val or '>' in _val:
+                flash(
+                    _('"<" and ">" cannot be used for searching.'),
+                    category='warning'
+                )
+                break
     if 'item_link' in get_args:
         from weko_workflow.api import WorkActivity
         from weko_workflow.views import get_main_record_detail
@@ -289,6 +303,7 @@ def journal_detail(index_id=0):
 
 
 @blueprint.route("/search/feedback_mail_list", methods=['GET'])
+@login_required
 def search_feedback_mail_list():
     """Render a check view."""
     result = get_feedback_mail_list()

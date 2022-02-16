@@ -210,6 +210,8 @@ class ItemResource(ContentNegotiatedMethodView):
                     'recid', pid_value.split(".")[0])
                 deposit = WekoDeposit.get_record(pid.object_uuid)
 
+                upgrade_record = deposit.newversion(pid)
+
                 with db.session.begin_nested():
 
                     if upgrade_record and ".0" in pid_value:
@@ -229,8 +231,6 @@ class ItemResource(ContentNegotiatedMethodView):
                     pid_type='recid',
                     object_uuid=upgrade_record.model.id).one_or_none()
                 pid_value = pid.pid_value if pid else pid_value
-
-                upgrade_record = deposit.newversion(pid)
 
             # Saving ItemMetadata cached on Redis by pid
             datastore = RedisStore(redis.StrictRedis.from_url(

@@ -8,6 +8,8 @@
 
 """Admin views for invenio-accounts."""
 
+import os
+
 from flask import current_app, flash
 from flask_admin.actions import action
 from flask_admin.babel import lazy_gettext
@@ -16,6 +18,7 @@ from flask_admin.contrib.sqla.ajax import QueryAjaxModelLoader
 from flask_admin.form.fields import DateTimeField
 from flask_admin.model.fields import AjaxSelectMultipleField
 from flask_babelex import gettext as _
+from flask_security import current_user
 from flask_security.recoverable import send_reset_password_instructions
 from flask_security.utils import hash_password
 from invenio_db import db
@@ -35,7 +38,6 @@ class UserView(ModelView):
     """Flask-Admin view to manage users."""
 
     can_view_details = True
-    can_delete = False
 
     list_all = (
         'id', 'email', 'active', 'confirmed_at', 'last_login_at',
@@ -131,6 +133,24 @@ class UserView(ModelView):
 
             current_app.logger.exception(str(exc))  # pragma: no cover
             flash(_('Failed to activate users.'), 'error')  # pragma: no cover
+
+    _system_role = os.environ.get('INVENIO_ROLE_SYSTEM',
+                                  'System Administrator')
+
+    @property
+    def can_create(self):
+        """Check permission for creating."""
+        return self._system_role in [role.name for role in current_user.roles]
+
+    @property
+    def can_edit(self):
+        """Check permission for Editing."""
+        return self._system_role in [role.name for role in current_user.roles]
+
+    @property
+    def can_delete(self):
+        """Check permission for Deleting."""
+        return self._system_role in [role.name for role in current_user.roles]
 
 
 class RoleView(ModelView):

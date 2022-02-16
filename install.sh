@@ -1,6 +1,6 @@
 #!/bin/bash
 
-
+find . | grep -E "(__pycache__|\.eggs|\.pyc|\.pyo$)" | xargs rm -rf
 docker-compose down -v
 docker volume rm $(docker volume ls -f name=weko -q)
 docker-compose build --no-cache --force-rm

@@ -504,3 +504,63 @@ RECORDS_UI_TOMBSTONE_TEMPLATE = 'weko_records_ui/tombstone.html'
 
 WEKO_RECORDS_UI_LANG_DISP_FLG = True
 """ Enable function of switching metadata by language of metadata """
+
+WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE = [
+    "conference paper",
+    "data paper",
+    "departmental bulletin paper",
+    "editorial",
+    "journal article",
+    "newspaper",
+    "periodical",
+    "review article",
+    "software paper",
+    "article",
+    "book",
+    "book part",
+    "cartographic material",
+    "map",
+    "conference object",
+    "conference proceedings",
+    "conference poster",
+    "dataset",
+    "interview",
+    "image",
+    "still image",
+    "moving image",
+    "video",
+    "lecture",
+    "patent",
+    "internal report",
+    "report",
+    "research report",
+    "technical report",
+    "policy report",
+    "report part",
+    "working paper",
+    "data management plan",
+    "sound",
+    "thesis",
+    "bachelor thesis",
+    "master thesis",
+    "doctoral thesis",
+    "interactive resource",
+    "learning object",
+    "manuscript",
+    "musical notation",
+    "research proposal",
+    "software",
+    "technical documentation",
+    "workflow",
+    "other"
+]
+"""Define of resouce types list will be used for google scholar output."""
+
+WEKO_RECORDS_UI_GOOGLE_DATASET_DISP_FLG = True
+"""Enable function of google dataset metadata output."""
+
+WEKO_RECORDS_UI_DISPLAY_ONLINE_ANALYSIS_FLG = False
+""" Display online analysis button on item detail. """
+
+WEKO_RECORDS_UI_ONLINE_ANALYSIS_URL = 'https://binder.cs.rcos.nii.ac.jp/v2/weko3/'
+""" URL for online analysis button. """

@@ -234,11 +234,11 @@ def file_ui(
             check_and_create_usage_report(record, fileobj)
             db.session.commit()
         except SQLAlchemyError as ex:
-            current_app.logger.error('sqlalchemy error: ', ex)
+            current_app.logger.error("sqlalchemy error: {}".format(ex))
             db.session.rollback()
             abort(500)
         except BaseException as ex:
-            current_app.logger.error('Unexpected error: ', ex)
+            current_app.logger.error("Unexpected error: {}".format(ex))
             db.session.rollback()
             abort(500)
 
@@ -455,11 +455,11 @@ def file_download_onetime(pid, record, _record_file_factory=None, **kwargs):
                 return render_template(error_template, error=error_msg)
             db.session.commit()
         except SQLAlchemyError as ex:
-            current_app.logger.error('sqlalchemy error: ', ex)
+            current_app.logger.error("sqlalchemy error: {}".format(ex))
             db.session.rollback()
             return render_template(error_template, error=_("Unexpected error occurred."))
         except BaseException as ex:
-            current_app.logger.error('Unexpected error: ', ex)
+            current_app.logger.error("Unexpected error: {}".format(ex))
             db.session.rollback()
             return render_template(error_template, error=_("Unexpected error occurred."))
 

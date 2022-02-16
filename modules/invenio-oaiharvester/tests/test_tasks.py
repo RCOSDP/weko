@@ -17,15 +17,22 @@
 # along with Invenio; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
+"""Module tests."""
+
 import re
+from datetime import datetime
 
 import pytest
 import responses
+from invenio_db import db
+from weko_index_tree.models import Index
 
 from invenio_oaiharvester.errors import InvenioOAIHarvesterError
+from invenio_oaiharvester.models import HarvestSettings
 from invenio_oaiharvester.signals import oaiharvest_finished
-from invenio_oaiharvester.tasks import get_specific_records, \
-    list_records_from_dates
+from invenio_oaiharvester.tasks import create_indexes, event_counter, \
+    get_specific_records, list_records_from_dates, map_indexes, \
+    run_harvesting
 
 
 @responses.activate
@@ -83,3 +90,68 @@ def test_list_records_from_dates(app, sample_list_xml):
             )
     finally:
         oaiharvest_finished.disconnect(bar)
+
+
+@responses.activate
+def test_list_records_from_dates(app, sample_list_xml):
+    """Check harvesting of records from multiple setspecs."""
+    try:
+        with app.app_context():
+            index = Index()
+            db.session.add(index)
+            db.session.commit()
+
+            harvesting = HarvestSettings(
+                repository_name='name',
+                base_url='https://jpcoar.repo.nii.ac.jp/oai',
+                metadata_prefix='jpcoar_1.0',
+                index_id=index.id,
+                update_style='0',
+                auto_distribution='0')
+            db.session.add(harvesting)
+            db.session.commit()
+
+            # run_harvesting(
+            #     harvesting.id,
+            #     datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'),
+            #     {'ip_address': '0.0,0.0',
+            #         'user_agent': '',
+            #         'user_id': 1,
+            #         'session_id': '1'}
+            # )
+    finally:
+        return
+
+
+def test_create_indexes(app):
+    """Check harvesting of records from multiple setspecs."""
+    with app.app_context():
+        index = Index()
+        db.session.add(index)
+        db.session.commit()
+
+        create_indexes(index.id, {
+            '1': 'set_name_1',
+            '2': 'set_name_2'
+        })
+
+
+def test_map_indexes(app):
+    """Check harvesting of records from multiple setspecs."""
+    with app.app_context():
+        index = Index()
+        db.session.add(index)
+        db.session.commit()
+
+        map_indexes({
+            '1': 'set_name_1',
+            '2': 'set_name_2'
+        }, index.id)
+
+
+def test_event_counter(app):
+    """Check harvesting of records from multiple setspecs."""
+    counter = {}
+
+    event_counter('a', counter)
+    event_counter('a', counter)

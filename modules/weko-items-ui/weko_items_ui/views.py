@@ -128,7 +128,8 @@ def index(item_type_id=0):
             files=[]
         )
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error(
+            'Unexpected error: {}'.format(sys.exc_info()[0]))
     return abort(400)
 
 
@@ -180,7 +181,8 @@ def iframe_index(item_type_id=0):
             endpoints=endpoints
         )
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error(
+            'Unexpected error: {}'.format(sys.exc_info()[0]))
     return abort(400)
 
 
@@ -208,7 +210,7 @@ def iframe_save_model():
             activity = WorkActivity()
             activity.upt_activity_metadata(activity_id, json.dumps(data))
     except Exception as ex:
-        current_app.logger.exception(str(ex))
+        current_app.logger.exception("{}".format(ex))
         return jsonify(code=1, msg='Model save error')
     return jsonify(code=0, msg='Model save success at {} (utc)'.format(
         datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
@@ -274,7 +276,8 @@ def get_json_schema(item_type_id=0, activity_id=""):
         remove_excluded_items_in_json_schema(item_type_id, json_schema)
         return jsonify(json_schema)
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error(
+            'Unexpected error: {}'.format(sys.exc_info()[0]))
     return abort(400)
 
 
@@ -332,7 +335,8 @@ def get_schema_form(item_type_id=0, activity_id=''):
 
         return jsonify(schema_form)
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error(
+            'Unexpected error: {}'.format(sys.exc_info()[0]))
     return abort(400)
 
 
@@ -388,7 +392,8 @@ def items_index(pid_value='0'):
                 ttl_secs=300)
         return jsonify(data)
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error(
+            'Unexpected error: {}'.format(sys.exc_info()[0]))
     return abort(400)
 
 
@@ -507,7 +512,8 @@ def iframe_items_index(pid_value='0'):
                 ttl_secs=300)
         return jsonify(data)
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error(
+            'Unexpected error: {}'.format(sys.exc_info()[0]))
     return abort(400)
 
 
@@ -870,14 +876,14 @@ def prepare_edit_item():
             rtn = prepare_edit_workflow(post_activity, recid, deposit)
             db.session.commit()
         except SQLAlchemyError as ex:
-            current_app.logger.error('sqlalchemy error: ', ex)
+            current_app.logger.error('sqlalchemy error: {}'.format(ex))
             db.session.rollback()
             return jsonify(
                 code=err_code,
                 msg=_('An error has occurred.')
             )
         except BaseException as ex:
-            current_app.logger.error('Unexpected error: ', ex)
+            current_app.logger.error('Unexpected error: {}'.format(ex))
             db.session.rollback()
             return jsonify(
                 code=err_code,
@@ -1088,6 +1094,7 @@ def check_validation_error_msg(activity_id):
 @blueprint.route('/', methods=['GET'])
 @blueprint.route('/corresponding-activity', methods=['GET'])
 @login_required
+@item_permission.require(http_exception=403)
 def corresponding_activity_list():
     """Get corresponding usage & output activity list.
 
