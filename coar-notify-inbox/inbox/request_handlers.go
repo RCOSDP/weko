@@ -114,6 +114,7 @@ func InboxNotificationGet(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, "No RDF representation of this resource was found", 404)
 		}
+	/*
 	case "application/n-quads", "nq":
 		if notification.ActivityId != "" {
 			w.Header().Set("Content-Type", "application/n-quads")
@@ -128,6 +129,7 @@ func InboxNotificationGet(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, "No RDF representation of this resource was found", 404)
 		}
+	*/
 	default:
 		var page = NewNotificationPage(notification)
 		page.Title = "Notification"

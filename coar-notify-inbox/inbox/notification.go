@@ -3,11 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/knakk/rdf"
-	"github.com/piprate/json-gold/ld"
+	//"github.com/knakk/rdf"
+	//"github.com/piprate/json-gold/ld"
 	uuid "github.com/satori/go.uuid"
 	"html/template"
-	"strings"
+	//"strings"
 	"time"
 )
 
@@ -18,8 +18,8 @@ type Notification struct {
 	DeletedAt          *time.Time `sql:"index"`
 	Sender             string
 	Payload            []byte
-	PayloadNQuads      string
-	PayloadTurtle      string
+	//PayloadNQuads      string
+	//PayloadTurtle      string
 	ActivityId         string
 	HttpRequest        string
 	HttpResponseHeader string
@@ -44,7 +44,7 @@ func (notification *Notification) AddToProcessLog(message string) {
 func (notification *Notification) ExpressPayloadAsInterface() (interface{}, error) {
 	var err error
 	var payloadInterface interface{}
-	err = json.Unmarshal(notification.Payload, &(payloadInterface))//jsonを構造体に
+	err = json.Unmarshal(notification.Payload, &(payloadInterface))
 	if err != nil {
 		zapLogger.Error(err.Error())
 	}
@@ -68,6 +68,7 @@ func (notification *Notification) ProcessPayload() error {
 	notification.Payload, _ = json.MarshalIndent(payloadInterface, "", "  ")
 	payloadMap := payloadInterface.(map[string]interface{})
 	notification.ActivityId = fmt.Sprintf("%v", payloadMap["id"])
+	/*
 	proc := ld.NewJsonLdProcessor()
 	options := ld.NewJsonLdOptions("")
 	options.Format = "application/n-quads"
@@ -96,6 +97,8 @@ func (notification *Notification) ProcessPayload() error {
 		zapLogger.Error(err.Error())
 		return err
 	}
+
+	*/
 	return err
 }
 
@@ -112,7 +115,7 @@ func (notification *Notification) HTMLFormattedPayload() template.HTML {
 		return htmlPayload
 	}
 }
-
+/*
 func (notification *Notification) HTMLFormattedPayloadNQuads() template.HTML {
 	if notification.ActivityId != "" {
 		payloadNQuads := fmt.Sprintf("```\n%s\n```\n", notification.PayloadNQuads)
@@ -134,7 +137,7 @@ func (notification *Notification) HTMLFormattedPayloadTurtle() template.HTML {
 		return htmlPayload
 	}
 }
-
+*/
 func (notification *Notification) HTMLFormattedHttpHeaders() template.HTML {
 	markdown := "#### HTTP Request Headers\n"
 	markdown += fmt.Sprintf("```yaml\n%s\n```\n", notification.HttpRequest)

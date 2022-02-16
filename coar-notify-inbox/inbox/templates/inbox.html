@@ -26,12 +26,8 @@
                 {{ if ne .ActivityId "" }}
                     | <a href="{{ .Url }}.json">JSON-LD</a>
                 {{ end }}
-                {{ if ne .PayloadNQuads "" }}
-                    | <a href="{{ .Url }}.nq">N-Quads</a>
-                {{ end }}
-                {{ if ne .PayloadTurtle "" }}
-                    | <a href="{{ .Url }}.ttl">Turtle</a>
-                {{ end }}
+
+                
             </td>
         </tr>
     {{ end }}
