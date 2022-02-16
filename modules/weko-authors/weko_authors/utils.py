@@ -579,7 +579,7 @@ def get_count_item_link(pk_id):
     """Get count of item link of author."""
     count = 0
     query_q = {
-        "query": {"term": {"author_link": pk_id}},
+        "query": {"term": {"author_link.raw": pk_id}},
         "_source": ["control_number"]
     }
     result_itemCnt = RecordIndexer().client.search(

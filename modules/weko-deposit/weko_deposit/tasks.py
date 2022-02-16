@@ -202,7 +202,7 @@ def update_items_by_authorInfo(origin_list, target):
                             }
                         }, {
                             "terms": {
-                                "author_link": origin_list
+                                "author_link.raw": origin_list
                             }
                         }]
                 }

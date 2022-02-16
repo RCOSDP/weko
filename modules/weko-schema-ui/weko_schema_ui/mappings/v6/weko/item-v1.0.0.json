@@ -79,7 +79,7 @@
           "index": true,
           "fields": {
             "tree": {
-              "type": "text",
+              "type": "keyword",
               "fielddata": true,
               "analyzer": "paths"
             }
@@ -133,7 +133,7 @@
           }
         },
         "control_number": {
-          "type": "integer",
+          "type": "keyword",
           "index": true
         },
         "title": {
@@ -889,7 +889,13 @@
           ]
         },
         "author_link": {
-          "type": "text"
+          "type": "text",
+          "fields" : {
+            "raw" : {
+              "type" : "keyword",
+              "ignore_above" : 256
+            }
+          }
         },
         "volume": {
           "type": "text",
