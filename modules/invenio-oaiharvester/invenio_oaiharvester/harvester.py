@@ -1568,6 +1568,7 @@ class DDIMapper(BaseMapper):
 
             try:
                 list_result = []
+                list_temp = []
                 root_key = ''
                 for val_obj in vals:
                     temp_lst = []
@@ -1606,12 +1607,21 @@ class DDIMapper(BaseMapper):
                     if result_dict:
                         if isinstance(result_dict[root_key.replace("[]", "")],
                                       list):
-                            list_result.append(
-                                result_dict[root_key.replace("[]", "")][0])
+                            temp_data = result_dict[root_key.replace("[]", "")][0]
+                            if temp_data.values() \
+                                    and isinstance(list(temp_data.values())[0], str):
+                                if set(temp_data.values()) not in list_temp:
+                                    list_temp.append(set(temp_data.values()))
+                                    list_result.append(temp_data)
+                            else:
+                                if temp_data not in list_result:
+                                    list_result.append(temp_data)
                         elif isinstance(
                                 result_dict[root_key.replace("[]", "")], dict):
-                            list_result.append(
-                                result_dict[root_key.replace("[]", "")])
+                            temp_data = result_dict[root_key.replace("[]", "")]
+                            if set(temp_data.values()) not in list_temp:
+                                list_temp.append(set(temp_data.values()))
+                                list_result.append(temp_data)
                 return list_result, root_key.replace("[]", "")
             except Exception:
                 import traceback
