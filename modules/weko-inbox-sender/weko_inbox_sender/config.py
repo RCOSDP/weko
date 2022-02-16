@@ -101,7 +101,7 @@ class NOTIFY_ACTION(Enum):
     ENDORSEMENT = "coar-notify:EndorsementAction"
     
     
-INBOX_VERIFY_TLS_CERTIFICATE = True
+INBOX_VERIFY_TLS_CERTIFICATE = False
 """ If True, verify the server’s TLS certificate """
 
-INBOX_URL = 'https://172.19.0.7:8000/inbox'
+INBOX_URL = 'https://172.19.0.4:8000/inbox'

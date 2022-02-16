@@ -8,7 +8,8 @@
 from flask import Blueprint, Response, request, current_app
 
 from invenio_records.api import Record
-
+from weko_inbox_consumer.api import get_records_pid
+from weko_inbox_sender.api import get_record_permalink
 blueprint_signposting_api = Blueprint(
     'weko_signpostingserver_api',
     __name__
@@ -16,13 +17,13 @@ blueprint_signposting_api = Blueprint(
 
 # TODO: recordが存在しない場合の処理
 @blueprint_signposting_api.route('/records/<recid>/signposting', methods = ['HEAD'])
-def request(recid):
+def requested_signposting(recid):
     resp = Response()
-    host_url = request.url_root()
-    record = Record.get_record(record)
+    host_url = request.host_url
+    record = Record.get_record(get_records_pid(str(recid)))
     link = list()
     
-    permalink = get_record_permalink(record)
+    permalink = get_record_permalink(recid)
     if not permalink:
         permalink = '{hosturl}/records/{recid}'.\
                     format(hosturl=host_url, recid=recid)
@@ -43,20 +44,5 @@ def request(recid):
         link.append('<{url}> ; rel="describedby" ; type="application/xml" ; formats={formats}'.\
                     format(url = url,
                            formats = _object['namespace']))
-    link_str=["recid",str(recid)]
-    resp.headers['Link'] = ','.join(link_str)
+    resp.headers['Link'] = ','.join(link)
     return resp
-
-def get_record_permalink(record):
-    """
-    Recordインスタンスから識別子を取得する。
-    weko_records_ui.utils.get_record_permalinkと処理は一緒。
-    wekoのメソッドを使っていいなら排除
-    """
-    doi = record.pid_doi
-    cnri = record.pid_cnri
-    
-    if doi or cnri:
-        return doi.pid_value if doi else cnri.pid_value
-    
-    return 

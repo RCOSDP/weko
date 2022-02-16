@@ -5,6 +5,11 @@
 # WEKO-Inbox-Sender is free software; you can redistribute it and/or modify
 # it under the terms of the MIT License; see LICENSE file for more details.
 
+from invenio_pidstore.models import PersistentIdentifier,PIDStatus
+from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidstore.errors import PIDDoesNotExistError
+from invenio_db import db
+
 import ldnlib
 import re
 import uuid
@@ -30,15 +35,36 @@ def get_payloaddata_publish(record):
     :rtype: dict
     """
     data = dict()
-    data['audience'] = {'id':record['_deposit']['owner'],'type':'Person'}
-    data['actor'] = {'id':record['_deposit']['created_by'],'type':'Person'}
-    item_url = '{host_url}/records/{recid}'.format(host_url=get_url_root(), recid = record.get('id'))
-    pid = get_record_permalink(record)
-    data['object'] = {'id':item_url, 'ietf:cite-as':pid, 'type':['Page','sorg:WebPage']}
+    data['audience'] = {'id':str(record['_deposit'].get('owner')),'type':'Person'}
+    data['actor'] = {'id':str(record['_deposit'].get('created_by')),'type':'Person'}
+    recid_p = get_recid_p(record.get('recid'))
+    item_url = '{host_url}records/{recid}'.\
+        format(host_url=get_url_root(), recid = recid_p)
+    doi = get_record_permalink(recid_p)
+    print(doi)
+    data['object'] = {'id':item_url, 'ietf:cite-as':doi, 'type':['Page','sorg:WebPage']}
     data['context'] = data['object']
     data['origin'] = {'id':get_url_root(), 'inbox':get_url_inbox(), 'type':'Service'}
     data['target'] = data['origin']
+    print(data)
     return data
+
+def get_recid_p(recid):
+    # recidから"."以下を排除
+    try:
+        c_recid = PersistentIdentifier.get('recid', str(recid))
+    except PIDDoesNotExistError:
+        c_recid = None
+    if c_recid:
+        recid_version = PIDVersioning(child=c_recid)
+        if recid_version.has_parents:
+            print("has parents")
+            print(recid_version.parent.pid_value.replace("parent:",""))
+            return recid_version.parent.pid_value.replace("parent:","")
+        else:
+            print("not has parent")
+            return recid
+
 
 def create_payload(data, notification_pattern, notification_type):
     """Create a notification payload
@@ -55,9 +81,10 @@ def create_payload(data, notification_pattern, notification_type):
     """
     payload = getattr(PAYLOAD_TEMPLATE,notification_pattern).template
     for key, value in data.items():
-        payload[key] = vlaue
+        payload[key] = value
     payload["id"] = str(uuid.uuid4())
     payload["type"].append(notification_type)
+    print(payload)
     return payload
 
 def send_notification_inbox(payload):
@@ -70,19 +97,24 @@ def send_notification_inbox(payload):
     
     sender.send(inbox, payload,verify = INBOX_VERIFY_TLS_CERTIFICATE)
     
-def get_record_permalink(record):
+def get_record_permalink(recid_p):
     """
-    Recordインスタンスから識別子を取得する。存在しない場合アイテムurlを返す。
-    weko_records_ui.utils.get_record_permalinkと処理は一緒。
-    wekoのメソッドを使っていいなら排除
+    そのレコードの親要素のuuidを取得し、それに紐づいているdoiのuriを取得
     """
-    doi = record.pid_doi
-    cnri = record.pid_cnri
     
-    if doi or cnri:
-        return doi.pid_value if doi else cnri.pid_value
+    uuid_p=PersistentIdentifier.get('parent','parent:'+str(recid_p)).object_uuid
+    try:
+        return PersistentIdentifier.query.filter_by(
+            pid_type="doi",
+            object_uuid=uuid_p,
+            status=PIDStatus.REGISTERED
+        ).order_by(
+            db.desc(PersistentIdentifier.created)
+        ).first().pid_value
+    except PIDDoesNotExistError as e:
+        pass
     
-    return '{host_url}/records/{recid}'.format(host_url=get_url_root(),recid=record.get('id'))
+    return '{host_url}records/{recid}'.format(host_url=get_url_root(),recid=recid_p)
 
 def get_url_root():
     """Check a DOI is existed.
@@ -112,4 +144,5 @@ def get_url_inbox():
     inbox = current_app.config['INBOX_URL']
     return inbox
         
-        
+def create_url_inbox(uri):
+    return re.sub("https://(.*)/inbox",current_app.config['INBOX_URL'],uri)
