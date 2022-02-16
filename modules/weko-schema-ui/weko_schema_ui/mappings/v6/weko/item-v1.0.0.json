@@ -79,7 +79,7 @@
           "index": true,
           "fields": {
             "tree": {
-              "type": "keyword",
+              "type": "text",
               "fielddata": true,
               "analyzer": "paths"
             }
