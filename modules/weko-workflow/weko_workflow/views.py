@@ -601,6 +601,7 @@ def display_activity(activity_id="0"):
     res_check = check_authority_action(str(activity_id), int(action_id),
                                        is_auto_set_index_action,
                                        activity_detail.action_order)
+    
     getargs = request.args
     ctx = {'community': None}
     community_id = ""
