@@ -1127,8 +1127,8 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'site_info',
     'location',
     'facet-search',
-    'restricted_access'
-    'mailtemplates',
+    'restricted_access',
+    'mailtemplates'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
 

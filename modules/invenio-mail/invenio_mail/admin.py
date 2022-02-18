@@ -2,10 +2,10 @@
 
 """Admin model views for Mail sets."""
 
-import sys
 import json
+import sys
 
-from flask import abort, current_app, flash, request, jsonify
+from flask import abort, current_app, flash, jsonify, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_mail import Message
@@ -156,7 +156,7 @@ class MailTemplatesView(BaseView):
 
         :return:
         """
-        
+
         mail_templates = request.get_json()['mail_templates']
         status = True
         for m in mail_templates:
@@ -181,7 +181,7 @@ class MailTemplatesView(BaseView):
 
         :return:
         """
-        
+
         template_id = request.get_json()['template_id']
         status = MailTemplates.delete_by_id(template_id)
         if status:
@@ -217,8 +217,7 @@ mail_templates_adminview = {
     }
 }
 
-
 __all__ = (
     'mail_adminview',
-    'mail_templates_adminview',
+    'mail_templates_adminview'
 )
