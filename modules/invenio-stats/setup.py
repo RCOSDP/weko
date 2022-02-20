@@ -130,7 +130,7 @@ setup(
         'invenio_db.models': [
             'invenio_stats = invenio_stats.models',
         ],
-                'invenio_db.alembi': [
+        'invenio_db.alembic': [
             'invenio_stats = invenio_stats:alembic',
         ],
     },
