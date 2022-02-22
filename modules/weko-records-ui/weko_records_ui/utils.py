@@ -62,8 +62,10 @@ def check_items_settings(settings=None):
     """Check items setting."""
     if settings is None:
         settings = AdminSettings.get('items_display_settings')
-    current_app.config['EMAIL_DISPLAY_FLG'] = settings.items_display_email
-    current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
+    if hasattr(settings, 'item_display_email'):
+        current_app.config['EMAIL_DISPLAY_FLG'] = settings.items_display_email
+    if hasattr(settings, 'item_search_author'):
+        current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
     if hasattr(settings, 'item_display_open_date'):
         current_app.config['OPEN_DATE_DISPLAY_FLG'] = \
             settings.item_display_open_date
@@ -556,7 +558,10 @@ def is_show_email_of_creator(item_type_id):
     def item_setting_show_email():
         # Display email from setting item admin.
         settings = AdminSettings.get('items_display_settings')
-        is_display = settings.items_display_email
+        if hasattr(settings, 'item_display_email'):
+            is_display = settings.items_display_email
+        else:
+            is_display = False
         return is_display
 
     is_hide = item_type_show_email(item_type_id)

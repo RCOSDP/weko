@@ -206,6 +206,9 @@ msgstr ""
 msgid "Please specify the date with any format of YYYY-MM-DD, YYYY-MM, YYYY."
 msgstr ""
 
+msgid "Replace value of {} from {} to {}."
+msgstr ""
+
 #: weko_search_ui/utils.py:1967
 msgid "Please specify PubDate with YYYY-MM-DD."
 msgstr ""
