@@ -108,6 +108,9 @@ setup(
         'invenio_db.models': [
             'weko_authors = weko_authors.models',
         ],
+         'invenio_db.alembic': [
+            'weko_authors = weko_authors:alembic',
+        ],
         'invenio_search.mappings': [
             'authors = weko_authors.mappings',
         ],

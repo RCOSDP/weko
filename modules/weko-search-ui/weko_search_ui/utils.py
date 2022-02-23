@@ -2810,28 +2810,25 @@ def export_all(root_url):
             hide_meta_data_for_role=lambda a: True,
             current_language=lambda: True
         )
-        try:
-            headers, records = make_stats_csv_with_permission(
-                item_datas['item_type_id'],
-                item_datas['recids'],
-                item_datas['data'],
-                permissions)
-            keys, labels, is_systems, options = headers
-            item_datas['recids'].sort()
-            item_datas['keys'] = keys
-            item_datas['labels'] = labels
-            item_datas['is_systems'] = is_systems
-            item_datas['options'] = options
-            item_datas['data'] = records
-            item_type_data = item_datas
+        headers, records = make_stats_csv_with_permission(
+            item_datas['item_type_id'],
+            item_datas['recids'],
+            item_datas['data'],
+            permissions)
+        keys, labels, is_systems, options = headers
+        item_datas['recids'].sort()
+        item_datas['keys'] = keys
+        item_datas['labels'] = labels
+        item_datas['is_systems'] = is_systems
+        item_datas['options'] = options
+        item_datas['data'] = records
+        item_type_data = item_datas
 
-            csv_full_path = '{}/{}.csv'.format(export_path,
-                                               item_type_data.get('name'))
-            with open(csv_full_path, 'w', encoding="utf-8-sig") as file:
-                csv_output = package_export_file(item_type_data)
-                file.write(csv_output.getvalue())
-        except Exception as ex:
-            current_app.logger.error(ex)
+        csv_full_path = '{}/{}.csv'.format(export_path,
+                                           item_type_data.get('name'))
+        with open(csv_full_path, 'w', encoding="utf-8-sig") as file:
+            csv_output = package_export_file(item_type_data)
+            file.write(csv_output.getvalue())
 
     def _get_export_data(export_path, finish_item_types, retrys, retry_info={}):
         try:
@@ -2929,6 +2926,7 @@ def export_all(root_url):
             if retrys < _num_retry:
                 retrys += 1
                 current_app.logger.info('retry count: {}'.format(retrys))
+                db.session.rollback()
                 sleep(5)
                 result = _get_export_data(
                     export_path, finish_item_types, retrys, retry_info)
@@ -3336,17 +3334,20 @@ def get_filenames_from_metadata(metadata):
     count = 0
     for _id in file_meta_ids:
         for file in metadata[_id]:
+            current_app.logger.debug("file: {}".format(file))
             data = {
                 'id': '.metadata.{}[{}].filename'.format(_id, count),
                 'filename': file.get('filename', '')
             }
             if not file.get('filename'):
-                del file['filename']
+                if 'filename' in file:
+                    # if 'filename' is blank, then delete 'filename' property
+                    del file['filename']
+            else:
+                if not file.get('accessrole', None):
+                    file['accessrole'] = 'open_access'
             filenames.append(data)
             count += 1
-
-            if not file.get('accessrole', None):
-                file['accessrole'] = 'open_access'
 
         new_file_metadata = list(filter(lambda x: x, metadata[_id]))
         if new_file_metadata:
