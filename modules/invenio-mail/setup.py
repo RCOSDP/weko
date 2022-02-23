@@ -89,6 +89,9 @@ setup(
         'invenio_db.models': [
             'invenio_mail = invenio_mail.models',
         ],
+        'invenio_db.alembic': [
+            'invenio_mail = invenio_mail:alembic',
+        ],
         'invenio_celery.tasks': [
             'invenio_mail = invenio_mail.tasks',
         ],

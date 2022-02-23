@@ -29,7 +29,7 @@ services:
     sysctls:
       net.core.somaxconn: 1024
     #command: /bin/bash -c "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO -B -D -f /code/celeryd.log && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
-    command: /bin/bash -c "jinja2 /code/scripts/instance.cfg > /home/invenio/.virtualenvs/invenio/var/instance/conf/invenio.cfg; uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
+    command: /bin/bash -c "jinja2 /code/scripts/instance.cfg > /home/invenio/.virtualenvs/invenio/var/instance/conf/invenio.cfg && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
     environment:
       - PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       - VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
@@ -136,10 +136,12 @@ services:
   worker:
     restart: "always"
     image: weko3_b_web
+    depends_on:
+      - web
     sysctls:
       net.core.somaxconn: 1024
     #command: /bin/bash -c "rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO -B -D -f /code/celeryd.log && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
-    command: /bin/bash -c "jinja2 /code/scripts/instance.cfg > /home/invenio/.virtualenvs/invenio/var/instance/conf/invenio.cfg; rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=INFO -B -f /code/celeryd.log --concurrency=8"
+    command: /bin/bash -c "rm -f /code/celeryd.pid && celery worker -A invenio_app.celery --loglevel=INFO -B --concurrency=8"
     environment:
       - PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
       - VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
