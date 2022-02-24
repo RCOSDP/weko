@@ -12,8 +12,10 @@ func NewInbox(latest_get []string) Inbox {
 	var i = Inbox{}
 	i.Notifications = make([]Notification, 0) 
 	if len(latest_get) == 0{
+		zapLogger.Debug("find all")
 		db.Find(&i.Notifications)
 	}else{
+		zapLogger.Debug("find some")
 		db.Where("updated_at > ?", latest_get[0]).Find(&i.Notifications)
 	}
 	return i

@@ -73,7 +73,8 @@ func handlePostErrorCondition(err error, w http.ResponseWriter, code int, messag
 }
 
 func InboxGet(w http.ResponseWriter, r *http.Request) {
-	latest_get := r.Header["LatestGet"]
+	zapLogger.Debug(fmt.Sprint(r.Header))
+	latest_get := r.Header["Latestget"]
 	inbox := NewInbox(latest_get)
 	if CheckExistenceAcceptHeaderMimeValue(r, "application/ld+json") {//ヘッダーのAcceptの値にapplication/ld+jsonはある？
 		w.Header().Set("Content-Type", "application/ld+json")
@@ -114,7 +115,7 @@ func InboxNotificationGet(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, "No RDF representation of this resource was found", 404)
 		}
-	/*
+/*
 	case "application/n-quads", "nq":
 		if notification.ActivityId != "" {
 			w.Header().Set("Content-Type", "application/n-quads")
@@ -129,12 +130,20 @@ func InboxNotificationGet(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, "No RDF representation of this resource was found", 404)
 		}
-	*/
+*/
 	default:
 		var page = NewNotificationPage(notification)
 		page.Title = "Notification"
 		pageRender.HTML(w, http.StatusOK, "notification", page)
 	}
+}
+
+func InboxNotificationDelete(w http.ResponseWriter, r *http.Request) {
+	idString := chi.URLParam(r, "id")
+	id, _ := uuid.FromString(idString)
+	notification := Notification{}
+	db.Delete(&notification, id)
+	pageRender.Text(w, http.StatusOK, "delete :id=" + idString)
 }
 
 func GetPageBodyAsByteSliceFromFs(filename string) ([]byte, error) {
