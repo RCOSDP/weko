@@ -23,9 +23,9 @@ blueprint = Blueprint(
 )
 
 
-@blueprint.route("/")
+@blueprint.route('/')
 def index():
     """Render a basic view."""
     return render_template(
-        "weko_inbox_sender/index.html",
+        'weko_inbox_sender/index.html',
         module_name=_('WEKO-Inbox-Sender'))

@@ -24,9 +24,9 @@ blueprint = Blueprint(
 )
 
 
-@blueprint.route("/")
+@blueprint.route('/')
 def index():
     """Render a basic view."""
     return render_template(
-        "weko_signpostingserver/index.html",
+        'weko_signpostingserver/index.html',
         module_name=_('WEKO-Signpostingserver'))

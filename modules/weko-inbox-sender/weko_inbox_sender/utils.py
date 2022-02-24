@@ -28,20 +28,14 @@ def get_records_pid(pid):
     try:
         p_pid = PersistentIdentifier.get('parent', 'parent:' + str(pid))
     except PIDDoesNotExistError:
-        print("not found")
         p_pid = None
     if p_pid:
         pid_version = PIDVersioning(parent=p_pid)
-        print(pid_version.children)
         if pid_version.last_child:
-            print("found")
-            print(pid_version.last_child.object_uuid)
             return pid_version.last_child.object_uuid
         else:
-            print("not found")
-            print(p_pid.object_uuid)
             return p_pid.object_uuid
-        print("not last child")
+
 
 
 def get_record_permalink(recid_p):

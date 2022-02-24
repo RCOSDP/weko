@@ -19,7 +19,7 @@ class WekoInboxSender(object):
 
     def __init__(self, app=None):
         """Extension initialization.
-        
+
         :param app: The Flask application. (Default: ``None``)
         """
         if app:
@@ -41,6 +41,8 @@ class WekoInboxSender(object):
         for k in dir(config):
             if k.startswith('WEKO_INBOX_SENDER_'):
                 app.config.setdefault(k, getattr(config, k))
-                
+
         app.config.setdefault('INBOX_URL',
-                              getattr(config,'INBOX_URL'))
+                              getattr(config, 'INBOX_URL'))
+        app.config.setdefault('NGINX_HOST',
+                              getattr(config, 'NGINX_HOST'))

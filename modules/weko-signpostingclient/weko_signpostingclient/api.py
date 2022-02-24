@@ -8,7 +8,8 @@
 
 import requests
 import re
-from flask import current_app,url_for
+from flask import current_app,url_for, redirect
+
 
 def request_signposting(uri):
     """get data from signposting
@@ -20,6 +21,7 @@ def request_signposting(uri):
     data = list()
     try:
         r = requests.head(make_signposting_url(uri))
+
         r.raise_for_status()
 
     except requests.exceptions.RequestException as e:
@@ -28,8 +30,9 @@ def request_signposting(uri):
     else:
         link = r.headers['Link']
         data = create_data_from_signposting(link)
-    
+
     return data
+
 
 def make_signposting_url(uri):
     """make url for signposting from item url
@@ -38,11 +41,14 @@ def make_signposting_url(uri):
     :return: url for signposting
     :rtype: str
     """
-    #return uri+"/signposting"
-    import re
-    print(url_for("weko_signpostingserver_api.requested_signposting",recid="2"))
-    return re.sub("https://(.*)/records","https://172.19.0.6:443/records",uri)+"/signposting"
-    #return uri+"/signposting"
+    if ('localhost' in uri) or (current_app.config['WEB_HOST'] in uri):
+        return re.sub('https://(.*)/records',
+                      'https://'+current_app.config['NGINX_HOST']+'/records',
+                      uri
+                      ) + '/signposting'
+    else:
+        return uri
+
 
 def create_data_from_signposting(link):
     """create list data from string
