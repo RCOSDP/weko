@@ -27,6 +27,8 @@ blueprint = Blueprint(
 blueprint_ui_init=Blueprint(
     'weko_inbox_consumer_ui_init',
     __name__,
+    template_folder = 'templates',
+    static_folder='static',
 )
 
 @blueprint_ui_init.record_once
@@ -34,12 +36,12 @@ def init_ui(state):
     app = state.app
     app.register_blueprint(
         blueprint_api,
-        url_prefix="/check_inbox"
+        url_prefix='/check_inbox'
     )
 
-@blueprint.route("/")
+@blueprint.route('/')
 def index():
     """Render a basic view."""
     return render_template(
-        "weko_inbox_consumer/index.html",
+        'weko_inbox_consumer/index.html',
         module_name=_('WEKO-Inbox-Consumer'))
