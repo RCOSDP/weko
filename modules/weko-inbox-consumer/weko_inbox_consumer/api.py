@@ -5,29 +5,46 @@
 # WEKO-Inbox-Consumer is free software; you can redistribute it and/or modify
 # it under the terms of the MIT License; see LICENSE file for more details.
 
+import os
 from flask import Blueprint, request, make_response, jsonify,current_app
 from flask_login import current_user,login_required
+from flask_babelex import gettext as _
 import ldnlib
 from datetime import datetime,timedelta
-
+import json
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 
-from .config import DATE_FORMAT, DEFAULT_NOTIFY_RETENTION_DAYS, INBOX_VERIFY_TLS_CERTIFICATE
+from .config import DATE_FORMAT, \
+    DEFAULT_NOTIFY_RETENTION_DAYS, INBOX_VERIFY_TLS_CERTIFICATE
 from weko_signpostingclient.api import request_signposting
-from weko_inbox_sender.config import NOTIFY_ACTION
-from weko_inbox_sender.api import get_url_inbox,create_url_inbox
+from weko_inbox_sender.actions import NOTIFY_ACTION
+from weko_inbox_sender.utils import inbox_url
 
 from invenio_records.api import Record
-
+from invenio_records.models import RecordMetadata
 from weko_inbox_sender.api import publish_notification
+from weko_inbox_sender.utils import get_records_pid
+
 
 blueprint_api = Blueprint('weko_inbox_consumer',
-                      __name__,
-                      )
+                          __name__,
+                          )
 
-@blueprint_api.route('/publish', methods = ['GET'])
+
+@blueprint_api.route('/send_push', methods=['GET'])
+@login_required
+def send_notify():
+    record_api = Record.get_record(get_records_pid('3'))
+    record_meta = RecordMetadata.query.filter_by(id=get_records_pid('3')).first()
+    print(record_api)
+    print(record_meta.json)
+    publish_notification(record_api)
+    return make_response()
+
+
+@blueprint_api.route('/publish', methods=['GET'])
 @login_required
 def check_inbox_publish():
     """Check if there is an item publivcation notification in inbox
@@ -35,57 +52,43 @@ def check_inbox_publish():
     :return: response
     :rtype: Response
     """
-    
-    #record = Record.get_record(get_records_pid("2"))
-    #publish_notification(record)
-    #return "2"
+
     user_id = current_user.get_id()
-    print("user_id:"+str(user_id))
-    inbox=get_url_inbox()
-    print("inbox_url:"+inbox)
+    inbox = inbox_url()
     send_cookie = dict()
     latest_get = request.cookies.get('LatestGet', None)
-    print(latest_get)
     if latest_get:
-        send_cookie=latest_get
         latest_get_users = json.loads(latest_get)
+        send_cookie=latest_get_users
         if user_id in latest_get_users.keys():
             latest_get = latest_get_users[user_id]
         else:
             latest_get = None
-    if (latest_get == None) or ((datetime.now() - datetime.strptime(latest_get, DATE_FORMAT)).days >= DEFAULT_NOTIFY_RETENTION_DAYS):
+    if (latest_get == None) or \
+        ((datetime.now() - datetime.strptime(latest_get, DATE_FORMAT)).days >= DEFAULT_NOTIFY_RETENTION_DAYS):
         latest_get = (datetime.now()-timedelta(days=DEFAULT_NOTIFY_RETENTION_DAYS)).strftime(DATE_FORMAT)
-    notifications = get_notification_in_user_and_action(inbox, user_id, NOTIFY_ACTION.ENDORSEMENT.value, latest_get)
+    notifications = \
+        get_notification_in_user_and_action(inbox,
+                                            user_id,
+                                            NOTIFY_ACTION.ENDORSEMENT.value,
+                                            latest_get
+                                            )
     send_data = list()
     for notification in notifications:
         record_url = notification['object']['id']
         data = create_push_data(request_signposting(record_url))
         push_data = dict()
-        push_data["title"] = "notification title"
-        push_data["body"] = "notification body"
-        push_data["data"] = data
+        push_data['title'] = _('Item release')
+        push_data['body'] = _('Items awaiting approval have been published.')
+        push_data['data'] = data
         send_data.append(push_data)
-    print(send_data)
+        current_app.logger.debug(data)
     response = make_response(jsonify(send_data))
-    send_cookie[user_id]=datetime.now().strftime(DATE_FORMAT)
-    #response.set_cookie("LatestGet",value=json.dumps(send_cookie))
-    print(send_cookie)
+    send_cookie[user_id] = datetime.now().strftime(DATE_FORMAT)
+    response.set_cookie('LatestGet',value=json.dumps(send_cookie))
     return response
 
-def get_records_pid(pid):
-    # weko_records_ui.views.parent_view_methodの一部分参考
-    # TODO:pidがない時の処理未考案
-    try:
-        p_pid = PersistentIdentifier.get('parent', 'parent:' + str(pid))
-    except PIDDoesNotExistError:
-        p_pid = None
-    if p_pid:
-        pid_version = PIDVersioning(parent=p_pid)
-        if pid_version.last_child:
-            print(pid_version.last_child.object_uuid)
-            print(type(pid_version.last_child.object_uuid))
-            return pid_version.last_child.object_uuid
-        
+
 def get_notification_in_user_and_action(inbox, user, action, latest_get):
     """Create a list of item publication notifications filtered be date and user
 
@@ -99,11 +102,12 @@ def get_notification_in_user_and_action(inbox, user, action, latest_get):
     all_notify = get_notifications(inbox, latest_get)
     notifications = list()
     for n_url in all_notify:
-        notification = get_notification(create_url_inbox(n_url))
-        if (user == notification['audience']['id']) and (action in notification['type']):
+        notification = get_notification(inbox_url(n_url))
+        if (user == notification['audience']['id']) and \
+                (action in notification['type']):
             notifications.append(notification)
-    print(notifications)
     return notifications
+
 
 def get_notifications(inbox, latest_get):
     """Create a notification list in inbox, filtered by date
@@ -114,9 +118,15 @@ def get_notifications(inbox, latest_get):
     :rtype: list
     """
     consumer = ldnlib.Consumer(allow_localhost=True)
-    notifications = consumer.notifications(inbox,headers={"accept":"application/ld+json","LatestGet":latest_get},verify=INBOX_VERIFY_TLS_CERTIFICATE)
-    print(notifications)
+    notifications = \
+        consumer.notifications(inbox_url(inbox),
+                               headers={'accept':'application/ld+json',
+                                        'LatestGet':latest_get
+                                        },
+                               verify=INBOX_VERIFY_TLS_CERTIFICATE
+                               )
     return notifications
+
 
 def get_notification(uri):
     """Get notification payload from inbox
@@ -126,35 +136,40 @@ def get_notification(uri):
     :rtype: dict
     """
     consumer = ldnlib.Consumer(allow_localhost=True)
-    notification = consumer.notification(uri,headers={"accept":"application/ld+json"},verify=INBOX_VERIFY_TLS_CERTIFICATE)
-    print(notification)
+    notification = \
+        consumer.notification(uri,
+                              headers={'accept':'application/ld+json'},
+                              verify=INBOX_VERIFY_TLS_CERTIFICATE
+                              )
     return notification
 
+
 def create_push_data(data):
-    """Format the data obtained from signposting into the data to create push notification.
+    """Format the data obtained from signposting 
+    into the data to create push notification.
 
     :param dict data: data
     :return: data for notification
     :rtype: dict
     """
     push_data = dict()
-    metadatas=dict()
-    oad = current_app.config.get("OAISERVER_METADATA_FORMATS",{})
+    metadatas = dict()
+    oad = current_app.config.get('OAISERVER_METADATA_FORMATS', {})
     for d in data:
-        if d["rel"] == "cite-as":
-            push_data["cite-as"] = d["url"]
-        elif d["rel"] == "describedby":
-            if d["type"] == "application/json":
-                metadatas["json"] = d["url"]
-            elif d["type"] == "application/x-bibtex":
-                metadatas["bibtex"] = d["url"]
+        if d['rel'] == 'cite-as':
+            push_data['cite-as'] = d['url']
+        elif d['rel'] == 'describedby':
+            if d['type'] == 'application/json':
+                metadatas['json'] = d['url']
+            elif d['type'] == 'application/x-bibtex':
+                metadatas['bibtex'] = d['url']
             else:
-                metadatas[get_oai_format(oad,d['formats'])] = d["url"]
+                metadatas[get_oai_format(oad, d['formats'])] = d['url']
         else:
-            push_data[d["rel"]] = d["url"]
-    push_data["metadata"] = metadatas
-    print(push_data)
+            push_data[d['rel']] = d['url']
+    push_data['metadata'] = metadatas
     return push_data
+
 
 def get_oai_format(oad, namespace):
     """Output the format name from namespace uri.
@@ -168,3 +183,12 @@ def get_oai_format(oad, namespace):
         if _object['namespace'] == namespace:
             return _format
     return None
+
+
+@blueprint_api.route('/push_data', methods=['POST'])
+def get_data_from_push():
+    data = request.json
+    for key, value in data.items():
+        print(key)
+        print(value)
+    return make_response()
