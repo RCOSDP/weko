@@ -1,0 +1,54 @@
+# Translations template for weko-inbox-consumer.
+# Copyright (C) 2022 National Institute of Informatics
+# This file is distributed under the same license as the weko-inbox-consumer
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: weko-inbox-consumer 1.0.0.dev20220000\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2022-02-24 00:33+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.1\n"
+
+#: weko_inbox_consumer/admin.py:19
+msgid "Intervel Check Inbox was updated."
+msgstr ""
+
+#: weko_inbox_consumer/admin.py:35
+msgid "Setting"
+msgstr ""
+
+#: weko_inbox_consumer/admin.py:36
+msgid "Shibboleth"
+msgstr ""
+
+#: weko_inbox_consumer/api.py:86
+msgid "Item release"
+msgstr ""
+
+#: weko_inbox_consumer/api.py:87
+msgid "Items awaiting approval have been published."
+msgstr ""
+
+#. NOTE: This is a note to a translator.
+#: weko_inbox_consumer/ext.py:25
+msgid "A translation string"
+msgstr ""
+
+#: weko_inbox_consumer/views.py:47
+msgid "WEKO-Inbox-Consumer"
+msgstr ""
+
+#: weko_inbox_consumer/templates/weko_inbox_consumer/index.html:12
+#, python-format
+msgid "Welcome to %(module_name)s"
+msgstr ""
+
