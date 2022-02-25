@@ -75,8 +75,7 @@
   {% assets "weko_admin_quill_css" %}
   <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   <!-- start improve-ui project add -->
-  {% assets "weko_theme_css_improveui" %}
-  <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  <link href="{{ url_for('static', filename='css/weko_theme/improve_ui.min.css') }}" rel="stylesheet">
   <!-- end improve-ui project add -->
   {%- endblock css %}
   <!-- start tracking code -->
