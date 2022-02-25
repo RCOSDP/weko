@@ -72,23 +72,17 @@ def search_responsify(serializer, mimetype):
         mapping_dict = __get_item_type_mappings(item_type_id_lst)
         tasks = []
         for record in records:
-            task = asyncio.ensure_future(
-                sort_meta_data_by_options(
-                    record, settings,
-                    mapping_dict.get(str(
-                        record['_source'].get('item_type_id')
-                        or record['_source']['_item_metadata'].get(
-                            'item_type_id'))
-                    ),
-                    item_type_dict.get(str(
-                        record['_source'].get('item_type_id')
-                        or record['_source']['_item_metadata'].get(
-                            'item_type_id'))
-                    )
+            sort_meta_data_by_options(
+                record, settings,
+                mapping_dict.get(str(
+                    record['_source'].get('item_type_id')
+                    or record['_source']['_item_metadata'].get('item_type_id'))
+                ),
+                item_type_dict.get(str(
+                    record['_source'].get('item_type_id')
+                    or record['_source']['_item_metadata'].get('item_type_id'))
                 )
             )
-            tasks.append(task)
-        await asyncio.gather(*tasks)
 
     def __get_item_types(ids: list) -> dict:
         """Get item types base on list of item type id.
