@@ -3334,17 +3334,20 @@ def get_filenames_from_metadata(metadata):
     count = 0
     for _id in file_meta_ids:
         for file in metadata[_id]:
+            current_app.logger.debug("file: {}".format(file))
             data = {
                 'id': '.metadata.{}[{}].filename'.format(_id, count),
                 'filename': file.get('filename', '')
             }
             if not file.get('filename'):
-                del file['filename']
+                if 'filename' in file:
+                    # if 'filename' is blank, then delete 'filename' property
+                    del file['filename']
+            else:
+                if not file.get('accessrole', None):
+                    file['accessrole'] = 'open_access'
             filenames.append(data)
             count += 1
-
-            if not file.get('accessrole', None):
-                file['accessrole'] = 'open_access'
 
         new_file_metadata = list(filter(lambda x: x, metadata[_id]))
         if new_file_metadata:

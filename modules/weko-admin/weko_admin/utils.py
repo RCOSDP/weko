@@ -385,7 +385,10 @@ def make_stats_csv(raw_stats, file_type, year, month):
     # Special cases:
     # Write total for per index views
     if file_type == 'index_access':
+        write_report_csv_rows(writer, raw_stats.get(
+            'all'), file_type, raw_stats.get('index_name'))
         writer.writerow([_('Total Detail Views'), raw_stats.get('total')])
+
     elif file_type in ['billing_file_download', 'billing_file_preview']:
         write_report_csv_rows(writer, raw_stats.get('all'), file_type,
                               raw_stats.get('all_groups'))  # Pass all groups
