@@ -3932,9 +3932,7 @@ def check_doi_validation_not_pass(item_id, activity_id,
         return error_list
 
     sessionstore = RedisStore(redis.StrictRedis.from_url(
-        'redis://{host}:{port}/1'.format(
-            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+        current_app.config['ACCOUNTS_SESSION_REDIS_URL']))
     if error_list:
         sessionstore.put(
             'updated_json_schema_{}'.format(activity_id),

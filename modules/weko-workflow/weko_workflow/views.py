@@ -584,9 +584,7 @@ def display_activity(activity_id="0"):
             record = item
 
         sessionstore = RedisStore(redis.StrictRedis.from_url(
-            'redis://{host}:{port}/1'.format(
-                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+            current_app.config['ACCOUNTS_SESSION_REDIS_URL']))
         if sessionstore.redis.exists(
             'updated_json_schema_{}'.format(activity_id)) \
             and sessionstore.get(

@@ -553,9 +553,7 @@ def update_json_schema_by_activity_id(json_data, activity_id):
     :return: json schema
     """
     sessionstore = RedisStore(redis.StrictRedis.from_url(
-        'redis://{host}:{port}/1'.format(
-            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+        current_app.config['ACCOUNTS_SESSION_REDIS_URL']))
     if not sessionstore.redis.exists(
         'updated_json_schema_{}'.format(activity_id)) \
         and not sessionstore.get(
@@ -585,9 +583,7 @@ def update_schema_form_by_activity_id(schema_form, activity_id):
     :return: schema form
     """
     sessionstore = RedisStore(redis.StrictRedis.from_url(
-        'redis://{host}:{port}/1'.format(
-            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+        current_app.config['ACCOUNTS_SESSION_REDIS_URL']))
     if not sessionstore.redis.exists(
         'updated_json_schema_{}'.format(activity_id)) \
         and not sessionstore.get(
