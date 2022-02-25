@@ -9,7 +9,7 @@
 #
 # WEKO3 is distributed in the hope that it will be
 # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
@@ -19,30 +19,50 @@
 #}
 {%- if config.ACCOUNTS %}
 {%- if not current_user.is_authenticated %}
-  {% if session['guest_email'] %}
-    <input id="current_guest_email" type="hidden"
-           value="{{ session['guest_email'] }}"/>
-    <input id="current_guest_url" type="hidden"
-           value="{{ session['guest_url'] }}"/>
-  {% endif %}
+{% if session['guest_email'] %}
+<input id="current_guest_email" type="hidden" value="{{ session['guest_email'] }}" />
+<input id="current_guest_url" type="hidden" value="{{ session['guest_url'] }}" />
+{% endif %}
 
 <form class="navbar-form navbar-right navbar-form2">
 
-  <a href="{{url_for_security('login', next=request.path)}}" class="btn
-      btn-default btn-primary bg-transparent login-button"><i class="fa fa-sign-in"></i> {{_('Log in')}}</a>
-  {% if security.registerable %}<a href="{{url_for_security('register')}}"
-      type="submit" class="btn btn-default btn-primary bg-transparent
-      signup-button"><i class="fa fa-edit"></i> {{_('Sign up')}}</a>{% endif %}
+  <a href="{{url_for_security('login', next=request.path)}}" class="component__btn module__btn-gray module__btn-login">
+    <span class="component__btn-has-icon">
+      <span aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+        </svg>
+      </span>
+      <span>
+        {{_('Log in')}}
+      </span>
+  </a>
+  {% if security.registerable %}
+  <a href="{{url_for_security('register')}}" type="submit" class="component__btn module__btn-gray module__btn-login">
+    <span class="component__btn-has-icon">
+      <span aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+      </span>
+      <span>
+        {{_('Sign up')}}
+      </span>
+  </a>
+  {% endif %}
 </form>
 {%- else %}
 <div class="navbar-form navbar-right navbar-form2">
-{%- if config.USERPROFILES %}
+  {%- if config.USERPROFILES %}
   <div class="btn-group">
     <a class="btn btn-default btn-primary bg-transparent" href="{{ url_for('weko_user_profiles.profile')}}">
-      <input id="current_user_email" type="hidden" value="{{current_user.email}}"/>
+      <input id="current_user_email" type="hidden" value="{{current_user.email}}" />
       <i class="fa fa-user"></i> {{current_user.email}}
     </a>
-    <button type="button" class="btn btn-default dropdown-toggle bg-transparent" onclick="$(this).parent().toggleClass('open')">
+    <button type="button" class="btn btn-default dropdown-toggle bg-transparent"
+      onclick="$(this).parent().toggleClass('open')">
       <span class="caret"></span>
     </button>
     <ul class="dropdown-menu" role="menu">
@@ -53,9 +73,20 @@
       <li><a href="{{url_for_security('logout')}}"><i class="fa fa-sign-out"></i> {{_('Log out')}}</a></li>
     </ul>
   </div>
-{%- else %}
-<a href=" {{url_for_security('logout')}}" class="btn btn-default logout-button"><i class="fa fa-sign-out"></i> {{_('Log out')}}</a>
-{%- endif %}
+  {%- else %}
+  <a href=" {{url_for_security('logout')}}" class="component__btn module__btn-gray module__btn-login">
+    <span class="component__btn-has-icon">
+      <span aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+      </span>
+      <span>
+        {{_('Log out')}}
+      </span>
+  </a>
+  {%- endif %}
 </div>
 {%- endif %}
 {%- endif %}
