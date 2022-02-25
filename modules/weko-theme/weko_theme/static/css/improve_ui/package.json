@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "build": "lessc --clean-css less/__base.less dist/improve-ui.min.css"
+  },
+  "devDependencies": {
+    "less": "^4.1.2",
+    "less-plugin-autoprefixer": "^2.1.0",
+    "less-plugin-clean-css": "^1.5.1"
+  }
+}

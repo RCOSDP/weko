@@ -1,0 +1,109 @@
+.component__search-detail {
+  margin: 0 auto;
+  max-width: 72rem;
+}
+
+.component__search-detail .detail-search-close {
+  display: none;
+}
+
+.component__search-detail.expanded .detail-search-open {
+  display: none;
+}
+
+.component__search-detail.expanded .detail-search-close {
+  display: inline-flex;
+}
+
+.element__search-detail-form-input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.element__search-detail-form-input-group > * + * {
+  margin-top: 0.75rem;
+}
+
+.element__search-detail-form-input-group-btn {
+  display: flex;
+  flex-direction: column;
+}
+
+.element__search-detail-form-input-group-btn > * + * {
+  margin-top: 0.75rem;
+}
+
+.element__search-detail-form-input-group-q {
+  flex-basis: 100%;
+}
+
+.element__search-detail-form-search-type {
+  margin-top: 0.75rem;
+  margin-left: 0.25rem;
+  display: flex;
+}
+
+.element__search-detail-form-search-type > * + * {
+  margin-left: 1rem;
+}
+
+.element__search-detail-form-search-type-label {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.element__search-detail-form-search-type-label > [type="radio"],
+.element__search-detail-form-search-type-label > [type="checkbox"] {
+  margin-right: 0.5rem;
+}
+
+.module__search-input {
+  .base-input-style;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  width: 100%;
+}
+
+.module__search-btn {
+  .base-btn-style;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (min-width: 768px) {
+  .element__search-detail-form-input-group {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
+
+  .element__search-detail-form-input-group > * + * {
+    margin-top: 0;
+    margin-left: 0.75rem;
+  }
+
+  .element__search-detail-form-input-group-q {
+    flex-basis: calc(100% - 10rem - 10rem - 0.75rem - 0.75rem);
+  }
+
+  .element__search-detail-form-input-group-btn {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .element__search-detail-form-input-group-btn > * + * {
+    margin-top: 0;
+    margin-left: 0.75rem;
+  }
+
+  .element__search-detail-form-input-group-btn-item {
+    min-width: 10rem;
+  }
+
+  .element__search-detail-form-search-type-label {
+    font-size: 1rem;
+  }
+}
