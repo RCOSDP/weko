@@ -80,7 +80,7 @@ css_improveui = Bundle(
     'css/improve_ui/dist/improve-ui.min.css',
     output='gen/weko_theme_improveui.%(version)s.css',
 )
-"""improve-ui CSS."""
+"""improve ui CSS."""
 
 js_treeview = Bundle(
     'js/weko_theme/inline.bundle.js',
