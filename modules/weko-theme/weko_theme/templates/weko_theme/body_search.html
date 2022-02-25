@@ -18,45 +18,67 @@
 # MA 02111-1307, USA.
 #}
 
-<div id="search_detail" style="height: 100%" ng-controller="searchDetailCtrl">
-  <form id="search-form" action="/search">
-    <div class="row row-4" style="height: 100%">
-      <div class="col-sm-6 col-md-6 col-lg-6
-      col-sm-offset-3 col-md-offset-3 col-lg-offset-3">
-        <div id="search_simple" id="simple-search-btn" class="input-group">
-          <label for="q" hidden>{{_('Search Keyword')}}</label>
-          <input class="form-control" type="text" id="q" name="q" placeholder="{{_('Type and press enter to search')}}"
-            ng-model="search_q">
-          <input class="form-control" type="hidden" id="community" name="community" value="{{community_id}}">
-          <div class="input-group-btn">
-            <button id="top-search-btn" type="submit" class="btn btn-primary">
-              <i class="fa fa-search fa-lg">&nbsp</i>
+<div id="search_detail" class="component__search-detail" ng-controller="searchDetailCtrl">
+  <form id="search-form" class="element__search-detail-form" action="/search">
+    <div id="search_simple" id="simple-search-btn" class="element__search-detail-form-input-group">
+      <div class="element__search-detail-form-input-group-q">
+        <label for="q" class="sr-only">{{_('Search Keyword')}}</label>
+        <input class="form-control component__input module__search-input" type="text" id="q" name="q"
+          placeholder="{{_('Type and press enter to search')}}" ng-model="search_q">
+        <input class="form-control" type="hidden" id="community" name="community" value="{{community_id}}">
+        <div id="search_type" class="element__search-detail-form-search-type">
+          <label class="element__search-detail-form-search-type-label">
+            <input type="radio" name="search_type" id="search_type_fulltext" value="0" ng-value="0"
+              ng-model="search_type"> {{_('Full text')}}
+          </label>
+          <label class="element__search-detail-form-search-type-label">
+            <input type="radio" name="search_type" id="search_type_keyword" value="1" ng-value="1"
+              ng-model="search_type"> {{_('Keyword')}}
+          </label>
+        </div>
+      </div>
+      <div class="element__search-detail-form-input-group-btn">
+        <div class="element__search-detail-form-input-group-btn-item">
+          <button id="top-search-btn" type="submit" class="component__btn module__btn-primary module__search-btn">
+            <span class="component__btn-has-icon">
+              <span aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </span>
               <span id="simple-search-txt">{{_('Search')}}</span>
-            </button>
-          </div>
-          <div id="search_detail" class="input-group-btn">
-            <button id="detail_search_main" class="btn btn-info" type="button">
-              <i class="fa fa-angle-down fa-lg detail-search-open">&nbsp</i>
-              <span class="detail-search-open">{{_('Advanced')}}</span>
-              <i class="fa fa-angle-up fa-lg detail-search-close">&nbsp</i>
-              <span class="detail-search-close">{{_('Close')}}</span>
-            </button>
-          </div>
+            </span>
+          </button>
+        </div>
+        <div id="search_detail" class="element__search-detail-form-input-group-btn-item">
+          <button id="detail_search_main" class="component__btn module__btn-info module__search-btn" type="button">
+            <span class="detail-search-open component__btn-has-icon">
+              <span aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+              <span>{{_('Advanced')}}</span>
+            </span>
+            <span class="detail-search-close component__btn-has-icon">
+              <span aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                </svg>
+              </span>
+              <span>{{_('Close')}}</span>
+            </span>
+          </button>
         </div>
       </div>
     </div>
     <div class="row row-4 detail-lable">
       <div class="col-sm-6 col-md-6 col-lg-6 col-lg-offset-3">
-        <div id="search_type" class="form-inline ten-pixel-margin">
-          <label class="radio-inline">
-            <input type="radio" name="search_type" id="search_type_fulltext" value="0" ng-value="0"
-              ng-model="search_type"> {{_('Full text')}}
-          </label>
-          <label class="radio-inline">
-            <input type="radio" name="search_type" id="search_type_keyword" value="1" ng-value="1"
-              ng-model="search_type"> {{_('Keyword')}}
-          </label>
-        </div>
+
       </div>
     </div>
   </form>
