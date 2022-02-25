@@ -77,8 +77,8 @@ css_widget = Bundle(
 """Widget CSS."""
 
 css_improveui = Bundle(
-    'css/improve_ui/dist/improve-ui.min.css',
-    output='gen/weko_theme_improveui.%(version)s.css',
+    'css/weko_theme/improve_ui.min.css',
+    output='gen/weko_theme_improve_ui.%(version)s.css',
 )
 """improve ui CSS."""
 
