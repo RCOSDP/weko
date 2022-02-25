@@ -1892,7 +1892,7 @@ class UsageReport:
         return activities
 
     def send_reminder_mail(self, activities_id: list,
-                           mail_id: str = None, activities: list = None):
+                           mail_id: str = None, activities: list = None, forced_send = False):
         """Send reminder email to user.
 
         Args:
@@ -1943,10 +1943,11 @@ class UsageReport:
             self.__mail_info_lst[-1]['mail_recipient'] = \
                 self.__mail_info_lst[-1]['restricted_mail_address']
         is_sendmail_success = True
-        for mail_info in self.__mail_info_lst:
-            if not self.__process_send_mail(mail_info, mail_id):
-                is_sendmail_success = False
-                break
+        if activity.extra_info.get('is_guest') or forced_send:
+            for mail_info in self.__mail_info_lst:
+                if not self.__process_send_mail(mail_info, mail_id):
+                    is_sendmail_success = False
+                    break
         return is_sendmail_success
 
     @staticmethod
