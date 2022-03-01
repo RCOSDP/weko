@@ -8,6 +8,7 @@ from invenio_db import db
 
 
 def get_recid_p(recid):
+    print("called get_recid_p")
     # recidから"."以下を排除
     try:
         c_recid = PersistentIdentifier.get('recid', str(recid))
@@ -35,7 +36,6 @@ def get_records_pid(pid):
             return pid_version.last_child.object_uuid
         else:
             return p_pid.object_uuid
-
 
 
 def get_record_permalink(recid_p):

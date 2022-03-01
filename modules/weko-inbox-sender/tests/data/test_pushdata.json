@@ -1,0 +1,20 @@
+{
+    "audience": {"id": "1", "type": "Person"},
+    "actor": {"id": "1", "type": "Person"},
+    "object": {"id": "http://test.com/records/2",
+               "ietf:cite-as": "http://test.com/records/2",
+               "type": ["Page", "sorg:WebPage"]
+               },
+    "context": {"id": "http://test.com/records/2",
+                "ietf:cite-as": "http://test.com/records/2",
+                "type": ["Page", "sorg:WebPage"]
+                },
+    "origin": {"id": "http://test.com/",
+               "inbox": "http://test.com/inbox",
+               "type": "Service"
+               },
+    "target": {"id": "http://test.com/",
+               "inbox": "http://test.com/inbox",
+               "type": "Service"
+               }
+}

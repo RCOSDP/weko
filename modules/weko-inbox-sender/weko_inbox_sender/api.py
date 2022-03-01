@@ -5,6 +5,7 @@
 # WEKO-Inbox-Sender is free software; you can redistribute it and/or modify
 # it under the terms of the MIT License; see LICENSE file for more details.
 
+from flask import current_app
 from flask_login import current_user
 
 import ldnlib
@@ -50,7 +51,7 @@ def get_payloaddata_publish(record):
     data['origin'] = \
         {'id': root_url, 'inbox': root_url+'inbox', 'type': 'Service'}
     data['target'] = data['origin']
-    print(data)
+    current_app.logger.debug(data)
     return data
 
 

@@ -18,20 +18,18 @@ import shutil
 import tempfile
 import uuid
 import json
-import copy
 from os.path import dirname, join
 
 import pytest
 from flask import Flask
 from flask_babelex import Babel
-from utils import create_record
+from helper import create_record
 from invenio_accounts import InvenioAccounts
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_records import InvenioRecords
 from invenio_records import Record
 from invenio_pidstore import InvenioPIDStore
-from invenio_pidstore import current_pidstore
 from invenio_accounts.testutils import create_test_user
 from sqlalchemy_utils.functions import create_database, database_exists
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -61,6 +59,22 @@ def test_data():
     with open(join(dirname(__file__), path)) as fp:
         records = json.load(fp)
     yield records
+
+
+@pytest.yield_fixture(scope='session')
+def test_payload():
+    path = 'data/test_payload.json'
+    with open(join(dirname(__file__), path)) as fp:
+        payload = json.load(fp)
+    yield payload
+
+
+@pytest.yield_fixture(scope='session')
+def test_pushdata():
+    path = 'data/test_pushdata.json'
+    with open(join(dirname(__file__), path)) as fp:
+        payload = json.load(fp)
+    yield payload
 
 
 @pytest.yield_fixture()
@@ -126,7 +140,7 @@ def test_pid(db):
 
     relation_p2 = PIDRelation.create(pid2_p, pid2, 2)
 
-    pids = [(pid1, uuid1), (pid1_1, uuid1_1), (pid2, uuid2), (doi1, uuid1), (pid1_p, uuid1)]
+    pids = [(pid1, uuid1)]
     db.session.commit()
     yield pids
 
@@ -144,7 +158,7 @@ def base_app(instance_path):
         ),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         TESTING=True,
-        PRESERVE_CONTEXT_ON_EXCEPTION = False,
+        PRESERVE_CONTEXT_ON_EXCEPTION=False,
         WEB_HOST="127.0.0.1"
     )
     InvenioAccounts(app_)
