@@ -13,7 +13,6 @@ from __future__ import absolute_import, print_function
 from flask_babelex import gettext as _
 
 from . import config
-from .api import blueprint_signposting_api
 
 
 class WekoSignpostingserver(object):
@@ -31,7 +30,6 @@ class WekoSignpostingserver(object):
     def init_app(self, app):
         """Flask application initialization."""
         self.init_config(app)
-        app.register_blueprint(blueprint_signposting_api, url_prefix='/')
         app.extensions['weko-signpostingserver'] = self
 
     def init_config(self, app):

@@ -42,13 +42,15 @@ def make_signposting_url(uri):
     :return: url for signposting
     :rtype: str
     """
+    #return uri
     if ('localhost' in uri) or (current_app.config['WEB_HOST'] in uri):
         return re.sub('https://(.*)/records',
                       'https://'+current_app.config['NGINX_HOST']+'/records',
                       uri
-                      ) + '/signposting'
+                      )
     else:
-        return uri + '/signposting'
+        return uri
+
 
 
 def create_data_from_signposting(link):

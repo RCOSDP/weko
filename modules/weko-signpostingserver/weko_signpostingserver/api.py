@@ -8,23 +8,34 @@
 from flask import Blueprint, Response, request, current_app, redirect
 
 from invenio_records.api import Record
-from weko_inbox_sender.utils import get_record_permalink, get_records_pid
-blueprint_signposting_api = Blueprint(
-    'weko_signpostingserver_api',
-    __name__
-)
+from weko_inbox_sender.utils import get_record_permalink
 
 
-# TODO: recordが存在しない場合の処理
-@blueprint_signposting_api.route('/records/<recid>/signposting',
-                                 methods=['HEAD']
-                                 )
-def requested_signposting(recid):
+def requested_signposting(pid, record, template=None, **kwargs):
+    """_summary_
+
+    Plug this method into your ``RECORDS_UI_ENDPOINTS`` configuration:
+    .. code-block:: python
+        RECORDS_UI_ENDPOINTS = dict(
+            recid_signposting=dict(
+                pid_type='recid',
+                route='/records/<pid_value>',
+                view_imp='weko_signpostingserver.api.requested_signposting',
+                methods=['HEAD']
+            ),
+            recid_signposting=dict(
+                pid_type='recid',
+                route='/records/<pid_value>',
+                # ...
+        )
+    In addition, please place it above the one that has 
+    the same route and uses the GET method.
+    """
+    
     resp = Response()
     host_url = outside_url(request.host_url)
-    record = Record.get_record(get_records_pid(str(recid)))
     link = list()
-
+    recid = record['recid']
     permalink = outside_url(get_record_permalink(recid))
     if not permalink:
         permalink = '{hosturl}records/{recid}'.\
