@@ -6,11 +6,11 @@
 # it under the terms of the MIT License; see LICENSE file for more details.
 
 import os
-from flask import Blueprint, request, make_response, jsonify,current_app
-from flask_login import current_user,login_required
+from flask import Blueprint, request, make_response, jsonify, current_app
+from flask_login import current_user, login_required
 from flask_babelex import gettext as _
 import ldnlib
-from datetime import datetime,timedelta
+from datetime import datetime, timedelta
 import json
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -36,16 +36,16 @@ blueprint_api = Blueprint('weko_inbox_consumer',
 @blueprint_api.route('/send_push', methods=['GET'])
 @login_required
 def send_notify():
-    record_api = Record.get_record(get_records_pid('3'))
-    record_meta = RecordMetadata.query.filter_by(id=get_records_pid('3')).first()
-    print(record_api)
-    print(record_meta.json)
+    record_api = Record.get_record(get_records_pid('6'))
+    record_meta = \
+        RecordMetadata.query.filter_by(
+            id=get_records_pid('3')
+            ).first()
     publish_notification(record_api)
     return make_response()
 
 
 @blueprint_api.route('/publish', methods=['GET'])
-@login_required
 def check_inbox_publish():
     """Check if there is an item publivcation notification in inbox
 
@@ -57,22 +57,27 @@ def check_inbox_publish():
     inbox = inbox_url()
     send_cookie = dict()
     latest_get = request.cookies.get('LatestGet', None)
+    latest_get = None
     if latest_get:
         latest_get_users = json.loads(latest_get)
-        send_cookie=latest_get_users
+        send_cookie = latest_get_users
         if user_id in latest_get_users.keys():
             latest_get = latest_get_users[user_id]
         else:
             latest_get = None
-    if (latest_get == None) or \
-        ((datetime.now() - datetime.strptime(latest_get, DATE_FORMAT)).days >= DEFAULT_NOTIFY_RETENTION_DAYS):
-        latest_get = (datetime.now()-timedelta(days=DEFAULT_NOTIFY_RETENTION_DAYS)).strftime(DATE_FORMAT)
+    if (latest_get is None) or \
+        ((datetime.now() - datetime.strptime(latest_get, DATE_FORMAT))
+         .days >= DEFAULT_NOTIFY_RETENTION_DAYS):
+        latest_get = \
+            (datetime.now()-timedelta(days=DEFAULT_NOTIFY_RETENTION_DAYS))\
+            .strftime(DATE_FORMAT)
     notifications = \
-        get_notification_in_user_and_action(inbox,
-                                            user_id,
-                                            NOTIFY_ACTION.ENDORSEMENT.value,
-                                            latest_get
-                                            )
+        get_notification_filter(inbox,
+                                latest_get,
+                                user=user_id,
+                                action=NOTIFY_ACTION.ENDORSEMENT.value,
+                                target=request.host_url
+                                )
     send_data = list()
     for notification in notifications:
         record_url = notification['object']['id']
@@ -81,20 +86,21 @@ def check_inbox_publish():
         push_data['title'] = _('Item release')
         push_data['body'] = _('Items awaiting approval have been published.')
         push_data['data'] = data
+        push_data['url'] = record_url
         send_data.append(push_data)
         current_app.logger.debug(data)
     response = make_response(jsonify(send_data))
     send_cookie[user_id] = datetime.now().strftime(DATE_FORMAT)
-    response.set_cookie('LatestGet',value=json.dumps(send_cookie))
+    response.set_cookie('LatestGet', value=json.dumps(send_cookie))
     return response
 
 
-def get_notification_in_user_and_action(inbox, user, action, latest_get):
+def get_notification_filter(inbox, latest_get, user, action, target):
     """Create a list of item publication notifications filtered be date and user
 
     :param str inbox: uri of inbox
     :param str user: now user
-    :param str action: notification action 
+    :param str action: notification action
     :param str latest_get: Last acquisition date
     :return: notification list
     :rtype: list
@@ -103,8 +109,11 @@ def get_notification_in_user_and_action(inbox, user, action, latest_get):
     notifications = list()
     for n_url in all_notify:
         notification = get_notification(inbox_url(n_url))
-        if (user == notification['audience']['id']) and \
-                (action in notification['type']):
+        if notification.get('audience') is None:
+            continue
+        if (action in notification['type']) and \
+                (notification['target']['id'] == target) and \
+                (user == notification['audience']['id']):
             notifications.append(notification)
     return notifications
 
@@ -120,8 +129,8 @@ def get_notifications(inbox, latest_get):
     consumer = ldnlib.Consumer(allow_localhost=True)
     notifications = \
         consumer.notifications(inbox_url(inbox),
-                               headers={'accept':'application/ld+json',
-                                        'LatestGet':latest_get
+                               headers={'accept': 'application/ld+json',
+                                        'LatestGet': latest_get
                                         },
                                verify=INBOX_VERIFY_TLS_CERTIFICATE
                                )
@@ -138,14 +147,15 @@ def get_notification(uri):
     consumer = ldnlib.Consumer(allow_localhost=True)
     notification = \
         consumer.notification(uri,
-                              headers={'accept':'application/ld+json'},
+                              headers={'accept': 'application/ld+json'},
                               verify=INBOX_VERIFY_TLS_CERTIFICATE
                               )
+    print(notification)
     return notification
 
 
 def create_push_data(data):
-    """Format the data obtained from signposting 
+    """Format the data obtained from signposting
     into the data to create push notification.
 
     :param dict data: data
@@ -188,7 +198,5 @@ def get_oai_format(oad, namespace):
 @blueprint_api.route('/push_data', methods=['POST'])
 def get_data_from_push():
     data = request.json
-    for key, value in data.items():
-        print(key)
-        print(value)
+    current_app.logger.debug(data)
     return make_response()

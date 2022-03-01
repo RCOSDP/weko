@@ -41,4 +41,4 @@ class WekoInboxConsumer(object):
             )
         for k in dir(config):
             if k.startswith('WEKO_'):
-                app.config.setdefault(k,getattr(config, k))
+                app.config.setdefault(k, getattr(config, k))

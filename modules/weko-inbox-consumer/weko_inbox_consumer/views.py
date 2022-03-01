@@ -17,6 +17,7 @@ from flask_babelex import gettext as _
 
 from .api import blueprint_api
 
+
 blueprint = Blueprint(
     'weko_inbox_consumer',
     __name__,
@@ -24,12 +25,14 @@ blueprint = Blueprint(
     static_folder='static',
 )
 
-blueprint_ui_init=Blueprint(
+
+blueprint_ui_init = Blueprint(
     'weko_inbox_consumer_ui_init',
     __name__,
-    template_folder = 'templates',
+    template_folder='templates',
     static_folder='static',
 )
+
 
 @blueprint_ui_init.record_once
 def init_ui(state):
@@ -38,6 +41,7 @@ def init_ui(state):
         blueprint_api,
         url_prefix='/check_inbox'
     )
+
 
 @blueprint.route('/')
 def index():

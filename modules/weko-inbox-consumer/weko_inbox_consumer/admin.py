@@ -1,7 +1,7 @@
 import sys
 
 from flask import abort, current_app, flash, request
-from flask_admin import BaseView,expose
+from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from werkzeug.local import LocalProxy
 
@@ -15,15 +15,15 @@ class CheckIntervalSettingView(BaseView):
         try:
             form = request.form.get('submit', None)
             if form == 'save_checkinterval_settings':
-                check_interval = request.form.get('save_checkinterval_setting', 30000)
-                _app.config['WEKO_CHECK_INBOX_INTERVAL']=check_interval
+                check_interval = \
+                    request.form.get('save_checkinterval_setting', 30000)
+                _app.config['WEKO_CHECK_INBOX_INTERVAL'] = check_interval
                 flash(
                     _('Intervel Check Inbox was updated.'),
                     category='success')
-            
             return self.render(
                 current_app.config['WEKO_INBOX_CONSUMER_SETTING_TEMPLATE'],
-                check_interval = check_interval
+                check_interval=check_interval
                 )
         except BaseException:
             current_app.logger.error(
