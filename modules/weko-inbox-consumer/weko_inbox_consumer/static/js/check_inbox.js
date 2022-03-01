@@ -1,18 +1,17 @@
 
 $("#check_push").on("click", function(){
-    console.log("push botton")
+    console.log("pushed check botton.")
     reload_notify_publish();
 });
 
 function reload_notify_publish(){
-    console.log("check inbox test");
+    console.log("check inbox")
     $.ajax({
         type:"GET",
         url:"/check_inbox/publish",
         success: function(result){
             console.log(result)
             result.forEach(function(push_data){
-                console.log(push_data)
                 check_permission_and_create(push_data)
             })
         },
@@ -42,10 +41,9 @@ function create_notification(push_data){
         body:push_data.body,
         data:push_data.data
     });
-    console.log("make push notification")
     notify.onclick=function(event){
         send_data_to_flask(notify)
-        console.log(notify.data)
+        window.open(push_data.url)
     };
 }
 
