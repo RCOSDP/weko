@@ -8,7 +8,7 @@
 
 import requests
 import re
-from flask import current_app,url_for, redirect
+from flask import current_app, url_for, redirect
 
 
 def request_signposting(uri):
@@ -29,6 +29,7 @@ def request_signposting(uri):
         print(e)
     else:
         link = r.headers['Link']
+        current_app.logger.debug(link)
         data = create_data_from_signposting(link)
 
     return data
@@ -47,7 +48,7 @@ def make_signposting_url(uri):
                       uri
                       ) + '/signposting'
     else:
-        return uri
+        return uri + '/signposting'
 
 
 def create_data_from_signposting(link):
@@ -60,11 +61,11 @@ def create_data_from_signposting(link):
     lines = link.split(',')
     data = list()
     for line in lines:
-        d=dict()
+        d = dict()
         for l in line.split(';'):
-            if re.search(r'<(.*)>',l):
-                d['url'] = re.search(r'<(.*)>',l).group(1).strip()
+            if re.search(r'<(.*)>', l):
+                d['url'] = re.search(r'<(.*)>', l).group(1).strip()
             else:
-                d[l.split('=')[0].strip()]=l.split('=')[1].strip(' "')
+                d[l.split('=')[0].strip()] = l.split('=')[1].strip(' "')
         data.append(d)
     return data
