@@ -1611,8 +1611,9 @@ class DDIMapper(BaseMapper):
                                 "[]", "")][0]
                             if temp_data.values() \
                                     and isinstance(list(temp_data.values())[0], str):
-                                if set(temp_data.values()) not in list_temp:
-                                    list_temp.append(set(temp_data.values()))
+                                temp_set = set(temp_data.values()) - set(['ja', 'en'])
+                                if temp_set not in list_temp:
+                                    list_temp.append(temp_set)
                                     list_result.append(temp_data)
                             else:
                                 if temp_data not in list_result:
@@ -1620,8 +1621,9 @@ class DDIMapper(BaseMapper):
                         elif root_key.replace("[]", "") in result_dict and isinstance(
                                 result_dict[root_key.replace("[]", "")], dict):
                             temp_data = result_dict[root_key.replace("[]", "")]
-                            if set(temp_data.values()) not in list_temp:
-                                list_temp.append(set(temp_data.values()))
+                            temp_set = set(temp_data.values()) - set(['ja', 'en'])
+                            if temp_set not in list_temp:
+                                list_temp.append(temp_set)
                                 list_result.append(temp_data)
                 return list_result, root_key.replace("[]", "")
             except Exception:
