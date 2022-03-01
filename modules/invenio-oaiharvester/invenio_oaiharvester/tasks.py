@@ -277,6 +277,7 @@ def process_item(record, harvesting, counter):
             if 'attribute_value_mlt' in json_data['item_1600078832557']:
                 for i in json_data['item_1600078832557']['attribute_value_mlt']:
                     i['accessrole'] = 'open_access'
+        
         # END: temporary fix for JDCat
 
         # current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
