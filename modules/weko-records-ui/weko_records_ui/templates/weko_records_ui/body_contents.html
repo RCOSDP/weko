@@ -418,9 +418,15 @@
               {% endif %}
             {% endif %}
           {% endif %}
-          {%- include "weko_records_ui/box/versions.html" %}
-          {%- include "weko_records_ui/box/share.html" %}
-          {%- include "weko_records_ui/box/export.html" %}
+		  {% if config.WEKO_RECORDS_UI_DISPLAY_VERSION_BOX_FLG %}
+             {%- include "weko_records_ui/box/versions.html" %}
+		  {% endif %}
+          {% if config.WEKO_RECORDS_UI_DISPLAY_SHARE_BOX_FLG %}
+              {%- include "weko_records_ui/box/share.html" %}
+          {% endif %}
+		  {% if config.WEKO_RECORDS_UI_DISPLAY_EXPORT_BOX_FLG %}
+              {%- include "weko_records_ui/box/export.html" %}
+		  {% endif %}
           <!-- end demo block -->
         </div>
       </div>
