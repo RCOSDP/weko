@@ -41,7 +41,7 @@ from lxml import etree
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.models import Index
 from weko_records.models import ItemMetadata
-from weko_records_ui.utils import soft_delete, restore
+from weko_records_ui.utils import restore, soft_delete
 
 from .api import get_records, list_records, send_run_status_mail
 from .config import OAIHARVESTER_ENABLE_ITEM_VERSIONING
@@ -272,6 +272,11 @@ def process_item(record, harvesting, counter):
             # current_app.logger.debug('json: %s' % json['item_1551264917614'])
             for i in json_data['item_1592405734122']:
                 i['subitem_1591320918354'] = 'Distributor'
+
+        if 'item_1600078832557' in json_data:
+            if 'attribute_value_mlt' in json_data['item_1600078832557']:
+                for i in json_data['item_1600078832557']['attribute_value_mlt']:
+                    i['accessrole'] = 'open_access'
         # END: temporary fix for JDCat
 
         # current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
