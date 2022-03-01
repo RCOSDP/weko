@@ -1703,4 +1703,7 @@ class DDIMapper(BaseMapper):
             self.ddi_harvest_processing(self.json['record']
                                         ['metadata']['codeBook'], res)
             res['title'] = self.record_title
+            # set resourcetype
+            type = [{"resourcetype": "dataset","resourceuri": "http://purl.org/coar/resource_type/c_ddb1"}]
+            res['type'] = type
             return res

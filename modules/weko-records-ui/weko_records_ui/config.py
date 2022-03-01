@@ -556,6 +556,24 @@ WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE = [
 ]
 """Define of resouce types list will be used for google scholar output."""
 
+WEKO_RECORDS_UI_GOOGLE_DATASET_RESOURCE_TYPE = ["dataset"]
+"""Define of resouce types list will be used for google dataset output."""
+
+WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN = 50
+""" minimum length of google dataset description """
+WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX = 5000
+""" maximum length of google dataset description """
+
+WEKO_RECORDS_UI_GOOGLE_DATASET_DISTRIBUTION_BUNDLE = [
+    {'contentUrl':'https://raw.githubusercontent.com/ikfj/JDCat-base/main/apt.txt',
+    'encodingFormat':'text/plain'},
+    {'contentUrl':'https://raw.githubusercontent.com/ikfj/JDCat-base/main/environment.yml',
+    'encodingFormat':'application/x-yaml'},
+    {'contentUrl':'https://raw.githubusercontent.com/ikfj/JDCat-base/main/postBuild',
+    'encodingFormat':'text/x-shellscript'}
+    ]
+""" List of force budle files in google dataset DISTRIBUTION """
+
 WEKO_RECORDS_UI_GOOGLE_DATASET_DISP_FLG = True
 """Enable function of google dataset metadata output."""
 
