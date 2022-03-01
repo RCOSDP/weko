@@ -203,8 +203,14 @@ RECORDS_REST_SORT_OPTIONS[SEARCH_UI_SEARCH_INDEX] = dict(
         fields=[],
         default_order='asc',
         order=11,
-    )
+    ),
     # add 20210505 end
+    temporal=dict(
+        title='Temporal',
+        fields=['date_range1.gte'],
+        default_order='asc',
+        order=12,
+    )
 )
 
 WEKO_SEARCH_REST_ENDPOINTS = dict(

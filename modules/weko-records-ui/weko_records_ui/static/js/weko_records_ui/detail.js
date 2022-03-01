@@ -213,6 +213,7 @@ require([
     let analysis_version = '/HEAD';
     analysis_url = analysis_url + encodeURIComponent(permalink_uri) + analysis_version;
     window.open(analysis_url);
+    $("#show_rights_info").modal("hide");
   });
 
   $(".term-condtion-modal").on("click", function () {
