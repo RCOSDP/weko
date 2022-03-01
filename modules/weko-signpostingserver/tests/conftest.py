@@ -36,10 +36,9 @@ from invenio_pidstore import current_pidstore
 from invenio_accounts.testutils import create_test_user
 from sqlalchemy_utils.functions import create_database, database_exists
 
-
-
 from weko_signpostingserver import WekoSignpostingserver
 from weko_signpostingserver.views import blueprint
+from weko_signpostingserver.api import blueprint_signposting_api
 from weko_workflow import WekoWorkflow
 
 
@@ -56,7 +55,7 @@ def db(app):
 
 @pytest.yield_fixture(scope='session')
 def test_data():
-    path = 'data/testrecords.json'
+    path = 'data/record_data.json'
     with open(join(dirname(__file__), path)) as fp:
         records = json.load(fp)
     yield records
@@ -71,6 +70,13 @@ def test_records(db, test_data):
     yield result
 
 
+@pytest.yield_fixture(scope='session')
+def test_link_str():
+    path = 'data/link_str.json'
+    with open(join(dirname(__file__), path)) as fp:
+        data = json.load(fp)
+    yield data
+
 
 @pytest.fixture(scope='module')
 def celery_config():
@@ -79,6 +85,7 @@ def celery_config():
     TODO: Remove this fixture if you add Celery support.
     """
     return {}
+
 
 @pytest.fixture()
 def base_app(instance_path):
@@ -93,6 +100,8 @@ def base_app(instance_path):
         ),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         TESTING=True,
+        WEB_HOST='test.com',
+        OAISERVER_METADATA_FORMATS=oaiserver
     )
     InvenioAccounts(app_)
     InvenioDB(app_)
@@ -100,7 +109,7 @@ def base_app(instance_path):
     InvenioPIDStore(app_)
     WekoWorkflow(app_)
     WekoSignpostingserver(app_)
-
+    app_.register_blueprint(blueprint_signposting_api)
     # with app_.app_context():
     #     if str(db.engine.url) != 'sqlite://' and \
     #        not database_exists(str(db.engine.url)):
@@ -108,13 +117,42 @@ def base_app(instance_path):
     return app_
 
 
-
-
 @pytest.yield_fixture()
 def app(base_app):
     with base_app.app_context():
         yield base_app
 
+
+oaiserver = {
+    'jpcoar_1.0': {
+        'serializer': (
+            'weko_schema_ui.utils:dumps_oai_etree', {
+                'schema_type': 'jpcoar',
+            }
+        ),
+        'namespace': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/',
+        'schema': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/jpcoar_scm.xsd',
+    },
+    'oai_dc': {
+        'serializer': (
+            'weko_schema_ui.utils:dumps_oai_etree', {
+                'schema_type': 'oai_dc',
+            }
+        ),
+        'namespace': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
+        'schema': 'http://www.openarchives.org/OAI/2.0/oai_dc.xsd',
+    },
+    'ddi': {
+        'serializer': (
+            'weko_schema_ui.utils:dumps_oai_etree', {
+                'schema_type': 'ddi',
+            }
+        ),
+        'namespace': 'ddi:codebook:2_5',
+        'schema': 'https://ddialliance.org/Specification'
+                  '/DDI-Codebook/2.5/XMLSchema/codebook.xsd',
+    },
+}
 
 # @pytest.fixture(scope='module')
 # def create_app(instance_path):
