@@ -1362,12 +1362,13 @@ def convert_record_to_item_metadata(record_metadata):
 
     for key, meta in item_type.get('meta_list', {}).items():
         if key in record_metadata:
-            if meta.get('option', {}).get('multiple'):
-                item_metadata[key] = \
-                    record_metadata[key]['attribute_value_mlt']
-            else:
-                item_metadata[key] = \
-                    record_metadata[key]['attribute_value_mlt'][0]
+            if 'attribute_value_mlt' in record_metadata[key]:
+                if meta.get('option', {}).get('multiple'):
+                    item_metadata[key] = \
+                        record_metadata[key]['attribute_value_mlt']
+                else:
+                    item_metadata[key] = \
+                        record_metadata[key]['attribute_value_mlt'][0]
 
     return item_metadata
 

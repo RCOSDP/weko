@@ -272,6 +272,11 @@ def process_item(record, harvesting, counter):
             # current_app.logger.debug('json: %s' % json['item_1551264917614'])
             for i in json_data['item_1592405734122']:
                 i['subitem_1591320918354'] = 'Distributor'
+        
+        if 'item_1617605131499' in json_data:
+            if 'attribute_value_mlt' in json_data['item_1617605131499']:
+                for i in json_data['item_1617605131499']['attribute_value_mlt']:
+                    i['accessrole'] = 'open_access'
         # END: temporary fix for JDCat
 
         # current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(

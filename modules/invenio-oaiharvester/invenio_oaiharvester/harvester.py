@@ -1604,14 +1604,15 @@ class DDIMapper(BaseMapper):
                         merge_dict(result_dict, temp_obj['full'],
                                    temp_obj['val'], temp_obj['key'])
                     if result_dict:
-                        if root_key.replace("[]", "") in result_dict and isinstance(result_dict[root_key.replace("[]", "")],
+                        if root_key.replace("[]", "") in result_dict:
+                            if isinstance(result_dict[root_key.replace("[]", "")],
                                                                                     list):
-                            list_result.append(
-                                result_dict[root_key.replace("[]", "")][0])
-                        elif root_key.replace("[]", "") in result_dict and isinstance(
+                                list_result.append(
+                                    result_dict[root_key.replace("[]", "")][0])
+                            elif isinstance(
                                 result_dict[root_key.replace("[]", "")], dict):
-                            list_result.append(
-                                result_dict[root_key.replace("[]", "")])
+                                list_result.append(
+                                    result_dict[root_key.replace("[]", "")])
                 return list_result, root_key.replace("[]", "")
             except Exception:
                 import traceback
