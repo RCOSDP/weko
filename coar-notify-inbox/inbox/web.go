@@ -7,7 +7,8 @@ type Site struct {
 }
 
 func (site *Site) InboxUrl() string {
-	return site.BaseUrl + "/inbox/"
+	return "https://localhost/inbox/"
+	//return site.BaseUrl + "/inbox/"
 	//return "https://nginx:443/inbox/"
 }
 
