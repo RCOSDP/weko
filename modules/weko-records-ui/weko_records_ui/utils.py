@@ -25,7 +25,7 @@ from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
 from typing import NoReturn, Tuple
-from urllib.parse import urlparse
+from urllib.parse import urlparse,quote
 
 from flask import abort, current_app, json, request, url_for
 from flask_babelex import get_locale
@@ -1412,7 +1412,7 @@ def get_google_detaset_meta(record):
 
         distribution = {'@type': 'DataDownload'}
         if uri is not None and len(uri.text) > 0:
-            distribution['contentUrl'] = uri.text
+            distribution['contentUrl'] = quote(uri.text,'/:%')
         if mime_type is not None and len(mime_type.text) > 0:
             distribution['encodingFormat'] = mime_type.text
         distributions.append(distribution)
@@ -1422,7 +1422,7 @@ def get_google_detaset_meta(record):
             for bundle in adding_bundles:
                 distribution = {'@type': 'DataDownload'}
                 if 'contentUrl' in bundle:
-                    distribution['contentUrl'] = bundle['contentUrl']
+                    distribution['contentUrl'] = quote(bundle['contentUrl'],'/:%')
                     if 'encodingFormat' in bundle:
                         distribution['encodingFormat'] = bundle['encodingFormat']
                     distributions.append(distribution)
