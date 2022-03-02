@@ -45,7 +45,7 @@
           <div id="record_id" class="hide">{{ record.id }}</div>
           {%- block record_author %}
           {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
-          {%- if accessRight == 'open access' or not config.WEKO_RECORDS_UI_DISPLAY_ONLINE_ANALYSIS_FLG -%}
+          {%- if (accessRight == 'open access' or accessRight == 'オープンアクセス') or not config.WEKO_RECORDS_UI_DISPLAY_ONLINE_ANALYSIS_FLG -%}
           {%- if files | selectattr('is_thumbnail', 'equalto', False)| list | length > 0 -%}
           <!-- Preview Carousel -->
           {% if not record.hide_file %}
@@ -413,7 +413,7 @@
           {%- include "weko_records_ui/box/stats.html" %}
           {%- if files | selectattr('is_thumbnail', 'equalto', False)| list | length > 0 -%}
             {% if not record.hide_file %}
-              {% if accessRight == 'open access' and config.WEKO_RECORDS_UI_DISPLAY_ONLINE_ANALYSIS_FLG %}
+              {% if (accessRight == 'open access' or accessRight=='オープンアクセス') and config.WEKO_RECORDS_UI_DISPLAY_ONLINE_ANALYSIS_FLG %}
                 {%- include "weko_records_ui/box/analysis.html" %}
               {% endif %}
             {% endif %}
