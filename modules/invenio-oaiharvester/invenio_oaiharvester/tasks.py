@@ -279,9 +279,10 @@ def process_item(record, harvesting, counter):
             if 'item_1600078832557' in json_data:
                 for i in json_data['item_1600078832557']:
                     i['accessrole'] = 'open_access'
-            if 'resourcetype' in json_data:
-                json_data['resourcetype'][0] = {
-                "resourcetype": "dataset", "resourceuri": "http://purl.org/coar/resource_type/c_ddb1"}        
+            
+            json_data['resourcetype']=[]
+            json_data['resourcetype'].append({
+                "resourcetype": "dataset", "resourceuri": "http://purl.org/coar/resource_type/c_ddb1"})        
         # END: temporary fix for JDCat
 
         # current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
