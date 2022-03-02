@@ -35,7 +35,9 @@ def search_mapping():
 
 @pytest.fixture
 def jsonpath():
-    return ['$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108', '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211', '$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890']
+    return ['$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108', '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211', 
+    '$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890',
+    '$.item_1551264846237.attribute_value_mlt[1:3].subitem_1551255577890']
 
 
 @pytest.fixture
@@ -94,6 +96,8 @@ def test_copy_values_json_path(meta, jsonpath):
         '2000-01-01/2021-03-30']
     assert copy_values_json_path(meta[0], jsonpath[2]) == [
         '概要', 'その他', 'materials: text']
+    assert copy_values_json_path(meta[0], jsonpath[3]) == [
+        'その他', 'materials: text']
 
 
 def test_convert_date_range_value():
