@@ -591,3 +591,9 @@ WEKO_RECORDS_UI_DISPLAY_VERSION_BOX_FLG = True
 
 WEKO_RECORDS_UI_DISPLAY_EXPORT_BOX_FLG = True
 """ Display Export box on item detail. """
+
+WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = True
+""" Display resource type on item detail. """
+
+WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = True
+""" Display item type name on item detail. """

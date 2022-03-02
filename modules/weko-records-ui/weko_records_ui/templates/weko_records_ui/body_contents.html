@@ -60,9 +60,11 @@
               <thead>
                 <tr>
                   {# ファイルが存在しない場合は空にする #}
+				  <!--
                   <th style="width: 3%; text-align: center; vertical-align: middle;" class="checkbox-th">
                     <input type="checkbox" id="all_file_checkbox" />
                   </th>
+				  -->
                   <th>{{_('Name')}} / {{_('File')}}</th>
                   <th>{{_('License')}}</th>
                   <th class="action_header">{{_('Actions')}}</th>
@@ -96,10 +98,11 @@
                     {%- set access_permission = record | check_file_permission(file) -%}
 
                     <tr class="file-row">
+						<!--
                       <td rowspan="1" class="filecheck-td">
                         <input type="checkbox" class="alignCenter file-check action-checkbox" value={{ file.filename | urlencode }}>
                       </td>
-
+					-->
                       <td class="filename-td">
                         <span class="filename">
                           <img src="{{img}}" alt={{ file.filename }} />
