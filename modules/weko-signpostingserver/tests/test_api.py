@@ -14,19 +14,12 @@ def test_requested_signposting(mock_permalink, mock_outside_url,
                                app, test_link_str, test_records
                                ):
     pid, record = test_records[0]
-    with patch('weko_signpostingserver.api.get_records_pid', return_value=pid):
-        with patch('weko_signpostingserver.api.Record.get_record',
-                   return_value=record
-                   ):
-            with app.test_client() as client:
-                url = url_for('weko_signpostingserver_api.'
-                              'requested_signposting',
-                              recid="1"
-                              )
-                res = client.head(url)
-                result = test_link_str['link']
-                test = res.headers['Link']
-                assert result == test
+    with app.test_client() as client:
+        url = '/records/1'
+        res = client.head(url)
+        result = test_link_str['link']
+        test = res.headers['Link']
+        assert result == test
 
 
 def test_outside_url1(app):

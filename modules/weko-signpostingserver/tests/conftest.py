@@ -35,10 +35,10 @@ from invenio_pidstore import InvenioPIDStore
 from invenio_pidstore import current_pidstore
 from invenio_accounts.testutils import create_test_user
 from sqlalchemy_utils.functions import create_database, database_exists
+from invenio_records_ui import InvenioRecordsUI
 
 from weko_signpostingserver import WekoSignpostingserver
 from weko_signpostingserver.views import blueprint
-from weko_signpostingserver.api import blueprint_signposting_api
 from weko_workflow import WekoWorkflow
 
 
@@ -101,15 +101,23 @@ def base_app(instance_path):
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         TESTING=True,
         WEB_HOST='test.com',
-        OAISERVER_METADATA_FORMATS=oaiserver
+        OAISERVER_METADATA_FORMATS=oaiserver,
+        RECORDS_UI_ENDPOINTS=dict(
+            recid_signposting=dict(
+                pid_type='recid',
+                route='/records/<pid_value>',
+                view_imp='weko_signpostingserver.api.requested_signposting',
+                methods=['HEAD']
+            ),
+        ),
     )
     InvenioAccounts(app_)
     InvenioDB(app_)
     InvenioRecords(app_)
+    InvenioRecordsUI(app_)
     InvenioPIDStore(app_)
     WekoWorkflow(app_)
     WekoSignpostingserver(app_)
-    app_.register_blueprint(blueprint_signposting_api)
     # with app_.app_context():
     #     if str(db.engine.url) != 'sqlite://' and \
     #        not database_exists(str(db.engine.url)):
