@@ -36,11 +36,23 @@ blueprint_api = Blueprint('weko_inbox_consumer',
 @blueprint_api.route('/send_push', methods=['GET'])
 @login_required
 def send_notify():
+    
+    # from invenio_deposit.api import Deposit
+    # record_dp = Deposit.get_record(get_records_pid('1'))
+    # print(record_dp)
+    # print(type(record_dp.files["画面キャプりゃー2.png"].obj)) # invenio_files_rest.models.ObjectVersion  dbではfiles_object
+    # print(record_dp.files["画面キャプりゃー2.png"].obj.file_id) # file_idを取得できた
+    # print(record_dp.files["画面キャプりゃー2.png"].data)
+    # print(type(record_dp.files["画面キャプりゃー2.png"].data))
     record_api = Record.get_record(get_records_pid('6'))
-    record_meta = \
-        RecordMetadata.query.filter_by(
-            id=get_records_pid('3')
-            ).first()
+    # print(record_api)
+    # record_meta = \
+    #     RecordMetadata.query.filter_by(
+    #         id=get_records_pid('1')
+    #         ).first()
+    # print(record_meta)
+    # print(record_api.files)
+    # print(record_meta.files)
     publish_notification(record_api)
     return make_response()
 

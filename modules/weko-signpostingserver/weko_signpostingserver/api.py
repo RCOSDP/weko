@@ -28,10 +28,11 @@ def requested_signposting(pid, record, template=None, **kwargs):
                 route='/records/<pid_value>',
                 # ...
         )
-    In addition, please place it above the one that has 
+    In addition, please place it above the one that has
     the same route and uses the GET method.
     """
-    
+    # print(type(record))# invenio_records.api.Record
+    # print(record.id)
     resp = Response()
     host_url = outside_url(request.host_url)
     link = list()

@@ -53,7 +53,6 @@
       <li><a href="{{url_for_security('logout')}}"><i class="fa fa-sign-out"></i> {{_('Log out')}}</a></li>
     </ul>
     {%- include config.WEKO_INBOX_CHECK_BUTTON_TEMPLATE%}
-    <a href="/inbox" class="btn btn-default">inbox</a>
   </div>
 {%- else %}
 <a href=" {{url_for_security('logout')}}" class="btn btn-default logout-button"><i class="fa fa-sign-out"></i> {{_('Log out')}}</a>
