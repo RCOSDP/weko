@@ -261,6 +261,7 @@ def process_item(record, harvesting, counter):
 
         json_data['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
         dep['_deposit']['status'] = 'draft'
+        dep.clear()
 
         # START: temporary fix for JDCat
         # if json['$schema'] == '/items/jsonschema/14' and 'item_1588260046718' in json:
