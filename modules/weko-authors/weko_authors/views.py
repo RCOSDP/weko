@@ -351,36 +351,39 @@ def mapping():
                 if affiliation.id == affiliationIdType:
                     affiliation_scheme = affiliation.scheme
                     affiliation_uri = affiliation.url
-                    return affiliation_scheme, affiliation_uri        
+                    return affiliation_scheme, affiliation_uri
 
         affiliation_info = _source.get('affiliationInfo')
         for affiliation_data in affiliation_info:
             identifier_info = affiliation_data.get('identifierInfo')
             affiliation_name_info = affiliation_data.get('affiliationNameInfo')
-            affiliation_tmp = {'affiliationNameIdentifiers': [], 'affiliationNames': []}
-            
+            affiliation_tmp = {
+                'affiliationNameIdentifiers': [], 'affiliationNames': []}
+
             for identifier_data in identifier_info:
                 if identifier_data.get('identifierShowFlg') == 'true':
-                    scheme, uri = get_affiliation_name_identifier(int(identifier_data['affiliationIdType']))
-                    _affiliation_name_identifier = identifier_data.get('affiliationId')
-                    if _affiliation_name_identifier and uri:
-                        uri = re.sub("#+$", _affiliation_name_identifier, uri, 1)
+                    scheme, uri = get_affiliation_name_identifier(
+                        int(identifier_data['affiliationIdType']))
+                    _affiliation_id = identifier_data.get('affiliationId')
+                    if _affiliation_id and uri:
+                        uri = re.sub(
+                            "#+$", _affiliation_id, uri, 1)
                     identifier_tmp = {
-                        'affiliationNameIdentifier': _affiliation_name_identifier,
+                        'affiliationNameIdentifier': _affiliation_id,
                         'affiliationNameIdentifierScheme': scheme,
                         'affiliationNameIdentifierURI': uri
                     }
-                    affiliation_tmp['affiliationNameIdentifiers'].append(identifier_tmp) 
+                    affiliation_tmp['affiliationNameIdentifiers'].append(
+                        identifier_tmp)
 
-            for affiliation_name_data in affiliation_name_info:
-                if affiliation_name_data.get('affiliationNameShowFlg') == 'true':
-                    affiliation_name = affiliation_name_data.get('affiliationName')
-                    affiliation_name_lang = affiliation_name_data.get('affiliationNameLang')
-                    affiliation_name_tmp = {'affiliationName': affiliation_name, 'affiliationNameLang': affiliation_name_lang}
-                    affiliation_tmp ['affiliationNames'].append(affiliation_name_tmp)
-            
-                
-            res['creatorAffiliations'].append(affiliation_tmp)                
+            for af_name_data in affiliation_name_info:
+                if af_name_data.get('affiliationNameShowFlg') == 'true':
+                    affiliation_name = af_name_data.get('affiliationName')
+                    af_name_lang = af_name_data.get('affiliationNameLang')
+                    af_name_tmp = {'affiliationName': affiliation_name,
+                                   'affiliationNameLang': af_name_lang}
+                    affiliation_tmp['affiliationNames'].append(af_name_tmp)
+            res['creatorAffiliations'].append(affiliation_tmp)
 
     # get author data
     author_id = data.get('id', '')
@@ -394,8 +397,9 @@ def mapping():
 
     # transfer to JPCOAR format
     res = {'familyNames': [], 'givenNames': [], 'creatorNames': [],
-           'nameIdentifiers': [], 'creatorAlternative': [], 'creatorMails': [], 'creatorAffiliations':[]
-           } 
+           'nameIdentifiers': [], 'creatorAlternative': [],
+           'creatorMails': [], 'creatorAffiliations': []
+           }
 
     get_name_creator(res, _source)
     get_identifier_creator(res, _source)
@@ -410,7 +414,8 @@ def mapping():
 
     last['author_name'] = WEKO_AUTHORS_IMPORT_KEY.get('author_name')
     last['author_mail'] = WEKO_AUTHORS_IMPORT_KEY.get('author_mail')
-    last['author_affiliation'] = WEKO_AUTHORS_IMPORT_KEY.get('author_affiliation')
+    last['author_affiliation'] = WEKO_AUTHORS_IMPORT_KEY.get(
+        'author_affiliation')
     current_app.logger.debug([last])
 
     return json.dumps([last])
@@ -511,6 +516,7 @@ def get_prefix_list():
             data.append(tmp)
     return jsonify(data)
 
+
 @blueprint_api.route("/search_affiliation", methods=['get'])
 @login_required
 @author_permission.require(http_exception=403)
@@ -527,6 +533,7 @@ def get_affiliation_list():
             data.append(tmp)
     return jsonify(data)
 
+
 @blueprint_api.route("/list_vocabulary", methods=['get'])
 @login_required
 @author_permission.require(http_exception=403)
@@ -538,6 +545,7 @@ def get_list_schema():
     }
     return jsonify(data)
 
+
 @blueprint_api.route("/list_affiliation_scheme", methods=['get'])
 @login_required
 @author_permission.require(http_exception=403)
@@ -545,9 +553,11 @@ def get_list_affiliation_schema():
     """Get all affiliation scheme items config.py."""
     data = {
         "list": current_app.config['WEKO_AUTHORS_LIST_SCHEME_AFFILIATION'],
-        "index": current_app.config['WEKO_AUTHORS_AFFILIATION_IDENTIFIER_ITEM_OTHER']
+        "index": current_app.config[
+            'WEKO_AUTHORS_AFFILIATION_IDENTIFIER_ITEM_OTHER']
     }
     return jsonify(data)
+
 
 @blueprint_api.route("/edit_prefix", methods=['post'])
 @login_required
@@ -593,6 +603,7 @@ def create_prefix():
     except Exception:
         return jsonify({'code': 204, 'msg': 'Failed'})
 
+
 @blueprint_api.route("/edit_affiliation", methods=['post'])
 @login_required
 @author_permission.require(http_exception=403)
@@ -610,6 +621,7 @@ def update_affiliation():
     except Exception:
         return jsonify({'code': 204, 'msg': 'Failed'})
 
+
 @blueprint_api.route("/delete_affiliation/<id>", methods=['delete'])
 @login_required
 @author_permission.require(http_exception=403)
@@ -617,6 +629,7 @@ def delete_affiliation(id):
     """Delete authors affiliation settings."""
     AuthorsAffiliationSettings.delete(id)
     return jsonify(msg=_('Success'))
+
 
 @blueprint_api.route("/add_affiliation", methods=['put'])
 @login_required
@@ -634,6 +647,3 @@ def create_affiliation():
                 {'code': 400, 'msg': 'Specified scheme is already exist.'})
     except Exception:
         return jsonify({'code': 204, 'msg': 'Failed'})
-
-
-

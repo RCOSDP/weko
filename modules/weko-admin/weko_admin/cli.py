@@ -237,7 +237,7 @@ def authors_affiliation():
 @click.argument('scheme')
 @click.argument('url')
 @with_appcontext
-def create_default_settings(name, scheme, url):
+def create_default_affiliation_settings(name, scheme, url):
     """Create default settings."""
     try:
         AuthorsAffiliationSettings.create(name, scheme, url)

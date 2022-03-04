@@ -206,6 +206,7 @@ class AuthorsPrefixSettings(db.Model, Timestamp):
             raise
         return cls
 
+
 class AuthorsAffiliationSettings(db.Model, Timestamp):
     """Represent an author affiliation setting."""
 

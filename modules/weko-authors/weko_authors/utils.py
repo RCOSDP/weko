@@ -145,7 +145,8 @@ def export_authors():
         # write csv data to a stream
         csv_io = io.StringIO()
         writer = csv.writer(csv_io, delimiter=',',
-                            quotechar='"', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+                            quotechar='"', quoting=csv.QUOTE_MINIMAL,
+                            lineterminator='\n')
         writer.writerows([row_header, row_label_en, row_label_jp, *row_data])
         reader = io.BufferedReader(io.BytesIO(
             csv_io.getvalue().encode("utf-8-sig")))

@@ -1919,7 +1919,7 @@ def get_data_authors_prefix_settings():
         return None
 
 def get_data_authors_affiliation_settings():
-    """Get all authors prefix settings."""
+    """Get all authors affiliation settings."""
     from weko_authors.models import AuthorsAffiliationSettings
     try:
         return db.session.query(AuthorsAffiliationSettings).all()
