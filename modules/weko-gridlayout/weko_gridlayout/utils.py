@@ -29,6 +29,7 @@ from uuid import UUID
 from xml.etree.ElementTree import tostring
 
 import redis
+from redis import sentinel
 from elasticsearch.exceptions import NotFoundError
 from flask import Markup, Response, abort, current_app, jsonify, request
 from flask_babelex import gettext as _
@@ -924,8 +925,9 @@ def delete_widget_cache(repository_id, page_id=None):
     @param page_id: The Page identifier
     @return:
     """
-    cache_store = RedisStore(redis.StrictRedis.from_url(
-        current_app.config['CACHE_REDIS_URL']))
+    sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+    cache_store = RedisStore(sentinel.master_for(
+            current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
     if page_id:
         cache_key = ("*" + config.WEKO_GRIDLAYOUT_WIDGET_PAGE_CACHE_KEY
                      + str(repository_id) + "_" + str(page_id) + "_*")

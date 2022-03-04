@@ -29,6 +29,7 @@ from io import BytesIO, StringIO
 from typing import Dict, Tuple, Union
 
 import redis
+from redis import sentinel
 import requests
 from flask import current_app, request
 from flask_babelex import gettext as __
@@ -492,8 +493,9 @@ def write_report_csv_rows(writer, records, file_type=None, other_info=None):
 def reset_redis_cache(cache_key, value):
     """Delete and then reset a cache value to Redis."""
     try:
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        datastore = RedisStore(sentinel.master_for(
+            current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
         if datastore.redis.exists(cache_key):
             datastore.delete(cache_key)
         datastore.put(cache_key, value.encode('utf-8'))
@@ -505,8 +507,9 @@ def reset_redis_cache(cache_key, value):
 def is_exists_key_in_redis(key):
     """Check key exist in redis."""
     try:
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        datastore = RedisStore(sentinel.master_for(
+            current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
         return datastore.redis.exists(key)
     except Exception as e:
         current_app.logger.error('Could get value for ' + key, e)
@@ -516,8 +519,9 @@ def is_exists_key_in_redis(key):
 def is_exists_key_or_empty_in_redis(key):
     """Check key exist in redis."""
     try:
-        datastore = RedisStore(
-            redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
+        sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        datastore = RedisStore(sentinel.master_for(
+            current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
         return datastore.redis.exists(key) and datastore.redis.get(key) != b''
     except Exception as e:
         current_app.logger.error('Could get value for ' + key, e)
@@ -527,8 +531,9 @@ def is_exists_key_or_empty_in_redis(key):
 def get_redis_cache(cache_key):
     """Check and then retrieve the value of a Redis cache key."""
     try:
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        datastore = RedisStore(sentinel.master_for(
+            current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
         if datastore.redis.exists(cache_key):
             return datastore.get(cache_key).decode('utf-8')
     except Exception as e:

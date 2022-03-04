@@ -24,6 +24,7 @@ from __future__ import absolute_import, print_function
 import ast
 
 import redis
+from redis import sentinel
 import requests
 from flask import current_app, render_template
 from flask_babelex import lazy_gettext as _
@@ -113,8 +114,9 @@ class TempDirInfo(object):
             key = current_app.config[
                 'WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT']
         cls.key = key
-        cls.redis = redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL'])
+        sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        cls.redis = sentinel.master_for(
+            current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
 
     def set(cls, temp_path, extra_info=None):
         """Add or update data.

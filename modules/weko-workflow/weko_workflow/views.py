@@ -31,6 +31,7 @@ from datetime import datetime
 from functools import wraps
 
 import redis
+from redis import sentinel
 from flask import Blueprint, abort, current_app, has_request_context, \
     jsonify, make_response, render_template, request, session, url_for
 from flask_babelex import gettext as _
@@ -583,8 +584,10 @@ def display_activity(activity_id="0"):
         if not record and item:
             record = item
 
-        sessionstore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['ACCOUNTS_SESSION_REDIS_URL']))
+        sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        sessionstore = RedisStore(sentinel.master_for(
+            current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
+
         if sessionstore.redis.exists(
             'updated_json_schema_{}'.format(activity_id)) \
             and sessionstore.get(
@@ -1308,8 +1311,10 @@ def get_journals():
     if not key:
         return jsonify({})
 
-    datastore = RedisStore(redis.StrictRedis.from_url(
-        current_app.config['CACHE_REDIS_URL']))
+    sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+    datastore = RedisStore(sentinel.master_for(
+        current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
+
     cache_key = current_app.config[
         'WEKO_WORKFLOW_OAPOLICY_SEARCH'].format(keyword=key)
 

@@ -35,6 +35,7 @@ from io import StringIO
 
 import bagit
 import redis
+from redis import sentinel
 from elasticsearch.exceptions import NotFoundError
 from flask import abort, current_app, flash, redirect, request, send_file, \
     url_for
@@ -552,8 +553,10 @@ def update_json_schema_by_activity_id(json_data, activity_id):
     :param activity_id: Activity ID
     :return: json schema
     """
-    sessionstore = RedisStore(redis.StrictRedis.from_url(
-        current_app.config['ACCOUNTS_SESSION_REDIS_URL']))
+
+    sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+    sessionstore = RedisStore(sentinel.master_for(
+            current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
     if not sessionstore.redis.exists(
         'updated_json_schema_{}'.format(activity_id)) \
         and not sessionstore.get(
@@ -582,8 +585,10 @@ def update_schema_form_by_activity_id(schema_form, activity_id):
     :param activity_id: Activity ID
     :return: schema form
     """
-    sessionstore = RedisStore(redis.StrictRedis.from_url(
-        current_app.config['ACCOUNTS_SESSION_REDIS_URL']))
+    
+    sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+    sessionstore = RedisStore(sentinel.master_for(
+            current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
     if not sessionstore.redis.exists(
         'updated_json_schema_{}'.format(activity_id)) \
         and not sessionstore.get(

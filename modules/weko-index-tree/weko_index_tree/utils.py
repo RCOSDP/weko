@@ -25,6 +25,7 @@ from functools import wraps
 from operator import itemgetter
 
 import redis
+from redis import sentinel
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import Bool, Exists, Q, QueryString
 from flask import Markup, current_app, session
@@ -822,8 +823,9 @@ def __get_redis_store():
         Redis store.
 
     """
-    return RedisStore(redis.StrictRedis.from_url(
-        current_app.config['CACHE_REDIS_URL']))
+    sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+    return RedisStore(sentinel.master_for(
+        current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
 
 
 def lock_all_child_index(index_id: str, value: str):

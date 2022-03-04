@@ -151,15 +151,59 @@ services:
     ports:
       - "25401:5432"
 
-  redis:
+  redis-master:
     restart: "always"
     image: redis
+    command: redis-server
     ports:
       - "26301:6379"
     deploy:
       resources:
         limits:
           memory: 100m
+
+  redis-slave:
+    restart: "always"
+    image: redis
+    command: redis-server --slaveof redis-master 6379
+    ports:
+      - "26301:6379"
+    links:
+        - redis-master
+    deploy:
+      resources:
+        limits:
+          memory: 100m
+
+  sentinel-1:
+    build: sentinel
+    environment:
+        - SENTINEL_DOWN_AFTER=5000
+        - SENTINEL_FAILOVER=500
+        - SENTINEL_QUORUM=2
+    depends_on:
+        - redis-master
+        - redis-slave
+
+  sentinel-2:
+    build: sentinel
+    environment:
+        - SENTINEL_DOWN_AFTER=5000
+        - SENTINEL_FAILOVER=500
+        - SENTINEL_QUORUM=2
+    depends_on:
+        - redis-master
+        - redis-slave
+
+  sentinel-3:
+    build: sentinel
+    environment:
+        - SENTINEL_DOWN_AFTER=5000
+        - SENTINEL_FAILOVER=500
+        - SENTINEL_QUORUM=2
+    depends_on:
+        - redis-master
+        - redis-slave
 
   elasticsearch:
     restart: "always"

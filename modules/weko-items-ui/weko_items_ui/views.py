@@ -27,6 +27,7 @@ from copy import deepcopy
 from datetime import date, datetime, timedelta
 
 import redis
+from redis import sentinel
 from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
     render_template, request, session, url_for
 from flask_babelex import gettext as _
@@ -374,8 +375,9 @@ def items_index(pid_value='0'):
                 render_widgets=render_widgets)
 
         data = request.get_json()
-        sessionstore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['ACCOUNTS_SESSION_REDIS_URL']))
+        sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        sessionstore = RedisStore(sentinel.master_for(
+            current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
         if request.method == 'PUT':
             """update index of item info."""
             item_str = sessionstore.get('item_index_{}'.format(pid_value))
@@ -492,8 +494,9 @@ def iframe_items_index(pid_value='0'):
             )
 
         data = request.get_json()
-        sessionstore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['ACCOUNTS_SESSION_REDIS_URL']))
+        sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        sessionstore = RedisStore(sentinel.master_for(
+            current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
         if request.method == 'PUT':
             """update index of item info."""
             item_str = sessionstore.get('item_index_{}'.format(pid_value))
@@ -1063,8 +1066,10 @@ def check_validation_error_msg(activity_id):
     :param activity_id: The identify of Activity.
     :return: Show error message
     """
-    sessionstore = RedisStore(redis.StrictRedis.from_url(
-        current_app.config['ACCOUNTS_SESSION_REDIS_URL']))
+    
+    sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+    sessionstore = RedisStore(sentinel.master_for(
+            current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
     if sessionstore.redis.exists(
             'updated_json_schema_{}'.format(activity_id)) \
             and sessionstore.get('updated_json_schema_{}'.format(activity_id)):

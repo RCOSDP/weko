@@ -39,6 +39,7 @@ from time import sleep
 
 import bagit
 import redis
+from redis import sentinel
 from celery.result import AsyncResult
 from celery.task.control import revoke
 from elasticsearch import ElasticsearchException
@@ -2981,8 +2982,9 @@ def delete_exported(uri, cache_key):
         with db.session.begin_nested():
             file_instance = FileInstance.get_by_uri(uri)
             file_instance.delete()
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        datastore = RedisStore(sentinel.master_for(
+            current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
         if datastore.redis.exists(cache_key):
             datastore.delete(cache_key)
         db.session.commit()

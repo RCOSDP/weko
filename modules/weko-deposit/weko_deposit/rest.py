@@ -24,6 +24,7 @@ import json
 import sys
 
 import redis
+from redis import sentinel
 from elasticsearch import ElasticsearchException
 from flask import Blueprint, abort, current_app, jsonify, request
 from invenio_db import db
@@ -233,8 +234,9 @@ class ItemResource(ContentNegotiatedMethodView):
                 pid_value = pid.pid_value if pid else pid_value
 
             # Saving ItemMetadata cached on Redis by pid
-            datastore = RedisStore(redis.StrictRedis.from_url(
-                current_app.config['CACHE_REDIS_URL']))
+            sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+            datastore = RedisStore(sentinel.master_for(
+                current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
             cache_key = current_app.config[
                 'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=pid_value)
             ttl_sec = int(current_app.config['WEKO_DEPOSIT_ITEMS_CACHE_TTL'])

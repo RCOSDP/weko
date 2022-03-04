@@ -28,6 +28,7 @@ from datetime import datetime, timezone
 from typing import NoReturn, Union
 
 import redis
+from redis import sentinel
 from dictdiffer import dot_lookup
 from dictdiffer.merge import Merger, UnresolvedConflictsException
 from elasticsearch.exceptions import TransportError
@@ -1032,8 +1033,9 @@ class WekoDeposit(Deposit):
 
         try:
             if not data:
-                datastore = RedisStore(redis.StrictRedis.from_url(
-                    current_app.config['CACHE_REDIS_URL']))
+                sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+                datastore = RedisStore(sentinel.master_for(
+                    current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
                 cache_key = current_app.config[
                     'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
                     pid_value=self.pid.pid_value)
