@@ -71,6 +71,7 @@ from .utils import get_billing_file_download_permission, \
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
+
 blueprint = Blueprint(
     'weko_records_ui',
     __name__,
@@ -601,6 +602,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         "display_community": display_community
     })
 
+    current_app.logger.debug("template :{}".format(template))
+
     return render_template(
         template,
         pid=pid,
@@ -635,8 +638,13 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         title_name=title_name,
         rights_values=rights_values,
         accessRight=accessRight,
+        thumbnail_width = current_app.config.get('WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL') ,
         analysis_url=current_app.config.get(
             'WEKO_RECORDS_UI_ONLINE_ANALYSIS_URL'),
+        flg_display_itemtype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE') ,
+        flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
+        
+        
         **ctx,
         **kwargs
     )

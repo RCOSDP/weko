@@ -29,7 +29,7 @@
   {% assets "weko_records_ui_file_action_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
-{% from "weko_records_ui/item_detail.html" import output_item_detail %}
+{% from "weko_records_ui/item_detail.html" import output_item_detail with context %}
 {% from "weko_records_ui/_macros.html" import check_download_file with context %}
 <div class="panel-group">
   <div class="panel panel-default">
