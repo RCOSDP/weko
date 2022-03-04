@@ -234,8 +234,8 @@ class ItemResource(ContentNegotiatedMethodView):
                 pid_value = pid.pid_value if pid else pid_value
 
             # Saving ItemMetadata cached on Redis by pid
-            sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
-            datastore = RedisStore(sentinel.master_for(
+            master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+            datastore = RedisStore(master.master_for(
                 current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
             cache_key = current_app.config[
                 'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=pid_value)

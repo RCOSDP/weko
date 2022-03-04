@@ -114,8 +114,8 @@ class TempDirInfo(object):
             key = current_app.config[
                 'WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT']
         cls.key = key
-        sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
-        cls.redis = sentinel.master_for(
+        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        cls.redis = master.master_for(
             current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO'])
 
     def set(cls, temp_path, extra_info=None):

@@ -584,8 +584,8 @@ def display_activity(activity_id="0"):
         if not record and item:
             record = item
 
-        sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
-        sessionstore = RedisStore(sentinel.master_for(
+        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        sessionstore = RedisStore(master.master_for(
             current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
 
         if sessionstore.redis.exists(
@@ -1311,8 +1311,8 @@ def get_journals():
     if not key:
         return jsonify({})
 
-    sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
-    datastore = RedisStore(sentinel.master_for(
+    master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+    datastore = RedisStore(master.master_for(
         current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
 
     cache_key = current_app.config[

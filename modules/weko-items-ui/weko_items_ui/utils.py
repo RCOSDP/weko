@@ -554,8 +554,8 @@ def update_json_schema_by_activity_id(json_data, activity_id):
     :return: json schema
     """
 
-    sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
-    sessionstore = RedisStore(sentinel.master_for(
+    master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+    sessionstore = RedisStore(master.master_for(
             current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
     if not sessionstore.redis.exists(
         'updated_json_schema_{}'.format(activity_id)) \
@@ -585,9 +585,9 @@ def update_schema_form_by_activity_id(schema_form, activity_id):
     :param activity_id: Activity ID
     :return: schema form
     """
-    
-    sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
-    sessionstore = RedisStore(sentinel.master_for(
+
+    master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+    sessionstore = RedisStore(master.master_for(
             current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
     if not sessionstore.redis.exists(
         'updated_json_schema_{}'.format(activity_id)) \
