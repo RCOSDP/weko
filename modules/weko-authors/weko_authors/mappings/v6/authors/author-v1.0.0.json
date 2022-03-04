@@ -64,6 +64,9 @@
   "mappings": {
     "author-v1.0.0": {
       "properties": {
+        "pk_id": {
+          "type": "keyword"
+        },
         "authorNameInfo": {
           "type": "object",
           "properties": {

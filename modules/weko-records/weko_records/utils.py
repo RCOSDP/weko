@@ -509,6 +509,7 @@ def copy_value_json_path(meta, jsonpath):
     try:
         matches = parse(jsonpath).find(meta)
         match_value = [match.value for match in matches]
+        current_app.logger.debug("jsonpath: {0},meta: {1}, match_value: {2}".format(jsonpath,meta,match_value))
         return match_value[0]
     except Exception:
         return match_value
@@ -528,6 +529,7 @@ def copy_values_json_path(meta, jsonpath):
     try:
         matches = parse(jsonpath).find(meta)
         match_value = [match.value for match in matches]
+        current_app.logger.debug("jsonpath: {0}, meta: {1}, match_value: {2}".format(jsonpath,meta,match_value))
         return match_value
     except Exception:
         return match_value

@@ -25,7 +25,7 @@ from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
 from typing import NoReturn, Tuple
-from urllib.parse import urlparse
+from urllib.parse import urlparse,quote
 
 from flask import abort, current_app, json, request, url_for
 from flask_babelex import get_locale
@@ -56,6 +56,8 @@ from .models import FileOnetimeDownload, FilePermission
 from .permissions import check_create_usage_report, \
     check_file_download_permission, check_user_group_permission, \
     is_open_restricted
+
+
 
 
 def check_items_settings(settings=None):
@@ -1221,11 +1223,19 @@ def get_google_detaset_meta(record):
     Returns:
         [type]: [description]
     """
+    from .config import WEKO_RECORDS_UI_GOOGLE_DATASET_RESOURCE_TYPE, \
+    WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN, \
+    WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX, \
+    WEKO_RECORDS_UI_GOOGLE_DATASET_DISTRIBUTION_BUNDLE
+
+    current_app.logger.debug("get_google_detaset_meta: {}".format(record.id))
+
     if not current_app.config['WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE']:
         return
 
     if '_oai' not in record and 'id' not in record['_oai']:
         return
+
     recstr = etree.tostring(
         getrecord(
             identifier=record['_oai'].get('id'),
@@ -1236,28 +1246,35 @@ def get_google_detaset_meta(record):
     if mtdata is None:
         return
 
+    output_resource_types = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_RESOURCE_TYPE',WEKO_RECORDS_UI_GOOGLE_DATASET_RESOURCE_TYPE)
     # Check resource type is 'dataset'
     resource_type_allowed = False
     for resource_type in mtdata.findall('dc:type', namespaces=mtdata.nsmap):
-        if resource_type.text == "dataset":
+        if resource_type.text in output_resource_types:
             resource_type_allowed = True
             break
 
     if not resource_type_allowed:
+        current_app.logger.debug("resource_type_allowed: {}".format(resource_type_allowed))
         return
 
     res_data = {'@context': 'https://schema.org/', '@type': 'Dataset'}
 
     # Required property check
+    min_length = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN',WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN)
+    max_length = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX',WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX)
+    
     for title in mtdata.findall('dc:title', namespaces=mtdata.nsmap):
         res_data['name'] = title.text
     for description in mtdata.findall('datacite:description', namespaces=mtdata.nsmap):
         description_text = description.text
-        if len(description_text) >= 50:
-            if len(description_text) > 5000:
-                description_text = description_text[:5000]
+        if len(description_text) >= min_length:
+            if len(description_text) > max_length:
+                description_text = description_text[:max_length]
             res_data['description'] = description_text
+
     if 'name' not in res_data or 'description' not in res_data:
+        current_app.logger.debug("resource_type_allowed: {}".format(resource_type_allowed))
         return
 
     # includedInDataCatalog
@@ -1395,11 +1412,22 @@ def get_google_detaset_meta(record):
 
         distribution = {'@type': 'DataDownload'}
         if uri is not None and len(uri.text) > 0:
-            distribution['contentUrl'] = uri.text
+            distribution['contentUrl'] = quote(uri.text,'/:%')
         if mime_type is not None and len(mime_type.text) > 0:
             distribution['encodingFormat'] = mime_type.text
         distributions.append(distribution)
     if len(distributions) > 0:
+        adding_bundles = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DISTRIBUTION_BUNDLE',WEKO_RECORDS_UI_GOOGLE_DATASET_DISTRIBUTION_BUNDLE)
+        if adding_bundles is not None:
+            for bundle in adding_bundles:
+                distribution = {'@type': 'DataDownload'}
+                if 'contentUrl' in bundle:
+                    distribution['contentUrl'] = quote(bundle['contentUrl'],'/:%')
+                    if 'encodingFormat' in bundle:
+                        distribution['encodingFormat'] = bundle['encodingFormat']
+                    distributions.append(distribution)
         res_data['distribution'] = distributions
+
+    current_app.logger.debug("res_data: {}".format(json.dumps(res_data, ensure_ascii=False)))
 
     return json.dumps(res_data, ensure_ascii=False)

@@ -227,7 +227,7 @@ def get():
                             "should": [
                                 {
                                     "term": {
-                                        "author_link":
+                                        "author_link.raw":
                                         "@author_id"
                                     }
                                 }

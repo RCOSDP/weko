@@ -104,8 +104,13 @@ def eval_field(field, asc, nested_sorting=None):
         key, key_asc = parse_sort_field(field)
         if not asc:
             key_asc = not key_asc
+        
         sorting = {key: {'order': 'asc' if key_asc else 'desc',
                          'unmapped_type': 'long'}}
+
+        if "date_range" in key:
+            sorting = {key: {'order': 'asc' if key_asc else 'desc',
+                         'unmapped_type': 'date'}}
         if nested_sorting:
             sorting[key].update({'nested': nested_sorting})
         return sorting

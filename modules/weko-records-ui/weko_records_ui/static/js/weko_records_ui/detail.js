@@ -210,9 +210,11 @@ require([
   $('.next_to_analysis').on('click', function () {
     let analysis_url = $('#analysis_url').text();
     let permalink_uri = $('#permalink_uri').text();
-    let analysis_version = '/HEAD';
+    //let analysis_version = '/HEAD';
+	let analysis_version =  '/' + new Date().getTime().toString(16)  + Math.floor(1000*Math.random()).toString(16);
     analysis_url = analysis_url + encodeURIComponent(permalink_uri) + analysis_version;
     window.open(analysis_url);
+    $("#show_rights_info").modal("hide");
   });
 
   $(".term-condtion-modal").on("click", function () {
