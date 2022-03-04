@@ -120,7 +120,8 @@ services:
     user: invenio
     links:
       - postgresql
-      - redis
+      - redis-master
+      - redis-slave
       - elasticsearch
       - rabbitmq
     logging:
