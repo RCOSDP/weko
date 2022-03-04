@@ -69,7 +69,6 @@ def check_inbox_publish():
     inbox = inbox_url()
     send_cookie = dict()
     latest_get = request.cookies.get('LatestGet', None)
-    latest_get = None
     if latest_get:
         latest_get_users = json.loads(latest_get)
         send_cookie = latest_get_users
