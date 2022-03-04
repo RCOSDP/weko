@@ -124,6 +124,9 @@ services:
       - redis-slave
       - elasticsearch
       - rabbitmq
+      - sentinel-1
+      - sentinel-2
+      - sentinel-3
     logging:
       driver: "json-file"
       options:
@@ -168,7 +171,7 @@ services:
     image: redis
     command: redis-server --slaveof redis-master 6379
     ports:
-      - "26301:6379"
+      - "26302:6379"
     links:
         - redis-master
     deploy:
