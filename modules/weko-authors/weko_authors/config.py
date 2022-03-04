@@ -29,7 +29,8 @@ WEKO_AUTHORS_LIST_SCHEME = ['e-Rad', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID',
 WEKO_AUTHORS_INDEX_ITEM_OTHER = 9
 """ Item other index """
 
-WEKO_AUTHORS_LIST_SCHEME_AFFILIATION = ['ISNI', 'GRID', 'Ringgold', 'kakenhi', 'Other']
+WEKO_AUTHORS_LIST_SCHEME_AFFILIATION = [
+    'ISNI', 'GRID', 'Ringgold', 'kakenhi', 'Other']
 """ List of Affiliation Name Identifier Scheme """
 
 WEKO_AUTHORS_AFFILIATION_IDENTIFIER_ITEM_OTHER = 4
@@ -47,7 +48,8 @@ WEKO_AUTHORS_ADMIN_EDIT_TEMPLATE = 'weko_authors/admin/author_edit.html'
 WEKO_AUTHORS_ADMIN_PREFIX_TEMPLATE = 'weko_authors/admin/prefix_list.html'
 """Template for the id prefix settings page."""
 
-WEKO_AUTHORS_ADMIN_AFFILIATION_TEMPLATE = 'weko_authors/admin/affiliation_list.html'
+WEKO_AUTHORS_ADMIN_AFFILIATION_TEMPLATE = \
+    'weko_authors/admin/affiliation_list.html'
 """Template for the id affiliation settings page."""
 
 WEKO_AUTHORS_ADMIN_EXPORT_TEMPLATE = 'weko_authors/admin/author_export.html'
@@ -219,52 +221,52 @@ WEKO_AUTHORS_IMPORT_KEY = {
         'creatorMails': 'creatorMail',
         'mails': 'mail'
     },
-    'author_affiliation':{
-        'contributorAffiliations':{
-            'names':{
+    'author_affiliation': {
+        'contributorAffiliations': {
+            'names': {
                 'key': 'contributorAffiliationNames',
-                'values':{
+                'values': {
                     'name': 'contributorAffiliationName',
                     'lang': 'contributorAffiliationNameLang'
                 }
             },
-            'identifiers':{
+            'identifiers': {
                 'key': 'contributorAffiliationNameIdentifiers',
-                'values':{
+                'values': {
                     'identifier': 'contributorAffiliationNameIdentifier',
                     'uri': 'contributorAffiliationURI',
                     'scheme': 'contributorAffiliationScheme'
                 }
             }
         },
-        'creatorAffiliations':{
-            'names':{
+        'creatorAffiliations': {
+            'names': {
                 'key': 'affiliationNames',
-                'values':{
+                'values': {
                     'name': 'affiliationName',
                     'lang': 'affiliationNameLang'
                 }
             },
-            'identifiers':{
+            'identifiers': {
                 'key': 'affiliationNameIdentifiers',
-                'values':{
+                'values': {
                     'identifier': 'affiliationNameIdentifier',
                     'uri': 'affiliationNameIdentifierURI',
                     'scheme': 'affiliationNameIdentifierScheme'
                 }
             }
         },
-        'affiliations':{
-            'names':{
+        'affiliations': {
+            'names': {
                 'key': 'affiliationNames',
-                'values':{
+                'values': {
                     'name': 'affiliationName',
                     'lang': 'lang'
                 }
             },
-            'identifiers':{
+            'identifiers': {
                 'key': 'nameIdentifiers',
-                'values':{
+                'values': {
                     'identifier': 'nameIdentifier',
                     'uri': 'nameIdentifierURI',
                     'scheme': 'nameIdentifierScheme'
@@ -274,3 +276,32 @@ WEKO_AUTHORS_IMPORT_KEY = {
     }
 }
 """Key of author get fill import data."""
+
+WEKO_AUTHORS_IDENTIFIER_REG = {
+    "ISNI": {
+        "minLength": 1,
+        "maxLength": 30,
+        "reg": "^.*$"
+    },
+    "GRID": {
+        "minLength": 1,
+        "maxLength": 30,
+        "reg": "^.*$"
+    },
+    "Ringgold": {
+        "minLength": 1,
+        "maxLength": 30,
+        "reg": "^.*$"
+    },
+    "kakenhi": {
+        "minLength": 1,
+        "maxLength": 30,
+        "reg": "^.*$"
+    }
+}
+"""
+Key of author affiliation nameidentifier regulations.
+length: "minLength" <= nameidentifier's length <= "maxLength"
+"reg": string pattern, excluding first and last slashes from literal notation
+"""
+
