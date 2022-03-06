@@ -8,7 +8,7 @@ import tempfile
 import pytest
 
 
-@pytest.fixture()
+@pytest.fixture(scope="function", autouse=True)
 def tmppath():
     """Make a temporary directory."""
     tmpdir = tempfile.mkdtemp()
@@ -16,7 +16,7 @@ def tmppath():
     shutil.rmtree(tmpdir)
 
 
-@pytest.fixture()
+@pytest.fixture(scope="function", autouse=True)
 def pywarnlogger():
     """Rest the py.warnings logger."""
     logger = logging.getLogger("py.warnings")

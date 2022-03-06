@@ -3,6 +3,8 @@
 """File system logging tests."""
 
 
+import logging
+import os
 from logging.handlers import TimedRotatingFileHandler
 from os.path import exists, join
 
@@ -24,7 +26,7 @@ def test_init(tmppath):
     assert "weko-logging-fs" in app.extensions
 
     ext = WekoLoggingFS()
-    app = Flask("testapp_app")
+    app = Flask("testapp")
     assert "weko-logging-fs" not in app.extensions
     ext.init_app(app)
     assert "weko-logging-fs" in app.extensions
@@ -36,6 +38,38 @@ def test_init(tmppath):
     assert "weko-logging-fs" in app.extensions
     assert app.config["WEKO_LOGGING_FS_LEVEL"] == WEKO_LOGGING_FS_LEVEL
 
+    app = Flask("testapp")
+    app.config.update(
+        dict(WEKO_LOGGING_FS_PYWARNINGS=None, WEKO_LOGGING_FS_LOGFILE=logfile)
+    )
+    ext = WekoLoggingFS(app)
+    assert "weko-logging-fs" in app.extensions
+    logger = logging.getLogger("py.warnings")
+    assert TimedRotatingFileHandler not in [x.__class__ for x in logger.handlers]
+
+    app = Flask("testapp")
+    app.config.update(
+        dict(WEKO_LOGGING_FS_PYWARNINGS=True, WEKO_LOGGING_FS_LOGFILE=logfile)
+    )
+    ext = WekoLoggingFS(app)
+    assert "weko-logging-fs" in app.extensions
+    logger = logging.getLogger("py.warnings")
+    assert TimedRotatingFileHandler in [x.__class__ for x in logger.handlers]
+
+    app = Flask("testapp")
+    app.config.update(dict(WEKO_LOGGING_FS_LOGFILE=None))
+    WekoLoggingFS(app)
+    assert "weko-logging-fs" not in app.extensions
+    assert app.config["WEKO_LOGGING_FS_LEVEL"] == WEKO_LOGGING_FS_LEVEL
+
+    app = Flask("testapp")
+    os.environ["LOGGING_FS_LOGFILE"] = logfile
+    WekoLoggingFS(app)
+    assert "weko-logging-fs" in app.extensions
+    assert app.config["WEKO_LOGGING_FS_LEVEL"] == WEKO_LOGGING_FS_LEVEL
+    assert app.config["WEKO_LOGGING_FS_LOGFILE"] == logfile
+    os.environ.pop("LOGGING_FS_LOGFILE")
+
 
 def test_filepath_formatting(tmppath):
     """
@@ -44,11 +78,10 @@ def test_filepath_formatting(tmppath):
     :param tmppath: Temp path object.
     """
     app = Flask("testapp", instance_path=tmppath)
-    app.config.update(
-        dict(DEBUG=True, WEKO_LOGGING_FS_LOGFILE=tmppath + "/testapp.log")
-    )
+    filepath = tmppath + "/testapp.log"
+    app.config.update(dict(DEBUG=True, WEKO_LOGGING_FS_LOGFILE=filepath))
     WekoLoggingFS(app)
-    assert app.config["WEKO_LOGGING_FS_LOGFILE"] == join(tmppath, "testapp.log")
+    assert app.config["WEKO_LOGGING_FS_LOGFILE"] == filepath
     assert app.config["WEKO_LOGGING_FS_LEVEL"] == "DEBUG"
 
 
@@ -97,6 +130,7 @@ def test_logging(tmppath):
     WekoLoggingFS(app)
     # Test delay opening of file
     app.logger.warning("My warning")
+
     assert exists(filepath)
     app.logger.info("My info")
     # Test log level

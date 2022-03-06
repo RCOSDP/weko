@@ -55,7 +55,7 @@ for further details):
 WEKO_LOGGING_FS_LOGFILE = "{instance_path}/weko-logging.log"
 """Enable logging to the filesystem."""
 
-WEKO_LOGGING_FS_PYWARNINGS = True
+WEKO_LOGGING_FS_PYWARNINGS = None
 """Enable logging of Python warnings to filesystem logging."""
 
 WEKO_LOGGING_FS_WHEN = "D"
