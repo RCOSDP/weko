@@ -33,7 +33,7 @@
   {% autoescape False %}
   <table class="table table-bordered table-striped detail-table">
       {% if m_record.item_type_info %}
-	    {% if config.WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE %}
+	    {% if flg_display_itemtype %}
         <tr>
           <th scope="row" colspan="6">{{ _('Item type') }}</th>
           <td>{{ m_record.item_type_info }}</td>
@@ -89,8 +89,10 @@
                       </tr>
                     {%- endif -%}
                   {%- endif -%}
-                {% elif lst['attribute_name'] == 'Resourcetype' and config.WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE %}
+                {% elif (lst['attribute_name']|upper == 'RESOURCETYPE') %}
+				   {% if flg_display_resourcetype %}
 					{{ output_detail_data(lst) }}
+				   {% endif %}
 				{% else %}
                   {{ output_detail_data(lst) }}
                 {% endif %}
@@ -121,7 +123,7 @@
                     <span>{{ thumb_name }}</span><br>
                     <img src={{ thumb_url }}
                          alt={{ thumb_name }}
-                         style="max-width: {{ config.WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL }}px;"
+                         style="max-width: {{ thumbnail_width }}px;"
                     />
                   </p>
                 {% endfor %}
