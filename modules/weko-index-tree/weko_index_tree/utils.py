@@ -823,7 +823,7 @@ def __get_redis_store():
         Redis store.
 
     """
-    master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+    master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=False)
     return RedisStore(master.master_for(
         current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
 

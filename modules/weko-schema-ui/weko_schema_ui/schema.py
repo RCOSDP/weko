@@ -1823,7 +1823,7 @@ def cache_schema(schema_name, delete=False):
 
     try:
         # schema cached on Redis by schema name
-        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=False)
         datastore = RedisStore(master.master_for(
             current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
         cache_key = current_app.config[
@@ -1856,7 +1856,7 @@ def delete_schema_cache(schema_name):
     """
     try:
         # schema cached on Redis by schema name
-        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=False)
         datastore = RedisStore(master.master_for(
             current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
         cache_key = current_app.config[

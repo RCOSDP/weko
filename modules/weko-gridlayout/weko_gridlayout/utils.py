@@ -925,7 +925,7 @@ def delete_widget_cache(repository_id, page_id=None):
     @param page_id: The Page identifier
     @return:
     """
-    master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+    master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=False)
     cache_store = RedisStore(master.master_for(
             current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
     if page_id:

@@ -116,7 +116,7 @@ def shib_auto_login():
         if not shib_session_id:
             return _redirect_method()
 
-        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=False)
         datastore = RedisStore(master.master_for(
             current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
         cache_key = current_app.config[
@@ -170,7 +170,7 @@ def confirm_user():
             flash('shib_session_id', category='error')
             return _redirect_method()
 
-        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=False)
         datastore = RedisStore(master.master_for(
             current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
         cache_key = current_app.config[
@@ -229,7 +229,7 @@ def shib_login():
             flash(_("Missing SHIB_ATTR_SESSION_ID!"), category='error')
             return _redirect_method()
 
-        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=False)
         datastore = RedisStore(master.master_for(
             current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
         cache_key = current_app.config[
@@ -292,7 +292,7 @@ def shib_sp_login():
             flash(_("Missing SHIB_ATTRs!"), category='error')
             return _redirect_method()
 
-        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=False)
         datastore = RedisStore(master.master_for(
             current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
         ttl_sec = int(current_app.config[

@@ -493,7 +493,7 @@ def write_report_csv_rows(writer, records, file_type=None, other_info=None):
 def reset_redis_cache(cache_key, value):
     """Delete and then reset a cache value to Redis."""
     try:
-        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=False)
         datastore = RedisStore(master.master_for(
             current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
         if datastore.redis.exists(cache_key):
@@ -507,7 +507,7 @@ def reset_redis_cache(cache_key, value):
 def is_exists_key_in_redis(key):
     """Check key exist in redis."""
     try:
-        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=False)
         datastore = RedisStore(master.master_for(
             current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
         return datastore.redis.exists(key)
@@ -519,7 +519,7 @@ def is_exists_key_in_redis(key):
 def is_exists_key_or_empty_in_redis(key):
     """Check key exist in redis."""
     try:
-        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=False)
         datastore = RedisStore(master.master_for(
             current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
         return datastore.redis.exists(key) and datastore.redis.get(key) != b''
@@ -531,7 +531,7 @@ def is_exists_key_or_empty_in_redis(key):
 def get_redis_cache(cache_key):
     """Check and then retrieve the value of a Redis cache key."""
     try:
-        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=False)
         datastore = RedisStore(master.master_for(
             current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
         if datastore.redis.exists(cache_key):

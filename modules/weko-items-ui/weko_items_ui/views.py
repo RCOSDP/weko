@@ -375,7 +375,7 @@ def items_index(pid_value='0'):
                 render_widgets=render_widgets)
 
         data = request.get_json()
-        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=False)
         sessionstore = RedisStore(master.master_for(
             current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
         if request.method == 'PUT':
@@ -494,7 +494,7 @@ def iframe_items_index(pid_value='0'):
             )
 
         data = request.get_json()
-        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=False)
         sessionstore = RedisStore(master.master_for(
             current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
         if request.method == 'PUT':
@@ -1067,7 +1067,7 @@ def check_validation_error_msg(activity_id):
     :return: Show error message
     """
 
-    master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+    master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=False)
     sessionstore = RedisStore(master.master_for(
             current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
     if sessionstore.redis.exists(

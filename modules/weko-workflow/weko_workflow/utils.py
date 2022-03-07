@@ -3932,7 +3932,7 @@ def check_doi_validation_not_pass(item_id, activity_id,
     if isinstance(error_list, str):
         return error_list
 
-    master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=True)
+    master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=False)
     sessionstore = RedisStore(master.master_for(
             current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
 
