@@ -44,7 +44,7 @@ services:
       - INVENIO_POSTGRESQL_DBNAME=invenio
       - INVENIO_POSTGRESQL_DBUSER=invenio
       - INVENIO_POSTGRESQL_DBPASS=dbpass123
-      - INVENIO_REDIS_HOST=redis
+      - INVENIO_REDIS_HOST=redis-master
       - INVENIO_ELASTICSEARCH_HOST=elasticsearch
       - INVENIO_RABBITMQ_HOST=rabbitmq
       - INVENIO_RABBITMQ_USER=guest
