@@ -8,13 +8,17 @@ from invenio_db import db
 
 
 def get_recid_p(recid):
-    print("called get_recid_p")
-    # recidから"."以下を排除
+    """Remove the version number from the recid that has the version number
+
+    :param string recid: recid that has
+    :type recid: _type_
+    :return: recid
+    :rtype: string
+    """
     try:
         c_recid = PersistentIdentifier.get('recid', str(recid))
     except PIDDoesNotExistError:
         c_recid = None
-        # TODO :レコードが存在しないエラーを探す
     if c_recid:
         recid_version = PIDVersioning(child=c_recid)
         if recid_version.has_parents:
@@ -24,8 +28,13 @@ def get_recid_p(recid):
 
 
 def get_records_pid(pid):
-    # weko_records_ui.views.parent_view_methodの一部分参考
-    # TODO:pidがない時の処理未考案
+    """Get the uuid of the latest record 
+    from the recid without the version number
+
+    :param string pid: recid without the version number
+    :return: uuid of the latest record
+    :rtype: string
+    """
     try:
         p_pid = PersistentIdentifier.get('parent', 'parent:' + str(pid))
     except PIDDoesNotExistError:
@@ -39,14 +48,17 @@ def get_records_pid(pid):
 
 
 def get_record_permalink(recid_p):
-    """
-    そのレコードの親要素のuuidを取得し、それに紐づいているdoiのuriを取得
+    """Get the uuid of the parent element of the record
+    and get the uri of the doi associated with it
+
+    :param string recid_p: recid
+    :return: uri of doi
+    :rtype: string
     """
     uuid_p = \
         PersistentIdentifier.get('parent',
                                  'parent:'+str(recid_p)
                                  ).object_uuid
-    print(uuid_p)
     try:
         pid = PersistentIdentifier.query.filter_by(
             pid_type='doi',
@@ -68,7 +80,6 @@ def get_record_permalink(recid_p):
 def get_url_root():
     """Check a DOI is existed.
 
-    weko_workflow.utils.get_url_rootのコピペ
     :return: url root.
     """
     site_url = current_app.config['THEME_SITEURL'] + '/'
@@ -76,6 +87,12 @@ def get_url_root():
 
 
 def inbox_url(url=None):
+    """Convert inbox url to your own inbox url
+
+    :param string url: inbox url, defaults to None
+    :return: own inbox url
+    :rtype: string
+    """
     if url is not None:
         if ('localhost' in url) or (current_app.config['WEB_HOST'] in url):
             return re.sub('https://(.*)/inbox',

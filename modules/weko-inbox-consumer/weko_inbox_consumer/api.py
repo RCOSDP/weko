@@ -33,30 +33,6 @@ blueprint_api = Blueprint('weko_inbox_consumer',
                           )
 
 
-@blueprint_api.route('/send_push', methods=['GET'])
-@login_required
-def send_notify():
-    
-    # from invenio_deposit.api import Deposit
-    # record_dp = Deposit.get_record(get_records_pid('1'))
-    # print(record_dp)
-    # print(type(record_dp.files["画面キャプりゃー2.png"].obj)) # invenio_files_rest.models.ObjectVersion  dbではfiles_object
-    # print(record_dp.files["画面キャプりゃー2.png"].obj.file_id) # file_idを取得できた
-    # print(record_dp.files["画面キャプりゃー2.png"].data)
-    # print(type(record_dp.files["画面キャプりゃー2.png"].data))
-    record_api = Record.get_record(get_records_pid('6'))
-    # print(record_api)
-    # record_meta = \
-    #     RecordMetadata.query.filter_by(
-    #         id=get_records_pid('1')
-    #         ).first()
-    # print(record_meta)
-    # print(record_api.files)
-    # print(record_meta.files)
-    publish_notification(record_api)
-    return make_response()
-
-
 @blueprint_api.route('/publish', methods=['GET'])
 def check_inbox_publish():
     """Check if there is an item publivcation notification in inbox
@@ -161,7 +137,6 @@ def get_notification(uri):
                               headers={'accept': 'application/ld+json'},
                               verify=INBOX_VERIFY_TLS_CERTIFICATE
                               )
-    print(notification)
     return notification
 
 
@@ -208,6 +183,11 @@ def get_oai_format(oad, namespace):
 
 @blueprint_api.route('/push_data', methods=['POST'])
 def get_data_from_push():
+    """Get the data sent from javascript
+
+    :return: response
+    :rtype: Response
+    """
     data = request.json
     current_app.logger.debug(data)
     return make_response()

@@ -26,7 +26,6 @@ def request_signposting(uri):
 
     except requests.exceptions.RequestException as e:
         current_app.logger.exception(str(e))
-        print(e)
     else:
         link = r.headers['Link']
         current_app.logger.debug(link)

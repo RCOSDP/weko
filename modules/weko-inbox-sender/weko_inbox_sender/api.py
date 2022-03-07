@@ -85,14 +85,3 @@ def send_notification_inbox(payload):
     sender = ldnlib.Sender(allow_localhost=True)
     inbox = inbox_url(payload['target']['inbox'])
     sender.send(inbox, payload, verify=INBOX_VERIFY_TLS_CERTIFICATE)
-
-
-def check_value_in_data(data):
-    for key, value in data.items():
-        if type(value) == list():
-            if len(value) == 0:
-                return False
-        else:
-            if value is None:
-                return False
-    return True

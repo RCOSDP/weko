@@ -1,22 +1,18 @@
 
 $("#check_push").on("click", function(){
-    console.log("pushed check botton.")
     reload_notify_publish();
 });
 
 function reload_notify_publish(){
-    console.log("check inbox")
     $.ajax({
         type:"GET",
         url:"/check_inbox/publish",
         success: function(result){
-            console.log(result)
             result.forEach(function(push_data){
                 check_permission_and_create(push_data)
             })
         },
         error: function(result){
-            console.log("notiry_check_error")
         }
     });
 };

@@ -20,6 +20,7 @@ WEKO_INBOX_CONSUMER_SETTING_TEMPLATE = \
     'weko_inbox_consumer/setting/checkinterval.html'
 
 WEKO_CHECK_INBOX_INTERVAL = 120000
+
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 DEFAULT_NOTIFY_RETENTION_DAYS = 7
