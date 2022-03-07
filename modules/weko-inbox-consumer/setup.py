@@ -94,9 +94,7 @@ setup(
             'weko_check_inbox_js = weko_inbox_consumer.bundles:push_notify_js',
             'weko_interval_check_js = weko_inbox_consumer.bundles:interval_check_js'
         ],
-        'invenio_admin.views': [
-            'weko_inbox_consumer_checkinterval = weko_inbox_consumer.admin:check_interval_adminview'
-        ]
+
         # TODO: Edit these entry points to fit your needs.
         # 'invenio_access.actions': [],
         # 'invenio_admin.actions': [],
