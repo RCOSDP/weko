@@ -279,22 +279,22 @@ WEKO_AUTHORS_IMPORT_KEY = {
 
 WEKO_AUTHORS_IDENTIFIER_REG = {
     "ISNI": {
-        "minLength": 1,
+        "minLength": 0,
         "maxLength": 30,
         "reg": "^.*$"
     },
     "GRID": {
-        "minLength": 1,
+        "minLength": 0,
         "maxLength": 30,
         "reg": "^.*$"
     },
     "Ringgold": {
-        "minLength": 1,
+        "minLength": 0,
         "maxLength": 30,
         "reg": "^.*$"
     },
     "kakenhi": {
-        "minLength": 1,
+        "minLength": 0,
         "maxLength": 30,
         "reg": "^.*$"
     }
