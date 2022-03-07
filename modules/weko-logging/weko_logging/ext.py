@@ -47,7 +47,7 @@ class WekoLoggingBase(object):
 
         :param handler: Log handler object.
         """
-        logger = logging.getLogger('py.warnings')
+        logger = logging.getLogger("py.warnings")
         # Check for previously installed handlers.
         for h in logger.handlers:
             if isinstance(h, handler.__class__):

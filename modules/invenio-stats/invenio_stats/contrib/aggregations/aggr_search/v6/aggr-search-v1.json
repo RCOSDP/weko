@@ -52,7 +52,7 @@
           "index": true
         },
         "search_type": {
-          "type": "integer",
+          "type": "keyword",
           "index": true
         },
         "site_license_name": {

@@ -565,11 +565,11 @@ WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX = 5000
 """ maximum length of google dataset description """
 
 WEKO_RECORDS_UI_GOOGLE_DATASET_DISTRIBUTION_BUNDLE = [
-    {'contentUrl':'https://raw.githubusercontent.com/ikfj/JDCat-base/main/apt.txt',
+    {'contentUrl':'https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt',
     'encodingFormat':'text/plain'},
-    {'contentUrl':'https://raw.githubusercontent.com/ikfj/JDCat-base/main/environment.yml',
+    {'contentUrl':'https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml',
     'encodingFormat':'application/x-yaml'},
-    {'contentUrl':'https://raw.githubusercontent.com/ikfj/JDCat-base/main/postBuild',
+    {'contentUrl':'https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild',
     'encodingFormat':'text/x-shellscript'}
     ]
 """ List of force budle files in google dataset DISTRIBUTION """
@@ -592,7 +592,7 @@ WEKO_RECORDS_UI_DISPLAY_VERSION_BOX_FLG = True
 WEKO_RECORDS_UI_DISPLAY_EXPORT_BOX_FLG = True
 """ Display Export box on item detail. """
 
-WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = True
+WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False 
 """ Display resource type on item detail. """
 
 WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = True

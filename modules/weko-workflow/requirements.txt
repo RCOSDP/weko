@@ -1,0 +1,2 @@
+Flask-Menu==0.6.0
+-e ../invenio-accounts
