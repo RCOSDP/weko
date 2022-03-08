@@ -157,7 +157,7 @@ services:
 
   redis-master:
     restart: "always"
-    image: redis
+    image: redis:3
     command: redis-server
     ports:
       - "26301:6379"
@@ -168,7 +168,7 @@ services:
 
   redis-slave:
     restart: "always"
-    image: redis
+    image: redis:3
     command: redis-server --slaveof redis-master 6379
     ports:
       - "26302:6379"
