@@ -254,9 +254,9 @@ class InvenioAccounts(object):
             from redis import sentinel
             from simplekv.memory.redisstore import RedisStore
 
-            master = sentinel.Sentinel(app.config['SENTINEL_URL'],decode_responses=False)
+            master = sentinel.Sentinel(app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
             session_kvstore = RedisStore(master.master_for(
-                    app.config['SENTINEL_SERVICE_NAME'],db=app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
+                    app.config['CACHE_REDIS_SENTINEL_MASTER'],db=app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
         else:
             from simplekv.memory import DictStore
 

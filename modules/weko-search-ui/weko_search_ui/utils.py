@@ -2982,9 +2982,9 @@ def delete_exported(uri, cache_key):
         with db.session.begin_nested():
             file_instance = FileInstance.get_by_uri(uri)
             file_instance.delete()
-        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=False)
+        master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
         datastore = RedisStore(master.master_for(
-            current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO']))
+            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB_NO']))
         if datastore.redis.exists(cache_key):
             datastore.delete(cache_key)
         db.session.commit()

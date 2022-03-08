@@ -114,9 +114,9 @@ class TempDirInfo(object):
             key = current_app.config[
                 'WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT']
         cls.key = key
-        master = sentinel.Sentinel(current_app.config['SENTINEL_URL'],decode_responses=False)
+        master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
         cls.redis = master.master_for(
-            current_app.config['SENTINEL_SERVICE_NAME'],db=current_app.config['CACHE_REDIS_DB_NO'])
+            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB_NO'])
 
     def set(cls, temp_path, extra_info=None):
         """Add or update data.
