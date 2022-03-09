@@ -39,12 +39,14 @@ class _OAuth2ServerState(object):
         oauth2.init_app(app)
 
         # Flask-OAuthlib does not support CACHE_REDIS_URL
-        if app.config['OAUTH2_CACHE_TYPE'] == 'redis' and app.config.get(
-                'CACHE_REDIS_URL'):
-            from redis import from_url as redis_from_url
+        if app.config['OAUTH2_CACHE_TYPE'] == 'redissentinel' and app.config.get(
+                'CACHE_REDIS_SENTINELS'):
+            from redis import sentinel
+            master = sentinel.Sentinel(app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
             app.config.setdefault(
                 'OAUTH2_CACHE_REDIS_HOST',
-                redis_from_url(app.config['CACHE_REDIS_URL'])
+                master.master_for(
+                app.config['CACHE_REDIS_SENTINEL_MASTER'],db=app.config['CACHE_REDIS_DB_NO'])
             )
 
         # Configures an OAuth2Provider instance to use configured caching
