@@ -46,7 +46,8 @@ Flask-Limiter==1.1.0
 Flask-Login==0.4.1
 Flask-Mail==0.9.1
 Flask-Menu==0.6.0
-Flask-OAuthlib==0.9.5
+#Flask-OAuthlib==0.9.5
+-e git+https://github.com/RCOSDP/flask-oauthlib.git@add-redissentinel#egg=Flask-OAuthlib
 Flask-Principal==0.4.0
 Flask-RESTful==0.3.8
 Flask-Security==3.0.0
