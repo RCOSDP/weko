@@ -46,7 +46,7 @@ class _OAuth2ServerState(object):
             app.config.setdefault(
                 'OAUTH2_CACHE_REDIS_HOST',
                 master.master_for(
-                app.config['CACHE_REDIS_SENTINEL_MASTER'],db=app.config['CACHE_REDIS_DB_NO'])
+                app.config['CACHE_REDIS_SENTINEL_MASTER'],db=app.config['CACHE_REDIS_DB'])
             )
 
         # Configures an OAuth2Provider instance to use configured caching

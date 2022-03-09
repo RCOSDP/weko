@@ -495,7 +495,7 @@ def reset_redis_cache(cache_key, value):
     try:
         master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
         datastore = RedisStore(master.master_for(
-            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB_NO']))
+            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB']))
         if datastore.redis.exists(cache_key):
             datastore.delete(cache_key)
         datastore.put(cache_key, value.encode('utf-8'))
@@ -509,7 +509,7 @@ def is_exists_key_in_redis(key):
     try:
         master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
         datastore = RedisStore(master.master_for(
-            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB_NO']))
+            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB']))
         return datastore.redis.exists(key)
     except Exception as e:
         current_app.logger.error('Could get value for ' + key, e)
@@ -521,7 +521,7 @@ def is_exists_key_or_empty_in_redis(key):
     try:
         master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
         datastore = RedisStore(master.master_for(
-            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB_NO']))
+            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB']))
         return datastore.redis.exists(key) and datastore.redis.get(key) != b''
     except Exception as e:
         current_app.logger.error('Could get value for ' + key, e)
@@ -533,7 +533,7 @@ def get_redis_cache(cache_key):
     try:
         master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
         datastore = RedisStore(master.master_for(
-            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB_NO']))
+            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB']))
         if datastore.redis.exists(cache_key):
             return datastore.get(cache_key).decode('utf-8')
     except Exception as e:

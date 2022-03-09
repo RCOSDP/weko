@@ -118,7 +118,7 @@ def shib_auto_login():
 
         master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
         datastore = RedisStore(master.master_for(
-            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB_NO']))
+            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB']))
         cache_key = current_app.config[
             'WEKO_ACCOUNTS_SHIB_CACHE_PREFIX'] + shib_session_id
         if not datastore.redis.exists(cache_key):
@@ -172,7 +172,7 @@ def confirm_user():
 
         master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
         datastore = RedisStore(master.master_for(
-            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB_NO']))
+            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB']))
         cache_key = current_app.config[
             'WEKO_ACCOUNTS_SHIB_CACHE_PREFIX'] + shib_session_id
 
@@ -231,7 +231,7 @@ def shib_login():
 
         master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
         datastore = RedisStore(master.master_for(
-            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB_NO']))
+            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB']))
         cache_key = current_app.config[
             'WEKO_ACCOUNTS_SHIB_CACHE_PREFIX'] + shib_session_id
 
@@ -294,7 +294,7 @@ def shib_sp_login():
 
         master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
         datastore = RedisStore(master.master_for(
-            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB_NO']))
+            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB']))
         ttl_sec = int(current_app.config[
             'WEKO_ACCOUNTS_SHIB_LOGIN_CACHE_TTL'])
         datastore.put(

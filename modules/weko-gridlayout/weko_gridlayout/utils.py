@@ -927,7 +927,7 @@ def delete_widget_cache(repository_id, page_id=None):
     """
     master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
     cache_store = RedisStore(master.master_for(
-            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB_NO']))
+            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB']))
     if page_id:
         cache_key = ("*" + config.WEKO_GRIDLAYOUT_WIDGET_PAGE_CACHE_KEY
                      + str(repository_id) + "_" + str(page_id) + "_*")

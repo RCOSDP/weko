@@ -116,7 +116,7 @@ class TempDirInfo(object):
         cls.key = key
         master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
         cls.redis = master.master_for(
-            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB_NO'])
+            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB'])
 
     def set(cls, temp_path, extra_info=None):
         """Add or update data.
