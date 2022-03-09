@@ -83,6 +83,7 @@ class AuthorManagementView(BaseView):
         """Render an adding author view."""
         return self.render(
             current_app.config['WEKO_AUTHORS_ADMIN_EDIT_TEMPLATE'],
+            identifier_reg=json.dumps(current_app.config['WEKO_AUTHORS_IDENTIFIER_REG']),
             render_widgets=False,  # Moved to admin, no need for widgets
             lang_code=session.get('selected_language', 'en')  # Set default
         )
