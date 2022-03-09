@@ -2105,8 +2105,10 @@ def set_mail_info(item_info, activity_detail, guest_user=False):
         advisor_fullname=item_info.get('subitem_advisor_fullname'),
         guarantor_fullname=item_info.get('subitem_guarantor_fullname'),
         url=request.url_root,
-        advisor_university_institution=item_info.get('subitem_advisor_university/institution'),
-        guarantor_university_institution=item_info.get('subitem_guarantor_university/institution'),
+        advisor_university_institution=item_info.get(
+            'subitem_advisor_university/institution'),
+        guarantor_university_institution=item_info.get(
+            'subitem_guarantor_university/institution'),
         advisor_mail_address=item_info.get('subitem_advisor_mail_address'),
         guarantor_mail_address=item_info.get('subitem_guarantor_mail_address'),
         register_user_mail=register_user,
@@ -3265,6 +3267,7 @@ def get_usage_data(item_type_id, activity_detail, user_profile=None):
         elif isinstance(record_data, list):
             for data in record_data:
                 __build_metadata_for_usage_report(data, usage_report_data)
+
     result = {}
     extra_info = activity_detail.extra_info
     if not extra_info:
@@ -3282,6 +3285,7 @@ def get_usage_data(item_type_id, activity_detail, user_profile=None):
             mail_address = extra_info.get('guest_mail', '')
 
         related_title = str(extra_info.get('related_title', ''))
+
         item_title = cfg.get('WEKO_WORKFLOW_USAGE_APPLICATION_ITEM_TITLE') \
             + activity_detail.created.strftime("%Y%m%d") \
             + str(related_title) + '_'

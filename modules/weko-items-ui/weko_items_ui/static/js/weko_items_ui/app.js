@@ -2411,14 +2411,14 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           setTimeout(function () {
             function updateItemTitle() {
               let item_title = $("#auto_fill_subitem_restricted_access_item_title").val() +
-                $("#subitem_restricted_access_name").val()
+                $("#subitem_fullname").val()
               $rootScope["recordsVM"].invenioRecordsModel[item_title_key]['subitem_restricted_access_item_title'] = item_title;
             }
-            $("#subitem_restricted_access_name").on('input', function () {
+            $("#subitem_fullname").on('input', function () {
               updateItemTitle();
             });
 
-            if ($("#subitem_restricted_access_name").val()) {
+            if ($("#subitem_fullname").val()) {
               updateItemTitle();
             }
           }, 3000);
