@@ -65,6 +65,7 @@ from weko_search_ui.utils import check_import_items, import_items_to_system
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
+from weko_inbox_sender.api import publish_notification
 
 from .api import Action, Flow, GetCommunity, WorkActivity, \
     WorkActivityHistory, WorkFlow
@@ -973,7 +974,7 @@ def next_action(activity_id='0', action_id=0):
     last_idt_setting = work_activity.get_action_identifier_grant(
         activity_id=activity_id,
         action_id=get_actionid('identifier_grant'))
-    if action_endpoint == 'approval' and item_id:
+    if action_endpoint == 'approval' and item_id:# 承認かつアイテムが存在する。
         if not post_json.get('temporary_save') and last_idt_setting \
             and last_idt_setting.get('action_identifier_select') \
                 and last_idt_setting.get('action_identifier_select') > 0:
@@ -1024,6 +1025,8 @@ def next_action(activity_id='0', action_id=0):
 
         if deposit:
             deposit.update_feedback_mail()
+            
+        publish_notification(record)
 
     if action_endpoint == 'item_link' and item_id:
         current_pid = PersistentIdentifier.get_by_object(

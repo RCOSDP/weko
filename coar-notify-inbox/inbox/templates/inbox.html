@@ -1,0 +1,35 @@
+{{ .Body }}
+
+<table id="inboxTable" class="table table-sm table-striped">
+    <thead>
+    <tr class="column-header-row">
+        <th>Activity ID</th>
+        <th>Response</th>
+        <th>Created</th>
+        <th>Sender</th>
+        <th class="view-column">Views&nbsp;</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{ range .Notifications }}
+        <tr>
+            <td>{{ if ne .ActivityId "" }}{{ .ActivityId }} {{ else }} n/a {{ end }}</td>
+            {{ if eq .HttpResponseCode 201 }}
+                <td class="bg-success text-white">{{ .HttpResponseCode }}</td>
+            {{ else }}
+                <td class="bg-danger text-white">{{ .HttpResponseCode }}</td>
+            {{ end }}
+            <td>{{ .FormattedTimestamp }}</td>
+            <td>{{ .Sender }}</td>
+            <td class="view-column">
+                <a href="{{ .Url }}">HTML</a>
+                {{ if ne .ActivityId "" }}
+                    | <a href="{{ .Url }}.json">JSON-LD</a>
+                {{ end }}
+
+                
+            </td>
+        </tr>
+    {{ end }}
+    </tbody>
+</table>

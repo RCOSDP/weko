@@ -58,7 +58,8 @@ def get_affected_records(spec=None, search_pattern=None):
     # X          Y          X OR Y
 
     if spec is None and search_pattern is None:
-        raise StopIteration
+        #raise StopIteration
+        return
 
     queries = []
 
