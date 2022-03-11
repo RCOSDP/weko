@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "build": "lessc --clean-css less/__base.less ../weko_theme/improve_ui.min.css"
+    "build": "lessc --clean-css less/__main.less ../weko_theme/improve_ui.min.css"
   },
   "devDependencies": {
     "less": "^4.1.2",
