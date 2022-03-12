@@ -26,4 +26,4 @@ def upgrade():
 def downgrade():
     """Downgrade database."""
     op.drop_constraint(op.f('uq_index_id'), 'index', type_='unique')
-    
+    rm 
