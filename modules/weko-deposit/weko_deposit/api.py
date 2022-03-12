@@ -38,7 +38,7 @@ from flask_security import current_user
 from invenio_db import db
 from invenio_deposit.api import Deposit, index, preserve
 from invenio_deposit.errors import MergeConflict
-from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
+from invenio_files_rest.models import Bucket, Location, MultipartObject, ObjectVersion, \
     Part
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
@@ -639,8 +639,18 @@ class WekoDeposit(Deposit):
         """
         if '$schema' in data:
             data.pop('$schema')
+        
+        # Get workflow storage location
+        location_name = None
+        if session and 'activity_info' in session:
+            activity_info = session['activity_info']
+            from weko_workflow.api import WorkActivity
+            activity = WorkActivity.get_activity_by_id(activity_info['activity_id'])
+            if activity and activity.workflow and activity.workflow.location:
+                location_name = activity.workflow.location.name
 
         bucket = Bucket.create(
+            location=location_name,
             quota_size=current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
             max_file_size=current_app.config['WEKO_MAX_FILE_SIZE'],
         )
@@ -776,6 +786,26 @@ class WekoDeposit(Deposit):
         super(WekoDeposit, self).commit(*args, **kwargs)
         record = RecordMetadata.query.get(self.pid.object_uuid)
         if self.data and len(self.data):
+            # Get bucket default location
+            deposit_bucket = Bucket.query.get(self['_buckets']['deposit'])
+            
+            print(deposit_bucket)
+
+            # Get workflow storage location
+            workflow_storage_location = None
+            if session and 'activity_info' in session:
+                activity_info = session['activity_info']
+                from weko_workflow.api import WorkActivity
+                activity = WorkActivity.get_activity_by_id(activity_info['activity_id'])
+                if activity and activity.workflow and activity.workflow.location:
+                    workflow_storage_location = activity.workflow.location
+            if workflow_storage_location == None:
+                workflow_storage_location = Location.get_default()
+
+            if(deposit_bucket.location.id != workflow_storage_location.id):
+                deposit_bucket.default_location =  workflow_storage_location.id
+                db.session.merge(deposit_bucket)
+
             # save item metadata
             self.save_or_update_item_metadata()
 

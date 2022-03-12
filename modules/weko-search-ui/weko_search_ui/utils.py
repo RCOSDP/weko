@@ -1925,7 +1925,10 @@ def handle_check_doi(list_record):
                             error = _('Please specify {}.').format(
                                 'DOI suffix')
             else:
-                if item.get('status') == 'new':
+                pid = WekoRecord.get_record_by_pid(item_id).pid_recid
+                identifier = IdentifierHandle(pid.object_uuid)
+                _value, doi_type = identifier.get_idt_registration_data()
+                if item.get('status') == 'new' or not doi_type:
                     if doi:
                         error = _check_doi(doi, item)
                 else:

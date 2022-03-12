@@ -474,6 +474,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # get title name
     from weko_records.utils import get_options_and_order_list
     from weko_search_ui.utils import get_data_by_property
+    from weko_records.utils import get_options_and_order_list
     title_name = ''
     rights_values = {}
     accessRight = ''
