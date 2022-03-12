@@ -23,7 +23,7 @@ import ast
 
 import click
 from flask.cli import with_appcontext
-from weko_authors.models import AuthorsPrefixSettings
+from weko_authors.models import AuthorsPrefixSettings, AuthorsAffiliationSettings
 
 from .models import AdminLangSettings, AdminSettings, ApiCertificate, \
     BillingPermission, FacetSearchSetting, SessionLifetime, StatisticTarget, \
@@ -227,6 +227,23 @@ def create_default_settings(name, scheme, url):
     except Exception as ex:
         click.secho(str(ex))
 
+@click.group()
+def authors_affiliation():
+    """Authors affiliation settings commands."""
+
+
+@authors_affiliation.command('default_settings')
+@click.argument('name')
+@click.argument('scheme')
+@click.argument('url')
+@with_appcontext
+def create_default_affiliation_settings(name, scheme, url):
+    """Create default settings."""
+    try:
+        AuthorsAffiliationSettings.create(name, scheme, url)
+        click.secho('insert setting success')
+    except Exception as ex:
+        click.secho(str(ex))
 
 @click.group()
 def facet_search_setting():
