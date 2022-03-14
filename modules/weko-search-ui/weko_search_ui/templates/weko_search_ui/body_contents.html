@@ -118,7 +118,7 @@
 
     <div id="search-result-body" class="panel-body" >
         <div id="index_item_list" ng-if="vm.invenioSearchResults.hits.total">
-        <div class="form-inline flow-root">
+        <div class="form-inline flow-root element__item-list-form-wrap">
           <label for="goExportORPrint" hidden>{{_(goExportORPrint)}}</label>
           <select class="form-control hide" id="goExportORPrint">
             <option value="check_Export">{{_('Export Checked Items')}}</option>
@@ -130,11 +130,25 @@
           </select>
           <button type="button" class="btn btn-primary hide">{{_('Execution')}}</button>
           {%- if not item_export and allow_item_exporting %}
-            <a href="{{ url_for('weko_items_ui.export', **request.args) }}" class="btn btn-primary">
-              <i class="fa fa-download"></i> {{ _('Export') }}
-            </a>
+            <div class="element__item-list-export-btn">
+              <a href=""{{ url_for('weko_items_ui.export', **request.args) }}"
+                  class="component__btn module__btn-primary">
+                  <span class="component__btn-has-icon">
+                      <span aria-hidden="true">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                              stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                      </span>
+                      <span>
+                        {{ _('Export') }}
+                      </span>
+                  </span>
+              </a>
+          </div>
           {%- endif %}
-          <div class="pull-right">
+          <div class="pull-right element__item-list-select-group">
             <div class="form-group hide">
               <label for="sort_item">{{_('Display Order')}}</label>
               <select class="form-control" id="sort_item">
@@ -198,7 +212,7 @@
             {%- endif %}
           </div>
         </div>
-        <div class="panel-group m-top-5">
+        <div class="panel-group m-top-5 element__item-list-result-wrap">
 
               <div class="row row-10">
                 {%- block search_item_result %}

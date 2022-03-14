@@ -1,4 +1,4 @@
-<div class="panel panel-default panel-default-2"
+<div class="component__index-list panel panel-default panel-default-2"
   ng-if="vm.invenioSearchResults.aggregations.hasOwnProperty('path') && (vm.invenioSearchResults.aggregations.path.buckets[0].length >= 1 || (isCommunityRootIndex && vm.invenioSearchResults.aggregations.path.buckets[0].length > 1))">
   <div class="panel-heading clearfix">
     <h3 class="panel-title">Index List</h3>
@@ -16,7 +16,7 @@
         </li>
       </ol>
   </div>
-  <div class="panel-body">
+  <div class="panel-body component__index-list-reselt-wrap">
     <div class="panel_bread">
       <ol class="breadcrumb" ng-if="(typeIndexList !== 'root' && !isCommunityRootIndex)">
         <li
