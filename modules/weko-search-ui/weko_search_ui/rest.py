@@ -67,6 +67,17 @@ from weko_index_tree.api import Indexes
 from weko_index_tree.utils import count_items, recorrect_private_items_count
 from weko_records.models import ItemType
 
+# ======================================================================================
+# RedisStore / Flask KV Session
+import redis
+from invenio_cache import current_cache
+from flask_kvsession import KVSessionExtension
+from simplekv.memory.redisstore import RedisStore
+
+# weko index tree Index model class
+from weko_index_tree.models import Index
+# ======================================================================================
+
 def create_blueprint(app, endpoints):
     """Create Invenio-Deposit-REST blueprint.
 
@@ -190,6 +201,15 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         from weko_admin.models import FacetSearchSetting
         from weko_admin.utils import get_facet_search_query
 
+        # ======================================================================================
+        # Flask KV Session
+        import redis
+        from flask_kvsession import KVSessionExtension
+        from simplekv.memory.redisstore import RedisStore
+        from simplekv.memory import DictStore
+        import json
+        # ======================================================================================
+
         page = request.values.get('page', 1, type=int)
         size = request.values.get('size', 20, type=int)
         community_id = request.values.get('community')
@@ -200,9 +220,15 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         if facets and search_index and 'post_filters' in facets[search_index]:
             post_filters = facets[search_index]['post_filters']
             for i in range(0, len(post_filters)):
-                value = request.args.getlist(post_filters[i])
-                if value:
-                    params[post_filters[i]] = value
+                try:
+                    value = request.args.getlist(post_filters[i])
+                    if value:
+                        params[post_filters[i]] = value
+                except:
+                    print(f'len: {len(post_filters)}')
+                    print(f'range: {range(len(post_filters))}')
+                    print(f'keys: {post_filters.keys()}')
+                    pass
 
         if page * size >= self.max_result_window:
             raise MaxResultWindowRESTError()
@@ -263,46 +289,68 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             }
 
         is_perm_paths = qs_kwargs.get('is_perm_paths', [])
+        # ======================================================================================
+        datastore = RedisStore(redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
         for p in paths:
-            m = 0
-            current_idx = {}
-            for k in range(len(agp)):
-                if p.path == agp[k].get("key"):
-                    agp[k]["name"] = p.name if p.name and lang == "ja" \
-                        else p.name_en
-                    agp[k]["date_range"] = dict()
-                    comment = p.comment
-                    agp[k]["comment"] = comment,
-                    result = agp.pop(k)
-                    result["comment"] = comment
-                    current_idx = result
-                    m = 1
-                    break
-            if m == 0:
-                index_id = p.cid
-                index_info = Indexes.get_index(index_id=index_id)
-                rss_status = index_info.rss_status
-                nd = {
-                    'doc_count': 0,
-                    'key': p.path,
-                    'name': p.name if p.name and lang == "ja" else p.name_en,
-                    'date_range': {
-                        'pub_cnt': 0,
-                        'un_pub_cnt': 0},
-                    'rss_status': rss_status,
-                    'comment': p.comment,
-                }
-                current_idx = nd
-            _child_indexes = []
-            for _path in is_perm_paths:
-                if (_path.startswith(str(p.path) + '/') or _path == p.path) \
-                        and items_count.get(str(_path.split('/')[-1])):
-                    _child_indexes.append(
-                        items_count[str(_path.split('/')[-1])])
-            private_count, public_count = count_items(_child_indexes)
-            current_idx["date_range"]["pub_cnt"] = public_count
-            current_idx["date_range"]["un_pub_cnt"] = private_count
-            nlst.append(current_idx)
+            index_updated = Index.query.get(p.cid).updated.strftime('%Y%m%d%H%M%S')
+            cache_key = p.cid
+
+            if datastore.redis.exists(str(cache_key)) and json.loads(datastore.get(str(cache_key)))[index_updated]:
+                cache_data = json.loads(datastore.get(str(cache_key)))
+                nlst.append(cache_data[index_updated])
+            else:
+                m = 0
+                current_idx = {}
+                for k in range(len(agp)):
+                    if p.path == agp[k].get("key"):
+                        agp[k]["name"] = p.name if p.name and lang == "ja" \
+                            else p.name_en
+                        agp[k]["date_range"] = dict()
+                        comment = p.comment
+                        agp[k]["comment"] = comment,
+                        result = agp.pop(k)
+                        result["comment"] = comment
+                        current_idx = result
+                        m = 1
+                        break
+                if m == 0:
+                    index_id = p.cid
+                    index_info = Indexes.get_index(index_id=index_id)
+                    rss_status = index_info.rss_status
+                    nd = {
+                        'doc_count': 0,
+                        'key': p.path,
+                        'name': p.name if p.name and lang == "ja" else p.name_en,
+                        'date_range': {
+                            'pub_cnt': 0,
+                            'un_pub_cnt': 0},
+                        'rss_status': rss_status,
+                        'comment': p.comment,
+                    }
+                    current_idx = nd
+                _child_indexes = []
+                for _path in is_perm_paths:
+                    if (_path.startswith(str(p.path) + '/') or _path == p.path) \
+                            and items_count.get(str(_path.split('/')[-1])):
+                        _child_indexes.append(
+                            items_count[str(_path.split('/')[-1])])
+                private_count, public_count = count_items(_child_indexes)
+                current_idx["date_range"]["pub_cnt"] = public_count
+                current_idx["date_range"]["un_pub_cnt"] = private_count
+                nlst.append(current_idx)
+                print(f'sss: {current_idx}')
+                cache_key = current_idx["key"]
+                json_data = json.dumps({index_updated: current_idx}).encode('utf-8')
+                datastore.put(
+                    cache_key,
+                    json_data,
+                    ttl_secs=100
+                )
+
+            # print(f'mycache: {datastore.redis.exists(cache_key)}')
+            # print(f'mygetcache: {datastore.get(cache_key)}')
+            # ======================================================================================
+
         agp.clear()
         # process index tree image info
         if len(nlst):
