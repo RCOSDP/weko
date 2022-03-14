@@ -297,7 +297,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
 
             if datastore.redis.exists(cache_key) and json.loads(datastore.get(cache_key))[index_updated]:
                 cache_data = json.loads(datastore.get(cache_key))
-                print(f'{cache_key}: FFXV - {cache_key}')
                 nlst.append(cache_data[index_updated])
             else:
                 m = 0
