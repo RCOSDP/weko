@@ -50,7 +50,7 @@
             {%- for p in path -%}
             {%- if community %}
             <li>
-              <a href="{{ url_for(" invenio_search_ui.search") + "?search_type=2&q=" + p + "&community=" + community.id
+              <a href="{{ url_for("invenio_search_ui.search") + "?search_type=2&q=" + p + "&community=" + community.id
                 }}">
                 {%- if path_name_dict[current_i18n.language] %}
                 {{path_name_dict[current_i18n.language][p]}}
@@ -61,7 +61,7 @@
             </li>
             {%-else%}
             <li>
-              <a href="{{url_for(" invenio_search_ui.search")+"?search_type=2&q="+p}}">
+              <a href="{{url_for("invenio_search_ui.search")+"?search_type=2&q="+p}}">
                 {%- if path_name_dict[current_i18n.language] %}
                 {{path_name_dict[current_i18n.language][p]}}
                 {%-else%}
