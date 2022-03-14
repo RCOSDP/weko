@@ -338,13 +338,12 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 current_idx["date_range"]["pub_cnt"] = public_count
                 current_idx["date_range"]["un_pub_cnt"] = private_count
                 nlst.append(current_idx)
-                print(f'sss: {current_idx}')
-                # cache_key = current_idx["key"].replace('/', '_')
+
                 json_data = json.dumps({index_updated: current_idx}).encode('utf-8')
                 datastore.put(
                     cache_key,
                     json_data,
-                    ttl_secs=100
+                    ttl_secs=3600
                 )
             # ======================================================================================
 
