@@ -43,18 +43,21 @@
   display: flex;
 }
 
-.element__search-detail-form-search-type > * + * {
-  margin-left: 1rem;
-}
-
 .element__search-detail-form-search-type-label {
   display: inline-flex;
   align-items: center;
   font-size: 0.875rem;
+  margin: 0;
+  padding: 0;
+
+  + .element__search-detail-form-search-type-label {
+    margin-left: 1rem;
+  }
 }
 
 .element__search-detail-form-search-type-label > [type="radio"],
 .element__search-detail-form-search-type-label > [type="checkbox"] {
+  margin: 0;
   margin-right: 0.5rem;
 }
 
