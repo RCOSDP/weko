@@ -293,10 +293,11 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         datastore = RedisStore(redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
         for p in paths:
             index_updated = Index.query.get(p.cid).updated.strftime('%Y%m%d%H%M%S')
-            cache_key = p.cid
+            cache_key = str(p.cid)
 
-            if datastore.redis.exists(str(cache_key)) and json.loads(datastore.get(str(cache_key)))[index_updated]:
-                cache_data = json.loads(datastore.get(str(cache_key)))
+            if datastore.redis.exists(cache_key) and json.loads(datastore.get(cache_key))[index_updated]:
+                cache_data = json.loads(datastore.get(cache_key))
+                print(f'{cache_key}: FFXV - {cache_key}')
                 nlst.append(cache_data[index_updated])
             else:
                 m = 0
@@ -339,16 +340,13 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 current_idx["date_range"]["un_pub_cnt"] = private_count
                 nlst.append(current_idx)
                 print(f'sss: {current_idx}')
-                cache_key = current_idx["key"]
+                # cache_key = current_idx["key"].replace('/', '_')
                 json_data = json.dumps({index_updated: current_idx}).encode('utf-8')
                 datastore.put(
                     cache_key,
                     json_data,
                     ttl_secs=100
                 )
-
-            # print(f'mycache: {datastore.redis.exists(cache_key)}')
-            # print(f'mygetcache: {datastore.get(cache_key)}')
             # ======================================================================================
 
         agp.clear()
