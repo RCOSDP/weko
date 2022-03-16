@@ -8,6 +8,7 @@
     padding-left: 0;
     padding-right: 0;
   }
+
   .container,
   .container-fluid {
     margin-right: 0;
@@ -15,9 +16,21 @@
     padding-left: 0;
     padding-right: 0;
   }
+
   .navbar-default {
     background-color: @color-white;
     border-color: none;
+  }
+
+  .navbar-default {
+    .navbar-form {
+      border-color: transparent;
+    }
+  }
+
+  .navbar-right {
+    float: none;
+    margin-right: 0;
   }
 
   // original
@@ -34,9 +47,6 @@
     > * + * {
       margin-left: 1rem;
     }
-  }
-
-  .element__header-nav-banner {
   }
 }
 
