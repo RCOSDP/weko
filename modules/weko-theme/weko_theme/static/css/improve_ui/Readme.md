@@ -5,14 +5,17 @@ less 開発環境の構築
 ```sh
 cd modules/weko-theme/weko_theme/static/css/improve_ui
 npm install
-npm lun build
 ```
 
 less/ ディレクトリ内に .less ファイルを追加した場合は、`__main.less` で `@import` する。
 
 ## less コンパイル
 
-package.json に記述。
+```sh
+npm run build
+```
+
+実行されるコマンドは package.json に記述。
 
 ```sh
 lessc --clean-css less/__main.less ../weko_theme/improve_ui.min.css
