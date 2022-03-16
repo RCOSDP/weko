@@ -76,6 +76,13 @@ from simplekv.memory.redisstore import RedisStore
 
 # weko index tree Index model class
 from weko_index_tree.models import Index
+
+# Session
+from flask import session
+
+# invenio_accounts
+from invenio_accounts.models import User, Role
+from flask_security import current_user
 # ======================================================================================
 
 def create_blueprint(app, endpoints):
@@ -225,9 +232,9 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     if value:
                         params[post_filters[i]] = value
                 except:
-                    print(f'len: {len(post_filters)}')
-                    print(f'range: {range(len(post_filters))}')
-                    print(f'keys: {post_filters.keys()}')
+                    print(f'len: {len(post_filters)}') # Added
+                    print(f'range: {range(len(post_filters))}') # Added
+                    print(f'keys: {post_filters.keys()}') # Added
                     pass
 
         if page * size >= self.max_result_window:
@@ -291,62 +298,107 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         is_perm_paths = qs_kwargs.get('is_perm_paths', [])
         # ======================================================================================
         datastore = RedisStore(redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
+        session[User.query.get(current_user.id).email] = {}
+
         for p in paths:
             index_updated = Index.query.get(p.cid).updated.strftime('%Y%m%d%H%M%S')
+            index_browsing_role = Index.query.get(p.cid).browsing_role
+            index_browsing_role_list = index_browsing_role.split(',')
             cache_key = str(p.cid)
 
-            if datastore.redis.exists(cache_key) and json.loads(datastore.get(cache_key))[index_updated]:
-                cache_data = json.loads(datastore.get(cache_key))
-                nlst.append(cache_data[index_updated])
-            else:
-                m = 0
-                current_idx = {}
-                for k in range(len(agp)):
-                    if p.path == agp[k].get("key"):
-                        agp[k]["name"] = p.name if p.name and lang == "ja" \
-                            else p.name_en
-                        agp[k]["date_range"] = dict()
-                        comment = p.comment
-                        agp[k]["comment"] = comment,
-                        result = agp.pop(k)
-                        result["comment"] = comment
-                        current_idx = result
-                        m = 1
-                        break
-                if m == 0:
-                    index_id = p.cid
-                    index_info = Indexes.get_index(index_id=index_id)
-                    rss_status = index_info.rss_status
-                    nd = {
-                        'doc_count': 0,
-                        'key': p.path,
-                        'name': p.name if p.name and lang == "ja" else p.name_en,
-                        'date_range': {
-                            'pub_cnt': 0,
-                            'un_pub_cnt': 0},
-                        'rss_status': rss_status,
-                        'comment': p.comment,
-                    }
-                    current_idx = nd
-                _child_indexes = []
-                for _path in is_perm_paths:
-                    if (_path.startswith(str(p.path) + '/') or _path == p.path) \
-                            and items_count.get(str(_path.split('/')[-1])):
-                        _child_indexes.append(
-                            items_count[str(_path.split('/')[-1])])
-                private_count, public_count = count_items(_child_indexes)
-                current_idx["date_range"]["pub_cnt"] = public_count
-                current_idx["date_range"]["un_pub_cnt"] = private_count
-                nlst.append(current_idx)
+            print('++++++++++')
+            print(f'{cache_key} - {cache_key in session[User.query.get(current_user.id).email].keys()}')
+            print(session[User.query.get(current_user.id).email].keys())
+            print('++++++++++')
 
-                json_data = json.dumps({index_updated: current_idx}).encode('utf-8')
-                datastore.put(
-                    cache_key,
-                    json_data,
-                    ttl_secs=3600
-                )
+
+            # datastore.delete(cache_key)
+            try:
+                print('XXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+                nlst.append(session[User.query.get(current_user.id).email][cache_key])
+                print('XXXXXXXXXXXXXXXXXXXXXXXXXXXX')
+            except:
+                if datastore.redis.exists(cache_key) and json.loads(datastore.get(cache_key)).get(index_updated):
+                    print('******************************************')
+                    print(f'{cache_key}: {datastore.get(cache_key)}')
+                    print('******************************************')
+                    cache_data = json.loads(datastore.get(cache_key))
+                    nlst.append(cache_data[index_updated])
+                else:
+                    m = 0
+                    current_idx = {}
+                    for k in range(len(agp)):
+                        if p.path == agp[k].get("key"):
+                            agp[k]["name"] = p.name if p.name and lang == "ja" \
+                                else p.name_en
+                            agp[k]["date_range"] = dict()
+                            comment = p.comment
+                            agp[k]["comment"] = comment,
+                            result = agp.pop(k)
+                            result["comment"] = comment
+                            current_idx = result
+                            m = 1
+                            break
+                    if m == 0:
+                        index_id = p.cid
+                        index_info = Indexes.get_index(index_id=index_id)
+                        rss_status = index_info.rss_status
+                        nd = {
+                            'doc_count': 0,
+                            'key': p.path,
+                            'name': p.name if p.name and lang == "ja" else p.name_en,
+                            'date_range': {
+                                'pub_cnt': 0,
+                                'un_pub_cnt': 0},
+                            'rss_status': rss_status,
+                            'comment': p.comment,
+                        }
+                        current_idx = nd
+                    _child_indexes = []
+                    for _path in is_perm_paths:
+                        if (_path.startswith(str(p.path) + '/') or _path == p.path) \
+                                and items_count.get(str(_path.split('/')[-1])):
+                            _child_indexes.append(
+                                items_count[str(_path.split('/')[-1])])
+                    private_count, public_count = count_items(_child_indexes)
+                    current_idx["date_range"]["pub_cnt"] = public_count
+                    current_idx["date_range"]["un_pub_cnt"] = private_count
+                    nlst.append(current_idx)
+
+                    print('########################################')
+                    print(f'current_idx: {current_idx}')
+                    print('########################################')
+
+                    # Private cache
+                    print('FFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXV')
+                    if current_user.is_authenticated:
+                        enable_browsing = False
+                        s_roles_id_list = [role.id for role in User.query.get(current_user.id).roles]
+                        print(s_roles_id_list)
+                        print(index_browsing_role_list)
+
+                        for role_id in s_roles_id_list:
+                            if str(role_id) in index_browsing_role_list:
+                                enable_browsing = True
+
+                        print('PIANO CODER ODYSSEY')
+                        if enable_browsing:
+                            session[User.query.get(current_user.id).email][cache_key] = current_idx
+                            print(f'true: {cache_key}')
+                        else:
+                            print(f'false: {cache_key}')
+                        print('SOMNUS')
+
+                    else:
+                        # Public cache
+                        json_data = json.dumps({index_updated: current_idx}).encode('utf-8')
+                        datastore.put(
+                            cache_key,
+                            json_data,
+                            ttl_secs=60
+                        )
+                    print('FFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXV')
             # ======================================================================================
-
         agp.clear()
         # process index tree image info
         if len(nlst):
