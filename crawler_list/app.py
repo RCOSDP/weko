@@ -15,6 +15,7 @@ app = Flask(__name__)
 class saveCrawlerList:
 
     def put_crawler(self):
+        app.logger.info("start put crawler")
         self.redis_connection()
         local_session = session()
         restricted_agent_lists = LogAnalysisRestrictedCrawlerList.get_all_active()
@@ -29,7 +30,6 @@ class saveCrawlerList:
             for restrict_ip in restrict_list:
                 self.master.sadd(restricted_agent_list,restrict_ip)
             app.logger.info("Set to redis crawler List:"+str(restricted_agent_list))
-        return restrict_list
 
     def redis_connection(self):
         try:
@@ -41,7 +41,6 @@ class saveCrawlerList:
         except RedisError as err:
             error_str = "Error while connecting to redis : " + str(err)
             app.logger.error(error_str)
-        return
 
 
 class LogAnalysisRestrictedCrawlerList(Base):

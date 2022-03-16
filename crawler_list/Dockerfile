@@ -1,11 +1,15 @@
 
-FROM python3.7
+FROM python:3.7
 
 WORKDIR /usr/src/app/
 
 COPY . .
 
 RUN pip3 install redis
+
+RUN pip3 install flask
+
+RUN pip3 install sqlalchemy
 
 RUN pip3 install requests
 
