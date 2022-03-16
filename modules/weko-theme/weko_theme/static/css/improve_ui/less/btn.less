@@ -11,11 +11,16 @@
   font-size: 0.875rem;
 }
 
-.component__input:focus,
-.component__btn:focus {
-  outline: 2px solid transparent;
-  outline-offset: 2px;
-  box-shadow: @focus-box-shadow;
+.component__input,
+.component__btn {
+  &:hover {
+    text-decoration: none;
+  }
+  &:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: @focus-box-shadow;
+  }
 }
 
 .component__btn-has-icon {
