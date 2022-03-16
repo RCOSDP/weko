@@ -7,8 +7,6 @@ COPY . .
 
 RUN pip3 install redis
 
-RUN pip3 install flask
-
 RUN pip3 install sqlalchemy
 
 RUN pip3 install requests

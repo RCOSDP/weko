@@ -96,7 +96,7 @@ if __name__ == "__main__":
 
     redis_driver = saveCrawlerList()
 
-    engine = create_engine(config_ini['DEFAULT']["DB_HOST"])
+    engine = create_engine(config_ini['DEFAULT']["DB_URI"])
     session = sessionmaker(engine)
 
     redis_driver.put_crawler()
