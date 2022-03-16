@@ -2028,7 +2028,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       }
 
       $scope.autoFillInstitutionPosition = function () {
-        let key = 'subitem_restricted_access_institution_position';
+        let key = 'subitem_institution_position';
         let schemaProperties = $rootScope.recordsVM.invenioRecordsSchema.properties;
         let formProperties = $rootScope.recordsVM.invenioRecordsForm;
         //Get "Institution Position" from select html.
@@ -2046,7 +2046,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.autoFillUsageApplication = function () {
         let properties = [
           'subitem_restricted_access_dataset_usage',
-          'subitem_restricted_access_mail_address',
           'subitem_restricted_access_usage_report_id',
           'subitem_restricted_access_wf_issued_date',
           'subitem_restricted_access_application_date',
@@ -2060,13 +2059,13 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.autoFillUsageReport = function () {
         let properties = [
           'subitem_restricted_access_dataset_usage',
-          'subitem_restricted_access_name',
-          'subitem_restricted_access_mail_address',
-          'subitem_restricted_access_university/institution',
-          'subitem_restricted_access_affiliated_division/department',
-          'subitem_restricted_access_position',
-          'subitem_restricted_access_position(others)',
-          'subitem_restricted_access_phone_number',
+          'subitem_fullname',
+          'subitem_mail_address',
+          'subitem_university/institution',
+          'subitem_affiliated_division/department',
+          'subitem_position',
+          'subitem_position(others)',
+          'subitem_phone_number',
           'subitem_restricted_access_usage_report_id',
           'subitem_restricted_access_wf_issued_date',
           'subitem_restricted_access_application_date',
@@ -4159,6 +4158,12 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           if($scope.usageapplication_keys.length>0 && $scope.item_tile_key){
             // In-case of output report, re-update title
             $scope.updateTitleForOutputReport()
+          }
+
+          if (!model['item_dataset_usage']) {
+            $rootScope.recordsVM.invenioRecordsModel['item_dataset_usage'] = {
+              subitem_dataset_usage : $("#data_type_title").val()
+            };
           }
 
           var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
