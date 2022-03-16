@@ -1,7 +1,7 @@
 import redis
 import requests
+import configparser
 
-from flask import Flask
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine ,Column, Integer, String, Boolean, asc
 from sqlalchemy.sql import func
@@ -10,12 +10,13 @@ from redis import RedisError, sentinel
 from simplekv.memory.redisstore import RedisStore
 
 Base = declarative_base()
-app = Flask(__name__)
+config_ini = configparser.ConfigParser()
+config_ini.read('config.ini', encoding='utf-8')
 
 class saveCrawlerList:
 
     def put_crawler(self):
-        app.logger.info("start put crawler")
+        print("start put crawler")
         self.redis_connection()
         local_session = session()
         restricted_agent_lists = LogAnalysisRestrictedCrawlerList.get_all_active()
@@ -29,18 +30,18 @@ class saveCrawlerList:
                 agent for agent in restrict_list if not agent.startswith('#')]
             for restrict_ip in restrict_list:
                 self.master.sadd(restricted_agent_list,restrict_ip)
-            app.logger.info("Set to redis crawler List:"+str(restricted_agent_list))
+            print("Set to redis crawler List:"+str(restricted_agent_list))
 
     def redis_connection(self):
         try:
-            if app.config["REDIS_TYPE"] == 'redis':
-                self.connection = RedisStore(redis.StrictRedis(app.config['REDIS_HOST'],port = app.config['REDIS_PORT'],db = app.config["REDIS_DB"]))
-            elif app.config["REDIS_TYPE"] == 'redissentinel':
-                self.connection = sentinel.Sentinel(app.config["SENTINEL_HOST"])
-                self.master = RedisStore(self.connection.master_for(app.config["SENTINEL_HOST"],db = app.config["REDIS_DB"]))
+            if config_ini['DEFAULT']["REDIS_TYPE"] == 'redis':
+                self.connection = RedisStore(redis.StrictRedis(config_ini['DEFAULT']['REDIS_HOST'],port = config_ini['DEFAULT']['REDIS_PORT'],db = config_ini['DEFAULT']["REDIS_DB"]))
+            elif config_ini['DEFAULT']["REDIS_TYPE"] == 'redissentinel':
+                self.connection = sentinel.Sentinel(config_ini['DEFAULT']["SENTINEL_HOST"])
+                self.master = RedisStore(self.connection.master_for(config_ini['DEFAULT']["SENTINEL_HOST"],db = config_ini['DEFAULT']["REDIS_DB"]))
         except RedisError as err:
             error_str = "Error while connecting to redis : " + str(err)
-            app.logger.error(error_str)
+            print(error_str)
 
 
 class LogAnalysisRestrictedCrawlerList(Base):
@@ -86,18 +87,16 @@ class LogAnalysisRestrictedCrawlerList(Base):
             all = cls.query.filter(cls.is_active.is_(True)) \
                 .filter(func.length(cls.list_url) > 0).all()
         except Exception as ex:
-            app.logger.debug(ex)
+            print(ex)
             all = []
             raise
         return all
 
 if __name__ == "__main__":
-    app.run(debug=True)
-    app.config.from_pyfile('instance.cfg')
 
     redis_driver = saveCrawlerList()
 
-    engine = create_engine(app.config["DB_HOST"])
+    engine = create_engine(config_ini['DEFAULT']["DB_HOST"])
     session = sessionmaker(engine)
 
     redis_driver.put_crawler()
