@@ -34,10 +34,10 @@ class saveCrawlerList:
     def redis_connection(self):
         try:
             if app.config["REDIS_TYPE"] == 'redis':
-                self.connection = RedisStore(redis.StrictRedis(app.config['REDIS_HOST'],app.config["REDIS_DB"]))
+                self.connection = RedisStore(redis.StrictRedis(app.config['REDIS_HOST'],port = app.config['REDIS_PORT'],db = app.config["REDIS_DB"]))
             elif app.config["REDIS_TYPE"] == 'redissentinel':
                 self.connection = sentinel.Sentinel(app.config["SENTINEL_HOST"])
-                self.master = RedisStore(self.connection.master_for(app.config["SENTINEL_HOST"],app.config["REDIS_DB"]))
+                self.master = RedisStore(self.connection.master_for(app.config["SENTINEL_HOST"],db = app.config["REDIS_DB"]))
         except RedisError as err:
             error_str = "Error while connecting to redis : " + str(err)
             app.logger.error(error_str)

@@ -205,6 +205,20 @@ services:
         limits:
           memory: 300m
 
+  crawler:
+    restart: "always"
+    build: ./crawler_list
+    ports:
+      - "28001:80"
+    links:
+      - web
+      - postgresql
+      - redis
+    deploy:
+      resources:
+        limits:
+          memory: 300m
+
 #  certbot:
 #    image: certbot/certbot:latest
 #    volumes:
