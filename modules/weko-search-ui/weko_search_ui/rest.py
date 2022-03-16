@@ -227,15 +227,15 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         if facets and search_index and 'post_filters' in facets[search_index]:
             post_filters = facets[search_index]['post_filters']
             for i in range(0, len(post_filters)):
-                try:
+                try: # Temporarily added due to value error
                     value = request.args.getlist(post_filters[i])
                     if value:
                         params[post_filters[i]] = value
-                except:
-                    print(f'len: {len(post_filters)}') # Added
-                    print(f'range: {range(len(post_filters))}') # Added
-                    print(f'keys: {post_filters.keys()}') # Added
-                    pass
+                except: # Temporarily added due to value error
+                    print(f'len: {len(post_filters)}') # Temporarily added due to value error
+                    print(f'range: {range(len(post_filters))}') # Temporarily added due to value error
+                    print(f'keys: {post_filters.keys()}') # Temporarily added due to value error
+                    pass # Temporarily added due to value error
 
         if page * size >= self.max_result_window:
             raise MaxResultWindowRESTError()
@@ -296,32 +296,25 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             }
 
         is_perm_paths = qs_kwargs.get('is_perm_paths', [])
-        # ======================================================================================
+
+        # Storage for public cache
         datastore = RedisStore(redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
+        # datastore.delete(cache_key)
+
+        # Declare user session
         session[User.query.get(current_user.id).email] = {}
 
         for p in paths:
             index_updated = Index.query.get(p.cid).updated.strftime('%Y%m%d%H%M%S')
-            index_browsing_role = Index.query.get(p.cid).browsing_role
-            index_browsing_role_list = index_browsing_role.split(',')
+            index_contribute_role = Index.query.get(p.cid).contribute_role
+            index_contribute_role_list = index_contribute_role.split(',')
             cache_key = str(p.cid)
-
-            print('++++++++++')
-            print(f'{cache_key} - {cache_key in session[User.query.get(current_user.id).email].keys()}')
-            print(session[User.query.get(current_user.id).email].keys())
-            print('++++++++++')
-
-
-            # datastore.delete(cache_key)
+            
+            # Check and storage of cache
             try:
-                print('XXXXXXXXXXXXXXXXXXXXXXXXXXXX')
                 nlst.append(session[User.query.get(current_user.id).email][cache_key])
-                print('XXXXXXXXXXXXXXXXXXXXXXXXXXXX')
             except:
                 if datastore.redis.exists(cache_key) and json.loads(datastore.get(cache_key)).get(index_updated):
-                    print('******************************************')
-                    print(f'{cache_key}: {datastore.get(cache_key)}')
-                    print('******************************************')
                     cache_data = json.loads(datastore.get(cache_key))
                     nlst.append(cache_data[index_updated])
                 else:
@@ -365,41 +358,33 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     current_idx["date_range"]["un_pub_cnt"] = private_count
                     nlst.append(current_idx)
 
-                    print('########################################')
-                    print(f'current_idx: {current_idx}')
-                    print('########################################')
-
                     # Private cache
-                    print('FFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXV')
                     if current_user.is_authenticated:
-                        enable_browsing = False
+                        enable_contribute = False
                         s_roles_id_list = [role.id for role in User.query.get(current_user.id).roles]
-                        print(s_roles_id_list)
-                        print(index_browsing_role_list)
 
+                        # Check for items which the user has permission
                         for role_id in s_roles_id_list:
-                            if str(role_id) in index_browsing_role_list:
-                                enable_browsing = True
+                            if str(role_id) in index_contribute_role_list:
+                                enable_contribute = True
+                                print(s_roles_id_list)
+                                print(index_contribute_role_list)
+                                print(f'{cache_key} - {p.name_en}')
 
-                        print('PIANO CODER ODYSSEY')
-                        if enable_browsing:
+                        # If item is accessible store data to session
+                        if enable_contribute:
                             session[User.query.get(current_user.id).email][cache_key] = current_idx
-                            print(f'true: {cache_key}')
-                        else:
-                            print(f'false: {cache_key}')
-                        print('SOMNUS')
 
+                    # Public cache
                     else:
-                        # Public cache
                         json_data = json.dumps({index_updated: current_idx}).encode('utf-8')
                         datastore.put(
                             cache_key,
                             json_data,
                             ttl_secs=60
                         )
-                    print('FFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXVFFXV')
-            # ======================================================================================
         agp.clear()
+
         # process index tree image info
         if len(nlst):
             index_id = nlst[0].get('key').split('/')[-1]
