@@ -3,7 +3,7 @@ FROM python3.7
 
 WORKDIR /usr/src/app/
 
-COPY app.py .
+COPY . .
 
 RUN pip3 install redis
 
