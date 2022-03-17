@@ -11,98 +11,102 @@ html {
 }
 
 body {
-  font-family: "Helvetica Neue", HelveticaNeue, YuGothic, "Yu Gothic Medium",
-    "Yu Gothic", Verdana, Meiryo, sans-serif;
-  font-feature-settings: "palt";
-  letter-spacing: 1px;
-  line-height: 1.6;
-  font-size: 1rem;
-  font-weight: 500;
-  min-height: 100vh;
-}
-
-*,
-::after,
-::before {
-  box-sizing: border-box;
-  border-width: 0;
-  border-style: solid;
-  border-color: currentColor;
-}
-
-a {
-  color: @color-blue-10;
-
-  &:hover {
-    color: @color-blue-10-hover;
+  &#state-enable-improveui {
+    font-family: "Helvetica Neue", HelveticaNeue, YuGothic, "Yu Gothic Medium",
+      "Yu Gothic", Verdana, Meiryo, sans-serif;
+    font-feature-settings: "palt";
+    letter-spacing: 1px;
+    line-height: 1.6;
+    font-size: 1rem;
+    font-weight: 500;
+    min-height: 100vh;
   }
 }
 
-[type="button"],
-[type="reset"],
-[type="submit"],
-button {
-  -webkit-appearance: button;
-  appearance: button;
-}
+#state-enable-improveui {
+  *,
+  ::after,
+  ::before {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: currentColor;
+  }
 
-[multiple],
-[type="date"],
-[type="datetime-local"],
-[type="email"],
-[type="month"],
-[type="number"],
-[type="password"],
-[type="search"],
-[type="tel"],
-[type="text"],
-[type="time"],
-[type="url"],
-[type="week"],
-select,
-textarea {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-color: @color-white;
-  border-color: @color-gray-05;
-  border-width: 1px;
-  border-radius: 0;
-  padding-top: 0.5rem;
-  padding-right: 0.75rem;
-  padding-bottom: 0.5rem;
-  padding-left: 0.75rem;
-  font-size: 1rem;
-  line-height: 1.5rem;
-}
+  a {
+    color: @color-blue-10;
 
-button,
-input,
-optgroup,
-select,
-textarea {
-  padding: 0;
-  line-height: inherit;
-  color: inherit;
-  font-family: inherit;
-  font-size: 1rem;
-  line-height: 1.15;
-  margin: 0;
-}
+    &:hover {
+      color: @color-blue-10-hover;
+    }
+  }
 
-[role="button"],
-button {
-  cursor: pointer;
-}
+  [type="button"],
+  [type="reset"],
+  [type="submit"],
+  button {
+    -webkit-appearance: button;
+    appearance: button;
+  }
 
-button {
-  background-color: transparent;
-  background-image: none;
-}
+  [multiple],
+  [type="date"],
+  [type="datetime-local"],
+  [type="email"],
+  [type="month"],
+  [type="number"],
+  [type="password"],
+  [type="search"],
+  [type="tel"],
+  [type="text"],
+  [type="time"],
+  [type="url"],
+  [type="week"],
+  select,
+  textarea {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-color: @color-white;
+    border-color: @color-gray-05;
+    border-width: 1px;
+    border-radius: 0;
+    padding-top: 0.5rem;
+    padding-right: 0.75rem;
+    padding-bottom: 0.5rem;
+    padding-left: 0.75rem;
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
 
-button,
-select {
-  text-transform: none;
+  button,
+  input,
+  optgroup,
+  select,
+  textarea {
+    padding: 0;
+    line-height: inherit;
+    color: inherit;
+    font-family: inherit;
+    font-size: 1rem;
+    line-height: 1.15;
+    margin: 0;
+  }
+
+  [role="button"],
+  button {
+    cursor: pointer;
+  }
+
+  button {
+    background-color: transparent;
+    background-image: none;
+  }
+
+  button,
+  select {
+    text-transform: none;
+  }
 }
 
 .select-menu-style() {

@@ -1,48 +1,50 @@
-.component__nav-tab {
-  margin: 0;
-  padding: 0;
-
-  .element__nav-tab {
+#state-enable-improveui {
+  .component__nav-tab {
     margin: 0;
     padding: 0;
-    display: flex;
-    list-style: none;
-    align-items: center;
-    border-bottom-color: @color-gray-05;
-    border-bottom-style: solid;
-    border-bottom-width: 1px;
 
-    li {
+    .element__nav-tab {
       margin: 0;
-      margin-bottom: -1px;
       padding: 0;
-      padding-left: 1.5rem;
-      padding-right: 1.5rem;
+      display: flex;
+      list-style: none;
+      align-items: center;
+      border-bottom-color: @color-gray-05;
+      border-bottom-style: solid;
+      border-bottom-width: 1px;
 
-      &:first-child {
-        padding-left: 0;
-      }
+      li {
+        margin: 0;
+        margin-bottom: -1px;
+        padding: 0;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
 
-      a {
-        display: block;
-        padding-bottom: 1rem;
-        padding-left: 0.5rem;
-        padding-right: 0.5rem;
-        border-color: transparent;
-        border-bottom-width: 2px;
-        white-space: nowrap;
-        color: inherit;
-        text-decoration: inherit;
+        &:first-child {
+          padding-left: 0;
+        }
 
-        &:hover {
-          border-color: @color-monochrome-300;
+        a {
+          display: block;
+          padding-bottom: 1rem;
+          padding-left: 0.5rem;
+          padding-right: 0.5rem;
+          border-color: transparent;
+          border-bottom-width: 2px;
+          white-space: nowrap;
+          color: inherit;
+          text-decoration: inherit;
+
+          &:hover {
+            border-color: @color-monochrome-300;
+            color: @color-blue-10;
+          }
+        }
+
+        &.state-active a {
+          border-color: @color-blue-10;
           color: @color-blue-10;
         }
-      }
-
-      &.state-active a {
-        border-color: @color-blue-10;
-        color: @color-blue-10;
       }
     }
   }
