@@ -247,46 +247,89 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             }
 
         is_perm_paths = qs_kwargs.get('is_perm_paths', [])
+
+        # Storage for public cache
+        datastore = RedisStore(redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
+
         for p in paths:
-            m = 0
-            current_idx = {}
-            for k in range(len(agp)):
-                if p.path == agp[k].get("key"):
-                    agp[k]["name"] = p.name if p.name and lang == "ja" \
-                        else p.name_en
-                    agp[k]["date_range"] = dict()
-                    comment = p.comment
-                    agp[k]["comment"] = comment,
-                    result = agp.pop(k)
-                    result["comment"] = comment
-                    current_idx = result
-                    m = 1
-                    break
-            if m == 0:
-                index_id = p.cid
-                index_info = Indexes.get_index(index_id=index_id)
-                rss_status = index_info.rss_status
-                nd = {
-                    'doc_count': 0,
-                    'key': p.path,
-                    'name': p.name if p.name and lang == "ja" else p.name_en,
-                    'date_range': {
-                        'pub_cnt': 0,
-                        'un_pub_cnt': 0},
-                    'rss_status': rss_status,
-                    'comment': p.comment,
-                }
-                current_idx = nd
-            _child_indexes = []
-            for _path in is_perm_paths:
-                if (_path.startswith(str(p.path) + '/') or _path == p.path) \
-                        and items_count.get(str(_path.split('/')[-1])):
-                    _child_indexes.append(
-                        items_count[str(_path.split('/')[-1])])
-            private_count, public_count = count_items(_child_indexes)
-            current_idx["date_range"]["pub_cnt"] = public_count
-            current_idx["date_range"]["un_pub_cnt"] = private_count
-            nlst.append(current_idx)
+            index_updated = Index.query.get(p.cid).updated.strftime('%Y%m%d%H%M%S')
+            index_contribute_role = Index.query.get(p.cid).contribute_role
+            index_contribute_role_list = index_contribute_role.split(',')
+            cache_key = str(p.cid)
+            
+            # Check and storage of cache
+            try:
+                nlst.append(session[User.query.get(current_user.id).email][cache_key])
+            except:
+                if datastore.redis.exists(cache_key) and json.loads(datastore.get(cache_key)).get(index_updated):
+                    cache_data = json.loads(datastore.get(cache_key))
+                    nlst.append(cache_data[index_updated])
+                else:
+                    m = 0
+                    current_idx = {}
+                    for k in range(len(agp)):
+                        if p.path == agp[k].get("key"):
+                            agp[k]["name"] = p.name if p.name and lang == "ja" \
+                                else p.name_en
+                            agp[k]["date_range"] = dict()
+                            comment = p.comment
+                            agp[k]["comment"] = comment,
+                            result = agp.pop(k)
+                            result["comment"] = comment
+                            current_idx = result
+                            m = 1
+                            break
+                    if m == 0:
+                        index_id = p.cid
+                        index_info = Indexes.get_index(index_id=index_id)
+                        rss_status = index_info.rss_status
+                        nd = {
+                            'doc_count': 0,
+                            'key': p.path,
+                            'name': p.name if p.name and lang == "ja" else p.name_en,
+                            'date_range': {
+                                'pub_cnt': 0,
+                                'un_pub_cnt': 0},
+                            'rss_status': rss_status,
+                            'comment': p.comment,
+                        }
+                        current_idx = nd
+                    _child_indexes = []
+                    for _path in is_perm_paths:
+                        if (_path.startswith(str(p.path) + '/') or _path == p.path) \
+                                and items_count.get(str(_path.split('/')[-1])):
+                            _child_indexes.append(
+                                items_count[str(_path.split('/')[-1])])
+                    private_count, public_count = count_items(_child_indexes)
+                    current_idx["date_range"]["pub_cnt"] = public_count
+                    current_idx["date_range"]["un_pub_cnt"] = private_count
+                    nlst.append(current_idx)
+
+                    # Private cache
+                    if current_user.is_authenticated:
+                        # Declare user session
+                        session[User.query.get(current_user.id).email] = {}
+
+                        enable_contribute = False
+                        s_roles_id_list = [role.id for role in User.query.get(current_user.id).roles]
+
+                        # Check for indeces which the user has permission
+                        for role_id in s_roles_id_list:
+                            if str(role_id) in index_contribute_role_list:
+                                enable_contribute = True
+
+                        # If item is accessible store data to session
+                        if enable_contribute:
+                            session[User.query.get(current_user.id).email][cache_key] = current_idx
+
+                    # Public cache
+                    else:
+                        json_data = json.dumps({index_updated: current_idx}).encode('utf-8')
+                        datastore.put(
+                            cache_key,
+                            json_data,
+                            ttl_secs=60
+                        )
         agp.clear()
         # process index tree image info
         if len(nlst):
