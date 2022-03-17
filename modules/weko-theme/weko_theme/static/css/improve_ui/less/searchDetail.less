@@ -88,6 +88,49 @@
       max-width: 100%;
     }
   }
+
+  #search_detail_metadata {
+    label {
+      display: inline-flex;
+      align-items: center;
+
+      select {
+        .select-menu-style;
+      }
+      input[type="checkbox"] {
+        margin-right: 0.35rem;
+        position: static;
+      }
+    }
+
+    input[type="text"] {
+      .base-input-style;
+    }
+    button {
+      &.btn-danger {
+        background-color: @color-red-10;
+        color: @color-white;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 3px;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0;
+        margin: 0;
+        font-size: 1rem;
+
+        &:hover {
+          background-color: @color-red-10-hover;
+          color: @color-white;
+        }
+        &:focus {
+          background-color: @color-red-10-hover;
+          color: @color-white;
+        }
+      }
+    }
+  }
 }
 
 @media (min-width: 768px) {
