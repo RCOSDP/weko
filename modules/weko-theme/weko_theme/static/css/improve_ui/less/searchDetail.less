@@ -90,6 +90,17 @@
   }
 
   #search_detail_metadata {
+    border-radius: 0.375rem;
+    margin: 0;
+    padding: 1.5rem;
+    padding-bottom: 0.75rem;
+    box-shadow: @base-box-shadow;
+    border-color: @color-gray-05;
+    border-width: 1px;
+    font-size: 1rem;
+    background-color: @color-white;
+    box-sizing: border-box;
+
     label {
       display: inline-flex;
       align-items: center;
@@ -165,6 +176,26 @@
     }
 
     .element__search-and-clear {
+      > div {
+        margin-left: 0;
+        margin-right: 0;
+        margin-top: 0;
+        margin-bottom: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        div {
+          margin: 0;
+          padding: 0;
+          width: auto;
+
+          + div {
+            margin-left: 1rem;
+          }
+        }
+      }
     }
   }
 }
