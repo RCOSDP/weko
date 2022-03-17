@@ -1,10 +1,13 @@
 {
   "scripts": {
-    "build": "lessc --clean-css less/__main.less ../weko_theme/improve_ui.min.css"
+    "build": "run-s build:*",
+    "build:static": "lessc --clean-css less/__main.less ../weko_theme/improve_ui.min.css",
+    "build:debug": "lessc --clean-css less/__main.less ./debug/improve_ui_debug.min.css"
   },
   "devDependencies": {
     "less": "^4.1.2",
     "less-plugin-autoprefixer": "^2.1.0",
-    "less-plugin-clean-css": "^1.5.1"
+    "less-plugin-clean-css": "^1.5.1",
+    "npm-run-all": "^4.1.5"
   }
 }
