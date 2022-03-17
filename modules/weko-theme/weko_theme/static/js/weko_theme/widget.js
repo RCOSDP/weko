@@ -110,6 +110,7 @@ const PageBodyGrid = function () {
         let frameBorderColorMainContent = node.frame_border_color;
         let labelColor = node.label_color;
         return '<style>' +
+                    /*
                     '#main_contents .panel{' +
                         'background-color: ' + backgroundColor + ' !important;' +
                         'border-color: ' + frameBorderColorMainContent + ';' +
@@ -127,6 +128,7 @@ const PageBodyGrid = function () {
                     '.pagination > .active > span:hover, .pagination > .active > a:focus, .pagination > .active > span:focus {' +
                         'background-color: #337ab7 !important;' +
                     '}' +
+                    */
                 '</style>';
     };
 
