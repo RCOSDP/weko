@@ -208,14 +208,12 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         from weko_admin.models import FacetSearchSetting
         from weko_admin.utils import get_facet_search_query
 
-        # ======================================================================================
         # Flask KV Session
         import redis
         from flask_kvsession import KVSessionExtension
         from simplekv.memory.redisstore import RedisStore
         from simplekv.memory import DictStore
         import json
-        # ======================================================================================
 
         page = request.values.get('page', 1, type=int)
         size = request.values.get('size', 20, type=int)
@@ -299,10 +297,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
 
         # Storage for public cache
         datastore = RedisStore(redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
-        # datastore.delete(cache_key)
-
-        # Declare user session
-        session[User.query.get(current_user.id).email] = {}
 
         for p in paths:
             index_updated = Index.query.get(p.cid).updated.strftime('%Y%m%d%H%M%S')
@@ -360,16 +354,16 @@ class IndexSearchResource(ContentNegotiatedMethodView):
 
                     # Private cache
                     if current_user.is_authenticated:
+                        # Declare user session
+                        session[User.query.get(current_user.id).email] = {}
+
                         enable_contribute = False
                         s_roles_id_list = [role.id for role in User.query.get(current_user.id).roles]
 
-                        # Check for items which the user has permission
+                        # Check for indeces which the user has permission
                         for role_id in s_roles_id_list:
                             if str(role_id) in index_contribute_role_list:
                                 enable_contribute = True
-                                print(s_roles_id_list)
-                                print(index_contribute_role_list)
-                                print(f'{cache_key} - {p.name_en}')
 
                         # If item is accessible store data to session
                         if enable_contribute:
