@@ -175,7 +175,7 @@ def get_search_detail_keyword(str):
         index_list = get_childinfo(indextree, index_parelist)
 
         for idx in index_list:
-            sub2 = dict(id=idx['parent_id'],
+            sub2 = dict(id=idx['id'],
                         contents=idx['parent_name'], checkStus=False)
             check_val2.append(sub2)
 
@@ -183,8 +183,8 @@ def get_search_detail_keyword(str):
         if k_v.get('id') == 'itemtype':
             k_v['check_val'] = check_val
         # detail search for index 
-        #elif k_v.get('id') == 'iid':
-        #    k_v['check_val'] = check_val2
+        elif k_v.get('id') == 'iid':
+            k_v['check_val'] = check_val2
         elif k_v.get('contents') == '':
             contents_value = k_v.get('contents_value')
             k_v['contents'] = contents_value['en']
