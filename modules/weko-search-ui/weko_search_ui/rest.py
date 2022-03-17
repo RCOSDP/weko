@@ -328,7 +328,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                         datastore.put(
                             cache_key,
                             json_data,
-                            ttl_secs=60
+                            ttl_secs=3600
                         )
         agp.clear()
         # process index tree image info
