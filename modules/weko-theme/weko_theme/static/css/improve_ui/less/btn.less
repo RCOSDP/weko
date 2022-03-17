@@ -57,40 +57,41 @@
   }
 }
 
-.module__btn-primary {
-  background-color: @color-blue-10;
-  color: @color-white;
-}
+.component__btn {
+  &.module__btn-primary {
+    background-color: @color-blue-10;
+    color: @color-white;
+    &:hover {
+      background-color: @color-blue-10-hover;
+      color: @color-white;
+    }
+  }
 
-.module__btn-primary:hover {
-  background-color: @color-blue-10-hover;
-}
+  &.module__btn-info {
+    background-color: @color-green-10;
+    color: @color-white;
+    &:hover {
+      background-color: @color-green-10-hover;
+      color: @color-white;
+    }
+  }
 
-.module__btn-info {
-  background-color: @color-green-10;
-  color: @color-white;
-}
+  &.module__btn-gray {
+    background-color: @color-gray-00;
+    color: @color-monochrome-700;
+    &:hover {
+      background-color: @color-blue-10;
+      color: @color-white;
+    }
+  }
 
-.module__btn-info:hover {
-  background-color: @color-green-10-hover;
-}
-
-.module__btn-gray {
-  background-color: @color-gray-00;
-  color: @color-monochrome-700;
-}
-
-.module__btn-gray:hover {
-  background-color: @color-blue-10;
-  color: @color-white;
-}
-
-.module__btn-login {
-  font-size: 0.75rem;
-  font-weight: normal;
-  border-color: @color-gray-05;
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
+  &.module__btn-login {
+    font-size: 0.75rem;
+    font-weight: normal;
+    border-color: @color-gray-05;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
 }
 
 @media (min-width: 768px) {
