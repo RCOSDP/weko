@@ -224,16 +224,10 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
         if facets and search_index and 'post_filters' in facets[search_index]:
             post_filters = facets[search_index]['post_filters']
-            for i in range(0, len(post_filters)):
-                try: # Temporarily added due to value error
-                    value = request.args.getlist(post_filters[i])
-                    if value:
-                        params[post_filters[i]] = value
-                except: # Temporarily added due to value error
-                    print(f'len: {len(post_filters)}') # Temporarily added due to value error
-                    print(f'range: {range(len(post_filters))}') # Temporarily added due to value error
-                    print(f'keys: {post_filters.keys()}') # Temporarily added due to value error
-                    pass # Temporarily added due to value error
+            for param in post_filters:
+                value = request.args.getlist(param)
+                if value:
+                    params[param] = value
 
         if page * size >= self.max_result_window:
             raise MaxResultWindowRESTError()
