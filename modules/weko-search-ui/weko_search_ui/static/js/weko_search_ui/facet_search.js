@@ -146,7 +146,7 @@ class MainLayout extends React.Component {
                   <div className="panel-heading clearfix">
                     <h3 className="panel-title">{list_title[name]}</h3>
                   </div>
-                  <div className="panel-body index-body">
+                  <div className="panel-body index-body element__body-facet-search-body">
                     {
                       item.buckets && item.buckets.map(function (subitem, k) {
                         const pattern = encodeURIComponent(name) + "=" + encodeURIComponent(subitem.key);
