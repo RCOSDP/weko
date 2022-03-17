@@ -93,13 +93,19 @@
     label {
       display: inline-flex;
       align-items: center;
+      float: none;
 
       select {
         .select-menu-style;
       }
+
       input[type="checkbox"] {
         margin-right: 0.35rem;
         position: static;
+      }
+
+      &.col-sm-3 {
+        width: 100%;
       }
     }
 
@@ -167,6 +173,14 @@
 
       .element__search-detail-form-search-type-label {
         font-size: 1rem;
+      }
+    }
+
+    #search_detail_metadata {
+      label {
+        &.col-sm-3 {
+          width: 50%;
+        }
       }
     }
   }
