@@ -96,14 +96,14 @@ USA. #}
                 <!--input_type is daterange sta-->
                 <div ng-if="sub_data.key_value.inputType=='dateRange'">
                   <div class="input-daterange input-group detail-search-text col-xs-7">
-                    <label for="[[sub_data.key_value.id]]_from" hidden>{{_('Start Date')}}</label>
+                    <label for="[[sub_data.key_value.id]]_from" class="sr-only">{{_('Start Date')}}</label>
                     <input type="text"
                       pattern="[0-9]{4}|[0-9]{4}(0[1-9]|1[0-2])|[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])"
                       class="input-sm form-control detail-search-date" name="[[sub_data.key_value.id]]_from"
                       data-provide="datepicker" id="[[sub_data.key_value.id]]_from" placeholder="yyyymmdd"
                       data-date-format="yyyymmdd" ng-model="sub_data.key_value.inputVal_from"/>
                     <span class="input-group-addon">To</span>
-                    <label for="[[sub_data.key_value.id]]_to" hidden>{{_('End Date')}}</label>
+                    <label for="[[sub_data.key_value.id]]_to" class="sr-only">{{_('End Date')}}</label>
                     <input type="text"
                       pattern="[0-9]{4}|[0-9]{4}(0[1-9]|1[0-2])|[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])"
                       class="input-sm form-control detail-search-date" name="[[sub_data.key_value.id]]_to"
@@ -147,7 +147,7 @@ USA. #}
       <div class="row row-4">
         <div class="col-xs-11 col-lg-11"></div>
         <div class="col-xs-1 col-lg-1">
-          <button id="add-big-button" class="btn btn-success" style="float:right;" ng-click="add_search_key()"
+          <button id="add-big-button" class="btn btn-success" ng-click="add_search_key()"
             ng-disabled="condition_data.length==detail_search_key.length">
             <span class="glyphicon glyphicon-plus"></span>
             {{_('Add Search Condition')}}&nbsp
@@ -159,8 +159,7 @@ USA. #}
     <div class="container testimonial-group">
       <div class="row row-4">
         <div class="col-xs-1 col-xs-offset-5">
-          <button id="detail-search-btn" type="submit" class="btn btn-primary" ng-click="detail_search()"
-            style="float:right;">
+          <button id="detail-search-btn" type="submit" class="btn btn-primary" ng-click="detail_search()">
             <span class="glyphicon glyphicon-search"></span>
             {{_('Search')}}&nbsp
           </button>
