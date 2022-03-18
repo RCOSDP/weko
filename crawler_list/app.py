@@ -21,7 +21,7 @@ class saveCrawlerList:
         print("start put crawler")
         self.redis_connection()
         local_session = session()
-        restricted_agent_lists = LogAnalysisRestrictedCrawlerList.get_all_active()
+        restricted_agent_lists = LogAnalysisRestrictedCrawlerList.get_all_active(local_session)
         local_session.close()
         for restricted_agent_list in restricted_agent_lists:
             raw_res = requests.get(restricted_agent_list.list_url).text
@@ -66,27 +66,27 @@ class LogAnalysisRestrictedCrawlerList(Base):
     )
 
     @classmethod
-    def get_all(cls):
+    def get_all(cls, session):
         """Get all crawler lists.
 
         :return: All crawler lists.
         """
         try:
-            all = cls.query.order_by(asc(cls.id)).all()
+            all = session.query.order_by(asc(cls.id)).all()
         except Exception as ex:
-            app.logger.debug(ex)
+            print(ex)
             all = []
             raise
         return all
 
     @classmethod
-    def get_all_active(cls):
+    def get_all_active(cls, session):
         """Get all active crawler lists.
 
         :return: All active crawler lists.
         """
         try:
-            all = cls.query.filter(cls.is_active.is_(True)) \
+            all = session.query.filter(cls.is_active.is_(True)) \
                 .filter(func.length(cls.list_url) > 0).all()
         except Exception as ex:
             print(ex)
