@@ -8,7 +8,6 @@ from sqlalchemy import create_engine ,Column, Integer, String, Boolean, asc
 from sqlalchemy.sql import func
 from sqlalchemy.orm import sessionmaker
 from redis import RedisError, sentinel
-from simplekv.memory.redisstore import RedisStore
 
 Base = declarative_base()
 config_ini = configparser.ConfigParser()
@@ -18,33 +17,33 @@ config_ini.set('DEFAULT', 'DB_URI','postgresql+psycopg2://' + str(os.environ.get
 class saveCrawlerList:
 
     def __init__(self):
-        self.connection = RedisStore(redis.StrictRedis(config_ini['DEFAULT']['REDIS_HOST'],port = config_ini['DEFAULT']['REDIS_PORT'],db = config_ini['DEFAULT']["REDIS_DB"]))
+        self.__redis_connection()
 
-    def redis_connection(self):
+    def __redis_connection(self):
         try:
             if config_ini['DEFAULT']['REDIS_TYPE'] == 'redis':
-                self.connection = RedisStore(redis.StrictRedis(config_ini['DEFAULT']['REDIS_HOST'],port = config_ini['DEFAULT']['REDIS_PORT'],db = config_ini['DEFAULT']["REDIS_DB"]))
+                self.connection = redis.StrictRedis(config_ini['DEFAULT']['REDIS_HOST'],port = config_ini['DEFAULT']['REDIS_PORT'],db = config_ini['DEFAULT']["REDIS_DB"])
             elif config_ini['DEFAULT']['REDIS_TYPE'] == 'redissentinel':
                 sentinels = sentinel.Sentinel(config_ini['DEFAULT']["SENTINEL_HOST"])
-                self.connection = RedisStore(sentinels.master_for(config_ini['DEFAULT']["SENTINEL_HOST"],db = config_ini['DEFAULT']["REDIS_DB"]))
+                self.connection = sentinels.master_for(config_ini['DEFAULT']["SENTINEL_HOST"],db = config_ini['DEFAULT']["REDIS_DB"])
         except RedisError as err:
             error_str = "Error while connecting to redis : " + str(err)
             print(error_str)
 
     def put_crawler(self):
-        print("start put crawler")
-        self.redis_connection()
         local_session = session()
         restricted_agent_lists = LogAnalysisRestrictedCrawlerList.get_all_active(session=local_session)
         local_session.close()
+
         for restricted_agent_list in restricted_agent_lists:
             raw_res = requests.get(restricted_agent_list.list_url).text
             if not raw_res:
                 continue
             restrict_list = raw_res.split('\n')
             restrict_list = [agent for agent in restrict_list if not agent.startswith('#')]
-            self.connection.sadd(restricted_agent_list,restrict_list)
-            print("Set to redis crawler List:"+str(restricted_agent_list))
+            for restrict_ip in restrict_list:
+                self.connection.sadd(restricted_agent_list.list_url,restrict_ip)
+            print("Set to redis crawler List:"+str(restricted_agent_list.list_url))
 
 
 class LogAnalysisRestrictedCrawlerList(Base):
@@ -102,6 +101,7 @@ if __name__ == "__main__":
     engine = create_engine(config_ini['DEFAULT']["DB_URI"])
     session = sessionmaker(engine)
 
+    print("Start putting crawler list to redis")
     redis_driver.put_crawler()
-    
+    print("End putting crawler list to redis")    
     
