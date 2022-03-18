@@ -43,6 +43,13 @@
     }
   }
 
+  .clearfix {
+    &::after,
+    &::before {
+      display: none;
+    }
+  }
+
   tree-internal .rootless {
     margin: 0;
   }
@@ -58,6 +65,31 @@
 
   tree-internal .tree .node-value {
     color: unset;
+  }
+
+  .container-fluid {
+    &::after {
+      display: none;
+    }
+    &::before {
+      display: none;
+    }
+  }
+  .container {
+    &::after {
+      display: none;
+    }
+    &::before {
+      display: none;
+    }
+  }
+  .row {
+    &::after {
+      display: none;
+    }
+    &::before {
+      display: none;
+    }
   }
 
   #search_res {

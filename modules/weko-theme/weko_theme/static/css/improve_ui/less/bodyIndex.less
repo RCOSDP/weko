@@ -11,7 +11,8 @@
     background-color: @color-white;
 
     .element__body-index-wrap-inner + .element__body-index-wrap-inner {
-      margin-top: 2rem;
+      display: block;
+      margin-top: 1.5rem;
     }
 
     .element__body-index-header {
@@ -46,19 +47,30 @@
     }
 
     .element__body-index-item {
+      display: block;
       margin: 0;
       padding: 0;
 
+      div {
+        float: none;
+        position: static;
+      }
       label {
         display: block;
         margin: 0;
         padding: 0;
         width: 100%;
       }
+      tree-internal,
+      app-tree-items,
+      app-tree-list2 {
+        display: block;
+        position: static;
+      }
     }
 
     .element__body-index-select-menu {
-      .select-menu-style;
+      .mixin__select-menu-style;
     }
 
     .element__body-index-tree-items {

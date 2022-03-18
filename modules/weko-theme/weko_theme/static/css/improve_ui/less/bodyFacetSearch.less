@@ -9,26 +9,17 @@
     border-width: 1px;
     background-color: @color-white;
 
-    .element__body-facet-search-wrap {
+    div,
+    .panel.panel-default {
       margin: 0;
       padding: 0;
     }
 
-    .element__body-facet-search-wrap-inner {
-      margin: 0;
-      padding: 0;
-    }
-
-    .element__body-facet-search-item {
-      margin: 0;
-      padding: 0;
-    }
-
-    .element__body-facet-search-item + .element__body-facet-search-item {
+    .panel.panel-default + .panel.panel-default {
       margin-top: 1.5rem;
     }
 
-    .element__body-facet-search-item-inner {
+    .panel-heading {
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -38,29 +29,35 @@
       padding-bottom: 1rem;
       border-bottom: 1px solid transparent;
       border-bottom-color: @color-gray-00;
-    }
 
-    .element__body-facet-search-item-head {
-      margin: 0;
-      padding: 0;
-      font-weight: normal;
-      font-size: 1.125rem;
-    }
+      .panel-title {
+        margin: 0;
+        padding: 0;
+        font-weight: normal;
+        font-size: 1.125rem;
+      }
 
-    .element__body-facet-search-item-head-btn {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 16px;
-      height: 16px;
-      flex: 0 0 16px;
-      margin-left: 1rem;
-      overflow: hidden;
-      color: @color-monochrome-700;
+      .pull-right {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 16px;
+        height: 16px;
+        flex: 0 0 16px;
+        margin-left: 1rem;
+        overflow: hidden;
+        color: @color-monochrome-700;
+        float: none;
+        background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 12H6" /></svg>');
+
+        span {
+          display: none;
+        }
+      }
     }
 
     .element__body-facet-search-select {
-      .select-menu-style;
+      .mixin__select-menu-style;
       padding: 0;
       padding-right: 40px;
       position: relative;
