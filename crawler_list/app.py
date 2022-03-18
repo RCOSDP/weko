@@ -13,7 +13,7 @@ from simplekv.memory.redisstore import RedisStore
 Base = declarative_base()
 config_ini = configparser.ConfigParser()
 config_ini.read('config.ini', encoding='utf-8')
-config_ini.set('DEFAULT', 'DB_URI','postgresql+psycopg2://' + os.environ.get('INVENIO_POSTGRESQL_DBUSER') + ':' + os.environ.get('INVENIO_POSTGRESQL_DBPASS')+'@'+ os.environ.get('INVENIO_POSTGRESQL_HOST')+':5432/' + os.environ.get('INVENIO_POSTGRESQL_DBNAME'))
+config_ini.set('DEFAULT', 'DB_URI','postgresql+psycopg2://' + str(os.environ.get('INVENIO_POSTGRESQL_DBUSER')) + ':' + str(os.environ.get('INVENIO_POSTGRESQL_DBPASS'))+'@'+ str(os.environ.get('INVENIO_POSTGRESQL_HOST'))+':5432/' + str(os.environ.get('INVENIO_POSTGRESQL_DBNAME')))
 
 class saveCrawlerList:
 
