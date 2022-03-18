@@ -1,6 +1,7 @@
 import redis
 import requests
 import configparser
+import os
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine ,Column, Integer, String, Boolean, asc
@@ -12,6 +13,7 @@ from simplekv.memory.redisstore import RedisStore
 Base = declarative_base()
 config_ini = configparser.ConfigParser()
 config_ini.read('config.ini', encoding='utf-8')
+config_ini.set('DEFAULT', 'DB_URI','postgresql+psycopg2://' + os.environ.get('INVENIO_POSTGRESQL_DBUSER') + ':' + os.environ.get('INVENIO_POSTGRESQL_DBPASS')+'@'+ os.environ.get('INVENIO_POSTGRESQL_HOST')+':5432/' + os.environ.get('INVENIO_POSTGRESQL_DBNAME'))
 
 class saveCrawlerList:
 
@@ -94,6 +96,7 @@ class LogAnalysisRestrictedCrawlerList(Base):
 
 if __name__ == "__main__":
 
+    
     redis_driver = saveCrawlerList()
 
     engine = create_engine(config_ini['DEFAULT']["DB_URI"])
