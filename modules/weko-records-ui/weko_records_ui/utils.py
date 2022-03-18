@@ -1235,7 +1235,7 @@ def get_google_detaset_meta(record):
 
     if '_oai' not in record and 'id' not in record['_oai']:
         return
-
+        
     recstr = etree.tostring(
         getrecord(
             identifier=record['_oai'].get('id'),
