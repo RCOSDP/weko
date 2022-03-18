@@ -20,7 +20,7 @@
   #main_contents {
     .panel {
       background-color: unset;
-      border-color: none;
+      border-color: currentcolor;
     }
     .active > a {
       background-color: unset;
@@ -40,6 +40,29 @@
       > span:focus {
         background-color: unset;
       }
+    }
+  }
+
+  tree-internal .rootless {
+    margin: 0;
+  }
+
+  tree-internal ul .value-container {
+    font-size: unset;
+  }
+
+  .node-menu .node-menu-content,
+  tree-internal .tree {
+    font-family: initial;
+  }
+
+  tree-internal .tree .node-value {
+    color: unset;
+  }
+
+  #search_res {
+    > div:nth-child(n + 2) {
+      margin-top: 1rem;
     }
   }
 }
