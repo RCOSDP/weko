@@ -20,6 +20,18 @@ class saveCrawlerList:
     def __init__(self):
         self.__redis_connection()
 
+    def __redis_connection(self):
+        try:
+            print(config_ini['DEFAULT']['REDIS_TYPE'])
+            if config_ini['DEFAULT']['REDIS_TYPE'] == 'redis':
+                self.connection = RedisStore(redis.StrictRedis(config_ini['DEFAULT']['REDIS_HOST'],port = config_ini['DEFAULT']['REDIS_PORT'],db = config_ini['DEFAULT']["REDIS_DB"]))
+            elif config_ini['DEFAULT']['REDIS_TYPE'] == 'redissentinel':
+                sentinels = sentinel.Sentinel(config_ini['DEFAULT']["SENTINEL_HOST"])
+                self.connection = RedisStore(sentinels.master_for(config_ini['DEFAULT']["SENTINEL_HOST"],db = config_ini['DEFAULT']["REDIS_DB"]))
+        except RedisError as err:
+            error_str = "Error while connecting to redis : " + str(err)
+            print(error_str)
+
     def put_crawler(self):
         print("start put crawler")
         local_session = session()
@@ -34,17 +46,6 @@ class saveCrawlerList:
                 agent for agent in restrict_list if not agent.startswith('#')]
             self.connection.sadd(restricted_agent_list,restrict_list)
             print("Set to redis crawler List:"+str(restricted_agent_list))
-
-    def __redis_connection(self):
-        try:
-            if config_ini['DEFAULT']["REDIS_TYPE"] == 'redis':
-                self.connection = RedisStore(redis.StrictRedis(config_ini['DEFAULT']['REDIS_HOST'],port = config_ini['DEFAULT']['REDIS_PORT'],db = config_ini['DEFAULT']["REDIS_DB"]))
-            elif config_ini['DEFAULT']["REDIS_TYPE"] == 'redissentinel':
-                sentinels = sentinel.Sentinel(config_ini['DEFAULT']["SENTINEL_HOST"])
-                self.connection = RedisStore(sentinels.master_for(config_ini['DEFAULT']["SENTINEL_HOST"],db = config_ini['DEFAULT']["REDIS_DB"]))
-        except RedisError as err:
-            error_str = "Error while connecting to redis : " + str(err)
-            print(error_str)
 
 
 class LogAnalysisRestrictedCrawlerList(Base):
