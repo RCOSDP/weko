@@ -33,8 +33,7 @@ class saveCrawlerList:
             restrict_list = raw_res.split('\n')
             restrict_list = [
                 agent for agent in restrict_list if not agent.startswith('#')]
-            for restrict_ip in restrict_list:
-                self.connection.sadd(restricted_agent_list,restrict_ip)
+            self.connection.sadd(restricted_agent_list,restrict_list)
             print("Set to redis crawler List:"+str(restricted_agent_list))
 
     def redis_connection(self):
