@@ -13,6 +13,8 @@ RUN pip3 install requests
 
 RUN pip3 install simplekv
 
+RUN pip3 install psycopg2
+
 ENV INVENIO_POSTGRESQL_HOST=postgresql
 
 ENV INVENIO_POSTGRESQL_DBUSER=invenio
