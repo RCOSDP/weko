@@ -18,11 +18,10 @@ config_ini.set('DEFAULT', 'DB_URI','postgresql+psycopg2://' + str(os.environ.get
 class saveCrawlerList:
 
     def __init__(self):
-        self.__redis_connection()
+        self.connection = RedisStore(redis.StrictRedis(config_ini['DEFAULT']['REDIS_HOST'],port = config_ini['DEFAULT']['REDIS_PORT'],db = config_ini['DEFAULT']["REDIS_DB"]))
 
-    def __redis_connection(self):
+    def redis_connection(self):
         try:
-            print(config_ini['DEFAULT']['REDIS_TYPE'])
             if config_ini['DEFAULT']['REDIS_TYPE'] == 'redis':
                 self.connection = RedisStore(redis.StrictRedis(config_ini['DEFAULT']['REDIS_HOST'],port = config_ini['DEFAULT']['REDIS_PORT'],db = config_ini['DEFAULT']["REDIS_DB"]))
             elif config_ini['DEFAULT']['REDIS_TYPE'] == 'redissentinel':
@@ -34,6 +33,7 @@ class saveCrawlerList:
 
     def put_crawler(self):
         print("start put crawler")
+        self.redis_connection()
         local_session = session()
         restricted_agent_lists = LogAnalysisRestrictedCrawlerList.get_all_active(session=local_session)
         local_session.close()
@@ -42,8 +42,7 @@ class saveCrawlerList:
             if not raw_res:
                 continue
             restrict_list = raw_res.split('\n')
-            restrict_list = [
-                agent for agent in restrict_list if not agent.startswith('#')]
+            restrict_list = [agent for agent in restrict_list if not agent.startswith('#')]
             self.connection.sadd(restricted_agent_list,restrict_list)
             print("Set to redis crawler List:"+str(restricted_agent_list))
 
