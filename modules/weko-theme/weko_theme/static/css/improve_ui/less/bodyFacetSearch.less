@@ -48,10 +48,42 @@
         overflow: hidden;
         color: @color-monochrome-700;
         float: none;
-        background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 12H6" /></svg>');
 
         span {
-          display: none;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: 100%;
+          height: 100%;
+
+          i {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+
+            &.glyphicon {
+              position: static;
+              top: 1px;
+              display: flex;
+              font-family: initial;
+
+              &::before {
+                display: none;
+              }
+
+              &.glyphicon-chevron-down {
+                color: @color-monochrome-700;
+                background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="%23374151"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 12H6" /></svg>');
+              }
+
+              &.glyphicon-chevron-right {
+                color: @color-monochrome-700;
+                background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="%23374151"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>');
+              }
+            }
+          }
         }
       }
     }
