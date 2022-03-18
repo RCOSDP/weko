@@ -17,6 +17,9 @@ config_ini.set('DEFAULT', 'DB_URI','postgresql+psycopg2://' + str(os.environ.get
 
 class saveCrawlerList:
 
+    def __init__(self) -> None:
+        self.connection = ''
+
     def put_crawler(self):
         print("start put crawler")
         self.redis_connection()
@@ -31,7 +34,7 @@ class saveCrawlerList:
             restrict_list = [
                 agent for agent in restrict_list if not agent.startswith('#')]
             for restrict_ip in restrict_list:
-                self.master.sadd(restricted_agent_list,restrict_ip)
+                self.connection.sadd(restricted_agent_list,restrict_ip)
             print("Set to redis crawler List:"+str(restricted_agent_list))
 
     def redis_connection(self):
@@ -39,8 +42,8 @@ class saveCrawlerList:
             if config_ini['DEFAULT']["REDIS_TYPE"] == 'redis':
                 self.connection = RedisStore(redis.StrictRedis(config_ini['DEFAULT']['REDIS_HOST'],port = config_ini['DEFAULT']['REDIS_PORT'],db = config_ini['DEFAULT']["REDIS_DB"]))
             elif config_ini['DEFAULT']["REDIS_TYPE"] == 'redissentinel':
-                self.connection = sentinel.Sentinel(config_ini['DEFAULT']["SENTINEL_HOST"])
-                self.master = RedisStore(self.connection.master_for(config_ini['DEFAULT']["SENTINEL_HOST"],db = config_ini['DEFAULT']["REDIS_DB"]))
+                sentinels = sentinel.Sentinel(config_ini['DEFAULT']["SENTINEL_HOST"])
+                self.connection = RedisStore(sentinels.master_for(config_ini['DEFAULT']["SENTINEL_HOST"],db = config_ini['DEFAULT']["REDIS_DB"]))
         except RedisError as err:
             error_str = "Error while connecting to redis : " + str(err)
             print(error_str)
