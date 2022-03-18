@@ -86,8 +86,7 @@ class LogAnalysisRestrictedCrawlerList(Base):
         :return: All active crawler lists.
         """
         try:
-            all = session.query.filter(cls.is_active.is_(True)) \
-                .filter(func.length(cls.list_url) > 0).all()
+            all = session.query.filter(cls.is_active.is_(True)).filter(len(cls.list_url) > 0).all()
         except Exception as ex:
             print(ex)
             all = []
