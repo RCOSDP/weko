@@ -1,26 +1,48 @@
 <nav aria-label="Page navigation">
-<ul class="pagination pagination-sm" ng-if="vm.invenioSearchResults.hits.total">
-  <li ng-show="showGoToFirstLast" ng-class="paginationHelper.getFirstClass()">
-    <a ng-click="paginationHelper.changePage(1)" aria-label="First">
-      <span aria-hidden="true">&laquo;</span>
+<ul class="component__pagination" ng-if="vm.invenioSearchResults.hits.total">
+  <li class="element__pagination-item" ng-show="showGoToFirstLast" ng-class="paginationHelper.getFirstClass()">
+    <a class="element__pagination-item-link" ng-click="paginationHelper.changePage(1)" aria-label="First">
+      <span aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+        </svg>
+      </span>
     </a>
   </li>
-  <li ng-class="paginationHelper.getPrevClass()">
-    <a ng-click="paginationHelper.changePage(paginationHelper.previous())" aria-label="Previous">
-      <span aria-hidden="true"><</span>
+  <li class="element__pagination-item" ng-class="paginationHelper.getPrevClass()">
+    <a class="element__pagination-item-link" ng-click="paginationHelper.changePage(paginationHelper.previous())" aria-label="Previous">
+      <span aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      </span>
     </a>
   </li>
-  <li ng-class="paginationHelper.getPageClass(page.value)" ng-repeat="page in paginatePages">
-    <a ng-click="paginationHelper.changePage(page.value)" alt="{{ page.title }}">{{ page.value }}</a>
+  <li class="element__pagination-item state__active" ng-class="paginationHelper.getPageClass(page.value)" ng-repeat="page in paginatePages">
+    <aclass="element__pagination-item-link" ng-click="paginationHelper.changePage(page.value)" alt="{{ page.title }}">{{ page.value }}</a>
   </li>
-  <li ng-class="paginationHelper.getNextClass()">
-    <a ng-click="paginationHelper.changePage(paginationHelper.next())" aria-label="Next">
-      <span aria-hidden="true">></span>
+  <li class="element__pagination-item" ng-class="paginationHelper.getNextClass()">
+    <a class="element__pagination-item-link" ng-click="paginationHelper.changePage(paginationHelper.next())" aria-label="Next">
+      <span aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </span>
     </a>
   </li>
-  <li ng-show="showGoToFirstLast" ng-class="paginationHelper.getLastClass()">
-    <a ng-click="paginationHelper.changePage(paginationHelper.total())" aria-label="Last">
-      <span aria-hidden="true">&raquo;</span>
+  <li class="element__pagination-item" ng-show="showGoToFirstLast" ng-class="paginationHelper.getLastClass()">
+    <a class="element__pagination-item-link" ng-click="paginationHelper.changePage(paginationHelper.total())" aria-label="Last">
+      <span aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+        </svg>
+      </span>
     </a>
   </li>
 </ul>
