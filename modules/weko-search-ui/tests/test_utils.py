@@ -64,6 +64,7 @@ def test_list_records():
     results = []
     tmp.append({"input":os.path.join(FIXTURE_DIR,'list_records','list_records.json'),"output":os.path.join(FIXTURE_DIR,'list_records','list_records_result.json')})
     tmp.append({"input":os.path.join(FIXTURE_DIR,'list_records','list_records00.json'),"output":os.path.join(FIXTURE_DIR,'list_records','list_records00_result.json')})
+    tmp.append({"input":os.path.join(FIXTURE_DIR,'list_records','list_records01.json'),"output":os.path.join(FIXTURE_DIR,'list_records','list_records01_result.json')})
 
     for t in tmp:
         with open(t.get('input'),encoding='utf-8') as f:
