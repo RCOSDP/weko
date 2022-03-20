@@ -21,6 +21,7 @@
 """Pytest configuration."""
 
 import shutil
+import os
 import tempfile
 
 import pytest
@@ -28,6 +29,7 @@ from flask import Flask
 from flask_babelex import Babel
 
 from weko_search_ui import WekoSearchUI
+from invenio_db import InvenioDB
 
 
 @pytest.yield_fixture()
@@ -58,3 +60,37 @@ def app(base_app):
     """Flask application fixture."""
     with base_app.app_context():
         yield base_app
+
+
+# 
+
+
+# @pytest.fixture()
+# def db():
+#     """Database fixture with session sharing."""
+#     import invenio_db
+#     from invenio_db import shared
+#     db = invenio_db.db = shared.db = shared.SQLAlchemy(
+#         metadata=shared.MetaData(naming_convention=shared.NAMING_CONVENTION)
+#     )
+#     return db
+
+
+@pytest.fixture()
+def app():
+    """Flask application fixture."""
+    app = Flask(__name__)
+    app.config.update(
+        DB_VERSIONING=False,
+        DB_VERSIONING_USER_MODEL=None,
+        SQLALCHEMY_DATABASE_URI=os.environ.get('SQLALCHEMY_DATABASE_URI',
+                                               'sqlite:///test.db'),
+        SQLALCHEMY_TRACK_MODIFICATIONS=True,
+        SECRET_KEY='SECRET_KEY',
+        TESTING=True,
+        INDEX_IMG='indextree/36466818-image.jpg',
+    )
+    Babel(app)
+    InvenioDB(app)
+    WekoSearchUI(app)
+    return app
