@@ -26,11 +26,13 @@ import tempfile
 
 import pytest
 from flask import Flask
+from flask import session, url_for
 from flask_babelex import Babel
 
 from weko_search_ui import WekoSearchUI
 from invenio_db import InvenioDB
-
+from invenio_i18n.ext import InvenioI18N, current_i18n
+from invenio_records_rest import InvenioRecordsREST
 
 @pytest.yield_fixture()
 def instance_path():
@@ -38,42 +40,6 @@ def instance_path():
     path = tempfile.mkdtemp()
     yield path
     shutil.rmtree(path)
-
-
-@pytest.fixture()
-def base_app(instance_path):
-    """Flask application fixture."""
-    app_ = Flask("testapp", instance_path=instance_path)
-    app_.config.update(
-        SECRET_KEY="SECRET_KEY",
-        TESTING=True,
-        INDEX_IMG="indextree/36466818-image.jpg",
-    )
-    Babel(app_)
-    WekoSearchUI(app_)
-
-    return app_
-
-
-@pytest.yield_fixture()
-def app(base_app):
-    """Flask application fixture."""
-    with base_app.app_context():
-        yield base_app
-
-
-#
-
-
-# @pytest.fixture()
-# def db():
-#     """Database fixture with session sharing."""
-#     import invenio_db
-#     from invenio_db import shared
-#     db = invenio_db.db = shared.db = shared.SQLAlchemy(
-#         metadata=shared.MetaData(naming_convention=shared.NAMING_CONVENTION)
-#     )
-#     return db
 
 
 @pytest.fixture()
@@ -90,8 +56,16 @@ def app():
         SECRET_KEY="SECRET_KEY",
         TESTING=True,
         INDEX_IMG="indextree/36466818-image.jpg",
+        JSON_AS_ASCII = False,
+                BABEL_DEFAULT_LOCALE = 'en',
+        BABEL_DEFAULT_LANGUAGE = 'en',
+        BABEL_DEFAULT_TIMEZONE='Asia/Tokyo',
+        I18N_LANGUAGES = [('ja', 'Japanese'),('en','English')],
+        I18N_SESSION_KEY='my_session_key',
     )
     Babel(app)
     InvenioDB(app)
+    InvenioI18N(app)
+    InvenioRecordsREST(app)
     WekoSearchUI(app)
     return app
