@@ -43,11 +43,11 @@ def instance_path():
 @pytest.fixture()
 def base_app(instance_path):
     """Flask application fixture."""
-    app_ = Flask('testapp', instance_path=instance_path)
+    app_ = Flask("testapp", instance_path=instance_path)
     app_.config.update(
-        SECRET_KEY='SECRET_KEY',
+        SECRET_KEY="SECRET_KEY",
         TESTING=True,
-        INDEX_IMG='indextree/36466818-image.jpg',
+        INDEX_IMG="indextree/36466818-image.jpg",
     )
     Babel(app_)
     WekoSearchUI(app_)
@@ -62,7 +62,7 @@ def app(base_app):
         yield base_app
 
 
-# 
+#
 
 
 # @pytest.fixture()
@@ -83,12 +83,13 @@ def app():
     app.config.update(
         DB_VERSIONING=False,
         DB_VERSIONING_USER_MODEL=None,
-        SQLALCHEMY_DATABASE_URI=os.environ.get('SQLALCHEMY_DATABASE_URI',
-                                               'sqlite:///test.db'),
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+            "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
+        ),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
-        SECRET_KEY='SECRET_KEY',
+        SECRET_KEY="SECRET_KEY",
         TESTING=True,
-        INDEX_IMG='indextree/36466818-image.jpg',
+        INDEX_IMG="indextree/36466818-image.jpg",
     )
     Babel(app)
     InvenioDB(app)
