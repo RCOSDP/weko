@@ -63,12 +63,8 @@ def _is_crawler(user_info):
     """
     restricted_agent_lists = LogAnalysisRestrictedCrawlerList.get_all_active()
     for restricted_agent_list in restricted_agent_lists:
-        raw_res = requests.get(restricted_agent_list.list_url).text
-        if not raw_res:
-            continue
-        restrict_list = raw_res.split('\n')
-        restrict_list = [
-            agent for agent in restrict_list if not agent.startswith('#')]
+        connection = redis.StrictRedis(current_app.config['INVENIO_REDIS_HOST'],port = current_app.config['CRAWLER_REDIS_PORT'],db = current_app.config["CRAWLER_REDIS_DB"])
+        restrict_list = connection.smembers(restricted_agent_list.list_url)
         if user_info['user_agent'] in restrict_list or \
            user_info['ip_address'] in restrict_list:
             return True
