@@ -1688,6 +1688,16 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           if (item.key === key) {
             item["readonly"] = true;
           }
+          if (item.items) {
+            item.items.forEach(function (subitem) {
+              if (typeof(subitem.key) === "string") {
+                let key_list = subitem.key.split(".");
+                if (key_list[key_list.length - 1] === key) {
+                  subitem["readonly"] = true;
+                }
+              }
+            });
+          }
         });
       }
 
@@ -1763,7 +1773,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 }
                 isExisted = true;
                 // Set read only for user information property
-                $scope.setFormReadOnly(key);
+                if ($('#current_guest_email').val()) {
+                  $scope.setFormReadOnly("subitem_mail_address");
+                } else {
+                  $scope.setFormReadOnly(key);
+                }
                 break;
               }
             }
@@ -1829,7 +1843,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
         if (userInfoKey != null) {
           // Set read only for user information property
-          $scope.setFormReadOnly(userInfoKey);
+          if ($('#current_guest_email').val()) {
+            $scope.setFormReadOnly("subitem_mail_address");
+          } else {
+            $scope.setFormReadOnly(userInfoKey);
+          }
         }
       };
 
@@ -1875,12 +1893,14 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           if (!titleData) {
             return;
           }
-          let userName;
-          titleData = JSON.parse(titleData);
-          if (guestEmail) {
-            userName = guestEmail.split("@")[0];
-          } else {
-            userName = JSON.parse(userInfoData).results["subitem_displayname"];
+	  let userName = $('#auto_fill_subitem_fullname').val();
+	  titleData = JSON.parse(titleData);
+          if (!userName) {
+            if (guestEmail) {
+              userName = guestEmail.split("@")[0];
+            } else {
+              userName = JSON.parse(userInfoData).results["subitem_displayname"];
+            }
           }
           let titleSubKey = "subitem_item_title";
           let titleLanguageKey = "subitem_item_title_language";
@@ -2028,7 +2048,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       }
 
       $scope.autoFillInstitutionPosition = function () {
-        let key = 'subitem_restricted_access_institution_position';
+        let key = 'subitem_institution_position';
         let schemaProperties = $rootScope.recordsVM.invenioRecordsSchema.properties;
         let formProperties = $rootScope.recordsVM.invenioRecordsForm;
         //Get "Institution Position" from select html.
@@ -2046,7 +2066,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.autoFillUsageApplication = function () {
         let properties = [
           'subitem_restricted_access_dataset_usage',
-          'subitem_restricted_access_mail_address',
           'subitem_restricted_access_usage_report_id',
           'subitem_restricted_access_wf_issued_date',
           'subitem_restricted_access_application_date',
@@ -2060,13 +2079,13 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.autoFillUsageReport = function () {
         let properties = [
           'subitem_restricted_access_dataset_usage',
-          'subitem_restricted_access_name',
-          'subitem_restricted_access_mail_address',
-          'subitem_restricted_access_university/institution',
-          'subitem_restricted_access_affiliated_division/department',
-          'subitem_restricted_access_position',
-          'subitem_restricted_access_position(others)',
-          'subitem_restricted_access_phone_number',
+          'subitem_fullname',
+          'subitem_mail_address',
+          'subitem_university/institution',
+          'subitem_affiliated_division/department',
+          'subitem_position',
+          'subitem_position(others)',
+          'subitem_phone_number',
           'subitem_restricted_access_usage_report_id',
           'subitem_restricted_access_wf_issued_date',
           'subitem_restricted_access_application_date',
@@ -2410,8 +2429,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           $scope.autoFillUsageApplication();
           setTimeout(function () {
             function updateItemTitle() {
-              let item_title = $("#auto_fill_subitem_restricted_access_item_title").val() +
-                $("#subitem_fullname").val()
+              let item_title = $("#auto_fill_subitem_restricted_access_item_title").val() + $("#subitem_fullname").val()
               $rootScope["recordsVM"].invenioRecordsModel[item_title_key]['subitem_restricted_access_item_title'] = item_title;
             }
             $("#subitem_fullname").on('input', function () {
@@ -4159,6 +4177,12 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           if($scope.usageapplication_keys.length>0 && $scope.item_tile_key){
             // In-case of output report, re-update title
             $scope.updateTitleForOutputReport()
+          }
+
+          if (!model['item_dataset_usage']) {
+            $rootScope.recordsVM.invenioRecordsModel['item_dataset_usage'] = {
+              subitem_dataset_usage : $("#data_type_title").val()
+            };
           }
 
           var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
