@@ -1893,8 +1893,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           if (!titleData) {
             return;
           }
-	  let userName = $('#auto_fill_subitem_fullname').val();
-	  titleData = JSON.parse(titleData);
+	        let userName = $('#auto_fill_subitem_fullname').val();
+	        titleData = JSON.parse(titleData);
           if (!userName) {
             if (guestEmail) {
               userName = guestEmail.split("@")[0];
