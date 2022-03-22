@@ -2987,7 +2987,7 @@ def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
 
     # Get guest user profile
     guest_email = session['guest_email']
-    user_name = guest_email.split('@')[0]
+    user_name = ''
     profile = {
         'subitem_user_name': user_name,
         'subitem_fullname': user_name,

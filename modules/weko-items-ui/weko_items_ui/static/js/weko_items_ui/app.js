@@ -1688,6 +1688,16 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           if (item.key === key) {
             item["readonly"] = true;
           }
+          if (item.items) {
+            item.items.forEach(function (subitem) {
+              if (typeof(subitem.key) === "string") {
+                let key_list = subitem.key.split(".");
+                if (key_list[key_list.length - 1] === key) {
+                  subitem["readonly"] = true;
+                }
+              }
+            });
+          }
         });
       }
 
@@ -1763,7 +1773,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 }
                 isExisted = true;
                 // Set read only for user information property
-                $scope.setFormReadOnly(key);
+                if ($('#current_guest_email').val()) {
+                  $scope.setFormReadOnly("subitem_mail_address");
+                } else {
+                  $scope.setFormReadOnly(key);
+                }
                 break;
               }
             }
@@ -1829,7 +1843,11 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
         if (userInfoKey != null) {
           // Set read only for user information property
-          $scope.setFormReadOnly(userInfoKey);
+          if ($('#current_guest_email').val()) {
+            $scope.setFormReadOnly("subitem_mail_address");
+          } else {
+            $scope.setFormReadOnly(userInfoKey);
+          }
         }
       };
 
@@ -1875,12 +1893,14 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           if (!titleData) {
             return;
           }
-          let userName;
-          titleData = JSON.parse(titleData);
-          if (guestEmail) {
-            userName = guestEmail.split("@")[0];
-          } else {
-            userName = JSON.parse(userInfoData).results["subitem_displayname"];
+	  let userName = $('#auto_fill_subitem_fullname').val();
+	  titleData = JSON.parse(titleData);
+          if (!userName) {
+            if (guestEmail) {
+              userName = guestEmail.split("@")[0];
+            } else {
+              userName = JSON.parse(userInfoData).results["subitem_displayname"];
+            }
           }
           let titleSubKey = "subitem_item_title";
           let titleLanguageKey = "subitem_item_title_language";
@@ -2409,8 +2429,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           $scope.autoFillUsageApplication();
           setTimeout(function () {
             function updateItemTitle() {
-              let item_title = $("#auto_fill_subitem_restricted_access_item_title").val() +
-                $("#subitem_fullname").val()
+              let item_title = $("#auto_fill_subitem_restricted_access_item_title").val() + $("#subitem_fullname").val()
               $rootScope["recordsVM"].invenioRecordsModel[item_title_key]['subitem_restricted_access_item_title'] = item_title;
             }
             $("#subitem_fullname").on('input', function () {
