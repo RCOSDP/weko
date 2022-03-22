@@ -1,0 +1,84 @@
+#state-enable-improveui {
+  .widget-nav {
+    white-space: pre-line;
+    border-radius: 0.375rem;
+
+    ::before {
+      display: none;
+    }
+
+    ::after {
+      display: none;
+    }
+
+    .container-fluid {
+      margin-right: 0;
+      margin-left: 0;
+      display: flex;
+      align-items: center;
+      padding: 0;
+    }
+
+    .container-fluid2 {
+      padding-left: 0;
+      padding-right: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .navbar-header {
+      margin-right: 0;
+      margin-left: 0;
+      display: flex;
+      align-items: center;
+      height: 100%;
+    }
+
+    .navbar-brand {
+      color: @color-gray-10;
+      font-size: 1rem;
+      padding-left: 1rem;
+      padding-right: 1rem;
+      display: block;
+      margin: 0;
+      font-weight: bold;
+    }
+
+    .navbar-collapse {
+      border-color: transparent;
+      display: flex;
+      align-items: center;
+      height: 100%;
+      padding-right: 0;
+      padding-left: 0;
+    }
+
+    .nav {
+      &.navbar-nav {
+        float: none;
+        display: flex;
+        align-items: center;
+
+        a {
+          color: @color-gray-10;
+          font-size: 1rem;
+          padding-left: 1rem;
+          padding-right: 1rem;
+          display: block;
+          font-weight: bold;
+        }
+      }
+    }
+  }
+
+  .navbar-default {
+    background-color: @color-gray-00;
+    border-color: transparent;
+  }
+
+  .navbar {
+    min-height: 60px;
+    margin-bottom: 0;
+    border: none;
+  }
+}
