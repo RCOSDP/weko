@@ -713,10 +713,10 @@ class WekoDeposit(Deposit):
         else:
             dc, deleted_items = self.convert_item_metadata(args[0])
         super(WekoDeposit, self).update(dc)
-        if deleted_items:
-            for key in deleted_items:
-                if key in self:
-                    self.pop(key)
+        #if deleted_items:
+        #    for key in deleted_items:
+        #        if key in self:
+        #            self.pop(key)
 
         #        if 'pid' in self['_deposit']:
         #            self['_deposit']['pid']['revision_id'] += 1
@@ -1048,6 +1048,17 @@ class WekoDeposit(Deposit):
             if klst:
                 self.indexer.delete_file_index(klst, self.pid.object_uuid)
 
+    def delete_item_metadata(self, data):
+        """Delete item metadata if item changes to empty."""
+        current_app.logger.debug("self: {}".format(self))
+        current_app.logger.debug("data: {}".format(data))
+        
+        del_key_list = self.keys() - data.keys()
+        for key in del_key_list:
+            if isinstance(self[key], dict) and \
+                    'attribute_name' in self[key]:
+                self.pop(key)
+
     def convert_item_metadata(self, index_obj, data=None):
         """Convert Item Metadat.
 
@@ -1134,6 +1145,8 @@ class WekoDeposit(Deposit):
         ps = dict(publish_status=pubs)
         jrc.update(ps)
         dc.update(ps)
+        if data:
+            self.delete_item_metadata(data)
         return dc, data.get('deleted_items')
 
     def _convert_description_to_object(self):
