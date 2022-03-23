@@ -5,8 +5,7 @@
     padding: 1.5rem;
     padding-bottom: 0.75rem;
     box-shadow: @base-box-shadow;
-    border-color: @color-gray-05;
-    border-width: 1px;
+    border: 1px solid @color-gray-05;
     font-size: 1rem;
     background-color: @color-white;
 
@@ -87,6 +86,13 @@
     .element__body-contents-item-body {
       margin-top: 2rem;
       margin-bottom: 2rem;
+
+      &::before {
+        display: none;
+      }
+      &::after {
+        display: none;
+      }
     }
 
     .element__body-contents-item-body-inner {
@@ -94,14 +100,62 @@
       grid-template-columns: 1fr;
       column-gap: 0;
       row-gap: 2em;
+
+      #detail-item {
+        padding: 0;
+        padding-left: 2px;
+        margin: 0;
+        width: 100%;
+        float: none;
+      }
+
+      #invenio-csl {
+        padding: 0;
+        margin: 0;
+        width: 100%;
+        float: none;
+      }
     }
 
-    .element__body-contents-item-table-area {
+    .element__body-contents-item-table-area,
+    .table-responsive {
+      margin: 0;
+      padding: 0;
       border-radius: 0.375rem;
       box-shadow: @base-box-shadow;
-      border-color: @color-gray-05;
-      border-width: 1px;
+      border: 1px solid @color-gray-05;
       background-color: @color-white;
+      width: 100%;
+
+      .table {
+        margin: 0;
+        padding: 0;
+        min-width: 100%;
+        text-indent: 0;
+        border: none;
+        border-color: inherit;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+        table-layout: auto;
+
+        th {
+          background-color: @color-gray-00;
+          padding: 0.75rem;
+          text-align: left;
+          border: none;
+          border-bottom: 1px solid @color-gray-05;
+          font-weight: normal;
+          vertical-align: top;
+          width: min-content;
+        }
+
+        td {
+          padding: 0.75rem;
+          border: none;
+          border-bottom: 1px solid @color-gray-05;
+          vertical-align: top;
+        }
+      }
     }
 
     .element__body-contents-item-table {

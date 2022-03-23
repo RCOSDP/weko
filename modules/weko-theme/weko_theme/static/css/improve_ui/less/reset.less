@@ -101,4 +101,45 @@
       margin-top: 1rem;
     }
   }
+
+  #item-main {
+    padding: 0;
+    padding-left: 1rem;
+    margin: 0;
+    box-sizing: border-box;
+  }
+
+  .breadcrumb {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    background-color: transparent;
+    border-radius: 0;
+    width: 100%;
+
+    li:nth-child(n + 2) {
+      margin-left: 1rem;
+      padding-left: calc(1rem + 16px);
+      background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z"></path></svg>');
+      background-size: 16px 16px;
+      background-position: left center;
+      background-repeat: no-repeat;
+      text-indent: 0;
+      display: flex;
+      align-items: center;
+
+      span {
+        text-indent: 0;
+        display: block;
+        margin: 0;
+        padding: 0;
+      }
+    }
+
+    li::before {
+      display: none;
+    }
+  }
 }

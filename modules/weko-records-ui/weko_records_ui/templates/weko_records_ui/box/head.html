@@ -44,8 +44,7 @@
           {% if display_index_tree or (current_user.is_authenticated and config.WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER)
           %}
 
-          <ol class="breadcrumb" id="body_indexlink"
-            style="display: inline; padding-left: 0.25em; padding-right: 0.25em; background-color: inherit;">
+          <ol class="breadcrumb" id="body_indexlink">
             {%- set path = nav.path.split('/') -%}
             {%- for p in path -%}
             {%- if community %}
@@ -76,7 +75,7 @@
         </div>
         {%- endfor %}
         {%- endif -%}
-        <div class="element__body-contents-item-header" style="padding-top: 10px;">
+        <div class="element__body-contents-item-header">
           <h2 class="element__body-contents-item-title">
             <!-- temporary fix for display of title -->
             {%- if title_name -%}
