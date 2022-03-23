@@ -26,15 +26,15 @@
 {% from "weko_records_ui/box/preview_carousel.html" import preview_carousel %}
 {% from "weko_theme/macros/modal_page.html" import all_modal %}
 {{ all_modal() }}
-<div class="panel-group">
+<div class="panel-group component__file-details-contents">
   <div class="panel panel-default" ng-controller="ItemController">
-    <div class="panel-heading clearfix" style="background-color: inherit; font-size: 120%">
-      <h4 style="display: inline;">
+    <div class="panel-heading clearfix">
+      <h4>
         {{_('Item')}}
-        <span style="margin-left: 0.25em; margin-right: 0.25em;">{{ '/' }} </span>
+        <span>{{ '/' }} </span>
         <a class="forcewrap" href="{{record_url}}">
           {{ record.get('item_title', _('No title')) }}</a>
-        <span style="margin-left: 0.25em; margin-right: 0.25em;">{{ '/' }} </span>
+        <span>{{ '/' }} </span>
         {{ filename.split('.')[0] }}
       </h4>
     </div>
