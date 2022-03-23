@@ -64,23 +64,27 @@ def _is_crawler(user_info):
     """
     restricted_agent_lists = LogAnalysisRestrictedCrawlerList.get_all_active()
     for restricted_agent_list in restricted_agent_lists:
+        empty_list = False            
         try:
-            connection = redis.StrictRedis(current_app.config['CACHE_REDIS_HOST'],port = current_app.config['CRAWLER_REDIS_PORT'],db = current_app.config["CRAWLER_REDIS_DB"])
+            connection = redis.StrictRedis(current_app.config['CACHE_REDIS_HOST'],port = current_app.config['CRAWLER_REDIS_PORT'],db = current_app.config["CRAWLER_REDIS_DB"])    
             restrict_list = connection.smembers(restricted_agent_list.list_url)
-            crawler_list = True
+            if len(restrict_list) == 0:
+                current_app.logger.info("Crawler List is expired : " + str(restricted_agent_list.list_url))
+                empty_list = True
         except RedisError:
             current_app.logger.info("Crawler List is expired : " + str(restricted_agent_list.list_url))
-            crawler_list = False
+            empty_list = True
 
-        if  not crawler_list:
+        if  empty_list:
             raw_res = requests.get(restricted_agent_list.list_url).text
             if not raw_res:
                 continue
-            restrict_list = raw_res.split('\n')
-            restrict_list = [agent for agent in restrict_list if not agent.startswith('#')]
-            for restrict_ip in restrict_list:
+            crawler_list = raw_res.split('\n')
+            crawler_list = [agent for agent in restrict_list if not agent.startswith('#')]
+            for restrict_ip in crawler_list:
                 connection.sadd(restricted_agent_list.list_url,restrict_ip)
             connection.expire(restricted_agent_list.list_url, current_app.config["CRAWLER_REDIS_TTL"])
+            restrict_list = set(crawler_list)
 
         if user_info['user_agent'] in restrict_list or \
            user_info['ip_address'] in restrict_list:
