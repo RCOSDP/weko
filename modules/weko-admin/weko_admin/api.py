@@ -65,7 +65,7 @@ def _is_crawler(user_info):
     restricted_agent_lists = LogAnalysisRestrictedCrawlerList.get_all_active()
     for restricted_agent_list in restricted_agent_lists:
         try:
-            connection = redis.StrictRedis(current_app.config['INVENIO_REDIS_HOST'],port = current_app.config['CRAWLER_REDIS_PORT'],db = current_app.config["CRAWLER_REDIS_DB"])
+            connection = redis.StrictRedis(current_app.config['CACHE_REDIS_HOST'],port = current_app.config['CRAWLER_REDIS_PORT'],db = current_app.config["CRAWLER_REDIS_DB"])
             restrict_list = connection.smembers(restricted_agent_list.list_url)
             crawler_list = True
         except RedisError:
