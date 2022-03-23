@@ -19,12 +19,12 @@
 # MA 02111-1307, USA.
 #}
 
-<div class="well well2">
-<h4>{{_('Export')}}</h4>
+<div class="well well2 component__export">
+<h4 class="element__views-title">{{_('Export')}}</h4>
 {%- set formats = export_formats(pid.pid_type) %}
 {%- if formats %}
-<dt>{{_('OAI-PMH')}}</dt>
-<ul class="list-inline">
+<h5 class="element__views-title-sub">{{_('OAI-PMH')}}</h5>
+<ul class="element__export-list">
   {%- for slug, fmt in formats %}
   {%- if fmt['title'] in ['JPCOAR', 'DublinCore', 'DDI'] %}
     <li><a
@@ -37,8 +37,8 @@
   {%- endif %}
   {%- endfor %}
 </ul>
-<dt>{{_('Other Formats')}}</dt>
-<ul class="list-inline">
+<h5 class="element__views-title-sub">{{_('Other Formats')}}</h5>
+<ul class="element__export-list">
   {%- for slug, fmt in formats %}
   {%- if 'JSON' in fmt['title'] %}
   <li><a href="{{ url_for('invenio_records_ui.recid_export', pid_value=pid.pid_value, format=slug) }}">{{fmt['title']}}</a></li>
