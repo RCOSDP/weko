@@ -345,7 +345,7 @@
           </div>
           <!-- Jupyter Button -->
           {%- if config.WEKO_JUPYTERHUB_ENABLE -%}
-          <div class="pull-right" style="display: inline-block; _display: inline; margin-bottom: 20px;">
+          <div class="pull-right module__jupyter-button">
             <a class="btn btn-info send-button disabled" id="jupyter_multiple" target="_blank"
               href="{{ config.WEKO_JUPYTERHUB_URL }}/{{ record._buckets.deposit }}/">
               <span class="glyphicon glyphicon-upload" aria-hidden="true"></span>
@@ -356,7 +356,7 @@
           {%- endif %}
           {% endif%}
           {% endif %}
-          <div class="table-responsive" style="display: inline-block; _display: inline;">
+          <div class="table-responsive">
             {{ output_item_detail(record, files, files_thumbnail, pid, record.items_show_list, true, is_logged_in,
             open_day_display_flg) }}
           </div>

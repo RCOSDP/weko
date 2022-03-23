@@ -56,8 +56,7 @@
             {%- for attribute_data in record_detail_data['attribute_value_mlt'] -%}
               {%- if attribute_data -%}
               <tr>
-                <th scope="row" colspan="6"
-                style="border-bottom: none">{{ record_detail_data['attribute_name_i18n'] }}</th>
+                <th scope="row" colspan="6">{{ record_detail_data['attribute_name_i18n'] }}</th>
                 <td>
                 </td>
               </tr>
@@ -107,7 +106,7 @@
       {%- if labels|length > 1 -%}
           {% set label = labels[1] %}
       {%- endif -%}
-      <th scope="row" colspan="{{ label_colspan_default - level }}" style="border-bottom: none">{{ label }}</th>
+      <th scope="row" colspan="{{ label_colspan_default - level }}">{{ label }}</th>
         {% autoescape false %}
             {%- if label == 'URL' -%}
                 <td><a href="{{content}}">{{ content | escape_str }}</a></td>
@@ -122,8 +121,7 @@
 
 {% macro out_table_th(parrent_length) %}
     {%- if parrent_length > 0 -%}
-      <th scope="row"
-          style="border-top: none; border-bottom: none"></th>
+      <th scope="row"></th>
         {{ out_table_th(parrent_length - 1) }}
     {%- endif -%}
 {% endmacro %}
@@ -135,8 +133,7 @@
     {%- set langflg = namespace(langjudgeflg = False) -%}
     {%- if data_attribute_value_mlt -%}
     <tr>
-        <th scope="row" colspan="6"
-        style="border-bottom: none">{{ record_detail_data['attribute_name_i18n'] }}</th>
+        <th scope="row" colspan="6">{{ record_detail_data['attribute_name_i18n'] }}</th>
         <td>
         </td>
     </tr>
