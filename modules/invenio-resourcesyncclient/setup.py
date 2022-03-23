@@ -94,6 +94,9 @@ setup(
         'invenio_db.models': [
             'invenio_resourcesyncclient = invenio_resourcesyncclient.models',
         ],
+                'invenio_db.alembic': [
+            'invenio_resourcesyncclient = invenio_resourcesyncclient:alembic',
+        ],
         'invenio_celery.tasks': [
             'invenio_resourcesyncclient = invenio_resourcesyncclient.tasks'
         ],

@@ -88,6 +88,7 @@
         </div>
         <div class="panel-group">
           {%- if record.permalink_uri -%}
+            <div class="hide" id="permalink_uri">{{record.permalink_uri}}</div>
             <span class="pull-right" style="display: inline;padding-right:10px;">
               {{ record.permalink_uri }}</span>
           {%- endif -%}

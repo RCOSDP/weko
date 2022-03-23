@@ -601,7 +601,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       $scope.outputapplication_keys = [];
       $scope.authors_keys = [];
       $scope.data_author = [];
-      $scope.sub_item_keys = ['nameIdentifiers', 'affiliation', 'contributorAffiliations'];
+      $scope.sub_item_keys = ['nameIdentifiers', 'creatorAffiliations', 'contributorAffiliations'];
       $scope.scheme_uri_mapping = [
         {
           scheme : 'nameIdentifierScheme',
@@ -3109,13 +3109,15 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let creatorModel;
         var author_name = authorInfoObj[0].author_name;
         var author_mail = authorInfoObj[0].author_mail;
+        var author_affiliation = authorInfoObj[0].author_affiliation;
+        console.log("authorInfo: " + authorInfo)
         if (arrayFlg == 'true' && Number.isInteger(parseInt(array_index))) {
           creatorModel = $rootScope.recordsVM.invenioRecordsModel[modelId][array_index];
         } else {
           creatorModel = $rootScope.recordsVM.invenioRecordsModel[modelId];
         }
         angular.forEach(authorInfoObj, function (value, key) {
-          creatorModel.affiliation = value.hasOwnProperty('affiliation') ? value.affiliation : [{}];
+          //creatorModel.creatorAffiliations = value.hasOwnProperty('creatorAffiliations') ? value.creatorAffiliations : [{}];
           creatorModel.creatorAlternatives = value.hasOwnProperty('creatorAlternatives') ? value.creatorAlternatives : [{}];
           creatorModel.familyNames = value.hasOwnProperty('familyNames') ? value.familyNames : [{}];
           creatorModel.givenNames = value.hasOwnProperty('givenNames') ? value.givenNames : [{}];
@@ -3145,6 +3147,38 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               let subMail = value.hasOwnProperty('creatorMails') ? value.creatorMails : [{}];
               subMail = JSON.parse(JSON.stringify(subMail).replace('creatorMail', v));
               creatorModel[k] = subMail;
+            }
+          });
+          angular.forEach(author_affiliation, function (v, k) {
+            if (creatorModel.hasOwnProperty(k)) {
+              const namesKey = v.names.key;
+              const namesNameKey = v.names.values.name;
+              const namesLangKey = v.names.values.lang;
+              const identifiersKey = v.identifiers.key;
+              const identifiersIdentifierKey = v.identifiers.values.identifier;
+              const identifiersUriKey = v.identifiers.values.uri;
+              const identifiersSchemeKey = v.identifiers.values.scheme;
+              creatorModel[k] = [];
+              for (var i = 0; i < value.creatorAffiliations.length; i++) {
+                let affiliation = value.creatorAffiliations[i];
+                let affiliationData = {[namesKey]: [], [identifiersKey]: []};
+                for (var j = 0; j < affiliation.affiliationNames.length; j++) {
+                  let affiliationNames = affiliation.affiliationNames[j];
+                  let affiliationNamesData = {};
+                  affiliationNamesData[namesNameKey] = affiliationNames.affiliationName;
+                  affiliationNamesData[namesLangKey] = affiliationNames.affiliationNameLang;
+                  affiliationData[namesKey].push(affiliationNamesData)
+                }
+                for (var j = 0; j < affiliation.affiliationNameIdentifiers.length; j++) {
+                  let affiliationIdentifiers = affiliation.affiliationNameIdentifiers[j];
+                  let affiliationIdentifiersData = {};
+                  affiliationIdentifiersData[identifiersIdentifierKey] = affiliationIdentifiers.affiliationNameIdentifier;
+                  affiliationIdentifiersData[identifiersUriKey] = affiliationIdentifiers.affiliationNameIdentifierURI;
+                  affiliationIdentifiersData[identifiersSchemeKey] = affiliationIdentifiers.affiliationNameIdentifierScheme;
+                  affiliationData[identifiersKey].push(affiliationIdentifiersData)
+                }
+                creatorModel[k].push(affiliationData)
+              }
             }
           });
         });

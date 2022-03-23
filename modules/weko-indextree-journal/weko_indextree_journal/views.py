@@ -50,7 +50,7 @@ blueprint = Blueprint(
 #             journal = '{}'
 #         return jsonify(journal)
 #     except BaseException:
-#         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+#         current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
 #     return abort(400)
 
 
@@ -63,7 +63,7 @@ def export_journals():
         journals = Journals.get_all_journals()
         results = [obj.__dict__ for obj in journals]
         data = numpy.asarray(results)
-        numpy.savetxt("journal.tsv", data, delimiter=",")
+        numpy.savetxt("journal.csv", data, delimiter=",")
 
         # jsonList = json.dumps({"results" : results})
         # Save journals information to file

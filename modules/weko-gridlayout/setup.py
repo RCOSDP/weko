@@ -91,6 +91,9 @@ setup(
         'invenio_db.models': [
             'weko_gridlayout = weko_gridlayout.models',
         ],
+                'invenio_db.alembic': [
+            'weko_gridlayout = weko_gridlayout:alembic',
+        ],
         'invenio_base.blueprints': [
             'weko_gridlayout = weko_gridlayout.views:blueprint',
             'weko_gridlayout_rss = weko_gridlayout.views:blueprint_rss',

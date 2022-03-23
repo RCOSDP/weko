@@ -1,7 +1,7 @@
 {
   "settings": {
     "number_of_shards": 1,
-    "number_of_replicas": 0,
+    "number_of_replicas": 1,
     "index.mapping.total_fields.limit": 50000,
     "analysis": {
       "tokenizer": {
@@ -133,7 +133,7 @@
           }
         },
         "control_number": {
-          "type": "integer",
+          "type": "keyword",
           "index": true
         },
         "title": {
@@ -889,7 +889,13 @@
           ]
         },
         "author_link": {
-          "type": "text"
+          "type": "text",
+          "fields" : {
+            "raw" : {
+              "type" : "keyword",
+              "ignore_above" : 256
+            }
+          }
         },
         "volume": {
           "type": "text",

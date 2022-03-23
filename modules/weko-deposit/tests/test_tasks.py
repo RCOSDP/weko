@@ -18,7 +18,14 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-[pytest]
-pep8ignore = docs/conf.py ALL
-addopts = --pep8 --doctest-glob="*.rst" --doctest-modules --cov=weko_search_ui --cov-report=term-missing
-testpaths = docs tests weko_search_ui
+"""Module tests."""
+
+import pytest
+from elasticsearch.exceptions import NotFoundError
+
+from weko_deposit.tasks import update_items_by_authorInfo
+
+
+def test_update_authorInfo(app, db):
+    with pytest.raises(NotFoundError):
+        update_items_by_authorInfo([], {})

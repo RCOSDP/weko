@@ -25,9 +25,9 @@ from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
 from typing import NoReturn, Tuple
-from urllib.parse import urlparse
+from urllib.parse import urlparse,quote
 
-from flask import abort, current_app, request, url_for
+from flask import abort, current_app, json, request, url_for
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
@@ -36,9 +36,11 @@ from invenio_accounts.models import Role
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
+from invenio_oaiserver.response import getrecord
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
+from lxml import etree
 from passlib.handlers.oracle import oracle10
 from weko_admin.models import AdminSettings
 from weko_admin.utils import UsageReport, get_restricted_access
@@ -48,18 +50,24 @@ from weko_records.serializers.utils import get_mapping
 from weko_records.utils import replace_fqdn
 from weko_workflow.api import WorkActivity, WorkFlow
 
+from weko_records_ui.models import InstitutionName
+
 from .models import FileOnetimeDownload, FilePermission
 from .permissions import check_create_usage_report, \
     check_file_download_permission, check_user_group_permission, \
     is_open_restricted
 
 
+
+
 def check_items_settings(settings=None):
     """Check items setting."""
     if settings is None:
         settings = AdminSettings.get('items_display_settings')
-    current_app.config['EMAIL_DISPLAY_FLG'] = settings.items_display_email
-    current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
+    if hasattr(settings, 'item_display_email'):
+        current_app.config['EMAIL_DISPLAY_FLG'] = settings.items_display_email
+    if hasattr(settings, 'item_search_author'):
+        current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
     if hasattr(settings, 'item_display_open_date'):
         current_app.config['OPEN_DATE_DISPLAY_FLG'] = \
             settings.item_display_open_date
@@ -472,9 +480,10 @@ def hide_by_email(item_metadata):
         if isinstance(_item, dict) and \
                 _item.get('attribute_value_mlt'):
             for _idx, _value in enumerate(_item['attribute_value_mlt']):
-                for key in subitem_keys:
-                    if key in _value.keys():
-                        del _item['attribute_value_mlt'][_idx][key]
+                if _value is not None:
+                    for key in subitem_keys:
+                        if key in _value.keys():
+                            del _item['attribute_value_mlt'][_idx][key]
 
     return item_metadata
 
@@ -551,7 +560,10 @@ def is_show_email_of_creator(item_type_id):
     def item_setting_show_email():
         # Display email from setting item admin.
         settings = AdminSettings.get('items_display_settings')
-        is_display = settings.items_display_email
+        if hasattr(settings, 'item_display_email'):
+            is_display = settings.items_display_email
+        else:
+            is_display = False
         return is_display
 
     is_hide = item_type_show_email(item_type_id)
@@ -621,6 +633,8 @@ def get_file_info_list(record):
         elif access == "open_date":
             if date and isinstance(date, list) and date[0]:
                 adt = date[0].get('dateValue')
+                if adt is None:
+                    adt = dt.date.max
                 pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
                 if pdt > dt.today():
                     message = "Download is available from {}/{}/{}."
@@ -1103,3 +1117,317 @@ def display_oaiset_path(record_metadata):
                 index_paths.append(path.path.replace('/', ':'))
 
     record_metadata['_oai']['sets'] = index_paths
+
+
+def get_google_scholar_meta(record):
+    """
+    _get_google_scholar_meta [make a google scholar metadata]
+
+    [extended_summary]
+
+    Args:
+        record ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+    target_map = {
+        'dc:title': 'citation_title',
+        'jpcoar:creatorName': 'citation_author',
+        'dc:publisher': 'citation_publisher',
+        'jpcoar:subject': 'citation_keywords',
+        'jpcoar:sourceTitle': 'citation_journal_title',
+        'jpcoar:volume': 'citation_volume',
+        'jpcoar:issue': 'citation_issue',
+        'jpcoar:pageStart': 'citation_firstpage',
+        'jpcoar:pageEnd': 'citation_lastpage', }
+
+    if '_oai' not in record and 'id' not in record['_oai']:
+        return
+    recstr = etree.tostring(
+        getrecord(
+            identifier=record['_oai'].get('id'),
+            metadataPrefix='jpcoar',
+            verb='getrecord'))
+    et = etree.fromstring(recstr)
+    mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
+    if mtdata is None:
+        return
+
+    # Check to outputable resource type by config
+    resource_type_allowed = False
+    for resource_type in mtdata.findall('dc:type', namespaces=mtdata.nsmap):
+        if resource_type.text in current_app.config['WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE']:
+            resource_type_allowed = True
+            break
+    if not resource_type_allowed:
+        return
+
+    res = []
+    for target in target_map:
+        found = mtdata.find(target, namespaces=mtdata.nsmap)
+        if found is not None:
+            res.append({'name': target_map[target], 'data': found.text})
+    for date in mtdata.findall('datacite:date', namespaces=mtdata.nsmap):
+        if date.attrib.get('dateType') == 'Available':
+            res.append({'name': 'citation_online_date', 'data': date.text})
+        elif date.attrib.get('dateType') == 'Issued':
+            res.append(
+                {'name': 'citation_publication_date', 'data': date.text})
+    for relatedIdentifier in mtdata.findall(
+            'jpcoar:relation/jpcoar:relatedIdentifier',
+            namespaces=mtdata.nsmap):
+        if 'identifierType' in relatedIdentifier.attrib and \
+            relatedIdentifier.attrib[
+                'identifierType'] == 'DOI':
+            res.append({'name': 'citation_doi',
+                        'data': relatedIdentifier.text})
+    for creator in mtdata.findall(
+            'jpcoar:creator/jpcoar:creatorName',
+            namespaces=mtdata.nsmap):
+        res.append({'name': 'citation_author', 'data': creator.text})
+    for sourceIdentifier in mtdata.findall(
+            'jpcoar:sourceIdentifier',
+            namespaces=mtdata.nsmap):
+        if 'identifierType' in sourceIdentifier.attrib and \
+            sourceIdentifier.attrib[
+                'identifierType'] == 'ISSN':
+            res.append({'name': 'citation_issn',
+                        'data': sourceIdentifier.text})
+    for pdf_url in mtdata.findall('jpcoar:file/jpcoar:URI',
+                                  namespaces=mtdata.nsmap):
+        res.append({'name': 'citation_pdf_url',
+                    'data': pdf_url.text})
+
+    res.append({'name': 'citation_dissertation_institution',
+                'data': InstitutionName.get_institution_name()})
+    record_route = current_app.config['RECORDS_UI_ENDPOINTS']['recid']['route']
+    record_url = '{protocol}://{host}{path}'.format(
+        protocol=request.environ['wsgi.url_scheme'],
+        host=request.environ['HTTP_HOST'],
+        path=record_route.replace('<pid_value>', record['recid'])
+    )
+    res.append({'name': 'citation_abstract_html_url', 'data': record_url})
+    return res
+
+
+def get_google_detaset_meta(record):
+    """
+    _get_google_detaset_meta [summary]
+
+    [extended_summary]
+
+    Args:
+        record ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+    from .config import WEKO_RECORDS_UI_GOOGLE_DATASET_RESOURCE_TYPE, \
+    WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN, \
+    WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX, \
+    WEKO_RECORDS_UI_GOOGLE_DATASET_DISTRIBUTION_BUNDLE
+
+    current_app.logger.debug("get_google_detaset_meta: {}".format(record.id))
+
+    if not current_app.config['WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE']:
+        return
+
+    if '_oai' not in record and 'id' not in record['_oai']:
+        return
+        
+    recstr = etree.tostring(
+        getrecord(
+            identifier=record['_oai'].get('id'),
+            metadataPrefix='jpcoar',
+            verb='getrecord'))
+    et = etree.fromstring(recstr)
+    mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
+    if mtdata is None:
+        return
+
+    output_resource_types = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_RESOURCE_TYPE',WEKO_RECORDS_UI_GOOGLE_DATASET_RESOURCE_TYPE)
+    # Check resource type is 'dataset'
+    resource_type_allowed = False
+    for resource_type in mtdata.findall('dc:type', namespaces=mtdata.nsmap):
+        if resource_type.text in output_resource_types:
+            resource_type_allowed = True
+            break
+
+    if not resource_type_allowed:
+        current_app.logger.debug("resource_type_allowed: {}".format(resource_type_allowed))
+        return
+
+    res_data = {'@context': 'https://schema.org/', '@type': 'Dataset'}
+
+    # Required property check
+    min_length = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN',WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN)
+    max_length = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX',WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX)
+    
+    for title in mtdata.findall('dc:title', namespaces=mtdata.nsmap):
+        res_data['name'] = title.text
+    for description in mtdata.findall('datacite:description', namespaces=mtdata.nsmap):
+        description_text = description.text
+        if len(description_text) >= min_length:
+            if len(description_text) > max_length:
+                description_text = description_text[:max_length]
+            res_data['description'] = description_text
+
+    if 'name' not in res_data or 'description' not in res_data:
+        current_app.logger.debug("resource_type_allowed: {}".format(resource_type_allowed))
+        return
+
+    # includedInDataCatalog
+    repository_url = current_app.config['THEME_SITEURL']
+    res_data['includedInDataCatalog'] = {
+        '@type': 'DataCatalog', 'name': repository_url}
+
+    # jpcoar:creator
+    creators_data = []
+    for creator in mtdata.findall('jpcoar:creator', namespaces=mtdata.nsmap):
+        givenName = creator.find('jpcoar:givenName', namespaces=creator.nsmap)
+        familyName = creator.find(
+            'jpcoar:familyName', namespaces=creator.nsmap)
+        name = creator.find('jpcoar:creatorName', namespaces=creator.nsmap)
+        identifier = creator.find(
+            'jpcoar:nameIdentifier', namespaces=creator.nsmap)
+        alternateName = creator.find(
+            'jpcoar:creatorAlternative', namespaces=creator.nsmap)
+        affiliations = []
+        for affiliation in mtdata.findall('jpcoar:affiliation', namespaces=mtdata.nsmap):
+            affiliation_data = {'@type': 'Organization'}
+            affiliationNameIdentifier = affiliation.find(
+                'jpcoar:nameIdentifier', namespaces=affiliation.nsmap)
+            affiliationName = affiliation.find(
+                'jpcoar:nameIdentifier', namespaces=affiliation.nsmap)
+            if affiliationNameIdentifier is not None and len(affiliationNameIdentifier.text) > 0:
+                affiliation_data['identifier'] = affiliationNameIdentifier.text
+            if affiliationName is not None and len(affiliationName.text) > 0:
+                affiliation_data['name'] = affiliationName.text
+            affiliations.append(affiliation_data)
+
+        creator_data = {'@type': 'Person'}
+        if givenName is not None and len(givenName.text) > 0:
+            creator_data['givenName'] = givenName.text
+        if familyName is not None and len(familyName.text) > 0:
+            creator_data['familyName'] = familyName.text
+        if name is not None and len(name.text) > 0:
+            creator_data['name'] = name.text
+        if identifier is not None and len(identifier.text) > 0:
+            creator_data['identifier'] = identifier.text
+        if alternateName is not None and len(alternateName.text) > 0:
+            creator_data['alternateName'] = alternateName.text
+        if len(affiliations) > 0:
+            creator_data['affiliation'] = affiliations
+
+        creators_data.append(creator_data)
+
+    if len(creators_data) > 0:
+        res_data['creator'] = creators_data
+
+    # jpcoar:identifier
+    identifiers = []
+    for identifier in mtdata.findall('jpcoar:identifier', namespaces=mtdata.nsmap):
+        identifiers.append(identifier.text)
+    if len(identifiers) > 0:
+        res_data['citation'] = identifiers
+
+    # jpcoar:subject
+    subjects = []
+    for subject in mtdata.findall('jpcoar:subject', namespaces=mtdata.nsmap):
+        subjects.append(subject.text)
+    if len(subjects) > 0:
+        res_data['keywords'] = subjects
+
+    # dc:rights
+    rights_list = []
+    for rights in mtdata.findall('dc:rights', namespaces=mtdata.nsmap):
+        rights_list.append(rights.text)
+    if len(rights_list) > 0:
+        res_data['license'] = rights_list
+
+    # datacite:geoLocation
+    geo_locations = []
+    for geo_location in mtdata.findall('datacite:geoLocation', namespaces=mtdata.nsmap):
+        # geoLocationPoint
+        point_longitude = geo_location.find(
+            'datacite:geoLocationPoint/datacite:pointLongitude', namespaces=geo_location.nsmap)
+        point_latitude = geo_location.find(
+            'datacite:geoLocationPoint/datacite:pointLatitude', namespaces=geo_location.nsmap)
+        if point_longitude is not None and len(point_longitude.text) > 0 and point_latitude is not None and len(point_latitude.text) > 0:
+            geo_locations.append({
+                '@type': 'Place',
+                'geo': {
+                    '@type': 'GeoCoordinates',
+                    'latitude': point_longitude.text,
+                    'longitude': point_latitude.text,
+                }
+            })
+
+        # geoLocationBox
+        box_west_bound_longitude = geo_location.find(
+            'datacite:geoLocationBox/datacite:westBoundLongitude', namespaces=geo_location.nsmap)
+        box_east_bound_longitude = geo_location.find(
+            'datacite:geoLocationBox/datacite:eastBoundLongitude', namespaces=geo_location.nsmap)
+        box_south_bound_latitude = geo_location.find(
+            'datacite:geoLocationBox/datacite:southBoundLatitude', namespaces=geo_location.nsmap)
+        box_north_bound_latitude = geo_location.find(
+            'datacite:geoLocationBox/datacite:northBoundLatitude', namespaces=geo_location.nsmap)
+        if box_west_bound_longitude is not None and len(box_west_bound_longitude.text) > 0 \
+                and box_east_bound_longitude is not None and len(box_east_bound_longitude.text) > 0 \
+                and box_south_bound_latitude is not None and len(box_south_bound_latitude.text) > 0 \
+                and box_north_bound_latitude is not None and len(box_north_bound_latitude.text) > 0:
+            geo_locations.append({
+                '@type': 'Place',
+                'geo': {
+                    '@type': 'GeoShape',
+                    'box': '{} {} {} {}'.format(
+                        box_west_bound_longitude.text,
+                        box_south_bound_latitude.text,
+                        box_east_bound_longitude.text,
+                        box_north_bound_latitude.text)
+                }
+            })
+
+        # geoLocationPlace
+        for geo_location_place in geo_location.findall('datacite:geoLocationPlace', namespaces=geo_location.nsmap):
+            if len(geo_location_place.text) > 0:
+                geo_locations.append(geo_location_place.text)
+
+    if len(geo_locations) > 0:
+        res_data['spatialCoverage'] = geo_locations
+
+    # dcterms:temporal
+    temporal_coverages = []
+    for temporal_coverage in mtdata.findall('dcterms:temporal', namespaces=mtdata.nsmap):
+        temporal_coverages.append(temporal_coverage.text)
+    if len(temporal_coverages) > 0:
+        res_data['temporalCoverage'] = temporal_coverages
+
+    # jpcoar:file
+    distributions = []
+    for file in mtdata.findall('jpcoar:file', namespaces=mtdata.nsmap):
+        uri = file.find('jpcoar:URI', namespaces=file.nsmap)
+        mime_type = file.find('jpcoar:mimeType', namespaces=file.nsmap)
+
+        distribution = {'@type': 'DataDownload'}
+        if uri is not None and len(uri.text) > 0:
+            distribution['contentUrl'] = quote(uri.text,'/:%')
+        if mime_type is not None and len(mime_type.text) > 0:
+            distribution['encodingFormat'] = mime_type.text
+        distributions.append(distribution)
+    if len(distributions) > 0:
+        adding_bundles = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DISTRIBUTION_BUNDLE',WEKO_RECORDS_UI_GOOGLE_DATASET_DISTRIBUTION_BUNDLE)
+        if adding_bundles is not None:
+            for bundle in adding_bundles:
+                distribution = {'@type': 'DataDownload'}
+                if 'contentUrl' in bundle:
+                    distribution['contentUrl'] = quote(bundle['contentUrl'],'/:%')
+                    if 'encodingFormat' in bundle:
+                        distribution['encodingFormat'] = bundle['encodingFormat']
+                    distributions.append(distribution)
+        res_data['distribution'] = distributions
+
+    current_app.logger.debug("res_data: {}".format(json.dumps(res_data, ensure_ascii=False)))
+
+    return json.dumps(res_data, ensure_ascii=False)

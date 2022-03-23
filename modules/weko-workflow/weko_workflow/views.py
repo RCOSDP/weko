@@ -22,6 +22,7 @@
 
 import json
 import os
+import re
 import shutil
 import sys
 from collections import OrderedDict
@@ -111,6 +112,11 @@ activity_blueprint = Blueprint(
     __name__,
     url_prefix='/depositactivity',
 )
+
+
+@blueprint.app_template_filter('regex_replace')
+def regex_replace(s, pattern, replace):
+    return re.sub(pattern, replace, s)
 
 
 @blueprint.route('/')
@@ -326,18 +332,19 @@ def init_activity():
         if rtn is None:
             return jsonify(code=-1, msg='error')
         url = url_for('weko_workflow.display_activity',
-                    activity_id=rtn.activity_id)
+                      activity_id=rtn.activity_id)
         if 'community' in getargs and request.args.get('community') != 'undefined':
-            comm = GetCommunity.get_community_by_id(request.args.get('community'))
+            comm = GetCommunity.get_community_by_id(
+                request.args.get('community'))
             url = url_for('weko_workflow.display_activity',
-                        activity_id=rtn.activity_id, community=comm.id)
+                          activity_id=rtn.activity_id, community=comm.id)
         db.session.commit()
     except SQLAlchemyError as ex:
-        current_app.logger.error('sqlalchemy error: ', ex)
+        current_app.logger.error("sqlalchemy error: {}".format(ex))
         db.session.rollback()
         return jsonify(code=-1, msg='Failed to init activity!')
     except BaseException as ex:
-        current_app.logger.error('Unexpected error: ', ex)
+        current_app.logger.error("Unexpected error: {}".format(ex))
         db.session.rollback()
         return jsonify(code=-1, msg='Failed to init activity!')
 
@@ -403,11 +410,11 @@ def init_activity_guest():
             __, tmp_url = init_activity_for_guest_user(data)
             db.session.commit()
         except SQLAlchemyError as ex:
-            current_app.logger.error('sqlalchemy error: ', ex)
+            current_app.logger.error("sqlalchemy error: {}".format(ex))
             db.session.rollback()
             return jsonify(msg='Cannot send mail')
         except BaseException as ex:
-            current_app.logger.error('Unexpected error: ', ex)
+            current_app.logger.error('Unexpected error: {}'.format(ex))
             db.session.rollback()
             return jsonify(msg='Cannot send mail')
 
@@ -671,6 +678,9 @@ def display_activity(activity_id="0"):
             record=approval_record
         )
     )
+    _id = None
+    if recid:
+        _id = re.sub("\.[0-9]+", "", recid.pid_value)
 
     return render_template(
         'weko_workflow/activity_detail.html',
@@ -716,6 +726,7 @@ def display_activity(activity_id="0"):
             'WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE'],
         page=page,
         pid=recid,
+        _id=_id,
         position_list=position_list,
         records=record,
         render_widgets=render_widgets,
@@ -1166,9 +1177,11 @@ def next_action(activity_id='0', action_id=0):
             # Call signal to push item data to ES.
             try:
                 if '.' not in current_pid.pid_value and has_request_context():
+                    user_id = activity_detail.activity_login_user if \
+                        activity and activity_detail.activity_login_user else -1
                     item_created.send(
                         current_app._get_current_object(),
-                        user_id=current_user.get_id() if current_user else -1,
+                        user_id=user_id,
                         item_id=current_pid,
                         item_title=activity_detail.title
                     )
@@ -1411,7 +1424,7 @@ def cancel_action(activity_id='0', action_id=0):
             except Exception:
                 db.session.rollback()
                 current_app.logger.error(
-                    'Unexpected error: {}', sys.exc_info()[0])
+                    'Unexpected error: {}'.format(sys.exc_info()))
                 return jsonify(code=-1,
                                msg=sys.exc_info()[0])
 
@@ -1522,7 +1535,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
         else:
             return jsonify(code=-1, msg=_('Invalid password'))
     except ValueError:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return jsonify(code=-1, msg=_('Error!'))
 
 
@@ -1559,7 +1572,7 @@ def save_feedback_maillist(activity_id='0', action_id='0'):
         )
         return jsonify(code=0, msg=_('Success'))
     except Exception:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return jsonify(code=-1, msg=_('Error'))
 
 
@@ -1594,7 +1607,7 @@ def get_feedback_maillist(activity_id='0'):
         else:
             return jsonify(code=0, msg=_('Empty!'))
     except Exception:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return jsonify(code=-1, msg=_('Error'))
 
 
@@ -1678,7 +1691,7 @@ def check_approval(activity_id='0'):
     try:
         response = check_continue(response, activity_id)
     except Exception:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         response['error'] = -1
     return jsonify(response)
 

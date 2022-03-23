@@ -286,7 +286,7 @@ class Location(db.Model, Timestamp):
     access_key = db.Column(db.String(128), nullable=True)
 
     secret_key = db.Column(db.String(128), nullable=True)
-
+    
     size = db.Column(db.BigInteger, default=0, nullable=True)
 
     quota_size = db.Column(db.BigInteger, nullable=True)
@@ -749,7 +749,7 @@ class FileInstance(db.Model, Timestamp):
     def get_location_by_file_instance(cls):
         """Get a file instance by URI."""
         return db.session.query(Location).filter(
-            FileInstance.uri.like(sa.func.concat(Location.uri, '%'))) \
+            FileInstance.uri.like(Location.uri + "%")) \
             .filter(FileInstance.id == cls.id) \
             .first()
 

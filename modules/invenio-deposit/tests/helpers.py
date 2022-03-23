@@ -64,12 +64,13 @@ def make_pdf_fixture(filename, text=None):
         text = "Filename: %s" % filename
 
     # Generate simple PDF
-    from reportlab.pdfgen import canvas
+    from fpdf import FPDF
+
     output = BytesIO()
-    c = canvas.Canvas(output)
-    c.drawString(100, 100, text)
-    c.showPage()
-    c.save()
+    pdf = FPDF('P', 'mm', 'A4')
+    pdf.add_page()
+    pdf.output(output)
+    pdf.close()
 
     return make_file_fixture(filename, stringio_to_base64(output))
 

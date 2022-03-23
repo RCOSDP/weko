@@ -38,10 +38,11 @@ from flask_security import current_user
 from invenio_db import db
 from invenio_deposit.api import Deposit, index, preserve
 from invenio_deposit.errors import MergeConflict
-from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
+from invenio_files_rest.models import Bucket, Location, MultipartObject, ObjectVersion, \
     Part
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
+from invenio_oaiserver.models import OAISet
 from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
@@ -58,7 +59,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
 from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, \
-    ItemTypes
+    ItemTypes, Mapping
 from weko_records.models import ItemMetadata, ItemReference
 from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, remove_weko2_special_character, \
@@ -638,8 +639,18 @@ class WekoDeposit(Deposit):
         """
         if '$schema' in data:
             data.pop('$schema')
+        
+        # Get workflow storage location
+        location_name = None
+        if session and 'activity_info' in session:
+            activity_info = session['activity_info']
+            from weko_workflow.api import WorkActivity
+            activity = WorkActivity.get_activity_by_id(activity_info['activity_id'])
+            if activity and activity.workflow and activity.workflow.location:
+                location_name = activity.workflow.location.name
 
         bucket = Bucket.create(
+            location=location_name,
             quota_size=current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
             max_file_size=current_app.config['WEKO_MAX_FILE_SIZE'],
         )
@@ -702,10 +713,10 @@ class WekoDeposit(Deposit):
         else:
             dc, deleted_items = self.convert_item_metadata(args[0])
         super(WekoDeposit, self).update(dc)
-        if deleted_items:
-            for key in deleted_items:
-                if key in self:
-                    self.pop(key)
+        #if deleted_items:
+        #    for key in deleted_items:
+        #        if key in self:
+        #            self.pop(key)
 
         #        if 'pid' in self['_deposit']:
         #            self['_deposit']['pid']['revision_id'] += 1
@@ -775,6 +786,26 @@ class WekoDeposit(Deposit):
         super(WekoDeposit, self).commit(*args, **kwargs)
         record = RecordMetadata.query.get(self.pid.object_uuid)
         if self.data and len(self.data):
+            # Get bucket default location
+            deposit_bucket = Bucket.query.get(self['_buckets']['deposit'])
+            
+            print(deposit_bucket)
+
+            # Get workflow storage location
+            workflow_storage_location = None
+            if session and 'activity_info' in session:
+                activity_info = session['activity_info']
+                from weko_workflow.api import WorkActivity
+                activity = WorkActivity.get_activity_by_id(activity_info['activity_id'])
+                if activity and activity.workflow and activity.workflow.location:
+                    workflow_storage_location = activity.workflow.location
+            if workflow_storage_location == None:
+                workflow_storage_location = Location.get_default()
+
+            if(deposit_bucket.location.id != workflow_storage_location.id):
+                deposit_bucket.default_location =  workflow_storage_location.id
+                db.session.merge(deposit_bucket)
+
             # save item metadata
             self.save_or_update_item_metadata()
 
@@ -785,7 +816,10 @@ class WekoDeposit(Deposit):
                         and ('sets' not in self.jrc['_oai']
                              or not self.jrc['_oai']['sets']):
                     setspec_list = self.jrc['path'] or []
+                    # setspec_list = OAISet.query.filter_by(
+                    #    id=self.jrc['path']).one_or_none()
                     if setspec_list:
+                        # self.jrc['_oai'].update(dict(sets=setspec_list.spec))
                         self.jrc['_oai'].update(dict(sets=setspec_list))
                 # upload item metadata to Elasticsearch
                 set_timestamp(self.jrc, self.created, self.updated)
@@ -1014,6 +1048,17 @@ class WekoDeposit(Deposit):
             if klst:
                 self.indexer.delete_file_index(klst, self.pid.object_uuid)
 
+    def delete_item_metadata(self, data):
+        """Delete item metadata if item changes to empty."""
+        current_app.logger.debug("self: {}".format(self))
+        current_app.logger.debug("data: {}".format(data))
+        
+        del_key_list = self.keys() - data.keys()
+        for key in del_key_list:
+            if isinstance(self[key], dict) and \
+                    'attribute_name' in self[key]:
+                self.pop(key)
+
     def convert_item_metadata(self, index_obj, data=None):
         """Convert Item Metadat.
 
@@ -1040,7 +1085,8 @@ class WekoDeposit(Deposit):
                         datastore.delete(cache_key)
                     data = json.loads(data_str.decode('utf-8'))
         except BaseException:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            current_app.logger.error(
+                "Unexpected error: {}".format(sys.exc_info()))
             abort(500, 'Failed to register item!')
         # Get index path
         index_lst = index_obj.get('index', [])
@@ -1099,6 +1145,8 @@ class WekoDeposit(Deposit):
         ps = dict(publish_status=pubs)
         jrc.update(ps)
         dc.update(ps)
+        if data:
+            self.delete_item_metadata(data)
         return dc, data.get('deleted_items')
 
     def _convert_description_to_object(self):
@@ -1430,6 +1478,74 @@ class WekoRecord(Record):
         item_type = ItemTypes.get_by_id(self.get('item_type_id'))
         return '{}({})'.format(item_type.item_type_name.name, item_type.tag)
 
+    @staticmethod
+    def switching_language(data):
+        """Switching language."""
+        current_lang = current_i18n.language
+        for value in data:
+            if value.get('language', '') == current_lang:
+                return value.get('title', '')
+        else:
+            for value in data:
+                if value.get('language', '') == 'en':
+                    return value.get('title', '')
+            else:
+                for value in data:
+                    if value.get('language', ''):
+                        return value.get('title', '')
+                else:
+                    if len(data) > 0:
+                        return data[0].get('title', '')
+        return ''
+
+    @staticmethod
+    def __get_titles_key(item_type_mapping):
+        """Get title keys in item type mapping.
+
+        :param item_type_mapping: item type mapping.
+        :return:
+        """
+        parent_key = None
+        title_key = None
+        language_key = None
+        for mapping_key in item_type_mapping:
+            property_data = item_type_mapping.get(mapping_key).get(
+                'jpcoar_mapping')
+            if (
+                isinstance(property_data, dict)
+                and property_data.get('title')
+            ):
+                title = property_data.get('title')
+                parent_key = mapping_key
+                title_key = title.get("@value")
+                language_key = title.get("@attributes", {}).get("xml:lang")
+        return parent_key, title_key, language_key
+
+    @property
+    def get_titles(self):
+        """Get titles of record.
+
+        :param record:
+        :return:
+        """
+        item_type_mapping = Mapping.get_record(self.get('item_type_id'))
+        parent_key, title_key, language_key = self.__get_titles_key(
+            item_type_mapping)
+        title_metadata = self.get(parent_key)
+        titles = []
+        if title_metadata:
+            attribute_value = title_metadata.get('attribute_value_mlt')
+            if isinstance(attribute_value, list):
+                for attribute in attribute_value:
+                    tmp = dict()
+                    if attribute.get(title_key):
+                        tmp['title'] = attribute.get(title_key)
+                    if attribute.get(language_key):
+                        tmp['language'] = attribute.get(language_key)
+                    if tmp.get('title'):
+                        titles.append(tmp.copy())
+        return self.switching_language(titles)
+
     @property
     def items_show_list(self):
         """Return the item show list."""
@@ -1692,6 +1808,8 @@ class WekoRecord(Record):
         # Get 'open_date' and convert to datetime.date.
         date_value = self.get_open_date_value(file_metadata)
         _format = '%Y-%m-%d'
+        if date_value is None:
+            date_value = datetime.date.max
         dt = datetime.strptime(date_value, _format)
         # Compare open_date with current date.
         is_future = dt.date() > today
@@ -1826,7 +1944,7 @@ class _FormatSysCreator:
         for creator_affiliation in self.creator.get(
                 WEKO_DEPOSIT_SYS_CREATOR_KEY['creatorAffiliations'], []):
             for affiliation_name in creator_affiliation.get(
-                    WEKO_DEPOSIT_SYS_CREATOR_KEY['alternative_names'], []):
+                    WEKO_DEPOSIT_SYS_CREATOR_KEY['affiliation_names'], []):
                 if affiliation_name.get(
                     WEKO_DEPOSIT_SYS_CREATOR_KEY[
                         'affiliation_lang']) not in languages:

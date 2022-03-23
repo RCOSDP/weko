@@ -59,8 +59,7 @@ from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
     ItemTypes, Mapping
 from weko_records.models import ItemType
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
-from weko_records_ui.utils import create_onetime_download_url, \
-    generate_one_time_download_url, get_list_licence
+
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
@@ -300,13 +299,20 @@ def register_hdl_by_handle(hdl, item_uuid, item_uri):
 
 
 def item_metadata_validation(item_id, identifier_type, record=None,
-                             is_import=False, without_ver_id=None):
+                             is_import=False, without_ver_id=None, file_path=None):
     """
     Validate item metadata.
 
     :param: item_id, identifier_type, record
     :return: error_list
     """
+    current_app.logger.debug("item_id: {}".format(item_id))
+    current_app.logger.debug("identifier_type: {}".format(identifier_type))
+    current_app.logger.debug("record: {}".format(record))
+    current_app.logger.debug("is_import: {}".format(is_import))
+    current_app.logger.debug("without_ver_id: {}".format(without_ver_id))
+    current_app.logger.debug("file_path: {}".format(file_path))
+
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
         return None
 
@@ -337,8 +343,8 @@ def item_metadata_validation(item_id, identifier_type, record=None,
     type_key, resource_type = metadata_item.get_first_data_by_mapping(
         'type.@value')
 
-    error_list = {'required': [], 'pattern': [],
-                  'either': [], 'mapping': [], 'other': ''}
+    error_list = {'required': [], 'required_key': [], 'pattern': [],
+                  'either': [],  'either_key': [], 'mapping': [], 'other': ''}
     # check resource type request
     if not resource_type and not type_key:
         error_list['mapping'].append('dc:type')
@@ -377,16 +383,14 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 or resource_type in elearning_type \
                 or resource_type in datageneral_types:
             required_properties = ['title']
-            if item_type.item_type_name.name != ddi_item_type_name:
-                required_properties.append('fileURI')
-            either_properties = ['version']
+            # remove 20220207
+            #either_properties = ['version']
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif resource_type in dataset_type:
             required_properties = ['title',
                                    'givenName']
-            if item_type.item_type_name.name != ddi_item_type_name:
-                required_properties.append('fileURI')
-            either_properties = ['geoLocation']
+            # remove 20220207
+            # either_properties = ['geoLocation']
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['Crossref']:
         if resource_type in journalarticle_type:
@@ -394,21 +398,28 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                                    'publisher',
                                    'sourceIdentifier',
                                    'sourceTitle']
-            if item_type.item_type_name.name != ddi_item_type_name:
-                required_properties.append('fileURI')
         elif resource_type in report_types \
                 or resource_type in thesis_types:
             required_properties = ['title']
-            if item_type.item_type_name.name != ddi_item_type_name:
-                required_properties.append('fileURI')
     # DataCite DOI identifier registration
-    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCite'] \
-            and item_type.item_type_name.name != ddi_item_type_name:
-        required_properties = ['fileURI']
+    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['DataCite']:
+        if resource_type in dataset_type:
+            required_properties = ['title',
+                                   'givenName']
+            # remove 20220207
+            # either_properties = ['geoLocation']
     # NDL JaLC DOI identifier registration
-    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NDL JaLC'] \
-            and item_type.item_type_name.name != ddi_item_type_name:
-        required_properties = ['fileURI']
+
+    # 本文URL条件
+    # DDIはスキップ
+    # 新規登録(item_idなし、かつfile_pathがある場合は本文URL:があるとみなす
+    # それ以外はfileURIが必須
+    if item_type.item_type_name.name != ddi_item_type_name:
+        if item_id is None:
+            if len(file_path) == 0:
+                required_properties.append('fileURI')
+        else:
+            required_properties.append('fileURI')
 
     if required_properties:
         properties['required'] = required_properties
@@ -435,8 +446,18 @@ def merge_doi_error_list(current, new):
     """Merge DOI validation error list."""
     if new['required']:
         current['required'].extend(new['required'])
+    if 'required_key' in new and new['required_key']:
+        if 'required_key' in current:
+            current['required_key'].extend(new['required_key'])
+        else:
+            current['required_key'] = new['required_key']
     if new['either']:
         current['either'].extend(new['either'])
+    if 'either_key' in new and new['either_key']:
+        if 'either_key' in current:
+            current['either_key'].extend(new['either_key'])
+        else:
+            current['either_key'] = new['either_key']
     if new['pattern']:
         current['pattern'].extend(new['pattern'])
     if new['mapping']:
@@ -452,7 +473,8 @@ def validation_item_property(mapping_data, properties):
     :param properties: Property's keywords
     :return: error_list or None
     """
-    error_list = {'required': [], 'pattern': [], 'either': [], 'mapping': []}
+    error_list = {'required': [], 'required_key': [],
+                  'pattern': [], 'either': [], 'either_key': [], 'mapping': []}
     empty_list = deepcopy(error_list)
 
     if properties.get('required'):
@@ -478,6 +500,9 @@ def handle_check_required_data(mapping_data, mapping_key):
     keys = []
     values = []
     requirements = []
+    current_app.logger.debug("mapping_data: {}".format(mapping_data))
+    current_app.logger.debug("mapping_key: {}".format(mapping_key))
+
     data = mapping_data.get_data_by_mapping(mapping_key)
     for key, value in data.items():
         keys.append(key)
@@ -498,8 +523,8 @@ def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
     if not (mapping_data and mapping_keys):
         return
     if not error_list:
-        error_list = {'required': [], 'pattern': [],
-                      'either': [], 'mapping': []}
+        error_list = {'required': [], 'required_key': [], 'pattern': [],
+                      'either': [], 'either_key': [], 'mapping': []}
     empty_list = deepcopy(error_list)
     keys = []
     num_map = 0
@@ -525,9 +550,11 @@ def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
     if requirements:
         if num_map == 1 and not is_either:
             error_list['required'].extend(requirements)
+            error_list['required_key'].append(mapping_key)
         else:
-            filter_root_keys = list(set([
-                key.split('.')[0] for key in keys[:num_map]]))
+            error_list['either_key'].append(mapping_key)
+            filter_root_keys = list(
+                set([key.split('.')[0] for key in keys[:num_map]]))
             either_list = []
             for key in filter_root_keys:
                 either_list.append([
@@ -537,6 +564,10 @@ def handle_check_required_pattern_and_either(mapping_data, mapping_keys,
             else:
                 error_list['either'].append(either_list)
 
+    current_app.logger.debug("mapping_data: {}".format(mapping_data))
+    current_app.logger.debug("mapping_keys: {}".format(mapping_keys))
+    current_app.logger.debug("error_list: {}".format(error_list))
+    current_app.logger.debug("is_either: {}".format(is_either))
     if empty_list != error_list:
         return error_list
 
@@ -550,7 +581,8 @@ def validattion_item_property_required(
     :param properties: Property's keywords
     :return: error_list or None
     """
-    error_list = {'required': [], 'pattern': [], 'either': [], 'mapping': []}
+    error_list = {'required': [], 'required_key': [],
+                  'pattern': [], 'either': [], 'either_key': [], 'mapping': []}
     empty_list = deepcopy(error_list)
 
     # check file jpcoar:URI
@@ -607,7 +639,8 @@ def validattion_item_property_either_required(
     :param properties: Property's keywords
     :return: either_list
     """
-    error_list = {'required': [], 'pattern': [], 'either': [], 'mapping': []}
+    error_list = {'required': [], 'required_key': [],
+                  'pattern': [], 'either': [], 'either_key': [], 'mapping': []}
 
     # For Dataset
     geo_location = None
@@ -644,15 +677,16 @@ def validattion_item_property_either_required(
 
     # For other resource type
     version = None
+    current_app.logger.debug("properties: {}".format(properties))
     if 'version' in properties:
         # check フォーマット jpcoar:mimeType
         mapping_keys = ['jpcoar:mimeType']
         version = handle_check_required_pattern_and_either(
             mapping_data, mapping_keys, None, True)
 
-        # check バージョン datacite:version
-        mapping_keys = ['datacite:version']
         if version:
+            # check バージョン datacite:version
+            mapping_keys = ['datacite:version']
             errors = handle_check_required_pattern_and_either(
                 mapping_data, mapping_keys, None, True)
             if not errors:
@@ -660,8 +694,8 @@ def validattion_item_property_either_required(
             else:
                 merge_doi_error_list(version, errors)
 
-        # check 出版タイプ oaire:version
         if version:
+            # check 出版タイプ oaire:version
             mapping_keys = ['oaire:version']
             errors = handle_check_required_pattern_and_either(
                 mapping_data, mapping_keys, None, True)
@@ -1328,11 +1362,13 @@ def convert_record_to_item_metadata(record_metadata):
     for key, meta in item_type.get('meta_list', {}).items():
         if key in record_metadata:
             if meta.get('option', {}).get('multiple'):
-                item_metadata[key] = \
-                    record_metadata[key]['attribute_value_mlt']
+                if 'attribute_value_mlt' in record_metadata[key]:
+                    item_metadata[key] = \
+                        record_metadata[key]['attribute_value_mlt']
             else:
-                item_metadata[key] = \
-                    record_metadata[key]['attribute_value_mlt'][0]
+                if 'attribute_value_mlt' in record_metadata[key]:
+                    item_metadata[key] = \
+                        record_metadata[key]['attribute_value_mlt'][0]
 
     return item_metadata
 
@@ -1372,19 +1408,30 @@ def prepare_edit_workflow(post_activity, recid, deposit):
         try:
             _deposit = WekoDeposit.get_record(draft_pid.object_uuid)
             _bucket = Bucket.get(_deposit.files.bucket.id)
+
+            if not _bucket:
+                _bucket = Bucket.create(
+                    quota_size=current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
+                    max_file_size=current_app.config['WEKO_MAX_FILE_SIZE'],
+                )
+                RecordsBuckets.create(record=_deposit.model, bucket=_bucket)
+                _deposit.files.bucket.id = _bucket
+
             bucket = deposit.files.bucket
 
             sync_bucket = RecordsBuckets.query.filter_by(
                 bucket_id=_deposit.files.bucket.id
             ).first()
+
             snapshot = bucket.snapshot(lock=False)
             snapshot.locked = False
             _bucket.locked = False
 
             sync_bucket.bucket_id = snapshot.id
             _deposit['_buckets']['deposit'] = str(snapshot.id)
-            _bucket.remove()
+
             db.session.add(sync_bucket)
+            _bucket.remove()
 
             # update metadata
             _metadata = convert_record_to_item_metadata(deposit)
@@ -2918,6 +2965,7 @@ def create_onetime_download_url_to_guest(activity_id: str,
         user_mail = extra_info.get('guest_mail')
         is_guest_user = True
     if file_name and record_id and user_mail:
+        from weko_records_ui.utils import generate_one_time_download_url
         onetime_file_url = generate_one_time_download_url(
             file_name, record_id, user_mail)
 
@@ -2925,6 +2973,7 @@ def create_onetime_download_url_to_guest(activity_id: str,
         delete_guest_activity(activity_id)
 
         # Save onetime to Database.
+        from weko_records_ui.utils import create_onetime_download_url
         one_time_obj = create_onetime_download_url(
             activity_id, file_name, record_id, user_mail, is_guest_user)
         expiration_tmp = {
@@ -3576,21 +3625,22 @@ def check_authority_by_admin(activity):
     # If user has community role
     # and the user who created activity is member of community
     # role -> has permission:
-    community_role_name = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-    # Get the list of users who has the community role
-    community_users = User.query.outerjoin(userrole).outerjoin(Role) \
-        .filter(community_role_name == Role.name) \
-        .filter(userrole.c.role_id == Role.id) \
-        .filter(User.id == userrole.c.user_id) \
-        .all()
-    community_user_ids = [
-        community_user.id for community_user in community_users]
-    for role in list(current_user.roles or []):
-        if role.name in community_role_name:
-            # User has community role
-            if activity.activity_login_user in community_user_ids:
-                return True
-            break
+    community_role_names = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+    for community_role_name in community_role_names:
+        # Get the list of users who has the community role
+        community_users = User.query.outerjoin(userrole).outerjoin(Role) \
+            .filter(community_role_name == Role.name) \
+            .filter(userrole.c.role_id == Role.id) \
+            .filter(User.id == userrole.c.user_id) \
+            .all()
+        community_user_ids = [
+            community_user.id for community_user in community_users]
+        for role in list(current_user.roles or []):
+            if role.name in community_role_name:
+                # User has community role
+                if activity.activity_login_user in community_user_ids:
+                    return True
+                break
     return False
 
 

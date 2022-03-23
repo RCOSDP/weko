@@ -509,6 +509,7 @@ def copy_value_json_path(meta, jsonpath):
     try:
         matches = parse(jsonpath).find(meta)
         match_value = [match.value for match in matches]
+        current_app.logger.debug("jsonpath: {0},meta: {1}, match_value: {2}".format(jsonpath,meta,match_value))
         return match_value[0]
     except Exception:
         return match_value
@@ -528,6 +529,7 @@ def copy_values_json_path(meta, jsonpath):
     try:
         matches = parse(jsonpath).find(meta)
         match_value = [match.value for match in matches]
+        current_app.logger.debug("jsonpath: {0}, meta: {1}, match_value: {2}".format(jsonpath,meta,match_value))
         return match_value
     except Exception:
         return match_value
@@ -2033,7 +2035,8 @@ def add_author(author_data, stt_key, is_specify_newline_array, s, value,
         'WEKO_RECORDS_AUTHOR_KEYS']
     sub_author_key = s['key'].split('.')[-1]
     if sub_author_key in current_app.config[
-            'WEKO_RECORDS_AUTHOR_NONE_LANG_KEYS']:
+            'WEKO_RECORDS_AUTHOR_NONE_LANG_KEYS'] \
+            and not is_hide and is_show_list:
         stt_key.append(sub_author_key)
         is_specify_newline_array.append(
             {sub_author_key: is_specify_newline})

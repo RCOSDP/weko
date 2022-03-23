@@ -95,7 +95,7 @@ def set_lifetime(minutes):
             minutes=db_lifetime.lifetime)
         return jsonify(code=0, msg='Session lifetime was updated.')
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         return abort(400)
 
 
@@ -151,7 +151,7 @@ def lifetime():
         current_app.logger.error(
             'Could not convert data to an integer: {0}'.format(valueErr))
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         return abort(400)
 
 
@@ -392,7 +392,7 @@ def get_send_mail_history():
         data = request.args
         page = int(data.get('page'))
     except Exception as ex:
-        current_app.logger.debug('Cannot convert parameter', ex)
+        current_app.logger.debug("Cannot convert parameter: {}".format(ex))
         page = 1
     result = FeedbackMail.load_feedback_mail_history(page)
     return jsonify(result)
@@ -413,7 +413,7 @@ def get_failed_mail():
         page = int(data.get('page'))
         history_id = int(data.get('id'))
     except Exception as ex:
-        current_app.logger.debug('Cannot convert parameter', ex)
+        current_app.logger.debug("Cannot convert parameter: {}".format(ex))
         page = 1
         history_id = 1
     result = FeedbackMail.load_feedback_failed_mail(history_id, page)
@@ -440,7 +440,7 @@ def resend_failed_mail():
         )
         FeedbackMail.update_history_after_resend(history_id)
     except Exception as ex:
-        current_app.logger.debug('Cannot resend mail', ex)
+        current_app.logger.debug("Cannot resend mail:{}".format(ex))
         result['success'] = False
         result['error'] = 'Request package is invalid'
     return jsonify(result)
@@ -545,7 +545,7 @@ def get_site_info():
     if site_info.ogp_image and site_info.ogp_image_name:
         ts = time.time()
         result['ogp_image'] = request.host_url + \
-            'api/admin/ogp_image?timestamp=' + str(ts)
+            'api/admin/ogp_image'
         result['ogp_image_name'] = site_info.ogp_image_name
     return jsonify(result)
 

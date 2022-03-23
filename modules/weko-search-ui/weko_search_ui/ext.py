@@ -43,11 +43,12 @@ class WekoSearchUI(object):
         """
         self.init_config(app)
         app.register_blueprint(blueprint)
-        app.extensions['weko-search-ui'] = self
+        app.extensions["weko-search-ui"] = self
 
         # to integrate search and search index url
         from .views import search
-        app.view_functions['invenio_search_ui.search'] = search
+
+        app.view_functions["invenio_search_ui.search"] = search
 
     def init_config(self, app):
         """Initialize configuration.
@@ -55,34 +56,32 @@ class WekoSearchUI(object):
         :param app: The Flask application.
         """
         # Use theme's base template if theme is installed
-        if 'BASE_PAGE_TEMPLATE' in app.config:
+        if "BASE_PAGE_TEMPLATE" in app.config:
             app.config.setdefault(
-                'WEKO_SEARCH_UI_BASE_PAGE_TEMPLATE',
-                app.config['BASE_PAGE_TEMPLATE'],
+                "WEKO_SEARCH_UI_BASE_PAGE_TEMPLATE",
+                app.config["BASE_PAGE_TEMPLATE"],
             )
 
-        app.config.setdefault('INDEX_IMG', app.config['INDEX_IMG'])
+        app.config.setdefault("INDEX_IMG", app.config["INDEX_IMG"])
 
         app.config.update(
-            SEARCH_UI_SEARCH_TEMPLATE=getattr(
-                config,
-                'WEKO_SEARCH_UI_SEARCH_TEMPLATE'),
+            SEARCH_UI_SEARCH_TEMPLATE=getattr(config, "WEKO_SEARCH_UI_SEARCH_TEMPLATE"),
             SEARCH_UI_JSTEMPLATE_LIST_RESULTS=getattr(
-                config,
-                'WEKO_SEARCH_UI_JSTEMPLATE_LIST_RESULTS'),
+                config, "WEKO_SEARCH_UI_JSTEMPLATE_LIST_RESULTS"
+            ),
             SEARCH_UI_JSTEMPLATE_TABLE_RESULTS=getattr(
-                config,
-                'WEKO_SEARCH_UI_JSTEMPLATE_TABLE_RESULTS'),
+                config, "WEKO_SEARCH_UI_JSTEMPLATE_TABLE_RESULTS"
+            ),
             SEARCH_UI_JSTEMPLATE_RESULTS_BASIC=getattr(
-                config,
-                'WEKO_SEARCH_UI_JSTEMPLATE_RESULTS_BASIC'),
+                config, "WEKO_SEARCH_UI_JSTEMPLATE_RESULTS_BASIC"
+            ),
             SEARCH_UI_JSTEMPLATE_COUNT=getattr(
-                config,
-                'WEKO_SEARCH_UI_JSTEMPLATE_COUNT'),
+                config, "WEKO_SEARCH_UI_JSTEMPLATE_COUNT"
+            ),
         )
 
         for k in dir(config):
-            if k.startswith('WEKO_SEARCH_UI_'):
+            if k.startswith("WEKO_SEARCH_UI_"):
                 app.config.setdefault(k, getattr(config, k))
 
 
@@ -105,8 +104,6 @@ class WekoSearchREST(object):
 
         :param app: An instance of :class:`flask.Flask`.
         """
-        blueprint = create_blueprint(app,
-                                     app.config['WEKO_SEARCH_REST_ENDPOINTS']
-                                     )
+        blueprint = create_blueprint(app, app.config["WEKO_SEARCH_REST_ENDPOINTS"])
         app.register_blueprint(blueprint)
-        app.extensions['weko-search-rest'] = self
+        app.extensions["weko-search-rest"] = self

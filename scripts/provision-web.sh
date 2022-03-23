@@ -283,6 +283,12 @@ main () {
     elif [ -e /etc/redhat-release ]; then
         os_distribution=$(cut -d ' ' -f 1 /etc/redhat-release)
         os_release=$(grep -oE '[0-9]+\.' /etc/redhat-release | cut -d. -f1 | head -1)
+    elif [ -e /etc/lsb-release ]; then
+        os_distribution=$(grep DISTRIB_ID /etc/lsb-release | cut -d"=" -f 2)
+        os_release=$(grep DISTRIB_RELEASE /etc/lsb-release | cut -d"=" -f 2)
+    elif [ -e /etc/debian_version ]; then
+        os_distribution="DEBIAN"
+        os_release=$(cat /etc/debian_version)
     else
         os_distribution="UNDETECTED"
         os_release="UNDETECTED"
@@ -298,18 +304,22 @@ main () {
         setup_libreoffice_ubuntu14
         cleanup_web_ubuntu14
     elif [ "$os_distribution" = "Ubuntu" ]; then
-        if [ "$os_release" = "14" ]; then
-            provision_web_common_ubuntu14
-            provision_web_libpostgresql_ubuntu14
-            setup_npm_and_css_js_filters
-            setup_virtualenvwrapper
-            #setup_nginx_ubuntu14
-            setup_libreoffice_ubuntu14
-            cleanup_web_ubuntu14
-        else
-            echo "[ERROR] Sorry, unsupported release ${os_release}."
-            exit 1
-        fi
+        provision_web_common_ubuntu14
+        provision_web_libpostgresql_ubuntu14
+        setup_npm_and_css_js_filters
+        setup_virtualenvwrapper
+        #setup_nginx_ubuntu14
+        setup_libreoffice_ubuntu14
+        cleanup_web_ubuntu14
+    elif [ "$os_distribution" = "DEBIAN" ]; then
+        # WSL2
+        provision_web_common_ubuntu14
+        provision_web_libpostgresql_ubuntu14
+        setup_npm_and_css_js_filters
+        setup_virtualenvwrapper
+        #setup_nginx_ubuntu14
+        setup_libreoffice_ubuntu14
+        cleanup_web_ubuntu14
     elif [ "$os_distribution" = "CentOS" ]; then
         if [ "$os_release" = "7" ]; then
             provision_web_common_centos7

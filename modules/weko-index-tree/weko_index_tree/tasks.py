@@ -37,12 +37,14 @@ def update_oaiset_setting(index_info, data):
             spec = index_info[2].replace("/", ":")
             description = index_info[4].replace("-/-", "->")
         with db.session.begin_nested():
+            current_app.logger.debug("data[id]:{}".format(data["id"]))
             oaiset = OAISet.query.filter_by(id=data["id"]).one_or_none()
             if oaiset:
                 if pub_state:
                     oaiset.spec = spec
                     oaiset.name = data["index_name"]
                     oaiset.search_pattern = 'path:"{}"'.format(data["id"])
+                    #oaiset.search_pattern = '_oai.sets:"{}"'.format(spec)
                     oaiset.description = description
                     db.session.merge(oaiset)
                 else:
@@ -54,6 +56,7 @@ def update_oaiset_setting(index_info, data):
                     name=data["index_name"],
                     description=description)
                 oaiset.search_pattern = 'path:"{}"'.format(data["id"])
+                #oaiset.search_pattern = '_oai.sets:"{}"'.format(spec)
                 db.session.add(oaiset)
         db.session.commit()
     except Exception as ex:

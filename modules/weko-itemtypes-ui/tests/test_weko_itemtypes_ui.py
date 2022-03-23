@@ -42,12 +42,3 @@ def test_init():
     assert 'weko-itemtypes-ui' not in app.extensions
     ext.init_app(app)
     assert 'weko-itemtypes-ui' in app.extensions
-
-
-def test_view(app):
-    """Test view."""
-    WekoItemtypesUI(app)
-    with app.test_client() as client:
-        res = client.post("/itemtypes/mapping", data={})
-        assert res.status_code == 200
-        assert 'Header Error' in str(res.data)

@@ -180,8 +180,13 @@ class Flow(object):
                 flow = _Flow.query.filter_by(
                     flow_id=flow_id).one_or_none()
                 if flow:
-                    flow.is_deleted = True
-                    db.session.merge(flow)
+                    # logical delete
+                    #flow.is_deleted = True
+                    # db.session.merge(flow)
+                    # physical delete
+                    _FlowAction.query.filter_by(flow_id=flow_id).delete()
+                    _Flow.query.filter_by(
+                        flow_id=flow_id).delete()
             db.session.commit()
             return {'code': 0, 'msg': ''}
         except Exception as ex:
@@ -384,6 +389,7 @@ class WorkFlow(object):
                     _workflow.flow_id = workflow.get('flow_id')
                     _workflow.index_tree_id = workflow.get('index_tree_id')
                     _workflow.open_restricted = workflow.get('open_restricted')
+                    _workflow.location_id = workflow.get('location_id')
                     _workflow.is_gakuninrdm = workflow.get('is_gakuninrdm')
                     db.session.merge(_workflow)
             db.session.commit()
@@ -762,7 +768,7 @@ class WorkActivity(object):
                             action_order=flow_action.action_order
                         )
                         db.session.add(db_activity_action)
-                        
+
             except BaseException as ex:
                 raise ex
             else:
@@ -774,18 +780,19 @@ class WorkActivity(object):
         :return: activity ID.
         """
         # Table lock for calculate new activity id
-        db.session.execute('LOCK TABLE ' + _Activity.__tablename__ + ' IN EXCLUSIVE MODE')
-        
+        db.session.execute(
+            'LOCK TABLE ' + _Activity.__tablename__ + ' IN EXCLUSIVE MODE')
+
         # Calculate activity_id based on id
-        utc_now=datetime.utcnow()
+        utc_now = datetime.utcnow()
         current_date_start = utc_now.strftime("%Y-%m-%d 00:00:00")
         next_date_start = (utc_now + timedelta(1)).\
             strftime("%Y-%m-%d 00:00:00")
-        
+
         max_id = db.session.query(func.count(_Activity.id)).filter(
             _Activity.created >= '{}'.format(current_date_start),
             _Activity.created < '{}'.format(next_date_start),
-        ).scalar() # Cannot use '.with_for_update()'. FOR UPDATE is not allowed with aggregate functions
+        ).scalar()  # Cannot use '.with_for_update()'. FOR UPDATE is not allowed with aggregate functions
 
         if max_id:
             # Calculate aid
@@ -1698,7 +1705,7 @@ class WorkActivity(object):
         community_roles = current_app.config[
             'WEKO_PERMISSION_ROLE_COMMUNITY']
         community_user_ids = []
-        for role_name in list(community_roles):
+        for role_name in community_roles:
             community_users = User.query.outerjoin(userrole).outerjoin(Role) \
                 .filter(role_name == Role.name) \
                 .filter(userrole.c.role_id == Role.id) \
@@ -1812,7 +1819,7 @@ class WorkActivity(object):
         offset = int(size) * (int(page) - 1)
         # Get activities
         query_action_activities = query_action_activities \
-            .distinct(_Activity.id).order_by(asc(_Activity.id))
+            .distinct(_Activity.id).order_by(desc(_Activity.id))
         if not is_get_all:
             query_action_activities = query_action_activities.limit(
                 size).offset(offset)
@@ -1858,11 +1865,11 @@ class WorkActivity(object):
                     _Activity.flow_id.in_(db_flow_define_ids),
                     _Activity.activity_community_id == community_id
                 ).order_by(
-                    asc(_Activity.id)).all()
+                    desc(_Activity.id)).all()
             else:
                 activities = _Activity.query.filter(
                     _Activity.flow_id.in_(db_flow_define_ids)).order_by(
-                    asc(_Activity.id)).all()
+                    desc(_Activity.id)).all()
             return activities
 
     def get_activity_steps(self, activity_id):

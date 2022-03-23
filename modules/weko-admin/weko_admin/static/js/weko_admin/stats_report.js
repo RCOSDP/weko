@@ -1,5 +1,5 @@
 $(document).ready(function () {
-  var fileDownloadURL = '/admin/report/stats_file_tsv';
+  var fileDownloadURL = '/admin/report/stats_file_csv';
   $('#downloadReport').on('click', function () {
     var year = $("#report_year_select").val();
     var month = $("#report_month_select").val();
@@ -43,7 +43,7 @@ $(document).ready(function () {
         'site_access'];
       for (let item in options) {
         var url = (options[item] == 'user_roles' ? uriByType[options[item]] : uriByType[options[item]] + '/' + year + '/' + month);
-        statsReports[options[item]] = ajaxGetTSV(url);
+        statsReports[options[item]] = ajaxGetCSV(url);
       }
       setStatsReportSubmit(statsReports);
     } else { // Get single report
@@ -104,7 +104,7 @@ $(document).ready(function () {
   }
 });
 
-function ajaxGetTSV(endpoint) {
+function ajaxGetCSV(endpoint) {
   let result;
   $.ajax({
     url: endpoint,

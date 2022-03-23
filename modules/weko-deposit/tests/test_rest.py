@@ -18,7 +18,15 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-[pytest]
-pep8ignore = docs/conf.py ALL
-addopts = --pep8 --doctest-glob="*.rst" --doctest-modules --cov=weko_logging --cov-report=term-missing
-testpaths = docs tests weko_logging
+"""Module tests."""
+
+
+from weko_deposit.api import WekoDeposit
+from weko_deposit.rest import publish
+
+
+def test_publish(app, location):
+    deposit = WekoDeposit.create({})
+    kwargs = {
+        'pid_value': deposit.pid.pid_value
+    }

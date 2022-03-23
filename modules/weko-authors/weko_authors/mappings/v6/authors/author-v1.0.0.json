@@ -64,6 +64,9 @@
   "mappings": {
     "author-v1.0.0": {
       "properties": {
+        "pk_id": {
+          "type": "keyword"
+        },
         "authorNameInfo": {
           "type": "object",
           "properties": {
@@ -119,6 +122,41 @@
                 "raw": {
                   "type": "keyword",
                   "index": true
+                }
+              }
+            }
+          }
+        },
+        "affiliationInfo": {
+          "type": "object",
+          "properties": {
+            "identifierInfo": {
+              "type": "object",
+              "properties": {
+                "affiliationId": {
+                  "type": "text"
+                },
+                "affiliationIdType": {
+                  "type": "text",
+                  "index": false
+                },
+                "identifierShowFlg": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "affiliationNameInfo": {
+              "type": "object",
+              "properties": {
+                "affiliationName": {
+                  "type": "text",
+                  "index": false
+                },
+                "affiliationNameLang": {
+                  "type": "text"
+                },
+                "affiliationNameShowFlg": {
+                  "type": "boolean"
                 }
               }
             }

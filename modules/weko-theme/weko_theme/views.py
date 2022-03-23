@@ -110,7 +110,7 @@ def get_site_info(site_info):
         or current_app.config['THEME_SITENAME']
     login_instructions = get_notify_for_current_language(notify)
     ts = time.time()
-    favicon = request.url_root + 'api/admin/favicon?timestamp=' + str(ts)
+    favicon = request.url_root + 'api/admin/favicon'
     prefix = ''
     if site_info and site_info.favicon:
         prefix = site_info.favicon.split(",")[0] == 'data:image/x-icon;base64'
@@ -118,7 +118,7 @@ def get_site_info(site_info):
         favicon = site_info.favicon if site_info and site_info.favicon else ''
     ogp_image = ''
     if site_info and site_info.ogp_image:
-        ogp_image = request.url_root + 'api/admin/ogp_image?timestamp=' + str(ts)
+        ogp_image = request.url_root + 'api/admin/ogp_image'
 
     result = {
         'title': title,
