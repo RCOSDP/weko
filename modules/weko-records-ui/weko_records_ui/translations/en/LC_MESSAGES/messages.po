@@ -695,7 +695,7 @@ msgid "Affiliation"
 msgstr ""
 
 msgid "PubDate"
-msgstr ""
+msgstr "DepositDate"
 
 msgid "life"
 msgstr ""

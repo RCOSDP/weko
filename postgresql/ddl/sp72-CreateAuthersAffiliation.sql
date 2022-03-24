@@ -10,7 +10,7 @@ CREATE TABLE public.authors_affiliation_settings (
 );
 INSERT INTO public.authors_affiliation_settings 
     (name, scheme, url) 
-    VALUES
+    VALUES (
         ('ISNI', 'ISNI', 'http://www.isni.org/isni/'),
         ('GRID', 'GRID', 'https://www.grid.ac/institutes/'), 
         ('Ringgold', 'Ringgold', ''), 
