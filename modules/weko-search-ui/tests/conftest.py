@@ -34,6 +34,7 @@ from invenio_db import InvenioDB
 from invenio_i18n.ext import InvenioI18N, current_i18n
 from invenio_records_rest import InvenioRecordsREST
 
+
 @pytest.yield_fixture()
 def instance_path():
     """Temporary instance path."""
@@ -56,12 +57,12 @@ def app():
         SECRET_KEY="SECRET_KEY",
         TESTING=True,
         INDEX_IMG="indextree/36466818-image.jpg",
-        JSON_AS_ASCII = False,
-                BABEL_DEFAULT_LOCALE = 'en',
-        BABEL_DEFAULT_LANGUAGE = 'en',
-        BABEL_DEFAULT_TIMEZONE='Asia/Tokyo',
-        I18N_LANGUAGES = [('ja', 'Japanese'),('en','English')],
-        I18N_SESSION_KEY='my_session_key',
+        JSON_AS_ASCII=False,
+        BABEL_DEFAULT_LOCALE="en",
+        BABEL_DEFAULT_LANGUAGE="en",
+        BABEL_DEFAULT_TIMEZONE="Asia/Tokyo",
+        I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English")],
+        I18N_SESSION_KEY="my_session_key",
     )
     Babel(app)
     InvenioDB(app)
