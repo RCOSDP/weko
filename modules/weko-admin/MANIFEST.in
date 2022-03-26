@@ -49,3 +49,13 @@ recursive-include examples *.sh
 recursive-include examples *.txt
 recursive-include tests *.py
 recursive-include weko_admin *.html
+
+# added by check-manifest
+include pytest.ini
+include tox.ini
+recursive-include weko_admin *.css
+recursive-include weko_admin *.gif
+recursive-include weko_admin *.js
+recursive-include weko_admin *.png
+recursive-include weko_admin *.py
+recursive-include weko_admin *.tpl

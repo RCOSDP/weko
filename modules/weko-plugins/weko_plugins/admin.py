@@ -29,7 +29,7 @@ from .proxies import current_plugins
 
 
 class PluginSettingView(BaseView):
-    @expose('/', methods=['GET'])
+    @expose("/", methods=["GET"])
     def index(self):
         """Get plugins list info.
 
@@ -38,11 +38,10 @@ class PluginSettingView(BaseView):
         """
         # current_plugins.plugin_manager.load_plugins()
         return self.render(
-            'weko_plugins/admin/plugin_list.html',
-            plugins=get_enabled_plugins()
+            "weko_plugins/admin/plugin_list.html", plugins=get_enabled_plugins()
         )
 
-    @expose('/<plugin>', methods=['GET'])
+    @expose("/<plugin>", methods=["GET"])
     def detail(self, plugin):
         """
         Get plugin base info.
@@ -52,12 +51,9 @@ class PluginSettingView(BaseView):
 
         """
         plugin = get_plugin(plugin)
-        return self.render(
-            'weko_plugins/admin/plugin_detail.html',
-            plugin=plugin
-        )
+        return self.render("weko_plugins/admin/plugin_detail.html", plugin=plugin)
 
-    @expose('/setting/<plugin>', methods=['GET'])
+    @expose("/setting/<plugin>", methods=["GET"])
     def setting(self, plugin):
         """
         Set plugin base info.
@@ -67,12 +63,9 @@ class PluginSettingView(BaseView):
 
         """
         plugin = get_plugin(plugin)
-        return self.render(
-            'weko_plugins/admin/plugin_setting.html',
-            plugin=plugin
-        )
+        return self.render("weko_plugins/admin/plugin_setting.html", plugin=plugin)
 
-    @expose('/disable/<plugin>', methods=['GET'])
+    @expose("/disable/<plugin>", methods=["GET"])
     def disable(self, plugin):
         """
         Disable the plugin.
@@ -83,14 +76,13 @@ class PluginSettingView(BaseView):
         """
         plugin = get_plugin(plugin)
         current_plugins.plugin_manager.disable_plugins([plugin])
-        redirect_url = url_for('pluginsetting.index')
-        href = request.args.get('href', 'index')
-        if 'detail' == href:
-            redirect_url = url_for('pluginsetting.detail',
-                                   plugin=plugin.identifier)
+        redirect_url = url_for("pluginsetting.index")
+        href = request.args.get("href", "index")
+        if "detail" == href:
+            redirect_url = url_for("pluginsetting.detail", plugin=plugin.identifier)
         return redirect(redirect_url)
 
-    @expose('/enable/<plugin>', methods=['GET'])
+    @expose("/enable/<plugin>", methods=["GET"])
     def enable(self, plugin):
         """
         Enable the plugin.
@@ -101,14 +93,13 @@ class PluginSettingView(BaseView):
         """
         plugin = get_plugin(plugin)
         current_plugins.plugin_manager.enable_plugins([plugin])
-        redirect_url = url_for('pluginsetting.index')
-        href = request.args.get('href', 'index')
-        if 'detail' == href:
-            redirect_url = url_for('pluginsetting.detail',
-                                   plugin=plugin.identifier)
+        redirect_url = url_for("pluginsetting.index")
+        href = request.args.get("href", "index")
+        if "detail" == href:
+            redirect_url = url_for("pluginsetting.detail", plugin=plugin.identifier)
         return redirect(redirect_url)
 
-    @expose('/delete/<plugin>', methods=['GET'])
+    @expose("/delete/<plugin>", methods=["GET"])
     def delete(self, plugin):
         """
         Delete the plugin.
@@ -122,18 +113,16 @@ class PluginSettingView(BaseView):
             plugin.delete()
             del current_plugins.plugin_manager.plugins[plugin.identifier]
             # del current_plugins.plugin_manager.all_plugins[plugin.identifier]
-        return redirect(url_for('pluginsetting.index'))
+        return redirect(url_for("pluginsetting.index"))
 
 
 plugin_adminview = {
-    'view_class': PluginSettingView,
-    'kwargs': {
-        'category': _('Plugins'),
-        'name': _('Plugin List'),
-        'endpoint': 'pluginsetting'
-    }
+    "view_class": PluginSettingView,
+    "kwargs": {
+        "category": _("Plugins"),
+        "name": _("Plugin List"),
+        "endpoint": "pluginsetting",
+    },
 }
 
-__all__ = (
-    'plugin_adminview',
-)
+__all__ = ("plugin_adminview",)

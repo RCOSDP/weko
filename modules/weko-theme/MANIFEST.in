@@ -31,3 +31,25 @@ include .editorconfig
 include .tx/config
 prune docs/_build
 recursive-include weko_theme *.po *.pot *.mo
+
+# added by check-manifest
+include *.rst
+include *.sh
+include *.txt
+include babel.ini
+include pytest.ini
+include tox.ini
+recursive-include docs *.bat
+recursive-include docs *.py
+recursive-include docs *.rst
+recursive-include docs *.txt
+recursive-include docs Makefile
+recursive-include examples *.py
+recursive-include examples *.sh
+recursive-include tests *.py
+recursive-include weko_theme *.css
+recursive-include weko_theme *.html
+recursive-include weko_theme *.ico
+recursive-include weko_theme *.js
+recursive-include weko_theme *.png
+recursive-include weko_theme *.scss
