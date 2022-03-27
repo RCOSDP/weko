@@ -69,7 +69,7 @@ install_requires = [
     'requests>=2.18.4',
     'invenio-cache>=1.0.0',
     'invenio-indexer>=1.0.0',
-    'invenio-search>=1.0.0'
+    'invenio-search>=1.0.0',
 ]
 
 packages = find_packages()
