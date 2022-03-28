@@ -25,7 +25,7 @@ from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import Bucket, Location, ObjectVersion
 from invenio_pidstore import InvenioPIDStore
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from invenio_records_files import InvenioRecordsFiles
+# from invenio_records_files import InvenioRecordsFiles
 from invenio_records_files.api import Record
 
 from invenio_iiif import InvenioIIIFAPI
@@ -77,7 +77,7 @@ def create_app():
         InvenioAccess(app)
         InvenioPIDStore(app)
         InvenioFilesREST(app)
-        InvenioRecordsFiles(app)
+        # InvenioRecordsFiles(app)
         InvenioIIIFAPI(app)
 
         app.register_blueprint(blueprint)

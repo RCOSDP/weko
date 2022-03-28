@@ -34,6 +34,132 @@ from weko_deposit.api import WekoDeposit, WekoFileObject, WekoIndexer, \
     WekoRecord, _FormatSysBibliographicInformation, _FormatSysCreator
 
 
+# class WekoFileObject(FileObject):
+#     def __init__(self, obj, data):
+#     def info(self):
+#     def file_preview_able(self):
+# class WekoIndexer(RecordIndexer):
+#     def get_es_index(self):
+#     def upload_metadata(self, jrc, item_id, revision_id, skip_files=False):
+#     def delete_file_index(self, body, parent_id):
+#     def update_publish_status(self, record):
+#     def update_relation_version_is_last(self, version):
+#     def update_path(self, record, update_revision=True,
+#     def index(self, record):
+#     def delete(self, record):
+#     def delete_by_id(self, uuid):
+#     def get_count_by_index_id(self, tree_path):
+#     def get_pid_by_es_scroll(self, path):
+#         def get_result(result):
+#     def get_metadata_by_item_id(self, item_id):
+#     def update_feedback_mail_list(self, feedback_mail):
+#     def update_author_link(self, author_link):
+#     def update_jpcoar_identifier(self, dc, item_id):
+#     def __build_bulk_es_data(self, updated_data):
+#     def bulk_update(self, updated_data):
+# class WekoDeposit(Deposit):
+#     def item_metadata(self):
+#     def is_published(self):
+#     def merge_with_published(self):
+#     def _patch(diff_result, destination, in_place=False):
+#         def add(node, changes):
+#         def change(node, changes):
+#         def remove(node, changes):
+#     def _publish_new(self, id_=None):
+#     def _update_version_id(self, metas, bucket_id):
+#     def publish(self, pid=None, id_=None):
+#     def publish_without_commit(self, pid=None, id_=None):
+#     def create(cls, data, id_=None, recid=None):
+#     def update(self, *args, **kwargs):
+#     def clear(self, *args, **kwargs):
+#     def delete(self, force=True, pid=None):
+#     def commit(self, *args, **kwargs):
+#     def newversion(self, pid=None, is_draft=False):
+#             # NOTE: We call the superclass `create()` method, because
+#     def get_content_files(self):
+#     def get_file_data(self):
+#     def save_or_update_item_metadata(self):
+#     def delete_old_file_index(self):
+#     def delete_item_metadata(self, data):
+#     def convert_item_metadata(self, index_obj, data=None):
+#     def _convert_description_to_object(self):
+#     def _convert_jpcoar_data_to_es(self):
+#     def _convert_data_for_geo_location(self):
+#         def _convert_geo_location(value):
+#         def _convert_geo_location_box():
+#     def delete_by_index_tree_id(cls, index_id: str, ignore_items: list = []):
+#     def update_pid_by_index_tree_id(self, path):
+#     def update_item_by_task(self, *args, **kwargs):
+#     def delete_es_index_attempt(self, pid):
+#     def update_author_link(self, author_link):
+#     def update_feedback_mail(self):
+#     def remove_feedback_mail(self):
+#     def clean_unuse_file_contents(self, item_id, pre_object_versions,
+#     def merge_data_to_record_without_version(self, pid, keep_version=False,
+#     def prepare_draft_item(self, recid):
+#     def delete_content_files(self):
+# class WekoRecord(Record):
+class WekoRecordTest:
+#     def pid(self):
+#     def pid_recid(self):
+#     def hide_file(self):
+#     def navi(self):
+#     def item_type_info(self):
+#     def switching_language(data):
+#     def __get_titles_key(item_type_mapping):
+#     def get_titles(self):
+#     def items_show_list(self):
+#     def display_file_info(self):
+#     def __remove_special_character_of_weko2(self, metadata):
+#     def _get_creator(meta_data, hide_email_flag):
+#     def __remove_file_metadata_do_not_publish(self, file_metadata_list):
+#     def __check_user_permission(user_id_list):
+#     def is_input_open_access_date(file_metadata):
+#     def is_do_not_publish(file_metadata):
+#     def get_open_date_value(file_metadata):
+#     def is_future_open_date(self, file_metadata):
+#     def pid_doi(self):
+#     def pid_cnri(self):
+#     def pid_parent(self):
+#     def get_record_by_pid(cls, pid):
+#     def get_record_by_uuid(cls, uuid):
+#     def get_record_cvs(cls, uuid):
+#     def _get_pid(self, pid_type):
+#     def update_item_link(self, pid_value):
+#     def get_file_data(self):
+# class _FormatSysCreator:
+#     def __init__(self, creator):
+#     def _get_creator_languages_order(self):
+#     def _format_creator_to_show_detail(self, language: str, parent_key: str,
+#     def _get_creator_to_show_popup(self, creators: Union[list, dict],
+#         def _run_format_affiliation(affiliation_max, affiliation_min,
+#         def format_affiliation(affiliation_data):
+#     def _get_creator_based_on_language(creator_data: dict,
+#     def format_creator(self) -> dict:
+#     def _format_creator_on_creator_popup(self, creators: Union[dict, list],
+#     def _format_creator_name(creator_data: dict,
+#     def _format_creator_affiliation(creator_data: dict,
+#         def _get_max_list_length() -> int:
+#     def _get_creator_to_display_on_popup(self, creator_list: list):
+#     def _merge_creator_data(self, creator_data: Union[list, dict],
+#         def merge_data(key, value):
+#     def _get_default_creator_name(self, list_parent_key: list,
+#         def _get_creator(_language):
+# class _FormatSysBibliographicInformation:
+#     def __init__(self, bibliographic_meta_data_lst, props_lst):
+#     def is_bibliographic(self):
+#         def check_key(_meta_data):
+#     def get_bibliographic_list(self, is_get_list):
+#     def _get_bibliographic(self, bibliographic, is_get_list):
+#     def _get_property_name(self, key):
+#     def _get_translation_key(key, lang):
+#     def _get_bibliographic_information(self, bibliographic):
+#     def _get_bibliographic_show_list(self, bibliographic, language):
+#     def _get_source_title(source_titles):
+#     def _get_source_title_show_list(source_titles, current_lang):
+#     def _get_page_tart_and_page_end(page_start, page_end):
+#     def _get_issue_date(issue_date):
+
 def test_missing_location(app, record):
     """Test missing location."""
     with pytest.raises(AttributeError):

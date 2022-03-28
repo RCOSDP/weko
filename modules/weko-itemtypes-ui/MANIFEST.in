@@ -58,3 +58,8 @@ recursive-include examples *.sh
 recursive-include tests *.py
 recursive-include weko_itemtypes_ui *.html
 recursive-include weko_itemtypes_ui *.js
+
+# added by check-manifest
+include pytest.ini
+include tox.ini
+recursive-include weko_itemtypes_ui *.less
