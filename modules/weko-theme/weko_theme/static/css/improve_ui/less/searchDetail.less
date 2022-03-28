@@ -102,10 +102,50 @@
     background-color: @color-white;
     box-sizing: border-box;
 
+    .form-horizontal {
+      .form-group {
+        display: flex;
+        flex-direction: row-reverse;
+        align-items: center;
+        flex-wrap: wrap;
+
+        &::before {
+          display: none;
+        }
+        &::after {
+          display: none;
+        }
+        label {
+          &.col-xs-3 {
+            float: none;
+          }
+        }
+        .col-xs-9 {
+          float: none;
+        }
+      }
+    }
+
+    .testimonial-group {
+      > .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+
+        .col-xs-10 {
+          float: none;
+          flex-basis: calc(100% - 56px);
+        }
+        .col-xs-1 {
+          float: none;
+          width: 36px;
+        }
+      }
+    }
+
     label {
       display: inline-flex;
       align-items: center;
-      float: none;
 
       select {
         .mixin__select-menu-style;
@@ -167,11 +207,26 @@
         display: flex;
         justify-content: flex-end;
         align-items: center;
+        float: none;
 
         div {
           margin: 0;
           padding: 0;
           width: auto;
+          float: none;
+
+          &:first-child {
+            display: none;
+          }
+        }
+
+        > .row {
+          display: block;
+
+          .col-xs-1.col-lg-1 {
+            width: auto;
+            float: none;
+          }
         }
       }
     }
@@ -197,11 +252,30 @@
           }
         }
       }
+
+      > .row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        .col-xs-10 {
+          float: none;
+          flex-basis: auto;
+        }
+        .col-xs-1 {
+          float: none;
+          width: auto;
+          &.col-xs-offset-5 {
+            float: none;
+            width: auto;
+          }
+        }
+      }
     }
   }
 }
 
-@media (min-width: 768px) {
+@media (min-width: 769px) {
   #state-enable-improveui {
     .component__search-detail {
       .element__search-detail-form-input-group {
@@ -242,6 +316,36 @@
       label {
         &.col-sm-3 {
           width: 50%;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  #state-enable-improveui {
+    #search_detail_metadata {
+      .form-horizontal {
+        .form-group {
+          display: flex;
+          flex-direction: column-reverse;
+          flex-wrap: wrap;
+
+          label {
+            &.col-xs-3 {
+              width: 100%;
+            }
+          }
+          .col-xs-9 {
+            width: 100%;
+            margin-bottom: 0.75rem;
+          }
+        }
+      }
+
+      .testimonial-group {
+        > .row {
+          align-items: center;
         }
       }
     }

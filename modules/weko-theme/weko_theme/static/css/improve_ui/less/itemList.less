@@ -126,3 +126,46 @@
     }
   }
 }
+
+@media (max-width: 1180px) {
+  #state-enable-improveui {
+    #main_contents {
+      .component__item-list {
+        .element__item-list-form-wrap {
+          flex-wrap: wrap;
+
+          .element__item-list-export-btn {
+            flex-basis: 100%;
+            margin-bottom: 0.75rem;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 980px) {
+  #state-enable-improveui {
+    #main_contents {
+      .component__item-list {
+        .element__item-list-form-wrap {
+          .element__item-list-select-group {
+            flex-wrap: wrap;
+
+            > .form-group {
+              flex-basis: 100%;
+
+              + .form-group {
+                margin-top: 0.75rem;
+              }
+
+              > label {
+                margin-left: 0;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
