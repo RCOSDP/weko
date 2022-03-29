@@ -33,29 +33,6 @@
       font-size: 1.125rem;
     }
 
-    .breadcrumb {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      display: flex;
-      align-items: center;
-
-      li {
-        margin: 0;
-        padding: 0;
-        list-style: none;
-        padding-right: 1rem;
-      }
-      li:first-child:last-child {
-        padding-left: 0;
-        padding-right: 0;
-      }
-      li:nth-child(n + 2) {
-        padding-left: calc(1rem + 20px);
-        .mixin__breadcrumbs-style;
-      }
-    }
-
     .element__body-contents-item-header {
       margin: 0;
       margin-top: 1.5rem;
@@ -99,7 +76,9 @@
       display: grid;
       grid-template-columns: 1fr;
       column-gap: 0;
-      row-gap: 2em;
+      row-gap: 1em;
+      box-sizing: border-box;
+      padding-right: 2px;
 
       #detail-item {
         padding: 0;
@@ -110,7 +89,8 @@
       }
 
       #invenio-csl {
-        padding: 0;
+        padding: 1.5rem;
+        padding-bottom: 0.75rem;
         margin: 0;
         width: 100%;
         float: none;
@@ -189,13 +169,24 @@
     }
 
     .element__body-contents-item-right {
+      .well {
+        background-color: transparent;
+        box-shadow: none;
+        border: none;
+        border-radius: 0;
+        padding: 0;
+      }
+
+      .row {
+        margin-left: 0;
+        margin-right: 0;
+      }
+
       border-radius: 0.375rem;
       margin: 0;
-      padding: 1.5rem;
-      padding-bottom: 0.75rem;
+      padding: 0;
       box-shadow: @base-box-shadow;
-      border-color: @color-gray-05;
-      border-width: 1px;
+      border: 1px solid @color-gray-05;
       font-size: 1rem;
       background-color: @color-white;
     }
@@ -217,6 +208,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      margin-left: 0;
+      margin-right: 0;
+
+      .row {
+        margin-left: 0;
+        margin-right: 0;
+      }
     }
 
     .element__views-icon {
@@ -246,6 +244,8 @@
       button {
         margin: 0;
         padding: 0;
+        border: none;
+        border-color: transparent;
         padding-left: calc(16px + 0.375rem);
         font-weight: normal;
         font-size: 1rem;
@@ -272,6 +272,8 @@
       button {
         margin: 0;
         padding: 0;
+        border: none;
+        border-color: transparent;
         padding-left: calc(16px + 0.375rem);
         font-weight: normal;
         font-size: 1rem;
@@ -365,6 +367,10 @@
 
       > * + * {
         margin-left: 0.375rem;
+      }
+
+      .at-icon-wrapper {
+        border-radius: 0.375rem;
       }
     }
 

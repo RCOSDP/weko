@@ -18,8 +18,14 @@
       padding: 0;
     }
 
-    .panel.panel-default + .panel.panel-default {
-      margin-top: 1.5rem;
+    .panel {
+      &.panel-default + .panel.panel-default {
+        margin-top: 1.5rem;
+      }
+    }
+
+    .panel-default > .panel-heading {
+      background-color: transparent;
     }
 
     .panel-heading {

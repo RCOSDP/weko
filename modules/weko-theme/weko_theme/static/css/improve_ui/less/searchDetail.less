@@ -3,11 +3,13 @@
     // reset
     #top-search-btn {
       width: 100%;
+      box-sizing: border-box;
     }
 
     #detail_search_main {
       background-color: #166534;
       width: 100%;
+      box-sizing: border-box;
     }
 
     // original
@@ -47,6 +49,7 @@
 
     .element__search-detail-form-input-group-q {
       flex-basis: 100%;
+      box-sizing: border-box;
     }
 
     .element__search-detail-form-search-type {
@@ -79,6 +82,7 @@
       padding-bottom: 0.75rem;
       width: 100%;
       height: auto;
+      box-sizing: border-box;
     }
 
     .module__search-btn {
@@ -87,6 +91,7 @@
       padding-bottom: 0.75rem;
       width: 100%;
       max-width: 100%;
+      box-sizing: border-box;
     }
   }
 
@@ -108,6 +113,7 @@
         flex-direction: row-reverse;
         align-items: center;
         flex-wrap: wrap;
+        margin-bottom: 1rem;
 
         &::before {
           display: none;
@@ -118,10 +124,24 @@
         label {
           &.col-xs-3 {
             float: none;
+            width: 25%;
+            padding-left: 15px;
+            padding-right: 15px;
+            box-sizing: border-box;
           }
         }
         .col-xs-9 {
           float: none;
+          width: 75%;
+          padding-left: 15px;
+          padding-right: 15px;
+          box-sizing: border-box;
+
+          .form-control {
+            .mixin__base-input-style;
+            box-sizing: border-box;
+            width: 100%;
+          }
         }
       }
     }
@@ -177,6 +197,7 @@
         padding: 0;
         margin: 0;
         font-size: 1rem;
+        border: none;
 
         span {
           display: flex;
@@ -198,6 +219,9 @@
     }
 
     .element__add-search-condition {
+      margin: 0;
+      padding: 0;
+
       > div {
         margin-left: 0;
         margin-right: 0;
@@ -219,13 +243,19 @@
             display: none;
           }
         }
+      }
 
-        > .row {
-          display: block;
+      > .row {
+        display: block;
 
-          .col-xs-1.col-lg-1 {
+        .col-xs-1 {
+          &.col-lg-1 {
             width: auto;
             float: none;
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+            padding-right: 0.25rem;
+            text-align: right;
           }
         }
       }
@@ -268,6 +298,8 @@
           &.col-xs-offset-5 {
             float: none;
             width: auto;
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
           }
         }
       }
