@@ -58,6 +58,43 @@
     }
   }
 
+  .module__delete-btn {
+    justify-content: center;
+    align-items: center;
+    white-space: nowrap;
+    background-color: @color-red-10;
+    color: @color-white;
+
+    &:hover {
+      background-color: @color-red-10-hover;
+      color: @color-white;
+    }
+
+    > span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    > * + * {
+      margin-left: 0.75rem;
+    }
+  }
+
+  .module__edit-btn {
+    justify-content: center;
+    align-items: center;
+    white-space: nowrap;
+
+    > span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    > * + * {
+      margin-left: 0.75rem;
+    }
+  }
+
   .component__btn {
     &.module__btn-primary {
       background-color: @color-blue-10;
