@@ -381,7 +381,7 @@
             </a>
             {% if record | check_permission %}
             {% if can_edit %}
-            <a class="component__btn module__btn-primary module__edit-button" href="#!" id="btn_edit" data-pid-value="{{ pid.pid_value }}" {%- if
+            <a class="component__btn module__btn-primary module__edit-btn" href="#!" id="btn_edit" data-pid-value="{{ pid.pid_value }}" {%- if
               community -%}data-community="{{ community.id }}" {%- endif -%}>
               <span aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -390,7 +390,7 @@
               </span>
               <span>{{_('Edit')}}</span>
             </a>
-            <a class="component__btn module__delete-button" id="btn_delete" ng-click="openConfirm('',
+            <a class="component__btn module__delete-btn" id="btn_delete" ng-click="openConfirm('',
                   '{{'/records/soft_delete/'+ pid.pid_value}}',
                   '{{url_for('weko_search_ui.search')}}',
                   '{{pid.pid_value}}')">
