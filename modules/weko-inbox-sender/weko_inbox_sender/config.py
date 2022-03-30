@@ -10,7 +10,9 @@
 INBOX_VERIFY_TLS_CERTIFICATE = False
 """ If True, verify the server’s TLS certificate """
 
-INBOX_URL = 'https://nginx:443/inbox'
-# nginxのIPに合わせる
+NGINX_PORT = '443'
 
-NGINX_HOST = 'nginx:443'
+NGINX_HOST = 'nginx:' + NGINX_PORT
+
+INBOX_URL = 'https://' + NGINX_HOST + '/inbox'
+# nginxのIPに合わせる
