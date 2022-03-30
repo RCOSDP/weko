@@ -85,13 +85,10 @@
         padding-left: 2px;
         margin: 0;
         width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
         float: none;
-
-        .component__btn {
-          + .component__btn {
-            margin-left: 0.5rem;
-          }
-        }
+        -webkit-overflow-scrolling: touch;
       }
 
       #invenio-csl {
@@ -111,10 +108,16 @@
       box-shadow: @base-box-shadow;
       border: 1px solid @color-gray-05;
       background-color: @color-white;
-      width: 100%;
+      width: auto;
 
       + div {
         margin-top: 2rem;
+
+        .component__btn {
+          + .component__btn {
+            margin-left: 0.5rem;
+          }
+        }
       }
 
       .table {
@@ -454,7 +457,7 @@
   }
 }
 
-@media (min-width: 768px) {
+@media (min-width: 769px) {
   #state-enable-improveui {
     .component__body-contents {
       .element__body-contents-item-body-inner {
@@ -465,6 +468,50 @@
 
       .element__body-contents-item-table {
         font-size: 1rem;
+      }
+    }
+  }
+}
+
+@media (max-width: 1180px) {
+  #state-enable-improveui {
+    .component__body-contents {
+      .table-responsive {
+        + .text-center {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          padding-left: 5px;
+          padding-right: 5px;
+
+          .component__btn {
+            + .component__btn {
+              margin-left: 0;
+              margin-top: 0.5rem;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  #state-enable-improveui {
+    .component__body-contents {
+      .element__body-contents-item-body-inner {
+        #invenio-csl {
+          padding: 2px;
+          padding-top: 1.5rem;
+          margin-top: 1.5rem;
+        }
+
+        .element__body-contents-item-right {
+          border-radius: 0;
+          box-shadow: none;
+          border: none;
+          border-top: 1px solid @color-gray-05;
+        }
       }
     }
   }
