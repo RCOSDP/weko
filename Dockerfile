@@ -52,33 +52,28 @@ RUN /tmp/provision-web.sh
 FROM stage_2 AS stage_3
 # Add Weko sources to `code` and work there:
 WORKDIR /code
-ADD scripts /code/scripts
-ADD modules /code/modules
-ADD packages.txt /code/packages.txt
-ADD packages-invenio.txt /code/packages-invenio.txt
-ADD requirements-weko-modules.txt /code/requirements-weko-modules.txt
-ADD invenio /code/invenio
+RUN adduser --uid 1000 --disabled-password --gecos '' invenio
+USER invenio
+ADD --chown=invenio:invenio scripts /code/scripts
+ADD --chown=invenio:invenio modules /code/modules
+ADD --chown=invenio:invenio packages.txt /code/packages.txt
+ADD --chown=invenio:invenio packages-invenio.txt /code/packages-invenio.txt
+ADD --chown=invenio:invenio requirements-weko-modules.txt /code/requirements-weko-modules.txt
+ADD --chown=invenio:invenio invenio /code/invenio
 
 FROM stage_3 AS stage_4
-# Run container as user `weko` with UID `1000`, which should match
-# current host user in most situations:
-RUN adduser --uid 1000 --disabled-password --gecos '' invenio && \
-    chown -R invenio:invenio /code
-USER invenio
-
-FROM stage_4 AS stage_5
 # Create Weko instance:
 RUN chmod +x /code/scripts/create-instance.sh
 RUN /code/scripts/create-instance.sh
 
-FROM stage_5 AS stage_6
+FROM stage_4 AS stage_5
 # Create Weko instance2:
 WORKDIR /code
-ADD scripts/instance.cfg /code/scripts/instance.cfg
+ADD --chown=invenio:invenio scripts/instance.cfg /code/scripts/instance.cfg
 RUN chmod +x /code/scripts/create-instance2.sh
 RUN /code/scripts/create-instance2.sh
 
-FROM stage_6 AS stage_7
+FROM stage_5 AS stage_6
 # Make given VENV default:
 ENV PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENV VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
@@ -86,7 +81,7 @@ RUN echo "source /usr/local/bin/virtualenvwrapper.sh" >> ~/.bashrc
 RUN echo "workon invenio" >> ~/.bashrc
 #RUN mv /home/invenio/.virtualenvs/invenio/var/instance/static /home/invenio/.virtualenvs/invenio/var/instance/static.org
 
-FROM stage_7 AS build-env
+FROM stage_6 AS build-env
 # Start the Weko application:
 CMD ["/bin/bash", "-c", "invenio run -h 0.0.0.0"]
 # CMD ["/bin/bash", "-c", "gunicorn invenio_app.wsgi --workers=4 --worker-class=meinheld.gmeinheld.MeinheldWorker -b 0.0.0.0:5000 "]
