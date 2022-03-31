@@ -23,4 +23,4 @@
 from .ext import WekoPlugins
 from .version import __version__
 
-__all__ = ('__version__', 'WekoPlugins')
+__all__ = ("__version__", "WekoPlugins")

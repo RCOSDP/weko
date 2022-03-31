@@ -1197,7 +1197,7 @@ def get_google_scholar_meta(record):
     for pdf_url in mtdata.findall('jpcoar:file/jpcoar:URI',
                                   namespaces=mtdata.nsmap):
         res.append({'name': 'citation_pdf_url',
-                    'data': pdf_url.text})
+                    'data': quote(pdf_url.text,'/:%')})
 
     res.append({'name': 'citation_dissertation_institution',
                 'data': InstitutionName.get_institution_name()})
@@ -1235,7 +1235,7 @@ def get_google_detaset_meta(record):
 
     if '_oai' not in record and 'id' not in record['_oai']:
         return
-
+        
     recstr = etree.tostring(
         getrecord(
             identifier=record['_oai'].get('id'),

@@ -23,8 +23,7 @@
 import copy
 from functools import partial
 
-from flask import Blueprint, abort, current_app, jsonify, redirect, request, \
-    url_for
+from flask import Blueprint, abort, current_app, jsonify, redirect, request, url_for
 from invenio_db import db
 from invenio_files_rest.storage import PyFSFileStorage
 from invenio_i18n.ext import current_i18n
@@ -32,14 +31,21 @@ from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.errors import PIDInvalidAction
 from invenio_records.api import Record
-from invenio_records_rest.errors import InvalidDataRESTError, \
-    MaxResultWindowRESTError, UnsupportedMediaRESTError
+from invenio_records_rest.errors import (
+    InvalidDataRESTError,
+    MaxResultWindowRESTError,
+    UnsupportedMediaRESTError,
+)
 from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
-from invenio_records_rest.views import \
-    create_error_handlers as records_rest_error_handlers
-from invenio_records_rest.views import create_url_rules, \
-    need_record_permission, pass_record
+from invenio_records_rest.views import (
+    create_error_handlers as records_rest_error_handlers,
+)
+from invenio_records_rest.views import (
+    create_url_rules,
+    need_record_permission,
+    pass_record,
+)
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.views import create_api_errorhandler
 from webargs import fields
@@ -60,66 +66,65 @@ def create_blueprint(app, endpoints):
     :returns: The configured blueprint.
     """
     blueprint = Blueprint(
-        'weko_search_rest',
+        "weko_search_rest",
         __name__,
-        url_prefix='',
+        url_prefix="",
     )
 
     for endpoint, options in (endpoints or {}).items():
-        if 'record_serializers' in options:
-            serializers = options.get('record_serializers')
-            serializers = {mime: obj_or_import_string(func)
-                           for mime, func in serializers.items()}
+        if "record_serializers" in options:
+            serializers = options.get("record_serializers")
+            serializers = {
+                mime: obj_or_import_string(func) for mime, func in serializers.items()
+            }
         else:
             serializers = {}
 
-        if 'search_serializers' in options:
-            serializers = options.get('search_serializers')
-            search_serializers = {mime: obj_or_import_string(func)
-                                  for mime, func in serializers.items()}
+        if "search_serializers" in options:
+            serializers = options.get("search_serializers")
+            search_serializers = {
+                mime: obj_or_import_string(func) for mime, func in serializers.items()
+            }
         else:
             search_serializers = {}
 
-        record_class = obj_or_import_string(options.get('record_class'),
-                                            default=Record)
-        search_class = obj_or_import_string(options.get('search_class'))
-        search_factory = obj_or_import_string(
-            options.get('search_factory_imp'))
+        record_class = obj_or_import_string(options.get("record_class"), default=Record)
+        search_class = obj_or_import_string(options.get("search_class"))
+        search_factory = obj_or_import_string(options.get("search_factory_imp"))
 
         search_class_kwargs = {}
-        search_class_kwargs['index'] = options.get('search_index')
-        search_class_kwargs['doc_type'] = options.get('search_type')
+        search_class_kwargs["index"] = options.get("search_index")
+        search_class_kwargs["doc_type"] = options.get("search_type")
         search_class = partial(search_class, **search_class_kwargs)
 
         ctx = dict(
             read_permission_factory=obj_or_import_string(
-                options.get('read_permission_factory_imp')
+                options.get("read_permission_factory_imp")
             ),
             create_permission_factory=obj_or_import_string(
-                options.get('create_permission_factory_imp')
+                options.get("create_permission_factory_imp")
             ),
             update_permission_factory=obj_or_import_string(
-                options.get('update_permission_factory_imp')
+                options.get("update_permission_factory_imp")
             ),
             delete_permission_factory=obj_or_import_string(
-                options.get('delete_permission_factory_imp')
+                options.get("delete_permission_factory_imp")
             ),
             record_class=record_class,
             search_class=search_class,
             record_loaders=obj_or_import_string(
-                options.get('record_loaders'),
-                default=app.config['RECORDS_REST_DEFAULT_LOADERS']
+                options.get("record_loaders"),
+                default=app.config["RECORDS_REST_DEFAULT_LOADERS"],
             ),
             search_factory=search_factory,
             links_factory=obj_or_import_string(
-                options.get('links_factory_imp'), default=default_links_factory
+                options.get("links_factory_imp"), default=default_links_factory
             ),
-            pid_type=options.get('pid_type'),
-            pid_minter=options.get('pid_minter'),
-            pid_fetcher=options.get('pid_fetcher'),
-            loaders={
-                options.get('default_media_type'): lambda: request.get_json()},
-            max_result_window=options.get('max_result_window'),
+            pid_type=options.get("pid_type"),
+            pid_minter=options.get("pid_minter"),
+            pid_fetcher=options.get("pid_fetcher"),
+            loaders={options.get("default_media_type"): lambda: request.get_json()},
+            max_result_window=options.get("max_result_window"),
         )
 
         isr = IndexSearchResource.as_view(
@@ -127,13 +132,13 @@ def create_blueprint(app, endpoints):
             ctx=ctx,
             search_serializers=search_serializers,
             record_serializers=serializers,
-            default_media_type=options.get('default_media_type'),
+            default_media_type=options.get("default_media_type"),
         )
 
         blueprint.add_url_rule(
-            options.pop('index_route'),
+            options.pop("index_route"),
             view_func=isr,
-            methods=['GET', 'POST'],
+            methods=["GET", "POST"],
         )
 
     return blueprint
@@ -142,20 +147,25 @@ def create_blueprint(app, endpoints):
 class IndexSearchResource(ContentNegotiatedMethodView):
     """Index aggs Seach API."""
 
-    view_name = '{0}_index'
+    view_name = "{0}_index"
 
-    def __init__(self, ctx, search_serializers=None,
-                 record_serializers=None,
-                 default_media_type=None, **kwargs):
+    def __init__(
+        self,
+        ctx,
+        search_serializers=None,
+        record_serializers=None,
+        default_media_type=None,
+        **kwargs
+    ):
         """Constructor."""
         super(IndexSearchResource, self).__init__(
             method_serializers={
-                'GET': search_serializers,
-                'POST': record_serializers,
+                "GET": search_serializers,
+                "POST": record_serializers,
             },
             default_method_media_type={
-                'GET': default_media_type,
-                'POST': default_media_type,
+                "GET": default_media_type,
+                "POST": default_media_type,
             },
             default_media_type=default_media_type,
             **kwargs
@@ -174,15 +184,15 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         from weko_admin.models import FacetSearchSetting
         from weko_admin.utils import get_facet_search_query
 
-        page = request.values.get('page', 1, type=int)
-        size = request.values.get('size', 20, type=int)
-        community_id = request.values.get('community')
+        page = request.values.get("page", 1, type=int)
+        size = request.values.get("size", 20, type=int)
+        community_id = request.values.get("community")
 
         params = {}
         facets = get_facet_search_query()
-        search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
-        if facets and search_index and 'post_filters' in facets[search_index]:
-            post_filters = facets[search_index]['post_filters']
+        search_index = current_app.config["SEARCH_UI_SEARCH_INDEX"]
+        if facets and search_index and "post_filters" in facets[search_index]:
+            post_filters = facets[search_index]["post_filters"]
             for param in post_filters:
                 value = request.args.getlist(param)
                 if value:
@@ -193,19 +203,18 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         urlkwargs = dict()
         search_obj = self.search_class()
         search = search_obj.with_preference_param().params(version=True)
-        search = search[(page - 1) * size:page * size]
+        search = search[(page - 1) * size : page * size]
         search, qs_kwargs = self.search_factory(self, search)
 
-        query = request.values.get('q')
+        query = request.values.get("q")
         if query:
-            urlkwargs['q'] = query
+            urlkwargs["q"] = query
 
         # Execute search
-        weko_faceted_search_mapping = \
-            FacetSearchSetting.get_activated_facets_mapping()
+        weko_faceted_search_mapping = FacetSearchSetting.get_activated_facets_mapping()
         for param in params:
             query_key = weko_faceted_search_mapping[param]
-            search = search.post_filter({'terms': {query_key: params[param]}})
+            search = search.post_filter({"terms": {query_key: params[param]}})
 
         search_result = search.execute()
 
@@ -214,18 +223,23 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             size=size,
             _external=True,
         )
-        links = dict(self=url_for('weko_search_rest.recid_index', page=page,
-                                  **urlkwargs))
+        links = dict(
+            self=url_for("weko_search_rest.recid_index", page=page, **urlkwargs)
+        )
         if page > 1:
-            links['prev'] = url_for('weko_search_rest.recid_index',
-                                    page=page - 1, **urlkwargs)
-        if size * page < search_result.hits.total and \
-                size * page < self.max_result_window:
-            links['next'] = url_for('weko_search_rest.recid_index',
-                                    page=page + 1, **urlkwargs)
+            links["prev"] = url_for(
+                "weko_search_rest.recid_index", page=page - 1, **urlkwargs
+            )
+        if (
+            size * page < search_result.hits.total
+            and size * page < self.max_result_window
+        ):
+            links["next"] = url_for(
+                "weko_search_rest.recid_index", page=page + 1, **urlkwargs
+            )
         # aggs result identify
         rd = search_result.to_dict()
-        q = request.values.get('q') or ''
+        q = request.values.get("q") or ""
         lang = current_i18n.language
 
         try:
@@ -243,20 +257,19 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 "key": i["key"],
                 "doc_count": i["doc_count"],
                 "no_available": i["no_available"]["doc_count"],
-                "public_state": True if i['key'] in public_indexes else False
+                "public_state": True if i["key"] in public_indexes else False,
             }
 
-        is_perm_paths = qs_kwargs.get('is_perm_paths', [])
+        is_perm_paths = qs_kwargs.get("is_perm_paths", [])
         for p in paths:
             m = 0
             current_idx = {}
             for k in range(len(agp)):
                 if p.path == agp[k].get("key"):
-                    agp[k]["name"] = p.name if p.name and lang == "ja" \
-                        else p.name_en
+                    agp[k]["name"] = p.name if p.name and lang == "ja" else p.name_en
                     agp[k]["date_range"] = dict()
                     comment = p.comment
-                    agp[k]["comment"] = comment,
+                    agp[k]["comment"] = (comment,)
                     result = agp.pop(k)
                     result["comment"] = comment
                     current_idx = result
@@ -267,22 +280,20 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 index_info = Indexes.get_index(index_id=index_id)
                 rss_status = index_info.rss_status
                 nd = {
-                    'doc_count': 0,
-                    'key': p.path,
-                    'name': p.name if p.name and lang == "ja" else p.name_en,
-                    'date_range': {
-                        'pub_cnt': 0,
-                        'un_pub_cnt': 0},
-                    'rss_status': rss_status,
-                    'comment': p.comment,
+                    "doc_count": 0,
+                    "key": p.path,
+                    "name": p.name if p.name and lang == "ja" else p.name_en,
+                    "date_range": {"pub_cnt": 0, "un_pub_cnt": 0},
+                    "rss_status": rss_status,
+                    "comment": p.comment,
                 }
                 current_idx = nd
             _child_indexes = []
             for _path in is_perm_paths:
-                if (_path.startswith(str(p.path) + '/') or _path == p.path) \
-                        and items_count.get(str(_path.split('/')[-1])):
-                    _child_indexes.append(
-                        items_count[str(_path.split('/')[-1])])
+                if (
+                    _path.startswith(str(p.path) + "/") or _path == p.path
+                ) and items_count.get(str(_path.split("/")[-1])):
+                    _child_indexes.append(items_count[str(_path.split("/")[-1])])
             private_count, public_count = count_items(_child_indexes)
             current_idx["date_range"]["pub_cnt"] = public_count
             current_idx["date_range"]["un_pub_cnt"] = private_count
@@ -290,55 +301,53 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         agp.clear()
         # process index tree image info
         if len(nlst):
-            index_id = nlst[0].get('key').split('/')[-1]
+            index_id = nlst[0].get("key").split("/")[-1]
             index_info = Indexes.get_index(index_id=index_id)
             # update by weko_dev17 at 2019/04/04
             if len(index_info.image_name) > 0:
-                nlst[0]['img'] = index_info.image_name
-            nlst[0]['display_format'] = index_info.display_format
-            nlst[0]['rss_status'] = index_info.rss_status
+                nlst[0]["img"] = index_info.image_name
+            nlst[0]["display_format"] = index_info.display_format
+            nlst[0]["rss_status"] = index_info.rss_status
         # Update rss_status for index child
         for idx in range(0, len(nlst)):
-            index_id = nlst[idx].get('key').split('/')[-1]
+            index_id = nlst[idx].get("key").split("/")[-1]
             index_info = Indexes.get_index(index_id=index_id)
-            nlst[idx]['rss_status'] = index_info.rss_status
+            nlst[idx]["rss_status"] = index_info.rss_status
         agp.append(nlst)
-        for hit in rd['hits']['hits']:
+        for hit in rd["hits"]["hits"]:
             try:
                 # Register comment
                 _comment = list()
-                _comment.append(hit['_source']['title'][0])
-                hit['_source']['_comment'] = _comment
+                _comment.append(hit["_source"]["title"][0])
+                hit["_source"]["_comment"] = _comment
                 # Register custom_sort
-                cn = hit['_source']['control_number']
+                cn = hit["_source"]["control_number"]
                 if index_info.item_custom_sort.get(cn):
-                    hit['_source']['custom_sort'] = {
-                        str(index_info.id):
-                            str(index_info.item_custom_sort.get(cn))}
+                    hit["_source"]["custom_sort"] = {
+                        str(index_info.id): str(index_info.item_custom_sort.get(cn))
+                    }
             except Exception:
                 pass
 
         # add info (headings & page info)
         try:
             item_type_list = {}
-            for hit in rd['hits']['hits']:
+            for hit in rd["hits"]["hits"]:
                 # get item type schema
-                item_type_id = \
-                    hit['_source']['_item_metadata']['item_type_id']
+                item_type_id = hit["_source"]["_item_metadata"]["item_type_id"]
                 if item_type_id in item_type_list:
                     item_type = copy.deepcopy(item_type_list[item_type_id])
                 else:
-                    item_type = ItemType.query.filter_by(
-                        id=item_type_id).first()
+                    item_type = ItemType.query.filter_by(id=item_type_id).first()
                     item_type_list[item_type_id] = copy.deepcopy(item_type)
                 # heading
                 heading = get_heading_info(hit, lang, item_type)
-                hit['_source']['heading'] = heading
+                hit["_source"]["heading"] = heading
                 # page info
-                if 'pageStart' not in hit['_source']:
-                    hit['_source']['pageStart'] = []
-                if 'pageEnd' not in hit['_source']:
-                    hit['_source']['pageEnd'] = []
+                if "pageStart" not in hit["_source"]:
+                    hit["_source"]["pageStart"] = []
+                if "pageEnd" not in hit["_source"]:
+                    hit["_source"]["pageEnd"] = []
         except Exception as ex:
             current_app.logger.error(ex)
         return self.make_response(
@@ -352,35 +361,37 @@ class IndexSearchResource(ContentNegotiatedMethodView):
 def get_heading_info(data, lang, item_type):
     """Get heading info."""
     item_key = None
-    heading_subitem_key = 'subitem_heading_banner_headline'
-    subheading_subitem_key = 'subitem_heading_headline'
-    lang_subitem_key = 'subitem_heading_language'
+    heading_subitem_key = "subitem_heading_banner_headline"
+    subheading_subitem_key = "subitem_heading_headline"
+    lang_subitem_key = "subitem_heading_language"
     # get item id of heading
-    if item_type and 'properties' in item_type.schema:
-        for key, value in item_type.schema['properties'].items():
-            if 'properties' in value \
-                    and value['type'] == 'object' \
-                    and heading_subitem_key in value['properties']:
+    if item_type and "properties" in item_type.schema:
+        for key, value in item_type.schema["properties"].items():
+            if (
+                "properties" in value
+                and value["type"] == "object"
+                and heading_subitem_key in value["properties"]
+            ):
                 item_key = key
                 break
-            elif 'items' in value \
-                    and value['type'] == 'array' \
-                    and 'properties' in value['items'] \
-                    and heading_subitem_key in value['items']['properties']:
+            elif (
+                "items" in value
+                and value["type"] == "array"
+                and "properties" in value["items"]
+                and heading_subitem_key in value["items"]["properties"]
+            ):
                 item_key = key
                 break
 
     # get heading data
-    heading_text = ''
-    subheading_text = ''
-    if item_key \
-            and item_key in data['_source']['_item_metadata']:
-        temp = \
-            data['_source']['_item_metadata'][item_key]['attribute_value_mlt']
+    heading_text = ""
+    subheading_text = ""
+    if item_key and item_key in data["_source"]["_item_metadata"]:
+        temp = data["_source"]["_item_metadata"][item_key]["attribute_value_mlt"]
         if len(temp) > 1:
             for v in temp:
-                heading_tmp = ''
-                subheading_tmp = ''
+                heading_tmp = ""
+                subheading_tmp = ""
                 if heading_subitem_key in v:
                     heading_tmp = v[heading_subitem_key]
                 if subheading_subitem_key in v:
@@ -389,14 +400,13 @@ def get_heading_info(data, lang, item_type):
                     heading_text = heading_tmp
                     subheading_text = subheading_tmp
                     break
-        elif len(temp) == 1 \
-                or (heading_text == '' and subheading_text == ''):
+        elif len(temp) == 1 or (heading_text == "" and subheading_text == ""):
             if heading_subitem_key in temp[0]:
                 heading_text = temp[0][heading_subitem_key]
             if subheading_subitem_key in temp[0]:
                 subheading_text = temp[0][subheading_subitem_key]
     if subheading_text:
-        heading = heading_text + ' : ' + subheading_text
+        heading = heading_text + " : " + subheading_text
     else:
         heading = heading_text
 

@@ -19,3 +19,22 @@ include .editorconfig
 include .tx/config
 prune docs/_build
 recursive-include invenio_resourcesyncserver/translations *.po *.pot *.mo
+
+# added by check-manifest
+include *.rst
+include *.sh
+include *.txt
+include babel.ini
+include pytest.ini
+include tox.ini
+recursive-include docs *.bat
+recursive-include docs *.py
+recursive-include docs *.rst
+recursive-include docs *.txt
+recursive-include docs Makefile
+recursive-include examples *.py
+recursive-include examples *.sh
+recursive-include invenio_resourcesyncserver *.css
+recursive-include invenio_resourcesyncserver *.html
+recursive-include invenio_resourcesyncserver *.js
+recursive-include invenio_resourcesyncserver *.py

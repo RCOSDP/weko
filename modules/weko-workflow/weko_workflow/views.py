@@ -565,14 +565,15 @@ def display_activity(activity_id="0"):
     if action_endpoint in ['item_login',
                            'item_login_application',
                            'file_upload']:
-        activity_session = dict(
-            activity_id=activity_id,
-            action_id=activity_detail.action_id,
-            action_version=cur_action.action_version,
-            action_status=ActionStatusPolicy.ACTION_DOING,
-            commond=''
-        )
-        session['activity_info'] = activity_session
+        if activity.get_activity_by_id(activity_id).action_status != ActionStatusPolicy.ACTION_CANCELED:
+            activity_session = dict(
+                activity_id=activity_id,
+                action_id=activity_detail.action_id,
+                action_version=cur_action.action_version,
+                action_status=ActionStatusPolicy.ACTION_DOING,
+                commond=''
+            )
+            session['activity_info'] = activity_session
         # get item edit page info.
         step_item_login_url, need_file, need_billing_file, \
             record, json_schema, schema_form,\

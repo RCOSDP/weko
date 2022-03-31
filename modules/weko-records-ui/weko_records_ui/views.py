@@ -474,6 +474,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # get title name
     from weko_records.utils import get_options_and_order_list
     from weko_search_ui.utils import get_data_by_property
+    from weko_records.utils import get_options_and_order_list
     title_name = ''
     rights_values = {}
     accessRight = ''
@@ -871,6 +872,18 @@ def escape_newline(s):
     s = '<br />'.join(s.splitlines())
 
     return s
+
+def json_string_escape(s):
+    opt = ''
+    if s.endswith('"'):
+        opt = '"'
+    s = json.dumps(s, ensure_ascii=False)
+    s = s.strip('"')
+    return s+opt
+
+
+def xml_string_escape(s):
+    return escape(s)
 
 
 @blueprint.app_template_filter('preview_able')

@@ -21,13 +21,18 @@
 """Pytest configuration."""
 
 import shutil
+import os
 import tempfile
 
 import pytest
 from flask import Flask
+from flask import session, url_for
 from flask_babelex import Babel
 
 from weko_search_ui import WekoSearchUI
+from invenio_db import InvenioDB
+from invenio_i18n.ext import InvenioI18N, current_i18n
+from invenio_records_rest import InvenioRecordsREST
 
 
 @pytest.yield_fixture()
@@ -39,22 +44,29 @@ def instance_path():
 
 
 @pytest.fixture()
-def base_app(instance_path):
+def app():
     """Flask application fixture."""
-    app_ = Flask('testapp', instance_path=instance_path)
-    app_.config.update(
-        SECRET_KEY='SECRET_KEY',
+    app = Flask(__name__)
+    app.config.update(
+        DB_VERSIONING=False,
+        DB_VERSIONING_USER_MODEL=None,
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+            "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
+        ),
+        SQLALCHEMY_TRACK_MODIFICATIONS=True,
+        SECRET_KEY="SECRET_KEY",
         TESTING=True,
-        INDEX_IMG='indextree/36466818-image.jpg',
+        INDEX_IMG="indextree/36466818-image.jpg",
+        JSON_AS_ASCII=False,
+        BABEL_DEFAULT_LOCALE="en",
+        BABEL_DEFAULT_LANGUAGE="en",
+        BABEL_DEFAULT_TIMEZONE="Asia/Tokyo",
+        I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English")],
+        I18N_SESSION_KEY="my_session_key",
     )
-    Babel(app_)
-    WekoSearchUI(app_)
-
-    return app_
-
-
-@pytest.yield_fixture()
-def app(base_app):
-    """Flask application fixture."""
-    with base_app.app_context():
-        yield base_app
+    Babel(app)
+    InvenioDB(app)
+    InvenioI18N(app)
+    InvenioRecordsREST(app)
+    WekoSearchUI(app)
+    return app
