@@ -140,6 +140,11 @@
           font-weight: normal;
           vertical-align: top;
           width: min-content;
+
+          &:not(:empty) {
+            min-width: 10em;
+            box-sizing: border-box;
+          }
         }
 
         td {
@@ -147,6 +152,15 @@
           border: none;
           border-bottom: 1px solid @color-gray-05;
           vertical-align: top;
+        }
+
+        tr:last-child {
+          th {
+            border-bottom: none;
+          }
+          td {
+            border-bottom: none;
+          }
         }
 
         button {
