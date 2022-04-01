@@ -278,18 +278,18 @@ class QueryFileReportsHelper(object):
         # file-download
         for item in res['get-file-download-per-user-report']['buckets']:
             data = {}
-            data['cur_user_id'] = item['key']
-            data['total_download'] = item['value']
-            data_list.update({item['key']: data})
+            data['cur_user_id'] = item['cur_user_id']
+            data['total_download'] = item['count']
+            data_list.update({item['cur_user_id']: data})
         # file-preview
         for item in res['get-file-preview-per-user-report']['buckets']:
             data = {}
-            data['cur_user_id'] = item['key']
-            data['total_preview'] = item['value']
-            if data_list.get(item['key']):
-                data_list[item['key']].update(data)
+            data['cur_user_id'] = item['cur_user_id']
+            data['total_preview'] = item['count']
+            if data_list.get(item['cur_user_id']):
+                data_list[item['cur_user_id']].update(data)
             else:
-                data_list.update({item['key']: data})
+                data_list.update({item['cur_user_id']: data})
 
     @classmethod
     def Calculation(cls, res, data_list, all_groups=set()):

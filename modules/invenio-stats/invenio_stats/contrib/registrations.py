@@ -598,7 +598,7 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-file-download'.format(search_index_prefix),
                 doc_type='file-download-day-aggregation',
-                aggregated_fields=['cur_user_id', 'file_id'],
+                group_fields=['cur_user_id', 'count'],
             )
         ),
         dict(
@@ -607,7 +607,7 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-file-preview'.format(search_index_prefix),
                 doc_type='file-preview-day-aggregation',
-                aggregated_fields=['cur_user_id', 'file_id'],
+                group_fields=['cur_user_id', 'count'],
             )
         ),
         dict(
