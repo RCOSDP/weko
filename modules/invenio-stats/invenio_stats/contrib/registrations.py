@@ -350,7 +350,7 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-search'.format(search_index_prefix),
                 doc_type='search-day-aggregation',
-                aggregated_fields=['search_key', 'count'],
+                group_fields=['search_key', 'count'],
             )
         ),
         dict(
@@ -616,8 +616,8 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-record-view'.format(search_index_prefix),
                 doc_type='record-view-day-aggregation',
-                aggregated_fields=['record_id', 'record_index_names',
-                                   'cur_user_id', 'pid_value', 'record_name'],
+                group_fields=['record_id', 'record_index_names',
+                               'cur_user_id', 'pid_value', 'record_name', 'count'],
             )
         ),
         dict(

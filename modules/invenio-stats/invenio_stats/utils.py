@@ -438,7 +438,6 @@ class QuerySearchReportHelper(object):
             params = {'start_date': start_date,
                       'end_date': end_date + 'T23:59:59',
                       'agg_size': kwargs.get('agg_size', 0),
-                      'agg_sort': kwargs.get('agg_sort', {'value': 'desc'}),
                       'agg_filter': kwargs.get('agg_filter', None)}
 
             # Run query
@@ -450,9 +449,10 @@ class QuerySearchReportHelper(object):
             all = []
             for report in raw_result['buckets']:
                 current_report = {}
-                current_report['search_key'] = report['key']
-                current_report['count'] = report['value']
+                current_report['search_key'] = report['search_key']
+                current_report['count'] = report['count']
                 all.append(current_report)
+            all = sorted(all, key=lambda x:x['count'], reverse=True) 
             result['all'] = all
         except es_exceptions.NotFoundError as e:
             current_app.logger.debug(
@@ -723,18 +723,16 @@ class QueryRecordViewReportHelper(object):
     @classmethod
     def Calculation(cls, res, data_list):
         """Create response object."""
-        for item in res['buckets']:
-            for record in item['buckets']:
-                data = {'record_id': item['key'], 'index_names': record['key'],
-                        'total_all': record['value'], 'total_not_login': 0}
-                for user in record['buckets']:
-                    for pid in user['buckets']:
-                        data['pid_value'] = pid['key']
-                        for title in pid['buckets']:
-                            data['record_name'] = title['key']
-                    if user['key'] == 'guest':
-                        data['total_not_login'] += user['value']
-                data_list.append(data)
+        for item in res['buckets']: 
+            data = { 
+                'record_id': item['record_id'],
+                'record_name': item['record_name'],
+                'index_names': item['record_index_names'],
+                'total_all': item['count'],
+                'total_not_login': item['count']
+                    if item['cur_user_id'] == 'guest' else 0
+            }
+            data_list.append(data)
         cls.correct_record_title(data_list)
 
     @classmethod
