@@ -759,7 +759,7 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-top-view'.format(search_index_prefix),
                 doc_type='top-view-day-aggregation',
-                aggregated_fields=['remote_addr', 'hostname']
+                group_fields=['remote_addr', 'hostname', 'count']
             )
         ),
         dict(
@@ -777,7 +777,7 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-top-view'.format(search_index_prefix),
                 doc_type='top-view-day-aggregation',
-                aggregated_fields=['site_license_name'],
+                group_fields=['site_license_name', 'count'],
             )
         ),
         dict(
@@ -786,7 +786,7 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-record-view'.format(search_index_prefix),
                 doc_type='record-view-day-aggregation',
-                aggregated_fields=['site_license_name'],
+                group_fields=['site_license_name', 'count'],
             )
         ),
         dict(
@@ -795,7 +795,7 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-search'.format(search_index_prefix),
                 doc_type='search-day-aggregation',
-                aggregated_fields=['site_license_name'],
+                group_fields=['site_license_name', 'count'],
             )
         ),
         dict(
@@ -804,7 +804,7 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-file-download'.format(search_index_prefix),
                 doc_type='file-download-day-aggregation',
-                aggregated_fields=['site_license_name'],
+                group_fields=['site_license_name', 'count'],
             )
         ),
         dict(
@@ -813,7 +813,7 @@ def register_queries():
             query_config=dict(
                 index='{}-stats-file-preview'.format(search_index_prefix),
                 doc_type='file-preview-day-aggregation',
-                aggregated_fields=['site_license_name'],
+                group_fields=['site_license_name', 'count'],
             )
         )
     ]

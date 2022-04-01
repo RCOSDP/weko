@@ -512,13 +512,16 @@ class QueryCommonReportsHelper(object):
         def Calculation(res, data_list):
             """Calculation."""
             if 'top-view-total-per-host' in res:
+                temp_data = []
                 for item in res['top-view-total-per-host']['buckets']:
-                    for hostaccess in item['buckets']:
-                        data = {}
-                        data['host'] = hostaccess['key']
-                        data['ip'] = item['key']
-                        data['count'] = hostaccess['value']
-                        data_list.update({item['key']: data})
+                    data = {}
+                    data['host'] = item['hostname']
+                    data['ip'] = item['remote_addr']
+                    data['count'] = item['count']
+                    temp_data.append(data)
+                temp_data = sorted(temp_data, key=lambda x:x['count'], reverse=True)
+                for item in temp_data:
+                    data_list.update({item['ip']: item})
             elif 'top-view-total' in res:
                 for item in res['top-view-total']['buckets']:
                     data_list.update({'count': item['value']})
@@ -568,18 +571,19 @@ class QueryCommonReportsHelper(object):
                 other_list[k] = 0
                 if items:
                     for i in items['buckets']:
-                        if i['key'] == '':
-                            other_list[k] += i['value']
+                        if i['site_license_name'] == '':
+                            other_list[k] += i['count']
                         else:
-                            site_license_list[k] += i['value']
-                            if i['key'] in mapper:
-                                institution_name_list[mapper[i['key']]
-                                                      ][k] = i['value']
+                            site_license_list[k] += i['count']
+                            if i['site_license_name'] in mapper:
+                                institution_name_list[
+                                    mapper[i['site_license_name']]
+                                    ][k] = i['count']
                             else:
-                                mapper[i['key']] = len(institution_name_list)
+                                mapper[i['site_license_name']] = len(institution_name_list)
                                 data = {}
-                                data['name'] = i['key']
-                                data[k] = i['value']
+                                data['name'] = i['site_license_name']
+                                data[k] = i['count']
                                 institution_name_list.append(data)
             for k in query_list:
                 for i in range(len(institution_name_list)):
@@ -819,8 +823,6 @@ class QueryRecordViewReportHelper(object):
             all_query_cfg = current_stats.queries['get-record-view-report']
             all_query = all_query_cfg.query_class(**all_query_cfg.query_config)
 
-            params.update({'agg_sort': kwargs.get('agg_sort',
-                                                  {'value': 'desc'})})
             all_res = all_query.run(**params)
             cls.Calculation(all_res, all_list)
 
