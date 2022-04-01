@@ -873,6 +873,18 @@ def escape_newline(s):
 
     return s
 
+def json_string_escape(s):
+    opt = ''
+    if s.endswith('"'):
+        opt = '"'
+    s = json.dumps(s, ensure_ascii=False)
+    s = s.strip('"')
+    return s+opt
+
+
+def xml_string_escape(s):
+    return escape(s)
+
 
 @blueprint.app_template_filter('preview_able')
 def preview_able(file_json):

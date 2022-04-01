@@ -16,17 +16,26 @@ from weko_search_ui.utils import (
     handle_check_date,
     get_list_key_of_iso_date,
     handle_validate_item_import,
-    get_item_type,
+    get_item_type,handle_fill_system_item,
+    get_system_data_uri,
+    represents_int,
+    validation_date_property
 )
 from invenio_i18n.ext import InvenioI18N, current_i18n
 from invenio_i18n.babel import set_locale
 from weko_search_ui.config import (
     WEKO_REPO_USER,
     WEKO_SYS_USER,
+    WEKO_IMPORT_SYSTEM_ITEMS,
+    VERSION_TYPE_URI,
+ACCESS_RIGHT_TYPE_URI,
+RESOURCE_TYPE_URI
 )
+
 from unittest.mock import patch, Mock, MagicMock
 from weko_search_ui import WekoSearchUI
 from flask_babelex import Babel
+import copy
 
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
 
@@ -227,13 +236,44 @@ def test_get_content_workflow():
 # def parse_to_json_form(data: list, item_path_not_existed=[], include_empty=False):
 
 #def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
-def test_check_import_items(app,test_importdata,mocker_itemtype):
-    app.config['WEKO_SEARCH_UI_IMPORT_TMP_PREFIX'] = 'importtest'
-    with app.app_context():
-        for file in test_importdata:
-            assert check_import_items(file,False,False)==''
+# def test_check_import_items(app,test_importdata,mocker):
+#     app.config['WEKO_SEARCH_UI_IMPORT_TMP_PREFIX'] = 'importtest'
+#     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "item_map.json")
+#     with open(filepath,encoding="utf-8") as f:
+#         item_map = json.load(f)
+
+#     mocker.patch("weko_records.serializers.utils.get_mapping",return_value=item_map)
+#     with app.test_request_context():
+#         with set_locale('en'):
+#             for file in test_importdata:
+#                 assert check_import_items(file,False,False)==''
 
 # def unpackage_import_file(data_path: str, csv_file_name: str, force_new=False):
+
+def test_unpackage_import_file(app,mocker,mocker_itemtype):
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "item_map.json")
+    with open(filepath,encoding="utf-8") as f:
+        item_map = json.load(f)
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "item_type_mapping.json")
+    with open(filepath,encoding="utf-8") as f:
+        item_type_mapping = json.load(f)
+    mocker.patch("weko_records.serializers.utils.get_mapping",return_value=item_map)
+    mocker.patch("weko_records.api.Mapping.get_record",return_value=item_type_mapping)
+
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "unpackage_import_file/result.json")
+    with open(filepath,encoding="utf-8") as f:
+        result = json.load(f)
+    
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "unpackage_import_file/result_force_new.json")
+    with open(filepath,encoding="utf-8") as f:
+        result_force_new = json.load(f)
+    
+    path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "unpackage_import_file")
+    with app.test_request_context():
+        with set_locale('en'):
+            assert unpackage_import_file(path,'items.csv',False)==result
+            assert unpackage_import_file(path,'items.csv',True)==result_force_new
+
 
 # def getEncode(filepath):
 def test_getEncode():
@@ -275,10 +315,30 @@ def test_read_stats_csv(app,mocker_itemtype):
 # def handle_convert_validate_msg_to_jp(message: str):
 # def handle_validate_item_import(list_record, schema) -> list:
 
-def test_handle_validate_item_import():
-    handle_validate_item_import()
+def test_handle_validate_item_import(app,mocker_itemtype):
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "csv","data.json")
+    with open(filepath,encoding="utf-8") as f:
+        data = json.load(f)
+
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "list_records.json")
+    with open(filepath,encoding="utf-8") as f:
+        list_record = json.load(f)
+
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "list_records_result.json")
+    with open(filepath,encoding="utf-8") as f:
+        result = json.load(f)
+
+    with app.test_request_context():
+        with set_locale('en'):
+            assert handle_validate_item_import(list_record, data.get("item_type_schema", {}))==result
 
 # def represents_int(s):
+
+def test_represents_int():
+    assert represents_int("a") == False
+    assert represents_int("30") == True
+    assert represents_int("31.1") == False
+    
 
 # def get_item_type(item_type_id=0) -> dict:
 def test_get_item_type(mocker_itemtype):
@@ -351,6 +411,18 @@ def test_validation_file_open_date(app, test_records):
 
 # def validation_date_property(date_str):
 
+def test_validation_date_property():
+    # with pytest.raises(Exception):
+    assert validation_date_property("2022")==True
+    assert validation_date_property("2022-03")==True
+    assert validation_date_property("2022-1")==False
+    assert validation_date_property("2022-1-1")==False
+    assert validation_date_property("2022-2-31")==False
+    assert validation_date_property("2022-12-01")==True
+    assert validation_date_property("2022-02-31")==False
+    assert validation_date_property("2022-12-0110")==False
+    assert validation_date_property("hogehoge")==False
+
 # def get_list_key_of_iso_date(schemaform):
 def test_get_list_key_of_iso_date():
     form = os.path.join(
@@ -374,7 +446,100 @@ def test_get_list_key_of_iso_date():
 # def check_sub_item_is_system(key, schemaform):
 # def get_lifetime():
 # def get_system_data_uri(key_type, key):
+
+def test_get_system_data_uri():
+    data = [{"resource_type":RESOURCE_TYPE_URI}, {"version_type": VERSION_TYPE_URI}, {"access_right":ACCESS_RIGHT_TYPE_URI}]
+    for t in data:
+        for key_type in t.keys():
+            val = t.get(key_type)
+            for key in val.keys():
+                url = val.get(key)
+                assert get_system_data_uri(key_type,key)==url
+
 # def handle_fill_system_item(list_record):
+
+def test_handle_fill_system_item(app,test_list_records,mocker):
+
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "item_map.json")
+    with open(filepath,encoding="utf-8") as f:
+        item_map = json.load(f)
+
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "item_type_mapping.json")
+    with open(filepath,encoding="utf-8") as f:
+        item_type_mapping = json.load(f)
+    mocker.patch("weko_records.serializers.utils.get_mapping",return_value=item_map)
+    mocker.patch("weko_records.api.Mapping.get_record",return_value=item_type_mapping)
+    
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records/list_records_fill_system.json")
+    with open(filepath,encoding="utf-8") as f:
+        list_record = json.load(f)
+
+    items = []
+    items_result = []
+
+    for a in VERSION_TYPE_URI:
+        item = copy.deepcopy(list_record[0])
+        item['metadata']['item_1617265215918']['subitem_1522305645492']=a
+        item['metadata']['item_1617265215918']['subitem_1600292170262']=VERSION_TYPE_URI[a]
+        item['metadata']['item_1617186476635']['subitem_1522299639480']="open access"
+        item['metadata']['item_1617186476635']['subitem_1600958577026']=ACCESS_RIGHT_TYPE_URI["open access"]
+        item['metadata']['item_1617258105262']['resourcetype']="conference paper"
+        item['metadata']['item_1617258105262']['resourceuri']=RESOURCE_TYPE_URI["conference paper"]
+        items_result.append(item)
+        item2 = copy.deepcopy(item)
+        item2['metadata']['item_1617265215918']['subitem_1522305645492']=a
+        item2['metadata']['item_1617265215918']['subitem_1600292170262']=""
+        items.append(item2)
+    
+    for a in ACCESS_RIGHT_TYPE_URI:
+        item = copy.deepcopy(list_record[0])
+        item['metadata']['item_1617265215918']['subitem_1522305645492']="VoR"
+        item['metadata']['item_1617265215918']['subitem_1600292170262']=VERSION_TYPE_URI["VoR"]
+        item['metadata']['item_1617186476635']['subitem_1522299639480']=a
+        item['metadata']['item_1617186476635']['subitem_1600958577026']=ACCESS_RIGHT_TYPE_URI[a]
+        item['metadata']['item_1617258105262']['resourcetype']="conference paper"
+        item['metadata']['item_1617258105262']['resourceuri']=RESOURCE_TYPE_URI["conference paper"]
+        items_result.append(item)
+        item2 = copy.deepcopy(item)
+        item2['metadata']['item_1617186476635']['subitem_1522299639480']=a
+        item2['metadata']['item_1617186476635']['subitem_1600958577026']=""
+        items.append(item2)
+        
+    for a in RESOURCE_TYPE_URI:
+        item = copy.deepcopy(list_record[0])
+        item['metadata']['item_1617265215918']['subitem_1522305645492']="VoR"
+        item['metadata']['item_1617265215918']['subitem_1600292170262']=VERSION_TYPE_URI["VoR"]
+        item['metadata']['item_1617186476635']['subitem_1522299639480']="open access"
+        item['metadata']['item_1617186476635']['subitem_1600958577026']=ACCESS_RIGHT_TYPE_URI["open access"]
+        item['metadata']['item_1617258105262']['resourcetype']= a
+        item['metadata']['item_1617258105262']['resourceuri']=RESOURCE_TYPE_URI[a]
+        items_result.append(item)
+        item2 = copy.deepcopy(item)
+        item2['metadata']['item_1617258105262']['resourcetype']=a
+        item2['metadata']['item_1617258105262']['resourceuri']=""
+        items.append(item2)
+    
+    # with open("items.json","w") as f:
+    #     json.dump(items,f)
+    
+    # with open("items_result.json","w") as f:
+    #     json.dump(items_result,f)
+    
+
+    # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data/handle_fill_system_item/items.json")
+    # with open(filepath,encoding="utf-8") as f:
+    #     items = json.load(f)
+    
+    # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data/handle_fill_system_item/items_result.json")
+    # with open(filepath,encoding="utf-8") as f:
+    #     items_result = json.load(f)
+
+    with app.test_request_context():
+        with set_locale('en'):
+            handle_fill_system_item(items)
+            assert len(items)==len(items_result)
+            assert items==items_result
+
 # def get_thumbnail_key(item_type_id=0):
 # def handle_check_thumbnail_file_type(thumbnail_paths):
 # def handle_check_metadata_not_existed(str_keys, item_type_id=0):
