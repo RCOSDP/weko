@@ -22,15 +22,17 @@
 import os
 import shutil
 import tempfile
+import json
 
 import pytest
-from flask import Flask
+from flask import Flask, request, url_for
 from flask_babelex import Babel
 from invenio_db import InvenioDB, db
 from invenio_accounts import InvenioAccounts
-from invenio_accounts.testutils import create_test_user
+from invenio_accounts.testutils import create_test_user, login_user_via_session
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers
+from invenio_search import InvenioSearch
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
@@ -63,6 +65,7 @@ def base_app(instance_path, request):
     InvenioDB(app_)
     InvenioAccounts(app_)
     InvenioAccess(app_)
+    InvenioSearch(app_)
     WekoAuthors(app_)
     _database_setup(app_, request)
 
@@ -146,3 +149,17 @@ def users(app):
         {'email': sysadmin.email, 'id': sysadmin.id,
          'password': sysadmin.password_plaintext, 'obj': sysadmin},
     ]
+
+
+@pytest.fixture()
+def id_prefix(client, users):
+    """Create test prefix."""
+    # login for create prefix
+    login_user_via_session(client=client, email=users[4]['email'])
+
+    input = {'name': 'testprefix', 'scheme': 'testprefix',
+             'url': 'https://testprefix/##'}
+    res = client.put('/api/authors/add_prefix',
+                     data=json.dumps(input),
+                     content_type='application/json')
+    client.get(url_for('security.logout'))

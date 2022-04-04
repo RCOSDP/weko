@@ -125,74 +125,67 @@ def test_create_prefix_sysadmin(client, users):
     assert res_dict['msg'] == 'Success'
 
 
-def test_update_prefix_user(client, users):
+def test_update_prefix_guest(client, id_prefix):
     """
     Test of update author prefix.
     :param client: The flask client.
     """
-    # login for create prefix
-    login_user_via_session(client=client, email=users[4]['email'])
+    input2 = {'id': 1, 'name': 'testchanged', 'scheme': 'testchanged',
+              'url': 'https://testchanged/##'}
+    res = client.post('/api/authors/edit_prefix',
+                      data=json.dumps(input2),
+                      content_type='application/json')
+    assert res.status_code == 302
+    # TODO check that the path changed
+    # assert res.url == url_for('security.login')
 
-    input = {'name': 'test4', 'scheme': 'test4', 'url': 'https://test4/##'}
-    res = client.put('/api/authors/add_prefix',
-                     data=json.dumps(input),
-                     content_type='application/json')
-    client.get(url_for('security.logout'))
 
+def test_update_prefix_user(client, users, id_prefix):
+    """
+    Test of update author prefix.
+    :param client: The flask client.
+    """
     # login
     login_user_via_session(client=client, email=users[0]['email'])
     input2 = {'id': 1, 'name': 'test0changed', 'scheme': 'test0changed',
               'url': 'https://test0changed/##'}
-    client.put('/api/authors/add_prefix',
-               data=json.dumps(input),
-               content_type='application/json')
     res = client.post('/api/authors/edit_prefix',
                       data=json.dumps(input2),
                       content_type='application/json')
     assert res.status_code == 403
 
 
-def test_update_prefix_contributor(client, users):
+def test_update_prefix_contributor(client, users, id_prefix):
     """
     Test of update author prefix.
     :param client: The flask client.
     """
     # login
     login_user_via_session(client=client, email=users[1]['email'])
-
-    input = {'name': 'test1', 'scheme': 'test1', 'url': 'https://test1/##'}
     input2 = {'id': 1, 'name': 'test1changed', 'scheme': 'test1changed',
               'url': 'https://test1changed/##'}
-    client.put('/api/authors/add_prefix',
-               data=json.dumps(input),
-               content_type='application/json')
     res = client.post('/api/authors/edit_prefix',
                       data=json.dumps(input2),
                       content_type='application/json')
     assert res.status_code == 403
 
 
-def test_update_prefix_comadmin(client, users):
+def test_update_prefix_comadmin(client, users, id_prefix):
     """
     Test of update author prefix.
     :param client: The flask client.
     """
     # login
     login_user_via_session(client=client, email=users[2]['email'])
-
-    input = {'name': 'test2', 'scheme': 'test2', 'url': 'https://test2/##'}
     input2 = {'id': 1, 'name': 'test2changed', 'scheme': 'test2changed',
               'url': 'https://test2changed/##'}
-    client.put('/api/authors/add_prefix',
-               data=json.dumps(input),
-               content_type='application/json')
     res = client.post('/api/authors/edit_prefix',
                       data=json.dumps(input2),
                       content_type='application/json')
     assert res.status_code == 403
 
 
-def test_update_prefix_repoadmin(client, users):
+def test_update_prefix_repoadmin(client, users, id_prefix):
     """
     Test of update author prefix.
     :param client: The flask client.
@@ -200,12 +193,8 @@ def test_update_prefix_repoadmin(client, users):
     # login
     login_user_via_session(client=client, email=users[3]['email'])
 
-    input = {'name': 'test3', 'scheme': 'test3', 'url': 'https://test3/##'}
     input2 = {'id': 1, 'name': 'test3changed', 'scheme': 'test3changed',
               'url': 'https://test3changed/##'}
-    client.put('/api/authors/add_prefix',
-               data=json.dumps(input),
-               content_type='application/json')
     res = client.post('/api/authors/edit_prefix',
                       data=json.dumps(input2),
                       content_type='application/json')
@@ -214,7 +203,7 @@ def test_update_prefix_repoadmin(client, users):
     assert res_dict['msg'] == 'Success'
 
 
-def test_update_prefix_sysadmin(client, users):
+def test_update_prefix_sysadmin(client, users, id_prefix):
     """
     Test of update author prefix.
     :param client: The flask client.
@@ -222,12 +211,8 @@ def test_update_prefix_sysadmin(client, users):
     # login
     login_user_via_session(client=client, email=users[4]['email'])
 
-    input = {'name': 'test4', 'scheme': 'test4', 'url': 'https://test4/##'}
     input2 = {'id': 1, 'name': 'test4changed', 'scheme': 'test4changed',
               'url': 'https://test4changed/##'}
-    client.put('/api/authors/add_prefix',
-               data=json.dumps(input),
-               content_type='application/json')
     res = client.post('/api/authors/edit_prefix',
                       data=json.dumps(input2),
                       content_type='application/json')
@@ -236,39 +221,52 @@ def test_update_prefix_sysadmin(client, users):
     assert res_dict['msg'] == 'Success'
 
 
-def test_delete_prefix_contributor(client, users):
+def test_delete_prefix_guest(client, id_prefix):
     """
     Test of delete author prefix.
     :param client: The flask client.
     """
-    # login
+    # delete prefix
+    res = client.delete('/api/authors/delete_prefix/1')
+    assert res.status_code == 302
+    # TODO check that the path changed
+    # assert res.url == url_for('security.login')
+
+
+def test_delete_prefix_user(client, users, id_prefix):
+    """
+    Test of delete author prefix.
+    :param client: The flask client.
+    """
+    # login for delete prefix
+    login_user_via_session(client=client, email=users[0]['email'])
+    res = client.delete('/api/authors/delete_prefix/1')
+    assert res.status_code == 403
+
+
+def test_delete_prefix_contributor(client, users, id_prefix):
+    """
+    Test of delete author prefix.
+    :param client: The flask client.
+    """
+    # login for delete prefix
     login_user_via_session(client=client, email=users[1]['email'])
-
-    input = {'name': 'test1', 'scheme': 'test1', 'url': 'https://test1/##'}
-    client.put('/api/authors/add_prefix',
-               data=json.dumps(input),
-               content_type='application/json')
     res = client.delete('/api/authors/delete_prefix/1')
     assert res.status_code == 403
 
 
-def test_delete_prefix_comadmin(client, users):
+def test_delete_prefix_comadmin(client, users, id_prefix):
     """
     Test of delete author prefix.
     :param client: The flask client.
     """
-    # login
+    # login for delete prefix
     login_user_via_session(client=client, email=users[2]['email'])
-
-    input = {'name': 'test2', 'scheme': 'test2', 'url': 'https://test2/##'}
-    client.put('/api/authors/add_prefix',
-               data=json.dumps(input),
-               content_type='application/json')
     res = client.delete('/api/authors/delete_prefix/1')
     assert res.status_code == 403
 
 
-def test_delete_prefix_repoadmin(client, users):
+def test_delete_prefix_repoadmin(client, users, id_prefix):
     """
     Test of delete author prefix.
     :param client: The flask client.
@@ -276,16 +274,12 @@ def test_delete_prefix_repoadmin(client, users):
     # login
     login_user_via_session(client=client, email=users[3]['email'])
 
-    input = {'name': 'test3', 'scheme': 'test3', 'url': 'https://test3/##'}
-    client.put('/api/authors/add_prefix',
-               data=json.dumps(input),
-               content_type='application/json')
     res = client.delete('/api/authors/delete_prefix/1')
     res_dict = get_json(res)
     assert res_dict['msg'] == 'Success'
 
 
-def test_delete_prefix_sysadmin(client, users):
+def test_delete_prefix_sysadmin(client, users, id_prefix):
     """
     Test of delete author prefix.
     :param client: The flask client.
@@ -293,10 +287,136 @@ def test_delete_prefix_sysadmin(client, users):
     # login
     login_user_via_session(client=client, email=users[4]['email'])
 
-    input = {'name': 'test4', 'scheme': 'test4', 'url': 'https://test4/##'}
-    client.put('/api/authors/add_prefix',
-               data=json.dumps(input),
-               content_type='application/json')
     res = client.delete('/api/authors/delete_prefix/1')
     res_dict = get_json(res)
     assert res_dict['msg'] == 'Success'
+
+
+def test_getById_guest(client):
+    """
+    Test of get author data by id.
+    :param client: The flask client.
+    """
+    # TODO create author
+
+    input = {"Id": "1"}
+    res = client.post('/api/authors/search_edit',
+                      data=json.dumps(input),
+                      content_type='application/json')
+    assert res.status_code == 302
+    # TODO check that the path changed
+    # assert res.url == url_for('security.login')
+
+
+def test_getById_user(client, users):
+    """
+    Test of get author data by id.
+    :param client: The flask client.
+    """
+    # TODO create author
+
+    login_user_via_session(client=client, email=users[0]['email'])
+    input = {"Id": "1"}
+    res = client.post('/api/authors/search_edit',
+                      data=json.dumps(input),
+                      content_type='application/json')
+    assert res.status_code == 403
+
+
+def test_gatherById_guest(client):
+    """
+    Test of gather author data by id.
+    :param client: The flask client.
+    """
+    input = {'idFrom': ['1', '2'], 'idFromPkId': ['1', '2'], 'idTo': '1'}
+    res = client.post('/api/authors/gather',
+                      data=json.dumps(input),
+                      content_type='application/json')
+    assert res.status_code == 302
+    # TODO check that the path changed
+    # assert res.url == url_for('security.login')
+
+
+def test_gatherById_user(client, users):
+    """
+    Test of gather author data by id.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[0]['email'])
+    input = {'idFrom': ['1', '2'], 'idFromPkId': ['1', '2'], 'idTo': '1'}
+    res = client.post('/api/authors/gather',
+                      data=json.dumps(input),
+                      content_type='application/json')
+    assert res.status_code == 403
+
+
+def test_gatherById_contributor(client, users):
+    """
+    Test of gather author data by id.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[1]['email'])
+    input = {'idFrom': ['1', '2'], 'idFromPkId': ['1', '2'], 'idTo': '1'}
+    res = client.post('/api/authors/gather',
+                      data=json.dumps(input),
+                      content_type='application/json')
+    assert res.status_code == 403
+
+
+def test_gatherById_comadmin(client, users):
+    """
+    Test of gather author data by id.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[2]['email'])
+    input = {'idFrom': ['1', '2'], 'idFromPkId': ['1', '2'], 'idTo': '1'}
+    res = client.post('/api/authors/gather',
+                      data=json.dumps(input),
+                      content_type='application/json')
+    assert res.status_code == 403
+
+
+def test_gatherById_repoadmin(client, users):
+    """
+    Test of gather author data by id.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[3]['email'])
+    input = {'idFrom': ['1', '2'], 'idFromPkId': ['1', '2'], 'idTo': '1'}
+    res = client.post('/api/authors/gather',
+                      data=json.dumps(input),
+                      content_type='application/json')
+    assert res.status_code == 200
+    res_dict = get_json(res)
+    assert res_dict['code'] == 204
+    assert res_dict['msg'] == 'Failed'
+
+
+def test_gatherById_sysadmin(client, users):
+    """
+    Test of gather author data by id.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[4]['email'])
+    input = {'idFrom': ['1', '2'], 'idFromPkId': ['1', '2'], 'idTo': '1'}
+    res = client.post('/api/authors/gather',
+                      data=json.dumps(input),
+                      content_type='application/json')
+    assert res.status_code == 200
+    res_dict = get_json(res)
+    assert res_dict['code'] == 204
+    assert res_dict['msg'] == 'Failed'
+
+
+def test_gatherById_guest(client):
+    """
+    Test of gather author data by id.
+    :param client: The flask client.
+    """
+    input = {'idFrom': ['1', '2'], 'idFromPkId': ['1', '2'], 'idTo': '1'}
+    res = client.post('/api/authors/gather',
+                      data=json.dumps(input),
+                      content_type='application/json')
+    assert res.status_code == 302
+    # TODO check that the path changed
+    # assert res.url == url_for('security.login')

@@ -401,7 +401,7 @@ def gatherById():
     except Exception as ex:
         current_app.logger.debug(ex)
         db.session.rollback()
-        return jsonify({'code': 204, 'msg': 'Faild'})
+        return jsonify({'code': 204, 'msg': 'Failed'})
 
     update_author_q = {
         "query": {
