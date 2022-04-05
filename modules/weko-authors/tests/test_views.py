@@ -420,3 +420,236 @@ def test_gatherById_guest(client):
     assert res.status_code == 302
     # TODO check that the path changed
     # assert res.url == url_for('security.login')
+
+
+def test_get_guest(client):
+    """
+    Test of search and get author data.
+    :param client: The flask client.
+    """
+    input = {"searchKey": "", "pageNumber": 1, "numOfPage": 25,
+             "sortKey": "", "sortOrder": ""}
+    res = client.post('/api/authors/search',
+                      data=json.dumps(input),
+                      content_type='application/json')
+    assert res.status_code == 302
+    # TODO check that the path changed
+    # assert res.url == url_for('security.login')
+
+
+def test_get_user(client, users):
+    """
+    Test of search and get author data.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[0]['email'])
+    input = {"searchKey": "", "pageNumber": 1, "numOfPage": 25,
+             "sortKey": "", "sortOrder": ""}
+    res = client.post('/api/authors/search',
+                      data=json.dumps(input),
+                      content_type='application/json')
+    assert res.status_code == 403
+
+
+def test_create_guest(client):
+    """
+    Test of create author.
+    :param client: The flask client.
+    """
+    input = {
+            "id": "",
+            "pk_id": "",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "タロウ",
+                    "fullName": "",
+                    "language": "ja-Kana",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "true"
+                }
+            ],
+            "authorIdInfo": [
+                {
+                    "idType": "2",
+                    "authorId": "0123",
+                    "authorIdShowFlg": "true"
+                }
+            ],
+            "emailInfo": [
+                {"email": "example@com"}
+            ]
+    }
+    res = client.post('/api/authors/add',
+                      data=json.dumps(input),
+                      content_type='application/json')
+    assert res.status_code == 302
+    # TODO check that the path changed
+    # assert res.url == url_for('security.login')
+
+
+def test_create_user(client, users):
+    """
+    Test of create author.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[0]['email'])
+    input = {
+            "id": "",
+            "pk_id": "",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "タロウ",
+                    "fullName": "",
+                    "language": "ja-Kana",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "true"
+                }
+            ],
+            "authorIdInfo": [
+                {
+                    "idType": "2",
+                    "authorId": "0123",
+                    "authorIdShowFlg": "true"
+                }
+            ],
+            "emailInfo": [
+                {"email": "example@com"}
+            ]
+    }
+    res = client.post('/api/authors/add',
+                      data=json.dumps(input),
+                      content_type='application/json')
+    assert res.status_code == 403
+
+
+def test_mapping_guest(client):
+    """
+    Test of mapping author data.
+    :param client: The flask client.
+    """
+    input = {"id": "1"}
+    res = client.post('/api/authors/input',
+                      data=json.dumps(input),
+                      content_type='application/json')
+    assert res.status_code == 302
+    # TODO check that the path changed
+    # assert res.url == url_for('security.login')
+
+
+def test_mapping_user(client, users):
+    """
+    Test of mapping author data.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[0]['email'])
+    input = {"id": "1"}
+    res = client.post('/api/authors/input',
+                      data=json.dumps(input),
+                      content_type='application/json')
+    assert res.status_code == 403
+
+
+def test_update_author_guest(client):
+    """
+    Test of update author data.
+    :param client: The flask client.
+    """
+    # TODO create author
+    input = {
+            "id": "1",
+            "pk_id": "",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "タロウ",
+                    "fullName": "",
+                    "language": "ja-Kana",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "true"
+                }
+            ],
+            "authorIdInfo": [
+                {
+                    "idType": "2",
+                    "authorId": "0123",
+                    "authorIdShowFlg": "true"
+                }
+            ],
+            "emailInfo": [
+                {"email": "examplechanged@com"}
+            ]
+    }
+    res = client.post('/api/authors/edit',
+                      data=json.dumps(input),
+                      content_type='application/json')
+    assert res.status_code == 302
+    # TODO check that the path changed
+    # assert res.url == url_for('security.login')
+
+
+def test_update_author_user(client, users):
+    """
+    Test of update author data.
+    :param client: The flask client.
+    """
+    # TODO create author
+    login_user_via_session(client=client, email=users[0]['email'])
+    input = {
+            "id": "1",
+            "pk_id": "",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "タロウ",
+                    "fullName": "",
+                    "language": "ja-Kana",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "true"
+                }
+            ],
+            "authorIdInfo": [
+                {
+                    "idType": "2",
+                    "authorId": "0123",
+                    "authorIdShowFlg": "true"
+                }
+            ],
+            "emailInfo": [
+                {"email": "examplechanged@com"}
+            ]
+    }
+    res = client.post('/api/authors/edit',
+                      data=json.dumps(input),
+                      content_type='application/json')
+    assert res.status_code == 403
+
+
+def test_delete_author_guest(client):
+    """
+    Test of delete author data.
+    :param client: The flask client.
+    """
+    # TODO create author
+    input = {"pk_id": "1"}
+    res = client.post('/api/authors/delete',
+                      data=json.dumps(input),
+                      content_type='application/json')
+    assert res.status_code == 302
+    # TODO check that the path changed
+    # assert res.url == url_for('security.login')
+
+
+def test_delete_author_user(client, users):
+    """
+    Test of delete author data.
+    :param client: The flask client.
+    """
+    # TODO create author
+    login_user_via_session(client=client, email=users[0]['email'])
+    input = {"pk_id": "1"}
+    res = client.post('/api/authors/delete',
+                      data=json.dumps(input),
+                      content_type='application/json')
+    assert res.status_code == 403

@@ -32,6 +32,7 @@ from invenio_accounts import InvenioAccounts
 from invenio_accounts.testutils import create_test_user, login_user_via_session
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers
+from invenio_indexer import InvenioIndexer
 from invenio_search import InvenioSearch
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
@@ -65,6 +66,7 @@ def base_app(instance_path, request):
     InvenioDB(app_)
     InvenioAccounts(app_)
     InvenioAccess(app_)
+    InvenioIndexer(app_)
     InvenioSearch(app_)
     WekoAuthors(app_)
     _database_setup(app_, request)
