@@ -31,7 +31,7 @@ from . import config
 from .datastore import SessionAwareSQLAlchemyUserDatastore
 from .hash import InvenioAesEncryptedEmail, _to_binary
 from .models import Role, User
-from .sessions import login_listener, logout_listener
+from .sessions import login_listener, logout_listener, session_update
 from .utils import set_session_info
 
 
@@ -319,3 +319,5 @@ class InvenioAccountsUI(InvenioAccounts):
         @app.before_request
         def make_session_permanent():
             session.permanent = True
+
+        session_update(app)
