@@ -229,48 +229,48 @@ class QueryFileReportsHelper(object):
     @classmethod
     def calc_file_stats_reports(cls, res, data_list, all_groups):
         """Create response object for file_stats_reports."""
-        for file in res['buckets']:
-            for index in file['buckets']:
+        mapper = {}
+        for i in res['buckets']:
+            key_str = '{}_{}'.format(i['file_key'], i['index_list'])
+            if key_str in mapper:
+                data = data_list[mapper[key_str]]
+            else:
+                mapper[key_str] = len(data_list)
                 data = {}
                 data['group_counts'] = {}  # Keep track of downloads per group
-                data['file_key'] = file['key']
-                data['index_list'] = index['key']
-                data['total'] = index['value']
+                data['file_key'] = i['file_key']
+                data['index_list'] = i['index_list']
+                data['total'] = 0
                 data['admin'] = 0
                 data['reg'] = 0
                 data['login'] = 0
                 data['no_login'] = 0
                 data['site_license'] = 0
-                for user in index['buckets']:
-                    for license in user['buckets']:
-                        if license['key'] == 1:
-                            data['site_license'] += license['value']
-                            break
-
-                    userrole = user['key']
-                    count = user['value']
-
-                    if userrole == 'guest':
-                        data['no_login'] += count
-                    elif userrole == 'Contributor':
-                        data['reg'] += count
-                        data['login'] += count
-                    elif 'Administrator' in userrole:
-                        data['admin'] += count
-                        data['login'] += count
-                    else:
-                        data['login'] += count
-
-                    # Get groups counts
-                    if 'field' in user['buckets'][0]:
-                        for group_acc in user['buckets'][0]['buckets']:
-                            group_list = group_acc['key']
-                            data['group_counts'] = cls.calc_per_group_counts(
-                                group_list, data['group_counts'], group_acc['value'])
-
-                    # Keep track of groups seen
-                    all_groups.update(data['group_counts'].keys())
                 data_list.append(data)
+
+            count = i['count']
+            data['total'] += count
+            if i['site_license_flag'] == 1:
+                data['site_license'] += count
+            if i['userrole'] == 'guest':
+                data['no_login'] += count
+            elif i['userrole'] == 'Contributor':
+                data['reg'] += count
+                data['login'] += count
+            elif 'Administrator' in i['userrole']:
+                data['admin'] += count
+                data['login'] += count
+            else:
+                data['login'] += count
+
+            # Get groups counts
+            if 'user_group_names' in i:
+                group_list = i['user_group_names']
+                data['group_counts'] = cls.calc_per_group_counts(
+                    group_list, data['group_counts'], count)
+            
+            # Keep track of groups seen
+            all_groups.update(data['group_counts'].keys())
 
     @classmethod
     def calc_file_per_using_report(cls, res, data_list):
