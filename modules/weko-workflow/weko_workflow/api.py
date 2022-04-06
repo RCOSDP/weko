@@ -1877,6 +1877,8 @@ class WorkActivity(object):
         steps = []
         his = WorkActivityHistory()
         histories = his.get_activity_history_list(activity_id)
+        if not histories:
+            abort(404)
         history_dict = {}
         activity = WorkActivity()
         activity_detail = activity.\
