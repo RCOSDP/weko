@@ -25,6 +25,7 @@ import six
 from dateutil import parser
 from elasticsearch import VERSION as ES_VERSION
 from elasticsearch import exceptions as es_exceptions
+from elasticsearch_dsl.aggs import A
 from elasticsearch.helpers import bulk
 from elasticsearch_dsl import Search
 from flask import current_app, request, session
@@ -656,11 +657,11 @@ class QueryRecordViewPerIndexReportHelper(object):
     """RecordViewPerIndex helper class."""
 
     nested_path = 'record_index_list'
-    first_level_field = 'record_index_list.index_id'
-    second_level_field = 'record_index_list.index_name'
+    index_id_field = 'record_index_list.index_id'
+    index_name_field = 'record_index_list.index_name'
 
     @classmethod
-    def get_nested_agg(cls, start_date, end_date):
+    def build_query(cls, start_date, end_date, after_key=None):
         """Get nested aggregation by index id."""
         agg_query = Search(
             using=current_search_client,
@@ -675,26 +676,27 @@ class QueryRecordViewPerIndexReportHelper(object):
             agg_query = agg_query.filter(
                 'range', **{'timestamp': time_range}).filter(
                 'term', **{'is_restricted': False})
-        agg_query.aggs.bucket(cls.nested_path, 'nested',
-                              path=cls.nested_path) \
-            .bucket(cls.first_level_field, 'terms',
-                    field=cls.first_level_field,
-                    size=current_app.config['STATS_ES_INTEGER_MAX_VALUE']) \
-            .bucket(cls.second_level_field, 'terms',
-                    field=cls.second_level_field,
-                    size=current_app.config['STATS_ES_INTEGER_MAX_VALUE'])
-        return agg_query.execute().to_dict()
+
+        size = current_app.config['STATS_ES_INTEGER_MAX_VALUE']
+        sources = [{cls.index_id_field: A('terms', field=cls.index_id_field)},
+                   {cls.index_name_field: A('terms', field=cls.index_name_field)}]
+
+        base_agg = agg_query.aggs.bucket(cls.nested_path, 'nested', path=cls.nested_path)
+        if after_key:
+            base_agg.bucket('my_buckets', 'composite', size=size, sources=sources, after=after_key)
+        else:
+            base_agg.bucket('my_buckets', 'composite', size=size, sources=sources)
+        return agg_query
 
     @classmethod
-    def parse_bucket_response(cls, res, date):
+    def parse_bucket_response(cls, aggs, result):
         """Parse raw aggregation response."""
-        aggs = res['aggregations'][cls.nested_path]
-        result = {'date': date, 'all': [], 'total': aggs['doc_count']}
-        for id_agg in aggs[cls.first_level_field]['buckets']:
-            for name_agg in id_agg[cls.second_level_field]['buckets']:
-                result['all'].append({'index_name': name_agg['key'],
-                                      'view_count': id_agg['doc_count']})
-        return result
+        count = 0
+        for data in aggs['my_buckets']['buckets']:
+            result['all'].append({'index_name': data['key'][cls.index_name_field],
+                                  'view_count': data['doc_count']})
+            count += data['doc_count']
+        return count
 
     @classmethod
     def get(cls, **kwargs):
@@ -711,8 +713,25 @@ class QueryRecordViewPerIndexReportHelper(object):
             _, lastday = calendar.monthrange(year, month)
             start_date = query_month + '-01'
             end_date = query_month + '-' + str(lastday).zfill(2) + 'T23:59:59'
-            raw_result = cls.get_nested_agg(start_date, end_date)
-            result = cls.parse_bucket_response(raw_result, query_month)
+            result = {'date': query_month, 'all': [], 'total': 0}
+            first_search = True
+            after_key = None
+            total = 1
+            count = 0
+            while count < total and (after_key or first_search):
+                agg_query = cls.build_query(start_date, end_date, after_key)
+                current_app.logger.debug(agg_query.to_dict())
+                temp_res = agg_query.execute().to_dict()
+                aggs = temp_res['aggregations'][cls.nested_path]
+                if 'after_key' in aggs['my_buckets']:
+                    after_key = aggs['my_buckets']['after_key']
+                else:
+                    after_key = None
+                if first_search:
+                    first_search = False
+                    result['total'] = aggs['doc_count']
+                    total = aggs['doc_count']
+                count += cls.parse_bucket_response(aggs, result)
 
         except Exception as e:
             current_app.logger.debug(e)
