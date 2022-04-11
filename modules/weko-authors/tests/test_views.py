@@ -23,8 +23,32 @@
 
 import json
 
-from flask import url_for
+from mock import patch, MagicMock
 from invenio_accounts.testutils import login_user_via_session
+import sqlalchemy
+
+
+class MockIndexer():
+    def __init__(self):
+        self.client = self.MockClient()
+
+    class MockClient():
+        def __init__(self):
+            pass
+
+        def search(self, index=None, doc_type=None, body=None):
+            return {"hits": {"hits": []}}
+
+        def index(self, index=None, doc_type=None, body=None):
+            return {}
+
+        def get(self, index=None, doc_type=None, id=None, body=None):
+            return {"_source": {"authorNameInfo": "", "authorIdInfo": "",
+                                "emailInfo": ""}}
+
+        def update(self, index=None, doc_type=None, id=None, body=None):
+            return {"_source": {"authorNameInfo": "", "authorIdInfo": "",
+                                "emailInfo": ""}}
 
 
 def get_json(response):
@@ -297,8 +321,6 @@ def test_getById_guest(client):
     Test of get author data by id.
     :param client: The flask client.
     """
-    # TODO create author
-
     input = {"Id": "1"}
     res = client.post('/api/authors/search_edit',
                       data=json.dumps(input),
@@ -313,14 +335,78 @@ def test_getById_user(client, users):
     Test of get author data by id.
     :param client: The flask client.
     """
-    # TODO create author
-
     login_user_via_session(client=client, email=users[0]['email'])
     input = {"Id": "1"}
     res = client.post('/api/authors/search_edit',
                       data=json.dumps(input),
                       content_type='application/json')
     assert res.status_code == 403
+
+
+def test_getById_contributor(client, users):
+    """
+    Test of get author data by id.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[1]['email'])
+    input = {"Id": "1"}
+    mock_indexer = MagicMock(side_effect=MockIndexer)
+    with patch('weko_authors.views.RecordIndexer', mock_indexer):
+        res = client.post('/api/authors/search_edit',
+                          data=json.dumps(input),
+                          content_type='application/json')
+        assert res.status_code == 403
+        mock_indexer.assert_called_once()
+
+
+def test_getById_comadmin(client, users):
+    """
+    Test of get author data by id.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[2]['email'])
+    input = {"Id": "1"}
+    mock_indexer = MagicMock(side_effect=MockIndexer)
+    with patch('weko_authors.views.RecordIndexer', mock_indexer):
+
+        res = client.post('/api/authors/search_edit',
+                          data=json.dumps(input),
+                          content_type='application/json')
+        assert res.status_code == 403
+        mock_indexer.assert_called_once()
+
+
+def test_getById_repoadmin(client, users):
+    """
+    Test of get author data by id.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[3]['email'])
+    input = {"Id": "1"}
+    mock_indexer = MagicMock(side_effect=MockIndexer)
+    with patch('weko_authors.views.RecordIndexer', mock_indexer):
+
+        res = client.post('/api/authors/search_edit',
+                          data=json.dumps(input),
+                          content_type='application/json')
+        assert res.status_code == 200
+        mock_indexer.assert_called_once()
+
+
+def test_getById_sysadmin(client, users):
+    """
+    Test of get author data by id.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[4]['email'])
+    input = {"Id": "1"}
+    mock_indexer = MagicMock(side_effect=MockIndexer)
+    with patch('weko_authors.views.RecordIndexer', mock_indexer):
+        res = client.post('/api/authors/search_edit',
+                          data=json.dumps(input),
+                          content_type='application/json')
+        assert res.status_code == 200
+        mock_indexer.assert_called_once()
 
 
 def test_gatherById_guest(client):
@@ -451,6 +537,94 @@ def test_get_user(client, users):
     assert res.status_code == 403
 
 
+def test_get_contributor(client, users):
+    """
+    Test of search and get author data.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[1]['email'])
+    input = {
+        "searchKey": "",
+        "pageNumber": 1,
+        "numOfPage": 25,
+        "sortKey": "",
+        "sortOrder": ""
+        }
+    mock_indexer = MagicMock(side_effect=MockIndexer)
+    with patch('weko_authors.views.RecordIndexer', mock_indexer):
+        res = client.post('/api/authors/search',
+                          data=json.dumps(input),
+                          content_type='application/json')
+        assert res.status_code == 200
+        mock_indexer.assert_called_once()
+
+
+def test_get_comadmin(client, users):
+    """
+    Test of search and get author data.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[2]['email'])
+    input = {
+        "searchKey": "",
+        "pageNumber": 1,
+        "numOfPage": 25,
+        "sortKey": "",
+        "sortOrder": ""
+        }
+    mock_indexer = MagicMock(side_effect=MockIndexer)
+    with patch('weko_authors.views.RecordIndexer', mock_indexer):
+        res = client.post('/api/authors/search',
+                          data=json.dumps(input),
+                          content_type='application/json')
+        assert res.status_code == 200
+        mock_indexer.assert_called_once()
+
+
+def test_get_repoadmin(client, users):
+    """
+    Test of search and get author data.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[3]['email'])
+    input = {
+        "searchKey": "",
+        "pageNumber": 1,
+        "numOfPage": 25,
+        "sortKey": "",
+        "sortOrder": ""
+        }
+    mock_indexer = MagicMock(side_effect=MockIndexer)
+    with patch('weko_authors.views.RecordIndexer', mock_indexer):
+        res = client.post('/api/authors/search',
+                          data=json.dumps(input),
+                          content_type='application/json')
+        assert res.status_code == 200
+        mock_indexer.assert_called_once()
+
+
+def test_get_sysadmin(client, users):
+    """
+    Test of search and get author data.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[4]['email'])
+    input = {
+        "searchKey": "",
+        "pageNumber": 1,
+        "numOfPage": 25,
+        "sortKey": "",
+        "sortOrder": ""
+        }
+    mock_indexer = MagicMock(side_effect=MockIndexer)
+    with patch('weko_authors.views.RecordIndexer', mock_indexer):
+        res = client.post('/api/authors/search',
+                          data=json.dumps(input),
+                          content_type='application/json')
+        assert res.status_code == 200
+        mock_indexer.assert_called_once()
+
+
 def test_create_guest(client):
     """
     Test of create author.
@@ -524,6 +698,174 @@ def test_create_user(client, users):
     assert res.status_code == 403
 
 
+def test_create_contributor(client, users):
+    """
+    Test of create author.
+    :param client: The flask client.
+    """
+    # login
+    login_user_via_session(client=client, email=users[1]['email'])
+    input = {
+            "id": "",
+            "pk_id": "",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "タロウ",
+                    "fullName": "",
+                    "language": "ja-Kana",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "true"
+                }
+            ],
+            "authorIdInfo": [
+                {
+                    "idType": "2",
+                    "authorId": "0123",
+                    "authorIdShowFlg": "true"
+                }
+            ],
+            "emailInfo": [
+                {"email": "example@com"}
+            ]
+    }
+    mock_indexer = MagicMock(side_effect=MockIndexer)
+    with patch('weko_authors.views.RecordIndexer', mock_indexer):
+        res = client.post('/api/authors/add',
+                          data=json.dumps(input),
+                          content_type='application/json')
+        res_dict = get_json(res)
+        assert res.status_code == 200
+        assert res_dict['msg'] == 'Success'
+        mock_indexer.assert_called_once()
+
+
+def test_create_comadmin(client, users):
+    """
+    Test of create author.
+    :param client: The flask client.
+    """
+    # login
+    login_user_via_session(client=client, email=users[1]['email'])
+    input = {
+            "id": "",
+            "pk_id": "",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "タロウ",
+                    "fullName": "",
+                    "language": "ja-Kana",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "true"
+                }
+            ],
+            "authorIdInfo": [
+                {
+                    "idType": "2",
+                    "authorId": "0123",
+                    "authorIdShowFlg": "true"
+                }
+            ],
+            "emailInfo": [
+                {"email": "example@com"}
+            ]
+    }
+    mock_indexer = MagicMock(side_effect=MockIndexer)
+    with patch('weko_authors.views.RecordIndexer', mock_indexer):
+        res = client.post('/api/authors/add',
+                          data=json.dumps(input),
+                          content_type='application/json')
+        res_dict = get_json(res)
+        assert res.status_code == 200
+        assert res_dict['msg'] == 'Success'
+        mock_indexer.assert_called_once()
+
+
+def test_create_repoadmin(client, users):
+    """
+    Test of create author.
+    :param client: The flask client.
+    """
+    # login
+    login_user_via_session(client=client, email=users[4]['email'])
+    input = {
+            "id": "",
+            "pk_id": "",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "タロウ",
+                    "fullName": "",
+                    "language": "ja-Kana",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "true"
+                }
+            ],
+            "authorIdInfo": [
+                {
+                    "idType": "2",
+                    "authorId": "0123",
+                    "authorIdShowFlg": "true"
+                }
+            ],
+            "emailInfo": [
+                {"email": "example@com"}
+            ]
+    }
+    mock_indexer = MagicMock(side_effect=MockIndexer)
+    with patch('weko_authors.views.RecordIndexer', mock_indexer):
+        res = client.post('/api/authors/add',
+                          data=json.dumps(input),
+                          content_type='application/json')
+        res_dict = get_json(res)
+        assert res.status_code == 200
+        assert res_dict['msg'] == 'Success'
+        mock_indexer.assert_called_once()
+
+
+def test_create_sysadmin(client, users):
+    """
+    Test of create author.
+    :param client: The flask client.
+    """
+    # login
+    login_user_via_session(client=client, email=users[4]['email'])
+    input = {
+            "id": "",
+            "pk_id": "",
+            "authorNameInfo": [
+                {
+                    "familyName": "テスト",
+                    "firstName": "タロウ",
+                    "fullName": "",
+                    "language": "ja-Kana",
+                    "nameFormat": "familyNmAndNm",
+                    "nameShowFlg": "true"
+                }
+            ],
+            "authorIdInfo": [
+                {
+                    "idType": "2",
+                    "authorId": "0123",
+                    "authorIdShowFlg": "true"
+                }
+            ],
+            "emailInfo": [
+                {"email": "example@com"}
+            ]
+    }
+    mock_indexer = MagicMock(side_effect=MockIndexer)
+    with patch('weko_authors.views.RecordIndexer', mock_indexer):
+        res = client.post('/api/authors/add',
+                          data=json.dumps(input),
+                          content_type='application/json')
+        res_dict = get_json(res)
+        assert res.status_code == 200
+        assert res_dict['msg'] == 'Success'
+        mock_indexer.assert_called_once()
+
+
 def test_mapping_guest(client):
     """
     Test of mapping author data.
@@ -551,15 +893,78 @@ def test_mapping_user(client, users):
     assert res.status_code == 403
 
 
+def test_mapping_contributor(client, users):
+    """
+    Test of mapping author data.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[1]['email'])
+    input = {"id": "1"}
+    mock_indexer = MagicMock(side_effect=MockIndexer)
+    with patch('weko_authors.views.RecordIndexer', mock_indexer):
+        res = client.post('/api/authors/input',
+                          data=json.dumps(input),
+                          content_type='application/json')
+        assert res.status_code == 200
+        mock_indexer.assert_called_once()
+
+
+def test_mapping_comadmin(client, users):
+    """
+    Test of mapping author data.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[2]['email'])
+    input = {"id": "1"}
+    mock_indexer = MagicMock(side_effect=MockIndexer)
+    with patch('weko_authors.views.RecordIndexer', mock_indexer):
+        res = client.post('/api/authors/input',
+                          data=json.dumps(input),
+                          content_type='application/json')
+        assert res.status_code == 200
+        mock_indexer.assert_called_once()
+
+
+def test_mapping_repoadmin(client, users):
+    """
+    Test of mapping author data.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[3]['email'])
+    input = {"id": "1"}
+    mock_indexer = MagicMock(side_effect=MockIndexer)
+    with patch('weko_authors.views.RecordIndexer', mock_indexer):
+        res = client.post('/api/authors/input',
+                          data=json.dumps(input),
+                          content_type='application/json')
+        assert res.status_code == 200
+        mock_indexer.assert_called_once()
+
+
+def test_mapping_sysadmin(client, users):
+    """
+    Test of mapping author data.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[4]['email'])
+    input = {"id": "1"}
+    mock_indexer = MagicMock(side_effect=MockIndexer)
+    with patch('weko_authors.views.RecordIndexer', mock_indexer):
+        res = client.post('/api/authors/input',
+                          data=json.dumps(input),
+                          content_type='application/json')
+        assert res.status_code == 200
+        mock_indexer.assert_called_once()
+
+
 def test_update_author_guest(client):
     """
     Test of update author data.
     :param client: The flask client.
     """
-    # TODO create author
     input = {
             "id": "1",
-            "pk_id": "",
+            "pk_id": "1",
             "authorNameInfo": [
                 {
                     "familyName": "テスト",
@@ -594,11 +999,10 @@ def test_update_author_user(client, users):
     Test of update author data.
     :param client: The flask client.
     """
-    # TODO create author
     login_user_via_session(client=client, email=users[0]['email'])
     input = {
             "id": "1",
-            "pk_id": "",
+            "pk_id": "1",
             "authorNameInfo": [
                 {
                     "familyName": "テスト",

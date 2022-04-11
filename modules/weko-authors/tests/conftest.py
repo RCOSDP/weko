@@ -34,12 +34,15 @@ from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers
 from invenio_indexer import InvenioIndexer
 from invenio_search import InvenioSearch
+from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
 
 from weko_authors.views import blueprint_api
+from weko_authors.models import Authors
 from weko_authors import WekoAuthors
+from weko_search_ui import WekoSearchUI
 
 
 @pytest.yield_fixture()
@@ -61,6 +64,8 @@ def base_app(instance_path, request):
            'SQLALCHEMY_DATABASE_URI',
            'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
+        INDEX_IMG='indextree/36466818-image.jpg',
+        SEARCH_UI_SEARCH_INDEX='tenant1-weko',
     )
     Babel(app_)
     InvenioDB(app_)
@@ -69,6 +74,7 @@ def base_app(instance_path, request):
     InvenioIndexer(app_)
     InvenioSearch(app_)
     WekoAuthors(app_)
+    WekoSearchUI(app_)
     _database_setup(app_, request)
 
     # app_.register_blueprint(blueprint)
@@ -161,7 +167,7 @@ def id_prefix(client, users):
 
     input = {'name': 'testprefix', 'scheme': 'testprefix',
              'url': 'https://testprefix/##'}
-    res = client.put('/api/authors/add_prefix',
-                     data=json.dumps(input),
-                     content_type='application/json')
+    client.put('/api/authors/add_prefix',
+               data=json.dumps(input),
+               content_type='application/json')
     client.get(url_for('security.logout'))
