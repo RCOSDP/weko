@@ -11,9 +11,11 @@
 import json
 from datetime import datetime
 
+import copy
 import dateutil.parser
 import six
 from elasticsearch_dsl import Search
+from elasticsearch_dsl.aggs import A
 from flask import current_app
 from invenio_search import current_search_client
 
@@ -202,7 +204,8 @@ class ESTermsQuery(ESQuery):
 
     def __init__(self, time_field='timestamp', copy_fields=None,
                  query_modifiers=None, required_filters=None,
-                 aggregated_fields=None, metric_fields=None, *args, **kwargs):
+                 aggregated_fields=None, metric_fields=None,
+                 group_fields=None, *args, **kwargs):
         """Constructor.
 
         :param time_field: name of the timestamp field.
@@ -217,6 +220,7 @@ class ESTermsQuery(ESQuery):
             terms aggregations.
         :param metric_fields: Dict of "destination field" ->
             tuple("metric type", "source field").
+        :param group_fields: group fields.
         """
         super(ESTermsQuery, self).__init__(*args, **kwargs)
         self.time_field = time_field
@@ -225,6 +229,7 @@ class ESTermsQuery(ESQuery):
         self.required_filters = required_filters or {}
         self.aggregated_fields = aggregated_fields or []
         self.metric_fields = metric_fields or {'value': ('sum', 'count', {})}
+        self.group_fields = group_fields or []
 
     def validate_arguments(self, start_date, end_date, **kwargs):
         """Validate query arguments."""
@@ -261,14 +266,27 @@ class ESTermsQuery(ESQuery):
             for dst, (metric, field, opts) in self.metric_fields.items():
                 agg.metric(dst, metric, field=field, **opts)
 
+        size = kwargs.get('agg_size') if kwargs.get('agg_size') else \
+            current_app.config['STATS_ES_INTEGER_MAX_VALUE']
         _apply_metric_aggs(base_agg)
-        if self.aggregated_fields:
-            cur_agg = base_agg
-            for term in self.aggregated_fields:
-                size = kwargs.get('agg_size') if kwargs.get('agg_size') else \
-                    current_app.config['STATS_ES_INTEGER_MAX_VALUE']
-                cur_agg = cur_agg.bucket(term, 'terms', field=term, size=size)
-                _apply_metric_aggs(cur_agg)
+        if self.group_fields:
+            sources = []
+            for f in self.group_fields:
+                sources.append({f: A('terms', field=f)})
+            if kwargs.get('after_key'):
+                base_agg.bucket(
+                    'my_buckets', 'composite', size=size, sources=sources, after=kwargs.get('after_key')
+                )
+            else:
+                base_agg.bucket(
+                    'my_buckets', 'composite', size=size, sources=sources
+                )
+        else:
+            if self.aggregated_fields:
+                cur_agg = base_agg
+                for term in self.aggregated_fields:
+                    cur_agg = cur_agg.bucket(term, 'terms', field=term, size=size)
+                    _apply_metric_aggs(cur_agg)
 
         if self.copy_fields:
             base_agg.metric(
@@ -290,7 +308,25 @@ class ESTermsQuery(ESQuery):
             # Add metric results for current bucket
             for metric in self.metric_fields:
                 bucket_result[metric] = agg[metric]['value']
-            if fields:
+            if self.group_fields:
+                temp_data = {}
+                count = 0
+                for item in agg['buckets']:
+                    key_str = ''
+                    for key in self.group_fields:
+                        if key != 'count':
+                            key_str += '{}_'.format(item['key'][key])
+                        else:
+                            count = item['key']['count'] * item['doc_count']
+                    if key_str in temp_data:
+                        temp_data[key_str]['count'] += count
+                    else:
+                        temp_data[key_str] = item['key']
+                        temp_data[key_str]['count'] = count
+                bucket_result.update(dict(
+                    buckets=[temp_data[key_str] for key_str in temp_data.keys()]
+                ))
+            elif fields:
                 current_level = fields[0]
                 bucket_result.update(dict(
                     type='bucket',
@@ -322,9 +358,36 @@ class ESTermsQuery(ESQuery):
         start_date = self.extract_date(start_date) if start_date else None
         end_date = self.extract_date(end_date) if end_date else None
         self.validate_arguments(start_date, end_date, **kwargs)
-        agg_query = self.build_query(start_date, end_date, **kwargs)
-        current_app.logger.debug(agg_query.to_dict())
-        query_result = agg_query.execute().to_dict()
+        if self.group_fields:
+            first_search = True
+            after_key = None
+            total = 1
+            count = 0
+            query_result = {}
+            res_list = []
+            res_count = {}
+            while count < total and (after_key or first_search):
+                agg_query = self.build_query(start_date, end_date, after_key=after_key, **kwargs)
+                current_app.logger.debug('agg_query: {}'.format(agg_query.to_dict()))
+                temp_res = agg_query.execute().to_dict()
+                if 'after_key' in temp_res['aggregations']['my_buckets']:
+                    after_key = temp_res['aggregations']['my_buckets']['after_key']
+                else:
+                    after_key = None
+                if first_search:
+                    first_search = False
+                    total = temp_res['hits']['total']
+                    for metric in self.metric_fields:
+                        res_count[metric] = temp_res['aggregations'][metric]
+                count += len(temp_res['aggregations']['my_buckets']['buckets'])
+                res_list += copy.deepcopy(temp_res['aggregations']['my_buckets']['buckets'])
+            query_result['aggregations'] = {'buckets': res_list}
+            for metric in self.metric_fields:
+                query_result['aggregations'][metric] = res_count[metric]
+        else:
+            agg_query = self.build_query(start_date, end_date, **kwargs)
+            current_app.logger.debug(agg_query.to_dict())
+            query_result = agg_query.execute().to_dict()
         res = self.process_query_result(query_result, start_date, end_date)
         return res
 
@@ -377,14 +440,27 @@ class ESWekoFileStatsQuery(ESTermsQuery):
             for dst, (metric, field, opts) in self.metric_fields.items():
                 agg.metric(dst, metric, field=field, **opts)
 
+        size = kwargs.get('agg_size') if kwargs.get('agg_size') else \
+            current_app.config['STATS_ES_INTEGER_MAX_VALUE']
         _apply_metric_aggs(base_agg)
-        if self.aggregated_fields:
-            cur_agg = base_agg
-            for term in self.aggregated_fields:
-                size = kwargs.get('agg_size') if kwargs.get('agg_size') else \
-                    current_app.config['STATS_ES_INTEGER_MAX_VALUE']
-                cur_agg = cur_agg.bucket(term, 'terms', field=term, size=size)
-                _apply_metric_aggs(cur_agg)
+        if self.group_fields:
+            sources = []
+            for f in self.group_fields:
+                sources.append({f: A('terms', field=f)})
+            if kwargs.get('after_key'):
+                base_agg.bucket(
+                    'my_buckets', 'composite', size=size, sources=sources, after=kwargs.get('after_key')
+                )
+            else:
+                base_agg.bucket(
+                    'my_buckets', 'composite', size=size, sources=sources
+                )
+        else:
+            if self.aggregated_fields:
+                cur_agg = base_agg
+                for term in self.aggregated_fields:
+                    cur_agg = cur_agg.bucket(term, 'terms', field=term, size=size)
+                    _apply_metric_aggs(cur_agg)
 
         if self.copy_fields:
             base_agg.metric(
@@ -424,17 +500,30 @@ class ESWekoTermsQuery(ESTermsQuery):
             for dst, (metric, field, opts) in self.metric_fields.items():
                 agg.metric(dst, metric, field=field, **opts)
 
+        size = kwargs.get('agg_size') if kwargs.get('agg_size') else \
+            current_app.config['STATS_ES_INTEGER_MAX_VALUE']
         _apply_metric_aggs(base_agg)
-        if self.aggregated_fields:
-            cur_agg = base_agg
-            size = kwargs.get('agg_size') if kwargs.get('agg_size') else \
-                current_app.config['STATS_ES_INTEGER_MAX_VALUE']
-            for term in self.aggregated_fields:  # Added size and sort
-                cur_agg = cur_agg.bucket(
-                    term, 'terms', field=term, size=size,
-                    order=kwargs.get('agg_sort', {"_count": "desc"})
+        if self.group_fields:
+            sources = []
+            for f in self.group_fields:
+                sources.append({f: A('terms', field=f)})
+            if kwargs.get('after_key'):
+                base_agg.bucket(
+                    'my_buckets', 'composite', size=size, sources=sources, after=kwargs.get('after_key')
                 )
-                _apply_metric_aggs(cur_agg)
+            else:
+                base_agg.bucket(
+                    'my_buckets', 'composite', size=size, sources=sources
+                )
+        else:
+            if self.aggregated_fields:
+                cur_agg = base_agg
+                for term in self.aggregated_fields:  # Added size and sort
+                    cur_agg = cur_agg.bucket(
+                        term, 'terms', field=term, size=size,
+                        order=kwargs.get('agg_sort', {"_count": "desc"})
+                    )
+                    _apply_metric_aggs(cur_agg)
 
         if self.copy_fields:
             base_agg.metric(
