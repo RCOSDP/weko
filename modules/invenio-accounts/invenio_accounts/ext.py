@@ -24,6 +24,7 @@ from invenio_db import db
 from passlib.registry import register_crypt_handler
 from werkzeug.utils import cached_property, import_string
 
+from weko_redis.redis import RedisConnection
 from invenio_accounts.forms import confirm_register_form_factory, \
     login_form_factory, register_form_factory
 
@@ -251,12 +252,9 @@ class InvenioAccounts(object):
         # Set Session KV store
         if app.config.get('ACCOUNTS_SESSION_REDIS_URL'):
             import redis
-            from redis import sentinel
             from simplekv.memory.redisstore import RedisStore
 
-            master = sentinel.Sentinel(app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
-            session_kvstore = RedisStore(master.master_for(
-                    app.config['CACHE_REDIS_SENTINEL_MASTER'],db=app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
+            session_kvstore = RedisConnection.connection(app.config['ACCOUNTS_SESSION_REDIS_DB_NO'])
         else:
             from simplekv.memory import DictStore
 

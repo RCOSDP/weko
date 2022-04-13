@@ -49,6 +49,7 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import cast
+from weko_redis import RedisConnection
 from weko_accounts.api import ShibUser
 from weko_accounts.utils import login_required_customize
 from weko_authors.models import Authors
@@ -584,9 +585,7 @@ def display_activity(activity_id="0"):
         if not record and item:
             record = item
 
-        master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
-        sessionstore = RedisStore(master.master_for(
-            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
+        sessionstore = RedisConnection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'])
 
         if sessionstore.redis.exists(
             'updated_json_schema_{}'.format(activity_id)) \
@@ -1311,9 +1310,7 @@ def get_journals():
     if not key:
         return jsonify({})
 
-    master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
-    datastore = RedisStore(master.master_for(
-        current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB']))
+    datastore = RedisConnection.connection(db=current_app.config['CACHE_REDIS_DB'])
 
     cache_key = current_app.config[
         'WEKO_WORKFLOW_OAPOLICY_SEARCH'].format(keyword=key)
