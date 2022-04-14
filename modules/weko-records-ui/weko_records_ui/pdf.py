@@ -312,6 +312,8 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
                 title_lang == 'None Language'
             multi_lang_value[title_lang] = title_name
         title = get_value_by_selected_lang(multi_lang_value, cur_lang)
+        if not title:
+            title = item_metadata_json['title']
     except (KeyError, IndexError):
         title = item_metadata_json['title']
 
