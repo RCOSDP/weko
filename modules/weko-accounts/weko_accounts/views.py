@@ -37,6 +37,7 @@ from flask_menu import current_menu
 from flask_security import url_for_security
 from invenio_admin.proxies import current_admin
 from simplekv.memory.redisstore import RedisStore
+from weko_redis.redis import RedisConnection
 from werkzeug.local import LocalProxy
 
 from .api import ShibUser
@@ -116,9 +117,7 @@ def shib_auto_login():
         if not shib_session_id:
             return _redirect_method()
 
-        master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
-        datastore = RedisStore(master.master_for(
-            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB']))
+        datastore = RedisConnection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         cache_key = current_app.config[
             'WEKO_ACCOUNTS_SHIB_CACHE_PREFIX'] + shib_session_id
         if not datastore.redis.exists(cache_key):
@@ -170,9 +169,7 @@ def confirm_user():
             flash('shib_session_id', category='error')
             return _redirect_method()
 
-        master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
-        datastore = RedisStore(master.master_for(
-            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB']))
+        datastore = RedisConnection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         cache_key = current_app.config[
             'WEKO_ACCOUNTS_SHIB_CACHE_PREFIX'] + shib_session_id
 
@@ -229,9 +226,7 @@ def shib_login():
             flash(_("Missing SHIB_ATTR_SESSION_ID!"), category='error')
             return _redirect_method()
 
-        master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
-        datastore = RedisStore(master.master_for(
-            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB']))
+        datastore = RedisConnection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         cache_key = current_app.config[
             'WEKO_ACCOUNTS_SHIB_CACHE_PREFIX'] + shib_session_id
 
@@ -292,9 +287,7 @@ def shib_sp_login():
             flash(_("Missing SHIB_ATTRs!"), category='error')
             return _redirect_method()
 
-        master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
-        datastore = RedisStore(master.master_for(
-            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB']))
+        datastore = RedisConnection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         ttl_sec = int(current_app.config[
             'WEKO_ACCOUNTS_SHIB_LOGIN_CACHE_TTL'])
         datastore.put(

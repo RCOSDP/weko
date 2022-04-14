@@ -21,6 +21,7 @@ from flask_kvsession import KVSessionInterface
 from flask_login import current_user
 from flask_oauthlib.contrib.oauth2 import bind_cache_grant
 from werkzeug.utils import cached_property, import_string
+from weko_redis.redis import RedisConnection
 
 from . import config
 from .models import OAuthUserProxy, Scope
@@ -42,11 +43,9 @@ class _OAuth2ServerState(object):
         if app.config['OAUTH2_CACHE_TYPE'] == 'redissentinel' and app.config.get(
                 'CACHE_REDIS_SENTINELS'):
             from redis import sentinel
-            master = sentinel.Sentinel(app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
             app.config.setdefault(
                 'OAUTH2_CACHE_REDIS_HOST',
-                master.master_for(
-                app.config['CACHE_REDIS_SENTINEL_MASTER'],db=app.config['CACHE_REDIS_DB'])
+                RedisConnection.connection(db=app.config['CACHE_REDIS_DB'])
             )
 
         # Configures an OAuth2Provider instance to use configured caching

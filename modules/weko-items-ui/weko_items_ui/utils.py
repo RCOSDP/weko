@@ -65,6 +65,7 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
 from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission, check_publish_status
+from weko_redis.redis import RedisConnection
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
@@ -554,9 +555,7 @@ def update_json_schema_by_activity_id(json_data, activity_id):
     :return: json schema
     """
 
-    master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
-    sessionstore = RedisStore(master.master_for(
-            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
+    sessionstore = RedisConnection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
     if not sessionstore.redis.exists(
         'updated_json_schema_{}'.format(activity_id)) \
         and not sessionstore.get(
@@ -586,9 +585,7 @@ def update_schema_form_by_activity_id(schema_form, activity_id):
     :return: schema form
     """
 
-    master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
-    sessionstore = RedisStore(master.master_for(
-            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
+    sessionstore = RedisConnection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
     if not sessionstore.redis.exists(
         'updated_json_schema_{}'.format(activity_id)) \
         and not sessionstore.get(

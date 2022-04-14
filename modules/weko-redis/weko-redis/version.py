@@ -18,9 +18,10 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Redis Connection."""
+"""Version information for weko-redis.
 
-from .redis import RedisConnection
-from .version import __version__
+This file is imported by ``weko_redis.__init__``,
+and parsed by ``setup.py``.
+"""
 
-__all__ = ('__version__')
+__version__ = '0.1.0.dev20170000'

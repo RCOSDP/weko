@@ -65,6 +65,7 @@ from weko_records.models import ItemMetadata, ItemReference
 from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, remove_weko2_special_character, \
     set_timestamp
+from weko_redis.redis import RedisConnection
 from weko_user_profiles.models import UserProfile
 
 from .config import WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_KEY, \
@@ -1033,9 +1034,7 @@ class WekoDeposit(Deposit):
 
         try:
             if not data:
-                master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
-                datastore = RedisStore(master.master_for(
-                    current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['CACHE_REDIS_DB']))
+                datastore = RedisConnection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
                 cache_key = current_app.config[
                     'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
                     pid_value=self.pid.pid_value)
