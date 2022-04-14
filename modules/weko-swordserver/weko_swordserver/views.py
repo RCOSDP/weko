@@ -11,6 +11,7 @@
 # the templates and static folders as well as the test case.
 
 from __future__ import absolute_import, print_function
+from fileinput import filename
 
 from flask import Blueprint, current_app, jsonify, abort, request, url_for
 from flask_babelex import gettext as _
@@ -18,7 +19,8 @@ from flask_babelex import gettext as _
 from sword3common import ServiceDocument, StatusDocument, constants
 from sword3common.lib.seamless import SeamlessException
 from weko_search_ui.utils import check_import_items, import_items_to_system
-from weko_records_ui.utils import get_record_permalink
+from weko_records_ui.utils import get_record_permalink, soft_delete
+from werkzeug.http import parse_options_header
 
 blueprint = Blueprint(
     'weko_swordserver',
@@ -160,32 +162,48 @@ def post_service_document():
 
         # zipfile = request.files.get('file')
 
-        # print("================")
-        # print(request.headers)
-        # print("----------------")
-        # for key, value in request.files.items():
-        #     print(key, value)
-        # print("================")
+        """
+        Check content-disposition
+            Request format:
+                Content-Disposition	attachment; filename=[filename]
+        """
+        content_disposition, content_disposition_options = parse_options_header(
+                request.headers.get("Content-Disposition") or ""
+            )
+        if content_disposition != "attachment" or not content_disposition_options.get('filename'):
+            abort(500)
+        filename = content_disposition_options.get('filename')
 
-        # check_result = check_import_items(zipfile, False)
-        # item = check_result.get('list_record')[0] if check_result.get('list_record') else None
-        # if check_result.get('error') or not item or item.get('errors'):
-        #     if check_result.get('error'):
-        #         current_app.logging_error('check_import_items', check_result.get('error'))
-        #     elif item.get('errors'):
-        #         current_app.logging_error('check_import_items', item.get('errors'))
-        #     else:
-        #         current_app.logging_error('check_import_items', 'item_missing')
-        #     abort(500)
+        # Check files
+        file = None
+        for key, value in request.files.items():
+            if value.filename == filename:
+                file = value
         
-        # import_result = import_items_to_system(item, None)
-        # if not import_result.get('success'):
-        #     current_app.logging_error('import_items_to_system', item.get('error_id'))
-        #     abort(500)
-        
-        # recid = import_result.get('recid')
+        check_result = check_import_items(file, False)
+        item = check_result.get('list_record')[0] if check_result.get('list_record') else None
 
-        return jsonify({})
+        print("================")
+        print(item)
+        print("================")
+
+        if check_result.get('error') or not item or item.get('errors'):
+            if check_result.get('error'):
+                current_app.logger.error('check_import_items', check_result.get('error'))
+            elif item.get('errors'):
+                current_app.logger.error('check_import_items', item.get('errors'))
+            else:
+                current_app.logger.error('check_import_items', 'item_missing')
+            abort(500)
+        
+        import_result = import_items_to_system(item, None)
+        if not import_result.get('success'):
+            current_app.logger.error('import_items_to_system', item.get('error_id'))
+            abort(500)
+        
+        recid = import_result.get('recid')
+
+        return jsonify(_get_status_document(recid))
 
     
     except SeamlessException as ex:
@@ -323,7 +341,7 @@ def _get_status_document(recid):
     return statusDocument.data
 
 @blueprint.route("/deposit/<recid>", methods=['DELETE'])
-def delete_item():
+def delete_item(recid):
     """ Delete the Object in its entirety from the server, along with all Metadata and Files. """
     
     """
@@ -346,9 +364,11 @@ def delete_item():
         * If the server does not support On-Behalf-Of deposit and the On-Behalf-Of header has been provided, MAY respond with a 412 (OnBehalfOfNotAllowed)
     """
     try:
-        """
-        TODO: Impliment delete action
-        """
+        # TODO: Request header check
+        
+        # TODO: recidに該当するレコードがない場合の挙動の確認。Exceptionがraiseされる？
+        soft_delete(recid)
+        return jsonify({'recid':recid})
     
     except SeamlessException as ex:
         current_app.logger.error(ex.message)
