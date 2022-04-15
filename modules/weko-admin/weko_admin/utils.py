@@ -494,7 +494,8 @@ def write_report_csv_rows(writer, records, file_type=None, other_info=None):
 def reset_redis_cache(cache_key, value):
     """Delete and then reset a cache value to Redis."""
     try:
-        datastore = RedisConnection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         if datastore.redis.exists(cache_key):
             datastore.delete(cache_key)
         datastore.put(cache_key, value.encode('utf-8'))
@@ -506,7 +507,8 @@ def reset_redis_cache(cache_key, value):
 def is_exists_key_in_redis(key):
     """Check key exist in redis."""
     try:
-        datastore = RedisConnection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         return datastore.redis.exists(key)
     except Exception as e:
         current_app.logger.error('Could get value for ' + key, e)
@@ -516,7 +518,8 @@ def is_exists_key_in_redis(key):
 def is_exists_key_or_empty_in_redis(key):
     """Check key exist in redis."""
     try:
-        datastore = RedisConnection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         return datastore.redis.exists(key) and datastore.redis.get(key) != b''
     except Exception as e:
         current_app.logger.error('Could get value for ' + key, e)
@@ -526,7 +529,8 @@ def is_exists_key_or_empty_in_redis(key):
 def get_redis_cache(cache_key):
     """Check and then retrieve the value of a Redis cache key."""
     try:
-        datastore = RedisConnection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         if datastore.redis.exists(cache_key):
             return datastore.get(cache_key).decode('utf-8')
     except Exception as e:

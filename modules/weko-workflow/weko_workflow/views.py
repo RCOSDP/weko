@@ -585,7 +585,8 @@ def display_activity(activity_id="0"):
         if not record and item:
             record = item
 
-        sessionstore = RedisConnection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+        redis_connection = RedisConnection()
+        sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
 
         if sessionstore.redis.exists(
             'updated_json_schema_{}'.format(activity_id)) \
@@ -1310,7 +1311,8 @@ def get_journals():
     if not key:
         return jsonify({})
 
-    datastore = RedisConnection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+    redis_connection = RedisConnection()
+    datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
 
     cache_key = current_app.config[
         'WEKO_WORKFLOW_OAPOLICY_SEARCH'].format(keyword=key)

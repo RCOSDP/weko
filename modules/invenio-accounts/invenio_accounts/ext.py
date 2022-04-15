@@ -253,8 +253,8 @@ class InvenioAccounts(object):
         if app.config.get('ACCOUNTS_SESSION_REDIS_URL'):
             import redis
             from simplekv.memory.redisstore import RedisStore
-
-            session_kvstore = RedisConnection.connection(app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+            redis_connection = RedisConnection()
+            session_kvstore = redis_connection.connection(app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
         else:
             from simplekv.memory import DictStore
 

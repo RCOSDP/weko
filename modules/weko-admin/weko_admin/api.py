@@ -115,7 +115,9 @@ class TempDirInfo(object):
             key = current_app.config[
                 'WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT']
         cls.key = key
-        cls.redis = RedisConnection.connection(db=current_app.config['CACHE_REDIS_DB'])
+
+        redis_connection = RedisConnection()
+        cls.redis = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'])
 
     def set(cls, temp_path, extra_info=None):
         """Add or update data.

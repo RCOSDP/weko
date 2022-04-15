@@ -824,7 +824,8 @@ def __get_redis_store():
         Redis store.
 
     """
-    return RedisConnection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+    redis_connection = RedisConnection()
+    return redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
 
 
 def lock_all_child_index(index_id: str, value: str):

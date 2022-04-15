@@ -43,9 +43,10 @@ class _OAuth2ServerState(object):
         if app.config['OAUTH2_CACHE_TYPE'] == 'redissentinel' and app.config.get(
                 'CACHE_REDIS_SENTINELS'):
             from redis import sentinel
+            redis_connection = RedisConnection()
             app.config.setdefault(
                 'OAUTH2_CACHE_REDIS_HOST',
-                RedisConnection.connection(db=app.config['CACHE_REDIS_DB'],kv = False)
+                redis_connection.connection(db=app.config['CACHE_REDIS_DB'],kv = False)
             )
 
         # Configures an OAuth2Provider instance to use configured caching

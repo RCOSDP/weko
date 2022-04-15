@@ -555,7 +555,8 @@ def update_json_schema_by_activity_id(json_data, activity_id):
     :return: json schema
     """
 
-    sessionstore = RedisConnection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+    redis_connection = RedisConnection()
+    sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
     if not sessionstore.redis.exists(
         'updated_json_schema_{}'.format(activity_id)) \
         and not sessionstore.get(
@@ -585,7 +586,8 @@ def update_schema_form_by_activity_id(schema_form, activity_id):
     :return: schema form
     """
 
-    sessionstore = RedisConnection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+    redis_connection = RedisConnection()
+    sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
     if not sessionstore.redis.exists(
         'updated_json_schema_{}'.format(activity_id)) \
         and not sessionstore.get(

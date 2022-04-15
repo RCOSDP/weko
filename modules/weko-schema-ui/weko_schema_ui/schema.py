@@ -1824,7 +1824,8 @@ def cache_schema(schema_name, delete=False):
 
     try:
         # schema cached on Redis by schema name
-        datastore = RedisConnection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         cache_key = current_app.config[
             'WEKO_SCHEMA_CACHE_PREFIX'].format(schema_name=schema_name)
         data_str = datastore.get(cache_key)
@@ -1855,7 +1856,8 @@ def delete_schema_cache(schema_name):
     """
     try:
         # schema cached on Redis by schema name
-        datastore = RedisConnection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         cache_key = current_app.config[
             'WEKO_SCHEMA_CACHE_PREFIX'].format(schema_name=schema_name)
         datastore.delete(cache_key)

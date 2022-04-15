@@ -1034,7 +1034,8 @@ class WekoDeposit(Deposit):
 
         try:
             if not data:
-                datastore = RedisConnection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+                redis_connection = RedisConnection()
+                datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
                 cache_key = current_app.config[
                     'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
                     pid_value=self.pid.pid_value)

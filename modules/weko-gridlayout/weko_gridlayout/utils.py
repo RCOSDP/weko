@@ -926,7 +926,8 @@ def delete_widget_cache(repository_id, page_id=None):
     @param page_id: The Page identifier
     @return:
     """
-    cache_store = RedisConnection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+    redis_connection = RedisConnection()
+    cache_store = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
     if page_id:
         cache_key = ("*" + config.WEKO_GRIDLAYOUT_WIDGET_PAGE_CACHE_KEY
                      + str(repository_id) + "_" + str(page_id) + "_*")

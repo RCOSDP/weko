@@ -376,7 +376,9 @@ def items_index(pid_value='0'):
                 render_widgets=render_widgets)
 
         data = request.get_json()
-        sessionstore = RedisConnection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+
+        redis_connection = RedisConnection()
+        sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
         if request.method == 'PUT':
             """update index of item info."""
             item_str = sessionstore.get('item_index_{}'.format(pid_value))
@@ -493,7 +495,9 @@ def iframe_items_index(pid_value='0'):
             )
 
         data = request.get_json()
-        sessionstore = RedisConnection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+
+        redis_connection = RedisConnection()
+        sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
         if request.method == 'PUT':
             """update index of item info."""
             item_str = sessionstore.get('item_index_{}'.format(pid_value))
@@ -1064,7 +1068,8 @@ def check_validation_error_msg(activity_id):
     :return: Show error message
     """
 
-    sessionstore = RedisConnection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+    redis_connection = RedisConnection()
+    sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
     if sessionstore.redis.exists(
             'updated_json_schema_{}'.format(activity_id)) \
             and sessionstore.get('updated_json_schema_{}'.format(activity_id)):
