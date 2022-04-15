@@ -30,10 +30,13 @@ class RedisConnection:
 
     def connection(self, db, kv = False):
         datastore = None
-        if self.redis_type == 'redis':
-            store = self.redis_connection(db)
-        elif self.redis_type == 'redissentinel':
-            store = self.sentinel_connection(db)
+        try:
+            if self.redis_type == 'redis':
+                store = self.redis_connection(db)
+            elif self.redis_type == 'redissentinel':
+                store = self.sentinel_connection(db)
+        except Exception as ex:
+            raise ex
 
         if kv == True:
             datastore = RedisStore(store)
@@ -43,14 +46,22 @@ class RedisConnection:
         return datastore
 
     def redis_connection(self, db):
-        redis_url = current_app.config['CACHE_REDIS_HOST'] + ':' + current_app.config['REDIS_PORT'] + '/' + str(db)
-        store = redis.StrictRedis.from_url(redis_url)
+        store = None
+        try:
+            redis_url = current_app.config['CACHE_REDIS_HOST'] + ':' + current_app.config['REDIS_PORT'] + '/' + str(db)
+            store = redis.StrictRedis.from_url(redis_url)
+        except Exception as ex:
+            raise ex
 
         return store
 
     def sentinel_connection(self, db):
-        sentinels = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'], decode_responses=False)
-        store = sentinels.master_for(
-            current_app.config['CACHE_REDIS_SENTINEL_MASTER'], db= db)
-
+        store = None
+        try:
+            sentinels = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'], decode_responses=False)
+            store = sentinels.master_for(
+                current_app.config['CACHE_REDIS_SENTINEL_MASTER'], db= db)
+        except Exception as ex:
+            raise ex
+            
         return store
