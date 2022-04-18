@@ -25,7 +25,7 @@ from simplekv.memory.redisstore import RedisStore
 
 class RedisConnection:
     def __init__(self):
-        self.redis_type = current_app.config.get('CACHE_TYPE')
+        self.redis_type = current_app.config['CACHE_TYPE']
 
 
     def connection(self, db, kv = False):
@@ -48,7 +48,7 @@ class RedisConnection:
     def redis_connection(self, db):
         store = None
         try:
-            redis_url = current_app.config.get('CACHE_REDIS_HOST') + ':' + current_app.config['REDIS_PORT'] + '/' + str(db)
+            redis_url = current_app.config['CACHE_REDIS_HOST'] + ':' + current_app.config['REDIS_PORT'] + '/' + str(db)
             store = redis.StrictRedis.from_url(redis_url)
         except Exception as ex:
             raise ex
@@ -58,10 +58,43 @@ class RedisConnection:
     def sentinel_connection(self, db):
         store = None
         try:
-            sentinels = sentinel.Sentinel(current_app.config.get('CACHE_REDIS_SENTINELS'), decode_responses=False)
+            sentinels = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'], decode_responses=False)
             store = sentinels.master_for(
-                current_app.config.get('CACHE_REDIS_SENTINEL_MASTER'), db= db)
+                current_app.config['CACHE_REDIS_SENTINEL_MASTER'], db= db)
         except Exception as ex:
             raise ex
             
         return store
+
+class RedisConnectionExtension:
+    "Redis Connection for ext.py"
+    def redis_connection(self, db, host, port, kv = False):
+        store = None
+        try:
+            redis_url = host + ':' + port + '/' + str(db)
+            store = redis.StrictRedis.from_url(redis_url)
+        except Exception as ex:
+            raise ex
+
+        if kv == True:
+            datastore = RedisStore(store)
+        else:
+            datastore = store
+
+        return datastore
+
+    def sentinel_connection(self, host, mymaster, db, kv = False):
+        store = None
+        try:
+            sentinels = sentinel.Sentinel(host, decode_responses=False)
+            store = sentinels.master_for(
+                mymaster, db= db)
+        except Exception as ex:
+            raise ex
+            
+        if kv == True:
+            datastore = RedisStore(store)
+        else:
+            datastore = store
+
+        return datastore
