@@ -69,7 +69,7 @@ class RedisConnection:
 
 class RedisConnectionExtension:
     "Redis Connection for ext.py"
-    def redis_connection(self, db, host, port, kv = False):
+    def redis_connection(self, host, port, db, kv = False):
         store = None
         try:
             redis_url = host + ':' + str(port) + '/' + str(db)
