@@ -49,7 +49,7 @@ class RedisConnection:
     def redis_connection(self, db):
         store = None
         try:
-            redis_url = current_app.config['CACHE_REDIS_HOST'] + ':' + current_app.config['REDIS_PORT'] + '/' + str(db)
+            redis_url = 'redis://' + current_app.config['CACHE_REDIS_HOST'] + ':' + current_app.config['REDIS_PORT'] + '/' + str(db)
             store = redis.StrictRedis.from_url(redis_url)
         except Exception as ex:
             raise ex
@@ -72,7 +72,7 @@ class RedisConnectionExtension:
     def redis_connection(self, host, port, db, kv = False):
         store = None
         try:
-            redis_url = host + ':' + str(port) + '/' + str(db)
+            redis_url = 'redis://' + host + ':' + str(port) + '/' + str(db)
             store = redis.StrictRedis.from_url(redis_url)
         except Exception as ex:
             raise ex
