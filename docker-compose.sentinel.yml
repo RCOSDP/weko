@@ -44,7 +44,7 @@ services:
       - INVENIO_POSTGRESQL_DBNAME=invenio
       - INVENIO_POSTGRESQL_DBUSER=invenio
       - INVENIO_POSTGRESQL_DBPASS=dbpass123
-      - INVENIO_REDIS_HOST=redis
+      - INVENIO_REDIS_HOST=redis-master
       - INVENIO_ELASTICSEARCH_HOST=elasticsearch
       - INVENIO_RABBITMQ_HOST=rabbitmq
       - INVENIO_RABBITMQ_USER=guest
@@ -67,7 +67,7 @@ services:
       - GOOGLE_TRACKING_ID_USER=
       - ADDTHIS_USER_ID=ra-5d8af23e9a3a2633
       - TMPDIR=/tmp
-      - WEKO_REDIS_TYPE=redis
+      - WEKO_REDIS_TYPE=redissentinel
     volumes:
       - weko3_data:/var/tmp
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
@@ -156,15 +156,59 @@ services:
     ports:
       - "25401:5432"
 
-  redis:
+  redis-master:
     restart: "always"
-    image: redis
+    image: redis:3
+    command: redis-server
     ports:
       - "26301:6379"
     deploy:
       resources:
         limits:
           memory: 100m
+
+  redis-slave:
+    restart: "always"
+    image: redis:3
+    command: redis-server --slaveof redis-master 6379
+    ports:
+      - "26302:6379"
+    links:
+        - redis-master
+    deploy:
+      resources:
+        limits:
+          memory: 100m
+
+  sentinel-1:
+    build: sentinel
+    environment:
+        - SENTINEL_DOWN_AFTER=5000
+        - SENTINEL_FAILOVER=500
+        - SENTINEL_QUORUM=2
+    depends_on:
+        - redis-master
+        - redis-slave
+
+  sentinel-2:
+    build: sentinel
+    environment:
+        - SENTINEL_DOWN_AFTER=5000
+        - SENTINEL_FAILOVER=500
+        - SENTINEL_QUORUM=2
+    depends_on:
+        - redis-master
+        - redis-slave
+
+  sentinel-3:
+    build: sentinel
+    environment:
+        - SENTINEL_DOWN_AFTER=5000
+        - SENTINEL_FAILOVER=500
+        - SENTINEL_QUORUM=2
+    depends_on:
+        - redis-master
+        - redis-slave
 
   elasticsearch:
     restart: "always"
