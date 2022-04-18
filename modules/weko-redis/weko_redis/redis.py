@@ -24,6 +24,7 @@ from flask import current_app
 from simplekv.memory.redisstore import RedisStore
 
 class RedisConnection:
+    "Redis Connection for app"
     def __init__(self):
         self.redis_type = current_app.config['CACHE_TYPE']
 

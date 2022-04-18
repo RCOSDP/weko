@@ -255,9 +255,9 @@ class InvenioAccounts(object):
             from simplekv.memory.redisstore import RedisStore
             redis_connection = RedisConnectionExtension()
             if app.config['CACHE_TYPE'] == 'redis':
-                session_kvstore = redis_connection.connection(app.config['CACHE_REDIS_HOST'], app.config['REDIS_PORT'], app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+                session_kvstore = redis_connection.redis_connection(app.config['CACHE_REDIS_HOST'], app.config['REDIS_PORT'], app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
             elif app.config['CACHE_TYPE'] == 'redissentinel':
-                session_kvstore = redis_connection.connection(app.config['CACHE_REDIS_SENTINELS'], app.config['CACHE_REDIS_SENTINEL_MASTER'], app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+                session_kvstore = redis_connection.sentinel_connection(app.config['CACHE_REDIS_SENTINELS'], app.config['CACHE_REDIS_SENTINEL_MASTER'], app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
         else:
             from simplekv.memory import DictStore
 
