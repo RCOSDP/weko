@@ -121,13 +121,9 @@ services:
     user: invenio
     links:
       - postgresql
-      - redis-master
-      - redis-slave
+      - redis
       - elasticsearch
       - rabbitmq
-      - sentinel-1
-      - sentinel-2
-      - sentinel-3
     logging:
       driver: "json-file"
       options:
