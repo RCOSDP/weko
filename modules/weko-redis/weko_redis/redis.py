@@ -25,7 +25,7 @@ from simplekv.memory.redisstore import RedisStore
 
 class RedisConnection:
     def __init__(self):
-        self.redis_type = current_app.config['CACHE_TYPE']
+        self.redis_type = current_app.config.get('CACHE_TYPE')
 
 
     def connection(self, db, kv = False):
@@ -48,7 +48,7 @@ class RedisConnection:
     def redis_connection(self, db):
         store = None
         try:
-            redis_url = current_app.config['CACHE_REDIS_HOST'] + ':' + current_app.config['REDIS_PORT'] + '/' + str(db)
+            redis_url = current_app.config.get('CACHE_REDIS_HOST') + ':' + current_app.config['REDIS_PORT'] + '/' + str(db)
             store = redis.StrictRedis.from_url(redis_url)
         except Exception as ex:
             raise ex
@@ -58,9 +58,9 @@ class RedisConnection:
     def sentinel_connection(self, db):
         store = None
         try:
-            sentinels = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'], decode_responses=False)
+            sentinels = sentinel.Sentinel(current_app.config.get('CACHE_REDIS_SENTINELS'), decode_responses=False)
             store = sentinels.master_for(
-                current_app.config['CACHE_REDIS_SENTINEL_MASTER'], db= db)
+                current_app.config.get('CACHE_REDIS_SENTINEL_MASTER'), db= db)
         except Exception as ex:
             raise ex
             
