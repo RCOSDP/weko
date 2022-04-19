@@ -1788,7 +1788,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 
       $scope.autoFillProfileInfo = function () {
         var needToAutoFillProfileInfo = $("#application_item_type").val();
-        if (needToAutoFillProfileInfo == 'False' || $scope.isExistingUserProfile()) {
+        if (needToAutoFillProfileInfo == 'False' || ($('#current_guest_email').val() && $scope.isExistingUserProfile())) {
           return;
         }
         var user_info_html = $("#user_info_data").val();
@@ -1834,7 +1834,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   }
                 } else {
                   if (data.results[subKey]) {
-                    $rootScope.recordsVM.invenioRecordsModel[key][subKey] = String(data.results[subKey])
+                    $rootScope.recordsVM.invenioRecordsModel[key][subKey] = $scope.translationsPosition(String(data.results[subKey]));
                   }
                 }
               }
