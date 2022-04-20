@@ -1738,8 +1738,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 
                 }
                 isExisted = true;
-                // Set read only for user information property
-                $scope.setFormReadOnly(key)
                 break;
               }
             }
@@ -1772,12 +1770,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                     }
                 }
                 isExisted = true;
-                // Set read only for user information property
-                if ($('#current_guest_email').val()) {
-                  $scope.setFormReadOnly("subitem_mail_address");
-                } else {
-                  $scope.setFormReadOnly(key);
-                }
                 break;
               }
             }
@@ -1839,14 +1831,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 }
               }
             }
-          }
-        }
-        if (userInfoKey != null) {
-          // Set read only for user information property
-          if ($('#current_guest_email').val()) {
-            $scope.setFormReadOnly("subitem_mail_address");
-          } else {
-            $scope.setFormReadOnly(userInfoKey);
           }
         }
       };
