@@ -33,17 +33,7 @@ from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
 from weko_records_ui import WekoRecordsUI 
 
-import subprocess
-from flask_assets import assets
-from invenio_assets import InvenioAssets
-from invenio_assets.cli import collect, npm
-from flask.cli import ScriptInfo
-from click.testing import CliRunner
-from weko_workflow.bundles import js_workflow,js_item_link, js_activity_list,js_iframe,js_oa_policy,js_identifier_grant,js_quit_confirmation,js_lock_activity,js_admin_workflow_detail,css_workflow,css_datepicker_workflow,js_admin_flow_detail
-from invenio_communities import InvenioCommunities
-from invenio_i18n import InvenioI18N
-from weko_admin import WekoAdmin
-from invenio_admin import InvenioAdmin
+
 @pytest.yield_fixture()
 def instance_path():
     """Temporary instance path."""
@@ -259,8 +249,6 @@ def base_app(instance_path):
     app_.testing = True
     Babel(app_)
     Menu(app_)
-    InvenioAdmin(app_)
-    InvenioI18N(app_)
     InvenioAccess(app_)
     InvenioAccounts(app_)
     InvenioCache(app_)
@@ -269,28 +257,9 @@ def base_app(instance_path):
     WekoTheme(app_)
     WekoWorkflow(app_)
     WekoRecords(app_)
-    
-    WekoRecordsUI(app_)
-    InvenioCommunities(app_)
-    WekoAdmin(app_)
-    assets_ext = InvenioAssets(app_)
-    app_.jinja_loader.searchpath.append("../invenio-communities/invenio_communities/templates")
-    # assets_ext.env.register("invenio_theme_js", js_workflow)
-    # assets_ext.env.register("invenio_theme_js", js_item_link)
-    # assets_ext.env.register("invenio_theme_js", js_activity_list)
-    # assets_ext.env.register("invenio_theme_js", js_iframe)
-    # assets_ext.env.register("invenio_theme_js", js_oa_policy)
-    # assets_ext.env.register("invenio_theme_js", js_identifier_grant)
-    # assets_ext.env.register("invenio_theme_js", js_quit_confirmation)
-    # assets_ext.env.register("invenio_theme_js", js_lock_activity)
-    # assets_ext.env.register("invenio_theme_js", js_admin_workflow_detail)
-    # assets_ext.env.register("invenio_theme_css", css_workflow)
-    # assets_ext.env.register("invenio_theme_css", css_datepicker_workflow)
-    # assets_ext.env.register("invenio_theme_css", js_admin_flow_detail)
-    # WekoRecordsUI(app_)
+
     app_.register_blueprint(invenio_accounts_blueprint)
     app_.register_blueprint(weko_workflow_blueprint)
-    print(app_.instance_path)
     return app_
 
 @pytest.yield_fixture()
@@ -469,23 +438,3 @@ def users(app, db):
         {'email': sysadmin.email, 'id': sysadmin.id,
          'obj': sysadmin},
     ]
-
-@pytest.yield_fixture()
-def webassets(app):
-    """Flask application fixture with assets."""
-    initial_dir = os.getcwd()
-    os.chdir(app.instance_path)
-
-    script_info = ScriptInfo(create_app=lambda info: app)
-    script_info._loaded_app = app
-
-    runner = CliRunner()
-    # runner.invoke(npm, obj=script_info)
-
-    # subprocess.call(['npm', 'install'])
-    runner.invoke(collect, ['-v'], obj=script_info)
-    runner.invoke(assets, ['build'], obj=script_info)
-
-    yield app
-
-    os.chdir(initial_dir)
