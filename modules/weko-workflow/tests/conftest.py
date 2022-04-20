@@ -1,20 +1,37 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+
+"""Pytest configuration."""
+
+import os
 import shutil
 import tempfile
-import os
-import uuid
-import json
 
 import pytest
 from flask import Flask
-from flask_babelex import Babel
 from flask_babelex import Babel, lazy_gettext as _
 from flask_menu import Menu
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers
 from invenio_accounts.testutils import create_test_user
 from invenio_accounts import InvenioAccounts
-from invenio_accounts.views.settings import blueprint as invenio_accounts_blueprint
-from invenio_db import InvenioDB
 from invenio_accounts.models import User, Role
 from invenio_accounts.views.settings import blueprint \
     as invenio_accounts_blueprint
@@ -24,23 +41,20 @@ from invenio_stats import InvenioStats
 # from weko_records_ui import WekoRecordsUI
 from weko_theme import WekoTheme
 from weko_workflow import WekoWorkflow
-from weko_workflow.models import Activity, Action, ActionStatus, FlowDefine, WorkFlow
-from weko_records.models import ItemType, ItemTypeName
-from weko_records import WekoRecords
+from weko_workflow.models import Activity
 from weko_workflow.views import blueprint as weko_workflow_blueprint
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
-from weko_records_ui import WekoRecordsUI 
 
 
 @pytest.yield_fixture()
 def instance_path():
     """Temporary instance path."""
     path = tempfile.mkdtemp()
-    print(path)
     yield path
     shutil.rmtree(path)
+
 
 @pytest.fixture()
 def base_app(instance_path):
@@ -49,8 +63,8 @@ def base_app(instance_path):
     app_.config.update(
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         ACCOUNTS_USERINFO_HEADERS=True,
         WEKO_PERMISSION_SUPER_ROLE_USER=['System Administrator',
@@ -256,11 +270,11 @@ def base_app(instance_path):
     InvenioStats(app_)
     WekoTheme(app_)
     WekoWorkflow(app_)
-    WekoRecords(app_)
-
+    # WekoRecordsUI(app_)
     app_.register_blueprint(invenio_accounts_blueprint)
     app_.register_blueprint(weko_workflow_blueprint)
     return app_
+
 
 @pytest.yield_fixture()
 def app(base_app):
@@ -277,7 +291,7 @@ def db(app):
     db_.create_all()
     yield db_
     db_.session.remove()
-    drop_database(str(db_.engine.url))
+    # drop_database(str(db_.engine.url))
 
 
 @pytest.yield_fixture()
@@ -286,101 +300,6 @@ def client(app):
     with app.test_client() as client:
         yield client
 
-@pytest.fixture()
-def create_activity(db, users):
-    from datetime import datetime
-    item_id = uuid.uuid4()
-    activity = Activity(
-        activity_id = "A-20220420-00001",
-        item_id=item_id,
-        workflow_id=1,
-        flow_id=1,
-        action_id=2,
-        action_status="F",
-        activity_login_user=5,
-        activity_update_user=5,
-        activity_status="F",
-        activity_start=datetime.utcnow(),
-        activity_end=datetime.utcnow(),
-        activity_confirm_term_of_use=True,
-        title="test item01",
-        shared_user_id=-1,
-        extra_info={},
-        action_order=6
-    )
-    #db.session.add(activity)
-    action_status = ActionStatus(
-        action_status_id="F",
-        action_status_name="action_done",
-        action_status_desc="",
-        action_scopes="sys,user",
-        action_displays="Complete",
-    )
-    #db.session.add(action_status)
-    flow_id = uuid.uuid4()
-    flows_id2 = uuid.uuid4()
-    flow_define = FlowDefine(
-        flow_id=flow_id,
-        flow_name="test flow",
-        flow_user=5,
-        flow_status="A",
-        is_deleted=False,
-    )
-    #db.session.add(flow_define)
-    workflow = WorkFlow(
-        flows_id=flows_id2,
-        flows_name="test workflow",
-        itemtype_id=1,
-        flow_id=flow_id,
-        is_deleted=False,
-        open_restricted=True,
-        is_gakuninrdm=False,
-    )
-    #db.session.add(workflow)
-    item_type=ItemType(
-        name_id=1,
-        harvesting_type=True,
-        schema={"type": "object"},
-        form={"type": "object"},
-        render={"type": "object"},
-        tag=1,
-        version_id=1,
-        is_deleted=False
-    )
-    #db.session.add(item_type)
-    item_type_name=ItemTypeName(
-        name="test item_type",
-        has_site_license=False,
-        is_active=True
-    )
-    #db.session.add(item_type_name)
-    actions=list()
-    with open("tests/data/actions.json","r") as f:
-        action_datas = json.load(f)
-        print(action_datas)
-    # for action_data in action_datas:
-    #     data = action_data
-    #     data["action_makedate"] = datetime.utcnow()
-    #     data["action_lastdate"] = datetime.utcnow()
-    #     action = Action(**data)
-    #     db.session.add(action)
-    #     actions.append(action)
-    data = action_datas[1]
-    data["action_makedate"] = datetime.utcnow()
-    data["action_lastdate"] = datetime.utcnow()
-    action = Action(**action_datas[1])
-    # db.session.commit()
-    yield {
-        "uuid":id,
-        "activity":activity,
-        # "actions":actions,
-        "action":action,
-        "action_status":action_status,
-        "flow_define":flow_define,
-        "workflow":workflow,
-        "item_type":item_type,
-        "item_type_name":item_type_name
-        }
 
 @pytest.fixture()
 def users(app, db):
@@ -425,7 +344,7 @@ def users(app, db):
             ActionUsers(action='superuser-access', user=sysadmin)
         ]
         db.session.add_all(action_users)
-    print(sysadmin.id)
+
     return [
         {'email': user.email, 'id': user.id,
          'obj': user},
