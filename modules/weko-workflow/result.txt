@@ -1,0 +1,1386 @@
+running pytest
+Searching for pytest<5.0.0,>=4.6.4
+Best match: pytest 4.6.11
+Processing pytest-4.6.11-py3.6.egg
+
+Using /code/modules/weko-workflow/.eggs/pytest-4.6.11-py3.6.egg
+running egg_info
+writing weko_workflow.egg-info/PKG-INFO
+writing dependency_links to weko_workflow.egg-info/dependency_links.txt
+writing entry points to weko_workflow.egg-info/entry_points.txt
+writing requirements to weko_workflow.egg-info/requires.txt
+writing top-level names to weko_workflow.egg-info/top_level.txt
+reading manifest file 'weko_workflow.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+adding license file 'LICENSE'
+adding license file 'AUTHORS.rst'
+writing manifest file 'weko_workflow.egg-info/SOURCES.txt'
+running build_ext
+============================= test session starts ==============================
+platform linux -- Python 3.6.15, pytest-4.6.11, py-1.11.0, pluggy-0.13.1
+rootdir: /code/modules/weko-workflow, inifile: pytest.ini, testpaths: docs, tests, weko_workflow
+plugins: celery-4.4.4, pep8-1.0.6, flask-0.15.1, cov-2.10.1, invenio-1.3.4
+collected 21 items
+
+tests/conftest.py F                                                      [  4%]
+tests/test_api.py FF                                                     [ 14%]
+tests/test_examples_app.py F                                             [ 19%]
+tests/test_weko_workflow.py F                                            [ 23%]
+weko_workflow/__init__.py .                                              [ 28%]
+weko_workflow/admin.py F                                                 [ 33%]
+weko_workflow/api.py F                                                   [ 38%]
+weko_workflow/bundles.py .                                               [ 42%]
+weko_workflow/cli.py F                                                   [ 47%]
+weko_workflow/config.py F                                                [ 52%]
+weko_workflow/errors.py .                                                [ 57%]
+weko_workflow/ext.py .                                                   [ 61%]
+weko_workflow/models.py F                                                [ 66%]
+weko_workflow/romeo.py .                                                 [ 71%]
+weko_workflow/scopes.py .                                                [ 76%]
+weko_workflow/sessions.py .                                              [ 80%]
+weko_workflow/tasks.py .                                                 [ 85%]
+weko_workflow/utils.py F                                                 [ 90%]
+weko_workflow/version.py .                                               [ 95%]
+weko_workflow/views.py F                                                 [100%]
+
+=================================== FAILURES ===================================
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-workflow/tests/conftest.py:16:80: E501 line too long (83 > 79 characters)
+from invenio_accounts.views.settings import blueprint as invenio_accounts_blueprint
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:27:80: E501 line too long (85 > 79 characters)
+from weko_workflow.models import Activity, Action, ActionStatus, FlowDefine, WorkFlow
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:34:42: W291 trailing whitespace
+from weko_records_ui import WekoRecordsUI
+                                         ^
+/code/modules/weko-workflow/tests/conftest.py:42:46: E231 missing whitespace after ','
+from weko_workflow.bundles import js_workflow,js_item_link, js_activity_list,js_iframe,js_oa_policy,js_identifier_grant,js_quit_confirmation,js_lock_activity,js_admin_workflow_detail,css_workflow,css_datepicker_workflow,js_admin_flow_detail
+                                             ^
+/code/modules/weko-workflow/tests/conftest.py:42:77: E231 missing whitespace after ','
+from weko_workflow.bundles import js_workflow,js_item_link, js_activity_list,js_iframe,js_oa_policy,js_identifier_grant,js_quit_confirmation,js_lock_activity,js_admin_workflow_detail,css_workflow,css_datepicker_workflow,js_admin_flow_detail
+                                                                            ^
+/code/modules/weko-workflow/tests/conftest.py:42:80: E501 line too long (240 > 79 characters)
+from weko_workflow.bundles import js_workflow,js_item_link, js_activity_list,js_iframe,js_oa_policy,js_identifier_grant,js_quit_confirmation,js_lock_activity,js_admin_workflow_detail,css_workflow,css_datepicker_workflow,js_admin_flow_detail
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:42:87: E231 missing whitespace after ','
+from weko_workflow.bundles import js_workflow,js_item_link, js_activity_list,js_iframe,js_oa_policy,js_identifier_grant,js_quit_confirmation,js_lock_activity,js_admin_workflow_detail,css_workflow,css_datepicker_workflow,js_admin_flow_detail
+                                                                                      ^
+/code/modules/weko-workflow/tests/conftest.py:42:100: E231 missing whitespace after ','
+from weko_workflow.bundles import js_workflow,js_item_link, js_activity_list,js_iframe,js_oa_policy,js_identifier_grant,js_quit_confirmation,js_lock_activity,js_admin_workflow_detail,css_workflow,css_datepicker_workflow,js_admin_flow_detail
+                                                                                                   ^
+/code/modules/weko-workflow/tests/conftest.py:42:120: E231 missing whitespace after ','
+from weko_workflow.bundles import js_workflow,js_item_link, js_activity_list,js_iframe,js_oa_policy,js_identifier_grant,js_quit_confirmation,js_lock_activity,js_admin_workflow_detail,css_workflow,css_datepicker_workflow,js_admin_flow_detail
+                                                                                                                       ^
+/code/modules/weko-workflow/tests/conftest.py:42:141: E231 missing whitespace after ','
+from weko_workflow.bundles import js_workflow,js_item_link, js_activity_list,js_iframe,js_oa_policy,js_identifier_grant,js_quit_confirmation,js_lock_activity,js_admin_workflow_detail,css_workflow,css_datepicker_workflow,js_admin_flow_detail
+                                                                                                                                            ^
+/code/modules/weko-workflow/tests/conftest.py:42:158: E231 missing whitespace after ','
+from weko_workflow.bundles import js_workflow,js_item_link, js_activity_list,js_iframe,js_oa_policy,js_identifier_grant,js_quit_confirmation,js_lock_activity,js_admin_workflow_detail,css_workflow,css_datepicker_workflow,js_admin_flow_detail
+                                                                                                                                                             ^
+/code/modules/weko-workflow/tests/conftest.py:42:183: E231 missing whitespace after ','
+from weko_workflow.bundles import js_workflow,js_item_link, js_activity_list,js_iframe,js_oa_policy,js_identifier_grant,js_quit_confirmation,js_lock_activity,js_admin_workflow_detail,css_workflow,css_datepicker_workflow,js_admin_flow_detail
+                                                                                                                                                                                      ^
+/code/modules/weko-workflow/tests/conftest.py:42:196: E231 missing whitespace after ','
+from weko_workflow.bundles import js_workflow,js_item_link, js_activity_list,js_iframe,js_oa_policy,js_identifier_grant,js_quit_confirmation,js_lock_activity,js_admin_workflow_detail,css_workflow,css_datepicker_workflow,js_admin_flow_detail
+                                                                                                                                                                                                   ^
+/code/modules/weko-workflow/tests/conftest.py:42:220: E231 missing whitespace after ','
+from weko_workflow.bundles import js_workflow,js_item_link, js_activity_list,js_iframe,js_oa_policy,js_identifier_grant,js_quit_confirmation,js_lock_activity,js_admin_workflow_detail,css_workflow,css_datepicker_workflow,js_admin_flow_detail
+                                                                                                                                                                                                                           ^
+/code/modules/weko-workflow/tests/conftest.py:47:1: E302 expected 2 blank lines, found 0
+@pytest.yield_fixture()
+^
+/code/modules/weko-workflow/tests/conftest.py:54:1: E302 expected 2 blank lines, found 1
+@pytest.fixture()
+^
+/code/modules/weko-workflow/tests/conftest.py:77:80: E501 line too long (84 > 79 characters)
+                    'Creative Commons CC0 1.0 Universal Public Domain Designation'),
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:79:80: E501 line too long (87 > 79 characters)
+                'href_ja': 'https://creativecommons.org/publicdomain/zero/1.0/deed.ja',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:80:80: E501 line too long (85 > 79 characters)
+                'href_default': 'https://creativecommons.org/publicdomain/zero/1.0/',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:84:80: E501 line too long (80 > 79 characters)
+                'href_pdf': 'https://creativecommons.org/publicdomain/zero/1.0/'
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:86:80: E501 line too long (80 > 79 characters)
+                'txt': 'This work is licensed under a Public Domain Dedication '
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:87:21: E131 continuation line unaligned for hanging indent
+                    'International License.'
+                    ^
+/code/modules/weko-workflow/tests/conftest.py:91:80: E501 line too long (83 > 79 characters)
+                'name': _('Creative Commons Attribution 3.0 Unported (CC BY 3.0)'),
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:93:80: E501 line too long (81 > 79 characters)
+                'href_ja': 'https://creativecommons.org/licenses/by/3.0/deed.ja',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:99:80: E501 line too long (83 > 79 characters)
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:107:80: E501 line too long (84 > 79 characters)
+                'href_ja': 'https://creativecommons.org/licenses/by-sa/3.0/deed.ja',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:108:80: E501 line too long (82 > 79 characters)
+                'href_default': 'https://creativecommons.org/licenses/by-sa/3.0/',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:113:80: E501 line too long (83 > 79 characters)
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:114:21: E131 continuation line unaligned for hanging indent
+                    '-ShareAlike 3.0 International License.'
+                    ^
+/code/modules/weko-workflow/tests/conftest.py:118:80: E501 line too long (89 > 79 characters)
+                    'Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)'),
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:120:80: E501 line too long (84 > 79 characters)
+                'href_ja': 'https://creativecommons.org/licenses/by-nd/3.0/deed.ja',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:121:80: E501 line too long (82 > 79 characters)
+                'href_default': 'https://creativecommons.org/licenses/by-nd/3.0/',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:126:80: E501 line too long (83 > 79 characters)
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:127:21: E131 continuation line unaligned for hanging indent
+                    '-NoDerivatives 3.0 International License.'
+                    ^
+/code/modules/weko-workflow/tests/conftest.py:135:80: E501 line too long (84 > 79 characters)
+                'href_ja': 'https://creativecommons.org/licenses/by-nc/3.0/deed.ja',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:136:80: E501 line too long (82 > 79 characters)
+                'href_default': 'https://creativecommons.org/licenses/by-nc/3.0/',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:141:80: E501 line too long (83 > 79 characters)
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:142:21: E131 continuation line unaligned for hanging indent
+                    '-NonCommercial 3.0 International License.'
+                    ^
+/code/modules/weko-workflow/tests/conftest.py:146:80: E501 line too long (80 > 79 characters)
+                    'Creative Commons Attribution-NonCommercial-ShareAlike 3.0 '
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:149:80: E501 line too long (87 > 79 characters)
+                'href_ja': 'https://creativecommons.org/licenses/by-nc-sa/3.0/deed.ja',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:150:80: E501 line too long (85 > 79 characters)
+                'href_default': 'https://creativecommons.org/licenses/by-nc-sa/3.0/',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:154:80: E501 line too long (80 > 79 characters)
+                'href_pdf': 'http://creativecommons.org/licenses/by-nc-sa/3.0/',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:155:80: E501 line too long (83 > 79 characters)
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:156:21: E131 continuation line unaligned for hanging indent
+                    '-NonCommercial-ShareAlike 3.0 International License.'
+                    ^
+/code/modules/weko-workflow/tests/conftest.py:163:80: E501 line too long (87 > 79 characters)
+                'href_ja': 'https://creativecommons.org/licenses/by-nc-nd/3.0/deed.ja',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:164:80: E501 line too long (85 > 79 characters)
+                'href_default': 'https://creativecommons.org/licenses/by-nc-nd/3.0/',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:168:80: E501 line too long (80 > 79 characters)
+                'href_pdf': 'http://creativecommons.org/licenses/by-nc-nd/3.0/',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:169:80: E501 line too long (83 > 79 characters)
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:170:21: E131 continuation line unaligned for hanging indent
+                    '-NonCommercial-ShareAlike 3.0 International License.'
+                    ^
+/code/modules/weko-workflow/tests/conftest.py:174:80: E501 line too long (88 > 79 characters)
+                'name': _('Creative Commons Attribution 4.0 International (CC BY 4.0)'),
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:176:80: E501 line too long (81 > 79 characters)
+                'href_ja': 'https://creativecommons.org/licenses/by/4.0/deed.ja',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:182:80: E501 line too long (83 > 79 characters)
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:183:21: E131 continuation line unaligned for hanging indent
+                    ' 4.0 International License.'
+                    ^
+/code/modules/weko-workflow/tests/conftest.py:187:80: E501 line too long (80 > 79 characters)
+                    'Creative Commons Attribution-ShareAlike 4.0 International '
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:190:80: E501 line too long (84 > 79 characters)
+                'href_ja': 'https://creativecommons.org/licenses/by-sa/4.0/deed.ja',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:191:80: E501 line too long (82 > 79 characters)
+                'href_default': 'https://creativecommons.org/licenses/by-sa/4.0/',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:196:80: E501 line too long (83 > 79 characters)
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:197:21: E131 continuation line unaligned for hanging indent
+                    '-ShareAlike 4.0 International License.'
+                    ^
+/code/modules/weko-workflow/tests/conftest.py:201:80: E501 line too long (83 > 79 characters)
+                    'Creative Commons Attribution-NoDerivatives 4.0 International '
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:204:80: E501 line too long (84 > 79 characters)
+                'href_ja': 'https://creativecommons.org/licenses/by-nd/4.0/deed.ja',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:205:80: E501 line too long (82 > 79 characters)
+                'href_default': 'https://creativecommons.org/licenses/by-nd/4.0/',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:210:80: E501 line too long (83 > 79 characters)
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:211:21: E131 continuation line unaligned for hanging indent
+                    '-NoDerivatives 4.0 International License.'
+                    ^
+/code/modules/weko-workflow/tests/conftest.py:215:80: E501 line too long (82 > 79 characters)
+                    'Creative Commons Attribution-NonCommercial 4.0 International'
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:218:80: E501 line too long (84 > 79 characters)
+                'href_ja': 'https://creativecommons.org/licenses/by-nc/4.0/deed.ja',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:219:80: E501 line too long (82 > 79 characters)
+                'href_default': 'https://creativecommons.org/licenses/by-nc/4.0/',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:224:80: E501 line too long (83 > 79 characters)
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:225:21: E131 continuation line unaligned for hanging indent
+                    '-NonCommercial 4.0 International License.'
+                    ^
+/code/modules/weko-workflow/tests/conftest.py:232:80: E501 line too long (87 > 79 characters)
+                'href_ja': 'https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ja',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:233:80: E501 line too long (85 > 79 characters)
+                'href_default': 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:237:80: E501 line too long (80 > 79 characters)
+                'href_pdf': 'http://creativecommons.org/licenses/by-nc-sa/4.0/',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:238:80: E501 line too long (83 > 79 characters)
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:239:21: E131 continuation line unaligned for hanging indent
+                    '-NonCommercial-ShareAlike 4.0 International License.'
+                    ^
+/code/modules/weko-workflow/tests/conftest.py:243:80: E501 line too long (83 > 79 characters)
+                    'Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 '
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:246:80: E501 line too long (87 > 79 characters)
+                'href_ja': 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:247:80: E501 line too long (85 > 79 characters)
+                'href_default': 'https://creativecommons.org/licenses/by-nc-nd/4.0/',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:251:80: E501 line too long (80 > 79 characters)
+                'href_pdf': 'http://creativecommons.org/licenses/by-nc-nd/4.0/',
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:252:80: E501 line too long (83 > 79 characters)
+                'txt': 'This work is licensed under a Creative Commons Attribution'
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:253:21: E131 continuation line unaligned for hanging indent
+                    '-NonCommercial-ShareAlike 4.0 International License.'
+                    ^
+/code/modules/weko-workflow/tests/conftest.py:271:1: W293 blank line contains whitespace
+
+^
+/code/modules/weko-workflow/tests/conftest.py:276:80: E501 line too long (95 > 79 characters)
+    app_.jinja_loader.searchpath.append("../invenio-communities/invenio_communities/templates")
+                                                                               ^
+/code/modules/weko-workflow/tests/conftest.py:294:1: E302 expected 2 blank lines, found 1
+@pytest.yield_fixture()
+^
+/code/modules/weko-workflow/tests/conftest.py:318:1: E302 expected 2 blank lines, found 1
+@pytest.fixture()
+^
+/code/modules/weko-workflow/tests/conftest.py:323:20: E251 unexpected spaces around keyword / parameter equals
+        activity_id = "A-20220420-00001",
+                   ^
+/code/modules/weko-workflow/tests/conftest.py:323:22: E251 unexpected spaces around keyword / parameter equals
+        activity_id = "A-20220420-00001",
+                     ^
+/code/modules/weko-workflow/tests/conftest.py:340:5: E265 block comment should start with '# '
+    #db.session.add(activity)
+    ^
+/code/modules/weko-workflow/tests/conftest.py:348:5: E265 block comment should start with '# '
+    #db.session.add(action_status)
+    ^
+/code/modules/weko-workflow/tests/conftest.py:358:5: E265 block comment should start with '# '
+    #db.session.add(flow_define)
+    ^
+/code/modules/weko-workflow/tests/conftest.py:368:5: E265 block comment should start with '# '
+    #db.session.add(workflow)
+    ^
+/code/modules/weko-workflow/tests/conftest.py:369:14: E225 missing whitespace around operator
+    item_type=ItemType(
+             ^
+/code/modules/weko-workflow/tests/conftest.py:379:5: E265 block comment should start with '# '
+    #db.session.add(item_type)
+    ^
+/code/modules/weko-workflow/tests/conftest.py:380:19: E225 missing whitespace around operator
+    item_type_name=ItemTypeName(
+                  ^
+/code/modules/weko-workflow/tests/conftest.py:385:5: E265 block comment should start with '# '
+    #db.session.add(item_type_name)
+    ^
+/code/modules/weko-workflow/tests/conftest.py:386:12: E225 missing whitespace around operator
+    actions=list()
+           ^
+/code/modules/weko-workflow/tests/conftest.py:387:40: E231 missing whitespace after ','
+    with open("tests/data/actions.json","r") as f:
+                                       ^
+/code/modules/weko-workflow/tests/conftest.py:403:15: E231 missing whitespace after ':'
+        "uuid":id,
+              ^
+/code/modules/weko-workflow/tests/conftest.py:404:19: E231 missing whitespace after ':'
+        "activity":activity,
+                  ^
+/code/modules/weko-workflow/tests/conftest.py:406:17: E231 missing whitespace after ':'
+        "action":action,
+                ^
+/code/modules/weko-workflow/tests/conftest.py:407:24: E231 missing whitespace after ':'
+        "action_status":action_status,
+                       ^
+/code/modules/weko-workflow/tests/conftest.py:408:22: E231 missing whitespace after ':'
+        "flow_define":flow_define,
+                     ^
+/code/modules/weko-workflow/tests/conftest.py:409:19: E231 missing whitespace after ':'
+        "workflow":workflow,
+                  ^
+/code/modules/weko-workflow/tests/conftest.py:410:20: E231 missing whitespace after ':'
+        "item_type":item_type,
+                   ^
+/code/modules/weko-workflow/tests/conftest.py:411:25: E231 missing whitespace after ':'
+        "item_type_name":item_type_name
+                        ^
+/code/modules/weko-workflow/tests/conftest.py:414:1: E302 expected 2 blank lines, found 1
+@pytest.fixture()
+^
+/code/modules/weko-workflow/tests/conftest.py:471:1: E302 expected 2 blank lines, found 1
+@pytest.yield_fixture()
+^
+/code/modules/weko-workflow/tests/conftest.py:489:1: W391 blank line at end of file
+    os.chdir(initial_dir)
+^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-workflow/tests/test_api.py:10:42: E231 missing whitespace after ','
+from weko_workflow.models import Activity,WorkFlow
+                                         ^
+/code/modules/weko-workflow/tests/test_api.py:12:1: E302 expected 2 blank lines, found 0
+def _post(client, url, json_data):
+^
+/code/modules/weko-workflow/tests/test_api.py:14:1: E302 expected 2 blank lines, found 0
+@pytest.mark.parametrize('users_index, status_code', [
+^
+/code/modules/weko-workflow/tests/test_api.py:15:5: E265 block comment should start with '# '
+    #(0, 403),
+    ^
+/code/modules/weko-workflow/tests/test_api.py:16:5: E265 block comment should start with '# '
+    #(1, 200),
+    ^
+/code/modules/weko-workflow/tests/test_api.py:17:5: E265 block comment should start with '# '
+    #(2, 200),
+    ^
+/code/modules/weko-workflow/tests/test_api.py:18:5: E265 block comment should start with '# '
+    #(3, 200),
+    ^
+/code/modules/weko-workflow/tests/test_api.py:21:48: E231 missing whitespace after ','
+def test_display_activity_users(create_activity,client, users, users_index, status_code, db):
+                                               ^
+/code/modules/weko-workflow/tests/test_api.py:21:80: E501 line too long (93 > 79 characters)
+def test_display_activity_users(create_activity,client, users, users_index, status_code, db):
+                                                                               ^
+/code/modules/weko-workflow/tests/test_api.py:27:5: E265 block comment should start with '# '
+    #activity_detail = Activity.query.filter_by(activity_id='1').one_or_none()
+    ^
+/code/modules/weko-workflow/tests/test_api.py:29:5: E265 block comment should start with '# '
+    #cur_action = activity_detail.action
+    ^
+/code/modules/weko-workflow/tests/test_api.py:30:15: E225 missing whitespace around operator
+    cur_action=create_activity["action"]
+              ^
+/code/modules/weko-workflow/tests/test_api.py:31:20: E225 missing whitespace around operator
+    workflow_detail=create_activity["workflow"]
+                   ^
+/code/modules/weko-workflow/tests/test_api.py:32:5: E265 block comment should start with '# '
+    #action_endpoint = cur_action.action_endpoint
+    ^
+/code/modules/weko-workflow/tests/test_api.py:33:5: E265 block comment should start with '# '
+    #action_id = cur_action.id
+    ^
+/code/modules/weko-workflow/tests/test_api.py:34:20: E225 missing whitespace around operator
+    action_endpoint="approval"
+                   ^
+/code/modules/weko-workflow/tests/test_api.py:51:80: E501 line too long (171 > 79 characters)
+    # workflow_detail = WorkFlow(flows_id='{39ba43f0-c876-4086-97f4-d9aed1be8083}', itemtype_id=15, flow_id=1, is_deleted=False, open_restricted=True, is_gakuninrdm=False)
+                                                                               ^
+/code/modules/weko-workflow/tests/test_api.py:53:77: E251 unexpected spaces around keyword / parameter equals
+    with patch('weko_workflow.views.get_activity_display_info', return_value = (action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+                                                                            ^
+/code/modules/weko-workflow/tests/test_api.py:53:79: E251 unexpected spaces around keyword / parameter equals
+    with patch('weko_workflow.views.get_activity_display_info', return_value = (action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+                                                                              ^
+/code/modules/weko-workflow/tests/test_api.py:53:80: E501 line too long (155 > 79 characters)
+    with patch('weko_workflow.views.get_activity_display_info', return_value = (action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+                                                                               ^
+/code/modules/weko-workflow/tests/test_api.py:53:155: E502 the backslash is redundant between brackets
+    with patch('weko_workflow.views.get_activity_display_info', return_value = (action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+                                                                                                                                                          ^
+/code/modules/weko-workflow/tests/test_api.py:56:80: E501 line too long (120 > 79 characters)
+            with patch('weko_workflow.views.WorkActivity.get_activity_action_role', return_value=(roles, action_users)):
+                                                                               ^
+/code/modules/weko-workflow/tests/test_api.py:58:1: W391 blank line at end of file
+                    assert res.status_code == 20000
+^
+
+______________________ test_display_activity_users[4-200] ______________________
+
+create_activity = {'action': <Action (transient 139924896527584)>, 'action_status': <ActionStatus (transient 139924899179768)>, 'activity': <Activity (transient 139924896841176)>, 'flow_define': <FlowDefine (transient 139924899178312)>, ...}
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>}, {'email': 'test2@test.org', 'id': 2, 'obj': <User 2>}, {'email'...User 3>}, {'email': 'test4@test.org', 'id': 4, 'obj': <User 4>}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>}]
+users_index = 4, status_code = 200
+db = <SQLAlchemy engine=sqlite:////code/modules/weko-workflow/test.db>
+
+    @pytest.mark.parametrize('users_index, status_code', [
+        #(0, 403),
+        #(1, 200),
+        #(2, 200),
+        #(3, 200),
+        (4, 200),
+    ])
+    def test_display_activity_users(create_activity,client, users, users_index, status_code, db):
+        """Test of display activity."""
+        login_user_via_session(client=client, email=users[users_index]['email'])
+        url = url_for('weko_workflow.display_activity', activity_id='1')
+        input = {}
+    
+        #activity_detail = Activity.query.filter_by(activity_id='1').one_or_none()
+        activity_detail = create_activity["activity"]
+        #cur_action = activity_detail.action
+        cur_action=create_activity["action"]
+        workflow_detail=create_activity["workflow"]
+        #action_endpoint = cur_action.action_endpoint
+        #action_id = cur_action.id
+        action_endpoint="approval"
+        action_id = 4
+        histories = 1
+        item = None
+        steps = 1
+        temporary_comment = 1
+    
+        roles = {
+            'allow': [],
+            'deny': []
+        }
+        action_users = {
+            'allow': [],
+            'deny': []
+        }
+        ctx = {'community': None}
+    
+        # workflow_detail = WorkFlow(flows_id='{39ba43f0-c876-4086-97f4-d9aed1be8083}', itemtype_id=15, flow_id=1, is_deleted=False, open_restricted=True, is_gakuninrdm=False)
+    
+        with patch('weko_workflow.views.get_activity_display_info', return_value = (action_endpoint, action_id, activity_detail, cur_action, histories, item, \
+                   steps, temporary_comment, workflow_detail)):
+            with patch('weko_workflow.views.check_authority_action'):
+                with patch('weko_workflow.views.WorkActivity.get_activity_action_role', return_value=(roles, action_users)):
+>                       res = _post(client, url, input)
+
+tests/test_api.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_api.py:13: in _post
+    return client.post(url, json=json_data)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/werkzeug/test.py:1039: in post
+    return self.open(*args, **kw)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/testing.py:196: in open
+    follow_redirects=follow_redirects
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/werkzeug/test.py:993: in open
+    response = self.run_wsgi_app(environ.copy(), buffered=buffered)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/werkzeug/test.py:884: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/werkzeug/test.py:1119: in run_wsgi_app
+    app_rv = app(environ, start_response)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/app.py:2334: in __call__
+    return self.wsgi_app(environ, start_response)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/app.py:2320: in wsgi_app
+    response = self.handle_exception(e)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/app.py:1766: in handle_exception
+    reraise(exc_type, exc_value, tb)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/app.py:2317: in wsgi_app
+    response = self.full_dispatch_request()
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/app.py:1840: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/app.py:1743: in handle_user_exception
+    reraise(exc_type, exc_value, tb)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/app.py:1838: in full_dispatch_request
+    rv = self.dispatch_request()
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/app.py:1824: in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask_login/utils.py:261: in decorated_view
+    return func(*args, **kwargs)
+weko_workflow/views.py:743: in display_activity
+    **ctx
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/templating.py:135: in render_template
+    context, ctx.app)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/templating.py:117: in _render
+    rv = template.render(context)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/jinja2/asyncsupport.py:76: in render
+    return original_render(self, *args, **kwargs)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/jinja2/environment.py:1008: in render
+    return self.environment.handle_exception(exc_info, True)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/jinja2/environment.py:780: in handle_exception
+    reraise(exc_type, exc_value, tb)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/jinja2/_compat.py:37: in reraise
+    raise value.with_traceback(tb)
+weko_workflow/templates/weko_workflow/activity_detail.html:420: in top-level template code
+    {{ inStyle }}
+../weko-theme/weko_theme/templates/weko_theme/page.html:20: in top-level template code
+    {%- extends config.THEME_BODY_TEMPLATE %}
+../weko-theme/weko_theme/templates/weko_theme/body.html:21: in top-level template code
+    {%- extends "weko_theme/base.html" %}
+../weko-theme/weko_theme/templates/weko_theme/base.html:11: in top-level template code
+    {%- block head %}
+../weko-theme/weko_theme/templates/weko_theme/base.html:54: in block "head"
+    {%- block css %}
+weko_workflow/templates/weko_workflow/activity_detail.html:25: in block "css"
+    {{ super() }}
+../weko-theme/weko_theme/templates/weko_theme/base.html:55: in block "css"
+    {% assets "weko_theme_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/webassets/ext/jinja2.py:186: in _render_assets
+    urls = bundle.urls()
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/webassets/bundle.py:806: in urls
+    urls.extend(bundle._urls(new_ctx, extra_filters, *args, **kwargs))
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/webassets/bundle.py:765: in _urls
+    *args, **kwargs)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/webassets/bundle.py:619: in _build
+    force, disable_cache=disable_cache, extra_filters=extra_filters)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/webassets/bundle.py:543: in _merge_and_apply
+    kwargs=item_data)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/webassets/merge.py:276: in apply
+    return self._wrap_cache(key, func)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/webassets/merge.py:213: in _wrap_cache
+    content = self.cache.get(key)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/webassets/cache.py:183: in get
+    filename = path.join(self.directory, '%s' % make_md5(self.V, key))
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/webassets/cache.py:84: in make_md5
+    for d in walk(data):
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/webassets/cache.py:61: in walk
+    for d in walk(item): yield d
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/webassets/cache.py:61: in walk
+    for d in walk(item): yield d
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/webassets/cache.py:67: in walk
+    yield obj.data().encode('utf-8')
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <FileHunk /code/modules/weko-workflow/static/css/weko_theme/theme.scss>
+
+    def data(self):
+>       f = open(self.filename, 'r', encoding='utf-8')
+E       FileNotFoundError: [Errno 2] No such file or directory: '/code/modules/weko-workflow/static/css/weko_theme/theme.scss'
+
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/webassets/merge.py:77: FileNotFoundError
+---------------------------- Captured stdout setup -----------------------------
+5
+[{'action_name': 'Start', 'action_desc': '', 'action_endpoint': 'begin_action', 'action_version': '1.0.0', 'action_is_need_agree': False}, {'action_name': 'End', 'action_desc': '', 'action_endpoint': 'end_action', 'action_version': '1.0.0', 'action_is_need_agree': False}, {'action_name': 'Item Registration', 'action_desc': '', 'action_endpoint': 'item_login', 'action_version': '1.0.1', 'action_is_need_agree': False}, {'action_name': 'Approval', 'action_desc': '', 'action_endpoint': 'approval', 'action_version': '2.0.0', 'action_is_need_agree': False}, {'action_name': 'Item Link', 'action_desc': '', 'action_endpoint': 'item_link', 'action_version': '1.0.1', 'action_is_need_agree': False}, {'action_name': 'OA Policy Confirmation', 'action_desc': '', 'action_endpoint': 'identifier_grant', 'action_version': '1.0.0', 'action_is_need_agree': False}, {'action_name': 'Identifier Grant', 'action_desc': '', 'action_endpoint': 'identifier_grant', 'action_version': '1.0.0', 'action_is_need_agree': False}]
+----------------------------- Captured stdout call -----------------------------
+/workflow/activity/detail/1
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-workflow/tests/test_examples_app.py:36:2: W291 trailing whitespace
+#
+ ^
+/code/modules/weko-workflow/tests/test_examples_app.py:41:2: W291 trailing whitespace
+#
+ ^
+/code/modules/weko-workflow/tests/test_examples_app.py:44:2: W291 trailing whitespace
+#
+ ^
+/code/modules/weko-workflow/tests/test_examples_app.py:47:2: W291 trailing whitespace
+#
+ ^
+/code/modules/weko-workflow/tests/test_examples_app.py:54:2: W291 trailing whitespace
+#
+ ^
+/code/modules/weko-workflow/tests/test_examples_app.py:57:2: W291 trailing whitespace
+#
+ ^
+/code/modules/weko-workflow/tests/test_examples_app.py:60:2: W291 trailing whitespace
+#
+ ^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-workflow/tests/test_weko_workflow.py:34:1: E265 block comment should start with '# '
+#def test_version():
+^
+/code/modules/weko-workflow/tests/test_weko_workflow.py:40:1: E265 block comment should start with '# '
+#def test_init():
+^
+/code/modules/weko-workflow/tests/test_weko_workflow.py:53:1: E265 block comment should start with '# '
+#def test_view(app):
+^
+/code/modules/weko-workflow/tests/test_weko_workflow.py:67:1: E265 block comment should start with '# '
+#def test_init_activity_success(app):
+^
+/code/modules/weko-workflow/tests/test_weko_workflow.py:89:1: E265 block comment should start with '# '
+#def test_init_activity_failed(app):
+^
+/code/modules/weko-workflow/tests/test_weko_workflow.py:111:1: E265 block comment should start with '# '
+#def test_init_activity_thread(app):
+^
+/code/modules/weko-workflow/tests/test_weko_workflow.py:153:1: E265 block comment should start with '# '
+#def _post(client, url, json_data):
+^
+/code/modules/weko-workflow/tests/test_weko_workflow.py:155:1: W391 blank line at end of file
+#
+^
+/code/modules/weko-workflow/tests/test_weko_workflow.py:155:2: W292 no newline at end of file
+#
+ ^
+/code/modules/weko-workflow/tests/test_weko_workflow.py:155:2: W292 no newline at end of file
+#
+ ^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-workflow/weko_workflow/admin.py:366:80: E501 line too long (80 > 79 characters)
+            activitys = activity.get_activity_by_workflow_id(workflow_detail.id)
+                                                                               ^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-workflow/weko_workflow/api.py:184:21: E265 block comment should start with '# '
+                    #flow.is_deleted = True
+                    ^
+/code/modules/weko-workflow/weko_workflow/api.py:243:80: E501 line too long (80 > 79 characters)
+                            'user_deny') if '0' != action.get('user') else False
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/api.py:257:80: E501 line too long (80 > 79 characters)
+                            'user_deny') if '0' != action.get('user') else False
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/api.py:259:80: E501 line too long (80 > 79 characters)
+                if flowactionrole.action_role or flowactionrole.action_user or \
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/api.py:794:80: E501 line too long (105 > 79 characters)
+        ).scalar()  # Cannot use '.with_for_update()'. FOR UPDATE is not allowed with aggregate functions
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/api.py:1415:21: W503 line break before binary operator
+                    == ActivityStatusPolicy.ACTIVITY_BEGIN,
+                    ^
+/code/modules/weko-workflow/weko_workflow/api.py:1417:21: W503 line break before binary operator
+                    == ActivityStatusPolicy.ACTIVITY_MAKING
+                    ^
+/code/modules/weko-workflow/weko_workflow/api.py:1465:80: E501 line too long (89 > 79 characters)
+                            _FlowActionRole.action_user != _Activity.activity_login_user,
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/api.py:1470:80: E501 line too long (90 > 79 characters)
+                            ActivityAction.action_handler != _Activity.activity_login_user
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/api.py:1501:25: W503 line break before binary operator
+                        == ActivityStatusPolicy.ACTIVITY_FINALLY
+                        ^
+/code/modules/weko-workflow/weko_workflow/api.py:1562:25: W503 line break before binary operator
+                        == ActivityStatusPolicy.ACTIVITY_BEGIN,
+                        ^
+/code/modules/weko-workflow/weko_workflow/api.py:1564:25: W503 line break before binary operator
+                        == ActivityStatusPolicy.ACTIVITY_MAKING))
+                        ^
+/code/modules/weko-workflow/weko_workflow/api.py:2042:17: W503 line break before binary operator
+                == action_endpoint or 'file_upload' == action_endpoint):
+                ^
+/code/modules/weko-workflow/weko_workflow/api.py:2368:17: W503 line break before binary operator
+                == ActivityStatusPolicy.ACTIVITY_BEGIN,
+                ^
+/code/modules/weko-workflow/weko_workflow/api.py:2370:17: W503 line break before binary operator
+                == ActivityStatusPolicy.ACTIVITY_MAKING)
+                ^
+/code/modules/weko-workflow/weko_workflow/api.py:2400:17: W503 line break before binary operator
+                == ActivityStatusPolicy.ACTIVITY_BEGIN,
+                ^
+/code/modules/weko-workflow/weko_workflow/api.py:2402:17: W503 line break before binary operator
+                == ActivityStatusPolicy.ACTIVITY_MAKING)
+                ^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-workflow/weko_workflow/cli.py:153:80: E501 line too long (80 > 79 characters)
+                action_name=current_app.config['WEKO_WORKFLOW_ACTION_APPROVAL'],
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/cli.py:200:80: E501 line too long (80 > 79 characters)
+                    'WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION'],
+                                                                               ^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-workflow/weko_workflow/config.py:53:35: W291 trailing whitespace
+IDENTIFIER_GRANT_SUFFIX_METHOD = 0
+                                  ^
+/code/modules/weko-workflow/weko_workflow/config.py:103:80: E501 line too long (81 > 79 characters)
+    'datacite:geoLocationPlace': [['geoLocation.geoLocationPlace.@value', None]],
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/config.py:215:80: E501 line too long (88 > 79 characters)
+WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE_PERFECTURE_AND_LOCATION_DATA_OF_GENERAL_USER = ''
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/config.py:216:80: E501 line too long (106 > 79 characters)
+"""Receiving Usage Application <Other than Perfecture Data & Location Data: General user> mail template"""
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/config.py:217:80: E501 line too long (104 > 79 characters)
+WEKO_WORKFLOW_RECEIVE_USAGE_APP_BESIDE_PERFECTURE_AND_LOCATION_DATA_OF_STUDENT_OR_GRADUATED_STUDENT = ''
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/config.py:218:80: E501 line too long (122 > 79 characters)
+"""Receiving Usage Application <Other than Perfecture Data & Location Data: Graduated Student OR Student> mail template"""
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/config.py:221:80: E501 line too long (122 > 79 characters)
+"""Receiving Usage Application <Other than Perfecture Data & Location Data: Graduated Student OR Student> mail template"""
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/config.py:223:80: E501 line too long (95 > 79 characters)
+"""Receiving Usage Application <Perfecture Data & Location Data: General user> mail template"""
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/config.py:294:80: E501 line too long (82 > 79 characters)
+WEKO_WORKFLOW_ACTIVITY_TOKEN_PATTERN = "activity={} file_name={} date={} email={}"
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/config.py:306:80: E501 line too long (103 > 79 characters)
+WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT = 'email_pattern_request_for_register_usage_report.tpl'
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/config.py:317:80: E501 line too long (89 > 79 characters)
+WEKO_WORKFLOW_RESTRICTED_ACCESS_APPROVAL_DATE = 'subitem_restricted_access_approval_date'
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/config.py:319:80: E501 line too long (93 > 79 characters)
+WEKO_WORKFLOW_RESTRICTED_ACCESS_USAGE_REPORT_ID = 'subitem_restricted_access_usage_report_id'
+                                                                               ^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-workflow/weko_workflow/models.py:501:80: E501 line too long (88 > 79 characters)
+    is_deleted = db.Column(db.Boolean(name='is_deleted'), nullable=False, default=False)
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/models.py:658:80: E501 line too long (88 > 79 characters)
+    is_deleted = db.Column(db.Boolean(name='is_deleted'), nullable=False, default=False)
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/models.py:661:80: E501 line too long (97 > 79 characters)
+    open_restricted = db.Column(db.Boolean(name='open_restricted'), nullable=False, default=True)
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/models.py:664:80: E501 line too long (94 > 79 characters)
+    is_gakuninrdm = db.Column(db.Boolean(name='is_gakuninrdm'), nullable=False, default=False)
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/models.py:1062:80: E501 line too long (98 > 79 characters)
+    is_usage_report = db.Column(db.Boolean(name='is_usage_report'), nullable=False, default=False)
+                                                                               ^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-workflow/weko_workflow/utils.py:303:80: E501 line too long (83 > 79 characters)
+                             is_import=False, without_ver_id=None, file_path=None):
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/utils.py:438:15: W503 line break before binary operator
+              and identifier_type != IDENTIFIER_GRANT_SELECT_DICT['NDL JaLC']
+              ^
+/code/modules/weko-workflow/weko_workflow/utils.py:1275:13: W503 line break before binary operator
+            and item_type_name in hidden_pubdate_list):
+            ^
+/code/modules/weko-workflow/weko_workflow/utils.py:1942:80: E501 line too long (80 > 79 characters)
+                current_config.get("WEKO_WORKFLOW_RECEIVE_OUTPUT_REGISTRATION"))
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/utils.py:1961:80: E501 line too long (80 > 79 characters)
+                                   "_PERFECTURE_AND_LOCATION_DATA_OF_STUDENT_OR"
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/utils.py:2892:80: E501 line too long (80 > 79 characters)
+        'template': current_app.config.get("WEKO_WORKFLOW_ACCESS_ACTIVITY_URL"),
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/utils.py:3049:80: E501 line too long (80 > 79 characters)
+    return action_endpoint, action_id, activity_detail, cur_action, histories, \
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/utils.py:3445:80: E501 line too long (80 > 79 characters)
+            'WEKO_WORKFLOW_USAGE_REPORT_ITEM_TITLE') + result['usage_data_name']
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/utils.py:3503:80: E501 line too long (80 > 79 characters)
+            deposit_without_ver, item_id_without_ver = get_record_first_version(
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/utils.py:3677:28: W503 line break before binary operator
+                           and i['is_thumbnail']]
+                           ^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-workflow/weko_workflow/views.py:336:80: E501 line too long (83 > 79 characters)
+        if 'community' in getargs and request.args.get('community') != 'undefined':
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/views.py:829:13: W503 line break before binary operator
+            == int(cur_user)).one_or_none()
+            ^
+/code/modules/weko-workflow/weko_workflow/views.py:838:13: W503 line break before binary operator
+            and int(activity_action_obj.action_handler) == int(cur_user)
+            ^
+/code/modules/weko-workflow/weko_workflow/views.py:839:13: W503 line break before binary operator
+            and contain_login_item_application):
+            ^
+/code/modules/weko-workflow/weko_workflow/views.py:895:80: E501 line too long (91 > 79 characters)
+    current_app.logger.debug("action_endpoint: {0}, current_pid: {1}, item_id: {2}".format(
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/views.py:900:80: E501 line too long (159 > 79 characters)
+    if action_endpoint in ['item_login', 'item_login_application'] and (record.pid_cnri is None) and current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_CNRI'):
+                                                                               ^
+/code/modules/weko-workflow/weko_workflow/views.py:1181:80: E501 line too long (80 > 79 characters)
+                        activity and activity_detail.activity_login_user else -1
+                                                                               ^
+
+=============================== warnings summary ===============================
+.eggs/pytest-4.6.11-py3.6.egg/_pytest/mark/structures.py:335
+.eggs/pytest-4.6.11-py3.6.egg/_pytest/mark/structures.py:335
+  /code/modules/weko-workflow/.eggs/pytest-4.6.11-py3.6.egg/_pytest/mark/structures.py:335: PytestUnknownMarkWarning: Unknown pytest.mark.pep8 - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/latest/mark.html
+    PytestUnknownMarkWarning,
+
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/kombu/utils/compat.py:93
+  /home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/kombu/utils/compat.py:93: DeprecationWarning: SelectableGroups dict interface is deprecated. Use select.
+    for ep in importlib_metadata.entry_points().get(namespace, [])
+
+tests/test_api.py::test_display_activity_users[4-200]
+  /home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/pkg_resources/_vendor/packaging/specifiers.py:276: DeprecationWarning: Creating a LegacyVersion has been deprecated and will be removed in the next major release
+    DeprecationWarning,
+
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+  /home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/pkg_resources/_vendor/packaging/version.py:114: DeprecationWarning: Creating a LegacyVersion has been deprecated and will be removed in the next major release
+    DeprecationWarning,
+
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+tests/test_api.py::test_display_activity_users[4-200]
+  /home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/invenio_admin/ext.py:73: PendingDeprecationWarning: Usage of model and modelview kwargs are deprecated in favor of view_class, args and kwargs.
+    PendingDeprecationWarning
+
+tests/test_api.py::test_display_activity_users[4-200]
+  /home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask_admin/model/base.py:1416: UserWarning: Fields missing from ruleset: created_userId,created_date,updated_userId,updated_date
+    warnings.warn(text)
+
+-- Docs: https://docs.pytest.org/en/latest/warnings.html
+
+---------- coverage: platform linux, python 3.6.15-final-0 -----------
+Name                        Stmts   Miss  Cover   Missing
+---------------------------------------------------------
+weko_workflow/__init__.py       4      0   100%
+weko_workflow/admin.py        219    174    21%   49-51, 63-85, 99-114, 118-127, 131-144, 149-170, 176-182, 187-197, 225-245, 257-298, 317-345, 354-382, 394-402, 413-418, 426-437, 445-447
+weko_workflow/api.py         1184   1039    12%   64-107, 116-142, 149-152, 160-170, 178-195, 199-262, 272-284, 294-306, 316-322, 330-337, 345-351, 363-372, 380-399, 406-409, 417-420, 428-431, 440-442, 450-453, 461-464, 472-484, 492-493, 503-511, 519-522, 531-551, 563, 571, 579-581, 589-591, 599, 611, 619, 627, 635, 643, 657-774, 782-814, 825-829, 840-847, 856-861, 869-873, 889-898, 910-920, 931-938, 948-954, 964-978, 989-1026, 1039-1056, 1089-1097, 1110-1113, 1117-1124, 1133-1159, 1163-1192, 1200-1257, 1266-1275, 1286-1309, 1319-1322, 1332-1334, 1344-1347, 1357-1371, 1380-1398, 1408-1475, 1490-1527, 1535-1549, 1560-1612, 1621-1666, 1676-1696, 1704-1717, 1725-1798, 1815-1830, 1837-1872, 1876-1939, 1947-1958, 1962-1988, 1996, 2000-2124, 2134-2172, 2179-2187, 2196, 2205-2216, 2226-2242, 2251-2284, 2288-2295, 2305-2314, 2322-2341, 2357-2376, 2389-2405, 2418-2449, 2457-2468, 2480-2493, 2501-2512, 2520-2565, 2574-2588, 2597-2609, 2624-2635, 2644-2655, 2663-2666, 2675-2677
+weko_workflow/bundles.py       14      0   100%
+weko_workflow/cli.py          109     95    13%   47-359
+weko_workflow/config.py        87      0   100%
+weko_workflow/errors.py        18      0   100%
+weko_workflow/ext.py           21      0   100%
+weko_workflow/models.py       302     48    84%   246-247, 256, 320-322, 331, 1070-1071, 1080-1088, 1097-1098, 1108-1119, 1128-1136, 1144-1154, 1164-1174
+weko_workflow/romeo.py         22     14    36%   36-49, 59-71, 80-91
+weko_workflow/scopes.py         6      0   100%
+weko_workflow/sessions.py      13      6    54%   41-47
+weko_workflow/tasks.py          7      2    71%   32-33
+weko_workflow/utils.py       1822   1622    11%   88-95, 104-116, 126-127, 145-214, 224-247, 259-276, 286-299, 310-442, 448-466, 477-496, 501-518, 524-573, 585-631, 643-713, 725-737, 751-764, 779-792, 803-806, 810, 822-849, 858-859, 869-870, 880-890, 900-913, 927-931, 944-946, 959-970, 983-995, 1007-1026, 1035-1057, 1070-1075, 1090-1095, 1112-1129, 1142-1144, 1161-1179, 1193-1220, 1233-1245, 1254-1262, 1271-1277, 1291-1301, 1311-1318, 1330-1333, 1343-1349, 1354-1372, 1392-1491, 1504-1603, 1611-1613, 1623-1626, 1636, 1646-1657, 1667-1672, 1682-1703, 1711-1712, 1720-1735, 1743-1756, 1764-1773, 1781-1788, 1793-1799, 1808-1817, 1826-1836, 1844-1849, 1857-1861, 1869-1875, 1883-1896, 1906-1912, 1921-1967, 1976-1984, 1993-2008, 2017-2018, 2026-2044, 2052-2060, 2069-2119, 2127-2136, 2144-2152, 2160-2172, 2180-2191, 2199-2200, 2210-2261, 2270-2286, 2297-2318, 2327-2351, 2359-2383, 2393-2411, 2430-2508, 2521-2583, 2588-2594, 2604-2619, 2624-2625, 2634-2649, 2660-2683, 2692-2723, 2732-2741, 2754, 2763-2771, 2779-2786, 2804-2814, 2826-2877, 2888-2900, 2912-2924, 2933-2948, 2959-2996, 3005-3008, 3017-3049, 3060-3110, 3184-3241, 3250-3259, 3271-3275, 3284-3291, 3296-3298, 3311-3349, 3364-3372, 3378-3447, 3456-3480, 3492-3521, 3531, 3541-3555, 3567-3570, 3583-3588, 3600-3608, 3618-3641, 3646-3651, 3661-3678, 3687-3692, 3701-3708, 3730, 3742-3793, 3807-3906, 3915-3923, 3929-3949
+weko_workflow/version.py        2      0   100%
+weko_workflow/views.py        963    771    20%   119, 126-182, 213-265, 290-311, 322-351, 359-373, 392-424, 435-479, 492, 500-515, 521-529, 535, 568-598, 603-606, 615-617, 622-632, 648-649, 672, 683, 751-777, 786-843, 853-1220, 1231-1303, 1309-1335, 1341-1358, 1369-1460, 1476-1539, 1546-1547, 1560-1576, 1588-1611, 1618-1656, 1670-1679, 1686-1696, 1709-1716, 1726-1737, 1747-1767, 1774-1778, 1799-1824, 1834, 1842-1848, 1864-1923, 1941-1954, 1974-2011
+---------------------------------------------------------
+TOTAL                        4793   3771    21%
+
+============== 12 failed, 9 passed, 519 warnings in 24.97 seconds ==============

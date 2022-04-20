@@ -1,0 +1,735 @@
+running pytest
+Searching for pytest<5.0.0,>=4.6.4
+Best match: pytest 4.6.11
+Processing pytest-4.6.11-py3.6.egg
+
+Using /code/modules/weko-search-ui/.eggs/pytest-4.6.11-py3.6.egg
+running egg_info
+writing weko_search_ui.egg-info/PKG-INFO
+writing dependency_links to weko_search_ui.egg-info/dependency_links.txt
+writing entry points to weko_search_ui.egg-info/entry_points.txt
+writing requirements to weko_search_ui.egg-info/requires.txt
+writing top-level names to weko_search_ui.egg-info/top_level.txt
+reading manifest file 'weko_search_ui.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+adding license file 'LICENSE'
+adding license file 'AUTHORS.rst'
+writing manifest file 'weko_search_ui.egg-info/SOURCES.txt'
+running build_ext
+============================= test session starts ==============================
+platform linux -- Python 3.6.15, pytest-4.6.11, py-1.11.0, pluggy-0.13.1
+rootdir: /code/modules/weko-search-ui, inifile: pytest.ini, testpaths: docs, tests, weko_search_ui
+plugins: celery-4.4.4, pep8-1.0.6, flask-0.15.1, cov-2.10.1, invenio-1.3.4
+collected 23 items
+
+tests/conftest.py F                                                      [  4%]
+tests/test_query.py F                                                    [  8%]
+tests/test_rest.py FF                                                    [ 17%]
+tests/test_utils.py F.                                                   [ 26%]
+tests/test_weko_search_ui.py ...                                         [ 39%]
+weko_search_ui/__init__.py .                                             [ 43%]
+weko_search_ui/admin.py F                                                [ 47%]
+weko_search_ui/api.py F                                                  [ 52%]
+weko_search_ui/bundles.py .                                              [ 56%]
+weko_search_ui/config.py F                                               [ 60%]
+weko_search_ui/ext.py .                                                  [ 65%]
+weko_search_ui/links.py .                                                [ 69%]
+weko_search_ui/permissions.py .                                          [ 73%]
+weko_search_ui/query.py F                                                [ 78%]
+weko_search_ui/rest.py F                                                 [ 82%]
+weko_search_ui/tasks.py F                                                [ 86%]
+weko_search_ui/utils.py F                                                [ 91%]
+weko_search_ui/version.py .                                              [ 95%]
+weko_search_ui/views.py F                                                [100%]
+
+=================================== FAILURES ===================================
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-search-ui/tests/conftest.py:46:1: E302 expected 2 blank lines, found 1
+@pytest.yield_fixture()
+^
+/code/modules/weko-search-ui/tests/conftest.py:64:35: E251 unexpected spaces around keyword / parameter equals
+        WEKO_SEARCH_REST_ENDPOINTS = dict(
+                                  ^
+/code/modules/weko-search-ui/tests/conftest.py:64:37: E251 unexpected spaces around keyword / parameter equals
+        WEKO_SEARCH_REST_ENDPOINTS = dict(
+                                    ^
+/code/modules/weko-search-ui/tests/conftest.py:65:5: E122 continuation line missing indentation or outdented
+    recid=dict(
+    ^
+/code/modules/weko-search-ui/tests/conftest.py:87:1: E122 continuation line missing indentation or outdented
+)
+^
+/code/modules/weko-search-ui/tests/conftest.py:106:1: E302 expected 2 blank lines, found 1
+@pytest.yield_fixture()
+^
+/code/modules/weko-search-ui/tests/conftest.py:112:1: E302 expected 2 blank lines, found 1
+@pytest.fixture()
+^
+/code/modules/weko-search-ui/tests/conftest.py:122:1: E302 expected 2 blank lines, found 1
+@pytest.fixture()
+^
+/code/modules/weko-search-ui/tests/conftest.py:162:1: W391 blank line at end of file
+    ]
+^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-search-ui/tests/test_query.py:14:80: E501 line too long (246 > 79 characters)
+#     request['values'] = CombinedMultiDict([ImmutableMultiDict([('page', '1'), ('size', '20'), ('sort', 'wtl'), ('timestamp', '1636732132.1051335'), ('search_type', '0'), ('q', ''), ('title', ''), ('creator', ''), ('text1', ''), ('text2', ''), (
+                                                                               ^
+/code/modules/weko-search-ui/tests/test_query.py:15:80: E501 line too long (238 > 79 characters)
+#         'text3', ''), ('text4', ''), ('text5', ''), ('text6', ''), ('text7', ''), ('text8', ''), ('text9', ''), ('text10', ''), ('text11', ''), ('date_range1_from', '19990101'), ('date_range1_to', '19991231')]), ImmutableMultiDict([])])
+                                                                               ^
+/code/modules/weko-search-ui/tests/test_query.py:17:2: W291 trailing whitespace
+#
+ ^
+/code/modules/weko-search-ui/tests/test_query.py:18:2: W291 trailing whitespace
+#
+ ^
+/code/modules/weko-search-ui/tests/test_query.py:20:2: W291 trailing whitespace
+#
+ ^
+/code/modules/weko-search-ui/tests/test_query.py:21:1: W391 blank line at end of file
+#     _get_date_query('date_range1', [('from', 'to'), 'date_range1']) == {}
+^
+/code/modules/weko-search-ui/tests/test_query.py:21:76: W292 no newline at end of file
+#     _get_date_query('date_range1', [('from', 'to'), 'date_range1']) == {}
+                                                                           ^
+/code/modules/weko-search-ui/tests/test_query.py:21:76: W292 no newline at end of file
+#     _get_date_query('date_range1', [('from', 'to'), 'date_range1']) == {}
+                                                                           ^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-search-ui/tests/test_rest.py:6:1: E302 expected 2 blank lines, found 1
+def test_IndexSearchResource_post_guest(client_rest, users):
+^
+/code/modules/weko-search-ui/tests/test_rest.py:10:1: W391 blank line at end of file
+    assert res.status_code == 300
+^
+
+_____________________ test_IndexSearchResource_post_guest ______________________
+
+client_rest = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_IndexSearchResource_post_guest(client_rest, users):
+        res = client_rest.post("/index/",
+                               data=json.dumps({}),
+>                              content_type="application/json")
+
+tests/test_rest.py:9: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/werkzeug/test.py:1039: in post
+    return self.open(*args, **kw)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/testing.py:196: in open
+    follow_redirects=follow_redirects
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/werkzeug/test.py:993: in open
+    response = self.run_wsgi_app(environ.copy(), buffered=buffered)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/werkzeug/test.py:884: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/werkzeug/test.py:1119: in run_wsgi_app
+    app_rv = app(environ, start_response)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/app.py:2334: in __call__
+    return self.wsgi_app(environ, start_response)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/app.py:2320: in wsgi_app
+    response = self.handle_exception(e)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/app.py:1766: in handle_exception
+    reraise(exc_type, exc_value, tb)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/app.py:2317: in wsgi_app
+    response = self.full_dispatch_request()
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/app.py:1840: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/app.py:1743: in handle_user_exception
+    reraise(exc_type, exc_value, tb)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/_compat.py:36: in reraise
+    raise value
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/app.py:1838: in full_dispatch_request
+    rv = self.dispatch_request()
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/app.py:1824: in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/views.py:88: in view
+    return self.dispatch_request(*args, **kwargs)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/invenio_rest/views.py:240: in dispatch_request
+    *args, **kwargs
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <weko_search_ui.rest.IndexSearchResource object at 0x7f3cee4283c8>
+args = (), kwargs = {}, meth = None
+
+    def dispatch_request(self, *args, **kwargs):
+        meth = getattr(self, request.method.lower(), None)
+    
+        # If the request method is HEAD and we don't have a handler for it
+        # retry with GET.
+        if meth is None and request.method == 'HEAD':
+            meth = getattr(self, 'get', None)
+    
+>       assert meth is not None, 'Unimplemented method %r' % request.method
+E       AssertionError: Unimplemented method 'POST'
+
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask/views.py:157: AssertionError
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-search-ui/tests/test_utils.py:5:80: E501 line too long (4898 > 79 characters)
+    record1 = {'pos_index': ['Index A'], 'publish_status': 'public', 'doi_ra': 'JaLC', 'edit_mode': 'Keep', 'metadata': {'pubdate': '2021-02-04', 'item_1617186331708': [{'subitem_1551255647225': 'DOI fileURIなし Fileあり', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'DOI without fileURI', 'subitem_1551255648112': 'en'}], 'item_1617186385884': [{'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'en'}, {'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'ja'}], 'item_1617186419668': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI', 'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048'}], 'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}]}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': '4', 'nameIdentifierScheme': 'WEKO'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617349709064': [{'contributorMails': [{'contributorMail': 'wekosoftware@nii.ac.jp'}], 'contributorNames': [{'contributorName': '情報, 太郎', 'lang': 'ja'}, {'contributorName': 'ジョウホウ, タロウ', 'lang': 'ja-Kana'}, {'contributorName': 'Joho, Taro', 'lang': 'en'}], 'contributorType': 'ContactPerson', 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617186476635': {'subitem_1522299639480': 'open access', 'subitem_1600958577026': 'http://purl.org/coar/access_right/c_abf2'}, 'item_1617351524846': {'subitem_1523260933860': 'Unknown'}, 'item_1617186499011': [{'subitem_1522650717957': 'ja',
+                                                                               ^
+/code/modules/weko-search-ui/tests/test_utils.py:6:80: E501 line too long (9743 > 79 characters)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'subitem_1522650727486': 'http://localhost', 'subitem_1522651041219': 'Rights Information'}], 'item_1617610673286': [{'nameIdentifiers': [{'nameIdentifier': 'xxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}], 'rightHolderNames': [{'rightHolderLanguage': 'ja', 'rightHolderName': 'Right Holder Name'}]}], 'item_1617186609386': [{'subitem_1522299896455': 'ja', 'subitem_1522300014469': 'Other', 'subitem_1522300048512': 'http://localhost/', 'subitem_1523261968819': 'Sibject1'}], 'item_1617186626617': [{'subitem_description': 'Description', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}, {'subitem_description': '概要', 'subitem_description_language': 'ja', 'subitem_description_type': 'Abstract'}], 'item_1617186643794': [{'subitem_1522300295150': 'en', 'subitem_1522300316516': 'Publisher'}], 'item_1617186660861': [{'subitem_1522300695726': 'Available', 'subitem_1522300722591': '2021-06-30'}], 'item_1617186702042': [{'subitem_1551255818386': 'jpn'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_1617349808926': {'subitem_1523263171732': 'Version'}, 'item_1617265215918': {'subitem_1522305645492': 'AO', 'subitem_1600292170262': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}, 'item_1617186783814': [{'subitem_identifier_type': 'URI', 'subitem_identifier_uri': 'http://localhost'}], 'item_1617353299429': [{'subitem_1522306207484': 'isVersionOf', 'subitem_1522306287251': {'subitem_1522306382014': 'arXiv', 'subitem_1522306436033': 'xxxxx'}, 'subitem_1523320863692': [{'subitem_1523320867455': 'en', 'subitem_1523320909613': 'Related Title'}]}], 'item_1617186859717': [{'subitem_1522658018441': 'en', 'subitem_1522658031721': 'Temporal'}], 'item_1617186882738': [{'subitem_geolocation_place': [{'subitem_geolocation_place_text': 'Japan'}]}], 'item_1617186901218': [{'subitem_1522399143519': {'subitem_1522399281603': 'ISNI', 'subitem_1522399333375': 'http://xxx'}, 'subitem_1522399412622': [{'subitem_1522399416691': 'en', 'subitem_1522737543681': 'Funder Name'}], 'subitem_1522399571623': {'subitem_1522399585738': 'Award URI', 'subitem_1522399628911': 'Award Number'}, 'subitem_1522399651758': [{'subitem_1522721910626': 'en', 'subitem_1522721929892': 'Award Title'}]}], 'item_1617186920753': [{'subitem_1522646500366': 'ISSN', 'subitem_1522646572813': 'xxxx-xxxx-xxxx'}], 'item_1617186941041': [{'subitem_1522650068558': 'en', 'subitem_1522650091861': 'Source Title'}], 'item_1617186959569': {'subitem_1551256328147': '1'}, 'item_1617186981471': {'subitem_1551256294723': '111'}, 'item_1617186994930': {'subitem_1551256248092': '12'}, 'item_1617187024783': {'subitem_1551256198917': '1'}, 'item_1617187045071': {'subitem_1551256185532': '3'}, 'item_1617187112279': [{'subitem_1551256126428': 'Degree Name', 'subitem_1551256129013': 'en'}], 'item_1617187136212': {'subitem_1551256096004': '2021-06-30'}, 'item_1617944105607': [{'subitem_1551256015892': [{'subitem_1551256027296': 'xxxxxx', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': 'Degree Grantor Name', 'subitem_1551256047619': 'en'}]}], 'item_1617187187528': [{'subitem_1599711633003': [{'subitem_1599711636923': 'Conference Name', 'subitem_1599711645590': 'ja'}], 'subitem_1599711655652': '1', 'subitem_1599711660052': [{'subitem_1599711680082': 'Sponsor', 'subitem_1599711686511': 'ja'}], 'subitem_1599711699392': {'subitem_1599711704251': '2020/12/11', 'subitem_1599711712451': '1', 'subitem_1599711727603': '12', 'subitem_1599711731891': '2000', 'subitem_1599711735410': '1', 'subitem_1599711739022': '12', 'subitem_1599711743722': '2020', 'subitem_1599711745532': 'ja'}, 'subitem_1599711758470': [{'subitem_1599711769260': 'Conference Venue', 'subitem_1599711775943': 'ja'}], 'subitem_1599711788485': [{'subitem_1599711798761': 'Conference Place', 'subitem_1599711803382': 'ja'}], 'subitem_1599711813532': 'JPN'}], 'item_1617605131499': [{'accessrole': 'open_access', 'date': [{'dateType': 'Available', 'dateValue': '2021-07-12'}], 'displaytype': 'simple', 'filename': '1KB.pdf', 'filesize': [{'value': '1 KB'}], 'format': 'text/plain'}], 'item_1617620223087': [{'subitem_1565671149650': 'ja', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheading'}, {'subitem_1565671149650': 'en', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheding'}], 'path': [1643988121088]}, 'file_path': ['recid_2/1KB.pdf'], 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'item_type_id': 15, '$schema': 'https://localhost:8443/items/jsonschema/15', 'identifier_key': 'item_1617186819068', 'errors': None, 'status': 'new', 'id': None, 'item_title': 'DOI fileURIなし Fileあり', 'filenames': [{'id': '.metadata.item_1617605131499[0].filename', 'filename': '1KB.pdf'}], 'is_change_identifier': False}
+                                                                               ^
+/code/modules/weko-search-ui/tests/test_utils.py:7:80: E501 line too long (4797 > 79 characters)
+    record2 = {'pos_index': ['Index A'], 'publish_status': 'public', 'doi_ra': 'JaLC', 'edit_mode': 'Keep', 'metadata': {'pubdate': '2021-02-04', 'item_1617186331708': [{'subitem_1551255647225': 'DOI fileURIのみ', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'DOI fileURI only', 'subitem_1551255648112': 'en'}], 'item_1617186385884': [{'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'en'}, {'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'ja'}], 'item_1617186419668': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI', 'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048'}], 'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}]}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': '4', 'nameIdentifierScheme': 'WEKO'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617349709064': [{'contributorMails': [{'contributorMail': 'wekosoftware@nii.ac.jp'}], 'contributorNames': [{'contributorName': '情報, 太郎', 'lang': 'ja'}, {'contributorName': 'ジョウホウ, タロウ', 'lang': 'ja-Kana'}, {'contributorName': 'Joho, Taro', 'lang': 'en'}], 'contributorType': 'ContactPerson', 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617186476635': {'subitem_1522299639480': 'open access', 'subitem_1600958577026': 'http://purl.org/coar/access_right/c_abf2'}, 'item_1617351524846': {
+                                                                               ^
+/code/modules/weko-search-ui/tests/test_utils.py:8:80: E501 line too long (4789 > 79 characters)
+        'subitem_1523260933860': 'Unknown'}, 'item_1617186499011': [{'subitem_1522650717957': 'ja', 'subitem_1522650727486': 'http://localhost', 'subitem_1522651041219': 'Rights Information'}], 'item_1617610673286': [{'nameIdentifiers': [{'nameIdentifier': 'xxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}], 'rightHolderNames': [{'rightHolderLanguage': 'ja', 'rightHolderName': 'Right Holder Name'}]}], 'item_1617186609386': [{'subitem_1522299896455': 'ja', 'subitem_1522300014469': 'Other', 'subitem_1522300048512': 'http://localhost/', 'subitem_1523261968819': 'Sibject1'}], 'item_1617186626617': [{'subitem_description': 'Description', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}, {'subitem_description': '概要', 'subitem_description_language': 'ja', 'subitem_description_type': 'Abstract'}], 'item_1617186643794': [{'subitem_1522300295150': 'en', 'subitem_1522300316516': 'Publisher'}], 'item_1617186660861': [{'subitem_1522300695726': 'Available', 'subitem_1522300722591': '2021-06-30'}], 'item_1617186702042': [{'subitem_1551255818386': 'jpn'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_1617349808926': {'subitem_1523263171732': 'Version'}, 'item_1617265215918': {'subitem_1522305645492': 'AO', 'subitem_1600292170262': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}, 'item_1617186783814': [{'subitem_identifier_type': 'URI', 'subitem_identifier_uri': 'http://localhost'}], 'item_1617353299429': [{'subitem_1522306207484': 'isVersionOf', 'subitem_1522306287251': {'subitem_1522306382014': 'arXiv', 'subitem_1522306436033': 'xxxxx'}, 'subitem_1523320863692': [{'subitem_1523320867455': 'en', 'subitem_1523320909613': 'Related Title'}]}], 'item_1617186859717': [{'subitem_1522658018441': 'en', 'subitem_1522658031721': 'Temporal'}], 'item_1617186882738': [{'subitem_geolocation_place': [{'subitem_geolocation_place_text': 'Japan'}]}], 'item_1617186901218': [{'subitem_1522399143519': {'subitem_1522399281603': 'ISNI', 'subitem_1522399333375': 'http://xxx'}, 'subitem_1522399412622': [{'subitem_1522399416691': 'en', 'subitem_1522737543681': 'Funder Name'}], 'subitem_1522399571623': {'subitem_1522399585738': 'Award URI', 'subitem_1522399628911': 'Award Number'}, 'subitem_1522399651758': [{'subitem_1522721910626': 'en', 'subitem_1522721929892': 'Award Title'}]}], 'item_1617186920753': [{'subitem_1522646500366': 'ISSN', 'subitem_1522646572813': 'xxxx-xxxx-xxxx'}], 'item_1617186941041': [{'subitem_1522650068558': 'en', 'subitem_1522650091861': 'Source Title'}], 'item_1617186959569': {'subitem_1551256328147': '1'}, 'item_1617186981471': {'subitem_1551256294723': '111'}, 'item_1617186994930': {'subitem_1551256248092': '12'}, 'item_1617187024783': {'subitem_1551256198917': '1'}, 'item_1617187045071': {'subitem_1551256185532': '3'}, 'item_1617187112279': [{'subitem_1551256126428': 'Degree Name', 'subitem_1551256129013': 'en'}], 'item_1617187136212': {'subitem_1551256096004': '2021-06-30'}, 'item_1617944105607': [{'subitem_1551256015892': [{'subitem_1551256027296': 'xxxxxx', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': 'Degree Grantor Name', 'subitem_1551256047619': 'en'}]}], 'item_1617187187528': [{'subitem_1599711633003': [{'subitem_1599711636923': 'Conference Name', 'subitem_1599711645590': 'ja'}], 'subitem_1599711655652': '1', 'subitem_1599711660052': [{'subitem_1599711680082': 'Sponsor', 'subitem_1599711686511': 'ja'}], 'subitem_1599711699392': {'subitem_1599711704251': '2020/12/11', 'subitem_1599711712451': '1', 'subitem_1599711727603': '12', 'subitem_1599711731891': '2000', 'subitem_1599711735410': '1', 'subitem_1599711739022': '12', 'subitem_1599711743722': '2020', 'subitem_1599711745532': 'ja'}, 'subitem_1599711758470': [{'subitem_1599711769260': 'Conference Venue', 'subitem_1599711775943': 'ja'}], 'subitem_1599711788485': [{'subitem_1599711798761': 'Conference Place', 'subitem_1599711803382': 'ja'}], 'subitem_1599711813532': 'JPN'}], 'item_1617605131499': [{'url': {'url': 'http://localhost/hoge'}}], 'item_1617620223087': [{'subitem_1565671149650': 'ja', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheading'}, {'subitem_1565671149650': 'en', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheding'}], 'path': [1643988121088]}, 'file_path': [''], 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'item_type_id': 15, '$schema': 'https://localhost:8443/items/jsonschema/15', 'identifier_key': 'item_1617186819068', 'errors': None, 'status': 'new', 'id': None, 'item_title': 'DOI fileURIのみ', 'filenames': [{'id': '.metadata.item_1617605131499[0].filename', 'filename': ''}], 'is_change_identifier': False}
+                                                                               ^
+/code/modules/weko-search-ui/tests/test_utils.py:9:80: E501 line too long (4898 > 79 characters)
+    record3 = {'pos_index': ['Index A'], 'publish_status': 'public', 'doi_ra': 'JaLC', 'edit_mode': 'Keep', 'metadata': {'pubdate': '2021-02-04', 'item_1617186331708': [{'subitem_1551255647225': 'DOI fileURIなし Fileあり', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'DOI without fileURI', 'subitem_1551255648112': 'en'}], 'item_1617186385884': [{'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'en'}, {'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'ja'}], 'item_1617186419668': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI', 'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048'}], 'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}]}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': '4', 'nameIdentifierScheme': 'WEKO'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617349709064': [{'contributorMails': [{'contributorMail': 'wekosoftware@nii.ac.jp'}], 'contributorNames': [{'contributorName': '情報, 太郎', 'lang': 'ja'}, {'contributorName': 'ジョウホウ, タロウ', 'lang': 'ja-Kana'}, {'contributorName': 'Joho, Taro', 'lang': 'en'}], 'contributorType': 'ContactPerson', 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617186476635': {'subitem_1522299639480': 'open access', 'subitem_1600958577026': 'http://purl.org/coar/access_right/c_abf2'}, 'item_1617351524846': {'subitem_1523260933860': 'Unknown'}, 'item_1617186499011': [{'subitem_1522650717957': 'ja',
+                                                                               ^
+/code/modules/weko-search-ui/tests/test_utils.py:10:80: E501 line too long (9743 > 79 characters)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'subitem_1522650727486': 'http://localhost', 'subitem_1522651041219': 'Rights Information'}], 'item_1617610673286': [{'nameIdentifiers': [{'nameIdentifier': 'xxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}], 'rightHolderNames': [{'rightHolderLanguage': 'ja', 'rightHolderName': 'Right Holder Name'}]}], 'item_1617186609386': [{'subitem_1522299896455': 'ja', 'subitem_1522300014469': 'Other', 'subitem_1522300048512': 'http://localhost/', 'subitem_1523261968819': 'Sibject1'}], 'item_1617186626617': [{'subitem_description': 'Description', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}, {'subitem_description': '概要', 'subitem_description_language': 'ja', 'subitem_description_type': 'Abstract'}], 'item_1617186643794': [{'subitem_1522300295150': 'en', 'subitem_1522300316516': 'Publisher'}], 'item_1617186660861': [{'subitem_1522300695726': 'Available', 'subitem_1522300722591': '2021-06-30'}], 'item_1617186702042': [{'subitem_1551255818386': 'jpn'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_1617349808926': {'subitem_1523263171732': 'Version'}, 'item_1617265215918': {'subitem_1522305645492': 'AO', 'subitem_1600292170262': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}, 'item_1617186783814': [{'subitem_identifier_type': 'URI', 'subitem_identifier_uri': 'http://localhost'}], 'item_1617353299429': [{'subitem_1522306207484': 'isVersionOf', 'subitem_1522306287251': {'subitem_1522306382014': 'arXiv', 'subitem_1522306436033': 'xxxxx'}, 'subitem_1523320863692': [{'subitem_1523320867455': 'en', 'subitem_1523320909613': 'Related Title'}]}], 'item_1617186859717': [{'subitem_1522658018441': 'en', 'subitem_1522658031721': 'Temporal'}], 'item_1617186882738': [{'subitem_geolocation_place': [{'subitem_geolocation_place_text': 'Japan'}]}], 'item_1617186901218': [{'subitem_1522399143519': {'subitem_1522399281603': 'ISNI', 'subitem_1522399333375': 'http://xxx'}, 'subitem_1522399412622': [{'subitem_1522399416691': 'en', 'subitem_1522737543681': 'Funder Name'}], 'subitem_1522399571623': {'subitem_1522399585738': 'Award URI', 'subitem_1522399628911': 'Award Number'}, 'subitem_1522399651758': [{'subitem_1522721910626': 'en', 'subitem_1522721929892': 'Award Title'}]}], 'item_1617186920753': [{'subitem_1522646500366': 'ISSN', 'subitem_1522646572813': 'xxxx-xxxx-xxxx'}], 'item_1617186941041': [{'subitem_1522650068558': 'en', 'subitem_1522650091861': 'Source Title'}], 'item_1617186959569': {'subitem_1551256328147': '1'}, 'item_1617186981471': {'subitem_1551256294723': '111'}, 'item_1617186994930': {'subitem_1551256248092': '12'}, 'item_1617187024783': {'subitem_1551256198917': '1'}, 'item_1617187045071': {'subitem_1551256185532': '3'}, 'item_1617187112279': [{'subitem_1551256126428': 'Degree Name', 'subitem_1551256129013': 'en'}], 'item_1617187136212': {'subitem_1551256096004': '2021-06-30'}, 'item_1617944105607': [{'subitem_1551256015892': [{'subitem_1551256027296': 'xxxxxx', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': 'Degree Grantor Name', 'subitem_1551256047619': 'en'}]}], 'item_1617187187528': [{'subitem_1599711633003': [{'subitem_1599711636923': 'Conference Name', 'subitem_1599711645590': 'ja'}], 'subitem_1599711655652': '1', 'subitem_1599711660052': [{'subitem_1599711680082': 'Sponsor', 'subitem_1599711686511': 'ja'}], 'subitem_1599711699392': {'subitem_1599711704251': '2020/12/11', 'subitem_1599711712451': '1', 'subitem_1599711727603': '12', 'subitem_1599711731891': '2000', 'subitem_1599711735410': '1', 'subitem_1599711739022': '12', 'subitem_1599711743722': '2020', 'subitem_1599711745532': 'ja'}, 'subitem_1599711758470': [{'subitem_1599711769260': 'Conference Venue', 'subitem_1599711775943': 'ja'}], 'subitem_1599711788485': [{'subitem_1599711798761': 'Conference Place', 'subitem_1599711803382': 'ja'}], 'subitem_1599711813532': 'JPN'}], 'item_1617605131499': [{'accessrole': 'open_access', 'date': [{'dateType': 'Available', 'dateValue': '2021-07-12'}], 'displaytype': 'simple', 'filename': '1KB.pdf', 'filesize': [{'value': '1 KB'}], 'format': 'text/plain'}], 'item_1617620223087': [{'subitem_1565671149650': 'ja', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheading'}, {'subitem_1565671149650': 'en', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheding'}], 'path': [1643988121088]}, 'file_path': ['recid_2/1KB.pdf'], 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'item_type_id': 15, '$schema': 'https://localhost:8443/items/jsonschema/15', 'identifier_key': 'item_1617186819068', 'errors': None, 'status': 'new', 'id': None, 'item_title': 'DOI fileURIなし Fileあり', 'filenames': [{'id': '.metadata.item_1617605131499[0].filename', 'filename': '1KB.pdf'}], 'is_change_identifier': False}
+                                                                               ^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-search-ui/weko_search_ui/admin.py:601:17: W503 line break before binary operator
+                + ('filename=' if not file_name
+                ^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-search-ui/weko_search_ui/api.py:50:80: E501 line too long (82 > 79 characters)
+            return current_app.config['RECORDS_REST_SORT_OPTIONS'], display_number
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/api.py:77:80: E501 line too long (95 > 79 characters)
+                sort_str = ad_config.WEKO_ADMIN_MANAGEMENT_OPTIONS['dlt_keyword_sort_selected']
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/api.py:79:80: E501 line too long (93 > 79 characters)
+                sort_str = ad_config.WEKO_ADMIN_MANAGEMENT_OPTIONS['dlt_index_sort_selected']
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/api.py:86:80: E501 line too long (95 > 79 characters)
+                sort_str = ad_config.WEKO_ADMIN_MANAGEMENT_OPTIONS['dlt_keyword_sort_selected']
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/api.py:88:80: E501 line too long (93 > 79 characters)
+                sort_str = ad_config.WEKO_ADMIN_MANAGEMENT_OPTIONS['dlt_index_sort_selected']
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/api.py:112:80: E501 line too long (190 > 79 characters)
+                        "source": "if(params.factor.get(doc[\"control_number\"].value.toString())!=null){params.factor.get(doc[\"control_number\"].value.toString())}else{Integer.MAX_VALUE}",
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/api.py:129:80: E501 line too long (174 > 79 characters)
+                        "source": "if(params.factor.get(doc[\"control_number\"].value.toString())!=null){params.factor.get(doc[\"control_number\"].value.toString())}else{0}",
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/api.py:218:5: E265 block comment should start with '# '
+    #current_app.logger.debug("index_tree: {0}".format(index_tree))
+    ^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-search-ui/weko_search_ui/config.py:49:80: E501 line too long (81 > 79 characters)
+WEKO_SEARCH_UI_JSTEMPLATE_LIST_RESULTS = 'templates/weko_search_ui/itemlist.html'
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/config.py:51:80: E501 line too long (91 > 79 characters)
+WEKO_SEARCH_UI_JSTEMPLATE_TABLE_RESULTS = 'templates/weko_search_ui/itemtablecontents.html'
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/config.py:53:80: E501 line too long (105 > 79 characters)
+WEKO_ITEM_MANAGEMENT_JSTEMPLATE_RESULTS_EDIT = 'templates/weko_search_ui/itemListItemManagementEdit.html'
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/config.py:55:80: E501 line too long (99 > 79 characters)
+WEKO_SEARCH_UI_BULK_UPDATE_JSTEMPLATE_RESULTS = 'templates/weko_search_ui/bulkupdate_itemlist.html'
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/config.py:57:80: E501 line too long (101 > 79 characters)
+WEKO_ITEM_WORKFLOW_JSTEMPLATE_RESULTS_EDIT = 'templates/weko_search_ui/itemListWorkFlowItemLink.html'
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/config.py:59:80: E501 line too long (87 > 79 characters)
+WEKO_SEARCH_UI_JSTEMPLATE_RESULTS_BASIC = 'templates/weko_search_ui/itemlistbasic.html'
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/config.py:65:80: E501 line too long (96 > 79 characters)
+WEKO_ITEM_MANAGEMENT_JSTEMPLATE_BREAD = 'templates/weko_search_ui/breadcrumbItemManagement.html'
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/config.py:71:80: E501 line too long (106 > 79 characters)
+SEARCH_UI_ITEM_MANAGEMENT_JSTEMPLATE_PAGINATION = 'templates/weko_search_ui/paginationItemManagement.html'
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/config.py:87:80: E501 line too long (94 > 79 characters)
+WEKO_OPENSEARCH_SYSTEM_DESCRIPTION = 'WEKO - NII Scholarly and Academic Information Navigator'
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/config.py:507:80: E501 line too long (133 > 79 characters)
+WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FILE_LOCATION = '/code/modules/weko-search-ui/weko_search_ui/static/change_identifier_mode/'
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/config.py:509:80: E501 line too long (83 > 79 characters)
+WEKO_ADMIN_IMPORT_CHANGE_IDENTIFIER_MODE_FIRST_FILE_NAME = 'change_identifier_mode'
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/config.py:555:80: E501 line too long (85 > 79 characters)
+DATE_ISO_TEMPLATE_URL = '/static/templates/weko_deposit/datepicker_multi_format.html'
+                                                                               ^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-search-ui/weko_search_ui/query.py:294:41: W503 line break before binary operator
+                                        and int(x) < len(vlst)]
+                                        ^
+/code/modules/weko-search-ui/weko_search_ui/query.py:343:80: E501 line too long (88 > 79 characters)
+                pattern = r'^(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})|(\d{4})|(\d{6})|(\d{8})$'
+                                                                               ^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-search-ui/weko_search_ui/rest.py:389:80: E501 line too long (82 > 79 characters)
+                if lang and lang_subitem_key in v and v[lang_subitem_key] == lang:
+                                                                               ^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-search-ui/weko_search_ui/tasks.py:132:1: W391 blank line at end of file
+        return True
+^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-search-ui/weko_search_ui/utils.py:538:23: W503 line break before binary operator
+                      + ' support import. Please specify one of the'
+                      ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:539:23: W503 line break before binary operator
+                      + ' following formats: zip, tar, gztar, bztar,'
+                      ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:540:23: W503 line break before binary operator
+                      + ' xztar.').format(filename)
+                      ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:543:23: W503 line break before binary operator
+                      + ' Check if the directory structure is correct.') \
+                      ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:635:40: W503 line break before binary operator
+                                       + ' first line of the header of the CSV'
+                                       ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:636:40: W503 line break before binary operator
+                                       + ' file.')
+                                       ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:651:44: W503 line break before binary operator
+                                           + ' the CSV file does not exist.')
+                                           ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:658:48: W503 line break before binary operator
+                                               + 'specified item type is not '
+                                               ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:659:48: W503 line break before binary operator
+                                               + 'the latest version.')
+                                               ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:722:31: W503 line break before binary operator
+                              + 'they do not exist in the specified '
+                              ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:723:31: W503 line break before binary operator
+                              + 'item type. {}')
+                              ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:729:27: W503 line break before binary operator
+                          + ' format is CSV and that the file is'
+                          ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:730:27: W503 line break before binary operator
+                          + ' UTF-8 encoded.').format(csv_file_name)
+                          ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:789:27: W503 line break before binary operator
+                          or re.search(r'([０-９])', record_id)):
+                          ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:1001:29: W503 line break before binary operator
+                            and record['filenames'][idx]
+                            ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:1002:29: W503 line break before binary operator
+                            and old_file.key
+                            ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:1003:29: W503 line break before binary operator
+                            == record['filenames'][idx]['filename']
+                            ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:1090:29: W503 line break before binary operator
+                            + u'/{bucket}/{key}?versionId={version_id}'.format(
+                            ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:1329:9: E265 block comment should start with '# '
+        #save_item_to_stats_events(id, index, doc_type, data)
+        ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:1412:13: E265 block comment should start with '# '
+            #current_app.logger.debug("item: {0}".format(item))
+            ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:1748:80: E501 line too long (86 > 79 characters)
+                        if not cnri and not pid_cnri.pid_value.endswith(str(item_id)):
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:1750:80: E501 line too long (81 > 79 characters)
+                        elif cnri and not pid_cnri.pid_value.endswith(str(cnri)):
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:1752:39: W503 line break before binary operator
+                                      + ' {}.').format('CNRI', 'CNRI')
+                                      ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:1755:35: W503 line break before binary operator
+                                  + 'from existing {}.').format('CNRI', 'CNRI')
+                                  ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:1825:27: W503 line break before binary operator
+                          + 'existing {}.').format('DOI_RA', 'DOI_RA')
+                          ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:1845:33: W503 line break before binary operator
+                                + ', Crossref, DataCite, NDL JaLC.'))
+                                ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:1851:80: E501 line too long (83 > 79 characters)
+                        "handle_doi_required_check: {0}".format(validation_errors))
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:1910:35: W503 line break before binary operator
+                                  + ' the maximum length.').format('DOI')
+                                  ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:1946:39: W503 line break before binary operator
+                                      + ' existing {}.').format('DOI', 'DOI')
+                                      ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:1974:80: E501 line too long (106 > 79 characters)
+        "item_id:{0} pid:{1} pid_hdl:{2} cnri:{3} status:{4}".format(item_id, pid, pid_hdl, cnri, status))
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:2061:13: W503 line break before binary operator
+            + identifier_setting.jalc_doi
+            ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:2062:13: W503 line break before binary operator
+            + suffix + '/' + item_id,
+            ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:2065:13: W503 line break before binary operator
+            + identifier_setting.jalc_crossref_doi
+            ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:2066:13: W503 line break before binary operator
+            + suffix + '/' + item_id,
+            ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:2069:13: W503 line break before binary operator
+            + identifier_setting.jalc_datacite_doi
+            ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:2070:13: W503 line break before binary operator
+            + suffix + '/' + item_id,
+            ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:2073:13: W503 line break before binary operator
+            + identifier_setting.ndl_jalc_doi
+            ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:2074:13: W503 line break before binary operator
+            + suffix + '/' + item_id
+            ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:2266:35: W503 line break before binary operator
+                                  + ' YYYY-MM-DD, YYYY-MM, YYYY.'))
+                                  ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:2268:80: E501 line too long (99 > 79 characters)
+                                _('Replace value of {} from {} to {}.').format(key, value, _value))
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:2272:35: W503 line break before binary operator
+                                  + ' YYYY-MM-DD, YYYY-MM, YYYY.'))
+                                  ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:2366:80: E501 line too long (94 > 79 characters)
+                            if d_value and d_value == datetime.strptime(d_value, '%Y-%m-%d') \
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:2633:15: W503 line break before binary operator
+              + ' png, bmp, tiff, tif) for the thumbnail.')
+              ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:2836:80: E501 line too long (80 > 79 characters)
+    def _get_export_data(export_path, finish_item_types, retrys, retry_info={}):
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:2841:80: E501 line too long (89 > 79 characters)
+                          _itemtype_name(it.item_type_name.name)) for it in item_type_all
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:2861:80: E501 line too long (84 > 79 characters)
+                                PersistentIdentifier.object_uuid == ItemMetadata.id)
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:2863:80: E501 line too long (86 > 79 characters)
+                                  PersistentIdentifier.status == PIDStatus.REGISTERED,
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:2877:80: E501 line too long (86 > 79 characters)
+                    if counter % WEKO_SEARCH_UI_BULK_EXPORT_LIMIT == 0 and item_datas:
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/utils.py:3038:28: W503 line break before binary operator
+                           or task.state == 'REVOKED')
+                           ^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-search-ui/weko_search_ui/views.py:224:80: E501 line too long (80 > 79 characters)
+        display_community = get_search_setting().get("display_control", {}).get(
+                                                                               ^
+/code/modules/weko-search-ui/weko_search_ui/views.py:284:13: W503 line break before binary operator
+            + 'api/opensearch/search?q={searchTerms}')
+            ^
+/code/modules/weko-search-ui/weko_search_ui/views.py:289:13: W503 line break before binary operator
+            + 'api/opensearch/search?q={searchTerms}&amp;format=atom')
+            ^
+
+=============================== warnings summary ===============================
+.eggs/pytest-4.6.11-py3.6.egg/_pytest/mark/structures.py:335
+.eggs/pytest-4.6.11-py3.6.egg/_pytest/mark/structures.py:335
+  /code/modules/weko-search-ui/.eggs/pytest-4.6.11-py3.6.egg/_pytest/mark/structures.py:335: PytestUnknownMarkWarning: Unknown pytest.mark.pep8 - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/latest/mark.html
+    PytestUnknownMarkWarning,
+
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/kombu/utils/compat.py:93
+  /home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/kombu/utils/compat.py:93: DeprecationWarning: SelectableGroups dict interface is deprecated. Use select.
+    for ep in importlib_metadata.entry_points().get(namespace, [])
+
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_weko_search_ui.py::test_init
+  /home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:794: FSADeprecationWarning: SQLALCHEMY_TRACK_MODIFICATIONS adds significant overhead and will be disabled by default in the future.  Set it to True or False to suppress this warning.
+    'SQLALCHEMY_TRACK_MODIFICATIONS adds significant overhead and '
+
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_rest.py::test_IndexSearchResource_post_guest
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+tests/test_weko_search_ui.py::test_init
+  /home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/pkg_resources/_vendor/packaging/version.py:114: DeprecationWarning: Creating a LegacyVersion has been deprecated and will be removed in the next major release
+    DeprecationWarning,
+
+-- Docs: https://docs.pytest.org/en/latest/warnings.html
+
+---------- coverage: platform linux, python 3.6.15-final-0 -----------
+Name                            Stmts   Miss  Cover   Missing
+-------------------------------------------------------------
+weko_search_ui/__init__.py          4      0   100%
+weko_search_ui/admin.py           329    265    19%   74-127, 136-159, 168, 176-197, 206-266, 271, 284-288, 296-309, 314-329, 334-351, 362-408, 413-439, 444-461, 472-473, 478-594, 607-612, 629-633, 640-652, 657-659, 669, 679-688
+weko_search_ui/api.py             122    103    16%   42-63, 68-92, 97-102, 107-142, 147-152, 157-204, 219-241
+weko_search_ui/bundles.py          19      0   100%
+weko_search_ui/config.py           95      0   100%
+weko_search_ui/ext.py              30      1    97%   59
+weko_search_ui/links.py             5      2    60%   32-37
+weko_search_ui/permissions.py       4      0   100%
+weko_search_ui/query.py           587    561     4%   47-49, 62-111, 123-781, 792-1126, 1135-1148, 1163-1172, 1196-1268, 1278-1339
+weko_search_ui/rest.py            213    159    25%   74, 81, 174-345, 355-404
+weko_search_ui/tasks.py            66     50    24%   38-65, 71-77, 83-84, 90-99, 106, 111-124, 129-132
+weko_search_ui/utils.py          1799   1642     9%   116-120, 124-127, 131-134, 138-142, 149, 153, 157-158, 163, 169-177, 182-218, 229-262, 267-309, 314-320, 333-341, 346-348, 353-357, 366, 378-380, 395-412, 427-463, 478-554, 568-580, 595-602, 615-735, 747-770, 783-810, 822-826, 835-851, 863-915, 920-925, 930-942, 953-957, 968-974, 989-1041, 1052, 1063-1210, 1222-1226, 1238-1252, 1263-1279, 1284-1300, 1315-1521, 1535-1547, 1559-1569, 1581-1660, 1671-1686, 1699-1700, 1711-1764, 1775-1801, 1812-1867, 1879-1953, 1965-1999, 2004-2022, 2027-2037, 2042-2049, 2054-2058, 2087-2161, 2174-2180, 2192-2229, 2240-2302, 2313-2341, 2351-2380, 2390-2395, 2400-2407, 2415-2422, 2430-2444, 2449-2463, 2468-2483, 2488-2501, 2506-2513, 2518-2523, 2534-2603, 2614-2621, 2632-2639, 2651-2660, 2675-2711, 2722-2742, 2754-2766, 2777-2781, 2792-2976, 2981-2992, 3001-3013, 3022-3043, 3054-3070, 3081-3118, 3129-3138, 3152-3162, 3180-3210, 3223-3240, 3253-3274, 3285-3290, 3301-3316, 3327-3357, 3369-3377
+weko_search_ui/version.py           2      0   100%
+weko_search_ui/views.py           147    108    27%   75-230, 258-295, 301-302, 309-310, 316, 322-334, 340-349
+-------------------------------------------------------------
+TOTAL                            3422   2891    16%
+
+============= 13 failed, 10 passed, 261 warnings in 17.38 seconds ==============

@@ -40,7 +40,6 @@ from sqlalchemy_utils.functions import create_database, database_exists, \
 from weko_authors.views import blueprint_api
 from weko_authors import WekoAuthors
 
-
 @pytest.yield_fixture()
 def instance_path():
     """Temporary instance path."""

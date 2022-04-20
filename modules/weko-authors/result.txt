@@ -1,0 +1,814 @@
+running pytest
+Searching for pytest<5.0.0,>=4.6.4
+Best match: pytest 4.6.11
+Processing pytest-4.6.11-py3.6.egg
+
+Using /code/modules/weko-authors/.eggs/pytest-4.6.11-py3.6.egg
+running egg_info
+writing weko_authors.egg-info/PKG-INFO
+writing dependency_links to weko_authors.egg-info/dependency_links.txt
+writing entry points to weko_authors.egg-info/entry_points.txt
+writing requirements to weko_authors.egg-info/requires.txt
+writing top-level names to weko_authors.egg-info/top_level.txt
+reading manifest file 'weko_authors.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+adding license file 'LICENSE'
+adding license file 'AUTHORS.rst'
+writing manifest file 'weko_authors.egg-info/SOURCES.txt'
+running build_ext
+============================= test session starts ==============================
+platform linux -- Python 3.6.15, pytest-4.6.11, py-1.11.0, pluggy-0.13.1
+rootdir: /code/modules/weko-authors, inifile: pytest.ini, testpaths: docs, tests, weko_authors
+plugins: celery-4.4.4, pep8-1.0.6, flask-0.15.1, cov-2.10.1, invenio-1.3.4
+collected 25 items
+
+tests/conftest.py F                                                      [  4%]
+tests/test_views.py FEFF                                                 [ 20%]
+tests/test_weko_authors.py F                                             [ 24%]
+tests/data/__init__.py .                                                 [ 28%]
+tests/data/v5/__init__.py .                                              [ 32%]
+tests/data/v6/__init__.py .                                              [ 36%]
+weko_authors/__init__.py .                                               [ 40%]
+weko_authors/admin.py .                                                  [ 44%]
+weko_authors/api.py .                                                    [ 48%]
+weko_authors/bundles.py .                                                [ 52%]
+weko_authors/config.py .                                                 [ 56%]
+weko_authors/ext.py .                                                    [ 60%]
+weko_authors/models.py .                                                 [ 64%]
+weko_authors/permissions.py .                                            [ 68%]
+weko_authors/tasks.py .                                                  [ 72%]
+weko_authors/utils.py F                                                  [ 76%]
+weko_authors/version.py .                                                [ 80%]
+weko_authors/views.py F                                                  [ 84%]
+weko_authors/contrib/validation.py .                                     [ 88%]
+weko_authors/mappings/__init__.py .                                      [ 92%]
+weko_authors/mappings/v2/__init__.py .                                   [ 96%]
+weko_authors/mappings/v6/__init__.py .                                   [100%]
+
+==================================== ERRORS ====================================
+_____________________ ERROR at setup of test_get_sysadmin ______________________
+
+self = <sqlalchemy.engine.base.Connection object at 0x7faae6634128>
+dialect = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7faae670fa90>
+constructor = <bound method DefaultExecutionContext._init_compiled of <class 'sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2'>>
+statement = 'INSERT INTO accounts_role (name, description) VALUES (%(name)s, %(description)s) RETURNING accounts_role.id'
+parameters = {'description': None, 'name': 'System Administrator'}
+args = (<sqlalchemy.dialects.postgresql.psycopg2.PGCompiler_psycopg2 object at 0x7faae6634198>, [{'description': None, 'name': 'System Administrator'}])
+conn = <sqlalchemy.pool._ConnectionFairy object at 0x7faae66131d0>
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7faae6634208>
+
+    def _execute_context(
+        self, dialect, constructor, statement, parameters, *args
+    ):
+        """Create an :class:`.ExecutionContext` and execute, returning
+        a :class:`.ResultProxy`."""
+    
+        try:
+            try:
+                conn = self.__connection
+            except AttributeError:
+                # escape "except AttributeError" before revalidating
+                # to prevent misleading stacktraces in Py3K
+                conn = None
+            if conn is None:
+                conn = self._revalidate_connection()
+    
+            context = constructor(dialect, self, conn, *args)
+        except BaseException as e:
+            self._handle_dbapi_exception(
+                e, util.text_type(statement), parameters, None, None
+            )
+    
+        if context.compiled:
+            context.pre_exec()
+    
+        cursor, statement, parameters = (
+            context.cursor,
+            context.statement,
+            context.parameters,
+        )
+    
+        if not context.executemany:
+            parameters = parameters[0]
+    
+        if self._has_events or self.engine._has_events:
+            for fn in self.dispatch.before_cursor_execute:
+                statement, parameters = fn(
+                    self,
+                    cursor,
+                    statement,
+                    parameters,
+                    context,
+                    context.executemany,
+                )
+    
+        if self._echo:
+            self.engine.logger.info(statement)
+            self.engine.logger.info(
+                "%r", sql_util._repr_params(parameters, batches=10)
+            )
+    
+        evt_handled = False
+        try:
+            if context.executemany:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_executemany:
+                        if fn(cursor, statement, parameters, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_executemany(
+                        cursor, statement, parameters, context
+                    )
+            elif not parameters and context.no_parameters:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute_no_params:
+                        if fn(cursor, statement, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute_no_params(
+                        cursor, statement, context
+                    )
+            else:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute:
+                        if fn(cursor, statement, parameters, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute(
+>                       cursor, statement, parameters, context
+                    )
+
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7faae670fa90>
+cursor = <cursor object at 0x7faae67af330; closed: -1>
+statement = 'INSERT INTO accounts_role (name, description) VALUES (%(name)s, %(description)s) RETURNING accounts_role.id'
+parameters = {'description': None, 'name': 'System Administrator'}
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7faae6634208>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       psycopg2.IntegrityError: duplicate key value violates unique constraint "uq_accounts_role_name"
+E       DETAIL:  Key (name)=(System Administrator) already exists.
+
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: IntegrityError
+
+The above exception was the direct cause of the following exception:
+
+app = <Flask 'testapp'>
+
+    @pytest.fixture()
+    def users(app):
+        """Create users."""
+        ds = app.extensions['invenio-accounts'].datastore
+        user = create_test_user(email='test@test.org')
+        contributor = create_test_user(email='test2@test.org')
+        comadmin = create_test_user(email='test3@test.org')
+        repoadmin = create_test_user(email='test4@test.org')
+        sysadmin = create_test_user(email='test5@test.org')
+    
+        r1 = ds.create_role(name='System Administrator')
+>       ds.add_role_to_user(sysadmin, r1)
+
+tests/conftest.py:121: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask_security/datastore.py:155: in add_role_to_user
+    if role not in user.roles:
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:275: in __get__
+    return self.impl.get(instance_state(instance), dict_)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/orm/attributes.py:674: in get
+    value = self.callable_(state, passive)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/orm/strategies.py:711: in _load_for_state
+    session, state, primary_key_identity, passive
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/orm/strategies.py:853: in _emit_lazyload
+    .with_post_criteria(set_default_params)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/ext/baked.py:477: in all
+    return list(self)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/ext/baked.py:375: in __iter__
+    self.session._autoflush()
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/orm/session.py:1582: in _autoflush
+    util.raise_from_cause(e)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: in reraise
+    raise value
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/orm/session.py:1571: in _autoflush
+    self.flush()
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2446: in flush
+    self._flush(objects)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2584: in _flush
+    transaction.rollback(_capture_exception=True)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/util/langhelpers.py:67: in __exit__
+    compat.reraise(exc_type, exc_value, exc_tb)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/util/compat.py:277: in reraise
+    raise value
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/orm/session.py:2544: in _flush
+    flush_context.execute()
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/orm/unitofwork.py:416: in execute
+    rec.execute(self)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/orm/unitofwork.py:583: in execute
+    uow,
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/orm/persistence.py:245: in save_obj
+    insert,
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/orm/persistence.py:1116: in _emit_insert_statements
+    statement, params
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/engine/base.py:980: in execute
+    return meth(self, multiparams, params)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/sql/elements.py:273: in _execute_on_connection
+    return connection._execute_clauseelement(self, multiparams, params)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1099: in _execute_clauseelement
+    distilled_params,
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1240: in _execute_context
+    e, statement, parameters, cursor, context
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1458: in _handle_dbapi_exception
+    util.raise_from_cause(sqlalchemy_exception, exc_info)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/util/compat.py:296: in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/util/compat.py:276: in reraise
+    raise value.with_traceback(tb)
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/engine/base.py:1236: in _execute_context
+    cursor, statement, parameters, context
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sqlalchemy.dialects.postgresql.psycopg2.PGDialect_psycopg2 object at 0x7faae670fa90>
+cursor = <cursor object at 0x7faae67af330; closed: -1>
+statement = 'INSERT INTO accounts_role (name, description) VALUES (%(name)s, %(description)s) RETURNING accounts_role.id'
+parameters = {'description': None, 'name': 'System Administrator'}
+context = <sqlalchemy.dialects.postgresql.psycopg2.PGExecutionContext_psycopg2 object at 0x7faae6634208>
+
+    def do_execute(self, cursor, statement, parameters, context=None):
+>       cursor.execute(statement, parameters)
+E       sqlalchemy.exc.IntegrityError: (raised as a result of Query-invoked autoflush; consider using a session.no_autoflush block if this flush is occurring prematurely) (psycopg2.IntegrityError) duplicate key value violates unique constraint "uq_accounts_role_name"
+E       DETAIL:  Key (name)=(System Administrator) already exists.
+E        [SQL: 'INSERT INTO accounts_role (name, description) VALUES (%(name)s, %(description)s) RETURNING accounts_role.id'] [parameters: {'name': 'System Administrator', 'description': None}] (Background on this error at: http://sqlalche.me/e/gkpj)
+
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/sqlalchemy/engine/default.py:536: IntegrityError
+=================================== FAILURES ===================================
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-authors/tests/conftest.py:43:1: E302 expected 2 blank lines, found 1
+@pytest.yield_fixture()
+^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-authors/tests/test_views.py:40:27: E231 missing whitespace after ':'
+            return {"hits":{"hits":[]}}
+                          ^
+/code/modules/weko-authors/tests/test_views.py:40:35: E231 missing whitespace after ':'
+            return {"hits":{"hits":[]}}
+                                  ^
+/code/modules/weko-authors/tests/test_views.py:53:40: W291 trailing whitespace
+    Test of search and get author data.
+                                       ^
+/code/modules/weko-authors/tests/test_views.py:125:32: E127 continuation line over-indented for visual indent
+                               data=json.dumps(input),
+                               ^
+/code/modules/weko-authors/tests/test_views.py:126:32: E127 continuation line over-indented for visual indent
+                               content_type='application/json')
+                               ^
+/code/modules/weko-authors/tests/test_views.py:180:2: W291 trailing whitespace
+#
+ ^
+/code/modules/weko-authors/tests/test_views.py:194:2: W291 trailing whitespace
+#
+ ^
+
+_____________________________ test_create_sysadmin _____________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_create_sysadmin(client, users):
+        """
+        Test of create author.
+        :param client: The flask client.
+        """
+        # login
+        login_user_via_session(client=client, email=users[0]['email'])
+        input = {
+                "id": "",
+                "pk_id": "",
+                "authorNameInfo": [
+                    {
+                        "familyName": "テスト",
+                        "firstName": "タロウ",
+                        "fullName": "",
+                        "language": "ja-Kana",
+                        "nameFormat": "familyNmAndNm",
+                        "nameShowFlg": "true"
+                    }
+                ],
+                "authorIdInfo": [
+                    {
+                        "idType": "2",
+                        "authorId": "0123",
+                        "authorIdShowFlg": "true"
+                    }
+                ],
+                "emailInfo": [
+                    {"email": "example@com"}
+                ]
+        }
+        mock_indexer = MagicMock(side_effect=MockIndexer)
+        with patch('weko_authors.views.RecordIndexer', mock_indexer):
+            res = client.post('/api/authors/add',
+                              data=json.dumps(input),
+                              content_type='application/json')
+>           res_dict = get_json(res)
+
+tests/test_views.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_views.py:48: in get_json
+    return json.loads(response.get_data(as_text=True))
+/usr/local/lib/python3.6/json/__init__.py:354: in loads
+    return _default_decoder.decode(s)
+/usr/local/lib/python3.6/json/decoder.py:339: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.decoder.JSONDecoder object at 0x7faaf3628588>
+s = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n<title>403 Forbidden</title>\n<h1>Forbidden</h1>\n<p>&lt;Per... value=5), Need(method=\'id\', value=4), Need(method=\'action\', value=\'superuser-access\')} excludes=set()&gt;</p>\n'
+idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+/usr/local/lib/python3.6/json/decoder.py:357: JSONDecodeError
+____________________________ test_getById_sysadmin _____________________________
+
+client = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+
+    def test_getById_sysadmin(client, users):
+        """
+        Test of get author data by id.
+        :param client: The flask client.
+        """
+        # TODO create author
+    
+        login_user_via_session(client=client, email=users[0]['email'])
+        input = {"Id": "1"}
+        mock_indexer = MagicMock(side_effect=MockIndexer)
+        with patch('weko_authors.views.RecordIndexer', mock_indexer):
+            res = client.post('/api/authors/search_edit',
+                                   data=json.dumps(input),
+                                   content_type='application/json')
+>           assert res.status_code == 200
+E           AssertionError: assert 403 == 200
+E            +  where 403 = <<class 'pytest_flask.plugin.JSONResponse'> streamed [403 FORBIDDEN]>.status_code
+
+tests/test_views.py:127: AssertionError
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-authors/tests/test_weko_authors.py:28:1: E265 block comment should start with '# '
+#def test_version():
+^
+/code/modules/weko-authors/tests/test_weko_authors.py:34:1: E265 block comment should start with '# '
+#def test_init():
+^
+/code/modules/weko-authors/tests/test_weko_authors.py:47:1: E265 block comment should start with '# '
+#def bak_test_view(app):
+^
+/code/modules/weko-authors/tests/test_weko_authors.py:54:1: W391 blank line at end of file
+#
+^
+/code/modules/weko-authors/tests/test_weko_authors.py:54:2: W292 no newline at end of file
+#
+ ^
+/code/modules/weko-authors/tests/test_weko_authors.py:54:2: W292 no newline at end of file
+#
+ ^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-authors/weko_authors/utils.py:305:27: W503 line break before binary operator
+                          + ' format is CSV and that the file is'
+                          ^
+/code/modules/weko-authors/weko_authors/utils.py:306:27: W503 line break before binary operator
+                          + ' UTF-8 encoded.').format(csv_file_name)
+                          ^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-authors/weko_authors/views.py:188:16: W503 line break before binary operator
+               or current_app.config['WEKO_AUTHORS_NUM_OF_PAGE'])
+               ^
+
+=============================== warnings summary ===============================
+.eggs/pytest-4.6.11-py3.6.egg/_pytest/mark/structures.py:335
+.eggs/pytest-4.6.11-py3.6.egg/_pytest/mark/structures.py:335
+  /code/modules/weko-authors/.eggs/pytest-4.6.11-py3.6.egg/_pytest/mark/structures.py:335: PytestUnknownMarkWarning: Unknown pytest.mark.pep8 - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/latest/mark.html
+    PytestUnknownMarkWarning,
+
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3
+  /home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask_oauthlib/contrib/cache.py:3: DeprecationWarning: 'werkzeug.contrib.cache' is deprecated as of version 0.15 and will be removed in version 1.0. It has moved to https://github.com/pallets/cachelib.
+    from werkzeug.contrib.cache import NullCache, SimpleCache, FileSystemCache
+
+/home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/kombu/utils/compat.py:93
+  /home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/kombu/utils/compat.py:93: DeprecationWarning: SelectableGroups dict interface is deprecated. Use select.
+    for ep in importlib_metadata.entry_points().get(namespace, [])
+
+tests/test_views.py::test_get_sysadmin
+  /home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/pkg_resources/_vendor/packaging/specifiers.py:276: DeprecationWarning: Creating a LegacyVersion has been deprecated and will be removed in the next major release
+    DeprecationWarning,
+
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_get_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_create_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+tests/test_views.py::test_getById_sysadmin
+  /home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/pkg_resources/_vendor/packaging/version.py:114: DeprecationWarning: Creating a LegacyVersion has been deprecated and will be removed in the next major release
+    DeprecationWarning,
+
+-- Docs: https://docs.pytest.org/en/latest/warnings.html
+
+---------- coverage: platform linux, python 3.6.15-final-0 -----------
+Name                                   Stmts   Miss  Cover   Missing
+--------------------------------------------------------------------
+weko_authors/__init__.py                   4      0   100%
+weko_authors/admin.py                    133     86    35%   50-55, 67, 79, 93, 101-110, 116-138, 147-149, 158-167, 180, 187-190, 196-208, 217-258, 263-283
+weko_authors/api.py                      149    132    11%   41-75, 80-135, 140-149, 154-169, 174-183, 188-282
+weko_authors/bundles.py                   13      0   100%
+weko_authors/config.py                    23      0   100%
+weko_authors/contrib/validation.py        57     45    21%   44-49, 64-73, 87-92, 105-114, 131-146
+weko_authors/ext.py                       15      1    93%   52
+weko_authors/mappings/__init__.py          1      0   100%
+weko_authors/mappings/v2/__init__.py       1      0   100%
+weko_authors/mappings/v6/__init__.py       1      0   100%
+weko_authors/models.py                    89     59    34%   85-89, 102-110, 123-130, 163-176, 181-194, 199-207
+weko_authors/permissions.py                4      0   100%
+weko_authors/tasks.py                     49     37    24%   39-49, 55-68, 73-94
+weko_authors/utils.py                    288    247    14%   52-57, 66-90, 98, 103-110, 115, 120, 125-132, 137-172, 184-210, 225-232, 247-311, 322-410, 415-441, 446-460, 465-471, 477-480, 486-505, 510-533, 542-576, 581-596
+weko_authors/version.py                    2      0   100%
+weko_authors/views.py                    265    216    18%   58-92, 101-126, 134-165, 175-263, 271-289, 297-375, 383-454, 462-471, 479-483, 491-501, 509-510, 518-528
+--------------------------------------------------------------------
+TOTAL                                   1094    823    25%
+
+========= 7 failed, 17 passed, 365 warnings, 1 error in 34.19 seconds ==========

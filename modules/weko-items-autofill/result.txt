@@ -1,0 +1,883 @@
+running pytest
+Searching for pytest<5.0.0,>=4.6.4
+Best match: pytest 4.6.11
+Processing pytest-4.6.11-py3.6.egg
+
+Using /code/modules/weko-items-autofill/.eggs/pytest-4.6.11-py3.6.egg
+running egg_info
+writing weko_items_autofill.egg-info/PKG-INFO
+writing dependency_links to weko_items_autofill.egg-info/dependency_links.txt
+writing entry points to weko_items_autofill.egg-info/entry_points.txt
+writing requirements to weko_items_autofill.egg-info/requires.txt
+writing top-level names to weko_items_autofill.egg-info/top_level.txt
+reading manifest file 'weko_items_autofill.egg-info/SOURCES.txt'
+reading manifest template 'MANIFEST.in'
+adding license file 'LICENSE'
+adding license file 'AUTHORS.rst'
+writing manifest file 'weko_items_autofill.egg-info/SOURCES.txt'
+running build_ext
+============================= test session starts ==============================
+platform linux -- Python 3.6.15, pytest-4.6.11, py-1.11.0, pluggy-0.13.1
+rootdir: /code/modules/weko-items-autofill, inifile: pytest.ini, testpaths: docs, tests, weko_items_autofill
+plugins: celery-4.4.4, pep8-1.0.6, flask-0.15.1, cov-2.10.1, invenio-1.3.4
+collected 20 items
+
+tests/conftest.py F                                                      [  5%]
+tests/test_examples_app.py .                                             [ 10%]
+tests/test_views.py FF.....                                              [ 45%]
+tests/test_weko_items_autofill.py ...                                    [ 60%]
+weko_items_autofill/__init__.py .                                        [ 65%]
+weko_items_autofill/api.py .                                             [ 70%]
+weko_items_autofill/config.py .                                          [ 75%]
+weko_items_autofill/ext.py .                                             [ 80%]
+weko_items_autofill/permissions.py .                                     [ 85%]
+weko_items_autofill/utils.py F                                           [ 90%]
+weko_items_autofill/version.py .                                         [ 95%]
+weko_items_autofill/views.py .                                           [100%]
+
+=================================== FAILURES ===================================
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-items-autofill/tests/conftest.py:36:1: E302 expected 2 blank lines, found 1
+@pytest.fixture(scope='module')
+^
+/code/modules/weko-items-autofill/tests/conftest.py:67:1: E302 expected 2 blank lines, found 1
+@pytest.fixture()
+^
+/code/modules/weko-items-autofill/tests/conftest.py:80:1: W293 blank line contains whitespace
+
+^
+/code/modules/weko-items-autofill/tests/conftest.py:83:1: E302 expected 2 blank lines, found 1
+@pytest.yield_fixture()
+^
+/code/modules/weko-items-autofill/tests/conftest.py:148:1: W391 blank line at end of file
+    ]
+^
+
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-items-autofill/tests/test_views.py:6:7: E231 missing whitespace after ','
+    (0,403),
+      ^
+/code/modules/weko-items-autofill/tests/test_views.py:7:7: E231 missing whitespace after ','
+    (1,200),
+      ^
+/code/modules/weko-items-autofill/tests/test_views.py:8:7: E231 missing whitespace after ','
+    (2,200),
+      ^
+/code/modules/weko-items-autofill/tests/test_views.py:9:7: E231 missing whitespace after ','
+    (3,200),
+      ^
+/code/modules/weko-items-autofill/tests/test_views.py:10:7: E231 missing whitespace after ','
+    (4,200),
+      ^
+/code/modules/weko-items-autofill/tests/test_views.py:13:1: E302 expected 2 blank lines, found 1
+@pytest.mark.parametrize('id, status_code', user_results)
+^
+/code/modules/weko-items-autofill/tests/test_views.py:17:23: E128 continuation line under-indented for visual indent
+                      data=json.dumps({}),
+                      ^
+/code/modules/weko-items-autofill/tests/test_views.py:18:23: E128 continuation line under-indented for visual indent
+                      content_type="application/json")
+                      ^
+/code/modules/weko-items-autofill/tests/test_views.py:26:1: W391 blank line at end of file
+    assert res.status_code == 302
+^
+
+_________________ test_get_auto_fill_record_data_login[0-403] __________________
+
+client_api = <FlaskClient <Flask 'testapp'>>
+users = [{'email': 'test@test.org', 'id': 1, 'obj': <User 1>, 'password': '123456'}, {'email': 'test2@test.org', 'id': 2, 'obj...4, 'obj': <User 4>, 'password': '123456'}, {'email': 'test5@test.org', 'id': 5, 'obj': <User 5>, 'password': '123456'}]
+id = 0, status_code = 403
+
+    @pytest.mark.parametrize('id, status_code', user_results)
+    def test_get_auto_fill_record_data_login(client_api, users, id, status_code):
+        login_user_via_session(client=client_api, email=users[id]["email"])
+        res = client_api.post("/autofill/get_auto_fill_record_data",
+                          data=json.dumps({}),
+                          content_type="application/json")
+>       assert res.status_code == status_code
+E       AssertionError: assert 200 == 403
+E        +  where 200 = <<class 'pytest_flask.plugin.JSONResponse'> streamed [200 OK]>.status_code
+
+tests/test_views.py:19: AssertionError
+---------------------------- Captured stdout setup -----------------------------
+Map([<Rule '/account/settings/password/' (OPTIONS, HEAD, POST, GET) -> security.change_password>,
+ <Rule '/autofill/get_auto_fill_record_data' (OPTIONS, POST) -> weko_items_autofill.get_auto_fill_record_data>,
+ <Rule '/autofill/select_options' (OPTIONS, HEAD, GET) -> weko_items_autofill.get_selection_option>,
+ <Rule '/lost-password/' (OPTIONS, HEAD, POST, GET) -> security.forgot_password>,
+ <Rule '/confirm' (OPTIONS, HEAD, POST, GET) -> security.send_confirmation>,
+ <Rule '/logout/' (OPTIONS, HEAD, GET) -> security.logout>,
+ <Rule '/signup/' (OPTIONS, HEAD, POST, GET) -> security.register>,
+ <Rule '/login/' (OPTIONS, HEAD, POST, GET) -> security.login>,
+ <Rule '/autofill/get_auto_fill_journal/<activity_id>' (OPTIONS, HEAD, GET) -> weko_items_autofill.get_item_auto_fill_journal>,
+ <Rule '/autofill/get_title_pubdate_id/<item_type_id>' (OPTIONS, HEAD, GET) -> weko_items_autofill.get_title_pubdate_id>,
+ <Rule '/autofill/static/<filename>' (OPTIONS, HEAD, GET) -> weko_items_autofill.static>,
+ <Rule '/lost-password/<token>/' (OPTIONS, HEAD, POST, GET) -> security.reset_password>,
+ <Rule '/confirm/<token>' (OPTIONS, HEAD, POST, GET) -> security.confirm_email>,
+ <Rule '/static/<filename>' (OPTIONS, HEAD, GET) -> static>])
+__________________________________ PEP8-check __________________________________
+/code/modules/weko-items-autofill/weko_items_autofill/utils.py:750:80: E501 line too long (80 > 79 characters)
+        result[keyword] = get_crossref_contributor_data(data.get('contributor'))
+                                                                               ^
+/code/modules/weko-items-autofill/weko_items_autofill/utils.py:1135:80: E501 line too long (80 > 79 characters)
+                        current_app.logger.error('Conflict at "{}"'.format(key))
+                                                                               ^
+
+=============================== warnings summary ===============================
+.eggs/pytest-4.6.11-py3.6.egg/_pytest/mark/structures.py:335
+.eggs/pytest-4.6.11-py3.6.egg/_pytest/mark/structures.py:335
+  /code/modules/weko-items-autofill/.eggs/pytest-4.6.11-py3.6.egg/_pytest/mark/structures.py:335: PytestUnknownMarkWarning: Unknown pytest.mark.pep8 - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/latest/mark.html
+    PytestUnknownMarkWarning,
+
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_guest
+  /home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/flask_sqlalchemy/__init__.py:794: FSADeprecationWarning: SQLALCHEMY_TRACK_MODIFICATIONS adds significant overhead and will be disabled by default in the future.  Set it to True or False to suppress this warning.
+    'SQLALCHEMY_TRACK_MODIFICATIONS adds significant overhead and '
+
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+  /home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/pkg_resources/_vendor/packaging/specifiers.py:276: DeprecationWarning: Creating a LegacyVersion has been deprecated and will be removed in the next major release
+    DeprecationWarning,
+
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[0-403]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[1-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[2-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[3-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_login[4-200]
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+tests/test_views.py::test_get_auto_fill_record_data_guest
+  /home/invenio/.virtualenvs/invenio/lib/python3.6/site-packages/pkg_resources/_vendor/packaging/version.py:114: DeprecationWarning: Creating a LegacyVersion has been deprecated and will be removed in the next major release
+    DeprecationWarning,
+
+-- Docs: https://docs.pytest.org/en/latest/warnings.html
+
+---------- coverage: platform linux, python 3.6.15-final-0 -----------
+Name                                 Stmts   Miss  Cover   Missing
+------------------------------------------------------------------
+weko_items_autofill/__init__.py          5      0   100%
+weko_items_autofill/api.py              84     57    32%   52-65, 72-76, 83-85, 93, 96, 101-111, 134-143, 150-151, 158-160, 168, 171, 176-186
+weko_items_autofill/config.py           18      0   100%
+weko_items_autofill/ext.py              18      1    94%   38
+weko_items_autofill/permissions.py       4      0   100%
+weko_items_autofill/utils.py           812    739     9%   42, 55-68, 82-109, 117-132, 142-155, 164-177, 189-207, 218-231, 246-256, 270-272, 288-299, 314-325, 340-357, 373-384, 401-415, 429-434, 446-456, 472-479, 489-544, 557-570, 579-595, 605, 615, 629-634, 647-654, 667-671, 684-688, 697-711, 720-726, 740-776, 785-790, 799-805, 816-855, 865-899, 910-958, 969-987, 997-1016, 1026-1061, 1070-1077, 1087-1109, 1119-1137, 1147-1160, 1170-1194, 1204-1208, 1217-1223, 1232-1253, 1263-1278, 1286-1325, 1335-1355, 1363-1366, 1376-1404, 1413-1425, 1435-1482, 1492-1502
+weko_items_autofill/version.py           3      0   100%
+weko_items_autofill/views.py            53     21    60%   41, 53-58, 70-71, 87-88, 97-101, 103-105, 107, 111-112, 126-129
+------------------------------------------------------------------
+TOTAL                                  997    818    18%
+
+============== 4 failed, 16 passed, 729 warnings in 23.27 seconds ==============
