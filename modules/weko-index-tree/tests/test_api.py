@@ -21,15 +21,17 @@
 """Module tests."""
 
 import pytest
+from datetime import datetime
 from elasticsearch.exceptions import NotFoundError
 from invenio_access.models import Role
 from weko_deposit.api import WekoDeposit
 
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
-
+from weko_index_tree import WekoIndexTree
 
 def test_indexes(app, db, user, location):
+    WekoIndexTree(app)
     index_metadata = {
         'id': 1,
         'parent': 0,
@@ -143,13 +145,14 @@ def test_indexes(app, db, user, location):
 
     Indexes.set_coverpage_state_resc(1, True)
 
-    Indexes.set_public_state_resc(1, True, '220202')
-
+    #Indexes.set_public_state_resc(1, True, '220202')
+    Indexes.set_public_state_resc(1, True, datetime.now())
     Indexes.set_contribute_role_resc(1, 'Admin')
 
-    Indexes.set_contribute_group_resc(1, [])
+    #Indexes.set_contribute_group_resc(1, [])
+    Indexes.set_contribute_group_resc(1, "1")
 
-    Indexes.set_browsing_role_resc(1, [])
+    Indexes.set_browsing_role_resc(1, "1")
 
     Indexes.get_index_count()
 
@@ -171,6 +174,7 @@ def test_indexes(app, db, user, location):
 
 
 def test_indexes_delete(app, db):
+    WekoIndexTree(app)
     index_metadata = {
         'id': 1,
         'parent': 0,
@@ -189,6 +193,7 @@ def test_indexes_delete(app, db):
 
 
 def test_indexes_delete_by_action(app, db, user):
+    WekoIndexTree(app)
     index_metadata = {
         'id': 1,
         'parent': 0,

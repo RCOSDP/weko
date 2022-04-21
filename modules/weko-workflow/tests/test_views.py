@@ -540,12 +540,13 @@ def test_display_activity_users(client, users, users_index, status_code):
         flows_id='{39ba43f0-c876-4086-97f4-d9aed1be8083}',
         itemtype_id=15, flow_id=1, is_deleted=False, open_restricted=True,
         is_gakuninrdm=False)
-
+    mock_render_template = MagicMock(return_value=jsonify({}))
     with patch('weko_workflow.views.get_activity_display_info',
                return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \
                steps, temporary_comment, workflow_detail)):
         with patch('weko_workflow.views.check_authority_action'):
             with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
                        return_value=(roles, action_users)):
+                with patch('weko_workflow.views.render_template', mock_render_template):
                     res = _post(client, url, input)
-                    assert res.status_code == status_code
+                    mock_render_template.assert_called()

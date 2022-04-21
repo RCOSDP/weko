@@ -133,7 +133,7 @@ def create_blueprint(app, endpoints):
         blueprint.add_url_rule(
             options.pop('index_route'),
             view_func=isr,
-            methods=['GET', 'POST'],
+            methods=['GET'],
         )
 
     return blueprint
@@ -171,6 +171,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         :returns: the search result containing hits and aggregations as
         returned by invenio-search.
         """
+        print("called method")
         from weko_admin.models import FacetSearchSetting
         from weko_admin.utils import get_facet_search_query
 
