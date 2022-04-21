@@ -148,7 +148,7 @@ def client_rest(app):
 
 @pytest.yield_fixture()
 def client_api(app):
-    app.register_blueprint(blueprint_api, url_prefix="/api")
+    app.register_blueprint(blueprint_api, url_prefix='/api')
     with app.test_client() as client:
         yield client
 

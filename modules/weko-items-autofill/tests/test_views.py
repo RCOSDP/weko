@@ -14,15 +14,15 @@ user_results = [
 
 @pytest.mark.parametrize('id, status_code', user_results)
 def test_get_auto_fill_record_data_login(client_api, users, id, status_code):
-    login_user_via_session(client=client_api, email=users[id]["email"])
-    res = client_api.post("/autofill/get_auto_fill_record_data",
+    login_user_via_session(client=client_api, email=users[id]['email'])
+    res = client_api.post('/autofill/get_auto_fill_record_data',
                       data=json.dumps({}),
-                      content_type="application/json")
+                      content_type='application/json')
     assert res.status_code == status_code
 
 
 def test_get_auto_fill_record_data_guest(client_api, users):
-    res = client_api.post("/autofill/get_auto_fill_record_data",
+    res = client_api.post('/autofill/get_auto_fill_record_data',
                           data=json.dumps({}),
-                          content_type="application/json")
+                          content_type='application/json')
     assert res.status_code == 302

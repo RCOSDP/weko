@@ -94,7 +94,7 @@ def app(base_app):
 
 @pytest.yield_fixture()
 def client_rest(app):
-    app.register_blueprint(create_blueprint(app.config["WEKO_SCHEMA_REST_ENDPOINTS"]))
+    app.register_blueprint(create_blueprint(app.config['WEKO_SCHEMA_REST_ENDPOINTS']))
     with app.test_client() as client:
         yield client
 

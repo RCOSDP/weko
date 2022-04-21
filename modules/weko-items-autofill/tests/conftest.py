@@ -68,7 +68,7 @@ def create_app(instance_path):
 
 @pytest.fixture()
 def base_app(instance_path):
-    app_ = Flask("testapp", instance_path=instance_path)
+    app_ = Flask('testapp', instance_path=instance_path)
     app_.config.update(
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
