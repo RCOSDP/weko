@@ -1826,11 +1826,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   }
                 } else {
                   if (data.results[subKey]) {
-                    if (subKey == "subitem_position") {
-                      $rootScope.recordsVM.invenioRecordsModel[key][subKey] = $scope.translationsPosition(String(data.results[subKey]));
-                    } else {
-                      $rootScope.recordsVM.invenioRecordsModel[key][subKey] = String(data.results[subKey]);
-                    }
+                    $rootScope.recordsVM.invenioRecordsModel[key][subKey] = String(data.results[subKey]);
                   }
                 }
               }
