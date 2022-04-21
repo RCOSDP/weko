@@ -123,10 +123,10 @@ def users(app, db):
     r4 = ds.create_role(name='Community Administrator')
     ds.add_role_to_user(comadmin, r4)
 
-    # Assign author-access to contributor, comadmin, repoadmin, sysadmin.
+    # Assign access authorization
     with db.session.begin_nested():
         action_users = [
-            ActionUsers(action='superuser-access', user=sysadmin),
+            ActionUsers(action='superuser-access', user=sysadmin)
         ]
         db.session.add_all(action_users)
 
