@@ -20,9 +20,10 @@
 
 """Module tests."""
 import threading
+from unittest.mock import MagicMock
 import pytest
 from mock import patch
-from flask import Flask, json, url_for
+from flask import Flask, json, jsonify, url_for
 from invenio_db import db
 from sqlalchemy import func
 
@@ -92,17 +93,6 @@ def test_init_activity_guest_users(client, users, users_index, status_code):
 
     res = _post(client, url, input)
     assert res.status_code == status_code
-
-
-def test_lock_activity_nologin(client):
-    """Test of lock activity."""
-    url = url_for('weko_workflow.lock_activity', activity_id='1')
-    input = {}
-
-    res = _post(client, url, input)
-    assert res.status_code == 302
-    # TODO check that the path changed
-    # assert res.url == url_for('security.login')
 
 
 def test_find_doi_nologin(client):
@@ -395,6 +385,17 @@ def test_send_mail_users(client, users, users_index, status_code):
     assert res.status_code == status_code
 
 
+def test_lock_activity_nologin(client):
+    """Test of lock activity."""
+    url = url_for('weko_workflow.lock_activity', activity_id='1')
+    input = {}
+
+    res = _post(client, url, input)
+    assert res.status_code == 302
+    # TODO check that the path changed
+    # assert res.url == url_for('security.login')
+
+
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 403),
     (1, 200),
@@ -513,7 +514,10 @@ def test_display_activity_nologin(client):
     (4, 200),
 ])
 def test_display_activity_users(client, users, users_index, status_code):
-    """Test of display activity."""
+    """
+    Test of display activity.
+    Expected: users[0]: AssertionError   
+    """
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.display_activity', activity_id='1')
     input = {}
