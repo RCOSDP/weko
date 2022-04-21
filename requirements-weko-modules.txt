@@ -38,3 +38,4 @@
 -e /code/modules/weko-items-autofill
 -e /code/modules/weko-sitemap
 -e /code/modules/invenio-iiif
+-e /code/modules/weko-redis

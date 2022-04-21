@@ -39,6 +39,7 @@ from time import sleep
 
 import bagit
 import redis
+from redis import sentinel
 from celery.result import AsyncResult
 from celery.task.control import revoke
 from elasticsearch import ElasticsearchException
@@ -83,6 +84,7 @@ from weko_indextree_journal.api import Journals
 from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_mapping
+from weko_redis.redis import RedisConnection
 from weko_workflow.api import Flow, WorkActivity
 from weko_workflow.config import (
     IDENTIFIER_GRANT_LIST,
@@ -3180,9 +3182,8 @@ def delete_exported(uri, cache_key):
         with db.session.begin_nested():
             file_instance = FileInstance.get_by_uri(uri)
             file_instance.delete()
-        datastore = RedisStore(
-            redis.StrictRedis.from_url(current_app.config["CACHE_REDIS_URL"])
-        )
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         if datastore.redis.exists(cache_key):
             datastore.delete(cache_key)
         db.session.commit()

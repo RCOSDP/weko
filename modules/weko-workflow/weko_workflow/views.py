@@ -31,6 +31,7 @@ from datetime import datetime
 from functools import wraps
 
 import redis
+from redis import sentinel
 from flask import Blueprint, abort, current_app, has_request_context, \
     jsonify, make_response, render_template, request, session, url_for
 from flask_babelex import gettext as _
@@ -48,6 +49,7 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import cast
+from weko_redis import RedisConnection
 from weko_accounts.api import ShibUser
 from weko_accounts.utils import login_required_customize
 from weko_authors.models import Authors
@@ -584,10 +586,9 @@ def display_activity(activity_id="0"):
         if not record and item:
             record = item
 
-        sessionstore = RedisStore(redis.StrictRedis.from_url(
-            'redis://{host}:{port}/1'.format(
-                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+        redis_connection = RedisConnection()
+        sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+
         if sessionstore.redis.exists(
             'updated_json_schema_{}'.format(activity_id)) \
             and sessionstore.get(
@@ -1311,8 +1312,9 @@ def get_journals():
     if not key:
         return jsonify({})
 
-    datastore = RedisStore(redis.StrictRedis.from_url(
-        current_app.config['CACHE_REDIS_URL']))
+    redis_connection = RedisConnection()
+    datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+
     cache_key = current_app.config[
         'WEKO_WORKFLOW_OAPOLICY_SEARCH'].format(keyword=key)
 

@@ -29,6 +29,7 @@ from uuid import UUID
 from xml.etree.ElementTree import tostring
 
 import redis
+from redis import sentinel
 from elasticsearch.exceptions import NotFoundError
 from flask import Markup, Response, abort, current_app, jsonify, request
 from flask_babelex import gettext as _
@@ -46,6 +47,7 @@ from weko_index_tree.api import Indexes
 from weko_records.api import Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_records_ui.utils import get_pair_value
+from weko_redis.redis import RedisConnection
 from weko_search_ui.query import item_search_factory
 from weko_theme import config as theme_config
 
@@ -924,8 +926,8 @@ def delete_widget_cache(repository_id, page_id=None):
     @param page_id: The Page identifier
     @return:
     """
-    cache_store = RedisStore(redis.StrictRedis.from_url(
-        current_app.config['CACHE_REDIS_URL']))
+    redis_connection = RedisConnection()
+    cache_store = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
     if page_id:
         cache_key = ("*" + config.WEKO_GRIDLAYOUT_WIDGET_PAGE_CACHE_KEY
                      + str(repository_id) + "_" + str(page_id) + "_*")

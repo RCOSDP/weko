@@ -28,6 +28,7 @@ from datetime import datetime, timezone
 from typing import NoReturn, Union
 
 import redis
+from redis import sentinel
 from dictdiffer import dot_lookup
 from dictdiffer.merge import Merger, UnresolvedConflictsException
 from elasticsearch.exceptions import TransportError
@@ -64,6 +65,7 @@ from weko_records.models import ItemMetadata, ItemReference
 from weko_records.utils import get_all_items, get_attribute_value_all_items, \
     get_options_and_order_list, json_loader, remove_weko2_special_character, \
     set_timestamp
+from weko_redis.redis import RedisConnection
 from weko_user_profiles.models import UserProfile
 
 from .config import WEKO_DEPOSIT_BIBLIOGRAPHIC_INFO_KEY, \
@@ -1073,8 +1075,8 @@ class WekoDeposit(Deposit):
 
         try:
             if not data:
-                datastore = RedisStore(redis.StrictRedis.from_url(
-                    current_app.config['CACHE_REDIS_URL']))
+                redis_connection = RedisConnection()
+                datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
                 cache_key = current_app.config[
                     'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
                     pid_value=self.pid.pid_value)

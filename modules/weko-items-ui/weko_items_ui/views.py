@@ -27,6 +27,7 @@ from copy import deepcopy
 from datetime import date, datetime, timedelta
 
 import redis
+from redis import sentinel
 from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
     render_template, request, session, url_for
 from flask_babelex import gettext as _
@@ -48,6 +49,7 @@ from weko_index_tree.utils import check_index_permissions, get_index_id, \
 from weko_records.api import ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
+from weko_redis.redis import RedisConnection
 from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow
 from weko_workflow.utils import check_an_item_is_locked, \
     get_record_by_root_ver, get_thumbnails, prepare_edit_workflow, \
@@ -375,10 +377,9 @@ def items_index(pid_value='0'):
                 render_widgets=render_widgets)
 
         data = request.get_json()
-        sessionstore = RedisStore(redis.StrictRedis.from_url(
-            'redis://{host}:{port}/1'.format(
-                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+
+        redis_connection = RedisConnection()
+        sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
         if request.method == 'PUT':
             """update index of item info."""
             item_str = sessionstore.get('item_index_{}'.format(pid_value))
@@ -495,10 +496,9 @@ def iframe_items_index(pid_value='0'):
             )
 
         data = request.get_json()
-        sessionstore = RedisStore(redis.StrictRedis.from_url(
-            'redis://{host}:{port}/1'.format(
-                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+
+        redis_connection = RedisConnection()
+        sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
         if request.method == 'PUT':
             """update index of item info."""
             item_str = sessionstore.get('item_index_{}'.format(pid_value))
@@ -1068,10 +1068,9 @@ def check_validation_error_msg(activity_id):
     :param activity_id: The identify of Activity.
     :return: Show error message
     """
-    sessionstore = RedisStore(redis.StrictRedis.from_url(
-        'redis://{host}:{port}/1'.format(
-            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+
+    redis_connection = RedisConnection()
+    sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
     if sessionstore.redis.exists(
             'updated_json_schema_{}'.format(activity_id)) \
             and sessionstore.get('updated_json_schema_{}'.format(activity_id)):
