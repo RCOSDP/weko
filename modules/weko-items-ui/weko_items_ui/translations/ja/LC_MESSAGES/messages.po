@@ -428,6 +428,9 @@ msgstr "メール（指導教員）"
 msgid "Email (Guarantor)"
 msgstr "メール（保証人）"
 
+msgid "The approver email address cannot be the same as the applicant. Please recheck and input."
+msgstr "承認者のメールアドレスが申請者と同じにすることはできません。ご確認の上、再度入力してください。"
+
 msgid "The following email address is not registered in the system. Please recheck and input."
 msgstr "以下のメールアドレスがシステムに登録されていません。ご確認の上、再度入力してください。"
 

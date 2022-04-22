@@ -359,6 +359,9 @@ msgstr ""
 msgid "Email (Guarantor)"
 msgstr ""
 
+msgid "The approver email address cannot be the same as the applicant. Please recheck and input."
+msgstr ""
+
 msgid "The following email address is not registered in the system. Please recheck and input."
 msgstr ""
 

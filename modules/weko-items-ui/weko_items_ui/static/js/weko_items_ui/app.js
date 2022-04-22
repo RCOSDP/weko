@@ -3592,6 +3592,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         }
         approvalMailSubKey = JSON.parse(approvalMailSubKey);
         let param = {};
+        let same_mail_flag = false;
         Object.keys($scope.depositionForm).forEach(function (key) {
           approvalMailSubKey.forEach(function (item) {
             let item_keys = item.split('.').pop();
@@ -3603,6 +3604,9 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 if (mail_address) {
                   mail_address = mail_address.trim()
                 }
+                if (mail_address == $("#subitem_mail_address").val()) {
+                  same_mail_flag = true;
+                }
                 param[item] = mail_address;
                 emailsToValidate.push(item);
                 listEmailKeys.push(key);
@@ -3610,6 +3614,10 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             }
           });
         });
+        if (same_mail_flag) {
+          $scope.processShowModelValidation([], itemsDict, "#validate_email_check");
+          return false;
+        }
         param['activity_id'] = activityId;
         param['user_to_check'] = emailsToValidate;
         param['user_key_to_check'] = listEmailKeys;
