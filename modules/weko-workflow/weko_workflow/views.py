@@ -146,7 +146,8 @@ def index():
                                conditions=conditions)
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
-        community_id = comm.id
+        if comm is not None:
+            community_id = comm.id
     else:
         activities, maxpage, size, pages, name_param = activity \
             .get_activity_list(conditions=conditions)
@@ -296,7 +297,8 @@ def new_activity():
     if 'community' in getargs:
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
-        community_id = comm.id
+        if comm is not None:
+           community_id = comm.id
 
     # Process exclude workflows
     from weko_workflow.utils import exclude_admin_workflow
@@ -336,7 +338,8 @@ def init_activity():
         if 'community' in getargs and request.args.get('community') != 'undefined':
             comm = GetCommunity.get_community_by_id(
                 request.args.get('community'))
-            url = url_for('weko_workflow.display_activity',
+            if comm is not None:
+                url = url_for('weko_workflow.display_activity',
                           activity_id=rtn.activity_id, community=comm.id)
         db.session.commit()
     except SQLAlchemyError as ex:
@@ -615,7 +618,8 @@ def display_activity(activity_id="0"):
     if 'community' in getargs:
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
-        community_id = comm.id
+        if comm is not None:
+            community_id = comm.id
     # be use for index tree and comment page.
     if 'item_login' == action_endpoint or \
             'item_login_application' == action_endpoint or \

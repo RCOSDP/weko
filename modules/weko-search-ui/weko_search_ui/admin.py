@@ -245,7 +245,8 @@ class ItemManagementBulkSearch(BaseView):
 
             comm = GetCommunity.get_community_by_id(request.args.get("community"))
             ctx = {"community": comm}
-            community_id = comm.id
+            if comm is not None:
+                community_id = comm.id
 
         # Get index style
         style = IndexStyle.get(
