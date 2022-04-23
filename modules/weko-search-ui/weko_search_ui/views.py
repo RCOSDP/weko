@@ -98,7 +98,8 @@ def search():
 
         comm = GetCommunity.get_community_by_id(request.args.get("community"))
         ctx = {"community": comm}
-        community_id = comm.id
+        if comm is not None:
+            community_id = comm.id
 
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(

@@ -2079,7 +2079,8 @@ class WorkActivity(object):
             comm = GetCommunity.get_community_by_id(
                 request.args.get('community'))
             ctx = {'community': comm}
-            community_id = comm.id
+            if comm is not None:
+                community_id = comm.id
 
         # display_activity of Identifier grant
         if action_endpoint == 'identifier_grant' and item:

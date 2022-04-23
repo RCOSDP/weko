@@ -449,7 +449,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         from weko_workflow.api import GetCommunity
         comm = GetCommunity.get_community_by_id(community_arg)
         ctx = {'community': comm}
-        community_id = comm.id
+        if comm is not None:
+            community_id = comm.id
 
     # Get index style
     style = IndexStyle.get(
