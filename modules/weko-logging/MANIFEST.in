@@ -45,3 +45,6 @@ recursive-include tests *.py
 
 # added by check_manifest.py
 include babel.ini
+
+# added by check-manifest
+recursive-include weko_logging *.pot

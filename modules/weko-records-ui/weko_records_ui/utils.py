@@ -21,11 +21,12 @@
 """Module of weko-records-ui utils."""
 
 import base64
+import os
 from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
 from typing import NoReturn, Tuple
-from urllib.parse import urlparse
+from urllib.parse import urlparse,quote
 
 from flask import abort, current_app, json, request, url_for
 from flask_babelex import get_locale
@@ -58,12 +59,16 @@ from .permissions import check_create_usage_report, \
     is_open_restricted
 
 
+
+
 def check_items_settings(settings=None):
     """Check items setting."""
     if settings is None:
         settings = AdminSettings.get('items_display_settings')
-    current_app.config['EMAIL_DISPLAY_FLG'] = settings.items_display_email
-    current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
+    if hasattr(settings, 'item_display_email'):
+        current_app.config['EMAIL_DISPLAY_FLG'] = settings.items_display_email
+    if hasattr(settings, 'item_search_author'):
+        current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
     if hasattr(settings, 'item_display_open_date'):
         current_app.config['OPEN_DATE_DISPLAY_FLG'] = \
             settings.item_display_open_date
@@ -235,7 +240,7 @@ def soft_delete(recid):
 
         if draft_pid:
             all_ver.append(draft_pid)
-
+        del_files = []
         for ver in all_ver:
             depid = PersistentIdentifier.query.filter_by(
                 pid_type='depid', object_uuid=ver.object_uuid).first()
@@ -247,12 +252,22 @@ def soft_delete(recid):
                 dep.indexer.update_path(dep, update_revision=False)
                 FeedbackMailList.delete(ver.object_uuid)
                 dep.remove_feedback_mail()
+                for i in range(len(dep.files)):
+                    if dep.files[i].file.uri not in del_files:
+                        del_files.append(dep.files[i].file.uri)
+                        dep.files[i].bucket.location.size -= dep.files[i].file.size
+                    dep.files[i].bucket.deleted = True
                 dep.commit()
             pids = PersistentIdentifier.query.filter_by(
                 object_uuid=ver.object_uuid)
             for p in pids:
                 p.status = PIDStatus.DELETED
             db.session.commit()
+        for path in del_files:
+            if os.path.exists(path):
+                os.remove(path)
+            if os.path.exists(path[:-4]):
+                os.removedirs(path[:-4])
 
         current_app.logger.info(
             'user({0}) deleted record id({1}).'.format(current_user_id, recid))
@@ -556,7 +571,10 @@ def is_show_email_of_creator(item_type_id):
     def item_setting_show_email():
         # Display email from setting item admin.
         settings = AdminSettings.get('items_display_settings')
-        is_display = settings.items_display_email
+        if hasattr(settings, 'item_display_email'):
+            is_display = settings.items_display_email
+        else:
+            is_display = False
         return is_display
 
     is_hide = item_type_show_email(item_type_id)
@@ -1190,7 +1208,7 @@ def get_google_scholar_meta(record):
     for pdf_url in mtdata.findall('jpcoar:file/jpcoar:URI',
                                   namespaces=mtdata.nsmap):
         res.append({'name': 'citation_pdf_url',
-                    'data': pdf_url.text})
+                    'data': quote(pdf_url.text,'/:%')})
 
     res.append({'name': 'citation_dissertation_institution',
                 'data': InstitutionName.get_institution_name()})
@@ -1216,11 +1234,19 @@ def get_google_detaset_meta(record):
     Returns:
         [type]: [description]
     """
+    from .config import WEKO_RECORDS_UI_GOOGLE_DATASET_RESOURCE_TYPE, \
+    WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN, \
+    WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX, \
+    WEKO_RECORDS_UI_GOOGLE_DATASET_DISTRIBUTION_BUNDLE
+
+    current_app.logger.debug("get_google_detaset_meta: {}".format(record.id))
+
     if not current_app.config['WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE']:
         return
 
     if '_oai' not in record and 'id' not in record['_oai']:
         return
+        
     recstr = etree.tostring(
         getrecord(
             identifier=record['_oai'].get('id'),
@@ -1231,28 +1257,35 @@ def get_google_detaset_meta(record):
     if mtdata is None:
         return
 
+    output_resource_types = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_RESOURCE_TYPE',WEKO_RECORDS_UI_GOOGLE_DATASET_RESOURCE_TYPE)
     # Check resource type is 'dataset'
     resource_type_allowed = False
     for resource_type in mtdata.findall('dc:type', namespaces=mtdata.nsmap):
-        if resource_type.text == "dataset":
+        if resource_type.text in output_resource_types:
             resource_type_allowed = True
             break
 
     if not resource_type_allowed:
+        current_app.logger.debug("resource_type_allowed: {}".format(resource_type_allowed))
         return
 
     res_data = {'@context': 'https://schema.org/', '@type': 'Dataset'}
 
     # Required property check
+    min_length = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN',WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN)
+    max_length = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX',WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX)
+    
     for title in mtdata.findall('dc:title', namespaces=mtdata.nsmap):
         res_data['name'] = title.text
     for description in mtdata.findall('datacite:description', namespaces=mtdata.nsmap):
         description_text = description.text
-        if len(description_text) >= 50:
-            if len(description_text) > 5000:
-                description_text = description_text[:5000]
+        if len(description_text) >= min_length:
+            if len(description_text) > max_length:
+                description_text = description_text[:max_length]
             res_data['description'] = description_text
+
     if 'name' not in res_data or 'description' not in res_data:
+        current_app.logger.debug("resource_type_allowed: {}".format(resource_type_allowed))
         return
 
     # includedInDataCatalog
@@ -1390,11 +1423,22 @@ def get_google_detaset_meta(record):
 
         distribution = {'@type': 'DataDownload'}
         if uri is not None and len(uri.text) > 0:
-            distribution['contentUrl'] = uri.text
+            distribution['contentUrl'] = quote(uri.text,'/:%')
         if mime_type is not None and len(mime_type.text) > 0:
             distribution['encodingFormat'] = mime_type.text
         distributions.append(distribution)
     if len(distributions) > 0:
+        adding_bundles = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DISTRIBUTION_BUNDLE',WEKO_RECORDS_UI_GOOGLE_DATASET_DISTRIBUTION_BUNDLE)
+        if adding_bundles is not None:
+            for bundle in adding_bundles:
+                distribution = {'@type': 'DataDownload'}
+                if 'contentUrl' in bundle:
+                    distribution['contentUrl'] = quote(bundle['contentUrl'],'/:%')
+                    if 'encodingFormat' in bundle:
+                        distribution['encodingFormat'] = bundle['encodingFormat']
+                    distributions.append(distribution)
         res_data['distribution'] = distributions
+
+    current_app.logger.debug("res_data: {}".format(json.dumps(res_data, ensure_ascii=False)))
 
     return json.dumps(res_data, ensure_ascii=False)

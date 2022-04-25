@@ -1,10 +1,564 @@
 import pytest
+import json
+import os
+
+from flask import session, url_for,current_app
+
+from weko_records.api import ItemTypes
+from weko_search_ui.utils import (
+    check_permission,
+    get_content_workflow,
+    getEncode,
+    validation_file_open_date,
+    check_import_items,
+    unpackage_import_file,
+    read_stats_csv,
+    handle_check_date,
+    get_list_key_of_iso_date,
+    handle_validate_item_import,
+    get_item_type,handle_fill_system_item,
+    get_system_data_uri,
+    represents_int,
+    validation_date_property
+)
+from invenio_i18n.ext import InvenioI18N, current_i18n
+from invenio_i18n.babel import set_locale
+from weko_search_ui.config import (
+    WEKO_REPO_USER,
+    WEKO_SYS_USER,
+    WEKO_IMPORT_SYSTEM_ITEMS,
+    VERSION_TYPE_URI,
+ACCESS_RIGHT_TYPE_URI,
+RESOURCE_TYPE_URI
+)
+
+from unittest.mock import patch, Mock, MagicMock
+from weko_search_ui import WekoSearchUI
+from flask_babelex import Babel
+import copy
+
+FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
+
+@pytest.fixture()
+def test_records():
+    results = []
+    #
+    results.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "records", "successRecord00.json"),
+            "output": "",
+        }
+    )
+    results.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "records", "successRecord01.json"),
+            "output": "",
+        }
+    )
+    results.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "records", "successRecord02.json"),
+            "output": "",
+        }
+    )
+    # 存在しない日付が設定されている
+    results.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "records", "noExistentDate00.json"),
+            "output": "Please specify Open Access Date with YYYY-MM-DD.",
+        }
+    )
+    # 日付がYYYY-MM-DD でない
+    results.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "records", "wrongDateFormat00.json"),
+            "output": "Please specify Open Access Date with YYYY-MM-DD.",
+        }
+    )
+    results.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "records", "wrongDateFormat01.json"),
+            "output": "Please specify Open Access Date with YYYY-MM-DD.",
+        }
+    )
+    results.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "records", "wrongDateFormat02.json"),
+            "output": "Please specify Open Access Date with YYYY-MM-DD.",
+        }
+    )
+
+    return results
+
+@pytest.fixture()
+def test_list_records():
+    tmp = []
+    results = []
+    tmp.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "list_records", "list_records.json"),
+            "output": os.path.join(
+                FIXTURE_DIR, "list_records", "list_records_result.json"
+            ),
+        }
+    )
+    tmp.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "list_records", "list_records00.json"),
+            "output": os.path.join(
+                FIXTURE_DIR, "list_records", "list_records00_result.json"
+            ),
+        }
+    )
+    tmp.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "list_records", "list_records01.json"),
+            "output": os.path.join(
+                FIXTURE_DIR, "list_records", "list_records01_result.json"
+            ),
+        }
+    )
+    tmp.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "list_records", "list_records02.json"),
+            "output": os.path.join(
+                FIXTURE_DIR, "list_records", "list_records02_result.json"
+            ),
+        }
+    )
+
+    tmp.append(
+        {
+            "input": os.path.join(FIXTURE_DIR, "list_records", "list_records03.json"),
+            "output": os.path.join(
+                FIXTURE_DIR, "list_records", "list_records03_result.json"
+            ),
+        }
+    )
+
+    for t in tmp:
+        with open(t.get("input"), encoding="utf-8") as f:
+            input_data = json.load(f)
+        with open(t.get("output"), encoding="utf-8") as f:
+            output_data = json.load(f)
+        results.append({"input": input_data, "output": output_data})
+    return results
+
+@pytest.fixture()
+def test_importdata():
+    files = [os.path.join(FIXTURE_DIR,'import00.zip')
+    ]
+    return files
+
+@pytest.fixture()
+def mocker_itemtype(mocker):
+    item_type = Mock()
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "item_type/15_render.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        render = json.load(f)
+    item_type.render = render
+
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "item_type/15_schema.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        schema = json.load(f)
+    item_type.schema = schema
+
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "item_type/15_form.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        form = json.load(f)
+    item_type.form = form
+
+    item_type.item_type_name.name="デフォルトアイテムタイプ（フル）"
+    item_type.item_type_name.item_type.first().id=15
+
+    mocker.patch("weko_records.api.ItemTypes.get_by_id", return_value=item_type)
 
 
-def test_handle_doi_required_check():
-    record1 = {'pos_index': ['Index A'], 'publish_status': 'public', 'doi_ra': 'JaLC', 'edit_mode': 'Keep', 'metadata': {'pubdate': '2021-02-04', 'item_1617186331708': [{'subitem_1551255647225': 'DOI fileURIなし Fileあり', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'DOI without fileURI', 'subitem_1551255648112': 'en'}], 'item_1617186385884': [{'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'en'}, {'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'ja'}], 'item_1617186419668': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI', 'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048'}], 'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}]}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': '4', 'nameIdentifierScheme': 'WEKO'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617349709064': [{'contributorMails': [{'contributorMail': 'wekosoftware@nii.ac.jp'}], 'contributorNames': [{'contributorName': '情報, 太郎', 'lang': 'ja'}, {'contributorName': 'ジョウホウ, タロウ', 'lang': 'ja-Kana'}, {'contributorName': 'Joho, Taro', 'lang': 'en'}], 'contributorType': 'ContactPerson', 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617186476635': {'subitem_1522299639480': 'open access', 'subitem_1600958577026': 'http://purl.org/coar/access_right/c_abf2'}, 'item_1617351524846': {'subitem_1523260933860': 'Unknown'}, 'item_1617186499011': [{'subitem_1522650717957': 'ja',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'subitem_1522650727486': 'http://localhost', 'subitem_1522651041219': 'Rights Information'}], 'item_1617610673286': [{'nameIdentifiers': [{'nameIdentifier': 'xxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}], 'rightHolderNames': [{'rightHolderLanguage': 'ja', 'rightHolderName': 'Right Holder Name'}]}], 'item_1617186609386': [{'subitem_1522299896455': 'ja', 'subitem_1522300014469': 'Other', 'subitem_1522300048512': 'http://localhost/', 'subitem_1523261968819': 'Sibject1'}], 'item_1617186626617': [{'subitem_description': 'Description', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}, {'subitem_description': '概要', 'subitem_description_language': 'ja', 'subitem_description_type': 'Abstract'}], 'item_1617186643794': [{'subitem_1522300295150': 'en', 'subitem_1522300316516': 'Publisher'}], 'item_1617186660861': [{'subitem_1522300695726': 'Available', 'subitem_1522300722591': '2021-06-30'}], 'item_1617186702042': [{'subitem_1551255818386': 'jpn'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_1617349808926': {'subitem_1523263171732': 'Version'}, 'item_1617265215918': {'subitem_1522305645492': 'AO', 'subitem_1600292170262': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}, 'item_1617186783814': [{'subitem_identifier_type': 'URI', 'subitem_identifier_uri': 'http://localhost'}], 'item_1617353299429': [{'subitem_1522306207484': 'isVersionOf', 'subitem_1522306287251': {'subitem_1522306382014': 'arXiv', 'subitem_1522306436033': 'xxxxx'}, 'subitem_1523320863692': [{'subitem_1523320867455': 'en', 'subitem_1523320909613': 'Related Title'}]}], 'item_1617186859717': [{'subitem_1522658018441': 'en', 'subitem_1522658031721': 'Temporal'}], 'item_1617186882738': [{'subitem_geolocation_place': [{'subitem_geolocation_place_text': 'Japan'}]}], 'item_1617186901218': [{'subitem_1522399143519': {'subitem_1522399281603': 'ISNI', 'subitem_1522399333375': 'http://xxx'}, 'subitem_1522399412622': [{'subitem_1522399416691': 'en', 'subitem_1522737543681': 'Funder Name'}], 'subitem_1522399571623': {'subitem_1522399585738': 'Award URI', 'subitem_1522399628911': 'Award Number'}, 'subitem_1522399651758': [{'subitem_1522721910626': 'en', 'subitem_1522721929892': 'Award Title'}]}], 'item_1617186920753': [{'subitem_1522646500366': 'ISSN', 'subitem_1522646572813': 'xxxx-xxxx-xxxx'}], 'item_1617186941041': [{'subitem_1522650068558': 'en', 'subitem_1522650091861': 'Source Title'}], 'item_1617186959569': {'subitem_1551256328147': '1'}, 'item_1617186981471': {'subitem_1551256294723': '111'}, 'item_1617186994930': {'subitem_1551256248092': '12'}, 'item_1617187024783': {'subitem_1551256198917': '1'}, 'item_1617187045071': {'subitem_1551256185532': '3'}, 'item_1617187112279': [{'subitem_1551256126428': 'Degree Name', 'subitem_1551256129013': 'en'}], 'item_1617187136212': {'subitem_1551256096004': '2021-06-30'}, 'item_1617944105607': [{'subitem_1551256015892': [{'subitem_1551256027296': 'xxxxxx', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': 'Degree Grantor Name', 'subitem_1551256047619': 'en'}]}], 'item_1617187187528': [{'subitem_1599711633003': [{'subitem_1599711636923': 'Conference Name', 'subitem_1599711645590': 'ja'}], 'subitem_1599711655652': '1', 'subitem_1599711660052': [{'subitem_1599711680082': 'Sponsor', 'subitem_1599711686511': 'ja'}], 'subitem_1599711699392': {'subitem_1599711704251': '2020/12/11', 'subitem_1599711712451': '1', 'subitem_1599711727603': '12', 'subitem_1599711731891': '2000', 'subitem_1599711735410': '1', 'subitem_1599711739022': '12', 'subitem_1599711743722': '2020', 'subitem_1599711745532': 'ja'}, 'subitem_1599711758470': [{'subitem_1599711769260': 'Conference Venue', 'subitem_1599711775943': 'ja'}], 'subitem_1599711788485': [{'subitem_1599711798761': 'Conference Place', 'subitem_1599711803382': 'ja'}], 'subitem_1599711813532': 'JPN'}], 'item_1617605131499': [{'accessrole': 'open_access', 'date': [{'dateType': 'Available', 'dateValue': '2021-07-12'}], 'displaytype': 'simple', 'filename': '1KB.pdf', 'filesize': [{'value': '1 KB'}], 'format': 'text/plain'}], 'item_1617620223087': [{'subitem_1565671149650': 'ja', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheading'}, {'subitem_1565671149650': 'en', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheding'}], 'path': [1643988121088]}, 'file_path': ['recid_2/1KB.pdf'], 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'item_type_id': 15, '$schema': 'https://localhost:8443/items/jsonschema/15', 'identifier_key': 'item_1617186819068', 'errors': None, 'status': 'new', 'id': None, 'item_title': 'DOI fileURIなし Fileあり', 'filenames': [{'id': '.metadata.item_1617605131499[0].filename', 'filename': '1KB.pdf'}], 'is_change_identifier': False}
-    record2 = {'pos_index': ['Index A'], 'publish_status': 'public', 'doi_ra': 'JaLC', 'edit_mode': 'Keep', 'metadata': {'pubdate': '2021-02-04', 'item_1617186331708': [{'subitem_1551255647225': 'DOI fileURIのみ', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'DOI fileURI only', 'subitem_1551255648112': 'en'}], 'item_1617186385884': [{'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'en'}, {'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'ja'}], 'item_1617186419668': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI', 'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048'}], 'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}]}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': '4', 'nameIdentifierScheme': 'WEKO'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617349709064': [{'contributorMails': [{'contributorMail': 'wekosoftware@nii.ac.jp'}], 'contributorNames': [{'contributorName': '情報, 太郎', 'lang': 'ja'}, {'contributorName': 'ジョウホウ, タロウ', 'lang': 'ja-Kana'}, {'contributorName': 'Joho, Taro', 'lang': 'en'}], 'contributorType': 'ContactPerson', 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617186476635': {'subitem_1522299639480': 'open access', 'subitem_1600958577026': 'http://purl.org/coar/access_right/c_abf2'}, 'item_1617351524846': {
-        'subitem_1523260933860': 'Unknown'}, 'item_1617186499011': [{'subitem_1522650717957': 'ja', 'subitem_1522650727486': 'http://localhost', 'subitem_1522651041219': 'Rights Information'}], 'item_1617610673286': [{'nameIdentifiers': [{'nameIdentifier': 'xxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}], 'rightHolderNames': [{'rightHolderLanguage': 'ja', 'rightHolderName': 'Right Holder Name'}]}], 'item_1617186609386': [{'subitem_1522299896455': 'ja', 'subitem_1522300014469': 'Other', 'subitem_1522300048512': 'http://localhost/', 'subitem_1523261968819': 'Sibject1'}], 'item_1617186626617': [{'subitem_description': 'Description', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}, {'subitem_description': '概要', 'subitem_description_language': 'ja', 'subitem_description_type': 'Abstract'}], 'item_1617186643794': [{'subitem_1522300295150': 'en', 'subitem_1522300316516': 'Publisher'}], 'item_1617186660861': [{'subitem_1522300695726': 'Available', 'subitem_1522300722591': '2021-06-30'}], 'item_1617186702042': [{'subitem_1551255818386': 'jpn'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_1617349808926': {'subitem_1523263171732': 'Version'}, 'item_1617265215918': {'subitem_1522305645492': 'AO', 'subitem_1600292170262': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}, 'item_1617186783814': [{'subitem_identifier_type': 'URI', 'subitem_identifier_uri': 'http://localhost'}], 'item_1617353299429': [{'subitem_1522306207484': 'isVersionOf', 'subitem_1522306287251': {'subitem_1522306382014': 'arXiv', 'subitem_1522306436033': 'xxxxx'}, 'subitem_1523320863692': [{'subitem_1523320867455': 'en', 'subitem_1523320909613': 'Related Title'}]}], 'item_1617186859717': [{'subitem_1522658018441': 'en', 'subitem_1522658031721': 'Temporal'}], 'item_1617186882738': [{'subitem_geolocation_place': [{'subitem_geolocation_place_text': 'Japan'}]}], 'item_1617186901218': [{'subitem_1522399143519': {'subitem_1522399281603': 'ISNI', 'subitem_1522399333375': 'http://xxx'}, 'subitem_1522399412622': [{'subitem_1522399416691': 'en', 'subitem_1522737543681': 'Funder Name'}], 'subitem_1522399571623': {'subitem_1522399585738': 'Award URI', 'subitem_1522399628911': 'Award Number'}, 'subitem_1522399651758': [{'subitem_1522721910626': 'en', 'subitem_1522721929892': 'Award Title'}]}], 'item_1617186920753': [{'subitem_1522646500366': 'ISSN', 'subitem_1522646572813': 'xxxx-xxxx-xxxx'}], 'item_1617186941041': [{'subitem_1522650068558': 'en', 'subitem_1522650091861': 'Source Title'}], 'item_1617186959569': {'subitem_1551256328147': '1'}, 'item_1617186981471': {'subitem_1551256294723': '111'}, 'item_1617186994930': {'subitem_1551256248092': '12'}, 'item_1617187024783': {'subitem_1551256198917': '1'}, 'item_1617187045071': {'subitem_1551256185532': '3'}, 'item_1617187112279': [{'subitem_1551256126428': 'Degree Name', 'subitem_1551256129013': 'en'}], 'item_1617187136212': {'subitem_1551256096004': '2021-06-30'}, 'item_1617944105607': [{'subitem_1551256015892': [{'subitem_1551256027296': 'xxxxxx', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': 'Degree Grantor Name', 'subitem_1551256047619': 'en'}]}], 'item_1617187187528': [{'subitem_1599711633003': [{'subitem_1599711636923': 'Conference Name', 'subitem_1599711645590': 'ja'}], 'subitem_1599711655652': '1', 'subitem_1599711660052': [{'subitem_1599711680082': 'Sponsor', 'subitem_1599711686511': 'ja'}], 'subitem_1599711699392': {'subitem_1599711704251': '2020/12/11', 'subitem_1599711712451': '1', 'subitem_1599711727603': '12', 'subitem_1599711731891': '2000', 'subitem_1599711735410': '1', 'subitem_1599711739022': '12', 'subitem_1599711743722': '2020', 'subitem_1599711745532': 'ja'}, 'subitem_1599711758470': [{'subitem_1599711769260': 'Conference Venue', 'subitem_1599711775943': 'ja'}], 'subitem_1599711788485': [{'subitem_1599711798761': 'Conference Place', 'subitem_1599711803382': 'ja'}], 'subitem_1599711813532': 'JPN'}], 'item_1617605131499': [{'url': {'url': 'http://localhost/hoge'}}], 'item_1617620223087': [{'subitem_1565671149650': 'ja', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheading'}, {'subitem_1565671149650': 'en', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheding'}], 'path': [1643988121088]}, 'file_path': [''], 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'item_type_id': 15, '$schema': 'https://localhost:8443/items/jsonschema/15', 'identifier_key': 'item_1617186819068', 'errors': None, 'status': 'new', 'id': None, 'item_title': 'DOI fileURIのみ', 'filenames': [{'id': '.metadata.item_1617605131499[0].filename', 'filename': ''}], 'is_change_identifier': False}
-    record3 = {'pos_index': ['Index A'], 'publish_status': 'public', 'doi_ra': 'JaLC', 'edit_mode': 'Keep', 'metadata': {'pubdate': '2021-02-04', 'item_1617186331708': [{'subitem_1551255647225': 'DOI fileURIなし Fileあり', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'DOI without fileURI', 'subitem_1551255648112': 'en'}], 'item_1617186385884': [{'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'en'}, {'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'ja'}], 'item_1617186419668': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI', 'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048'}], 'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}]}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': '4', 'nameIdentifierScheme': 'WEKO'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617349709064': [{'contributorMails': [{'contributorMail': 'wekosoftware@nii.ac.jp'}], 'contributorNames': [{'contributorName': '情報, 太郎', 'lang': 'ja'}, {'contributorName': 'ジョウホウ, タロウ', 'lang': 'ja-Kana'}, {'contributorName': 'Joho, Taro', 'lang': 'en'}], 'contributorType': 'ContactPerson', 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}], 'item_1617186476635': {'subitem_1522299639480': 'open access', 'subitem_1600958577026': 'http://purl.org/coar/access_right/c_abf2'}, 'item_1617351524846': {'subitem_1523260933860': 'Unknown'}, 'item_1617186499011': [{'subitem_1522650717957': 'ja',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'subitem_1522650727486': 'http://localhost', 'subitem_1522651041219': 'Rights Information'}], 'item_1617610673286': [{'nameIdentifiers': [{'nameIdentifier': 'xxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}], 'rightHolderNames': [{'rightHolderLanguage': 'ja', 'rightHolderName': 'Right Holder Name'}]}], 'item_1617186609386': [{'subitem_1522299896455': 'ja', 'subitem_1522300014469': 'Other', 'subitem_1522300048512': 'http://localhost/', 'subitem_1523261968819': 'Sibject1'}], 'item_1617186626617': [{'subitem_description': 'Description', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}, {'subitem_description': '概要', 'subitem_description_language': 'ja', 'subitem_description_type': 'Abstract'}], 'item_1617186643794': [{'subitem_1522300295150': 'en', 'subitem_1522300316516': 'Publisher'}], 'item_1617186660861': [{'subitem_1522300695726': 'Available', 'subitem_1522300722591': '2021-06-30'}], 'item_1617186702042': [{'subitem_1551255818386': 'jpn'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_1617349808926': {'subitem_1523263171732': 'Version'}, 'item_1617265215918': {'subitem_1522305645492': 'AO', 'subitem_1600292170262': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}, 'item_1617186783814': [{'subitem_identifier_type': 'URI', 'subitem_identifier_uri': 'http://localhost'}], 'item_1617353299429': [{'subitem_1522306207484': 'isVersionOf', 'subitem_1522306287251': {'subitem_1522306382014': 'arXiv', 'subitem_1522306436033': 'xxxxx'}, 'subitem_1523320863692': [{'subitem_1523320867455': 'en', 'subitem_1523320909613': 'Related Title'}]}], 'item_1617186859717': [{'subitem_1522658018441': 'en', 'subitem_1522658031721': 'Temporal'}], 'item_1617186882738': [{'subitem_geolocation_place': [{'subitem_geolocation_place_text': 'Japan'}]}], 'item_1617186901218': [{'subitem_1522399143519': {'subitem_1522399281603': 'ISNI', 'subitem_1522399333375': 'http://xxx'}, 'subitem_1522399412622': [{'subitem_1522399416691': 'en', 'subitem_1522737543681': 'Funder Name'}], 'subitem_1522399571623': {'subitem_1522399585738': 'Award URI', 'subitem_1522399628911': 'Award Number'}, 'subitem_1522399651758': [{'subitem_1522721910626': 'en', 'subitem_1522721929892': 'Award Title'}]}], 'item_1617186920753': [{'subitem_1522646500366': 'ISSN', 'subitem_1522646572813': 'xxxx-xxxx-xxxx'}], 'item_1617186941041': [{'subitem_1522650068558': 'en', 'subitem_1522650091861': 'Source Title'}], 'item_1617186959569': {'subitem_1551256328147': '1'}, 'item_1617186981471': {'subitem_1551256294723': '111'}, 'item_1617186994930': {'subitem_1551256248092': '12'}, 'item_1617187024783': {'subitem_1551256198917': '1'}, 'item_1617187045071': {'subitem_1551256185532': '3'}, 'item_1617187112279': [{'subitem_1551256126428': 'Degree Name', 'subitem_1551256129013': 'en'}], 'item_1617187136212': {'subitem_1551256096004': '2021-06-30'}, 'item_1617944105607': [{'subitem_1551256015892': [{'subitem_1551256027296': 'xxxxxx', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': 'Degree Grantor Name', 'subitem_1551256047619': 'en'}]}], 'item_1617187187528': [{'subitem_1599711633003': [{'subitem_1599711636923': 'Conference Name', 'subitem_1599711645590': 'ja'}], 'subitem_1599711655652': '1', 'subitem_1599711660052': [{'subitem_1599711680082': 'Sponsor', 'subitem_1599711686511': 'ja'}], 'subitem_1599711699392': {'subitem_1599711704251': '2020/12/11', 'subitem_1599711712451': '1', 'subitem_1599711727603': '12', 'subitem_1599711731891': '2000', 'subitem_1599711735410': '1', 'subitem_1599711739022': '12', 'subitem_1599711743722': '2020', 'subitem_1599711745532': 'ja'}, 'subitem_1599711758470': [{'subitem_1599711769260': 'Conference Venue', 'subitem_1599711775943': 'ja'}], 'subitem_1599711788485': [{'subitem_1599711798761': 'Conference Place', 'subitem_1599711803382': 'ja'}], 'subitem_1599711813532': 'JPN'}], 'item_1617605131499': [{'accessrole': 'open_access', 'date': [{'dateType': 'Available', 'dateValue': '2021-07-12'}], 'displaytype': 'simple', 'filename': '1KB.pdf', 'filesize': [{'value': '1 KB'}], 'format': 'text/plain'}], 'item_1617620223087': [{'subitem_1565671149650': 'ja', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheading'}, {'subitem_1565671149650': 'en', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheding'}], 'path': [1643988121088]}, 'file_path': ['recid_2/1KB.pdf'], 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'item_type_id': 15, '$schema': 'https://localhost:8443/items/jsonschema/15', 'identifier_key': 'item_1617186819068', 'errors': None, 'status': 'new', 'id': None, 'item_title': 'DOI fileURIなし Fileあり', 'filenames': [{'id': '.metadata.item_1617605131499[0].filename', 'filename': '1KB.pdf'}], 'is_change_identifier': False}
+#def get_tree_items(index_tree_id):
+#def delete_records(index_tree_id, ignore_items):
+#def get_journal_info(index_id=0):
+#def get_feedback_mail_list():
+
+# def check_permission():
+def test_check_permission(mocker):
+    user = MagicMock()
+    user.roles = []
+    mocker.patch('flask_login.utils._get_user',return_value=user)
+    assert check_permission() == False
+
+    user.roles = [WEKO_SYS_USER]
+    mocker.patch('flask_login.utils._get_user',return_value=user)
+    assert check_permission() == True
+
+    user.roles = [WEKO_REPO_USER]
+    mocker.patch('flask_login.utils._get_user',return_value=user)
+    assert check_permission() == True
+
+    user.roles = ["ROLE"]
+    mocker.patch('flask_login.utils._get_user',return_value=user)
+    assert check_permission() == False
+
+    user.roles = ["ROLE",WEKO_SYS_USER]
+    mocker.patch('flask_login.utils._get_user',return_value=user)
+    assert check_permission() == True
+
+# def get_content_workflow(item):
+def test_get_content_workflow():
+    item = MagicMock()
+
+    item.flowname = 'flowname'
+    item.id = 'id'
+    item.flow_id='flow_id'
+    item.flow_define.flow_name='flow_name'
+    item.itemtype.item_type_name.name='item_type_name'
+
+    result = dict()
+    result["flows_name"] = item.flows_name
+    result["id"] = item.id
+    result["itemtype_id"] = item.itemtype_id
+    result["flow_id"] = item.flow_id
+    result["flow_name"] = item.flow_define.flow_name
+    result["item_type_name"] = item.itemtype.item_type_name.name
+    
+    assert get_content_workflow(item) == result
+
+# def set_nested_item(data_dict, map_list, val):
+# def convert_nested_item_to_list(data_dict, map_list):
+# def define_default_dict():
+# def defaultify(d: dict) -> dict:
+# def handle_generate_key_path(key) -> list:
+# def parse_to_json_form(data: list, item_path_not_existed=[], include_empty=False):
+
+#def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
+# def test_check_import_items(app,test_importdata,mocker):
+#     app.config['WEKO_SEARCH_UI_IMPORT_TMP_PREFIX'] = 'importtest'
+#     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "item_map.json")
+#     with open(filepath,encoding="utf-8") as f:
+#         item_map = json.load(f)
+
+#     mocker.patch("weko_records.serializers.utils.get_mapping",return_value=item_map)
+#     with app.test_request_context():
+#         with set_locale('en'):
+#             for file in test_importdata:
+#                 assert check_import_items(file,False,False)==''
+
+# def unpackage_import_file(data_path: str, csv_file_name: str, force_new=False):
+
+def test_unpackage_import_file(app,mocker,mocker_itemtype):
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "item_map.json")
+    with open(filepath,encoding="utf-8") as f:
+        item_map = json.load(f)
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "item_type_mapping.json")
+    with open(filepath,encoding="utf-8") as f:
+        item_type_mapping = json.load(f)
+    mocker.patch("weko_records.serializers.utils.get_mapping",return_value=item_map)
+    mocker.patch("weko_records.api.Mapping.get_record",return_value=item_type_mapping)
+
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "unpackage_import_file/result.json")
+    with open(filepath,encoding="utf-8") as f:
+        result = json.load(f)
+    
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "unpackage_import_file/result_force_new.json")
+    with open(filepath,encoding="utf-8") as f:
+        result_force_new = json.load(f)
+    
+    path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "unpackage_import_file")
+    with app.test_request_context():
+        with set_locale('en'):
+            assert unpackage_import_file(path,'items.csv',False)==result
+            assert unpackage_import_file(path,'items.csv',True)==result_force_new
+
+
+# def getEncode(filepath):
+def test_getEncode():
+    csv_files = [
+        {"file":"eucjp_lf_items.csv","enc":"euc-jp"},
+        {"file":"iso2022jp_lf_items.csv","enc":"iso-2022-jp"},
+        {"file":"sjis_lf_items.csv","enc":"shift_jis"},
+        {"file":"utf8_cr_items.csv","enc":"utf-8"},
+        {"file":"utf8_crlf_items.csv","enc":"utf-8"},
+        {"file":"utf8_lf_items.csv","enc":"utf-8"},
+        {"file":"utf8bom_lf_items.csv","enc":"utf-8"},
+        {"file":"utf16be_bom_lf_items.csv","enc":"utf-16be"},
+        {"file":"utf16le_bom_lf_items.csv","enc":"utf-16le"},
+        # {"file":"utf32be_bom_lf_items.csv","enc":"utf-32"},
+        # {"file":"utf32le_bom_lf_items.csv","enc":"utf-32"},
+         {"file":"big5.txt","enc":""},
+        
+    ]
+    
+    for f in csv_files:
+        filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "csv",f['file'])
+        print(filepath)
+        assert getEncode(filepath) == f['enc']
+
+
+# def read_stats_csv(csv_file_path: str, csv_file_name: str) -> dict:
+
+def test_read_stats_csv(app,mocker_itemtype):
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "csv","data.json")
+    csv_file_name = "utf8_lf_items.csv"
+    csv_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "csv",csv_file_name)
+    with open(filepath,encoding="utf-8") as f:
+        data = json.load(f)
+
+    with app.test_request_context():
+        with set_locale('en'):
+            assert read_stats_csv(csv_file_path,csv_file_name) == data
+
+# def handle_convert_validate_msg_to_jp(message: str):
+# def handle_validate_item_import(list_record, schema) -> list:
+
+def test_handle_validate_item_import(app,mocker_itemtype):
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "csv","data.json")
+    with open(filepath,encoding="utf-8") as f:
+        data = json.load(f)
+
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "list_records.json")
+    with open(filepath,encoding="utf-8") as f:
+        list_record = json.load(f)
+
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "list_records_result.json")
+    with open(filepath,encoding="utf-8") as f:
+        result = json.load(f)
+
+    with app.test_request_context():
+        with set_locale('en'):
+            assert handle_validate_item_import(list_record, data.get("item_type_schema", {}))==result
+
+# def represents_int(s):
+
+def test_represents_int():
+    assert represents_int("a") == False
+    assert represents_int("30") == True
+    assert represents_int("31.1") == False
+    
+
+# def get_item_type(item_type_id=0) -> dict:
+def test_get_item_type(mocker_itemtype):
+    filepath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "item_type/15_get_item_type_result.json"
+    )
+    with open(filepath, encoding="utf-8") as f:
+        except_result = json.load(f)
+    result = get_item_type(15)
+    assert result['is_lastest']==except_result['is_lastest']
+    assert result['name']==except_result['name']
+    assert result['item_type_id']==except_result['item_type_id']
+    assert result['schema']==except_result['schema']
+    assert result==except_result
+
+    assert get_item_type(0) == {}
+
+
+# def handle_check_exist_record(list_record) -> list:
+# def make_csv_by_line(lines):
+# def make_stats_csv(raw_stats, list_name):
+# def create_deposit(item_id):
+# def clean_thumbnail_file(deposit, root_path, thumbnail_path):
+# def up_load_file(record, root_path, deposit, allow_upload_file_content, old_files):
+# def get_file_name(file_path):
+# def register_item_metadata(item, root_path, is_gakuninrdm=False):
+# def update_publish_status(item_id, status):
+# def handle_workflow(item: dict):
+# def create_work_flow(item_type_id):
+# def create_flow_define():
+# def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
+# def handle_item_title(list_record):
+# def handle_check_and_prepare_publish_status(list_record):
+# def handle_check_and_prepare_index_tree(list_record):
+# def handle_check_and_prepare_feedback_mail(list_record):
+# def handle_set_change_identifier_flag(list_record, is_change_identifier):
+# def handle_check_cnri(list_record):
+# def handle_check_doi_indexes(list_record):
+# def handle_check_doi_ra(list_record):
+# def handle_check_doi(list_record):
+# def register_item_handle(item):
+# def prepare_doi_setting():
+# def get_doi_prefix(doi_ra):
+# def get_doi_link(doi_ra, data):
+# def prepare_doi_link(item_id):
+# def register_item_doi(item):
+# def register_item_update_publish_status(item, status):
+# def handle_doi_required_check(record):
+
+# def handle_check_date(list_record):
+def test_handle_check_date(app, test_list_records, mocker_itemtype):
+    for t in test_list_records:
+        input_data = t.get("input")
+        output_data = t.get("output")
+        with app.app_context():
+            ret = handle_check_date(input_data)
+            assert ret == output_data
+
+# def get_data_in_deep_dict(search_key, _dict={}):
+# def validation_file_open_date(record):
+def test_validation_file_open_date(app, test_records):
+    for t in test_records:
+        filepath = t.get("input")
+        result = t.get("output")
+        with open(filepath, encoding="utf-8") as f:
+            ret = json.load(f)
+        with app.app_context():
+            assert validation_file_open_date(ret) == result
+
+
+# def validation_date_property(date_str):
+
+def test_validation_date_property():
+    # with pytest.raises(Exception):
+    assert validation_date_property("2022")==True
+    assert validation_date_property("2022-03")==True
+    assert validation_date_property("2022-1")==False
+    assert validation_date_property("2022-1-1")==False
+    assert validation_date_property("2022-2-31")==False
+    assert validation_date_property("2022-12-01")==True
+    assert validation_date_property("2022-02-31")==False
+    assert validation_date_property("2022-12-0110")==False
+    assert validation_date_property("hogehoge")==False
+
+# def get_list_key_of_iso_date(schemaform):
+def test_get_list_key_of_iso_date():
+    form = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)), "item_type", "form00.json"
+    )
+    result = [
+        "item_1617186660861.subitem_1522300722591",
+        "item_1617187056579.bibliographicIssueDates.bibliographicIssueDate",
+        "item_1617187136212.subitem_1551256096004",
+        "item_1617605131499.fileDate.fileDateValue",
+    ]
+    with open(form, encoding="utf-8") as f:
+        df = json.load(f)
+    assert get_list_key_of_iso_date(df) == result
+
+
+# def get_current_language():
+# def get_change_identifier_mode_content():
+# def get_root_item_option(item_id, item, sub_form={"title_i18n": {}}):
+# def get_sub_item_option(key, schemaform):
+# def check_sub_item_is_system(key, schemaform):
+# def get_lifetime():
+# def get_system_data_uri(key_type, key):
+
+def test_get_system_data_uri():
+    data = [{"resource_type":RESOURCE_TYPE_URI}, {"version_type": VERSION_TYPE_URI}, {"access_right":ACCESS_RIGHT_TYPE_URI}]
+    for t in data:
+        for key_type in t.keys():
+            val = t.get(key_type)
+            for key in val.keys():
+                url = val.get(key)
+                assert get_system_data_uri(key_type,key)==url
+
+# def handle_fill_system_item(list_record):
+
+def test_handle_fill_system_item(app,test_list_records,mocker):
+
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "item_map.json")
+    with open(filepath,encoding="utf-8") as f:
+        item_map = json.load(f)
+
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "item_type_mapping.json")
+    with open(filepath,encoding="utf-8") as f:
+        item_type_mapping = json.load(f)
+    mocker.patch("weko_records.serializers.utils.get_mapping",return_value=item_map)
+    mocker.patch("weko_records.api.Mapping.get_record",return_value=item_type_mapping)
+    
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records/list_records_fill_system.json")
+    with open(filepath,encoding="utf-8") as f:
+        list_record = json.load(f)
+
+    items = []
+    items_result = []
+
+    for a in VERSION_TYPE_URI:
+        item = copy.deepcopy(list_record[0])
+        item['metadata']['item_1617265215918']['subitem_1522305645492']=a
+        item['metadata']['item_1617265215918']['subitem_1600292170262']=VERSION_TYPE_URI[a]
+        item['metadata']['item_1617186476635']['subitem_1522299639480']="open access"
+        item['metadata']['item_1617186476635']['subitem_1600958577026']=ACCESS_RIGHT_TYPE_URI["open access"]
+        item['metadata']['item_1617258105262']['resourcetype']="conference paper"
+        item['metadata']['item_1617258105262']['resourceuri']=RESOURCE_TYPE_URI["conference paper"]
+        items_result.append(item)
+        item2 = copy.deepcopy(item)
+        item2['metadata']['item_1617265215918']['subitem_1522305645492']=a
+        item2['metadata']['item_1617265215918']['subitem_1600292170262']=""
+        items.append(item2)
+    
+    for a in ACCESS_RIGHT_TYPE_URI:
+        item = copy.deepcopy(list_record[0])
+        item['metadata']['item_1617265215918']['subitem_1522305645492']="VoR"
+        item['metadata']['item_1617265215918']['subitem_1600292170262']=VERSION_TYPE_URI["VoR"]
+        item['metadata']['item_1617186476635']['subitem_1522299639480']=a
+        item['metadata']['item_1617186476635']['subitem_1600958577026']=ACCESS_RIGHT_TYPE_URI[a]
+        item['metadata']['item_1617258105262']['resourcetype']="conference paper"
+        item['metadata']['item_1617258105262']['resourceuri']=RESOURCE_TYPE_URI["conference paper"]
+        items_result.append(item)
+        item2 = copy.deepcopy(item)
+        item2['metadata']['item_1617186476635']['subitem_1522299639480']=a
+        item2['metadata']['item_1617186476635']['subitem_1600958577026']=""
+        items.append(item2)
+        
+    for a in RESOURCE_TYPE_URI:
+        item = copy.deepcopy(list_record[0])
+        item['metadata']['item_1617265215918']['subitem_1522305645492']="VoR"
+        item['metadata']['item_1617265215918']['subitem_1600292170262']=VERSION_TYPE_URI["VoR"]
+        item['metadata']['item_1617186476635']['subitem_1522299639480']="open access"
+        item['metadata']['item_1617186476635']['subitem_1600958577026']=ACCESS_RIGHT_TYPE_URI["open access"]
+        item['metadata']['item_1617258105262']['resourcetype']= a
+        item['metadata']['item_1617258105262']['resourceuri']=RESOURCE_TYPE_URI[a]
+        items_result.append(item)
+        item2 = copy.deepcopy(item)
+        item2['metadata']['item_1617258105262']['resourcetype']=a
+        item2['metadata']['item_1617258105262']['resourceuri']=""
+        items.append(item2)
+    
+    # with open("items.json","w") as f:
+    #     json.dump(items,f)
+    
+    # with open("items_result.json","w") as f:
+    #     json.dump(items_result,f)
+    
+
+    # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data/handle_fill_system_item/items.json")
+    # with open(filepath,encoding="utf-8") as f:
+    #     items = json.load(f)
+    
+    # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data/handle_fill_system_item/items_result.json")
+    # with open(filepath,encoding="utf-8") as f:
+    #     items_result = json.load(f)
+
+    with app.test_request_context():
+        with set_locale('en'):
+            handle_fill_system_item(items)
+            assert len(items)==len(items_result)
+            assert items==items_result
+
+# def get_thumbnail_key(item_type_id=0):
+# def handle_check_thumbnail_file_type(thumbnail_paths):
+# def handle_check_metadata_not_existed(str_keys, item_type_id=0):
+# def handle_get_all_sub_id_and_name(items, root_id=None, root_name=None, form=[]):
+# def handle_get_all_id_in_item_type(item_type_id):
+# def handle_check_consistence_with_mapping(mapping_ids, keys):
+# def handle_check_duplication_item_id(ids: list):
+# def export_all(root_url):
+# def delete_exported(uri, cache_key):
+# def cancel_export_all():
+# def get_export_status():
+# def handle_check_item_is_locked(item):
+# def handle_remove_es_metadata(item, bef_metadata, bef_last_ver_metadata):
+# def check_index_access_permissions(func):
+# def handle_check_file_metadata(list_record, data_path):
+# def handle_check_file_path(
+# def handle_check_file_content(record, data_path):
+# def handle_check_thumbnail(record, data_path):
+# def get_key_by_property(record, item_map, item_property):
+# def get_data_by_property(item_metadata, item_map, mapping_key):
+# def get_filenames_from_metadata(metadata):
+# def handle_check_filename_consistence(file_paths, meta_filenames):

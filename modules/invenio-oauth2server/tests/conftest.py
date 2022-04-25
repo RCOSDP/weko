@@ -22,7 +22,7 @@ from flask_babelex import Babel
 from flask_breadcrumbs import Breadcrumbs
 from flask_mail import Mail
 from flask_menu import Menu
-from helpers import create_oauth_client, patch_request
+from .helpers import create_oauth_client, patch_request
 from invenio_accounts import InvenioAccountsREST, InvenioAccountsUI
 from invenio_accounts.models import User
 from invenio_accounts.views import blueprint as accounts_blueprint

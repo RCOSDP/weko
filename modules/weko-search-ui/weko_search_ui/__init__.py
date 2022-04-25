@@ -23,4 +23,4 @@
 from .ext import WekoSearchREST, WekoSearchUI
 from .version import __version__
 
-__all__ = ('__version__', 'WekoSearchUI', 'WekoSearchREST')
+__all__ = ("__version__", "WekoSearchUI", "WekoSearchREST")

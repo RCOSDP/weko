@@ -29,6 +29,7 @@ from io import BytesIO, StringIO
 from typing import Dict, Tuple, Union
 
 import redis
+from redis import sentinel
 import requests
 from flask import current_app, request
 from flask_babelex import gettext as __
@@ -48,6 +49,7 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_authors.models import Authors
 from weko_records.api import ItemsMetadata
+from weko_redis.redis import RedisConnection
 
 from . import config
 from .models import AdminLangSettings, AdminSettings, ApiCertificate, \
@@ -385,7 +387,10 @@ def make_stats_csv(raw_stats, file_type, year, month):
     # Special cases:
     # Write total for per index views
     if file_type == 'index_access':
+        write_report_csv_rows(writer, raw_stats.get(
+            'all'), file_type, raw_stats.get('index_name'))
         writer.writerow([_('Total Detail Views'), raw_stats.get('total')])
+
     elif file_type in ['billing_file_download', 'billing_file_preview']:
         write_report_csv_rows(writer, raw_stats.get('all'), file_type,
                               raw_stats.get('all_groups'))  # Pass all groups
@@ -489,8 +494,8 @@ def write_report_csv_rows(writer, records, file_type=None, other_info=None):
 def reset_redis_cache(cache_key, value):
     """Delete and then reset a cache value to Redis."""
     try:
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         if datastore.redis.exists(cache_key):
             datastore.delete(cache_key)
         datastore.put(cache_key, value.encode('utf-8'))
@@ -502,8 +507,8 @@ def reset_redis_cache(cache_key, value):
 def is_exists_key_in_redis(key):
     """Check key exist in redis."""
     try:
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         return datastore.redis.exists(key)
     except Exception as e:
         current_app.logger.error('Could get value for ' + key, e)
@@ -513,8 +518,8 @@ def is_exists_key_in_redis(key):
 def is_exists_key_or_empty_in_redis(key):
     """Check key exist in redis."""
     try:
-        datastore = RedisStore(
-            redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         return datastore.redis.exists(key) and datastore.redis.get(key) != b''
     except Exception as e:
         current_app.logger.error('Could get value for ' + key, e)
@@ -524,8 +529,8 @@ def is_exists_key_or_empty_in_redis(key):
 def get_redis_cache(cache_key):
     """Check and then retrieve the value of a Redis cache key."""
     try:
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         if datastore.redis.exists(cache_key):
             return datastore.get(cache_key).decode('utf-8')
     except Exception as e:
@@ -2036,7 +2041,7 @@ def get_facet_search(id: int = None):
 
 
 def get_item_mapping_list():
-    """Get Item Mapping list.
+    """Get Item Mapping list in Facet search setting.
 
     Returns:
         object:

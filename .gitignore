@@ -68,6 +68,9 @@ target/
 .vagrant
 .DS_Store
 
+#sonarqube
+.scannerwork
+
 # backup
 scripts/demo/contents/
 scripts/demo/elasticsearch/

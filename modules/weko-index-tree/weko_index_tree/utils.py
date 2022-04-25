@@ -25,6 +25,7 @@ from functools import wraps
 from operator import itemgetter
 
 import redis
+from redis import sentinel
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import Bool, Exists, Q, QueryString
 from flask import Markup, current_app, session
@@ -39,6 +40,7 @@ from invenio_search import RecordsSearch
 from simplekv.memory.redisstore import RedisStore
 from weko_admin.utils import is_exists_key_in_redis
 from weko_groups.models import Group
+from weko_redis.redis import RedisConnection
 
 from .config import WEKO_INDEX_TREE_STATE_PREFIX
 from .errors import IndexBaseRESTError, IndexDeletedRESTError
@@ -822,8 +824,8 @@ def __get_redis_store():
         Redis store.
 
     """
-    return RedisStore(redis.StrictRedis.from_url(
-        current_app.config['CACHE_REDIS_URL']))
+    redis_connection = RedisConnection()
+    return redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
 
 
 def lock_all_child_index(index_id: str, value: str):

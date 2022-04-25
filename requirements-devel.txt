@@ -1,43 +1,312 @@
-# -*- coding: utf-8 -*-
-#
-# This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
-#
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-
--e git+https://github.com/inveniosoftware/dojson.git#egg=dojson
--e git+https://github.com/inveniosoftware/invenio-access.git#egg=invenio-access
--e git+https://github.com/inveniosoftware/invenio-accounts.git#egg=invenio-accounts
--e git+https://github.com/inveniosoftware/invenio-app-ils.git#egg=invenio-app-ils[postgresql,elasticsearch2]
--e git+https://github.com/inveniosoftware/invenio-assets.git#egg=invenio-assets
--e git+https://github.com/inveniosoftware/invenio-base.git#egg=invenio-base
--e git+https://github.com/inveniosoftware/invenio-celery.git#egg=invenio-celery
--e git+https://github.com/inveniosoftware/invenio-config.git#egg=invenio-config
--e git+https://github.com/inveniosoftware/invenio-db.git#egg=invenio-db[postgresql,versioning]
--e git+https://github.com/inveniosoftware/invenio-i18n.git#egg=invenio-i18n
--e git+https://github.com/inveniosoftware/invenio-indexer.git#egg=invenio-indexer
--e git+https://github.com/inveniosoftware/invenio-logging.git#egg=invenio-logging
--e git+https://github.com/inveniosoftware/invenio-mail.git#egg=invenio-mail
--e git+https://github.com/inveniosoftware/invenio-marc21.git#egg=invenio-marc21
--e git+https://github.com/inveniosoftware/invenio-pidstore.git#egg=invenio-pidstore
--e git+https://github.com/inveniosoftware/invenio-query-parser.git#egg=invenio-query-parser
--e git+https://github.com/inveniosoftware/invenio-records-rest.git#egg=invenio-records-rest
--e git+https://github.com/inveniosoftware/invenio-records-ui.git#egg=invenio-records-ui
--e git+https://github.com/inveniosoftware/invenio-records.git#egg=invenio-records
--e git+https://github.com/inveniosoftware/invenio-rest.git#egg=invenio-rest
--e git+https://github.com/inveniosoftware/invenio-search-ui.git#egg=invenio-search-ui
--e git+https://github.com/inveniosoftware/invenio-search.git#egg=invenio-search
--e git+https://github.com/inveniosoftware/invenio-theme.git#egg=invenio-theme
+alabaster==0.7.12
+alembic==0.9.6
+amqp==2.6.0
+angular-gettext-babel==0.3
+aniso8601==8.0.0
+arrow==0.12.1
+asn1crypto==0.23.0
+atomicwrites==1.4.0
+attrs==17.4.0
+aws-xray-sdk==0.95
+b2handle==1.1.2
+Babel==2.5.1
+bagit==1.7.0
+beautifulsoup4==4.9.3
+bibtexparser==1.0.1
+billiard==3.6.3.0
+binaryornot==0.4.4
+black==22.1.0
+bleach==3.1.0
+blinker==1.4
+boto==2.49.0
+boto3==1.7.84
+botocore==1.10.84
+build==0.7.0
+cachelib==0.1
+cachetools==4.2.4
+cchardet==2.1.1
+celery==4.4.4
+certifi==2017.11.5
+cffi==1.11.2
+chardet==3.0.4
+charset-normalizer==2.0.12
+check-manifest==0.47
+citeproc-py==0.5.1
+citeproc-py-styles==0.1.2
+click==8.0.4
+colorama==0.4.4
+cookiecutter==1.6.0
+cookies==2.2.1
+counter-robots==2018.6
+coverage==4.5.4
+coveralls==3.3.1
+cryptography==2.1.4
+datacite==1.0.1
+dataclasses==0.8
+DateTime==4.4
+decorator==4.1.2
+defusedxml==0.5.0
+dictdiffer==0.7.0
+dnspython==2.2.0
+docker==5.0.3
+Docker-Services-CLI==0.4.0
+docopt==0.6.2
+docutils==0.18.1
+dojson==1.3.2
+ecdsa==0.17.0
+elasticsearch==6.1.1
+elasticsearch-dsl==6.4.0
+elementpath==1.0.6
+email-validator==1.0.5
+entrypoints==0.2.3
+execnet==1.9.0
+feedgen==0.7.0
+flake8==4.0.1
+Flask==1.0.4
+Flask-Admin==1.5.3
+Flask-Alembic==2.0.1
+Flask-Assets==0.12
+Flask-BabelEx==0.9.4
+Flask-Breadcrumbs==0.5.0
+Flask-Caching==1.3.3
+Flask-CeleryExt==0.3.4
+Flask-Collect==1.2.2
+Flask-Cors==3.0.3
+Flask-DebugToolbar==0.11.0
+Flask-IIIF==0.6.1
+Flask-KVSession==0.6.2
+Flask-Limiter==1.1.0
+Flask-Login==0.4.1
+Flask-Mail==0.9.1
+flask-marshmallow==0.14.0
+Flask-Menu==0.6.0
+Flask-OAuthlib==0.9.5
+Flask-Plugins==1.6.1
+Flask-Principal==0.4.0
+Flask-RESTful==0.3.8
+Flask-Security==3.0.0
+flask-shell-ipython==0.4.1
+Flask-Sitemap==0.1.0
+Flask-SQLAlchemy==2.3.2
+flask-talisman==0.4.1
+Flask-WTF==0.14.3
+-e git+https://github.com/RCOSDP/pyfpdf.git@f9b032148283d535cabc7789858081c80de36fef#egg=fpdf
+frozendict==2.3.0
+fs==0.5.4
+ftfy==4.4.3
+future==0.16.0
+github3.py==1.1.0
+html5lib==1.0.1
+idna==2.6
+iiif-prezi==0.3.0
+imagesize==1.3.0
+importlib-metadata==4.2.0
+importlib-resources==5.4.0
+infinity==1.4
+intervals==0.8.0
+invenio-access==1.1.0
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=invenio_accounts&subdirectory=modules/invenio-accounts
+invenio-admin==1.1.2
+invenio-app==1.1.0
+invenio-assets==1.0.0
+invenio-base==1.0.2
+invenio-cache==1.0.0
+invenio-celery==1.1.3
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=invenio_communities&subdirectory=modules/invenio-communities
+invenio-config==1.0.0
+invenio-csl-rest==1.0.0a1
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=invenio_db&subdirectory=modules/invenio-db
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=invenio_deposit&subdirectory=modules/invenio-deposit
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=invenio_files_rest&subdirectory=modules/invenio-files-rest
+invenio-formatter==1.0.0b3
+invenio-i18n==1.0.0
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=invenio_iiif&subdirectory=modules/invenio-iiif
+invenio-indexer==1.0.2
+invenio-jsonschemas==1.0.0
+invenio-logging==1.0.0b3
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=invenio_mail&subdirectory=modules/invenio-mail
+invenio-marc21==1.0.0a8
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=invenio_oaiharvester&subdirectory=modules/invenio-oaiharvester
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=invenio_oaiserver&subdirectory=modules/invenio-oaiserver
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=invenio_oauth2server&subdirectory=modules/invenio-oauth2server
+invenio-oauthclient==1.0.0
+invenio-pidrelations==1.0.0a4
+invenio-pidstore==1.0.0
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=invenio_previewer&subdirectory=modules/invenio-previewer
+invenio-query-parser==0.6.0
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=invenio_queues&subdirectory=modules/invenio-queues
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=invenio_records&subdirectory=modules/invenio-records
+invenio-records-files==1.0.0a10
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=invenio_records_rest&subdirectory=modules/invenio-records-rest
+invenio-records-ui==1.0.0
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=invenio_resourcesyncclient&subdirectory=modules/invenio-resourcesyncclient
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=invenio_resourcesyncserver&subdirectory=modules/invenio-resourcesyncserver
+invenio-rest==1.1.2
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=invenio_s3&subdirectory=modules/invenio-s3
+invenio-search==1.1.0
+invenio-search-ui==1.0.0a9
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=invenio_stats&subdirectory=modules/invenio-stats
+invenio-theme==1.0.0b4
+ipaddress==1.0.19
+ipython==6.2.1
+ipython-genutils==0.2.0
+isort==5.10.1
+itsdangerous==0.24
+jedi==0.11.0
+Jinja2==2.10
+jinja2-cli==0.6.0
+jinja2-time==0.2.0
+jmespath==0.10.0
+jsmin==2.2.2
+jsondiff==1.1.1
+jsonpatch==1.21
+jsonpath-ng==1.5.2
+jsonpickle==2.1.0
+jsonpointer==1.14
+jsonref==0.1
+jsonresolver==0.2.1
+jsonschema==2.6.0
+jupyter-client==5.2.2
+jupyter-core==4.4.0
+kombu==4.6.10
+limits==1.2.1
+lxml==4.1.1
+Mako==1.0.7
+mando==0.6.4
+MarkupSafe==1.1.1
+marshmallow==2.20.1
+marshmallow-sqlalchemy==0.23.1
+maxminddb==1.5.2
+maxminddb-geolite2==2017.803
+mccabe==0.6.1
+mistune==0.8.3
+mock==3.0.5
+more-itertools==8.10.0
+moto==1.3.5
+msgpack==0.6.2
+mypy==0.931
+mypy-extensions==0.4.3
+nbconvert==5.3.1
+nbformat==4.4.0
+netaddr==0.8.0
+node-semver==0.1.1
+numpy==1.16.1
+oauthlib==2.1.0
+ordereddict==1.1
+packaging==21.3
+pandocfilters==1.4.2
+parso==0.1.0
+passlib==1.7.1
+pathspec==0.9.0
+pep517==0.12.0
+pep8==1.7.1
+pexpect==4.3.0
+pickleshare==0.7.4
+Pillow==5.4.1
+platformdirs==2.4.0
+pluggy==0.13.1
+ply==3.11
+poyo==0.4.1
+prompt-toolkit==1.0.15
+psycopg2==2.7.3.2
+ptyprocess==0.5.2
+py==1.11.0
+pyaml==21.10.1
+pycodestyle==2.8.0
+pycparser==2.18
+pycryptodome==3.14.1
+pydocstyle==6.1.1
+pyflakes==2.4.0
+Pygments==2.2.0
+PyJWT==1.5.3
+PyLD==2.0.3
+pyparsing==3.0.7
+-e git+https://github.com/RCOSDP/PyPDF2.git@fefc684a3a74aff6f99e5dff24f9b4dd1c95169d#egg=PyPDF2
+pyPEG2==2.15.2
+pytest==5.4.3
+pytest-cache==1.0
+pytest-cov==2.10.1
+pytest-flask==0.15.1
+pytest-invenio==1.3.4
+pytest-pep8==1.0.6
+python-dateutil==2.6.1
+python-editor==1.0.3
+python-geoip==1.2
+python-jose==2.0.2
+pytz==2017.3
+PyYAML==6.0
+pyzmq==17.0.0
+radon==5.1.0
+redis==2.10.6
+requests==2.18.4
+requests-oauthlib==1.1.0
+responses==0.10.3
+resync==1.0.9
+s3fs==0.1.6
+s3transfer==0.1.13
+selenium==3.141.0
+Sickle==0.6.4
+simplegeneric==0.8.1
+simplejson==3.12.0
+simplekv==0.11.2
+six==1.12.0
+snowballstemmer==2.2.0
+soupsieve==2.3.1
+speaklater==1.3
+Sphinx==1.8.4
+sphinxcontrib-serializinghtml==1.1.5
+sphinxcontrib-websupport==1.2.4
+SQLAlchemy==1.2.19
+SQLAlchemy-Continuum==1.3.6
+SQLAlchemy-Utils==0.35.0
+testpath==0.3.1
+toml==0.10.2
+tomli==1.2.3
+tornado==4.5.3
+traitlets==4.3.2
+typed-ast==1.5.2
+typing-extensions==4.1.1
+ua-parser==0.7.3
+uritemplate==4.1.1
+uritools==2.1.0
+urllib3==1.21.1
+validators==0.12.0
+vine==1.3.0
+Wand==0.6.1
+wcwidth==0.1.7
+webargs==5.5.2
+webassets==0.12.1
+webencodings==0.5.1
+websocket-client==1.3.1
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_accounts&subdirectory=modules/weko-accounts
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_admin&subdirectory=modules/weko-admin
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_authors&subdirectory=modules/weko-authors
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_bulkupdate&subdirectory=modules/weko-bulkupdate
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_deposit&subdirectory=modules/weko-deposit
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_gridlayout&subdirectory=modules/weko-gridlayout
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_groups&subdirectory=modules/weko-groups
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_handle&subdirectory=modules/weko-handle
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_index_tree&subdirectory=modules/weko-index-tree
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_indextree_journal&subdirectory=modules/weko-indextree-journal
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_items_autofill&subdirectory=modules/weko-items-autofill
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_items_ui&subdirectory=modules/weko-items-ui
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_itemtypes_ui&subdirectory=modules/weko-itemtypes-ui
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_logging&subdirectory=modules/weko-logging
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_records&subdirectory=modules/weko-records
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_records_ui&subdirectory=modules/weko-records-ui
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_schema_ui&subdirectory=modules/weko-schema-ui
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_search_ui&subdirectory=modules/weko-search-ui
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_sitemap&subdirectory=modules/weko-sitemap
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_theme&subdirectory=modules/weko-theme
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_user_profiles&subdirectory=modules/weko-user-profiles
+-e git+https://github.com/RCOSDP/weko.git@123dfb6d399a6a7ff8d27e754a63e85745c2bb52#egg=weko_workflow&subdirectory=modules/weko-workflow
+Werkzeug==0.15.2
+whichcraft==0.4.1
+wrapt==1.13.3
+WTForms==2.1
+WTForms-Alchemy==0.16.5
+WTForms-Components==0.10.3
+xmlschema==0.9.30
+xmltodict==0.12.0
+zipp==3.6.0
+zope.interface==5.4.0

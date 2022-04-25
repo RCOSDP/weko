@@ -35,6 +35,7 @@ from io import StringIO
 
 import bagit
 import redis
+from redis import sentinel
 from elasticsearch.exceptions import NotFoundError
 from flask import abort, current_app, flash, redirect, request, send_file, \
     url_for
@@ -64,6 +65,7 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
 from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission, check_publish_status
+from weko_redis.redis import RedisConnection
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
@@ -552,10 +554,9 @@ def update_json_schema_by_activity_id(json_data, activity_id):
     :param activity_id: Activity ID
     :return: json schema
     """
-    sessionstore = RedisStore(redis.StrictRedis.from_url(
-        'redis://{host}:{port}/1'.format(
-            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+
+    redis_connection = RedisConnection()
+    sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
     if not sessionstore.redis.exists(
         'updated_json_schema_{}'.format(activity_id)) \
         and not sessionstore.get(
@@ -584,10 +585,9 @@ def update_schema_form_by_activity_id(schema_form, activity_id):
     :param activity_id: Activity ID
     :return: schema form
     """
-    sessionstore = RedisStore(redis.StrictRedis.from_url(
-        'redis://{host}:{port}/1'.format(
-            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+
+    redis_connection = RedisConnection()
+    sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
     if not sessionstore.redis.exists(
         'updated_json_schema_{}'.format(activity_id)) \
         and not sessionstore.get(
@@ -1914,6 +1914,15 @@ def get_data_authors_prefix_settings():
     from weko_authors.models import AuthorsPrefixSettings
     try:
         return db.session.query(AuthorsPrefixSettings).all()
+    except Exception as e:
+        current_app.logger.error(e)
+        return None
+
+def get_data_authors_affiliation_settings():
+    """Get all authors affiliation settings."""
+    from weko_authors.models import AuthorsAffiliationSettings
+    try:
+        return db.session.query(AuthorsAffiliationSettings).all()
     except Exception as e:
         current_app.logger.error(e)
         return None
