@@ -25,6 +25,7 @@ import six
 from dateutil import parser
 from elasticsearch import VERSION as ES_VERSION
 from elasticsearch import exceptions as es_exceptions
+from elasticsearch_dsl.aggs import A
 from elasticsearch.helpers import bulk
 from elasticsearch_dsl import Search
 from flask import current_app, request, session
@@ -54,9 +55,8 @@ def get_anonymization_salt(ts):
 
 def get_geoip(ip):
     """Lookup country for IP address."""
-    reader = geolite2.reader()
-    ip_data = reader.get(ip) or {}
-    return ip_data.get('country', {}).get('iso_code', '')
+    match = geolite2.reader().get(ip)
+    return match.get('country', {}).get('iso_code') if match else None
 
 
 def get_user():
@@ -230,48 +230,48 @@ class QueryFileReportsHelper(object):
     @classmethod
     def calc_file_stats_reports(cls, res, data_list, all_groups):
         """Create response object for file_stats_reports."""
-        for file in res['buckets']:
-            for index in file['buckets']:
+        mapper = {}
+        for i in res['buckets']:
+            key_str = '{}_{}'.format(i['file_key'], i['index_list'])
+            if key_str in mapper:
+                data = data_list[mapper[key_str]]
+            else:
+                mapper[key_str] = len(data_list)
                 data = {}
                 data['group_counts'] = {}  # Keep track of downloads per group
-                data['file_key'] = file['key']
-                data['index_list'] = index['key']
-                data['total'] = index['value']
+                data['file_key'] = i['file_key']
+                data['index_list'] = i['index_list']
+                data['total'] = 0
                 data['admin'] = 0
                 data['reg'] = 0
                 data['login'] = 0
                 data['no_login'] = 0
                 data['site_license'] = 0
-                for user in index['buckets']:
-                    for license in user['buckets']:
-                        if license['key'] == 1:
-                            data['site_license'] += license['value']
-                            break
-
-                    userrole = user['key']
-                    count = user['value']
-
-                    if userrole == 'guest':
-                        data['no_login'] += count
-                    elif userrole == 'Contributor':
-                        data['reg'] += count
-                        data['login'] += count
-                    elif 'Administrator' in userrole:
-                        data['admin'] += count
-                        data['login'] += count
-                    else:
-                        data['login'] += count
-
-                    # Get groups counts
-                    if 'field' in user['buckets'][0]:
-                        for group_acc in user['buckets'][0]['buckets']:
-                            group_list = group_acc['key']
-                            data['group_counts'] = cls.calc_per_group_counts(
-                                group_list, data['group_counts'], group_acc['value'])
-
-                    # Keep track of groups seen
-                    all_groups.update(data['group_counts'].keys())
                 data_list.append(data)
+
+            count = i['count']
+            data['total'] += count
+            if i['site_license_flag'] == 1:
+                data['site_license'] += count
+            if i['userrole'] == 'guest':
+                data['no_login'] += count
+            elif i['userrole'] == 'Contributor':
+                data['reg'] += count
+                data['login'] += count
+            elif 'Administrator' in i['userrole']:
+                data['admin'] += count
+                data['login'] += count
+            else:
+                data['login'] += count
+
+            # Get groups counts
+            if 'user_group_names' in i:
+                group_list = i['user_group_names']
+                data['group_counts'] = cls.calc_per_group_counts(
+                    group_list, data['group_counts'], count)
+            
+            # Keep track of groups seen
+            all_groups.update(data['group_counts'].keys())
 
     @classmethod
     def calc_file_per_using_report(cls, res, data_list):
@@ -279,18 +279,18 @@ class QueryFileReportsHelper(object):
         # file-download
         for item in res['get-file-download-per-user-report']['buckets']:
             data = {}
-            data['cur_user_id'] = item['key']
-            data['total_download'] = item['value']
-            data_list.update({item['key']: data})
+            data['cur_user_id'] = item['cur_user_id']
+            data['total_download'] = item['count']
+            data_list.update({item['cur_user_id']: data})
         # file-preview
         for item in res['get-file-preview-per-user-report']['buckets']:
             data = {}
-            data['cur_user_id'] = item['key']
-            data['total_preview'] = item['value']
-            if data_list.get(item['key']):
-                data_list[item['key']].update(data)
+            data['cur_user_id'] = item['cur_user_id']
+            data['total_preview'] = item['count']
+            if data_list.get(item['cur_user_id']):
+                data_list[item['cur_user_id']].update(data)
             else:
-                data_list.update({item['key']: data})
+                data_list.update({item['cur_user_id']: data})
 
     @classmethod
     def Calculation(cls, res, data_list, all_groups=set()):
@@ -439,7 +439,6 @@ class QuerySearchReportHelper(object):
             params = {'start_date': start_date,
                       'end_date': end_date + 'T23:59:59',
                       'agg_size': kwargs.get('agg_size', 0),
-                      'agg_sort': kwargs.get('agg_sort', {'value': 'desc'}),
                       'agg_filter': kwargs.get('agg_filter', None)}
 
             # Run query
@@ -451,9 +450,10 @@ class QuerySearchReportHelper(object):
             all = []
             for report in raw_result['buckets']:
                 current_report = {}
-                current_report['search_key'] = report['key']
-                current_report['count'] = report['value']
+                current_report['search_key'] = report['search_key']
+                current_report['count'] = report['count']
                 all.append(current_report)
+            all = sorted(all, key=lambda x:x['count'], reverse=True) 
             result['all'] = all
         except es_exceptions.NotFoundError as e:
             current_app.logger.debug(
@@ -513,13 +513,16 @@ class QueryCommonReportsHelper(object):
         def Calculation(res, data_list):
             """Calculation."""
             if 'top-view-total-per-host' in res:
+                temp_data = []
                 for item in res['top-view-total-per-host']['buckets']:
-                    for hostaccess in item['buckets']:
-                        data = {}
-                        data['host'] = hostaccess['key']
-                        data['ip'] = item['key']
-                        data['count'] = hostaccess['value']
-                        data_list.update({item['key']: data})
+                    data = {}
+                    data['host'] = item['hostname']
+                    data['ip'] = item['remote_addr']
+                    data['count'] = item['count']
+                    temp_data.append(data)
+                temp_data = sorted(temp_data, key=lambda x:x['count'], reverse=True)
+                for item in temp_data:
+                    data_list.update({item['ip']: item})
             elif 'top-view-total' in res:
                 for item in res['top-view-total']['buckets']:
                     data_list.update({'count': item['value']})
@@ -569,18 +572,19 @@ class QueryCommonReportsHelper(object):
                 other_list[k] = 0
                 if items:
                     for i in items['buckets']:
-                        if i['key'] == '':
-                            other_list[k] += i['value']
+                        if i['site_license_name'] == '':
+                            other_list[k] += i['count']
                         else:
-                            site_license_list[k] += i['value']
-                            if i['key'] in mapper:
-                                institution_name_list[mapper[i['key']]
-                                                      ][k] = i['value']
+                            site_license_list[k] += i['count']
+                            if i['site_license_name'] in mapper:
+                                institution_name_list[
+                                    mapper[i['site_license_name']]
+                                    ][k] = i['count']
                             else:
-                                mapper[i['key']] = len(institution_name_list)
+                                mapper[i['site_license_name']] = len(institution_name_list)
                                 data = {}
-                                data['name'] = i['key']
-                                data[k] = i['value']
+                                data['name'] = i['site_license_name']
+                                data[k] = i['count']
                                 institution_name_list.append(data)
             for k in query_list:
                 for i in range(len(institution_name_list)):
@@ -653,11 +657,11 @@ class QueryRecordViewPerIndexReportHelper(object):
     """RecordViewPerIndex helper class."""
 
     nested_path = 'record_index_list'
-    first_level_field = 'record_index_list.index_id'
-    second_level_field = 'record_index_list.index_name'
+    index_id_field = 'record_index_list.index_id'
+    index_name_field = 'record_index_list.index_name'
 
     @classmethod
-    def get_nested_agg(cls, start_date, end_date):
+    def build_query(cls, start_date, end_date, after_key=None):
         """Get nested aggregation by index id."""
         agg_query = Search(
             using=current_search_client,
@@ -672,26 +676,27 @@ class QueryRecordViewPerIndexReportHelper(object):
             agg_query = agg_query.filter(
                 'range', **{'timestamp': time_range}).filter(
                 'term', **{'is_restricted': False})
-        agg_query.aggs.bucket(cls.nested_path, 'nested',
-                              path=cls.nested_path) \
-            .bucket(cls.first_level_field, 'terms',
-                    field=cls.first_level_field,
-                    size=current_app.config['STATS_ES_INTEGER_MAX_VALUE']) \
-            .bucket(cls.second_level_field, 'terms',
-                    field=cls.second_level_field,
-                    size=current_app.config['STATS_ES_INTEGER_MAX_VALUE'])
-        return agg_query.execute().to_dict()
+
+        size = current_app.config['STATS_ES_INTEGER_MAX_VALUE']
+        sources = [{cls.index_id_field: A('terms', field=cls.index_id_field)},
+                   {cls.index_name_field: A('terms', field=cls.index_name_field)}]
+
+        base_agg = agg_query.aggs.bucket(cls.nested_path, 'nested', path=cls.nested_path)
+        if after_key:
+            base_agg.bucket('my_buckets', 'composite', size=size, sources=sources, after=after_key)
+        else:
+            base_agg.bucket('my_buckets', 'composite', size=size, sources=sources)
+        return agg_query
 
     @classmethod
-    def parse_bucket_response(cls, res, date):
+    def parse_bucket_response(cls, aggs, result):
         """Parse raw aggregation response."""
-        aggs = res['aggregations'][cls.nested_path]
-        result = {'date': date, 'all': [], 'total': aggs['doc_count']}
-        for id_agg in aggs[cls.first_level_field]['buckets']:
-            for name_agg in id_agg[cls.second_level_field]['buckets']:
-                result['all'].append({'index_name': name_agg['key'],
-                                      'view_count': id_agg['doc_count']})
-        return result
+        count = 0
+        for data in aggs['my_buckets']['buckets']:
+            result['all'].append({'index_name': data['key'][cls.index_name_field],
+                                  'view_count': data['doc_count']})
+            count += data['doc_count']
+        return count
 
     @classmethod
     def get(cls, **kwargs):
@@ -708,8 +713,25 @@ class QueryRecordViewPerIndexReportHelper(object):
             _, lastday = calendar.monthrange(year, month)
             start_date = query_month + '-01'
             end_date = query_month + '-' + str(lastday).zfill(2) + 'T23:59:59'
-            raw_result = cls.get_nested_agg(start_date, end_date)
-            result = cls.parse_bucket_response(raw_result, query_month)
+            result = {'date': query_month, 'all': [], 'total': 0}
+            first_search = True
+            after_key = None
+            total = 1
+            count = 0
+            while count < total and (after_key or first_search):
+                agg_query = cls.build_query(start_date, end_date, after_key)
+                current_app.logger.debug(agg_query.to_dict())
+                temp_res = agg_query.execute().to_dict()
+                aggs = temp_res['aggregations'][cls.nested_path]
+                if 'after_key' in aggs['my_buckets']:
+                    after_key = aggs['my_buckets']['after_key']
+                else:
+                    after_key = None
+                if first_search:
+                    first_search = False
+                    result['total'] = aggs['doc_count']
+                    total = aggs['doc_count']
+                count += cls.parse_bucket_response(aggs, result)
 
         except Exception as e:
             current_app.logger.debug(e)
@@ -724,18 +746,16 @@ class QueryRecordViewReportHelper(object):
     @classmethod
     def Calculation(cls, res, data_list):
         """Create response object."""
-        for item in res['buckets']:
-            for record in item['buckets']:
-                data = {'record_id': item['key'], 'index_names': record['key'],
-                        'total_all': record['value'], 'total_not_login': 0}
-                for user in record['buckets']:
-                    for pid in user['buckets']:
-                        data['pid_value'] = pid['key']
-                        for title in pid['buckets']:
-                            data['record_name'] = title['key']
-                    if user['key'] == 'guest':
-                        data['total_not_login'] += user['value']
-                data_list.append(data)
+        for item in res['buckets']: 
+            data = { 
+                'record_id': item['record_id'],
+                'record_name': item['record_name'],
+                'index_names': item['record_index_names'],
+                'total_all': item['count'],
+                'total_not_login': item['count']
+                    if item['cur_user_id'] == 'guest' else 0
+            }
+            data_list.append(data)
         cls.correct_record_title(data_list)
 
     @classmethod
@@ -822,8 +842,6 @@ class QueryRecordViewReportHelper(object):
             all_query_cfg = current_stats.queries['get-record-view-report']
             all_query = all_query_cfg.query_class(**all_query_cfg.query_config)
 
-            params.update({'agg_sort': kwargs.get('agg_sort',
-                                                  {'value': 'desc'})})
             all_res = all_query.run(**params)
             cls.Calculation(all_res, all_list)
 

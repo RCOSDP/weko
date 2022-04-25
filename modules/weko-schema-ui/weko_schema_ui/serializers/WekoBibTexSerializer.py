@@ -196,9 +196,10 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
-                        BibTexFields.JOURNAL, BibTexFields.YEAR]
-        lst_optional = [BibTexFields.VOLUME, BibTexFields.NUMBER,
+        lst_required = []
+        lst_optional = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.JOURNAL, BibTexFields.YEAR,
+                        BibTexFields.VOLUME, BibTexFields.NUMBER,
                         BibTexFields.PAGE_START,
                         BibTexFields.PAGE_END, BibTexFields.MONTH,
                         BibTexFields.NOTE, BibTexFields.KEY]
@@ -212,15 +213,16 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.TITLE, BibTexFields.PUBLISHER,
-                        BibTexFields.YEAR]
-        lst_optional = [BibTexFields.VOLUME, BibTexFields.NUMBER,
+        lst_required = []
+        lst_optional = [BibTexFields.EDITOR,BibTexFields.AUTHOR,
+                        BibTexFields.TITLE, BibTexFields.PUBLISHER,
+                        BibTexFields.YEAR,
+                        BibTexFields.VOLUME, BibTexFields.NUMBER,
                         BibTexFields.MONTH,
                         BibTexFields.EDITION, BibTexFields.SERIES,
                         BibTexFields.ADDRESS,
                         BibTexFields.NOTE, BibTexFields.KEY]
-        lst_required_partial = [[BibTexFields.EDITOR,
-                                 BibTexFields.AUTHOR]]
+        lst_required_partial = []
         return {'required': lst_required, 'optional': lst_optional,
                 'required_partial': lst_required_partial}
 
@@ -230,8 +232,9 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.TITLE]
-        lst_optional = [BibTexFields.AUTHOR, BibTexFields.HOW_PUBLISHER,
+        lst_required = []
+        lst_optional = [BibTexFields.TITLE,
+                        BibTexFields.AUTHOR, BibTexFields.HOW_PUBLISHER,
                         BibTexFields.YEAR, BibTexFields.MONTH,
                         BibTexFields.ADDRESS, BibTexFields.NOTE,
                         BibTexFields.KEY]
@@ -245,9 +248,10 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
-                        BibTexFields.BOOK_TITLE, BibTexFields.YEAR]
-        lst_optional = [BibTexFields.VOLUME, BibTexFields.NUMBER,
+        lst_required = []
+        lst_optional = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.BOOK_TITLE, BibTexFields.YEAR,
+                        BibTexFields.VOLUME, BibTexFields.NUMBER,
                         BibTexFields.PAGE_START,
                         BibTexFields.PAGE_END, BibTexFields.PUBLISHER,
                         BibTexFields.MONTH,
@@ -264,18 +268,18 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.TITLE, BibTexFields.YEAR,
-                        BibTexFields.PUBLISHER]
-        lst_optional = [BibTexFields.VOLUME, BibTexFields.NUMBER,
+        lst_required = []
+        lst_optional = [BibTexFields.AUTHOR,BibTexFields.EDITOR,
+                        BibTexFields.PAGES,BibTexFields.CHAPTER,
+                        BibTexFields.TITLE, BibTexFields.YEAR,
+                        BibTexFields.PUBLISHER,
+                        BibTexFields.VOLUME, BibTexFields.NUMBER,
                         BibTexFields.MONTH,
                         BibTexFields.TYPE, BibTexFields.EDITION,
                         BibTexFields.SERIES,
                         BibTexFields.ADDRESS, BibTexFields.NOTE,
                         BibTexFields.KEY]
-        lst_required_partial = [[BibTexFields.AUTHOR,
-                                 BibTexFields.EDITOR],
-                                [BibTexFields.PAGES,
-                                 BibTexFields.CHAPTER]]
+        lst_required_partial = []
         return {'required': lst_required, 'optional': lst_optional,
                 'required_partial': lst_required_partial}
 
@@ -285,10 +289,11 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+        lst_required = []
+        lst_optional = [BibTexFields.AUTHOR, BibTexFields.TITLE,
                         BibTexFields.BOOK_TITLE, BibTexFields.YEAR,
-                        BibTexFields.PUBLISHER]
-        lst_optional = [BibTexFields.VOLUME, BibTexFields.NUMBER,
+                        BibTexFields.PUBLISHER,
+                        BibTexFields.VOLUME, BibTexFields.NUMBER,
                         BibTexFields.PAGE_START,
                         BibTexFields.PAGE_END, BibTexFields.MONTH,
                         BibTexFields.TYPE, BibTexFields.EDITOR,
@@ -306,9 +311,10 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
-                        BibTexFields.BOOK_TITLE, BibTexFields.YEAR]
-        lst_optional = [BibTexFields.VOLUME, BibTexFields.NUMBER,
+        lst_required = []
+        lst_optional = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.BOOK_TITLE, BibTexFields.YEAR,
+                        BibTexFields.VOLUME, BibTexFields.NUMBER,
                         BibTexFields.PAGE_START,
                         BibTexFields.PAGE_END, BibTexFields.PUBLISHER,
                         BibTexFields.MONTH, BibTexFields.EDITOR,
@@ -325,8 +331,9 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.TITLE]
-        lst_optional = [BibTexFields.AUTHOR, BibTexFields.YEAR,
+        lst_required = []
+        lst_optional = [BibTexFields.TITLE,
+                        BibTexFields.AUTHOR, BibTexFields.YEAR,
                         BibTexFields.MONTH, BibTexFields.EDITION,
                         BibTexFields.ADDRESS, BibTexFields.NOTE,
                         BibTexFields.ORGANIZATION, BibTexFields.KEY]
@@ -340,9 +347,10 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
-                        BibTexFields.YEAR, BibTexFields.SCHOOL]
-        lst_optional = [BibTexFields.MONTH, BibTexFields.TYPE,
+        lst_required = []
+        lst_optional = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.YEAR, BibTexFields.SCHOOL,
+                        BibTexFields.MONTH, BibTexFields.TYPE,
                         BibTexFields.ADDRESS, BibTexFields.NOTE,
                         BibTexFields.KEY]
         lst_required_partial = []
@@ -355,9 +363,10 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
-                        BibTexFields.YEAR, BibTexFields.SCHOOL]
-        lst_optional = [BibTexFields.MONTH, BibTexFields.TYPE,
+        lst_required = []
+        lst_optional = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.YEAR, BibTexFields.SCHOOL,
+                        BibTexFields.MONTH, BibTexFields.TYPE,
                         BibTexFields.ADDRESS, BibTexFields.NOTE,
                         BibTexFields.KEY]
         lst_required_partial = []
@@ -370,8 +379,9 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.TITLE, BibTexFields.YEAR]
-        lst_optional = [BibTexFields.VOLUME, BibTexFields.NUMBER,
+        lst_required = []
+        lst_optional = [BibTexFields.TITLE, BibTexFields.YEAR,
+                        BibTexFields.VOLUME, BibTexFields.NUMBER,
                         BibTexFields.PUBLISHER, BibTexFields.MONTH,
                         BibTexFields.EDITOR, BibTexFields.SERIES,
                         BibTexFields.ADDRESS, BibTexFields.NOTE,
@@ -386,9 +396,10 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
-                        BibTexFields.YEAR, BibTexFields.INSTITUTION]
-        lst_optional = [BibTexFields.NUMBER, BibTexFields.MONTH,
+        lst_required = []
+        lst_optional = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.YEAR, BibTexFields.INSTITUTION,
+                        BibTexFields.NUMBER, BibTexFields.MONTH,
                         BibTexFields.TYPE, BibTexFields.ADDRESS,
                         BibTexFields.NOTE, BibTexFields.KEY]
         lst_required_partial = []
@@ -401,9 +412,10 @@ class WekoBibTexSerializer():
 
         @return:
         """
-        lst_required = [BibTexFields.AUTHOR, BibTexFields.TITLE,
-                        BibTexFields.NOTE]
-        lst_optional = [BibTexFields.YEAR, BibTexFields.MONTH,
+        lst_required = []
+        lst_optional = [BibTexFields.AUTHOR, BibTexFields.TITLE,
+                        BibTexFields.NOTE,
+                        BibTexFields.YEAR, BibTexFields.MONTH,
                         BibTexFields.KEY]
         lst_required_partial = []
         return {'required': lst_required, 'optional': lst_optional,

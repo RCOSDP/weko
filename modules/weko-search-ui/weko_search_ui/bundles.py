@@ -27,85 +27,80 @@ from invenio_assets import AngularGettextFilter, GlobBundle, NpmBundle
 from pkg_resources import resource_filename
 
 css = Bundle(
-    'node_modules/bootstrap-datepicker/dist/css/bootstrap-datepicker.css',
-    'css/weko_search_ui/dot_leaders.css',
-    filters='cleancss',
-    output='gen/weko_search_ui.%(version)s.css',
+    "node_modules/bootstrap-datepicker/dist/css/bootstrap-datepicker.css",
+    "css/weko_search_ui/dot_leaders.css",
+    filters="cleancss",
+    output="gen/weko_search_ui.%(version)s.css",
 )
 
 js_dependencies_datepicker = NpmBundle(
-    'node_modules/bootstrap-datepicker/dist/js/bootstrap-datepicker.js',
+    "node_modules/bootstrap-datepicker/dist/js/bootstrap-datepicker.js",
     npm={
-        'bootstrap-datepicker': '~1.7.1',
-    }
+        "bootstrap-datepicker": "~1.7.1",
+    },
 )
 
 js_dependecies = NpmBundle(
     js_dependencies_datepicker,
-    filters='requirejs',
-    output='gen/weko_search_ui.dependencies.%(version)s.js',
+    filters="requirejs",
+    output="gen/weko_search_ui.dependencies.%(version)s.js",
 )
 
 js = Bundle(
-    'js/weko_search_ui/app.js',
-    filters='requirejs',
+    "js/weko_search_ui/app.js",
+    filters="requirejs",
     output="gen/weko_search_ui.%(version)s.js",
 )
 
 weko_admin_item_import_js = Bundle(
-    'js/weko_search_ui/import.js',
-    output="gen/import.%(version)s.js"
+    "js/weko_search_ui/import.js", output="gen/import.%(version)s.js"
 )
 
 weko_admin_item_export_js = Bundle(
-    'js/weko_search_ui/export.js',
-    output="gen/export.%(version)s.js"
+    "js/weko_search_ui/export.js", output="gen/export.%(version)s.js"
 )
 
-weko_moment_js = Bundle(
-    'js/weko_search_ui/moment.min.js',
-    output="gen/moment.min.js"
-)
+weko_moment_js = Bundle("js/weko_search_ui/moment.min.js", output="gen/moment.min.js")
 
 weko_admin_item_import_css = Bundle(
-    'css/weko_search_ui/import.less',
-    filters='cleancss',
-    output="gen/import.%(version)s.css"
+    "css/weko_search_ui/import.less",
+    filters="cleancss",
+    output="gen/import.%(version)s.css",
 )
 
 weko_admin_item_export_css = Bundle(
-    'css/weko_search_ui/export.less',
-    filters='cleancss',
-    output="gen/export.%(version)s.css"
+    "css/weko_search_ui/export.less",
+    filters="cleancss",
+    output="gen/export.%(version)s.css",
 )
 
 weko_facet_search_js = Bundle(
-    'js/weko_search_ui/facet.runtime-main.js',
-    'js/weko_search_ui/facet.chunk.js',
-    'js/weko_search_ui/facet.main.chunk.js',
-    output="gen/facet_search.js"
+    "js/weko_search_ui/facet.runtime-main.js",
+    "js/weko_search_ui/facet.chunk.js",
+    "js/weko_search_ui/facet.main.chunk.js",
+    output="gen/facet_search.js",
 )
 
 weko_facet_search_css = Bundle(
-    'css/weko_search_ui/facet_search.less',
-    'css/weko_search_ui/facet_chunk.css',
-    filters='cleancss',
-    output="gen/facet_search.%(version)s.css"
+    "css/weko_search_ui/facet_search.less",
+    "css/weko_search_ui/facet_chunk.css",
+    filters="cleancss",
+    output="gen/facet_search.%(version)s.css",
 )
 
 
 def catalog(domain):
     """Return glob matching path to tranlated messages for a given domain."""
     return os.path.join(
-        resource_filename('weko_search_ui', 'translations'),
-        '*',  # language code
-        'LC_MESSAGES',
-        '{0}.po'.format(domain),
+        resource_filename("weko_search_ui", "translations"),
+        "*",  # language code
+        "LC_MESSAGES",
+        "{0}.po".format(domain),
     )
 
 
 i18n = GlobBundle(
-    catalog('messages-js'),
-    filters=AngularGettextFilter(catalog_name='invenioSearch'),
-    output='gen/translations/weko-search-ui.%(version)s.js',
+    catalog("messages-js"),
+    filters=AngularGettextFilter(catalog_name="invenioSearch"),
+    output="gen/translations/weko-search-ui.%(version)s.js",
 )

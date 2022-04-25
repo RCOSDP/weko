@@ -22,5 +22,5 @@
 
 from invenio_access import Permission, action_factory
 
-action_search_access = action_factory('search-access')
+action_search_access = action_factory("search-access")
 search_permission = Permission(action_search_access)

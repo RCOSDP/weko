@@ -24,6 +24,7 @@ from invenio_db import db
 from passlib.registry import register_crypt_handler
 from werkzeug.utils import cached_property, import_string
 
+from weko_redis.redis import RedisConnectionExtension
 from invenio_accounts.forms import confirm_register_form_factory, \
     login_form_factory, register_form_factory
 
@@ -31,7 +32,7 @@ from . import config
 from .datastore import SessionAwareSQLAlchemyUserDatastore
 from .hash import InvenioAesEncryptedEmail, _to_binary
 from .models import Role, User
-from .sessions import login_listener, logout_listener
+from .sessions import login_listener, logout_listener, session_update
 from .utils import set_session_info
 
 
@@ -251,10 +252,11 @@ class InvenioAccounts(object):
         # Set Session KV store
         if app.config.get('ACCOUNTS_SESSION_REDIS_URL'):
             import redis
-            from simplekv.memory.redisstore import RedisStore
-
-            session_kvstore = RedisStore(redis.StrictRedis.from_url(
-                app.config['ACCOUNTS_SESSION_REDIS_URL']))
+            redis_connection = RedisConnectionExtension()
+            if app.config['CACHE_TYPE'] == 'redis':
+                session_kvstore = redis_connection.redis_connection(app.config['CACHE_REDIS_HOST'], app.config['REDIS_PORT'], app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+            elif app.config['CACHE_TYPE'] == 'redissentinel':
+                session_kvstore = redis_connection.sentinel_connection(app.config['CACHE_REDIS_SENTINELS'], app.config['CACHE_REDIS_SENTINEL_MASTER'], app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
         else:
             from simplekv.memory import DictStore
 
@@ -319,3 +321,5 @@ class InvenioAccountsUI(InvenioAccounts):
         @app.before_request
         def make_session_permanent():
             session.permanent = True
+
+        session_update(app)

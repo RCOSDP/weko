@@ -31,7 +31,7 @@ def default_links_factory(pid, **kwargs):
     """
     links = dict(
         self=url_for(
-            'invenio_records_rest.recid_item',
-            pid_value=pid.pid_value,
-            _external=True))
+            "invenio_records_rest.recid_item", pid_value=pid.pid_value, _external=True
+        )
+    )
     return links

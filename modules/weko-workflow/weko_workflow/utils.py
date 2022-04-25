@@ -29,6 +29,7 @@ from datetime import datetime, timedelta
 from typing import NoReturn, Optional, Tuple, Union
 
 import redis
+from redis import sentinel
 from celery.task.control import inspect
 from flask import current_app, request, session
 from flask_babelex import gettext as _
@@ -59,8 +60,7 @@ from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
     ItemTypes, Mapping
 from weko_records.models import ItemType
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
-from weko_records_ui.utils import create_onetime_download_url, \
-    generate_one_time_download_url, get_list_licence
+
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
@@ -1363,11 +1363,13 @@ def convert_record_to_item_metadata(record_metadata):
     for key, meta in item_type.get('meta_list', {}).items():
         if key in record_metadata:
             if meta.get('option', {}).get('multiple'):
-                item_metadata[key] = \
-                    record_metadata[key]['attribute_value_mlt']
+                if 'attribute_value_mlt' in record_metadata[key]:
+                    item_metadata[key] = \
+                        record_metadata[key]['attribute_value_mlt']
             else:
-                item_metadata[key] = \
-                    record_metadata[key]['attribute_value_mlt'][0]
+                if 'attribute_value_mlt' in record_metadata[key]:
+                    item_metadata[key] = \
+                        record_metadata[key]['attribute_value_mlt'][0]
 
     return item_metadata
 
@@ -2964,6 +2966,7 @@ def create_onetime_download_url_to_guest(activity_id: str,
         user_mail = extra_info.get('guest_mail')
         is_guest_user = True
     if file_name and record_id and user_mail:
+        from weko_records_ui.utils import generate_one_time_download_url
         onetime_file_url = generate_one_time_download_url(
             file_name, record_id, user_mail)
 
@@ -2971,6 +2974,7 @@ def create_onetime_download_url_to_guest(activity_id: str,
         delete_guest_activity(activity_id)
 
         # Save onetime to Database.
+        from weko_records_ui.utils import create_onetime_download_url
         one_time_obj = create_onetime_download_url(
             activity_id, file_name, record_id, user_mail, is_guest_user)
         expiration_tmp = {
@@ -3931,10 +3935,10 @@ def check_doi_validation_not_pass(item_id, activity_id,
     if isinstance(error_list, str):
         return error_list
 
-    sessionstore = RedisStore(redis.StrictRedis.from_url(
-        'redis://{host}:{port}/1'.format(
-            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+    master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
+    sessionstore = RedisStore(master.master_for(
+            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
+
     if error_list:
         sessionstore.put(
             'updated_json_schema_{}'.format(activity_id),

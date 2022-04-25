@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from collections import OrderedDict
-
+import json
 import pytest
+import os
 
 from weko_records.utils import convert_date_range_value, convert_range_value, \
-    copy_value_json_path, copy_values_json_path, makeDateRangeValue
+    copy_value_json_path, copy_values_json_path, makeDateRangeValue, remove_weko2_special_character
 
 
 @pytest.fixture
@@ -13,98 +14,42 @@ def identifiers():
     identifier = ['oai:weko3.example.org:00000965']
     return identifiers
 
-
 @pytest.fixture
 def k_v():
     k_v = [{'id': 'date_range1', 'mapping': [], 'contents': '', 'inputType': 'dateRange', 'input_Type': 'range', 'item_value':{'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}, '12': {'path': {'gte': '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211', 'lte': '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211'}, 'path_type': {'gte': 'json', 'lte': 'json'}}}, 'mappingFlg': False, 'inputVal_to': '', 'mappingName': '', 'inputVal_from': '', 'contents_value': {'en': 'date_EN_1', 'ja': 'date_JA_1'}, 'useable_status': True, 'default_display': True}, {"id": "text3", "mapping": [], "contents": "", "inputVal": "", "inputType": "text", "input_Type": "text", "item_value":  {"1": {"path": "", "path_type": "json"}, "12": {"path": "$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890", "path_type": "json"}, "20": {"path": "$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890", "path_type": "json"}}, "mappingFlg": False, "mappingName": "", "contents_value": {"en": "Summary", "ja": "概要"}, "useable_status": True, "default_display": True}
            ]
     return k_v
 
-
-@pytest.fixture
-def search_mapping():
-    map = [
-        {'id': 'title', 'mapping': ['title'], 'contents': '', 'inputVal': '', 'inputType': 'text', 'mappingFlg': False, 'mappingName': '', 'sche_or_attr': [
-            {'id': 'title', 'contents': 'title', 'checkStus': False}], 'contents_value': {'en': 'Title', 'ja': 'タイトル'}, 'useable_status': True, 'default_display': True},
-        {'id': 'creator', 'mapping': ['creator'], 'contents': '', 'inputVal': '', 'inputType': 'text', 'mappingFlg': False, 'mappingName': '', 'sche_or_attr': [
-            {'id': 'creator', 'contents': 'creator', 'checkStus': False}], 'contents_value': {'en': 'Author Name', 'ja': '著者名'}, 'useable_status': True, 'default_display': True},
-        {'id': 'subject', 'mapping': ['BSH', 'DDC', 'LCC', 'LCSH', 'MeSH', 'NDC', 'NDLC', 'NDLSH', 'UDC', 'Other', 'Scival'], 'contents': '', 'inputVal': '', 'inputType': 'text', 'mappingFlg': True, 'mappingName': 'sbjscheme', 'sche_or_attr': [{'id': '0', 'contents': 'BSH', 'checkStus': False}, {'id': '1', 'contents': 'DDC', 'checkStus': False}, {'id': '2', 'contents': 'LCC', 'checkStus': False}, {'id': '3', 'contents': 'LCSH', 'checkStus': False}, {'id': '4', 'contents': 'MeSH', 'checkStus': False}, {'id': '5', 'contents': 'NDC', 'checkStus': False}, {'id': '6', 'contents': 'NDLC', 'checkStus': False}, {'id': '7', 'contents': 'NDLSH', 'checkStus': False}, {'id': '8', 'contents': 'UDC', 'checkStus': False}, {'id': '9', 'contents': 'Other', 'checkStus': False}, {'id': '10', 'contents': 'Scival', 'checkStus': False}], 'contents_value': {'en': 'Subject', 'ja': '件名'}, 'useable_status': True, 'default_display': True}, {'id': 'spatial', 'mapping': ['spatial'], 'contents': '', 'inputVal': '', 'inputType': 'text', 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'Region', 'ja': '地域'}, 'useable_status': True, 'default_display': True}, {'id': 'des', 'mapping': ['description'], 'contents': '', 'inputVal': '', 'inputType': 'text', 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'Description', 'ja': '内容記述'}, 'useable_status': True, 'default_display': True}, {'id': 'publisher', 'mapping': ['publisher'], 'contents': '', 'inputVal': '', 'inputType': 'text', 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'Publisher', 'ja': '出版者'}, 'useable_status': True, 'default_display': True}, {'id': 'cname', 'mapping': ['contributor'], 'contents': '', 'inputVal': '', 'inputType': 'text', 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'Contributors', 'ja': '寄与者'}, 'useable_status': True, 'default_display': True}, {'id': 'filedate', 'mapping': ['date'], 'contents': '', 'inputType': 'dateRange', 'mappingFlg': True, 'inputVal_to': '', 'mappingName': 'fd_attr', 'sche_or_attr': [{'id': 'Accepted', 'contents': 'Accepted', 'checkStus': False}, {'id': 'Available', 'contents': 'Available', 'checkStus': False}, {'id': 'Collected', 'contents': 'Collected', 'checkStus': False}, {'id': 'Copyrighted', 'contents': 'Copyrighted', 'checkStus': False}, {'id': 'Created', 'contents': 'Created', 'checkStus': False}, {'id': 'Issued', 'contents': 'Issued', 'checkStus': False}, {'id': 'Submitted', 'contents': 'Submitted', 'checkStus': False}, {'id': 'Updated', 'contents': 'Updated', 'checkStus': False}, {'id': 'Valid', 'contents': 'Valid', 'checkStus': False}], 'inputVal_from': '', 'contents_value': {'en': 'Contents Created Date', 'ja': 'コンテンツ作成日'}, 'useable_status': True, 'default_display': True}, {'id': 'mimetype', 'mapping': ['format'], 'contents': '', 'inputVal': '', 'inputType': 'text', 'mappingFlg': False, 'mappingName': '', 'sche_or_attr': [{'id': 'format', 'contents': 'format', 'checkStus': False}], 'contents_value': {'en': 'Format', 'ja': 'フォーマット'}, 'useable_status': True, 'default_display': True}, {'id': 'id', 'mapping': ['identifier', 'URI', 'fullTextURL', 'selfDOI', 'ISBN', 'ISSN', 'NCID', 'pmid', 'doi', 'NAID', 'ichushi'], 'contents': '', 'inputVal': '', 'inputType': 'text', 'mappingFlg': True, 'mappingName': 'id_attr', 'sche_or_attr': [{'id': 'identifier', 'contents': 'identifier', 'checkStus': False}, {'id': 'URI', 'contents': 'URI', 'checkStus': False}, {'id': 'fullTextURL', 'contents': 'fullTextURL', 'checkStus': False}, {'id': 'selfDOI', 'contents': 'selfDOI', 'checkStus': False}, {'id': 'ISBN', 'contents': 'ISBN', 'checkStus': False}, {'id': 'ISSN', 'contents': 'ISSN', 'checkStus': False}, {'id': 'NCID', 'contents': 'NCID', 'checkStus': False}, {'id': 'pmid', 'contents': 'pmid', 'checkStus': False}, {'id': 'doi', 'contents': 'doi', 'checkStus': False}, {'id': 'NAID', 'contents': 'NAID', 'checkStus': False}, {'id': 'ichushi', 'contents': 'ichushi', 'checkStus': False}], 'contents_value': {'en': 'ID', 'ja': 'ID'}, 'useable_status': True, 'default_display': True}, {'id': 'srctitle', 'mapping': ['srctitle'], 'contents': '', 'inputVal': '', 'inputType': 'text', 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'Journal Title', 'ja': '雑誌名'}, 'useable_status': True, 'default_display': True}, {'id': 'type', 'mapping': ['Conference', 'Paper', 'Departmental', 'Bulletin', 'Paper', 'Journal', 'Article', 'Article', 'Book', 'Presentation', 'Data', 'or', 'Dataset', 'Research', 'Paper', 'Technical', 'Report', 'Thesis', 'or', 'Dissertation', 'Learning', 'Material', 'Software'], 'contents': '', 'inputVal': '', 'check_val': [{'id': '0', 'contents': 'conference paper', 'checkStus': False}, {'id': '1', 'contents': 'data paper', 'checkStus': False}, {'id': '2', 'contents': 'departmental bulletin paper', 'checkStus': False}, {'id': '3', 'contents': 'editorial', 'checkStus': False}, {'id': '4', 'contents': 'journal article', 'checkStus': False}, {'id': '5', 'contents': 'newspaper', 'checkStus': False}, {'id': '6', 'contents': 'periodical', 'checkStus': False}, {'id': '7', 'contents': 'review article', 'checkStus': False}, {'id': '8', 'contents': 'software paper', 'checkStus': False}, {'id': '9', 'contents': 'article', 'checkStus': False}, {'id': '10', 'contents': 'book', 'checkStus': False}, {'id': '11', 'contents': 'book part', 'checkStus': False}, {'id': '12', 'contents': 'cartographic material', 'checkStus': False}, {'id': '13', 'contents': 'map', 'checkStus': False}, {'id': '14', 'contents': 'conference object', 'checkStus': False}, {'id': '15', 'contents': 'conference proceedings', 'checkStus': False}, {'id': '16', 'contents': 'conference poster', 'checkStus': False}, {'id': '17', 'contents': 'dataset', 'checkStus': False}, {'id': '18', 'contents': 'interview', 'checkStus': False}, {'id': '19', 'contents': 'image', 'checkStus': False}, {'id': '20', 'contents': 'still image', 'checkStus': False}, {'id': '21', 'contents': 'moving image', 'checkStus': False}, {'id': '22', 'contents': 'video', 'checkStus': False}, {'id': '23', 'contents': 'lecture', 'checkStus': False}, {'id': '24', 'contents': 'patent', 'checkStus': False}, {'id': '25', 'contents': 'internal report', 'checkStus': False}, {'id': '26', 'contents': 'report', 'checkStus': False}, {'id': '27', 'contents': 'research report', 'checkStus': False}, {'id': '28', 'contents': 'technical report', 'checkStus': False}, {'id': '29', 'contents': 'policy report', 'checkStus': False}, {'id': '30', 'contents': 'report part', 'checkStus': False}, {'id': '31', 'contents': 'working paper', 'checkStus': False}, {'id': '32', 'contents': 'data management plan', 'checkStus': False}, {'id': '33', 'contents': 'sound', 'checkStus': False}, {'id': '34', 'contents': 'thesis', 'checkStus': False}, {'id': '35', 'contents': 'bachelor thesis', 'checkStus': False}, {'id': '36', 'contents': 'master thesis', 'checkStus': False}, {'id': '37', 'contents': 'doctoral thesis', 'checkStus': False}, {'id': '38', 'contents': 'interactive resource', 'checkStus': False}, {'id': '39', 'contents': 'learning object', 'checkStus': False}, {'id': '40', 'contents': 'manuscript', 'checkStus': False}, {'id': '41', 'contents': 'musical notation', 'checkStus': False}, {'id': '42', 'contents': 'research proposal', 'checkStus': False}, {'id': '43', 'contents': 'software', 'checkStus': False}, {'id': '44', 'contents': 'technical documentation', 'checkStus': False}, {'id': '45', 'contents': 'workflow', 'checkStus': False}, {'id': '46', 'contents': 'other', 'checkStus': False}], 'inputType': 'checkbox_list', 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'Resource Type', 'ja': '資源タイプ'}, 'useable_status': True, 'default_display': True}, {'id': 'itemtype', 'mapping': ['itemtype'], 'contents': '', 'inputVal': '', 'check_val': [], 'inputType': 'checkbox_list', 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'Item Type', 'ja': 'アイテムタイプ'}, 'useable_status': True, 'default_display': True}, {'id': 'lang', 'mapping': ['Japanese', 'English', 'French', 'Italian', 'German', 'Spanish', 'Chinese', 'Russian', 'Latin', 'Malay', 'Esperanto', 'Arabic', 'Greek', 'Korean', 'Other'], 'contents': '', 'inputVal': '', 'check_val': [{'id': 'jpn', 'contents': 'Japanese', 'checkStus': False}, {'id': 'eng', 'contents': 'English', 'checkStus': False}, {'id': 'fra', 'contents': 'French', 'checkStus': False}, {'id': 'ita', 'contents': 'Italian', 'checkStus': False}, {'id': 'deu', 'contents': 'German', 'checkStus': False}, {'id': 'spa', 'contents': 'Spanish', 'checkStus': False}, {'id': 'zho', 'contents': 'Chinese', 'checkStus': False}, {'id': 'rus', 'contents': 'Russian', 'checkStus': False}, {'id': 'lat', 'contents': 'Latin', 'checkStus': False}, {'id': 'msa', 'contents': 'Malay', 'checkStus': False}, {'id': 'epo', 'contents': 'Esperanto', 'checkStus': False}, {'id': 'ara', 'contents': 'Arabic', 'checkStus': False}, {'id': 'ell', 'contents': 'Greek', 'checkStus': False}, {'id': 'kor', 'contents': 'Korean', 'checkStus': False}, {'id': 'other', 'contents': 'Other', 'checkStus': False}], 'inputType': 'checkbox_list', 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'Language', 'ja': '言語'}, 'useable_status': True, 'default_display': True}, {'id': 'temporal', 'mapping': ['temporal'], 'contents': '', 'inputVal': '', 'inputType': 'text', 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'Period', 'ja': '期間'}, 'useable_status': True, 'default_display': True}, {'id': 'dategranted', 'mapping': ['date'], 'contents': '', 'inputType': 'dateRange', 'mappingFlg': False, 'inputVal_to': '', 'mappingName': '', 'inputVal_from': '', 'contents_value': {'en': 'Academic Degree Date', 'ja': '学位取得日'}, 'useable_status': True, 'default_display': True}, {'id': 'version', 'mapping': [], 'options': [{'id': 'accepted', 'contents': 'accepted'}, {'id': 'published', 'contents': 'published'}, {'id': 'draft', 'contents': 'draft'}, {'id': 'submitted', 'contents': 'submitted'}, {'id': 'updated', 'contents': 'updated'}], 'contents': '', 'inputVal': '', 'inputType': 'selectbox', 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'Author Version Flag', 'ja': '著者版フラグ'}, 'useable_status': True, 'default_display': True}, {'id': 'dissno', 'mapping': [], 'contents': '', 'inputVal': '', 'inputType': 'text', 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'Academic Degree Number', 'ja': '学位番号'}, 'useable_status': True, 'default_display': True}, {'id': 'degreename', 'mapping': [], 'contents': '', 'inputVal': '', 'inputType': 'text', 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'Degree Name', 'ja': '学位名'}, 'useable_status': True, 'default_display': True}, {'id': 'dgname', 'mapping': [], 'contents': '', 'inputVal': '', 'inputType': 'text', 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'Institution For Academic Degree', 'ja': '学位授与機関'}, 'useable_status': True, 'default_display': True}, {'id': 'wid', 'mapping': [], 'contents': '', 'inputVal': '',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    'inputType': 'text', 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'Author Id', 'ja': '著者ID'}, 'useable_status': True, 'default_display': True}, {'id': 'iid', 'mapping': ['iid'], 'contents': '', 'inputVal': '', 'check_val': [], 'inputType': 'checkbox_list', 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'Index', 'ja': 'インデックス'}, 'useable_status': True, 'default_display': True}, {'id': 'rights', 'mapping': ['CC', 'BY', 'CC', 'BY-SA', 'CC', 'BY-ND', 'CC', 'BY-NC', 'CC', 'BY-NC-SA', 'ANY', 'CC0', 'licensefree', 'CC', 'BY-NC-ND'], 'contents': '', 'inputVal': '', 'check_val': [{'id': 'CC BY 3.0', 'contents': 'CC BY 3.0'}, {'id': 'CC BY-SA 3.0', 'contents': 'CC BY-SA 3.0'}, {'id': 'CC BY-ND 3.0', 'contents': 'CC BY-ND 3.0'}, {'id': 'CC BY-NC 3.0', 'contents': 'CC BY-NC 3.0'}, {'id': 'CC BY-NC-SA 3.0', 'contents': 'CC BY-NC-SA 3.0'}, {'id': 'CC BY-NC-ND 3.0', 'contents': 'CC BY-NC-ND 3.0'}, {'id': 'CC BY 4.0', 'contents': 'CC BY 4.0'}, {'id': 'CC BY-SA 4.0', 'contents': 'CC BY-SA 4.0'}, {'id': 'CC BY-ND 4.0', 'contents': 'CC BY-ND 4.0'}, {'id': 'CC BY-NC 4.0', 'contents': 'CC BY-NC 4.0'}, {'id': 'CC BY-NC-SA 4.0', 'contents': 'CC BY-NC-SA 4.0'}, {'id': 'CC0', 'contents': 'CC0'}, {'id': 'licensefree', 'contents': 'licensefree'}, {'id': 'CC BY-NC-ND 4.0', 'contents': 'CC BY-NC-ND 4.0'}], 'inputType': 'checkbox_list', 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'Rights', 'ja': '権利'}, 'useable_status': True, 'default_display': True}, {'id': 'text1', 'mapping': [], 'contents': '', 'inputVal': '', 'inputType': 'text', 'input_Type': 'text', 'item_value': {'1': {'path': '', 'path_type': 'json'}, '12': {'path': '$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108', 'path_type': 'json'}}, 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'text1', 'ja': 'テキスト1'}, 'useable_status': True, 'default_display': True}, {'id': 'text2', 'mapping': [], 'contents': '', 'inputVal': '', 'inputType': 'text', 'input_Type': 'text', 'item_value': {'1': {'path': '', 'path_type': 'json'}}, 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'text2', 'ja': 'テキスト2'}, 'useable_status': True, 'default_display': False}, {'id': 'text3', 'mapping': [], 'contents': '', 'inputVal': '', 'inputType': 'text', 'input_Type': 'text', 'item_value': {'1': {'path': '', 'path_type': 'json'}}, 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'text3', 'ja': 'テキスト3'}, 'useable_status': True, 'default_display': False}, {'id': 'text4', 'mapping': [], 'contents': '', 'inputVal': '', 'inputType': 'text', 'input_Type': 'text', 'item_value': {'1': {'path': '', 'path_type': 'json'}}, 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'text4', 'ja': 'テキスト4'}, 'useable_status': True, 'default_display': False}, {'id': 'text5', 'mapping': [], 'contents': '', 'inputVal': '', 'inputType': 'text', 'input_Type': 'text', 'item_value': {'1': {'path': '', 'path_type': 'json'}}, 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'text5', 'ja': 'テキスト5'}, 'useable_status': True, 'default_display': False}, {'id': 'text6', 'mapping': [], 'contents': '', 'inputVal': '', 'inputType': 'text', 'input_Type': 'text', 'item_value': {'1': {'path': '', 'path_type': 'json'}}, 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'text6', 'ja': 'テキスト6'}, 'useable_status': True, 'default_display': False}, {'id': 'text7', 'mapping': [], 'contents': '', 'inputVal': '', 'inputType': 'text', 'input_Type': 'text', 'item_value': {'1': {'path': '', 'path_type': 'json'}}, 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'text7', 'ja': 'テキスト7'}, 'useable_status': True, 'default_display': False}, {'id': 'text8', 'mapping': [], 'contents': '', 'inputVal': '', 'inputType': 'text', 'input_Type': 'text', 'item_value': {'1': {'path': '', 'path_type': 'json'}}, 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'text8', 'ja': 'テキスト8'}, 'useable_status': True, 'default_display': False}, {'id': 'text9', 'mapping': [], 'contents': '', 'inputVal': '', 'inputType': 'text', 'input_Type': 'text', 'item_value': {'1': {'path': '', 'path_type': 'json'}}, 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'text9', 'ja': 'テキスト9'}, 'useable_status': True, 'default_display': False}, {'id': 'text10', 'mapping': [], 'contents': '', 'inputVal': '', 'inputType': 'text', 'input_Type': 'text', 'item_value': {'1': {'path': '', 'path_type': 'json'}}, 'mappingFlg': False, 'mappingName': '', 'contents_value': {'en': 'text10', 'ja': 'テキスト10'}, 'useable_status': True, 'default_display': False}, {'id': 'integer_range1', 'mapping': [], 'contents': '', 'inputType': 'range', 'input_Type': 'range', 'item_value': {'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}}, 'mappingFlg': False, 'inputVal_to': '', 'mappingName': '', 'inputVal_from': '', 'contents_value': {'en': 'integer_EN_1', 'ja': 'integer_JA_1'}, 'useable_status': True, 'default_display': True}, {'id': 'integer_range2', 'mapping': [], 'contents': '', 'inputType': 'range', 'input_Type': 'range', 'item_value': {'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}}, 'mappingFlg': False, 'inputVal_to': '', 'mappingName': '', 'inputVal_from': '', 'contents_value': {'en': 'integer_EN_2', 'ja': 'integer_JA_2'}, 'useable_status': True, 'default_display': False}, {'id': 'integer_range3', 'mapping': [], 'contents': '', 'inputType': 'range', 'input_Type': 'range', 'item_value': {'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}}, 'mappingFlg': False, 'inputVal_to': '', 'mappingName': '', 'inputVal_from': '', 'contents_value': {'en': 'integer_EN_3', 'ja': 'integer_JA_3'}, 'useable_status': True, 'default_display': False}, {'id': 'integer_range4', 'mapping': [], 'contents': '', 'inputType': 'range', 'input_Type': 'range', 'item_value': {'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}}, 'mappingFlg': False, 'inputVal_to': '', 'mappingName': '', 'inputVal_from': '', 'contents_value': {'en': 'integer_EN_4', 'ja': 'integer_JA_4'}, 'useable_status': True, 'default_display': False}, {'id': 'integer_range5', 'mapping': [], 'contents': '', 'inputType': 'range', 'input_Type': 'range', 'item_value': {'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}}, 'mappingFlg': False, 'inputVal_to': '', 'mappingName': '', 'inputVal_from': '', 'contents_value': {'en': 'integer_EN_5', 'ja': 'integer_JA_5'}, 'useable_status': True, 'default_display': False}, {'id': 'float_range1', 'mapping': [], 'contents': '', 'inputType': 'range', 'input_Type': 'range', 'item_value': {'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}}, 'mappingFlg': False, 'inputVal_to': '', 'mappingName': '', 'inputVal_from': '', 'contents_value': {'en': 'float_EN_1', 'ja': 'float_JA_1'}, 'useable_status': True, 'default_display': True}, {'id': 'float_range2', 'mapping': [], 'contents': '', 'inputType': 'range', 'input_Type': 'range', 'item_value': {'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}}, 'mappingFlg': False, 'inputVal_to': '', 'mappingName': '', 'inputVal_from': '', 'contents_value': {'en': 'float_EN_2', 'ja': 'float_JA_2'}, 'useable_status': True, 'default_display': False}, {'id': 'float_range3', 'mapping': [], 'contents': '', 'inputType': 'range', 'input_Type': 'range', 'item_value': {'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}}, 'mappingFlg': False, 'inputVal_to': '', 'mappingName': '', 'inputVal_from': '', 'contents_value': {'en': 'float_EN_3', 'ja': 'float_JA_3'}, 'useable_status': True, 'default_display': False}, {'id': 'float_range4', 'mapping': [], 'contents': '', 'inputType': 'range', 'input_Type': 'range', 'item_value': {'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}}, 'mappingFlg': False, 'inputVal_to': '', 'mappingName': '', 'inputVal_from': '', 'contents_value': {'en': 'float_EN_4', 'ja': 'float_JA_4'}, 'useable_status': True, 'default_display': False}, {'id': 'float_range5', 'mapping': [], 'contents': '', 'inputType': 'range', 'input_Type': 'range', 'item_value': {'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}}, 'mappingFlg': False, 'inputVal_to': '', 'mappingName': '', 'inputVal_from': '', 'contents_value': {'en': 'float_EN_5', 'ja': 'float_JA_5'}, 'useable_status': True, 'default_display': False}, {'id': 'date_range1', 'mapping': [], 'contents': '', 'inputType': 'dateRange', 'input_Type': 'range', 'item_value': {'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}, '12': {'path': {'gte': '$.item_item_1551265302120.attribute_value_mlt[*].subitem_155125691821', 'lte': '$.item_item_1551265302120.attribute_value_mlt[*].subitem_155125691821'}, 'path_type': {'gte': 'json', 'lte': 'json'}}}, 'mappingFlg': False, 'inputVal_to': '', 'mappingName': '', 'inputVal_from': '', 'contents_value': {'en': 'date_EN_1', 'ja': 'date_JA_1'}, 'useable_status': True, 'default_display': True}, {'id': 'date_range2', 'mapping': [], 'contents': '', 'inputType': 'dateRange', 'input_Type': 'range', 'item_value': {'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}}, 'mappingFlg': False, 'inputVal_to': '', 'mappingName': '', 'inputVal_from': '', 'contents_value': {'en': 'date_EN_2', 'ja': 'date_JA_2'}, 'useable_status': True, 'default_display': False}, {'id': 'date_range3', 'mapping': [], 'contents': '', 'inputType': 'dateRange', 'input_Type': 'range', 'item_value': {'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}}, 'mappingFlg': False, 'inputVal_to': '', 'mappingName': '', 'inputVal_from': '', 'contents_value': {'en': 'date_EN_3', 'ja': 'date_JA_3'}, 'useable_status': True, 'default_display': False}, {'id': 'date_range4', 'mapping': [], 'contents': '', 'inputType': 'dateRange', 'input_Type': 'range', 'item_value': {'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}}, 'mappingFlg': False, 'inputVal_to': '', 'mappingName': '', 'inputVal_from': '', 'contents_value': {'en': 'date_EN_4', 'ja': 'date_JA_4'}, 'useable_status': True, 'default_display': False}, {'id': 'date_range5', 'mapping': [], 'contents': '', 'inputType': 'dateRange', 'input_Type': 'range', 'item_value': {'1': {'path': {'gte': '', 'lte': ''}, 'path_type': {'gte': 'json', 'lte': 'json'}}}, 'mappingFlg': False, 'inputVal_to': '', 'mappingName': '', 'inputVal_from': '', 'contents_value': {'en': 'date_EN_5', 'ja': 'date_JA_5'}, 'useable_status': True, 'default_display': False}, {'id': 'geo_point1', 'mapping': [], 'contents': '', 'inputType': 'geo_distance', 'input_Type': 'geo_point', 'item_value': {'1': {'path': {'lat': '', 'lon': ''}, 'path_type': {'lat': 'json', 'lon': 'json'}}}, 'mappingFlg': False, 'mappingName': '', 'inputVal_lat': '', 'inputVal_lon': '', 'contents_value': {'en': 'geopoint_EN_1', 'ja': 'geopoint_JA_1'}, 'useable_status': True, 'default_display': True, 'inputVal_distance': ''}, {'id': 'geo_shape1', 'mapping': [], 'contents': '', 'inputType': 'geo_distance', 'input_Type': 'geo_shape', 'item_value': {'1': {'path': {'type': '', 'coordinates': ''}, 'path_type': {'type': 'json', 'coordinates': 'json'}}}, 'mappingFlg': False, 'mappingName': '', 'inputVal_lat': '', 'inputVal_lon': '', 'contents_value': {'en': 'geoshape_EN_1', 'ja': 'geoshape_JA_1'}, 'useable_status': True, 'default_display': True, 'inputVal_distance': ''}]
-    return map
-
-
 @pytest.fixture
 def jsonpath():
-    return ['$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108', '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211', '$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890']
-
+    return ['$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108', '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211', 
+    '$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890',
+    '$.item_1551264846237.attribute_value_mlt[1:3].subitem_1551255577890']
 
 @pytest.fixture
 def meta():
-    return [OrderedDict(
-        [('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2021-10-26'}),
-         ('item_1551264308487', {'attribute_name': 'Title', 'attribute_value_mlt': [
-             {'subitem_1551255647225': 'タイトル日本語', 'subitem_1551255648112': 'ja'},
-             {'subitem_1551255647225': 'Title', 'subitem_1551255648112': 'en'}]}),
-         ('item_1551264340087', {'attribute_name': 'Creator', 'attribute_value_mlt':
-                                 [{'subitem_1551255898956': [{'subitem_1551255905565': '作者', 'subitem_1551255907416': 'ja'}]}]}),
-         ('item_1551264447183', {'attribute_name': 'Access Rights', 'attribute_value_mlt':
-                                 [{'subitem_1551257553743': 'open access', 'subitem_1551257578398': 'http://purl.org/coar/access_right/c_abf2'}]}),
-         ('item_1551264418667', {'attribute_name': 'Contributor', 'attribute_value_mlt':
-                                 [{'subitem_1551257036415': 'Distributor', 'subitem_1551257339190':
-                                   [{'subitem_1551257342360': ''}], 'subitem_1551257245638':
-                                   [{'subitem_1551257276108': '寄与者', 'subitem_1551257279831': 'ja'},
-                                    {'subitem_1551257276108': 'Contributor', 'subitem_1551257279831': 'en'}]}]}),
-         ('item_1551264822581', {'attribute_name': 'Subject', 'attribute_value_mlt':
-                                 [{'subitem_1551257315453': '日本史', 'subitem_1551257323812': 'ja', 'subitem_1551257329877': 'NDC'},
-                                  {'subitem_1551257315453': 'General History of Japan', 'subitem_1551257323812': 'en',
-                                   'subitem_1551257329877': 'NDC'}]}), ('item_1551265227803',
-                                                                        {'attribute_name': 'Relation', 'attribute_value_mlt':
-                                                                         [{'subitem_1551256388439': 'references', 'subitem_1551256465077':
-                                                                           [{'subitem_1551256478339': 'localid', 'subitem_1551256629524': 'Local'}]}]}),
-         ('item_1551264974654', {'attribute_name': 'Date', 'attribute_value_mlt':
-                                 [{'subitem_1551255753471': '2000-01-01'}, {'subitem_1551255753471': '2012-06-11'},
-                                  {'subitem_1551255753471': '2016-05-24'}]}),
-         ('item_1551264846237', {'attribute_name': 'Description', 'attribute_value_mlt':
-                                 [{'subitem_1551255577890': '概要', 'subitem_1551255592625': 'ja', 'subitem_1551255637472': 'Abstract'},
-                                  {'subitem_1551255577890': 'その他', 'subitem_1551255592625': 'ja',
-                                      'subitem_1551255637472': 'Other'},
-                                  {'subitem_1551255577890': 'materials: text', 'subitem_1551255592625': 'en', 'subitem_1551255637472': 'Other'}]}),
-         ('item_1551265002099', {'attribute_name': 'Language', 'attribute_value_mlt': [
-          {'subitem_1551255818386': 'jpn'}]}),
-         ('item_1551265032053', {'attribute_name': 'Resource Type', 'attribute_value_mlt':
-                                 [{'resourcetype': 'manuscript', 'resourceuri': 'http://purl.org/coar/resource_type/c_0040'}]}),
-         ('item_1551265302120', {'attribute_name': 'Temporal', 'attribute_value_mlt': [
-          {'subitem_1551256918211': '2000-01-01/2021-03-30'}]}),
-         ('item_title', 'タイトル日本語'),
-         ('item_type_id', '12'), ('control_number', '870')])]
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data", "meta00.json")
+    with open(filepath, encoding="utf-8") as f:
+            input_data = json.load(f)
+    return input_data
+
+# def json_loader(data, pid, owner_id=None):
+# def copy_field_test(dc, map, jrc, iid=None):
+# def convert_range_value(start, end=None):
+
+def test_convert_range_value():
+    assert convert_range_value('1', '2') == {'gte': '1', 'lte': '2'}
 
 
-def test_copy_value_json_path(meta, jsonpath):
-    assert copy_value_json_path(meta[0], jsonpath[0]) == '寄与者'
-    assert copy_value_json_path(
-        meta[0], jsonpath[1]) == '2000-01-01/2021-03-30'
-    assert copy_value_json_path(
-        meta[0], jsonpath[2]) == '概要'
-
-
-def test_copy_values_json_path(meta, jsonpath):
-    assert copy_values_json_path(meta[0], jsonpath[0]) == [
-        '寄与者', 'Contributor']
-    assert copy_values_json_path(meta[0], jsonpath[1]) == [
-        '2000-01-01/2021-03-30']
-    assert copy_values_json_path(meta[0], jsonpath[2]) == [
-        '概要', 'その他', 'materials: text']
-
+# def convert_date_range_value(start, end=None):
 
 def test_convert_date_range_value():
     assert convert_date_range_value('1762-01-26/1762-02-23') == {'gte': '1762-01-26',
                                                                  'lte': '1762-02-23'}
     assert convert_date_range_value('2000-01-01/2021-03-30') == {'gte': '2000-01-01',
                                                                  'lte': '2021-03-30'}
-
     assert convert_date_range_value(' 1762-01-26/1762-02-23 ') == {'gte': '1762-01-26',
                                                                    'lte': '1762-02-23'}
-
     assert convert_date_range_value('2000-01/2021-03') == {'gte': '2000-01',
                                                            'lte': '2021-03'}
     assert convert_date_range_value('2000/2021') == {'gte': '2000',
@@ -117,16 +62,15 @@ def test_convert_date_range_value():
                                                 'lte': '2000'}
     assert convert_date_range_value('2000-01-01', '2000-12-01') == {'gte': '2000-01-01',
                                                                     'lte': '2000-12-01'}
-
-
-def test_convert_range_value():
-    assert convert_range_value('1', '2') == {'gte': '1', 'lte': '2'}
-
-
-def test_convert_date_range_value():
+    assert convert_date_range_value(None, '2000-12-01') == {'gte': '2000-12-01',
     assert convert_date_range_value(
         '1979-01-01/1960-01-01') == {'gte': '1960-01-01', 'lte': '1979-01-01'}
+    assert convert_date_range_value(
+        '1979-1-1/1960-1-1') == {'gte': '1960-1-1', 'lte': '1979-1-1'}
+    assert convert_date_range_value('2021/12/1')=={'gte': '2021-12-1', 'lte': '2021-12-1'}
 
+
+# def makeDateRangeValue(start, end):
 
 def test_makeDateRangeValue():
     assert makeDateRangeValue('1979', '1960') == {
@@ -139,4 +83,91 @@ def test_makeDateRangeValue():
         'gte': '1979-01-01', 'lte': '1979-12-30'}
     assert makeDateRangeValue('1979-01-01', '1979-01-01') == {
         'gte': '1979-01-01', 'lte': '1979-01-01'}
-    assert makeDateRangeValue('1979/01/01', '1979/12/30') == None
+    assert makeDateRangeValue('1979/01/01', '1979/12/30') == {
+        'gte': '1979-01-01', 'lte': '1979-12-30'}
+    assert makeDateRangeValue('0000-00-00', '0000-00-00') == None
+
+
+
+
+
+# def get_value_from_dict(dc, path, path_type, iid=None):
+# def get_values_from_dict(dc, path, path_type, iid=None):
+# def copy_value_xml_path(dc, xml_path, iid=None):
+# def copy_value_json_path(meta, jsonpath):
+
+def test_copy_value_json_path(meta, jsonpath):
+    assert copy_value_json_path(meta[0], jsonpath[0]) == ['寄与者','Contributor']
+    assert copy_value_json_path(
+        meta[0], jsonpath[1]) == ['2000-01-01/2021-03-30']
+    assert copy_value_json_path(
+        meta[0], jsonpath[2]) == ['概要', 'その他', 'materials: text']
+
+
+# def copy_values_json_path(meta, jsonpath):
+
+def test_copy_values_json_path(meta, jsonpath):
+    assert copy_values_json_path(meta[0], jsonpath[0]) == [
+        '寄与者', 'Contributor']
+    assert copy_values_json_path(meta[0], jsonpath[1]) == [
+        '2000-01-01/2021-03-30']
+    assert copy_values_json_path(meta[0], jsonpath[2]) == [
+        '概要', 'その他', 'materials: text']
+    assert copy_values_json_path(meta[0], jsonpath[3]) == [
+        'その他', 'materials: text']
+
+# def set_timestamp(jrc, created, updated):
+# def sort_records(records, form):
+# def sort_op(record, kd, form):
+# def find_items(form):
+# def get_all_items(nlst, klst, is_get_name=False):
+# def get_all_items2(nlst, klst):
+# def to_orderdict(alst, klst, is_full_key=False):
+# def get_options_and_order_list(item_type_id, ojson=None):
+# def get_keywords_data_load(str):
+# def is_valid_openaire_type(resource_type, communities):
+# def check_has_attribute_value(node):
+# def get_attribute_value_all_items(
+# def check_input_value(old, new):
+# def remove_key(removed_key, item_val):
+# def remove_keys(excluded_keys, item_val):
+# def remove_multiple(schema):
+# def check_to_upgrade_version(old_render, new_render):
+# def remove_weko2_special_character(s: str):
+
+def test_remove_weko2_special_character():
+    assert remove_weko2_special_character("HOGE")=="HOGE"
+    assert remove_weko2_special_character("HOGE&EMPTY&HOGE")=="HOGEHOGE"
+    assert remove_weko2_special_character("HOGE,&EMPTY&")=="HOGE"
+    assert remove_weko2_special_character("&EMPTY&,HOGE")=="HOGE"
+    assert remove_weko2_special_character("HOGE,&EMPTY&,HOGE")=="HOGE,,HOGE"
+
+
+# def selected_value_by_language(lang_array, value_array, lang_id, val_id,
+# def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
+# def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
+# def get_value_by_selected_lang(source_title, current_lang):
+# def get_show_list_author(solst_dict_array, hide_email_flag, author_key,
+# def format_creates(creates, hide_creator_keys):
+# def get_creator(create, result_end, hide_creator_keys, current_lang):
+# def get_creator_by_languages(creates_key, create):
+# def get_affiliation(affiliations, result_end, current_lang, affiliation_key):
+# def get_author_has_language(creator, result_end, current_lang, map_keys):
+# def add_author(author_data, stt_key, is_specify_newline_array, s, value,
+# def convert_bibliographic(data_sys_bibliographic):
+# def add_biographic(sys_bibliographic, bibliographic_key, s, stt_key,
+# def custom_record_medata_for_export(record_metadata: dict):
+# def replace_fqdn(url_path: str, host_url: str = None) -> str:
+# def replace_fqdn_of_file_metadata(file_metadata_lst: list,
+
+
+
+
+
+
+
+
+
+
+
+    
