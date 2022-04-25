@@ -22,6 +22,7 @@
 
 from __future__ import absolute_import, print_function
 
+import json
 from celery import group, states
 from celery.task.control import revoke
 from flask import abort, current_app, request, session
@@ -52,6 +53,9 @@ class AuthorManagementView(BaseView):
         if tab_value == 'prefix':
             template = \
                 current_app.config['WEKO_AUTHORS_ADMIN_PREFIX_TEMPLATE']
+        if tab_value == 'affiliation':
+            template = \
+                current_app.config['WEKO_AUTHORS_ADMIN_AFFILIATION_TEMPLATE']
         return self.render(
             template,
             render_widgets=False,  # Moved to admin, no need for widgets
@@ -66,10 +70,11 @@ class AuthorManagementView(BaseView):
         """Render author edit view."""
         return self.render(
             current_app.config['WEKO_AUTHORS_ADMIN_EDIT_TEMPLATE'],
+            identifier_reg=json.dumps(current_app.config['WEKO_AUTHORS_IDENTIFIER_REG']),
             render_widgets=False,  # Moved to admin, no need for widgets
             lang_code=session.get(
                 'selected_language',
-                'en')  # Set default lang
+                'en'),  # Set default lang
         )
 
     @author_permission.require(http_exception=403)
@@ -78,6 +83,7 @@ class AuthorManagementView(BaseView):
         """Render an adding author view."""
         return self.render(
             current_app.config['WEKO_AUTHORS_ADMIN_EDIT_TEMPLATE'],
+            identifier_reg=json.dumps(current_app.config['WEKO_AUTHORS_IDENTIFIER_REG']),
             render_widgets=False,  # Moved to admin, no need for widgets
             lang_code=session.get('selected_language', 'en')  # Set default
         )

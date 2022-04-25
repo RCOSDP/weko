@@ -265,12 +265,6 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
             type='')
         pdf.set_y(55)
 
-    # Title settings
-    title = item_metadata_json['title']
-    pdf.set_font('IPAexm', '', 20)
-    pdf.multi_cell(w1 + w2, title_h, title, 0, 'L', False)
-    pdf.ln(h='15')
-
     # Metadata
     fg = WekoFeedGenerator()
     fe = fg.add_entry()
@@ -288,6 +282,10 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     if _creator in item_map:
         _creator_item_id = item_map[_creator].split('.')[0]
 
+    title_attr_lang = 'title.@attributes.xml:lang'
+    title_value = 'title.@value'
+    title_item_id = None
+
     publisher_attr_lang = 'publisher.@attributes.xml:lang'
     publisher_value = 'publisher.@value'
     publisher_item_id = None
@@ -298,6 +296,31 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     keyword_attr_value = 'subject.@value'
     keyword_base = None
     keyword_lang = None
+
+    try:
+        multi_lang_value = {}
+        title_item_id = item_map[title_attr_lang].split('.')[0]
+        title_lang_ids = item_map[title_attr_lang].split('.')[1:]
+        title_text_ids = item_map[title_value].split('.')[1:]
+        title = None
+        titles = item_metadata_json[title_item_id]
+        pair_name_language_title = get_pair_value(title_text_ids,
+                                                  title_lang_ids,
+                                                  titles)
+        for title_name, title_lang in pair_name_language_title:
+            if not title_lang:
+                title_lang == 'None Language'
+            multi_lang_value[title_lang] = title_name
+        title = get_value_by_selected_lang(multi_lang_value, cur_lang)
+        if not title:
+            title = item_metadata_json['title']
+    except (KeyError, IndexError):
+        title = item_metadata_json['title']
+
+    # Title settings
+    pdf.set_font('IPAexm', '', 20)
+    pdf.multi_cell(w1 + w2, title_h, title, 0, 'L', False)
+    pdf.ln(h='15')
 
     #pdf.set_font('Arial', '', 14)
     pdf.set_font('IPAexg', '', 14)

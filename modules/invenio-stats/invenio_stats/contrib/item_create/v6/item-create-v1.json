@@ -39,7 +39,7 @@
           "type": "boolean"
         },
         "cur_user_id": {
-          "type": "integer",
+          "type": "keyword",
           "index": true
         },
         "username": {

@@ -25,7 +25,7 @@ import tempfile
 import json
 
 import pytest
-from flask import Flask, request, url_for
+from flask import Flask, url_for
 from flask_babelex import Babel
 from invenio_db import InvenioDB, db as db_
 from invenio_accounts import InvenioAccounts
@@ -37,6 +37,7 @@ from invenio_indexer import InvenioIndexer
 from invenio_search import InvenioSearch
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 from simplekv.memory.redisstore import RedisStore
+from sqlalchemy import inspect
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
 
@@ -67,6 +68,9 @@ def base_app(instance_path):
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         INDEX_IMG='indextree/36466818-image.jpg',
         SEARCH_UI_SEARCH_INDEX='tenant1-weko',
+        WEKO_AUTHORS_AFFILIATION_IDENTIFIER_ITEM_OTHER=4,
+        WEKO_AUTHORS_LIST_SCHEME_AFFILIATION=[
+            'ISNI', 'GRID', 'Ringgold', 'kakenhi', 'Other'],
     )
     Babel(app_)
     InvenioDB(app_)
@@ -197,3 +201,12 @@ def create_author(db):
 
     # Return new author's id
     return _create_author
+def user():
+    """Create a example user."""
+    return create_test_user(email='test@test.org')
+
+
+def object_as_dict(obj):
+    """Make a dict from SQLAlchemy object."""
+    return {c.key: getattr(obj, c.key)
+            for c in inspect(obj).mapper.column_attrs}

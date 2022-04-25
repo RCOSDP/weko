@@ -222,14 +222,16 @@ def getEncode(filepath):
     Returns:
         [type]: [description]
     """
-    encs = "iso-2022-jp euc-jp shift_jis utf-8".split()
+    encs = ["iso-2022-jp", "euc-jp", "shift_jis", "utf-8","utf-8-sig","utf-16be","utf-16le","utf-32be","utf-32le",""]
     for enc in encs:
-        with open(filepath, encoding=enc) as fr:
-            try:
-                fr = fr.read()
-            except UnicodeDecodeError:
-                continue
-        return enc
+        if enc != "":
+            with open(filepath, encoding=enc) as fr:
+                try:
+                    fr = fr.read()
+                except UnicodeDecodeError:
+                    continue
+            return enc
+    return enc
 
 
 def unpackage_and_check_import_file(csv_file_name, temp_file, mapping_ids):
@@ -580,7 +582,7 @@ def get_count_item_link(pk_id):
     """Get count of item link of author."""
     count = 0
     query_q = {
-        "query": {"term": {"author_link": pk_id}},
+        "query": {"term": {"author_link.raw": pk_id}},
         "_source": ["control_number"]
     }
     result_itemCnt = RecordIndexer().client.search(

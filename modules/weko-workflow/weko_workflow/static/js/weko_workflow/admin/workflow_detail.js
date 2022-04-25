@@ -76,6 +76,8 @@ $("#btn_create").on("click", function () {
   if (index_id !== '') {
     post_data['index_id'] = index_id;
   }
+  location_id = $('#txt_location').val()
+  post_data['location_id'] = location_id !== '' ? location_id : null;
   $.ajax({
     url: post_uri,
     method: "POST",

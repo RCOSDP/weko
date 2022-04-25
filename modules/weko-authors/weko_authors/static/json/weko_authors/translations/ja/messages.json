@@ -1,4 +1,48 @@
 {
+    "Author_Button_Clear": [
+        null,
+        "取消"
+    ],
+    "Author_Button_Save": [
+        null,
+        "保存"
+    ],
+    "Author_Button_Edit": [
+        null,
+        "編集"
+    ],
+    "Author_Button_Search": [
+        null,
+        "検索"
+    ],
+    "Author_Button_Back": [
+        null,
+        "戻る"
+    ],
+    "Author_Button_Execute": [
+        null,
+        "実行"
+    ],
+    "Author_Control": [
+        null,
+        "コントロール"
+    ],
+    "Author_Button_Cancel": [
+        null,
+        "キャンセル"
+    ],
+    "Author_Button_Delete": [
+        null,
+        "削除"
+    ],
+    "Author_Select": [
+        null,
+        "選択"
+    ],
+    "Author_Button_Add": [
+        null,
+        "追加"
+    ],  
     "Author_Add_New_Author": [
         null,
         "著者追加"
@@ -41,15 +85,31 @@
     ],
     "Author_Add_EMail": [
         null,
-        "e-mailを追加"
+        "E-Mailを追加"
     ],
-    "Author_Button_Clear": [
+    "Author_Identifier": [
         null,
-        "取 消"
+        "所属機関識別子"
     ],
-    "Author_Button_Save": [
+    "Author_Add_Identifier": [
         null,
-        "保存"
+        "所属機関識別子を追加"
+    ],
+    "Author_Affiliation_Name": [
+        null,
+        "所属機関名"
+    ],
+    "Author_Add_Affiliation_Name": [
+        null,
+        "所属機関名を追加"
+    ],
+    "Author_Affiliation": [
+        null,
+        "所属情報"
+    ],
+    "Author_Add_Affiliation": [
+        null,
+        "所属情報を追加"
     ],
     "Author_familyNmAndNm": [
         null,
@@ -63,21 +123,33 @@
         null,
         "組織追加"
     ],
+    "Author_Button_Merge": [
+        null,
+        "著者統合"
+    ],
     "Author_Add_Author": [
         null,
         "著者追加"
     ],
-    "Author_Search": [
+    "Author_Display_Number": [
         null,
-        "検索"
+        "表示件数"
+    ],
+    "Author_Origin": [
+        null,
+        "統合元"
+    ],
+    "Author_Target": [
+        null,
+        "統合先"
     ],
     "Author_Mail_Address": [
         null,
         "メールアドレス"
     ],
-    "Author_Edit": [
+    "Author_Item_Count": [
         null,
-        "編集"
+        "アイテム件数"
     ],
     "Author_Search_No_Result": [
         null,
@@ -98,5 +170,29 @@
     "Author_Confirm_Msg": [
         null,
         "指定された識別子にURLが設定されていないため確認のサイトを開けません。"
+    ],
+    "Prefix_Name": [
+        null,
+        "作成者識別子"
+    ],
+    "Prefix_Scheme": [
+        null,
+        "IDスキーマ名"
+    ],
+    "Prefix_URL": [
+        null,
+        "URL"
+    ],
+    "Affiliation_Name": [
+        null,
+        "所属機関識別子"
+    ],
+    "Affiliation_Scheme": [
+        null,
+        "IDスキーマ名"
+    ],
+    "Affiliation_URL": [
+        null,
+        "URL"
     ]
 }

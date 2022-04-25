@@ -1918,6 +1918,15 @@ def get_data_authors_prefix_settings():
         current_app.logger.error(e)
         return None
 
+def get_data_authors_affiliation_settings():
+    """Get all authors affiliation settings."""
+    from weko_authors.models import AuthorsAffiliationSettings
+    try:
+        return db.session.query(AuthorsAffiliationSettings).all()
+    except Exception as e:
+        current_app.logger.error(e)
+        return None
+
 
 def hide_meta_data_for_role(record):
     """

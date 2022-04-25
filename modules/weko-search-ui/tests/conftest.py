@@ -21,11 +21,13 @@
 """Pytest configuration."""
 
 import shutil
+import os
 import tempfile
 import os
 
 import pytest
 from flask import Flask
+from flask import session, url_for
 from flask_babelex import Babel
 
 from invenio_accounts import InvenioAccounts
@@ -33,12 +35,13 @@ from invenio_accounts.testutils import create_test_user, login_user_via_session
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers
 from sqlalchemy_utils.functions import create_database, database_exists
-from invenio_db import InvenioDB
-from invenio_db import db as db_
+from invenio_db import InvenioDB, db as db_
 from invenio_search import RecordsSearch
 from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 from invenio_records_rest import InvenioRecordsREST
 from invenio_pidstore import InvenioPIDStore
+from invenio_i18n.ext import InvenioI18N, current_i18n
+from invenio_records_rest import InvenioRecordsREST
 
 from weko_search_ui import WekoSearchUI, WekoSearchREST
 from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX
@@ -56,38 +59,51 @@ def base_app(instance_path):
     """Flask application fixture."""
     app_ = Flask('testapp', instance_path=instance_path)
     app_.config.update(
-        SECRET_KEY='SECRET_KEY',
+        DB_VERSIONING=False,
+        DB_VERSIONING_USER_MODEL=None,
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+            "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
+        ),
+        SQLALCHEMY_TRACK_MODIFICATIONS=True,
+        SECRET_KEY="SECRET_KEY",
         TESTING=True,
         INDEX_IMG='indextree/36466818-image.jpg',
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         WEKO_SEARCH_REST_ENDPOINTS = dict(
-    recid=dict(
-        pid_type='recid',
-        pid_minter='recid',
-        pid_fetcher='recid',
-        search_class=RecordsSearch,
-        search_index=SEARCH_UI_SEARCH_INDEX,
-        search_type='item-v1.0.0',
-        search_factory_imp='weko_search_ui.query.weko_search_factory',
-        # record_class='',
-        record_serializers={
-            'application/json': ('invenio_records_rest.serializers'
-                                 ':json_v1_response'),
-        },
-        search_serializers={
-            'application/json': ('weko_records.serializers'
-                                 ':json_v1_search'),
-        },
-        index_route='/index/',
-        links_factory_imp='weko_search_ui.links:default_links_factory',
-        default_media_type='application/json',
-        max_result_window=10000,
-    ),
-)
+            recid=dict(
+                pid_type='recid',
+                pid_minter='recid',
+                pid_fetcher='recid',
+                search_class=RecordsSearch,
+                search_index=SEARCH_UI_SEARCH_INDEX,
+                search_type='item-v1.0.0',
+                search_factory_imp='weko_search_ui.query.weko_search_factory',
+                # record_class='',
+                record_serializers={
+                    'application/json': ('invenio_records_rest.serializers'
+                                        ':json_v1_response'),
+                },
+                search_serializers={
+                    'application/json': ('weko_records.serializers'
+                                        ':json_v1_search'),
+                },
+                index_route='/index/',
+                links_factory_imp='weko_search_ui.links:default_links_factory',
+                default_media_type='application/json',
+                max_result_window=10000,
+            ),
+        ),
+        JSON_AS_ASCII=False,
+        BABEL_DEFAULT_LOCALE="en",
+        BABEL_DEFAULT_LANGUAGE="en",
+        BABEL_DEFAULT_TIMEZONE="Asia/Tokyo",
+        I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English")],
+        I18N_SESSION_KEY="my_session_key",
     )
     Babel(app_)
     InvenioDB(app_)
+    InvenioI18N(app_)
     InvenioAccounts(app_)
     InvenioAccess(app_)
     InvenioRecordsREST(app_)

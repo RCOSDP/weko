@@ -61,8 +61,15 @@ install_requires = [
     'Flask-WTF>=0.13.1',
     'Flask-Mail>=0.9.1',
     'invenio-db>=1.0.0b9',
+    'SQLAlchemy-Continuum>=1.3.6',
     'invenio-accounts>=1.0.0b3',
+    "elasticsearch_dsl<7.0.0,>=6.4.0",
     'invenio-assets>=1.0.0b7',
+    'invenio-admin>=1.1.2',
+    'requests>=2.18.4',
+    'invenio-cache>=1.0.0',
+    'invenio-indexer>=1.0.0',
+    'invenio-search>=1.0.0',
 ]
 
 packages = find_packages()
@@ -97,6 +104,7 @@ setup(
             'billing = weko_admin.cli:billing',
             'admin_settings = weko_admin.cli:admin_settings',
             'authors_prefix = weko_admin.cli:authors_prefix',
+            'authors_affiliation = weko_admin.cli:authors_affiliation',
             'facet_search_setting = weko_admin.cli:facet_search_setting'
         ],
         'invenio_celery.tasks': [

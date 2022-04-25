@@ -107,6 +107,7 @@ def access_token():
         error = InvalidClientError()
         response = jsonify(dict(error.twotuples))
         response.status_code = error.status_code
+        current_app.logger.debug(response)
         abort(response)
 
     # Return None or a dictionary. Dictionary will be merged with token
