@@ -389,6 +389,7 @@ class WorkFlow(object):
                     _workflow.flow_id = workflow.get('flow_id')
                     _workflow.index_tree_id = workflow.get('index_tree_id')
                     _workflow.open_restricted = workflow.get('open_restricted')
+                    _workflow.location_id = workflow.get('location_id')
                     _workflow.is_gakuninrdm = workflow.get('is_gakuninrdm')
                     db.session.merge(_workflow)
             db.session.commit()
@@ -1818,7 +1819,7 @@ class WorkActivity(object):
         offset = int(size) * (int(page) - 1)
         # Get activities
         query_action_activities = query_action_activities \
-            .distinct(_Activity.id).order_by(asc(_Activity.id))
+            .distinct(_Activity.id).order_by(desc(_Activity.id))
         if not is_get_all:
             query_action_activities = query_action_activities.limit(
                 size).offset(offset)
@@ -1864,11 +1865,11 @@ class WorkActivity(object):
                     _Activity.flow_id.in_(db_flow_define_ids),
                     _Activity.activity_community_id == community_id
                 ).order_by(
-                    asc(_Activity.id)).all()
+                    desc(_Activity.id)).all()
             else:
                 activities = _Activity.query.filter(
                     _Activity.flow_id.in_(db_flow_define_ids)).order_by(
-                    asc(_Activity.id)).all()
+                    desc(_Activity.id)).all()
             return activities
 
     def get_activity_steps(self, activity_id):
@@ -1876,6 +1877,8 @@ class WorkActivity(object):
         steps = []
         his = WorkActivityHistory()
         histories = his.get_activity_history_list(activity_id)
+        if not histories:
+            abort(404)
         history_dict = {}
         activity = WorkActivity()
         activity_detail = activity.\
@@ -2076,7 +2079,8 @@ class WorkActivity(object):
             comm = GetCommunity.get_community_by_id(
                 request.args.get('community'))
             ctx = {'community': comm}
-            community_id = comm.id
+            if comm is not None:
+                community_id = comm.id
 
         # display_activity of Identifier grant
         if action_endpoint == 'identifier_grant' and item:

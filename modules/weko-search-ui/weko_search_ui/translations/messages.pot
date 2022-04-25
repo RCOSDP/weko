@@ -156,6 +156,10 @@ msgstr ""
 msgid "Both of IndexID and POS_INDEX are not being set."
 msgstr ""
 
+#: weko_search_ui/utils.py:2470
+msgid "ID is specified for the newly registered item. Ignore the ID and register."
+msgstr ""
+
 #: weko_search_ui/utils.py:1426
 msgid "Specified {} is invalid."
 msgstr ""

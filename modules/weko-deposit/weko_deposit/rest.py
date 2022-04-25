@@ -24,6 +24,7 @@ import json
 import sys
 
 import redis
+from redis import sentinel
 from elasticsearch import ElasticsearchException
 from flask import Blueprint, abort, current_app, jsonify, request
 from invenio_db import db
@@ -37,6 +38,7 @@ from invenio_records_rest.views import pass_record
 from invenio_rest import ContentNegotiatedMethodView
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
+from weko_redis.redis import RedisConnection
 
 from .api import WekoDeposit
 
@@ -233,8 +235,8 @@ class ItemResource(ContentNegotiatedMethodView):
                 pid_value = pid.pid_value if pid else pid_value
 
             # Saving ItemMetadata cached on Redis by pid
-            datastore = RedisStore(redis.StrictRedis.from_url(
-                current_app.config['CACHE_REDIS_URL']))
+            redis_connection = RedisConnection()
+            datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
             cache_key = current_app.config[
                 'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=pid_value)
             ttl_sec = int(current_app.config['WEKO_DEPOSIT_ITEMS_CACHE_TTL'])

@@ -29,7 +29,7 @@
   {% assets "weko_records_ui_file_action_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
-{% from "weko_records_ui/item_detail.html" import output_item_detail %}
+{% from "weko_records_ui/item_detail.html" import output_item_detail with context %}
 {% from "weko_records_ui/_macros.html" import check_download_file with context %}
 <div class="panel-group">
   <div class="panel panel-default">
@@ -45,7 +45,7 @@
           <div id="record_id" class="hide">{{ record.id }}</div>
           {%- block record_author %}
           {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
-          {%- if accessRight == 'open access' or not config.WEKO_RECORDS_UI_DISPLAY_ONLINE_ANALYSIS_FLG -%}
+          {%- if (accessRight == 'open access' or accessRight == 'オープンアクセス') or not config.WEKO_RECORDS_UI_DISPLAY_ONLINE_ANALYSIS_FLG -%}
           {%- if files | selectattr('is_thumbnail', 'equalto', False)| list | length > 0 -%}
           <!-- Preview Carousel -->
           {% if not record.hide_file %}
@@ -60,9 +60,11 @@
               <thead>
                 <tr>
                   {# ファイルが存在しない場合は空にする #}
+				  <!--
                   <th style="width: 3%; text-align: center; vertical-align: middle;" class="checkbox-th">
                     <input type="checkbox" id="all_file_checkbox" />
                   </th>
+				  -->
                   <th>{{_('Name')}} / {{_('File')}}</th>
                   <th>{{_('License')}}</th>
                   <th class="action_header">{{_('Actions')}}</th>
@@ -96,10 +98,11 @@
                     {%- set access_permission = record | check_file_permission(file) -%}
 
                     <tr class="file-row">
+						<!--
                       <td rowspan="1" class="filecheck-td">
                         <input type="checkbox" class="alignCenter file-check action-checkbox" value={{ file.filename | urlencode }}>
                       </td>
-
+					-->
                       <td class="filename-td">
                         <span class="filename">
                           <img src="{{img}}" alt={{ file.filename }} />
@@ -413,14 +416,20 @@
           {%- include "weko_records_ui/box/stats.html" %}
           {%- if files | selectattr('is_thumbnail', 'equalto', False)| list | length > 0 -%}
             {% if not record.hide_file %}
-              {% if accessRight == 'open access' and config.WEKO_RECORDS_UI_DISPLAY_ONLINE_ANALYSIS_FLG %}
+              {% if (accessRight == 'open access' or accessRight=='オープンアクセス') and config.WEKO_RECORDS_UI_DISPLAY_ONLINE_ANALYSIS_FLG %}
                 {%- include "weko_records_ui/box/analysis.html" %}
               {% endif %}
             {% endif %}
           {% endif %}
-          {%- include "weko_records_ui/box/versions.html" %}
-          {%- include "weko_records_ui/box/share.html" %}
-          {%- include "weko_records_ui/box/export.html" %}
+		  {% if config.WEKO_RECORDS_UI_DISPLAY_VERSION_BOX_FLG %}
+             {%- include "weko_records_ui/box/versions.html" %}
+		  {% endif %}
+          {% if config.WEKO_RECORDS_UI_DISPLAY_SHARE_BOX_FLG %}
+              {%- include "weko_records_ui/box/share.html" %}
+          {% endif %}
+		  {% if config.WEKO_RECORDS_UI_DISPLAY_EXPORT_BOX_FLG %}
+              {%- include "weko_records_ui/box/export.html" %}
+		  {% endif %}
           <!-- end demo block -->
         </div>
       </div>

@@ -33,6 +33,34 @@ def test_version():
 def test_init():
     """Test extension initialization."""
     app = Flask('testapp')
+    app.config.update(
+        ACCOUNTS_USE_CELERY=False,
+        task_always_eager=True,
+        CELERY_CACHE_BACKEND="memory",
+        task_eager_propagates=True,
+        CELERY_RESULT_BACKEND="cache",
+        LOGIN_DISABLED=False,
+        MAIL_SUPPRESS_SEND=True,
+        SECRET_KEY="CHANGE_ME",
+        SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
+        SECURITY_CONFIRM_EMAIL_WITHIN="2 seconds",
+        SECURITY_RESET_PASSWORD_WITHIN="2 seconds",
+        DB_VERSIONING=False,
+        DB_VERSIONING_USER_MODEL=None,
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///'+os.path.join(instance_path,'test.db')),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///:memory:'),
+        SERVER_NAME='example.com',
+        TESTING=True,
+        WTF_CSRF_ENABLED=False,
+        ACCOUNTS_JWT_ALOGORITHM = 'HS256',
+        ACCOUNTS_JWT_SECRET_KEY = None
+    )
+
     Babel(app)
     Mail(app)
     InvenioDB(app)
@@ -41,6 +69,34 @@ def test_init():
     assert 'security' in app.blueprints.keys()
 
     app = Flask('testapp')
+    app.config.update(
+        ACCOUNTS_USE_CELERY=False,
+        task_always_eager=True,
+        CELERY_CACHE_BACKEND="memory",
+        task_eager_propagates=True,
+        CELERY_RESULT_BACKEND="cache",
+        LOGIN_DISABLED=False,
+        MAIL_SUPPRESS_SEND=True,
+        SECRET_KEY="CHANGE_ME",
+        SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
+        SECURITY_CONFIRM_EMAIL_WITHIN="2 seconds",
+        SECURITY_RESET_PASSWORD_WITHIN="2 seconds",
+        DB_VERSIONING=False,
+        DB_VERSIONING_USER_MODEL=None,
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///'+os.path.join(instance_path,'test.db')),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///:memory:'),
+        SERVER_NAME='example.com',
+        TESTING=True,
+        WTF_CSRF_ENABLED=False,
+        ACCOUNTS_JWT_ALOGORITHM = 'HS256',
+        ACCOUNTS_JWT_SECRET_KEY = None
+    )
+
     Babel(app)
     Mail(app)
     InvenioDB(app)
@@ -55,6 +111,34 @@ def test_init():
 def test_init_rest():
     """Test REST extension initialization."""
     app = Flask('testapp')
+    app.config.update(
+        ACCOUNTS_USE_CELERY=False,
+        task_always_eager=True,
+        CELERY_CACHE_BACKEND="memory",
+        task_eager_propagates=True,
+        CELERY_RESULT_BACKEND="cache",
+        LOGIN_DISABLED=False,
+        MAIL_SUPPRESS_SEND=True,
+        SECRET_KEY="CHANGE_ME",
+        SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
+        SECURITY_CONFIRM_EMAIL_WITHIN="2 seconds",
+        SECURITY_RESET_PASSWORD_WITHIN="2 seconds",
+        DB_VERSIONING=False,
+        DB_VERSIONING_USER_MODEL=None,
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///'+os.path.join(instance_path,'test.db')),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///:memory:'),
+        SERVER_NAME='example.com',
+        TESTING=True,
+        WTF_CSRF_ENABLED=False,
+        ACCOUNTS_JWT_ALOGORITHM = 'HS256',
+        ACCOUNTS_JWT_SECRET_KEY = None
+    )
+
     Babel(app)
     Mail(app)
     InvenioDB(app)
@@ -63,6 +147,33 @@ def test_init_rest():
     assert 'security' not in app.blueprints.keys()
 
     app = Flask('testapp')
+    app.config.update(
+        ACCOUNTS_USE_CELERY=False,
+        task_always_eager=True,
+        CELERY_CACHE_BACKEND="memory",
+        task_eager_propagates=True,
+        CELERY_RESULT_BACKEND="cache",
+        LOGIN_DISABLED=False,
+        MAIL_SUPPRESS_SEND=True,
+        SECRET_KEY="CHANGE_ME",
+        SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
+        SECURITY_CONFIRM_EMAIL_WITHIN="2 seconds",
+        SECURITY_RESET_PASSWORD_WITHIN="2 seconds",
+        DB_VERSIONING=False,
+        DB_VERSIONING_USER_MODEL=None,
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///'+os.path.join(instance_path,'test.db')),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///:memory:'),
+        SERVER_NAME='example.com',
+        TESTING=True,
+        WTF_CSRF_ENABLED=False,
+        ACCOUNTS_JWT_ALOGORITHM = 'HS256',
+        ACCOUNTS_JWT_SECRET_KEY = None
+    )
     Babel(app)
     Mail(app)
     InvenioDB(app)
@@ -74,6 +185,33 @@ def test_init_rest():
     assert 'security' not in app.blueprints.keys()
 
     app = Flask('testapp')
+    app.config.update(
+        ACCOUNTS_USE_CELERY=False,
+        task_always_eager=True,
+        CELERY_CACHE_BACKEND="memory",
+        task_eager_propagates=True,
+        CELERY_RESULT_BACKEND="cache",
+        LOGIN_DISABLED=False,
+        MAIL_SUPPRESS_SEND=True,
+        SECRET_KEY="CHANGE_ME",
+        SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
+        SECURITY_CONFIRM_EMAIL_WITHIN="2 seconds",
+        SECURITY_RESET_PASSWORD_WITHIN="2 seconds",
+        DB_VERSIONING=False,
+        DB_VERSIONING_USER_MODEL=None,
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///'+os.path.join(instance_path,'test.db')),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///:memory:'),
+        SERVER_NAME='example.com',
+        TESTING=True,
+        WTF_CSRF_ENABLED=False,
+        ACCOUNTS_JWT_ALOGORITHM = 'HS256',
+        ACCOUNTS_JWT_SECRET_KEY = None
+    )
     app.config['ACCOUNTS_REGISTER_BLUEPRINT'] = True
     Babel(app)
     Mail(app)

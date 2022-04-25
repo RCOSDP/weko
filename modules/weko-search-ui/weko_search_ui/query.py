@@ -45,6 +45,7 @@ def get_item_type_aggs(search_index):
     :return: aggs dict
     """
     from weko_admin.utils import get_facet_search_query
+
     facets = get_facet_search_query(search_permission.can())
     return facets.get(search_index).get("aggs", {})
 
@@ -60,36 +61,36 @@ def get_permission_filter(index_id: str = None):
 
     """
     is_perm = search_permission.can()
-    match = Q('match', publish_status='0')
-    version = Q('match', relation_version_is_last='true')
-    rng = Q('range', **{'publish_date': {'lte': 'now/d'}})
+    match = Q("match", publish_status="0")
+    version = Q("match", relation_version_is_last="true")
+    rng = Q("range", **{"publish_date": {"lte": "now/d"}})
     term_list = []
     mst = []
     is_perm_paths = Indexes.get_browsing_tree_paths()
-    is_perm_indexes = [item.split('/')[-1] for item in is_perm_paths]
-    search_type = request.values.get('search_type')
+    is_perm_indexes = [item.split("/")[-1] for item in is_perm_paths]
+    search_type = request.values.get("search_type")
 
     if index_id:
         index_id = str(index_id)
-        if search_type == config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']:
+        if search_type == config.WEKO_SEARCH_TYPE_DICT["FULL_TEXT"]:
             should_path = []
             if index_id in is_perm_indexes:
                 should_path.append(Q("terms", path=index_id))
 
             mst.append(match)
             mst.append(rng)
-            terms = Q('bool', should=should_path)
-        else:   # In case search_type is keyword or index
+            terms = Q("bool", should=should_path)
+        else:  # In case search_type is keyword or index
             if index_id in is_perm_indexes:
                 term_list.append(index_id)
 
             mst.append(match)
             mst.append(rng)
-            terms = Q('terms', path=term_list)
+            terms = Q("terms", path=term_list)
     else:
         mst.append(match)
         mst.append(rng)
-        terms = Q('terms', path=is_perm_indexes)
+        terms = Q("terms", path=is_perm_indexes)
 
     mut = []
 
@@ -97,16 +98,18 @@ def get_permission_filter(index_id: str = None):
         user_id, result = check_admin_user()
 
         if result:
-            shuld = [Q('match', weko_creator_id=user_id),
-                     Q('match', weko_shared_id=user_id)]
-            shuld.append(Q('bool', must=mst))
-            mut.append(Q('bool', should=shuld, must=[terms]))
-            mut.append(Q('bool', must=version))
+            shuld = [
+                Q("match", weko_creator_id=user_id),
+                Q("match", weko_shared_id=user_id),
+            ]
+            shuld.append(Q("bool", must=mst))
+            mut.append(Q("bool", should=shuld, must=[terms]))
+            mut.append(Q("bool", must=version))
     else:
         mut = mst
         mut.append(terms)
         base_mut = [match, version]
-        mut.append(Q('bool', must=base_mut))
+        mut.append(Q("bool", must=base_mut))
 
     return mut, is_perm_paths
 
@@ -120,18 +123,23 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     :param search_type: Search type. (Default: ``None``)
     :returns: Tuple with search instance and URL arguments.
     """
+
     def _get_search_qs_query(qs=None):
         """Qs of search bar keywords for detail simple search.
 
         :param qs: Query string.
         :return: Query parser.
         """
-        q = Q(
-            'query_string',
-            query=qs,
-            default_operator='and',
-            fields=['search_*', 'search_*.ja']
-        ) if qs else None
+        q = (
+            Q(
+                "query_string",
+                query=qs,
+                default_operator="and",
+                fields=["search_*", "search_*.ja"],
+            )
+            if qs
+            else None
+        )
 
         return q
 
@@ -140,11 +148,12 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
         :return: Query parser.
         """
+
         def _get_keywords_query(k, v):
             qry = None
-            kv = request.values.get(
-                'lang'
-            ) if k == 'language' else request.values.get(k)
+            kv = (
+                request.values.get("lang") if k == "language" else request.values.get(k)
+            )
 
             if not kv:
                 return
@@ -152,11 +161,16 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             if isinstance(v, str):
                 name_dict = dict(operator="and")
                 name_dict.update(dict(query=kv))
-                qry = Q('match', **{v: name_dict})
+                qry = Q("match", **{v: name_dict})
             elif isinstance(v, list):
-                qry = Q('multi_match', query=kv, type='most_fields',
-                        minimum_should_match='75%',
-                        operator='and', fields=v)
+                qry = Q(
+                    "multi_match",
+                    query=kv,
+                    type="most_fields",
+                    minimum_should_match="75%",
+                    operator="and",
+                    fields=v,
+                )
             elif isinstance(v, dict):
 
                 for key, vlst in v.items():
@@ -164,35 +178,36 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                     if isinstance(vlst, list):
                         shud = []
                         kvl = [
-                            x for x in kv.split(',')
+                            x
+                            for x in kv.split(",")
                             if x.isdecimal() and int(x) < len(vlst) + 1
                         ]
 
-                        for j in map(
-                                partial(lambda x, y: x[int(y)], vlst), kvl):
+                        for j in map(partial(lambda x, y: x[int(y)], vlst), kvl):
                             name_dict = dict(operator="and")
                             name_dict.update(dict(query=j))
-                            shud.append(Q('match', **{key: name_dict}))
+                            shud.append(Q("match", **{key: name_dict}))
 
-                        kvl = [x for x in kv.split(',')
-                               if not x.isdecimal() and x in vlst]
+                        kvl = [
+                            x for x in kv.split(",") if not x.isdecimal() and x in vlst
+                        ]
 
                         for j in kvl:
                             name_dict = dict(operator="and")
                             name_dict.update(dict(query=j))
-                            shud.append(Q('match', **{key: name_dict}))
+                            shud.append(Q("match", **{key: name_dict}))
 
                         if shud:
-                            return Q('bool', should=shud)
+                            return Q("bool", should=shud)
 
             elif isinstance(v, tuple) and len(v) >= 2:
                 shud = []
 
-                for i in map(lambda x: v[1](x), kv.split(',')):
-                    shud.append(Q('match', **{v[0]: i}))
+                for i in map(lambda x: v[1](x), kv.split(",")):
+                    shud.append(Q("match", **{v[0]: i}))
 
                 if shud:
-                    qry = Q('bool', should=shud)
+                    qry = Q("bool", should=shud)
 
             return qry
 
@@ -203,29 +218,31 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 return
             if isinstance(v, tuple) and len(v) > 1 and isinstance(v[1], dict):
                 # attr keyword in request url
-                attrs = map(lambda x: (x, request.values.get(x)),
-                            list(v[1].keys()))
+                attrs = map(lambda x: (x, request.values.get(x)), list(v[1].keys()))
                 for attr_key, attr_val_str in attrs:
                     attr_obj = v[1].get(attr_key)
                     if isinstance(attr_obj, dict) and attr_val_str:
                         if isinstance(v[0], str) and len(v[0]):
                             attr_key_hit = [
-                                x for x in attr_obj.keys() if v[0] + "." in x]
+                                x for x in attr_obj.keys() if v[0] + "." in x
+                            ]
                             if attr_key_hit:
                                 vlst = attr_obj.get(attr_key_hit[0])
                                 if isinstance(vlst, list):
                                     attr_val = [
-                                        int(x) for x in attr_val_str.split(',')
+                                        int(x)
+                                        for x in attr_val_str.split(",")
                                         if x.isdecimal() and int(x) < len(vlst)
                                     ]
                                     if attr_val:
                                         name = v[0] + ".value"
                                         schemas = [vlst[i] for i in attr_val]
-                                        return Bool(must=[
-                                            {"term": {name: kv}},
-                                            {"terms": {
-                                                attr_key_hit[0]: schemas}}
-                                        ])
+                                        return Bool(
+                                            must=[
+                                                {"term": {name: kv}},
+                                                {"terms": {attr_key_hit[0]: schemas}},
+                                            ]
+                                        )
             return None
 
         def _get_nested_query(k, v):
@@ -240,9 +257,8 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             if isinstance(v, tuple) and len(v) > 1 and isinstance(v[1], dict):
                 # attr keyword in request url
                 for attr_key, attr_val_str in map(
-                    lambda x: (
-                        x, request.values.get(x)), list(
-                        v[1].keys())):
+                    lambda x: (x, request.values.get(x)), list(v[1].keys())
+                ):
                     attr_obj = v[1].get(attr_key)
 
                     if isinstance(attr_obj, dict) and attr_val_str:
@@ -250,7 +266,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                         if isinstance(v[0], str) and not len(v[0]):
 
                             # For ID search
-                            for key in attr_val_str.split(','):
+                            for key in attr_val_str.split(","):
                                 attr = attr_obj.get(key)
 
                                 if isinstance(attr, tuple):
@@ -259,65 +275,75 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                 if isinstance(attr, list):
                                     for alst in attr:
                                         if isinstance(alst, tuple):
-                                            val_attr_lst = alst[1].split('=')
+                                            val_attr_lst = alst[1].split("=")
                                             name = alst[0] + ".value"
                                             name_dict = dict(operator="and")
                                             name_dict.update(dict(query=kv))
-                                            mut = [
-                                                Q('match',
-                                                  **{name: name_dict})]
+                                            mut = [Q("match", **{name: name_dict})]
                                             qt = None
 
-                                            if '=*' in alst[1]:
-                                                name = alst[0] + \
-                                                    "." + val_attr_lst[0]
+                                            if "=*" in alst[1]:
+                                                name = alst[0] + "." + val_attr_lst[0]
                                                 qt = [
-                                                    Q('term',
-                                                      **{name:
-                                                         val_attr_lst[1]})]
+                                                    Q("term", **{name: val_attr_lst[1]})
+                                                ]
 
                                             mut.extend(qt or [])
-                                            qry = Q('bool', must=mut)
+                                            qry = Q("bool", must=mut)
                                             shuld.append(
-                                                Q('nested', path=alst[0],
-                                                  query=qry))
+                                                Q("nested", path=alst[0], query=qry)
+                                            )
                         else:
                             attr_key_hit = [
-                                x for x in attr_obj.keys() if v[0] + "." in x]
+                                x for x in attr_obj.keys() if v[0] + "." in x
+                            ]
 
                             if attr_key_hit:
                                 vlst = attr_obj.get(attr_key_hit[0])
 
                                 if isinstance(vlst, list):
-                                    attr_val = [x for x in attr_val_str.split(
-                                        ',') if x.isdecimal()
-                                        and int(x) < len(vlst)]
+                                    attr_val = [
+                                        x
+                                        for x in attr_val_str.split(",")
+                                        if x.isdecimal() and int(x) < len(vlst)
+                                    ]
 
                                     if attr_val:
                                         mst = []
                                         name = v[0] + ".value"
-                                        qry = Q('multi_match', query=kv,
-                                                type='most_fields',
-                                                minimum_should_match='75%',
-                                                operator='and', fields=[name])
+                                        qry = Q(
+                                            "multi_match",
+                                            query=kv,
+                                            type="most_fields",
+                                            minimum_should_match="75%",
+                                            operator="and",
+                                            fields=[name],
+                                        )
                                         mst.append(qry)
                                         name = attr_key_hit[0]
-                                        name_val = list(map(partial(
-                                            lambda m, n: m[int(n)], vlst),
-                                            attr_val))
-                                        qm = Q('terms', **{name: name_val})
+                                        name_val = list(
+                                            map(
+                                                partial(lambda m, n: m[int(n)], vlst),
+                                                attr_val,
+                                            )
+                                        )
+                                        qm = Q("terms", **{name: name_val})
                                         mst.append(qm)
-                                        shuld.append(Q('nested', path=v[0],
-                                                       query=Q(
-                                                           'bool', must=mst)))
+                                        shuld.append(
+                                            Q(
+                                                "nested",
+                                                path=v[0],
+                                                query=Q("bool", must=mst),
+                                            )
+                                        )
                     elif isinstance(attr_obj, str) and attr_val_str:
-                        query = Q('bool',
-                                  must=[
-                                      {"terms": {
-                                          attr_obj: attr_val_str.split(',')}}])
-                        shuld.append(Q('nested', path=v[0], query=query))
+                        query = Q(
+                            "bool",
+                            must=[{"terms": {attr_obj: attr_val_str.split(",")}}],
+                        )
+                        shuld.append(Q("nested", path=v[0], query=query))
 
-            return Q('bool', should=shuld) if shuld else None
+            return Q("bool", should=shuld) if shuld else None
 
         def _get_date_query(k, v):
             """[summary]
@@ -340,21 +366,23 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 if not date_from or not date_to:
                     return
 
-                pattern = r'^(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})|(\d{4})|(\d{6})|(\d{8})$'
+                pattern = r"^(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})|(\d{4})|(\d{6})|(\d{8})$"
                 p = re.compile(pattern)
                 if p.match(date_from) and p.match(date_to):
                     if len(date_from) == 8:
-                        date_from = datetime.strptime(
-                            date_from, '%Y%m%d').strftime('%Y-%m-%d')
+                        date_from = datetime.strptime(date_from, "%Y%m%d").strftime(
+                            "%Y-%m-%d"
+                        )
                     if len(date_to) == 8:
-                        date_to = datetime.strptime(
-                            date_to, '%Y%m%d').strftime('%Y-%m-%d')
+                        date_to = datetime.strptime(date_to, "%Y%m%d").strftime(
+                            "%Y-%m-%d"
+                        )
                     if len(date_from) == 6:
-                        date_from = datetime.strptime(
-                            date_from, '%Y%m').strftime('%Y-%m')
+                        date_from = datetime.strptime(date_from, "%Y%m").strftime(
+                            "%Y-%m"
+                        )
                     if len(date_to) == 6:
-                        date_to = datetime.strptime(
-                            date_to, '%Y%m').strftime('%Y-%m')
+                        date_to = datetime.strptime(date_to, "%Y%m").strftime("%Y-%m")
                 else:
                     return
 
@@ -363,7 +391,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 qv.update(dict(lte=date_to))
 
                 if isinstance(v[1], str):
-                    qry = Q('range', **{v[1]: qv})
+                    qry = Q("range", **{v[1]: qv})
                 elif isinstance(v[1], tuple) and len(v[1]) >= 2:
                     path = v[1][0]
                     dt = v[1][1]
@@ -371,42 +399,39 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                     if isinstance(dt, dict):
 
                         for attr_key, attr_val_str in map(
-                            lambda x: (
-                                x, request.values.get(x)), list(
-                                dt.keys())):
+                            lambda x: (x, request.values.get(x)), list(dt.keys())
+                        ):
                             attr_obj = dt.get(attr_key)
 
                             if isinstance(attr_obj, dict) and attr_val_str:
                                 attr_key_hit = [
-                                    x for x in attr_obj.keys()
-                                    if path + "." in x]
+                                    x for x in attr_obj.keys() if path + "." in x
+                                ]
 
                                 if attr_key_hit:
                                     vlst = attr_obj.get(attr_key_hit[0])
 
                                     if isinstance(vlst, list):
-                                        attr_val = [
-                                            x for x in attr_val_str.split(',')]
+                                        attr_val = [x for x in attr_val_str.split(",")]
                                         shud = []
                                         for j in attr_val:
-                                            qt = Q(
-                                                'term', **{attr_key_hit[0]: j})
+                                            qt = Q("term", **{attr_key_hit[0]: j})
                                             shud.append(qt)
 
+                                        qry = Q("range", **{path + ".value": qv})
                                         qry = Q(
-                                            'range', **{path + ".value": qv})
-                                        qry = Q(
-                                            'nested', path=path, query=Q(
-                                                'bool', should=shud,
-                                                must=[qry]))
+                                            "nested",
+                                            path=path,
+                                            query=Q("bool", should=shud, must=[qry]),
+                                        )
             current_app.logger.debug(qry)
             return qry
 
         def _get_text_query(k, v):
             qry = None
-            kv = request.values.get(
-                'lang'
-            ) if k == 'language' else request.values.get(k)
+            kv = (
+                request.values.get("lang") if k == "language" else request.values.get(k)
+            )
 
             if not kv:
                 return
@@ -414,7 +439,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             if isinstance(v, str):
                 name_dict = dict(operator="and")
                 name_dict.update(dict(query=kv))
-                qry = Q('match', **{v: name_dict})
+                qry = Q("match", **{v: name_dict})
 
             return qry
 
@@ -433,7 +458,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 qv.update(dict(lte=value_to))
 
                 if isinstance(v[1], str):
-                    qry = Q('range', **{v[1]: qv})
+                    qry = Q("range", **{v[1]: qv})
                     print(qry)
             return qry
 
@@ -454,11 +479,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 qv.update(dict(lon=value_lon))
 
                 if isinstance(v[1], str):
-                    qry = {
-                        "geo_distance": {
-                            "distance": value_distance,
-                            v[1]: qv
-                        }}
+                    qry = {"geo_distance": {"distance": value_distance, v[1]: qv}}
 
             return qry
 
@@ -483,21 +504,24 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                             v[1]: {
                                 "shape": {
                                     "type": "circle",
-                                            "coordinates": qv,
-                                            "radius": value_distance,
-                                }}}}
+                                    "coordinates": qv,
+                                    "radius": value_distance,
+                                }
+                            }
+                        }
+                    }
 
             return qry
 
-        kwd = current_app.config['WEKO_SEARCH_KEYWORDS_DICT']
-        ks = kwd.get('string')
-        kd = kwd.get('date')
-        kn = kwd.get('nested')
-        ko = kwd.get('object')
-        kr = kwd.get('range')
-        kt = kwd.get('text')
-        kgd = kwd.get('geo_distance')
-        kgs = kwd.get('geo_shape')
+        kwd = current_app.config["WEKO_SEARCH_KEYWORDS_DICT"]
+        ks = kwd.get("string")
+        kd = kwd.get("date")
+        kn = kwd.get("nested")
+        ko = kwd.get("object")
+        kr = kwd.get("range")
+        kt = kwd.get("text")
+        kgd = kwd.get("geo_distance")
+        kgs = kwd.get("geo_shape")
 
         mut = []
 
@@ -550,7 +574,8 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
         except Exception as e:
             current_app.logger.exception(
-                'Detail search query parser failed. err:{0}'.format(e))
+                "Detail search query parser failed. err:{0}".format(e)
+            )
 
         current_app.logger.debug(mut)
         return mut
@@ -571,7 +596,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
         mst.extend(_get_detail_keywords_query())
 
-        return Q('bool', must=mst) if mst else Q()
+        return Q("bool", must=mst) if mst else Q()
 
     def _get_simple_search_community_query(community_id, qs=None):
         """Query parser for simple search.
@@ -590,23 +615,27 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             mst.append(q)
 
         mst.extend(_get_detail_keywords_query())
-        return Q('bool', must=mst) if mst else Q()
+        return Q("bool", must=mst) if mst else Q()
 
     def _get_file_content_query(qstr):
         """Query for searching indexed file contents."""
-        multi_cont_q = Q('multi_match', query=qstr, operator='and',
-                         fields=['content.attachment.content'])
+        multi_cont_q = Q(
+            "multi_match",
+            query=qstr,
+            operator="and",
+            fields=["content.attachment.content"],
+        )
 
         # Search fields may increase so leaving as multi
         multi_q = Q(
-            'query_string',
+            "query_string",
             query=qs,
-            default_operator='and',
-            fields=['search_*', 'search_*.ja']
+            default_operator="and",
+            fields=["search_*", "search_*.ja"],
         )
 
-        nested_content = Q('nested', query=multi_cont_q, path='content')
-        return Q('bool', should=[nested_content, multi_q])
+        nested_content = Q("nested", query=multi_cont_q, path="content")
+        return Q("bool", should=[nested_content, multi_q])
 
     def _default_parser(qstr=None):
         """Default parser that uses the Q() from elasticsearch_dsl.
@@ -636,7 +665,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 q_s = _get_file_content_query(qstr)
                 mst.append(q_s)
 
-        return Q('bool', must=mst) if mst else Q()
+        return Q("bool", must=mst) if mst else Q()
 
     def _default_parser_community(community_id, qstr=None):
         """Default parser that uses the Q() from elasticsearch_dsl.
@@ -668,16 +697,16 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 q_s = _get_file_content_query(qstr)
                 mst.append(q_s)
 
-        return Q('bool', must=mst) if mst else Q()
+        return Q("bool", must=mst) if mst else Q()
 
     from invenio_records_rest.facets import default_facets_factory
     from invenio_records_rest.sorter import default_sorter_factory
 
     # add by ryuu at 1004 start curate
-    comm_ide = request.values.get('provisional_communities')
+    comm_ide = request.values.get("provisional_communities")
 
     # simple search
-    comm_id_simple = request.values.get('community')
+    comm_id_simple = request.values.get("community")
 
     # add by ryuu at 1004 end
     if comm_id_simple:
@@ -686,38 +715,38 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         query_parser = query_parser or _default_parser
 
     if search_type is None:
-        search_type = request.values.get('search_type')
+        search_type = request.values.get("search_type")
 
-    if request.values.get('format'):
-        qs = request.values.get('keyword')
+    if request.values.get("format"):
+        qs = request.values.get("keyword")
     else:
         # Escape special characters for avoiding ES search errors
         qs = (
-            request.values.get('q', '')
-            .replace('\\', r'\\')
-            .replace('+', r'\+')
-            .replace('-', r'\-')
-            .replace('=', r'\=')
-            .replace('&&', r'\&&')
-            .replace('||', r'\||')
-            .replace('!', r'\!')
-            .replace('(', r'\(')
-            .replace(')', r'\)')
-            .replace('{', r'\{')
-            .replace('}', r'\}')
-            .replace('[', r'\[')
-            .replace(']', r'\]')
-            .replace('^', r'\^')
-            .replace('"', r'\"')
-            .replace('~', r'\~')
-            .replace('*', r'\*')
-            .replace('?', r'\?')
-            .replace(':', r'\:')
-            .replace('/', r'\/')
+            request.values.get("q", "")
+            .replace("\\", r"\\")
+            .replace("+", r"\+")
+            .replace("-", r"\-")
+            .replace("=", r"\=")
+            .replace("&&", r"\&&")
+            .replace("||", r"\||")
+            .replace("!", r"\!")
+            .replace("(", r"\(")
+            .replace(")", r"\)")
+            .replace("{", r"\{")
+            .replace("}", r"\}")
+            .replace("[", r"\[")
+            .replace("]", r"\]")
+            .replace("^", r"\^")
+            .replace('"', r"\"")
+            .replace("~", r"\~")
+            .replace("*", r"\*")
+            .replace("?", r"\?")
+            .replace(":", r"\:")
+            .replace("/", r"\/")
         )
 
     # full text search
-    if search_type == config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']:
+    if search_type == config.WEKO_SEARCH_TYPE_DICT["FULL_TEXT"]:
         if comm_id_simple:
             query_q = query_parser(comm_id_simple, qs)
         else:
@@ -731,17 +760,16 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         else:
             query_q = _get_simple_search_query(qs)
 
-    src = {'_source': {'excludes': ['content']}}
+    src = {"_source": {"excludes": ["content"]}}
     search._extra.update(src)
 
     try:
         search = search.filter(query_q)
     except SyntaxError:
         current_app.logger.debug(
-            "Failed parsing query: {0}".format(
-                request.values.get('q', '')
-            ),
-            exc_info=True)
+            "Failed parsing query: {0}".format(request.values.get("q", "")),
+            exc_info=True,
+        )
         raise InvalidQueryRESTError()
 
     search_index = search._index[0]
@@ -751,33 +779,45 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     for key, value in sortkwargs.items():
         urlkwargs.add(key, value)
 
+        current_app.logger.debug("key: {}".format(key))
+        current_app.logger.debug("value: {}".format(value))
+        current_app.logger.debug("sortkwargs: {}".format(sortkwargs))
+
         # defalult sort
         if not sortkwargs:
             sort_key, sort = SearchSetting.get_default_sort(
-                current_app.config['WEKO_SEARCH_TYPE_KEYWORD'])
+                current_app.config["WEKO_SEARCH_TYPE_KEYWORD"]
+            )
             key_fileds = SearchSetting.get_sort_key(sort_key)
+            current_app.logger.debug("sort_key: {}".format(sort_key))
+            current_app.logger.debug("sort: {}".format(sort))
+            current_app.logger.debug("key_fileds: {}".format(key_fileds))
+
             if key_fileds:
                 sort_obj = dict()
                 nested_sorting = SearchSetting.get_nested_sorting(sort_key)
 
-                if sort == 'desc':
-                    sort_obj[key_fileds] = dict(order='desc',
-                                                unmapped_type='long')
-                    sort_key = '-' + sort_key
+                if sort == "desc":
+                    sort_obj[key_fileds] = dict(order="desc", unmapped_type="long")
+                    sort_key = "-" + sort_key
                 else:
-                    sort_obj[key_fileds] = dict(order='asc',
-                                                unmapped_type='long')
+                    sort_obj[key_fileds] = dict(order="asc", unmapped_type="long")
 
                 if nested_sorting:
-                    sort_obj[key_fileds].update({'nested': nested_sorting})
+                    sort_obj[key_fileds].update({"nested": nested_sorting})
 
                 search._sort.append(sort_obj)
 
-            urlkwargs.add('sort', sort_key)
+            urlkwargs.add("sort", sort_key)
 
-    urlkwargs.add('q', query_q)
+    urlkwargs.add("q", query_q)
     # debug elastic search query
-    current_app.logger.debug(json.dumps((search.query()).to_dict()))
+    current_app.logger.debug("query: {}".format(json.dumps((search.query()).to_dict())))
+    # {"query": {"bool": {"filter": [{"bool": {"must": [{"match": {"publish_status": "0"}}, {"range": {"publish_date": {"lte": "now/d"}}}, {"terms": {"path": ["1031", "1029", "1025", "952", "953", "943", "940", "1017", "1015", "1011", "881", "893", "872", "869", "758", "753", "742", "530", "533", "502", "494", "710", "702", "691", "315", "351", "288", "281", "759", "754", "744", "531", "534", "503", "495", "711", "704", "692", "316", "352", "289", "282", "773", "771", "767", "538", "539", "519", "510", "756", "745", "733", "337", "377", "308", "299", "2063", "2061", "2057", "1984", "1985", "1975", "1972", "2049", "2047", "2043", "1913", "1925", "1904", "1901", "1790", "1785", "1774", "1562", "1565", "1534", "1526", "1742", "1734", "1723", "1347", "1383", "1320", "1313", "1791", "1786", "1776", "1563", "1566", "1535", "1527", "1743", "1736", "1724", "1348", "1384", "1321", "1314", "1805", "1803", "1799", "1570", "1571", "1551", "1542", "1788", "1777", "1765", "1369", "1409", "1340", "1331", "4127", "4125", "4121", "4048", "4049", "4039", "4036", "4113", "4111", "4107", "3977", "3989", "3968", "3965", "3854", "3849", "3838", "3626", "3629", "3598", "3590", "3806", "3798", "3787", "3411", "3447", "3384", "3377", "3855", "3850", "3840", "3627", "3630", "3599", "3591", "3807", "3800", "3788", "3412", "3448", "3385", "3378", "3869", "3867", "3863", "3634", "3635", "3615", "3606", "3852", "3841", "3829", "3433", "3473", "3404", "3395"]}}, {"bool": {"must": [{"match": {"publish_status": "0"}}, {"match": {"relation_version_is_last": "true"}}]}}]}}], "must": [{"match_all": {}}]}}, "aggs": {"Data Language": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Data Language": {"terms": {"field": "language", "size": 1000}}}}, "Access": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Access": {"terms": {"field": "accessRights", "size": 1000}}}}, "Location": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Location": {"terms": {"field": "geoLocation.geoLocationPlace", "size": 1000}}}}, "Temporal": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Temporal": {"terms": {"field": "temporal", "size": 1000}}}}, "Topic": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Topic": {"terms": {"field": "subject.value", "size": 1000}}}}, "Distributor": {"filter": {"bool": {"must": [{"term": {"contributor.@attributes.contributorType": "Distributor"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Distributor": {"terms": {"field": "contributor.contributorName", "size": 1000}}}}, "Data Type": {"filter": {"bool": {"must": [{"term": {"description.descriptionType": "Other"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Data Type": {"terms": {"field": "description.value", "size": 1000}}}}}, "from": 0, "size": 20, "_source": {"excludes": ["content"]}}
+    # {"query": {"bool": {"filter": [{"bool": {"must": [{"match": {"publish_status": "0"}}, {"range": {"publish_date": {"lte": "now/d"}}}, {"terms": {"path": ["1031", "1029", "1025", "952", "953", "943", "940", "1017", "1015", "1011", "881", "893", "872", "869", "758", "753", "742", "530", "533", "502", "494", "710", "702", "691", "315", "351", "288", "281", "759", "754", "744", "531", "534", "503", "495", "711", "704", "692", "316", "352", "289", "282", "773", "771", "767", "538", "539", "519", "510", "756", "745", "733", "337", "377", "308", "299", "2063", "2061", "2057", "1984", "1985", "1975", "1972", "2049", "2047", "2043", "1913", "1925", "1904", "1901", "1790", "1785", "1774", "1562", "1565", "1534", "1526", "1742", "1734", "1723", "1347", "1383", "1320", "1313", "1791", "1786", "1776", "1563", "1566", "1535", "1527", "1743", "1736", "1724", "1348", "1384", "1321", "1314", "1805", "1803", "1799", "1570", "1571", "1551", "1542", "1788", "1777", "1765", "1369", "1409", "1340", "1331", "4127", "4125", "4121", "4048", "4049", "4039", "4036", "4113", "4111", "4107", "3977", "3989", "3968", "3965", "3854", "3849", "3838", "3626", "3629", "3598", "3590", "3806", "3798", "3787", "3411", "3447", "3384", "3377", "3855", "3850", "3840", "3627", "3630", "3599", "3591", "3807", "3800", "3788", "3412", "3448", "3385", "3378", "3869", "3867", "3863", "3634", "3635", "3615", "3606", "3852", "3841", "3829", "3433", "3473", "3404", "3395"]}}, {"bool": {"must": [{"match": {"publish_status": "0"}}, {"match": {"relation_version_is_last": "true"}}]}}]}}], "must": [{"match_all": {}}]}}, "aggs": {"Data Language": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Data Language": {"terms": {"field": "language", "size": 1000}}}}, "Access": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Access": {"terms": {"field": "accessRights", "size": 1000}}}}, "Location": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Location": {"terms": {"field": "geoLocation.geoLocationPlace", "size": 1000}}}}, "Temporal": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Temporal": {"terms": {"field": "temporal", "size": 1000}}}}, "Topic": {"filter": {"bool": {"must": [{"term": {"publish_status": "0"}}]}}, "aggs": {"Topic": {"terms": {"field": "subject.value", "size": 1000}}}}, "Distributor": {"filter": {"bool": {"must": [{"term": {"contributor.@attributes.contributorType": "Distributor"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Distributor": {"terms": {"field": "contributor.contributorName", "size": 1000}}}}, "Data Type": {"filter": {"bool": {"must": [{"term": {"description.descriptionType": "Other"}}, {"term": {"publish_status": "0"}}]}}, "aggs": {"Data Type": {"terms": {"field": "description.value", "size": 1000}}}}}, "sort": [{"date_range1.gte": {"order": "asc", "unmapped_type": "date"}}], "from": 0, "size": 20, "_source": {"excludes": ["content"]}}
+    current_app.logger.debug("urlkwargs: {}".format(urlkwargs))
+    # MultiDict([('sort', 'relevance'), ('q', Bool(must=[Match(publish_status='0'), Range(publish_date={'lte': 'now/d'}), Terms(path=['1031', '1029', '1025', '952', '953', '943', '940', '1017', '1015', '1011', '881', '893', '872', '869', '758', '753', '742', '530', '533', '502', '494', '710', '702', '691', '315', '351', '288', '281', '759', '754', '744', '531', '534', '503', '495', '711', '704', '692', '316', '352', '289', '282', '773', '771', '767', '538', '539', '519', '510', '756', '745', '733', '337', '377', '308', '299', '2063', '2061', '2057', '1984', '1985', '1975', '1972', '2049', '2047', '2043', '1913', '1925', '1904', '1901', '1790', '1785', '1774', '1562', '1565', '1534', '1526', '1742', '1734', '1723', '1347', '1383', '1320', '1313', '1791', '1786', '1776', '1563', '1566', '1535', '1527', '1743', '1736', '1724', '1348', '1384', '1321', '1314', '1805', '1803', '1799', '1570', '1571', '1551', '1542', '1788', '1777', '1765', '1369', '1409', '1340', '1331', '4127', '4125', '4121', '4048', '4049', '4039', '4036', '4113', '4111', '4107', '3977', '3989', '3968', '3965', '3854', '3849', '3838', '3626', '3629', '3598', '3590', '3806', '3798', '3787', '3411', '3447', '3384', '3377', '3855', '3850', '3840', '3627', '3630', '3599', '3591', '3807', '3800', '3788', '3412', '3448', '3385', '3378', '3869', '3867', '3863', '3634', '3635', '3615', '3606', '3852', '3841', '3829', '3433', '3473', '3404', '3395']), Bool(must=[Match(publish_status='0'), Match(relation_version_is_last='true')])]))])
+
     return search, urlkwargs
 
 
@@ -789,6 +829,7 @@ def item_path_search_factory(self, search, index_id=None):
     :param index_id: Index Identifier contains item's path
     :returns: Tuple with search instance and URL arguments.
     """
+
     def _get_index_earch_query():
         """Prepare search query.
 
@@ -797,73 +838,50 @@ def item_path_search_factory(self, search, index_id=None):
 
         """
         query_q = {
-            "_source": {
-                "excludes": ['content']
-            },
+            "_source": {"excludes": ["content"]},
             "query": {
-                "bool": {
-                    "must": [
-                        {
-                            "match": {
-                                "relation_version_is_last": "true"
-                            }
-                        }
-                    ]
-                }
+                "bool": {"must": [{"match": {"relation_version_is_last": "true"}}]}
             },
             "aggs": {
                 "path": {
                     "terms": {
                         "field": "path",
                         "include": "@idxchild",
-                        "size": "@count"
+                        "size": "@count",
                     },
                     "aggs": {
                         "date_range": {
-                            "filter": {
-                                "match": {"publish_status": "0"}
-                            },
+                            "filter": {"match": {"publish_status": "0"}},
                             "aggs": {
                                 "available": {
                                     "range": {
                                         "field": "publish_date",
                                         "ranges": [
-                                            {
-                                                "from": "now+1d/d"
-                                            },
-                                            {
-                                                "to": "now+1d/d"
-                                            }
-                                        ]
+                                            {"from": "now+1d/d"},
+                                            {"to": "now+1d/d"},
+                                        ],
                                     },
                                 }
-                            }
+                            },
                         },
                         "no_available": {
                             "filter": {
                                 "bool": {
-                                    "must_not": [
-                                        {
-                                            "match": {
-                                                "publish_status": "0"
-                                            }
-                                        }
-                                    ]
+                                    "must_not": [{"match": {"publish_status": "0"}}]
                                 }
                             }
-                        }
-                    }
+                        },
+                    },
                 }
             },
-            "post_filter": {}
+            "post_filter": {},
         }
 
-        q = request.values.get('q') or '0' if index_id is None else index_id
+        q = request.values.get("q") or "0" if index_id is None else index_id
 
-        if q != '0':
+        if q != "0":
             # add item type aggs
-            query_q['aggs']['path']['aggs']. \
-                update(get_item_type_aggs(search._index[0]))
+            query_q["aggs"]["path"]["aggs"].update(get_item_type_aggs(search._index[0]))
 
             if q:
                 mut, is_perm_paths = get_permission_filter(q)
@@ -872,12 +890,12 @@ def item_path_search_factory(self, search, index_id=None):
 
             if mut:
                 mut = list(map(lambda x: x.to_dict(), mut))
-                post_filter = query_q['post_filter']
+                post_filter = query_q["post_filter"]
 
-                if mut[0].get('bool'):
-                    post_filter['bool'] = mut[0]['bool']
+                if mut[0].get("bool"):
+                    post_filter["bool"] = mut[0]["bool"]
                 else:
-                    post_filter['bool'] = {'must': mut}
+                    post_filter["bool"] = {"must": mut}
 
             # create search query
             if q:
@@ -885,43 +903,36 @@ def item_path_search_factory(self, search, index_id=None):
                     child_idx = Indexes.get_child_list_recursive(q)
                     child_idx_str = "|".join(child_idx)
                     max_clause_count = current_app.config.get(
-                        'OAISERVER_ES_MAX_CLAUSE_COUNT', 1024)
+                        "OAISERVER_ES_MAX_CLAUSE_COUNT", 1024
+                    )
 
                     if len(child_idx) > max_clause_count:
                         div_indexes = []
-                        for div in range(
-                                0,
-                                int(len(child_idx) / max_clause_count) + 1):
+                        for div in range(0, int(len(child_idx) / max_clause_count) + 1):
                             _right = div * max_clause_count
-                            _left = (div + 1) * max_clause_count \
-                                if len(child_idx) > \
-                                    (div + 1) * max_clause_count \
+                            _left = (
+                                (div + 1) * max_clause_count
+                                if len(child_idx) > (div + 1) * max_clause_count
                                 else len(child_idx)
-                            div_indexes.append({
-                                "terms": {
-                                    "path": child_idx[_right:_left]
-                                }
-                            })
+                            )
+                            div_indexes.append(
+                                {"terms": {"path": child_idx[_right:_left]}}
+                            )
 
-                        query_q["query"]["bool"]["must"].append({
-                            "bool": {
-                                "should": div_indexes
-                            }
-                        })
+                        query_q["query"]["bool"]["must"].append(
+                            {"bool": {"should": div_indexes}}
+                        )
                     else:
-                        query_q["query"]["bool"]["must"].append({
-                            "terms": {
-                                "path": child_idx
-                            }
-                        })
+                        query_q["query"]["bool"]["must"].append(
+                            {"terms": {"path": child_idx}}
+                        )
 
-                    query_q = json.dumps(query_q).replace(
-                        "@idxchild", child_idx_str
-                    )
+                    query_q = json.dumps(query_q).replace("@idxchild", child_idx_str)
                     query_q = json.loads(query_q)
                 except BaseException as ex:
                     current_app.logger.error(ex)
                     import traceback
+
                     traceback.print_exc(file=sys.stdout)
 
             count = str(Indexes.get_index_count())
@@ -932,64 +943,39 @@ def item_path_search_factory(self, search, index_id=None):
         else:
             # add item type aggs
             query_not_q = {
-                "_source": {
-                    "excludes": ["content"]
-                },
+                "_source": {"excludes": ["content"]},
                 "query": {
-                    "bool": {
-                        "must": [
-                            {
-                                "match": {
-                                    "relation_version_is_last": "true"
-                                }
-                            }
-                        ]
-                    }
+                    "bool": {"must": [{"match": {"relation_version_is_last": "true"}}]}
                 },
                 "aggs": {
                     "path": {
-                        "terms": {
-                            "field": "path",
-                            "size": "@count"
-                        },
+                        "terms": {"field": "path", "size": "@count"},
                         "aggs": {
                             "date_range": {
-                                "filter": {
-                                    "match": {"publish_status": "0"}
-                                },
+                                "filter": {"match": {"publish_status": "0"}},
                                 "aggs": {
                                     "available": {
                                         "range": {
                                             "field": "publish_date",
                                             "ranges": [
-                                                {
-                                                    "from": "now+1d/d"
-                                                },
-                                                {
-                                                    "to": "now+1d/d"
-                                                }
-                                            ]
+                                                {"from": "now+1d/d"},
+                                                {"to": "now+1d/d"},
+                                            ],
                                         },
                                     }
-                                }
+                                },
                             },
                             "no_available": {
                                 "filter": {
                                     "bool": {
-                                        "must_not": [
-                                            {
-                                                "match": {
-                                                    "publish_status": "0"
-                                                }
-                                            }
-                                        ]
+                                        "must_not": [{"match": {"publish_status": "0"}}]
                                     }
                                 }
-                            }
-                        }
+                            },
+                        },
                     }
                 },
-                "post_filter": {}
+                "post_filter": {},
             }
 
             is_perm_paths = []
@@ -1001,45 +987,39 @@ def item_path_search_factory(self, search, index_id=None):
             child_idx = [item.split("/")[-1] for item in is_perm_paths]
             child_idx = list(set(child_idx))
             max_clause_count = current_app.config.get(
-                'OAISERVER_ES_MAX_CLAUSE_COUNT', 1024)
+                "OAISERVER_ES_MAX_CLAUSE_COUNT", 1024
+            )
 
             if len(child_idx) > max_clause_count:
                 div_indexes = []
-                for div in range(
-                        0,
-                        int(len(child_idx) / max_clause_count) + 1):
+                for div in range(0, int(len(child_idx) / max_clause_count) + 1):
                     _right = div * max_clause_count
-                    _left = (div + 1) * max_clause_count \
-                        if len(child_idx) > (div + 1) * max_clause_count \
+                    _left = (
+                        (div + 1) * max_clause_count
+                        if len(child_idx) > (div + 1) * max_clause_count
                         else len(child_idx)
-                    div_indexes.append({
-                        "terms": {
-                            "path": child_idx[_right:_left]
-                        }
-                    })
-                query_not_q["query"]["bool"]["must"].append({
-                    "bool": {
-                        "should": div_indexes
-                    }
-                })
+                    )
+                    div_indexes.append({"terms": {"path": child_idx[_right:_left]}})
+                query_not_q["query"]["bool"]["must"].append(
+                    {"bool": {"should": div_indexes}}
+                )
             else:
-                query_not_q["query"]["bool"]["must"].append({
-                    "terms": {
-                        "path": child_idx
-                    }
-                })
+                query_not_q["query"]["bool"]["must"].append(
+                    {"terms": {"path": child_idx}}
+                )
 
-            query_not_q['aggs']['path']['aggs']. \
-                update(get_item_type_aggs(search._index[0]))
+            query_not_q["aggs"]["path"]["aggs"].update(
+                get_item_type_aggs(search._index[0])
+            )
 
             if mut:
                 mut = list(map(lambda x: x.to_dict(), mut))
-                post_filter = query_not_q['post_filter']
+                post_filter = query_not_q["post_filter"]
 
-                if mut[0].get('bool'):
-                    post_filter['bool'] = mut[0]['bool']
+                if mut[0].get("bool"):
+                    post_filter["bool"] = mut[0]["bool"]
                 else:
-                    post_filter['bool'] = {'must': mut}
+                    post_filter["bool"] = {"must": mut}
 
             # create search query
             count = str(Indexes.get_index_count())
@@ -1058,28 +1038,25 @@ def item_path_search_factory(self, search, index_id=None):
         search.update_from_dict(query_q)
         search._extra.update(extr)
     except SyntaxError:
-        q = request.values.get('q', '') if index_id is None else index_id
-        current_app.logger.debug(
-            "Failed parsing query: {0}".format(q),
-            exc_info=True)
+        q = request.values.get("q", "") if index_id is None else index_id
+        current_app.logger.debug("Failed parsing query: {0}".format(q), exc_info=True)
         raise InvalidQueryRESTError()
 
     from invenio_records_rest.sorter import default_sorter_factory
+
     search_index = search._index[0]
     search, sortkwargs = default_sorter_factory(search, search_index)
 
     for key, value in sortkwargs.items():
         # set custom sort option
-        if 'custom_sort' in value:
-            ind_id = request.values.get('q', '')
+        if "custom_sort" in value:
+            ind_id = request.values.get("q", "")
             search._sort = []
 
-            if value == 'custom_sort':
-                script_str, default_sort = SearchSetting.get_custom_sort(
-                    ind_id, 'asc')
+            if value == "custom_sort":
+                script_str, default_sort = SearchSetting.get_custom_sort(ind_id, "asc")
             else:
-                script_str, default_sort = SearchSetting.get_custom_sort(
-                    ind_id, 'desc')
+                script_str, default_sort = SearchSetting.get_custom_sort(ind_id, "desc")
 
             search._sort.append(script_str)
             search._sort.append(default_sort)
@@ -1089,38 +1066,37 @@ def item_path_search_factory(self, search, index_id=None):
 
     # default sort
     if not sortkwargs:
-        ind_id = request.values.get('q', '')
-        root_flag = True if ind_id and ind_id == '0' else False
+        ind_id = request.values.get("q", "")
+        root_flag = True if ind_id and ind_id == "0" else False
         sort_key, sort = SearchSetting.get_default_sort(
-            current_app.config['WEKO_SEARCH_TYPE_INDEX'], root_flag)
+            current_app.config["WEKO_SEARCH_TYPE_INDEX"], root_flag
+        )
         sort_obj = dict()
         key_fileds = SearchSetting.get_sort_key(sort_key)
 
-        if 'custom_sort' not in sort_key:
-            if sort == 'desc':
-                sort_obj[key_fileds] = dict(order='desc', unmapped_type='long')
-                sort_key = '-' + sort_key
+        if "custom_sort" not in sort_key:
+            if sort == "desc":
+                sort_obj[key_fileds] = dict(order="desc", unmapped_type="long")
+                sort_key = "-" + sort_key
             else:
-                sort_obj[key_fileds] = dict(order='asc', unmapped_type='long')
+                sort_obj[key_fileds] = dict(order="asc", unmapped_type="long")
             search._sort.append(sort_obj)
         else:
-            ind_id = request.values.get('q', '')
-            if sort == 'desc':
-                script_str, default_sort = SearchSetting.get_custom_sort(
-                    ind_id, 'desc')
-                sort_key = '-' + sort_key
+            ind_id = request.values.get("q", "")
+            if sort == "desc":
+                script_str, default_sort = SearchSetting.get_custom_sort(ind_id, "desc")
+                sort_key = "-" + sort_key
             else:
-                script_str, default_sort = SearchSetting.get_custom_sort(
-                    ind_id, 'asc')
+                script_str, default_sort = SearchSetting.get_custom_sort(ind_id, "asc")
 
             search._sort = []
             search._sort.append(script_str)
             search._sort.append(default_sort)
 
-        urlkwargs.add('sort', sort_key)
+        urlkwargs.add("sort", sort_key)
 
-    urlkwargs.add('q', query_q)
-    urlkwargs.add('is_perm_paths', is_perm_paths)
+    urlkwargs.add("q", query_q)
+    urlkwargs.add("is_perm_paths", is_perm_paths)
     # debug elastic search query
     current_app.logger.debug(json.dumps((search.query()).to_dict()))
     return search, urlkwargs
@@ -1133,11 +1109,14 @@ def check_admin_user():
     :return: result
     """
     result = True
-    user_id = current_user.get_id() \
-        if current_user and current_user.is_authenticated else None
+    user_id = (
+        current_user.get_id()
+        if current_user and current_user.is_authenticated
+        else None
+    )
 
     if user_id:
-        users = current_app.config['WEKO_PERMISSION_ROLE_USER']
+        users = current_app.config["WEKO_PERMISSION_ROLE_USER"]
 
         for lst in list(current_user.roles or []):
 
@@ -1160,28 +1139,27 @@ def opensearch_factory(self, search, query_parser=None):
     :param query_parser:
     :return:
     """
-    index_id = request.values.get('q')
-    search_type = config.WEKO_SEARCH_TYPE_DICT['FULL_TEXT']
+    index_id = request.values.get("q")
+    search_type = config.WEKO_SEARCH_TYPE_DICT["FULL_TEXT"]
 
     if index_id:
         index_id = str(index_id)
-        return item_path_search_factory(self,
-                                        search,
-                                        index_id=index_id)
+        return item_path_search_factory(self, search, index_id=index_id)
     else:
-        return default_search_factory(self,
-                                      search,
-                                      query_parser,
-                                      search_type=search_type)
+        return default_search_factory(
+            self, search, query_parser, search_type=search_type
+        )
 
 
-def item_search_factory(self,
-                        search,
-                        start_date,
-                        end_date,
-                        list_index_id=None,
-                        ignore_publish_status=False,
-                        ranking=False):
+def item_search_factory(
+    self,
+    search,
+    start_date,
+    end_date,
+    list_index_id=None,
+    ignore_publish_status=False,
+    ranking=False,
+):
     """Factory for opensearch.
 
     :param self:
@@ -1193,36 +1171,19 @@ def item_search_factory(self,
     :param ranking: Ranking check
     :return:
     """
+
     def _get_query(start_term, end_term, indexes):
         query_string = "_type:{} AND relation_version_is_last:true ".format(
-            current_app.config["INDEXER_DEFAULT_DOC_TYPE"])
+            current_app.config["INDEXER_DEFAULT_DOC_TYPE"]
+        )
         if not ignore_publish_status:
             query_string += " AND publish_status:0 "
-        query_string += " AND publish_date:[{} TO {}]".format(
-            start_term, end_term)
+        query_string += " AND publish_date:[{} TO {}]".format(start_term, end_term)
 
         query_q = {
             "size": 10000,
-            "query": {
-                "bool": {
-                    "must": [
-                        {
-                            "query_string": {
-                                "query": query_string
-                            }
-                        }
-                    ]
-                }
-            },
-            "sort":
-                [
-                    {
-                        "publish_date":
-                            {
-                                "order": "desc"
-                            }
-                    }
-            ]
+            "query": {"bool": {"must": [{"query_string": {"query": query_string}}]}},
+            "sort": [{"publish_date": {"order": "desc"}}],
         }
         query_must_param = []
         if indexes:
@@ -1230,23 +1191,17 @@ def item_search_factory(self,
             max_clause_count = 1024
             for div in range(0, int(indexes_num / max_clause_count) + 1):
                 e_right = div * max_clause_count
-                e_left = (div + 1) * max_clause_count \
-                    if indexes_num > (div + 1) * max_clause_count \
+                e_left = (
+                    (div + 1) * max_clause_count
+                    if indexes_num > (div + 1) * max_clause_count
                     else indexes_num
+                )
                 div_indexes = []
                 for index in indexes[e_right:e_left]:
-                    div_indexes.append({
-                        "wildcard": {
-                            "path": str(index)
-                        }
-                    })
-                query_must_param.append({
-                    "bool": {
-                        "should": div_indexes
-                    }
-                })
+                    div_indexes.append({"wildcard": {"path": str(index)}})
+                query_must_param.append({"bool": {"should": div_indexes}})
         if ranking:
-            query_must_param.append({'exists': {'field': 'path'}})
+            query_must_param.append({"exists": {"field": "path"}})
         if query_must_param:
             query_q["query"]["bool"]["must"] += query_must_param
         return query_q
@@ -1260,8 +1215,8 @@ def item_search_factory(self,
         search._extra.update(extr)
     except SyntaxError:
         current_app.logger.debug(
-            "Failed parsing query: {0}".format(query_q),
-            exc_info=True)
+            "Failed parsing query: {0}".format(query_q), exc_info=True
+        )
         raise InvalidQueryRESTError()
     # debug elastic search query
     current_app.logger.debug(json.dumps((search.query()).to_dict()))
@@ -1275,50 +1230,48 @@ def feedback_email_search_factory(self, search):
     :param search:
     :return:
     """
+
     def _get_query():
-        query_string = "_type:{} AND " \
-                       "relation_version_is_last:true " \
-            .format(current_app.config['INDEXER_DEFAULT_DOC_TYPE'])
+        query_string = "_type:{} AND " "relation_version_is_last:true ".format(
+            current_app.config["INDEXER_DEFAULT_DOC_TYPE"]
+        )
         query_q = {
             "query": {
                 "bool": {
                     "must": [
-                        {"nested": {
-                            "path": "feedback_mail_list",
-                            "query": {
-                                "bool": {
-                                    "must": [
-                                        {"exists": {
-                                            "field": "feedback_mail_list.email"
-                                        }}
-                                    ]
-                                }
-                            }
-                        }
-                        },
                         {
-                            "query_string": {
-                                "query": query_string
+                            "nested": {
+                                "path": "feedback_mail_list",
+                                "query": {
+                                    "bool": {
+                                        "must": [
+                                            {
+                                                "exists": {
+                                                    "field": "feedback_mail_list.email"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                },
                             }
-                        }
+                        },
+                        {"query_string": {"query": query_string}},
                     ]
                 }
             },
             "aggs": {
                 "feedback_mail_list": {
-                    "nested": {
-                        "path": "feedback_mail_list"
-                    },
+                    "nested": {"path": "feedback_mail_list"},
                     "aggs": {
                         "email_list": {
                             "terms": {
                                 "field": "feedback_mail_list.email",
-                                "size": config.WEKO_SEARCH_MAX_FEEDBACK_MAIL
+                                "size": config.WEKO_SEARCH_MAX_FEEDBACK_MAIL,
                             }
                         }
-                    }
+                    },
                 }
-            }
+            },
         }
         return query_q
 
@@ -1331,8 +1284,8 @@ def feedback_email_search_factory(self, search):
         search._extra.update(extr)
     except SyntaxError:
         current_app.logger.debug(
-            "Failed parsing query: {0}".format(query_q),
-            exc_info=True)
+            "Failed parsing query: {0}".format(query_q), exc_info=True
+        )
         raise InvalidQueryRESTError()
     # debug elastic search query
     current_app.logger.debug(json.dumps((search.query()).to_dict()))
