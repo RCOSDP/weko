@@ -2886,7 +2886,13 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       }
 
       $scope.hiddenPubdate = function () {
-        if ($("#is_hidden_pubdate").val() !== "True") {
+        if (!model["pubdate"]) {
+          let now = new Date();
+          let day = ("0" + now.getDate()).slice(-2);
+          let month = ("0" + (now.getMonth() + 1)).slice(-2);
+          model["pubdate"] = now.getFullYear() + "-" + (month) + "-" + (day);
+        }
+	if ($("#is_hidden_pubdate").val() !== "True") {
           return;
         }
         let model = $rootScope["recordsVM"].invenioRecordsModel;
@@ -2896,12 +2902,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             item['required'] = false;
           }
         });
-        if (!model["pubdate"]) {
-          let now = new Date();
-          let day = ("0" + now.getDate()).slice(-2);
-          let month = ("0" + (now.getMonth() + 1)).slice(-2);
-          model["pubdate"] = now.getFullYear() + "-" + (month) + "-" + (day);
-        }
       };
 
       $scope.setValueToField = function (id, value) {
