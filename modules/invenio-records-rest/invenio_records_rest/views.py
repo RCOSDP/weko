@@ -539,6 +539,18 @@ class RecordsListResource(ContentNegotiatedMethodView):
         # will put the correct "total" and "hits" into the search variable
         search, qs_kwargs = self.search_factory(search)
 
+        # =======================================
+        # Storage for public cache
+        datastore = RedisStore(redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
+        cache_key = "search_after"
+
+        if datastore.redis.exists(cache_key) and json.loads(datastore.get(cache_key)).get(control_number):
+            cache_data = json.loads(datastore.get(cache_key))
+            cache_data[index_updated]
+        
+        
+        # =======================================
+
         print('\n\n\nSOMNUS - invenio_records_rest/views.py\n')
         # print(qs_kwargs)
         query = request.values.get('q')
@@ -570,20 +582,32 @@ class RecordsListResource(ContentNegotiatedMethodView):
             # next_check1 = search.execute()
             # next_check2 = next_check1["hits"]["hits"][-1]["_source"][sort_key]
 
-            if next_sort_value:
+            if datastore.redis.exists(cache_key) and json.loads(datastore.get(cache_key)).get(control_number):
+                cache_data = json.loads(datastore.get(cache_key))
+                # cache_data[control_number]
+
                 next_search_after_set = search
                 next_search_after_set._extra.update(search_after_size)
                 next_search_after_set._extra.update({"search_after": [next_sort_value]})
                 next_items_sort_value = next_search_after_set.execute()["hits"]["hits"][-1]["_source"][sort_key]
                 next_search_after_set = None
 
-                print('\n\n\n next_items_sort_value')
+                json_data = json.dumps({control_number: next_items_sort_value}).encode('utf-8')
+                datastore.put(
+                    cache_key,
+                    json_data,
+                    ttl_secs=3600
+                )
+
+                print('\n\n\nNOCTIS LUCIS CAELUM')
                 print(next_items_sort_value)
-                print(next_sort_value)
-                print('next_items_sort_value \n\n\n')
+                print(json.loads(datastore.get(cache_key)).get(control_number))
+                print('NOCTIS LUCIS CAELUM\n\n\n')
             else:
                 next_items_sort_value = first_10k_last_sort_value
                 print('\n\n\n\n\n\n FINAL FANTASY XV \n\n\n\n\n\n')
+
+            
 
             # Search after test using the last _id of the first 10,000 items
             # next_items_sort = {"sort": [{"_source.control_number": "desc"}]}
@@ -621,10 +645,16 @@ class RecordsListResource(ContentNegotiatedMethodView):
         # Execute search
         search_result = search.execute()
         next_sort_value = search_result["hits"]["hits"][-1]["_source"][sort_key]
+        json_data = json.dumps({control_number: next_sort_value}).encode('utf-8')
+        datastore.put(
+            cache_key,
+            json_data,
+            ttl_secs=3600
+        )
 
-        print('\n\n\n next_sort_value')
-        print(next_sort_value)
-        print('next_sort_value \n\n\n')
+        print('\n\n\nSOMNUS')
+        print(json.loads(datastore.get(cache_key)).get(control_number))
+        print('SOMNUS\n\n\n')
 
         
         #=========================== 20220421 comment
