@@ -1239,9 +1239,12 @@ def is_hidden_pubdate(item_type_name):
     hidden_pubdate_list = current_app.config.get(
         'WEKO_ITEMS_UI_HIDE_PUBLICATION_DATE')
     is_hidden = False
+
     if (item_type_name and isinstance(hidden_pubdate_list, list)
             and item_type_name in hidden_pubdate_list):
         is_hidden = True
+    import inspect
+    current_app.logger.error(inspect.stack()[1].function)
     return is_hidden
 
 

@@ -2886,7 +2886,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       }
 
       $scope.hiddenPubdate = function () {
-        if (!model["pubdate"]) {
+        let model = $rootScope["recordsVM"].invenioRecordsModel;
+	if (!model["pubdate"]) {
           let now = new Date();
           let day = ("0" + now.getDate()).slice(-2);
           let month = ("0" + (now.getMonth() + 1)).slice(-2);
@@ -2895,7 +2896,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
 	if ($("#is_hidden_pubdate").val() !== "True") {
           return;
         }
-        let model = $rootScope["recordsVM"].invenioRecordsModel;
         $rootScope["recordsVM"]["invenioRecordsForm"].forEach(function (item) {
           if (item.key === "pubdate") {
             item['condition'] = true;
