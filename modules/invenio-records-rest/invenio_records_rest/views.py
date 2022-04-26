@@ -46,6 +46,7 @@ from .proxies import current_records_rest
 from .query import es_search_factory
 from .utils import obj_or_import_string
 
+next_sort_value = None
 
 def elasticsearch_query_parsing_exception_handler(error):
     """Handle query parsing exceptions from ElasticSearch."""
@@ -515,8 +516,8 @@ class RecordsListResource(ContentNegotiatedMethodView):
         :returns: Search result containing hits and aggregations as
                   returned by invenio-search.
         """
-        default_results_size = current_app.config.get(
-            'RECORDS_REST_DEFAULT_RESULTS_SIZE', 10)
+        # default_results_size = current_app.config.get(
+        #     'RECORDS_REST_DEFAULT_RESULTS_SIZE', 10)
         # page_no is parameters for Opensearch
         page = request.values.get('page',
                                   request.values.get('page_no', 1, type=int),
@@ -526,23 +527,143 @@ class RecordsListResource(ContentNegotiatedMethodView):
                                   request.values.get(
                                       'list_view_num', 10, type=int),
                                   type=int)
-        if page * size >= self.max_result_window:
-            raise MaxResultWindowRESTError()
+        # if page * size >= self.max_result_window:
+        #     raise MaxResultWindowRESTError()
 
         # Arguments that must be added in prev/next links
         urlkwargs = dict()
         search_obj = self.search_class()
         search = search_obj.with_preference_param().params(version=True)
-        search = search[(page - 1) * size:page * size]
 
+        # this line of code will process the query string and as a result
+        # will put the correct "total" and "hits" into the search variable
         search, qs_kwargs = self.search_factory(search)
+
+        print('\n\n\nSOMNUS - invenio_records_rest/views.py\n')
+        # print(qs_kwargs)
         query = request.values.get('q')
+
+        # Search_after trigger
+        use_search_after = False
+
+        # Sort key being used in the query
+        sort_key = list(search.to_dict()["sort"][0].keys())[0]
+
+        # Get the first 10,000 item's last element's "_id"
+        first_10k = search[9999:10000]
+        first_10k = first_10k.execute()
+        first_10k_last_sort_value = first_10k["hits"]["hits"][-1]["_source"][sort_key] # last item's "ID" of the query result
+
+        global next_sort_value
+
+        if page * size > self.max_result_window:
+            
+                
+
+            search_after_size = {"size": size}
+
+            # Get the next items
+            # next_items = search[0:size]
+
+            # next_items = search
+            # next_items_sort_key_source = next_items.execute()
+            # next_check1 = search.execute()
+            # next_check2 = next_check1["hits"]["hits"][-1]["_source"][sort_key]
+
+            if next_sort_value:
+                next_search_after_set = search
+                next_search_after_set._extra.update(search_after_size)
+                next_search_after_set._extra.update({"search_after": [next_sort_value]})
+                next_items_sort_value = next_search_after_set.execute()["hits"]["hits"][-1]["_source"][sort_key]
+                next_search_after_set = None
+
+                print('\n\n\n next_items_sort_value')
+                print(next_items_sort_value)
+                print(next_sort_value)
+                print('next_items_sort_value \n\n\n')
+            else:
+                next_items_sort_value = first_10k_last_sort_value
+                print('\n\n\n\n\n\n FINAL FANTASY XV \n\n\n\n\n\n')
+
+            # Search after test using the last _id of the first 10,000 items
+            # next_items_sort = {"sort": [{"_source.control_number": "desc"}]}
+
+            # Due to the error below 'from' needs to be set to 0 when using search_after
+            # elasticsearch.exceptions.Transporagg
+
+            next_items_search_after = {"search_after": [next_items_sort_value]}
+           
+            print('\n\n\n///////////////')
+            print(next_items_search_after)
+            print(f'next_items_search_after: {next_items_search_after}')
+            print('///////////////\n\n\n')
+            
+            # next_items = search
+            # next_items._extra.update(next_items_from)
+            search._extra.update(search_after_size)
+            search._extra.update(next_items_search_after)
+            # next_items = next_items.execute()
+
+            # Search after trigger set to true
+            use_search_after = True
+
+        if use_search_after:
+            search = search[0:size]
+        else:
+            search = search[(page - 1) * size:page * size]
+            use_search_after = False
+
+        # query = request.values.get('q')
         if query:
             urlkwargs['q'] = query
 
         # current_app.logger.debug(search.to_dict())
         # Execute search
         search_result = search.execute()
+        next_sort_value = search_result["hits"]["hits"][-1]["_source"][sort_key]
+
+        print('\n\n\n next_sort_value')
+        print(next_sort_value)
+        print('next_sort_value \n\n\n')
+
+        
+        #=========================== 20220421 comment
+        # method 1 for getting all hits without breaking the 10000 limit
+        # total = test_search["hits"]["total"]
+        # count = []
+        # hits = {}
+        # while (total - 10000) > 0:
+        #     total = total - 10000
+        #     if total > 10000:
+        #         try:
+        #             count[-1] + 10001
+        #         except:
+        #             count.append(10000)
+        # else:
+        #     count.append(total)
+        # for index, content in enumerate(count):
+        #     hits[index] = 
+        # print(f'\n\ncount: {count}\n\n')
+
+        # x = search[(page - 1) * size:10000]
+        # y = x.execute()
+
+        # print('\n\n\nLAST ITEM')
+        # print(test_search["hits"]["hits"][-1])
+        # print('LAST ITEM/n/n/n')
+
+        # print('\n\nY HITS')
+        # print(len(y["hits"]["hits"]))
+        # print('Y HITS\n\n')
+        #=========================== 20220421 comment
+        
+        # total number of hits
+        # print(search_result.to_dict()['hits']['total'])
+
+        # list of limited results based on display size
+        # if 1-20, this list items would be the first 20 of the ["hits"]["total"]
+        # print(search_result.to_dict()['hits']['hits'])
+        print('\nSOMNUS - invenio_records_rest/views.py\n\n\n')
 
         # Generate links for prev/next
         urlkwargs.update(

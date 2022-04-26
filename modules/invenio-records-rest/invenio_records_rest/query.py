@@ -43,7 +43,10 @@ def default_search_factory(self, search, query_parser=None):
                 request.values.get('q', '')),
             exc_info=True)
         raise InvalidQueryRESTError()
-
+    print('\n\n\n invenio_records_rest/query.py \n')
+    print(dir(search))
+    print('\n invenio_records_rest/query.py \n\n\n')
+    
     search_index = getattr(search, '_original_index', search._index)[0]
     search, urlkwargs = default_facets_factory(search, search_index)
     search, sortkwargs = default_sorter_factory(search, search_index)

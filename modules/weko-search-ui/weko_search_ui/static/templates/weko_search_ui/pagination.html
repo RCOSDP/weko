@@ -1,4 +1,16 @@
 <nav aria-label="Page navigation">
+<!-- <br>
+<h3>{{ vm.invenioSearchArgs.page }}</h3>
+<br>
+<hr>
+<br>
+<h3>{{ vm.invenioSearchResults.hits.hits[0] }}</h3>
+<br>
+<hr>
+<br>
+<h3>{{ vm.invenioSearchResults.hits.hits[1] }}</h3>
+<hr>
+<br> -->
 <ul class="pagination pagination-sm" ng-if="vm.invenioSearchResults.hits.total">
   <li ng-show="showGoToFirstLast" ng-class="paginationHelper.getFirstClass()">
     <a ng-click="paginationHelper.changePage(1)" aria-label="First">
