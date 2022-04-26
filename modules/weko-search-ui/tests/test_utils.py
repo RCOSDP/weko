@@ -312,6 +312,17 @@ def test_read_stats_csv(app,mocker_itemtype):
         with set_locale('en'):
             assert read_stats_csv(csv_file_path,csv_file_name) == data
 
+def test_read_stats_tsv(app,mocker_itemtype):
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "csv","data.json")
+    tsv_file_name = "utf8_lf_items.tsv"
+    tsv_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "tsv",tsv_file_name)
+    with open(filepath,encoding="utf-8") as f:
+        data = json.load(f)
+
+    with app.test_request_context():
+        with set_locale('en'):
+            assert read_stats_csv(tsv_file_path,tsv_file_name) == data
+
 # def handle_convert_validate_msg_to_jp(message: str):
 # def handle_validate_item_import(list_record, schema) -> list:
 
