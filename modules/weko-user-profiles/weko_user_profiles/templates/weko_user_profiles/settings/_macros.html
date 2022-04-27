@@ -18,10 +18,10 @@
 # MA 02111-1307, USA.
 #}
 
-{% macro render_field(field, icon="", placeholder='', autofocus=False) %}
+{% macro render_field(field, icon="", placeholder='', autofocus=False, readonly=False) %}
   <div class="form-group {% if icon %} has-feedback{% endif %}{% if field.errors %} has-error{% endif %}">
     {{ field.label }}
-    {%- set extras = dict(autofocus="") if autofocus else dict() %}
+    {%- set extras = dict(autofocus="",readonly=readonly) if autofocus else dict() %}
     {%- if placeholder -%}
       {{field(class_="form-control", placeholder=placeholder, **extras)}}
     {%- else %}

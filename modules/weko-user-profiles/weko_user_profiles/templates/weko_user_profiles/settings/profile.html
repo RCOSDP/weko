@@ -45,6 +45,8 @@
   {%- for field in form %}
   {%- if field.widget.input_type == 'hidden' %}
   {{ field() }}
+  {%- elif config.WEKO_USERPROFILES_READONLY_EMAILFIELD==True and (field.id == 'profile-email' or field.id=='profile-email_repeat') %}
+  {{ render_field(field, autofocus=True, placeholder=field.label.text,readonly=True) }}
   {%- else %}
   {{ render_field(field, autofocus=True, placeholder=field.label.text) }}
   {%- endif %}
