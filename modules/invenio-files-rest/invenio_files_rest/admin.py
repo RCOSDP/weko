@@ -193,7 +193,7 @@ class ObjectModelView(ModelView):
         'file_instance': _("File"),
     }
     column_list = (
-        'bucket', 'key', 'version_id', 'file.uri', 'is_head', 'is_deleted',
+        'bucket', 'key', 'version_id', 'file.uri', 'is_head',
         'file.size', 'created', 'updated', 'versions', 'bucket_objs',
         'file_instance')
     column_searchable_list = ('key', )

@@ -29,6 +29,7 @@ from datetime import datetime, timedelta
 from typing import NoReturn, Optional, Tuple, Union
 
 import redis
+from redis import sentinel
 from celery.task.control import inspect
 from flask import current_app, request, session
 from flask_babelex import gettext as _
@@ -3934,10 +3935,10 @@ def check_doi_validation_not_pass(item_id, activity_id,
     if isinstance(error_list, str):
         return error_list
 
-    sessionstore = RedisStore(redis.StrictRedis.from_url(
-        'redis://{host}:{port}/1'.format(
-            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+    master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
+    sessionstore = RedisStore(master.master_for(
+            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
+
     if error_list:
         sessionstore.put(
             'updated_json_schema_{}'.format(activity_id),

@@ -21,6 +21,7 @@
 """Module of weko-records-ui utils."""
 
 import base64
+import os
 from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
@@ -239,7 +240,7 @@ def soft_delete(recid):
 
         if draft_pid:
             all_ver.append(draft_pid)
-
+        del_files = {}
         for ver in all_ver:
             depid = PersistentIdentifier.query.filter_by(
                 pid_type='depid', object_uuid=ver.object_uuid).first()
@@ -251,12 +252,19 @@ def soft_delete(recid):
                 dep.indexer.update_path(dep, update_revision=False)
                 FeedbackMailList.delete(ver.object_uuid)
                 dep.remove_feedback_mail()
+                for i in range(len(dep.files)):
+                    if dep.files[i].file.uri not in del_files:
+                        del_files[dep.files[i].file.uri] = dep.files[i].file.storage()
+                        dep.files[i].bucket.location.size -= dep.files[i].file.size
+                    dep.files[i].bucket.deleted = True
                 dep.commit()
             pids = PersistentIdentifier.query.filter_by(
                 object_uuid=ver.object_uuid)
             for p in pids:
                 p.status = PIDStatus.DELETED
             db.session.commit()
+        for file_storage in del_files.values():
+            file_storage.delete()
 
         current_app.logger.info(
             'user({0}) deleted record id({1}).'.format(current_user_id, recid))
