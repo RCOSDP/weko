@@ -420,13 +420,13 @@ def convert_date_range_value(start, end=None):
     _start = "gte"
     _end = "lte"
     pattern = r"^(([0-9]?[0-9]?[0-9]?[0-9]-(0?[1-9]|1[0-2])-(0?[1-9]|[12][0-9]|3[01]))/"\
-        "([0-9]?[0-9]?[0-9]?[0-9]-(0?[1-9]|1[0-2])-(0?[1-9]|[12][0-9]|3[01])))|"\
-        "(([0-9]?[0-9]?[0-9]?[0-9]-(0?[1-9]|1[0-2]))/([0-9]?[0-9]?[0-9]?[0-9]-(0?[1-9]|1[0-2])))|"\
-        "(([0-9]?[0-9]?[0-9]?[0-9])/([0-9]?[0-9]?[0-9]?[0-9]))$"
+    "([0-9]?[0-9]?[0-9]?[0-9]-(0?[1-9]|1[0-2])-(0?[1-9]|[12][0-9]|3[01])))|"\
+    "(([0-9]?[0-9]?[0-9]?[0-9]-(0?[1-9]|1[0-2]))/([0-9]?[0-9]?[0-9]?[0-9]-(0?[1-9]|1[0-2])))|"\
+    "(([0-9]?[0-9]?[0-9]?[0-9])/([0-9]?[0-9]?[0-9]?[0-9]))$"
     p = re.compile(pattern)
     if start is not None:
         start = start.strip()
-        ret = makeDateRangeValue(start, start)
+        ret = makeDateRangeValue(start,start)
         if p.match(start) is not None:
             _tmp = start.split("/")
             if len(_tmp) == 2:
@@ -435,7 +435,7 @@ def convert_date_range_value(start, end=None):
             ret = makeDateRangeValue(start, end)
     else:
         if end is not None:
-            ret = makeDateRangeValue(end, end)
+            ret = makeDateRangeValue(end,end)
     return ret
 
 
@@ -452,9 +452,9 @@ def makeDateRangeValue(start, end):
     _start = "gte"
     _end = "lte"
     start = start.strip()
-    start = start.replace('/', '-')
+    start = start.replace('/','-')
     end = end.strip()
-    end = end.replace('/', '-')
+    end = end.replace('/','-')
     ret = None
     p2 = re.compile(
         r"^([0-9]?[0-9]?[0-9]?[0-9]-(0?[1-9]|1[0-2])-(0?[1-9]|[12][0-9]|3[01]))$"
@@ -2259,7 +2259,11 @@ def custom_record_medata_for_export(record_metadata: dict):
 
     :param record_metadata:
     """
-    from weko_records_ui.utils import display_oaiset_path, hide_item_metadata, replace_license_free
+    from weko_records_ui.utils import (
+        display_oaiset_path,
+        hide_item_metadata,
+        replace_license_free,
+    )
 
     hide_item_metadata(record_metadata)
     replace_license_free(record_metadata)
