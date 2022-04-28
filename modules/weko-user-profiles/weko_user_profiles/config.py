@@ -168,3 +168,5 @@ WEKO_USERPROFILES_ROLE_MAPPING = {}
 WEKO_USERPROFILES_FORM_COLUMN = ["username", "timezone", "language", "email",
                                  "email_repeat"]
 """User profile form column"""
+
+WEKO_USERPROFILES_READONLY_EMAILFIELD = False 

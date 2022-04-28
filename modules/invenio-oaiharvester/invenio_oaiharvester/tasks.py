@@ -41,7 +41,7 @@ from lxml import etree
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.models import Index
 from weko_records.models import ItemMetadata
-from weko_records_ui.utils import soft_delete, restore
+from weko_records_ui.utils import restore, soft_delete
 
 from .api import get_records, list_records, send_run_status_mail
 from .config import OAIHARVESTER_ENABLE_ITEM_VERSIONING
@@ -223,24 +223,25 @@ def process_item(record, harvesting, counter):
         # merge creatorNames
         current_app.logger.debug('[{0}] [{1}] Processing json: {2}'.format(
             0, 'Harvesting', mapper.identifier()))
-        if 'item_1593074267803' in json_data:
-            if len(json_data['item_1593074267803']) > 0:
-                n2 = len(json_data['item_1593074267803'])
-                n = int(n2/2)
-                if 'creatorNames' in json_data['item_1593074267803'][0] and 'creatorNames' in json_data['item_1593074267803'][n]:
-                    if 'creatorNameLang' in json_data['item_1593074267803'][0]['creatorNames'][0] and 'creatorNameLang' in json_data['item_1593074267803'][n]['creatorNames'][0]:
-                        if json_data['item_1593074267803'][0]['creatorNames'][0]['creatorNameLang'] != json_data['item_1593074267803'][n]['creatorNames'][0]['creatorNameLang']:
-                            for i in range(n):
-                                json_data['item_1593074267803'][i]['creatorNames'].append(
-                                    json_data['item_1593074267803'][i+n]['creatorNames'][0])
-                                if json_data['item_1593074267803'][i]['creatorNames'][0]['creatorNameLang'] == 'en':
-                                    tmp = json_data['item_1593074267803'][i]['creatorNames'][0]
-                                    json_data['item_1593074267803'][i]['creatorNames'][0] = json_data['item_1593074267803'][i]['creatorNames'][1]
-                                    json_data['item_1593074267803'][i]['creatorNames'][1] = tmp
-                                if 'nameIdentifiers' in json_data['item_1593074267803'][i]:
-                                    del json_data['item_1593074267803'][i]['nameIdentifiers']
+        if harvesting.metadata_prefix == 'oai_ddi25' or harvesting.metadata_prefix == 'ddi':
+            if 'item_1593074267803' in json_data:
+                if len(json_data['item_1593074267803']) > 0:
+                    n2 = len(json_data['item_1593074267803'])
+                    n = int(n2/2)
+                    if 'creatorNames' in json_data['item_1593074267803'][0] and 'creatorNames' in json_data['item_1593074267803'][n]:
+                        if 'creatorNameLang' in json_data['item_1593074267803'][0]['creatorNames'][0] and 'creatorNameLang' in json_data['item_1593074267803'][n]['creatorNames'][0]:
+                            if json_data['item_1593074267803'][0]['creatorNames'][0]['creatorNameLang'] != json_data['item_1593074267803'][n]['creatorNames'][0]['creatorNameLang']:
+                                for i in range(n):
+                                    json_data['item_1593074267803'][i]['creatorNames'].append(
+                                        json_data['item_1593074267803'][i+n]['creatorNames'][0])
+                                    if json_data['item_1593074267803'][i]['creatorNames'][0]['creatorNameLang'] == 'en':
+                                        tmp = json_data['item_1593074267803'][i]['creatorNames'][0]
+                                        json_data['item_1593074267803'][i]['creatorNames'][0] = json_data['item_1593074267803'][i]['creatorNames'][1]
+                                        json_data['item_1593074267803'][i]['creatorNames'][1] = tmp
+                                    if 'nameIdentifiers' in json_data['item_1593074267803'][i]:
+                                        del json_data['item_1593074267803'][i]['nameIdentifiers']
 
-                            del json_data['item_1593074267803'][n:]
+                                del json_data['item_1593074267803'][n:]
 
         # for e in json_data:
         #    current_app.logger.debug('[{0}] [{1}] Processing json_data[e]: {2}'.format(
@@ -260,18 +261,29 @@ def process_item(record, harvesting, counter):
 
         json_data['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
         dep['_deposit']['status'] = 'draft'
+        dep.clear()
 
         # START: temporary fix for JDCat
         # if json['$schema'] == '/items/jsonschema/14' and 'item_1588260046718' in json:
-        if 'item_1588260046718' in json_data:
-            for i in json_data['item_1588260046718']:
-                i['subitem_1592380784883'] = 'Other'
+        if harvesting.metadata_prefix == 'oai_ddi25' or harvesting.metadata_prefix == 'ddi':
+            # if json['$schema'] == '/items/jsonschema/14' and 'item_1588260046718' in json:
+            if 'item_1588260046718' in json_data:
+                for i in json_data['item_1588260046718']:
+                    i['subitem_1592380784883'] = 'Other'
 
-        # if json['$schema'] == '/items/jsonschema/14' and 'item_1592405734122' in json:
-        if 'item_1592405734122' in json_data:
-            # current_app.logger.debug('json: %s' % json['item_1551264917614'])
-            for i in json_data['item_1592405734122']:
-                i['subitem_1591320918354'] = 'Distributor'
+            # if json['$schema'] == '/items/jsonschema/14' and 'item_1592405734122' in json:
+            if 'item_1592405734122' in json_data:
+                # current_app.logger.debug('json: %s' % json['item_1551264917614'])
+                for i in json_data['item_1592405734122']:
+                    i['subitem_1591320918354'] = 'Distributor'
+
+            if 'item_1600078832557' in json_data:
+                for i in json_data['item_1600078832557']:
+                    i['accessrole'] = 'open_access'
+            
+            json_data['resourcetype']=[]
+            json_data['resourcetype'].append({
+                "resourcetype": "dataset", "resourceuri": "http://purl.org/coar/resource_type/c_ddb1"})        
         # END: temporary fix for JDCat
 
         # current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(

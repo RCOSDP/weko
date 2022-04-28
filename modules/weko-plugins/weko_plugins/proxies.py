@@ -23,4 +23,4 @@
 from flask import current_app
 from werkzeug.local import LocalProxy
 
-current_plugins = LocalProxy(lambda: current_app.extensions['weko-plugins'])
+current_plugins = LocalProxy(lambda: current_app.extensions["weko-plugins"])

@@ -239,9 +239,9 @@ class ShibUser(object):
             return False, ret
 
         roles = self.shib_attr.get('shib_role_authority_name', '')
-
+        # Splitting the value of shib_role_authority_name into multiple roles
+        roles = [x.strip() for x in roles.split(';')]
         shib_roles = current_app.config['WEKO_ACCOUNTS_SHIB_ROLE_RELATION']
-        roles = [x.strip() for x in roles.split(',')]
 
         if set(roles).issubset(set(shib_roles.keys())):
             _roles = [shib_roles[role] for role in roles]

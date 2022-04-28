@@ -39,45 +39,70 @@ from weko_admin.api import TempDirInfo
 from weko_admin.utils import reset_redis_cache
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
-from weko_index_tree.utils import get_doi_items_in_index, \
-    get_editing_items_in_index, is_index_locked
+from weko_index_tree.utils import (
+    get_doi_items_in_index,
+    get_editing_items_in_index,
+    is_index_locked,
+)
 from weko_records.api import ItemTypes
 from weko_workflow.api import WorkFlow
-from weko_workflow.utils import delete_cache_data, get_cache_data, \
-    update_cache_data
+from weko_workflow.utils import delete_cache_data, get_cache_data, update_cache_data
 
 from weko_search_ui.api import get_search_detail_keyword
 
-from .config import WEKO_EXPORT_TEMPLATE_BASIC_ID, \
-    WEKO_EXPORT_TEMPLATE_BASIC_NAME, WEKO_EXPORT_TEMPLATE_BASIC_OPTION, \
-    WEKO_IMPORT_CHECK_LIST_NAME, WEKO_IMPORT_LIST_NAME, \
-    WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE
-from .tasks import check_celery_is_run, check_import_items_task, \
-    export_all_task, import_item, is_import_running, remove_temp_dir_task
-from .utils import cancel_export_all, check_import_items, \
-    check_sub_item_is_system, create_flow_define, delete_records, \
-    get_change_identifier_mode_content, get_content_workflow, \
-    get_export_status, get_lifetime, get_root_item_option, \
-    get_sub_item_option, get_tree_items, handle_get_all_sub_id_and_name, \
-    handle_workflow, make_stats_csv, make_csv_by_line
+from .config import (
+    WEKO_EXPORT_TEMPLATE_BASIC_ID,
+    WEKO_EXPORT_TEMPLATE_BASIC_NAME,
+    WEKO_EXPORT_TEMPLATE_BASIC_OPTION,
+    WEKO_IMPORT_CHECK_LIST_NAME,
+    WEKO_IMPORT_LIST_NAME,
+    WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
+    WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE,
+)
+from .tasks import (
+    check_celery_is_run,
+    check_import_items_task,
+    export_all_task,
+    import_item,
+    is_import_running,
+    remove_temp_dir_task,
+)
+from .utils import (
+    cancel_export_all,
+    check_import_items,
+    check_sub_item_is_system,
+    create_flow_define,
+    delete_records,
+    get_change_identifier_mode_content,
+    get_content_workflow,
+    get_export_status,
+    get_lifetime,
+    get_root_item_option,
+    get_sub_item_option,
+    get_tree_items,
+    handle_get_all_sub_id_and_name,
+    handle_workflow,
+    make_stats_csv,
+    make_csv_by_line,
+)
 
 _signals = Namespace()
-searched = _signals.signal('searched')
+searched = _signals.signal("searched")
 
 
 class ItemManagementBulkDelete(BaseView):
     """Item Management - Bulk Delete view."""
 
-    @expose('/', methods=['GET', 'PUT'])
+    @expose("/", methods=["GET", "PUT"])
     def index(self):
         """Bulk delete items and index trees."""
-        if request.method == 'PUT':
+        if request.method == "PUT":
             # Do delete items inside the current index tree (maybe root tree)
-            q = request.values.get('q')
+            q = request.values.get("q")
             if q is not None and q.isdigit():
                 current_tree = Indexes.get_index(q)
                 recursive_tree = Indexes.get_recursive_tree(q)
-                recursively = request.values.get('recursively') == 'true'
+                recursively = request.values.get("recursively") == "true"
 
                 if current_tree:
                     doi_items = get_doi_items_in_index(q, recursively)
@@ -101,76 +126,75 @@ class ItemManagementBulkDelete(BaseView):
                                     direct_child_trees.append(child_tree.id)
 
                     if ignore_items:
-                        msg = '{}<br/>'.format(
-                            _('The following item(s) cannot be deleted.'))
+                        msg = "{}<br/>".format(
+                            _("The following item(s) cannot be deleted.")
+                        )
                         if doi_items:
-                            _item_d = ['recid: {}'.format(i)
-                                       for i in doi_items]
-                            msg += '<br/>{}<br/>&nbsp;{}'.format(
-                                _('DOI granting item(s):'),
-                                (', ').join(_item_d)
+                            _item_d = ["recid: {}".format(i) for i in doi_items]
+                            msg += "<br/>{}<br/>&nbsp;{}".format(
+                                _("DOI granting item(s):"), (", ").join(_item_d)
                             )
                         if edt_items:
-                            _item_e = ['recid: {}'.format(i)
-                                       for i in edt_items]
-                            msg += '<br/>{}<br/>&nbsp;{}'.format(
-                                _('Editing item(s):'),
-                                (', ').join(_item_e)
+                            _item_e = ["recid: {}".format(i) for i in edt_items]
+                            msg += "<br/>{}<br/>&nbsp;{}".format(
+                                _("Editing item(s):"), (", ").join(_item_e)
                             )
-                        return jsonify({'status': 1, 'msg': msg})
-                    return jsonify({'status': 1, 'msg': _('Success')})
+                        return jsonify({"status": 1, "msg": msg})
+                    return jsonify({"status": 1, "msg": _("Success")})
 
-            return jsonify({'status': 0, 'msg': 'Invalid tree'})
+            return jsonify({"status": 0, "msg": "Invalid tree"})
 
         """Render view."""
-        detail_condition = get_search_detail_keyword('')
+        detail_condition = get_search_detail_keyword("")
         return self.render(
-            current_app.config['WEKO_THEME_ADMIN_ITEM_MANAGEMENT_TEMPLATE'],
-            management_type='delete',
-            detail_condition=detail_condition
+            current_app.config["WEKO_THEME_ADMIN_ITEM_MANAGEMENT_TEMPLATE"],
+            management_type="delete",
+            detail_condition=detail_condition,
         )
 
-    @expose('/check', methods=['GET'])
+    @expose("/check", methods=["GET"])
     def check(self):
         """Get list."""
-        q = request.values.get('q')
+        q = request.values.get("q")
         status = 0
         msg = None
-        recursively = request.values.get('recursively') == 'true'
+        recursively = request.values.get("recursively") == "true"
 
         if q and q.isdigit() and Indexes.get_index(q):
             if is_index_locked(q):
                 status = 0
-                msg = _('Index Delete is in progress on another device.')
+                msg = _("Index Delete is in progress on another device.")
             elif get_doi_items_in_index(q, recursively):
                 status = 1
-                msg = _('DOI granting item(s) are including in the '
-                        'deletion items.<br/>DOI granting item(s) cannot '
-                        'be deleted without withdrawing the DOI.<br/>'
-                        'Do you want to continue deleting items that are '
-                        'not grant DOI?')
+                msg = _(
+                    "DOI granting item(s) are including in the "
+                    "deletion items.<br/>DOI granting item(s) cannot "
+                    "be deleted without withdrawing the DOI.<br/>"
+                    "Do you want to continue deleting items that are "
+                    "not grant DOI?"
+                )
             else:
                 status = 1
-                msg = _('Are you sure you want to delete it?')
+                msg = _("Are you sure you want to delete it?")
         else:
             status = 0
-            msg = _('No such index.')
+            msg = _("No such index.")
 
-        return jsonify({'status': status, 'msg': msg})
+        return jsonify({"status": status, "msg": msg})
 
 
 class ItemManagementCustomSort(BaseView):
     """Item Management - Custom Sort view."""
 
-    @expose('/', methods=['GET'])
+    @expose("/", methods=["GET"])
     def index(self):
         """Custom sort index."""
         return self.render(
-            current_app.config['WEKO_THEME_ADMIN_ITEM_MANAGEMENT_TEMPLATE'],
-            management_type='sort',
+            current_app.config["WEKO_THEME_ADMIN_ITEM_MANAGEMENT_TEMPLATE"],
+            management_type="sort",
         )
 
-    @expose('/save', methods=['POST'])
+    @expose("/save", methods=["POST"])
     def save_sort(self):
         """Save custom sort."""
         try:
@@ -181,9 +205,9 @@ class ItemManagementCustomSort(BaseView):
             # save data to DB
             item_sort = {}
             for sort in sort_data:
-                sd = sort.get('custom_sort').get(index_id)
+                sd = sort.get("custom_sort").get(index_id)
                 if sd:
-                    item_sort[sort.get('id')] = sd
+                    item_sort[sort.get("id")] = sd
 
             Indexes.set_item_sort_custom(index_id, item_sort)
 
@@ -191,48 +215,58 @@ class ItemManagementCustomSort(BaseView):
             # fp = Indexes.get_self_path(index_id)
             # Indexes.update_item_sort_custom_es(fp.path, sort_data)
 
-            jfy = {'status': 200, 'message': 'Data is successfully updated.'}
+            jfy = {"status": 200, "message": "Data is successfully updated."}
         except Exception:
-            jfy = {'status': 405, 'message': 'Error.'}
-        return make_response(jsonify(jfy), jfy['status'])
+            jfy = {"status": 405, "message": "Error."}
+        return make_response(jsonify(jfy), jfy["status"])
 
 
 class ItemManagementBulkSearch(BaseView):
     """Item Management - Search."""
 
-    @expose('/', methods=['GET'])
+    @expose("/", methods=["GET"])
     def index(self):
         """Index Search page ui."""
-        search_type = request.args.get('search_type', '0')
+        search_type = request.args.get("search_type", "0")
         get_args = request.args
         community_id = ""
-        ctx = {'community': None}
-        cur_index_id = search_type if search_type not in ('0', '1', ) else None
-        if 'community' in get_args:
+        ctx = {"community": None}
+        cur_index_id = (
+            search_type
+            if search_type
+            not in (
+                "0",
+                "1",
+            )
+            else None
+        )
+        if "community" in get_args:
             from weko_workflow.api import GetCommunity
-            comm = GetCommunity.get_community_by_id(
-                request.args.get('community'))
-            ctx = {'community': comm}
-            community_id = comm.id
+
+            comm = GetCommunity.get_community_by_id(request.args.get("community"))
+            ctx = {"community": comm}
+            if comm is not None:
+                community_id = comm.id
 
         # Get index style
         style = IndexStyle.get(
-            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
-        width = style.width if style else '3'
+            current_app.config["WEKO_INDEX_TREE_STYLE_OPTIONS"]["id"]
+        )
+        width = style.width if style else "3"
 
-        detail_condition = get_search_detail_keyword('')
+        detail_condition = get_search_detail_keyword("")
 
         height = style.height if style else None
-        header = ''
-        if 'item_management' in get_args:
-            management_type = request.args.get('item_management', 'sort')
+        header = ""
+        if "item_management" in get_args:
+            management_type = request.args.get("item_management", "sort")
             has_items = False
             has_child_trees = False
-            header = _('Custom Sort')
-            if management_type == 'delete':
-                header = _('Bulk Delete')
+            header = _("Custom Sort")
+            if management_type == "delete":
+                header = _("Bulk Delete")
                 # Does this tree has items or children?
-                q = request.args.get('q')
+                q = request.args.get("q")
                 if q is not None and q.isdigit():
                     current_tree = Indexes.get_index(q)
                     recursive_tree = Indexes.get_recursive_tree(q)
@@ -242,26 +276,26 @@ class ItemManagementBulkSearch(BaseView):
                         has_items = len(tree_items) > 0
                         if recursive_tree is not None:
                             has_child_trees = len(recursive_tree) > 1
-            elif management_type == 'update':
-                header = _('Bulk Update')
+            elif management_type == "update":
+                header = _("Bulk Update")
 
             return self.render(
-                current_app.config[
-                    'WEKO_THEME_ADMIN_ITEM_MANAGEMENT_TEMPLATE'],
+                current_app.config["WEKO_THEME_ADMIN_ITEM_MANAGEMENT_TEMPLATE"],
                 index_id=cur_index_id,
                 community_id=community_id,
                 width=width,
                 height=height,
                 header=header,
                 management_type=management_type,
-                fields=current_app.config[
-                    'WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['fields'],
-                licences=current_app.config[
-                    'WEKO_RECORDS_UI_LICENSE_DICT'],
+                fields=current_app.config["WEKO_RECORDS_UI_BULK_UPDATE_FIELDS"][
+                    "fields"
+                ],
+                licences=current_app.config["WEKO_RECORDS_UI_LICENSE_DICT"],
                 has_items=has_items,
                 has_child_trees=has_child_trees,
                 detail_condition=detail_condition,
-                **ctx)
+                **ctx
+            )
         else:
             return abort(500)
 
@@ -274,7 +308,7 @@ class ItemManagementBulkSearch(BaseView):
 class ItemImportView(BaseView):
     """BaseView for Admin Import."""
 
-    @expose('/', methods=['GET'])
+    @expose("/", methods=["GET"])
     def index(self):
         """Renders an item import view.
 
@@ -286,49 +320,54 @@ class ItemImportView(BaseView):
         workflows_js = [get_content_workflow(item) for item in workflows]
 
         return self.render(
-            WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
-            workflows=json.dumps(workflows_js)
+            WEKO_ITEM_ADMIN_IMPORT_TEMPLATE, workflows=json.dumps(workflows_js)
         )
 
-    @expose('/check', methods=['POST'])
+    @expose("/check", methods=["POST"])
     def check(self) -> jsonify:
         """Validate item import."""
         data = request.form
-        file = request.files['file'] if request.files else None
+        file = request.files["file"] if request.files else None
 
         if data and file:
-            temp_path = tempfile.gettempdir() + '/' + \
-                current_app.config['WEKO_SEARCH_UI_IMPORT_TMP_PREFIX'] + \
-                datetime.utcnow().strftime(r'%Y%m%d%H%M%S%f')
+            temp_path = (
+                tempfile.gettempdir()
+                + "/"
+                + current_app.config["WEKO_SEARCH_UI_IMPORT_TMP_PREFIX"]
+                + datetime.utcnow().strftime(r"%Y%m%d%H%M%S%f")
+            )
             os.mkdir(temp_path)
-            file_path = temp_path + '/' + file.filename
+            file_path = temp_path + "/" + file.filename
             file.save(file_path)
             task = check_import_items_task.apply_async(
-                (file_path, data.get('is_change_identifier') == 'true',
-                 request.host_url, current_i18n.language), )
+                (
+                    file_path,
+                    data.get("is_change_identifier") == "true",
+                    request.host_url,
+                    current_i18n.language,
+                ),
+            )
         return jsonify(code=1, check_import_task_id=task.task_id)
 
-    @expose('/get_check_status', methods=['POST'])
+    @expose("/get_check_status", methods=["POST"])
     def get_check_status(self) -> jsonify:
         """Validate item import."""
         data = request.get_json()
         result = {}
 
-        if data and data.get('task_id'):
-            task = import_item.AsyncResult(data.get('task_id'))
+        if data and data.get("task_id"):
+            task = import_item.AsyncResult(data.get("task_id"))
             if task and isinstance(task.result, dict):
                 start_date = task.result.get("start_date")
                 end_date = task.result.get("end_date")
-                result.update({
-                    "start_date": start_date,
-                    "end_date": end_date,
-                    **task.result
-                })
+                result.update(
+                    {"start_date": start_date, "end_date": end_date, **task.result}
+                )
             elif task and task.status != "PENDING":
-                result['error'] = _('Internal server error')
+                result["error"] = _("Internal server error")
         return jsonify(**result)
 
-    @expose('/download_check', methods=['POST'])
+    @expose("/download_check", methods=["POST"])
     def download_check(self):
         """Download report check result."""
         data = request.get_json()
@@ -337,73 +376,63 @@ class ItemImportView(BaseView):
         file_name = "check_" + now + ".csv"
         if data:
             csv_file = make_stats_csv(
-                data.get('list_result'),
-                WEKO_IMPORT_CHECK_LIST_NAME
+                data.get("list_result"), WEKO_IMPORT_CHECK_LIST_NAME
             )
             return Response(
                 csv_file.getvalue(),
                 mimetype="text/csv",
-                headers={
-                    "Content-disposition": "attachment; filename=" + file_name
-                }
+                headers={"Content-disposition": "attachment; filename=" + file_name},
             )
         else:
             return Response(
                 [],
                 mimetype="text/csv",
-                headers={
-                    "Content-disposition": "attachment; filename=" + file_name
-                }
+                headers={"Content-disposition": "attachment; filename=" + file_name},
             )
 
-    @expose('/import', methods=['POST'])
+    @expose("/import", methods=["POST"])
     def import_items(self) -> jsonify:
         """Import item into System."""
         data = request.get_json() or {}
-        data_path = data.get('data_path')
+        data_path = data.get("data_path")
         request_info = {
-            'remote_addr': request.remote_addr,
-            'referrer': request.referrer,
-            'hostname': request.host
+            "remote_addr": request.remote_addr,
+            "referrer": request.referrer,
+            "hostname": request.host,
         }
         # update temp dir expire to 1 day from now
         expire = datetime.now() + timedelta(days=1)
-        TempDirInfo().set(
-            data_path,
-            {'expire': expire.strftime('%Y-%m-%d %H:%M:%S')}
-        )
+        TempDirInfo().set(data_path, {"expire": expire.strftime("%Y-%m-%d %H:%M:%S")})
 
         tasks = []
-        list_record = [item for item in data.get(
-            'list_record', []) if not item.get(
-            'errors')]
-        import_start_time = ''
+        list_record = [
+            item for item in data.get("list_record", []) if not item.get("errors")
+        ]
+        import_start_time = ""
         if list_record:
             group_tasks = []
             for item in list_record:
-                item['root_path'] = data_path + '/data'
+                item["root_path"] = data_path + "/data"
                 create_flow_define()
                 handle_workflow(item)
                 group_tasks.append(import_item.s(item, request_info))
 
             # handle import tasks
-            import_task = chord(group_tasks)(
-                remove_temp_dir_task.si(data_path))
+            import_task = chord(group_tasks)(remove_temp_dir_task.si(data_path))
             for idx, task in enumerate(import_task.parent.results):
-                tasks.append({
-                    'task_id': task.task_id,
-                    'item_id': list_record[idx].get('id'),
-                })
+                tasks.append(
+                    {
+                        "task_id": task.task_id,
+                        "item_id": list_record[idx].get("id"),
+                    }
+                )
             # save start time of import progress into cache
-            import_start_time = datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z')
-            update_cache_data('import_start_time', import_start_time, 0)
+            import_start_time = datetime.now().strftime("%Y-%m-%dT%H:%M:%S%z")
+            update_cache_data("import_start_time", import_start_time, 0)
 
         response_object = {
             "status": "success",
-            "data": {
-                "tasks": tasks,
-                "import_start_time": import_start_time
-            }
+            "data": {"tasks": tasks, "import_start_time": import_start_time},
         }
         return jsonify(response_object)
 
@@ -412,33 +441,44 @@ class ItemImportView(BaseView):
         """Get status of import process."""
         data = request.get_json()
         result = []
-        if data and data.get('tasks'):
-            status = 'done'
-            for task_item in data.get('tasks'):
-                task_id = task_item.get('task_id')
+        if data and data.get("tasks"):
+            status = "done"
+            for task_item in data.get("tasks"):
+                task_id = task_item.get("task_id")
                 task = import_item.AsyncResult(task_id)
-                start_date = task.result.get(
-                    "start_date"
-                ) if task and isinstance(task.result, dict) else ""
-                end_date = datetime.now().strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                ) if task.successful() or task.failed() else ""
-                result.append(dict(**{
-                    "task_status": task.status,
-                    "task_result": task.result,
-                    "start_date": start_date,
-                    "end_date": task_item.get("end_date") or end_date,
-                    "task_id": task_id,
-                    "item_id": task_item.get("item_id"),
-                }))
-                status = 'doing' if not (task.successful() or task.failed()) \
-                    or status == 'doing' else "done"
+                start_date = (
+                    task.result.get("start_date")
+                    if task and isinstance(task.result, dict)
+                    else ""
+                )
+                end_date = (
+                    datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    if task.successful() or task.failed()
+                    else ""
+                )
+                result.append(
+                    dict(
+                        **{
+                            "task_status": task.status,
+                            "task_result": task.result,
+                            "start_date": start_date,
+                            "end_date": task_item.get("end_date") or end_date,
+                            "task_id": task_id,
+                            "item_id": task_item.get("item_id"),
+                        }
+                    )
+                )
+                status = (
+                    "doing"
+                    if not (task.successful() or task.failed()) or status == "doing"
+                    else "done"
+                )
             response_object = {"status": status, "result": result}
         else:
             response_object = {"status": "error", "result": result}
         return jsonify(response_object)
 
-    @expose('/export_import', methods=['POST'])
+    @expose("/export_import", methods=["POST"])
     def download_import(self):
         """Download import result."""
         data = request.get_json()
@@ -446,231 +486,244 @@ class ItemImportView(BaseView):
 
         file_name = "List_Download " + now + ".csv"
         if data:
-            csv_file = make_stats_csv(
-                data.get('list_result'),
-                WEKO_IMPORT_LIST_NAME
-            )
+            csv_file = make_stats_csv(data.get("list_result"), WEKO_IMPORT_LIST_NAME)
             return Response(
                 csv_file.getvalue(),
                 mimetype="text/csv",
-                headers={
-                    "Content-disposition": "attachment; filename=" + file_name
-                }
+                headers={"Content-disposition": "attachment; filename=" + file_name},
             )
         else:
             return Response(
                 [],
                 mimetype="text/csv",
-                headers={
-                    "Content-disposition": "attachment; filename=" + file_name
-                }
+                headers={"Content-disposition": "attachment; filename=" + file_name},
             )
 
-    @expose('/get_disclaimer_text', methods=['GET'])
+    @expose("/get_disclaimer_text", methods=["GET"])
     def get_disclaimer_text(self):
         """Get disclaimer text."""
         data = get_change_identifier_mode_content()
         return jsonify(code=1, data=data)
 
-    @expose('/export_template', methods=['POST'])
+    @expose("/export_template", methods=["POST"])
     def export_template(self):
         """Download item type template."""
         file_name = None
         csv_file = None
         data = request.get_json()
         if data:
-            item_type_id = int(data.get('item_type_id', 0))
+            item_type_id = int(data.get("item_type_id", 0))
             if item_type_id > 0:
-                item_type = ItemTypes.get_by_id(
-                    id_=item_type_id, with_deleted=True)
+                item_type = ItemTypes.get_by_id(id_=item_type_id, with_deleted=True)
                 if item_type:
-                    file_name = '{}({}).csv'.format(
-                        item_type.item_type_name.name, item_type.id)
+                    file_name = "{}({}).csv".format(
+                        item_type.item_type_name.name, item_type.id
+                    )
                     item_type_line = [
-                        '#ItemType',
-                        '{}({})'.format(
-                            item_type.item_type_name.name, item_type.id),
-                        '{}items/jsonschema/{}'.format(
-                            request.url_root, item_type.id)
+                        "#ItemType",
+                        "{}({})".format(item_type.item_type_name.name, item_type.id),
+                        "{}items/jsonschema/{}".format(request.url_root, item_type.id),
                     ]
                     ids_line = copy.deepcopy(WEKO_EXPORT_TEMPLATE_BASIC_ID)
                     names_line = copy.deepcopy(WEKO_EXPORT_TEMPLATE_BASIC_NAME)
-                    systems_line = ['#'] + \
-                        ['' for _ in range(len(ids_line) - 1)]
-                    options_line = copy.deepcopy(
-                        WEKO_EXPORT_TEMPLATE_BASIC_OPTION)
+                    systems_line = ["#"] + ["" for _ in range(len(ids_line) - 1)]
+                    options_line = copy.deepcopy(WEKO_EXPORT_TEMPLATE_BASIC_OPTION)
 
                     item_type = item_type.render
-                    meta_list = {**item_type.get('meta_fix', {}),
-                                 **item_type.get('meta_list', {})}
-                    meta_system = [
-                        key for key in item_type.get('meta_system', {})]
-                    schema = item_type.get('table_row_map', {}) \
-                        .get('schema', {}).get('properties', {})
-                    form = item_type.get('table_row_map', {}).get('form', [])
+                    meta_list = {
+                        **item_type.get("meta_fix", {}),
+                        **item_type.get("meta_list", {}),
+                    }
+                    meta_system = [key for key in item_type.get("meta_system", {})]
+                    schema = (
+                        item_type.get("table_row_map", {})
+                        .get("schema", {})
+                        .get("properties", {})
+                    )
+                    form = item_type.get("table_row_map", {}).get("form", [])
 
                     count_file = 0
                     count_thumbnail = 0
-                    for key in ['pubdate', *item_type.get('table_row', [])]:
+                    for key in ["pubdate", *item_type.get("table_row", [])]:
                         if key in meta_system:
                             continue
 
                         item = schema.get(key)
-                        item_option = meta_list.get(key) \
-                            if meta_list.get(key) else item
+                        item_option = meta_list.get(key) if meta_list.get(key) else item
                         sub_form = next(
-                            (x for x in form if key == x.get('key')),
-                            {'title_i18n': {}})
-                        root_id, root_name, root_option = \
-                            get_root_item_option(key, item_option, sub_form)
+                            (x for x in form if key == x.get("key")), {"title_i18n": {}}
+                        )
+                        root_id, root_name, root_option = get_root_item_option(
+                            key, item_option, sub_form
+                        )
                         # have not sub item
-                        if not (item.get('properties') or item.get('items')):
+                        if not (item.get("properties") or item.get("items")):
                             ids_line.append(root_id)
                             names_line.append(root_name)
-                            systems_line.append('')
-                            options_line.append(', '.join(root_option))
+                            systems_line.append("")
+                            options_line.append(", ".join(root_option))
                         else:
                             # have sub item
-                            sub_items = item.get('properties') \
-                                if item.get('properties') \
-                                else item.get('items').get('properties')
+                            sub_items = (
+                                item.get("properties")
+                                if item.get("properties")
+                                else item.get("items").get("properties")
+                            )
                             _ids, _names = handle_get_all_sub_id_and_name(
-                                sub_items, root_id, root_name,
-                                sub_form.get('items', []))
+                                sub_items, root_id, root_name, sub_form.get("items", [])
+                            )
                             _options = []
                             for _id in _ids:
-                                if 'filename' in _id:
-                                    ids_line.append(
-                                        '.file_path[{}]'.format(count_file))
-                                    file_path_name = 'File Path' \
-                                        if current_i18n.language == 'en' \
-                                        else 'ファイルパス'
-                                    names_line.append('.{}[{}]'.format(
-                                        file_path_name, count_file))
-                                    systems_line.append('')
-                                    options_line.append('Allow Multiple')
+                                if "filename" in _id:
+                                    ids_line.append(".file_path[{}]".format(count_file))
+                                    file_path_name = (
+                                        "File Path"
+                                        if current_i18n.language == "en"
+                                        else "ファイルパス"
+                                    )
+                                    names_line.append(
+                                        ".{}[{}]".format(file_path_name, count_file)
+                                    )
+                                    systems_line.append("")
+                                    options_line.append("Allow Multiple")
                                     count_file += 1
-                                if 'thumbnail_label' in _id:
-                                    thumbnail_path_name = 'Thumbnail Path' \
-                                        if current_i18n.language == 'en' \
-                                        else 'サムネイルパス'
-                                    if item.get('items'):
+                                if "thumbnail_label" in _id:
+                                    thumbnail_path_name = (
+                                        "Thumbnail Path"
+                                        if current_i18n.language == "en"
+                                        else "サムネイルパス"
+                                    )
+                                    if item.get("items"):
                                         ids_line.append(
-                                            '.thumbnail_path[{}]'.format(
-                                                count_thumbnail))
-                                        names_line.append('.{}[{}]'.format(
-                                            thumbnail_path_name,
-                                            count_thumbnail))
-                                        options_line.append('Allow Multiple')
+                                            ".thumbnail_path[{}]".format(
+                                                count_thumbnail
+                                            )
+                                        )
+                                        names_line.append(
+                                            ".{}[{}]".format(
+                                                thumbnail_path_name, count_thumbnail
+                                            )
+                                        )
+                                        options_line.append("Allow Multiple")
                                         count_thumbnail += 1
                                     else:
-                                        ids_line.append('.thumbnail_path')
-                                        names_line.append('.{}'.format(
-                                            thumbnail_path_name))
-                                        options_line.append('')
-                                    systems_line.append('')
+                                        ids_line.append(".thumbnail_path")
+                                        names_line.append(
+                                            ".{}".format(thumbnail_path_name)
+                                        )
+                                        options_line.append("")
+                                    systems_line.append("")
 
-                                clean_key = _id.replace('.metadata.', '') \
-                                    .replace('[0]', '[]')
+                                clean_key = _id.replace(".metadata.", "").replace(
+                                    "[0]", "[]"
+                                )
                                 _options.append(
-                                    get_sub_item_option(clean_key, form) or [])
+                                    get_sub_item_option(clean_key, form) or []
+                                )
                                 systems_line.append(
-                                    'System' if check_sub_item_is_system(
-                                        clean_key, form) else '')
+                                    "System"
+                                    if check_sub_item_is_system(clean_key, form)
+                                    else ""
+                                )
 
                             ids_line += _ids
                             names_line += _names
                             for _option in _options:
                                 options_line.append(
-                                    ', '.join(list(set(root_option + _option)))
+                                    ", ".join(list(set(root_option + _option)))
                                 )
-                    csv_file = make_csv_by_line([
-                        item_type_line,
-                        ids_line,
-                        names_line,
-                        systems_line,
-                        options_line
-                    ])
+                    csv_file = make_csv_by_line(
+                        [
+                            item_type_line,
+                            ids_line,
+                            names_line,
+                            systems_line,
+                            options_line,
+                        ]
+                    )
         return Response(
-            [] if not csv_file else codecs.BOM_UTF8.decode(
-                "utf8") + codecs.BOM_UTF8.decode()+csv_file.getvalue(),
+            []
+            if not csv_file
+            else codecs.BOM_UTF8.decode("utf8")
+            + codecs.BOM_UTF8.decode()
+            + csv_file.getvalue(),
             mimetype="text/csv",
             headers={
                 "Content-type": "text/csv; charset=utf-8",
                 "Content-disposition": "attachment; "
-                + ('filename=' if not file_name
-                   else urlencode({'filename': file_name}))
-            })
+                + (
+                    "filename=" if not file_name else urlencode({"filename": file_name})
+                ),
+            },
+        )
 
-    @expose('/check_import_is_available', methods=['GET'])
+    @expose("/check_import_is_available", methods=["GET"])
     def check_import_available(self):
         check = is_import_running()
         if not check:
-            delete_cache_data('import_start_time')
-            return jsonify({'is_available': True})
+            delete_cache_data("import_start_time")
+            return jsonify({"is_available": True})
         else:
-            return jsonify({
-                'is_available': False,
-                'start_time': get_cache_data('import_start_time'),
-                'error_id': check
-            })
+            return jsonify(
+                {
+                    "is_available": False,
+                    "start_time": get_cache_data("import_start_time"),
+                    "error_id": check,
+                }
+            )
 
 
 class ItemBulkExport(BaseView):
     """BaseView for Admin Export."""
 
-    @expose('/', methods=['GET'])
+    @expose("/", methods=["GET"])
     def index(self):
         """Renders admin bulk export page.
 
         :param
         :return: The rendered template.
         """
-        _cache_prefix = current_app.config['WEKO_ADMIN_CACHE_PREFIX']
-        _msg_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_MSG']
+        _cache_prefix = current_app.config["WEKO_ADMIN_CACHE_PREFIX"]
+        _msg_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_MSG"]
         _msg_key = _cache_prefix.format(name=_msg_config)
-        reset_redis_cache(_msg_key, '')
-        return self.render(
-            WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE
-        )
+        reset_redis_cache(_msg_key, "")
+        return self.render(WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE)
 
-    @expose('/export_all', methods=['GET'])
+    @expose("/export_all", methods=["GET"])
     def export_all(self):
         """Export all items."""
-        _task_config = current_app.config['WEKO_SEARCH_UI_BULK_EXPORT_TASK']
-        _cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-            format(name=_task_config)
+        _task_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_TASK"]
+        _cache_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+            name=_task_config
+        )
         export_status, download_uri, message = get_export_status()
 
-        if (not export_status):
-            export_task = export_all_task.apply_async(
-                args=(
-                    request.url_root,
-                ))
+        if not export_status:
+            export_task = export_all_task.apply_async(args=(request.url_root,))
             reset_redis_cache(_cache_key, str(export_task.task_id))
 
         return Response(status=200)
 
-    @expose('/check_export_status', methods=['GET'])
+    @expose("/check_export_status", methods=["GET"])
     def check_export_status(self):
         """Check export status."""
         check = check_celery_is_run()
         export_status, download_uri, message = get_export_status()
-        return jsonify(data={
-            'export_status': export_status,
-            'uri_status': True if download_uri else False,
-            'celery_is_run': check,
-            'error_message': message
-        })
+        return jsonify(
+            data={
+                "export_status": export_status,
+                "uri_status": True if download_uri else False,
+                "celery_is_run": check,
+                "error_message": message,
+            }
+        )
 
-    @expose('/cancel_export', methods=['GET'])
+    @expose("/cancel_export", methods=["GET"])
     def cancel_export(self):
         """Check export status."""
-        return jsonify(data={
-            'cancel_status': cancel_export_all()
-        })
+        return jsonify(data={"cancel_status": cancel_export_all()})
 
-    @expose('/download', methods=['GET'])
+    @expose("/download", methods=["GET"])
     def download(self):
         """Funtion send file to Client.
 
@@ -680,63 +733,59 @@ class ItemBulkExport(BaseView):
         if not export_status and download_uri is not None:
             file_instance = FileInstance.get_by_uri(download_uri)
             return file_instance.send_file(
-                'export-all.zip',
-                mimetype='application/octet-stream',
-                as_attachment=True
+                "export-all.zip",
+                mimetype="application/octet-stream",
+                as_attachment=True,
             )
         else:
             return Response(status=200)
 
 
 item_management_bulk_search_adminview = {
-    'view_class': ItemManagementBulkSearch,
-    'kwargs': {
-        'endpoint': 'items/search',
-        'category': _('Index Tree'),
-        'name': '',
-    }
+    "view_class": ItemManagementBulkSearch,
+    "kwargs": {
+        "endpoint": "items/search",
+        "category": _("Index Tree"),
+        "name": "",
+    },
 }
 
 item_management_bulk_delete_adminview = {
-    'view_class': ItemManagementBulkDelete,
-    'kwargs': {
-        'category': _('Items'),
-        'name': _('Bulk Delete'),
-        'endpoint': 'items/bulk/delete'
-    }
+    "view_class": ItemManagementBulkDelete,
+    "kwargs": {
+        "category": _("Items"),
+        "name": _("Bulk Delete"),
+        "endpoint": "items/bulk/delete",
+    },
 }
 
 item_management_custom_sort_adminview = {
-    'view_class': ItemManagementCustomSort,
-    'kwargs': {
-        'category': _('Index Tree'),
-        'name': _('Custom Sort'),
-        'endpoint': 'items/custom_sort'
-    }
+    "view_class": ItemManagementCustomSort,
+    "kwargs": {
+        "category": _("Index Tree"),
+        "name": _("Custom Sort"),
+        "endpoint": "items/custom_sort",
+    },
 }
 
 item_management_import_adminview = {
-    'view_class': ItemImportView,
-    'kwargs': {
-        'category': _('Items'),
-        'name': _('Import'),
-        'endpoint': 'items/import'
-    }
+    "view_class": ItemImportView,
+    "kwargs": {"category": _("Items"), "name": _("Import"), "endpoint": "items/import"},
 }
 
 item_management_export_adminview = {
-    'view_class': ItemBulkExport,
-    'kwargs': {
-        'category': _('Items'),
-        'name': _('Bulk Export'),
-        'endpoint': 'items/bulk-export'
-    }
+    "view_class": ItemBulkExport,
+    "kwargs": {
+        "category": _("Items"),
+        "name": _("Bulk Export"),
+        "endpoint": "items/bulk-export",
+    },
 }
 
 __all__ = (
-    'item_management_bulk_delete_adminview',
-    'item_management_bulk_search_adminview',
-    'item_management_custom_sort_adminview',
-    'item_management_import_adminview',
-    'item_management_export_adminview'
+    "item_management_bulk_delete_adminview",
+    "item_management_bulk_search_adminview",
+    "item_management_custom_sort_adminview",
+    "item_management_import_adminview",
+    "item_management_export_adminview",
 )

@@ -108,6 +108,9 @@ setup(
         'invenio_db.models': [
             'weko_authors = weko_authors.models',
         ],
+         'invenio_db.alembic': [
+            'weko_authors = weko_authors:alembic',
+        ],
         'invenio_search.mappings': [
             'authors = weko_authors.mappings',
         ],
@@ -118,6 +121,8 @@ setup(
             'weko_authors_search_js = weko_authors.bundles:author_search_js',
             'weko_authors_prefix_css = weko_authors.bundles:author_prefix_css',
             'weko_authors_prefix_js = weko_authors.bundles:author_prefix_js',
+            'weko_authors_affiliation_css = weko_authors.bundles:author_affiliation_css',
+            'weko_authors_affiliation_js = weko_authors.bundles:author_affiliation_js',
             'weko_authors_export_css = weko_authors.bundles:author_export_css',
             'weko_authors_export_js = weko_authors.bundles:author_export_js',
             'weko_authors_import_css = weko_authors.bundles:author_import_css',

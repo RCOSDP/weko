@@ -27,6 +27,7 @@ from copy import deepcopy
 from datetime import date, datetime, timedelta
 
 import redis
+from redis import sentinel
 from flask import Blueprint, abort, current_app, flash, jsonify, redirect, \
     render_template, request, session, url_for
 from flask_babelex import gettext as _
@@ -48,6 +49,7 @@ from weko_index_tree.utils import check_index_permissions, get_index_id, \
 from weko_records.api import ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
+from weko_redis.redis import RedisConnection
 from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow
 from weko_workflow.utils import check_an_item_is_locked, \
     get_record_by_root_ver, get_thumbnails, prepare_edit_workflow, \
@@ -57,6 +59,7 @@ from werkzeug.utils import import_string
 from .permissions import item_permission
 from .utils import _get_max_export_items, check_item_is_being_edit, \
     export_items, get_current_user, get_data_authors_prefix_settings, \
+    get_data_authors_affiliation_settings, \
     get_list_email, get_list_username, get_ranking, get_user_info_by_email, \
     get_user_info_by_username, get_user_information, get_user_permission, \
     get_workflow_by_item_type_id, hide_form_items, is_schema_include_key, \
@@ -374,10 +377,9 @@ def items_index(pid_value='0'):
                 render_widgets=render_widgets)
 
         data = request.get_json()
-        sessionstore = RedisStore(redis.StrictRedis.from_url(
-            'redis://{host}:{port}/1'.format(
-                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+
+        redis_connection = RedisConnection()
+        sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
         if request.method == 'PUT':
             """update index of item info."""
             item_str = sessionstore.get('item_index_{}'.format(pid_value))
@@ -494,10 +496,9 @@ def iframe_items_index(pid_value='0'):
             )
 
         data = request.get_json()
-        sessionstore = RedisStore(redis.StrictRedis.from_url(
-            'redis://{host}:{port}/1'.format(
-                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+
+        redis_connection = RedisConnection()
+        sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
         if request.method == 'PUT':
             """update index of item info."""
             item_str = sessionstore.get('item_index_{}'.format(pid_value))
@@ -1013,7 +1014,8 @@ def export():
         from weko_workflow.api import GetCommunity
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
-        community_id = comm.id
+        if comm is not None:
+            community_id = comm.id
 
     from weko_theme.utils import get_design_layout
 
@@ -1067,10 +1069,9 @@ def check_validation_error_msg(activity_id):
     :param activity_id: The identify of Activity.
     :return: Show error message
     """
-    sessionstore = RedisStore(redis.StrictRedis.from_url(
-        'redis://{host}:{port}/1'.format(
-            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+
+    redis_connection = RedisConnection()
+    sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
     if sessionstore.redis.exists(
             'updated_json_schema_{}'.format(activity_id)) \
             and sessionstore.get('updated_json_schema_{}'.format(activity_id)):
@@ -1119,6 +1120,24 @@ def get_authors_prefix_settings():
         for prefix in author_prefix_settings:
             scheme = prefix.scheme
             url = prefix.url
+            result = dict(
+                scheme=scheme,
+                url=url
+            )
+            results.append(result)
+        return jsonify(results)
+    else:
+        return abort(403)
+
+@blueprint_api.route('/author_affiliation_settings', methods=['GET'])
+def get_authors_affiliation_settings():
+    """Get all author affiliation settings."""
+    author_affiliation_settings = get_data_authors_affiliation_settings()
+    if author_affiliation_settings is not None:
+        results = []
+        for affiliation in author_affiliation_settings:
+            scheme = affiliation.scheme
+            url = affiliation.url
             result = dict(
                 scheme=scheme,
                 url=url

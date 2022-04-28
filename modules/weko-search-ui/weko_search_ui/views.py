@@ -24,47 +24,55 @@ import time
 from xml.etree import ElementTree
 
 from blinker import Namespace
-from flask import Blueprint, current_app, flash, jsonify, render_template, \
-    request
+from flask import Blueprint, current_app, flash, jsonify, render_template, request
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import AdminSettings
 from weko_admin.utils import get_search_setting
-from weko_gridlayout.utils import get_widget_design_page_with_main, \
-    main_design_has_main_widget
+from weko_gridlayout.utils import (
+    get_widget_design_page_with_main,
+    main_design_has_main_widget,
+)
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
 from weko_index_tree.utils import get_index_link_list
 from weko_records.api import ItemLink
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_theme.utils import get_design_layout
-from weko_workflow.utils import get_allow_multi_thumbnail, \
-    get_record_by_root_ver, get_thumbnails
+from weko_workflow.utils import (
+    get_allow_multi_thumbnail,
+    get_record_by_root_ver,
+    get_thumbnails,
+)
 
 from weko_search_ui.api import get_search_detail_keyword
 
 from .api import SearchSetting
 from .config import WEKO_SEARCH_TYPE_DICT
-from .utils import check_index_access_permissions, check_permission, \
-    get_feedback_mail_list, get_journal_info
+from .utils import (
+    check_index_access_permissions,
+    check_permission,
+    get_feedback_mail_list,
+    get_journal_info,
+)
 
 _signals = Namespace()
-searched = _signals.signal('searched')
+searched = _signals.signal("searched")
 
 blueprint = Blueprint(
-    'weko_search_ui',
+    "weko_search_ui",
     __name__,
-    template_folder='templates',
-    static_folder='static',
+    template_folder="templates",
+    static_folder="static",
 )
 
 blueprint_api = Blueprint(
-    'weko_search_ui',
+    "weko_search_ui",
     __name__,
-    template_folder='templates',
-    static_folder='static',
+    template_folder="templates",
+    static_folder="static",
 )
 
 
@@ -72,28 +80,35 @@ blueprint_api = Blueprint(
 @check_index_access_permissions
 def search():
     """Index Search page ui."""
-    search_type = request.args.get('search_type', WEKO_SEARCH_TYPE_DICT[
-        'FULL_TEXT'])
+    search_type = request.args.get("search_type", WEKO_SEARCH_TYPE_DICT["FULL_TEXT"])
     get_args = request.args
     community_id = ""
-    ctx = {'community': None}
-    cur_index_id = search_type if search_type not in \
-        (WEKO_SEARCH_TYPE_DICT['FULL_TEXT'], WEKO_SEARCH_TYPE_DICT[
-            'KEYWORD'], ) else None
-    if 'community' in get_args:
+    ctx = {"community": None}
+    cur_index_id = (
+        search_type
+        if search_type
+        not in (
+            WEKO_SEARCH_TYPE_DICT["FULL_TEXT"],
+            WEKO_SEARCH_TYPE_DICT["KEYWORD"],
+        )
+        else None
+    )
+    if "community" in get_args:
         from weko_workflow.api import GetCommunity
-        comm = GetCommunity.get_community_by_id(request.args.get('community'))
-        ctx = {'community': comm}
-        community_id = comm.id
+
+        comm = GetCommunity.get_community_by_id(request.args.get("community"))
+        ctx = {"community": comm}
+        if comm is not None:
+            community_id = comm.id
 
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
-        community_id or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+        community_id or current_app.config["WEKO_THEME_DEFAULT_COMMUNITY"]
+    )
 
     # Get index style
-    style = IndexStyle.get(
-        current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
-    width = style.width if style else '3'
+    style = IndexStyle.get(current_app.config["WEKO_INDEX_TREE_STYLE_OPTIONS"]["id"])
+    width = style.width if style else "3"
 
     # add at 1206 for search management
     sort_options, display_number = SearchSetting.get_results_setting()
@@ -101,60 +116,73 @@ def search():
     ts = time.time()
     disply_setting = dict(size=display_number, timestamp=ts)
 
-    detail_condition = get_search_detail_keyword('')
+    detail_condition = get_search_detail_keyword("")
 
-    export_settings = AdminSettings.get('item_export_settings') or \
-        AdminSettings.Dict2Obj(
-            current_app.config['WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS'])
+    export_settings = AdminSettings.get(
+        "item_export_settings"
+    ) or AdminSettings.Dict2Obj(
+        current_app.config["WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS"]
+    )
 
     height = style.height if style else None
-    if request.values.get('search_type') in (
-        WEKO_SEARCH_TYPE_DICT['FULL_TEXT'],
-            WEKO_SEARCH_TYPE_DICT['KEYWORD']):
+    if request.values.get("search_type") in (
+        WEKO_SEARCH_TYPE_DICT["FULL_TEXT"],
+        WEKO_SEARCH_TYPE_DICT["KEYWORD"],
+    ):
         for _key in request.values:
             _val = request.values.get(_key)
-            if '<' in _val or '>' in _val:
+            if "<" in _val or ">" in _val:
                 flash(
-                    _('"<" and ">" cannot be used for searching.'),
-                    category='warning'
+                    _('"<" and ">" cannot be used for searching.'), category="warning"
                 )
                 break
-    if 'item_link' in get_args:
+    if "item_link" in get_args:
         from weko_workflow.api import WorkActivity
         from weko_workflow.views import get_main_record_detail
 
-        activity_id = request.args.get('item_link')
+        activity_id = request.args.get("item_link")
         workflow_activity = WorkActivity()
-        activity_detail, item, steps, action_id, cur_step, temporary_comment,\
-            approval_record, step_item_login_url, histories, res_check, pid, \
-            community_id, ctx = workflow_activity.get_activity_index_search(
-                activity_id=activity_id)
+        (
+            activity_detail,
+            item,
+            steps,
+            action_id,
+            cur_step,
+            temporary_comment,
+            approval_record,
+            step_item_login_url,
+            histories,
+            res_check,
+            pid,
+            community_id,
+            ctx,
+        ) = workflow_activity.get_activity_index_search(activity_id=activity_id)
 
-        recid = approval_record.get('control_number', None)
+        recid = approval_record.get("control_number", None)
         if recid:
-            pid_without_ver = recid.split('.')[0]
+            pid_without_ver = recid.split(".")[0]
             item_link = ItemLink.get_item_link_info(pid_without_ver)
-            ctx['item_link'] = item_link
+            ctx["item_link"] = item_link
         # Get files and thumbnail to set and show popup item link.
         item_link, files = get_record_by_root_ver(recid)
         is_multi_thumbnails = get_allow_multi_thumbnail(
-            approval_record.get('item_type_id'), None)
+            approval_record.get("item_type_id"), None
+        )
         files_thumbnail = get_thumbnails(files, is_multi_thumbnails)
 
         # Get item link info.
-        record_detail_alt = get_main_record_detail(activity_id,
-                                                   activity_detail)
+        record_detail_alt = get_main_record_detail(activity_id, activity_detail)
 
         ctx.update(
             dict(
-                record_org=record_detail_alt.get('record'),
-                files_org=record_detail_alt.get('files'),
-                thumbnails_org=record_detail_alt.get('files_thumbnail'),
+                record_org=record_detail_alt.get("record"),
+                files_org=record_detail_alt.get("files"),
+                thumbnails_org=record_detail_alt.get("files_thumbnail"),
             )
         )
 
         return render_template(
-            'weko_workflow/activity_detail.html',
+            "weko_workflow/activity_detail.html",
             action_id=action_id,
             activity=activity_detail,
             allow_item_exporting=export_settings.allow_item_exporting,
@@ -178,57 +206,78 @@ def search():
             steps=steps,
             temporary_comment=temporary_comment,
             width=width,
-            **ctx)
+            **ctx
+        )
     else:
         journal_info = None
-        index_display_format = '1'
+        index_display_format = "1"
         check_site_license_permission()
         send_info = dict()
-        send_info['site_license_flag'] = True \
-            if hasattr(current_user, 'site_license_flag') else False
-        send_info['site_license_name'] = current_user.site_license_name \
-            if hasattr(current_user, 'site_license_name') else ''
+        send_info["site_license_flag"] = (
+            True if hasattr(current_user, "site_license_flag") else False
+        )
+        send_info["site_license_name"] = (
+            current_user.site_license_name
+            if hasattr(current_user, "site_license_name")
+            else ""
+        )
         if search_type in WEKO_SEARCH_TYPE_DICT.values():
-            if not search_type == WEKO_SEARCH_TYPE_DICT[
-                    'INDEX'] and get_args.get('q', '').strip():
+            if (
+                not search_type == WEKO_SEARCH_TYPE_DICT["INDEX"]
+                and get_args.get("q", "").strip()
+            ):
                 searched.send(
                     current_app._get_current_object(),
                     search_args=get_args,
-                    info=send_info
+                    info=send_info,
                 )
-            if search_type == WEKO_SEARCH_TYPE_DICT['INDEX']:
-                cur_index_id = request.args.get('q', '')
+            if search_type == WEKO_SEARCH_TYPE_DICT["INDEX"]:
+                cur_index_id = request.args.get("q", "")
                 journal_info = get_journal_info(cur_index_id)
                 index_info = Indexes.get_index(cur_index_id)
                 if index_info:
                     index_display_format = index_info.display_format
-                    if index_display_format == '2':
+                    if index_display_format == "2":
                         disply_setting = dict(size=100, timestamp=ts)
 
         index_link_list = get_index_link_list()
         # Get Facet search setting.
-        display_facet_search = get_search_setting().get("display_control", {})\
-            .get('display_facet_search', {}).get('status', False)
-        ctx.update({
-            "display_facet_search": display_facet_search,
-        })
+        display_facet_search = (
+            get_search_setting()
+            .get("display_control", {})
+            .get("display_facet_search", {})
+            .get("status", False)
+        )
+        ctx.update(
+            {
+                "display_facet_search": display_facet_search,
+            }
+        )
 
         # Get index tree setting.
-        display_index_tree = get_search_setting().get("display_control", {})\
-            .get('display_index_tree', {}).get('status', False)
-        ctx.update({
-            "display_index_tree": display_index_tree,
-        })
+        display_index_tree = (
+            get_search_setting()
+            .get("display_control", {})
+            .get("display_index_tree", {})
+            .get("status", False)
+        )
+        ctx.update(
+            {
+                "display_index_tree": display_index_tree,
+            }
+        )
 
         # Get display_community setting.
-        display_community = get_search_setting().get("display_control", {}).get(
-            'display_community', {}).get('status', False)
-        ctx.update({
-            "display_community": display_community
-        })
+        display_community = (
+            get_search_setting()
+            .get("display_control", {})
+            .get("display_community", {})
+            .get("status", False)
+        )
+        ctx.update({"display_community": display_community})
 
         return render_template(
-            current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
+            current_app.config["SEARCH_UI_SEARCH_TEMPLATE"],
             page=page,
             render_widgets=render_widgets,
             index_id=cur_index_id,
@@ -245,10 +294,11 @@ def search():
             allow_item_exporting=export_settings.allow_item_exporting,
             is_permission=check_permission(),
             is_login=bool(current_user.get_id()),
-            **ctx)
+            **ctx
+        )
 
 
-@blueprint_api.route('/opensearch/description.xml', methods=['GET'])
+@blueprint_api.route("/opensearch/description.xml", methods=["GET"])
 def opensearch_description():
     """Returns WEKO3 opensearch description document.
 
@@ -260,49 +310,49 @@ def opensearch_description():
     # set the returned data, which will just contain the title
     ns_opensearch = "http://a9.com/-/spec/opensearch/1.1/"
 
-    ElementTree.register_namespace('', ns_opensearch)
+    ElementTree.register_namespace("", ns_opensearch)
     # ElementTree.register_namespace('jairo', ns_jairo)
 
-    root = ElementTree.Element('OpenSearchDescription')
+    root = ElementTree.Element("OpenSearchDescription")
 
-    sname = ElementTree.SubElement(root, '{' + ns_opensearch + '}ShortName')
-    sname.text = current_app.config['WEKO_OPENSEARCH_SYSTEM_SHORTNAME']
+    sname = ElementTree.SubElement(root, "{" + ns_opensearch + "}ShortName")
+    sname.text = current_app.config["WEKO_OPENSEARCH_SYSTEM_SHORTNAME"]
 
-    des = ElementTree.SubElement(root, '{' + ns_opensearch + '}Description')
-    des.text = current_app.config['WEKO_OPENSEARCH_SYSTEM_DESCRIPTION']
+    des = ElementTree.SubElement(root, "{" + ns_opensearch + "}Description")
+    des.text = current_app.config["WEKO_OPENSEARCH_SYSTEM_DESCRIPTION"]
 
-    img = ElementTree.SubElement(root, '{' + ns_opensearch + '}Image')
-    img.set('height', '16')
-    img.set('width', '16')
-    img.set('type', 'image/x-icon')
-    img.text = request.host_url + \
-        current_app.config['WEKO_OPENSEARCH_IMAGE_URL']
+    img = ElementTree.SubElement(root, "{" + ns_opensearch + "}Image")
+    img.set("height", "16")
+    img.set("width", "16")
+    img.set("type", "image/x-icon")
+    img.text = request.host_url + current_app.config["WEKO_OPENSEARCH_IMAGE_URL"]
 
-    url = ElementTree.SubElement(root, '{' + ns_opensearch + '}Url')
-    url.set('type', 'application/atom+xml')
-    url.set('template', request.host_url
-            + 'api/opensearch/search?q={searchTerms}')
+    url = ElementTree.SubElement(root, "{" + ns_opensearch + "}Url")
+    url.set("type", "application/atom+xml")
+    url.set("template", request.host_url + "api/opensearch/search?q={searchTerms}")
 
-    url = ElementTree.SubElement(root, '{' + ns_opensearch + '}Url')
-    url.set('type', 'application/atom+xml')
-    url.set('template', request.host_url
-            + 'api/opensearch/search?q={searchTerms}&amp;format=atom')
+    url = ElementTree.SubElement(root, "{" + ns_opensearch + "}Url")
+    url.set("type", "application/atom+xml")
+    url.set(
+        "template",
+        request.host_url + "api/opensearch/search?q={searchTerms}&amp;format=atom",
+    )
 
     response.data = ElementTree.tostring(root)
 
     # update headers
-    response.headers['Content-Type'] = 'application/xml'
+    response.headers["Content-Type"] = "application/xml"
     return response
 
 
-@blueprint.route("/journal_info/<int:index_id>", methods=['GET'])
+@blueprint.route("/journal_info/<int:index_id>", methods=["GET"])
 def journal_detail(index_id=0):
     """Render a check view."""
     result = get_journal_info(index_id)
     return jsonify(result)
 
 
-@blueprint.route("/search/feedback_mail_list", methods=['GET'])
+@blueprint.route("/search/feedback_mail_list", methods=["GET"])
 @login_required
 def search_feedback_mail_list():
     """Render a check view."""
@@ -310,40 +360,37 @@ def search_feedback_mail_list():
     return jsonify(result)
 
 
-@blueprint.route("/get_child_list/<int:index_id>", methods=['GET'])
+@blueprint.route("/get_child_list/<int:index_id>", methods=["GET"])
 def get_child_list(index_id=0):
     """Get child id list to index list display."""
     return jsonify(Indexes.get_child_id_list(index_id))
 
 
-@blueprint.route("/get_path_name_dict/<string:path_str>", methods=['GET'])
-def get_path_name_dict(path_str=''):
+@blueprint.route("/get_path_name_dict/<string:path_str>", methods=["GET"])
+def get_path_name_dict(path_str=""):
     """Get path and name."""
     path_name_dict = {}
-    path_arr = path_str.split('_')
+    path_arr = path_str.split("_")
     for path in path_arr:
         index = Indexes.get_index(index_id=path)
         idx_name = index.index_name
         idx_name_en = index.index_name_english
-        if current_i18n.language == 'ja' and idx_name:
-            path_name_dict[path] = idx_name.replace(
-                "\n", r"<br\>").replace("&EMPTY&", "")
+        if current_i18n.language == "ja" and idx_name:
+            path_name_dict[path] = idx_name.replace("\n", r"<br\>").replace(
+                "&EMPTY&", ""
+            )
         else:
-            path_name_dict[path] = idx_name_en.replace(
-                "\n", r"<br\>").replace("&EMPTY&", "")
+            path_name_dict[path] = idx_name_en.replace("\n", r"<br\>").replace(
+                "&EMPTY&", ""
+            )
     return jsonify(path_name_dict)
 
 
-@blueprint.route("/facet-search/get-title-and-order", methods=['POST'])
+@blueprint.route("/facet-search/get-title-and-order", methods=["POST"])
 def gettitlefacet():
     """Soft getname Facet Search."""
     from weko_admin.utils import get_title_facets
+
     titles, order = get_title_facets()
-    result = {
-        "status": True,
-        "data": {
-            "titles": titles,
-            "order": order
-        }
-    }
+    result = {"status": True, "data": {"titles": titles, "order": order}}
     return jsonify(result), 200

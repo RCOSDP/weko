@@ -1,15 +1,15 @@
 # Translations template for weko-authors.
-# Copyright (C) 2019 National Institute of Informatics
+# Copyright (C) 2022 National Institute of Informatics
 # This file is distributed under the same license as the weko-authors
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: weko-authors 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-07-02 04:54+0000\n"
+"POT-Creation-Date: 2022-02-08 06:26+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,196 +18,101 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_authors/admin.py:69
-msgid "Setting"
-msgstr ""
-
-#: weko_authors/admin.py:70
+#: weko_authors/admin.py:292 weko_authors/admin.py:301
+#: weko_authors/admin.py:310
 msgid "Author Management"
 msgstr ""
 
-#: weko_authors/views.py:56 weko_authors/views.py:84 weko_authors/views.py:113
-msgid "Header Error"
+#: weko_authors/admin.py:293
+msgid "Edit"
 msgstr ""
 
-#: weko_authors/views.py:74 weko_authors/views.py:103 weko_authors/views.py:127
-msgid "Success"
-msgstr ""
-
-msgid "Export all creator"
-msgstr ""
-
-msgid "Download URL"
-msgstr ""
-
+#: weko_authors/admin.py:302
 msgid "Export"
 msgstr ""
 
-msgid "Are you sure you want to export all creator?"
-msgstr ""
-
-msgid "Confirm"
-msgstr ""
-
-msgid "Execute"
-msgstr ""
-
-msgid "Cancel"
-msgstr ""
-
-msgid "Internal server error"
-msgstr ""
-
-msgid "Are you sure you want to cancel process of exporting all creator?"
-msgstr ""
-
-msgid "Failed to cancel export."
-msgstr ""
-
-msgid "Export is in progress on another device."
-msgstr ""
-
-msgid "Export is failed."
-msgstr ""
-
-# Import authors
-msgid "Select"
-msgstr ""
-
+#: weko_authors/admin.py:311
 msgid "Import"
 msgstr ""
 
-msgid "Result"
-msgstr ""
-
-msgid "Download"
-msgstr ""
-
-msgid "No."
-msgstr ""
-
-msgid "WEKO ID"
-msgstr ""
-
-msgid "full_name"
-msgstr ""
-
-msgid "Select File"
-msgstr ""
-
-msgid "Selected file name"
-msgstr ""
-
-msgid "Next"
-msgstr ""
-
-msgid "Summary"
-msgstr ""
-
-msgid "Total"
-msgstr ""
-
-msgid "New Creator"
-msgstr ""
-
-msgid "Update Creator"
-msgstr ""
-
-msgid "Delete Creator"
-msgstr ""
-
-msgid "Result Error"
-msgstr ""
-
-msgid "Mail Address"
-msgstr ""
-
-msgid "Check Result"
-msgstr ""
-
-msgid "Start Date"
-msgstr ""
-
-msgid "End Date"
-msgstr ""
-
-msgid "Status"
-msgstr ""
-
-msgid "To Do"
-msgstr ""
-
-msgid "Error"
-msgstr ""
-
-msgid "Warning"
-msgstr ""
-
-msgid "Register"
-msgstr ""
-
-msgid "Update"
-msgstr ""
-
-msgid "Delete"
-msgstr ""
-
+#: weko_authors/utils.py:198
 msgid "Internal server error"
 msgstr ""
 
-msgid "Celery is not running."
-msgstr ""
-
-msgid "Import is in progress."
-msgstr ""
-
-msgid "Import is in progress on another device."
-msgstr ""
-
+#: weko_authors/utils.py:240
 msgid "The following metadata keys are duplicated.<br/>{}"
 msgstr ""
 
+#: weko_authors/utils.py:252
 msgid "Specified item does not consistency with DB item.<br/>{}"
 msgstr ""
 
-msgid "The CSV file could not be read. Make sure the file format is CSV and that the file is UTF-8 encoded."
+#: weko_authors/utils.py:268
+msgid "Cannot read csv file correctly."
 msgstr ""
 
+#: weko_authors/utils.py:275
 msgid "There is no data to import."
 msgstr ""
 
-msgid "{} is required item."
+#: weko_authors/utils.py:278
+msgid ""
+"The CSV file could not be read. Make sure the file format is CSV and that"
+" the file is UTF-8 encoded."
 msgstr ""
 
-msgid "{} should be set by one of {}."
-msgstr ""
-
-msgid "Specified WEKO ID does not exist."
-msgstr ""
-
-msgid "Specified Identifier Scheme '{}' does not exist."
-msgstr ""
-
+#: weko_authors/utils.py:315
 msgid "There is duplicated data in the CSV file."
 msgstr ""
 
+#: weko_authors/utils.py:338
+msgid "{} is required item."
+msgstr ""
+
+#: weko_authors/utils.py:347
+msgid "{} should be set by one of {}."
+msgstr ""
+
+#: weko_authors/utils.py:462
+msgid "Specified WEKO ID does not exist."
+msgstr ""
+
+#: weko_authors/utils.py:470 weko_authors/views.py:140
+msgid "The author is linked to items and cannot be deleted."
+msgstr ""
+
+#: weko_authors/utils.py:475
+msgid ""
+"The specified author has been deleted. Update author information with csv"
+" content, but author remains deleted as it is."
+msgstr ""
+
+#: weko_authors/views.py:59 weko_authors/views.py:102 weko_authors/views.py:135
+msgid "Header Error"
+msgstr ""
+
+#: weko_authors/views.py:91 weko_authors/views.py:125 weko_authors/views.py:164
+#: weko_authors/views.py:576 weko_authors/views.py:619
+msgid "Success"
+msgstr ""
+
+#: weko_authors/contrib/validation.py:106
+msgid "Specified Identifier Scheme '{}' does not exist."
+msgstr ""
+
+#: weko_authors/contrib/validation.py:132
 msgid "External author identifier exists in DB.<br/>{}"
 msgstr ""
 
-msgid "Register Success"
+#: weko_authors/templates/weko_authors/macros/tabs_selector.html:22
+msgid "Author ID"
 msgstr ""
 
-msgid "Update Success"
+#: weko_authors/templates/weko_authors/macros/tabs_selector.html:23
+msgid "ID Prefix"
 msgstr ""
 
-msgid "Delete Success"
+#: weko_authors/templates/weko_authors/macros/tabs_selector.html:24
+msgid "Affiliation ID"
 msgstr ""
 
-msgid "Failed to import."
-msgstr ""
-
-msgid "The specified author has been deleted. Update author information with csv content, but author remains deleted as it is."
-msgstr ""
-
-msgid "The author is linked to items and cannot be deleted."
-msgstr ""

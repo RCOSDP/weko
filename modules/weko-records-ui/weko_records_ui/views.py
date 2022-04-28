@@ -71,6 +71,7 @@ from .utils import get_billing_file_download_permission, \
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
+
 blueprint = Blueprint(
     'weko_records_ui',
     __name__,
@@ -448,7 +449,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         from weko_workflow.api import GetCommunity
         comm = GetCommunity.get_community_by_id(community_arg)
         ctx = {'community': comm}
-        community_id = comm.id
+        if comm is not None:
+            community_id = comm.id
 
     # Get index style
     style = IndexStyle.get(
@@ -473,6 +475,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # get title name
     from weko_records.utils import get_options_and_order_list
     from weko_search_ui.utils import get_data_by_property
+    from weko_records.utils import get_options_and_order_list
     title_name = ''
     rights_values = {}
     accessRight = ''
@@ -601,6 +604,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         "display_community": display_community
     })
 
+    current_app.logger.debug("template :{}".format(template))
+
     return render_template(
         template,
         pid=pid,
@@ -635,8 +640,13 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         title_name=title_name,
         rights_values=rights_values,
         accessRight=accessRight,
+        thumbnail_width = current_app.config.get('WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL') ,
         analysis_url=current_app.config.get(
             'WEKO_RECORDS_UI_ONLINE_ANALYSIS_URL'),
+        flg_display_itemtype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE') ,
+        flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
+        
+        
         **ctx,
         **kwargs
     )
@@ -863,6 +873,18 @@ def escape_newline(s):
     s = '<br />'.join(s.splitlines())
 
     return s
+
+def json_string_escape(s):
+    opt = ''
+    if s.endswith('"'):
+        opt = '"'
+    s = json.dumps(s, ensure_ascii=False)
+    s = s.strip('"')
+    return s+opt
+
+
+def xml_string_escape(s):
+    return escape(s)
 
 
 @blueprint.app_template_filter('preview_able')

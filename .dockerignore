@@ -17,7 +17,13 @@ docker-compose-dev.yml
 
 Procfile*
 
-test
-uml
-weko-migration
-weko-demodata
+test/
+uml/
+weko-migration/
+weko-demodata/
+metrix/
+
+**/**/.tox
+**/**/.eggs
+**/.pytest_cache
+**/.scannerwork

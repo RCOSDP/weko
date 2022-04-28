@@ -1568,6 +1568,7 @@ class DDIMapper(BaseMapper):
 
             try:
                 list_result = []
+                list_temp = []
                 root_key = ''
                 for val_obj in vals:
                     temp_lst = []
@@ -1604,14 +1605,26 @@ class DDIMapper(BaseMapper):
                         merge_dict(result_dict, temp_obj['full'],
                                    temp_obj['val'], temp_obj['key'])
                     if result_dict:
-                        if isinstance(result_dict[root_key.replace("[]", "")],
-                                      list):
-                            list_result.append(
-                                result_dict[root_key.replace("[]", "")][0])
-                        elif isinstance(
+                        if root_key.replace("[]", "") in result_dict and isinstance(result_dict[root_key.replace("[]", "")],
+                                                                                    list):
+                            temp_data = result_dict[root_key.replace(
+                                "[]", "")][0]
+                            if temp_data.values() \
+                                    and isinstance(list(temp_data.values())[0], str):
+                                temp_set = set(temp_data.values()) - set(['ja', 'en'])
+                                if temp_set not in list_temp:
+                                    list_temp.append(temp_set)
+                                    list_result.append(temp_data)
+                            else:
+                                if temp_data not in list_result:
+                                    list_result.append(temp_data)
+                        elif root_key.replace("[]", "") in result_dict and isinstance(
                                 result_dict[root_key.replace("[]", "")], dict):
-                            list_result.append(
-                                result_dict[root_key.replace("[]", "")])
+                            temp_data = result_dict[root_key.replace("[]", "")]
+                            temp_set = set(temp_data.values()) - set(['ja', 'en'])
+                            if temp_set not in list_temp:
+                                list_temp.append(temp_set)
+                                list_result.append(temp_data)
                 return list_result, root_key.replace("[]", "")
             except Exception:
                 import traceback
@@ -1690,4 +1703,7 @@ class DDIMapper(BaseMapper):
             self.ddi_harvest_processing(self.json['record']
                                         ['metadata']['codeBook'], res)
             res['title'] = self.record_title
+            # set resourcetype
+            type = [{"resourcetype": "dataset","resourceuri": "http://purl.org/coar/resource_type/c_ddb1"}]
+            res['type'] = type
             return res

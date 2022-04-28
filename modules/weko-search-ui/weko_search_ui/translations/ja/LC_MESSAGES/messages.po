@@ -157,6 +157,10 @@ msgstr "指定された{}はシステムに存在しません。"
 msgid "Both of IndexID and POS_INDEX are not being set."
 msgstr "IndexID, POS_INDEXがどちらも設定されていません。"
 
+#: weko_search_ui/utils.py:2470
+msgid "ID is specified for the newly registered item. Ignore the ID and register."
+msgstr "新規登録アイテムにIDが指定されています。IDを無視して登録を行います。"
+
 #: weko_search_ui/utils.py:1426
 msgid "Specified {} is invalid."
 msgstr "指定された{}は不正です。"

@@ -26,12 +26,14 @@ from collections import Iterable, OrderedDict
 from functools import partial
 
 import redis
+from redis import sentinel
 import xmlschema
 from flask import abort, current_app, request, url_for
 from lxml import etree
 from lxml.builder import ElementMaker
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemLink, Mapping
+from weko_redis import RedisConnection
 from xmlschema.validators import XsdAnyAttribute, XsdAnyElement, \
     XsdAtomicBuiltin, XsdAtomicRestriction, XsdEnumerationFacet, XsdGroup, \
     XsdPatternsFacet, XsdSingleFacet, XsdUnion
@@ -1822,8 +1824,8 @@ def cache_schema(schema_name, delete=False):
 
     try:
         # schema cached on Redis by schema name
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         cache_key = current_app.config[
             'WEKO_SCHEMA_CACHE_PREFIX'].format(schema_name=schema_name)
         data_str = datastore.get(cache_key)
@@ -1854,8 +1856,8 @@ def delete_schema_cache(schema_name):
     """
     try:
         # schema cached on Redis by schema name
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         cache_key = current_app.config[
             'WEKO_SCHEMA_CACHE_PREFIX'].format(schema_name=schema_name)
         datastore.delete(cache_key)

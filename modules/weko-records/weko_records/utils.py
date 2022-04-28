@@ -52,24 +52,26 @@ def json_loader(data, pid, owner_id=None):
     :param owner_id: record owner.
     :return: dc, jrc, is_edit
     """
+
     def _get_author_link(author_link, value):
         """Get author link data."""
         if isinstance(value, list):
             for v in value:
-                if 'nameIdentifiers' in v \
-                    and len(v['nameIdentifiers']) > 0 \
-                    and 'nameIdentifierScheme' in v['nameIdentifiers'][0] \
-                    and v['nameIdentifiers'][0][
-                        'nameIdentifierScheme'] == 'WEKO':
-                    author_link.append(
-                        v['nameIdentifiers'][0]['nameIdentifier'])
-        elif isinstance(value, dict) and 'nameIdentifiers' in value \
-            and len(value['nameIdentifiers']) > 0 \
-            and 'nameIdentifierScheme' in value['nameIdentifiers'][0] \
-            and value['nameIdentifiers'][0][
-                'nameIdentifierScheme'] == 'WEKO':
-            author_link.append(
-                value['nameIdentifiers'][0]['nameIdentifier'])
+                if (
+                    "nameIdentifiers" in v
+                    and len(v["nameIdentifiers"]) > 0
+                    and "nameIdentifierScheme" in v["nameIdentifiers"][0]
+                    and v["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
+                ):
+                    author_link.append(v["nameIdentifiers"][0]["nameIdentifier"])
+        elif (
+            isinstance(value, dict)
+            and "nameIdentifiers" in value
+            and len(value["nameIdentifiers"]) > 0
+            and "nameIdentifierScheme" in value["nameIdentifiers"][0]
+            and value["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
+        ):
+            author_link.append(value["nameIdentifiers"][0]["nameIdentifier"])
 
     dc = OrderedDict()
     jpcoar = OrderedDict()
@@ -84,17 +86,19 @@ def json_loader(data, pid, owner_id=None):
     pid = pid.pid_value
 
     # get item type id
-    split_schema_info = data["$schema"].split('/')
-    item_type_id = split_schema_info[-2] \
-        if 'A-' in split_schema_info[-1] \
+    split_schema_info = data["$schema"].split("/")
+    item_type_id = (
+        split_schema_info[-2]
+        if "A-" in split_schema_info[-1]
         else split_schema_info[-1]
+    )
 
     # get item type mappings
     ojson = ItemTypes.get_record(item_type_id)
     mjson = Mapping.get_record(item_type_id)
 
     if not (ojson and mjson):
-        raise RuntimeError('Item Type {} does not exist.'.format(item_type_id))
+        raise RuntimeError("Item Type {} does not exist.".format(item_type_id))
 
     mp = mjson.dumps()
     data.get("$schema")
@@ -106,38 +110,41 @@ def json_loader(data, pid, owner_id=None):
 
         item.clear()
         try:
-            item["attribute_name"] = ojson["properties"][k]["title"] \
-                if ojson["properties"][k].get("title") is not None else k
+            item["attribute_name"] = (
+                ojson["properties"][k]["title"]
+                if ojson["properties"][k].get("title") is not None
+                else k
+            )
         except Exception:
             pub_date_setting = {
                 "type": "string",
                 "title": "Publish Date",
-                "format": "datetime"
+                "format": "datetime",
             }
             ojson["properties"]["pubdate"] = pub_date_setting
-            item["attribute_name"] = 'Publish Date'
+            item["attribute_name"] = "Publish Date"
         # set a identifier to add a link on detail page when is a creator field
         # creator = mp.get(k, {}).get('jpcoar_mapping', {})
         # creator = creator.get('creator') if isinstance(
         #     creator, dict) else None
         iscreator = False
         creator = ojson["properties"][k]
-        if 'object' == creator["type"]:
+        if "object" == creator["type"]:
             creator = creator["properties"]
-            if 'iscreator' in creator:
+            if "iscreator" in creator:
                 iscreator = True
-        elif 'array' == creator["type"]:
-            creator = creator['items']["properties"]
-            if 'iscreator' in creator:
+        elif "array" == creator["type"]:
+            creator = creator["items"]["properties"]
+            if "iscreator" in creator:
                 iscreator = True
         if iscreator:
-            item["attribute_type"] = 'creator'
+            item["attribute_type"] = "creator"
 
         item_data = ojson["properties"][k]
-        if 'array' == item_data.get('type'):
-            properties_data = item_data['items']['properties']
-            if 'filename' in properties_data:
-                item["attribute_type"] = 'file'
+        if "array" == item_data.get("type"):
+            properties_data = item_data["items"]["properties"]
+            if "filename" in properties_data:
+                item["attribute_type"] = "file"
 
         if isinstance(v, list):
             if len(v) > 0 and isinstance(v[0], dict):
@@ -173,8 +180,8 @@ def json_loader(data, pid, owner_id=None):
         # get the tile name to detail page
         title = data.get("title")
 
-        if 'control_number' in dc:
-            del dc['control_number']
+        if "control_number" in dc:
+            del dc["control_number"]
 
         dc.update(dict(item_title=title))
         dc.update(dict(item_type_id=item_type_id))
@@ -188,16 +195,16 @@ def json_loader(data, pid, owner_id=None):
         is_edit = False
         try:
             oai_value = PersistentIdentifier.get_by_object(
-                pid_type='oai',
-                object_type='rec',
-                object_uuid=PersistentIdentifier.get('recid', pid).object_uuid
+                pid_type="oai",
+                object_type="rec",
+                object_uuid=PersistentIdentifier.get("recid", pid).object_uuid,
             ).pid_value
-            is_edit = pid_exists(oai_value, 'oai')
+            is_edit = pid_exists(oai_value, "oai")
         except PIDDoesNotExistError:
             pass
 
         if not is_edit:
-            oaid = current_pidstore.minters['oaiid'](item_id, dc)
+            oaid = current_pidstore.minters["oaiid"](item_id, dc)
             oai_value = oaid.pid_value
         # relation_ar = []
         # relation_ar.append(dict(value="", item_links="", item_title=""))
@@ -210,7 +217,9 @@ def json_loader(data, pid, owner_id=None):
             if res:
                 detail_condition = res.search_conditions
             else:
-                detail_condition = ad_config.WEKO_ADMIN_MANAGEMENT_OPTIONS['detail_condition']
+                detail_condition = ad_config.WEKO_ADMIN_MANAGEMENT_OPTIONS[
+                    "detail_condition"
+                ]
 
             if is_edit:
                 copy_field_test(dc, detail_condition, jrc, oai_value)
@@ -231,30 +240,28 @@ def json_loader(data, pid, owner_id=None):
         if current_user:
             current_user_id = current_user.get_id()
         else:
-            current_user_id = '1'
+            current_user_id = "1"
         if current_user_id:
             # jrc is saved on elastic
             jrc_weko_creator_id = jrc.get("weko_creator_id", None)
             if not jrc_weko_creator_id:
                 # in case first time create record
                 jrc.update(dict(weko_creator_id=owner_id or current_user_id))
-                jrc.update(dict(weko_shared_id=data.get('shared_user_id', -1)))
+                jrc.update(dict(weko_shared_id=data.get("shared_user_id", -1)))
             else:
                 # incase record is end and someone is updating record
                 if current_user_id == int(jrc_weko_creator_id):
                     # just allow owner update shared_user_id
-                    jrc.update(
-                        dict(weko_shared_id=data.get('shared_user_id', -1)))
+                    jrc.update(dict(weko_shared_id=data.get("shared_user_id", -1)))
 
             # dc js saved on postgresql
             dc_owner = dc.get("owner", None)
             if not dc_owner:
-                dc.update(dict(weko_shared_id=data.get('shared_user_id', -1)))
+                dc.update(dict(weko_shared_id=data.get("shared_user_id", -1)))
                 dc.update(dict(owner=owner_id or current_user_id))
             else:
                 if current_user_id == int(dc_owner):
-                    dc.update(
-                        dict(weko_shared_id=data.get('shared_user_id', -1)))
+                    dc.update(dict(weko_shared_id=data.get("shared_user_id", -1)))
 
     del ojson, mjson, item
     return dc, jrc, is_edit
@@ -263,75 +270,97 @@ def json_loader(data, pid, owner_id=None):
 def copy_field_test(dc, map, jrc, iid=None):
     for k_v in map:
         if type(k_v) is dict:
-            if k_v.get('item_value'):
-                if dc["item_type_id"] in k_v.get('item_value').keys():
-                    for key, val in k_v.get('item_value').items():
+            if k_v.get("item_value"):
+                if dc["item_type_id"] in k_v.get("item_value").keys():
+                    for key, val in k_v.get("item_value").items():
                         if dc["item_type_id"] == key:
-                            _id = k_v.get('id')
-                            _inputType = k_v.get('inputType')
+                            _id = k_v.get("id")
+                            _inputType = k_v.get("inputType")
                             current_app.logger.debug(
-                                'id: {0} , inputType: {1} '.format(_id, _inputType))
-                            if _inputType == 'text':
+                                "id: {0} , inputType: {1} ".format(_id, _inputType)
+                            )
+                            if _inputType == "text":
                                 txt = get_values_from_dict(
-                                    dc, val["path"], val["path_type"], iid)
+                                    dc, val["path"], val["path_type"], iid
+                                )
                                 if txt:
-                                    jrc[k_v.get('id')] = txt
+                                    jrc[k_v.get("id")] = txt
                             elif _inputType == "range":
-                                id = k_v.get('id')
+                                id = k_v.get("id")
                                 ranges = []
                                 _gte = get_values_from_dict(
-                                    dc, val["path"]["gte"], val["path_type"]["gte"], iid)
+                                    dc, val["path"]["gte"], val["path_type"]["gte"], iid
+                                )
                                 _lte = get_values_from_dict(
-                                    dc, val["path"]["lte"], val["path_type"]["lte"], iid)
+                                    dc, val["path"]["lte"], val["path_type"]["lte"], iid
+                                )
                                 for idx in range(len(_gte)):
                                     a = _gte[idx]
                                     b = None
                                     if idx < len(_lte):
                                         b = _lte[idx]
-                                    ranges.append(
-                                        convert_range_value(a, b))
+                                    ranges.append(convert_range_value(a, b))
                                 if len(ranges) > 0:
                                     value_range = {id: ranges}
                                     jrc.update(value_range)
                             elif _inputType == "dateRange":
-                                id = k_v.get('id')
+                                id = k_v.get("id")
                                 dateRanges = []
                                 _gte = get_values_from_dict(
-                                    dc, val["path"]["gte"], val["path_type"]["gte"], iid)
+                                    dc, val["path"]["gte"], val["path_type"]["gte"], iid
+                                )
                                 _lte = get_values_from_dict(
-                                    dc, val["path"]["lte"], val["path_type"]["lte"], iid)
+                                    dc, val["path"]["lte"], val["path_type"]["lte"], iid
+                                )
                                 for idx in range(len(_gte)):
                                     a = _gte[idx]
                                     b = None
                                     if idx < len(_lte):
                                         b = _lte[idx]
-                                    dateRanges.append(
-                                        convert_date_range_value(a, b))
+                                    dateRanges.append(convert_date_range_value(a, b))
                                 if len(dateRanges) > 0:
                                     value_range = {id: dateRanges}
                                     jrc.update(value_range)
                             elif _inputType == "geo_point":
-                                geo_point = {k_v.get('id'): {
-                                    "lat": "", "lon": ""}}
-                                geo_point[k_v.get('id')]["lat"] = get_value_from_dict(
-                                    dc, val["path"]["lat"], val["path_type"]["lat"], iid)
-                                geo_point[k_v.get('id')]["lon"] = get_value_from_dict(
-                                    dc, val["path"]["lon"], val["path_type"]["lon"], iid)
-                                if geo_point[k_v.get('id')]["lat"] and geo_point[k_v.get('id')]["lon"]:
+                                geo_point = {k_v.get("id"): {"lat": "", "lon": ""}}
+                                geo_point[k_v.get("id")]["lat"] = get_value_from_dict(
+                                    dc, val["path"]["lat"], val["path_type"]["lat"], iid
+                                )
+                                geo_point[k_v.get("id")]["lon"] = get_value_from_dict(
+                                    dc, val["path"]["lon"], val["path_type"]["lon"], iid
+                                )
+                                if (
+                                    geo_point[k_v.get("id")]["lat"]
+                                    and geo_point[k_v.get("id")]["lon"]
+                                ):
                                     jrc.update(geo_point)
                             elif _inputType == "geo_shape":
                                 geo_shape = {
-                                    k_v.get('id'): {"type": "", "coordinates": ""}}
-                                geo_shape[k_v.get('id')]["type"] = get_value_from_dict(
-                                    dc, val["path"]["type"], val["path_type"]["type"], iid)
-                                geo_shape[k_v.get('id')]["coordinates"] = get_value_from_dict(
-                                    dc, val["path"]["coordinates"], val["path_type"]["coordinates"], iid)
-                                if geo_shape[k_v.get('id')]["type"] and geo_shape[k_v.get('id')]["coordinates"]:
+                                    k_v.get("id"): {"type": "", "coordinates": ""}
+                                }
+                                geo_shape[k_v.get("id")]["type"] = get_value_from_dict(
+                                    dc,
+                                    val["path"]["type"],
+                                    val["path_type"]["type"],
+                                    iid,
+                                )
+                                geo_shape[k_v.get("id")][
+                                    "coordinates"
+                                ] = get_value_from_dict(
+                                    dc,
+                                    val["path"]["coordinates"],
+                                    val["path_type"]["coordinates"],
+                                    iid,
+                                )
+                                if (
+                                    geo_shape[k_v.get("id")]["type"]
+                                    and geo_shape[k_v.get("id")]["coordinates"]
+                                ):
                                     jrc.update(geo_shape)
 
 
 def convert_range_value(start, end=None):
-    """ Convert to range value for Elasticsearch
+    """Convert to range value for Elasticsearch
 
     Args:
         start ([str]): [description]
@@ -341,16 +370,14 @@ def convert_range_value(start, end=None):
         [dict]: range value for Elasticsearch
     """
     ret = None
-    _start = 'gte'
-    _end = 'lte'
+    _start = "gte"
+    _end = "lte"
     if end is None:
         start = start.strip()
-        ret = {_start: start,
-               _end: start}
+        ret = {_start: start, _end: start}
     elif start is None:
         end = end.strip()
-        ret = {_start: end,
-               _end: end}
+        ret = {_start: end, _end: end}
     else:
         start = start.strip()
         end = end.strip()
@@ -372,12 +399,15 @@ def convert_range_value(start, end=None):
                     ret = {_start: end, _end: start}
             except ValueError:
                 current_app.logger.exception(
-                    "can not convert to range value. start:{0} end:{1}".format(start, end))
+                    "can not convert to range value. start:{0} end:{1}".format(
+                        start, end
+                    )
+                )
     return ret
 
 
 def convert_date_range_value(start, end=None):
-    """ Convert to dateRange value for Elasticsearch
+    """Convert to dateRange value for Elasticsearch
 
     Args:
         start ([str]): [description]
@@ -387,23 +417,25 @@ def convert_date_range_value(start, end=None):
         [dict]: dateRange value for Elasticsearch
     """
     ret = None
-    _start = 'gte'
-    _end = 'lte'
-    pattern = r'^((\d{4}-\d{2}-\d{2})/(\d{4}-\d{2}-\d{2}))|((\d{4}-\d{2})/(\d{4}-\d{2}))|((\d{4})/(\d{4}))$'
+    _start = "gte"
+    _end = "lte"
+    pattern = r"^(([0-9]?[0-9]?[0-9]?[0-9]-(0?[1-9]|1[0-2])-(0?[1-9]|[12][0-9]|3[01]))/"\
+    "([0-9]?[0-9]?[0-9]?[0-9]-(0?[1-9]|1[0-2])-(0?[1-9]|[12][0-9]|3[01])))|"\
+    "(([0-9]?[0-9]?[0-9]?[0-9]-(0?[1-9]|1[0-2]))/([0-9]?[0-9]?[0-9]?[0-9]-(0?[1-9]|1[0-2])))|"\
+    "(([0-9]?[0-9]?[0-9]?[0-9])/([0-9]?[0-9]?[0-9]?[0-9]))$"
     p = re.compile(pattern)
     if start is not None:
         start = start.strip()
-        ret = {_start: start,
-               _end: start}
+        ret = makeDateRangeValue(start,start)
         if p.match(start) is not None:
-            _tmp = start.split('/')
+            _tmp = start.split("/")
             if len(_tmp) == 2:
                 ret = makeDateRangeValue(_tmp[0], _tmp[1])
         elif end is not None:
             ret = makeDateRangeValue(start, end)
-        else:
-            ret = {_start: end,
-                   _end: end}
+    else:
+        if end is not None:
+            ret = makeDateRangeValue(end,end)
     return ret
 
 
@@ -417,15 +449,18 @@ def makeDateRangeValue(start, end):
     Returns:
         [dict]: dateRange value
     """
-    _start = 'gte'
-    _end = 'lte'
+    _start = "gte"
+    _end = "lte"
     start = start.strip()
+    start = start.replace('/','-')
     end = end.strip()
+    end = end.replace('/','-')
     ret = None
-
-    p2 = re.compile(r'^(\d{4}-\d{2}-\d{2})$')
-    p3 = re.compile(r'^(\d{4}-\d{2})$')
-    p4 = re.compile(r'^(\d{4})$')
+    p2 = re.compile(
+        r"^([0-9]?[0-9]?[0-9]?[0-9]-(0?[1-9]|1[0-2])-(0?[1-9]|[12][0-9]|3[01]))$"
+    )
+    p3 = re.compile(r"^([0-9]?[0-9]?[0-9]?[0-9]-(0?[1-9]|1[0-2]))$")
+    p4 = re.compile(r"^([0-9]?[0-9]?[0-9]?[0-9])$")
 
     a = None
     b = None
@@ -442,11 +477,9 @@ def makeDateRangeValue(start, end):
 
     if a is not None and b is not None:
         if a < b:
-            ret = {_start: start,
-                   _end: end}
+            ret = {_start: start, _end: end}
         else:
-            ret = {_start: end,
-                   _end: start}
+            ret = {_start: end, _end: start}
 
     return ret
 
@@ -474,19 +507,26 @@ def get_values_from_dict(dc, path, path_type, iid=None):
 
 def copy_value_xml_path(dc, xml_path, iid=None):
     from invenio_oaiserver.response import getrecord
+
     try:
         meta_prefix = xml_path[0]
         xpath = xml_path[1]
         if iid:
             # url_for('invenio_oaiserver.response', _external=True)をこの関数で実行した場合エラーが起きました。原因は調査中です。
-            xml = etree.tostring(getrecord(
-                metadataPrefix=meta_prefix, identifier=iid, verb='GetRecord', url="https://192.168.75.3/oai"))
+            xml = etree.tostring(
+                getrecord(
+                    metadataPrefix=meta_prefix,
+                    identifier=iid,
+                    verb="GetRecord",
+                    url="https://192.168.75.3/oai",
+                )
+            )
             root = ET.fromstring(xml)
             ns = {
-                'oai_dc': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
-                'dc': 'http://purl.org/dc/elements/1.1/',
-                'jpcoar': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/',
-                'xml': 'http://www.w3.org/XML/1998/namespace'
+                "oai_dc": "http://www.openarchives.org/OAI/2.0/oai_dc/",
+                "dc": "http://purl.org/dc/elements/1.1/",
+                "jpcoar": "https://irdb.nii.ac.jp/schema/jpcoar/1.0/",
+                "xml": "http://www.w3.org/XML/1998/namespace",
             }
             copy_value = root.findall(xpath, ns)[0].text
             return str(copy_value)
@@ -509,6 +549,11 @@ def copy_value_json_path(meta, jsonpath):
     try:
         matches = parse(jsonpath).find(meta)
         match_value = [match.value for match in matches]
+        current_app.logger.debug(
+            "jsonpath: {0},meta: {1}, match_value: {2}".format(
+                jsonpath, meta, match_value
+            )
+        )
         return match_value[0]
     except Exception:
         return match_value
@@ -528,6 +573,11 @@ def copy_values_json_path(meta, jsonpath):
     try:
         matches = parse(jsonpath).find(meta)
         match_value = [match.value for match in matches]
+        current_app.logger.debug(
+            "jsonpath: {0}, meta: {1}, match_value: {2}".format(
+                jsonpath, meta, match_value
+            )
+        )
         return match_value
     except Exception:
         return match_value
@@ -536,12 +586,12 @@ def copy_values_json_path(meta, jsonpath):
 def set_timestamp(jrc, created, updated):
     """Set timestamp."""
     jrc.update(
-        {"_created": pytz.utc.localize(created)
-            .isoformat() if created else None})
+        {"_created": pytz.utc.localize(created).isoformat() if created else None}
+    )
 
     jrc.update(
-        {"_updated": pytz.utc.localize(updated)
-            .isoformat() if updated else None})
+        {"_updated": pytz.utc.localize(updated).isoformat() if updated else None}
+    )
 
 
 def sort_records(records, form):
@@ -582,7 +632,7 @@ def sort_op(record, kd, form):
             if not odd.get(key) and record.get(key):
                 index += 1
                 val = record.pop(key, {})
-                val['index'] = index
+                val["index"] = index
                 odd.update({key: val})
 
         record.clear()
@@ -602,23 +652,22 @@ def find_items(form):
 
     def find_key(node):
         if isinstance(node, dict):
-            key = node.get('key')
-            title = node.get('title', '')
+            key = node.get("key")
+            title = node.get("title", "")
             try:
                 # Try catch for case this function is called from celery app
                 current_lang = current_i18n.language
             except Exception:
-                current_lang = 'en'
-            title_i18n = node.get('title_i18n', {}) \
-                .get(current_lang, title)
+                current_lang = "en"
+            title_i18n = node.get("title_i18n", {}).get(current_lang, title)
             option = {
-                'required': node.get('required', False),
-                'show_list': node.get('isShowList', False),
-                'specify_newline': node.get('isSpecifyNewline', False),
-                'hide': node.get('isHide', False),
-                'non_display': node.get('isNonDisplay', False)
+                "required": node.get("required", False),
+                "show_list": node.get("isShowList", False),
+                "specify_newline": node.get("isSpecifyNewline", False),
+                "hide": node.get("isHide", False),
+                "non_display": node.get("isNonDisplay", False),
             }
-            val = ''
+            val = ""
             if key:
                 yield [key, title, title_i18n, option, val]
             for v in node.values():
@@ -644,18 +693,19 @@ def get_all_items(nlst, klst, is_get_name=False):
     :param is_get_name:
     :return: alst
     """
+
     def get_name(key):
         for lst in klst:
-            key_arr = lst[0].split('.')
+            key_arr = lst[0].split(".")
             k = key_arr[-1]
             if key != k:
                 continue
             item_name = lst[1]
             if len(key_arr) >= 3:
-                parent_key = key_arr[-2].replace('[]', '')
+                parent_key = key_arr[-2].replace("[]", "")
                 parent_key_name = get_name(parent_key)
                 if item_name and parent_key_name:
-                    item_name = item_name + '.' + get_name(parent_key)
+                    item_name = item_name + "." + get_name(parent_key)
 
             return item_name
 
@@ -673,7 +723,7 @@ def get_all_items(nlst, klst, is_get_name=False):
                     if is_get_name:
                         item_name = get_name(k)
                         if item_name:
-                            d[k + '.name'] = item_name
+                            d[k + ".name"] = item_name
                 else:
                     _list.append(get_items(v))
             _list.append(d)
@@ -726,7 +776,7 @@ def to_orderdict(alst, klst, is_full_key=False):
         nlst = []
         if isinstance(klst, list):
             for lst in klst:
-                key = lst[0] if is_full_key else lst[0].split('.')[-1]
+                key = lst[0] if is_full_key else lst[0].split(".")[-1]
                 val = alst.pop(key, {})
                 if val:
                     if isinstance(val, dict):
@@ -753,13 +803,16 @@ def get_options_and_order_list(item_type_id, ojson=None):
     if ojson is None:
         ojson = ItemTypes.get_record(item_type_id)
     solst = find_items(ojson.model.form)
-    meta_options = ojson.model.render.get('meta_fix')
-    meta_options.update(ojson.model.render.get('meta_list'))
+    meta_options = ojson.model.render.get("meta_fix")
+    meta_options.update(ojson.model.render.get("meta_list"))
     return solst, meta_options
 
 
 async def sort_meta_data_by_options(
-    record_hit, settings, item_type_mapping, item_type_data,
+    record_hit,
+    settings,
+    item_type_mapping,
+    item_type_data,
 ):
     """Reset metadata by '_options'.
 
@@ -781,21 +834,21 @@ async def sort_meta_data_by_options(
         """Convert solst to dict."""
         solst_dict_array = []
         for lst in solst:
-            key = lst[0].replace('[]', '')
-            option = meta_options.get(key, {}).get('option')
+            key = lst[0].replace("[]", "")
+            option = meta_options.get(key, {}).get("option")
             temp = {
-                'key': key,
-                'title': lst[1],
-                'title_ja': lst[2],
-                'option': lst[3],
-                'parent_option': option,
-                'value': ''
+                "key": key,
+                "title": lst[1],
+                "title_ja": lst[2],
+                "option": lst[3],
+                "parent_option": option,
+                "value": "",
             }
             solst_dict_array.append(temp)
         return solst_dict_array
 
     def get_author_comment(data_result, key, result, is_specify_newline_array):
-        value = data_result[key].get(key, {}).get('value', [])
+        value = data_result[key].get(key, {}).get("value", [])
         value = [x for x in value if x]
         if len(value) > 0:
             is_specify_newline = False
@@ -812,42 +865,50 @@ async def sort_meta_data_by_options(
         return result
 
     def data_comment(result, data_result, stt_key, is_specify_newline_array):
-        list_author_key = current_app.config['WEKO_RECORDS_AUTHOR_KEYS']
+        list_author_key = current_app.config["WEKO_RECORDS_AUTHOR_KEYS"]
         for idx, key in enumerate(stt_key):
-            lang_id = ''
+            lang_id = ""
             if key in data_result and data_result[key] is not None:
                 if key in list_author_key:
-                    result = get_author_comment(data_result, key, result,
-                                                is_specify_newline_array)
+                    result = get_author_comment(
+                        data_result, key, result, is_specify_newline_array
+                    )
                 else:
-                    if 'lang_id' in data_result[key]:
-                        lang_id = data_result[key].get('lang_id') \
-                            if "[]" not in data_result[key].get('lang_id') \
-                            else data_result[key].get(
-                                'lang_id').replace("[]", '')
-                    data = ''
-                    if "stt" in data_result[key] and data_result[key].get(
-                            "stt") is not None:
+                    if "lang_id" in data_result[key]:
+                        lang_id = (
+                            data_result[key].get("lang_id")
+                            if "[]" not in data_result[key].get("lang_id")
+                            else data_result[key].get("lang_id").replace("[]", "")
+                        )
+                    data = ""
+                    if (
+                        "stt" in data_result[key]
+                        and data_result[key].get("stt") is not None
+                    ):
                         data = data_result[key].get("stt")
                     else:
                         data = data_result.get(key)
                     for idx2, d in enumerate(data):
                         if d not in "lang" and d not in "lang_id":
                             lang_arr = []
-                            if 'lang' in data_result[key]:
-                                lang_arr = data_result[key].get('lang')
-                            if (key in data_result) and (
-                                d in data_result[key]) and (
-                                    'value' in data_result[key][d]):
-                                value_arr = data_result[key][d]['value']
+                            if "lang" in data_result[key]:
+                                lang_arr = data_result[key].get("lang")
+                            if (
+                                (key in data_result)
+                                and (d in data_result[key])
+                                and ("value" in data_result[key][d])
+                            ):
+                                value_arr = data_result[key][d]["value"]
                                 value = selected_value_by_language(
-                                    lang_arr, value_arr, lang_id,
-                                    d.replace("[]", ''), web_screen_lang,
-                                    _item_metadata
+                                    lang_arr,
+                                    value_arr,
+                                    lang_id,
+                                    d.replace("[]", ""),
+                                    web_screen_lang,
+                                    _item_metadata,
                                 )
                                 if value is not None and len(value) > 0:
-                                    for index, n in enumerate(
-                                            is_specify_newline_array):
+                                    for index, n in enumerate(is_specify_newline_array):
                                         if d in n:
                                             if n[d] or len(result) == 0:
                                                 result.append(value)
@@ -856,152 +917,170 @@ async def sort_meta_data_by_options(
                                             break
         return result
 
-    def get_comment(solst_dict_array, hide_email_flag, _item_metadata, src,
-                    solst):
+    def get_comment(solst_dict_array, hide_email_flag, _item_metadata, src, solst):
         """Check and get info."""
+
         def get_option_value(option_type, parent_option, child_option):
             """Get value of option by option type, prioritized parent.
 
             @param option_type: show_list, specify_newline, hide, required
             @return: True or False
             """
-            return parent_option.get(option_type) \
-                if parent_option and parent_option.get(option_type) \
+            return (
+                parent_option.get(option_type)
+                if parent_option and parent_option.get(option_type)
                 else child_option.get(option_type)
+            )
 
         result = []
         data_result = {}
         stt_key = []
         _ignore_items = list()
-        _license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
+        _license_dict = current_app.config["WEKO_RECORDS_UI_LICENSE_DICT"]
         is_specify_newline_array = []
         bibliographic_key = None
         author_key = None
         author_data = {}
         if _license_dict:
-            _ignore_items.append(_license_dict[0].get('value'))
+            _ignore_items.append(_license_dict[0].get("value"))
         for i, s in enumerate(solst_dict_array):
-            value = s['value']
-            option = s['option']
-            parent_option = s['parent_option']
+            value = s["value"]
+            option = s["option"]
+            parent_option = s["parent_option"]
             # Get 'show list', 'specify newline', 'hide' flag.
-            is_show_list = get_option_value('show_list', parent_option, option)
+            is_show_list = get_option_value("show_list", parent_option, option)
             is_specify_newline = get_option_value(
-                'specify_newline', parent_option, option)
-            is_hide = get_option_value('hide', parent_option, option)
+                "specify_newline", parent_option, option
+            )
+            is_hide = get_option_value("hide", parent_option, option)
             # Get hide email flag
-            if 'creatorMails.creatorMail' in s['key'] \
-                or 'contributorMails.contributorMail' in s['key'] \
-                    or 'mails.mail' in s['key']:
+            if (
+                "creatorMails.creatorMail" in s["key"]
+                or "contributorMails.contributorMail" in s["key"]
+                or "mails.mail" in s["key"]
+            ):
                 is_hide = is_hide | hide_email_flag
             # Get creator flag.
-            is_author = src.get(s['key'], {}).get('attribute_type',
-                                                  {}) == 'creator'
+            is_author = src.get(s["key"], {}).get("attribute_type", {}) == "creator"
 
-            if author_key and author_key in s['key']:
+            if author_key and author_key in s["key"]:
                 stt_key, data_result, is_specify_newline_array = add_author(
-                    author_data, stt_key, is_specify_newline_array, s, value,
-                    data_result, is_specify_newline, is_hide, is_show_list)
+                    author_data,
+                    stt_key,
+                    is_specify_newline_array,
+                    s,
+                    value,
+                    data_result,
+                    is_specify_newline,
+                    is_hide,
+                    is_show_list,
+                )
             elif is_author:
                 # Format creator data to display on item list
-                author_key = s['key']
-                attr_mlt = src.get(s['key'], {}).get('attribute_value_mlt', {})
+                author_key = s["key"]
+                attr_mlt = src.get(s["key"], {}).get("attribute_value_mlt", {})
                 author_data = get_show_list_author(
                     solst_dict_array, hide_email_flag, author_key, attr_mlt
                 )
-            elif bibliographic_key is None and is_show_list and \
-                    'bibliographic_titles' in s['key']:
+            elif (
+                bibliographic_key is None
+                and is_show_list
+                and "bibliographic_titles" in s["key"]
+            ):
                 # Format bibliographic data to display on item list
-                bibliographic_key = s['key'].split(".")[0].replace('[]', '')
+                bibliographic_key = s["key"].split(".")[0].replace("[]", "")
                 mlt_bibliographic = src.get(bibliographic_key, {}).get(
-                    'attribute_value_mlt')
+                    "attribute_value_mlt"
+                )
                 if mlt_bibliographic:
                     sys_bibliographic = _FormatSysBibliographicInformation(
-                        copy.deepcopy(mlt_bibliographic),
-                        copy.deepcopy(solst)
+                        copy.deepcopy(mlt_bibliographic), copy.deepcopy(solst)
                     )
-                    stt_key, data_result, is_specify_newline_array = \
-                        add_biographic(sys_bibliographic, bibliographic_key,
-                                       s, stt_key,
-                                       data_result, is_specify_newline_array
-                                       )
-            elif not (bibliographic_key and bibliographic_key in s['key']) and \
-                    value and value not in _ignore_items and \
-                    ((not is_hide and is_show_list) or
-                     s['title'] in current_app.config[
-                         'WEKO_RECORDS_LANGUAGE_TITLES']) and s['key'] \
-                    and s['title'] != current_app.config[
-                        'WEKO_RECORDS_TITLE_TITLE']:
+                    stt_key, data_result, is_specify_newline_array = add_biographic(
+                        sys_bibliographic,
+                        bibliographic_key,
+                        s,
+                        stt_key,
+                        data_result,
+                        is_specify_newline_array,
+                    )
+            elif (
+                not (bibliographic_key and bibliographic_key in s["key"])
+                and value
+                and value not in _ignore_items
+                and (
+                    (not is_hide and is_show_list)
+                    or s["title"] in current_app.config["WEKO_RECORDS_LANGUAGE_TITLES"]
+                )
+                and s["key"]
+                and s["title"] != current_app.config["WEKO_RECORDS_TITLE_TITLE"]
+            ):
                 data_result, stt_key = get_value_and_lang_by_key(
-                    s['key'], solst_dict_array, data_result, stt_key)
-                is_specify_newline_array.append(
-                    {s['key']: is_specify_newline})
+                    s["key"], solst_dict_array, data_result, stt_key
+                )
+                is_specify_newline_array.append({s["key"]: is_specify_newline})
 
         if len(data_result) > 0:
-            result = data_comment(result, data_result, stt_key,
-                                  is_specify_newline_array)
+            result = data_comment(
+                result, data_result, stt_key, is_specify_newline_array
+            )
         return result
 
     def get_file_comments(record, files):
         """Check and get file info."""
+
         def __get_label_extension():
-            _label = f.get('url', {}).get('label')
-            _filename = f.get('filename', '')
-            _extension = ''
-            if not _label and not f.get('version_id'):
-                _label = f.get('url', {}).get('url', '')
+            _label = f.get("url", {}).get("label")
+            _filename = f.get("filename", "")
+            _extension = ""
+            if not _label and not f.get("version_id"):
+                _label = f.get("url", {}).get("url", "")
             elif not _label:
                 _label = _filename
-            if f.get('version_id'):
-                _idx = _filename.rfind('.') + 1
-                _extension = _filename[_idx:] if _idx > 0 else 'unknown'
+            if f.get("version_id"):
+                _idx = _filename.rfind(".") + 1
+                _extension = _filename[_idx:] if _idx > 0 else "unknown"
             return _label, _extension
+
         result = []
         for f in files:
             label, extension = __get_label_extension()
-            if 'open_restricted' == f.get('accessrole', ''):
+            if "open_restricted" == f.get("accessrole", ""):
                 if label:
-                    result.append({
-                        'label': label,
-                        'extention': extension,
-                        'url': ""
-                    })
+                    result.append({"label": label, "extention": extension, "url": ""})
             elif label and (
-                not extension
-                    or check_file_download_permission(record, f, False)):
-                file_url = f.get('url', {}).get('url', '')
+                not extension or check_file_download_permission(record, f, False)
+            ):
+                file_url = f.get("url", {}).get("url", "")
                 if extension and file_url:
                     file_url = replace_fqdn(file_url)
-                result.append({
-                    'label': label,
-                    'extention': extension,
-                    'url': file_url
-                })
+                result.append({"label": label, "extention": extension, "url": file_url})
         return result
 
     def get_file_thumbnail(thumbnails):
         """Get file thumbnail."""
         thumbnail = {}
         if thumbnails and len(thumbnails) > 0:
-            subitem_thumbnails = thumbnails[0].get('subitem_thumbnail')
+            subitem_thumbnails = thumbnails[0].get("subitem_thumbnail")
             if subitem_thumbnails and len(subitem_thumbnails) > 0:
                 thumbnail = {
-                    'thumbnail_label': subitem_thumbnails[0].get(
-                        'thumbnail_label', ''),
-                    'thumbnail_width': current_app.config[
-                        'WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL']
+                    "thumbnail_label": subitem_thumbnails[0].get("thumbnail_label", ""),
+                    "thumbnail_width": current_app.config[
+                        "WEKO_RECORDS_UI_DEFAULT_MAX_WIDTH_THUMBNAIL"
+                    ],
                 }
         return thumbnail
 
     def append_parent_key(key, attribute_value_mlt):
         """Update parent key attribute_value_mlt."""
+
         def get_parent_key(key):
             """Get root key in string key."""
             parent_key = key
-            key_arr = key.split('.')
+            key_arr = key.split(".")
             if len(key_arr) >= 2:
                 del key_arr[-1]
-                parent_key = '.'.join(key_arr)
+                parent_key = ".".join(key_arr)
             return parent_key
 
         def append_parent_key_all_type(parent_key, attr_val_mlt):
@@ -1016,15 +1095,17 @@ async def sort_meta_data_by_options(
             mlt_temp = {}
             for attr_key, attr_val in attr_val_mlt.items():
                 # Join parent and child key. Ex: parent_key_01.sub_key_01
-                parent_key_temp = '{}.{}'.format(parent_key, attr_key)
+                parent_key_temp = "{}.{}".format(parent_key, attr_key)
                 mlt_temp.update({parent_key_temp: attr_val})
                 if isinstance(attr_val, dict):
                     attr_val_temp = append_parent_key_for_dict(
-                        parent_key_temp, attr_val)
+                        parent_key_temp, attr_val
+                    )
                     mlt_temp[parent_key_temp] = attr_val_temp
                 if isinstance(attr_val, list):
                     attr_val_temp = append_parent_key_for_list(
-                        parent_key_temp, attr_val)
+                        parent_key_temp, attr_val
+                    )
                     mlt_temp[parent_key_temp] = attr_val_temp
             return mlt_temp
 
@@ -1045,49 +1126,60 @@ async def sort_meta_data_by_options(
         parent_key = get_parent_key(key)
         # Append parent key for all sub key.
         attribute_value_mlt = append_parent_key_all_type(
-            parent_key, attribute_value_mlt)
+            parent_key, attribute_value_mlt
+        )
         return attribute_value_mlt
 
     def get_title_option(solst_dict_array):
         """Get option of title."""
         parent_option, child_option = {}, {}
         for item in solst_dict_array:
-            if '.' in item.get('key') and item.get('title') == 'Title':
-                parent_option = item.get('parent_option')
-                child_option = item.get('option')
+            if "." in item.get("key") and item.get("title") == "Title":
+                parent_option = item.get("parent_option")
+                child_option = item.get("option")
                 break
-        show_list = parent_option.get('show_list') if parent_option.get(
-            'show_list') else child_option.get('show_list')
-        specify_newline = parent_option.get('crtf') if parent_option.get(
-            'crtf') else child_option.get('specify_newline')
-        option = {
-            "show_list": show_list,
-            "specify_newline": specify_newline
-        }
+        show_list = (
+            parent_option.get("show_list")
+            if parent_option.get("show_list")
+            else child_option.get("show_list")
+        )
+        specify_newline = (
+            parent_option.get("crtf")
+            if parent_option.get("crtf")
+            else child_option.get("specify_newline")
+        )
+        option = {"show_list": show_list, "specify_newline": specify_newline}
         return option
 
     try:
-        src_default = copy.deepcopy(
-            record_hit['_source'].get('_item_metadata'))
-        _item_metadata = copy.deepcopy(record_hit['_source'])
-        src = record_hit['_source']['_item_metadata']
-        item_type_id = record_hit['_source'].get('item_type_id') or \
-            src.get('item_type_id')
-        item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
+        src_default = copy.deepcopy(record_hit["_source"].get("_item_metadata"))
+        _item_metadata = copy.deepcopy(record_hit["_source"])
+        src = record_hit["_source"]["_item_metadata"]
+        item_type_id = record_hit["_source"].get("item_type_id") or src.get(
+            "item_type_id"
+        )
+        item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
         language_dict = {}
-        suffixes = '.@attributes.xml:lang'
+        suffixes = ".@attributes.xml:lang"
         for key in item_map:
             if key.find(suffixes) != -1:
                 # get language
-                title_languages, _title_key = get_data_by_property(
-                    src, item_map, key)
+                title_languages, _title_key = get_data_by_property(src, item_map, key)
                 # get value
-                prefix = key.replace(suffixes, '')
+                prefix = key.replace(suffixes, "")
                 title_values, _title_key1 = get_data_by_property(
-                    src, item_map, prefix + '.@value')
-                language_dict.update({
-                    prefix: {'lang': title_languages, 'lang-id': _title_key,
-                             'val': title_values, 'val-id': _title_key1}})
+                    src, item_map, prefix + ".@value"
+                )
+                language_dict.update(
+                    {
+                        prefix: {
+                            "lang": title_languages,
+                            "lang-id": _title_key,
+                            "val": title_values,
+                            "val-id": _title_key1,
+                        }
+                    }
+                )
         # selected title
         title_obj = language_dict.get("title")
         if title_obj is not None:
@@ -1097,26 +1189,25 @@ async def sort_meta_data_by_options(
             val_id = title_obj.get("val-id")
             if lang_arr and len(lang_arr) > 0 and lang_arr != "null":
                 result = selected_value_by_language(
-                    lang_arr, val_arr, lang_id, val_id,
-                    web_screen_lang, _item_metadata
+                    lang_arr, val_arr, lang_id, val_id, web_screen_lang, _item_metadata
                 )
                 if result is not None:
-                    for idx, val in enumerate(record_hit['_source']['title']):
+                    for idx, val in enumerate(record_hit["_source"]["title"]):
                         if val == result:
                             arr = []
-                            record_hit['_source']['title'][idx] = \
-                                record_hit['_source']['title'][0]
-                            record_hit['_source']['title'][0] = result
+                            record_hit["_source"]["title"][idx] = record_hit["_source"][
+                                "title"
+                            ][0]
+                            record_hit["_source"]["title"][0] = result
                             arr.append(result)
-                            record_hit['_source']['_comment'] = arr
+                            record_hit["_source"]["_comment"] = arr
                             break
             elif val_arr and len(val_arr) > 0:
-                record_hit['_source']['_comment'] = [val_arr[0]]
+                record_hit["_source"]["_comment"] = [val_arr[0]]
 
         if not item_type_id:
             return
-        solst, meta_options = get_options_and_order_list(item_type_id,
-                                                         item_type_data)
+        solst, meta_options = get_options_and_order_list(item_type_id, item_type_data)
         solst_dict_array = convert_data_to_dict(solst)
         files_info = []
         thumbnail = None
@@ -1125,65 +1216,77 @@ async def sort_meta_data_by_options(
         for lst in solst:
             key = lst[0]
             val = src.get(key)
-            option = meta_options.get(key, {}).get('option')
+            option = meta_options.get(key, {}).get("option")
             if not val or not option:
                 continue
-            mlt = val.get('attribute_value_mlt', [])
+            mlt = val.get("attribute_value_mlt", [])
             if mlt:
-                if val.get('attribute_type', '') == 'file' \
-                    and not option.get("hidden") \
-                        and option.get("showlist"):
+                if (
+                    val.get("attribute_type", "") == "file"
+                    and not option.get("hidden")
+                    and option.get("showlist")
+                ):
                     files_info = get_file_comments(src, mlt)
                     continue
-                is_thumbnail = any('subitem_thumbnail' in data for data in mlt)
-                if is_thumbnail and not option.get("hidden") \
-                        and option.get("showlist"):
+                is_thumbnail = any("subitem_thumbnail" in data for data in mlt)
+                if is_thumbnail and not option.get("hidden") and option.get("showlist"):
                     thumbnail = get_file_thumbnail(mlt)
                     continue
                 mlt = append_parent_key(key, mlt)
                 meta_data = get_all_items2(mlt, solst)
                 for m in meta_data:
                     for s in solst_dict_array:
-                        s_key = s.get('key')
+                        s_key = s.get("key")
                         if m.get(s_key):
-                            s['value'] = m.get(s_key) if not s['value'] else \
-                                '{}{} {}'.format(
-                                    s['value'],
+                            s["value"] = (
+                                m.get(s_key)
+                                if not s["value"]
+                                else "{}{} {}".format(
+                                    s["value"],
                                     current_app.config.get(
-                                        'WEKO_RECORDS_SYSTEM_COMMA', ''),
-                                    m.get(s_key))
-                            s['parent_option'] = {
-                                'required': option.get("required"),
-                                'show_list': option.get("showlist"),
-                                'specify_newline': option.get("crtf"),
-                                'hide': option.get("hidden")
+                                        "WEKO_RECORDS_SYSTEM_COMMA", ""
+                                    ),
+                                    m.get(s_key),
+                                )
+                            )
+                            s["parent_option"] = {
+                                "required": option.get("required"),
+                                "show_list": option.get("showlist"),
+                                "specify_newline": option.get("crtf"),
+                                "hide": option.get("hidden"),
                             }
                             break
         # Format data to display on item list
         items = get_comment(
-            solst_dict_array, not settings.items_display_email,
-            _item_metadata, src_default, solst)
+            solst_dict_array,
+            not settings.items_display_email,
+            _item_metadata,
+            src_default,
+            solst,
+        )
 
-        if 'file' in record_hit['_source']:
-            record_hit['_source'].pop('file')
+        if "file" in record_hit["_source"]:
+            record_hit["_source"].pop("file")
 
         # Title do not display if show list is false.
         title_option = get_title_option(solst_dict_array)
-        if not title_option.get('show_list'):
-            record_hit['_source']['_comment'] = []
+        if not title_option.get("show_list"):
+            record_hit["_source"]["_comment"] = []
         if items and len(items) > 0:
-            if record_hit['_source'].get('_comment'):
-                record_hit['_source']['_comment'].extend(items)
+            if record_hit["_source"].get("_comment"):
+                record_hit["_source"]["_comment"].extend(items)
             else:
-                record_hit['_source']['_comment'] = items
+                record_hit["_source"]["_comment"] = items
         if files_info:
-            record_hit['_source']['_files_info'] = files_info
+            record_hit["_source"]["_files_info"] = files_info
         if thumbnail:
-            record_hit['_source']['_thumbnail'] = thumbnail
+            record_hit["_source"]["_thumbnail"] = thumbnail
     except Exception:
         current_app.logger.exception(
-            u'Record serialization failed {}.'.format(
-                str(record_hit['_source'].get('control_number'))))
+            "Record serialization failed {}.".format(
+                str(record_hit["_source"].get("control_number"))
+            )
+        )
 
 
 def get_keywords_data_load(str):
@@ -1206,18 +1309,18 @@ def is_valid_openaire_type(resource_type, communities):
     :returns: True if the 'openaire_subtype' (if it exists) is valid w.r.t.
         the `resource_type.type` and the selected communities, False otherwise.
     """
-    if 'openaire_subtype' not in resource_type:
+    if "openaire_subtype" not in resource_type:
         return True
-    oa_subtype = resource_type['openaire_subtype']
-    prefix = oa_subtype.split(':')[0] if ':' in oa_subtype else ''
+    oa_subtype = resource_type["openaire_subtype"]
+    prefix = oa_subtype.split(":")[0] if ":" in oa_subtype else ""
 
     cfg = current_openaire.openaire_communities
-    defined_comms = [c for c in cfg.get(prefix, {}).get('communities', [])]
-    type_ = resource_type['type']
-    subtypes = cfg.get(prefix, {}).get('types', {}).get(type_, [])
+    defined_comms = [c for c in cfg.get(prefix, {}).get("communities", [])]
+    type_ = resource_type["type"]
+    subtypes = cfg.get(prefix, {}).get("types", {}).get(type_, [])
     # Check if the OA subtype is defined in config and at least one of its
     # corresponding communities is present
-    is_defined = any(t['id'] == oa_subtype for t in subtypes)
+    is_defined = any(t["id"] == oa_subtype for t in subtypes)
     comms_match = len(set(communities) & set(defined_comms))
     return is_defined and comms_match
 
@@ -1241,14 +1344,19 @@ def check_has_attribute_value(node):
                         return check_has_attribute_value(val)
         return False
     except BaseException as e:
-        current_app.logger.error(
-            'Function check_has_attribute_value error:', e)
+        current_app.logger.error("Function check_has_attribute_value error:", e)
         return False
 
 
 def get_attribute_value_all_items(
-        root_key, nlst, klst, is_author=False, hide_email_flag=True,
-        non_display_flag=False, one_line_flag=False):
+    root_key,
+    nlst,
+    klst,
+    is_author=False,
+    hide_email_flag=True,
+    non_display_flag=False,
+    one_line_flag=False,
+):
     """Convert and sort item list.
 
     :param root_key:
@@ -1265,30 +1373,33 @@ def get_attribute_value_all_items(
     def get_name_mapping():
         """Create key & title mapping."""
         for lst in klst:
-            keys = lst[0].replace("[]", "").split('.')
+            keys = lst[0].replace("[]", "").split(".")
             if keys[0].startswith(root_key):
                 key = keys[-1]
-                name = lst[2] if not is_author \
-                    else '{}.{}'.format(key, lst[2])
+                name = lst[2] if not is_author else "{}.{}".format(key, lst[2])
                 name_mapping[key] = {
-                    'multi_lang': name,
-                    'item_name': lst[1],
-                    'non_display': lst[3].get('non_display', False)}
+                    "multi_lang": name,
+                    "item_name": lst[1],
+                    "non_display": lst[3].get("non_display", False),
+                }
 
     def get_name(key, multi_lang_flag=True):
         """Get multi-lang title."""
         if key in name_mapping:
-            name = name_mapping[key]['multi_lang'] \
-                if multi_lang_flag else name_mapping[key]['item_name']
+            name = (
+                name_mapping[key]["multi_lang"]
+                if multi_lang_flag
+                else name_mapping[key]["item_name"]
+            )
             return name
         else:
-            return ''
+            return ""
 
     def change_temporal_format(value):
         """Change temporal format."""
-        if '/' in value:
+        if "/" in value:
             result = []
-            temp = value.split('/')
+            temp = value.split("/")
             for v in temp:
                 r = change_date_format(v)
                 if r:
@@ -1297,7 +1408,7 @@ def get_attribute_value_all_items(
                     result = []
                     break
             if result:
-                return str.join(' - ', result)
+                return str.join(" - ", result)
             else:
                 return value
         else:
@@ -1307,12 +1418,11 @@ def get_attribute_value_all_items(
     def change_date_format(value):
         """Change date format from yyyy-MM-dd to yyyy/MM/dd."""
         result = None
-        y_re = re.compile(r'^\d{4}$')
-        ym_re = re.compile(r'^\d{4}-(0[1-9]|1[0-2])$')
-        ymd_re = re.compile(
-            r'^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$')
+        y_re = re.compile(r"^\d{4}$")
+        ym_re = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
+        ymd_re = re.compile(r"^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$")
         if y_re.match(value) or ym_re.match(value) or ymd_re.match(value):
-            result = value.replace('-', '/')
+            result = value.replace("-", "/")
         return result
 
     def get_value(data):
@@ -1325,20 +1435,19 @@ def get_attribute_value_all_items(
         non_display_list = []
         key_list = list(data.keys())
         for k in key_list:
-            item_name = ''
+            item_name = ""
             flag = False
             if k in name_mapping:
-                item_name = name_mapping[k]['item_name']
-                flag = name_mapping[k]['non_display']
-            if item_name in current_app.config[
-                    'WEKO_RECORDS_LANGUAGE_TITLES']:
+                item_name = name_mapping[k]["item_name"]
+                flag = name_mapping[k]["non_display"]
+            if item_name in current_app.config["WEKO_RECORDS_LANGUAGE_TITLES"]:
                 lang_key = k
-            elif item_name in current_app.config[
-                    'WEKO_RECORDS_EVENT_TITLES']:
+            elif item_name in current_app.config["WEKO_RECORDS_EVENT_TITLES"]:
                 event_key = k
-            elif not flag and item_name in \
-                    current_app.config[
-                        'WEKO_RECORDS_TIME_PERIOD_TITLES']:
+            elif (
+                not flag
+                and item_name in current_app.config["WEKO_RECORDS_TIME_PERIOD_TITLES"]
+            ):
                 date_key = k
             elif not flag:
                 if value_key:
@@ -1351,35 +1460,34 @@ def get_attribute_value_all_items(
 
         data_type = None
         data_key = None
-        split_data = 'none'
-        return_data = ''
+        split_data = "none"
+        return_data = ""
         if date_key and event_key:
-            data_type = 'event'
+            data_type = "event"
             data_key = date_key
             split_data = data[event_key]
             date_value = change_temporal_format(data[date_key])
             if event_key in non_display_list:
                 return_data = date_value
             else:
-                return_data = '{}({})'.format(date_value, data[event_key])
-        elif date_key and \
-                (len(list(temp_data.keys())) == 1 or lang_key):
-            data_type = 'event'
+                return_data = "{}({})".format(date_value, data[event_key])
+        elif date_key and (len(list(temp_data.keys())) == 1 or lang_key):
+            data_type = "event"
             data_key = date_key
-            split_data = 'none_event'
+            split_data = "none_event"
             return_data = change_temporal_format(data[date_key])
         elif value_key and lang_key:
-            data_type = 'lang'
+            data_type = "lang"
             data_key = value_key
             split_data = data[lang_key]
             if lang_key in non_display_list:
                 return_data = data[value_key]
             else:
-                return_data = '{}({})'.format(data[value_key], data[lang_key])
+                return_data = "{}({})".format(data[value_key], data[lang_key])
         elif value_key and len(list(temp_data.keys())) == 1:
-            data_type = 'lang'
+            data_type = "lang"
             data_key = value_key
-            split_data = 'none_lang'
+            split_data = "none_lang"
             return_data = data[value_key]
 
         return data_type, data_key, split_data, return_data
@@ -1400,7 +1508,7 @@ def get_attribute_value_all_items(
                         data_type = None
                         for a in alst:
                             t, k, l, v = get_value(a)
-                            if t == 'lang':
+                            if t == "lang":
                                 if l in data_split:
                                     temp = data_split[l]
                                 else:
@@ -1409,24 +1517,23 @@ def get_attribute_value_all_items(
                                 data_type = t
                                 value_key = k
                                 temp.append(v)
-                            elif t == 'event':
-                                if 'data' not in data_split:
+                            elif t == "event":
+                                if "data" not in data_split:
                                     temp = []
-                                    data_split['data'] = temp
+                                    data_split["data"] = temp
                                 else:
-                                    temp = data_split['data']
-                                if l == 'start':
-                                    if 'start' in data_split:
-                                        temp.append(data_split.pop('start'))
-                                    data_split['start'] = v
-                                elif l == 'end':
-                                    if 'start' in data_split:
-                                        v = '{} - {}'.format(
-                                            data_split.pop('start'), v)
+                                    temp = data_split["data"]
+                                if l == "start":
+                                    if "start" in data_split:
+                                        temp.append(data_split.pop("start"))
+                                    data_split["start"] = v
+                                elif l == "end":
+                                    if "start" in data_split:
+                                        v = "{} - {}".format(data_split.pop("start"), v)
                                     temp.append(v)
                                 else:
-                                    if 'start' in data_split:
-                                        temp.append(data_split.pop('start'))
+                                    if "start" in data_split:
+                                        temp.append(data_split.pop("start"))
                                     temp.append(v)
                                 data_type = t
                                 value_key = k
@@ -1434,17 +1541,18 @@ def get_attribute_value_all_items(
                                 data_type = None
                                 result = []
                                 break
-                        if data_type == 'lang':
+                        if data_type == "lang":
                             for k, v in data_split.items():
-                                data_split[k] = str.join(', ', v)
+                                data_split[k] = str.join(", ", v)
                             result.append(
-                                [{value_key: str.join('\n', list(data_split.values()))}])
-                        elif data_type == 'event':
-                            if 'start' in data_split:
-                                data_split['data'].append(
-                                    data_split.pop('start'))
+                                [{value_key: str.join("\n", list(data_split.values()))}]
+                            )
+                        elif data_type == "event":
+                            if "start" in data_split:
+                                data_split["data"].append(data_split.pop("start"))
                             result.append(
-                                [{value_key: str.join(', ', data_split['data'])}])
+                                [{value_key: str.join(", ", data_split["data"])}]
+                            )
                     elif isinstance(alst, dict):
                         data_type, value_key, l, v = get_value(alst)
                         if data_type is not None and value_key:
@@ -1457,24 +1565,28 @@ def get_attribute_value_all_items(
                 else:
                     temp = []
                     for lst in klst:
-                        key = lst[0].split('.')[-1]
+                        key = lst[0].split(".")[-1]
                         val = alst.pop(key, {})
-                        name = get_name(key, False) or ''
-                        hide = lst[3].get('hide') or \
-                            (non_display_flag and lst[3].get(
-                                'non_display', False))
+                        name = get_name(key, False) or ""
+                        hide = lst[3].get("hide") or (
+                            non_display_flag and lst[3].get("non_display", False)
+                        )
 
-                        if key in ('creatorMail', 'contributorMail', 'mail'):
+                        if key in ("creatorMail", "contributorMail", "mail"):
                             hide = hide | hide_email_flag
-                        if val and (isinstance(val, str)
-                                    or (key == 'nameIdentifier')):
-                            if name in current_app.config[
-                                    'WEKO_RECORDS_TIME_PERIOD_TITLES']:
+                        if val and (isinstance(val, str) or (key == "nameIdentifier")):
+                            if (
+                                name
+                                in current_app.config["WEKO_RECORDS_TIME_PERIOD_TITLES"]
+                            ):
                                 val = change_temporal_format(val)
                             if not hide:
                                 temp.append({key: val})
-                        elif isinstance(val, list) and len(
-                                val) > 0 and isinstance(val[0], str):
+                        elif (
+                            isinstance(val, list)
+                            and len(val) > 0
+                            and isinstance(val[0], str)
+                        ):
                             if not hide:
                                 temp.append({key: val})
                         else:
@@ -1487,7 +1599,7 @@ def get_attribute_value_all_items(
                     result.append(temp)
                 return result
             except BaseException as e:
-                current_app.logger.error('Function to_sort_dict error: ', e)
+                current_app.logger.error("Function to_sort_dict error: ", e)
                 return result
 
     def set_attribute_value(nlst):
@@ -1500,14 +1612,16 @@ def get_attribute_value_all_items(
             elif isinstance(nlst, dict) and bool(nlst):
                 d = {}
                 for key, val in nlst.items():
-                    item_name = get_name(key) or ''
-                    if val and (isinstance(val, str)
-                                or (key == 'nameIdentifier')):
+                    item_name = get_name(key) or ""
+                    if val and (isinstance(val, str) or (key == "nameIdentifier")):
                         # the last children level
                         d[item_name] = val
-                    elif isinstance(val, list) and len(val) > 0 and isinstance(
-                            val[0], str):
-                        d[item_name] = ', '.join(val)
+                    elif (
+                        isinstance(val, list)
+                        and len(val) > 0
+                        and isinstance(val[0], str)
+                    ):
+                        d[item_name] = ", ".join(val)
                     else:
                         # parents level
                         # check if have any child
@@ -1516,7 +1630,7 @@ def get_attribute_value_all_items(
                 _list.append(d)
             return _list
         except BaseException as e:
-            current_app.logger.error('Function set_node error: ', e)
+            current_app.logger.error("Function set_node error: ", e)
             return _list
 
     get_name_mapping()
@@ -1535,7 +1649,7 @@ def check_input_value(old, new):
     """
     diff = False
     for k in old.keys():
-        if old[k]['input_value'] != new[k]['input_value']:
+        if old[k]["input_value"] != new[k]["input_value"]:
             diff = True
             break
     return diff
@@ -1579,12 +1693,12 @@ def remove_multiple(schema):
     @param schema:
     @return:
     """
-    for k in schema['properties'].keys():
-        if 'maxItems' and 'minItems' in schema['properties'][k].keys():
-            del schema['properties'][k]['maxItems']
-            del schema['properties'][k]['minItems']
-        if 'items' in schema['properties'][k].keys():
-            schema['properties'][k] = schema['properties'][k]['items']
+    for k in schema["properties"].keys():
+        if "maxItems" and "minItems" in schema["properties"][k].keys():
+            del schema["properties"][k]["maxItems"]
+            del schema["properties"][k]["minItems"]
+        if "items" in schema["properties"][k].keys():
+            schema["properties"][k] = schema["properties"][k]["items"]
 
 
 def check_to_upgrade_version(old_render, new_render):
@@ -1594,19 +1708,16 @@ def check_to_upgrade_version(old_render, new_render):
     @param new_render:
     @return:
     """
-    if old_render.get('meta_list').keys() != \
-            new_render.get('meta_list').keys():
+    if old_render.get("meta_list").keys() != new_render.get("meta_list").keys():
         return True
     # Check diff input value:
-    if check_input_value(old_render.get('meta_list'),
-                         new_render.get('meta_list')):
+    if check_input_value(old_render.get("meta_list"), new_render.get("meta_list")):
         return True
     # Check diff schema
-    old_schema = old_render.get('table_row_map').get('schema')
-    new_schema = new_render.get('table_row_map').get('schema')
+    old_schema = old_render.get("table_row_map").get("schema")
+    new_schema = new_render.get("table_row_map").get("schema")
 
-    excluded_keys = \
-        current_app.config['WEKO_ITEMTYPE_EXCLUDED_KEYS']
+    excluded_keys = current_app.config["WEKO_ITEMTYPE_EXCLUDED_KEYS"]
     remove_keys(excluded_keys, old_schema)
     remove_keys(excluded_keys, new_schema)
 
@@ -1622,12 +1733,13 @@ def remove_weko2_special_character(s: str):
 
     :param s:
     """
+
     def __remove_special_character(_s_str: str):
         pattern = r"(^(&EMPTY&,|,&EMPTY&)|(&EMPTY&,|,&EMPTY&)$|&EMPTY&)"
-        _s_str = re.sub(pattern, '', _s_str)
-        if _s_str == ',':
-            return ''
-        return _s_str.strip() if _s_str != ',' else ''
+        _s_str = re.sub(pattern, "", _s_str)
+        if _s_str == ",":
+            return ""
+        return _s_str.strip() if _s_str != "," else ""
 
     s = s.strip()
     esc_str = ""
@@ -1638,8 +1750,9 @@ def remove_weko2_special_character(s: str):
     return esc_str
 
 
-def selected_value_by_language(lang_array, value_array, lang_id, val_id,
-                               lang_selected, _item_metadata):
+def selected_value_by_language(
+    lang_array, value_array, lang_id, val_id, lang_selected, _item_metadata
+):
     """Select value by language.
 
     @param lang_array:
@@ -1650,8 +1763,11 @@ def selected_value_by_language(lang_array, value_array, lang_id, val_id,
     @param _item_metadata:
     @return:
     """
-    if (lang_array is not None) and (value_array is not None) \
-            and isinstance(lang_selected, str):
+    if (
+        (lang_array is not None)
+        and (value_array is not None)
+        and isinstance(lang_selected, str)
+    ):
         if len(value_array) < 1:
             return None
         else:
@@ -1659,33 +1775,40 @@ def selected_value_by_language(lang_array, value_array, lang_id, val_id,
                 for idx, lang in enumerate(lang_array):
                     lang_array[idx] = lang.strip()
             if lang_selected in lang_array:  # Web screen display language
-                value = check_info_in_metadata(lang_id, val_id, lang_selected,
-                                               _item_metadata)
+                value = check_info_in_metadata(
+                    lang_id, val_id, lang_selected, _item_metadata
+                )
                 if value is not None:
                     return value
             if "ja-Latn" in lang_array:  # ja_Latn
-                value = check_info_in_metadata(lang_id, val_id, "ja-Latn",
-                                               _item_metadata)
+                value = check_info_in_metadata(
+                    lang_id, val_id, "ja-Latn", _item_metadata
+                )
                 if value is not None:
                     return value
-            if "en" in lang_array and (lang_selected != 'ja' or
-                                       not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)):  # English
-                value = check_info_in_metadata(lang_id, val_id, "en",
-                                               _item_metadata)
+            if "en" in lang_array and (
+                lang_selected != "ja"
+                or not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)
+            ):  # English
+                value = check_info_in_metadata(lang_id, val_id, "en", _item_metadata)
                 if value is not None:
                     return value
             # 1st language when registering items
             if len(lang_array) > 0:
                 noreturn = False
                 for idx, lg in enumerate(lang_array):
-                    if current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False) and \
-                            ((lg == 'ja' and lang_selected == 'en') or
-                             (lg == 'en' and lang_selected == 'ja')):
+                    if current_app.config.get(
+                        "WEKO_RECORDS_UI_LANG_DISP_FLG", False
+                    ) and (
+                        (lg == "ja" and lang_selected == "en")
+                        or (lg == "en" and lang_selected == "ja")
+                    ):
                         noreturn = True
                         break
                     if len(lg) > 0:
-                        value = check_info_in_metadata(lang_id, val_id, lg,
-                                                       _item_metadata)
+                        value = check_info_in_metadata(
+                            lang_id, val_id, lg, _item_metadata
+                        )
                         if value is not None:
                             return value
                 if noreturn:
@@ -1706,21 +1829,28 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
     @param metadata:
     @return
     """
-    if len(str_key_lang) > 0 and (
-        len(str_lang) > 0 or str_lang is None) and len(
-            metadata) > 0 and str_key_val is not None and len(str_key_val) > 0:
-        if '.' in str_key_lang:
-            str_key_lang = str_key_lang.split('.')
-        if '.' in str_key_val:
-            str_key_val = str_key_val.split('.')
-        metadata = metadata.get("_item_metadata") \
-            if "_item_metadata" in metadata else metadata
+    if (
+        len(str_key_lang) > 0
+        and (len(str_lang) > 0 or str_lang is None)
+        and len(metadata) > 0
+        and str_key_val is not None
+        and len(str_key_val) > 0
+    ):
+        if "." in str_key_lang:
+            str_key_lang = str_key_lang.split(".")
+        if "." in str_key_val:
+            str_key_val = str_key_val.split(".")
+        metadata = (
+            metadata.get("_item_metadata") if "_item_metadata" in metadata else metadata
+        )
         if str_key_lang[0] in metadata:
-            obj = metadata.get(str_key_lang[0]).get('attribute_value_mlt')
+            obj = metadata.get(str_key_lang[0]).get("attribute_value_mlt")
             save = obj
             for ob in str_key_lang:
-                if ob not in str_key_lang[0] and ob not in str_key_lang[
-                        len(str_key_lang) - 1]:
+                if (
+                    ob not in str_key_lang[0]
+                    and ob not in str_key_lang[len(str_key_lang) - 1]
+                ):
                     for x in save:
                         if x.get(ob):
                             save = x.get(ob)
@@ -1729,11 +1859,17 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
                     value = s.get(str_key_val[len(str_key_val) - 1]).strip()
                     if len(value) > 0:
                         return value
-                if s and isinstance(s, dict) and s.get(str_key_lang[-1]) \
-                        and s.get(str_key_val[-1]):
-                    if s.get(str_key_lang[-1]).strip() == str_lang.strip() \
-                            and str_key_val[-1] in s \
-                            and len(s.get(str_key_val[-1]).strip()) > 0:
+                if (
+                    s
+                    and isinstance(s, dict)
+                    and s.get(str_key_lang[-1])
+                    and s.get(str_key_val[-1])
+                ):
+                    if (
+                        s.get(str_key_lang[-1]).strip() == str_lang.strip()
+                        and str_key_val[-1] in s
+                        and len(s.get(str_key_val[-1]).strip()) > 0
+                    ):
                         return s.get(str_key_val[-1])
     return None
 
@@ -1747,15 +1883,18 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
     @param stt_key:
     @return:
     """
-    sys_comma = current_app.config.get('WEKO_RECORDS_SYSTEM_COMMA', '')
-    if (key is not None) and isinstance(key, str) and (data_json is not None) \
-            and (data_result is not None):
+    sys_comma = current_app.config.get("WEKO_RECORDS_SYSTEM_COMMA", "")
+    if (
+        (key is not None)
+        and isinstance(key, str)
+        and (data_json is not None)
+        and (data_result is not None)
+    ):
         save_key = ""
         key_split = key.split(".")
         if len(key_split) > 1:
             for i, k in enumerate(key_split):
-                if k == key_split[len(key_split) - 1] and i == (
-                        len(key_split) - 1):
+                if k == key_split[len(key_split) - 1] and i == (len(key_split) - 1):
                     break
                 save_key += str(k + ".") if i < len(key_split) - 2 else str(k)
         for j in data_json:
@@ -1764,25 +1903,27 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
                 if save_key not in data_result.keys():
                     stt_key.append(save_key)
                     data_result = {**data_result, **{save_key: {}}}
-                if save_key in data_result.keys() and (
-                    j["title"].strip() in "Language") or (
-                    j["title_ja"].strip() in "Language") \
-                    or (j["title_ja"].strip() in "言語") or (
-                        j["title"].strip() in "言語"):
+                if (
+                    save_key in data_result.keys()
+                    and (j["title"].strip() in "Language")
+                    or (j["title_ja"].strip() in "Language")
+                    or (j["title_ja"].strip() in "言語")
+                    or (j["title"].strip() in "言語")
+                ):
                     data_result[save_key] = {
                         **data_result[save_key],
-                        **{'lang': j["value"].split(sys_comma),
-                           'lang_id': key}
+                        **{"lang": j["value"].split(sys_comma), "lang_id": key},
                     }
                     flag = True
                 if key not in data_result[save_key] and not flag:
                     if "stt" not in data_result[save_key]:
-                        data_result[save_key] = {**data_result[save_key],
-                                                 **{'stt': []}}
+                        data_result[save_key] = {**data_result[save_key], **{"stt": []}}
                     if "stt" in data_result[save_key]:
                         data_result[save_key]["stt"].append(key)
-                    data_result[save_key] = {**data_result[save_key], **{
-                        key: {'value': j["value"].split(sys_comma)}}}
+                    data_result[save_key] = {
+                        **data_result[save_key],
+                        **{key: {"value": j["value"].split(sys_comma)}},
+                    }
         return data_result, stt_key
     else:
         return None
@@ -1807,11 +1948,11 @@ def get_value_by_selected_lang(source_title, current_lang):
             return value
         else:
             title[key] = value
-            if key == 'en':
+            if key == "en":
                 value_en = value
-            elif key == 'ja-Latn':
+            elif key == "ja-Latn":
                 value_latn = value
-            elif key == 'None Language':
+            elif key == "None Language":
                 title_data_langs_none.append(title)
             elif key:
                 title_data_langs.append(title)
@@ -1819,16 +1960,18 @@ def get_value_by_selected_lang(source_title, current_lang):
     if value_latn:
         return value_latn
 
-    if value_en and (current_lang != 'ja' or
-                     not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)):
+    if value_en and (
+        current_lang != "ja"
+        or not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)
+    ):
         return value_en
 
     if len(title_data_langs) > 0:
-        if current_lang == 'en':
+        if current_lang == "en":
             for t in title_data_langs:
-                if list(t)[0] != 'ja' or \
-                        not current_app.config.get(
-                            "WEKO_RECORDS_UI_LANG_DISP_FLG", False):
+                if list(t)[0] != "ja" or not current_app.config.get(
+                    "WEKO_RECORDS_UI_LANG_DISP_FLG", False
+                ):
                     return list(t.values())[0]
         else:
             return list(title_data_langs[0].values())[0]
@@ -1839,8 +1982,7 @@ def get_value_by_selected_lang(source_title, current_lang):
         return None
 
 
-def get_show_list_author(solst_dict_array, hide_email_flag, author_key,
-                         creates):
+def get_show_list_author(solst_dict_array, hide_email_flag, author_key, creates):
     """Get show list author.
 
     @param solst_dict_array:
@@ -1851,24 +1993,30 @@ def get_show_list_author(solst_dict_array, hide_email_flag, author_key,
     """
     remove_show_list_create = []
     for s in solst_dict_array:
-        option = s['option']
-        parent_option = s['parent_option']
-        is_show_list = parent_option.get(
-            'show_list') if parent_option and parent_option.get(
-            'show_list') else option.get('show_list')
-        is_hide = parent_option.get(
-            'hide') if parent_option and parent_option.get(
-            'hide') else option.get('hide')
-        if 'creatorMails[].creatorMail' in s['key'] \
-            or 'contributorMails[].contributorMail' in s['key'] \
-                or 'mails[].mail' in s['key']:
+        option = s["option"]
+        parent_option = s["parent_option"]
+        is_show_list = (
+            parent_option.get("show_list")
+            if parent_option and parent_option.get("show_list")
+            else option.get("show_list")
+        )
+        is_hide = (
+            parent_option.get("hide")
+            if parent_option and parent_option.get("hide")
+            else option.get("hide")
+        )
+        if (
+            "creatorMails[].creatorMail" in s["key"]
+            or "contributorMails[].contributorMail" in s["key"]
+            or "mails[].mail" in s["key"]
+        ):
             is_hide = is_hide | hide_email_flag
 
-        if author_key != s['key'] and author_key in s['key']:
-            sub_author_key = s['key'].split('.')[-1]
-            key_creator = ['creatorName', 'familyName', 'givenName']
+        if author_key != s["key"] and author_key in s["key"]:
+            sub_author_key = s["key"].split(".")[-1]
+            key_creator = ["creatorName", "familyName", "givenName"]
             if sub_author_key in key_creator and (is_hide or not is_show_list):
-                remove_show_list_create.append(sub_author_key + 's')
+                remove_show_list_create.append(sub_author_key + "s")
 
     return format_creates(creates, remove_show_list_create)
 
@@ -1884,22 +2032,22 @@ def format_creates(creates, hide_creator_keys):
     result_end = {}
     for create in creates:
         # get creator comments
-        result_end = get_creator(create, result_end, hide_creator_keys,
-                                 current_lang)
+        result_end = get_creator(create, result_end, hide_creator_keys, current_lang)
         # get alternatives comments
-        if 'creatorAlternatives' in create:
-            alternatives_key = current_app.config[
-                'WEKO_RECORDS_ALTERNATIVE_NAME_KEYS']
-            result_end = get_author_has_language(create['creatorAlternatives'],
-                                                 result_end, current_lang,
-                                                 alternatives_key)
+        if "creatorAlternatives" in create:
+            alternatives_key = current_app.config["WEKO_RECORDS_ALTERNATIVE_NAME_KEYS"]
+            result_end = get_author_has_language(
+                create["creatorAlternatives"],
+                result_end,
+                current_lang,
+                alternatives_key,
+            )
         # get affiliations comments
-        if 'creatorAffiliations' in create:
-            affiliation_key = current_app.config[
-                'WEKO_RECORDS_AFFILIATION_NAME_KEYS']
-            result_end = get_affiliation(create['creatorAffiliations'],
-                                         result_end, current_lang,
-                                         affiliation_key)
+        if "creatorAffiliations" in create:
+            affiliation_key = current_app.config["WEKO_RECORDS_AFFILIATION_NAME_KEYS"]
+            result_end = get_affiliation(
+                create["creatorAffiliations"], result_end, current_lang, affiliation_key
+            )
     return result_end
 
 
@@ -1913,9 +2061,9 @@ def get_creator(create, result_end, hide_creator_keys, current_lang):
     @return:
     """
     creates_key = {
-        'creatorNames': ['creatorName', 'creatorNameLang'],
-        'familyNames': ['familyName', 'familyNameLang'],
-        'givenNames': ['givenName', 'givenNameLang']
+        "creatorNames": ["creatorName", "creatorNameLang"],
+        "familyNames": ["familyName", "familyNameLang"],
+        "givenNames": ["givenName", "givenNameLang"],
     }
     if hide_creator_keys:
         for key in hide_creator_keys:
@@ -1945,7 +2093,7 @@ def get_creator_by_languages(creates_key, create):
         if key in create:
             is_added = []
             for val in create[key]:
-                key_data = val.get(value[1], 'None Language')
+                key_data = val.get(value[1], "None Language")
                 value_data = val.get(value[0])
                 if not value_data:
                     continue
@@ -1971,10 +2119,10 @@ def get_affiliation(affiliations, result_end, current_lang, affiliation_key):
     """
     for name_affiliation in affiliations:
         for key, value in name_affiliation.items():
-            if key == 'affiliationNames':
-                result_end = get_author_has_language(value, result_end,
-                                                     current_lang,
-                                                     affiliation_key)
+            if key == "affiliationNames":
+                result_end = get_author_has_language(
+                    value, result_end, current_lang, affiliation_key
+                )
     return result_end
 
 
@@ -1990,7 +2138,7 @@ def get_author_has_language(creator, result_end, current_lang, map_keys):
     result = {}
     is_added = []
     for val in creator:
-        key_data = val.get(map_keys[1], 'None Language')
+        key_data = val.get(map_keys[1], "None Language")
         value_data = val.get(map_keys[0])
         if not value_data:
             continue
@@ -2014,8 +2162,17 @@ def get_author_has_language(creator, result_end, current_lang, map_keys):
     return result_end
 
 
-def add_author(author_data, stt_key, is_specify_newline_array, s, value,
-               data_result, is_specify_newline, is_hide, is_show_list):
+def add_author(
+    author_data,
+    stt_key,
+    is_specify_newline_array,
+    s,
+    value,
+    data_result,
+    is_specify_newline,
+    is_hide,
+    is_show_list,
+):
     """Add author in show list result.
 
     @param author_data:
@@ -2029,26 +2186,27 @@ def add_author(author_data, stt_key, is_specify_newline_array, s, value,
     @param is_show_list:
     @return:
     """
-    list_author_key = current_app.config[
-        'WEKO_RECORDS_AUTHOR_KEYS']
-    sub_author_key = s['key'].split('.')[-1]
-    if sub_author_key in current_app.config[
-            'WEKO_RECORDS_AUTHOR_NONE_LANG_KEYS'] \
-            and not is_hide and is_show_list:
+    list_author_key = current_app.config["WEKO_RECORDS_AUTHOR_KEYS"]
+    sub_author_key = s["key"].split(".")[-1]
+    if (
+        sub_author_key in current_app.config["WEKO_RECORDS_AUTHOR_NONE_LANG_KEYS"]
+        and not is_hide
+        and is_show_list
+    ):
         stt_key.append(sub_author_key)
-        is_specify_newline_array.append(
-            {sub_author_key: is_specify_newline})
-        data_result.update({
-            sub_author_key: {sub_author_key: {
-                "value": [value]}}})
-    elif sub_author_key in list_author_key and sub_author_key in \
-            author_data and not is_hide and is_show_list:
+        is_specify_newline_array.append({sub_author_key: is_specify_newline})
+        data_result.update({sub_author_key: {sub_author_key: {"value": [value]}}})
+    elif (
+        sub_author_key in list_author_key
+        and sub_author_key in author_data
+        and not is_hide
+        and is_show_list
+    ):
         stt_key.append(sub_author_key)
-        is_specify_newline_array.append(
-            {sub_author_key: is_specify_newline})
-        data_result.update({
-            sub_author_key: {sub_author_key: {
-                "value": author_data[sub_author_key]}}})
+        is_specify_newline_array.append({sub_author_key: is_specify_newline})
+        data_result.update(
+            {sub_author_key: {sub_author_key: {"value": author_data[sub_author_key]}}}
+        )
     return stt_key, data_result, is_specify_newline_array
 
 
@@ -2060,17 +2218,22 @@ def convert_bibliographic(data_sys_bibliographic):
     """
     list_data = []
     for bibliographic_value in data_sys_bibliographic:
-        if bibliographic_value.get('title_attribute_name'):
-            list_data.append(
-                bibliographic_value.get('title_attribute_name'))
-        for magazine in bibliographic_value.get('magazine_attribute_name'):
+        if bibliographic_value.get("title_attribute_name"):
+            list_data.append(bibliographic_value.get("title_attribute_name"))
+        for magazine in bibliographic_value.get("magazine_attribute_name"):
             for key in magazine:
-                list_data.append(key + ' ' + magazine[key])
+                list_data.append(key + " " + magazine[key])
     return ", ".join(list_data)
 
 
-def add_biographic(sys_bibliographic, bibliographic_key, s, stt_key,
-                   data_result, is_specify_newline_array):
+def add_biographic(
+    sys_bibliographic,
+    bibliographic_key,
+    s,
+    stt_key,
+    data_result,
+    is_specify_newline_array,
+):
     """Add author in show list result.
 
     @param sys_bibliographic:
@@ -2082,11 +2245,11 @@ def add_biographic(sys_bibliographic, bibliographic_key, s, stt_key,
     @return:
     """
     bibliographic = convert_bibliographic(
-        sys_bibliographic.get_bibliographic_list(True))
+        sys_bibliographic.get_bibliographic_list(True)
+    )
     stt_key.append(bibliographic_key)
-    is_specify_newline_array.append({s['key']: True})
-    data_result.update({
-        bibliographic_key: {s['key']: {"value": [bibliographic]}}})
+    is_specify_newline_array.append({s["key"]: True})
+    data_result.update({bibliographic_key: {s["key"]: {"value": [bibliographic]}}})
 
     return stt_key, data_result, is_specify_newline_array
 
@@ -2096,8 +2259,11 @@ def custom_record_medata_for_export(record_metadata: dict):
 
     :param record_metadata:
     """
-    from weko_records_ui.utils import display_oaiset_path, \
-        hide_item_metadata, replace_license_free
+    from weko_records_ui.utils import (
+        display_oaiset_path,
+        hide_item_metadata,
+        replace_license_free,
+    )
 
     hide_item_metadata(record_metadata)
     replace_license_free(record_metadata)
@@ -2116,20 +2282,19 @@ def replace_fqdn(url_path: str, host_url: str = None) -> str:
 
     """
     if host_url is None:
-        host_url = current_app.config['THEME_SITEURL']
-    url_pattern = r'^http[s]{0,1}:\/\/'
+        host_url = current_app.config["THEME_SITEURL"]
+    url_pattern = r"^http[s]{0,1}:\/\/"
     if re.search(url_pattern, url_path) is None:
         url_path = host_url + url_path
     elif host_url not in url_path:
-        if host_url[-1] != '/':
-            host_url = host_url + '/'
-        pattern = r'https?:\/\/([\w-]+(\.\w)*)+(:\d+)?\/'
+        if host_url[-1] != "/":
+            host_url = host_url + "/"
+        pattern = r"https?:\/\/([\w-]+(\.\w)*)+(:\d+)?\/"
         url_path = re.sub(pattern, host_url, url_path)
     return url_path
 
 
-def replace_fqdn_of_file_metadata(file_metadata_lst: list,
-                                  file_url: list = None):
+def replace_fqdn_of_file_metadata(file_metadata_lst: list, file_url: list = None):
     """Replace FQDN of file metadata.
 
     Args:
@@ -2137,8 +2302,8 @@ def replace_fqdn_of_file_metadata(file_metadata_lst: list,
         file_url (list): File metadata list.
     """
     for file in file_metadata_lst:
-        if file.get('url', {}).get('url'):
-            if file.get('version_id'):
-                file['url']['url'] = replace_fqdn(file['url']['url'])
+        if file.get("url", {}).get("url"):
+            if file.get("version_id"):
+                file["url"]["url"] = replace_fqdn(file["url"]["url"])
             elif isinstance(file_url, list):
-                file_url.append(file['url']['url'])
+                file_url.append(file["url"]["url"])
