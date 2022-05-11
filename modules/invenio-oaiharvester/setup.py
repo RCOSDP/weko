@@ -112,6 +112,9 @@ setup(
         'invenio_db.models': [
             'invenio_oaiharvester = invenio_oaiharvester.models',
         ],
+                'invenio_db.alembic': [
+            'invenio_oaiharvester = invenio_oaiharvester:alembic',
+        ],
         'invenio_i18n.translations': [
             'messages = invenio_oaiharvester',
         ],

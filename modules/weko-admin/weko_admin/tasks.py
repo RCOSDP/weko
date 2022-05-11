@@ -50,7 +50,7 @@ def send_all_reports(report_type=None, year=None, month=None):
     now = datetime.now()
     month = month or now.month
     year = year or now.year
-    tsv_files = []
+    csv_files = []
     all_results = {
         'file_download': QueryFileReportsHelper.get(
             year=year, month=month, event='file_download'),

@@ -43,6 +43,7 @@
             <th>{{_('Restricted Access Flag')}}</th>
             <th>{{_('GakuNinRDM Flag')}}</th>
             <th>{{_('Registration Destination Index')}}</th>
+            <th>{{_('Strage Location')}}</th>
             <th>{{ display_label }}</th>
             <th>{{_('Hide')}}</th>
             <th class="hide">{{_('Next Flow')}}</th>
@@ -75,6 +76,13 @@
               <td>
                 {%- if  workflow.index_tree %}
                   {{ workflow.index_tree.index_name }}
+                {%- else %}
+                  {{_('Undesignated')}}
+                {%- endif %}
+              </td>
+              <td>
+                {%- if  workflow.location %}
+                  {{ workflow.location.name }}
                 {%- else %}
                   {{_('Undesignated')}}
                 {%- endif %}

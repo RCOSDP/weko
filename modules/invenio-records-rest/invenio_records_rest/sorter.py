@@ -104,8 +104,15 @@ def eval_field(field, asc, nested_sorting=None):
         key, key_asc = parse_sort_field(field)
         if not asc:
             key_asc = not key_asc
+        
         sorting = {key: {'order': 'asc' if key_asc else 'desc',
                          'unmapped_type': 'long'}}
+
+        if "date_range" in key:
+            current_app.logger.debug(key)
+            sorting = {"_script":{"type":"number",
+            "script":{"lang":"painless","source":"def x = params._source.date_range1;Date dt = new Date();if (x != null && x instanceof Map) { def st = x.getOrDefault(\"gte\",\"\");SimpleDateFormat format = new SimpleDateFormat();if (st.length()>7) {format.applyPattern(\"yyyy-MM-dd\");}else if (st.length()>4){format.applyPattern(\"yyyy-MM\");}else if (st.length()==4){format.applyPattern(\"yyyy\");} try { dt = format.parse(st);} catch (Exception e){}} return dt.getTime()"},"order": 'asc' if key_asc else 'desc'}}
+
         if nested_sorting:
             sorting[key].update({'nested': nested_sorting})
         return sorting

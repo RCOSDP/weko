@@ -90,7 +90,9 @@
               </div>
               <input type="hidden" value="{{_('Cannot delete item type for harvesting.')}}" id="msg_for_harvesting">
               <input type="hidden" value="{{_('Cannot delete due to child existing item types.')}}" id="msg_for_belonging_item">
-              <!-- </div>-->
+              <!-- button Import Export -->
+              <button type="button" class="btn btn-primary mr-5" id="item_type_export" disabled>{{_('Export')}}</button>
+              <button type="button" class="btn btn-primary" id="item_type_import">{{_('Import')}}</button>
 
           </div>
         </div>
@@ -100,6 +102,48 @@
 <div class="lds-ring-background" style="width: auto ! important;">
   <div class="lds-ring"></div>
 </div>
+
+<!-- importUI -->
+<div class="row hide" id="importUI">
+  <div class="col-lg-11">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Import</h3>
+      </div>
+      <div class="panel-body">
+        <div class="panel-group">
+          <div class="panel panel-default">
+            <div class="panel-body">
+              <div class="row">
+                <div class="col-sm-2 col-md-2">Zipfile *</div>
+                <div class="col-sm-10 col-md-10">
+                  <div class="row-line-space"></div>
+                  <div class="input-group">
+                    <p><input type="file" name="header-output-image" id="import_file" accept=".zip"></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-default">
+            <div class="panel-body">
+              <div class="row">
+                <div class="col-sm-2 col-md-2">Item Type *</div>
+                <div class="col-sm-10 col-md-10">
+                  <input type="text" class="form-control width_60" id="itemtype_name_import" placeholder="Input Type Name" value="">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel-footer">
+        <button type="button" class="btn btn-light send-button" id="import_exec_btn">Execute Import</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="container hidden">
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-11 metadata-content">

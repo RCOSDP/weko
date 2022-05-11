@@ -156,3 +156,14 @@ def delete_user_sessions(user):
         SessionActivity.query.filter_by(user=user).delete()
 
     return True
+
+
+def session_update(app):
+    
+    @app.teardown_request
+    def session_ttl_update(arg):
+        if 'user_id' not in session and 'sid_s' in session:
+            if request.path == '/ping':
+                _sessionstore.redis.expire(session.sid_s, 1)
+            else:
+                _sessionstore.redis.expire(session.sid_s,900)

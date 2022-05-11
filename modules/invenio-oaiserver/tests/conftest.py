@@ -18,7 +18,7 @@ import pytest
 from elasticsearch import Elasticsearch
 from flask import Flask
 from flask_celeryext import FlaskCeleryExt
-from helpers import load_records, remove_records
+from .helpers import load_records, remove_records
 from invenio_db import InvenioDB, db
 from invenio_indexer import InvenioIndexer
 from invenio_jsonschemas import InvenioJSONSchemas
@@ -76,7 +76,7 @@ def app():
     with app.app_context():
         if str(db.engine.url) != 'sqlite://' and \
            not database_exists(str(db.engine.url)):
-                create_database(str(db.engine.url))
+            create_database(str(db.engine.url))
         db.create_all()
         list(search.create(ignore=[400]))
         search.flush_and_refresh('_all')
@@ -89,6 +89,7 @@ def app():
         if str(db.engine.url) != 'sqlite://':
             drop_database(str(db.engine.url))
         list(search.delete(ignore=[404]))
+        search.client.indices.delete("*-percolators")
     shutil.rmtree(instance_path)
 
 

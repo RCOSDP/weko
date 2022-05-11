@@ -30,6 +30,7 @@ from flask_babelex import Babel
 from flask_mail import Mail
 from flask_menu import Menu
 from invenio_accounts import InvenioAccounts
+from invenio_admin import InvenioAdmin
 from invenio_db import InvenioDB, db
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
@@ -47,7 +48,10 @@ def base_app():
         ACCOUNTS_USE_CELERY=False,
         LOGIN_DISABLED=False,
         SECRET_KEY='testing_key',
-        SQLALCHEMY_DATABASE_URI='sqlite:///test.db',
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SEARCH_ELASTIC_HOSTS=os.environ.get(
+            'SEARCH_ELASTIC_HOSTS', None),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         SQLALCHEMY_ECHO=False,
         TEST_USER_EMAIL='test_user@example.com',
@@ -61,8 +65,9 @@ def base_app():
     Mail(app_)
     Menu(app_)
     InvenioDB(app_)
-    WekoAdmin(app_)
     InvenioAccounts(app_)
+    InvenioAdmin(app_)
+    WekoAdmin(app_)
     app_.register_blueprint(blueprint)
 
     with app_.app_context():

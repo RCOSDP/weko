@@ -108,7 +108,8 @@ def get_community_id(getargs):  # TODO: Use this to refactor
         from weko_workflow.api import GetCommunity
         comm = GetCommunity.get_community_by_id(getargs.get('community'))
         ctx = {'community': comm}
-        community_id = comm.id
+        if comm is not None:
+            community_id = comm.id
     return community_id, ctx
 
 

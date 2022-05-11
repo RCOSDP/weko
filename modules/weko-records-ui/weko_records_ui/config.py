@@ -504,3 +504,96 @@ RECORDS_UI_TOMBSTONE_TEMPLATE = 'weko_records_ui/tombstone.html'
 
 WEKO_RECORDS_UI_LANG_DISP_FLG = True
 """ Enable function of switching metadata by language of metadata """
+
+WEKO_RECORDS_UI_GOOGLE_SCHOLAR_OUTPUT_RESOURCE_TYPE = [
+    "conference paper",
+    "data paper",
+    "departmental bulletin paper",
+    "editorial",
+    "journal article",
+    "newspaper",
+    "periodical",
+    "review article",
+    "software paper",
+    "article",
+    "book",
+    "book part",
+    "cartographic material",
+    "map",
+    "conference object",
+    "conference proceedings",
+    "conference poster",
+    "dataset",
+    "interview",
+    "image",
+    "still image",
+    "moving image",
+    "video",
+    "lecture",
+    "patent",
+    "internal report",
+    "report",
+    "research report",
+    "technical report",
+    "policy report",
+    "report part",
+    "working paper",
+    "data management plan",
+    "sound",
+    "thesis",
+    "bachelor thesis",
+    "master thesis",
+    "doctoral thesis",
+    "interactive resource",
+    "learning object",
+    "manuscript",
+    "musical notation",
+    "research proposal",
+    "software",
+    "technical documentation",
+    "workflow",
+    "other"
+]
+"""Define of resouce types list will be used for google scholar output."""
+
+WEKO_RECORDS_UI_GOOGLE_DATASET_RESOURCE_TYPE = ["dataset"]
+"""Define of resouce types list will be used for google dataset output."""
+
+WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN = 50
+""" minimum length of google dataset description """
+WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX = 5000
+""" maximum length of google dataset description """
+
+WEKO_RECORDS_UI_GOOGLE_DATASET_DISTRIBUTION_BUNDLE = [
+    {'contentUrl':'https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/apt.txt',
+    'encodingFormat':'text/plain'},
+    {'contentUrl':'https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/environment.yml',
+    'encodingFormat':'application/x-yaml'},
+    {'contentUrl':'https://raw.githubusercontent.com/RCOSDP/JDCat-base/main/postBuild',
+    'encodingFormat':'text/x-shellscript'}
+    ]
+""" List of force budle files in google dataset DISTRIBUTION """
+
+WEKO_RECORDS_UI_GOOGLE_DATASET_DISP_FLG = True
+"""Enable function of google dataset metadata output."""
+
+WEKO_RECORDS_UI_DISPLAY_ONLINE_ANALYSIS_FLG = False
+""" Display online analysis button on item detail. """
+
+WEKO_RECORDS_UI_ONLINE_ANALYSIS_URL = 'https://binder.cs.rcos.nii.ac.jp/v2/weko3/'
+""" URL for online analysis button. """
+
+WEKO_RECORDS_UI_DISPLAY_SHARE_BOX_FLG = True
+""" Display Share box on item detail. """
+
+WEKO_RECORDS_UI_DISPLAY_VERSION_BOX_FLG = True
+""" Display Version box on item detail. """
+
+WEKO_RECORDS_UI_DISPLAY_EXPORT_BOX_FLG = True
+""" Display Export box on item detail. """
+
+WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE = False 
+""" Display resource type on item detail. """
+
+WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE = True
+""" Display item type name on item detail. """

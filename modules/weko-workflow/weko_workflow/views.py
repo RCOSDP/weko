@@ -22,6 +22,7 @@
 
 import json
 import os
+import re
 import shutil
 import sys
 from collections import OrderedDict
@@ -30,6 +31,7 @@ from datetime import datetime
 from functools import wraps
 
 import redis
+from redis import sentinel
 from flask import Blueprint, abort, current_app, has_request_context, \
     jsonify, make_response, render_template, request, session, url_for
 from flask_babelex import gettext as _
@@ -47,6 +49,7 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import types
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import cast
+from weko_redis import RedisConnection
 from weko_accounts.api import ShibUser
 from weko_accounts.utils import login_required_customize
 from weko_authors.models import Authors
@@ -113,6 +116,11 @@ activity_blueprint = Blueprint(
 )
 
 
+@blueprint.app_template_filter('regex_replace')
+def regex_replace(s, pattern, replace):
+    return re.sub(pattern, replace, s)
+
+
 @blueprint.route('/')
 @login_required
 def index():
@@ -140,7 +148,8 @@ def index():
                                conditions=conditions)
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
-        community_id = comm.id
+        if comm is not None:
+            community_id = comm.id
     else:
         activities, maxpage, size, pages, name_param = activity \
             .get_activity_list(conditions=conditions)
@@ -290,7 +299,8 @@ def new_activity():
     if 'community' in getargs:
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
-        community_id = comm.id
+        if comm is not None:
+           community_id = comm.id
 
     # Process exclude workflows
     from weko_workflow.utils import exclude_admin_workflow
@@ -326,18 +336,20 @@ def init_activity():
         if rtn is None:
             return jsonify(code=-1, msg='error')
         url = url_for('weko_workflow.display_activity',
-                    activity_id=rtn.activity_id)
+                      activity_id=rtn.activity_id)
         if 'community' in getargs and request.args.get('community') != 'undefined':
-            comm = GetCommunity.get_community_by_id(request.args.get('community'))
-            url = url_for('weko_workflow.display_activity',
-                        activity_id=rtn.activity_id, community=comm.id)
+            comm = GetCommunity.get_community_by_id(
+                request.args.get('community'))
+            if comm is not None:
+                url = url_for('weko_workflow.display_activity',
+                          activity_id=rtn.activity_id, community=comm.id)
         db.session.commit()
     except SQLAlchemyError as ex:
-        current_app.logger.error('sqlalchemy error: ', ex)
+        current_app.logger.error("sqlalchemy error: {}".format(ex))
         db.session.rollback()
         return jsonify(code=-1, msg='Failed to init activity!')
     except BaseException as ex:
-        current_app.logger.error('Unexpected error: ', ex)
+        current_app.logger.error("Unexpected error: {}".format(ex))
         db.session.rollback()
         return jsonify(code=-1, msg='Failed to init activity!')
 
@@ -403,11 +415,11 @@ def init_activity_guest():
             __, tmp_url = init_activity_for_guest_user(data)
             db.session.commit()
         except SQLAlchemyError as ex:
-            current_app.logger.error('sqlalchemy error: ', ex)
+            current_app.logger.error("sqlalchemy error: {}".format(ex))
             db.session.rollback()
             return jsonify(msg='Cannot send mail')
         except BaseException as ex:
-            current_app.logger.error('Unexpected error: ', ex)
+            current_app.logger.error('Unexpected error: {}'.format(ex))
             db.session.rollback()
             return jsonify(msg='Cannot send mail')
 
@@ -558,14 +570,15 @@ def display_activity(activity_id="0"):
     if action_endpoint in ['item_login',
                            'item_login_application',
                            'file_upload']:
-        activity_session = dict(
-            activity_id=activity_id,
-            action_id=activity_detail.action_id,
-            action_version=cur_action.action_version,
-            action_status=ActionStatusPolicy.ACTION_DOING,
-            commond=''
-        )
-        session['activity_info'] = activity_session
+        if activity.get_activity_by_id(activity_id).action_status != ActionStatusPolicy.ACTION_CANCELED:
+            activity_session = dict(
+                activity_id=activity_id,
+                action_id=activity_detail.action_id,
+                action_version=cur_action.action_version,
+                action_status=ActionStatusPolicy.ACTION_DOING,
+                commond=''
+            )
+            session['activity_info'] = activity_session
         # get item edit page info.
         step_item_login_url, need_file, need_billing_file, \
             record, json_schema, schema_form,\
@@ -576,10 +589,9 @@ def display_activity(activity_id="0"):
         if not record and item:
             record = item
 
-        sessionstore = RedisStore(redis.StrictRedis.from_url(
-            'redis://{host}:{port}/1'.format(
-                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+        redis_connection = RedisConnection()
+        sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
+
         if sessionstore.redis.exists(
             'updated_json_schema_{}'.format(activity_id)) \
             and sessionstore.get(
@@ -607,7 +619,8 @@ def display_activity(activity_id="0"):
     if 'community' in getargs:
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
-        community_id = comm.id
+        if comm is not None:
+            community_id = comm.id
     # be use for index tree and comment page.
     if 'item_login' == action_endpoint or \
             'item_login_application' == action_endpoint or \
@@ -671,6 +684,9 @@ def display_activity(activity_id="0"):
             record=approval_record
         )
     )
+    _id = None
+    if recid:
+        _id = re.sub("\.[0-9]+", "", recid.pid_value)
 
     return render_template(
         'weko_workflow/activity_detail.html',
@@ -716,6 +732,7 @@ def display_activity(activity_id="0"):
             'WEKO_ITEMS_UI_OUTPUT_REGISTRATION_TITLE'],
         page=page,
         pid=recid,
+        _id=_id,
         position_list=position_list,
         records=record,
         render_widgets=render_widgets,
@@ -1166,9 +1183,11 @@ def next_action(activity_id='0', action_id=0):
             # Call signal to push item data to ES.
             try:
                 if '.' not in current_pid.pid_value and has_request_context():
+                    user_id = activity_detail.activity_login_user if \
+                        activity and activity_detail.activity_login_user else -1
                     item_created.send(
                         current_app._get_current_object(),
-                        user_id=current_user.get_id() if current_user else -1,
+                        user_id=user_id,
                         item_id=current_pid,
                         item_title=activity_detail.title
                     )
@@ -1297,8 +1316,9 @@ def get_journals():
     if not key:
         return jsonify({})
 
-    datastore = RedisStore(redis.StrictRedis.from_url(
-        current_app.config['CACHE_REDIS_URL']))
+    redis_connection = RedisConnection()
+    datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
+
     cache_key = current_app.config[
         'WEKO_WORKFLOW_OAPOLICY_SEARCH'].format(keyword=key)
 
@@ -1411,7 +1431,7 @@ def cancel_action(activity_id='0', action_id=0):
             except Exception:
                 db.session.rollback()
                 current_app.logger.error(
-                    'Unexpected error: {}', sys.exc_info()[0])
+                    'Unexpected error: {}'.format(sys.exc_info()))
                 return jsonify(code=-1,
                                msg=sys.exc_info()[0])
 
@@ -1522,7 +1542,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
         else:
             return jsonify(code=-1, msg=_('Invalid password'))
     except ValueError:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return jsonify(code=-1, msg=_('Error!'))
 
 
@@ -1559,7 +1579,7 @@ def save_feedback_maillist(activity_id='0', action_id='0'):
         )
         return jsonify(code=0, msg=_('Success'))
     except Exception:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return jsonify(code=-1, msg=_('Error'))
 
 
@@ -1594,7 +1614,7 @@ def get_feedback_maillist(activity_id='0'):
         else:
             return jsonify(code=0, msg=_('Empty!'))
     except Exception:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
     return jsonify(code=-1, msg=_('Error'))
 
 
@@ -1678,7 +1698,7 @@ def check_approval(activity_id='0'):
     try:
         response = check_continue(response, activity_id)
     except Exception:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
         response['error'] = -1
     return jsonify(response)
 

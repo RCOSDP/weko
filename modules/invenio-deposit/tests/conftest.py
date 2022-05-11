@@ -41,7 +41,7 @@ from flask_breadcrumbs import Breadcrumbs
 from flask_celeryext import FlaskCeleryExt
 from flask_oauthlib.provider import OAuth2Provider
 from flask_security import login_user
-from helpers import fill_oauth2_headers, make_pdf_fixture
+from .helpers import fill_oauth2_headers, make_pdf_fixture
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers
 from invenio_accounts import InvenioAccounts
@@ -97,6 +97,8 @@ def base_app(request):
             SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
             SQLALCHEMY_DATABASE_URI=os.environ.get(
                 'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+            SEARCH_ELASTIC_HOSTS=os.environ.get(
+                'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
             SQLALCHEMY_TRACK_MODIFICATIONS=True,
             SQLALCHEMY_ECHO=False,
             TESTING=True,
@@ -323,32 +325,36 @@ def deposit(app, es, users, location):
 @pytest.fixture()
 def files(app, deposit):
     """Add a file to the deposit."""
-    content = b'### Testing textfile ###'
-    stream = BytesIO(content)
-    key = 'hello.txt'
-    deposit.files[key] = stream
-    deposit.commit()
-    db.session.commit()
-    return list(deposit.files)
+    # content = b'### Testing textfile ###'
+    # stream = BytesIO(content)
+    # key = 'hello.txt'
+    # deposit.files[key] = stream
+    # deposit.commit()
+    # db.session.commit()
+    return []
 
 
 @pytest.fixture()
 def pdf_file(app):
     """Create a test pdf file."""
-    return {'file': make_pdf_fixture('test.pdf'), 'name': 'test.pdf'}
+    # return {'file': make_pdf_fixture('test.pdf'), 'name': 'test.pdf'}
+    return None
 
 
 @pytest.fixture()
 def pdf_file2(app):
     """Create a test pdf file."""
-    return {'file': make_pdf_fixture('test2.pdf', 'test'), 'name': 'test2.pdf'}
+    # return {'file': make_pdf_fixture('test2.pdf', 'test'),
+    #  'name': 'test2.pdf'}
+    return None
 
 
 @pytest.fixture()
 def pdf_file2_samename(app):
     """Create a test pdf file."""
-    return {'file': make_pdf_fixture('test2.pdf', 'test same'),
-            'name': 'test2.pdf'}
+    # return {'file': make_pdf_fixture('test2.pdf', 'test same'),
+    #         'name': 'test2.pdf'}
+    return None
 
 
 @pytest.fixture()

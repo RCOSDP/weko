@@ -611,6 +611,9 @@ msgstr "指定なし"
 msgid "Registration Destination Index"
 msgstr "登録先インデックス"
 
+msgid "Strage Location"
+msgstr "ストレージロケーション"
+
 #: weko_workflow/templates/weko_workflow/activity_detail.html:260
 msgid "Reject"
 msgstr "却下"

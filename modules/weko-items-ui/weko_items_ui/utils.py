@@ -35,6 +35,7 @@ from io import StringIO
 
 import bagit
 import redis
+from redis import sentinel
 from elasticsearch.exceptions import NotFoundError
 from flask import abort, current_app, flash, redirect, request, send_file, \
     url_for
@@ -64,6 +65,7 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
 from weko_records_ui.permissions import check_created_id, \
     check_file_download_permission, check_publish_status
+from weko_redis.redis import RedisConnection
 from weko_search_ui.config import WEKO_IMPORT_DOI_TYPE
 from weko_search_ui.query import item_search_factory
 from weko_search_ui.utils import check_sub_item_is_system, \
@@ -403,14 +405,22 @@ def parse_ranking_results(index_info,
                 else:
                     t['date'] = new_date
                     date = new_date
-            title = item.get(title_key)
+            if pid_key == 'col1':
+                pid_value = item.get(pid_key, '')
+            else:
+                pid_value = item.get('pid_value', '')
+            if pid_value:
+                record = WekoRecord.get_record_by_pid(pid_value)
+                title = record.get_titles
+            else:
+                title = item.get(title_key)
             if title_key == 'user_id':
                 user_info = UserProfile.get_by_userid(title)
                 if user_info:
                     title = user_info.username
                 else:
                     title = 'None'
-            t['title'] = title
+            t['title'] = title if title else 'None'
             t['url'] = url.format(item[key]) if url and key in item else None
             if title != '':  # Do not add empty searches
                 ranking_list.append(t)
@@ -544,10 +554,9 @@ def update_json_schema_by_activity_id(json_data, activity_id):
     :param activity_id: Activity ID
     :return: json schema
     """
-    sessionstore = RedisStore(redis.StrictRedis.from_url(
-        'redis://{host}:{port}/1'.format(
-            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+
+    redis_connection = RedisConnection()
+    sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
     if not sessionstore.redis.exists(
         'updated_json_schema_{}'.format(activity_id)) \
         and not sessionstore.get(
@@ -576,10 +585,9 @@ def update_schema_form_by_activity_id(schema_form, activity_id):
     :param activity_id: Activity ID
     :return: schema form
     """
-    sessionstore = RedisStore(redis.StrictRedis.from_url(
-        'redis://{host}:{port}/1'.format(
-            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+
+    redis_connection = RedisConnection()
+    sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
     if not sessionstore.redis.exists(
         'updated_json_schema_{}'.format(activity_id)) \
         and not sessionstore.get(
@@ -706,21 +714,21 @@ def recursive_update_schema_form_with_condition(
 
 
 def package_export_file(item_type_data):
-    """Export TSV Files.
+    """Export CSV Files.
 
     Arguments:
         item_type_data  -- schema's Item Type
 
     Returns:
-        return          -- TSV file
+        return          -- CSV file
 
     """
-    tsv_output = StringIO()
+    csv_output = StringIO()
     jsonschema_url = item_type_data.get('root_url') + item_type_data.get(
         'jsonschema')
 
-    tsv_writer = csv.writer(tsv_output, delimiter='\t')
-    tsv_writer.writerow(['#ItemType',
+    csv_writer = csv.writer(csv_output, delimiter=',', lineterminator='\n')
+    csv_writer.writerow(['#ItemType',
                          item_type_data.get('name'),
                          jsonschema_url])
 
@@ -728,35 +736,35 @@ def package_export_file(item_type_data):
     labels = item_type_data['labels']
     is_systems = item_type_data['is_systems']
     options = item_type_data['options']
-    tsv_metadata_writer = csv.DictWriter(tsv_output,
+    csv_metadata_writer = csv.DictWriter(csv_output,
                                          fieldnames=keys,
-                                         delimiter='\t')
-    tsv_metadata_label_writer = csv.DictWriter(tsv_output,
+                                         delimiter=',', lineterminator='\n')
+    csv_metadata_label_writer = csv.DictWriter(csv_output,
                                                fieldnames=labels,
-                                               delimiter='\t')
-    tsv_metadata_is_system_writer = csv.DictWriter(tsv_output,
+                                               delimiter=',', lineterminator='\n')
+    csv_metadata_is_system_writer = csv.DictWriter(csv_output,
                                                    fieldnames=is_systems,
-                                                   delimiter='\t')
-    tsv_metadata_option_writer = csv.DictWriter(tsv_output,
+                                                   delimiter=',', lineterminator='\n')
+    csv_metadata_option_writer = csv.DictWriter(csv_output,
                                                 fieldnames=options,
-                                                delimiter='\t')
-    tsv_metadata_data_writer = csv.writer(tsv_output,
-                                          delimiter='\t')
-    tsv_metadata_writer.writeheader()
-    tsv_metadata_label_writer.writeheader()
-    tsv_metadata_is_system_writer.writeheader()
-    tsv_metadata_option_writer.writeheader()
+                                                delimiter=',', lineterminator='\n')
+    csv_metadata_data_writer = csv.writer(csv_output,
+                                          delimiter=',', lineterminator='\n')
+    csv_metadata_writer.writeheader()
+    csv_metadata_label_writer.writeheader()
+    csv_metadata_is_system_writer.writeheader()
+    csv_metadata_option_writer.writeheader()
     for recid in item_type_data.get('recids'):
-        tsv_metadata_data_writer.writerow(
+        csv_metadata_data_writer.writerow(
             [recid, item_type_data.get('root_url') + 'records/' + str(recid)]
             + item_type_data['data'].get(recid)
         )
 
-    return tsv_output
+    return csv_output
 
 
-def make_stats_tsv(item_type_id, recids, list_item_role):
-    """Prepare TSV data for each Item Types.
+def make_stats_csv(item_type_id, recids, list_item_role):
+    """Prepare CSV data for each Item Types.
 
     Arguments:
         item_type_id    -- ItemType ID
@@ -775,7 +783,7 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
         list_item_role.get(item_type_id))
     if no_permission_show_hide and item_type and item_type.get('table_row'):
         for name_hide in list_hide:
-            item_type['table_row'] = hide_table_row_for_tsv(
+            item_type['table_row'] = hide_table_row_for_csv(
                 item_type.get('table_row'), name_hide)
 
     table_row_properties = item_type['table_row_map']['schema'].get(
@@ -1096,8 +1104,8 @@ def make_stats_tsv(item_type_id, recids, list_item_role):
             doi_type_str,
             doi_str
         ])
-
-        records.attr_output[recid].append('')
+        # .edit Keep/Upgrade default is Keep
+        records.attr_output[recid].append('Keep')
         if has_pubdate:
             pubdate = record.get('pubdate', {}).get('attribute_value', '')
             records.attr_output[recid].append(pubdate)
@@ -1264,8 +1272,8 @@ def write_bibtex_files(item_types_data, export_path):
                 file.write(output)
 
 
-def write_tsv_files(item_types_data, export_path, list_item_role):
-    """Write TSV data to files.
+def write_csv_files(item_types_data, export_path, list_item_role):
+    """Write CSV data to files.
 
     @param item_types_data:
     @param export_path:
@@ -1273,7 +1281,7 @@ def write_tsv_files(item_types_data, export_path, list_item_role):
     @return:
     """
     for item_type_id in item_types_data:
-        headers, records = make_stats_tsv(
+        headers, records = make_stats_csv(
             item_type_id,
             item_types_data[item_type_id]['recids'],
             list_item_role)
@@ -1285,12 +1293,11 @@ def write_tsv_files(item_types_data, export_path, list_item_role):
         item_types_data[item_type_id]['options'] = options
         item_types_data[item_type_id]['data'] = records
         item_type_data = item_types_data[item_type_id]
-
-        with open('{}/{}.tsv'.format(export_path,
+        with open('{}/{}.csv'.format(export_path,
                                      item_type_data.get('name')),
-                  'w') as file:
-            tsv_output = package_export_file(item_type_data)
-            file.write(tsv_output.getvalue())
+                  'w', encoding="utf-8-sig") as file:
+            csv_output = package_export_file(item_type_data)
+            file.write(csv_output.getvalue())
 
 
 def check_item_type_name(name):
@@ -1366,7 +1373,7 @@ def export_items(post_data):
         if export_format == 'BIBTEX':
             write_bibtex_files(item_types_data, export_path)
         else:
-            write_tsv_files(item_types_data, export_path, list_item_role)
+            write_csv_files(item_types_data, export_path, list_item_role)
 
         # Create bag
         bagit.make_bag(export_path)
@@ -1911,6 +1918,15 @@ def get_data_authors_prefix_settings():
         current_app.logger.error(e)
         return None
 
+def get_data_authors_affiliation_settings():
+    """Get all authors affiliation settings."""
+    from weko_authors.models import AuthorsAffiliationSettings
+    try:
+        return db.session.query(AuthorsAffiliationSettings).all()
+    except Exception as e:
+        current_app.logger.error(e)
+        return None
+
 
 def hide_meta_data_for_role(record):
     """
@@ -1928,10 +1944,10 @@ def hide_meta_data_for_role(record):
             is_hidden = False
             break
     # Community users
-    community_role_name = current_app.config[
+    community_role_names = current_app.config[
         'WEKO_PERMISSION_ROLE_COMMUNITY']
     for role in list(roles):
-        if role.name in community_role_name:
+        if role.name in community_role_names:
             is_hidden = False
             break
 
@@ -2104,7 +2120,7 @@ def get_options_and_order_list(item_type_id, item_type_mapping=None,
     return meta_options, item_type_mapping
 
 
-def hide_table_row_for_tsv(table_row, hide_key):
+def hide_table_row_for_csv(table_row, hide_key):
     """Get Options by item type id.
 
     :param hide_key:
@@ -2554,9 +2570,9 @@ def get_ignore_item(_item_type_id, item_type_mapping=None,
     return ignore_list
 
 
-def make_stats_tsv_with_permission(item_type_id, recids,
+def make_stats_csv_with_permission(item_type_id, recids,
                                    records_metadata, permissions):
-    """Prepare TSV data for each Item Types.
+    """Prepare CSV data for each Item Types.
 
     Arguments:
         item_type_id    -- ItemType ID
@@ -2926,7 +2942,9 @@ def make_stats_tsv_with_permission(item_type_id, recids,
             doi_str
         ])
 
-        records.attr_output[recid].append('')
+        # .edit Keep or Upgrade. default is Keep
+        records.attr_output[recid].append('Keep')
+
         records.attr_output[recid].append(record[
             'pubdate']['attribute_value'])
 
@@ -3043,7 +3061,7 @@ def check_item_is_being_edit(
     if post_workflow and post_workflow.action_status \
             in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]:
         current_app.logger.debug("post_workflow: {0} status: {1}".format(
-            item_uuid, post_workflow.action_status))
+            post_workflow, post_workflow.action_status))
         return True
 
     draft_pid = PersistentIdentifier.query.filter_by(
