@@ -11,7 +11,7 @@ name_en = 'Textarea'
 
 def add(post_data, key, **kwargs):
     """Add to a item type."""
-    option = kwargs['option']
+    option = kwargs.pop('option')
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
     post_data['table_row_map']['mapping'][key] = {

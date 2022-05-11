@@ -11,7 +11,7 @@ name_en = 'Item Title'
 
 def add(post_data, key, **kwargs):
     """Add to a item type."""
-    option = kwargs['option']
+    option = kwargs.pop('option')
     mapping_switch = kwargs['mapping_switch']   # title, alternative
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
