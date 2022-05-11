@@ -22,6 +22,7 @@
 
 import shutil
 import tempfile
+import os
 
 import pytest
 from flask import Flask
@@ -30,10 +31,18 @@ from flask_menu import Menu
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.views.settings import \
     blueprint as invenio_accounts_blueprint
-from invenio_db import InvenioDB
+from invenio_accounts.testutils import create_test_user, login_user_via_session
+from invenio_access import InvenioAccess
+from invenio_access.models import ActionUsers
+from sqlalchemy_utils.functions import create_database, database_exists
 
+from invenio_db import InvenioDB
+from invenio_db import db as db_
+
+from weko_workflow import WekoWorkflow
 from weko_items_ui import WekoItemsUI
 from weko_items_ui.views import blueprint as weko_items_ui_blueprint
+from weko_items_ui.views import blueprint_api
 
 
 @pytest.yield_fixture()
@@ -51,15 +60,17 @@ def base_app(instance_path):
     app_.config.update(
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
     )
     InvenioAccounts(app_)
+    InvenioAccess(app_)
     Babel(app_)
     Menu(app_)
-    InvenioAccounts(app_)
     InvenioDB(app_)
-    WekoItemsUI(app_)
+    WekoWorkflow(app_)
     app_.register_blueprint(invenio_accounts_blueprint)
-    app_.register_blueprint(weko_items_ui_blueprint)
+    
     return app_
 
 
@@ -68,3 +79,61 @@ def app(base_app):
     """Flask application fixture."""
     with base_app.app_context():
         yield base_app
+
+
+@pytest.yield_fixture()
+def client_api(app):
+    app.register_blueprint(blueprint_api, url_prefix="/api")
+    with app.test_client() as client:
+        yield client
+
+
+@pytest.fixture()
+def db(app):
+    """Database fixture."""
+    if not database_exists(str(db_.engine.url)):
+        create_database(str(db_.engine.url))
+    db_.create_all()
+    yield db_
+    db_.session.remove()
+    db_.drop_all()
+
+
+@pytest.fixture()
+def users(app, db):
+    """Create users."""
+    ds = app.extensions['invenio-accounts'].datastore
+    user = create_test_user(email='test@test.org')
+    contributor = create_test_user(email='test2@test.org')
+    comadmin = create_test_user(email='test3@test.org')
+    repoadmin = create_test_user(email='test4@test.org')
+    sysadmin = create_test_user(email='test5@test.org')
+
+    r1 = ds.create_role(name='System Administrator')
+    ds.add_role_to_user(sysadmin, r1)
+    r2 = ds.create_role(name='Repository Administrator')
+    ds.add_role_to_user(repoadmin, r2)
+    r3 = ds.create_role(name='Contributor')
+    ds.add_role_to_user(contributor, r3)
+    r4 = ds.create_role(name='Community Administrator')
+    ds.add_role_to_user(comadmin, r4)
+
+    # Assign access authorization
+    with db.session.begin_nested():
+        action_users = [
+            ActionUsers(action='superuser-access', user=sysadmin)
+        ]
+        db.session.add_all(action_users)
+
+    return [
+        {'email': user.email, 'id': user.id,
+         'password': user.password_plaintext, 'obj': user},
+        {'email': contributor.email, 'id': contributor.id,
+         'password': contributor.password_plaintext, 'obj': contributor},
+        {'email': comadmin.email, 'id': comadmin.id,
+         'password': comadmin.password_plaintext, 'obj': comadmin},
+        {'email': repoadmin.email, 'id': repoadmin.id,
+         'password': repoadmin.password_plaintext, 'obj': repoadmin},
+        {'email': sysadmin.email, 'id': sysadmin.id,
+         'password': sysadmin.password_plaintext, 'obj': sysadmin},
+    ]

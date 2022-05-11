@@ -92,6 +92,8 @@ USER invenio
 WORKDIR /code
 COPY --from=build-env --chown=invenio:invenio /code /code
 COPY --from=build-env --chown=invenio:invenio /home/invenio/.virtualenvs /home/invenio/.virtualenvs
+COPY --from=build-env --chown=invenio:invenio /usr/bin/cleancss /usr/bin/cleancss
+COPY --from=build-env --chown=invenio:invenio /usr/bin/node-sass /usr/bin/node-sass
 RUN mv /home/invenio/.virtualenvs/invenio/var/instance/static /home/invenio/.virtualenvs/invenio/var/instance/static.org
 # CMD ["/bin/bash"]
 CMD ["/bin/bash", "-c", "invenio run -h 0.0.0.0"]
