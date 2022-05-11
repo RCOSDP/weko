@@ -92,7 +92,7 @@ USER invenio
 WORKDIR /code
 COPY --from=build-env --chown=invenio:invenio /code /code
 COPY --from=build-env --chown=invenio:invenio /home/invenio/.virtualenvs /home/invenio/.virtualenvs
-#RUN mv /home/invenio/.virtualenvs/invenio/var/instance/static /home/invenio/.virtualenvs/invenio/var/instance/static.org
+RUN mv /home/invenio/.virtualenvs/invenio/var/instance/static /home/invenio/.virtualenvs/invenio/var/instance/static.org
 # CMD ["/bin/bash"]
 CMD ["/bin/bash", "-c", "invenio run -h 0.0.0.0"]
 # FROM python:3.6-slim-buster as product-env
