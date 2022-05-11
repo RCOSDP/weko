@@ -32,7 +32,7 @@ services:
     command: /bin/bash -c "jinja2 /code/scripts/instance.cfg > /home/invenio/.virtualenvs/invenio/var/instance/conf/invenio.cfg; rm -f /code/celeryd.pid; celery worker -A invenio_app.celery --loglevel=DEBUG -B -D -f /code/celeryd.log && uwsgi --ini /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini"
     environment:
       - PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-      - VIRTUALENVWRAPPER_PYTHON=/usr/local/bin/python
+      - VIRTUALENVWRAPPER_PYTHON=/home/invenio/.virtualenvs/invenio/bin/python
       - INVENIO_WEB_HOST=127.0.0.1
       - INVENIO_WEB_INSTANCE=invenio
       - INVENIO_WEB_VENV=invenio
