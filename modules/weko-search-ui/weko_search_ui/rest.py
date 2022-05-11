@@ -138,7 +138,7 @@ def create_blueprint(app, endpoints):
         blueprint.add_url_rule(
             options.pop("index_route"),
             view_func=isr,
-            methods=["GET", "POST"],
+            methods=['GET'],
         )
 
     return blueprint

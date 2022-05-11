@@ -1,0 +1,36 @@
+{
+  "mappings": {
+    "record-v1.0.0": {
+      "_source" : { "enabled" : true },
+      "properties" : {
+        "title_statement": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "body": {
+              "type": "string"
+            }
+          }
+        },
+        "_oai": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "index": "not_analyzed"
+            },
+            "sets": {
+              "type": "string",
+              "index": "not_analyzed"
+            }
+          }
+        },
+        "genre": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

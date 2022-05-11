@@ -19,14 +19,147 @@
 # MA 02111-1307, USA.
 
 """Module tests."""
+import json
+import pytest
 
-
+from flask import url_for
 from weko_deposit.api import WekoDeposit
-from weko_deposit.rest import publish
+from invenio_accounts.testutils import login_user_via_session
 
 
-def test_publish(app, location):
-    deposit = WekoDeposit.create({})
+# def test_publish(app, location):
+#    deposit = WekoDeposit.create({})
+#    kwargs = {
+#        'pid_value': deposit.pid.pid_value
+#    }
+
+
+def test_publish_guest(client, deposit):
+    """
+    Test of publish.
+    """
     kwargs = {
-        'pid_value': deposit.pid.pid_value
+        'pid_value': deposit
     }
+    url = url_for('weko_deposit_rest.publish', pid_value=kwargs['pid_value'])
+    input = {}
+    res = client.put(url, data=json.dumps(input),
+                     content_type='application/json')
+    assert res.status_code == 302
+    # TODO check that the path changed
+    # assert res.url == url_for('security.login')
+
+
+@pytest.mark.parametrize('index, status_code', [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+])
+def test_publish_users(client, users, deposit, index, status_code):
+    """
+    Test of publish.
+    """
+    login_user_via_session(client=client, email=users[index]['email'])
+    kwargs = {
+        'pid_value': deposit
+    }
+    url = url_for('weko_deposit_rest.publish', pid_value=kwargs['pid_value'])
+    input = {}
+    res = client.put(url, data=json.dumps(input),
+                     content_type='application/json')
+    assert res.status_code == status_code
+
+
+def test_depid_item_put_guest(client, deposit):
+    """
+    Test of depid_item post.
+    :param client: The flask client.
+    """
+    kwargs = {
+        'pid_value': deposit
+    }
+    url = url_for('weko_deposit_rest.depid_item',
+                  pid_value=kwargs['pid_value'])
+    input = {"item_1617186331708": [{"subitem_1551255647225": "tetest",
+             "subitem_1551255648112": "en"}], "pubdate": "2021-01-01",
+             "item_1617258105262": {"resourcetype": "conference paper",
+                                    "resourceuri": "http://purl.org/coar/resource_type/c_5794"},
+             "shared_user_id": -1, "title": "tetest", "lang": "en",
+             "deleted_items": ["item_1617186385884", "item_1617186419668",
+                               "approval1", "approval2"],
+             "$schema": "/items/jsonschema/15"}
+    res = client.put(url, data=json.dumps(input),
+                     content_type='application/json')
+    assert res.status_code == 302
+    # TODO check that the path changed
+    # assert res.url == url_for('security.login')
+
+
+@pytest.mark.parametrize('index, status_code', [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+])
+def test_depid_item_put_users(client, users, deposit, index, status_code):
+    """
+    Test of depid_item post.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[index]['email'])
+    kwargs = {
+        'pid_value': deposit
+    }
+    url = url_for('weko_deposit_rest.depid_item',
+                  pid_value=kwargs['pid_value'])
+    input = {}
+    res = client.put(url, data=json.dumps(input),
+                     content_type='application/json')
+    assert res.status_code == status_code
+
+
+def test_depid_item_post_guest(client, deposit):
+    """
+    Test of depid_item post.
+    :param client: The flask client.
+    """
+    kwargs = {
+            'pid_value': deposit
+    }
+    url = url_for('weko_deposit_rest.depid_item',
+                  pid_value=kwargs['pid_value'])
+    input = {}
+    res = client.post(url,
+                      data=json.dumps(input),
+                      content_type='application/json')
+    assert res.status_code == 302
+    # TODO check that the path changed
+    # assert res.url == url_for('security.login')
+
+
+@pytest.mark.parametrize('index, status_code', [
+    (0, 403),
+    (1, 201),
+    (2, 201),
+    (3, 201),
+    (4, 201),
+])
+def test_depid_item_post_users(client, users, deposit, index, status_code):
+    """
+    Test of depid_item post.
+    :param client: The flask client.
+    """
+    login_user_via_session(client=client, email=users[index]['email'])
+    kwargs = {
+        'pid_value': deposit
+    }
+    url = url_for('weko_deposit_rest.depid_item',
+                  pid_value=kwargs['pid_value'])
+    input = {}
+    res = client.post(url,
+                      data=json.dumps(input),
+                      content_type='application/json')
+    assert res.status_code == status_code

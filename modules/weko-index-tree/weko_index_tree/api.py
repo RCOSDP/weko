@@ -396,6 +396,11 @@ class Indexes(object):
                 ret['msg'] = _('Select an index to move.')
                 return ret
 
+            if index_id == int(parent):
+                ret['is_ok'] = False
+                ret['msg'] = _('Fail move an index.')
+                return ret
+
             try:
                 new_position = int(data.get('position'))
                 if int(parent) == 0:
