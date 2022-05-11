@@ -1,0 +1,17 @@
+env:
+  browser: true
+  commonjs: true
+  es2021: true
+  jquery: true
+extends: 
+  - eslint:recommended
+  - plugin:react/recommended
+parserOptions:
+  ecmaVersion: latest
+  ecmaFeatures:
+    jsx: true
+  sourceType: module
+plugins:
+  - react
+rules: {'max-lines-per-function': ["error",{max: 200,skipBlankLines: true,skipComments: true,},],'max-depth': ["error", 3]}
+
