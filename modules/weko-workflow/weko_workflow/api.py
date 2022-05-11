@@ -181,7 +181,7 @@ class Flow(object):
                     flow_id=flow_id).one_or_none()
                 if flow:
                     # logical delete
-                    #flow.is_deleted = True
+                    # flow.is_deleted = True
                     # db.session.merge(flow)
                     # physical delete
                     _FlowAction.query.filter_by(flow_id=flow_id).delete()
@@ -237,10 +237,12 @@ class Flow(object):
                             'role_deny') if '0' != action.get(
                             'role') else False,
                         action_user=action.get(
-                            'user') if '0' != action.get('user') else None,
+                            'user') if '0' != action.get(
+                                'user') else None,
                         specify_property=None,
                         action_user_exclude=action.get(
-                            'user_deny') if '0' != action.get('user') else False
+                            'user_deny') if '0' != action.get(
+                                'user') else False
                     )
                 else:
                     flowactionrole = _FlowActionRole(
@@ -792,7 +794,9 @@ class WorkActivity(object):
         max_id = db.session.query(func.count(_Activity.id)).filter(
             _Activity.created >= '{}'.format(current_date_start),
             _Activity.created < '{}'.format(next_date_start),
-        ).scalar()  # Cannot use '.with_for_update()'. FOR UPDATE is not allowed with aggregate functions
+        ).scalar()  
+        # Cannot use '.with_for_update()'. FOR UPDATE is not allowed 
+        # with aggregate functions
 
         if max_id:
             # Calculate aid
@@ -1463,12 +1467,14 @@ class WorkActivity(object):
                         ),
                         and_(
                             _Activity.shared_user_id == self_user_id,
-                            _FlowActionRole.action_user != _Activity.activity_login_user,
+                            _FlowActionRole.action_user 
+                            != _Activity.activity_login_user,
                             _FlowActionRole.action_user_exclude == '0'
                         ),
                         and_(
                             _Activity.shared_user_id == self_user_id,
-                            ActivityAction.action_handler != _Activity.activity_login_user
+                            ActivityAction.action_handler 
+                            != _Activity.activity_login_user
                         ),
                     )
                 )
