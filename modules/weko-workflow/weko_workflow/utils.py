@@ -60,7 +60,7 @@ from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypeNames, \
     ItemTypes, Mapping
 from weko_records.models import ItemType
 from weko_records.serializers.utils import get_full_mapping, get_item_type_name
-
+from weko_redis import RedisConnection
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
     WEKO_USERPROFILES_POSITION_LIST
@@ -385,7 +385,7 @@ def item_metadata_validation(item_id, identifier_type, record=None,
                 or resource_type in datageneral_types:
             required_properties = ['title']
             # remove 20220207
-            #either_properties = ['version']
+            # either_properties = ['version']
         # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
         elif resource_type in dataset_type:
             required_properties = ['title',
@@ -3935,9 +3935,8 @@ def check_doi_validation_not_pass(item_id, activity_id,
     if isinstance(error_list, str):
         return error_list
 
-    master = sentinel.Sentinel(current_app.config['CACHE_REDIS_SENTINELS'],decode_responses=False)
-    sessionstore = RedisStore(master.master_for(
-            current_app.config['CACHE_REDIS_SENTINEL_MASTER'],db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO']))
+    redis_connection = RedisConnection()
+    sessionstore = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
 
     if error_list:
         sessionstore.put(

@@ -240,7 +240,7 @@ def soft_delete(recid):
 
         if draft_pid:
             all_ver.append(draft_pid)
-        del_files = []
+        del_files = {}
         for ver in all_ver:
             depid = PersistentIdentifier.query.filter_by(
                 pid_type='depid', object_uuid=ver.object_uuid).first()
@@ -254,7 +254,7 @@ def soft_delete(recid):
                 dep.remove_feedback_mail()
                 for i in range(len(dep.files)):
                     if dep.files[i].file.uri not in del_files:
-                        del_files.append(dep.files[i].file.uri)
+                        del_files[dep.files[i].file.uri] = dep.files[i].file.storage()
                         dep.files[i].bucket.location.size -= dep.files[i].file.size
                     dep.files[i].bucket.deleted = True
                 dep.commit()
@@ -263,11 +263,8 @@ def soft_delete(recid):
             for p in pids:
                 p.status = PIDStatus.DELETED
             db.session.commit()
-        for path in del_files:
-            if os.path.exists(path):
-                os.remove(path)
-            if os.path.exists(path[:-4]):
-                os.removedirs(path[:-4])
+        for file_storage in del_files.values():
+            file_storage.delete()
 
         current_app.logger.info(
             'user({0}) deleted record id({1}).'.format(current_user_id, recid))

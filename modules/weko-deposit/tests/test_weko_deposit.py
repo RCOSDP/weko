@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 """Module tests."""
-
+import json
 from flask import Flask
 
 from weko_deposit import WekoDeposit
@@ -63,4 +63,4 @@ def test_ItemResource_put(app):
         res = client.put("/deposits/redirect/1",
                          data=json.dumps(data), headers=headers)
         assert res.status_code == 200
-        print(api_response)
+        print(res)
