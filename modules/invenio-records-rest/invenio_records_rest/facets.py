@@ -135,30 +135,14 @@ def default_facets_factory(search, index):
     facets = get_facet_search_query(search_permission.can()).get(index)
 
     if facets is not None:
-        print('\n\n invenio_records_rest/facets.py \n')
         # Aggregations.
         search = _aggregations(search, facets.get("aggs", {}))
-        z = search.execute()
-        print(z.to_dict()["hits"]["total"])
-        print(len(z.to_dict()["hits"]["hits"]))
 
         # Query filter
         search, urlkwargs = _query_filter(
             search, urlkwargs, facets.get("filters", {}))
         
-        x = search.execute()
-        print(x.to_dict()["hits"]["total"])
-        print(len(x.to_dict()["hits"]["hits"]))
-
-        print('\n')
-        print('FINAL FANTASY XV: THE DAWN OF THE FUTURE')
-        print('\n')
         # Post filter
         search, urlkwargs = _post_filter(
             search, urlkwargs, facets.get("post_filters", {}))
-        y = search.execute()
-        print(y.to_dict()["hits"]["total"])
-        print(len(y.to_dict()["hits"]["hits"]))
-        print('\n invenio_records_rest/facets.py \n\n')
-
     return (search, urlkwargs)

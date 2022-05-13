@@ -49,6 +49,11 @@ from .utils import obj_or_import_string
 import redis
 import json
 from simplekv.memory.redisstore import RedisStore
+import os
+
+from flask_security import current_user
+from flask import session
+from invenio_accounts.models import User
 
 def elasticsearch_query_parsing_exception_handler(error):
     """Handle query parsing exceptions from ElasticSearch."""
@@ -529,6 +534,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
                                   request.values.get(
                                       'list_view_num', 10, type=int),
                                   type=int)
+
         # if page * size >= self.max_result_window:
         #     raise MaxResultWindowRESTError()
 
@@ -541,8 +547,10 @@ class RecordsListResource(ContentNegotiatedMethodView):
         # will put the correct "total" and "hits" into the search variable
         search, qs_kwargs = self.search_factory(search)
 
-        print('\n\n\nSOMNUS - invenio_records_rest/views.py\n')
-        # print(qs_kwargs)
+        from flask_security import current_user
+        from flask import session
+        from invenio_accounts.models import User
+
         query = request.values.get('q')
 
         # Search_after trigger
@@ -551,89 +559,136 @@ class RecordsListResource(ContentNegotiatedMethodView):
         # Sort key being used in the query
         sort_key = list(search.to_dict()["sort"][0].keys())[0]
 
-        # Storage for public cache
-        datastore = RedisStore(redis.StrictRedis.from_url(current_app.config['CACHE_REDIS_URL']))
-        cache_key = "search_after"
-        # cache_key = str(page)
+        # Cache Storage
+        sessionstorage = RedisStore(redis.StrictRedis.from_url(
+            'redis://{host}:{port}/1'.format(
+                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+                port=os.getenv('INVENIO_REDIS_PORT', '6379')
+            )
+        ))
+
+        if current_user.is_authenticated:
+            cache_name = User.query.get(current_user.id).email
+        else:
+            cache_name = "anonymous_user"
+        
+        cache_key = str(page)
+
+        if sessionstorage.redis.exists(f"{cache_name}_url_args"):
+            cache_name_url_args = json.loads(sessionstorage.get(f"{cache_name}_url_args"))
+            q_check = cache_name_url_args.get("q") != request.args.to_dict().get("q")
+            sort_check = cache_name_url_args.get("sort") != request.args.to_dict().get("sort")
+            size_check = cache_name_url_args.get("size") != request.args.to_dict().get("size")
+
+            if (q_check or sort_check) or size_check:
+                sessionstorage.delete(cache_name)
+                sessionstorage.redis.delete(f"{cache_name}_url_args")
+                json_data = json.dumps(request.args.to_dict()).encode('utf-8')
+                sessionstorage.put(
+                    f"{cache_name}_url_args",
+                    json_data,
+                    ttl_secs=3600
+                )
+        else:
+            json_data = json.dumps(request.args.to_dict()).encode('utf-8')
+            sessionstorage.put(
+                f"{cache_name}_url_args",
+                json_data,
+                ttl_secs=3600
+            )
+        
         next_items_sort_value = ""
+
         if page * size > self.max_result_window:
             # Get the first 10,000 item's last element's "_id"
             first_10k = search[9999:10000]
             first_10k = first_10k.execute()
             first_10k_last_sort_value = first_10k["hits"]["hits"][-1]["_source"][sort_key] # last item's "ID" of the query result
-        
+
             search_after_size = {"size": size}
+            next_items_sort_value = None
 
-            # Get the next items
-            # next_items = search[0:size]
-            # next_items = search
-            # next_items_sort_key_source = next_items.execute()
-            # next_check1 = search.execute()
-            # next_check2 = next_check1["hits"]["hits"][-1]["_source"][sort_key]
-
-            if datastore.redis.exists(cache_key):
-                if str(page) in datastore.keys():
-                    print('\n\n\XXX')
-                    print(json.loads(datastore.get(cache_key)))
-                    print('XXX\n\n\n')
-                    next_search_after_set = search
-                    next_search_after_set._extra.update(search_after_size)
-                    next_items_sort_value = next_search_after_set.execute()["hits"]["hits"][-1]["_source"][sort_key]
-                    next_search_after_set._extra.update({"search_after": [json.loads(datastore.get(cache_key)).get(str(page)).get("control_number")]})
-                    next_search_after_set = None
+            if sessionstorage.redis.exists(cache_name):
+                if json.loads(sessionstorage.get(cache_name)).get(cache_key):
+                    cache_name_checker = json.loads(sessionstorage.get(cache_name)).get(cache_key)
                 else:
-                    cache_data = json.loads(datastore.get(cache_key))
+                    cache_name_checker = None
+            else:
+                cache_name_checker = None
 
-                    print('\n\n\ncache_key')
-                    print(cache_data)
-                    print('cache_key\n\n\n')
+            if sessionstorage.redis.exists(cache_name):
+                if cache_name_checker:
+                    page_list = []
+                    cache_name_stored_data = json.loads(sessionstorage.get(cache_name))
+                    for cached_page in cache_name_stored_data.keys():
+                        try:
+                            page_list.append(int(cached_page))
+                        except:
+                            pass
+                    sorted_page_list = sorted(page_list)
 
                     next_search_after_set = search
                     next_search_after_set._extra.update(search_after_size)
-                    next_search_after_set._extra.update({"search_after": [json.loads(datastore.get(cache_key)).get(str(page)).get("control_number")]})
-                    # next_search_after_set._extra.update({"search_after": [json.loads(datastore.get(cache_key)).get(page).get("control_number")]})
+                    next_search_after_set._extra.update({"search_after": [json.loads(sessionstorage.get(cache_name)).get(cache_key).get("control_number")]})
                     next_items_sort_value = next_search_after_set.execute()["hits"]["hits"][-1]["_source"][sort_key]
-                    next_search_after_set = None
+                else:
+                    page_list = []
+                    cache_name_stored_data = json.loads(sessionstorage.get(cache_name))
+                    for cached_page in cache_name_stored_data.keys():
+                        try:
+                            page_list.append(int(cached_page))
+                        except:
+                            pass
+                    sorted_page_list = sorted(page_list)
 
-                    json_data = json.dumps({str(page): {"control_number": next_items_sort_value}}).encode('utf-8')
-                    datastore.put(
-                        cache_key,
-                        json_data,
-                        ttl_secs=3600
-                    )
+                    if ((page - 1) == sorted_page_list[-1] or page > sorted_page_list[-1]) and page * size > self.max_result_window:
+                        cache_data = cache_name_stored_data.get(str(int(cache_key) - 1))
+                        next_search_after_set = search
+                        next_search_after_set._extra.update(search_after_size)
+                        next_search_after_set._extra.update({"search_after": [json.loads(sessionstorage.get(cache_name)).get(str(sorted_page_list[-1])).get("control_number")]})
+                        
+                        try:
+                            if cache_data.get('control_number') is None:
+                                next_items_sort_value = first_10k_last_sort_value
+                            else:
+                                try:
+                                    next_items_sort_value = next_search_after_set.execute()["hits"]["hits"][-1]["_source"][sort_key]
+                                except:
+                                    next_items_sort_value = first_10k_last_sort_value
+                        except:
+                            try:
+                                next_items_sort_value = next_search_after_set.execute()["hits"]["hits"][-1]["_source"][sort_key]
+                            except:
+                                next_items_sort_value = first_10k_last_sort_value
 
-                    # print('\n\n\nNOCTIS LUCIS CAELUM')
-                    # print(next_items_sort_value)
-                    # print(json.loads(datastore.get(cache_key)).get("control_number"))
-                    # print('NOCTIS LUCIS CAELUM\n\n\n')
+                        next_search_after_set = None
+
+                        cache_name_stored_data[cache_key] = {"control_number": next_items_sort_value}
+
+                        json_data = json.dumps(cache_name_stored_data).encode('utf-8')
+                        sessionstorage.put(
+                            cache_name,
+                            json_data,
+                            ttl_secs=3600
+                        )
+                    else:
+                        next_items_sort_value = first_10k_last_sort_value
             else:
                 next_items_sort_value = first_10k_last_sort_value
-                # print('\n\n\n\n\n\n FINAL FANTASY XV \n\n\n\n\n\n')
 
             # Search after test using the last _id of the first 10,000 items
             # next_items_sort = {"sort": [{"_source.control_number": "desc"}]}
 
-            # Due to the error below 'from' needs to be set to 0 when using search_after
-            # elasticsearch.exceptions.Transporagg
+            if sessionstorage.redis.exists(cache_name):
+                if json.loads(sessionstorage.get(cache_name)).get(cache_key):
+                    next_items_search_after = {"search_after": [json.loads(sessionstorage.get(cache_name)).get(cache_key).get("control_number")]}
+                else:
+                    next_items_search_after = {"search_after": [next_items_sort_value]}
+            else:
+                next_items_search_after = {"search_after": [next_items_sort_value]}
 
-            # next_items_search_after = {"search_after": [next_items_sort_value]}
-
-            next_items_search_after = {"search_after": [json.loads(datastore.get(cache_key)).get(str(page)).get("control_number")]}
-            # try:
-            #     next_items_search_after = {"search_after": [json.loads(datastore.get(cache_key)).get(page).get("control_number")]}
-            # except:    
-            #     next_items_search_after = {"search_after": [json.loads(datastore.get(cache_key)).get("control_number")]}
-
-            print('\n\n\n///////////////')
-            print(next_items_search_after)
-            print(f'next_items_search_after: {next_items_search_after}')
-            print('///////////////\n\n\n')
-            
-            # next_items = search
-            # next_items._extra.update(next_items_from)
             search._extra.update(search_after_size)
             search._extra.update(next_items_search_after)
-            # next_items = next_items.execute()
 
             # Search after trigger set to true
             use_search_after = True
@@ -644,7 +699,6 @@ class RecordsListResource(ContentNegotiatedMethodView):
             search = search[(page - 1) * size:page * size]
             use_search_after = False
 
-        # query = request.values.get('q')
         if query:
             urlkwargs['q'] = query
 
@@ -652,56 +706,14 @@ class RecordsListResource(ContentNegotiatedMethodView):
         # Execute search
         search_result = search.execute()
         next_sort_value = search_result["hits"]["hits"][-1]["_source"][sort_key]
-        # json_data = json.dumps({"control_number": next_sort_value}).encode('utf-8')
-        json_data = json.dumps({str(page): {"control_number": next_items_sort_value}}).encode('utf-8')
-        datastore.put(
-            cache_key,
-            json_data,
-            ttl_secs=3600
-        )
 
-        print('\n\n\nSOMNUS')
-        print(json.loads(datastore.get(cache_key)))
-        print('SOMNUS\n\n\n')
-
-        
-        #=========================== 20220421 comment
-        # method 1 for getting all hits without breaking the 10000 limit
-        # total = test_search["hits"]["total"]
-        # count = []
-        # hits = {}
-        # while (total - 10000) > 0:
-        #     total = total - 10000
-        #     if total > 10000:
-        #         try:
-        #             count[-1] + 10001
-        #         except:
-        #             count.append(10000)
-        # else:
-        #     count.append(total)
-        # for index, content in enumerate(count):
-        #     hits[index] = 
-        # print(f'\n\ncount: {count}\n\n')
-
-        # x = search[(page - 1) * size:10000]
-        # y = x.execute()
-
-        # print('\n\n\nLAST ITEM')
-        # print(test_search["hits"]["hits"][-1])
-        # print('LAST ITEM/n/n/n')
-
-        # print('\n\nY HITS')
-        # print(len(y["hits"]["hits"]))
-        # print('Y HITS\n\n')
-        #=========================== 20220421 comment
-        
-        # total number of hits
-        # print(search_result.to_dict()['hits']['total'])
-
-        # list of limited results based on display size
-        # if 1-20, this list items would be the first 20 of the ["hits"]["total"]
-        # print(search_result.to_dict()['hits']['hits'])
-        print('\nSOMNUS - invenio_records_rest/views.py\n\n\n')
+        if not sessionstorage.redis.exists(cache_name) and page * size == self.max_result_window:
+            json_data = json.dumps({cache_key: {"control_number": next_items_sort_value}}).encode('utf-8')
+            sessionstorage.put(
+                cache_name,
+                json_data,
+                ttl_secs=3600
+            )
 
         # Generate links for prev/next
         urlkwargs.update(
@@ -716,7 +728,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
         if size * page < search_result.hits.total and \
                 size * page < self.max_result_window:
             links['next'] = url_for(endpoint, page=page + 1, **urlkwargs)
-        datastore.redis.flushall()
+
         return self.make_response(
             pid_fetcher=self.pid_fetcher,
             search_result=search_result.to_dict(),
