@@ -60,6 +60,8 @@ resource_type = [
 
 def add(post_data, key, **kwargs):
     """Add to a item type."""
+    if 'option' in kwargs:
+        kwargs.pop('option')
     option = {
         'required': True,
         'multiple': multiple_flag,

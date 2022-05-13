@@ -17,6 +17,8 @@ access_rights = [
 
 def add(post_data, key, **kwargs):
     """Add to a item type."""
+    if 'option' in kwargs:
+        kwargs.pop('option')
     option = {
         'required': False,
         'multiple': multiple_flag,
