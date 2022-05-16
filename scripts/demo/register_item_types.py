@@ -7,6 +7,7 @@ from item_types import item_type_config
 from invenio_db import db
 from weko_itemtypes_ui.utils import fix_json_schema, update_required_schema_not_exist_in_form
 from weko_records.api import ItemTypes, Mapping
+from weko_records.models import ItemType
 
 
 def main():
@@ -25,10 +26,12 @@ def main():
         if args.reg_type == 'overwrite_all':
             truncate_table()
             register_item_types_from_folder(exclusion_list)
+            update_harvesting_types()
             db.session.commit()
         elif args.reg_type == 'only_add_new':
             exclusion_list += get_item_type_id()
             register_item_types_from_folder(exclusion_list)
+            update_harvesting_types()
             db.session.commit()
         else: 
             print('Please input parameter of register type.')
@@ -39,12 +42,12 @@ def main():
 
 
 def truncate_table():
-    db.session.execute('TRUNCATE item_type, item_type_name, item_type_mapping;')
+    db.session.execute('TRUNCATE item_type, item_type_name, item_type_mapping CASCADE;')
     db.session.commit()
 
 
 def get_item_type_id():
-    item_types = db.session.query(ItemTypes.id).all()
+    item_types = db.session.query(ItemType.id).all()
     return [x.id for x in item_types]
 
 
@@ -88,6 +91,15 @@ def register_item_types_from_folder(exclusion_list):
 
     reg_list.sort()
     print('Processed id list: ', reg_list)
+
+
+def update_harvesting_types():
+    """Update harvesting item type flag."""
+    if item_type_config.HARVESTING_ITEM_TYPE_LIST:
+        harvesting_str = ','.join(item_type_config.HARVESTING_ITEM_TYPE_LIST)
+        query = "UPDATE item_type SET harvesting_type = true WHERE id in ({})".format(
+            harvesting_str)
+        db.session.execute(query)
 
 
 if __name__ == '__main__':
