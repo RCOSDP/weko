@@ -7,13 +7,13 @@ from item_types import item_type_config
 from invenio_db import db
 from weko_itemtypes_ui.utils import fix_json_schema, update_required_schema_not_exist_in_form
 from weko_records.api import ItemTypes, Mapping
-from weko_records.models import ItemType
+from weko_records.models import ItemType, ItemTypeName, ItemTypeMapping
 
 
 def main():
     try:
         exclusion_list = [int(x) for x in item_type_config.EXCLUSION_LIST]
-        type_list = ['overwrite_all', 'only_add_new']
+        type_list = ['overwrite_all', 'only_add_new', 'only_specified']
         # Read parameters.
         parser = argparse.ArgumentParser()
         parser.add_argument('reg_type', action='store')
@@ -33,6 +33,12 @@ def main():
             register_item_types_from_folder(exclusion_list)
             update_harvesting_types()
             db.session.commit()
+        elif args.reg_type == 'only_specified':
+            specified_list = item_type_config.SPECIFIED_LIST
+            del_item_type(specified_list)
+            exclusion_list += get_item_type_id()
+            register_item_types_from_folder(exclusion_list, specified_list)
+            db.session.commit()
         else: 
             print('Please input parameter of register type.')
             print('List of valid parameters [{}].'.format(','.join(type_list)))
@@ -51,13 +57,22 @@ def get_item_type_id():
     return [x.id for x in item_types]
 
 
-def register_item_types_from_folder(exclusion_list):
+def del_item_type(del_list):
+    query = db.session.query(ItemType).filter(ItemType.id.in_(del_list))
+    name_id = [x.name_id for x in query.all()]
+    query.delete(synchronize_session='fetch')
+    db.session.query(ItemTypeName).filter(ItemTypeName.id.in_(name_id)).delete(synchronize_session='fetch')
+    db.session.query(ItemTypeMapping).filter(ItemTypeMapping.id.in_(del_list)).delete(synchronize_session='fetch')
+
+
+def register_item_types_from_folder(exclusion_list, specified_list=[]):
     reg_list = []
     for i in dir(item_types):
         item_type_def = getattr(item_types, i)
         if getattr(item_type_def, 'item_type_id', None) and item_type_def.item_type_id:
             item_type_id = int(item_type_def.item_type_id)
-            if item_type_id not in exclusion_list:
+            if (item_type_id not in exclusion_list) \
+                    or (item_type_id in specified_list):
                 db.session.execute("SELECT setval('item_type_id_seq', {}, false)".format(item_type_id))
                 
                 item_type = base_data()

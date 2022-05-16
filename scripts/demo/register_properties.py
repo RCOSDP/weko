@@ -10,7 +10,7 @@ from weko_records.models import ItemTypeProperty
 def main():
     try:
         exclusion_list = [int(x) for x in property_config.EXCLUSION_LIST]
-        type_list = ['overwrite_all', 'only_add_new']
+        type_list = ['overwrite_all', 'only_add_new', 'only_specified']
         # Read parameters.
         parser = argparse.ArgumentParser()
         parser.add_argument('reg_type', action='store')
@@ -27,6 +27,12 @@ def main():
         elif args.reg_type == 'only_add_new':
             exclusion_list += get_properties_id()
             register_properties_from_folder(exclusion_list)
+            db.session.commit()
+        elif args.reg_type == 'only_specified':
+            specified_list = property_config.SPECIFIED_LIST
+            del_properties(specified_list)
+            exclusion_list += get_properties_id()
+            register_properties_from_folder(exclusion_list, specified_list)
             db.session.commit()
         else: 
             print('Please input parameter of register type.')
@@ -46,14 +52,19 @@ def get_properties_id():
     return [x.id for x in properties]
 
 
-def register_properties_from_folder(exclusion_list):
+def del_properties(del_list):
+    db.session.query(ItemTypeProperty).filter(ItemTypeProperty.id.in_(del_list)).delete(synchronize_session='fetch')
+
+
+def register_properties_from_folder(exclusion_list, specified_list=[]):
     reg_list = []
     prop_list = list()
     for i in dir(properties):
         prop = getattr(properties, i)
         if getattr(prop, 'property_id', None) and prop.property_id:
             prop_id = int(prop.property_id)
-            if prop_id not in exclusion_list:
+            if (prop_id not in exclusion_list) \
+                    or (prop_id in specified_list):
                 prop_list.append(dict(
                     id=prop_id,
                     name=prop.name_ja,
