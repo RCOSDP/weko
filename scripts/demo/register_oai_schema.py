@@ -73,12 +73,13 @@ def register_oai_schema_from_folder(exclusion_list=[], specified_list=[]):
                     namespaces=schema_obj.namespaces,
                     schema_location=schema_obj.schema_location,
                     isvalid=True,
+                    version_id=1,
                     target_namespace=schema_obj.target_namespace
                 ))
     if reg_list:
         db.session.execute(OAIServerSchema.__table__.insert(), reg_list)
 
-    print('Processed id list: ', [x['schema'] for x in reg_list])
+    print('Processed id list: ', [x['schema_name'] for x in reg_list])
 
 
 if __name__ == '__main__':
