@@ -38,6 +38,7 @@ def main():
             del_item_type(specified_list)
             exclusion_list += get_item_type_id()
             register_item_types_from_folder(exclusion_list, specified_list)
+            update_harvesting_types()
             db.session.commit()
         else: 
             print('Please input parameter of register type.')
@@ -62,7 +63,7 @@ def del_item_type(del_list):
     name_id = [x.name_id for x in query.all()]
     query.delete(synchronize_session='fetch')
     db.session.query(ItemTypeName).filter(ItemTypeName.id.in_(name_id)).delete(synchronize_session='fetch')
-    db.session.query(ItemTypeMapping).filter(ItemTypeMapping.id.in_(del_list)).delete(synchronize_session='fetch')
+    db.session.query(ItemTypeMapping).filter(ItemTypeMapping.item_type_id.in_(del_list)).delete(synchronize_session='fetch')
 
 
 def register_item_types_from_folder(exclusion_list, specified_list=[]):
@@ -111,8 +112,8 @@ def register_item_types_from_folder(exclusion_list, specified_list=[]):
 def update_harvesting_types():
     """Update harvesting item type flag."""
     if item_type_config.HARVESTING_ITEM_TYPE_LIST:
-        harvesting_str = ','.join(item_type_config.HARVESTING_ITEM_TYPE_LIST)
-        query = "UPDATE item_type SET harvesting_type = true WHERE id in ({})".format(
+        harvesting_str = ','.join([str(x) for x in item_type_config.HARVESTING_ITEM_TYPE_LIST])
+        query = "UPDATE item_type SET harvesting_type = true WHERE id in ({});".format(
             harvesting_str)
         db.session.execute(query)
 
