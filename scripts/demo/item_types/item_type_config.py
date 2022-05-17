@@ -2,12 +2,12 @@ DEFAULT_ITEM_TYPE_SIMPLE = "30001"
 DEFAULT_ITEM_TYPE_FULL = "30002"
 
 EXCLUSION_LIST = []
-# Exclusion property id list. The ID set in the list will not be registered.
+# Exclusion item type id list. The ID set in the list will not be registered.
 # e.g.: EXCLUSION_LIST = [30001, 30002] or EXCLUSION_LIST = [DEFAULT_ITEM_TYPE_SIMPLE, DEFAULT_ITEM_TYPE_FULL]
 
 HARVESTING_ITEM_TYPE_LIST = []
 # e.g.: HARVESTING_ITEM_TYPE_LIST = [30001, 30002] or HARVESTING_ITEM_TYPE_LIST = [DEFAULT_ITEM_TYPE_SIMPLE, DEFAULT_ITEM_TYPE_FULL]
 
 SPECIFIED_LIST = []
-# Specified property id list. The ID set in the list will be deleted and registered.
+# Specified item type id list. The ID set in the list will be deleted and registered.
 # e.g.: SPECIFIED_LIST = [30001, 30002] or SPECIFIED_LIST = [DEFAULT_ITEM_TYPE_SIMPLE, DEFAULT_ITEM_TYPE_FULL]
