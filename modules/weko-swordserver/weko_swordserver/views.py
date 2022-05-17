@@ -11,15 +11,17 @@
 # the templates and static folders as well as the test case.
 
 from __future__ import absolute_import, print_function
-from fileinput import filename
 
-from flask import Blueprint, current_app, jsonify, abort, request, url_for
+from datetime import datetime
+from enum import Enum
+
+import sword3common
+from flask import Blueprint, abort, current_app, jsonify, request, url_for
 from flask_babelex import gettext as _
-
 from sword3common import ServiceDocument, StatusDocument, constants
 from sword3common.lib.seamless import SeamlessException
-from weko_search_ui.utils import check_import_items, import_items_to_system
 from weko_records_ui.utils import get_record_permalink, soft_delete
+from weko_search_ui.utils import check_import_items, import_items_to_system
 from werkzeug.http import parse_options_header
 
 blueprint = Blueprint(
@@ -64,12 +66,21 @@ def get_service_document():
     """
 
     try:
+        authorization = request.headers.get("Authorization", "")
+        if authorization == "":
+            errType = ErrorType.AuthenticationRequired
+            msg = "Header 'Authorization' is none."
+            return jsonify(_create_error_document(errType.type, msg)), errType.code
+
+        allowOnBehalfOf = current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_ON_BEHALF_OF']
+        onBehalfOf = request.headers.get("On-Behalf-Of", "")
+        if allowOnBehalfOf == False and onBehalfOf != "":
+            errType = ErrorType.OnBehalfOfNotAllowed
+            msg = "Not support On-Behalf-Of."
+            return jsonify(_create_error_document(errType.type, msg)), errType.code
+        
         """
         Set raw data to ServiceDocument
-        
-        The following fields are set by sword3common
-            # "@context"
-            # "@type"
         """
         raw_data = {
             "@context": constants.JSON_LD_CONTEXT,
@@ -104,11 +115,13 @@ def get_service_document():
     
     except SeamlessException as ex:
         current_app.logger.error(ex.message)
-        abort(500)
+        errType = ErrorType.ServerError
+        return jsonify(_create_error_document(errType.type, ex.message)), errType.code
 
     except Exception as ex:
         current_app.logger.error(ex)
-        abort(500)
+        errType = ErrorType.ServerError
+        return jsonify(_create_error_document(errType.type, "Internal Server Error")), errType.code
 
 
 @blueprint.route("/service-document", methods=['POST'])
@@ -378,6 +391,34 @@ def delete_item(recid):
         current_app.logger.error(ex)
         abort(500)
 
+def _create_error_document(type, error):
+    
+    class Error(sword3common.Error):
+        # fix to timestamp coerce function not defined
+        __SEAMLESS_STRUCT__ = {
+            "fields": {
+                "@context": {"coerce": "unicode"},
+                "@type": {"coerce": "unicode"},
+                "timestamp": {"coerce": "datetime"},
+                "error": {"coerce": "unicode"},
+                "log": {"coerce": "unicode"},
+            }
+        }
+
+        @property
+        def data(self):
+            return self.__seamless__.data
+
+
+    raw_data = {
+        "@context": constants.JSON_LD_CONTEXT,
+        "@type": type,
+        "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "error": error,
+        # "log": "",
+    }
+    return Error(raw_data).data
+
 class SwordState:
     accepted = "http://purl.org/net/sword/3.0/state/accepted"
     inProgress = "http://purl.org/net/sword/3.0/state/inProgress"
@@ -385,3 +426,37 @@ class SwordState:
     ingested = "http://purl.org/net/sword/3.0/state/ingested"
     rejected = "http://purl.org/net/sword/3.0/state/rejected"
     deleted = "http://purl.org/net/sword/3.0/state/deleted"
+
+class ErrorType(Enum):
+    # Swordv3 ErrorType
+    BadRequest                      = ("BadRequest",                    400, "BadRequest")
+    ByReferenceFileSizeExceeded     = ("ByReferenceFileSizeExceeded",   400, "BadRequest")
+    ContentMalformed                = ("ContentMalformed",              400, "BadRequest")
+    InvalidSegmentSize              = ("InvalidSegmentSize",            400, "BadRequest")
+    MaxAssembledSizeExceeded        = ("MaxAssembledSizeExceeded",      400, "BadRequest")
+    SegmentLimitExceeded            = ("SegmentLimitExceeded",          400, "BadRequest")
+    UnexpectedSegment               = ("UnexpectedSegment",             400, "BadRequest")
+    AuthenticationRequired          = ("AuthenticationRequired",        401, "Unauthorized")
+    AuthenticationFailed            = ("AuthenticationFailed",          403, "Forbidden")
+    Forbidden                       = ("Forbidden",                     403, "Forbidden")
+    MethodNotAllowed	            = ("MethodNotAllowed",              405, "MethodNotAllowed")
+    SegmentedUploadTimedOut         = ("SegmentedUploadTimedOut",       410, "MethodNotAllowed")
+    ByReferenceNotAllowed           = ("ByReferenceNotAllowed",         412, "PreconditionFailed")
+    DigestMismatch                  = ("DigestMismatch",                412, "PreconditionFailed")
+    ETagNotMatched                  = ("ETagNotMatched",                412, "PreconditionFailed")
+    ETagRequired                    = ("ETagRequired",                  412, "PreconditionFailed")
+    OnBehalfOfNotAllowed            = ("OnBehalfOfNotAllowed",          412, "PreconditionFailed")
+    MaxUploadSizeExceeded           = ("MaxUploadSizeExceeded",         413, "PayloadTooLarge")
+    ContentTypeNotAcceptable        = ("ContentTypeNotAcceptable",      415, "UnsupportedMediaType")
+    FormatHeaderMismatch            = ("FormatHeaderMismatch",          415, "UnsupportedMediaType")
+    MetadataFormatNotAcceptable     = ("MetadataFormatNotAcceptable",   415, "UnsupportedMediaType")
+    PackagingFormatNotAcceptable    = ("PackagingFormatNotAcceptable",  415, "UnsupportedMediaType")
+
+    # Addlitional ErrorType
+    NotFound                        = ("NotFound",                      404, "NotFound")
+    ServerError                     = ("ServerError",                   500, "InternalServerError")
+
+    def __init__(self, type, code, httpName):
+        self.type = type
+        self.code = code
+        self.httpName = httpName
