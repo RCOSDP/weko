@@ -790,7 +790,7 @@ class WekoDeposit(Deposit):
         if self.data and len(self.data):
             # Get deposit bucket
             deposit_bucket = Bucket.query.get(self['_buckets']['deposit'])
-            if deposit_bucket:
+            if deposit_bucket and deposit_bucket.location:
                 # Get workflow storage location
                 workflow_storage_location = None
                 if session and 'activity_info' in session:
