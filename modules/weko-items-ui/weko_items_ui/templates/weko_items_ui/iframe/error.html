@@ -22,7 +22,7 @@
 
 {%- block css %}
   {{ super() }}
-  <link href="/static/css/weko_workflow/style.css" rel="stylesheet">
+  <link href="/static/css/weko_workflow/style.css" rel="stylesheet" media="print" onload="this.media='all'">
 {%- endblock css %}
 
 {%- block page_header %}

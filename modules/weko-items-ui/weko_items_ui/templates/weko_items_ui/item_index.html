@@ -22,7 +22,7 @@
 
 {%- block css %}
   {{ super() }}
-  {% assets "weko_items_ui_indextree_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_items_ui_indextree_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet" media="print" onload="this.media='all'">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}

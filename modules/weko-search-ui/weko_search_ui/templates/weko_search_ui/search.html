@@ -24,8 +24,8 @@
 
 {%- block css %}
   {{ super() }}
-  {% assets "invenio_search_ui_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {% assets "weko_search_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "invenio_search_ui_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet" media="print" onload="this.media='all'">{% endassets %}
+  {% assets "weko_search_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet" media="print" onload="this.media='all'">{% endassets %}
   <style>
     a.collapsed-link {
       color: inherit;

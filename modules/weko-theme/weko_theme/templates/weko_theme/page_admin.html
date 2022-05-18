@@ -49,7 +49,7 @@
       {%- block header %}{% endblock header %}
       {%- block css %}
         {% assets "invenio_theme_css" %}
-          <link href="{{ ASSET_URL }}" rel="stylesheet">
+          <link href="{{ ASSET_URL }}" rel="stylesheet" media="print" onload="this.media='all'">
         {% endassets %}
         <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
         <!--[if lt IE 9]>
@@ -57,12 +57,12 @@
           <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
         <![endif]-->
         {% assets "invenio_theme_admin_lte_css" %}
-          <link href="{{ ASSET_URL }}" rel="stylesheet">
+          <link href="{{ ASSET_URL }}" rel="stylesheet" media="print" onload="this.media='all'">
         {% endassets %}
         {% assets "invenio_theme_admin_css" %}
-          <link href="{{ ASSET_URL }}" rel="stylesheet">
+          <link href="{{ ASSET_URL }}" rel="stylesheet" media="print" onload="this.media='all'">
         {% endassets %}
-        <link href="{{ admin_static.url(filename='admin/css/bootstrap3/admin.css', v='1.1.1') }}" rel="stylesheet">
+        <link href="{{ admin_static.url(filename='admin/css/bootstrap3/admin.css', v='1.1.1') }}" rel="stylesheet" media="print" onload="this.media='all'">
       {%- endblock css %}
       {%- block trackingcode %}
       {% include config.THEME_TRACKINGCODE_TEMPLATE %}
