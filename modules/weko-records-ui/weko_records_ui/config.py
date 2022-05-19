@@ -242,11 +242,20 @@ OAISERVER_METADATA_FORMATS = {
     'jpcoar_1.0': {
         'serializer': (
             'weko_schema_ui.utils:dumps_oai_etree', {
-                'schema_type': 'jpcoar',
+                'schema_type': 'jpcoar_v1',
             }
         ),
         'namespace': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/',
         'schema': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/jpcoar_scm.xsd',
+    },
+    'jpcoar_2.0': {
+        'serializer': (
+            'weko_schema_ui.utils:dumps_oai_etree', {
+                'schema_type': 'jpcoar',
+            }
+        ),
+        'namespace': 'https://irdb.nii.ac.jp/schema/jpcoar/2.0/',
+        'schema': 'https://irdb.nii.ac.jp/schema/jpcoar/2.0/jpcoar_scm.xsd',
     },
     'oai_dc': {
         'serializer': (
