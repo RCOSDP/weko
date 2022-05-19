@@ -14,199 +14,199 @@ namespaces = {
     "oai_dc": "http://www.openarchives.org/OAI/2.0/oai_dc/"
 }
 xsd = {
-	"dc:title": {
-		"type": {
-			"minOccurs": 1,
-			"maxOccurs": 1,
-			"attributes": [
-				{
-					"ref": "xml:lang",
-					"name": "xml:lang",
-					"use": "optional"
-				}
-			]
-		}
-	},
-	"dc:creator": {
-		"type": {
-			"minOccurs": 1,
-			"maxOccurs": 1,
-			"attributes": [
-				{
-					"ref": "xml:lang",
-					"name": "xml:lang",
-					"use": "optional"
-				}
-			]
-		}
-	},
-	"dc:subject": {
-		"type": {
-			"minOccurs": 1,
-			"maxOccurs": 1,
-			"attributes": [
-				{
-					"ref": "xml:lang",
-					"name": "xml:lang",
-					"use": "optional"
-				}
-			]
-		}
-	},
-	"dc:description": {
-		"type": {
-			"minOccurs": 1,
-			"maxOccurs": 1,
-			"attributes": [
-				{
-					"ref": "xml:lang",
-					"name": "xml:lang",
-					"use": "optional"
-				}
-			]
-		}
-	},
-	"dc:publisher": {
-		"type": {
-			"minOccurs": 1,
-			"maxOccurs": 1,
-			"attributes": [
-				{
-					"ref": "xml:lang",
-					"name": "xml:lang",
-					"use": "optional"
-				}
-			]
-		}
-	},
-	"dc:contributor": {
-		"type": {
-			"minOccurs": 1,
-			"maxOccurs": 1,
-			"attributes": [
-				{
-					"ref": "xml:lang",
-					"name": "xml:lang",
-					"use": "optional"
-				}
-			]
-		}
-	},
-	"dc:date": {
-		"type": {
-			"minOccurs": 1,
-			"maxOccurs": 1,
-			"attributes": [
-				{
-					"ref": "xml:lang",
-					"name": "xml:lang",
-					"use": "optional"
-				}
-			]
-		}
-	},
-	"dc:type": {
-		"type": {
-			"minOccurs": 1,
-			"maxOccurs": 1,
-			"attributes": [
-				{
-					"ref": "xml:lang",
-					"name": "xml:lang",
-					"use": "optional"
-				}
-			]
-		}
-	},
-	"dc:format": {
-		"type": {
-			"minOccurs": 1,
-			"maxOccurs": 1,
-			"attributes": [
-				{
-					"ref": "xml:lang",
-					"name": "xml:lang",
-					"use": "optional"
-				}
-			]
-		}
-	},
-	"dc:identifier": {
-		"type": {
-			"minOccurs": 1,
-			"maxOccurs": 1,
-			"attributes": [
-				{
-					"ref": "xml:lang",
-					"name": "xml:lang",
-					"use": "optional"
-				}
-			]
-		}
-	},
-	"dc:source": {
-		"type": {
-			"minOccurs": 1,
-			"maxOccurs": 1,
-			"attributes": [
-				{
-					"ref": "xml:lang",
-					"name": "xml:lang",
-					"use": "optional"
-				}
-			]
-		}
-	},
-	"dc:language": {
-		"type": {
-			"minOccurs": 1,
-			"maxOccurs": 1,
-			"attributes": [
-				{
-					"ref": "xml:lang",
-					"name": "xml:lang",
-					"use": "optional"
-				}
-			]
-		}
-	},
-	"dc:relation": {
-		"type": {
-			"minOccurs": 1,
-			"maxOccurs": 1,
-			"attributes": [
-				{
-					"ref": "xml:lang",
-					"name": "xml:lang",
-					"use": "optional"
-				}
-			]
-		}
-	},
-	"dc:coverage": {
-		"type": {
-			"minOccurs": 1,
-			"maxOccurs": 1,
-			"attributes": [
-				{
-					"ref": "xml:lang",
-					"name": "xml:lang",
-					"use": "optional"
-				}
-			]
-		}
-	},
-	"dc:rights": {
-		"type": {
-			"minOccurs": 1,
-			"maxOccurs": 1,
-			"attributes": [
-				{
-					"ref": "xml:lang",
-					"name": "xml:lang",
-					"use": "optional"
-				}
-			]
-		}
-	}
+    "dc:title": {
+        "type": {
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "attributes": [
+                {
+                    "ref": "xml:lang",
+                    "name": "xml:lang",
+                    "use": "optional"
+                }
+            ]
+        }
+    },
+    "dc:creator": {
+        "type": {
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "attributes": [
+                {
+                    "ref": "xml:lang",
+                    "name": "xml:lang",
+                    "use": "optional"
+                }
+            ]
+        }
+    },
+    "dc:subject": {
+        "type": {
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "attributes": [
+                {
+                    "ref": "xml:lang",
+                    "name": "xml:lang",
+                    "use": "optional"
+                }
+            ]
+        }
+    },
+    "dc:description": {
+        "type": {
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "attributes": [
+                {
+                    "ref": "xml:lang",
+                    "name": "xml:lang",
+                    "use": "optional"
+                }
+            ]
+        }
+    },
+    "dc:publisher": {
+        "type": {
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "attributes": [
+                {
+                    "ref": "xml:lang",
+                    "name": "xml:lang",
+                    "use": "optional"
+                }
+            ]
+        }
+    },
+    "dc:contributor": {
+        "type": {
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "attributes": [
+                {
+                    "ref": "xml:lang",
+                    "name": "xml:lang",
+                    "use": "optional"
+                }
+            ]
+        }
+    },
+    "dc:date": {
+        "type": {
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "attributes": [
+                {
+                    "ref": "xml:lang",
+                    "name": "xml:lang",
+                    "use": "optional"
+                }
+            ]
+        }
+    },
+    "dc:type": {
+        "type": {
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "attributes": [
+                {
+                    "ref": "xml:lang",
+                    "name": "xml:lang",
+                    "use": "optional"
+                }
+            ]
+        }
+    },
+    "dc:format": {
+        "type": {
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "attributes": [
+                {
+                    "ref": "xml:lang",
+                    "name": "xml:lang",
+                    "use": "optional"
+                }
+            ]
+        }
+    },
+    "dc:identifier": {
+        "type": {
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "attributes": [
+                {
+                    "ref": "xml:lang",
+                    "name": "xml:lang",
+                    "use": "optional"
+                }
+            ]
+        }
+    },
+    "dc:source": {
+        "type": {
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "attributes": [
+                {
+                    "ref": "xml:lang",
+                    "name": "xml:lang",
+                    "use": "optional"
+                }
+            ]
+        }
+    },
+    "dc:language": {
+        "type": {
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "attributes": [
+                {
+                    "ref": "xml:lang",
+                    "name": "xml:lang",
+                    "use": "optional"
+                }
+            ]
+        }
+    },
+    "dc:relation": {
+        "type": {
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "attributes": [
+                {
+                    "ref": "xml:lang",
+                    "name": "xml:lang",
+                    "use": "optional"
+                }
+            ]
+        }
+    },
+    "dc:coverage": {
+        "type": {
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "attributes": [
+                {
+                    "ref": "xml:lang",
+                    "name": "xml:lang",
+                    "use": "optional"
+                }
+            ]
+        }
+    },
+    "dc:rights": {
+        "type": {
+            "minOccurs": 1,
+            "maxOccurs": 1,
+            "attributes": [
+                {
+                    "ref": "xml:lang",
+                    "name": "xml:lang",
+                    "use": "optional"
+                }
+            ]
+        }
+    }
 }
