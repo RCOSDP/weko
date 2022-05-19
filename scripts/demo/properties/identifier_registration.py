@@ -32,6 +32,14 @@ def add(post_data, key, **kwargs):
 
     post_data['table_row_map']['mapping'][key] = {
         'display_lang_type': '',
+        'jpcoar_v1_mapping': {
+            'identifierRegistration': {
+                '@attributes': {
+                    'identifierType': 'subitem_identifier_reg_type'
+                },
+                '@value': 'subitem_identifier_reg_text'
+            }
+        },
         'jpcoar_mapping': {
             'identifierRegistration': {
                 '@attributes': {

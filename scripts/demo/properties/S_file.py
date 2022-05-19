@@ -40,6 +40,32 @@ def add(post_data, key, **kwargs):
 
     post_data['table_row_map']['mapping'][key] = {
         'display_lang_type': '',
+        'jpcoar_v1_mapping': {
+            'system_file': {
+                'URI': {
+                    '@value': 'subitem_systemfile_filename_uri',
+                    '@attributes': {
+                        'label': 'subitem_systemfile_filename_label',
+                        'objectType': 'subitem_systemfile_filename_type'
+                    }
+                },
+                'date': {
+                    '@value': 'subitem_systemfile_datetime_date',
+                    '@attributes': {
+                        'dateType': 'subitem_systemfile_datetime_type'
+                    }
+                },
+                'extent': {
+                    '@value': 'subitem_systemfile_size'
+                },
+                'version': {
+                    '@value': 'subitem_systemfile_version'
+                },
+                'mimeType': {
+                    '@value': 'subitem_systemfile_mimetype'
+                }
+            }
+        },
         'jpcoar_mapping': {
             'system_file': {
                 'URI': {

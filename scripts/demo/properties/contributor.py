@@ -36,6 +36,76 @@ def add(post_data, key, **kwargs):
 
     post_data['table_row_map']['mapping'][key] = {
         'display_lang_type': '',
+        'jpcoar_v1_mapping': {
+            'contributor': {
+                '@attributes': {
+                    'contributorType': 'contributorType'
+                },
+                'affiliation': {
+                    'affiliationName': {
+                        '@attributes': {
+                            'xml:lang':
+                                'contributorAffiliations.'
+                                'contributorAffiliationNames.'
+                                'contributorAffiliationNameLang'
+                        },
+                        '@value':
+                            'contributorAffiliations.'
+                            'contributorAffiliationNames.'
+                            'contributorAffiliationName'
+                    },
+                    'nameIdentifier': {
+                        '@attributes': {
+                            'nameIdentifierScheme':
+                                'contributorAffiliations.'
+                                'contributorAffiliationNameIdentifiers.'
+                                'contributorAffiliationScheme',
+                            'nameIdentifierURI':
+                                'contributorAffiliations.'
+                                'contributorAffiliationNameIdentifiers.'
+                                'contributorAffiliationURI'
+                        },
+                        '@value':
+                            'contributorAffiliations.'
+                            'contributorAffiliationNameIdentifiers.'
+                            'contributorAffiliationNameIdentifier'
+                    }
+                },
+                'contributorAlternative': {
+                    '@attributes': {
+                        'xml:lang':
+                            'contributorAlternatives.contributorAlternativeLang'
+                    },
+                    '@value': 'contributorAlternatives.contributorAlternative'
+                },
+                'contributorName': {
+                    '@attributes': {
+                        'xml:lang': 'contributorNames.lang'
+                    },
+                    '@value': 'contributorNames.contributorName'
+                },
+                'familyName': {
+                    '@attributes': {
+                        'xml:lang': 'familyNames.familyNameLang'
+                    },
+                    '@value': 'familyNames.familyName'
+                },
+                'givenName': {
+                    '@attributes': {
+                        'xml:lang': 'givenNames.givenNameLang'
+                    },
+                    '@value': 'givenNames.givenName'
+                },
+                'nameIdentifier': {
+                    '@attributes': {
+                        'nameIdentifierScheme':
+                            'nameIdentifiers.nameIdentifierScheme',
+                        'nameIdentifierURI': 'nameIdentifiers.nameIdentifierURI'
+                    },
+                    '@value': 'nameIdentifiers.nameIdentifier'
+                }
+            }
+        },
         'jpcoar_mapping': {
             'contributor': {
                 '@attributes': {

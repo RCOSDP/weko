@@ -27,6 +27,14 @@ def add(post_data, key, **kwargs):
 
     post_data['table_row_map']['mapping'][key] = {
         'display_lang_type': '',
+        'jpcoar_v1_mapping': {
+            'system_identifier': {
+                '@value': 'subitem_systemidt_identifier',
+                '@attributes': {
+                    'identifierType': 'subitem_systemidt_identifier_type'
+                }
+            }
+        },
         'jpcoar_mapping': {
             'system_identifier': {
                 '@value': 'subitem_systemidt_identifier',

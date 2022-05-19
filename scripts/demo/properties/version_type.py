@@ -26,6 +26,14 @@ def add(post_data, key, **kwargs):
 
     post_data['table_row_map']['mapping'][key] = {
         'display_lang_type': '',
+        'jpcoar_v1_mapping': {
+            'versiontype': {
+                '@attributes': {
+                    'rdf:resource': 'subitem_version_resource'
+                },
+                '@value': 'subitem_version_type'
+            }
+        },
         'jpcoar_mapping': {
             'versiontype': {
                 '@attributes': {

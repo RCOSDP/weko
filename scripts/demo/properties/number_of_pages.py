@@ -16,6 +16,11 @@ def add(post_data, key, **kwargs):
 
     post_data['table_row_map']['mapping'][key] = {
         'display_lang_type': '',
+        'jpcoar_v1_mapping': {
+            'numPages': {
+                '@value': 'subitem_number_of_pages'
+            }
+        },
         'jpcoar_mapping': {
             'numPages': {
                 '@value': 'subitem_number_of_pages'

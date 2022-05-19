@@ -30,6 +30,14 @@ def add(post_data, key, **kwargs):
                 '@value': 'subitem_source_identifier'
             }
         },
+        'jpcoar_v1_mapping': {
+            'sourceIdentifier': {
+                '@attributes': {
+                    'identifierType': 'subitem_source_identifier_type'
+                },
+                '@value': 'subitem_source_identifier'
+            }
+        },
         'junii2_mapping': '',
         'lido_mapping': '',
         'lom_mapping': '',

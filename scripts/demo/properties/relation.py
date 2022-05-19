@@ -56,6 +56,25 @@ def add(post_data, key, **kwargs):
 
     post_data['table_row_map']['mapping'][key] = {
         'display_lang_type': '',
+        'jpcoar_v1_mapping': {
+            'relation': {
+                '@attributes': {
+                    'relationType': 'subitem_relation_type'
+                },
+                'relatedIdentifier': {
+                    '@attributes': {
+                        'identifierType': 'subitem_relation_type_id.subitem_relation_type_select'
+                    },
+                    '@value': 'subitem_relation_type_id.subitem_relation_type_id_text'
+                },
+                'relatedTitle': {
+                    '@attributes': {
+                        'xml:lang': 'subitem_relation_name.subitem_relation_name_language'
+                    },
+                    '@value': 'subitem_relation_name.subitem_relation_name_text'
+                }
+            }
+        },
         'jpcoar_mapping': {
             'relation': {
                 '@attributes': {

@@ -26,6 +26,7 @@ def add(post_data, key, **kwargs):
 
     post_data['table_row_map']['mapping'][key] = {
         'display_lang_type': '',
+        'jpcoar_v1_mapping': '',
         'jpcoar_mapping': '',
         'junii2_mapping': '',
         'lido_mapping': '',

@@ -16,6 +16,25 @@ def add(post_data, key, **kwargs):
 
     post_data['table_row_map']['mapping'][key] = {
         'display_lang_type': '',
+        'jpcoar_v1_mapping': {
+            'rightsHolder': {
+                'rightsHolderName': {
+                    '@attributes': {
+                        'xml:lang': 'rightHolderNames.rightHolderLanguage'
+                    },
+                    '@value': 'rightHolderNames.rightHolderName'
+                },
+                'nameIdentifier': {
+                    '@attributes': {
+                        'nameIdentifierScheme':
+                            'nameIdentifiers.nameIdentifierScheme',
+                        'nameIdentifierURI':
+                            'nameIdentifiers.nameIdentifierURI'
+                    },
+                    '@value': 'nameIdentifiers.nameIdentifier'
+                }
+            }
+        },
         'jpcoar_mapping': {
             'rightsHolder': {
                 'rightsHolderName': {

@@ -16,6 +16,35 @@ def add(post_data, key, **kwargs):
 
     post_data['table_row_map']['mapping'][key] = {
         'display_lang_type': '',
+        'jpcoar_v1_mapping': {
+            'geoLocation': {
+                'geoLocationPoint': {
+                    'pointLongitude': {
+                        '@value': 'subitem_geolocation_point.subitem_point_longitude'
+                    },
+                    'pointLatitude': {
+                        '@value': 'subitem_geolocation_point.subitem_point_latitude'
+                    }
+                },
+                'geoLocationBox': {
+                    'westBoundLongitude': {
+                        '@value': 'subitem_geolocation_box.subitem_west_longitude'
+                    },
+                    'eastBoundLongitude': {
+                        '@value': 'subitem_geolocation_box.subitem_east_longitude'
+                    },
+                    'southBoundLatitude': {
+                        '@value': 'subitem_geolocation_box.subitem_south_latitude'
+                    },
+                    'northBoundLatitude': {
+                        '@value': 'subitem_geolocation_box.subitem_north_latitude'
+                    }
+                },
+                'geoLocationPlace': {
+                    '@value': 'subitem_geolocation_place.subitem_geolocation_place_text'
+                }
+            }
+        },
         'jpcoar_mapping': {
             'geoLocation': {
                 'geoLocationPoint': {

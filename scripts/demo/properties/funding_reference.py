@@ -23,6 +23,35 @@ def add(post_data, key, **kwargs):
 
     post_data['table_row_map']['mapping'][key] = {
         'display_lang_type': '',
+        'jpcoar_v1_mapping': {
+            'fundingReference': {
+                'funderIdentifier': {
+                    '@attributes': {
+                        'funderIdentifierType':
+                            'subitem_funder_identifiers.subitem_funder_identifier_type'
+                    },
+                    '@value': 'subitem_funder_identifiers.subitem_funder_identifier'
+                },
+                'funderName': {
+                    '@attributes': {
+                        'xml:lang': 'subitem_funder_names.subitem_funder_name_language'
+                    },
+                    '@value': 'subitem_funder_names.subitem_funder_name'
+                },
+                'awardNumber': {
+                    '@attributes': {
+                        'awardURI': 'subitem_award_numbers.subitem_award_uri'
+                    },
+                    '@value': 'subitem_award_numbers.subitem_award_number'
+                },
+                'awardTitle': {
+                    '@attributes': {
+                        'xml:lang': 'subitem_award_titles.subitem_award_title_language'
+                    },
+                    '@value': 'subitem_award_titles.subitem_award_title'
+                }
+            }
+        },
         'jpcoar_mapping': {
             'fundingReference': {
                 'funderIdentifier': {

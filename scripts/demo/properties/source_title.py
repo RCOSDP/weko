@@ -16,6 +16,14 @@ def add(post_data, key, **kwargs):
 
     post_data['table_row_map']['mapping'][key] = {
         'display_lang_type': '',
+        'jpcoar_v1_mapping': {
+            'sourceTitle': {
+                '@attributes': {
+                    'xml:lang': 'subitem_record_name_language'
+                },
+                '@value': 'subitem_record_name'
+            }
+        },
         'jpcoar_mapping': {
             'sourceTitle': {
                 '@attributes': {

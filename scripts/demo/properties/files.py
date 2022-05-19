@@ -16,6 +16,32 @@ def add(post_data, key, **kwargs):
 
     post_data['table_row_map']['mapping'][key] = {
         'display_lang_type': '',
+        'jpcoar_v1_mapping': {
+            'file': {
+                'date': {
+                    '@attributes': {
+                        'dateType': 'date.dateType,fileDate.fileDateType'
+                    },
+                    '@value': 'date.dateValue,fileDate.fileDateValue'
+                },
+                'extent': {
+                    '@value': 'filesize.value'
+                },
+                'mimeType': {
+                    '@value': 'format'
+                },
+                'URI': {
+                    '@attributes': {
+                        'label': 'url.label',
+                        'objectType': 'url.objectType'
+                    },
+                    '@value': 'url.url'
+                },
+                'version': {
+                    '@value': 'version'
+                }
+            }
+        },
         'jpcoar_mapping': {
             'file': {
                 'date': {

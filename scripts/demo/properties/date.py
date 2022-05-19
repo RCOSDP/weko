@@ -18,6 +18,14 @@ def add(post_data, key, **kwargs):
     if mapping_flag:
         post_data['table_row_map']['mapping'][key] = {
             'display_lang_type': '',
+            'jpcoar_v1_mapping': {
+                'date': {
+                    '@attributes': {
+                        'dateType': 'subitem_date_issued_type'
+                    },
+                    '@value': 'subitem_date_issued_datetime'
+                }
+            },
             'jpcoar_mapping': {
                 'date': {
                     '@attributes': {

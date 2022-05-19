@@ -31,6 +31,14 @@ def add(post_data, key, **kwargs):
 
     post_data['table_row_map']['mapping'][key] = {
         'display_lang_type': '',
+        'jpcoar_v1_mapping': {
+            'accessRights': {
+                '@attributes': {
+                    'rdf:resource': 'subitem_access_right_uri'
+                },
+                '@value': 'subitem_access_right'
+            }
+        },
         'jpcoar_mapping': {
             'accessRights': {
                 '@attributes': {

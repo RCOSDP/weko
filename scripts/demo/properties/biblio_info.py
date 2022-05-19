@@ -20,6 +20,36 @@ def add(post_data, key, **kwargs):
 
     post_data['table_row_map']['mapping'][key] = {
         'display_lang_type': '',
+        'jpcoar_v1_mapping': {
+            'issue': {
+                '@value': 'bibliographicIssueNumber'
+            },
+            'pageEnd': {
+                '@value': 'bibliographicPageEnd'
+            },
+            'pageStart': {
+                '@value': 'bibliographicPageStart'
+            },
+            'sourceTitle': {
+                '@attributes': {
+                    'xml:lang': 'bibliographic_titles.bibliographic_titleLang'
+                },
+                '@value': 'bibliographic_titles.bibliographic_title'
+            },
+            'volume': {
+                '@value': 'bibliographicVolumeNumber'
+            },
+            'numPages': {
+                '@value': 'bibliographicNumberOfPages'
+            },
+            'date': {
+                '@attributes': {
+                    'dateType':
+                        'bibliographicIssueDates.bibliographicIssueDateType'
+                },
+                '@value': 'bibliographicIssueDates.bibliographicIssueDate'
+            }
+        },
         'jpcoar_mapping': {
             'issue': {
                 '@value': 'bibliographicIssueNumber'

@@ -16,6 +16,73 @@ def add(post_data, key, **kwargs):
 
     post_data['table_row_map']['mapping'][key] = {
         'display_lang_type': '',
+        'jpcoar_v1_mapping': {
+            'creator': {
+                'affiliation': {
+                    'affiliationName': {
+                        '@attributes': {
+                            'xml:lang':
+                                'creatorAffiliations.'
+                                'affiliationNames.'
+                                'affiliationNameLang'
+                        },
+                        '@value':
+                            'creatorAffiliations.'
+                            'affiliationNames.'
+                            'affiliationName'
+                    },
+                    'nameIdentifier': {
+                        '@attributes': {
+                            'nameIdentifierScheme':
+                                'creatorAffiliations.'
+                                'affiliationNameIdentifiers.'
+                                'affiliationNameIdentifierScheme',
+                            'nameIdentifierURI':
+                                'creatorAffiliations.'
+                                'affiliationNameIdentifiers.'
+                                'affiliationNameIdentifierURI'
+                        },
+                        '@value':
+                            'creatorAffiliations.'
+                            'affiliationNameIdentifiers.'
+                            'affiliationNameIdentifier'
+                    }
+                },
+                'creatorAlternative': {
+                    '@attributes': {
+                        'xml:lang': 'creatorAlternatives.creatorAlternativeLang'
+                    },
+                    '@value': 'creatorAlternatives.creatorAlternative'
+                },
+                'creatorName': {
+                    '@attributes': {
+                        'xml:lang': 'creatorNames.creatorNameLang'
+                    },
+                    '@value': 'creatorNames.creatorName'
+                },
+                'familyName': {
+                    '@attributes': {
+                        'xml:lang': 'familyNames.familyNameLang'
+                    },
+                    '@value': 'familyNames.familyName'
+                },
+                'givenName': {
+                    '@attributes': {
+                        'xml:lang': 'givenNames.givenNameLang'
+                    },
+                    '@value': 'givenNames.givenName'
+                },
+                'nameIdentifier': {
+                    '@attributes': {
+                        'nameIdentifierScheme':
+                            'nameIdentifiers.nameIdentifierScheme',
+                        'nameIdentifierURI':
+                            'nameIdentifiers.nameIdentifierURI'
+                    },
+                    '@value': 'nameIdentifiers.nameIdentifier'
+                }
+            }
+        },
         'jpcoar_mapping': {
             'creator': {
                 'affiliation': {

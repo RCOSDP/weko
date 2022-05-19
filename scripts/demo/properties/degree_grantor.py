@@ -20,6 +20,26 @@ def add(post_data, key, **kwargs):
 
     post_data['table_row_map']['mapping'][key] = {
         'display_lang_type': '',
+        'jpcoar_v1_mapping': {
+            'degreeGrantor': {
+                'degreeGrantorName': {
+                    '@attributes': {
+                        'xml:lang': 'subitem_degreegrantor.'
+                                    'subitem_degreegrantor_language'
+                    },
+                    '@value': 'subitem_degreegrantor.subitem_degreegrantor_name'
+                },
+                'nameIdentifier': {
+                    '@attributes': {
+                        'nameIdentifierScheme':
+                            'subitem_degreegrantor_identifier.'
+                            'subitem_degreegrantor_identifier_scheme'
+                    },
+                    '@value': 'subitem_degreegrantor_identifier.'
+                              'subitem_degreegrantor_identifier_name'
+                }
+            }
+        },
         'jpcoar_mapping': {
             'degreeGrantor': {
                 'degreeGrantorName': {
