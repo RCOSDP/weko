@@ -8,7 +8,6 @@
 """Useful decorators for checking request headers."""
 import os
 from functools import wraps
-from pprint import pprint
 
 from flask import current_app, request
 from invenio_oauth2server.decorators import require_api_auth, require_oauth_scopes
@@ -60,34 +59,24 @@ def check_package_contents():
     def wrapper(f):
         @wraps(f)
         def decorated(*args, **kwargs):
-            print("=oauth===============")
-            pprint(request.oauth)
-            print("=oauth===============")
-
-            contentDisposition = request.headers.get("Content-Disposition", None)
             if 'file' not in request.files:
                 raise WekoSwordserverException("No file part.", ErrorType.ContentMalformed)
             file = request.files['file']
             if file.filename == '':
                 raise WekoSwordserverException("No selected file.", ErrorType.ContentMalformed)
 
-            print("=files===============")
-            pprint(vars(file))
-            pprint(vars(file.headers))
-            pprint(file.headers.get('Content-Type'))
-            print("=files===============")
-            
             # Check Content-Length
-            # file.seek(0, os.SEEK_END)
-            # file_length = file.tell()
-            # file.seek(0, 0)
-            # reqContentLength = request.headers.get("Content-Length", None)
-            # print("=Length===============")
-            # pprint(file_length)
-            # pprint(reqContentLength)
-            # print("=Length===============")
-            # if reqContentLength is not None and reqContentLength != file_length:
-            #     raise WekoSwordserverException("Not matched Content-Length.", ErrorType.ContentMalformed)
+            maxUploadSize = current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_MAX_UPLOAD_SIZE']
+            contentLength = request.headers.get("Content-Length", None)
+            if contentLength is None:
+                # Get length by file
+                file.seek(0, os.SEEK_END)
+                contentLength = file.tell()
+                file.seek(0, 0)
+            if int(contentLength or '0') > maxUploadSize:
+                raise WekoSwordserverException(
+                    "Content size is too large. (request:{}, maxUploadSize:{})".format(
+                        contentLength, maxUploadSize), ErrorType.MaxUploadSizeExceeded)
 
             # Check Content-Type
             acceptArchiveFormat = current_app.config['WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT']
