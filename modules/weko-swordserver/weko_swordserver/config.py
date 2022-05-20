@@ -35,7 +35,13 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_METADATA = ['http://purl.org/net/sword/3
 """ List of Metadata Formats which are acceptable to the server. """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_PACKAGING = ['*']
-""" List of Packaging Formats which are acceptable to the server. """
+""" List of Packaging Formats which are acceptable to the server. 
+
+    ['*'] or List of Packaging Formats URI
+        - http://purl.org/net/sword/3.0/package/Binary
+        - http://purl.org/net/sword/3.0/package/SimpleZip
+        - http://purl.org/net/sword/3.0/package/SWORDBagIt
+"""
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_COLLECTION_POLICY = {}
 """ URL and description of the server’s collection policy.
@@ -62,13 +68,13 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_STAGING_MAX_IDLE = 3600
 WEKO_SWORDSERVER_SERVICEDOCUMENT_BY_REFERENCE_DEPOSIT = False
 """ Does the server support By-Reference deposit? """
 
-WEKO_SWORDSERVER_SERVICEDOCUMENT_ON_BEHALF_OF = True
+WEKO_SWORDSERVER_SERVICEDOCUMENT_ON_BEHALF_OF = False
 """ Does the server support deposit on behalf of other users (mediation) """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_DIGEST = ["SHA-256", "SHA", "MD5"]
 """ The list of digest formats that the server will accept. """
 
-WEKO_SWORDSERVER_SERVICEDOCUMENT_AUTHENTICATION = ["Basic", "OAuth", "Digest", "APIKey"]
+WEKO_SWORDSERVER_SERVICEDOCUMENT_AUTHENTICATION = ["OAuth"]
 """ List of authentication schemes supported by the server. """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_SERVICES = []
