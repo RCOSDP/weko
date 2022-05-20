@@ -1101,12 +1101,6 @@ class WidgetDataLoaderServices:
             item_id_list = list(map(itemgetter('_id'), es_data))
             hidden_items = find_hidden_items(item_id_list)
 
-            print('\n\n\nSOMNUS - weko_gridlayout/services.py\n')
-            print(rd)
-            print(hits["hits"])
-            print(es_data)
-            print(item_id_list)
-
             for es_item in es_data:
                 if len(data) >= int(number_result):
                     break
@@ -1124,9 +1118,6 @@ class WidgetDataLoaderServices:
                     'control_number')
                 data.append(new_data)
             result['data'] = data
-            print(result)
-            print(data)
-            print('\nSOMNUS - weko_gridlayout/services.py\n\n\n')
         except Exception as e:
             result['error'] = str(e)
             
