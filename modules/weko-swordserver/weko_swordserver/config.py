@@ -31,7 +31,7 @@ WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_ARCHIVE_FORMAT = ['application/zip']
 WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_DEPOSITS = True
 """ Does the Service accept deposits? """
 
-WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_METADATA = ['http://purl.org/net/sword/3.0/types/Metadata']
+WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_METADATA = []
 """ List of Metadata Formats which are acceptable to the server. """
 
 WEKO_SWORDSERVER_SERVICEDOCUMENT_ACCEPT_PACKAGING = ['*']
