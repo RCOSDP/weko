@@ -25,7 +25,9 @@ relation_type = [
     'isSupplementTo',
     'isIdenticalTo',
     'isDerivedFrom',
-    'isSourceOf'
+    'isSourceOf',
+    'isCitedBy',
+    'Cites'
 ]
 id_type = [
     None,
@@ -39,7 +41,7 @@ id_type = [
     'Local',
     'PISSN',
     'EISSN',
-    'ISSN',
+    'ISSN【非推奨】',
     'NAID',
     'NCID',
     'PMID',
