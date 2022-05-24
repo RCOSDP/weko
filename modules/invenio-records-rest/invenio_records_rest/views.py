@@ -46,6 +46,14 @@ from .proxies import current_records_rest
 from .query import es_search_factory
 from .utils import obj_or_import_string
 
+import redis
+import json
+from simplekv.memory.redisstore import RedisStore
+import os
+
+from flask_security import current_user
+from flask import session
+from invenio_accounts.models import User
 
 def elasticsearch_query_parsing_exception_handler(error):
     """Handle query parsing exceptions from ElasticSearch."""
@@ -515,8 +523,8 @@ class RecordsListResource(ContentNegotiatedMethodView):
         :returns: Search result containing hits and aggregations as
                   returned by invenio-search.
         """
-        default_results_size = current_app.config.get(
-            'RECORDS_REST_DEFAULT_RESULTS_SIZE', 10)
+        # default_results_size = current_app.config.get(
+        #     'RECORDS_REST_DEFAULT_RESULTS_SIZE', 10)
         # page_no is parameters for Opensearch
         page = request.values.get('page',
                                   request.values.get('page_no', 1, type=int),
@@ -526,23 +534,245 @@ class RecordsListResource(ContentNegotiatedMethodView):
                                   request.values.get(
                                       'list_view_num', 10, type=int),
                                   type=int)
-        if page * size >= self.max_result_window:
-            raise MaxResultWindowRESTError()
+
+        # if page * size >= self.max_result_window:
+        #     raise MaxResultWindowRESTError()
 
         # Arguments that must be added in prev/next links
         urlkwargs = dict()
         search_obj = self.search_class()
         search = search_obj.with_preference_param().params(version=True)
-        search = search[(page - 1) * size:page * size]
 
+        # this line of code will process the query string and as a result
+        # will put the correct "total" and "hits" into the search variable
         search, qs_kwargs = self.search_factory(search)
+
+        from flask_security import current_user
+        from flask import session
+        from invenio_accounts.models import User
+
         query = request.values.get('q')
+
+        # Search_after trigger
+        use_search_after = False
+
+        def get_item_control_number(search_result):
+            return search_result["hits"]["hits"][-1]["_source"]["control_number"]
+
+        # Sort key being used in the query
+        relevance_sort_is_used = False
+        try:
+            sort_element = search.to_dict()["sort"]
+        except:
+            # sort_element = "_id"
+            sort_element = "control_number"
+            relevance_sort_is_used = True
+
+        try:
+            if relevance_sort_is_used:
+                sort_key = sort_element
+                sort_key_arrangement = "desc"
+            else:
+                sort_key = list(sort_element[0].keys())[0]
+                sort_key_arrangement = sort_element[0][sort_key]["order"]
+        except:
+            sort_key = list(search.to_dict()["sort"].keys())[0]
+
+        # Cache Storage
+        sessionstorage = RedisStore(redis.StrictRedis.from_url(
+            'redis://{host}:{port}/1'.format(
+                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+                port=os.getenv('INVENIO_REDIS_PORT', '6379')
+            )
+        ))
+
+        # For saving current user to session storage for seach_after use as cache name
+        if current_user.is_authenticated:
+            cache_name = User.query.get(current_user.id).email
+        else:
+            cache_name = "anonymous_user"
+        
+        # For saving a specific page for search_after use as cache key
+        cache_key = str(page)
+
+        # For checking search results option changes and resetting cache upon option change
+        def url_args_check():
+            if sessionstorage.redis.exists(f"{cache_name}_url_args"):
+                cache_name_url_args = json.loads(sessionstorage.get(f"{cache_name}_url_args"))
+                q_check = cache_name_url_args.get("q") != request.args.to_dict().get("q")
+                sort_check = cache_name_url_args.get("sort") != request.args.to_dict().get("sort")
+                size_check = cache_name_url_args.get("size") != request.args.to_dict().get("size")
+
+                if (q_check or sort_check) or size_check:
+                    sessionstorage.delete(cache_name)
+                    sessionstorage.delete(f"{cache_name}_url_args")
+                    json_data = json.dumps(request.args.to_dict()).encode('utf-8')
+                    sessionstorage.put(
+                        f"{cache_name}_url_args",
+                        json_data,
+                        ttl_secs=3600
+                    )
+            else:
+                try:
+                    sessionstorage.delete(cache_name)
+                    sessionstorage.delete(f"{cache_name}_url_args")
+                except:
+                    pass
+                json_data = json.dumps(request.args.to_dict()).encode('utf-8')
+                sessionstorage.put(
+                    f"{cache_name}_url_args",
+                    json_data,
+                    ttl_secs=3600
+                )
+        
+        url_args_check()
+
+        next_items_sort_value = ""
+
+        if page * size > self.max_result_window:
+            # For getting the 10,000th item's "_id"
+            first_10k = search[9999:10000]
+            first_10k = first_10k.execute()
+            first_10k_last_sort_value = get_item_control_number(first_10k)
+
+            # Sort to be used for search_after regardless of the selected sort type on the search results page
+            search._extra.update({"sort": [{"control_number": {"order": f"{sort_key_arrangement}"}}]})
+
+            # Size for search. Dynamically changes depending on the size selected on the search results page
+            search_after_size = {"size": size}
+
+            next_items_sort_value = None
+
+            if sessionstorage.redis.exists(cache_name):
+                if json.loads(sessionstorage.get(cache_name)).get(cache_key):
+                    cache_name_checker = json.loads(sessionstorage.get(cache_name)).get(cache_key)
+                else:
+                    cache_name_checker = None
+            else:
+                cache_name_checker = None
+
+            if sessionstorage.redis.exists(cache_name):
+                if cache_name_checker:
+                    page_list = []
+                    cache_name_stored_data = json.loads(sessionstorage.get(cache_name))
+                    for cached_page in cache_name_stored_data.keys():
+                        try:
+                            page_list.append(int(cached_page))
+                        except:
+                            pass
+                    sorted_page_list = sorted(page_list)
+
+                    next_search_after_set = search
+                    next_search_after_set._extra.update(search_after_size)
+                    next_search_after_set._extra.update({"search_after": [json.loads(sessionstorage.get(cache_name)).get(cache_key).get("control_number")]})
+                    next_items_sort_value = next_search_after_set.execute()["hits"]["hits"][-1]["_source"]["control_number"]
+                    
+                else:
+                    """ Below line is for debugging purposes """
+                    # print('\n\n 1 \n\n')
+                    page_list = []
+                    cache_name_stored_data = json.loads(sessionstorage.get(cache_name))
+                    for cached_page in cache_name_stored_data.keys():
+                        try:
+                            page_list.append(int(cached_page))
+                        except:
+                            pass
+                    sorted_page_list = sorted(page_list)
+
+                    if ((page - 1) == sorted_page_list[-1] or page > sorted_page_list[-1]) and page * size > self.max_result_window:
+                        """ Below line is for debugging purposes """
+                        # print('\n\n 2 \n\n')
+                        cache_data = cache_name_stored_data.get(str(int(cache_key) - 1))
+                        next_search_after_set = search
+                        next_search_after_set._extra.update(search_after_size)
+                        next_search_after_set._extra.update({"search_after": [json.loads(sessionstorage.get(cache_name)).get(str(sorted_page_list[-1])).get("control_number")]})
+                        
+                        try:
+                            """ Below line is for debugging purposes """
+                            # print('\n\n 3 \n\n')
+                            if cache_data.get("control_number") is None:
+                                """ Below line is for debugging purposes """
+                                # print('\n\n 4 \n\n')
+                                next_items_sort_value = first_10k_last_sort_value
+
+                            else:
+                                """ Below line is for debugging purposes """
+                                # print('\n\n 5 \n\n')
+                                """ try and except block is for debugging purposes """
+                                next_items_sort_value = get_item_control_number(next_search_after_set.execute())
+                        except:
+                            """ Below line is for debugging purposes """
+                            # print(print('\n\n 6 \n\n'))
+                            try:
+                                next_items_sort_value = get_item_control_number(next_search_after_set.execute())
+                                """ Below line is for debugging purposes """
+                                # print(print('\n\n 7 \n\n'))
+                            except:
+                                next_items_sort_value = first_10k_last_sort_value
+                                """ Below line is for debugging purposes """
+                                # print(print('\n\n 8 \n\n'))
+
+                        next_search_after_set = None
+                        cache_name_stored_data[cache_key] = {"control_number": next_items_sort_value}
+
+                        json_data = json.dumps(cache_name_stored_data).encode('utf-8')
+                        sessionstorage.put(
+                            cache_name,
+                            json_data,
+                            ttl_secs=3600
+                        )
+                    else:
+                        next_items_sort_value = first_10k_last_sort_value
+            else:
+                next_items_sort_value = first_10k_last_sort_value
+
+            if sessionstorage.redis.exists(cache_name):
+                if json.loads(sessionstorage.get(cache_name)).get(cache_key):
+                    next_items_search_after = {"search_after": [json.loads(sessionstorage.get(cache_name)).get(cache_key).get("control_number")]}
+                else:
+                    next_items_search_after = {"search_after": [next_items_sort_value]}
+            else:
+                next_items_search_after = {"search_after": [next_items_sort_value]}
+
+            search._extra.update(search_after_size)
+            search._extra.update(next_items_search_after)
+
+            # Search after trigger set to true
+            use_search_after = True
+
+        if use_search_after:
+            search = search[0:size]
+        else:
+            search = search[(page - 1) * size:page * size]
+            use_search_after = False
+
         if query:
             urlkwargs['q'] = query
 
         # current_app.logger.debug(search.to_dict())
         # Execute search
         search_result = search.execute()
+
+        if not sessionstorage.redis.exists(cache_name) and page * size == self.max_result_window:
+            json_data = json.dumps({cache_key: {"control_number": [next_items_sort_value]}}).encode('utf-8')
+            sessionstorage.put(
+                cache_name,
+                json_data,
+                ttl_secs=3600
+            )
+
+        # This snippet is for checking if search_after is extracting the last item's _id of the previous page
+        """
+        print('\n\n SEARCH AFTER TEST')
+        print('cache name')
+        if sessionstorage.redis.exists(cache_name):
+            print(json.loads(sessionstorage.get(cache_name)))
+        else:
+            print(sessionstorage.redis.exists(cache_name))
+        print('page cache')
+        print(json.loads(sessionstorage.get(f"{cache_name}_url_args")))
+        print('SEARCH AFTER TEST \n\n')
+        """
 
         # Generate links for prev/next
         urlkwargs.update(
