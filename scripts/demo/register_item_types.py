@@ -35,9 +35,8 @@ def main():
             db.session.commit()
         elif args.reg_type == 'only_specified':
             specified_list = item_type_config.SPECIFIED_LIST
-            del_item_type(specified_list)
             exclusion_list += get_item_type_id()
-            register_item_types_from_folder(exclusion_list, specified_list)
+            register_item_types_from_folder(exclusion_list, specified_list, True)
             update_harvesting_types()
             db.session.commit()
         else: 
@@ -58,24 +57,14 @@ def get_item_type_id():
     return [x.id for x in item_types]
 
 
-def del_item_type(del_list):
-    query = db.session.query(ItemType).filter(ItemType.id.in_(del_list))
-    name_id = [x.name_id for x in query.all()]
-    query.delete(synchronize_session='fetch')
-    db.session.query(ItemTypeName).filter(ItemTypeName.id.in_(name_id)).delete(synchronize_session='fetch')
-    db.session.query(ItemTypeMapping).filter(ItemTypeMapping.item_type_id.in_(del_list)).delete(synchronize_session='fetch')
-
-
-def register_item_types_from_folder(exclusion_list, specified_list=[]):
+def register_item_types_from_folder(exclusion_list, specified_list=[], update_flag=False):
     reg_list = []
     for i in dir(item_types):
         item_type_def = getattr(item_types, i)
         if getattr(item_type_def, 'item_type_id', None) and item_type_def.item_type_id:
             item_type_id = int(item_type_def.item_type_id)
             if (item_type_id not in exclusion_list) \
-                    or (item_type_id in specified_list):
-                db.session.execute("SELECT setval('item_type_id_seq', {}, false)".format(item_type_id))
-                
+                    or (item_type_id in specified_list):                
                 item_type = base_data()
                 for idx, property in enumerate(item_type_def.property_list):
                     property.add_func(
@@ -89,17 +78,27 @@ def register_item_types_from_folder(exclusion_list, specified_list=[]):
                 json_schema = fix_json_schema(item_type['table_row_map']['schema'])
                 json_form = item_type['table_row_map']['form']
                 json_schema = update_required_schema_not_exist_in_form(json_schema, json_form)
-                record = ItemTypes.create(
-                    name=item_type_def.item_type_name,
-                    schema=json_schema,
-                    form=json_form,
-                    render=item_type
-                )
+                if update_flag:
+                    record = ItemTypes.update(
+                        id_=item_type_id,
+                        name=item_type_def.item_type_name,
+                        schema=json_schema,
+                        form=json_form,
+                        render=item_type
+                    )
+                else:
+                    db.session.execute("SELECT setval('item_type_id_seq', {}, false)".format(item_type_id))
+                    record = ItemTypes.create(
+                        name=item_type_def.item_type_name,
+                        schema=json_schema,
+                        form=json_form,
+                        render=item_type
+                    )
 
-                Mapping.create(
-                    item_type_id=record.model.id,
-                    mapping=item_type['table_row_map']['mapping']
-                )
+                    Mapping.create(
+                        item_type_id=record.model.id,
+                        mapping=item_type['table_row_map']['mapping']
+                    )
 
                 reg_list.append(item_type_id)
 
