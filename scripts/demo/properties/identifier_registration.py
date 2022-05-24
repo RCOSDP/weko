@@ -12,7 +12,7 @@ id_type = [
     'JaLC',
     'Crossref',
     'DataCite',
-    'PMID'
+    'PMID【現在不使用】'
 ]
 
 
