@@ -27,7 +27,7 @@ resource_type = [
     'conference proceedings',
     'conference poster',
     'dataset',
-    "aggregated data",
+    'aggregated data',
     'clinical trial data',
     'compiled data',
     'encoded data',
