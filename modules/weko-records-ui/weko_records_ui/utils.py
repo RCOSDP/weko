@@ -627,7 +627,10 @@ def get_file_info_list(record):
             size_num = file_size_value.split(' ')[0]
             size_unit = file_size_value.split(' ')[1]
             unit_num = defined_unit.get(size_unit.lower(), 0)
-            file_size_value = float(size_num) * unit_num
+            try:
+                file_size_value = float(size_num) * unit_num
+            except:
+                file_size_value = -1
         return file_size_value
 
     def set_message_for_file(p_file):
