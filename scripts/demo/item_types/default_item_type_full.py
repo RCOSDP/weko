@@ -1,5 +1,5 @@
 # coding:utf-8
-"""Default item type full."""
+"""Default item type."""
 from properties import AddProperty
 from . import item_type_config as config
 

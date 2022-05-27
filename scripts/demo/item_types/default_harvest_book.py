@@ -3,8 +3,8 @@
 from properties import AddProperty
 from . import item_type_config as config
 
-item_type_id = config.DEFAULT_ITEM_TYPE_SIMPLE
-item_type_name = "デフォルトアイテムタイプ（シンプル）"
+item_type_id = config.DEFAULT_HARVEST_BOOK
+item_type_name = "Book"
 property_list = [
     AddProperty(
         AddProperty.title,
@@ -12,9 +12,7 @@ property_list = [
         'タイトル',
         'Title',
         required=True,
-        multiple=True,
-        showlist=True,
-        newline=True
+        multiple=True
     ),
     AddProperty(
         AddProperty.alternative_title,
@@ -28,9 +26,7 @@ property_list = [
         '作成者',
         '作成者',
         'Creator',
-        multiple=True,
-        showlist=True,
-        newline=True
+        multiple=True
     ),
     AddProperty(
         AddProperty.contributor,
@@ -44,6 +40,12 @@ property_list = [
         'アクセス権',
         'アクセス権',
         'Access Rights'
+    ),
+    AddProperty(
+        AddProperty.apc,
+        'APC',
+        'APC',
+        'APC'
     ),
     AddProperty(
         AddProperty.rights,
@@ -81,6 +83,13 @@ property_list = [
         multiple=True
     ),
     AddProperty(
+        AddProperty.date,
+        '日付',
+        '日付',
+        'Date',
+        multiple=True
+    ),
+    AddProperty(
         AddProperty.language,
         '言語',
         '言語',
@@ -88,17 +97,11 @@ property_list = [
         multiple=True
     ),
     AddProperty(
-        AddProperty.resource_type_simple,
+        AddProperty.resource_type,  # ??
         '資源タイプ',
         '資源タイプ',
         'Resource Type',
         required=True
-    ),
-    AddProperty(
-        AddProperty.version_type,
-        '出版タイプ',
-        '出版タイプ',
-        'Version Type'
     ),
     AddProperty(
         AddProperty.identifier_registration,
@@ -114,6 +117,20 @@ property_list = [
         multiple=True
     ),
     AddProperty(
+        AddProperty.temporal,
+        '時間的範囲',
+        '時間的範囲',
+        'Temporal',
+        multiple=True
+    ),
+    AddProperty(
+        AddProperty.geolocation,
+        '位置情報',
+        '位置情報',
+        'Geo Location',
+        multiple=True
+    ),
+    AddProperty(
         AddProperty.funding_reference,
         '助成情報',
         '助成情報',
@@ -121,62 +138,10 @@ property_list = [
         multiple=True
     ),
     AddProperty(
-        AddProperty.source_id,
-        '収録物識別子',
-        '収録物識別子',
-        'Source Identifier',
-        multiple=True
-    ),
-    AddProperty(
-        AddProperty.biblio_info,
-        '書誌情報',
-        '書誌情報',
-        'Bibliographic Information',
-        showlist=True
-    ),
-    AddProperty(
-        AddProperty.dissertation_number,
-        '学位授与番号',
-        '学位授与番号',
-        'Dissertation Number',
-        showlist=True
-    ),
-    AddProperty(
-        AddProperty.degree_name,
-        '学位名',
-        '学位名',
-        'Degree Name',
-        multiple=True,
-        showlist=True
-    ),
-    AddProperty(
-        AddProperty.date_granted,
-        '学位授与年月日',
-        '学位授与年月日',
-        'Date Granted',
-        showlist=True
-    ),
-    AddProperty(
-        AddProperty.degree_grantor,
-        '学位授与機関',
-        '学位授与機関',
-        'Degree Grantor',
-        multiple=True,
-        showlist=True
-    ),
-    AddProperty(
         AddProperty.files,
         'ファイル情報',
         'ファイル情報',
         'File',
-        multiple=True,
-        showlist=True
-    ),
-    AddProperty(
-        AddProperty.heading,
-        '見出し',
-        '見出し',
-        'Heading',
         multiple=True
     )
 ]
