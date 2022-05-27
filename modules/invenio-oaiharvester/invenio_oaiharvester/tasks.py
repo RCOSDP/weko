@@ -186,7 +186,7 @@ def process_item(record, harvesting, counter):
         dep = WekoDeposit.get_record(hvstid.object_uuid)
         indexes = dep.get("path", []).copy()
         event = ItemEvents.UPDATE
-    elif mapper.is_deleted():
+    elif mapper.is_deleted():    # skip deleted item if item is not registered
         return
     else:
         dep = WekoDeposit.create({})
@@ -208,7 +208,7 @@ def process_item(record, harvesting, counter):
        indexes == dep['path'] and harvesting.update_style == '1':
         return
 
-    if mapper.is_deleted():
+    if mapper.is_deleted():    # delete item if item is already registered
         soft_delete(recid.pid_value)
         event = ItemEvents.DELETE
     else:
