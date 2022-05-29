@@ -611,8 +611,10 @@ def listrecords(**kwargs):
                     is_deleted_workflow(pid_object) or \
                     is_private_workflow(record) or \
                     is_pubdate_in_future(record):
+                e_record = SubElement(
+                    e_listrecords, etree.QName(NS_OAIPMH, 'record'))
                 header(
-                    e_listrecords,
+                    e_record,
                     identifier=pid.pid_value,
                     datestamp=r['updated'],
                     deleted=True
