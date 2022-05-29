@@ -788,25 +788,23 @@ class WekoDeposit(Deposit):
         super(WekoDeposit, self).commit(*args, **kwargs)
         record = RecordMetadata.query.get(self.pid.object_uuid)
         if self.data and len(self.data):
-            # Get bucket default location
+            # Get deposit bucket
             deposit_bucket = Bucket.query.get(self['_buckets']['deposit'])
-            
-            print(deposit_bucket)
-
-            # Get workflow storage location
-            workflow_storage_location = None
-            if session and 'activity_info' in session:
-                activity_info = session['activity_info']
-                from weko_workflow.api import WorkActivity
-                activity = WorkActivity.get_activity_by_id(activity_info['activity_id'])
-                if activity and activity.workflow and activity.workflow.location:
-                    workflow_storage_location = activity.workflow.location
-            if workflow_storage_location == None:
-                workflow_storage_location = Location.get_default()
-
-            if(deposit_bucket.location.id != workflow_storage_location.id):
-                deposit_bucket.default_location =  workflow_storage_location.id
-                db.session.merge(deposit_bucket)
+            if deposit_bucket and deposit_bucket.location:
+                # Get workflow storage location
+                workflow_storage_location = None
+                if session and 'activity_info' in session:
+                    activity_info = session['activity_info']
+                    from weko_workflow.api import WorkActivity
+                    activity = WorkActivity.get_activity_by_id(activity_info['activity_id'])
+                    if activity and activity.workflow and activity.workflow.location:
+                        workflow_storage_location = activity.workflow.location
+                if workflow_storage_location == None:
+                    workflow_storage_location = Location.get_default()
+                if(deposit_bucket.location.id != workflow_storage_location.id):
+                    # Set workflow storage location to bucket default location
+                    deposit_bucket.default_location =  workflow_storage_location.id
+                    db.session.merge(deposit_bucket)
 
             # save item metadata
             self.save_or_update_item_metadata()
