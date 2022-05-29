@@ -538,3 +538,4 @@ def test_mapping_users(client, users, users_index, status_code):
                           data=json.dumps(input),
                           content_type='application/json')
         assert res.status_code == status_code
+
