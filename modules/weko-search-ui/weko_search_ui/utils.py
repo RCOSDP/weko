@@ -155,8 +155,10 @@ class DefaultOrderedDict(OrderedDict):
     def __deepcopy__(self, memo):
         """Modify inherited dict provides __deepcopy__."""
         import copy
+        import pickle
+        pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
         return type(self)(self.default_factory,
-                          copy.deepcopy(self.items()))
+                          pickle_copy(self.items()))
 
     def __repr__(self):
         """Return a nicely formatted representation string."""

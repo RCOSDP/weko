@@ -44,6 +44,8 @@ from .utils import cached_index_tree_json, check_doi_in_index, \
     get_user_roles, is_index_locked, reset_tree, sanitize
 
 
+import pickle
+
 class Indexes(object):
     """Define API for index tree creation and update."""
 
@@ -635,7 +637,8 @@ class Indexes(object):
         role = cls.get_account_role()
         allow = index["browsing_role"].split(',') \
             if len(index["browsing_role"]) else []
-        allow, deny = _get_allow_deny(allow, deepcopy(role), True)
+        pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
+        allow, deny = _get_allow_deny(allow, pickle_copy(role), True)
         index["browsing_role"] = dict(allow=allow, deny=deny)
 
         allow = index["contribute_role"].split(',') \
@@ -651,13 +654,13 @@ class Indexes(object):
         allow_group_id = index["browsing_group"].split(',') \
             if len(index["browsing_group"]) else []
         allow_group, deny_group = _get_group_allow_deny(allow_group_id,
-                                                        deepcopy(group_list))
+                                                        pickle_copy(group_list))
         index["browsing_group"] = dict(allow=allow_group, deny=deny_group)
 
         allow_group_id = index["contribute_group"].split(',') \
             if len(index["contribute_group"]) else []
         allow_group, deny_group = _get_group_allow_deny(allow_group_id,
-                                                        deepcopy(group_list))
+                                                        pickle_copy(group_list))
         index["contribute_group"] = dict(allow=allow_group, deny=deny_group)
 
         return index
@@ -1233,7 +1236,8 @@ class Indexes(object):
                     'parent_state')).filter(Index.id.in_(path))
 
         try:
-            _paths = deepcopy(paths)
+            pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
+            _paths = pickle_copy(paths)
             last_path = _paths.pop(-1).split('/')
             qry = _query(last_path)
             for i in range(len(_paths)):
@@ -1277,7 +1281,8 @@ class Indexes(object):
                     'parent_state')).filter(Index.id.in_(path))
 
         try:
-            _paths = deepcopy(paths)
+            pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
+            _paths = pickle_copy(paths)
             last_path = _paths.pop(-1).split('/')
             qry = _query(last_path)
             for i in range(len(_paths)):
@@ -1305,7 +1310,8 @@ class Indexes(object):
                 ))).label('parent_state'))
 
         try:
-            _ids = deepcopy(ids)
+            pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
+            _ids = pickle_copy(ids)
             qry = _query(_ids.pop(-1))
             for i in range(len(_ids)):
                 _ids[i] = _query(_ids[i])

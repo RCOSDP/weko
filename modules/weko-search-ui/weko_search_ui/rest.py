@@ -49,6 +49,7 @@ from weko_index_tree.api import Indexes
 from weko_index_tree.utils import count_items, recorrect_private_items_count
 from weko_records.models import ItemType
 from werkzeug.utils import secure_filename
+import pickle
 
 
 def create_blueprint(app, endpoints):
@@ -177,6 +178,8 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         page = request.values.get('page', 1, type=int)
         size = request.values.get('size', 20, type=int)
         community_id = request.values.get('community')
+        pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
+        
 
         params = {}
         facets = get_facet_search_query()
@@ -233,7 +236,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         except BaseException:
             paths = []
         agp = rd["aggregations"]["path"]["buckets"]
-        rd["aggregations"]["aggregations"] = copy.deepcopy(agp)
+        rd["aggregations"]["aggregations"] = pickle_copy(agp)
         nlst = []
         items_count = dict()
         public_indexes = Indexes.get_public_indexes_list()
@@ -319,6 +322,8 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 pass
 
         # add info (headings & page info)
+        pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
+        
         try:
             item_type_list = {}
             for hit in rd['hits']['hits']:
@@ -326,11 +331,11 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 item_type_id = \
                     hit['_source']['_item_metadata']['item_type_id']
                 if item_type_id in item_type_list:
-                    item_type = copy.deepcopy(item_type_list[item_type_id])
+                    item_type = pickle_copy(item_type_list[item_type_id])
                 else:
                     item_type = ItemType.query.filter_by(
                         id=item_type_id).first()
-                    item_type_list[item_type_id] = copy.deepcopy(item_type)
+                    item_type_list[item_type_id] = pickle_copy(item_type)
                 # heading
                 heading = get_heading_info(hit, lang, item_type)
                 hit['_source']['heading'] = heading

@@ -11,6 +11,7 @@
 from __future__ import absolute_import, print_function
 
 import copy
+import pickle
 
 import pytz
 from weko_records.api import Mapping
@@ -199,7 +200,8 @@ class PreprocessorMixin(PreprocessorMixinInterface):
             return mapping_dict
 
         links_factory = links_factory or (lambda x, record=None, **k: dict())
-        metadata = copy.deepcopy(record.replace_refs()) if self.replace_refs \
+        pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
+        metadata = pickle_copy(record.replace_refs()) if self.replace_refs \
             else record.dumps()
         # Get keys of metadata record by mapping.
         mapping_key_lang = get_mapping(metadata.get('item_type_id'))

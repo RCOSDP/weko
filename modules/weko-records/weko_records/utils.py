@@ -22,6 +22,7 @@
 import copy
 import re
 import time
+import pickle
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
 
@@ -917,6 +918,7 @@ async def sort_meta_data_by_options(
                 bibliographic_key = s['key'].split(".")[0].replace('[]', '')
                 mlt_bibliographic = src.get(bibliographic_key, {}).get(
                     'attribute_value_mlt')
+                
                 if mlt_bibliographic:
                     sys_bibliographic = _FormatSysBibliographicInformation(
                         copy.deepcopy(mlt_bibliographic),
@@ -1069,9 +1071,11 @@ async def sort_meta_data_by_options(
         return option
 
     try:
-        src_default = copy.deepcopy(
+        pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
+        
+        src_default = pickle_copy(
             record_hit['_source'].get('_item_metadata'))
-        _item_metadata = copy.deepcopy(record_hit['_source'])
+        _item_metadata = pickle_copy(record_hit['_source'])
         src = record_hit['_source']['_item_metadata']
         item_type_id = record_hit['_source'].get('item_type_id') or \
             src.get('item_type_id')

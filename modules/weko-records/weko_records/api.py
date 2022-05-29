@@ -22,6 +22,7 @@
 
 import urllib.parse
 from copy import deepcopy
+import pickle
 from typing import Union
 
 from elasticsearch.exceptions import NotFoundError
@@ -158,7 +159,8 @@ class RecordBase(dict):
 
     def dumps(self, **kwargs):
         """Return pure Python dictionary with record metadata."""
-        return deepcopy(dict(self))
+        pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
+        return pickle_copy(dict(self))
 
 
 class ItemTypeNames(RecordBase):
@@ -376,8 +378,9 @@ class ItemTypes(RecordBase):
         """
         # Get the latest tag of item type by name identifier
         result = cls.get_by_name_id(name_id=result.name_id)
-        old_render = deepcopy(result[0].render)
-        new_render = deepcopy(render)
+        pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
+        old_render = pickle_copy(result[0].render)
+        new_render = pickle_copy(render)
 
         updated_name = False
         tag = result[0].tag + 1
@@ -500,9 +503,11 @@ class ItemTypes(RecordBase):
             :param _delete_list: delete list
             """
             try:
+                pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
+        
                 with db.session.begin_nested():
                     for db_record in db_records:
-                        record_json = deepcopy(db_record.json)
+                        record_json = pickle_copy(db_record.json)
                         if __del_data(record_json, _delete_list):
                             db_record.json = record_json
                             db.session.merge(db_record)

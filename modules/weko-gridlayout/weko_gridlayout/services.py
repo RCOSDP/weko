@@ -21,6 +21,7 @@
 """Service for widget modules."""
 import copy
 import json
+import pickle
 from datetime import date, datetime, timedelta
 from operator import itemgetter
 
@@ -164,7 +165,9 @@ class WidgetItemServices:
             return result
 
         session = db.session
-        multi_lang_data = copy.deepcopy(widget_data.get('multiLangSetting'))
+        pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
+        
+        multi_lang_data = pickle_copy(widget_data.get('multiLangSetting'))
         if not multi_lang_data:
             result['error'] = 'Multiple language data is empty'
             return result
@@ -208,7 +211,9 @@ class WidgetItemServices:
             result['error'] = 'Widget data is empty!'
             return result
 
-        multi_lang_data = copy.deepcopy(widget_data.get('multiLangSetting'))
+        pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
+        
+        multi_lang_data = pickle_copy(widget_data.get('multiLangSetting'))
         if not multi_lang_data:
             result['error'] = 'Multiple language data is empty'
             return result

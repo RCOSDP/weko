@@ -23,6 +23,7 @@ from __future__ import absolute_import, print_function
 import copy
 
 import six
+import pickle
 from flask import current_app, request
 
 from .config import RECORDS_REST_DEFAULT_SORT
@@ -94,7 +95,8 @@ def eval_field(field, asc, nested_sorting=None):
             return field
         else:
             # Field should only have one key and must have an order subkey.
-            field = copy.deepcopy(field)
+            pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
+            field = pickle_copy(field)
             key = list(field.keys())[0]
             field[key]['order'] = reverse_order(field[key]['order'])
             return field

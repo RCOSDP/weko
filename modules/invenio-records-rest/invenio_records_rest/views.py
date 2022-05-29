@@ -13,6 +13,7 @@ from __future__ import absolute_import, print_function
 import copy
 import inspect
 import traceback
+import pickle
 import uuid
 from collections import defaultdict
 from functools import partial, wraps
@@ -826,12 +827,13 @@ class SuggestResource(MethodView):
         """Get suggestions."""
         completions = []
         size = request.values.get('size', type=int)
+        pickle_copy = lambda l: pickle.loads(pickle.dumps(l, -1))
 
         for k in self.suggesters.keys():
             val = request.values.get(k)
             if val:
                 # Get completion suggestions
-                opts = copy.deepcopy(self.suggesters[k])
+                opts = pickle_copy(self.suggesters[k])
 
                 if 'context' in opts.get('completion', {}):
                     ctx_field = opts['completion']['context']
@@ -867,7 +869,7 @@ class SuggestResource(MethodView):
                 for resp in response[field]:
                     for op in resp['options']:
                         if 'payload' in op:
-                            op['_source'] = copy.deepcopy(op['payload'])
+                            op['_source'] = pickle_copy(op['payload'])
         elif ES_VERSION[0] >= 5:
             response = s.execute().to_dict()['suggest']
 
