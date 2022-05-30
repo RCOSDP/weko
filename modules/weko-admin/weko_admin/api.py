@@ -24,7 +24,7 @@ from __future__ import absolute_import, print_function
 import ast
 
 import redis
-from redis import sentinel
+from redis import RedisError
 import requests
 from flask import current_app, render_template
 from flask_babelex import lazy_gettext as _
@@ -67,7 +67,9 @@ def _is_crawler(user_info):
     for restricted_agent_list in restricted_agent_lists:
         empty_list = False            
         try:
-            connection = redis.StrictRedis(current_app.config['CACHE_REDIS_HOST'],port = current_app.config['CRAWLER_REDIS_PORT'],db = current_app.config["CRAWLER_REDIS_DB"])        
+            redis_connection = RedisConnection()
+            connection = redis_connection.connection(db=current_app.config['CRAWLER_REDIS_DB'], kv = True)
+       
             restrict_list = connection.smembers(restricted_agent_list.list_url)
             if len(restrict_list) == 0:
                 current_app.logger.info("Crawler List is expired : " + str(restricted_agent_list.list_url))
