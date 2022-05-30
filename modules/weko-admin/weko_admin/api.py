@@ -68,7 +68,7 @@ def _is_crawler(user_info):
         empty_list = False            
         try:
             redis_connection = RedisConnection()
-            connection = redis_connection.connection(db=current_app.config['CRAWLER_REDIS_DB'], kv = True)
+            connection = redis_connection.connection(db=current_app.config['CRAWLER_REDIS_DB'], kv = False)
        
             restrict_list = connection.smembers(restricted_agent_list.list_url)
             if len(restrict_list) == 0:
