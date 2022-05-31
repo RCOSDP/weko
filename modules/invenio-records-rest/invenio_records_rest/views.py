@@ -52,6 +52,7 @@ from simplekv.memory.redisstore import RedisStore
 import os
 import sys
 
+from weko_redis import RedisConnection
 from flask_security import current_user
 from flask import session
 from invenio_accounts.models import User
@@ -578,12 +579,8 @@ class RecordsListResource(ContentNegotiatedMethodView):
             sort_key_arrangement = sort_element[0][sort_key]["order"]
 
         # Cache Storage
-        sessionstorage = RedisStore(redis.StrictRedis.from_url(
-            'redis://{host}:{port}/1'.format(
-                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
-                port=os.getenv('INVENIO_REDIS_PORT', '6379')
-            )
-        ))
+        redis_connection = RedisConnection()
+        sessionstorage = redis_connection.connection(db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv = True)
 
         # For saving current user to session storage for seach_after use as cache name
         if current_user.is_authenticated:
