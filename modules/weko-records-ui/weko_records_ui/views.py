@@ -20,6 +20,7 @@
 
 """Blueprint for weko-records-ui."""
 
+import re
 import os
 
 import six
@@ -38,7 +39,7 @@ from invenio_oaiserver.response import getrecord
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from invenio_records_ui.signals import record_viewed
+from invenio_records_ui.signals import record_viewed, file_downloaded
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from weko_accounts.views import _redirect_method
@@ -57,6 +58,7 @@ from weko_records.utils import custom_record_medata_for_export, \
 from weko_search_ui.api import get_search_detail_keyword
 from weko_workflow.api import WorkFlow
 
+from weko_records_ui.fd import add_signals_info
 from weko_records_ui.utils import check_items_settings, get_file_info_list
 
 from .ipaddr import check_site_license_permission
@@ -909,5 +911,15 @@ def preview_able(file_json):
 
 @blueprint.route("/get_uri", methods=['POST'])
 def get_uri():
-    
+    data = request.get_json()
+    uri = data.get('uri')
+    pid_value = data.get('pid_value')
+    pattern = re.compile('^/record/{}/files/.*'.format(pid_value))
+    if not pattern.match(uri):
+        pid = PersistentIdentifier.get('recid', pid_value)
+        record = WekoRecord.get_record_by_pid(pid_value)
+        
+        file_obj = ObjectVersion()
+        add_signals_info(record, file_obj)
+        file_downloaded.send(current_app._get_current_object(), obj=file_obj)
     return True

@@ -370,14 +370,13 @@ if (Number($('#preview_count').val()) == 0) {
     $('#preview_carousel_panel').addClass('hide')
 }
 
-function OnLinkClick(uri, pid, record) {
+function OnLinkClick(uri, pid_value) {
     $.ajax({
         url: '/get_uri',
         type: "POST",
         data: {
             uri: uri,
-            pid: pid,
-            record: record
+            pid_value: pid_value
         },
         success: function(data) {
             console.log(data);
