@@ -50,6 +50,7 @@ import redis
 import json
 from simplekv.memory.redisstore import RedisStore
 import os
+import sys
 
 from flask_security import current_user
 from flask import session
@@ -563,20 +564,18 @@ class RecordsListResource(ContentNegotiatedMethodView):
         relevance_sort_is_used = False
         try:
             sort_element = search.to_dict()["sort"]
-        except:
-            # sort_element = "_id"
+        except KeyError:
+            # Since "relevance" sort type has no "sort" key, it will produce a "KeyError"
+            # This exception is for when sort type "relevance" is used
             sort_element = "control_number"
             relevance_sort_is_used = True
 
-        try:
-            if relevance_sort_is_used:
-                sort_key = sort_element
-                sort_key_arrangement = "desc"
-            else:
-                sort_key = list(sort_element[0].keys())[0]
-                sort_key_arrangement = sort_element[0][sort_key]["order"]
-        except:
-            sort_key = list(search.to_dict()["sort"].keys())[0]
+        if relevance_sort_is_used:
+            sort_key = sort_element
+            sort_key_arrangement = "desc"
+        else:
+            sort_key = list(sort_element[0].keys())[0]
+            sort_key_arrangement = sort_element[0][sort_key]["order"]
 
         # Cache Storage
         sessionstorage = RedisStore(redis.StrictRedis.from_url(
@@ -610,19 +609,16 @@ class RecordsListResource(ContentNegotiatedMethodView):
                     sessionstorage.put(
                         f"{cache_name}_url_args",
                         json_data,
-                        ttl_secs=3600
+                        ttl_secs=current_app.config['RECORDS_REST_DEFAULT_TTL_VALUE']
                     )
             else:
-                try:
+                if sessionstorage.redis.exists(cache_name):
                     sessionstorage.delete(cache_name)
-                    sessionstorage.delete(f"{cache_name}_url_args")
-                except:
-                    pass
                 json_data = json.dumps(request.args.to_dict()).encode('utf-8')
                 sessionstorage.put(
                     f"{cache_name}_url_args",
                     json_data,
-                    ttl_secs=3600
+                    ttl_secs=current_app.config['RECORDS_REST_DEFAULT_TTL_VALUE']
                 )
         
         url_args_check()
@@ -631,9 +627,11 @@ class RecordsListResource(ContentNegotiatedMethodView):
 
         if page * size > self.max_result_window:
             # For getting the 10,000th item's "_id"
-            first_10k = search[9999:10000]
-            first_10k = first_10k.execute()
-            first_10k_last_sort_value = get_item_control_number(first_10k)
+            start_value = current_app.config['RECORDS_REST_SEARCH_AFTER_START_VALUE'][0]
+            end_value = current_app.config['RECORDS_REST_SEARCH_AFTER_START_VALUE'][1]
+            search_after_start_value = search[start_value:end_value]
+            search_after_start_value = search_after_start_value.execute()
+            last_sort_value = get_item_control_number(search_after_start_value)
 
             # Sort to be used for search_after regardless of the selected sort type on the search results page
             search._extra.update({"sort": [{"control_number": {"order": f"{sort_key_arrangement}"}}]})
@@ -658,7 +656,9 @@ class RecordsListResource(ContentNegotiatedMethodView):
                     for cached_page in cache_name_stored_data.keys():
                         try:
                             page_list.append(int(cached_page))
-                        except:
+                        except Exception as e:
+                            # This exception is for excluding non numerical values
+                            print(f"{cached_page}: {e}")
                             pass
                     sorted_page_list = sorted(page_list)
 
@@ -668,49 +668,39 @@ class RecordsListResource(ContentNegotiatedMethodView):
                     next_items_sort_value = next_search_after_set.execute()["hits"]["hits"][-1]["_source"]["control_number"]
                     
                 else:
-                    """ Below line is for debugging purposes """
-                    # print('\n\n 1 \n\n')
                     page_list = []
                     cache_name_stored_data = json.loads(sessionstorage.get(cache_name))
                     for cached_page in cache_name_stored_data.keys():
                         try:
                             page_list.append(int(cached_page))
-                        except:
+                        except Exception as e:
+                            # This exception is to filter not numerical values
+                            print(f"{cached_page}: {e}")
                             pass
                     sorted_page_list = sorted(page_list)
 
                     if ((page - 1) == sorted_page_list[-1] or page > sorted_page_list[-1]) and page * size > self.max_result_window:
-                        """ Below line is for debugging purposes """
-                        # print('\n\n 2 \n\n')
                         cache_data = cache_name_stored_data.get(str(int(cache_key) - 1))
                         next_search_after_set = search
                         next_search_after_set._extra.update(search_after_size)
                         next_search_after_set._extra.update({"search_after": [json.loads(sessionstorage.get(cache_name)).get(str(sorted_page_list[-1])).get("control_number")]})
                         
                         try:
-                            """ Below line is for debugging purposes """
-                            # print('\n\n 3 \n\n')
                             if cache_data.get("control_number") is None:
-                                """ Below line is for debugging purposes """
-                                # print('\n\n 4 \n\n')
-                                next_items_sort_value = first_10k_last_sort_value
+                                next_items_sort_value = last_sort_value
 
                             else:
-                                """ Below line is for debugging purposes """
-                                # print('\n\n 5 \n\n')
-                                """ try and except block is for debugging purposes """
                                 next_items_sort_value = get_item_control_number(next_search_after_set.execute())
-                        except:
-                            """ Below line is for debugging purposes """
-                            # print(print('\n\n 6 \n\n'))
+                        except Exception as err:
+                            # This exception is in case cache_data.get("control_number") somehow throws an unknown error
+                            print(f"get('control_number) produced the error: {err}")
+
                             try:
                                 next_items_sort_value = get_item_control_number(next_search_after_set.execute())
-                                """ Below line is for debugging purposes """
-                                # print(print('\n\n 7 \n\n'))
-                            except:
-                                next_items_sort_value = first_10k_last_sort_value
-                                """ Below line is for debugging purposes """
-                                # print(print('\n\n 8 \n\n'))
+                            except Exception as e:
+                                # This exception is for getting value of the 10,000th element
+                                print(f"get_item_control_number got an error: {e}\nLast element value will be used")
+                                next_items_sort_value = last_sort_value
 
                         next_search_after_set = None
                         cache_name_stored_data[cache_key] = {"control_number": next_items_sort_value}
@@ -719,12 +709,12 @@ class RecordsListResource(ContentNegotiatedMethodView):
                         sessionstorage.put(
                             cache_name,
                             json_data,
-                            ttl_secs=3600
+                            ttl_secs=current_app.config['RECORDS_REST_DEFAULT_TTL_VALUE']
                         )
                     else:
-                        next_items_sort_value = first_10k_last_sort_value
+                        next_items_sort_value = last_sort_value
             else:
-                next_items_sort_value = first_10k_last_sort_value
+                next_items_sort_value = last_sort_value
 
             if sessionstorage.redis.exists(cache_name):
                 if json.loads(sessionstorage.get(cache_name)).get(cache_key):
@@ -749,7 +739,6 @@ class RecordsListResource(ContentNegotiatedMethodView):
         if query:
             urlkwargs['q'] = query
 
-        # current_app.logger.debug(search.to_dict())
         # Execute search
         search_result = search.execute()
 
@@ -758,21 +747,8 @@ class RecordsListResource(ContentNegotiatedMethodView):
             sessionstorage.put(
                 cache_name,
                 json_data,
-                ttl_secs=3600
+                ttl_secs=current_app.config['RECORDS_REST_DEFAULT_TTL_VALUE']
             )
-
-        # This snippet is for checking if search_after is extracting the last item's _id of the previous page
-        """
-        print('\n\n SEARCH AFTER TEST')
-        print('cache name')
-        if sessionstorage.redis.exists(cache_name):
-            print(json.loads(sessionstorage.get(cache_name)))
-        else:
-            print(sessionstorage.redis.exists(cache_name))
-        print('page cache')
-        print(json.loads(sessionstorage.get(f"{cache_name}_url_args")))
-        print('SEARCH AFTER TEST \n\n')
-        """
 
         # Generate links for prev/next
         urlkwargs.update(
