@@ -369,3 +369,22 @@ function handleConfirmButton() {
 if (Number($('#preview_count').val()) == 0) {
     $('#preview_carousel_panel').addClass('hide')
 }
+
+function OnLinkClick(uri, pid, record) {
+    $.ajax({
+        url: '/get_uri',
+        type: "POST",
+        data: {
+            uri: uri,
+            pid: pid,
+            record: record
+        },
+        success: function(data) {
+            console.log(data);
+        },
+        error: function(error) {
+          console.log(error);
+        }
+      });
+    window.open(uri);
+}

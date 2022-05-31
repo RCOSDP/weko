@@ -906,3 +906,8 @@ def preview_able(file_json):
         if file_size > file_size_limit:
             return False
     return True
+
+@blueprint.route("/get_uri", methods=['POST'])
+def get_uri():
+    
+    return True
