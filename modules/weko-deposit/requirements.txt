@@ -130,6 +130,7 @@ speaklater==1.3
 SQLAlchemy==1.2.19
 SQLAlchemy-Continuum==1.3.6
 SQLAlchemy-Utils==0.35.0
+tcptest==0.6.0
 testpath==0.3.1
 tornado==4.5.3
 traitlets==4.3.2
@@ -251,3 +252,4 @@ invenio-csl-rest==1.0.0a1
 -e ../weko-items-autofill
 -e ../weko-sitemap
 -e ../invenio-iiif
+-e ../weko-redis

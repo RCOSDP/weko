@@ -29,7 +29,7 @@ from invenio_access import InvenioAccess
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 
-
+from invenio_accounts.models import User, Role
 from weko_gridlayout import WekoGridLayout
 from weko_gridlayout.views import blueprint
 from weko_gridlayout.views import blueprint_api
@@ -108,19 +108,37 @@ def db(app):
 def users(app, db):
     """Create users."""
     ds = app.extensions['invenio-accounts'].datastore
-    user = create_test_user(email='test@test.org')
-    contributor = create_test_user(email='test2@test.org')
-    comadmin = create_test_user(email='test3@test.org')
-    repoadmin = create_test_user(email='test4@test.org')
-    sysadmin = create_test_user(email='test5@test.org')
+    user_count = User.query.filter_by(email='test@test.org').count()
+    if user_count != 1:
+        user = create_test_user(email='test@test.org')
+        contributor = create_test_user(email='test2@test.org')
+        comadmin = create_test_user(email='test3@test.org')
+        repoadmin = create_test_user(email='test4@test.org')
+        sysadmin = create_test_user(email='test5@test.org')
 
-    r1 = ds.create_role(name='System Administrator')
+    else:
+        user = User.query.filter_by(email='test@test.org').first()
+        contributor = User.query.filter_by(email='test2@test.org').first()
+        comadmin = User.query.filter_by(email='test3@test.org').first()
+        repoadmin = User.query.filter_by(email='test4@test.org').first()
+        sysadmin = User.query.filter_by(email='test5@test.org').first()
+
+    role_count = Role.query.filter_by(name='System Administrator').count()
+    if role_count != 1:
+        r1 = ds.create_role(name='System Administrator')
+        r2 = ds.create_role(name='Repository Administrator')
+        r3 = ds.create_role(name='Contributor')
+        r4 = ds.create_role(name='Community Administrator')
+
+    else:
+        r1 = Role.query.filter_by(name='System Administrator').first()
+        r2 = Role.query.filter_by(name='Repository Administrator').first()
+        r3 = Role.query.filter_by(name='Contributor').first()
+        r4 = Role.query.filter_by(name='Community Administrator').first()
+
     ds.add_role_to_user(sysadmin, r1)
-    r2 = ds.create_role(name='Repository Administrator')
     ds.add_role_to_user(repoadmin, r2)
-    r3 = ds.create_role(name='Contributor')
     ds.add_role_to_user(contributor, r3)
-    r4 = ds.create_role(name='Community Administrator')
     ds.add_role_to_user(comadmin, r4)
 
     # Assign access authorization

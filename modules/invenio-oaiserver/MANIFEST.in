@@ -31,3 +31,7 @@ recursive-include invenio_oaiserver *.xsl
 recursive-include tests *.json
 recursive-include tests *.py
 recursive-include tests *.xml
+
+# added by check-manifest
+include *.properties
+include tox.ini

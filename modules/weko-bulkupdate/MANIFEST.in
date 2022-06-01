@@ -33,3 +33,6 @@ recursive-include docs Makefile
 recursive-include examples *.py
 recursive-include examples *.sh
 recursive-include weko_bulkupdate *.html
+
+# added by check-manifest
+include *.properties

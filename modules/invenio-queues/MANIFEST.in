@@ -42,3 +42,7 @@ recursive-include examples *.sh
 recursive-include invenio_queues *.html
 recursive-include invenio_queues *.po *.pot *.mo
 recursive-include tests *.py
+
+# added by check-manifest
+include *.properties
+include tox.ini

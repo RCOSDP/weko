@@ -59,3 +59,6 @@ recursive-include weko_admin *.js
 recursive-include weko_admin *.png
 recursive-include weko_admin *.py
 recursive-include weko_admin *.tpl
+
+# added by check-manifest
+include *.properties

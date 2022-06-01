@@ -42,6 +42,8 @@ from invenio_records_rest import InvenioRecordsREST
 from invenio_pidstore import InvenioPIDStore
 from invenio_i18n.ext import InvenioI18N, current_i18n
 from invenio_records_rest import InvenioRecordsREST
+from invenio_records_rest.views import create_blueprint_from_app
+from invenio_records_rest.utils import PIDConverter
 
 from weko_search_ui import WekoSearchUI, WekoSearchREST
 from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX
@@ -68,8 +70,6 @@ def base_app(instance_path):
         SECRET_KEY="SECRET_KEY",
         TESTING=True,
         INDEX_IMG='indextree/36466818-image.jpg',
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         WEKO_SEARCH_REST_ENDPOINTS = dict(
             recid=dict(
                 pid_type='recid',
@@ -101,6 +101,8 @@ def base_app(instance_path):
         I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English")],
         I18N_SESSION_KEY="my_session_key",
     )
+    app_.url_map.converters['pid'] = PIDConverter
+    
     Babel(app_)
     InvenioDB(app_)
     InvenioI18N(app_)
@@ -109,6 +111,7 @@ def base_app(instance_path):
     InvenioRecordsREST(app_)
     InvenioPIDStore(app_)
     WekoSearchUI(app_)
+    app_.register_blueprint(create_blueprint_from_app(app_))
 
     return app_
 

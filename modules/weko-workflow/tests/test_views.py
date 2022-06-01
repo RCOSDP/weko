@@ -170,20 +170,13 @@ def test_save_feedback_maillist_nologin(client):
     (3, 200),
     (4, 200),
 ])
-def test_save_feedback_maillist_users(client, users, users_index, status_code):
+def test_save_feedback_maillist_users(client, users, db_register, users_index, status_code):
     """Test of save feedback maillist."""
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.save_feedback_maillist',
                   activity_id='1', action_id=1)
     input = {}
-    activity = Activity(activity_id='1',workflow_id=1, flow_id=1,
-                        action_id=2, activity_login_user=1,
-                        activity_update_user=1,
-                        activity_start='2022/04/14 3:01:53.931',
-                        activity_community_id=3,
-                        activity_confirm_term_of_use=True,
-                        title='test', shared_user_id=-1, extra_info={},
-                        action_order=6)
+
     roles = {
         'allow': [],
         'deny': []
@@ -193,12 +186,10 @@ def test_save_feedback_maillist_users(client, users, users_index, status_code):
         'deny': []
     }
 
-    with patch('weko_workflow.views.WorkActivity.get_activity_by_id',
-               return_value=activity):
-        with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
-                   return_value=(roles, action_users)):
-            res = _post(client, url, input)
-            assert res.status_code == status_code
+    with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+               return_value=(roles, action_users)):
+        res = _post(client, url, input)
+        assert res.status_code == status_code
 
 
 def test_previous_action_nologin(client):
@@ -220,20 +211,13 @@ def test_previous_action_nologin(client):
     (3, 200),
     (4, 200),
 ])
-def test_previous_action_users(client, users, users_index, status_code):
+def test_previous_action_users(client, users, db_register, users_index, status_code):
     """Test of previous action."""
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.previous_action', activity_id='1',
-                  action_id=1, req=1)
+                  action_id=2, req=1)
     input = {}
-    activity = Activity(activity_id='1',workflow_id=1, flow_id=1,
-                        action_id=2, activity_login_user=1,
-                        activity_update_user=1,
-                        activity_start='2022/04/14 3:01:53.931',
-                        activity_community_id=3,
-                        activity_confirm_term_of_use=True,
-                        title='test', shared_user_id=-1, extra_info={},
-                        action_order=6)
+
     roles = {
         'allow': [],
         'deny': []
@@ -243,15 +227,13 @@ def test_previous_action_users(client, users, users_index, status_code):
         'deny': []
     }
 
-    with patch('weko_workflow.views.WorkActivity.get_activity_by_id',
-               return_value=activity):
-        with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
-                   return_value=(roles, action_users)):
-            res = _post(client, url, input)
-            assert res.status_code == status_code
+    with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+               return_value=(roles, action_users)):
+        res = _post(client, url, input)
+        assert res.status_code == status_code
 
 
-def test_next_action_nologin(client):
+def test_next_action_nologin(client, db_register):
     """Test of next action."""
     url = url_for('weko_workflow.next_action', activity_id='1',
                   action_id=1)
@@ -270,20 +252,13 @@ def test_next_action_nologin(client):
     (3, 200),
     (4, 200),
 ])
-def test_next_action_users(client, users, users_index, status_code):
+def test_next_action_users(client, users, db_register, users_index, status_code):
     """Test of next action."""
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.next_action', activity_id='1',
                   action_id=1)
     input = {}
-    activity = Activity(activity_id='1',workflow_id=1, flow_id=1,
-                        action_id=2, activity_login_user=1,
-                        activity_update_user=1,
-                        activity_start='2022/04/14 3:01:53.931',
-                        activity_community_id=3,
-                        activity_confirm_term_of_use=True,
-                        title='test', shared_user_id=-1, extra_info={},
-                        action_order=6)
+
     roles = {
         'allow': [],
         'deny': []
@@ -293,12 +268,10 @@ def test_next_action_users(client, users, users_index, status_code):
         'deny': []
     }
 
-    with patch('weko_workflow.views.WorkActivity.get_activity_by_id',
-               return_value=activity):
-        with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
-                   return_value=(roles, action_users)):
-            res = _post(client, url, input)
-            assert res.status_code == status_code
+    with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+               return_value=(roles, action_users)):
+        res = _post(client, url, input)
+        assert res.status_code == status_code
 
 
 def test_cancel_action_nologin(client):
@@ -320,20 +293,12 @@ def test_cancel_action_nologin(client):
     (3, 200),
     (4, 200),
 ])
-def test_cancel_action_users(client, users, users_index, status_code):
+def test_cancel_action_users(client, users, db_register, users_index, status_code):
     """Test of cancel action."""
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.cancel_action',
                   activity_id='1', action_id=1)
     input = {'action_version': 1, 'commond': 1}
-    activity = Activity(activity_id='1',workflow_id=1, flow_id=1,
-                        action_id=2, activity_login_user=1,
-                        activity_update_user=1,
-                        activity_start='2022/04/14 3:01:53.931',
-                        activity_community_id=3,
-                        activity_confirm_term_of_use=True,
-                        title='test', shared_user_id=-1, extra_info={},
-                        action_order=6)
     roles = {
         'allow': [],
         'deny': []
@@ -343,16 +308,14 @@ def test_cancel_action_users(client, users, users_index, status_code):
         'deny': []
     }
 
-    with patch('weko_workflow.views.WorkActivity.get_activity_by_id',
-               return_value=activity):
-        with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
-                   return_value=(roles, action_users)):
-            with patch('weko_workflow.views.WorkActivity.upt_activity_action_status',
-                       return_value={}):
-                with patch('weko_workflow.views.WorkActivity.quit_activity',
-                           return_value=None):
-                    res = _post(client, url, input)
-                    assert res.status_code == status_code
+    with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+               return_value=(roles, action_users)):
+        with patch('weko_workflow.views.WorkActivity.upt_activity_action_status',
+                   return_value={}):
+            with patch('weko_workflow.views.WorkActivity.quit_activity',
+                       return_value=None):
+                res = _post(client, url, input)
+                assert res.status_code == status_code
 
 
 def test_send_mail_nologin(client):
@@ -380,9 +343,9 @@ def test_send_mail_users(client, users, users_index, status_code):
     url = url_for('weko_workflow.send_mail', activity_id='1',
                   mail_template='a')
     input = {}
-
-    res = _post(client, url, input)
-    assert res.status_code == status_code
+    with patch('weko_workflow.views.process_send_reminder_mail'):
+        res = _post(client, url, input)
+        assert res.status_code == status_code
 
 
 def test_lock_activity_nologin(client):
@@ -464,20 +427,12 @@ def test_withdraw_confirm_nologin(client):
     (3, 200),
     (4, 200),
 ])
-def test_withdraw_confirm_users(client, users, users_index, status_code):
+def test_withdraw_confirm_users(client, users, db_register, users_index, status_code):
     """Test of withdraw confirm."""
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.withdraw_confirm', activity_id='1',
                   action_id=2)
     input = {}
-    activity = Activity(activity_id='1',workflow_id=1, flow_id=1,
-                        action_id=2, activity_login_user=1,
-                        activity_update_user=1,
-                        activity_start='2022/04/14 3:01:53.931',
-                        activity_community_id=3,
-                        activity_confirm_term_of_use=True,
-                        title='test', shared_user_id=-1, extra_info={},
-                        action_order=6)
     roles = {
         'allow': [],
         'deny': []
@@ -487,12 +442,10 @@ def test_withdraw_confirm_users(client, users, users_index, status_code):
         'deny': []
     }
 
-    with patch('weko_workflow.views.WorkActivity.get_activity_by_id',
-               return_value=activity):
-        with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
-                   return_value=(roles, action_users)):
-            res = _post(client, url, input)
-            assert res.status_code == status_code
+    with patch('weko_workflow.views.WorkActivity.get_activity_action_role',
+               return_value=(roles, action_users)):
+        res = _post(client, url, input)
+        assert res.status_code == status_code
 
 
 def test_display_activity_nologin(client):
@@ -513,7 +466,7 @@ def test_display_activity_nologin(client):
     (3, 200),
     (4, 200),
 ])
-def test_display_activity_users(client, users, users_index, status_code):
+def test_display_activity_users(client, users, db_register, users_index, status_code):
     """
     Test of display activity.
     Expected: users[0]: AssertionError   
@@ -540,10 +493,7 @@ def test_display_activity_users(client, users, users_index, status_code):
         'deny': []
     }
 
-    workflow_detail = WorkFlow(
-        flows_id='{39ba43f0-c876-4086-97f4-d9aed1be8083}',
-        itemtype_id=15, flow_id=1, is_deleted=False, open_restricted=True,
-        is_gakuninrdm=False)
+    workflow_detail = WorkFlow.query.filter_by(id=1).one_or_none()
     mock_render_template = MagicMock(return_value=jsonify({}))
     with patch('weko_workflow.views.get_activity_display_info',
                return_value=(action_endpoint, action_id, activity_detail, cur_action, histories, item, \

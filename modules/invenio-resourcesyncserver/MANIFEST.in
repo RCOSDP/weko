@@ -38,3 +38,6 @@ recursive-include invenio_resourcesyncserver *.css
 recursive-include invenio_resourcesyncserver *.html
 recursive-include invenio_resourcesyncserver *.js
 recursive-include invenio_resourcesyncserver *.py
+
+# added by check-manifest
+include *.properties
