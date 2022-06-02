@@ -56,6 +56,8 @@ from flask_security import current_user
 from flask import session
 from invenio_accounts.models import User
 
+from .config import RECORDS_REST_DEFAULT_TTL_VALUE
+
 def elasticsearch_query_parsing_exception_handler(error):
     """Handle query parsing exceptions from ElasticSearch."""
     description = _('The syntax of the search query is invalid.')
@@ -565,11 +567,13 @@ class RecordsListResource(ContentNegotiatedMethodView):
         try:
             sort_element = search.to_dict()["sort"]
         except KeyError:
+            raise ValueError
             # Since "relevance" sort type has no "sort" key, it will produce a "KeyError"
             # This exception is for when sort type "relevance" is used
             sort_element = "control_number"
             relevance_sort_is_used = True
-
+        except:
+            current_app.logger.error(traceback.format_exc())
         if relevance_sort_is_used:
             sort_key = sort_element
             sort_key_arrangement = "desc"
@@ -609,7 +613,10 @@ class RecordsListResource(ContentNegotiatedMethodView):
                     sessionstorage.put(
                         f"{cache_name}_url_args",
                         json_data,
-                        ttl_secs=current_app.config['RECORDS_REST_DEFAULT_TTL_VALUE']
+                        ttl_secs=current_app.config.get(
+                            'RECORDS_REST_DEFAULT_TTL_VALUE',
+                            RECORDS_REST_DEFAULT_TTL_VALUE
+                        )
                     )
             else:
                 if sessionstorage.redis.exists(cache_name):
@@ -618,7 +625,10 @@ class RecordsListResource(ContentNegotiatedMethodView):
                 sessionstorage.put(
                     f"{cache_name}_url_args",
                     json_data,
-                    ttl_secs=current_app.config['RECORDS_REST_DEFAULT_TTL_VALUE']
+                    ttl_secs=current_app.config.get(
+                        'RECORDS_REST_DEFAULT_TTL_VALUE',
+                        RECORDS_REST_DEFAULT_TTL_VALUE
+                    )
                 )
         
         url_args_check()
@@ -627,8 +637,8 @@ class RecordsListResource(ContentNegotiatedMethodView):
 
         if page * size > self.max_result_window:
             # For getting the 10,000th item's "_id"
-            start_value = current_app.config['RECORDS_REST_SEARCH_AFTER_START_VALUE'][0]
-            end_value = current_app.config['RECORDS_REST_SEARCH_AFTER_START_VALUE'][1]
+            start_value = int(self.max_result_window) - 1
+            end_value = int(self.max_result_window)
             search_after_start_value = search[start_value:end_value]
             search_after_start_value = search_after_start_value.execute()
             last_sort_value = get_item_control_number(search_after_start_value)
@@ -656,10 +666,14 @@ class RecordsListResource(ContentNegotiatedMethodView):
                     for cached_page in cache_name_stored_data.keys():
                         try:
                             page_list.append(int(cached_page))
-                        except Exception as e:
+                        except ValueError:
                             # This exception is for excluding non numerical values
-                            print(f"{cached_page}: {e}")
+                            current_app.logger.error(f"{cached_page}: {e}")
+                            current_app.logger.error(traceback.format_exc())
                             pass
+                        except:
+                            current_app.logger.error('An error occurred besides the possibly expected KeyError')
+                            current_app.logger.error(traceback.format_exc())
                     sorted_page_list = sorted(page_list)
 
                     next_search_after_set = search
@@ -673,10 +687,14 @@ class RecordsListResource(ContentNegotiatedMethodView):
                     for cached_page in cache_name_stored_data.keys():
                         try:
                             page_list.append(int(cached_page))
-                        except Exception as e:
+                        except KeyError:
                             # This exception is to filter not numerical values
-                            print(f"{cached_page}: {e}")
+                            current_app.logger.error(f"{cached_page}: {e}")
+                            current_app.logger.error(traceback.format_exc())
                             pass
+                        except:
+                            current_app.logger.error('An error occurred besides the possibly expected KeyError')
+                            current_app.logger.error(traceback.format_exc())
                     sorted_page_list = sorted(page_list)
 
                     if ((page - 1) == sorted_page_list[-1] or page > sorted_page_list[-1]) and page * size > self.max_result_window:
@@ -688,18 +706,23 @@ class RecordsListResource(ContentNegotiatedMethodView):
                         try:
                             if cache_data.get("control_number") is None:
                                 next_items_sort_value = last_sort_value
-
                             else:
                                 next_items_sort_value = get_item_control_number(next_search_after_set.execute())
                         except Exception as err:
-                            # This exception is in case cache_data.get("control_number") somehow throws an unknown error
-                            print(f"get('control_number) produced the error: {err}")
+                            """
+                            Possible known error:
+                            1) elasticsearch.exceptions.RequestError: TransportError(400, 'parsing_exception', 'Expected [VALUE_STRING] or [VALUE_NUMBER] or [VALUE_BOOLEAN] or [VALUE_NULL] but found [START_ARRAY] inside search_after.')
+                            2) elasticsearch.exceptions.TransportError: TransportError(500, 'search_phase_execution_exception', 'Cannot invoke "java.lang.Long.longValue()" because "value" is null')
+                            """
+                            current_app.logger.error('*** If search_after runs properly ignore this error')
+                            current_app.logger.error(traceback.format_exc())
 
                             try:
                                 next_items_sort_value = get_item_control_number(next_search_after_set.execute())
                             except Exception as e:
                                 # This exception is for getting value of the 10,000th element
-                                print(f"get_item_control_number got an error: {e}\nLast element value will be used")
+                                current_app.logger.error('*** If search_after runs properly ignore this error')
+                                current_app.logger.error(traceback.format_exc())
                                 next_items_sort_value = last_sort_value
 
                         next_search_after_set = None
@@ -709,7 +732,10 @@ class RecordsListResource(ContentNegotiatedMethodView):
                         sessionstorage.put(
                             cache_name,
                             json_data,
-                            ttl_secs=current_app.config['RECORDS_REST_DEFAULT_TTL_VALUE']
+                            ttl_secs=current_app.config.get(
+                                'RECORDS_REST_DEFAULT_TTL_VALUE',
+                                RECORDS_REST_DEFAULT_TTL_VALUE
+                            )
                         )
                     else:
                         next_items_sort_value = last_sort_value
@@ -747,7 +773,10 @@ class RecordsListResource(ContentNegotiatedMethodView):
             sessionstorage.put(
                 cache_name,
                 json_data,
-                ttl_secs=current_app.config['RECORDS_REST_DEFAULT_TTL_VALUE']
+                ttl_secs=current_app.config.get(
+                    'RECORDS_REST_DEFAULT_TTL_VALUE',
+                    RECORDS_REST_DEFAULT_TTL_VALUE
+                )
             )
 
         # Generate links for prev/next
