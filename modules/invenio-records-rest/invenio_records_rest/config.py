@@ -407,8 +407,5 @@ RECORDS_REST_DEFAULT_MAPPING_DICT = \
     dict(RECORDS_REST_DEFAULT_MAPPING_KEY, **RECORDS_REST_DEFAULT_MAPPING_LANG)
 """Dictionary mapping key and language default."""
 
-RECORDS_REST_SEARCH_AFTER_START_VALUE = [9999,10000]
-"""For getting the first value for Elasticsearch's Search After feature"""
-
 RECORDS_REST_DEFAULT_TTL_VALUE = 3600
 """Default number of seconds for ttl value"""
