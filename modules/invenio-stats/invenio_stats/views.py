@@ -7,6 +7,7 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """InvenioStats views."""
+import uuid
 
 import calendar
 from datetime import datetime, timedelta
@@ -236,9 +237,15 @@ class QueryFileStatsCount(WekoQuery):
         unknown_download = 0
         unknown_preview = 0
 
+        # get root_file_id for general file download/preview event
         if not root_file_id:
             obv = ObjectVersion.get(bucket_id, file_key)
-            root_file_id = str(obv.root_file_id) if obv else None
+            root_file_id = str(obv.root_file_id) if obv else ''
+        # get root_file_id for url file download/preview event
+        if not root_file_id and '{URL_SLASH}' in file_key:
+            file_key = file_key.replace('{URL_SLASH}', '/')
+            file_id_key = '{}_{}'.format(bucket_id, file_key)
+            root_file_id = str(uuid.uuid3(uuid.NAMESPACE_URL, file_id_key))
 
         params = {'bucket_id': bucket_id,
                   'file_key': file_key,

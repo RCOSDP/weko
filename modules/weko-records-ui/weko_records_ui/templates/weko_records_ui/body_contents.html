@@ -166,7 +166,7 @@
                           <!-- Show FileName/Label -->
                           {%- if access_permission and billing_file_access_permission -%}
                             <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
-                              {% if text_url %} href="javascript:OnLinkClick('{{ text_url }}', {{ pid.pid_value }})" {% endif %}>
+                              {% if text_url %} href="javascript:OnLinkClick('{{ text_url }}', {{ pid.pid_value }}, '{{ file.accessrole }}')" {% endif %}>
                               {% autoescape false %}
                               {{ file_label | escape_str }} {{ filesize }}
                               {% endautoescape %}
@@ -271,9 +271,9 @@
                         <!-- Show button 'Information' -->
                         {%- set file_details_url = url_for('invenio_records_ui.recid_file_details', pid_value=pid.pid_value, filename=file.filename or '[No FileName]') %}
                         {%- if file.filename -%}
-                          {% set file_detail_url = file_details_url + '?filename=' + file.filename %}
+                          {% set file_detail_url = file_details_url + '?filename=' + file.filename + '&file_order=' + file.file_order|string %}
                         {%- else -%}
-                          {% set file_detail_url = file_details_url + '?file_order=' +file.file_order|string %}
+                          {% set file_detail_url = file_details_url + '?file_order=' + file.file_order|string %}
                         {%- endif -%}
                         {%- if community -%}
                           {% set file_detail_url = file_detail_url + "&community=" + community.id %}

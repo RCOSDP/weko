@@ -370,14 +370,17 @@ if (Number($('#preview_count').val()) == 0) {
     $('#preview_carousel_panel').addClass('hide')
 }
 
-function OnLinkClick(uri, pid_value) {
+function OnLinkClick(uri, pid_value, accessrole) {
+    let data = {
+        uri: uri,
+        pid_value: pid_value,
+        accessrole: accessrole
+    };
     $.ajax({
         url: '/get_uri',
         type: "POST",
-        data: {
-            uri: uri,
-            pid_value: pid_value
-        },
+        contentType: "application/json",
+        data: JSON.stringify(data),
         success: function(data) {
             console.log(data);
         },
