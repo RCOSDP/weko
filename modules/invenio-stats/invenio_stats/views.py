@@ -256,18 +256,24 @@ class QueryFileStatsCount(WekoQuery):
             })
 
         try:
-            # file download
-            query_download_total_cfg = current_stats.queries[
-                'bucket-file-download-total']
-            query_download_total = query_download_total_cfg.query_class(
-                **query_download_total_cfg.query_config)
-            res_download_total = query_download_total.run(**params)
-            # file preview
-            query_preview_total_cfg = current_stats.queries[
-                'bucket-file-preview-total']
-            query_preview_total = query_preview_total_cfg.query_class(
-                **query_preview_total_cfg.query_config)
-            res_preview_total = query_preview_total.run(**params)
+            try:
+                # file download
+                query_download_total_cfg = current_stats.queries[
+                    'bucket-file-download-total']
+                query_download_total = query_download_total_cfg.query_class(
+                    **query_download_total_cfg.query_config)
+                res_download_total = query_download_total.run(**params)
+            except Exception as e:
+                res_download_total = {'value': 0, 'buckets': []}
+            try:
+                # file preview
+                query_preview_total_cfg = current_stats.queries[
+                    'bucket-file-preview-total']
+                query_preview_total = query_preview_total_cfg.query_class(
+                    **query_preview_total_cfg.query_config)
+                res_preview_total = query_preview_total.run(**params)
+            except Exception as e:
+                res_preview_total = {'value': 0, 'buckets': []}
             # total
             result['download_total'] = res_download_total['value']
             result['preview_total'] = res_preview_total['value']
