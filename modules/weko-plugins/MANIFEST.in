@@ -51,3 +51,6 @@ recursive-include misc *.py
 recursive-include misc *.rst
 recursive-include tests *.py
 recursive-include weko_plugins *.html
+
+# added by check-manifest
+include *.properties

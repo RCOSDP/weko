@@ -28,7 +28,6 @@ from flask import url_for
 from mock import patch, MagicMock
 from invenio_accounts.testutils import login_user_via_session
 import sqlalchemy
-from weko_authors.models import Authors
 
 
 class MockIndexer():
@@ -48,8 +47,12 @@ class MockIndexer():
             return {}
 
         def get(self, index=None, doc_type=None, id=None, body=None):
-            return {"_source": {"authorNameInfo": "", "authorIdInfo": "",
-                                "emailInfo": ""}}
+            return {"_source": {"authorNameInfo": {},
+                                "authorIdInfo": {},
+                                "emailInfo": {},
+                                "affiliationInfo":{}
+                                }
+                    }
 
         def update(self, index=None, doc_type=None, id=None, body=None):
             return {"_source": {"authorNameInfo": "", "authorIdInfo": "",
@@ -354,9 +357,10 @@ def test_create_users(client, users, users_index, status_code):
     }
     mock_indexer = MagicMock(side_effect=MockIndexer)
     with patch('weko_authors.views.RecordIndexer', mock_indexer):
-        res = client.post('/api/authors/add',
-                          data=json.dumps(input),
-                          content_type='application/json')
+        with patch('weko_authors.views.Authors.get_sequence', return_value=1):
+            res = client.post('/api/authors/add',
+                              data=json.dumps(input),
+                              content_type='application/json')
     assert res.status_code == status_code
 
 
@@ -431,7 +435,8 @@ def test_update_author_users(client, users, create_author, users_index, status_c
                     {"email": "example@com"}
                 ]
         }
-    author_id = create_author(author_data)
+    id = 1
+    author_id = create_author(author_data, id)
     login_user_via_session(client=client, email=users[users_index]['email'])
     input = {
             "id": author_id,
@@ -492,7 +497,30 @@ def test_delete_author_users(client, users, create_author, users_index, status_c
     Test of delete author data.
     :param client: The flask client.
     """
-    id = create_author
+    author_data = {
+                "authorNameInfo": [
+                    {
+                        "familyName": "テスト",
+                        "firstName": "ハナコ",
+                        "fullName": "",
+                        "language": "ja-Kana",
+                        "nameFormat": "familyNmAndNm",
+                        "nameShowFlg": "true"
+                    }
+                ],
+                "authorIdInfo": [
+                    {
+                        "idType": "2",
+                        "authorId": "01234",
+                        "authorIdShowFlg": "true"
+                    }
+                ],
+                "emailInfo": [
+                    {"email": "example@com"}
+                ]
+        }
+    author_id = 1
+    id = create_author(author_data, author_id)
     login_user_via_session(client=client, email=users[users_index]['email'])
     input = {"pk_id": str(id)}
     mock_indexer = MagicMock(side_effect=MockIndexer)

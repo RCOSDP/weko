@@ -23,6 +23,9 @@
 import os
 import shutil
 import tempfile
+import json
+import uuid
+from datetime import datetime
 
 import pytest
 from flask import Flask
@@ -40,8 +43,9 @@ from invenio_db import InvenioDB, db as db_
 from invenio_stats import InvenioStats
 # from weko_records_ui import WekoRecordsUI
 from weko_theme import WekoTheme
+from weko_records.models import ItemTypeName, ItemType
 from weko_workflow import WekoWorkflow
-from weko_workflow.models import Activity
+from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
 from weko_workflow.views import blueprint as weko_workflow_blueprint
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
@@ -63,8 +67,11 @@ def base_app(instance_path):
     app_.config.update(
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
+        SERVER_NAME='TEST_SERVER',
+        # SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+        #                                   'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
+        SQLALCHEMY_DATABASE_URI=os.environ.get(
+            'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         ACCOUNTS_USERINFO_HEADERS=True,
         WEKO_PERMISSION_SUPER_ROLE_USER=['System Administrator',
@@ -291,6 +298,7 @@ def db(app):
     db_.create_all()
     yield db_
     db_.session.remove()
+    db_.drop_all()
     # drop_database(str(db_.engine.url))
 
 
@@ -357,3 +365,73 @@ def users(app, db):
         {'email': sysadmin.email, 'id': sysadmin.id,
          'obj': sysadmin},
     ]
+
+@pytest.fixture()
+def db_register(app, db, users):
+    action_datas=dict()
+    with open('tests/data/actions.json', 'r') as f:
+        action_datas = json.load(f)
+    actions_db = list()
+    with db.session.begin_nested():
+        for data in action_datas:
+            actions_db.append(Action(**data))
+        db.session.add_all(actions_db)
+    
+    actionstatus_datas = dict()
+    with open('tests/data/action_status.json') as f:
+        actionstatus_datas = json.load(f)
+    actionstatus_db = list()
+    with db.session.begin_nested():
+        for data in actionstatus_datas:
+            actionstatus_db.append(ActionStatus(**data))
+        db.session.add_all(actionstatus_db)
+
+    flow_define = FlowDefine(flow_id=uuid.uuid4(),
+                             flow_name='Registration Flow',
+                             flow_user=5)
+
+    item_type_name = ItemTypeName(name='テストアイテムタイプ',
+                                  has_site_license=True,
+                                  is_active=True)
+
+    item_type = ItemType(name_id=1,harvesting_type=True,
+                         schema={'type':'test schema'},
+                         form={'type':'test form'},
+                         render={'type':'test render'},
+                         tag=1,version_id=1,is_deleted=False)
+    
+    flow_action = FlowAction(flow_id=flow_define.flow_id,
+                     action_id=2,
+                     action_version='1.0.0',
+                     action_order=6,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+
+    workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test workflow1',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=1,
+                        is_deleted=False,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
+
+    activity = Activity(activity_id='1',workflow_id=1, flow_id=1,
+                    action_id=2, activity_login_user=1,
+                    activity_update_user=1,
+                    activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+                    activity_community_id=3,
+                    activity_confirm_term_of_use=True,
+                    title='test', shared_user_id=-1, extra_info={},
+                    action_order=6)
+
+    with db.session.begin_nested():
+        db.session.add(flow_define)
+        db.session.add(item_type_name)
+        db.session.add(item_type)
+        db.session.add(flow_action)
+        db.session.add(workflow)
+        db.session.add(activity)

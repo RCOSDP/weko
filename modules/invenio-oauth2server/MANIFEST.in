@@ -32,3 +32,7 @@ recursive-include invenio_oauth2server *.pot
 recursive-include invenio_oauth2server *.py
 recursive-include tests *.py
 recursive-include docs *.jpg
+
+# added by check-manifest
+include *.properties
+include tox.ini

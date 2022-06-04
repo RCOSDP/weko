@@ -22,6 +22,7 @@
 
 import shutil
 import tempfile
+import os
 
 import pytest
 from flask import Flask
@@ -34,6 +35,7 @@ from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers
 from invenio_db import InvenioDB
 from invenio_db import db as db_
+from invenio_pidstore import InvenioPIDStore
 
 # from weko_schema_ui import WekoSchemaREST
 from weko_schema_ui.rest import create_blueprint
@@ -80,6 +82,7 @@ def base_app(instance_path):
     InvenioAccounts(app_)
     InvenioAccess(app_)
     InvenioDB(app_)
+    InvenioPIDStore(app_)
     Babel(app_)
     
     return app_
@@ -102,7 +105,7 @@ def client_rest(app):
 @pytest.fixture()
 def db(app):
     if not database_exists(str(db_.engine.url)):
-        create_database(str(db_engine.url))
+        create_database(str(db_.engine.url))
     db_.create_all()
     yield db_
     db_.session.remove()

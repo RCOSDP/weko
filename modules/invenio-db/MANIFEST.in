@@ -23,3 +23,7 @@ recursive-include examples *.py
 recursive-include invenio_db *.mako
 recursive-include invenio_db *.py
 recursive-include tests *.py
+
+# added by check-manifest
+include *.properties
+include tox.ini

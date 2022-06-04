@@ -2,7 +2,7 @@ import pytest
 import json
 from mock import patch, MagicMock
 from invenio_accounts.testutils import login_user_via_session
-
+from flask import current_app
 
 user_results = [
     (0, 403),
@@ -22,7 +22,7 @@ def test_SchemaFilesResource_schemas_post_login(client_rest, users, id, status_c
     assert res.status_code == status_code
 
 
-def test_SchemaFilesResource_schemas_post_guest(client_rest, users, create_schema):
+def test_SchemaFilesResource_schemas_post_guest(client_rest, users):
     res = client_rest.post('/schemas/',
                        data=json.dumps({}),
                        content_type='application/json')
@@ -64,7 +64,7 @@ def test_SchemaFilesResource_shcemaspid_post_login(client_rest, users, id, statu
     mock_SchemaConverter = MagicMock(side_effect=MockSchemaConverter)
     with patch('weko_schema_ui.rest.SchemaConverter', mock_SchemaConverter):
         with patch('weko_schema_ui.rest.get_oai_metadata_formats', return_value=test_aoi_metadata_formats):
-            with patch('weko_schema_ui.rest.WekoSchema.create'):
+            with patch('weko_schema_ui.api.WekoSchema.create'):
                 res = client_rest.post('/schema/111',
                                        data=json.dumps(data),
                                        content_type='application/json')
@@ -87,7 +87,7 @@ def test_SchemaFilesResource_shcemaspid_post_guest(client_rest, users):
     mock_SchemaConverter = MagicMock(side_effect=MockSchemaConverter)
     with patch('weko_schema_ui.rest.SchemaConverter', mock_SchemaConverter):
         with patch('weko_schema_ui.rest.get_oai_metadata_formats', return_value=test_aoi_metadata_formats):
-            with patch('weko_schema_ui.rest.WekoSchema.create'):
+            with patch('weko_schema_ui.api.WekoSchema.create'):
                 res = client_rest.post('/schema/111',
                                        data=json.dumps(data),
                                        content_type='application/json')
@@ -119,4 +119,4 @@ def test_SchemaFilesResource_put_guest(client_rest, users):
         res = client_rest.put('/schemas/put/111/test.zip',
                               data=json.dumps({}),
                               content_type='application/json')
-        assert res.status_code == status_code
+        assert res.status_code == 403

@@ -52,3 +52,7 @@ recursive-include weko_authors *.html
 recursive-include weko_authors *.js
 recursive-include weko_authors *.json
 recursive-include weko_authors *.py
+
+# added by check-manifest
+include *.properties
+recursive-include tests *.json

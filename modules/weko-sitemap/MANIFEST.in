@@ -38,3 +38,6 @@ recursive-include weko_sitemap *.css
 recursive-include weko_sitemap *.html
 recursive-include weko_sitemap *.js
 recursive-include weko_sitemap *.tmpl
+
+# added by check-manifest
+include *.properties

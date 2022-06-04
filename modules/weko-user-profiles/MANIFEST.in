@@ -51,3 +51,6 @@ recursive-include examples *.txt
 recursive-include tests *.py
 recursive-include weko_user_profiles *.html
 recursive-include weko_user_profiles *.py
+
+# added by check-manifest
+include *.properties

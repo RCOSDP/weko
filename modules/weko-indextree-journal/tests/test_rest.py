@@ -64,7 +64,6 @@ def test_JournalActionResource_put_guest(client_rest, users):
 @pytest.mark.parametrize('id, status_code', user_results2)
 def test_JournalActionResource_delete_login(client_rest, users, id, status_code):
     login_user_via_session(client=client_rest, email=users[id]['email'])
-    mock_jounals = MagicMock(return_value=MockJournals)
     with patch('weko_indextree_journal.rest.Journals.get_self_path', return_value=True):
         with patch('weko_indextree_journal.rest.Journals.delete_by_action', return_value=True):
             res = client_rest.delete('/admin/indexjournal/1',
@@ -74,7 +73,6 @@ def test_JournalActionResource_delete_login(client_rest, users, id, status_code)
 
 
 def test_JournalActionResource_delete_guest(client_rest, users):
-    mock_jounals = MagicMock(return_value=MockJournals)
     with patch('weko_indextree_journal.rest.Journals.get_self_path', return_value=True):
         with patch('weko_indextree_journal.rest.Journals.delete_by_action', return_value=True):
             res = client_rest.delete('/admin/indexjournal/1',

@@ -55,11 +55,13 @@ def test_view(app):
 
 
 def test_prepare_edit_item(app):
+    from weko_items_ui.views import blueprint_api
     app.login_manager._login_disabled = True
-    WekoItemsUI(app)
+    app.register_blueprint(blueprint_api)
+    
     with app.test_request_context():
         url = url_for('weko_items_ui.prepare_edit_item')
-
+    # WekoItemsUI(app)
     with app.test_client() as client:
         res = client.post(url, json={})
         json_response = json.loads(res.get_data())
