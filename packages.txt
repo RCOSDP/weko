@@ -76,7 +76,7 @@ jsmin==2.2.2
 jsonpatch==1.21
 jsonpointer==1.14
 jsonref==0.1
-jsonresolver>=0.2.1
+jsonresolver==0.2.1
 jsonschema==2.6.0
 jsonpath_ng==1.5.2
 jupyter-client==5.2.2
