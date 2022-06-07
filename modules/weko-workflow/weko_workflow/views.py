@@ -42,7 +42,7 @@ from invenio_files_rest.utils import remove_file_cancel_action
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
-from invenio_pidstore.errors import PIDDoesNotExistError
+from invenio_pidstore.errors import PIDDoesNotExistError,PIDDeletedError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_rest import ContentNegotiatedMethodView
 from simplekv.memory.redisstore import RedisStore
@@ -604,11 +604,20 @@ def display_activity(activity_id="0"):
 
     # if 'approval' == action_endpoint:
     if item:
-        # get record data for the first time access to editing item screen
-        recid, approval_record = get_pid_and_record(item)
-        files, files_thumbnail = get_files_and_thumbnail(activity_id, item)
+        try:
+            # get record data for the first time access to editing item screen
+            recid, approval_record = get_pid_and_record(item)
+            files, files_thumbnail = get_files_and_thumbnail(activity_id, item)
 
-        links = base_factory(recid)
+            links = base_factory(recid)
+        except PIDDeletedError:
+            current_app.loger.error("PIDDeletedError: {}".format(sys.exc_info()))
+            abort(404)
+        except PIDDoesNotExistError:
+            current_app.logger.debug("PIDDoesNotExistError: {}".format(sys.exc_info()))
+            abort(404)
+        except Exception:
+            current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
 
     res_check = check_authority_action(str(activity_id), int(action_id),
                                        is_auto_set_index_action,
