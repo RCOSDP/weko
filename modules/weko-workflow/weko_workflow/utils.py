@@ -3691,6 +3691,10 @@ def get_pid_and_record(item_id):
 
     Returns:
         _type_: A tuple containing (pid, object).
+    
+    Raises:
+        invenio_pidstore.errors.PIDDoesNotExistError: if no PID is found.
+        invenio_pidstore.errors.PIDDeletedError: if PID is deleted.
     """
     recid = PersistentIdentifier.get_by_object(
         pid_type='recid', object_type='rec', object_uuid=item_id)

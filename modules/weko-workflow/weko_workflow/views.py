@@ -611,7 +611,7 @@ def display_activity(activity_id="0"):
 
             links = base_factory(recid)
         except PIDDeletedError:
-            current_app.loger.error("PIDDeletedError: {}".format(sys.exc_info()))
+            current_app.loger.debug("PIDDeletedError: {}".format(sys.exc_info()))
             abort(404)
         except PIDDoesNotExistError:
             current_app.logger.debug("PIDDoesNotExistError: {}".format(sys.exc_info()))
