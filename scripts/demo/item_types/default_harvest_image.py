@@ -3,8 +3,8 @@
 from properties import AddProperty
 from . import item_type_config as config
 
-item_type_id = config.DEFAULT_HARVEST_REPORT
-item_type_name = "Report"
+item_type_id = config.DEFAULT_HARVEST_IMAGE
+item_type_name = "Image"
 property_list = [
     AddProperty(
         AddProperty.title,

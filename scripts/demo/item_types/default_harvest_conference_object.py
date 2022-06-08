@@ -3,8 +3,8 @@
 from properties import AddProperty
 from . import item_type_config as config
 
-item_type_id = config.DEFAULT_HARVEST_REPORT
-item_type_name = "Report"
+item_type_id = config.DEFAULT_HARVEST_CONFERENCE_OBJECT
+item_type_name = "Conference Object"
 property_list = [
     AddProperty(
         AddProperty.title,
@@ -135,6 +135,13 @@ property_list = [
         '助成情報',
         '助成情報',
         'Funding Reference',
+        multiple=True
+    ),
+    AddProperty(
+        AddProperty.conference,
+        '会議記述',
+        '会議記述',
+        'Conference',
         multiple=True
     ),
     AddProperty(

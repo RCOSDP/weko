@@ -97,7 +97,7 @@ property_list = [
         multiple=True
     ),
     AddProperty(
-        AddProperty.resource_type,  # ??
+        AddProperty.resource_type,
         '資源タイプ',
         '資源タイプ',
         'Resource Type',

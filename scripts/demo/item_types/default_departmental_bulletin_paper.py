@@ -66,14 +66,14 @@ property_list = property_list = [
         showlist=True,
         newline=True
     ),
-    AddProperty(  # ???
+    AddProperty(
         AddProperty.full_name,
         '著者（英）',
         '',
         '',
         multiple=True
     ),
-    AddProperty(  # ???
+    AddProperty(
         AddProperty.description,
         '著者ID',
         '',

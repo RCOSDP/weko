@@ -3,8 +3,8 @@
 from properties import AddProperty
 from . import item_type_config as config
 
-item_type_id = config.DEFAULT_HARVEST_REPORT
-item_type_name = "Report"
+item_type_id = config.DEFAULT_HARVEST_DATASET
+item_type_name = "Dataset"
 property_list = [
     AddProperty(
         AddProperty.title,
@@ -102,6 +102,12 @@ property_list = [
         '資源タイプ',
         'Resource Type',
         required=True
+    ),
+    AddProperty(
+        AddProperty.version,
+        'バージョン情報',
+        'バージョン情報',
+        'Version'
     ),
     AddProperty(
         AddProperty.identifier_registration,

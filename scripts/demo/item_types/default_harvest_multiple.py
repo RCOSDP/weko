@@ -3,8 +3,8 @@
 from properties import AddProperty
 from . import item_type_config as config
 
-item_type_id = config.DEFAULT_HARVEST_REPORT
-item_type_name = "Report"
+item_type_id = config.DEFAULT_HARVEST_MULTIPLE
+item_type_name = "Multiple"
 property_list = [
     AddProperty(
         AddProperty.title,
@@ -104,6 +104,18 @@ property_list = [
         required=True
     ),
     AddProperty(
+        AddProperty.version,
+        'バージョン情報',
+        'バージョン情報',
+        'Version'
+    ),
+    AddProperty(
+        AddProperty.version_type,
+        '出版タイプ',
+        '出版タイプ',
+        'Version Type'
+    ),
+    AddProperty(
         AddProperty.identifier_registration,
         'ID登録',
         'ID登録',
@@ -135,6 +147,83 @@ property_list = [
         '助成情報',
         '助成情報',
         'Funding Reference',
+        multiple=True
+    ),
+    AddProperty(
+        AddProperty.source_id,
+        '収録物識別子',
+        '収録物識別子',
+        'Source Identifier',
+        multiple=True
+    ),
+    AddProperty(
+        AddProperty.source_title,
+        '収録物名',
+        '収録物名',
+        'Source Title',
+        multiple=True
+    ),
+    AddProperty(
+        AddProperty.volume,
+        '巻',
+        '巻',
+        'Volume Number'
+    ),
+    AddProperty(
+        AddProperty.issue,
+        '号',
+        '号',
+        'Issue Number'
+    ),
+    AddProperty(
+        AddProperty.number_of_pages,
+        'ページ数',
+        'ページ数',
+        'Number of Pages'
+    ),
+    AddProperty(
+        AddProperty.start_page,
+        '開始ページ',
+        '開始ページ',
+        'Page Start'
+    ),
+    AddProperty(
+        AddProperty.end_page,
+        '終了ページ',
+        '終了ページ',
+        'Page End'
+    ),
+    AddProperty(
+        AddProperty.dissertation_number,
+        '学位授与番号',
+        '学位授与番号',
+        'Dissertation Number'
+    ),
+    AddProperty(
+        AddProperty.degree_name,
+        '学位名',
+        '学位名',
+        'Degree Name',
+        multiple=True
+    ),
+    AddProperty(
+        AddProperty.date_granted,
+        '学位授与年月日',
+        '学位授与年月日',
+        'Date Granted'
+    ),
+    AddProperty(
+        AddProperty.degree_grantor,
+        '学位授与機関',
+        '学位授与機関',
+        'Degree Grantor',
+        multiple=True
+    ),
+    AddProperty(
+        AddProperty.conference,
+        '会議記述',
+        '会議記述',
+        'Conference',
         multiple=True
     ),
     AddProperty(
