@@ -34,158 +34,161 @@ def add(post_data, key, **kwargs):
     option = kwargs.pop('option')
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
-    post_data['table_row_map']['mapping'][key] = {
-        'display_lang_type': '',
-        'jpcoar_v1_mapping': {
-            'contributor': {
-                '@attributes': {
-                    'contributorType': 'contributorType'
-                },
-                'affiliation': {
-                    'affiliationName': {
-                        '@attributes': {
-                            'xml:lang':
+    if kwargs.pop('mapping', True):
+        post_data['table_row_map']['mapping'][key] = {
+            'display_lang_type': '',
+            'jpcoar_v1_mapping': {
+                'contributor': {
+                    '@attributes': {
+                        'contributorType': 'contributorType'
+                    },
+                    'affiliation': {
+                        'affiliationName': {
+                            '@attributes': {
+                                'xml:lang':
+                                    'contributorAffiliations.'
+                                    'contributorAffiliationNames.'
+                                    'contributorAffiliationNameLang'
+                            },
+                            '@value':
                                 'contributorAffiliations.'
                                 'contributorAffiliationNames.'
-                                'contributorAffiliationNameLang'
+                                'contributorAffiliationName'
                         },
-                        '@value':
-                            'contributorAffiliations.'
-                            'contributorAffiliationNames.'
-                            'contributorAffiliationName'
+                        'nameIdentifier': {
+                            '@attributes': {
+                                'nameIdentifierScheme':
+                                    'contributorAffiliations.'
+                                    'contributorAffiliationNameIdentifiers.'
+                                    'contributorAffiliationScheme',
+                                'nameIdentifierURI':
+                                    'contributorAffiliations.'
+                                    'contributorAffiliationNameIdentifiers.'
+                                    'contributorAffiliationURI'
+                            },
+                            '@value':
+                                'contributorAffiliations.'
+                                'contributorAffiliationNameIdentifiers.'
+                                'contributorAffiliationNameIdentifier'
+                        }
+                    },
+                    'contributorAlternative': {
+                        '@attributes': {
+                            'xml:lang':
+                                'contributorAlternatives.contributorAlternativeLang'
+                        },
+                        '@value': 'contributorAlternatives.contributorAlternative'
+                    },
+                    'contributorName': {
+                        '@attributes': {
+                            'xml:lang': 'contributorNames.lang'
+                        },
+                        '@value': 'contributorNames.contributorName'
+                    },
+                    'familyName': {
+                        '@attributes': {
+                            'xml:lang': 'familyNames.familyNameLang'
+                        },
+                        '@value': 'familyNames.familyName'
+                    },
+                    'givenName': {
+                        '@attributes': {
+                            'xml:lang': 'givenNames.givenNameLang'
+                        },
+                        '@value': 'givenNames.givenName'
                     },
                     'nameIdentifier': {
                         '@attributes': {
                             'nameIdentifierScheme':
-                                'contributorAffiliations.'
-                                'contributorAffiliationNameIdentifiers.'
-                                'contributorAffiliationScheme',
-                            'nameIdentifierURI':
-                                'contributorAffiliations.'
-                                'contributorAffiliationNameIdentifiers.'
-                                'contributorAffiliationURI'
+                                'nameIdentifiers.nameIdentifierScheme',
+                            'nameIdentifierURI': 'nameIdentifiers.nameIdentifierURI'
                         },
-                        '@value':
-                            'contributorAffiliations.'
-                            'contributorAffiliationNameIdentifiers.'
-                            'contributorAffiliationNameIdentifier'
+                        '@value': 'nameIdentifiers.nameIdentifier'
                     }
-                },
-                'contributorAlternative': {
-                    '@attributes': {
-                        'xml:lang':
-                            'contributorAlternatives.contributorAlternativeLang'
-                    },
-                    '@value': 'contributorAlternatives.contributorAlternative'
-                },
-                'contributorName': {
-                    '@attributes': {
-                        'xml:lang': 'contributorNames.lang'
-                    },
-                    '@value': 'contributorNames.contributorName'
-                },
-                'familyName': {
-                    '@attributes': {
-                        'xml:lang': 'familyNames.familyNameLang'
-                    },
-                    '@value': 'familyNames.familyName'
-                },
-                'givenName': {
-                    '@attributes': {
-                        'xml:lang': 'givenNames.givenNameLang'
-                    },
-                    '@value': 'givenNames.givenName'
-                },
-                'nameIdentifier': {
-                    '@attributes': {
-                        'nameIdentifierScheme':
-                            'nameIdentifiers.nameIdentifierScheme',
-                        'nameIdentifierURI': 'nameIdentifiers.nameIdentifierURI'
-                    },
-                    '@value': 'nameIdentifiers.nameIdentifier'
                 }
-            }
-        },
-        'jpcoar_mapping': {
-            'contributor': {
-                '@attributes': {
-                    'contributorType': 'contributorType'
-                },
-                'affiliation': {
-                    'affiliationName': {
-                        '@attributes': {
-                            'xml:lang':
+            },
+            'jpcoar_mapping': {
+                'contributor': {
+                    '@attributes': {
+                        'contributorType': 'contributorType'
+                    },
+                    'affiliation': {
+                        'affiliationName': {
+                            '@attributes': {
+                                'xml:lang':
+                                    'contributorAffiliations.'
+                                    'contributorAffiliationNames.'
+                                    'contributorAffiliationNameLang'
+                            },
+                            '@value':
                                 'contributorAffiliations.'
                                 'contributorAffiliationNames.'
-                                'contributorAffiliationNameLang'
+                                'contributorAffiliationName'
                         },
-                        '@value':
-                            'contributorAffiliations.'
-                            'contributorAffiliationNames.'
-                            'contributorAffiliationName'
+                        'nameIdentifier': {
+                            '@attributes': {
+                                'nameIdentifierScheme':
+                                    'contributorAffiliations.'
+                                    'contributorAffiliationNameIdentifiers.'
+                                    'contributorAffiliationScheme',
+                                'nameIdentifierURI':
+                                    'contributorAffiliations.'
+                                    'contributorAffiliationNameIdentifiers.'
+                                    'contributorAffiliationURI'
+                            },
+                            '@value':
+                                'contributorAffiliations.'
+                                'contributorAffiliationNameIdentifiers.'
+                                'contributorAffiliationNameIdentifier'
+                        }
+                    },
+                    'contributorAlternative': {
+                        '@attributes': {
+                            'xml:lang':
+                                'contributorAlternatives.contributorAlternativeLang'
+                        },
+                        '@value': 'contributorAlternatives.contributorAlternative'
+                    },
+                    'contributorName': {
+                        '@attributes': {
+                            'xml:lang': 'contributorNames.lang'
+                        },
+                        '@value': 'contributorNames.contributorName'
+                    },
+                    'familyName': {
+                        '@attributes': {
+                            'xml:lang': 'familyNames.familyNameLang'
+                        },
+                        '@value': 'familyNames.familyName'
+                    },
+                    'givenName': {
+                        '@attributes': {
+                            'xml:lang': 'givenNames.givenNameLang'
+                        },
+                        '@value': 'givenNames.givenName'
                     },
                     'nameIdentifier': {
                         '@attributes': {
                             'nameIdentifierScheme':
-                                'contributorAffiliations.'
-                                'contributorAffiliationNameIdentifiers.'
-                                'contributorAffiliationScheme',
-                            'nameIdentifierURI':
-                                'contributorAffiliations.'
-                                'contributorAffiliationNameIdentifiers.'
-                                'contributorAffiliationURI'
+                                'nameIdentifiers.nameIdentifierScheme',
+                            'nameIdentifierURI': 'nameIdentifiers.nameIdentifierURI'
                         },
-                        '@value':
-                            'contributorAffiliations.'
-                            'contributorAffiliationNameIdentifiers.'
-                            'contributorAffiliationNameIdentifier'
+                        '@value': 'nameIdentifiers.nameIdentifier'
                     }
-                },
-                'contributorAlternative': {
-                    '@attributes': {
-                        'xml:lang':
-                            'contributorAlternatives.contributorAlternativeLang'
-                    },
-                    '@value': 'contributorAlternatives.contributorAlternative'
-                },
-                'contributorName': {
-                    '@attributes': {
-                        'xml:lang': 'contributorNames.lang'
-                    },
-                    '@value': 'contributorNames.contributorName'
-                },
-                'familyName': {
-                    '@attributes': {
-                        'xml:lang': 'familyNames.familyNameLang'
-                    },
-                    '@value': 'familyNames.familyName'
-                },
-                'givenName': {
-                    '@attributes': {
-                        'xml:lang': 'givenNames.givenNameLang'
-                    },
-                    '@value': 'givenNames.givenName'
-                },
-                'nameIdentifier': {
-                    '@attributes': {
-                        'nameIdentifierScheme':
-                            'nameIdentifiers.nameIdentifierScheme',
-                        'nameIdentifierURI': 'nameIdentifiers.nameIdentifierURI'
-                    },
-                    '@value': 'nameIdentifiers.nameIdentifier'
                 }
-            }
-        },
-        'junii2_mapping': '',
-        'lido_mapping': '',
-        'lom_mapping': '',
-        'oai_dc_mapping': {
-            'contributor': {
-                '@value': 'contributorNames.contributorName,nameIdentifiers.nameIdentifier'
-            }
-        },
-        'spase_mapping': ''
-    }
+            },
+            'junii2_mapping': '',
+            'lido_mapping': '',
+            'lom_mapping': '',
+            'oai_dc_mapping': {
+                'contributor': {
+                    '@value': 'contributorNames.contributorName,nameIdentifiers.nameIdentifier'
+                }
+            },
+            'spase_mapping': ''
+        }
+    else:
+        post_data['table_row_map']['mapping'][key] = config.DEFAULT_MAPPING
 
 
 def schema(title='', multi_flag=multiple_flag):

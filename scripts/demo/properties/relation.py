@@ -56,56 +56,59 @@ def add(post_data, key, **kwargs):
     option = kwargs.pop('option')
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
-    post_data['table_row_map']['mapping'][key] = {
-        'display_lang_type': '',
-        'jpcoar_v1_mapping': {
-            'relation': {
-                '@attributes': {
-                    'relationType': 'subitem_relation_type'
-                },
-                'relatedIdentifier': {
+    if kwargs.pop('mapping', True):
+        post_data['table_row_map']['mapping'][key] = {
+            'display_lang_type': '',
+            'jpcoar_v1_mapping': {
+                'relation': {
                     '@attributes': {
-                        'identifierType': 'subitem_relation_type_id.subitem_relation_type_select'
+                        'relationType': 'subitem_relation_type'
                     },
-                    '@value': 'subitem_relation_type_id.subitem_relation_type_id_text'
-                },
-                'relatedTitle': {
-                    '@attributes': {
-                        'xml:lang': 'subitem_relation_name.subitem_relation_name_language'
+                    'relatedIdentifier': {
+                        '@attributes': {
+                            'identifierType': 'subitem_relation_type_id.subitem_relation_type_select'
+                        },
+                        '@value': 'subitem_relation_type_id.subitem_relation_type_id_text'
                     },
-                    '@value': 'subitem_relation_name.subitem_relation_name_text'
+                    'relatedTitle': {
+                        '@attributes': {
+                            'xml:lang': 'subitem_relation_name.subitem_relation_name_language'
+                        },
+                        '@value': 'subitem_relation_name.subitem_relation_name_text'
+                    }
                 }
-            }
-        },
-        'jpcoar_mapping': {
-            'relation': {
-                '@attributes': {
-                    'relationType': 'subitem_relation_type'
-                },
-                'relatedIdentifier': {
+            },
+            'jpcoar_mapping': {
+                'relation': {
                     '@attributes': {
-                        'identifierType': 'subitem_relation_type_id.subitem_relation_type_select'
+                        'relationType': 'subitem_relation_type'
                     },
-                    '@value': 'subitem_relation_type_id.subitem_relation_type_id_text'
-                },
-                'relatedTitle': {
-                    '@attributes': {
-                        'xml:lang': 'subitem_relation_name.subitem_relation_name_language'
+                    'relatedIdentifier': {
+                        '@attributes': {
+                            'identifierType': 'subitem_relation_type_id.subitem_relation_type_select'
+                        },
+                        '@value': 'subitem_relation_type_id.subitem_relation_type_id_text'
                     },
-                    '@value': 'subitem_relation_name.subitem_relation_name_text'
+                    'relatedTitle': {
+                        '@attributes': {
+                            'xml:lang': 'subitem_relation_name.subitem_relation_name_language'
+                        },
+                        '@value': 'subitem_relation_name.subitem_relation_name_text'
+                    }
                 }
-            }
-        },
-        'junii2_mapping': '',
-        'lido_mapping': '',
-        'lom_mapping': '',
-        'oai_dc_mapping': {
-            'relation': {
-                '@value': 'subitem_relation_name.subitem_relation_name_text,subitem_relation_type_id.subitem_relation_type_id_text'
-            }
-        },
-        'spase_mapping': ''
-    }
+            },
+            'junii2_mapping': '',
+            'lido_mapping': '',
+            'lom_mapping': '',
+            'oai_dc_mapping': {
+                'relation': {
+                    '@value': 'subitem_relation_name.subitem_relation_name_text,subitem_relation_type_id.subitem_relation_type_id_text'
+                }
+            },
+            'spase_mapping': ''
+        }
+    else:
+        post_data['table_row_map']['mapping'][key] = config.DEFAULT_MAPPING
 
 
 def schema(title='', multi_flag=multiple_flag):

@@ -27,38 +27,41 @@ def add(post_data, key, **kwargs):
     option = kwargs.pop('option')
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
-    post_data['table_row_map']['mapping'][key] = {
-        'display_lang_type': '',
-        'jpcoar_v1_mapping': {
-            'subject': {
-                '@attributes': {
-                    'subjectScheme': 'subitem_subject_scheme',
-                    'subjectURI': 'subitem_subject_uri',
-                    'xml:lang': 'subitem_subject_language'
-                },
-                '@value': 'subitem_subject'
-            }
-        },
-        'jpcoar_mapping': {
-            'subject': {
-                '@attributes': {
-                    'subjectScheme': 'subitem_subject_scheme',
-                    'subjectURI': 'subitem_subject_uri',
-                    'xml:lang': 'subitem_subject_language'
-                },
-                '@value': 'subitem_subject'
-            }
-        },
-        'junii2_mapping': '',
-        'lido_mapping': '',
-        'lom_mapping': '',
-        'oai_dc_mapping': {
-            "subject": {
-                "@value": "subitem_subject"
-            }
-        },
-        'spase_mapping': ''
-    }
+    if kwargs.pop('mapping', True):
+        post_data['table_row_map']['mapping'][key] = {
+            'display_lang_type': '',
+            'jpcoar_v1_mapping': {
+                'subject': {
+                    '@attributes': {
+                        'subjectScheme': 'subitem_subject_scheme',
+                        'subjectURI': 'subitem_subject_uri',
+                        'xml:lang': 'subitem_subject_language'
+                    },
+                    '@value': 'subitem_subject'
+                }
+            },
+            'jpcoar_mapping': {
+                'subject': {
+                    '@attributes': {
+                        'subjectScheme': 'subitem_subject_scheme',
+                        'subjectURI': 'subitem_subject_uri',
+                        'xml:lang': 'subitem_subject_language'
+                    },
+                    '@value': 'subitem_subject'
+                }
+            },
+            'junii2_mapping': '',
+            'lido_mapping': '',
+            'lom_mapping': '',
+            'oai_dc_mapping': {
+                "subject": {
+                    "@value": "subitem_subject"
+                }
+            },
+            'spase_mapping': ''
+        }
+    else:
+        post_data['table_row_map']['mapping'][key] = config.DEFAULT_MAPPING
 
 
 def schema(title='', multi_flag=multiple_flag):

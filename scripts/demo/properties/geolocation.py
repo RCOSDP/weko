@@ -14,76 +14,79 @@ def add(post_data, key, **kwargs):
     option = kwargs.pop('option')
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
-    post_data['table_row_map']['mapping'][key] = {
-        'display_lang_type': '',
-        'jpcoar_v1_mapping': {
-            'geoLocation': {
-                'geoLocationPoint': {
-                    'pointLongitude': {
-                        '@value': 'subitem_geolocation_point.subitem_point_longitude'
+    if kwargs.pop('mapping', True):
+        post_data['table_row_map']['mapping'][key] = {
+            'display_lang_type': '',
+            'jpcoar_v1_mapping': {
+                'geoLocation': {
+                    'geoLocationPoint': {
+                        'pointLongitude': {
+                            '@value': 'subitem_geolocation_point.subitem_point_longitude'
+                        },
+                        'pointLatitude': {
+                            '@value': 'subitem_geolocation_point.subitem_point_latitude'
+                        }
                     },
-                    'pointLatitude': {
-                        '@value': 'subitem_geolocation_point.subitem_point_latitude'
+                    'geoLocationBox': {
+                        'westBoundLongitude': {
+                            '@value': 'subitem_geolocation_box.subitem_west_longitude'
+                        },
+                        'eastBoundLongitude': {
+                            '@value': 'subitem_geolocation_box.subitem_east_longitude'
+                        },
+                        'southBoundLatitude': {
+                            '@value': 'subitem_geolocation_box.subitem_south_latitude'
+                        },
+                        'northBoundLatitude': {
+                            '@value': 'subitem_geolocation_box.subitem_north_latitude'
+                        }
+                    },
+                    'geoLocationPlace': {
+                        '@value': 'subitem_geolocation_place.subitem_geolocation_place_text'
                     }
-                },
-                'geoLocationBox': {
-                    'westBoundLongitude': {
-                        '@value': 'subitem_geolocation_box.subitem_west_longitude'
+                }
+            },
+            'jpcoar_mapping': {
+                'geoLocation': {
+                    'geoLocationPoint': {
+                        'pointLongitude': {
+                            '@value': 'subitem_geolocation_point.subitem_point_longitude'
+                        },
+                        'pointLatitude': {
+                            '@value': 'subitem_geolocation_point.subitem_point_latitude'
+                        }
                     },
-                    'eastBoundLongitude': {
-                        '@value': 'subitem_geolocation_box.subitem_east_longitude'
+                    'geoLocationBox': {
+                        'westBoundLongitude': {
+                            '@value': 'subitem_geolocation_box.subitem_west_longitude'
+                        },
+                        'eastBoundLongitude': {
+                            '@value': 'subitem_geolocation_box.subitem_east_longitude'
+                        },
+                        'southBoundLatitude': {
+                            '@value': 'subitem_geolocation_box.subitem_south_latitude'
+                        },
+                        'northBoundLatitude': {
+                            '@value': 'subitem_geolocation_box.subitem_north_latitude'
+                        }
                     },
-                    'southBoundLatitude': {
-                        '@value': 'subitem_geolocation_box.subitem_south_latitude'
-                    },
-                    'northBoundLatitude': {
-                        '@value': 'subitem_geolocation_box.subitem_north_latitude'
+                    'geoLocationPlace': {
+                        '@value': 'subitem_geolocation_place.subitem_geolocation_place_text'
                     }
-                },
-                'geoLocationPlace': {
+                }
+            },
+            'junii2_mapping': '',
+            'lido_mapping': '',
+            'lom_mapping': '',
+            'oai_dc_mapping': {
+                'coverage': {
                     '@value': 'subitem_geolocation_place.subitem_geolocation_place_text'
                 }
-            }
-        },
-        'jpcoar_mapping': {
-            'geoLocation': {
-                'geoLocationPoint': {
-                    'pointLongitude': {
-                        '@value': 'subitem_geolocation_point.subitem_point_longitude'
-                    },
-                    'pointLatitude': {
-                        '@value': 'subitem_geolocation_point.subitem_point_latitude'
-                    }
-                },
-                'geoLocationBox': {
-                    'westBoundLongitude': {
-                        '@value': 'subitem_geolocation_box.subitem_west_longitude'
-                    },
-                    'eastBoundLongitude': {
-                        '@value': 'subitem_geolocation_box.subitem_east_longitude'
-                    },
-                    'southBoundLatitude': {
-                        '@value': 'subitem_geolocation_box.subitem_south_latitude'
-                    },
-                    'northBoundLatitude': {
-                        '@value': 'subitem_geolocation_box.subitem_north_latitude'
-                    }
-                },
-                'geoLocationPlace': {
-                    '@value': 'subitem_geolocation_place.subitem_geolocation_place_text'
-                }
-            }
-        },
-        'junii2_mapping': '',
-        'lido_mapping': '',
-        'lom_mapping': '',
-        'oai_dc_mapping': {
-            'coverage': {
-                '@value': 'subitem_geolocation_place.subitem_geolocation_place_text'
-            }
-        },
-        'spase_mapping': ''
-    }
+            },
+            'spase_mapping': ''
+        }
+    else:
+        post_data['table_row_map']['mapping'][key] = config.DEFAULT_MAPPING
 
 
 def schema(title='', multi_flag=multiple_flag):

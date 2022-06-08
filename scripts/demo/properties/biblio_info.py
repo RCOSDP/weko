@@ -18,81 +18,84 @@ def add(post_data, key, **kwargs):
     option = kwargs.pop('option')
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
-    post_data['table_row_map']['mapping'][key] = {
-        'display_lang_type': '',
-        'jpcoar_v1_mapping': {
-            'issue': {
-                '@value': 'bibliographicIssueNumber'
-            },
-            'pageEnd': {
-                '@value': 'bibliographicPageEnd'
-            },
-            'pageStart': {
-                '@value': 'bibliographicPageStart'
-            },
-            'sourceTitle': {
-                '@attributes': {
-                    'xml:lang': 'bibliographic_titles.bibliographic_titleLang'
+    if kwargs.pop('mapping', True):
+        post_data['table_row_map']['mapping'][key] = {
+            'display_lang_type': '',
+            'jpcoar_v1_mapping': {
+                'issue': {
+                    '@value': 'bibliographicIssueNumber'
                 },
-                '@value': 'bibliographic_titles.bibliographic_title'
-            },
-            'volume': {
-                '@value': 'bibliographicVolumeNumber'
-            },
-            'numPages': {
-                '@value': 'bibliographicNumberOfPages'
-            },
-            'date': {
-                '@attributes': {
-                    'dateType':
-                        'bibliographicIssueDates.bibliographicIssueDateType'
+                'pageEnd': {
+                    '@value': 'bibliographicPageEnd'
                 },
-                '@value': 'bibliographicIssueDates.bibliographicIssueDate'
-            }
-        },
-        'jpcoar_mapping': {
-            'issue': {
-                '@value': 'bibliographicIssueNumber'
-            },
-            'pageEnd': {
-                '@value': 'bibliographicPageEnd'
-            },
-            'pageStart': {
-                '@value': 'bibliographicPageStart'
-            },
-            'sourceTitle': {
-                '@attributes': {
-                    'xml:lang': 'bibliographic_titles.bibliographic_titleLang'
+                'pageStart': {
+                    '@value': 'bibliographicPageStart'
                 },
-                '@value': 'bibliographic_titles.bibliographic_title'
-            },
-            'volume': {
-                '@value': 'bibliographicVolumeNumber'
-            },
-            'numPages': {
-                '@value': 'bibliographicNumberOfPages'
-            },
-            'date': {
-                '@attributes': {
-                    'dateType':
-                        'bibliographicIssueDates.bibliographicIssueDateType'
+                'sourceTitle': {
+                    '@attributes': {
+                        'xml:lang': 'bibliographic_titles.bibliographic_titleLang'
+                    },
+                    '@value': 'bibliographic_titles.bibliographic_title'
                 },
-                '@value': 'bibliographicIssueDates.bibliographicIssueDate'
-            }
-        },
-        'junii2_mapping': '',
-        'lido_mapping': '',
-        'lom_mapping': '',
-        'oai_dc_mapping': {
-            'date': {
-                '@value': 'bibliographicIssueDates.bibliographicIssueDate'
+                'volume': {
+                    '@value': 'bibliographicVolumeNumber'
+                },
+                'numPages': {
+                    '@value': 'bibliographicNumberOfPages'
+                },
+                'date': {
+                    '@attributes': {
+                        'dateType':
+                            'bibliographicIssueDates.bibliographicIssueDateType'
+                    },
+                    '@value': 'bibliographicIssueDates.bibliographicIssueDate'
+                }
             },
-            'identifier': {
-                '@value': 'bibliographic_titles.bibliographic_title,bibliographicIssueNumber,bibliographicVolumeNumber,bibliographicPageStart,bibliographicPageEnd'
-            }
-        },
-        'spase_mapping': ''
-    }
+            'jpcoar_mapping': {
+                'issue': {
+                    '@value': 'bibliographicIssueNumber'
+                },
+                'pageEnd': {
+                    '@value': 'bibliographicPageEnd'
+                },
+                'pageStart': {
+                    '@value': 'bibliographicPageStart'
+                },
+                'sourceTitle': {
+                    '@attributes': {
+                        'xml:lang': 'bibliographic_titles.bibliographic_titleLang'
+                    },
+                    '@value': 'bibliographic_titles.bibliographic_title'
+                },
+                'volume': {
+                    '@value': 'bibliographicVolumeNumber'
+                },
+                'numPages': {
+                    '@value': 'bibliographicNumberOfPages'
+                },
+                'date': {
+                    '@attributes': {
+                        'dateType':
+                            'bibliographicIssueDates.bibliographicIssueDateType'
+                    },
+                    '@value': 'bibliographicIssueDates.bibliographicIssueDate'
+                }
+            },
+            'junii2_mapping': '',
+            'lido_mapping': '',
+            'lom_mapping': '',
+            'oai_dc_mapping': {
+                'date': {
+                    '@value': 'bibliographicIssueDates.bibliographicIssueDate'
+                },
+                'identifier': {
+                    '@value': 'bibliographic_titles.bibliographic_title,bibliographicIssueNumber,bibliographicVolumeNumber,bibliographicPageStart,bibliographicPageEnd'
+                }
+            },
+            'spase_mapping': ''
+        }
+    else:
+        post_data['table_row_map']['mapping'][key] = config.DEFAULT_MAPPING
 
 
 def schema(title='', multi_flag=multiple_flag):

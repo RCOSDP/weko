@@ -21,36 +21,39 @@ def add(post_data, key, **kwargs):
     option = kwargs.pop('option')
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
-    post_data['table_row_map']['mapping'][key] = {
-        'display_lang_type': '',
-        'jpcoar_v1_mapping': {
-            'description': {
-                '@attributes': {
-                    'descriptionType': 'subitem_description_type',
-                    'xml:lang': 'subitem_description_language'
-                },
-                '@value': 'subitem_description'
-            }
-        },
-        'jpcoar_mapping': {
-            'description': {
-                '@attributes': {
-                    'descriptionType': 'subitem_description_type',
-                    'xml:lang': 'subitem_description_language'
-                },
-                '@value': 'subitem_description'
-            }
-        },
-        'junii2_mapping': '',
-        'lido_mapping': '',
-        'lom_mapping': '',
-        'oai_dc_mapping': {
-            'description': {
-                '@value': 'subitem_description'
-            }
-        },
-        'spase_mapping': ''
-    }
+    if kwargs.pop('mapping', True):
+        post_data['table_row_map']['mapping'][key] = {
+            'display_lang_type': '',
+            'jpcoar_v1_mapping': {
+                'description': {
+                    '@attributes': {
+                        'descriptionType': 'subitem_description_type',
+                        'xml:lang': 'subitem_description_language'
+                    },
+                    '@value': 'subitem_description'
+                }
+            },
+            'jpcoar_mapping': {
+                'description': {
+                    '@attributes': {
+                        'descriptionType': 'subitem_description_type',
+                        'xml:lang': 'subitem_description_language'
+                    },
+                    '@value': 'subitem_description'
+                }
+            },
+            'junii2_mapping': '',
+            'lido_mapping': '',
+            'lom_mapping': '',
+            'oai_dc_mapping': {
+                'description': {
+                    '@value': 'subitem_description'
+                }
+            },
+            'spase_mapping': ''
+        }
+    else:
+        post_data['table_row_map']['mapping'][key] = config.DEFAULT_MAPPING
 
 
 def schema(title='', multi_flag=multiple_flag):

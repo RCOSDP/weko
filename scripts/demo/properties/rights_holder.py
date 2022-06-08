@@ -14,52 +14,55 @@ def add(post_data, key, **kwargs):
     option = kwargs.pop('option')
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
-    post_data['table_row_map']['mapping'][key] = {
-        'display_lang_type': '',
-        'jpcoar_v1_mapping': {
-            'rightsHolder': {
-                'rightsHolderName': {
-                    '@attributes': {
-                        'xml:lang': 'rightHolderNames.rightHolderLanguage'
+    if kwargs.pop('mapping', True):
+        post_data['table_row_map']['mapping'][key] = {
+            'display_lang_type': '',
+            'jpcoar_v1_mapping': {
+                'rightsHolder': {
+                    'rightsHolderName': {
+                        '@attributes': {
+                            'xml:lang': 'rightHolderNames.rightHolderLanguage'
+                        },
+                        '@value': 'rightHolderNames.rightHolderName'
                     },
-                    '@value': 'rightHolderNames.rightHolderName'
-                },
-                'nameIdentifier': {
-                    '@attributes': {
-                        'nameIdentifierScheme':
-                            'nameIdentifiers.nameIdentifierScheme',
-                        'nameIdentifierURI':
-                            'nameIdentifiers.nameIdentifierURI'
-                    },
-                    '@value': 'nameIdentifiers.nameIdentifier'
+                    'nameIdentifier': {
+                        '@attributes': {
+                            'nameIdentifierScheme':
+                                'nameIdentifiers.nameIdentifierScheme',
+                            'nameIdentifierURI':
+                                'nameIdentifiers.nameIdentifierURI'
+                        },
+                        '@value': 'nameIdentifiers.nameIdentifier'
+                    }
                 }
-            }
-        },
-        'jpcoar_mapping': {
-            'rightsHolder': {
-                'rightsHolderName': {
-                    '@attributes': {
-                        'xml:lang': 'rightHolderNames.rightHolderLanguage'
+            },
+            'jpcoar_mapping': {
+                'rightsHolder': {
+                    'rightsHolderName': {
+                        '@attributes': {
+                            'xml:lang': 'rightHolderNames.rightHolderLanguage'
+                        },
+                        '@value': 'rightHolderNames.rightHolderName'
                     },
-                    '@value': 'rightHolderNames.rightHolderName'
-                },
-                'nameIdentifier': {
-                    '@attributes': {
-                        'nameIdentifierScheme':
-                            'nameIdentifiers.nameIdentifierScheme',
-                        'nameIdentifierURI':
-                            'nameIdentifiers.nameIdentifierURI'
-                    },
-                    '@value': 'nameIdentifiers.nameIdentifier'
+                    'nameIdentifier': {
+                        '@attributes': {
+                            'nameIdentifierScheme':
+                                'nameIdentifiers.nameIdentifierScheme',
+                            'nameIdentifierURI':
+                                'nameIdentifiers.nameIdentifierURI'
+                        },
+                        '@value': 'nameIdentifiers.nameIdentifier'
+                    }
                 }
-            }
-        },
-        'junii2_mapping': '',
-        'lido_mapping': '',
-        'lom_mapping': '',
-        'oai_dc_mapping': '',
-        'spase_mapping': ''
-    }
+            },
+            'junii2_mapping': '',
+            'lido_mapping': '',
+            'lom_mapping': '',
+            'oai_dc_mapping': '',
+            'spase_mapping': ''
+        }
+    else:
+        post_data['table_row_map']['mapping'][key] = config.DEFAULT_MAPPING
 
 
 def schema(title='', multi_flag=multiple_flag):

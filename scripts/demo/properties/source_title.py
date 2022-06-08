@@ -14,34 +14,37 @@ def add(post_data, key, **kwargs):
     option = kwargs.pop('option')
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
-    post_data['table_row_map']['mapping'][key] = {
-        'display_lang_type': '',
-        'jpcoar_v1_mapping': {
-            'sourceTitle': {
-                '@attributes': {
-                    'xml:lang': 'subitem_record_name_language'
-                },
-                '@value': 'subitem_record_name'
-            }
-        },
-        'jpcoar_mapping': {
-            'sourceTitle': {
-                '@attributes': {
-                    'xml:lang': 'subitem_record_name_language'
-                },
-                '@value': 'subitem_record_name'
-            }
-        },
-        'junii2_mapping': '',
-        'lido_mapping': '',
-        'lom_mapping': '',
-        'oai_dc_mapping': {
-            'identifier': {
-                '@value': 'subitem_record_name'
-            }
-        },
-        'spase_mapping': ''
-    }
+    if kwargs.pop('mapping', True):
+        post_data['table_row_map']['mapping'][key] = {
+            'display_lang_type': '',
+            'jpcoar_v1_mapping': {
+                'sourceTitle': {
+                    '@attributes': {
+                        'xml:lang': 'subitem_record_name_language'
+                    },
+                    '@value': 'subitem_record_name'
+                }
+            },
+            'jpcoar_mapping': {
+                'sourceTitle': {
+                    '@attributes': {
+                        'xml:lang': 'subitem_record_name_language'
+                    },
+                    '@value': 'subitem_record_name'
+                }
+            },
+            'junii2_mapping': '',
+            'lido_mapping': '',
+            'lom_mapping': '',
+            'oai_dc_mapping': {
+                'identifier': {
+                    '@value': 'subitem_record_name'
+                }
+            },
+            'spase_mapping': ''
+        }
+    else:
+        post_data['table_row_map']['mapping'][key] = config.DEFAULT_MAPPING
 
 
 def schema(title='', multi_flag=multiple_flag):

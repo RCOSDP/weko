@@ -21,72 +21,75 @@ def add(post_data, key, **kwargs):
     option = kwargs.pop('option')
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
-    post_data['table_row_map']['mapping'][key] = {
-        'display_lang_type': '',
-        'jpcoar_v1_mapping': {
-            'fundingReference': {
-                'funderIdentifier': {
-                    '@attributes': {
-                        'funderIdentifierType':
-                            'subitem_funder_identifiers.subitem_funder_identifier_type'
+    if kwargs.pop('mapping', True):
+        post_data['table_row_map']['mapping'][key] = {
+            'display_lang_type': '',
+            'jpcoar_v1_mapping': {
+                'fundingReference': {
+                    'funderIdentifier': {
+                        '@attributes': {
+                            'funderIdentifierType':
+                                'subitem_funder_identifiers.subitem_funder_identifier_type'
+                        },
+                        '@value': 'subitem_funder_identifiers.subitem_funder_identifier'
                     },
-                    '@value': 'subitem_funder_identifiers.subitem_funder_identifier'
-                },
-                'funderName': {
-                    '@attributes': {
-                        'xml:lang': 'subitem_funder_names.subitem_funder_name_language'
+                    'funderName': {
+                        '@attributes': {
+                            'xml:lang': 'subitem_funder_names.subitem_funder_name_language'
+                        },
+                        '@value': 'subitem_funder_names.subitem_funder_name'
                     },
-                    '@value': 'subitem_funder_names.subitem_funder_name'
-                },
-                'awardNumber': {
-                    '@attributes': {
-                        'awardURI': 'subitem_award_numbers.subitem_award_uri'
+                    'awardNumber': {
+                        '@attributes': {
+                            'awardURI': 'subitem_award_numbers.subitem_award_uri'
+                        },
+                        '@value': 'subitem_award_numbers.subitem_award_number'
                     },
-                    '@value': 'subitem_award_numbers.subitem_award_number'
-                },
-                'awardTitle': {
-                    '@attributes': {
-                        'xml:lang': 'subitem_award_titles.subitem_award_title_language'
-                    },
-                    '@value': 'subitem_award_titles.subitem_award_title'
+                    'awardTitle': {
+                        '@attributes': {
+                            'xml:lang': 'subitem_award_titles.subitem_award_title_language'
+                        },
+                        '@value': 'subitem_award_titles.subitem_award_title'
+                    }
                 }
-            }
-        },
-        'jpcoar_mapping': {
-            'fundingReference': {
-                'funderIdentifier': {
-                    '@attributes': {
-                        'funderIdentifierType':
-                            'subitem_funder_identifiers.subitem_funder_identifier_type'
+            },
+            'jpcoar_mapping': {
+                'fundingReference': {
+                    'funderIdentifier': {
+                        '@attributes': {
+                            'funderIdentifierType':
+                                'subitem_funder_identifiers.subitem_funder_identifier_type'
+                        },
+                        '@value': 'subitem_funder_identifiers.subitem_funder_identifier'
                     },
-                    '@value': 'subitem_funder_identifiers.subitem_funder_identifier'
-                },
-                'funderName': {
-                    '@attributes': {
-                        'xml:lang': 'subitem_funder_names.subitem_funder_name_language'
+                    'funderName': {
+                        '@attributes': {
+                            'xml:lang': 'subitem_funder_names.subitem_funder_name_language'
+                        },
+                        '@value': 'subitem_funder_names.subitem_funder_name'
                     },
-                    '@value': 'subitem_funder_names.subitem_funder_name'
-                },
-                'awardNumber': {
-                    '@attributes': {
-                        'awardURI': 'subitem_award_numbers.subitem_award_uri'
+                    'awardNumber': {
+                        '@attributes': {
+                            'awardURI': 'subitem_award_numbers.subitem_award_uri'
+                        },
+                        '@value': 'subitem_award_numbers.subitem_award_number'
                     },
-                    '@value': 'subitem_award_numbers.subitem_award_number'
-                },
-                'awardTitle': {
-                    '@attributes': {
-                        'xml:lang': 'subitem_award_titles.subitem_award_title_language'
-                    },
-                    '@value': 'subitem_award_titles.subitem_award_title'
+                    'awardTitle': {
+                        '@attributes': {
+                            'xml:lang': 'subitem_award_titles.subitem_award_title_language'
+                        },
+                        '@value': 'subitem_award_titles.subitem_award_title'
+                    }
                 }
-            }
-        },
-        'junii2_mapping': '',
-        'lido_mapping': '',
-        'lom_mapping': '',
-        'oai_dc_mapping': '',
-        'spase_mapping': ''
-    }
+            },
+            'junii2_mapping': '',
+            'lido_mapping': '',
+            'lom_mapping': '',
+            'oai_dc_mapping': '',
+            'spase_mapping': ''
+        }
+    else:
+        post_data['table_row_map']['mapping'][key] = config.DEFAULT_MAPPING
 
 
 def schema(title='', multi_flag=multiple_flag):

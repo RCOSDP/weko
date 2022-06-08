@@ -14,106 +14,109 @@ def add(post_data, key, **kwargs):
     option = kwargs.pop('option')
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
-    post_data['table_row_map']['mapping'][key] = {
-        'display_lang_type': '',
-        'jpcoar_v1_mapping': {
-            'conference': {
-                'conferenceName': {
-                    '@attributes': {
-                        'xml:lang': 'subitem_conference_names.subitem_conference_name_language'
+    if kwargs.pop('mapping', True):
+        post_data['table_row_map']['mapping'][key] = {
+            'display_lang_type': '',
+            'jpcoar_v1_mapping': {
+                'conference': {
+                    'conferenceName': {
+                        '@attributes': {
+                            'xml:lang': 'subitem_conference_names.subitem_conference_name_language'
+                        },
+                        '@value': 'subitem_conference_names.subitem_conference_name'
                     },
-                    '@value': 'subitem_conference_names.subitem_conference_name'
-                },
-                'conferenceSequence': {
-                    '@value': 'subitem_conference_sequence'
-                },
-                'conferenceSponsor': {
-                    '@attributes': {
-                        'xml:lang': 'subitem_conference_sponsors.subitem_conference_sponsor_language'
+                    'conferenceSequence': {
+                        '@value': 'subitem_conference_sequence'
                     },
-                    '@value': 'subitem_conference_sponsors.subitem_conference_sponsor'
-                },
-                'conferenceDate': {
-                    '@attributes': {
-                        'xml:lang': 'subitem_conference_date.subitem_conference_date_language',
-                        'startDay': 'subitem_conference_date.subitem_conference_start_day',
-                        'startMonth': 'subitem_conference_date.subitem_conference_start_month',
-                        'startYear': 'subitem_conference_date.subitem_conference_start_year',
-                        'endDay': 'subitem_conference_date.subitem_conference_end_day',
-                        'endMonth': 'subitem_conference_date.subitem_conference_end_month',
-                        'endYear': 'subitem_conference_date.subitem_conference_end_year'
+                    'conferenceSponsor': {
+                        '@attributes': {
+                            'xml:lang': 'subitem_conference_sponsors.subitem_conference_sponsor_language'
+                        },
+                        '@value': 'subitem_conference_sponsors.subitem_conference_sponsor'
                     },
-                    '@value': 'subitem_conference_date.subitem_conference_period'
-                },
-                'conferenceVenue': {
-                    '@attributes': {
-                        'xml:lang': 'subitem_conference_venues.subitem_conference_venue_language'
+                    'conferenceDate': {
+                        '@attributes': {
+                            'xml:lang': 'subitem_conference_date.subitem_conference_date_language',
+                            'startDay': 'subitem_conference_date.subitem_conference_start_day',
+                            'startMonth': 'subitem_conference_date.subitem_conference_start_month',
+                            'startYear': 'subitem_conference_date.subitem_conference_start_year',
+                            'endDay': 'subitem_conference_date.subitem_conference_end_day',
+                            'endMonth': 'subitem_conference_date.subitem_conference_end_month',
+                            'endYear': 'subitem_conference_date.subitem_conference_end_year'
+                        },
+                        '@value': 'subitem_conference_date.subitem_conference_period'
                     },
-                    '@value': 'subitem_conference_venues.subitem_conference_venue'
-                },
-                'conferencePlace': {
-                    '@attributes': {
-                        'xml:lang': 'subitem_conference_places.subitem_conference_place_language'
+                    'conferenceVenue': {
+                        '@attributes': {
+                            'xml:lang': 'subitem_conference_venues.subitem_conference_venue_language'
+                        },
+                        '@value': 'subitem_conference_venues.subitem_conference_venue'
                     },
-                    '@value': 'subitem_conference_places.subitem_conference_place'
-                },
-                'conferenceCountry': {
-                    '@value': 'subitem_conference_country'
+                    'conferencePlace': {
+                        '@attributes': {
+                            'xml:lang': 'subitem_conference_places.subitem_conference_place_language'
+                        },
+                        '@value': 'subitem_conference_places.subitem_conference_place'
+                    },
+                    'conferenceCountry': {
+                        '@value': 'subitem_conference_country'
+                    }
                 }
-            }
-        },
-        'jpcoar_mapping': {
-            'conference': {
-                'conferenceName': {
-                    '@attributes': {
-                        'xml:lang': 'subitem_conference_names.subitem_conference_name_language'
+            },
+            'jpcoar_mapping': {
+                'conference': {
+                    'conferenceName': {
+                        '@attributes': {
+                            'xml:lang': 'subitem_conference_names.subitem_conference_name_language'
+                        },
+                        '@value': 'subitem_conference_names.subitem_conference_name'
                     },
-                    '@value': 'subitem_conference_names.subitem_conference_name'
-                },
-                'conferenceSequence': {
-                    '@value': 'subitem_conference_sequence'
-                },
-                'conferenceSponsor': {
-                    '@attributes': {
-                        'xml:lang': 'subitem_conference_sponsors.subitem_conference_sponsor_language'
+                    'conferenceSequence': {
+                        '@value': 'subitem_conference_sequence'
                     },
-                    '@value': 'subitem_conference_sponsors.subitem_conference_sponsor'
-                },
-                'conferenceDate': {
-                    '@attributes': {
-                        'xml:lang': 'subitem_conference_date.subitem_conference_date_language',
-                        'startDay': 'subitem_conference_date.subitem_conference_start_day',
-                        'startMonth': 'subitem_conference_date.subitem_conference_start_month',
-                        'startYear': 'subitem_conference_date.subitem_conference_start_year',
-                        'endDay': 'subitem_conference_date.subitem_conference_end_day',
-                        'endMonth': 'subitem_conference_date.subitem_conference_end_month',
-                        'endYear': 'subitem_conference_date.subitem_conference_end_year'
+                    'conferenceSponsor': {
+                        '@attributes': {
+                            'xml:lang': 'subitem_conference_sponsors.subitem_conference_sponsor_language'
+                        },
+                        '@value': 'subitem_conference_sponsors.subitem_conference_sponsor'
                     },
-                    '@value': 'subitem_conference_date.subitem_conference_period'
-                },
-                'conferenceVenue': {
-                    '@attributes': {
-                        'xml:lang': 'subitem_conference_venues.subitem_conference_venue_language'
+                    'conferenceDate': {
+                        '@attributes': {
+                            'xml:lang': 'subitem_conference_date.subitem_conference_date_language',
+                            'startDay': 'subitem_conference_date.subitem_conference_start_day',
+                            'startMonth': 'subitem_conference_date.subitem_conference_start_month',
+                            'startYear': 'subitem_conference_date.subitem_conference_start_year',
+                            'endDay': 'subitem_conference_date.subitem_conference_end_day',
+                            'endMonth': 'subitem_conference_date.subitem_conference_end_month',
+                            'endYear': 'subitem_conference_date.subitem_conference_end_year'
+                        },
+                        '@value': 'subitem_conference_date.subitem_conference_period'
                     },
-                    '@value': 'subitem_conference_venues.subitem_conference_venue'
-                },
-                'conferencePlace': {
-                    '@attributes': {
-                        'xml:lang': 'subitem_conference_places.subitem_conference_place_language'
+                    'conferenceVenue': {
+                        '@attributes': {
+                            'xml:lang': 'subitem_conference_venues.subitem_conference_venue_language'
+                        },
+                        '@value': 'subitem_conference_venues.subitem_conference_venue'
                     },
-                    '@value': 'subitem_conference_places.subitem_conference_place'
-                },
-                'conferenceCountry': {
-                    '@value': 'subitem_conference_country'
+                    'conferencePlace': {
+                        '@attributes': {
+                            'xml:lang': 'subitem_conference_places.subitem_conference_place_language'
+                        },
+                        '@value': 'subitem_conference_places.subitem_conference_place'
+                    },
+                    'conferenceCountry': {
+                        '@value': 'subitem_conference_country'
+                    }
                 }
-            }
-        },
-        'junii2_mapping': '',
-        'lido_mapping': '',
-        'lom_mapping': '',
-        'oai_dc_mapping': '',
-        'spase_mapping': ''
-    }
+            },
+            'junii2_mapping': '',
+            'lido_mapping': '',
+            'lom_mapping': '',
+            'oai_dc_mapping': '',
+            'spase_mapping': ''
+        }
+    else:
+        post_data['table_row_map']['mapping'][key] = config.DEFAULT_MAPPING
 
 
 def schema(title='', multi_flag=multiple_flag):

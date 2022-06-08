@@ -29,34 +29,37 @@ def add(post_data, key, **kwargs):
     }
     set_post_data(post_data, property_id, name_ja, key, option, form, schema, **kwargs)
 
-    post_data['table_row_map']['mapping'][key] = {
-        'display_lang_type': '',
-        'jpcoar_v1_mapping': {
-            'accessRights': {
-                '@attributes': {
-                    'rdf:resource': 'subitem_access_right_uri'
-                },
-                '@value': 'subitem_access_right'
-            }
-        },
-        'jpcoar_mapping': {
-            'accessRights': {
-                '@attributes': {
-                    'rdf:resource': 'subitem_access_right_uri'
-                },
-                '@value': 'subitem_access_right'
-            }
-        },
-        'junii2_mapping': '',
-        'lido_mapping': '',
-        'lom_mapping': '',
-        'oai_dc_mapping': {
-            'rights': {
-                '@value': 'subitem_access_right'
-            }
-        },
-        'spase_mapping': ''
-    }
+    if kwargs.pop('mapping', True):
+        post_data['table_row_map']['mapping'][key] = {
+            'display_lang_type': '',
+            'jpcoar_v1_mapping': {
+                'accessRights': {
+                    '@attributes': {
+                        'rdf:resource': 'subitem_access_right_uri'
+                    },
+                    '@value': 'subitem_access_right'
+                }
+            },
+            'jpcoar_mapping': {
+                'accessRights': {
+                    '@attributes': {
+                        'rdf:resource': 'subitem_access_right_uri'
+                    },
+                    '@value': 'subitem_access_right'
+                }
+            },
+            'junii2_mapping': '',
+            'lido_mapping': '',
+            'lom_mapping': '',
+            'oai_dc_mapping': {
+                'rights': {
+                    '@value': 'subitem_access_right'
+                }
+            },
+            'spase_mapping': ''
+        }
+    else:
+        post_data['table_row_map']['mapping'][key] = config.DEFAULT_MAPPING
 
 
 def schema(title='', multi_flag=multiple_flag):
