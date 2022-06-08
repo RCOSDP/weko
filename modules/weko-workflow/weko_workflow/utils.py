@@ -3230,7 +3230,7 @@ def prepare_data_for_guest_activity(activity_id: str) -> dict:
         item = get_items_metadata_by_activity_detail(activity_detail)
         approval_record = []
         if item:
-            _, approval_record = get_pid_and_record(item)
+            _, approval_record = get_pid_and_record(item.id)
         # be use for index tree and comment page.
         session['itemlogin_item'] = ctx['item']
         session['itemlogin_steps'] = ctx['steps']
@@ -3682,14 +3682,18 @@ def get_files_and_thumbnail(activity_id, item):
     return files, files_thumbnail
 
 
-def get_pid_and_record(item):
-    """Get record data for the first time access to editing item screen.
-
+def get_pid_and_record(item_id):
+    """
+    get_pid_and_record Get record data for the first time access to editing item screen.
+    
     Args:
-        item: Item metadata.
+        item_id (_type_): id of Item metadata.
+
+    Returns:
+        _type_: A tuple containing (pid, object).
     """
     recid = PersistentIdentifier.get_by_object(
-        pid_type='recid', object_type='rec', object_uuid=item.id)
+        pid_type='recid', object_type='rec', object_uuid=item_id)
     record_class = import_string('weko_deposit.api:WekoRecord')
     resolver = Resolver(pid_type='recid', object_type='rec',
                         getter=record_class.get_record)
@@ -3745,7 +3749,7 @@ def get_main_record_detail(activity_id,
         else:
             item = get_items_metadata_by_activity_detail(activity_detail)
     if item and not approval_record:
-        recid, approval_record = get_pid_and_record(item)
+        recid, approval_record = get_pid_and_record(item.id)
     if item and not files:
         files, files_thumbnail = get_files_and_thumbnail(activity_id, item)
 
