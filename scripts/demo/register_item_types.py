@@ -74,7 +74,12 @@ def register_item_types_from_folder(exclusion_list, specified_list=[], update_fl
                         title_ja=property.property_title_ja,
                         title_en=property.property_title_en,
                         option=property.option,
-                        mapping=property.mapping
+                        mapping=property.mapping,
+                        sub_required=property.sub_required,
+                        sub_showlist=property.sub_showlist,
+                        sub_newline=property.sub_newline,
+                        sub_hide=property.sub_hide,
+                        sub_nondisplay=property.sub_nondisplay
                     )
                 json_schema = fix_json_schema(item_type['table_row_map']['schema'])
                 json_form = item_type['table_row_map']['form']

@@ -62,7 +62,7 @@ def add(post_data, key, **kwargs):
         post_data['table_row_map']['mapping'][key] = config.DEFAULT_MAPPING
 
 
-def schema(title='', multi_flag=multiple_flag):
+def schema(title='', multi_flag=multiple_flag, **kwargs):
     """Get schema text of item type."""
     def _schema():
         """Schema text."""
@@ -85,7 +85,7 @@ def schema(title='', multi_flag=multiple_flag):
         }
         return _d
 
-    return get_property_schema(title, _schema, multi_flag)
+    return get_property_schema(title, _schema, multi_flag, **kwargs)
 
 
 def form(key='', title='', title_ja=name_ja, title_en=name_en, multi_flag=multiple_flag):

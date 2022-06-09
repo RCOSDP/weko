@@ -6,7 +6,150 @@ def _schema():
     return {}
 
 
-def get_property_schema(title='', _schema=_schema, multi_flag=False):
+def set_subitem_option(data, **kwargs):
+    subitem_list = {}
+    # Required
+    sub_required = kwargs.get('sub_required', {})
+    if sub_required:
+        level1 = sub_required.get('level1', [])
+        data['required'] = level1
+        for sub_key in level1:
+            if data['properties'][sub_key]['format'] not in ['object', 'array', 'select',
+                                                             'checkboxes', 'radios']:
+                data['properties'][sub_key]['isRequired'] = True
+            elif data['properties'][sub_key]['format'] == 'array':
+                if sub_key not in subitem_list:
+                    subitem = {}
+                    subitem['data'] = data['properties'][sub_key]['items']
+                    subitem_list[sub_key] = subitem
+                else:
+                    subitem = subitem_list[sub_key]
+                level2 = sub_required.get('level2', {})
+                subitem['level2_required'] = level2
+            elif data['properties'][sub_key]['format'] == 'object':
+                if sub_key not in subitem_list:
+                    subitem = {}
+                    subitem['data'] = data['properties'][sub_key]
+                    subitem_list[sub_key] = subitem
+                else:
+                    subitem = subitem_list[sub_key]
+                level2 = sub_required.get('level2', {})
+                subitem['level2_required'] = level2
+    # Show List
+    sub_showlist = kwargs.get('sub_showlist', {})
+    if sub_showlist:
+        level1 = sub_showlist.get('level1', [])
+        for sub_key in level1:
+            if data['properties'][sub_key]['format'] not in ['object', 'array', 'select',
+                                                             'checkboxes', 'radios']:
+                data['properties'][sub_key]['isShowList'] = True
+            elif data['properties'][sub_key]['format'] == 'array':
+                if sub_key not in subitem_list:
+                    subitem = {}
+                    subitem['data'] = data['properties'][sub_key]['items']
+                    subitem_list[sub_key] = subitem
+                else:
+                    subitem = subitem_list[sub_key]
+                level2 = sub_showlist.get('level2', {})
+                subitem['level2_showlist'] = level2
+            elif data['properties'][sub_key]['format'] == 'object':
+                if sub_key not in subitem_list:
+                    subitem = {}
+                    subitem['data'] = data['properties'][sub_key]
+                    subitem_list[sub_key] = subitem
+                else:
+                    subitem = subitem_list[sub_key]
+                level2 = sub_showlist.get('level2', {})
+                subitem['level2_showlist'] = level2
+    # Specify Newline
+    sub_newline = kwargs.get('sub_newline', {})
+    if sub_newline:
+        level1 = sub_newline.get('level1', [])
+        for sub_key in level1:
+            if data['properties'][sub_key]['format'] not in ['object', 'array', 'select',
+                                                             'checkboxes', 'radios']:
+                data['properties'][sub_key]['isSpecifyNewline'] = True
+            elif data['properties'][sub_key]['format'] == 'array':
+                if sub_key not in subitem_list:
+                    subitem = {}
+                    subitem['data'] = data['properties'][sub_key]['items']
+                    subitem_list[sub_key] = subitem
+                else:
+                    subitem = subitem_list[sub_key]
+                level2 = sub_newline.get('level2', {})
+                subitem['level2_newline'] = level2
+            elif data['properties'][sub_key]['format'] == 'object':
+                if sub_key not in subitem_list:
+                    subitem = {}
+                    subitem['data'] = data['properties'][sub_key]
+                    subitem_list[sub_key] = subitem
+                else:
+                    subitem = subitem_list[sub_key]
+                level2 = sub_newline.get('level2', {})
+                subitem['level2_newline'] = level2
+    # Hide
+    sub_hide = kwargs.get('sub_hide', {})
+    if sub_hide:
+        level1 = sub_hide.get('level1', [])
+        for sub_key in level1:
+            if data['properties'][sub_key]['format'] not in ['object', 'array', 'select',
+                                                             'checkboxes', 'radios']:
+                data['properties'][sub_key]['isHide'] = True
+            elif data['properties'][sub_key]['format'] == 'array':
+                if sub_key not in subitem_list:
+                    subitem = {}
+                    subitem['data'] = data['properties'][sub_key]['items']
+                    subitem_list[sub_key] = subitem
+                else:
+                    subitem = subitem_list[sub_key]
+                level2 = sub_hide.get('level2', {})
+                subitem['level2_hide'] = level2
+            elif data['properties'][sub_key]['format'] == 'object':
+                if sub_key not in subitem_list:
+                    subitem = {}
+                    subitem['data'] = data['properties'][sub_key]
+                    subitem_list[sub_key] = subitem
+                else:
+                    subitem = subitem_list[sub_key]
+                level2 = sub_hide.get('level2', {})
+                subitem['level2_hide'] = level2
+    # Non Display on Detail
+    sub_nondisplay = kwargs.get('sub_nondisplay', {})
+    if sub_nondisplay:
+        level1 = sub_nondisplay.get('level1', [])
+        for sub_key in level1:
+            if data['properties'][sub_key]['format'] not in ['object', 'array', 'select',
+                                                             'checkboxes', 'radios']:
+                data['properties'][sub_key]['isNonDisplay'] = True
+            elif data['properties'][sub_key]['format'] == 'array':
+                if sub_key not in subitem_list:
+                    subitem = {}
+                    subitem['data'] = data['properties'][sub_key]['items']
+                    subitem_list[sub_key] = subitem
+                else:
+                    subitem = subitem_list[sub_key]
+                level2 = sub_nondisplay.get('level2', {})
+                subitem['level2_nondisplay'] = level2
+            elif data['properties'][sub_key]['format'] == 'object':
+                if sub_key not in subitem_list:
+                    subitem = {}
+                    subitem['data'] = data['properties'][sub_key]
+                    subitem_list[sub_key] = subitem
+                else:
+                    subitem = subitem_list[sub_key]
+                level2 = sub_nondisplay.get('level2', {})
+                subitem['level2_nondisplay'] = level2
+    # next level
+    for sub_key in subitem_list.keys():
+        set_subitem_option(data[sub_key]['data'],
+                           sub_required=subitem_list[sub_key]['level2_required'],
+                           sub_showlist=subitem_list[sub_key]['level2_showlist'],
+                           sub_newline=subitem_list[sub_key]['level2_newline'],
+                           sub_hide=subitem_list[sub_key]['level2_hide'],
+                           sub_nondisplay=subitem_list[sub_key]['level2_nondisplay'])
+
+
+def get_property_schema(title='', _schema=_schema, multi_flag=False, **kwargs):
     """Get schema text of item type.
 
     Args:
@@ -19,18 +162,24 @@ def get_property_schema(title='', _schema=_schema, multi_flag=False):
     """
     if title:
         if multi_flag:
+            schema_data = _schema()
+            set_subitem_option(schema_data, **kwargs)
             schema_property = {
                 'type': 'array',
                 'title': title,
                 'minItems': '1',
                 'maxItems': '9999',
-                'items': _schema()
+                'items': schema_data
             }
         else:
-            schema_property = _schema()
+            schema_data = _schema()
+            set_subitem_option(schema_data, **kwargs)
+            schema_property = schema_data
             schema_property['title'] = title
     else:
-        schema_property = _schema()
+        schema_data = _schema()
+        set_subitem_option(schema_data, **kwargs)
+        schema_property = schema_data
         schema_property['format'] = 'object'
 
     return schema_property
@@ -88,13 +237,13 @@ def set_post_data(post_data, property_id, name, key, option, form, schema, **kwa
         form ([type], optional): form function.
         schema ([type], optional): schema function.
     """
-    title = kwargs.get('title', name)
-    title_ja = kwargs.get('title_ja', '')
-    title_en = kwargs.get('title_en', '')
-    sys_property = kwargs.get('sys_property', False)
+    title = kwargs.pop('title', name)
+    title_ja = kwargs.pop('title_ja', '')
+    title_en = kwargs.pop('title_en', '')
+    sys_property = kwargs.pop('sys_property', False)
 
     post_data['table_row_map']['form'].append(form(key, title, title_ja, title_en, option['multiple']))
-    post_data['table_row_map']['schema']['properties'][key] = schema(title, option['multiple'])
+    post_data['table_row_map']['schema']['properties'][key] = schema(title, option['multiple'], **kwargs)
     if option['required']:
         post_data['table_row_map']['schema']['required'].append(key)
     meta_data = {
