@@ -603,7 +603,7 @@ def display_activity(activity_id="0"):
         is_hidden_pubdate_value = is_hidden_pubdate(item_type_name)
 
     # if 'approval' == action_endpoint:
-    if item and id in item:
+    if item:
         try:
             # get record data for the first time access to editing item screen
             recid, approval_record = get_pid_and_record(item.id)
