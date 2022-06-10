@@ -55,6 +55,7 @@ import sys
 from flask_security import current_user
 from flask import session
 from invenio_accounts.models import User
+# from weko_redis.redis import RedisConnection
 
 from .config import RECORDS_REST_DEFAULT_TTL_VALUE
 

@@ -235,8 +235,9 @@
       <div class="text-center">
         {%- block search_pagination_top %}
         <invenio-search-pagination
-        adjacent-size="4"
-        show-go-to-first-last="false"
+         max-result-window="{{ config.WEKO_SEARCH_MAX_RESULT }}"
+         adjacent-size="4"
+         show-go-to-first-last="false"
          template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_PAGINATION) }}">
         </invenio-search-pagination>
         {%- endblock search_pagination_top %}
