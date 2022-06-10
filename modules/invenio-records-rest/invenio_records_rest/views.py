@@ -46,9 +46,7 @@ from .proxies import current_records_rest
 from .query import es_search_factory
 from .utils import obj_or_import_string
 
-import redis
 import json
-from simplekv.memory.redisstore import RedisStore
 import os
 import sys
 import math
