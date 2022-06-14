@@ -56,6 +56,29 @@ from invenio_stats.processors import EventsIndexer
 from invenio_stats.tasks import aggregate_events
 from invenio_stats.views import blueprint
 
+# @pytest.yield_fixture()
+# def instance_path():
+#     path = tempfile.mkdtemp()
+#     yield path
+#     shutil.rmtree(path)
+# 
+# @pytest.fixture()
+# def base_app(instance_path):
+#     app_ = Flask("testapp", instance_path=instance_path)
+#     app_.config.update(
+#         SQLALCHEMY_DATABASE_URI=os.environ.get(
+#             "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
+#         ),
+#         SECRET_KEY="SECRET_KEY",
+#         TESTING=True,
+#     )
+#     return app_
+# 
+# @pytest.yield_fixture()
+# def app(base_app):
+#     with base_app.app_context():
+#         yield base_app
+
 
 def mock_iter_entry_points_factory(data, mocked_group):
     """Create a mock iter_entry_points function."""
@@ -193,10 +216,18 @@ def event_queues(app, event_entrypoints):
 
 
 @pytest.yield_fixture()
-def base_app():
+def instance_path():
+    path = tempfile.mkdtemp()
+    yield path
+    shutil.rmtree(path)
+
+# @pytest.yield_fixture()
+# def base_app():
+@pytest.fixture()
+def base_app(instance_path):
     """Flask application fixture without InvenioStats."""
     from invenio_stats.config import STATS_EVENTS
-    instance_path = tempfile.mkdtemp()
+    # instance_path = tempfile.mkdtemp()
     app_ = Flask('testapp', instance_path=instance_path)
     stats_events = {
         'file-download': deepcopy(STATS_EVENTS['file-download']),
@@ -214,8 +245,11 @@ def base_app():
         CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
         CELERY_TASK_EAGER_PROPAGATES=True,
         CELERY_RESULT_BACKEND='cache',
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #     'SQLALCHEMY_DATABASE_URI', 'sqlite://'),
         SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI', 'sqlite://'),
+            "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
+        ),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         TESTING=True,
         OAUTH2SERVER_CLIENT_ID_SALT_LEN=64,
@@ -243,15 +277,17 @@ def base_app():
     InvenioRecords(app_)
     InvenioFilesREST(app_)
     InvenioPIDStore(app_)
+    #
     InvenioCache(app_)
     InvenioQueues(app_)
-    InvenioOAuth2Server(app_)
+    # InvenioOAuth2Server(app_)xxx
     InvenioOAuth2ServerREST(app_)
     InvenioMARC21(app_)
     InvenioSearch(app_, entry_point_group=None)
-    with app_.app_context():
-        yield app_
-    shutil.rmtree(instance_path)
+    # with app_.app_context():
+    #     yield app_
+    # shutil.rmtree(instance_path)
+    return app_
 
 
 @pytest.yield_fixture()
@@ -259,8 +295,8 @@ def app(base_app):
     """Flask application fixture with InvenioStats."""
     base_app.register_blueprint(blueprint)
     InvenioStats(base_app)
-    yield base_app
-
+    with base_app.app_context():
+        yield base_app
 
 @pytest.yield_fixture()
 def db(app):
@@ -584,8 +620,8 @@ def _create_file_download_event(timestamp,
         user_id=user_id,
     )
     return build_file_unique_id(doc)
-
-
+# 
+# 
 def _create_record_view_event(timestamp,
                               record_id='R0000000000000000000000000000001',
                               pid_type='recid',

@@ -12,9 +12,9 @@ import logging
 from datetime import datetime
 
 import pytest
-from conftest import _create_file_download_event
+from tests.conftest import _create_file_download_event
 from elasticsearch_dsl import Search
-from helpers import get_queue_size
+from tests.helpers import get_queue_size
 from invenio_queues.proxies import current_queues
 from mock import patch
 

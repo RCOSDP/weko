@@ -12,7 +12,7 @@ import datetime
 
 import pytest
 from click.testing import CliRunner
-from conftest import _create_file_download_event, _create_record_view_event
+from tests.conftest import _create_file_download_event, _create_record_view_event
 from elasticsearch_dsl import Search
 
 from invenio_stats import current_stats

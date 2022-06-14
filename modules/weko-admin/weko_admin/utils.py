@@ -2164,10 +2164,11 @@ def get_query_key_by_permission(has_permission):
 
 def get_facet_search_query(has_permission=True):
     """Get facet search query in redis."""
-    search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
+    search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']# tenant1-weko#
     key = get_query_key_by_permission(has_permission)
     # Check query exists in redis.
     query = json.loads(get_redis_cache(key) or '{}')
+    current_app.logger.debug(query)#
     if not is_exists_key_or_empty_in_redis(key) \
             or query.get(search_index, {}).get('post_filters', {}) == {} \
             or query.get(search_index, {}).get('aggs', {}) == {}:

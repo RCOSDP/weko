@@ -547,7 +547,7 @@ class ItemImportView(BaseView):
                     for key in ["pubdate", *item_type.get("table_row", [])]:
                         if key in meta_system:
                             continue
-
+                        print("key:{}".format(key))#
                         item = schema.get(key)
                         item_option = meta_list.get(key) if meta_list.get(key) else item
                         sub_form = next(

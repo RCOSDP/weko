@@ -187,7 +187,8 @@ class DefaultOrderedDict(OrderedDict):
         """Modify inherited dict provides __deepcopy__."""
         import copy
 
-        return type(self)(self.default_factory, copy.deepcopy(self.items()))
+        # return type(self)(self.default_factory, copy.deepcopy(self.items()))
+        return type(self)(self.default_factory, copy.deepcopy(list(self.items())))
 
     def __repr__(self):
         """Return a nicely formatted representation string."""
