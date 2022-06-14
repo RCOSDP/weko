@@ -683,6 +683,43 @@
             "input_value": "",
             "input_maxItems": "9999",
             "input_minItems": "1"
+        },
+        "item_1655086765562": {
+            "title": "thumbnail",
+            "option": {
+                "crtf": false,
+                "hidden": false,
+                "oneline": false,
+                "multiple": false,
+                "required": false,
+                "showlist": false
+            },
+            "input_type": "cus_120",
+            "title_i18n": {
+                "en": "",
+                "ja": ""
+            },
+            "input_value": "",
+            "input_maxItems": "9999",
+            "input_minItems": "1"
+        },
+        "item_yyyyyyyyyyyyy": {
+            "title": "not in form item",
+            "option": {
+                "crtf": false,
+                "hidden": false,
+                "oneline": false,
+                "multiple": false,
+                "required": false,
+                "showlist": false
+            },
+            "title_i18n": {
+                "en": "not in form item",
+                "ja": "formにないアイテム"
+            },
+            "input_value": "",
+            "input_maxItems": "9999",
+            "input_minItems": "1"
         }
     },
     "table_row": [
@@ -723,7 +760,10 @@
         "item_1617187187528",
         "item_1617605131499",
         "item_1617620223087",
-        "item_xxxxxxxxxxxxx"
+        "item_1655086765562",
+        "item_xxxxxxxxxxxxx",
+        "item_yyyyyyyyyyyyy"
+
     ],
     "edit_notes": {
         "item_1617186331708": "",
@@ -762,7 +802,8 @@
         "item_1617605131499": "",
         "item_1617610673286": "",
         "item_1617620223087": "",
-        "item_1617944105607": ""
+        "item_1617944105607": "",
+        "item_1655086765562": ""
     },
     "meta_system": {
         "system_file": {
@@ -5355,6 +5396,41 @@
                             }
                         },
                         "title": "Degree Grantor Name",
+                        "format": "array"
+                    }
+                }
+            },
+            "item_1655086765562": {
+                "type": "object",
+                "format": "object",
+                "properties": {
+                    "subitem_thumbnail": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "format": "object",
+                            "properties": {
+                                "thumbnail_url": {
+                                    "type": "string",
+                                    "title": "URI",
+                                    "format": "text",
+                                    "title_i18n": {
+                                        "en": "URI",
+                                        "ja": "URI"
+                                    }
+                                },
+                                "thumbnail_label": {
+                                    "type": "string",
+                                    "title": "URI Label",
+                                    "format": "text",
+                                    "title_i18n": {
+                                        "en": "URI Label",
+                                        "ja": "URI Label"
+                                    }
+                                }
+                            }
+                        },
+                        "title": "URI",
                         "format": "array"
                     }
                 }
@@ -12495,6 +12571,51 @@
                 }
             },
             {
+                "key": "item_1655086765562",
+                "type": "fieldset",
+                "items": [
+                    {
+                        "add": "New",
+                        "key": "item_1655086765562.subitem_thumbnail",
+                        "items": [
+                            {
+                                "key": "item_1655086765562.subitem_thumbnail[].thumbnail_url",
+                                "type": "text",
+                                "title": "URI",
+                                "readonly": true,
+                                "title_i18n": {
+                                    "en": "URI",
+                                    "ja": "URI"
+                                }
+                            },
+                            {
+                                "key": "item_1655086765562.subitem_thumbnail[].thumbnail_label",
+                                "type": "text",
+                                "title": "URI Label",
+                                "readonly": true,
+                                "title_i18n": {
+                                    "en": "URI Label",
+                                    "ja": "URI Label"
+                                }
+                            }
+                        ],
+                        "style": {
+                            "add": "btn-success"
+                        },
+                        "title": "URI",
+                        "title_i18n": {
+                            "en": "URI",
+                            "ja": "URI"
+                        }
+                    }
+                ],
+                "title": "thumbnail",
+                "title_i18n": {
+                    "en": "",
+                    "ja": ""
+                }
+            },
+            {
                 "key": "system_identifier_doi",
                 "type": "fieldset",
                 "items": [
@@ -17468,6 +17589,48 @@
                     "maxItems": "9999",
                     "minItems": "1"
                 },
+                "item_1655086765562": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "subitem_thumbnail": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "format": "object",
+                                    "properties": {
+                                        "thumbnail_url": {
+                                            "type": "string",
+                                            "title": "URI",
+                                            "format": "text",
+                                            "title_i18n": {
+                                                "en": "URI",
+                                                "ja": "URI"
+                                            }
+                                        },
+                                        "thumbnail_label": {
+                                            "type": "string",
+                                            "title": "URI Label",
+                                            "format": "text",
+                                            "title_i18n": {
+                                                "en": "URI Label",
+                                                "ja": "URI Label"
+                                            }
+                                        }
+                                    }
+                                },
+                                "title": "URI",
+                                "format": "array"
+                            }
+                        }
+                    },
+                    "title": "thumbnail"
+                },
+                "item_yyyyyyyyyyyyy": {
+                    "type": "array",
+                    "title": "not in form item"
+                },
                 "system_identifier_doi": {
                     "type": "object",
                     "title": "Persistent Identifier(DOI)",
@@ -18487,6 +18650,15 @@
                         "@value": "subitem_1551256037922.subitem_1551256042287"
                     }
                 },
+                "display_lang_type": ""
+            },
+            "item_1655086765562": {
+                "lom_mapping": "",
+                "lido_mapping": "",
+                "spase_mapping": "",
+                "jpcoar_mapping": "",
+                "junii2_mapping": "",
+                "oai_dc_mapping": "",
                 "display_lang_type": ""
             },
             "system_identifier_doi": {

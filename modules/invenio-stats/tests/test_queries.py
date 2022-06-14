@@ -38,7 +38,7 @@ def test_histogram_query(app, event_queues, aggregated_events):
         assert int(day_result['value']) == 2
 
 
-@pytest.mark.skip('This test dont ever finish')
+# @pytest.mark.skip('This test dont ever finish')
 @pytest.mark.parametrize('aggregated_events',
                          [dict(file_number=1,
                                event_number=7,
@@ -48,6 +48,11 @@ def test_histogram_query(app, event_queues, aggregated_events):
 def test_terms_query(app, event_queues, aggregated_events):
     """Test that the terms query returns the correct total count."""
     query_configs = register_queries()
+    # memo query_configs[1]['query_config']=dict(
+    #             index='{}-stats-search'.format(search_index_prefix),
+    #             doc_type='search-day-aggregation',
+    #             group_fields=['search_key', 'count'],
+    #         )
     terms_query = ESTermsQuery(query_name='test_total_count',
                                **query_configs[1]['query_config'])
     results = terms_query.run(bucket_id='B0000000000000000000000000000001',

@@ -355,10 +355,12 @@ class ESTermsQuery(ESQuery):
 
     def run(self, start_date=None, end_date=None, **kwargs):
         """Run the query."""
+        print("start_run")#
         start_date = self.extract_date(start_date) if start_date else None
         end_date = self.extract_date(end_date) if end_date else None
         self.validate_arguments(start_date, end_date, **kwargs)
         if self.group_fields:
+            print("in group_fields")#
             first_search = True
             after_key = None
             total = 1
@@ -367,7 +369,9 @@ class ESTermsQuery(ESQuery):
             res_list = []
             res_count = {}
             while count < total and (after_key or first_search):
+                print("count:{} > total:{}".format(count, total))#
                 agg_query = self.build_query(start_date, end_date, after_key=after_key, **kwargs)
+                print("agg_query:{}".format(agg_puery))#
                 current_app.logger.debug('agg_query: {}'.format(agg_query.to_dict()))
                 temp_res = agg_query.execute().to_dict()
                 if 'after_key' in temp_res['aggregations']['my_buckets']:
@@ -385,7 +389,9 @@ class ESTermsQuery(ESQuery):
             for metric in self.metric_fields:
                 query_result['aggregations'][metric] = res_count[metric]
         else:
+            print("out group field")#
             agg_query = self.build_query(start_date, end_date, **kwargs)
+            current_app.logger.debug("this run")#
             current_app.logger.debug(agg_query.to_dict())
             query_result = agg_query.execute().to_dict()
         res = self.process_query_result(query_result, start_date, end_date)
