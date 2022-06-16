@@ -2,7 +2,36 @@ require([
   "jquery",
   "bootstrap"
 ], function () {
-
+  function to_cancel_activity() {
+    let activity_id = $("#activity_id").text().trim();
+    let action_id = $("#hide-actionId").text().trim();
+    let pid_val = request_uri.substring(request_uri.lastIndexOf("/") + 1, request_uri.length)
+    if (!pid_val) {
+      let pid_value_data = JSON.parse(sessionStorage.getItem("pid_value_data"))
+      if (pid_value_data && pid_value_data.activity_id == $('#activity_id').text()) {
+        pid_val = pid_value_data.pid_value_temp
+      }
+    }
+    let cancel_uri = '/activity/action/' + activity_id + '/' + action_id + '/cancel'
+    let cancel_data = {
+      commond: 'Auto cancel becase workflow setting be changed.',
+      action_version: '',
+      pid_value: pid_val
+    };
+    send(cancel_uri, cancel_data,
+      function (data) {
+        if (data && data.code == 0) {
+          document.location.href = '/workflow';
+        } else {
+          $('#cancelModalBody').text(data.msg);
+          $('#cancelModal').modal('show');
+        }
+      },
+      function (errmsg) {
+        $('#cancelModalBody').text('Server error.');
+        $('#cancelModal').modal('show');
+    });
+  }
   /**
    * Start Loading
    * @param actionButton
@@ -174,6 +203,12 @@ require([
     startLoading(_this);
     let $currentStep = $('.cur_step');
     let uri_apo = $currentStep.data('next-uri');
+    if (!uri_apo) {
+      let error_msg = $('#AutoCancelMsg').text;
+      $('#cancelModalBody').text(error_msg);
+      $('#cancelModal').modal('show');
+      to_cancel_activity();
+    }
     let act_ver = $currentStep.data('action-version');
     let community_id = $('#community_id').text();
     let post_data = {
@@ -194,6 +229,11 @@ require([
           } else {
             document.location.reload(true);
           }
+        } else if (-2 == data.code) {
+          let error_msg = $('#AutoCancelMsg').text;
+          $('#cancelModalBody').text(error_msg);
+          $('#cancelModal').modal('show');
+          to_cancel_activity();
         } else {
           endLoading(_this);
           alert(data.msg);

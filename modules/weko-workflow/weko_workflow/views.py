@@ -918,6 +918,8 @@ def next_action(activity_id='0', action_id=0):
     flow = Flow()
     next_flow_action = flow.get_next_flow_action(
         activity_detail.flow_define.flow_id, action_id, action_order)
+    if not next_flow_action:
+        return jsonify(code=-2, msg='')
     next_action_endpoint = next_flow_action[0].action.action_endpoint
     next_action_id = next_flow_action[0].action_id
     next_action_order = next_flow_action[
@@ -929,6 +931,10 @@ def next_action(activity_id='0', action_id=0):
         next_action_detail = work_activity.get_activity_action_comment(
             activity_id, next_action_id,
             next_action_order)
+
+        if not next_action_detail:
+            return jsonify(code=-2, msg='')
+
         is_last_approval_step = work_activity \
             .is_last_approval_step(activity_id, action_id, action_order) \
             if action_endpoint == "approval" else False

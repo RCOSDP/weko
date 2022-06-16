@@ -243,6 +243,37 @@ require([
 
 //Item Link
 function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
+  function to_cancel_activity() {
+    let activity_id = $("#activity_id").text().trim();
+    let action_id = $("#hide-actionId").text().trim();
+    let pid_val = request_uri.substring(request_uri.lastIndexOf("/") + 1, request_uri.length)
+    if (!pid_val) {
+      let pid_value_data = JSON.parse(sessionStorage.getItem("pid_value_data"))
+      if (pid_value_data && pid_value_data.activity_id == $('#activity_id').text()) {
+        pid_val = pid_value_data.pid_value_temp
+      }
+    }
+    let cancel_uri = '/activity/action/' + activity_id + '/' + action_id + '/cancel'
+    let cancel_data = {
+      commond: 'Auto cancel becase workflow setting be changed.',
+      action_version: '',
+      pid_value: pid_val
+    };
+    send(cancel_uri, cancel_data,
+      function (data) {
+        if (data && data.code == 0) {
+          document.location.href = '/workflow';
+        } else {
+          $('#cancelModalBody').text(data.msg);
+          $('#cancelModal').modal('show');
+        }
+      },
+      function (errmsg) {
+        $('#cancelModalBody').text('Server error.');
+        $('#cancelModal').modal('show');
+    });
+  }
+
   /**
    * Start Loading
    * @param actionButton
@@ -353,6 +384,12 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
     let runButton = $("#item-link-run-btn");
     $scope.startLoading(runButton);
     var post_url = $('.cur_step').data('next-uri');
+    if (!post_url) {
+      let error_msg = $('#AutoCancelMsg').text;
+      $('#cancelModalBody').text(error_msg);
+      $('#cancelModal').modal('show');
+      to_cancel_activity();
+    }
     var post_data = {
       commond: $("#input-comment").val(),
       action_version: $('.cur_step').data('action-version'),
@@ -379,6 +416,11 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
         } else {
           document.location.reload(true);
         }
+      } else if (-2 === response.data.code) {
+        let error_msg = $('#AutoCancelMsg').text;
+        $('#cancelModalBody').text(error_msg);
+        $('#cancelModal').modal('show');
+        to_cancel_activity();
       } else {
         $scope.endLoading(runButton);
         alert(response.data.msg);
