@@ -5,21 +5,20 @@ require([
   function to_cancel_activity() {
     let activity_id = $("#activity_id").text().trim();
     let action_id = $("#hide-actionId").text().trim();
-    let pid_val = request_uri.substring(request_uri.lastIndexOf("/") + 1, request_uri.length)
-    if (!pid_val) {
-      let pid_value_data = JSON.parse(sessionStorage.getItem("pid_value_data"))
-      if (pid_value_data && pid_value_data.activity_id == $('#activity_id').text()) {
-        pid_val = pid_value_data.pid_value_temp
-      }
-    }
     let cancel_uri = '/activity/action/' + activity_id + '/' + action_id + '/cancel'
     let cancel_data = {
       commond: 'Auto cancel becase workflow setting be changed.',
       action_version: '',
-      pid_value: pid_val
+      pid_value: ''
     };
-    send(cancel_uri, cancel_data,
-      function (data) {
+    $.ajax({
+      method: 'POST',
+      url: cancel_uri,
+      async: true,
+      contentType: 'application/json',
+      dataType: 'json',
+      data: JSON.stringify(cancel_data),
+      success: function (data, textStatus) {
         if (data && data.code == 0) {
           document.location.href = '/workflow';
         } else {
@@ -27,9 +26,10 @@ require([
           $('#cancelModal').modal('show');
         }
       },
-      function (errmsg) {
+      error: function (textStatus, errorThrown) {
         $('#cancelModalBody').text('Server error.');
         $('#cancelModal').modal('show');
+      }
     });
   }
   /**
@@ -204,7 +204,7 @@ require([
     let $currentStep = $('.cur_step');
     let uri_apo = $currentStep.data('next-uri');
     if (!uri_apo) {
-      let error_msg = $('#AutoCancelMsg').text;
+      let error_msg = $('#AutoCancelMsg').text();
       $('#cancelModalBody').text(error_msg);
       $('#cancelModal').modal('show');
       to_cancel_activity();
@@ -230,7 +230,7 @@ require([
             document.location.reload(true);
           }
         } else if (-2 == data.code) {
-          let error_msg = $('#AutoCancelMsg').text;
+          let error_msg = $('#AutoCancelMsg').text();
           $('#cancelModalBody').text(error_msg);
           $('#cancelModal').modal('show');
           to_cancel_activity();
