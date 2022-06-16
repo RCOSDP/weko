@@ -82,7 +82,8 @@ jsonpath_ng==1.5.2
 jupyter-client==5.2.2
 jupyter-core==4.4.0
 jsonpath-ng == 1.5.2
-kombu==4.6.10
+#kombu==4.6.10
+-e git+https://github.com/RCOSDP/kombu.git@fix-queue-type#egg=kombu
 limits==1.2.1
 lxml==4.1.1
 Mako==1.0.7
