@@ -91,6 +91,11 @@ require([
     }
 
     let post_uri = $('.cur_step').data('next-uri');
+    if (!post_uri) {
+      let error_msg = $('#AutoCancelMsg').text();
+      $('#cancelModalBody').text(error_msg);
+      $('#cancelModal').modal('show');
+    }
     let post_data = {
       commond: comment,
       action_version: $('.cur_step').data('action-version'),
@@ -144,6 +149,11 @@ require([
     }
 
     let post_uri = $('.cur_step').data('next-uri');
+    if (!post_uri) {
+      let error_msg = $('#AutoCancelMsg').text();
+      $('#cancelModalBody').text(error_msg);
+      $('#cancelModal').modal('show');
+    }
     let post_data = {
       commond: comment,
       action_version: $('.cur_step').data('action-version'),
@@ -177,6 +187,10 @@ require([
           } else {
             document.location.reload(true);
           }
+        } else if (-2 == data.code) {
+          let error_msg = $('#AutoCancelMsg').text();
+          $('#cancelModalBody').text(error_msg);
+          $('#cancelModal').modal('show');
         } else {
           endLoading(_this);
           alert(data.msg);
@@ -280,6 +294,11 @@ require([
     let _this = $(this);
     startLoading(_this);
     let uri_apo = $('.cur_step').data('next-uri');
+    if (!uri_apo) {
+      let error_msg = $('#AutoCancelMsg').text();
+      $('#cancelModalBody').text(error_msg);
+      $('#cancelModal').modal('show');
+    }
     let act_ver = $('.cur_step').data('action-version');
     let post_data = {
       commond: $('#input-comment').val(),
@@ -299,6 +318,10 @@ require([
           } else {
             document.location.reload(true);
           }
+        } else if (-2 == data.code) {
+          let error_msg = $('#AutoCancelMsg').text();
+          $('#cancelModalBody').text(error_msg);
+          $('#cancelModal').modal('show');
         } else {
           endLoading(_this);
           alert(data.msg);
@@ -315,6 +338,11 @@ require([
     let _this = $(this);
     startLoading(_this);
     let uri_apo = $('.cur_step').data('next-uri');
+    if (!uri_apo) {
+      let error_msg = $('#AutoCancelMsg').text();
+      $('#cancelModalBody').text(error_msg);
+      $('#cancelModal').modal('show');
+    }
     let act_ver = $('.cur_step').data('action-version');
     let post_data = {
       commond: $('#input-comment').val(),
@@ -334,6 +362,10 @@ require([
           } else {
             document.location.reload(true);
           }
+        } else if (-2 == data.code) {
+          let error_msg = $('#AutoCancelMsg').text();
+          $('#cancelModalBody').text(error_msg);
+          $('#cancelModal').modal('show');
         } else {
           endLoading(_this);
           alert(data.msg);
