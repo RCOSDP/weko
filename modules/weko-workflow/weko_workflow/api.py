@@ -842,14 +842,18 @@ class WorkActivity(object):
         :param action_status:
         :return:
         """
-        with db.session.begin_nested():
-            activity = self.get_activity_by_id(activity_id)
-            activity.action_id = action_id
-            activity.action_status = action_status
-            if action_order:
-                activity.action_order = action_order
-            db.session.merge(activity)
-        db.session.commit()
+        try:
+            with db.session.begin_nested():
+                activity = self.get_activity_by_id(activity_id)
+                activity.action_id = action_id
+                activity.action_status = action_status
+                if action_order:
+                    activity.action_order = action_order
+                db.session.merge(activity)
+            db.session.commit()
+            return True
+        except Exception as ex:
+            return False
 
     def upt_activity_metadata(self, activity_id, metadata):
         """Update metadata to activity table.
@@ -891,16 +895,20 @@ class WorkActivity(object):
         :param action_status:
         :return:
         """
-        with db.session.begin_nested():
-            query = ActivityAction.query.filter_by(
-                activity_id=activity_id,
-                action_id=action_id)
-            if action_order:
-                query = query.filter_by(action_order=action_order)
-            activity_action = query.first()
-            activity_action.action_status = action_status
-            db.session.merge(activity_action)
-        db.session.commit()
+        try:
+            with db.session.begin_nested():
+                query = ActivityAction.query.filter_by(
+                    activity_id=activity_id,
+                    action_id=action_id)
+                if action_order:
+                    query = query.filter_by(action_order=action_order)
+                activity_action = query.first()
+                activity_action.action_status = action_status
+                db.session.merge(activity_action)
+            db.session.commit()
+            return True
+        except Exception as ex:
+            return False
 
     def upt_activity_action_comment(self, activity_id, action_id, comment,
                                     action_order):

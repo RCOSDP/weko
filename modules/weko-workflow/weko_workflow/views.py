@@ -1158,11 +1158,13 @@ def next_action(activity_id='0', action_id=0):
     if not rtn:
         return jsonify(code=-1, msg=_('error'))
     # next action
-    work_activity.upt_activity_action_status(
+    flag = work_activity.upt_activity_action_status(
         activity_id=activity_id, action_id=action_id,
         action_status=ActionStatusPolicy.ACTION_DONE,
         action_order=action_order
     )
+    if not flag:
+        return jsonify(code=-2, msg='')
     work_activity.upt_activity_action_comment(
         activity_id=activity_id,
         action_id=action_id,
@@ -1209,14 +1211,16 @@ def next_action(activity_id='0', action_id=0):
             except BaseException:
                 abort(500, 'MAPPING_ERROR')
         else:
-            work_activity.upt_activity_action(
+            flag = work_activity.upt_activity_action(
                 activity_id=activity_id, action_id=next_action_id,
                 action_status=ActionStatusPolicy.ACTION_DOING,
                 action_order=next_action_order)
-            work_activity.upt_activity_action_status(
+            flag &= work_activity.upt_activity_action_status(
                 activity_id=activity_id, action_id=next_action_id,
                 action_status=ActionStatusPolicy.ACTION_DOING,
                 action_order=next_action_order)
+            if not flag:
+                return jsonify(code=-2, msg='')
     # delete session value
     if session.get('itemlogin_id'):
         del session['itemlogin_id']
@@ -1303,24 +1307,26 @@ def previous_action(activity_id='0', action_id=0, req=0):
         previous_action_order = pre_action[
             0].action_order if action_order else None
         if req == 0:
-            work_activity.upt_activity_action_status(
+            flag = work_activity.upt_activity_action_status(
                 activity_id=activity_id,
                 action_id=action_id,
                 action_status=ActionStatusPolicy.ACTION_THROWN_OUT,
                 action_order=action_order)
         else:
-            work_activity.upt_activity_action_status(
+            flag = work_activity.upt_activity_action_status(
                 activity_id=activity_id, action_id=action_id,
                 action_status=ActionStatusPolicy.ACTION_RETRY,
                 action_order=action_order)
-        work_activity.upt_activity_action_status(
+        flag &= work_activity.upt_activity_action_status(
             activity_id=activity_id, action_id=previous_action_id,
             action_status=ActionStatusPolicy.ACTION_DOING,
             action_order=previous_action_order)
-        work_activity.upt_activity_action(
+        flag &= work_activity.upt_activity_action(
             activity_id=activity_id, action_id=previous_action_id,
             action_status=ActionStatusPolicy.ACTION_DOING,
             action_order=previous_action_order)
+        if not flag:
+            return jsonify(code=-2, msg='')
     return jsonify(code=0, msg=_('success'))
 
 
