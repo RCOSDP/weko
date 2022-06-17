@@ -378,16 +378,20 @@
 {%- endblock page_body_main %}
 
 {%- block page_body %}
-<div id="AutoCancelMsg" class="hide">{_('')}</div>
+<div id="AutoCancelMsg" class="hide">{{_('The activity is forcibly canceled because the workflow settings have changed and the next step was not found.')}}</div>
 <div ng-controller="AuthorModalCtrl" class="modal fade" tabindex="-1" role="dialog" id="cancelModal">
   <div class="modal-dialog modelWidth modal-lg" role="document">
     <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">WEKO</h4>
+      </div>
       <div class="modal-body" id="cancelModalBody">
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-info close-button" id="btnModalClose" data-dismiss="modal">
-          <span class="glyphicon glyphicon-remove"></span>{{_('Close')}}
-        </button>
+        <button type="button" class="btn btn-primary" id="btnContinue">{{_('Continue')}}</button>
       </div>
     </div>
   </div>

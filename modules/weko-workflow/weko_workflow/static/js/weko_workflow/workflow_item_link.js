@@ -243,12 +243,12 @@ require([
 
 //Item Link
 function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
-  function to_cancel_activity() {
+  $('#btnContinue').on('click', function () {
     let activity_id = $("#activity_id").text().trim();
     let action_id = $("#hide-actionId").text().trim();
-    let cancel_uri = '/activity/action/' + activity_id + '/' + action_id + '/cancel'
+    let cancel_uri = '/workflow/activity/action/' + activity_id + '/' + action_id + '/cancel'
     let cancel_data = {
-      commond: 'Auto cancel becase workflow setting be changed.',
+      commond: 'Auto cancel because workflow setting be changed.',
       action_version: '',
       pid_value: ''
     };
@@ -263,16 +263,14 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
         if (data && data.code == 0) {
           document.location.href = '/workflow';
         } else {
-          $('#cancelModalBody').text(data.msg);
-          $('#cancelModal').modal('show');
+          alert(data.msg);
         }
       },
       error: function (textStatus, errorThrown) {
-        $('#cancelModalBody').text('Server error.');
-        $('#cancelModal').modal('show');
+        alert('Server error.');
       }
     });
-  }
+  });
 
   /**
    * Start Loading
@@ -388,7 +386,6 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
       let error_msg = $('#AutoCancelMsg').text();
       $('#cancelModalBody').text(error_msg);
       $('#cancelModal').modal('show');
-      to_cancel_activity();
     }
     var post_data = {
       commond: $("#input-comment").val(),
@@ -420,7 +417,6 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
         let error_msg = $('#AutoCancelMsg').text();
         $('#cancelModalBody').text(error_msg);
         $('#cancelModal').modal('show');
-        to_cancel_activity();
       } else {
         $scope.endLoading(runButton);
         alert(response.data.msg);

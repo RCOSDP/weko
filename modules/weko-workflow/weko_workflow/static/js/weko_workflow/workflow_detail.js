@@ -2,12 +2,12 @@ require([
   "jquery",
   "bootstrap"
 ], function () {
-  function to_cancel_activity() {
+  $('#btnContinue').on('click', function () {
     let activity_id = $("#activity_id").text().trim();
     let action_id = $("#hide-actionId").text().trim();
-    let cancel_uri = '/activity/action/' + activity_id + '/' + action_id + '/cancel'
+    let cancel_uri = '/workflow/activity/action/' + activity_id + '/' + action_id + '/cancel'
     let cancel_data = {
-      commond: 'Auto cancel becase workflow setting be changed.',
+      commond: 'Auto cancel because workflow setting be changed.',
       action_version: '',
       pid_value: ''
     };
@@ -22,16 +22,14 @@ require([
         if (data && data.code == 0) {
           document.location.href = '/workflow';
         } else {
-          $('#cancelModalBody').text(data.msg);
-          $('#cancelModal').modal('show');
+          alert(data.msg);
         }
       },
       error: function (textStatus, errorThrown) {
-        $('#cancelModalBody').text('Server error.');
-        $('#cancelModal').modal('show');
+        alert('Server error.');
       }
     });
-  }
+  });
   /**
    * Start Loading
    * @param actionButton
@@ -207,7 +205,6 @@ require([
       let error_msg = $('#AutoCancelMsg').text();
       $('#cancelModalBody').text(error_msg);
       $('#cancelModal').modal('show');
-      to_cancel_activity();
     }
     let act_ver = $currentStep.data('action-version');
     let community_id = $('#community_id').text();
@@ -233,7 +230,6 @@ require([
           let error_msg = $('#AutoCancelMsg').text();
           $('#cancelModalBody').text(error_msg);
           $('#cancelModal').modal('show');
-          to_cancel_activity();
         } else {
           endLoading(_this);
           alert(data.msg);

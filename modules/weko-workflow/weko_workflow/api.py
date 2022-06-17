@@ -1123,9 +1123,13 @@ class WorkActivity(object):
             query = ActivityAction.query.filter_by(activity_id=activity_id,
                                                    action_id=action_id)
             if action_order:
-                query = query.filter_by(action_order=action_order)
-            activity_ac = query.first()
-            action_stus = activity_ac.action_status
+                query_with_order = query.filter_by(action_order=action_order)
+            activity_ac = query_with_order.first()
+            if activity_ac:
+                action_stus = activity_ac.action_status
+            else:
+                activity_ac = query.first()
+                action_stus = activity_ac.action_status
             return action_stus
 
     def upt_activity_item(self, activity, item_id):
