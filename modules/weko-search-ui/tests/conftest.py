@@ -20,6 +20,7 @@
 
 """Pytest configuration."""
 
+from multiprocessing import dummy
 import shutil
 import os
 import tempfile
@@ -32,6 +33,7 @@ from flask import Flask, current_app
 from flask import session, url_for
 from flask_babelex import Babel
 from flask_admin import Admin
+from elasticsearch_dsl import response, Search
 
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.testutils import create_test_user, login_user_via_session
@@ -53,6 +55,8 @@ from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 from invenio_search import InvenioSearch
 from weko_records.models import ItemTypeName, ItemType
 from weko_index_tree import WekoIndexTree
+from weko_index_tree.models import Index
+from weko_admin.models import FacetSearchSetting
 
 from weko_search_ui import WekoSearchUI, WekoSearchREST
 from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX
@@ -212,7 +216,7 @@ def users(app, db):
          'password': sysadmin.password_plaintext, 'obj': sysadmin},
     ]
 
-def data_from_jsonfile(filename):
+def json_data(filename):
     with open(filename, "r") as f:
         return json.load(f)
 
@@ -226,15 +230,15 @@ def item_type(db):
                                   is_active=True)
     
     item_type17 = ItemType(id=17,name_id=1,harvesting_type=False,
-                         schema=data_from_jsonfile("tests/item_type/17_schema.json"),
-                         form=data_from_jsonfile("tests/item_type/17_form.json"),
-                         render=data_from_jsonfile("tests/item_type/17_render.json"),
+                         schema=json_data("tests/item_type/17_schema.json"),
+                         form=json_data("tests/item_type/17_form.json"),
+                         render=json_data("tests/item_type/17_render.json"),
                          tag=1,version_id=58,is_deleted=False)
     
     item_type18 = ItemType(id=18,name_id=2,harvesting_type=False,
-                         schema=data_from_jsonfile("tests/item_type/18_schema.json"),
-                         form=data_from_jsonfile("tests/item_type/18_form.json"),
-                         render=data_from_jsonfile("tests/item_type/18_render.json"),
+                         schema=json_data("tests/item_type/18_schema.json"),
+                         form=json_data("tests/item_type/18_form.json"),
+                         render=json_data("tests/item_type/18_render.json"),
                          tag=1,version_id=58,is_deleted=False)
     with db.session.begin_nested():
         db.session.add(item_type_name1)
@@ -250,21 +254,21 @@ def item_type(db):
 @pytest.fixture()
 def record(db):
     with db.session.begin_nested():
-        id1 = uuid.uuid4()
-        # data = data_from_jsonfile("tests/data/record01.json")
+        id1 = uuid.UUID('b7bdc3ad-4e7d-4299-bd87-6d79a250553f')
+        # data = json_data("tests/data/record01.json")
         # pid = current_pidstore.minters['recid'](id, data)
         # rec = Record.create(data, id_=id)
         rec1 = RecordMetadata(id=id1,
-                             json=data_from_jsonfile("tests/data/record01.json"),
+                             json=json_data("tests/data/record01.json"),
                              version_id=1
                              )
-        id2 = uuid.uuid4()
+        id2 = uuid.UUID('362e800c-08a2-425d-a2b6-bcae7d5c3701')
         rec2 = RecordMetadata(id=id2,
-                              json=data_from_jsonfile("tests/data/record02.json"),
+                              json=json_data("tests/data/record02.json"),
                               version_id=2)
-        id3 = uuid.uuid4()
+        id3 = uuid.UUID('3ead53d0-8e4a-489e-bb6c-d88433a029c2')
         rec3 = RecordMetadata(id=id3,
-                              json=data_from_jsonfile("tests/data/record03.json"),
+                              json=json_data("tests/data/record03.json"),
                               version_id=3)
         db.session.add(rec1)
         db.session.add(rec2)
@@ -273,3 +277,31 @@ def record(db):
     #     db.session.add(rec)
     
     return [{"id":id1, "record": rec1},{"id":id2,"record":rec2},{"id":id3,"record":rec3}]
+
+@pytest.fixture()
+def facet_search_setting(db):
+    datas = json_data("tests/data/facet_search_setting.json")
+    settings = list()
+
+    for setting in datas:
+        settings.append(FacetSearchSetting(**datas[setting]))
+    with db.session.begin_nested():
+        db.session.add_all(settings)
+
+@pytest.fixture()
+def index(db):
+    datas = json_data("tests/data/index.json")
+    indexes = list()
+    for index in datas:
+        indexes.append(Index(**datas[index]))
+    with db.session.begin_nested():
+        db.session.add_all(indexes)
+        
+@pytest.fixture()
+def mock_es_execute():
+    def _dummy_response(data):
+        if isinstance(data, str):
+            data = json_data(data)
+        dummy=response.Response(Search(), data)
+        return dummy
+    return _dummy_response

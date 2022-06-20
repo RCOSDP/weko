@@ -18,8 +18,6 @@
                 "_version": 1,
                 "_score": null,
                 "_source": {
-                    "pageStart":1,
-                    "pageEnd":2,
                     "date": [
                         {
                             "dateType": "Accepted",
@@ -2419,85 +2417,7 @@
         "path": {
             "doc_count_error_upper_bound": 0,
             "sum_other_doc_count": 0,
-            "buckets": [
-                {
-                    "key": "1557820086539",
-                    "doc_count": 1,
-                    "date_range": {
-                        "doc_count": 1,
-                        "available": {
-                            "buckets": [
-                                {
-                                    "key": "*-2022-06-07",
-                                    "to": 1654560000000.0,
-                                    "to_as_string": "2022-06-07",
-                                    "doc_count": 1
-                                },
-                                {
-                                    "key": "2022-06-07-*",
-                                    "from": 1654560000000.0,
-                                    "from_as_string": "2022-06-07",
-                                    "doc_count": 0
-                                }
-                            ]
-                        }
-                    },
-                    "Data Type": {
-                        "doc_count": 0,
-                        "Data Type": {
-                            "doc_count_error_upper_bound": 0,
-                            "sum_other_doc_count": 0,
-                            "buckets": []
-                        }
-                    },
-                    "Distributor": {
-                        "doc_count": 0,
-                        "Distributor": {
-                            "doc_count_error_upper_bound": 0,
-                            "sum_other_doc_count": 0,
-                            "buckets": []
-                        }
-                    },
-                    "Data Language": {
-                        "doc_count_error_upper_bound": 0,
-                        "sum_other_doc_count": 0,
-                        "buckets": [
-                            {
-                                "key": "jpn",
-                                "doc_count": 1
-                            }
-                        ]
-                    },
-                    "Temporal": {
-                        "doc_count_error_upper_bound": 0,
-                        "sum_other_doc_count": 0,
-                        "buckets": []
-                    },
-                    "Access": {
-                        "doc_count_error_upper_bound": 0,
-                        "sum_other_doc_count": 0,
-                        "buckets": [
-                            {
-                                "key": "open access",
-                                "doc_count": 1
-                            }
-                        ]
-                    },
-                    "no_available": {
-                        "doc_count": 0
-                    },
-                    "Topic": {
-                        "doc_count_error_upper_bound": 0,
-                        "sum_other_doc_count": 0,
-                        "buckets": []
-                    },
-                    "Location": {
-                        "doc_count_error_upper_bound": 0,
-                        "sum_other_doc_count": 0,
-                        "buckets": []
-                    }
-                }
-            ]
+            "buckets": []
         }
     }
 }

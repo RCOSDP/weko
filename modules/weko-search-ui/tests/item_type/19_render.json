@@ -762,7 +762,8 @@
         "item_1617620223087",
         "item_1655086765562",
         "item_in_meta_system",
-        "item_not_in_form_item"
+        "item_not_in_form_item",
+        "item_not_in_table_row_map"
 
     ],
     "edit_notes": {
@@ -5433,7 +5434,8 @@
                         "title": "URI",
                         "format": "array"
                     }
-                }
+                },
+                "items":{}
             }
         }
     },

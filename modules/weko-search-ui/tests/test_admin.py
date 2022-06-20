@@ -71,6 +71,10 @@ def test_export_template(app, client, admin_view, users, item_type):
     
 
     # nomal test1
+    # exist thumbnail with items
+    # exist item not in form item
+    # exist item in meta_system
+    # exist item not in table_row_map
     data = {
         "item_type_id":18
     }

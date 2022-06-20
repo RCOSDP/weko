@@ -1,42 +1,108 @@
 {
-    "took": 137,
-    "timed_out": false,
-    "_shards": {
-        "total": 3,
-        "successful": 3,
-        "skipped": 0,
-        "failed": 0
-    },
-    "hits": {
-        "total": 3,
-        "max_score": null,
-        "hits": [
+    "aggregations": {
+        "aggregations": [
             {
-                "_index": "tenant1-weko-item-v1.0.0",
-                "_type": "item-v1.0.0",
-                "_id": "b7bdc3ad-4e7d-4299-bd87-6d79a250553f",
-                "_version": 1,
-                "_score": null,
-                "_source": {
-                    "pageStart":1,
-                    "pageEnd":2,
-                    "date": [
+                "Access": {
+                    "buckets": [
                         {
-                            "dateType": "Accepted",
-                            "value": "2022-05-18"
+                            "doc_count": 1,
+                            "key": "open access"
                         }
                     ],
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 0
+                },
+                "Data Language": {
+                    "buckets": [
+                        {
+                            "doc_count": 1,
+                            "key": "jpn"
+                        }
+                    ],
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 0
+                },
+                "Data Type": {
+                    "Data Type": {
+                        "buckets": [],
+                        "doc_count_error_upper_bound": 0,
+                        "sum_other_doc_count": 0
+                    },
+                    "doc_count": 0
+                },
+                "Distributor": {
+                    "Distributor": {
+                        "buckets": [],
+                        "doc_count_error_upper_bound": 0,
+                        "sum_other_doc_count": 0
+                    },
+                    "doc_count": 0
+                },
+                "Location": {
+                    "buckets": [],
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 0
+                },
+                "Temporal": {
+                    "buckets": [],
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 0
+                },
+                "Topic": {
+                    "buckets": [],
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 0
+                },
+                "date_range": {
+                    "available": {
+                        "buckets": [
+                            {
+                                "doc_count": 1,
+                                "key": "*-2022-06-07",
+                                "to": 1654560000000.0,
+                                "to_as_string": "2022-06-07"
+                            },
+                            {
+                                "doc_count": 0,
+                                "from": 1654560000000.0,
+                                "from_as_string": "2022-06-07",
+                                "key": "2022-06-07-*"
+                            }
+                        ]
+                    },
+                    "doc_count": 1
+                },
+                "doc_count": 1,
+                "key": "1557820086539",
+                "no_available": {
+                    "doc_count": 0
+                }
+            }
+        ],
+        "path": {
+            "buckets": [[]],
+            "doc_count_error_upper_bound": 0,
+            "sum_other_doc_count": 0
+        }
+    },
+    "hits": {
+        "hits": [
+            {
+                "created": "2022-05-24T08:28:07.807702+00:00",
+                "id": 1,
+                "links": {
+                    "self": "http://localhost:8443/records/1"
+                },
+                "metadata": {
+                    "_comment": [
+                        "ja_conference paperITEM00000001(public_open_access_open_access_simple)"
+                    ],
                     "_item_metadata": {
-                        "item_title": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
                         "author_link": [
                             "1",
                             "2",
                             "3"
                         ],
-                        "item_type_id": "15",
-                        "publish_date": "2021-02-13",
-                        "publish_status": "0",
-                        "weko_shared_id": -1,
                         "item_1617186331708": {
                             "attribute_name": "Title",
                             "attribute_value_mlt": [
@@ -681,7 +747,7 @@
                                     "accessrole": "open_date",
                                     "version_id": "6e3b5a33-ab7c-49e3-86e2-90d1cf7a9489",
                                     "displaytype": "simple",
-                                    "licensetype":"license_0"
+                                    "licensetype": "license_0"
                                 }
                             ]
                         },
@@ -739,8 +805,32 @@
                                 }
                             ]
                         },
-                        "relation_version_is_last": true
+                        "item_title": "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
+                        "item_type_id": "15",
+                        "publish_date": "2021-02-13",
+                        "publish_status": "0",
+                        "relation_version_is_last": true,
+                        "weko_shared_id": -1
                     },
+                    "_oai": {
+                        "id": "oai:weko3.example.org:00000001"
+                    },
+                    "accessRights": [
+                        "embargoed access"
+                    ],
+                    "alternative": [
+                        "Alternative Title",
+                        "Alternative Title"
+                    ],
+                    "apc": [
+                        "Paid"
+                    ],
+                    "author_link": [
+                        "1",
+                        "2",
+                        "3"
+                    ],
+                    "control_number": "1",
                     "creator": {
                         "affiliation": {
                             "affiliationName": [],
@@ -760,15 +850,25 @@
                             "1"
                         ]
                     },
-                    "weko_creator_id": "1",
-                    "alternative": [
-                        "Alternative Title",
-                        "Alternative Title"
+                    "date": [
+                        {
+                            "dateType": "Accepted",
+                            "value": "2022-05-18"
+                        }
                     ],
-                    "_updated": "2022-05-24T08:32:26.405052+00:00",
+                    "feedback_mail_list": [],
+                    "itemtype": "デフォルトアイテムタイプ（フル）",
                     "language": [
                         "jpn"
                     ],
+                    "pageEnd": 2,
+                    "pageStart": 1,
+                    "path": [
+                        "1031"
+                    ],
+                    "publish_date": "2022-05-24",
+                    "publish_status": "0",
+                    "relation_version_is_last": true,
                     "title": [
                         "ja_conference paperITEM00000001(public_open_access_open_access_simple)",
                         "en_conference paperITEM00000001(public_open_access_simple)"
@@ -779,64 +879,30 @@
                     "version": [
                         "1"
                     ],
-                    "author_link": [
-                        "1",
-                        "2",
-                        "3"
-                    ],
-                    "path": [
-                        "1031"
-                    ],
                     "versiontype": [
                         "AO"
                     ],
-                    "itemtype": "デフォルトアイテムタイプ（フル）",
-                    "_oai": {
-                        "id": "oai:weko3.example.org:00000001"
-                    },
-                    "apc": [
-                        "Paid"
-                    ],
-                    "feedback_mail_list": [
-                    ],
-                    "_created": "2022-05-24T08:28:07.807702+00:00",
-                    "control_number": "1",
-                    "weko_shared_id": -1,
-                    "relation_version_is_last": true,
-                    "accessRights": [
-                        "embargoed access"
-                    ],
-                    "publish_date": "2022-05-24",
-                    "publish_status": "0"
+                    "weko_creator_id": "1",
+                    "weko_shared_id": -1
                 },
-                "sort": [
-                    "1"
-                ]
+                "updated": "2022-05-24T08:32:26.405052+00:00"
             },
             {
-                "_index": "tenant1-weko-item-v1.0.0",
-                "_type": "item-v1.0.0",
-                "_id": "362e800c-08a2-425d-a2b6-bcae7d5c3701",
-                "_version": 1,
-                "_score": null,
-                "_source": {
-                    "date": [
-                        {
-                            "dateType": "Accepted",
-                            "value": "2022-05-18"
-                        }
+                "created": "2022-05-24T08:28:07.807702+00:00",
+                "id": 2,
+                "links": {
+                    "self": "http://localhost:8443/records/2"
+                },
+                "metadata": {
+                    "_comment": [
+                        "ja_conference paperITEM00000002(public_open_access_open_access_simple)"
                     ],
                     "_item_metadata": {
-                        "item_title": "ja_conference paperITEM00000002(public_open_access_open_access_simple)",
                         "author_link": [
                             "1",
                             "2",
                             "3"
                         ],
-                        "item_type_id": "15",
-                        "publish_date": "2021-02-13",
-                        "publish_status": "0",
-                        "weko_shared_id": -1,
                         "item_1617186331708": {
                             "attribute_name": "Title",
                             "attribute_value_mlt": [
@@ -1481,7 +1547,7 @@
                                     "accessrole": "open_date",
                                     "version_id": "6e3b5a33-ab7c-49e3-86e2-90d1cf7a9489",
                                     "displaytype": "simple",
-                                    "licensetype":"license_0"
+                                    "licensetype": "license_0"
                                 }
                             ]
                         },
@@ -1539,8 +1605,32 @@
                                 }
                             ]
                         },
-                        "relation_version_is_last": true
+                        "item_title": "ja_conference paperITEM00000002(public_open_access_open_access_simple)",
+                        "item_type_id": "15",
+                        "publish_date": "2021-02-13",
+                        "publish_status": "0",
+                        "relation_version_is_last": true,
+                        "weko_shared_id": -1
                     },
+                    "_oai": {
+                        "id": "oai:weko3.example.org:00000002"
+                    },
+                    "accessRights": [
+                        "embargoed access"
+                    ],
+                    "alternative": [
+                        "Alternative Title",
+                        "Alternative Title"
+                    ],
+                    "apc": [
+                        "Paid"
+                    ],
+                    "author_link": [
+                        "1",
+                        "2",
+                        "3"
+                    ],
+                    "control_number": "2",
                     "creator": {
                         "affiliation": {
                             "affiliationName": [],
@@ -1560,15 +1650,23 @@
                             "1"
                         ]
                     },
-                    "weko_creator_id": "1",
-                    "alternative": [
-                        "Alternative Title",
-                        "Alternative Title"
+                    "date": [
+                        {
+                            "dateType": "Accepted",
+                            "value": "2022-05-18"
+                        }
                     ],
-                    "_updated": "2022-05-24T08:32:26.405052+00:00",
+                    "feedback_mail_list": [],
+                    "itemtype": "デフォルトアイテムタイプ（フル）",
                     "language": [
                         "jpn"
                     ],
+                    "path": [
+                        "1031"
+                    ],
+                    "publish_date": "2022-05-24",
+                    "publish_status": "0",
+                    "relation_version_is_last": true,
                     "title": [
                         "ja_conference paperITEM00000002(public_open_access_open_access_simple)",
                         "en_conference paperITEM00000002(public_open_access_simple)"
@@ -1579,64 +1677,30 @@
                     "version": [
                         "1"
                     ],
-                    "author_link": [
-                        "1",
-                        "2",
-                        "3"
-                    ],
-                    "path": [
-                        "1031"
-                    ],
                     "versiontype": [
                         "AO"
                     ],
-                    "itemtype": "デフォルトアイテムタイプ（フル）",
-                    "_oai": {
-                        "id": "oai:weko3.example.org:00000002"
-                    },
-                    "apc": [
-                        "Paid"
-                    ],
-                    "feedback_mail_list": [
-                    ],
-                    "_created": "2022-05-24T08:28:07.807702+00:00",
-                    "control_number": "2",
-                    "weko_shared_id": -1,
-                    "relation_version_is_last": true,
-                    "accessRights": [
-                        "embargoed access"
-                    ],
-                    "publish_date": "2022-05-24",
-                    "publish_status": "0"
+                    "weko_creator_id": "1",
+                    "weko_shared_id": -1
                 },
-                "sort": [
-                    "1"
-                ]
+                "updated": "2022-05-24T08:32:26.405052+00:00"
             },
             {
-                "_index": "tenant1-weko-item-v1.0.0",
-                "_type": "item-v1.0.0",
-                "_id": "3ead53d0-8e4a-489e-bb6c-d88433a029c2",
-                "_version": 1,
-                "_score": null,
-                "_source": {
-                    "date": [
-                        {
-                            "dateType": "Accepted",
-                            "value": "2022-05-18"
-                        }
+                "created": "2022-05-24T08:28:07.807702+00:00",
+                "id": 3,
+                "links": {
+                    "self": "http://localhost:8443/records/3"
+                },
+                "metadata": {
+                    "_comment": [
+                        "ja_conference paperITEM00000003(public_open_access_open_access_simple)"
                     ],
                     "_item_metadata": {
-                        "item_title": "ja_conference paperITEM00000003(public_open_access_open_access_simple)",
                         "author_link": [
                             "1",
                             "2",
                             "3"
                         ],
-                        "item_type_id": "15",
-                        "publish_date": "2021-02-13",
-                        "publish_status": "0",
-                        "weko_shared_id": -1,
                         "item_1617186331708": {
                             "attribute_name": "Title",
                             "attribute_value_mlt": [
@@ -2281,7 +2345,7 @@
                                     "accessrole": "open_date",
                                     "version_id": "6e3b5a33-ab7c-49e3-86e2-90d1cf7a9489",
                                     "displaytype": "simple",
-                                    "licensetype":"license_0"
+                                    "licensetype": "license_0"
                                 }
                             ]
                         },
@@ -2339,8 +2403,32 @@
                                 }
                             ]
                         },
-                        "relation_version_is_last": true
+                        "item_title": "ja_conference paperITEM00000003(public_open_access_open_access_simple)",
+                        "item_type_id": "15",
+                        "publish_date": "2021-02-13",
+                        "publish_status": "0",
+                        "relation_version_is_last": true,
+                        "weko_shared_id": -1
                     },
+                    "_oai": {
+                        "id": "oai:weko3.example.org:00000003"
+                    },
+                    "accessRights": [
+                        "embargoed access"
+                    ],
+                    "alternative": [
+                        "Alternative Title",
+                        "Alternative Title"
+                    ],
+                    "apc": [
+                        "Paid"
+                    ],
+                    "author_link": [
+                        "1",
+                        "2",
+                        "3"
+                    ],
+                    "control_number": "3",
                     "creator": {
                         "affiliation": {
                             "affiliationName": [],
@@ -2360,15 +2448,23 @@
                             "1"
                         ]
                     },
-                    "weko_creator_id": "1",
-                    "alternative": [
-                        "Alternative Title",
-                        "Alternative Title"
+                    "date": [
+                        {
+                            "dateType": "Accepted",
+                            "value": "2022-05-18"
+                        }
                     ],
-                    "_updated": "2022-05-24T08:32:26.405052+00:00",
+                    "feedback_mail_list": [],
+                    "itemtype": "デフォルトアイテムタイプ（フル）",
                     "language": [
                         "jpn"
                     ],
+                    "path": [
+                        "1031"
+                    ],
+                    "publish_date": "2022-05-24",
+                    "publish_status": "0",
+                    "relation_version_is_last": true,
                     "title": [
                         "ja_conference paperITEM00000003(public_open_access_open_access_simple)",
                         "en_conference paperITEM00000003(public_open_access_simple)"
@@ -2379,125 +2475,16 @@
                     "version": [
                         "1"
                     ],
-                    "author_link": [
-                        "1",
-                        "2",
-                        "3"
-                    ],
-                    "path": [
-                        "1031"
-                    ],
                     "versiontype": [
                         "AO"
                     ],
-                    "itemtype": "デフォルトアイテムタイプ（フル）",
-                    "_oai": {
-                        "id": "oai:weko3.example.org:00000003"
-                    },
-                    "apc": [
-                        "Paid"
-                    ],
-                    "feedback_mail_list": [
-                    ],
-                    "_created": "2022-05-24T08:28:07.807702+00:00",
-                    "control_number": "3",
-                    "weko_shared_id": -1,
-                    "relation_version_is_last": true,
-                    "accessRights": [
-                        "embargoed access"
-                    ],
-                    "publish_date": "2022-05-24",
-                    "publish_status": "0"
+                    "weko_creator_id": "1",
+                    "weko_shared_id": -1
                 },
-                "sort": [
-                    "1"
-                ]
+                "updated": "2022-05-24T08:32:26.405052+00:00"
             }
-        ]
+        ],
+        "total": 3
     },
-    "aggregations": {
-        "path": {
-            "doc_count_error_upper_bound": 0,
-            "sum_other_doc_count": 0,
-            "buckets": [
-                {
-                    "key": "1557820086539",
-                    "doc_count": 1,
-                    "date_range": {
-                        "doc_count": 1,
-                        "available": {
-                            "buckets": [
-                                {
-                                    "key": "*-2022-06-07",
-                                    "to": 1654560000000.0,
-                                    "to_as_string": "2022-06-07",
-                                    "doc_count": 1
-                                },
-                                {
-                                    "key": "2022-06-07-*",
-                                    "from": 1654560000000.0,
-                                    "from_as_string": "2022-06-07",
-                                    "doc_count": 0
-                                }
-                            ]
-                        }
-                    },
-                    "Data Type": {
-                        "doc_count": 0,
-                        "Data Type": {
-                            "doc_count_error_upper_bound": 0,
-                            "sum_other_doc_count": 0,
-                            "buckets": []
-                        }
-                    },
-                    "Distributor": {
-                        "doc_count": 0,
-                        "Distributor": {
-                            "doc_count_error_upper_bound": 0,
-                            "sum_other_doc_count": 0,
-                            "buckets": []
-                        }
-                    },
-                    "Data Language": {
-                        "doc_count_error_upper_bound": 0,
-                        "sum_other_doc_count": 0,
-                        "buckets": [
-                            {
-                                "key": "jpn",
-                                "doc_count": 1
-                            }
-                        ]
-                    },
-                    "Temporal": {
-                        "doc_count_error_upper_bound": 0,
-                        "sum_other_doc_count": 0,
-                        "buckets": []
-                    },
-                    "Access": {
-                        "doc_count_error_upper_bound": 0,
-                        "sum_other_doc_count": 0,
-                        "buckets": [
-                            {
-                                "key": "open access",
-                                "doc_count": 1
-                            }
-                        ]
-                    },
-                    "no_available": {
-                        "doc_count": 0
-                    },
-                    "Topic": {
-                        "doc_count_error_upper_bound": 0,
-                        "sum_other_doc_count": 0,
-                        "buckets": []
-                    },
-                    "Location": {
-                        "doc_count_error_upper_bound": 0,
-                        "sum_other_doc_count": 0,
-                        "buckets": []
-                    }
-                }
-            ]
-        }
-    }
+    "links": {}
 }
