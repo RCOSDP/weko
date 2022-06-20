@@ -1550,7 +1550,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
                 _deposit.publish()
 
                 pv = PIDVersioning(child=pid_without_ver)
-                last_ver = PIDVersioning(parent=pv.parent).get_children(
+                last_ver = PIDVersioning(parent=pv.parent,child=pid_without_ver).get_children(
                     pid_status=PIDStatus.REGISTERED
                 ).filter(PIDRelation.relation_type == 2).order_by(
                     PIDRelation.index.desc()).first()

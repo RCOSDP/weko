@@ -1025,7 +1025,7 @@ def next_action(activity_id='0', action_id=0):
             if not recid and pid_without_ver:
                 if ".0" in current_pid.pid_value:
                     pv = PIDVersioning(child=pid_without_ver)
-                    last_ver = PIDVersioning(parent=pv.parent).get_children(
+                    last_ver = PIDVersioning(parent=pv.parent,child=pid_without_ver).get_children(
                         pid_status=PIDStatus.REGISTERED
                     ).filter(PIDRelation.relation_type == 2).order_by(
                         PIDRelation.index.desc()).first()

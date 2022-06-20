@@ -3079,7 +3079,7 @@ def check_item_is_being_edit(
             return True
 
         pv = PIDVersioning(child=recid)
-        latest_pid = PIDVersioning(parent=pv.parent).get_children(
+        latest_pid = PIDVersioning(parent=pv.parent,child=recid).get_children(
             pid_status=PIDStatus.REGISTERED
         ).filter(PIDRelation.relation_type == 2).order_by(
             PIDRelation.index.desc()).first()
