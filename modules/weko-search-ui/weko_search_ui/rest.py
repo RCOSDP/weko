@@ -187,37 +187,29 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         page = request.values.get("page", 1, type=int)
         size = request.values.get("size", 20, type=int)
         community_id = request.values.get("community")
-        print("page:{}".format(page))#
-        print("size:{}".format(size))#
         params = {}
         facets = get_facet_search_query()
         search_index = current_app.config["SEARCH_UI_SEARCH_INDEX"]
-        if facets and search_index and "post_filters" in facets[search_index]:# false#
+        if facets and search_index and "post_filters" in facets[search_index]:
             post_filters = facets[search_index]["post_filters"]
             for param in post_filters:
                 value = request.args.getlist(param)
-                if value: # paramの値をurlに入れる#
+                if value:
                     params[param] = value
-        print("page*size={}".format(page*size))#
-        print("max_result_window:{}".format(self.max_result_window))#
-        if page * size >= self.max_result_window: # ?page=x&size=yでx*y>10000に#
-            print("in error")#
+        if page * size >= self.max_result_window:
             raise MaxResultWindowRESTError()
-        print("throw error")#
         urlkwargs = dict()
         search_obj = self.search_class()
         search = search_obj.with_preference_param().params(version=True)
         search = search[(page - 1) * size : page * size]
         search, qs_kwargs = self.search_factory(self, search)
-        current_app.logger.debug("search:{}".format(search))#
-        current_app.logger.debug("qs_kwargs:{}".format(qs_kwargs))#
         query = request.values.get("q")
-        if query: # qを設定#
+        if query:
             urlkwargs["q"] = query
 
         # Execute search
         weko_faceted_search_mapping = FacetSearchSetting.get_activated_facets_mapping()
-        for param in params: # paramの部分の分岐を踏めば自動的に踏む#
+        for param in params:
             query_key = weko_faceted_search_mapping[param]
             search = search.post_filter({"terms": {query_key: params[param]}})
 
@@ -231,8 +223,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         links = dict(
             self=url_for("weko_search_rest.recid_index", page=page, **urlkwargs)
         )
-        print(links)#
-        if page > 1: # pageを設定#
+        if page > 1:
             links["prev"] = url_for(
                 "weko_search_rest.recid_index", page=page - 1, **urlkwargs
             )
@@ -245,16 +236,13 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             )
         # aggs result identify
         rd = search_result.to_dict()
-        print(rd)#
         q = request.values.get("q") or ""
         lang = current_i18n.language
 
         try:
             paths = Indexes.get_self_list(q, community_id)
-            current_app.logger.debug("paths:{}".format(paths))#
-        except BaseException:# Indexes.get_self_listにBaseExceptionを出させる#
+        except BaseException:
             paths = []
-            current_app.logger.debug("except BaseException")#
         agp = rd["aggregations"]["path"]["buckets"]
         rd["aggregations"]["aggregations"] = copy.deepcopy(agp)
         nlst = []
@@ -270,7 +258,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             }
 
         is_perm_paths = qs_kwargs.get("is_perm_paths", [])
-        for p in paths: # Indexes.get_self_listをちゃんと変えさせる#
+        for p in paths:
             m = 0
             current_idx = {}
             for k in range(len(agp)):
@@ -284,7 +272,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     current_idx = result
                     m = 1
                     break
-            if m == 0: # 上のループに一回の引っかからなかった# 
+            if m == 0:
                 index_id = p.cid
                 index_info = Indexes.get_index(index_id=index_id)
                 rss_status = index_info.rss_status
@@ -359,7 +347,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     hit["_source"]["pageEnd"] = []
         except Exception as ex:
             current_app.logger.error(ex)
-        current_app.logger.debug("rd:{}".format(rd))# 
         return self.make_response(
             pid_fetcher=self.pid_fetcher,
             search_result=rd,

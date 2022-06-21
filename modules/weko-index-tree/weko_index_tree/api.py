@@ -809,7 +809,6 @@ class Indexes(object):
                 return lst
         else:
             recursive_t = cls.recs_query()
-            current_app.logger.debug("recursive_t:{}".format(recursive_t))# 
             query = db.session.query(recursive_t).filter(
                 db.or_(recursive_t.c.pid == index_id,
                        recursive_t.c.cid == index_id))
