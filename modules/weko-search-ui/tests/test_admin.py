@@ -1,6 +1,7 @@
 import pytest
 import codecs
 import io
+import csv
 from invenio_accounts.testutils import login_user_via_session
 
 # class ItemManagementBulkDelete(BaseView):
@@ -30,7 +31,27 @@ from invenio_accounts.testutils import login_user_via_session
 #     def cancel_export(self):
 #     def download(self):
 
-
+def compare_csv(data1, data2):
+    def _str2csv(data):
+        f = io.StringIO()
+        f.write(data)
+        f.seek(0)
+        csv_data = [row for row in csv.reader(f)]
+        return csv_data
+    
+    csv1 = _str2csv(data1)
+    csv2 = _str2csv(data2)
+    for i, row in enumerate(csv1):
+        for t, w in enumerate(row):
+            if "," in w:
+                if not set([a.strip() for a in w.split(",")]) == set([a.strip() for a in csv2[i][t].split(",")]):
+                    print("data at {i}:{t} don't mathch:{d1} - {d2}".format(i=i,t=t,d1=w,d2=csv2[i][t]))
+                    return False
+            else:
+                if not w == csv2[i][t]:
+                    print("data at {i}:{t} don't mathch:{d1} - {d2}".format(i=i,t=t,d1=w,d2=csv2[i][t]))
+                    return False
+    return True
 
 def test_export_template(app, client, admin_view, users, item_type):
     
@@ -67,7 +88,8 @@ def test_export_template(app, client, admin_view, users, item_type):
     with open("tests/item_type/export_template_17.csv","r") as f:
         result = f.read()
         io_obj = io.StringIO(result)
-    assert res.get_data(as_text=True) == codecs.BOM_UTF8.decode("utf8")+codecs.BOM_UTF8.decode()+io_obj.getvalue()
+    # assert res.get_data(as_text=True) == codecs.BOM_UTF8.decode("utf8")+codecs.BOM_UTF8.decode()+io_obj.getvalue()
+    assert compare_csv(res.get_data(as_text=True),codecs.BOM_UTF8.decode("utf8")+codecs.BOM_UTF8.decode()+io_obj.getvalue())
     
 
     # nomal test1
@@ -82,5 +104,5 @@ def test_export_template(app, client, admin_view, users, item_type):
     with open("tests/item_type/export_template_18.csv","r") as f:
         result = f.read()
         io_obj = io.StringIO(result)
-    assert res.get_data(as_text=True) == codecs.BOM_UTF8.decode("utf8")+codecs.BOM_UTF8.decode()+io_obj.getvalue()
-    
+    # assert res.get_data(as_text=True) == codecs.BOM_UTF8.decode("utf8")+codecs.BOM_UTF8.decode()+io_obj.getvalue()
+    assert compare_csv(res.get_data(as_text=True), codecs.BOM_UTF8.decode("utf8")+codecs.BOM_UTF8.decode()+io_obj.getvalue())
