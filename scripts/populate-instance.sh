@@ -433,6 +433,8 @@ ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "CiNii" "CiNii" "https://ci.nii.ac.jp/author/##"
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "KAKEN2" "KAKEN2" "https://nrid.nii.ac.jp/nrid/##"
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "ROR" "ROR" "https://ror.org/##"
 # create-default-authors-prefix-settings-end
 
 # create-default-authors-affiliation-settings-begin

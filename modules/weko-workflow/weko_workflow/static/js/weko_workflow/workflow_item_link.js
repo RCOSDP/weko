@@ -279,7 +279,9 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
     { id: "isSupplementedBy", content: "isSupplementedBy" },
     { id: "isIdenticalTo", content: "isIdenticalTo" },
     { id: "isDerivedFrom", content: "isDerivedFrom" },
-    { id: "isSourceOf", content: "isSourceOf" }
+    { id: "isSourceOf", content: "isSourceOf" },
+    { id: "isCitedBy", content: "isCitedBy" },
+    { id: "Cites", content: "Cites" }
   ];
 
 //   add button
