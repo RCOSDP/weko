@@ -626,6 +626,10 @@ msgstr "承認"
 msgid "Quit_Approval"
 msgstr "強制終了"
 
+#: weko_workflow/templates/weko_workflow/activity_detail.html:381
+msgid "The activity is forcibly canceled because the workflow settings have changed and the next step was not found."
+msgstr "ワークフローの設定が変更し、次のアクションが見つかないため、このアクティビティは強制的に中止します。"
+
 #: weko_workflow/templates/weko_workflow/item_link.html:153
 msgid "Quit_item"
 msgstr "強制終了"
@@ -641,6 +645,10 @@ msgstr "強制終了"
 #: weko_workflow/templates/weko_workflow/item_login_sucess.html:288
 msgid "Back"
 msgstr "戻る"
+
+#: weko_workflow/templates/weko_workflow/item_login_sucess.html:295
+msgid "The activity is forcibly canceled because the workflow settings have changed and the next step was not found."
+msgstr "ワークフローの設定が変更し、次のアクションが見つかないため、このアクティビティは強制的に中止します。"
 
 msgid "The specified link has expired."
 msgstr "指定したリンクはアクセス有効期限を超過しています。"

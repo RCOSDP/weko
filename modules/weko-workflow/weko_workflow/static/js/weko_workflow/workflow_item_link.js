@@ -58,6 +58,11 @@ require([
     let _this = $(this);
     startLoading(_this);
     let post_uri = $('.cur_step').data('next-uri');
+    if (!post_uri) {
+      let error_msg = $('#AutoCancelMsg').text();
+      $('#cancelModalBody').text(error_msg);
+      $('#cancelModal').modal('show');
+    }
     let post_data = {
       commond: $('#input-comment').val(),
       action_version: $('.cur_step').data('action-version'),
@@ -76,6 +81,10 @@ require([
           } else {
             document.location.reload(true);
           }
+        } else if (-2 == data.code) {
+          let error_msg = $('#AutoCancelMsg').text();
+          $('#cancelModalBody').text(error_msg);
+          $('#cancelModal').modal('show');
         } else {
           endLoading(_this);
           alert(data.msg);
@@ -93,6 +102,11 @@ require([
     let _this = $(this);
     startLoading(_this);
     let post_uri = $('.cur_step').data('next-uri');
+    if (!post_uri) {
+      let error_msg = $('#AutoCancelMsg').text();
+      $('#cancelModalBody').text(error_msg);
+      $('#cancelModal').modal('show');
+    }
     let post_data = {
       commond: $('#input-comment').val(),
       action_version: $('.cur_step').data('action-version'),
@@ -111,6 +125,10 @@ require([
           } else {
             document.location.reload(true);
           }
+        } else if (-2 == data.code) {
+          let error_msg = $('#AutoCancelMsg').text();
+          $('#cancelModalBody').text(error_msg);
+          $('#cancelModal').modal('show');
         } else {
           endLoading(_this);
           alert(data.msg);
@@ -134,6 +152,11 @@ require([
       let _this = $(this);
       startLoading(_this);
       let uri_apo = $('.cur_step').data('next-uri');
+      if (!uri_apo) {
+        let error_msg = $('#AutoCancelMsg').text();
+        $('#cancelModalBody').text(error_msg);
+        $('#cancelModal').modal('show');
+      }
       let act_ver = $('.cur_step').data('action-version');
       let community_id = $('#community_id').text();
       let post_data = {
@@ -154,6 +177,10 @@ require([
                   } else {
                       document.location.reload(true);
                   }
+              } else if (-2 == data.code) {
+                  let error_msg = $('#AutoCancelMsg').text();
+                  $('#cancelModalBody').text(error_msg);
+                  $('#cancelModal').modal('show');
               } else {
                   endLoading(_this);
                   alert(data.msg);
@@ -170,6 +197,11 @@ require([
       let _this = $(this);
       startLoading(_this);
       let uri_apo = $('.cur_step').data('next-uri');
+      if (!uri_apo) {
+        let error_msg = $('#AutoCancelMsg').text();
+        $('#cancelModalBody').text(error_msg);
+        $('#cancelModal').modal('show');
+      }
       let act_ver = $('.cur_step').data('action-version');
       let post_data = {
           commond: $('#input-comment').val(),
@@ -189,6 +221,10 @@ require([
                   } else {
                       document.location.reload(true);
                   }
+              } else if (-2 == data.code) {
+                  let error_msg = $('#AutoCancelMsg').text();
+                  $('#cancelModalBody').text(error_msg);
+                  $('#cancelModal').modal('show');
               } else {
                   endLoading(_this);
                   alert(data.msg);
@@ -205,6 +241,11 @@ require([
       let _this = $(this);
       startLoading(_this);
       let uri_apo = $('.cur_step').data('next-uri');
+      if (!uri_apo) {
+        let error_msg = $('#AutoCancelMsg').text();
+        $('#cancelModalBody').text(error_msg);
+        $('#cancelModal').modal('show');
+      }
       let act_ver = $('.cur_step').data('action-version');
       let post_data = {
           commond: $('#input-comment').val(),
@@ -224,6 +265,10 @@ require([
                   } else {
                       document.location.reload(true);
                   }
+              } else if (-2 == data.code) {
+                  let error_msg = $('#AutoCancelMsg').text();
+                  $('#cancelModalBody').text(error_msg);
+                  $('#cancelModal').modal('show');
               } else {
                   endLoading(_this);
                   alert(data.msg);
@@ -243,6 +288,35 @@ require([
 
 //Item Link
 function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
+  $('#btnContinue').on('click', function () {
+    let activity_id = $("#activity_id").text().trim();
+    let action_id = $("#hide-actionId").text().trim();
+    let cancel_uri = '/workflow/activity/action/' + activity_id + '/' + action_id + '/cancel'
+    let cancel_data = {
+      commond: 'Auto cancel because workflow setting be changed.',
+      action_version: '',
+      pid_value: ''
+    };
+    $.ajax({
+      method: 'POST',
+      url: cancel_uri,
+      async: true,
+      contentType: 'application/json',
+      dataType: 'json',
+      data: JSON.stringify(cancel_data),
+      success: function (data, textStatus) {
+        if (data && data.code == 0) {
+          document.location.href = '/workflow';
+        } else {
+          alert(data.msg);
+        }
+      },
+      error: function (textStatus, errorThrown) {
+        alert('Server error.');
+      }
+    });
+  });
+
   /**
    * Start Loading
    * @param actionButton
@@ -322,6 +396,11 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
     let saveButton = $("#item-link-save-btn");
     $scope.startLoading(saveButton);
     var post_url = $('.cur_step').data('next-uri');
+    if (!post_url) {
+      let error_msg = $('#AutoCancelMsg').text();
+      $('#cancelModalBody').text(error_msg);
+      $('#cancelModal').modal('show');
+    }
     var post_data = {
       commond: $("#input-comment").val(),
       action_version: $('.cur_step').data('action-version'),
@@ -340,6 +419,10 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
         } else {
           document.location.reload(true);
         }
+      } else if (-2 == response.data.code) {
+        let error_msg = $('#AutoCancelMsg').text();
+        $('#cancelModalBody').text(error_msg);
+        $('#cancelModal').modal('show');
       } else {
         $scope.endLoading(saveButton);
         alert(response.data.msg);
@@ -355,6 +438,11 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
     let runButton = $("#item-link-run-btn");
     $scope.startLoading(runButton);
     var post_url = $('.cur_step').data('next-uri');
+    if (!post_url) {
+      let error_msg = $('#AutoCancelMsg').text();
+      $('#cancelModalBody').text(error_msg);
+      $('#cancelModal').modal('show');
+    }
     var post_data = {
       commond: $("#input-comment").val(),
       action_version: $('.cur_step').data('action-version'),
@@ -381,6 +469,10 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
         } else {
           document.location.reload(true);
         }
+      } else if (-2 === response.data.code) {
+        let error_msg = $('#AutoCancelMsg').text();
+        $('#cancelModalBody').text(error_msg);
+        $('#cancelModal').modal('show');
       } else {
         $scope.endLoading(runButton);
         alert(response.data.msg);

@@ -2,7 +2,34 @@ require([
   "jquery",
   "bootstrap"
 ], function () {
-
+  $('#btnContinue').on('click', function () {
+    let activity_id = $("#activity_id").text().trim();
+    let action_id = $("#hide-actionId").text().trim();
+    let cancel_uri = '/workflow/activity/action/' + activity_id + '/' + action_id + '/cancel'
+    let cancel_data = {
+      commond: 'Auto cancel because workflow setting be changed.',
+      action_version: '',
+      pid_value: ''
+    };
+    $.ajax({
+      method: 'POST',
+      url: cancel_uri,
+      async: true,
+      contentType: 'application/json',
+      dataType: 'json',
+      data: JSON.stringify(cancel_data),
+      success: function (data, textStatus) {
+        if (data && data.code == 0) {
+          document.location.href = '/workflow';
+        } else {
+          alert(data.msg);
+        }
+      },
+      error: function (textStatus, errorThrown) {
+        alert('Server error.');
+      }
+    });
+  });
   /**
    * Start Loading
    * @param actionButton
@@ -64,6 +91,11 @@ require([
     }
 
     let post_uri = $('.cur_step').data('next-uri');
+    if (!post_uri) {
+      let error_msg = $('#AutoCancelMsg').text();
+      $('#cancelModalBody').text(error_msg);
+      $('#cancelModal').modal('show');
+    }
     let post_data = {
       commond: comment,
       action_version: $('.cur_step').data('action-version'),
@@ -117,6 +149,11 @@ require([
     }
 
     let post_uri = $('.cur_step').data('next-uri');
+    if (!post_uri) {
+      let error_msg = $('#AutoCancelMsg').text();
+      $('#cancelModalBody').text(error_msg);
+      $('#cancelModal').modal('show');
+    }
     let post_data = {
       commond: comment,
       action_version: $('.cur_step').data('action-version'),
@@ -150,6 +187,10 @@ require([
           } else {
             document.location.reload(true);
           }
+        } else if (-2 == data.code) {
+          let error_msg = $('#AutoCancelMsg').text();
+          $('#cancelModalBody').text(error_msg);
+          $('#cancelModal').modal('show');
         } else {
           endLoading(_this);
           alert(data.msg);
@@ -174,6 +215,11 @@ require([
     startLoading(_this);
     let $currentStep = $('.cur_step');
     let uri_apo = $currentStep.data('next-uri');
+    if (!uri_apo) {
+      let error_msg = $('#AutoCancelMsg').text();
+      $('#cancelModalBody').text(error_msg);
+      $('#cancelModal').modal('show');
+    }
     let act_ver = $currentStep.data('action-version');
     let community_id = $('#community_id').text();
     let post_data = {
@@ -194,6 +240,10 @@ require([
           } else {
             document.location.reload(true);
           }
+        } else if (-2 == data.code) {
+          let error_msg = $('#AutoCancelMsg').text();
+          $('#cancelModalBody').text(error_msg);
+          $('#cancelModal').modal('show');
         } else {
           endLoading(_this);
           alert(data.msg);
@@ -244,6 +294,11 @@ require([
     let _this = $(this);
     startLoading(_this);
     let uri_apo = $('.cur_step').data('next-uri');
+    if (!uri_apo) {
+      let error_msg = $('#AutoCancelMsg').text();
+      $('#cancelModalBody').text(error_msg);
+      $('#cancelModal').modal('show');
+    }
     let act_ver = $('.cur_step').data('action-version');
     let post_data = {
       commond: $('#input-comment').val(),
@@ -263,6 +318,10 @@ require([
           } else {
             document.location.reload(true);
           }
+        } else if (-2 == data.code) {
+          let error_msg = $('#AutoCancelMsg').text();
+          $('#cancelModalBody').text(error_msg);
+          $('#cancelModal').modal('show');
         } else {
           endLoading(_this);
           alert(data.msg);
@@ -279,6 +338,11 @@ require([
     let _this = $(this);
     startLoading(_this);
     let uri_apo = $('.cur_step').data('next-uri');
+    if (!uri_apo) {
+      let error_msg = $('#AutoCancelMsg').text();
+      $('#cancelModalBody').text(error_msg);
+      $('#cancelModal').modal('show');
+    }
     let act_ver = $('.cur_step').data('action-version');
     let post_data = {
       commond: $('#input-comment').val(),
@@ -298,6 +362,10 @@ require([
           } else {
             document.location.reload(true);
           }
+        } else if (-2 == data.code) {
+          let error_msg = $('#AutoCancelMsg').text();
+          $('#cancelModalBody').text(error_msg);
+          $('#cancelModal').modal('show');
         } else {
           endLoading(_this);
           alert(data.msg);
