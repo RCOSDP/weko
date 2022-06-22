@@ -195,7 +195,8 @@ def get_search_detail_keyword(str):
         # detail search for index
         elif k_v.get("id") == "iid":
             k_v["check_val"] = check_val2
-        elif k_v.get("contents") == "":
+        
+        if k_v.get("contents") == "":
             contents_value = k_v.get("contents_value")
             k_v["contents"] = contents_value["en"]
             for key_lang in contents_value.keys():
