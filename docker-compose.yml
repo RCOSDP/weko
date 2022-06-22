@@ -117,6 +117,7 @@ services:
       - /code/modules/weko-items-autofill/weko_items_autofill.egg-info
       - /code/modules/weko-sitemap/weko_sitemap.egg-info
       - /code/modules/invenio-iiif/invenio_iiif.egg-info
+      - /code/modules/weko-swordserver/weko_swordserver.egg-info
     user: invenio
     links:
       - postgresql
