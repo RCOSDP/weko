@@ -1161,10 +1161,10 @@ class QueryItemRegReportHelper(object):
                     end_date_string = ''
                     params = {}
                     if start_date is not None:
-                        start_date_string = start_date.strftime('%Y-%m-%d')
+                        start_date_string = start_date.strftime('%Y-%m-%d 00:00:00')
                         params.update({'start_date': start_date_string})
                     if end_date is not None:
-                        end_date_string = end_date.strftime('%Y-%m-%d')
+                        end_date_string = end_date.strftime('%Y-%m-%d 23:59:59')
                         params.update({'end_date': end_date_string})
                     # Limit size
                     params.update({'agg_size': kwargs.get('agg_size', 0)})

@@ -1403,51 +1403,9 @@ def create_flow_define():
             the_flow.upt_flow_action(flow.flow_id, flow_actions)
 
 
-def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
-    """Validation importing zip file.
-
-    :argument
-        item        -- Items Metadata.
-        request_info -- Information from request.
-        is_gakuninrdm - Is call by gakuninrdm api.
-    :return
-        return      -- Json response.
-
-    """
-
-    def store_data_to_es_and_db(item, request_info):
-        """Store data to es and db."""
-        # Default admin user (1) for this import.
-        request_info["user_id"] = 1
-        timestamp = datetime.utcnow().replace(microsecond=0)
-        # Prepare stored data.
-        data = prepare_stored_data(item, request_info)
-        doc_type = "stats-item-create"
-        index = "{}-events-{}-{}".format(index_prefix, doc_type, timestamp.year)
-        id = hash_id(timestamp, data)
-        # Push item to elasticsearch.
-        push_item_to_elasticsearch(id, index, doc_type, data)
-        # Save item to stats events.
-        # save_item_to_stats_events(id, index, doc_type, data)
-        try:
-            if has_request_context():
-                if current_user:
-                    user_id = current_user.get_id()
-                else:
-                    user_id = -1
-                item_created.send(
-                    current_app._get_current_object(),
-                    user_id=user_id,
-                    item_id=item.get("id"),
-                    item_title=item.get("item_title"),
-                )
-        except BaseException:
-            import traceback
-
-            current_app.logger.error(traceback.format_exc())
-            abort(500, "MAPPING_ERROR")
-
-    def prepare_stored_data(item, request_info):
+def send_item_created_event_to_es(item, request_info):
+    """Send item_created event to ES."""
+    def _prepare_stored_data(item, request_info):
         """Prepare stored data."""
         # TODO: consider to use "weko_deposit.signals.item_created."
         timestamp = datetime.utcnow().replace(microsecond=0)
@@ -1476,29 +1434,39 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
         }
         return data
 
-    def push_item_to_elasticsearch(id, index, doc_type, data):
+    def _push_item_to_elasticsearch(id, index, doc_type, data):
         """Push item to elasticsearch in order to count report."""
         indexer = RecordIndexer()
         indexer.client.index(index=index, doc_type=doc_type, id=id, body=data)
 
-    def save_item_to_stats_events(id, index, doc_type, data):
-        """Save item to db in order to run aggregation."""
-        rtn_data = dict(
-            _id=id,
-            _op_type="index",
-            _index=index,
-            _type=doc_type,
-            _source=data,
-        )
-        if current_app.config["STATS_WEKO_DB_BACKUP_EVENTS"]:
-            # Save stats event into Database.
-            StatsEvents.save(rtn_data, True)
+    timestamp = datetime.utcnow().replace(microsecond=0)
+    # Prepare stored data.
+    data = _prepare_stored_data(item, request_info)
+    doc_type = "stats-item-create"
+    index = "{}-events-{}-{}".format(index_prefix, doc_type, timestamp.year)
+    id = hash_id(timestamp, data)
+    # Save item to stats events.
+    _push_item_to_elasticsearch(id, index, doc_type, data)
+
+
+def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
+    """Validation importing zip file.
+
+    :argument
+        item        -- Items Metadata.
+        request_info -- Information from request.
+        is_gakuninrdm - Is call by gakuninrdm api.
+    :return
+        return      -- Json response.
+
+    """
 
     if not request_info and request:
         request_info = {
             "remote_addr": request.remote_addr,
             "referrer": request.referrer,
             "hostname": request.host,
+            "user_id": 1
         }
 
     if not item:
@@ -1535,8 +1503,8 @@ def import_items_to_system(item: dict, request_info=None, is_gakuninrdm=False):
                 )
                 register_item_update_publish_status(item, str(status_number))
                 if item.get("status") == "new":
-                    # Store data to es and db.
-                    store_data_to_es_and_db(item, request_info)
+                    # Send item_created event to ES.
+                    send_item_created_event_to_es(item, request_info)
             db.session.commit()
 
             # clean unuse file content in keep mode if import success
