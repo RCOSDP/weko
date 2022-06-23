@@ -1,0 +1,184 @@
+<!-- For Addthis cookies -->
+<script id="addthis"></script>
+
+<!-- Google Analytics Cookies -->
+<script id="googleanalytics2">
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-966315FGWJ');
+</script>
+
+<!-- Manage cookies -->
+<script>
+    const getCookie = {
+        getItem: (item) => {
+            const cookies = document.cookie
+                .split(';')
+                .map(cookie => cookie.split('='))
+                .reduce((acc, [key, value]) => ({ ...acc, [key.trim()]: value }), {});
+            return cookies[item];
+        },
+        googleAnalyticsCheck: () => {
+            const cookies = document.cookie
+                .split(';')
+                .map(cookie => cookie.split('='))
+                .reduce((acc, [key, value]) => ({ ...acc, [key.trim()]: value }), {})
+            console.log(cookies)
+        },
+    }
+    if(getCookie.getItem('klaro')) {
+        console.log("\n\n")
+        console.log("COMEON!")
+        console.log("\n\n")
+        const klaroCookies = JSON.parse(
+            decodeURIComponent(getCookie.getItem('klaro'))
+            .split(';')
+            .map(cookie => cookie.split(','))
+        )
+        const addThisKlaroCookies = klaroCookies["Addthis"]
+        const googleAnalyticsKlaroCookies = klaroCookies["Google Analytics"]
+        const addThisScript = document.getElementById("addthis")
+        // const googleAnalyticsScript = document.getElementById("googleanalytics1")
+        const googleAnalyticsTwoScript = document.getElementById("googleanalytics2")
+
+        // window.onload = () => {
+        if(addThisKlaroCookies) {
+            addThisScript.setAttribute("type", "text/javascript")
+            addThisScript.setAttribute("src", "//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-62a7e93949d43cb0")
+        } else {
+            addThisScript.setAttribute("type", "text/plain")
+            addThisScript.setAttribute("src", "")
+        }
+
+        if(googleAnalyticsKlaroCookies) {
+            // googleAnalyticsScript.setAttribute("src", "https://www.googletagmanager.com/gtag/js?id=G-966315FGWJ")
+            googleAnalyticsTwoScript.setAttribute("type", "text/javascript")
+        } else {
+            // googleAnalyticsScript.setAttribute("src", "")
+            googleAnalyticsTwoScript.setAttribute("type", "text/plain")
+        }
+        // }
+    }
+</script>
+
+<!-- Klaro Consent configuration -->
+<script>
+    var klaroConfig = {
+        version: 1,
+        elementID: 'klaro',
+        styling: {
+            theme: ['dark', 'bottom', 'wide'],
+        },
+        noAutoLoad: false,
+        htmlTexts: true,
+        embedded: false,
+        groupByPurpose: true,
+        storageMethod: 'cookie',
+        cookieName: 'klaro',
+        cookieExpiresAfterDays: 365,
+        default: false,
+        mustConsent: false,
+        acceptAll: true,
+        hideDeclineAll: false,
+        hideLearnMore: false,
+        noticeAsModal: false,
+        translations: {
+            en: {
+                consentModal: {
+                    title: '<u>コンセント設定</u>',
+                    description:
+                    `ここのリンクを変更出来ること。現在設定されているのは『<a href="https://github.com/kiprotect/klaro">klaro</a>』のgithubです。`,
+                },
+                inlineTracker: {
+                    description: 'Example of an inline tracking script',
+                },
+                externalTracker: {
+                    description: 'Example of an external tracking script',
+                },
+                adsense: {
+                    description: 'Displaying of advertisements (just an example)',
+                    title: 'Google Adsense Advertisement',
+                },
+                matomo: {
+                    description: 'Collecting of visitor statistics',
+                },
+                camera: {
+                    description:
+                        'A surveillance camera (just an example for an IMG tag)',
+                },
+                cloudflare: {
+                    description: 'Protection against DDoS attacks',
+                },
+                intercom: {
+                    description:
+                        'Chat widget & collecting of visitor statistics (just an example)',
+                },
+                mouseflow: {
+                    description: 'Real-Time user analytics (just an example)',
+                },
+                googleFonts: {
+                    description: 'Web fonts hosted by Google',
+                },
+                purposes: {
+                    analytics: 'アナリティクス',
+                    security: 'Security',
+                    livechat: 'Livechat',
+                    advertising: 'Advertising',
+                    styling: 'Styling',
+                },
+            },
+        },
+    
+        // Services categorization settings
+        services: [
+            {
+                name: 'Google Analytics',
+                default: false,
+                title: 'Google Analytics',
+                purposes: ['analytics'],
+            },
+            {
+                name: 'Addthis',
+                default: false,
+                title: 'Addthis',
+                purposes: ['analytics'],
+            },
+        ],
+    };
+</script>
+
+<!-- Styling for the consent pop-up -->
+<link rel="stylesheet" href="https://cdn.kiprotect.com/klaro/v0.7.16/klaro.min.css" />
+
+<!-- Klaro Consent Pop-up Library -->
+<script type="text/javascript" src="https://cdn.kiprotect.com/klaro/v0.7.16/klaro.js"></script>
+
+<div id="klaro"></div>
+
+<!-- Will delete Google Analytics automatically if klaro hasn't run yet -->
+<script>
+    // window.onload = () => {
+    setTimeout(() => {
+        const cookies = document.cookie
+            .split(';')
+            .map(cookie => cookie.split('='))
+            .reduce((acc, [key, value]) => ({ ...acc, [key.trim()]: value }), {});
+        if(!Object.keys(cookies).includes("klaro")) {
+            document.cookie = "_ga_966315FGWJ= ; expires = Thu, 01 Jan 1970 00:00:00 GMT"
+            document.cookie = "_ga= ; expires = Thu, 01 Jan 1970 00:00:00 GMT"
+        } else {
+            const klaroCookies = JSON.parse(
+                decodeURIComponent(getCookie.getItem('klaro'))
+                .split(';')
+                .map(cookie => cookie.split(','))
+            )
+            const googleAnalyticsKlaroCookies = klaroCookies["Google Analytics"]
+            if(!googleAnalyticsKlaroCookies) {
+                document.cookie = "_ga_966315FGWJ= ; expires = Thu, 01 Jan 1970 00:00:00 GMT"
+                document.cookie = "_ga= ; expires = Thu, 01 Jan 1970 00:00:00 GMT"
+            }
+        }
+    }, "5000")
+    // }
+</script>
