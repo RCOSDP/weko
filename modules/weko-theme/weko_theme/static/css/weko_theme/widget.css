@@ -170,6 +170,7 @@
 
 .trumbowyg-editor img {
   max-width: none !important;
+  cursor: default !important;
 }
 
 .lds-ring-background {
