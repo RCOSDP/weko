@@ -273,8 +273,8 @@ def test_unpackage_import_file(app,mocker,mocker_itemtype):
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "unpackage_import_file")
     with app.test_request_context():
         with set_locale('en'):
-            assert unpackage_import_file(path,'items.csv',False)==result
-            assert unpackage_import_file(path,'items.csv',True)==result_force_new
+            assert unpackage_import_file(path,'items.csv','csv',False)==result
+            assert unpackage_import_file(path,'items.csv','csv',True)==result_force_new
 
 
 # def getEncode(filepath):

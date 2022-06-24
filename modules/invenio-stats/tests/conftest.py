@@ -17,14 +17,24 @@ import tempfile
 import uuid
 from contextlib import contextmanager
 from copy import deepcopy
+import json
+from mock import Mock, patch
+from six import BytesIO
+import pytest
 
 # imported to make sure that
 # login_oauth2_user(valid, oauth) is included
 import invenio_oauth2server.views.server  # noqa
-import pytest
+
+
+from elasticsearch import Elasticsearch
+from elasticsearch_dsl import response, Search
+from sqlalchemy_utils.functions import create_database, database_exists
+from kombu import Exchange
 from flask import Flask, appcontext_pushed, g
 from flask.cli import ScriptInfo
 from flask_celeryext import FlaskCeleryExt
+
 from invenio_access import InvenioAccess
 from invenio_accounts import InvenioAccounts, InvenioAccountsREST
 from invenio_accounts.testutils import create_test_user
@@ -43,10 +53,6 @@ from invenio_queues.proxies import current_queues
 from invenio_records import InvenioRecords
 from invenio_records.api import Record
 from invenio_search import InvenioSearch, current_search, current_search_client
-from kombu import Exchange
-from mock import Mock, patch
-from six import BytesIO
-from sqlalchemy_utils.functions import create_database, database_exists
 
 from invenio_stats import InvenioStats
 from invenio_stats.contrib.event_builders import build_file_unique_id, \
@@ -55,29 +61,6 @@ from invenio_stats.contrib.registrations import register_queries
 from invenio_stats.processors import EventsIndexer
 from invenio_stats.tasks import aggregate_events
 from invenio_stats.views import blueprint
-
-# @pytest.yield_fixture()
-# def instance_path():
-#     path = tempfile.mkdtemp()
-#     yield path
-#     shutil.rmtree(path)
-# 
-# @pytest.fixture()
-# def base_app(instance_path):
-#     app_ = Flask("testapp", instance_path=instance_path)
-#     app_.config.update(
-#         SQLALCHEMY_DATABASE_URI=os.environ.get(
-#             "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
-#         ),
-#         SECRET_KEY="SECRET_KEY",
-#         TESTING=True,
-#     )
-#     return app_
-# 
-# @pytest.yield_fixture()
-# def app(base_app):
-#     with base_app.app_context():
-#         yield base_app
 
 
 def mock_iter_entry_points_factory(data, mocked_group):
@@ -92,6 +75,12 @@ def mock_iter_entry_points_factory(data, mocked_group):
             for x in iter_entry_points(group=group, name=name):
                 yield x
     return entrypoints
+
+
+@pytest.yield_fixture()
+def mock_gethostbyaddr():
+    with patch("invenio_stats.contrib.event_builders.gethostbyaddr", return_value="test_host"):
+        yield
 
 
 @pytest.yield_fixture()
@@ -221,13 +210,11 @@ def instance_path():
     yield path
     shutil.rmtree(path)
 
-# @pytest.yield_fixture()
-# def base_app():
+
 @pytest.fixture()
-def base_app(instance_path):
+def base_app(instance_path, mock_gethostbyaddr):
     """Flask application fixture without InvenioStats."""
     from invenio_stats.config import STATS_EVENTS
-    # instance_path = tempfile.mkdtemp()
     app_ = Flask('testapp', instance_path=instance_path)
     stats_events = {
         'file-download': deepcopy(STATS_EVENTS['file-download']),
@@ -245,6 +232,7 @@ def base_app(instance_path):
         CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
         CELERY_TASK_EAGER_PROPAGATES=True,
         CELERY_RESULT_BACKEND='cache',
+        QUEUES_BROKER_URL="amqp://guest:guest@rabbitmq:5672//",
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite://'),
         SQLALCHEMY_DATABASE_URI=os.environ.get(
@@ -255,6 +243,7 @@ def base_app(instance_path):
         OAUTH2SERVER_CLIENT_ID_SALT_LEN=64,
         OAUTH2SERVER_CLIENT_SECRET_SALT_LEN=60,
         OAUTH2SERVER_TOKEN_PERSONAL_SALT_LEN=60,
+        OAUTH2_CACHE_TYPE="simple",
         STATS_MQ_EXCHANGE=Exchange(
             'test_events',
             type='direct',
@@ -271,22 +260,20 @@ def base_app(instance_path):
         STATS_AGGREGATIONS={'file-download-agg': {}}
     ))
     FlaskCeleryExt(app_)
+    InvenioAccess(app_)
     InvenioAccounts(app_)
     InvenioAccountsREST(app_)
     InvenioDB(app_)
     InvenioRecords(app_)
     InvenioFilesREST(app_)
     InvenioPIDStore(app_)
-    #
     InvenioCache(app_)
     InvenioQueues(app_)
-    # InvenioOAuth2Server(app_)xxx
+    InvenioOAuth2Server(app_)
     InvenioOAuth2ServerREST(app_)
     InvenioMARC21(app_)
-    InvenioSearch(app_, entry_point_group=None)
-    # with app_.app_context():
-    #     yield app_
-    # shutil.rmtree(instance_path)
+    InvenioSearch(app_, entry_point_group=None, client=MockEs())
+
     return app_
 
 
@@ -298,6 +285,7 @@ def app(base_app):
     with base_app.app_context():
         yield base_app
 
+
 @pytest.yield_fixture()
 def db(app):
     """Setup database."""
@@ -307,6 +295,39 @@ def db(app):
     yield db_
     db_.session.remove()
     db_.drop_all()
+
+class MockEs():
+    def __init__(self,**keywargs):
+        self.indices = self.MockIndices()
+        self.es = Elasticsearch()
+    @property
+    def transport(self):
+        return self.es.transport
+    class MockIndices():
+        def __init__(self,**keywargs):
+            self.mapping = dict()
+        def delete(self,index):
+            pass
+        def delete_template(self,index):
+            pass
+        def create(self,index,body,ignore):
+            self.mapping[index] = body
+        def put_alias(self,index, name, ignore):
+            pass
+        def put_template(self,name, body, ignore):
+            pass
+        def refresh(self,index):
+            pass
+        def exists(self, index, **kwargs):
+            if index in self.mapping:
+                return True
+            else:
+                return False
+        def flush(self,index):
+            pass
+        
+        def search(self,index,doc_type,body,**kwargs):
+            pass
 
 
 @pytest.yield_fixture()
@@ -501,6 +522,17 @@ def mock_event_queue(app, mock_datetime, request_headers, objects,
     return mock_queue
 
 
+@pytest.fixture()
+def mock_es_execute():
+    def _dummy_response(data):
+        if isinstance(data, str):
+            with open(data, "r") as f:
+                data = json.load(f)
+        dummy=response.Response(Search(), data)
+        return dummy
+    return _dummy_response
+
+
 def generate_events(app, file_number=5, event_number=100, robot_event_number=0,
                     start_date=datetime.date(2021, 1, 1),
                     end_date=datetime.date(2021, 1, 7)):
@@ -535,7 +567,9 @@ def generate_events(app, file_number=5, event_number=100, robot_event_number=0,
                         file_key='test.pdf',
                         size=9000,
                         visitor_id=100,
-                        is_robot=is_robot
+                        is_robot=is_robot,
+                        remote_addr="test_remote_addr",
+                        unique_session_id="xxxxxxx"
                     )
 
                 for event_idx in range(event_number):
@@ -620,8 +654,8 @@ def _create_file_download_event(timestamp,
         user_id=user_id,
     )
     return build_file_unique_id(doc)
-# 
-# 
+
+
 def _create_record_view_event(timestamp,
                               record_id='R0000000000000000000000000000001',
                               pid_type='recid',

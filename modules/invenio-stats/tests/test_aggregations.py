@@ -296,6 +296,7 @@ def test_get_bookmark(app, indexed_events):
 #     assert results[0].unique_count == 4  # 4 different hour slices accessed
 #     assert results[0].volume == 9000 * 12
 
+
 def test_BookmarkAPI(app):
     bookmark_api = BookmarkAPI(current_search_client,
                                'file-download-agg',
