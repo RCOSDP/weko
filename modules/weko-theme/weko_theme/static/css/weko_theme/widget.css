@@ -168,6 +168,8 @@
   word-wrap: break-word;
 }
 
+/* 課題 #32415 */
+/* overwrite cursor: move with cursor: default */
 .trumbowyg-editor img {
   max-width: none !important;
   cursor: default !important;
