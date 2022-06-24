@@ -846,8 +846,7 @@ class QueryRecordViewReportHelper(object):
             cls.Calculation(all_res, all_list)
 
         except es_exceptions.NotFoundError as e:
-            current_app.logger.debug("Indexes do not exist yet:",
-                                     str(e.info['error']))
+            current_app.logger.debug(e)
             result['all'] = []
         except Exception as e:
             current_app.logger.debug(e)
@@ -1161,10 +1160,10 @@ class QueryItemRegReportHelper(object):
                     end_date_string = ''
                     params = {}
                     if start_date is not None:
-                        start_date_string = start_date.strftime('%Y-%m-%d')
+                        start_date_string = start_date.strftime('%Y-%m-%d 00:00:00')
                         params.update({'start_date': start_date_string})
                     if end_date is not None:
-                        end_date_string = end_date.strftime('%Y-%m-%d')
+                        end_date_string = end_date.strftime('%Y-%m-%d 23:59:59')
                         params.update({'end_date': end_date_string})
                     # Limit size
                     params.update({'agg_size': kwargs.get('agg_size', 0)})
@@ -1186,8 +1185,7 @@ class QueryItemRegReportHelper(object):
                 else:
                     result = []
             except es_exceptions.NotFoundError as e:
-                current_app.logger.debug("Indexes do not exist yet:",
-                                         str(e.info['error']))
+                current_app.logger.debug(e)
                 result = []
             except Exception as e:
                 current_app.logger.debug(e)
