@@ -367,7 +367,6 @@ class ESTermsQuery(ESQuery):
             res_list = []
             res_count = {}
             while count < total and (after_key or first_search):
-                print("count:{} > total:{}".format(count, total))#
                 agg_query = self.build_query(start_date, end_date, after_key=after_key, **kwargs)
                 current_app.logger.debug('agg_query: {}'.format(agg_query.to_dict()))
                 temp_res = agg_query.execute().to_dict()
