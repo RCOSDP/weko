@@ -1416,6 +1416,7 @@ def send_item_created_event_to_es(item, request_info):
         doc = anonymize_user(doc)
         doc = flag_restricted(doc)
         doc = flag_robots(doc)
+        item_id = item.get("id") if 'id' in item else item.get("recid", -1)
         data = {
             "remote_addr": request_info.get("remote_addr"),
             "country": doc.get("country"),
@@ -1426,8 +1427,8 @@ def send_item_created_event_to_es(item, request_info):
             "is_restricted": doc.get("is_restricted"),
             "unique_session_id": doc.get("unique_session_id"),
             "hostname": request_info.get("hostname"),
-            "pid_value": item.get("id"),
-            "unique_id": "item_create_{}".format(item.get("id")),
+            "pid_value": item_id,
+            "unique_id": "item_create_{}".format(item_id),
             "pid_type": "depid",
             "timestamp": doc.get("timestamp"),
             "visitor_id": doc.get("visitor_id"),
