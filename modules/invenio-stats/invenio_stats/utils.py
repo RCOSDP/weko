@@ -752,6 +752,7 @@ class QueryRecordViewReportHelper(object):
                 'record_name': item['record_name'],
                 'index_names': item['record_index_names'],
                 'total_all': item['count'],
+                'pid_value': item['pid_value'],
                 'total_not_login': item['count']
                     if item['cur_user_id'] == 'guest' else 0
             }
