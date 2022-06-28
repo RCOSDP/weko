@@ -217,7 +217,10 @@ class Indexes(object):
                         getattr(index, "contribute_group")),
                     'recursive_contribute_role': partial(
                         cls.set_contribute_role_resc, index_id,
-                        getattr(index, "contribute_role"))
+                        getattr(index, "contribute_role")),
+                    'biblio_flag': partial(
+                        cls.set_online_issn_resc, index_id,
+                        getattr(index, "online_issn"))                        
                 }
                 for recur_key, recur_update_func in recs_group.items():
                     if getattr(index, recur_key):
@@ -1518,6 +1521,20 @@ class Indexes(object):
                    synchronize_session='fetch')
         for index in Index.query.filter_by(parent=index_id).all():
             cls.set_browsing_group_resc(index.id, browsing_group)
+
+    @classmethod
+    def set_online_issn_resc(cls, index_id, online_issn):
+        """
+        Set Online ISSN for all index's children.
+
+        :param index_id: search index id
+        :param online_issn: Online ISSN
+        """
+        Index.query.filter_by(parent=index_id). \
+            update({Index.online_issn: online_issn},
+                   synchronize_session='fetch')
+        for index in Index.query.filter_by(parent=index_id).all():
+            cls.set_online_issn_resc(index.id, online_issn)
 
     @classmethod
     def get_index_count(cls):
