@@ -917,6 +917,18 @@ def ranking():
     """Ranking page view."""
     # get ranking settings
     settings = RankingSettings.get()
+
+    if not settings:
+        upd_data = RankingSettings()
+        dafault_data = current_app.config['WEKO_ITEMS_UI_RANKING_DEFAULT_SETTINGS']
+        upd_data.is_show = dafault_data['is_show']
+        upd_data.new_item_period = dafault_data['new_item_period']
+        upd_data.statistical_period = dafault_data['statistical_period']
+        upd_data.display_rank = dafault_data['display_rank']
+        upd_data.rankings = dafault_data['rankings']
+        RankingSettings.update(data=upd_data) 
+        settings = RankingSettings.get()
+
     # get statistical period
     end_date = date.today()  # - timedelta(days=1)
     start_date = end_date - timedelta(days=int(settings.statistical_period))
