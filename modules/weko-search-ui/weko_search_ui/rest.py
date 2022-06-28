@@ -187,7 +187,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         page = request.values.get("page", 1, type=int)
         size = request.values.get("size", 20, type=int)
         community_id = request.values.get("community")
-
         params = {}
         facets = get_facet_search_query()
         search_index = current_app.config["SEARCH_UI_SEARCH_INDEX"]
@@ -197,7 +196,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 value = request.args.getlist(param)
                 if value:
                     params[param] = value
-
         if page * size >= self.max_result_window:
             raise MaxResultWindowRESTError()
         urlkwargs = dict()
@@ -205,7 +203,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         search = search_obj.with_preference_param().params(version=True)
         search = search[(page - 1) * size : page * size]
         search, qs_kwargs = self.search_factory(self, search)
-
         query = request.values.get("q")
         if query:
             urlkwargs["q"] = query

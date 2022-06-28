@@ -19,7 +19,9 @@ from weko_search_ui.utils import (
     get_item_type,handle_fill_system_item,
     get_system_data_uri,
     represents_int,
-    validation_date_property
+    validation_date_property,
+    DefaultOrderedDict,
+    defaultify
 )
 from invenio_i18n.ext import InvenioI18N, current_i18n
 from invenio_i18n.babel import set_locale
@@ -271,8 +273,8 @@ def test_unpackage_import_file(app,mocker,mocker_itemtype):
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "unpackage_import_file")
     with app.test_request_context():
         with set_locale('en'):
-            assert unpackage_import_file(path,'items.csv',False)==result
-            assert unpackage_import_file(path,'items.csv',True)==result_force_new
+            assert unpackage_import_file(path,'items.csv','csv',False)==result
+            assert unpackage_import_file(path,'items.csv','csv',True)==result_force_new
 
 
 # def getEncode(filepath):
@@ -562,3 +564,28 @@ def test_handle_fill_system_item(app,test_list_records,mocker):
 # def get_data_by_property(item_metadata, item_map, mapping_key):
 # def get_filenames_from_metadata(metadata):
 # def handle_check_filename_consistence(file_paths, meta_filenames):
+
+def test_DefaultOrderDict_deepcopy():
+    import copy
+    
+    data={
+        "key0":"value0",
+        "key1":"value1",
+        "key2":{
+            "key2.0":"value2.0",
+            "key2.1":"value2.1"
+            }
+        }
+    dict1 = defaultify(data)
+    dict2 = copy.deepcopy(dict1)
+    
+    for i, d in enumerate(dict2):
+        if i in [0, 1] :
+            assert d == "key" + str(i)
+            assert dict2[d] == "value" + str(i)
+        else:
+            assert d == "key" + str(i)
+            assert isinstance(dict2[d], DefaultOrderedDict)
+            for s, dd in enumerate(dict2[d]):
+                assert dd == "key{}.{}".format(i,s)
+                assert dict2[d][dd] == "value{}.{}".format(i,s)
