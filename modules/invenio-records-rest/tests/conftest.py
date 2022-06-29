@@ -93,9 +93,7 @@ class MockEs():
         self.es = Elasticsearch()
         self.cluster = self.MockCluster()
     def index(self, id="",version="",version_type="",index="",doc_type="",body="",**arguments):
-        print("id:{id},version:{v},version_type:{vt},index:{i},doc_type:{dc},body:{b}".format(
-            id=id,v=version,vt=version_type,i=index,dc=doc_type,b=body
-        ))
+        pass
     def delete(self,id="",index="",doc_type="",**kwargs):
         return Response(response=json.dumps({}),status=500)
     @property
@@ -383,7 +381,6 @@ def mock_es_execute():
             with open(data, "r") as f:
                 data = json.load(f)
         dummy=response.Response(Search(), data)
-        print("in mock_ex_response")
         return dummy
     return _dummy_response
 
