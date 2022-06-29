@@ -15,7 +15,7 @@ import json
 import mock
 import pytest
 from conftest import IndexFlusher
-from helpers import _mock_validate_fail, assert_hits_len, get_json, record_url
+from tests.helpers import _mock_validate_fail, assert_hits_len, get_json, record_url
 from mock import patch
 from sqlalchemy.exc import SQLAlchemyError
 
