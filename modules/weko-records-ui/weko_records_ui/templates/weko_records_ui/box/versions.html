@@ -1,16 +1,16 @@
-<div class="well well2 metadata">
-  <h4>{{_('Versions')}}</h4>
+<div class="well well2 metadata component__versions">
+  <h4 class="element__views-title">{{_('Versions')}}</h4>
   {%- if pid in active_versions %}
     {%- set pid_version_index = active_versions.index(pid) %}
     {%- set version_label_const = _('Ver.') %}
-    <table class="table">
+    <table class="element__views-versions-table">
       {%- if not active_versions[0].pid_value | pid_value_version %}
         {%- set current_version_index = all_versions[-1].pid_value | pid_value_version | int %}
         <tr class="{% if pid_version_index == 0 %}info {% endif %}">
           <td>
             <a href="{{ url_for('invenio_records_ui.recid', pid_value=active_versions[0].pid_value) }}">{{ version_label_const + current_version_index | string }} </a>
           </td>
-          <td align="right" style="word-wrap: anywhere;">
+          <td>
             <small class="text-muted">{{ all_versions[-1].updated }}</small>
           </td>
         </tr>
@@ -25,7 +25,7 @@
             <td>
               <a href="{{ url_for('invenio_records_ui.recid', pid_value=pid_version.pid_value) }}">{{ version_label }} </a>
             </td>
-            <td align="right" style="word-wrap: anywhere;">
+            <td>
               <small class="text-muted">{{ version_date }}</small>
             </td>
           </tr>
@@ -34,7 +34,8 @@
 
       {%- endfor %}
       </table>
-     <a id="views-allversions" ng-click="versionsCollapse = !versionsCollapse">{{_('Show All versions')}}</a>
-
+      <div class="element__views-allversions">
+        <button id="views-allversions" ng-click="versionsCollapse = !versionsCollapse">{{_('Show All versions')}}</button>
+      </div>
    {%- endif %}
 </div>

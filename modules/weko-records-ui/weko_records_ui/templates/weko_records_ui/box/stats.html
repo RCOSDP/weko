@@ -1,43 +1,49 @@
 <div class="{{'hidden' if not display_stats else ''}} well well2 stats">
-<!--
+  <!--
   <div class="row">
     <div class="col-sm-6 pull-left">
       <h4>{{_('Stats')}}</h4>
     </div>
   </div>
 -->
-  <div class="row">
-<div id="record_view_num" class="h3" style="text-align:center;">
-<span id="views-num">0</span>
-</div>
+  <div class="row component__views">
+    <div class="element__views-icon" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+        stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+        </path>
+      </svg>
+    </div>
+    <div id="record_view_num" class="element__views-nom">
+      <span id="views-num">0</span>
+    </div>
+    <div id="views-txt" class="element__views-text">views</div>
   </div>
+
   <div class="row">
-    <div style="text-align:center;">
-<i class="fa fa-eye" aria-hidden="true"></i>
-    <span id="views-txt">views</span>
-  </div>
-</div>
-<div class="row" style="text-align:center;">
- <label for="record_view_period" hidden>{{_('Choose stats period')}}</label>
- <select id="record_view_period" class="btn btn-default btn-sm"
-        onchange="period_change(this)">
-        <option value="total">total</option>
+    <label for="record_view_period" class="sr-only">{{_('Choose stats period')}}</label>
+    <select id="record_view_period" class="element__views-select" onchange="period_change(this)">
+      <option value="total">total</option>
     </select>
-</div>
+  </div>
   <div class="row" ng-init="statsCollapse = false">
-    <div class="col-sm-6 col-sm-offset-3">
-      <a id="views-details" ng-click="statsCollapse = !statsCollapse">{{_('See details')}}</a></div>
+    <div class="element__views-details">
+      <button id="views-details" ng-click="statsCollapse = !statsCollapse">{{_('See
+        details')}}</button>
+    </div>
   </div>
   <div class="row ng-hidden" id="collapse-stats" ng-show="statsCollapse">
-    <table class="table stats-table">
-        <thead>
-            <tr>
-                <th></th>
-                <th>{{_('Views')}}</th>
-            </tr>
-        </thead>
-        <tbody id="record_view_country">
-        </tbody>
+    <table class="element__views-details-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th>{{_('Views')}}</th>
+        </tr>
+      </thead>
+      <tbody id="record_view_country">
+      </tbody>
     </table>
   </div>
 </div>

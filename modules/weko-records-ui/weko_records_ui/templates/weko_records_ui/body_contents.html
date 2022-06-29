@@ -10,7 +10,7 @@
 #
 # WEKO3 is distributed in the hope that it will be
 # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
@@ -26,21 +26,22 @@
 {{ all_modal() }}
 
 {%- block javascript %}
-  {% assets "weko_records_ui_file_action_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{% assets "weko_records_ui_file_action_js" %}
+<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {% from "weko_records_ui/item_detail.html" import output_item_detail %}
 {% from "weko_records_ui/_macros.html" import check_download_file with context %}
-<div class="panel-group">
-  <div class="panel panel-default">
-    <div class="panel-heading clearfix">
-      <h3 class="panel-title">{{_('Item')}}</h3>
+<div class="panel-group component__body-contents">
+  <div class="panel panel-default element__body-contents-inner">
+    <div class="panel-heading clearfix element__body-contents-header">
+      <h3 class="panel-title element__body-contents-header-title">{{_('Item')}}</h3>
     </div>
     <div class="panel-body panel-body2">
       {%- include "weko_records_ui/box/head.html" %}
     </div>
-    <div class="panel-body panel-body2" style="padding-top: 10px;">
-      <div class="row row-4">
+    <div class="panel-body panel-body2 element__body-contents-item-body">
+      <div class="row row-4 element__body-contents-item-body-inner">
         <div id="detail-item" class="col-sm-9 col-md-9 col-lg-9 col-left">
           <div id="record_id" class="hide">{{ record.id }}</div>
           {%- block record_author %}
@@ -49,14 +50,15 @@
           {%- if files | selectattr('is_thumbnail', 'equalto', False)| list | length > 0 -%}
           <!-- Preview Carousel -->
           {% if not record.hide_file %}
-            {%- if is_display_file_preview -%}
-              {{ preview_carousel(record=record, files=files, pid=pid) }}
-            {%- endif -%}
-            {%- set file_order = [] -%}
-              {%- for file in files -%}
-                {%- do file_order.append(file.filename) -%}
-              {%- endfor -%}
-            <table class="table table-bordered">
+          {%- if is_display_file_preview -%}
+          {{ preview_carousel(record=record, files=files, pid=pid) }}
+          {%- endif -%}
+          {%- set file_order = [] -%}
+          {%- for file in files -%}
+          {%- do file_order.append(file.filename) -%}
+          {%- endfor -%}
+          <div class="element__body-contents-item-table-area">
+            <table class="table table-bordered element__body-contents-item-table">
               <thead>
                 <tr>
                   {# ファイルが存在しない場合は空にする #}
@@ -69,286 +71,294 @@
                 </tr>
               </thead>
               <tbody>
-              {%- set preview_count = {'value': 0} -%}
-              {%- for file_name in file_order|unique-%}
+                {%- set preview_count = {'value': 0} -%}
+                {%- for file_name in file_order|unique-%}
                 {%- for file in files -%}
-                  {%- if file_name == file.filename -%}
-                    {%- if file.displaytype == 'preview' -%}
-                      {% if preview_count.update({'value': preview_count.value + 1}) %}
-                      {% endif %}
+                {%- if file_name == file.filename -%}
+                {%- if file.displaytype == 'preview' -%}
+                {% if preview_count.update({'value': preview_count.value + 1}) %}
+                {% endif %}
+                {%- endif -%}
+                {%- set img = file.mimetype | get_image_src -%}
+                {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
+                filename=file.filename) %}
+                {%- set is_billing_file = False -%}
+                {%- set billing_file_data = "" -%}
+                {%- set billing_file_url = "" -%}
+                {%- set billing_file_class = "" -%}
+                {%- set billing_file_access_permission = True -%}
+
+                {%- if billing_files_permission -%}
+                {%- set billing_file_permission = billing_files_permission.get(file.filename) -%}
+                {%- set is_billing_file = True -%}
+                {%- set billing_file_class = " billing-file" -%}
+                {%- set file_url = "JavaScript:void(0);" -%}
+                {%- endif %}
+
+                {%- set access_permission = record | check_file_permission(file) -%}
+
+                <tr class="file-row">
+                  <td rowspan="1" class="filecheck-td">
+                    <input type="checkbox" class="alignCenter file-check action-checkbox" value={{ file.filename |
+                      urlencode }}>
+                  </td>
+
+                  <td class="filename-td">
+                    <span class="filename">
+                      <img src="{{img}}" alt={{ file.filename }} />
+                      {%- if not file.groupsprice and not access_permission and file.accessrole == 'open_login' -%}
+                      {%- set billing_file_class = "" -%}
+                      {%- elif is_billing_file or file.groupsprice -%}
+                      {%- if not session['user_id'] -%}
+                      {%- set file_url = url_for_security('login', next=request.path) -%}
+                      {%- set billing_file_class = "" -%}
+                      {%- elif billing_file_permission -%}
+                      {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_files',
+                      pid_value=pid.pid_value, filename=file.filename) -%}
+                      {%- set billing_file_data = "data-billing-file-permission=true data-billing-file-price=" +
+                      billing_files_prices.get(file.filename)|string -%}
+                      {%- else -%}
+                      {%- set billing_file_data = "data-billing-file-permission=false" -%}
+                      <input id="download_permission_error" type="hidden"
+                        value="{{_('The file cannot be downloaded because you do not have permission to view this file.')}}" />
+                      {%- set billing_file_access_permission = False -%}
+                      {%- endif -%}
+                      {%- endif -%}
+                      {%- set is_file_name_url = True %}
+                      {%- set clickable = record | check_content_file_clickable(file) -%}
+                      {%- set permission = record | get_permission(file) -%}
+                      <!-- Check and set file label. -->
+                      {%- if file.url -%}
+                      {%- if file.url.label -%}
+                      {%- set file_label = file.url.label -%}
+                      {%- else -%}
+                      {%- set file_label = file.filename -%}
+                      {%- endif -%}
+                      {%- else -%}
+                      {%- set file_label = file.filename -%}
+                      {%- endif -%}
+                      <!-- version_id == '' => not upload file, but fill data for 'File Information' -->
+                      {%- if file.version_id == '' -%}
+                      {%- if file.url -%}
+                      {%- if file.url.label -%}
+                      {%- set file_label = file.url.label -%}
+                      {%- elif file.url.url -%}
+                      {%- set file_label = file.url.url -%}
+                      {%- else -%}
+                      {%- set file_label = file.filename -%}
+                      {%- endif -%}
+                      {%- endif -%}
+                      {%- if file.url -%}
+                      {%- if file.url.url -%}
+                      {%- set text_url = file.url.url -%}
+                      {%- else -%}
+                      {%- set text_url = '' -%}
+                      {%- endif -%}
+                      {%- endif -%}
+                      {%- else -%}
+                      {%- set text_url = file_url -%}
+                      {%- endif -%}
+
+                      <!-- Get file size -->
+                      {%- if file.filesize -%}
+                      {%- set filesize = '(' + file.filesize[0].value + ')' -%}
+                      {%- else -%}
+                      {%- set filesize = '' -%}
+                      {%- endif -%}
+                      <!-- Show FileName/Label -->
+                      {%- if access_permission and billing_file_access_permission -%}
+                      <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }} {% if
+                        text_url %} href={{ text_url }} {% endif %}>
+                        {% autoescape false %}
+                        {{ file_label | escape_str }} {{ filesize }}
+                        {% endautoescape %}
+                      </a>
+                      <br>
+                      {%- elif clickable -%}
+                      {{ check_download_file(record, file, permission, community, url_for_security, is_file_name_url,
+                      file_label) }}
+                      {%- else -%}
+                      {%- set download_param = '?download=download-' + file.version_id %}
+                      {%- set path = request.path + download_param %}
+                      {%- set next_path = url_for_security('login', next=path) %}
+                      {%- if not current_user.is_authenticated -%}
+                      <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
+                        href="{{next_path}}">
+                        {% autoescape false %}
+                        {{ file_label | escape_str }} {{ filesize }}
+                        {% endautoescape %}
+                      </a>
+                      {%- else -%}
+                      <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
+                        href="{{file_url}}">
+                        {% autoescape false %}
+                        {{ file_label | escape_str }} {{ filesize }}
+                        {% endautoescape %}
+                      </a>
+                      {%- endif -%}
+                      <br>
+                      {%- endif -%}
+                      <!-- Show future open date message -->
+                      {%- if file.future_date_message -%}
+                      <div class="panel-body panel-body2">
+                        <span class="fa fa-key"
+                          style="font-size:18px;font-weight:bold">&nbsp;{{file.future_date_message}}</span>
+                      </div>
+                      {%- endif -%}
+                      {%- if access_permission and billing_file_access_permission -%}
+                      <!-- Show check sum -->
+                      {%- else -%}
+                      <!-- Show 'Restricted Access' message -->
+                      {%- if not file.future_date_message -%}
+                      <div class="panel-body panel-body2">
+                        <span class="fa fa-key" style="font-size:18px;font-weight:bold">&nbsp;{{_('Restricted
+                          Access')}}</span>
+                      </div>
+                      {%- endif -%}
+                      {%- endif -%}
+                    </span>
+                    {%- if 'pdf' in file.mimetype and can_download_original_pdf -%}
+                    {%- set original_file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
+                    filename=file.filename, original=1) %}
+                    {%- if is_billing_file -%}
+                    {%- set original_file_url = "javascript:void(0)" -%}
+                    {%- if billing_file_permission -%}
+                    {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_files',
+                    pid_value=pid.pid_value, filename=file.filename, original=1) %}
                     {%- endif -%}
-                    {%- set img = file.mimetype | get_image_src -%}
-                    {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
-                        filename=file.filename) %}
-                    {%- set is_billing_file = False -%}
-                    {%- set billing_file_data = "" -%}
-                    {%- set billing_file_url = "" -%}
-                    {%- set billing_file_class = "" -%}
-                    {%- set billing_file_access_permission = True -%}
+                    {%- endif -%}
+                    <div class="text-right">
+                      <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}}
+                        href="{{original_file_url}}">{{_('Original')}}</a>
+                    </div>
+                    {%- endif -%}
+                  </td>
 
-                    {%- if billing_files_permission -%}
-                      {%- set billing_file_permission = billing_files_permission.get(file.filename) -%}
-                      {%- set is_billing_file = True -%}
-                      {%- set billing_file_class = " billing-file" -%}
-                      {%- set file_url = "JavaScript:void(0);" -%}
-                    {%- endif %}
+                  <td>
+                    <!-- Creative Commons Licenses -->
+                    <div>
+                      {%- if not 'simple' in file.displaytype -%}
+                      {%- if 'license_free' == file.licensetype -%}
+                      {% autoescape false %}
+                      <div id="square" style="width: 1px; height: 1px;"></div>
+                      <span class="break-word">{{ file.licensefree | escape_str }}</span>
+                      {% endautoescape %}
+                      {%- else %}
+                      {% set lst = file.licensetype | get_license_icon %}
+                      {%- if lst[0] -%}
+                      <a class="creative-commons" target="_blank" href="{{lst[2]}}" alt="Creative Commons Licenses">
+                        <img src="{{lst[0]}}" alt="license.icon" />
+                      </a><br>
+                      {%- endif -%}
+                      {%- endif %}
+                      {%- endif -%}
+                    </div>
+                  </td>
 
-                    {%- set access_permission = record | check_file_permission(file) -%}
-
-                    <tr class="file-row">
-                      <td rowspan="1" class="filecheck-td">
-                        <input type="checkbox" class="alignCenter file-check action-checkbox" value={{ file.filename | urlencode }}>
-                      </td>
-
-                      <td class="filename-td">
-                        <span class="filename">
-                          <img src="{{img}}" alt={{ file.filename }} />
-                          {%- if not file.groupsprice and not access_permission and file.accessrole == 'open_login' -%}
-                            {%- set billing_file_class = "" -%}
-                          {%- elif is_billing_file or file.groupsprice -%}
-                            {%- if not session['user_id'] -%}
-                              {%- set file_url = url_for_security('login', next=request.path) -%}
-                              {%- set billing_file_class = "" -%}
-                            {%- elif billing_file_permission -%}
-                              {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value, filename=file.filename) -%}
-                              {%- set billing_file_data = "data-billing-file-permission=true data-billing-file-price=" + billing_files_prices.get(file.filename)|string -%}
-                            {%- else -%}
-                              {%- set billing_file_data = "data-billing-file-permission=false" -%}
-                              <input id="download_permission_error" type="hidden"
-                              value="{{_('The file cannot be downloaded because you do not have permission to view this file.')}}" />
-                              {%- set billing_file_access_permission = False -%}
-                            {%- endif -%}
-                          {%- endif -%}
-                          {%- set is_file_name_url = True %}
-                          {%- set clickable = record | check_content_file_clickable(file) -%}
-                          {%- set permission = record | get_permission(file) -%}
-                          <!-- Check and set file label. -->
-                          {%- if file.url -%}
-                            {%- if file.url.label -%}
-                              {%- set file_label = file.url.label -%}
-                            {%- else -%}
-                              {%- set file_label = file.filename -%}
-                            {%- endif -%}
-                          {%- else -%}
-                            {%- set file_label = file.filename -%}
-                          {%- endif -%}
-                          <!-- version_id == '' => not upload file, but fill data for 'File Information' -->
-                          {%- if file.version_id == '' -%}
-			    {%- if file.url -%}
-			    {%- if file.url.label -%}
-                              {%- set file_label = file.url.label -%}
-                            {%- elif file.url.url -%}
-                              {%- set file_label = file.url.url -%}
-                            {%- else -%}
-                              {%- set file_label = file.filename -%}
-                            {%- endif -%}
-			    {%- endif -%}
-			    {%- if file.url -%}
-                            {%- if file.url.url -%}
-                              {%- set text_url = file.url.url -%}
-                            {%- else -%}
-                              {%- set text_url = '' -%}
-                            {%- endif -%}
-			    {%- endif -%}
-                          {%- else -%}
-                            {%- set text_url = file_url -%}
-                          {%- endif -%}
-
-                          <!-- Get file size -->
-                          {%- if file.filesize -%}
-                            {%- set filesize = '(' + file.filesize[0].value + ')' -%}
-                          {%- else -%}
-                          {%- set filesize = '' -%}
-                          {%- endif -%}
-                          <!-- Show FileName/Label -->
-                          {%- if access_permission and billing_file_access_permission -%}
-                            <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
-                              {% if text_url %} href={{ text_url }} {% endif %}>
-                              {% autoescape false %}
-                              {{ file_label | escape_str }} {{ filesize }}
-                              {% endautoescape %}
-                            </a>
-                            <br>
-                          {%- elif clickable -%}
-                            {{ check_download_file(record, file, permission, community, url_for_security, is_file_name_url, file_label) }}
-                          {%- else -%}
-                            {%- set download_param = '?download=download-' + file.version_id %}
-                            {%- set path = request.path + download_param %}
-                            {%- set next_path = url_for_security('login', next=path) %}
-                            {%- if not current_user.is_authenticated -%}
-                              <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
-                                  href="{{next_path}}">
-                                {% autoescape false %}
-                                {{ file_label | escape_str }} {{ filesize }}
-                                {% endautoescape %}
-                              </a>
-                            {%- else -%}
-                              <a class="forcewrap{{ billing_file_class }}" {{ billing_file_data }} {{ billing_file_url }}
-                                  href="{{file_url}}">
-                                {% autoescape false %}
-                                {{ file_label | escape_str }} {{ filesize }}
-                                {% endautoescape %}
-                              </a>
-                            {%- endif -%}
-                            <br>
-                          {%- endif -%}
-                          <!-- Show future open date message -->
-                          {%- if file.future_date_message -%}
-                            <div class="panel-body panel-body2">
-                              <span class="fa fa-key"
-                                style="font-size:18px;font-weight:bold">&nbsp;{{file.future_date_message}}</span>
-                            </div>
-                          {%- endif -%}
-                          {%- if access_permission and billing_file_access_permission -%}
-                            <!-- Show check sum -->
-                          {%- else -%}
-                            <!-- Show 'Restricted Access' message -->
-                            {%- if not file.future_date_message -%}
-                              <div class="panel-body panel-body2">
-                                <span class="fa fa-key"
-                                  style="font-size:18px;font-weight:bold">&nbsp;{{_('Restricted Access')}}</span>
-                              </div>
-                            {%- endif -%}
-                          {%- endif -%}
-                        </span>
-                        {%- if 'pdf' in file.mimetype and can_download_original_pdf -%}
-                          {%- set original_file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
-                                filename=file.filename, original=1) %}
-                          {%- if is_billing_file -%}
-                            {%- set original_file_url = "javascript:void(0)" -%}
-                              {%- if billing_file_permission -%}
-                                {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value, filename=file.filename, original=1) %}
-                              {%- endif -%}
-                          {%- endif -%}
-                          <div class="text-right">
-                            <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}}
-                              href="{{original_file_url}}">{{_('Original')}}</a>
-                          </div>
-                        {%- endif -%}
-                      </td>
-
-                      <td>
-                        <!-- Creative Commons Licenses -->
-                        <div>
-                            {%- if not 'simple' in file.displaytype -%}
-                            {%- if 'license_free' == file.licensetype -%}
-                              {% autoescape false %}
-                              <div id="square" style="width: 1px; height: 1px;"></div>
-                              <span class="break-word">{{ file.licensefree | escape_str }}</span>
-                              {% endautoescape %}
-                            {%- else %}
-                              {% set lst = file.licensetype | get_license_icon %}
-                              {%- if lst[0] -%}
-                                <a class="creative-commons" target="_blank" href="{{lst[2]}}" alt="Creative Commons Licenses">
-                                  <img src="{{lst[0]}}" alt="license.icon" />
-                                </a><br>
-                              {%- endif -%}
-                            {%- endif %}
-                          {%- endif -%}
-                          </div>
-                      </td>
-
-                      <td>
-                        {%- set is_file_name_url = False %}
-                        <!-- Show button 'Download' -->
-                        {%- if file.version_id %}
-                          {%- set download_id = 'download-' + file.version_id %}
-                          {%- if (access_permission and billing_file_access_permission) or not clickable -%}
-                            <!-- User has permission download. -->
-                            <a class="action-anchor" href="{{file_url}}">
-                              <button class="img-rounded action-button button-sm" id="{{download_id}}">
-                                <i class="action-icon fa fa-download"></i>
-                                {{_('Download')}}
-                              </button>
-                            </a>
-                          {%- elif clickable -%}
-                            {{ check_download_file(record, file, permission, community, url_for_security, is_file_name_url, file_label) }}
-                          {%- endif -%}
-                        {%- endif -%}
-                        <!-- Show button 'Information' -->
-                        {%- set file_details_url = url_for('invenio_records_ui.recid_file_details', pid_value=pid.pid_value, filename=file.filename or '[No FileName]') %}
-                        {%- if file.filename -%}
-                          {% set file_detail_url = file_details_url + '?filename=' + file.filename %}
-                        {%- else -%}
-                          {% set file_detail_url = file_details_url + '?file_order=' +file.file_order|string %}
-                        {%- endif -%}
-                        {%- if community -%}
-                          {% set file_detail_url = file_detail_url + "&community=" + community.id %}
-                        {%- endif -%}
-                        <a class="action-anchor" href="{{ file_detail_url }}">
-                          <button class="img-rounded action-button button-sm">
-                            <i class="action-icon fa fa-info-circle fa-lg"></i>
-                            {{_('Information')}}
-                          </button>
-                        </a>
-                        <!-- Show button 'Preview' -->
-                        {%- if file.version_id and file.displaytype == 'preview'-%}
-                          {%- set preview_id = 'preview-' + file.version_id %}
-                          {%- if not current_user.is_authenticated and file.future_date_message -%}
-                            <!-- If user not login => redirect to login screen. -->
-                            <!-- Auto click 'Preview' button when logged in. -->
-                            {%- set preview_param = '?preview=preview-' + file.version_id %}
-                            {%- set path = request.path + preview_param %}
-                            {%- set next_path = url_for_security('login', next=path) %}
-                            <a class="action-anchor preview-button" href="{{next_path}}" data-slide-to="{{ loop.index0 }}">
-                              <button class="img-rounded action-button button-sm" id="{{preview_id}}">
-                                <i class="action-icon fa fa-play-circle fa-lg"></i>
-                                {{_('Preview')}}
-                              </button>
-                            </a>
-                          {%- else -%}
-                            {%- if access_permission and billing_file_access_permission -%}
-                              <!-- User have permission preview -->
-                              <a class="action-anchor preview-button" href="#preview_carousel" data-slide-to="{{ loop.index0 }}">
-                                <button class="img-rounded action-button button-sm" id="{{preview_id}}">
-                                  <i class="action-icon fa fa-play-circle fa-lg"></i>
-                                  {{_('Preview')}}
-                                </button>
-                              </a>
-                            {%- elif file.accessrole == 'open_login' -%}
-                              <!-- User do not belong to group -->
-                              <a class="action-anchor preview-button" href="{{file_url}}" data-slide-to="{{ loop.index0 }}">
-                                <button class="img-rounded action-button button-sm" id="{{preview_id}}">
-                                  <i class="action-icon fa fa-play-circle fa-lg"></i>
-                                  {{_('Preview')}}
-                                </button>
-                              </a>
-                            {%- else -%}
-                              <a class="action-anchor preview-button" href="#" data-slide-to="{{ loop.index0 }}">
-                                <button class="img-rounded action-button button-sm" id="{{preview_id}}"
-                                  {% if file.download_preview_message %}
-                                    onclick="alert('{{file.download_preview_message}}')"
-                                  {% endif %}>
-                                  <i class="action-icon fa fa-play-circle fa-lg"></i>
-                                  {{_('Preview')}}
-                                </button>
-                              </a>
-                            {%- endif -%}
-                          {%- endif -%}
-                        {%- endif -%}
-                      </td>
-                    </tr>
-                  {%- endif -%}
+                  <td>
+                    {%- set is_file_name_url = False %}
+                    <!-- Show button 'Download' -->
+                    {%- if file.version_id %}
+                    {%- set download_id = 'download-' + file.version_id %}
+                    {%- if (access_permission and billing_file_access_permission) or not clickable -%}
+                    <!-- User has permission download. -->
+                    <a class="action-anchor" href="{{file_url}}">
+                      <button class="img-rounded action-button button-sm" id="{{download_id}}">
+                        <i class="action-icon fa fa-download"></i>
+                        {{_('Download')}}
+                      </button>
+                    </a>
+                    {%- elif clickable -%}
+                    {{ check_download_file(record, file, permission, community, url_for_security, is_file_name_url,
+                    file_label) }}
+                    {%- endif -%}
+                    {%- endif -%}
+                    <!-- Show button 'Information' -->
+                    {%- set file_details_url = url_for('invenio_records_ui.recid_file_details', pid_value=pid.pid_value,
+                    filename=file.filename or '[No FileName]') %}
+                    {%- if file.filename -%}
+                    {% set file_detail_url = file_details_url + '?filename=' + file.filename %}
+                    {%- else -%}
+                    {% set file_detail_url = file_details_url + '?file_order=' +file.file_order|string %}
+                    {%- endif -%}
+                    {%- if community -%}
+                    {% set file_detail_url = file_detail_url + "&community=" + community.id %}
+                    {%- endif -%}
+                    <a class="action-anchor" href="{{ file_detail_url }}">
+                      <button class="img-rounded action-button button-sm">
+                        <i class="action-icon fa fa-info-circle fa-lg"></i>
+                        {{_('Information')}}
+                      </button>
+                    </a>
+                    <!-- Show button 'Preview' -->
+                    {%- if file.version_id and file.displaytype == 'preview'-%}
+                    {%- set preview_id = 'preview-' + file.version_id %}
+                    {%- if not current_user.is_authenticated and file.future_date_message -%}
+                    <!-- If user not login => redirect to login screen. -->
+                    <!-- Auto click 'Preview' button when logged in. -->
+                    {%- set preview_param = '?preview=preview-' + file.version_id %}
+                    {%- set path = request.path + preview_param %}
+                    {%- set next_path = url_for_security('login', next=path) %}
+                    <a class="action-anchor preview-button" href="{{next_path}}" data-slide-to="{{ loop.index0 }}">
+                      <button class="img-rounded action-button button-sm" id="{{preview_id}}">
+                        <i class="action-icon fa fa-play-circle fa-lg"></i>
+                        {{_('Preview')}}
+                      </button>
+                    </a>
+                    {%- else -%}
+                    {%- if access_permission and billing_file_access_permission -%}
+                    <!-- User have permission preview -->
+                    <a class="action-anchor preview-button" href="#preview_carousel" data-slide-to="{{ loop.index0 }}">
+                      <button class="img-rounded action-button button-sm" id="{{preview_id}}">
+                        <i class="action-icon fa fa-play-circle fa-lg"></i>
+                        {{_('Preview')}}
+                      </button>
+                    </a>
+                    {%- elif file.accessrole == 'open_login' -%}
+                    <!-- User do not belong to group -->
+                    <a class="action-anchor preview-button" href="{{file_url}}" data-slide-to="{{ loop.index0 }}">
+                      <button class="img-rounded action-button button-sm" id="{{preview_id}}">
+                        <i class="action-icon fa fa-play-circle fa-lg"></i>
+                        {{_('Preview')}}
+                      </button>
+                    </a>
+                    {%- else -%}
+                    <a class="action-anchor preview-button" href="#" data-slide-to="{{ loop.index0 }}">
+                      <button class="img-rounded action-button button-sm" id="{{preview_id}}" {% if
+                        file.download_preview_message %} onclick="alert('{{file.download_preview_message}}')" {% endif
+                        %}>
+                        <i class="action-icon fa fa-play-circle fa-lg"></i>
+                        {{_('Preview')}}
+                      </button>
+                    </a>
+                    {%- endif -%}
+                    {%- endif -%}
+                    {%- endif -%}
+                  </td>
+                </tr>
+                {%- endif -%}
                 {%- endfor -%}
-              {%- endfor -%}
-              <input type='hidden' id='preview_count' value='{{preview_count.value}}' />
+                {%- endfor -%}
+                <input type='hidden' id='preview_count' value='{{preview_count.value}}' />
               </tbody>
             </table>
-
-            <!-- Jupyter Button -->
-              {%- if config.WEKO_JUPYTERHUB_ENABLE -%}
-                <div class="pull-right" style="display: inline-block; _display: inline; margin-bottom: 20px;">
-                  <a class="btn btn-info send-button disabled" id="jupyter_multiple" target="_blank" href="{{ config.WEKO_JUPYTERHUB_URL }}/{{ record._buckets.deposit }}/">
-                    <span class="glyphicon glyphicon-upload" aria-hidden="true"></span>
-                    {{_('Jupyter')}}
-                  </a>
-                </div>
-              {%- endif %}
-            {%- endif %}
-        {% endif%}
-        {% endif %}
-          <div class="table-responsive" style="display: inline-block; _display: inline;">
-              {{ output_item_detail(record, files, files_thumbnail, pid, record.items_show_list, true, is_logged_in, open_day_display_flg) }}
+          </div>
+          <!-- Jupyter Button -->
+          {%- if config.WEKO_JUPYTERHUB_ENABLE -%}
+          <div class="pull-right module__jupyter-button">
+            <a class="btn btn-info send-button disabled" id="jupyter_multiple" target="_blank"
+              href="{{ config.WEKO_JUPYTERHUB_URL }}/{{ record._buckets.deposit }}/">
+              <span class="glyphicon glyphicon-upload" aria-hidden="true"></span>
+              {{_('Jupyter')}}
+            </a>
+          </div>
+          {%- endif %}
+          {%- endif %}
+          {% endif%}
+          {% endif %}
+          <div class="table-responsive">
+            {{ output_item_detail(record, files, files_thumbnail, pid, record.items_show_list, true, is_logged_in,
+            open_day_display_flg) }}
           </div>
           {%- if 'main_entry_personal_name' in record %}
           <p class="record_authors">
@@ -360,21 +370,39 @@
           {% endif %}
           {%- endblock %}
           <div class="text-center" ng-controller="ItemController">
-            <a class="btn btn-info back-button" id="btn_back" href="#!">
-              <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span> {{_('Back')}}</a>
+            <a class="component__btn module__back-btn module__btn-gray" id="btn_back" href="#!">
+              <span aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                </svg>
+              </span>
+              <span>{{_('Back')}}</span>
+            </a>
             {% if record | check_permission %}
-              {% if can_edit %}
-                <a class="btn btn-primary edit-button" href="#!" id="btn_edit" data-pid-value="{{ pid.pid_value }}"
-                  {%- if community -%}data-community="{{ community.id }}" {%- endif -%}>
-                  <span class="glyphicon glyphicon-edit" aria-hidden="true"></span> {{_('Edit')}}</a>
-                <a class="btn btn-danger delete-button" id="btn_delete" ng-click="openConfirm('',
+            {% if can_edit %}
+            <a class="component__btn module__btn-primary module__edit-btn" href="#!" id="btn_edit" data-pid-value="{{ pid.pid_value }}" {%- if
+              community -%}data-community="{{ community.id }}" {%- endif -%}>
+              <span aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </span>
+              <span>{{_('Edit')}}</span>
+            </a>
+            <a class="component__btn module__delete-btn" id="btn_delete" ng-click="openConfirm('',
                   '{{'/records/soft_delete/'+ pid.pid_value}}',
                   '{{url_for('weko_search_ui.search')}}',
                   '{{pid.pid_value}}')">
-                  <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> {{_('Delete')}}</a>
-              {% endif %}
-            <input id="edit_message" type="hidden"
-              value="{{_('The workflow is being edited.')}}" />
+              <span aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </span>
+              <span>{{_('Delete')}}</span>
+            </a>
+            {% endif %}
+            <input id="edit_message" type="hidden" value="{{_('The workflow is being edited.')}}" />
             <input id="delete_message" type="hidden"
               value="{{_('The item cannot be deleted because it has a DOI.')}}" />
             <input id="change_publish_message" type="hidden"
@@ -408,15 +436,15 @@
             {% endif %}
           </div>
         </div>
-        <div id="invenio-csl" class="col-sm-3 col-md-3 col-lg-3 col-right">
+        <div id="invenio-csl" class="col-sm-3 col-md-3 col-lg-3 col-right element__body-contents-item-right">
           <!-- start demo block -->
           {%- include "weko_records_ui/box/stats.html" %}
           {%- if files | selectattr('is_thumbnail', 'equalto', False)| list | length > 0 -%}
-            {% if not record.hide_file %}
-              {% if accessRight == 'open access' and config.WEKO_RECORDS_UI_DISPLAY_ONLINE_ANALYSIS_FLG %}
-                {%- include "weko_records_ui/box/analysis.html" %}
-              {% endif %}
-            {% endif %}
+          {% if not record.hide_file %}
+          {% if accessRight == 'open access' and config.WEKO_RECORDS_UI_DISPLAY_ONLINE_ANALYSIS_FLG %}
+          {%- include "weko_records_ui/box/analysis.html" %}
+          {% endif %}
+          {% endif %}
           {% endif %}
           {%- include "weko_records_ui/box/versions.html" %}
           {%- include "weko_records_ui/box/share.html" %}
@@ -465,34 +493,34 @@
 {% endblock %}
 
 {# {%- block javascript %} #}
-  <script>
-    jQuery(window).load(function () {
-      var parseQueryString = function() {
-        var str = window.location.search;
-        var objURL = {};
-        str.replace(
-            new RegExp( "([^?=&]+)(=([^&]*))?", "g" ),
-            function( $0, $1, $2, $3 ){
-                objURL[ $1 ] = $3;
-            }
-        );
-        return objURL;
-      };
-      var params = parseQueryString();
-      download_id = params['download'];
-      if(download_id){
-        search = window.location.search;
-        href = window.location.href;
-        window.history.replaceState( {} , '',  href.replace(search, ''));
-        $('#' + download_id).click();
-      }
-      preview_id = params['preview'];
-      if(preview_id){
-        search = window.location.search;
-        href = window.location.href;
-        window.history.replaceState( {} , '',  href.replace(search, ''));
-        $('#' + preview_id).click();
-      }
-    });
-  </script>
+<script>
+  jQuery(window).load(function () {
+    var parseQueryString = function () {
+      var str = window.location.search;
+      var objURL = {};
+      str.replace(
+        new RegExp("([^?=&]+)(=([^&]*))?", "g"),
+        function ($0, $1, $2, $3) {
+          objURL[$1] = $3;
+        }
+      );
+      return objURL;
+    };
+    var params = parseQueryString();
+    download_id = params['download'];
+    if (download_id) {
+      search = window.location.search;
+      href = window.location.href;
+      window.history.replaceState({}, '', href.replace(search, ''));
+      $('#' + download_id).click();
+    }
+    preview_id = params['preview'];
+    if (preview_id) {
+      search = window.location.search;
+      href = window.location.href;
+      window.history.replaceState({}, '', href.replace(search, ''));
+      $('#' + preview_id).click();
+    }
+  });
+</script>
 {# {%- endblock javascript %} #}

@@ -1,62 +1,67 @@
-  {#
-  # This file is part of WEKO3.
-  # Copyright (C) 2017 National Institute of Informatics.
-  #
-  # WEKO3 is free software; you can redistribute it
-  # and/or modify it under the terms of the GNU General Public License as
-  # published by the Free Software Foundation; either version 2 of the
-  # License, or (at your option) any later version.
-  #
-  # WEKO3 is distributed in the hope that it will be
-  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  # General Public License for more details.
-  #
-  # You should have received a copy of the GNU General Public License
-  # along with WEKO3; if not, write to the
-  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-  # MA 02111-1307, USA.
-  #}
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
 
-  <div class="panel-group-tmp" id="body_index">
-    {% if index_link_enabled  %}
-    <div class="panel panel-default">
+<div class="component__body-index" id="body_index">
+  {% if index_link_enabled %}
+  <div class="element__body-index-wrap">
     {% else %}
-    <div class="panel panel-default hide">
-    {% endif %}
-      <div class="panel-heading clearfix">
-          <h3 class="panel-title">{{_('Index Link')}}</h3>
-      </div>
-      <div class="panel-body">
+    <div class="element__body-index-wrap hide">
+      {% endif %}
+      <div class="element__body-index-wrap-inner">
+        <div class="element__body-index-header">
+          <h3 class="element__body-index-head">{{_('Index Link')}}</h3>
+        </div>
+        <div class="element__body-index-item">
           <div class="spinner-loading-wrapper">
-            <label style="width:100%" >
-              <select name=index_link style="width:100%" onchange="selectIndexLink(this);">
-                  <option></option>
-                  {% if index_link_list %}
-                      {% for id, name in index_link_list %}
-                      <option value={{id}}>{{name}}</option>
-                      {% endfor %}
-                  {% endif %}
+            <label>
+              <span class="sr-only">Select link</span>
+              <select class="element__body-index-select-menu" name="index_link" onchange="selectIndexLink(this);">
+                <option></option>
+                {% if index_link_list %}
+                {% for id, name in index_link_list %}
+                <option value={{id}}>{{name}}</option>
+                {% endfor %}
+                {% endif %}
               </select>
             </label>
           </div>
+        </div>
       </div>
-    </div>
-    <div class="scroll">
-    <div class="panel panel-default">
-      <div class="panel-heading clearfix">
+      <div class="element__body-index-wrap-inner">
+        <div class="element__body-index-header">
           {%-if community %}
-            {%- set community_param = '&community=' + community.id -%}
-            {%- set param = '&root_index=true&q=' + community.index.id|string + community_param -%}
+          {%- set community_param = '&community=' + community.id -%}
+          {%- set param = '&root_index=true&q=' + community.index.id|string + community_param -%}
           {%- else %}
-            {%- set param = '&q=0' -%}
+          {%- set param = '&q=0' -%}
           {%- endif %}
-          <h3 class="panel-title"><a href="/search?page=1&size=20&search_type=2{{param}}">{{_('Index Tree')}}</a></h3>
+          <h3 class="element__body-index-head">
+            <a class="element__body-index-head-link" href="/search?page=1&size=20&search_type=2{{param}}">
+              {{_('Index Tree')}}
+            </a>
+          </h3>
+        </div>
+        <div id="index-height" name="index-height" hidden>{{ height }}</div>
+        <div class="element__body-index-item" id="index-background">
+          <app-tree-items></app-tree-items>
+        </div>
       </div>
-      <div id="index-height" name="index-height" hidden>{{ height }}</div>
-      <div class="panel-body index-body" id="index-background" style="overflow: auto;">
-        <app-tree-items></app-tree-items>
-      </div>
-    </div>
     </div>
   </div>

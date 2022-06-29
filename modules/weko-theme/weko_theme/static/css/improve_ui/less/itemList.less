@@ -1,0 +1,189 @@
+#state-enable-improveui {
+  #main_contents {
+    .component__item-list {
+      border-radius: 0.375rem;
+      margin: 0;
+      padding: 1.5rem;
+      padding-bottom: 0.75rem;
+      box-shadow: @base-box-shadow;
+      border: 1px solid @color-gray-05;
+      font-size: 1rem;
+      background-color: @color-white;
+
+      .panel-heading {
+        margin: 0;
+        margin-bottom: 1.5rem;
+        padding: 0;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid transparent;
+        border-bottom-color: @color-gray-00;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        &::before {
+          display: none;
+        }
+
+        .pull-right {
+          float: none;
+          flex: 1 1 50%;
+          display: flex;
+          justify-content: flex-end;
+        }
+      }
+
+      .panel-title {
+        display: block;
+        margin: 0;
+        padding: 0;
+        font-weight: normal;
+        font-size: 1.125rem;
+      }
+
+      .invenio-search-results {
+        font-size: 0.875rem;
+        color: @color-monochrome-700;
+      }
+
+      .element__item-list-form-wrap {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .element__item-list-select-group {
+        display: flex;
+        align-items: center;
+
+        .form-group {
+          display: flex;
+          align-items: center;
+
+          label {
+            white-space: nowrap;
+            font-size: 0.875rem;
+          }
+
+          > * {
+            margin-left: 0.5rem;
+            margin-right: 0.5rem;
+          }
+        }
+      }
+
+      .form-control {
+        .mixin__select-menu-style;
+        font-size: 0.875rem;
+      }
+
+      .form-control#selectedDisplay {
+        max-width: 200px;
+      }
+
+      .form-control#sortType {
+        max-width: 100px;
+      }
+
+      .form-control#pagesize {
+        max-width: 200px;
+      }
+
+      .element__item-list-result-wrap {
+        margin-top: 2rem;
+
+        .panel-heading {
+          border-bottom: none;
+          margin: 0;
+          padding: 0;
+        }
+      }
+
+      .element__item-list-result {
+        margin: 0;
+        margin-left: -1.5rem;
+        margin-right: -1.5rem;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        border-top: 1px solid transparent;
+        border-top-color: @color-gray-00;
+
+        a {
+          color: @color-blue-10;
+
+          &:hover {
+            color: @color-blue-10-hover;
+          }
+
+          .glyphicon {
+            position: relative;
+            top: 1px;
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>');
+            background-size: 1rem 1rem;
+            background-position: center center;
+            background-repeat: no-repeat;
+            margin-right: 0.25rem;
+
+            &-file {
+              &::before {
+                display: none;
+              }
+            }
+          }
+        }
+
+        &:nth-child(even) {
+          background-color: @color-gray-00;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 1180px) {
+  #state-enable-improveui {
+    #main_contents {
+      .component__item-list {
+        .element__item-list-form-wrap {
+          flex-wrap: wrap;
+
+          .element__item-list-export-btn {
+            flex-basis: 100%;
+            margin-bottom: 0.75rem;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 980px) {
+  #state-enable-improveui {
+    #main_contents {
+      .component__item-list {
+        .element__item-list-form-wrap {
+          .element__item-list-select-group {
+            flex-wrap: wrap;
+
+            > .form-group {
+              flex-basis: 100%;
+
+              + .form-group {
+                margin-top: 0.75rem;
+              }
+
+              > label {
+                margin-left: 0;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

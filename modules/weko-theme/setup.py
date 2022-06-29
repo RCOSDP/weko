@@ -87,6 +87,7 @@ setup(
             'weko_theme_css_bootstrap = weko_theme.bundles:css_bootstrap',
             'weko_theme_css_buttons = weko_theme.bundles:css_buttons',
             'weko_theme_css_widget = weko_theme.bundles:css_widget',
+            'weko_theme_css_improveui = weko_theme.bundles:css_improveui',
             'weko_theme_js_treeview = weko_theme.bundles:js_treeview',
             'weko_theme_js = weko_theme.bundles:js',
             'weko_theme_js_top_page = weko_theme.bundles:js_top_page',

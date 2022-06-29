@@ -1,0 +1,26 @@
+#state-enable-improveui {
+  .component__body-contents {
+    .breadcrumb {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      align-items: center;
+
+      li {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        padding-right: 1rem;
+      }
+      li:first-child:last-child {
+        padding-left: 0;
+        padding-right: 0;
+      }
+      li:nth-child(n + 2) {
+        padding-left: calc(1rem + 10px);
+        .mixin__breadcrumbs-style;
+      }
+    }
+  }
+}

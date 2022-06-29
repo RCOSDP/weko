@@ -23,11 +23,13 @@
 {%- endblock body_title_right %}
 
 {%- block body_center %}
-<ul class="nav nav-tabs">
+<div class="component__nav-tab">
+  <ul class="element__nav-tab">
   {%- block page_body_tabs %}
     {% from "weko_theme/macros/tabs_selector.html" import tabs_selector with context %}
   {%- endblock page_body_tabs%}
- </ul>
+  </ul>
+</div>
 
   <div class="row row-4" style="height: 100%">
     <div class="col-sm-12 col-md-12" style="height: 100%">

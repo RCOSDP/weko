@@ -76,6 +76,12 @@ css_widget = Bundle(
 )
 """Widget CSS."""
 
+css_improveui = Bundle(
+    'css/weko_theme/improve_ui.min.css',
+    output='gen/weko_theme_improve_ui.%(version)s.css',
+)
+"""improve ui CSS."""
+
 js_treeview = Bundle(
     'js/weko_theme/inline.bundle.js',
     'js/weko_theme/polyfills.bundle.js',

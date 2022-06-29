@@ -111,7 +111,7 @@ const PageBodyGrid = function () {
         let labelColor = node.label_color;
         return '<style>' +
                     '#main_contents .panel{' +
-                        'background-color: ' + backgroundColor + ' !important;' +
+                        'background-color: ' + backgroundColor + ';' +
                         'border-color: ' + frameBorderColorMainContent + ';' +
                     '}' +
                     '#main_contents .active > a{' +
@@ -125,7 +125,7 @@ const PageBodyGrid = function () {
                     '}' +
                     '.pagination > .active > a, .pagination > .active > span, .pagination > .active > a:hover,' +
                     '.pagination > .active > span:hover, .pagination > .active > a:focus, .pagination > .active > span:focus {' +
-                        'background-color: #337ab7 !important;' +
+                        'background-color: #337ab7;' +
                     '}' +
                 '</style>';
     };

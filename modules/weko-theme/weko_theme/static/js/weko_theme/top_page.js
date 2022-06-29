@@ -276,13 +276,13 @@ require([
 
             if (isExpanded) {
                 $('#search_detail_metadata').collapse('hide');
-                $('.detail-search-close').hide();
-                $('.detail-search-open').show();
+                //$('.detail-search-close').hide();
+                //$('.detail-search-open').show();
                 $('#search_detail').removeClass('expanded');
             } else {
                 $('#search_detail_metadata').collapse('show');
-                $('.detail-search-open').hide();
-                $('.detail-search-close').show();
+                //$('.detail-search-open').hide();
+                //$('.detail-search-close').show();
                 $('#search_detail').addClass('expanded');
             }
         });
@@ -294,7 +294,7 @@ require([
                 && event.which !== 13
                 && event.which !== 27) {
                 var input = $(this).val()
-                var kbEvent = new KeyboardEvent('keydown', {keyCode: 27});
+                var kbEvent = new KeyboardEvent('keydown', { keyCode: 27 });
                 this.dispatchEvent(kbEvent);
                 $(this).val(input);
             }
@@ -336,7 +336,7 @@ require([
         $('.detail-search-text').keypress(function (event) {
             // 13はエンターキー
             if (event.which == 13) {
-              $('#detail-search-btn').click();
+                $('#detail-search-btn').click();
             }
         });
 

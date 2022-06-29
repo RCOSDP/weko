@@ -1,0 +1,155 @@
+#state-enable-improveui {
+  #body_index ~ #app-facet-search {
+    margin-top: 1rem;
+  }
+
+  .component__body-index {
+    border-radius: 0.375rem;
+    margin: 0;
+    padding: 1.5rem;
+    padding-bottom: 0.75rem;
+    box-shadow: @base-box-shadow;
+    border: 1px solid @color-gray-05;
+    font-size: 1rem;
+    background-color: @color-white;
+
+    .element__body-index-wrap-inner + .element__body-index-wrap-inner {
+      display: block;
+      margin-top: 1.5rem;
+    }
+
+    .element__body-index-header {
+      margin: 0;
+      margin-bottom: 1.5rem;
+      padding: 0;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid transparent;
+      border-bottom-color: @color-gray-00;
+    }
+
+    .element__body-index-head {
+      margin: 0;
+      padding: 0;
+      font-weight: normal;
+      font-size: 1.125rem;
+    }
+
+    .element__body-index-head-link {
+      display: block;
+      color: currentColor;
+      text-decoration: none;
+      background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>');
+      padding-left: calc(16px + 0.375rem);
+      background-size: 16px 16px;
+      background-repeat: no-repeat;
+      background-position: left center;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    .element__body-index-item {
+      display: block;
+      margin: 0;
+      padding: 0;
+
+      div {
+        float: none;
+        position: static;
+      }
+      label {
+        display: block;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+      }
+      tree-internal,
+      app-tree-items,
+      app-tree-list2 {
+        display: block;
+        position: static;
+      }
+    }
+
+    .element__body-index-select-menu {
+      .mixin__select-menu-style;
+    }
+
+    .element__body-index-tree-items {
+      margin: 0;
+      padding: 0;
+    }
+
+    tree-internal ul .tree {
+      margin: 0;
+      padding: 0;
+      padding-inline-start: 0;
+
+      li {
+        list-style: none;
+        margin-top: 0.75rem;
+        margin-bottom: 0.75rem;
+
+        > div {
+          display: flex;
+          align-items: center;
+        }
+      }
+
+      .node-value {
+        &::after {
+          display: none;
+        }
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+
+      .node-name {
+        display: block;
+      }
+
+      .node-expanded {
+        background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>');
+        flex: 0 0 16px;
+        width: 16px;
+        height: 16px;
+        overflow: hidden;
+        background-size: 16px 16px;
+        background-repeat: no-repeat;
+        background-position: left center;
+        margin-right: 0.375rem;
+
+        &.state-open {
+          background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 12H6" /></svg>');
+        }
+
+        &::before {
+          display: none;
+        }
+      }
+
+      .node-collapsed,
+      .weko-node-empty {
+        background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>');
+        flex: 0 0 16px;
+        width: 16px;
+        height: 16px;
+        overflow: hidden;
+        background-size: 16px 16px;
+        background-repeat: no-repeat;
+        background-position: left center;
+        margin-right: 0.375rem;
+
+        &::before {
+          display: none;
+        }
+      }
+
+      .weko-node-empty {
+        margin-left: 1rem;
+      }
+    }
+  }
+}

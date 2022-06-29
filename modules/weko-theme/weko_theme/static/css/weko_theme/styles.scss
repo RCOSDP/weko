@@ -114,18 +114,18 @@ ng\:form {
 }
 
 .detail-table th {
-    background-color: #f9f9f9 !important;
-    white-space: normal !important;
+    background-color: #f9f9f9;
+    white-space: normal;
 }
 
 .detail-table td {
-    background-color: #ffffff !important;
+    background-color: #ffffff;
     word-break: break-word;
-    white-space: normal !important;
+    white-space: normal;
 }
 
 .detail-table td.multiple-line {
-    white-space: pre-wrap !important;
+    white-space: pre-wrap;
 }
 
 .detail-table {
@@ -139,7 +139,7 @@ ng\:form {
 }
 
 .detail-table td.multiple-line {
-    white-space: pre-wrap !important;
+    white-space: pre-wrap;
 }
 
 .scroll_y {
@@ -309,17 +309,17 @@ ng\:form {
 }
 
 .navbar-form2 > .login-button, .signup-button {
-    height: auto !important;
+    height: auto;
 }
 
 // language selector
 .form-group2 {
-    height: auto !important;
-    font-size: 12px !important;
+    height: auto;
+    font-size: 12px;
 }
 .form-group2 > .form-control {
-    height: auto !important;
-    font-size: 12px !important;
+    height: auto;
+    font-size: 12px;
     padding-left: 10px;
     padding-right: 10px;
     padding-top: 4px;
@@ -329,8 +329,8 @@ ng\:form {
 .container-fluid2 {padding-left: 15px; padding-right: 15px;}
 
 .navbar-nav > a {
-    padding-bottom: 15px !important;
-    padding-top: 15px !important;
+    padding-bottom: 15px;
+    padding-top: 15px;
 }
 
 .detail-table > tbody > tr > th {
