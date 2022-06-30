@@ -3067,7 +3067,7 @@ def export_all(root_url):
                             _run_msg_key,
                             "The latest csv file was created on {}.".format(
                                 datetime.now(pytz.timezone(_timezone)).strftime("%Y/%m/%d %H:%M:%S"))
-                            + "<br/>Number of retries: {} times.".format(retrys)
+                            + " Number of retries: {} times.".format(retrys)
                         )
                         current_app.logger.info(
                             "{}.csv has been created.".format(item_datas["name"])
@@ -3108,7 +3108,7 @@ def export_all(root_url):
                     _run_msg_key,
                     "The latest csv file was created on {}.".format(
                         datetime.now(pytz.timezone(_timezone)).strftime("%Y/%m/%d %H:%M:%S"))
-                    + "<br/>Number of retries: {} times.".format(retrys)
+                    + " Number of retries: {} times.".format(retrys)
                 )
                 finish_item_types.append(item_type_id)
                 current_app.logger.info(
@@ -3136,6 +3136,7 @@ def export_all(root_url):
                 return False
 
     reset_redis_cache(_msg_key, "")
+    reset_redis_cache(_run_msg_key, "")
     temp_path = tempfile.TemporaryDirectory(
         prefix=current_app.config["WEKO_ITEMS_UI_EXPORT_TMP_PREFIX"]
     )
@@ -3238,7 +3239,7 @@ def get_export_status():
         task_id = get_redis_cache(cache_key)
         download_uri = get_redis_cache(cache_uri)
         message = get_redis_cache(cache_msg)
-        run_message = get_cache_data(run_msg)
+        run_message = get_redis_cache(run_msg)
         if task_id:
             task = AsyncResult(task_id)
             status_cond = task.successful() or task.failed() or task.state == "REVOKED"
