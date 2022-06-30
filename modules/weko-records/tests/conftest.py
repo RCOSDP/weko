@@ -21,6 +21,7 @@
 """Pytest configuration."""
 
 import os
+import sys
 import shutil
 import tempfile
 
@@ -48,6 +49,7 @@ from weko_records.api import ItemTypes
 from weko_records.config import WEKO_ITEMTYPE_EXCLUDED_KEYS
 from weko_records.models import ItemTypeName
 
+sys.path.append(os.path.dirname(__file__))
 
 @pytest.yield_fixture()
 def instance_path():

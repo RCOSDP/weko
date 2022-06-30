@@ -20,11 +20,13 @@
 
 """Module tests."""
 
+from re import T
 import pytest
 from elasticsearch.exceptions import RequestError
-from invenio_records.api import Record
+from invenio_records.api import Record, RecordBase
 from weko_deposit.api import WekoDeposit
 from weko_index_tree.models import Index
+from mock import patch
 
 from weko_records.api import FeedbackMailList, FilesMetadata, ItemLink, \
     ItemsMetadata, ItemTypeEditHistory, ItemTypeNames, ItemTypeProps, \
@@ -32,6 +34,29 @@ from weko_records.api import FeedbackMailList, FilesMetadata, ItemLink, \
 from weko_records.models import ItemTypeName, SiteLicenseInfo, \
     SiteLicenseIpAddress
 
+
+def test_recordbase(app, db):
+    class MockClass():
+        def __init__(self, id, version_id, created, updated):
+            self.id=id
+            self.version_id=version_id
+            self.created=created
+            self.updated=updated
+    data = dict(
+        id=1,
+        version_id=10,
+        created="yesterday",
+        updated="now"
+    )
+    test_model = MockClass(**data)
+    record = RecordBase(data)
+    record.model = test_model
+    result = record.dumps()
+    print(result)
+    assert result["id"] == 1
+    assert result["version_id"] == 10
+    assert result["created"] == "yesterday"
+    assert result["updated"] == "now"
 
 def test_itemtypenames(app, db):
     item_type_name = ItemTypeNames.update({'a': [{'id': 1}]})
@@ -95,9 +120,11 @@ def test_itemtypes(app, db):
         record.revert(len(record.revisions) - 1)
 
 
-def test_itemtypes_update_metadata(app, db, location):
+def test_itemtypes_update_metadata(app, db, location, mocker):
     _item_type_name = ItemTypeName(name='test')
-
+    _item_type_name_exist = ItemTypeName(name='exist title')
+    with db.session.begin_nested():
+        db.session.add(_item_type_name_exist)
     _render = {
         'meta_list': {},
         'table_row_map': {
@@ -133,9 +160,37 @@ def test_itemtypes_update_metadata(app, db, location):
         render=_render,
         tag=1
     )
+    with patch("weko_records.api.ItemTypes.__update_item_type"):
+        # 名前を変える
+        record = ItemTypes.update(
+            id_=item_type.id,
+            name='test2',
+            schema=_schema,
+            form={},
+            render=_render
+        )
 
-    app.config['WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'] = False
-    with pytest.raises(RequestError):
+        # 同名が存在
+        with pytest.raises(ValueError):
+            record = ItemTypes.update(
+                id_=item_type.id,
+                name='exist title',
+                schema=_schema,
+                form={},
+                render=_render
+            )
+# check_to_upgrade_versionがTrue
+        with patch("weko_records.api.utils.check_to_upgrade_version", return_value=True):
+            record = ItemTypes.update(
+                id_=item_type.id,
+                name="new item",
+                schema=_schema,
+                form={},
+                render=_render
+            )
+        
+        app.config['WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'] = False
+        #with pytest.raises(RequestError):
         record = ItemTypes.update(
             id_=item_type.id,
             name='test',

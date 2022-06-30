@@ -63,6 +63,7 @@ def test_convert_date_range_value():
     assert convert_date_range_value('2000-01-01', '2000-12-01') == {'gte': '2000-01-01',
                                                                     'lte': '2000-12-01'}
     assert convert_date_range_value(None, '2000-12-01') == {'gte': '2000-12-01',
+                                                            'lte': '2000-12-01'}
     assert convert_date_range_value(
         '1979-01-01/1960-01-01') == {'gte': '1960-01-01', 'lte': '1979-01-01'}
     assert convert_date_range_value(
