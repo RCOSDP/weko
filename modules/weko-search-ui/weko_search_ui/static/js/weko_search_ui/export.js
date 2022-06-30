@@ -45,6 +45,7 @@ class ExportComponent extends React.Component {
     super()
     this.state = {
       show: false,
+      esportRunMessage: "",
       exportStatus: false,
       uriStatus: false,
       checkExportSttInterval: null,
@@ -150,6 +151,7 @@ class ExportComponent extends React.Component {
             });
           }
           me.setState({
+            esportRunMessage: response.data.export_run_msg,
             exportStatus: response.data.export_status,
             uriStatus: response.data.uri_status,
             isDisableExport: response.data.export_status || !response.data.celery_is_run,
@@ -189,6 +191,7 @@ class ExportComponent extends React.Component {
       show,
       isDisableExport,
       isDisableCancel,
+      esportRunMessage,
       exportStatus,
       uriStatus,
       confirmMessage
@@ -206,6 +209,9 @@ class ExportComponent extends React.Component {
               <div className="col-xs-12 text-center">
                 <button disabled={isDisableExport} variant="primary" type="button" className="btn btn-primary" onClick={() => this.handleConfirm(true)}>{export_label}</button>
                 <button disabled={isDisableCancel} variant="secondary" type="button" className="btn btn-primary cancel" onClick={() => this.handleConfirm(false)}>{cancel_label}</button>
+              </div>
+              <div className="col-xs-12">
+                <label>{esportRunMessage}</label>
               </div>
             </div>
             <div className="row">
