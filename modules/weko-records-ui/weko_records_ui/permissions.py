@@ -398,36 +398,37 @@ def check_created_id(record):
     created_id = record.get('_deposit', {}).get('created_by')
     from weko_records.serializers.utils import get_item_type_name
     item_type_id = record.get('item_type_id', '')
-    item_type_name = get_item_type_name(item_type_id)
-    for lst in list(current_user.roles or []):
-        # In case of supper user,it's always have permission
-        if lst.name in supers:
-            is_himself = True
-            break
-        if lst.name in users:
-            is_himself = True
-            data_registration = current_app.config.get(
-                'WEKO_ITEMS_UI_DATA_REGISTRATION')
-            application_item_type_list = current_app.config.get(
-                'WEKO_ITEMS_UI_APPLICATION_ITEM_TYPES_LIST')
-            if item_type_name and data_registration \
-                    and application_item_type_list and (
-                    item_type_name == data_registration
-                    or item_type_name in application_item_type_list):
-                if user_id and user_id == str(created_id):
-                    is_himself = True
-                else:
-                    is_himself = False
+    if item_type_id:
+        item_type_name = get_item_type_name(item_type_id)
+        for lst in list(current_user.roles or []):
+            # In case of supper user,it's always have permission
+            if lst.name in supers:
+                is_himself = True
                 break
-            if lst.name == users[2]:
-                is_himself = False
-                shared_id = record.get('weko_shared_id')
-                if user_id and created_id and user_id == str(created_id):
-                    is_himself = True
-                elif user_id and shared_id and user_id == str(shared_id):
-                    is_himself = True
-            elif lst.name == users[3]:
-                is_himself = False
+            if lst.name in users:
+                is_himself = True
+                data_registration = current_app.config.get(
+                    'WEKO_ITEMS_UI_DATA_REGISTRATION')
+                application_item_type_list = current_app.config.get(
+                    'WEKO_ITEMS_UI_APPLICATION_ITEM_TYPES_LIST')
+                if item_type_name and data_registration \
+                        and application_item_type_list and (
+                        item_type_name == data_registration
+                        or item_type_name in application_item_type_list):
+                    if user_id and user_id == str(created_id):
+                        is_himself = True
+                    else:
+                        is_himself = False
+                    break
+                if lst.name == users[2]:
+                    is_himself = False
+                    shared_id = record.get('weko_shared_id')
+                    if user_id and created_id and user_id == str(created_id):
+                        is_himself = True
+                    elif user_id and shared_id and user_id == str(shared_id):
+                        is_himself = True
+                elif lst.name == users[3]:
+                    is_himself = False
     return is_himself
 
 
