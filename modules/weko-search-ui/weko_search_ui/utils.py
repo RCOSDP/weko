@@ -26,6 +26,7 @@ import os
 import re
 import shutil
 import sys
+import pytz
 import tempfile
 import traceback
 import uuid
@@ -128,6 +129,7 @@ from .config import (
     WEKO_SEARCH_TYPE_DICT,
     WEKO_SEARCH_UI_BULK_EXPORT_LIMIT,
     WEKO_SEARCH_UI_BULK_EXPORT_MSG,
+    WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG,
     WEKO_SEARCH_UI_BULK_EXPORT_TASK,
     WEKO_SEARCH_UI_BULK_EXPORT_URI,
     WEKO_SYS_USER,
@@ -2961,6 +2963,13 @@ def export_all(root_url):
     """
     from weko_items_ui.utils import make_stats_csv_with_permission, package_export_file
 
+    _cache_prefix = current_app.config["WEKO_ADMIN_CACHE_PREFIX"]
+    _msg_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_MSG"]
+    _msg_key = _cache_prefix.format(name=_msg_config)
+    _run_msg_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG"]
+    _run_msg_key = _cache_prefix.format(name=_run_msg_config)
+    _timezone = current_app.config["STATS_WEKO_DEFAULT_TIMEZONE"]
+
     def _itemtype_name(name):
         """Check a list of allowed characters in filenames."""
         return re.sub(r'[\/:*"<>|\s]', "_", name)
@@ -3054,6 +3063,12 @@ def export_all(root_url):
                             item_datas["name"], file_part
                         )
                         _write_csv_files(item_datas, export_path)
+                        reset_redis_cache(
+                            _run_msg_key,
+                            "The latest csv file was created on {}.".format(
+                                datetime.now(pytz.timezone(_timezone)).strftime("%Y/%m/%d %H:%M:%S"))
+                            + " Number of retries: {} times.".format(retrys)
+                        )
                         current_app.logger.info(
                             "{}.csv has been created.".format(item_datas["name"])
                         )
@@ -3089,6 +3104,12 @@ def export_all(root_url):
                     )
                 # Create export info file
                 _write_csv_files(item_datas, export_path)
+                reset_redis_cache(
+                    _run_msg_key,
+                    "The latest csv file was created on {}.".format(
+                        datetime.now(pytz.timezone(_timezone)).strftime("%Y/%m/%d %H:%M:%S"))
+                    + " Number of retries: {} times.".format(retrys)
+                )
                 finish_item_types.append(item_type_id)
                 current_app.logger.info(
                     "{}.csv has been created.".format(item_datas["name"])
@@ -3114,10 +3135,8 @@ def export_all(root_url):
             else:
                 return False
 
-    _cache_prefix = current_app.config["WEKO_ADMIN_CACHE_PREFIX"]
-    _msg_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_MSG"]
-    _msg_key = _cache_prefix.format(name=_msg_config)
     reset_redis_cache(_msg_key, "")
+    reset_redis_cache(_run_msg_key, "")
     temp_path = tempfile.TemporaryDirectory(
         prefix=current_app.config["WEKO_ITEMS_UI_EXPORT_TMP_PREFIX"]
     )
@@ -3145,11 +3164,13 @@ def export_all(root_url):
             db.session.commit()
         else:
             reset_redis_cache(_msg_key, "Export failed.")
+        reset_redis_cache(_run_msg_key, "")
         return src.uri if result and src else ""
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error(ex)
         reset_redis_cache(_msg_key, "Export failed.")
+        reset_redis_cache(_run_msg_key, "")
         return ""
 
 
@@ -3207,13 +3228,18 @@ def get_export_status():
     cache_msg = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
         name=WEKO_SEARCH_UI_BULK_EXPORT_MSG
     )
+    run_msg = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+        name=WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG
+    )
     export_status = False
     download_uri = None
     message = None
+    run_message = ""
     try:
         task_id = get_redis_cache(cache_key)
         download_uri = get_redis_cache(cache_uri)
         message = get_redis_cache(cache_msg)
+        run_message = get_redis_cache(run_msg)
         if task_id:
             task = AsyncResult(task_id)
             status_cond = task.successful() or task.failed() or task.state == "REVOKED"
@@ -3221,7 +3247,7 @@ def get_export_status():
     except Exception as ex:
         current_app.logger.error(ex)
         export_status = False
-    return export_status, download_uri, message
+    return export_status, download_uri, message, run_message
 
 
 def handle_check_item_is_locked(item):
