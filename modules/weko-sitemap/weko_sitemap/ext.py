@@ -21,6 +21,7 @@ from invenio_cache import current_cache
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
+from weko_records.models import ItemMetadata
 from sqlalchemy import Float, Integer, cast, not_
 
 from . import config
@@ -107,9 +108,9 @@ class WekoSitemap(Sitemap):
         """Make url set for all items."""
         self.clear_cache_pages()  # Clear cache
         q = (db.session
-             .query(PersistentIdentifier, RecordMetadata)
-             .join(RecordMetadata,
-                   RecordMetadata.id == PersistentIdentifier.object_uuid)
+             .query(PersistentIdentifier, ItemMetadata)
+             .join(ItemMetadata,
+                   ItemMetadata.id == PersistentIdentifier.object_uuid)
              .filter(PersistentIdentifier.status == PIDStatus.REGISTERED,
                      PersistentIdentifier.pid_type == 'parent')
              .order_by(PersistentIdentifier.id)
