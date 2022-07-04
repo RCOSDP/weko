@@ -108,11 +108,12 @@ class WekoSitemap(Sitemap):
         """Make url set for all items."""
         self.clear_cache_pages()  # Clear cache
         q = (db.session
-             .query(PersistentIdentifier, ItemMetadata)
-             .join(ItemMetadata,
-                   ItemMetadata.id == PersistentIdentifier.object_uuid)
+             .query(PersistentIdentifier, RecordMetadata)
+             .join(RecordMetadata,
+                   RecordMetadata.id == PersistentIdentifier.object_uuid)
              .filter(PersistentIdentifier.status == PIDStatus.REGISTERED,
-                     PersistentIdentifier.pid_type == 'parent')
+                     PersistentIdentifier.pid_type == 'recid',
+                     PersistentIdentifier.pid_value.ilike('%.1'))
              .order_by(PersistentIdentifier.id)
              .limit(current_app.config['WEKO_SITEMAP_TOTAL_MAX_URL_COUNT']))
 
@@ -120,7 +121,7 @@ class WekoSitemap(Sitemap):
             yield {
                 'loc': url_for('invenio_records_ui.recid',
                                pid_value=(recid.pid_value).replace(
-                                   'parent:', ''),
+                                   '.1', ''),
                                _external=True),
                 # W3C Datetime format YYYY-MM-DDThh:mmTZD
                 'lastmod': format_datetime(
