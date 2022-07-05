@@ -3,9 +3,8 @@ from . import (access_right, access, advisor, alternative_title, annual_report, 
 class AddProperty():
     def __init__(self, add_func, title, title_ja='', title_en='',
                  required=False, multiple=False, showlist=False,
-                 newline=False, hide=False, displayoneline= False, mapping=True,
-                 sub_required={}, sub_showlist={}, sub_newline={},
-                 sub_hide={}, sub_nondisplay={}):
+                 newline=False, hide=False, displayoneline= False,
+                 mapping=True):
         self.add_func = add_func
         self.property_title = title
         self.property_title_ja = title_ja
@@ -19,11 +18,6 @@ class AddProperty():
             "showlist": showlist
         }
         self.mapping = mapping
-        self.sub_required = sub_required
-        self.sub_showlist = sub_showlist
-        self.sub_newline = sub_newline
-        self.sub_hide = sub_hide
-        self.sub_nondisplay = sub_nondisplay
 
     access_right = access_right.add
     access = access.add
