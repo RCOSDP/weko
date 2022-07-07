@@ -2855,25 +2855,25 @@ def handle_get_all_sub_id_and_name(items, root_id=None, root_name=None, form=[])
             _ids, _names = handle_get_all_sub_id_and_name(
                 item.get("items").get("properties"), form=sub_form.get("items", [])
             )
-            ids += [key + "[0]." + _id for _id in _ids]
-            names += [title + "[0]." + _name for _name in _names]
+            ids += [str(key) + "[0]." + str(_id) for _id in _ids]
+            names += [str(title) + "[0]." + str(_name) for _name in _names]
         elif item.get("type") == "object" and item.get("properties"):
             _ids, _names = handle_get_all_sub_id_and_name(
                 item.get("properties"), form=sub_form.get("items", [])
             )
-            ids += [key + "." + _id for _id in _ids]
-            names += [title + "." + _name for _name in _names]
+            ids += [str(key) + "." + str(_id) for _id in _ids]
+            names += [str(title) + "." + str(_name) for _name in _names]
         elif item.get("format") == "checkboxes":
-            ids.append(key + "[0]")
-            names.append(title + "[0]")
+            ids.append(str(key) + "[0]")
+            names.append(str(title) + "[0]")
         else:
-            ids.append(key)
-            names.append(title)
+            ids.append(str(key))
+            names.append(str(title))
 
     if root_id:
-        ids = [root_id + "." + _id for _id in ids]
+        ids = [str(root_id) + "." + str(_id) for _id in ids]
     if root_name:
-        names = [root_name + "." + _name for _name in names]
+        names = [str(root_name) + "." + str(_name) for _name in names]
 
     return ids, names
 
