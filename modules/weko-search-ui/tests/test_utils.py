@@ -19,7 +19,8 @@ from weko_search_ui.utils import (
     get_item_type,handle_fill_system_item,
     get_system_data_uri,
     represents_int,
-    validation_date_property
+    validation_date_property,
+    handle_get_all_sub_id_and_name
 )
 from invenio_i18n.ext import InvenioI18N, current_i18n
 from invenio_i18n.babel import set_locale
@@ -271,8 +272,8 @@ def test_unpackage_import_file(app,mocker,mocker_itemtype):
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "unpackage_import_file")
     with app.test_request_context():
         with set_locale('en'):
-            assert unpackage_import_file(path,'items.csv',False)==result
-            assert unpackage_import_file(path,'items.csv',True)==result_force_new
+            assert unpackage_import_file(path,'items.csv','csv',False)==result
+            assert unpackage_import_file(path,'items.csv','csv',True)==result_force_new
 
 
 # def getEncode(filepath):
@@ -310,7 +311,18 @@ def test_read_stats_csv(app,mocker_itemtype):
 
     with app.test_request_context():
         with set_locale('en'):
-            assert read_stats_csv(csv_file_path,csv_file_name) == data
+            assert read_stats_csv(csv_file_path,csv_file_name,'csv') == data
+
+    
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "tsv","data.json")
+    tsv_file_name = "utf8_lf_items.tsv"
+    tsv_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "tsv",tsv_file_name)
+    with open(filepath,encoding="utf-8") as f:
+        data = json.load(f)
+
+    with app.test_request_context():
+        with set_locale('en'):
+            assert read_stats_csv(tsv_file_path,tsv_file_name,'tsv') == data
 
 # def handle_convert_validate_msg_to_jp(message: str):
 # def handle_validate_item_import(list_record, schema) -> list:
@@ -543,7 +555,38 @@ def test_handle_fill_system_item(app,test_list_records,mocker):
 # def get_thumbnail_key(item_type_id=0):
 # def handle_check_thumbnail_file_type(thumbnail_paths):
 # def handle_check_metadata_not_existed(str_keys, item_type_id=0):
-# def handle_get_all_sub_id_and_name(items, root_id=None, root_name=None, form=[]):
+
+
+@pytest.mark.parametrize(
+    "items,root_id,root_name,form,ids,names",[
+        pytest.param({'interim': {'type': 'string'}},'.metadata.item_1657196790737[0]','text[0]',[{'key': 'item_1657196790737[].interim', 'type': 'text', 'notitle': True}],['.metadata.item_1657196790737[0].interim'],['text[0].None']),
+        pytest.param({'interim': {'enum': [None, 'op1', 'op2', 'op3', 'op4'], 'type': ['null', 'string'], 'title': 'list', 'title_i18n': {'en': '', 'ja': ''}}},
+        '.metadata.item_1657204077414[0]',
+        'list[0]',[{'key': 'item_1657204077414[].interim', 'type': 'select', 'title': 'list', 'notitle': True, 'titleMap': [{'name': 'op1', 'value': 'op1'}, {'name': 'op2', 'value': 'op2'}, {'name': 'op3', 'value': 'op3'}, {'name': 'op4', 'value': 'op4'}], 'title_i18n': {'en': '', 'ja': ''}}]
+        ,['.metadata.item_1657204026946.interim[0]'],['check.check[0]']),
+        pytest.param({'interim': {'enum': [None, 'op1', 'op2', 'op3', 'op4'], 'type': ['null', 'string'], 'title': 'list', 'format': 'select'}},
+'.metadata.item_1657204070640','list',[{'key': 'item_1657204070640.interim', 'type': 'select', 'title': 'list', 'titleMap': [{'name': 'op1', 'value': 'op1'}, {'name': 'op2', 'value': 'op2'}, {'name': 'op3', 'value': 'op3'}, {'name': 'op4', 'value': 'op4'}], 'title_i18n': {'en': '', 'ja': ''}}]
+,['.metadata.item_1657204036771[0].interim[0]'],['checjk[0].checjk[0]']),
+pytest.param({'interim': {'type': 'array', 'items': {'enum': ['op1', 'op2', 'op3', 'op4'], 'type': 'string'}, 'title': 'check', 'format': 'checkboxes', 'title_i18n': {'en': '', 'ja': ''}}},
+'.metadata.item_1657204026946','check',[{'key': 'item_1657204026946.interim', 'type': 'template', 'title': 'check', 'titleMap': [{'name': 'op1', 'value': 'op1'}, {'name': 'op2', 'value': 'op2'}, {'name': 'op3', 'value': 'op3'}, {'name': 'op4', 'value': 'op4'}], 'title_i18n': {'en': '', 'ja': ''}, 'templateUrl': '/static/templates/weko_deposit/checkboxes.html'}]
+,['.metadata.item_1657204043063.interim'],['rad.rad']),
+pytest.param({'interim': {'type': 'array', 'items': {'enum': ['op1', 'op2', 'op3', 'op4'], 'type': 'string'}, 'title': 'checjk', 'format': 'checkboxes', 'title_i18n': {'en': '', 'ja': ''}}},
+'.metadata.item_1657204036771[0]','check[0]',[{'key': 'item_1657204036771[].interim', 'type': 'template', 'title': 'checjk', 'notitle': True, 'titleMap': [{'name': 'op1', 'value': 'op1'}, {'name': 'op2', 'value': 'op2'}, {'name': 'op3', 'value': 'op3'}, {'name': 'op4', 'value': 'op4'}], 'title_i18n': {'en': '', 'ja': ''}, 'templateUrl': '/static/templates/weko_deposit/checkboxes.html'}]
+,['.metadata.item_1657204049138[0].interim'],['rd[0].rd']),
+pytest.param({'interim': {'enum': ['op1', 'op2', 'op3', 'op4'], 'type': ['null', 'string'], 'title': 'rad', 'format': 'radios'}},
+'.metadata.item_1657204043063',
+'rad',[{'key': 'item_1657204043063.interim', 'type': 'radios', 'title': 'rad', 'titleMap': [{'name': 'op1', 'value': 'op1'}, {'name': 'op2', 'value': 'op2'}, {'name': 'op3', 'value': 'op3'}, {'name': 'op4', 'value': 'op4'}], 'title_i18n': {'en': '', 'ja': ''}}]
+,['.metadata.item_1657204070640.interim'],['list.list']),
+pytest.param({'interim': {'enum': ['op1', 'op2', 'op3', 'op4'], 'type': ['null', 'string'], 'title': 'rd', 'title_i18n': {'en': '', 'ja': ''}}},
+'.metadata.item_1657204049138[0]','rd[0]',[{'key': 'item_1657204049138[].interim', 'type': 'radios', 'title': 'rd', 'notitle': True, 'titleMap': [{'name': 'op1', 'value': 'op1'}, {'name': 'op2', 'value': 'op2'}, {'name': 'op3', 'value': 'op3'}, {'name': 'op4', 'value': 'op4'}], 'title_i18n': {'en': '', 'ja': ''}}]
+,['.metadata.item_1657204077414[0].interim'],['list[0].list']
+)
+]
+)
+def test_handle_get_all_sub_id_and_name(app,items,root_id,root_name,form,ids,names):
+    with app.app_context():
+        assert ids,names == handle_get_all_sub_id_and_name(items,root_id,root_name,form)
+
 # def handle_get_all_id_in_item_type(item_type_id):
 # def handle_check_consistence_with_mapping(mapping_ids, keys):
 # def handle_check_duplication_item_id(ids: list):

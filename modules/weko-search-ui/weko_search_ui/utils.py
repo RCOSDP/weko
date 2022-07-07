@@ -2855,7 +2855,7 @@ def handle_get_all_sub_id_and_name(items, root_id=None, root_name=None, form=[])
             _ids, _names = handle_get_all_sub_id_and_name(
                 item.get("items").get("properties"), form=sub_form.get("items", [])
             )
-            ids += [str(key) + "[0]." + str(_id) for _id in _ids]
+            ids += [key + "[0]." + _id for _id in _ids]
             names += [str(title) + "[0]." + str(_name) for _name in _names]
         elif item.get("type") == "object" and item.get("properties"):
             _ids, _names = handle_get_all_sub_id_and_name(
@@ -2871,9 +2871,9 @@ def handle_get_all_sub_id_and_name(items, root_id=None, root_name=None, form=[])
             names.append(str(title))
 
     if root_id:
-        ids = [str(root_id) + "." + str(_id) for _id in ids]
+        ids = [root_id + "." + _id for _id in ids]
     if root_name:
-        names = [str(root_name) + "." + str(_name) for _name in names]
+        names = [root_name + "." + _name for _name in names]
 
     return ids, names
 
