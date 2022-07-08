@@ -386,7 +386,7 @@ function FacetSearchDetailsLayout(
         <div className="form-group row">
           <div className="col-xs-offset-2 col-xs-5">
             <button type="button" style={{marginLeft: "10px"}}
-                    className="btn btn-danger delete-button"
+                    className="btn btn-danger component__btn module__btn-danger delete-button"
                     onClick={confirmRemoveFacet}>
                       <span className="glyphicon glyphicon-trash" aria-hidden="true"/>
                       &nbsp;{LABELS['lblDelete']}

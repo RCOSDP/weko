@@ -34,11 +34,11 @@
           <h4 class="list-group-item-heading">{{ plugin.name }}</h4>
           <p class="list-group-item-text">{{ plugin.description }}</p>
           <div class="form-inline col-sm-offset-4">
-            <a class="btn btn-primary detail-button five-pixel-margin" href="{{ url_for('pluginsetting.detail', plugin=plugin.identifier) }}">
+            <a class="btn btn-primary component__btn module__btn-primary detail-button five-pixel-margin" href="{{ url_for('pluginsetting.detail', plugin=plugin.identifier) }}">
                 <span class="glyphicon glyphicon-info-sign"></span> 
                        {{_('Detail')}}
             </a>
-            <a class="btn btn-success action-button five-pixel-margin" href="{{ url_for('pluginsetting.setting', plugin=plugin.identifier) }}">
+            <a class="btn btn-success component__btn module__btn-success action-button five-pixel-margin" href="{{ url_for('pluginsetting.setting', plugin=plugin.identifier) }}">
                   <i class="fa fa-cogs"> </i>
                       {{_('Setting')}}
              </a>
@@ -48,12 +48,12 @@
                       {{_('Disable')}}
               </a>
             {%- else %}
-              <a class="btn btn-info action-button five-pixel-margin" href="{{ url_for('pluginsetting.enable', plugin=plugin.identifier) }}">
+              <a class="btn btn-info component__btn module__btn-info action-button five-pixel-margin" href="{{ url_for('pluginsetting.enable', plugin=plugin.identifier) }}">
                      <span class="glyphicon glyphicon-hand-right"></span>
                        {{_('Enable')}}
               </a>
             {%- endif %}
-            <a class="btn btn-danger delete-button five-pixel-margin" href="{{ url_for('pluginsetting.delete', plugin=plugin.identifier) }}">
+            <a class="btn btn-danger component__btn module__btn-danger delete-button five-pixel-margin" href="{{ url_for('pluginsetting.delete', plugin=plugin.identifier) }}">
                  <span class="glyphicon glyphicon-trash"></span>
                      {{_('Delete')}}</a>
           </div>

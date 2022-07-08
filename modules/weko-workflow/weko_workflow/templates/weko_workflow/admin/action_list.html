@@ -53,15 +53,15 @@
         <tr>
           <td colspan="6">
             <div>
-              <button class="btn btn-primary action-button" id="btn_apply_{{action.id}}">
+              <button class="btn btn-primary component__btn module__btn-primary action-button" id="btn_apply_{{action.id}}">
                         <span class="glyphicon glyphicon-hand-right"></span>
                               {{_('Apply')}}
               </button>
-              <button class="btn btn-primary action-button" id="btn_unusable_{{action.id}}">
+              <button class="btn btn-primary component__btn module__btn-primary action-button" id="btn_unusable_{{action.id}}">
                         <span class="glyphicon glyphicon-hand-right"></span>
                               {{_('Unusable')}}
               </button>
-              <button class="btn btn-default update-button" id="btn_update_{{action.id}}" style="width: 120px; height: 40px;font-size: 15px;">
+              <button class="btn btn-default component__btn module__btn-default update-button" id="btn_update_{{action.id}}" style="width: 120px; height: 40px;font-size: 15px;">
                         <span class="glyphicon glyphicon-edit"></span>
                               {{_('Update')}}
               </button>
@@ -71,7 +71,7 @@
       {%- endfor %}
       </tbody>
     </table>
-    <button type="button" class="btn btn-info pull-right back-button" id="btn_back">
+    <button type="button" class="btn btn-info component__btn module__btn-info pull-right back-button" id="btn_back">
         <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</button>
     </div>
   </div>

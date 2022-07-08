@@ -443,7 +443,7 @@ class MainLayout extends React.Component {
                 <div className="row form-group">
                   <div className="col-md-2 col-md-offset-8">
                       <button
-                       className="btn btn-success"
+                       className="btn btn-success component__btn module__btn-success"
                        onClick={this.handleAddSiteName}
                        disabled={!this.isEnableAddSiteName()}
                        ><span className="glyphicon glyphicon-plus icon"></span>{add_site_name_label}</button>
@@ -490,7 +490,7 @@ class MainLayout extends React.Component {
                           key > 0 &&
                           <div className="col-md-2">
                             <button
-                             className="btn btn-danger"
+                             className="btn btn-danger component__btn module__btn-danger"
                              onClick={()=>{this.handleRemoveSiteName(key)}}
                              ><span className="glyphicon glyphicon-trash icon"></span>{delete_label}</button>
                           </div>
@@ -655,7 +655,7 @@ class MainLayout extends React.Component {
                     <div className="row form-group">
                     <div className="col-md-2 col-md-offset-8">
                         <button
-                          className="btn btn-success"
+                          className="btn btn-success component__btn module__btn-success"
                           onClick={this.handleAddNotify}
                           disabled={!this.isEnableAddNotify()}
                           ><span className="glyphicon glyphicon-plus icon"></span>{add_notify_label}</button>
@@ -704,7 +704,7 @@ class MainLayout extends React.Component {
                           key > 0 &&
                           <div className="col-md-2">
                             <button
-                             className="btn btn-danger"
+                             className="btn btn-danger component__btn module__btn-danger"
                              onClick={()=>{this.handleRemoveNotify(key)}}
                              ><span className="glyphicon glyphicon-trash icon"></span>{delete_label}</button>
                           </div>

@@ -113,10 +113,10 @@
                             <br/>
                           {%- endif %}
                         {%- endfor %}
-                        <a id="remove_row" class="btn btn-danger btn-sm">
+                        <a id="remove_row" class="btn btn-danger component__btn module__btn-danger btn-sm">
                            <span class="glyphicon glyphicon-remove"></span>
                         </a>
-                        <a id="add_row" class="btn btn-success btn-sm">
+                        <a id="add_row" class="btn btn-success component__btn module__btn-success btn-sm">
                            <span class="glyphicon glyphicon-plus"></span>
                         </a>
                       </div>
@@ -164,7 +164,7 @@
           </tr>
         </table>
         <div class="form-group col-sm-3 col-sm-offset-4">
-          <a id="confirm_button" class="btn btn-primary" data-toggle="modal" data-target="#confirm_modal">
+          <a id="confirm_button" class="btn btn-primary component__btn module__btn-primary" data-toggle="modal" data-target="#confirm_modal">
             <span class="glyphicon glyphicon-save"></span>&nbsp
             {{_('Save')}}
           </a>
@@ -186,11 +186,11 @@
         <p class="text-center">{{_('Are you sure you want to block the given addresses?')}}</p>
       </div>
       <div class="modal-footer">
-        <button id="submit_button" class="btn btn-primary">
+        <button id="submit_button" class="btn btn-primary component__btn module__btn-primary">
             <span class="glyphicon glyphicon-save"></span>&nbsp
           {{_('Save')}}
         </button>
-        <button type="button" class="btn btn-default" data-dismiss="modal">
+        <button type="button" class="btn btn-default component__btn module__btn-default" data-dismiss="modal">
           <span class="glyphicon glyphicon-remove"></span>&nbsp
           {{_('Close')}}
         </button>

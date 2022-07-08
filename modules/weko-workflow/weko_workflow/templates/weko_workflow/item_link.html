@@ -76,7 +76,7 @@
                       {[sub_link_item.item_title]}
                     </div>
                     <div class="col-sm-3 col-md-3 col-lg-3 text-center">
-                      <button type="button" class="btn btn-danger delete-button" ng-click="del_link($index)">
+                      <button type="button" class="btn btn-danger component__btn module__btn-danger delete-button" ng-click="del_link($index)">
                         <span class="glyphicon glyphicon-trash"></span>
                         {{_('Delete')}}
                       </button>
@@ -141,16 +141,16 @@
                placeholder="">{{temporary_comment if temporary_comment else ''}}</textarea>
             </div>
           </div>
-          <button type="button" class="btn btn-primary save-button" id="item-link-save-btn" ng-click="btn_save()">
+          <button type="button" class="btn btn-primary component__btn module__btn-primary save-button" id="item-link-save-btn" ng-click="btn_save()">
             <span class="glyphicon glyphicon-saved"></span>
             {{_('Save')}}
           </button>
 
-          <button type="button" class="btn btn-info next-button"
+          <button type="button" class="btn btn-info component__btn module__btn-info next-button"
             id="item-link-run-btn" ng-click="btn_run()">{{_('Next_item')}}
             <span _ngcontent-c1="" class="glyphicon glyphicon-chevron-right"></span>
           </button>
-      <button class="btn btn-danger done-button pull-right" id="btn_quit">
+      <button class="btn btn-danger component__btn module__btn-danger done-button pull-right" id="btn_quit">
         <i class="fa fa-sign-out"></i>
         {{_('Quit_item')}}</button>
       </div>

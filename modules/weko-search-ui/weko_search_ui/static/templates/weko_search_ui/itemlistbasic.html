@@ -1,7 +1,7 @@
 <div class="row record-elem" ng-repeat="record in vm.invenioSearchResults.hits.hits track by $index">
   <div class="col-xs-12">
     <div class="pull-right view-record hidden-xs">
-      <a target="_self" ng-href="/records/{{ record.id }}" class="btn btn-default">View</a>
+      <a target="_self" ng-href="/records/{{ record.id }}" class="btn btn-default component__btn module__btn-default">View</a>
     </div>
     <span class="label label-info" bs-tooltip data-container="div" data-title="Publication date">{{ record.updated|date:'longDate' }}</span>
     <h4><a target="_self" ng-href="/records/{{ record.id }}">{{ record.metadata.hasOwnProperty('title')?record.metadata.title[0]:record.metadata['dc:title'][0] }}</a></h4>

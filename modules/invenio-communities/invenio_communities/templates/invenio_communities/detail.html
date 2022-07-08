@@ -33,7 +33,7 @@
           <div class="input-group">
             <input type="text" class="form-control" name="q" placeholder="{{_('Search ') + community.title}}">
             <div class="input-group-btn">
-              <button id="simple_search" type="submit" class="btn btn-default">
+              <button id="simple_search" type="submit" class="btn btn-default component__btn module__btn-default">
                 <i class="fa fa-search"></i>
               </button>
             </div>
@@ -60,7 +60,7 @@
         {%- endblock search_results %}
       </invenio-search>
       {%- endblock search_body %}
-      <p class="text-center"><a class="btn btn-default" href="{{url_for('.search', community_id=community
+      <p class="text-center"><a class="btn btn-default component__btn module__btn-default" href="{{url_for('.search', community_id=community
       .id)}}">More</a></p>
       <div class="col-sm-9 col-md-9 col-lg-9 m-top-20">
       </div>

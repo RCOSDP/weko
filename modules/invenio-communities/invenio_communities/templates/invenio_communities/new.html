@@ -139,7 +139,7 @@
           {{form.csrf_token}}
           {%- for field in deleteform %}{{ field }}{% endfor %}
           <button class="btn btn-large" data-dismiss="modal" aria-hidden="true">No, thanks</button>
-          <button type="submit" href="{{ url_for('.delete', community_id=community.id) }}" class="btn btn-danger"><i class="icon-trash  icon-white"></i> Yes, delete</button>
+          <button type="submit" href="{{ url_for('.delete', community_id=community.id) }}" class="btn btn-danger component__btn module__btn-danger"><i class="icon-trash  icon-white"></i> Yes, delete</button>
         </form>
       </div>
       </div>
@@ -343,10 +343,10 @@
       </div>
       <div class="well clearfix" style="margin-top: 10px;">
         {% if not community.is_deleted %}
-        <button type="button" role="button" data-toggle="modal" class="btn btn-danger pull-left{% if is_new %} hide{% endif %}" data-target="#deletemodal"><i class="icon-trash  icon-white"></i> Delete</button>
+        <button type="button" role="button" data-toggle="modal" class="btn btn-danger component__btn module__btn-danger pull-left{% if is_new %} hide{% endif %}" data-target="#deletemodal"><i class="icon-trash  icon-white"></i> Delete</button>
         {% endif %}
         <span class="pull-right">
-          <button type="submit" class="btn btn-primary edit-form-submit"><i class="icon-ok  icon-white"></i> {% if is_new %}Create{% else %}Save{% endif %}</a>
+          <button type="submit" class="btn btn-primary component__btn module__btn-primary edit-form-submit"><i class="icon-ok  icon-white"></i> {% if is_new %}Create{% else %}Save{% endif %}</a>
         </span>
       </div>
       </form>

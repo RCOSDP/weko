@@ -204,8 +204,8 @@ class ExportComponent extends React.Component {
             </div>
             <div className="row">
               <div className="col-xs-12 text-center">
-                <button disabled={isDisableExport} variant="primary" type="button" className="btn btn-primary" onClick={() => this.handleConfirm(true)}>{export_label}</button>
-                <button disabled={isDisableCancel} variant="secondary" type="button" className="btn btn-primary cancel" onClick={() => this.handleConfirm(false)}>{cancel_label}</button>
+                <button disabled={isDisableExport} variant="primary" type="button" className="btn btn-primary component__btn module__btn-default" onClick={() => this.handleConfirm(true)}>{export_label}</button>
+                <button disabled={isDisableCancel} variant="secondary" type="button" className="btn btn-primary component__btn module__btn-default cancel" onClick={() => this.handleConfirm(false)}>{cancel_label}</button>
               </div>
             </div>
             <div className="row">

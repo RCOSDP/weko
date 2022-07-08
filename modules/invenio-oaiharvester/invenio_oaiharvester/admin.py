@@ -79,7 +79,7 @@ def control_btns():
             pause_url, m.id, pause_text)
         clear_url = url_for('harvestsettings.clear')
         clear_text = _('Clear')
-        clear_btn = '<a id="clear-btn" class="btn btn-danger" href="{0}?id={1}">{2}</a>'.format(
+        clear_btn = '<a id="clear-btn" class="btn btn-danger component__btn module__btn-danger" href="{0}?id={1}">{2}</a>'.format(
             clear_url, m.id, clear_text)
         harvesting = HarvestSettings.query.filter_by(id=m.id).first()
         if harvesting.task_id is None and harvesting.resumption_token is None:

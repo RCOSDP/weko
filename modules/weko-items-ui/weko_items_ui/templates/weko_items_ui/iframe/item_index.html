@@ -276,12 +276,12 @@
       </div>
     </div>
     {%- if community %}
-    <a class="btn btn-info pull-left back-button"
+    <a class="btn btn-info component__btn module__btn-info pull-left back-button"
       href="{{url_for('weko_workflow.index',community=community.id)}}">
         <span class="glyphicon glyphicon-chevron-left"></span>
             {{_('Back')}}</a>
     {%- else %}
-    <a class="btn btn-info pull-left back-button" href="{{url_for('weko_workflow.index')}}">
+    <a class="btn btn-info component__btn module__btn-info pull-left back-button" href="{{url_for('weko_workflow.index')}}">
         <span class="glyphicon glyphicon-chevron-left"></span>
             {{_('Back')}}</a>
     {%- endif %}
@@ -307,7 +307,7 @@
             {%- endwith %}
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-info close-button" id="btnModalClose" data-dismiss="modal">
+            <button type="button" class="btn btn-info component__btn module__btn-info close-button" id="btnModalClose" data-dismiss="modal">
               <span class="glyphicon glyphicon-remove"></span>
               {{_('Close')}}
             </button>

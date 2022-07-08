@@ -55,7 +55,7 @@
       <h6 class="text-info">{{ _('Max number of items able to export') }}:{{ max_export_num }}</h6>
     </div>
     <div class="col-xs-2">
-      <button class="btn btn-primary" id="item_export_button" ng-click="exportItems()"
+      <button class="btn btn-primary component__btn module__btn-primary" id="item_export_button" ng-click="exportItems()"
       ng-disabled="item_export_checkboxes.length > max_export_num || item_export_checkboxes.length==0">
         <span class="glyphicon glyphicon-save"></span>
         {{_('Export')}}

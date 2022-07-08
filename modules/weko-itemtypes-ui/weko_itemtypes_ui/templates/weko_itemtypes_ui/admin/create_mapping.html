@@ -140,13 +140,13 @@
                       {%- endfor -%}
                     </select>
                     <div class="btn-group pull-right" data-key="{{key}}">
-                      <button type="button" class="btn btn-success
+                      <button type="button" class="btn btn-success component__btn module__btn-success
                             ten-pixel-right-margin ten-pixel-bottom-margin"
                               data-action="add" style="position:unset;" {% if not is_system_admin %}{{ " disabled" }}{% endif %}>
                         <span class="glyphicon glyphicon-plus"></span>&nbsp;
                         {{_('Add')}}
                       </button>
-                      <button type="button" class="btn btn-danger
+                      <button type="button" class="btn btn-danger component__btn module__btn-danger 
                             ten-pixel-bottom-margin"
                               style="position:unset;" data-action="del" disabled>
                         <span class="glyphicon glyphicon-remove"></span>
@@ -176,19 +176,19 @@
                     </select>
                     <div class="btn-group pull-right" data-key="{{key}}">
                       <!--<input type="button" class="btn btn-light add-button five-pixel-margin" data-action="add" value="{{_('Add')}}">
-                      <input type="button" class="btn btn-danger delete-button
+                      <input type="button" class="btn btn-danger component__btn module__btn-danger delete-button
                       five-pixel-margin" data-action="del" value="{{_('Delete')}}"
                       disabled>-->
                       <!-- INPUT BUTTON -->
 
-                      <button type="button" class="btn btn-success
+                      <button type="button" class="btn btn-success component__btn module__btn-success
                               ten-pixel-right-margin ten-pixel-bottom-margin"
                               style="position:unset;" data-action="add" value="" {%- if not is_system_admin -%}{{ " disabled" }}{%- endif -%}>
                         <span class="glyphicon glyphicon-plus"></span>&nbsp;
                         {{_('Add')}}
                       </button>
 
-                      <button type="button" class="btn btn-danger
+                      <button type="button" class="btn btn-danger component__btn module__btn-danger 
                               ten-pixel-bottom-margin"
                               style="position:unset;" data-action="del" disabled>
                         <span class="glyphicon glyphicon-remove"></span>
@@ -283,13 +283,13 @@
                     ten-pixel-right-margin ten-pixel-bottom-margin"
                     data-action="add" value="{{_('Add')}}">-->
 
-                <!--<input type="button" class="btn btn-danger delete-button
+                <!--<input type="button" class="btn btn-danger component__btn module__btn-danger delete-button
                     ten-pixel-bottom-margin" data-action="del"
                     value="{{_('Delete')}}" {%- if keys_count ==
                     1 -%}disabled{%- endif -%}>-->
                 <!-- INPUT BUTTON -->
 
-                <button type="button" class="btn btn-success
+                <button type="button" class="btn btn-success component__btn module__btn-success
                             ten-pixel-right-margin ten-pixel-bottom-margin"
                         data-action="add"
                         style="position:unset;">
@@ -297,7 +297,7 @@
                   {{_('Add')}}
                 </button>
 
-                <button type="button" class="btn btn-danger
+                <button type="button" class="btn btn-danger component__btn module__btn-danger 
                             ten-pixel-bottom-margin"
                         style="position:unset;"
                         data-action="del" {%- if keys_count== 1
@@ -333,12 +333,12 @@
               <div class="btn-group pull-right"
                    data-key="{{key}}">
                 <!--<input type="button" class="btn btn-light add-button five-pixel-margin" data-action="add" value="{{_('Add')}}">
-                <input type="button" class="btn btn-danger delete-button
+                <input type="button" class="btn btn-danger component__btn module__btn-danger delete-button
                 five-pixel-margin" data-action="del" value="{{_('Delete')}}"
                 disabled>-->
                 <!-- INPUT BUTTON -->
 
-                <button type="button" class="btn btn-success
+                <button type="button" class="btn btn-success component__btn module__btn-success
                               ten-pixel-right-margin ten-pixel-bottom-margin"
                         style="position:unset;"
                         data-action="add" value="">
@@ -346,7 +346,7 @@
                   {{_('Add')}}
                 </button>
 
-                <button type="button" class="btn btn-danger
+                <button type="button" class="btn btn-danger component__btn module__btn-danger 
                               ten-pixel-bottom-margin"
                         style="position:unset;"
                         data-action="del" disabled>
@@ -406,14 +406,14 @@
           </div>
           <div class="col-sm-6">
             <label id="sub-jpcoar-lists-label">{{_('Schema')}}</label><label>&nbsp;({{_('Child')}})</label>
-            <!-- <button id="sub_mapping-add" class="btn btn-success pull-right">{{_('Add')}}</button>-->
+            <!-- <button id="sub_mapping-add" class="btn btn-success component__btn module__btn-success pull-right">{{_('Add')}}</button>-->
             <button id="sub_mapping-add"
-                    class="btn btn-success pull-right twentyeight-pixel-right-margin">
+                    class="btn btn-success component__btn module__btn-success pull-right twentyeight-pixel-right-margin">
               <span class="glyphicon glyphicon-plus"></span>&nbsp;
               {{_('Add')}}
             </button>
             <button id="sub_mapping-add2"
-            class="btn btn-success pull-right twentyeight-pixel-right-margin">
+            class="btn btn-success component__btn module__btn-success pull-right twentyeight-pixel-right-margin">
             <span class="glyphicon glyphicon-plus"></span>&nbsp;
               {{_('Add static value')}}
             </button>
@@ -452,7 +452,7 @@
                          placeholder="{{_('Input Field')}}">
                 </div>
                 <button type="button"
-                        class="btn btn-danger five-pixel-margin"
+                        class="btn btn-danger component__btn module__btn-danger five-pixel-margin"
                         style="position:unset;"
                         data-action="del_sub_child">
                   <span class="glyphicon glyphicon-trash"></span>&nbsp;
@@ -460,7 +460,7 @@
                 </button>
                 <!--<div style="position: relative;" style="padding: 50px; background-color: #E5E4E2; display: inline-block;">
                     <i class="glyphicon glyphicon-trash" style="color: white; position: absolute;left: 2em; top:0.85em"></i>
-                    <input type="button" class="btn btn-danger delete-button five-pixel-margin" data-action="del_sub_child" value="{{_('Delete')}}">
+                    <input type="button" class="btn btn-danger component__btn module__btn-danger delete-button five-pixel-margin" data-action="del_sub_child" value="{{_('Delete')}}">
                 </div>-->
               </div>
             </div>
@@ -481,7 +481,7 @@
             <div class="col-sm-5">
               <fieldset class="pull-right">
                 <button type="button"
-                        class="btn btn-danger five-pixel-margin"
+                        class="btn btn-danger component__btn module__btn-danger five-pixel-margin"
                         style="position:unset;"
                         data-action="del_child">
                   <span class="glyphicon glyphicon-trash"></span>&nbsp;
@@ -490,7 +490,7 @@
               </fieldset>
               <fieldset class="pull-right">
                 <button type="button"
-                        class="btn btn-success pull-right five-pixel-margin"
+                        class="btn btn-success component__btn module__btn-success pull-right five-pixel-margin"
                         data-action="add_child">
                   {{_('Join')}}
                 </button>
@@ -532,13 +532,13 @@
                    id="delete-icon-two"></i>
 
                 <button type="button"
-                        class="btn btn-danger pull right delete-button five-pixel-margin"
+                        class="btn btn-danger component__btn module__btn-danger pull right delete-button five-pixel-margin"
                         style="position:unset;"
                         data-action="del_sub_child">
                   <span class="glyphicon glyphicon-trash"></span>
                   {{_('Delete')}}
                 </button>
-                <!--<button class="btn btn-danger pull right delete-button five-pixel-margin" data-action="del_sub_child">
+                <!--<button class="btn btn-danger component__btn module__btn-danger pull right delete-button five-pixel-margin" data-action="del_sub_child">
                         <span class="glyphicon glyphicon-trash"></span>
                               {{_('Delete')}}
                 </button>-->
@@ -562,20 +562,20 @@
               <fieldset class="pull-right">
                 <div class="button-container">
                   <button type="button"
-                          class="btn btn-danger twentyeight-pixel-right-margin"
+                          class="btn btn-danger component__btn module__btn-danger twentyeight-pixel-right-margin"
                           style="position:unset;"
                           data-action="del_child">
                     <span class="glyphicon glyphicon-trash"></span>&nbsp;
                     {{_('Delete')}}
                   </button>
                 </div>
-                <!-- <button class="btn btn-danger delete-button twentyeight-pixel-right-margin" data-action="del_child"
+                <!-- <button class="btn btn-danger component__btn module__btn-danger delete-button twentyeight-pixel-right-margin" data-action="del_child"
                     style="margin-right:28px;">
                       <span class="glyphicon glyphicon-trash"></span>
                           {{_('Delete')}}
                 </button> -->
               </fieldset>
-              <button class="btn btn-success pull-right twentyeight-pixel-right-margin"
+              <button class="btn btn-success component__btn module__btn-success pull-right twentyeight-pixel-right-margin"
                       data-action="add_child">
                 {{_('Join')}}
               </button>
@@ -600,7 +600,7 @@
   <pre class="pre-scrollable hide"><code id="preview_mapping">{{ hide_mapping_prop|tojson(indent=4) }}</code></pre>
   <div class="col-sm-10"></div>
   <div class="col-sm-2">
-    <button id="mapping-submit" class="btn btn-primary pull-right">
+    <button id="mapping-submit" class="btn btn-primary component__btn module__btn-primary pull-right">
       <span class="glyphicon glyphicon-save"></span>&nbsp;
       {{_('Save')}}
     </button>
@@ -622,15 +622,15 @@
         <p>One fine body&hellip;</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary hide"
+        <button type="button" class="btn btn-primary component__btn module__btn-primary hide"
                 id="btn_confirm">{{_('OK')}}
         </button>
-        <button type="button" class="btn btn-primary hide"
+        <button type="button" class="btn btn-primary component__btn module__btn-primary hide"
                 id="btn_submit">
           <span class="glyphicon glyphicon-save"></span>&nbsp;
           {{_('Save')}}
         </button>
-        <button type="button" class="btn btn-default"
+        <button type="button" class="btn btn-default component__btn module__btn-default"
                 data-dismiss="modal">
           <span class="glyphicon glyphicon-remove"></span>&nbsp;
           {{_('Close')}}

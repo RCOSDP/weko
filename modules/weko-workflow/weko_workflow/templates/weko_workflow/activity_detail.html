@@ -283,37 +283,37 @@
               {% endif %}
 
               {%- if 'approval_request' == cur_step %}
-                <button type="button" class="btn btn-primary action-big-button" id="btn-approval-req">{{_('Approval Request')}}</button>
-                <button type="button" class="btn btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
+                <button type="button" class="btn btn-primary component__btn module__btn-primary action-big-button" id="btn-approval-req">{{_('Approval Request')}}</button>
+                <button type="button" class="btn btn-primary component__btn module__btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
               {%- elif 'approval' == cur_step or 'approval_advisor' == cur_step or 'approval_guarantor' == cur_step or 'approval_administrator' == cur_step %}
-                <button type="button" class="btn btn-danger action-button" id="btn-reject">{{_('Reject')}}</button>
-                <button type="button" class="btn btn-primary save-button" id="btn-draft">
+                <button type="button" class="btn btn-danger component__btn module__btn-danger action-button" id="btn-reject">{{_('Reject')}}</button>
+                <button type="button" class="btn btn-primary component__btn module__btn-primary save-button" id="btn-draft">
                   <span class="glyphicon glyphicon-saved"></span> {{_('Save')}}</button>
-                <button type="button" class="btn btn-info action-button" id="btn-approval">{{_('Approval')}}</button>
-                <button class="btn btn-danger done-button pull-right" id="btn_quit">
+                <button type="button" class="btn btn-info component__btn module__btn-info action-button" id="btn-approval">{{_('Approval')}}</button>
+                <button class="btn btn-danger component__btn module__btn-danger done-button pull-right" id="btn_quit">
                   <i class="fa fa-sign-out"></i>
                   {{_('Quit_Approval')}}</button>
                 {% include "weko_workflow/modal_quit_confirmation.html" %}
               {%- endif %}
               {%- if 'double_check' == cur_step %}
-                <button type="button" class="btn btn-primary save-button" id="btn-draft">
+                <button type="button" class="btn btn-primary component__btn module__btn-primary save-button" id="btn-draft">
                   <span class="glyphicon glyphicon-saved"></span> {{_('Save')}}</button>
-                <button type="button" class="btn btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
+                <button type="button" class="btn btn-primary component__btn module__btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
               {%- elif 'oa_policy' == cur_step %}
-                <button type="button" class="btn btn-primary save-button" id="btn-draft">
+                <button type="button" class="btn btn-primary component__btn module__btn-primary save-button" id="btn-draft">
                   <span class="glyphicon glyphicon-saved"></span> {{_('Save')}}</button>
-                <button type="button" class="btn btn-info done-button" id="btn-finish">{{_('Next')}}
+                <button type="button" class="btn btn-info component__btn module__btn-info done-button" id="btn-finish">{{_('Next')}}
                   <span class="glyphicon glyphicon-chevron-right"></span>
                 </button>
-                <button class="btn btn-danger done-button pull-right" id="btn_quit">
+                <button class="btn btn-danger component__btn module__btn-danger done-button pull-right" id="btn_quit">
                   <i class="fa fa-sign-out"></i>
                   {{_('QuitQO')}}</button>
                 {% include "weko_workflow/modal_quit_confirmation.html" %}
               {%- endif %}
               {%- if 'end_action' == cur_step %}
-                <button type="button" class="btn btn-primary" id="btn-draft" style="width: 120px; height: 40px;font-size: 15px;">
+                <button type="button" class="btn btn-primary component__btn module__btn-primary" id="btn-draft" style="width: 120px; height: 40px;font-size: 15px;">
                       <span class="glyphicon glyphicon-saved"></span> {{_('Save')}}</button>
-                <button type="button" class="btn btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
+                <button type="button" class="btn btn-primary component__btn module__btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
               {%- endif %}
             </div>
           {%- endif %}
@@ -361,14 +361,14 @@
       {%- endblock history_panel %}
     </div>
     {%- if community %}
-       <button class="btn btn-info pull-left back-button" onClick="window.location.href='{{url_for('weko_workflow.index',community=community.id)}}';$(this).prop('disabled', true)">
+       <button class="btn btn-info component__btn module__btn-info pull-left back-button" onClick="window.location.href='{{url_for('weko_workflow.index',community=community.id)}}';$(this).prop('disabled', true)">
          <span class="glyphicon glyphicon-chevron-left"></span> {{_('Back')}}</button>
 
     {%- else %}
-       <button class="btn btn-info pull-left back-button" onClick="window.location.href='{{url_for('weko_workflow.index')}}'; $(this).prop('disabled', true)">
+       <button class="btn btn-info component__btn module__btn-info pull-left back-button" onClick="window.location.href='{{url_for('weko_workflow.index')}}'; $(this).prop('disabled', true)">
          <span class="glyphicon glyphicon-chevron-left"></span> {{_('Back')}}</button>
          {%- if 'F' == activity.activity_status %}
-         <button class="btn btn-info pull-right back-button" onClick="window.location.href='/records/{{ item.get('id')| regex_replace('.[0-9]+','') }}';$(this).prop('disabled', true)">
+         <button class="btn btn-info component__btn module__btn-info pull-right back-button" onClick="window.location.href='/records/{{ item.get('id')| regex_replace('.[0-9]+','') }}';$(this).prop('disabled', true)">
           Access</button>
          {%- endif %}
     {%- endif %}
@@ -394,7 +394,7 @@
         {%- endwith %}
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-info close-button" id="btnModalClose" data-dismiss="modal">
+        <button type="button" class="btn btn-info component__btn module__btn-info close-button" id="btnModalClose" data-dismiss="modal">
           <span class="glyphicon glyphicon-remove"></span>{{_('Close')}}
         </button>
       </div>

@@ -109,7 +109,7 @@
     </li>
   </ul>
   {%- if send_mail -%}
-    <button class="btn btn-default style-button pull-right" id="btn_send_mail">
+    <button class="btn btn-default component__btn module__btn-default style-button pull-right" id="btn_send_mail">
       <span class="glyphicon glyphicon-send"></span>&nbsp; {{ _('Send Mail') }}
     </button>
   {%- endif %}
@@ -149,7 +149,7 @@
 
 </div>
 <div class="form-inline flow-root">
-  <button type="submit" id="filter_form_submit" class="btn btn-primary">{{_('Apply')}}</button>
+  <button type="submit" id="filter_form_submit" class="btn btn-primary component__btn module__btn-primary">{{_('Apply')}}</button>
   <div class="pull-right">
     <div class="form-group">
       <label for="page_count">{{_('Display Number')}}</label>
@@ -298,11 +298,11 @@
     {%- endif%}
     <div>
       {%-if community%}
-        <button class="btn btn-success pull-right" onClick="window.location.href='{{url_for('weko_workflow.new_activity', community=community.id)}}'; $(this).prop('disabled', true)">
+        <button class="btn btn-success component__btn module__btn-success pull-right" onClick="window.location.href='{{url_for('weko_workflow.new_activity', community=community.id)}}'; $(this).prop('disabled', true)">
           <span class="glyphicon glyphicon-plus"></span>&nbsp
           {{_('New Activity')}}</button>
       {%-else%}
-        <button class="btn btn-success pull-right" onClick="window.location.href='{{url_for('weko_workflow.new_activity')}}'; $(this).prop('disabled', true)">
+        <button class="btn btn-success component__btn module__btn-success pull-right" onClick="window.location.href='{{url_for('weko_workflow.new_activity')}}'; $(this).prop('disabled', true)">
           <span class="glyphicon glyphicon-plus"></span>&nbsp
           {{_('New Activity')}}</button>
       {%- endif%}
@@ -372,7 +372,7 @@
               </div>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn-primary text-white btn btn-default" id="btn_Next" disabled>
+              <button type="button" class="btn-primary text-white btn btn-default component__btn module__btn-default" id="btn_Next" disabled>
                   <span class="glyphicon glyphicon-check"></span>&nbsp;{{_('Confirm')}}
               </button>
             </div>
@@ -421,12 +421,12 @@
 
               <div class="modal-footer">
                 <button type="button"
-                        class="btn-info text-white btn btn-default pull-left"
+                        class="btn-info text-white btn btn-default component__btn module__btn-default pull-left"
                         id="btn_back">
                   <span class="glyphicon glyphicon-chevron-left text-white"></span>&nbsp;{{ _('Back') }}
                 </button>
                 <button type="button"
-                        class="btn-primary text-white btn btn-default"
+                        class="btn-primary text-white btn btn-default component__btn module__btn-default"
                         id="btn_approve">
                   <span class="glyphicon glyphicon-send"></span>&nbsp;{{ _('Send') }}
                 </button>

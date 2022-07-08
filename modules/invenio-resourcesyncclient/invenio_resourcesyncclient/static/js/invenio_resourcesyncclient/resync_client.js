@@ -658,7 +658,7 @@ class CreateResyncComponent extends React.Component {
             </span>
           }
             <button
-              className="btn btn-danger"
+              className="btn btn-danger component__btn module__btn-danger"
               onClick={() => {
                 this.props.handleChangeTab("list");
               }}

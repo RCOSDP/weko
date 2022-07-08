@@ -95,6 +95,41 @@
     }
   }
 
+  // Alternative for changing values inside a minified css
+  // in which the source file cannot be located
+  .save-button {
+    background-color: @color-blue-10 !important;
+    color: @color-white !important;
+    &:hover {
+      background-color: @color-blue-10-hover !important;
+      color: @color-white !important;
+    }
+  }
+
+  // Alternative for changing values inside a minified css
+  // in which the source file cannot be located
+  .next-button {
+    background-color: @color-cyan-10 !important;
+    color: @color-white !important;
+    &:hover {
+      background-color: @color-cyan-10-hover !important;
+      color: @color-white !important;
+    }
+  }
+
+  // Alternative for changing values inside a minified css
+  // in which the source file cannot be located
+  .btn-danger {
+    padding: 0.5rem 1rem !important;
+    margin: 0.1rem !important;
+    background-color: @color-red-10 !important;
+    color: @color-white !important;
+    &:hover {
+      background-color: @color-red-10-hover !important;
+      color: @color-white !important;
+    }
+  }
+
   .component__btn {
     &.module__btn-primary {
       background-color: @color-blue-10;
@@ -105,11 +140,40 @@
       }
     }
 
-    &.module__btn-info {
+    &.module__btn-default {
+      background-color: @color-monochrome-300;
+      color: @color-monochrome-900;
+      &:hover {
+        background-color: @color-monochrome-400;
+        color: @color-monochrome-900;
+      }
+    }
+
+    &.module__btn-success {
       background-color: @color-green-10;
       color: @color-white;
       &:hover {
         background-color: @color-green-10-hover;
+        color: @color-white;
+      }
+    }
+
+    &.module__btn-info {
+      background-color: @color-cyan-10;
+      color: @color-white;
+      &:hover {
+        background-color: @color-cyan-10-hover;
+        color: @color-white;
+      }
+    }
+
+    &.module__btn-danger {
+      padding: 0.5rem 1rem;
+      margin: 0.1rem;
+      background-color: @color-red-10;
+      color: @color-white;
+      &:hover {
+        background-color: @color-red-10-hover;
         color: @color-white;
       }
     }

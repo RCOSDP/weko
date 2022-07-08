@@ -25,7 +25,7 @@
       <div class="col-md-12 col-lg-3">
         <form method="POST" action="{{ url_for('.client_reset', client_id=client.client_id) }}">
           <input type="hidden" name="reset" value="yes">
-          <button type="submit" class="btn btn-danger">
+          <button type="submit" class="btn btn-danger component__btn module__btn-danger">
             <i class="fa fa-ban"></i> {{ _('Reset client secret') }}
           </button>
         </form>
@@ -43,8 +43,8 @@
       {{ render_field(field) }}
       {%- endfor %}
       <div class="form-group">
-        <button type="submit" name="delete" class="btn btn-danger"><i class="fa fa-trash-o"></i> {{ _('Delete') }}</button>
-        <button type="submit" name="save" class="btn btn-primary"><i class="fa fa-check"></i> {{ _('Save') }}</button>
+        <button type="submit" name="delete" class="btn btn-danger component__btn module__btn-danger"><i class="fa fa-trash-o"></i> {{ _('Delete') }}</button>
+        <button type="submit" name="save" class="btn btn-primary component__btn module__btn-primary"><i class="fa fa-check"></i> {{ _('Save') }}</button>
       </div>
     </form>
   </div>

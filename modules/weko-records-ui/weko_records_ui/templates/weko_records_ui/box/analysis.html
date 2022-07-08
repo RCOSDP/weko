@@ -22,12 +22,12 @@
     <div class="well component__analysis">
         <div class="hide" id="analysis_url">{{analysis_url}}</div>
         {%- if rights_values -%}
-            <button class="term-condtion-modal btn btn-primary" id="btn_analysis"
+            <button class="term-condtion-modal btn btn-primary component__btn module__btn-primary" id="btn_analysis"
                     data-modal-id="#show_rights_info">
                 {{_('Online Analysis')}}
             </button>
         {%- else -%}
-            <button class="next_to_analysis term-condtion-modal btn btn-primary" id="btn_analysis">
+            <button class="next_to_analysis term-condtion-modal btn btn-primary component__btn module__btn-primary" id="btn_analysis">
                 {{_('Online Analysis')}}
             </button>
         {%- endif -%}
@@ -75,7 +75,7 @@
                 </div>
                 <div class="modal-footer">
                     <button id="next_to_analysis"
-                            type="button" class="next_to_analysis btn btn-primary disabled"
+                            type="button" class="next_to_analysis btn btn-primary component__btn module__btn-primary disabled"
                             disabled>{{ _('Next') }}</button>
                 </div>
             </div>

@@ -1648,7 +1648,7 @@ class ComponentButtonLayout extends React.Component {
               <span className="glyphicon glyphicon-remove" aria-hidden="true"/>
               &nbsp;Cancel
             </button>
-            <button className="btn btn-danger delete-button style-my-button"
+            <button className="btn btn-danger component__btn module__btn-danger delete-button style-my-button"
                     onClick={this.deleteCommand}>
               <span className="glyphicon glyphicon-trash" aria-hidden="true"/>
               &nbsp;Delete

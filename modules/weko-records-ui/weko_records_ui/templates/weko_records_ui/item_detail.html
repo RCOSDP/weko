@@ -155,14 +155,14 @@
                     {% if '0' in public_status %}
                         {{ _('Public') }}
                         <input type="hidden" name="status" value="1">
-                      <button class="btn btn-default btn-xs" type="button"
+                      <button class="btn btn-default component__btn module__btn-default btn-xs" type="button"
                               name="status" value="1" id="public_status_btn">
                           {{ _('Change to Private') }}
                       </button>
                     {% else %}
                         {{ _('Private') }}
                         <input type="hidden" name="status" value="0">
-                      <button class="btn btn-default btn-xs" type="button"
+                      <button class="btn btn-default component__btn module__btn-default btn-xs" type="button"
                               name="status" value="0" id="public_status_btn">
                           {{ _('Change to Public') }}
                       </button>

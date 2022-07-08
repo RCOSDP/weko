@@ -141,12 +141,12 @@
                       </div>
                       <div class="col-sm-2 col-md-2 col-md-2 text-center">
                         &nbsp;<br>
-                        <button type="button" class="btn btn-default" ng-click="setDeny(selected_allow)">
+                        <button type="button" class="btn btn-default component__btn module__btn-default" ng-click="setDeny(selected_allow)">
                           <span class="glyphicon glyphicon-arrow-right"></span>
                         </button>
                         <br>
                         <br>
-                        <button type="button" class="btn btn-default" ng-click="setAllow(selected_deny)" >
+                        <button type="button" class="btn btn-default component__btn module__btn-default" ng-click="setAllow(selected_deny)" >
                           <span class="glyphicon glyphicon-arrow-left"></span>
                         </button>
                       </div>
@@ -225,7 +225,7 @@
                             <input type="label" class="form-control" id="label_contents_[[$index]]" value=[[option_condition.contents_value.en]] lang={{currentLanguage}} readonly="readonly">
                             <input type="hidden" class="form-control" id="hidden_contents_[[$index]]" value=[[option_condition.contents_value.ja]] readonly="readonly">
                           {%- endif -%}
-                          <a data-toggle="modal" data-target="#search_contents_chg" class="btn btn-default" data-contents="label_contents_[[$index]]" data-subcontents="hidden_contents_[[$index]]" data-index="[[$index]]" id="btn_contents_[[$index]]" data-lang={{currentLanguage}}>
+                          <a data-toggle="modal" data-target="#search_contents_chg" class="btn btn-default component__btn module__btn-default" data-contents="label_contents_[[$index]]" data-subcontents="hidden_contents_[[$index]]" data-index="[[$index]]" id="btn_contents_[[$index]]" data-lang={{currentLanguage}}>
                             <span class="glyphicon glyphicon-edit"></span>&nbsp
                                 {{ _('Edit') }}</a>
                         </div>
@@ -259,7 +259,7 @@
                   </td>
                   <td >
                     <div class="col-sm-4 col-md-4 col-md-4"  style="display: flex;">
-                      <a data-toggle="modal" data-target="#search_item_chg" class="btn btn-default" data-contents="label_contents_" id="btn_contents_[[$index]]">
+                      <a data-toggle="modal" data-target="#search_item_chg" class="btn btn-default component__btn module__btn-default" data-contents="label_contents_" id="btn_contents_[[$index]]">
                         <span class="glyphicon glyphicon-edit"></span>&nbsp
                           {{_('Search item setting')}}</a>
                     </div>
@@ -437,7 +437,7 @@
     </div>
     <!--END Main Screen Initial Display Setting -->
     <div class="form-group">
-      <button type="button" class="btn btn-primary pull-right" ng-click="saveData()">
+      <button type="button" class="btn btn-primary component__btn module__btn-primary pull-right" ng-click="saveData()">
         <span class="glyphicon glyphicon-save"></span>&nbsp
         {{_('Save')}}
       </button>
@@ -474,7 +474,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button id="save_button" class="btn btn-primary pull-right" >
+        <button id="save_button" class="btn btn-primary component__btn module__btn-primary pull-right" >
           <span class="glyphicon glyphicon-save" class="close" data-dismiss="modal" aria-label="Close" data-num></span>&nbsp;
           {{_('Save')}}
         </button>
@@ -554,14 +554,14 @@
                 <td class="col-sm-2" id="group_btn">
                   <div class="btn-group form-inline" data-key="{{key}}">
                     <!--Button-->
-                    <button type="button" class="btn btn-success
+                    <button type="button" class="btn btn-success component__btn module__btn-success
                             ten-pixel-right-margin ten-pixel-bottom-margin"
                             style="position:unset;" data-action="add" value="">
                       <span class="glyphicon glyphicon-plus"></span>&nbsp;
                       {{_('Add')}}
                     </button>
 
-                    <button type="button" class="btn btn-danger
+                    <button type="button" class="btn btn-danger component__btn module__btn-danger 
                             ten-pixel-bottom-margin" id="button_remove"
                             style="position:unset;" data-action="del">
                       <span class="glyphicon glyphicon-remove"></span>
@@ -577,7 +577,7 @@
           <!--<div class= "col-sm-2"> -->
           <div class="col-sm-10"></div>
           <div class="col-sm-2">
-            <button type="button" id="mapping-submit" class="btn btn-primary pull-right" data-action="save">
+            <button type="button" id="mapping-submit" class="btn btn-primary component__btn module__btn-primary pull-right" data-action="save">
               <span class="glyphicon glyphicon-save"></span>&nbsp;
               {{_('Save')}}
             </button>

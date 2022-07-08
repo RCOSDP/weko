@@ -154,13 +154,13 @@
    <div class="container col-xs-12 col-md-6 col-lg-4" style="padding: 5px;">
    <!--<br class="rwd-break">-->
     <div class="row col-xs-6 col-md-2 col-lg-2 col-xl-1">
-       <button id="downloadReport" class="btn btn-primary">
+       <button id="downloadReport" class="btn btn-primary component__btn module__btn-primary">
            <span class="glyphicon glyphicon-cloud-download"></span>&nbsp
         {{_('Download')}}
        </button>
      </div><div class="col-md-3"></div>
      <div class="col-xs-6 col-md-7 col-lg-8 col-xl-1 pull-right">
-      <a id="confirm_send_email" class="btn btn-primary"
+      <a id="confirm_send_email" class="btn btn-primary component__btn module__btn-primary"
         data-toggle="modal" data-target="#confirm_send_email_modal">
         <span class="glyphicon glyphicon-send"></span>&nbsp
         {{_('Send')}}
@@ -199,7 +199,7 @@
             value={{email.email_address}} required/></br>
         </div>
         <div class="col-xs-1 col-md-1">
-            <a class="btn btn-danger btn-sm"
+            <a class="btn btn-danger component__btn module__btn-danger btn-sm"
                 onclick="var email = document.getElementById('inputEmail_{{email.id + 1}}').parentElement.parentElement; email.parentElement.removeChild(email)"  id="remove_button">
                 <span class="glyphicon glyphicon-remove"></span>
             </a>
@@ -212,14 +212,14 @@
     <div class="form-actions col-xs-8 col-md-8 col-lg-8">
         <div class="col-xs-4 col-md-4 col-lg-4"></div>
         <div class="col-xs-2 col-md-2 col-lg-2">
-          <a id="addEmail" class="btn btn-success">
+          <a id="addEmail" class="btn btn-success component__btn module__btn-success">
               <span class="glyphicon glyphicon-plus"></span>&nbsp
                   {{_('Email Address')}}
           </a>
         </div>
         <div class="col-xs-8 col-md-4 col-lg-4"></div>
         <div class="col-xs-2 col-md-2 col-lg-2">
-          <a id="saveEmail" class="btn btn-primary">
+          <a id="saveEmail" class="btn btn-primary component__btn module__btn-primary">
               <span class="glyphicon glyphicon-save"></span>&nbsp
                   {{_('Save')}}
           </a>
@@ -268,7 +268,7 @@
         <p class="text-center">{{_('Could not download file.')}}</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-info close-button" data-dismiss="modal">
+        <button type="button" class="btn btn-info component__btn module__btn-info close-button" data-dismiss="modal">
               <span class="glyphicon glyphicon-remove"></span>
                  {{_('Close')}}
         </button>

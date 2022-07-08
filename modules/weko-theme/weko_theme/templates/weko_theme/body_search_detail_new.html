@@ -136,7 +136,7 @@ USA. #}
           </form>
         </div>
         <div class="col-xs-1 text-center">
-          <button ng-if="!$first" type="button" class="btn btn-danger btn-sm" ng-click="delete_search_key($index)">
+          <button ng-if="!$first" type="button" class="btn btn-danger component__btn module__btn-danger btn-sm" ng-click="delete_search_key($index)">
             <span class="sr-only">Delete</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -150,7 +150,7 @@ USA. #}
       <div class="row row-4">
         <div class="col-xs-11 col-lg-11"></div>
         <div class="col-xs-1 col-lg-1">
-          <button id="add-big-button" class="btn btn-success component__btn module__btn-gray" ng-click="add_search_key()"
+          <button id="add-big-button" class="btn btn-success component__btn module__btn-success component__btn module__btn-gray" ng-click="add_search_key()"
             ng-disabled="condition_data.length==detail_search_key.length">
             <span class="component__btn-has-icon">
               <span aria-hidden="true">
@@ -170,7 +170,7 @@ USA. #}
     <div class="container testimonial-group element__search-and-clear">
       <div class="row row-4">
         <div class="col-xs-1 col-xs-offset-5">
-          <button id="detail-search-btn" type="submit" class="btn btn-primary component__btn module__btn-primary" ng-click="detail_search()">
+          <button id="detail-search-btn" type="submit" class="btn btn-primary component__btn module__btn-primary component__btn module__btn-primary" ng-click="detail_search()">
             <span class="component__btn-has-icon">
               <span aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -184,7 +184,7 @@ USA. #}
           </button>
         </div>
         <div class="col-xs-1">
-          <button id="clear-search-btn" type="button" class="btn btn-default component__btn module__btn-gray" ng-click="detail_search_clear()">
+          <button id="clear-search-btn" type="button" class="btn btn-default component__btn module__btn-default component__btn module__btn-gray" ng-click="detail_search_clear()">
             <span class="component__btn-has-icon">
               <span aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

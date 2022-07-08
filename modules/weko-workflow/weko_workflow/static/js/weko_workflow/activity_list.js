@@ -217,7 +217,7 @@ require([
       newRow = $('<div class="form-group">');
       cols += '<div class="col-sm-7"><input type="text" name="' + name + '" class="form-control" value= "' + valueParam + '"></div>';
     }
-    cols += '<div class="col-sm-2"><div class="col-sm-8"><button type="button" class="btn btn-danger btn-sm remove_row"><span class="glyphicon glyphicon-remove"></span></button></div></div>';
+    cols += '<div class="col-sm-2"><div class="col-sm-8"><button type="button" class="btn btn-danger component__btn module__btn-danger btn-sm remove_row"><span class="glyphicon glyphicon-remove"></span></button></div></div>';
     newRow.append(cols);
     $("#" + name + '_group').append(newRow);
   }

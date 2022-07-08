@@ -487,7 +487,7 @@ class CreateResourceComponent extends React.Component {
               Create add Add Another
             </button>
             <button
-              className="btn btn-danger"
+              className="btn btn-danger component__btn module__btn-danger"
               onClick={() => {
                 this.props.handleChangeTab("list");
               }}
@@ -720,7 +720,7 @@ class EditResourceComponent extends React.Component {
               Save
             </button>
             <button
-              className="btn btn-danger"
+              className="btn btn-danger component__btn module__btn-danger"
               onClick={() => {
                 this.props.handleChangeTab("list");
               }}

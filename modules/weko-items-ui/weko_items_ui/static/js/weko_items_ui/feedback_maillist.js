@@ -133,13 +133,13 @@ class ComponentExclusionTarget extends React.Component {
         </label>
         <div className="controls col-xs-9">
           <div>
-            <ReactBootstrap.Button variant="primary" onClick={this.searchCommand}>
+            <ReactBootstrap.Button variant="primary" className="btn btn-default component__btn module__btn-default" onClick={this.searchCommand}>
               <i className="glyphicon glyphicon-search"></i>&nbsp;{OPEN_MODAL_SEARCH_BUTTON_NAME}
             </ReactBootstrap.Button>
           </div>
           <div className="style-full-size">
             {this.generateSelectedBox(this.state.listEmail)}
-            <button className="btn btn-danger style-deleteBtn" onClick={this.deleteCommand}>
+            <button className="btn btn-danger component__btn module__btn-danger style-deleteBtn" onClick={this.deleteCommand}>
               <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
               &nbsp;{DELETE_BUTTON_NAME}
             </button>
@@ -307,7 +307,7 @@ class SearchComponent extends React.Component {
           <input className="form-control" placeholder="" type="text" onChange={this.handleChange} value={this.state.searchKey} />
         </div>
         <div className="col-sm-1 col-md-1">
-          <button class="btn btn-primary search-button" type="button" onClick={this.searchEmail}>&nbsp;&nbsp;
+          <button class="btn btn-primary search-button component__btn module__btn-primary" type="button" onClick={this.searchEmail}>&nbsp;&nbsp;
             <i class="fa fa-search-plus"></i>
             &nbsp;
             {SEARCH_BUTTON_NAME} &nbsp;&nbsp;
@@ -488,7 +488,7 @@ class ModalFooterComponent extends React.Component {
   }
   render() {
     return (
-      <ReactBootstrap.Button variant="secondary" onClick={this.handleClose}>
+      <ReactBootstrap.Button variant="secondary" className="btn btn-default component__btn module__btn-default" onClick={this.handleClose}>
         <span className="glyphicon glyphicon-remove"></span> {CLOSE_BUTTON_NAME}
       </ReactBootstrap.Button>
     )

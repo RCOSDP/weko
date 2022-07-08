@@ -51,7 +51,7 @@
         <form action="{{url_for('invenio_accounts.revoke_session')}}" method="POST">
           {{ form.csrf_token }}
           {{ form.sid_s }}
-          <button type="submit" class="btn btn-default" title="{{remove_action}}">
+          <button type="submit" class="btn btn-default component__btn module__btn-default" title="{{remove_action}}">
             {{revoke_action if not is_current_sid else _('Logout')}}
           </button>
         </form>

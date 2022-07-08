@@ -57,7 +57,7 @@
           </div>
           <div class="form-group pull-right">
             <div class="btn-group">
-              <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+              <a class="btn btn-default component__btn module__btn-default dropdown-toggle" data-toggle="dropdown" href="#">
                 <i class="glyphicon glyphicon-random"></i> {{ _('Sort by') }}
                 <span class="caret"></span>
               </a>
@@ -116,7 +116,7 @@
                           </div>
                         </div>
                         {% if obj.id_role == current_user.roles[0].id %}
-                          <a href="{{url_for('.curate', community_id=obj.id)}}" class="btn btn-info">{{ _('Curate') }}</a>
+                          <a href="{{url_for('.curate', community_id=obj.id)}}" class="btn btn-info component__btn module__btn-info">{{ _('Curate') }}</a>
                         {% endif %}
                       </div>
                       {{ obj.title }}

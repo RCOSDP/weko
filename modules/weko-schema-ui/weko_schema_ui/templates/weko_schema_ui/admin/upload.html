@@ -65,7 +65,7 @@
              <!--   <div ng-show="true">
                   <ul class="list-inline text-right">
                     <li><button ng-disabled="recordsVM.invenioRecordsLoading"
-                            class="btn btn-primary save-button"
+                            class="btn btn-primary component__btn module__btn-primary save-button"
                             ng-click="recordsVM.actionHandler(['self',
                             'POST'])"><span class="glyphicon glyphicon-download-alt"></span>
                          {{_('Save')}}
@@ -73,7 +73,7 @@
                     <li>
                         <button ng-disabled="recordsVM.invenioRecordsLoading"
                             ng-hide="!recordsVM.invenioRecordsEndpoints.initialization"
-                            class="btn btn-danger delete-button" ng-click="recordsVM.actionHandler(['self', 'DELETE'])">
+                            class="btn btn-danger component__btn module__btn-danger delete-button" ng-click="recordsVM.actionHandler(['self', 'DELETE'])">
                             <span class="glyphicon glyphicon-trash"></span>
                                {{_('Delete')}}
                         </button>
@@ -99,7 +99,7 @@
                 <div ng-show="true">
                   <ul class="list-inline text-center">
                     <li><button ng-disabled="recordsVM.invenioRecordsLoading"
-                            class="btn btn-primary"
+                            class="btn btn-primary component__btn module__btn-primary"
                             ng-click="recordsVM.actionHandler(['self',
                             'POST'], '{{ url_for('schemasettings.list')
                             }}')"><span class="glyphicon glyphicon-save"></span>&nbsp;

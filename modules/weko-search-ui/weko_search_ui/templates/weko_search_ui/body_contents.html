@@ -128,7 +128,7 @@
             <option value="view_print">{{_('Print All Displayed Items')}}</option>
             <option value="all_print">{{_('Print All Items Of This Index')}}</option>
           </select>
-          <button type="button" class="btn btn-primary hide">{{_('Execution')}}</button>
+          <button type="button" class="btn btn-primary component__btn module__btn-primary hide">{{_('Execution')}}</button>
           {%- if not item_export and allow_item_exporting %}
             <div class="element__item-list-export-btn">
               <a href=""{{ url_for('weko_items_ui.export', **request.args) }}"

@@ -58,14 +58,14 @@
                     <input type="hidden" ng-model="ipDetail.receive_mail_flag" hide>
                   </td>
                   <td rowspan="4" class="width_15 btnMiddle">
-                    <button type="button" class="btn btn-default" ng-click="moveSiteLicenseUp($index)" ><span class="glyphicon glyphicon-arrow-up"></span>
+                    <button type="button" class="btn btn-default component__btn module__btn-default" ng-click="moveSiteLicenseUp($index)" ><span class="glyphicon glyphicon-arrow-up"></span>
                     </button>
                     <p></p>
-                    <button type="button" class="btn btn-default" ng-click="moveSiteLicenseDown($index)" ><span class="glyphicon glyphicon-arrow-down"></span>
+                    <button type="button" class="btn btn-default component__btn module__btn-default" ng-click="moveSiteLicenseDown($index)" ><span class="glyphicon glyphicon-arrow-down"></span>
                     </button>
                   </td>
                   <td rowspan="4" class="width_15 btnMiddle">
-                    <button type="button" class="btn btn-danger" ng-click="deleteSiteLicense(ipIndex)">
+                    <button type="button" class="btn btn-danger component__btn module__btn-danger" ng-click="deleteSiteLicense(ipIndex)">
                          <span class="glyphicon glyphicon-trash"></span>&nbsp
                                {{_('Delete')}}
                     </button>
@@ -136,7 +136,7 @@
                     <span style="color:red" ng-show="ipCheckFlgArry[ipIndex].ipRangeCheck" class="ng-hide">{{_('The range of ipAddress is not correct')}}</span>
                     <p></p>
                     <div class="form-group">
-                      <button type="button" class="btn btn-success"
+                      <button type="button" class="btn btn-success component__btn module__btn-success"
                           ng-click="addNewRowRange(ipIndex)">
                          <span class="glyphicon glyphicon-plus"></span>&nbsp
                               {{_('More Input Row')}}
@@ -147,7 +147,7 @@
               </table>
             </div>
             <div class="form-group">
-              <button type="button" class="btn btn-success"
+              <button type="button" class="btn btn-success component__btn module__btn-success"
                   ng-click="addNewRowSiteLicense()">
                 <span class="glyphicon glyphicon-plus"></span>&nbsp
                 {{_('More Input Row')}}
@@ -177,10 +177,10 @@
                     </select>
                   </td>
                   <td class="width_10 btnMiddle">
-                    <button type="button" class="btn btn-default" ng-click="setAllowToDeny(denyId)">
+                    <button type="button" class="btn btn-default component__btn module__btn-default" ng-click="setAllowToDeny(denyId)">
                       <span class="glyphicon glyphicon-arrow-right"></span></button>
                     <p></p>
-                    <button type="button" class="btn btn-default" ng-click="setDenyToAllow(alowId)">
+                    <button type="button" class="btn btn-default component__btn module__btn-default" ng-click="setDenyToAllow(alowId)">
                       <span class="glyphicon glyphicon-arrow-left"></span></button>
                   </td>
                   <td class="width_45">
@@ -199,7 +199,7 @@
       </table>
     </form>
     <div class="form-group">
-      <button type="button" class="btn btn-primary pull-right" ng-click="commitData()">
+      <button type="button" class="btn btn-primary component__btn module__btn-primary pull-right" ng-click="commitData()">
         <span class="glyphicon glyphicon-save"></span>&nbsp
         {{_('Save')}}
       </button>

@@ -77,17 +77,17 @@
         <div class="form-group">
           <div class="col-sm-offset-3 col-sm-9">
             {%- if flow_id == '0' %}
-            <button type="button" class="btn btn-primary" id="btn-new-flow">
+            <button type="button" class="btn btn-primary component__btn module__btn-primary" id="btn-new-flow">
               <span class="glyphicon glyphicon-save" aria-hidden="true"></span>&nbsp
                   {{_('Save')}}
             </button>
             {%- else %}
-            <button type="button" class="btn btn-primary" id="btn-upt-flow">
+            <button type="button" class="btn btn-primary component__btn module__btn-primary" id="btn-upt-flow">
               <span class="glyphicon glyphicon-save" aria-hidden="true"></span>&nbsp
                      {{_('Save')}}
             </button>
             {% endif %}
-            <button type="button" class="btn btn-danger" id="btn-del-flow" {%- if flow_id == '0' %} disabled {% endif %}>
+            <button type="button" class="btn btn-danger component__btn module__btn-danger" id="btn-del-flow" {%- if flow_id == '0' %} disabled {% endif %}>
               <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>&nbsp
                    {{_('Delete')}}
             </button>
@@ -103,7 +103,7 @@
 <div class="row">
   <div class="col-sm-offset-2 col-sm-8">
     <label>{{_('Action List')}}</label><br>
-    <button class="btn btn-success pull-right" id="btn_pop_action" {%- if flow_id == '0' %} disabled {% endif %}>
+    <button class="btn btn-success component__btn module__btn-success pull-right" id="btn_pop_action" {%- if flow_id == '0' %} disabled {% endif %}>
       <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp
       {{_('More Action')}}
     </button><br/><br/><br/>
@@ -200,10 +200,10 @@
               <td class="hide"><span id="td_action_ver_{{action.action_id}}">{{action.action_version|default(action.action.action_version)}}</span></td>
               <td>
                 <div class="btn-group" role="group" aria-label="Swap">
-                 <button type="button" class="btn btn-default btn-sm sortable sortable_up" {%- if loop.first %}disabled{%- endif %}>
+                 <button type="button" class="btn btn-default component__btn module__btn-default btn-sm sortable sortable_up" {%- if loop.first %}disabled{%- endif %}>
                         <i class="fa fa-angle-up"></i>
                  </button><br/><br/>
-                 <button type="button" class="btn btn-default btn-sm sortable sortable_down" {%- if loop.last %}disabled{%- endif %}>
+                 <button type="button" class="btn btn-default component__btn module__btn-default btn-sm sortable sortable_down" {%- if loop.last %}disabled{%- endif %}>
                         <i class="fa fa-angle-down"></i>
                  </button>
                 </div>
@@ -218,11 +218,11 @@
 </div>
 <div class="row">
 <div class="col-sm-offset-2 col-sm-8">
-  <button type="button" class="btn btn-default" onclick="window.location.href='{{url_for('flowsetting.index')}}';">
+  <button type="button" class="btn btn-default component__btn module__btn-default" onclick="window.location.href='{{url_for('flowsetting.index')}}';">
     <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>&nbsp
     {{_('Back')}}
  </button>
-<button type="button" class="btn btn-primary pull-right" id="btn_submit"
+<button type="button" class="btn btn-primary component__btn module__btn-primary pull-right" id="btn_submit"
     data-uri="{{url_for('flowsetting.upt_flow_action', flow_id=flow_id)}}" {%- if flow_id == '0' %} disabled {% endif %}>
     <span class="glyphicon glyphicon-save" aria-hidden="true"></span>&nbsp
      {{_('Save')}}
@@ -290,8 +290,8 @@
     <td class="hide"><span id="td_action_ver_apply_action.id">apply_action.action_version</span></td>
     <td>
       <div class="btn-group" role="group" aria-label="Swap">
-        <button type="button" class="btn btn-default btn-sm sortable sortable_up"><i class="fa fa-angle-up"></i></button><br/><br/>
-        <button type="button" class="btn btn-default btn-sm sortable sortable_down"><i class="fa fa-angle-down"></i></button>
+        <button type="button" class="btn btn-default component__btn module__btn-default btn-sm sortable sortable_up"><i class="fa fa-angle-up"></i></button><br/><br/>
+        <button type="button" class="btn btn-default component__btn module__btn-default btn-sm sortable sortable_down"><i class="fa fa-angle-down"></i></button>
       </div>
     </td>
   </tr>

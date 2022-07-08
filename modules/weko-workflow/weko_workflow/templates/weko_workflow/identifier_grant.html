@@ -42,12 +42,14 @@
         <tr>
           {%- set idf_link_data = idf_grant_input[0] %}
           <td height="35">
-            <label>
-              <input type="radio" name="identifier_grant"
-                     value="{{ idf_link_data[0] }}" {%- if idf_link_data[0]==
-                     temporary_idf_grant %}checked{%- endif %}>
-              {{ idf_link_data[1] }}
-            </label>
+            <div class="less-grant">
+              <label>
+                  <input type="radio" name="identifier_grant"
+                      value="{{ idf_link_data[0] }}" {%- if idf_link_data[0]==
+                      temporary_idf_grant %}checked{%- endif %}>
+              </label>
+              <div class="less-grant-label">{{ idf_link_data[1] }}</div>
+          </div>
           </td>
         </tr>
         {%- if idf_grant_data %}
@@ -86,7 +88,7 @@
       {% include "weko_workflow/modal_withdraw_confirmation.html" %}
       <div class="row h-100">
         <p class="text-center">
-          <button class="btn btn-danger withdraw-button" id="btn_withdraw">
+          <button class="btn btn-danger component__btn module__btn-danger withdraw-button" id="btn_withdraw">
             {{_('Withdraw DOI')}}
           </button>
         </p>
@@ -107,14 +109,14 @@
   </div>
 </div>
 <br>
-<button type="button" class="btn btn-primary save-button" id="btn-draft"
+<button type="button" class="btn btn-primary component__btn module__btn-primary save-button" id="btn-draft"
         style="width: 120px; height: 40px;font-size: 15px;">
   <span class="glyphicon glyphicon-saved"></span> {{_('Save')}}
 </button>
-<button type="button" class="btn btn-info next-button" id="btn-finish">
+<button type="button" class="btn btn-info component__btn module__btn-info next-button" id="btn-finish">
   {{_('Next')}} <span class="glyphicon glyphicon-chevron-right"></span>
 </button>
 <button ng-disabled="recordsVM.invenioRecordsLoading"
-        class="btn btn-danger done-button pull-right" id="btn_quit">
+        class="btn btn-danger component__btn module__btn-danger done-button pull-right" id="btn_quit">
   <i class="fa fa-sign-out"></i> {{_('Quit_identifier_grand')}}
 </button>

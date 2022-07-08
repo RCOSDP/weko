@@ -234,7 +234,7 @@ class ComponentExclusionTarget extends React.Component {
                     <div className="style-full-size">
                       {this.generateSelectedBox(this.state.listEmail)}
                       <div className="button-container">
-                        <button ref={this.setDeleteWrapperRef} className="btn btn-danger style-deleteBtn" onClick={this.deleteCommand}>
+                        <button ref={this.setDeleteWrapperRef} className="btn btn-danger component__btn module__btn-danger style-deleteBtn" onClick={this.deleteCommand}>
                             <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
                             &nbsp;{DELETE_BUTTON_NAME}
                         </button>
@@ -397,7 +397,7 @@ class SearchComponent extends React.Component {
           <input className="form-control" placeholder="" type="text" onChange={this.handleChange} value={this.state.searchKey}/>
         </div>
         <div className="col-sm-1 col-md-1">
-          <button class="btn btn-primary search-button" type="button" onClick = {this.searchEmail}>&nbsp;&nbsp;
+          <button class="" type="button" onClick = {this.searchEmail}>&nbsp;&nbsp;
             <i class="fa fa-search-plus"></i>
             &nbsp;
             {SEARCH_BUTTON_NAME} &nbsp;&nbsp;
