@@ -48,6 +48,14 @@
       "oai_dc_mapping": "",
       "display_lang_type": ""
     },
+    "item_15512643084872":{
+      "jpcoar_mapping":{
+        "title":{
+          "@value":"subitem_15512556472252",
+          "@attributes":{"xml:lang":"subitem_1551255648112"}
+        }
+      }
+    },
     "item_1551264326373": {
       "lom_mapping": "",
       "lido_mapping": "",
@@ -192,6 +200,9 @@
       "junii2_mapping": "",
       "oai_dc_mapping": "",
       "display_lang_type": ""
+    },
+    "not_jpcoar_mapping":{
+      "lom_mapping":""
     }
   }
   

@@ -23,14 +23,16 @@
 from re import T
 import pytest
 from elasticsearch.exceptions import RequestError
-from invenio_records.api import Record, RecordBase
+from invenio_records.api import Record
 from weko_deposit.api import WekoDeposit
 from weko_index_tree.models import Index
 from mock import patch
+import uuid
+from sqlalchemy.exc import SQLAlchemyError
 
 from weko_records.api import FeedbackMailList, FilesMetadata, ItemLink, \
     ItemsMetadata, ItemTypeEditHistory, ItemTypeNames, ItemTypeProps, \
-    ItemTypes, Mapping, SiteLicense
+    ItemTypes, Mapping, SiteLicense, RecordBase
 from weko_records.models import ItemTypeName, SiteLicenseInfo, \
     SiteLicenseIpAddress
 
@@ -52,7 +54,6 @@ def test_recordbase(app, db):
     record = RecordBase(data)
     record.model = test_model
     result = record.dumps()
-    print(result)
     assert result["id"] == 1
     assert result["version_id"] == 10
     assert result["created"] == "yesterday"
@@ -119,8 +120,17 @@ def test_itemtypes(app, db):
     if len(record.revisions) > 1:
         record.revert(len(record.revisions) - 1)
 
+def test_itemtypes_update(app, db, location, mocker):
+    # create new record
+    mock_create = mocker.patch("weko_records.api.ItemTypes.create")
+    ItemTypes.update(id_=-1, name="test")
+    mock_create.assert_called_once()
+    
+    # the record to be updated does not exist
+    with pytest.raises(ValueError):
+        ItemTypes.update(id_=1,name="test")
 
-def test_itemtypes_update_metadata(app, db, location, mocker):
+def test_itemtypes_update_item_type(app, db, location, mocker):
     _item_type_name = ItemTypeName(name='test')
     _item_type_name_exist = ItemTypeName(name='exist title')
     with db.session.begin_nested():
@@ -160,44 +170,316 @@ def test_itemtypes_update_metadata(app, db, location, mocker):
         render=_render,
         tag=1
     )
-    with patch("weko_records.api.ItemTypes.__update_item_type"):
-        # 名前を変える
+    # Change the name
+    record = ItemTypes.update(
+        id_=item_type.id,
+        name='test2',
+        schema=_schema,
+        form={},
+        render=_render
+    )
+
+    # Alliance exists
+    with pytest.raises(ValueError):
         record = ItemTypes.update(
             id_=item_type.id,
-            name='test2',
+            name='exist title',
             schema=_schema,
             form={},
             render=_render
         )
 
-        # 同名が存在
-        with pytest.raises(ValueError):
-            record = ItemTypes.update(
-                id_=item_type.id,
-                name='exist title',
-                schema=_schema,
-                form={},
-                render=_render
-            )
-# check_to_upgrade_versionがTrue
-        with patch("weko_records.api.utils.check_to_upgrade_version", return_value=True):
+    app.config['WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'] = False
+    record = ItemTypes.update(
+        id_=item_type.id,
+        name='test2',
+        schema=_schema,
+        form={},
+        render=_render
+    )
+
+    # check_to_upgrade_version is True
+    with patch("weko_records.utils.check_to_upgrade_version", return_value=True):
+        with patch("weko_records.api.ItemTypes.create"):
             record = ItemTypes.update(
                 id_=item_type.id,
                 name="new item",
                 schema=_schema,
                 form={},
-                render=_render
+                render=_render_2
             )
-        
-        app.config['WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'] = False
-        #with pytest.raises(RequestError):
-        record = ItemTypes.update(
-            id_=item_type.id,
-            name='test',
-            schema=_schema,
-            form={},
-            render=_render_2
-        )
+
+    # with pytest.raises(RequestError):
+    record = ItemTypes.update(
+        id_=item_type.id,
+        name='test',
+        schema=_schema,
+        form={},
+        render=_render_2
+    )
+
+
+@pytest.fixture()
+def update_metadata_data(app, db):
+    _render1 = {
+        'meta_list': {},
+        'table_row_map': {
+            'schema': {
+                'properties': {
+                    'item_1': {}
+                }
+            }
+        },
+        'table_row': ['pub_date','system_file','2','3']
+    }
+    _render2 = {
+        'meta_list': {},
+        'table_row_map': {
+            'schema': {
+                'properties': {
+                    'item_1': {}
+                }
+            }
+        },
+        'table_row':['2', '3', '4']
+    }
+    _schema={
+        'properties':{},
+    }
+    _mapping={
+        "pubdate":{
+        },
+        "system_file":{
+            "jpcoar_mapping": {
+                "URL":{},
+                "date":{},
+                "extent":{}
+                
+            }
+        }
+    }
+    _item_type_name = ItemTypeName(name='test')
+    _item_type_name2 = ItemTypeName(name="test2")
+    item_type = ItemTypes.create(
+        name="test",
+        item_type_name=_item_type_name,
+        schema=_schema,
+        render=_render1,
+        tag=1
+    )
+    item_type2 = ItemTypes.create(
+        name="test2",
+        item_type_name=_item_type_name2,
+        schema=_schema,
+        render=_render1,
+        tag=1
+    )
+    _item_type_mapping= Mapping.create(
+        item_type_id=item_type.id,
+        mapping=_mapping)
+    app.config['WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED']=False
+    return {
+        "item_type_name":[_item_type_name,_item_type_name2],
+        "item_type":[item_type, item_type2],
+        "schema":_schema,
+        "render":[_render1, _render2]
+        }
+
+
+@pytest.mark.parametrize("dummy_data",[
+    {"hits":{"hits":
+                [{"_id":"",
+                    "_source":{
+                        "_item_metadata":{
+                            "item_type_id":"","system_file":{}
+                        },
+                        "URL":{},
+                        "date":{}
+                    }
+                },
+                {"_id":"not_item_type",
+                    "_source":{
+                        "item_metadata":{
+                            "item_type_id":"xxxxx"
+                        }
+                    }
+                }]}
+    },
+    {"hits":{"hits":
+                [{"_id":"",
+                    "_source":{
+                        "_item_metadata":{
+                            "item_type_id":"",
+                            },
+                        }
+                },
+                {"_id":"not_item_type",
+                    "_source":{
+                        "item_metadata":{
+                            "item_type_id":"xxxxx"
+                        }
+                    }
+                }]}
+    }
+])
+def test_itemtypes_update_metadata(app, db, mock_execute, records, update_metadata_data, mocker, dummy_data):
+
+    item_type=update_metadata_data["item_type"][0]
+    _schema=update_metadata_data["schema"]
+    _render2=update_metadata_data["render"][1]
+    
+    dummy_data["hits"]["hits"][0]["_id"]=records[0][0].object_uuid
+    dummy_data["hits"]["hits"][0]["_source"]["_item_metadata"]["item_type_id"] = str(item_type.id)
+
+    app.config['WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED']=False
+    mocker.patch("weko_records.api.RecordsSearch.execute", return_value=mock_execute(dummy_data))
+    record = ItemTypes.update(
+        id_=item_type.id,
+        name="test",
+        schema=_schema,
+        form={},
+        render=_render2
+    )
+
+
+def test_itemtypes_update_metadata_diff_itemtype(app, db, mock_execute, update_metadata_data, mocker):
+    item_type2 = update_metadata_data["item_type"][1]
+    item_type=update_metadata_data["item_type"][0]
+    _schema=update_metadata_data["schema"]
+    _render2=update_metadata_data["render"][1]
+    dummy_data = {
+        "hits":{
+            "hits":[
+                {
+                    "_id":"test data",
+                    "_item_metadata":{
+                        "item_type_id":str(item_type2.id)
+                    }
+                }
+            ]
+        }
+    }
+
+    mocker.patch("weko_records.api.RecordsSearch.execute", return_value=mock_execute(dummy_data))
+    record = ItemTypes.update(
+        id_=item_type.id,
+        name="test",
+        schema=_schema,
+        form={},
+        render=_render2
+    )
+
+
+def test_itemtypes_update_metadata_sqlerror(app, db, records, mock_execute, update_metadata_data, mocker):
+    item_type=update_metadata_data["item_type"][0]
+    _schema=update_metadata_data["schema"]
+    _render2=update_metadata_data["render"][1]
+    dummy_data = {
+        "hits":{
+            "hits":
+                [
+                    {
+                        "_id":records[0][0].object_uuid,
+                        "_source":{
+                            "_item_metadata":{
+                                "item_type_id":str(item_type.id),
+                                "system_file":{}
+                            },
+                            "URL":{},
+                            "date":{}
+                            
+                        }
+                    },
+                    {
+                        "_id":"not_item_type",
+                        "_source":{
+                            "item_metadata":{
+                                "item_type_id":"xxxxx"
+                            }
+                        }
+                    }
+                ]
+        }
+    }
+    mocker.patch("weko_records.api.RecordsSearch.execute", return_value=mock_execute(dummy_data))
+    with patch("weko_records.api.db.session.commit", side_effect=SQLAlchemyError):
+        with pytest.raises(SQLAlchemyError):
+            record = ItemTypes.update(
+                id_=item_type.id,
+                name="test",
+                schema=_schema,
+                form={},
+                render=_render2
+            )
+
+
+def test_itemtypes_update_metadata_record0(app, db, mock_execute, update_metadata_data, mocker):
+    item_type=update_metadata_data["item_type"][0]
+    _schema=update_metadata_data["schema"]
+    _render2=update_metadata_data["render"][1]
+    dummy_data = {
+        "hits":{
+            "hits":
+                [
+                    {
+                        "_id":uuid.uuid4(),
+                        "_source":{
+                            "_item_metadata":{
+                                "item_type_id":str(item_type.id),
+                                "system_file":{}
+                            },
+                            "URL":{},
+                            "date":{}
+                            
+                        }
+                    }
+                ]
+        }
+    }
+    mocker.patch("weko_records.api.RecordsSearch.execute", return_value=mock_execute(dummy_data))
+    record = ItemTypes.update(
+        id_=item_type.id,
+        name="test",
+        schema=_schema,
+        form={},
+        render=_render2
+    )
+
+
+def test_itemtypes_update_metadata_item0(app, db, records, mock_execute, update_metadata_data, mocker):
+    item_type=update_metadata_data["item_type"][0]
+    item_type=update_metadata_data["item_type"][0]
+    _schema=update_metadata_data["schema"]
+    _render2=update_metadata_data["render"][1]
+
+    dummy_data = {
+        "hits":{
+            "hits":
+                [
+                    {
+                        "_id":records[0][0].object_uuid,
+                        "_source":{
+                            "_item_metadata":{
+                                "item_type_id":str(item_type.id),
+                                "system_file":{}
+                            },
+                            "URL":{},
+                            "date":{}
+                            
+                        }
+                    }
+                ]
+        }
+    }
+    app.config['WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED']=False
+    mocker.patch("weko_records.api.RecordsSearch.execute", return_value=mock_execute(dummy_data))
+    record = ItemTypes.update(
+        id_=item_type.id,
+        name="test",
+        schema=_schema,
+        form={},
+        render=_render2
+    )
 
 
 def test_itemtypes_delete(app, db):
