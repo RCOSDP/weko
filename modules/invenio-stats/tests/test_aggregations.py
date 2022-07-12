@@ -12,13 +12,13 @@ import datetime
 import time
 
 import pytest
-from conftest import _create_file_download_event
+from tests.conftest import _create_file_download_event
 from elasticsearch_dsl import Index, Search
 from invenio_search import current_search, current_search_client
 from mock import patch
 
 from invenio_stats import current_stats
-from invenio_stats.aggregations import StatAggregator, filter_robots
+from invenio_stats.aggregations import StatAggregator, filter_robots, BookmarkAPI
 from invenio_stats.processors import EventsIndexer
 from invenio_stats.tasks import aggregate_events, process_events
 
@@ -295,3 +295,11 @@ def test_get_bookmark(app, indexed_events):
 #     assert results[0].count == 12  # 3 views over 4 differnet hour slices
 #     assert results[0].unique_count == 4  # 4 different hour slices accessed
 #     assert results[0].volume == 9000 * 12
+
+
+def test_BookmarkAPI(app):
+    bookmark_api = BookmarkAPI(current_search_client,
+                               'file-download-agg',
+                               'day')
+    result = {"mappings":bookmark_api.MAPPINGS["mappings"]["aggregation-bookmark"]}
+    assert bookmark_api.MAPPINGS_ES7 == result

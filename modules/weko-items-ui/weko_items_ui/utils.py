@@ -991,11 +991,7 @@ def make_stats_csv(item_type_id, recids, list_item_role):
                             str(idx)))
                         key_label.insert(0, '.ファイルパス[{}]'.format(
                             str(idx)))
-                        if key_data[key_index]:
-                            key_data.insert(0, 'recid_{}/{}'.format(str(
-                                self.cur_recid), key_data[key_index]))
-                        else:
-                            key_data.insert(0, '')
+                        key_data.insert(0, '')
                         break
                     elif 'thumbnail_label' in key_list[key_index] \
                             and len(item_key_split) == 2:
@@ -2832,11 +2828,7 @@ def make_stats_csv_with_permission(item_type_id, recids,
                             str(idx)))
                         key_label.insert(0, '.ファイルパス[{}]'.format(
                             str(idx)))
-                        if key_data[key_index]:
-                            key_data.insert(0, 'recid_{}/{}'.format(str(
-                                self.cur_recid), key_data[key_index]))
-                        else:
-                            key_data.insert(0, '')
+                        key_data.insert(0, '')
                         break
                     elif 'thumbnail_label' in key_list[key_index] \
                             and len(item_key_split) == 2:
