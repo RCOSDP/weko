@@ -681,6 +681,9 @@ WEKO_SEARCH_UI_BULK_EXPORT_URI = "URI_EXPORT_ALL"
 WEKO_SEARCH_UI_BULK_EXPORT_MSG = "MSG_EXPORT_ALL"
 """Template for the Admin Bulk Export page."""
 
+WEKO_SEARCH_UI_TO_NUMBER_FORMAT = "99999999999999.99"
+"""The format of to_number function."""
+
 WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG = "RUN_MSG_EXPORT_ALL"
 """Bulk export running message."""
 

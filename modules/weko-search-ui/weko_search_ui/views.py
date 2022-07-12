@@ -28,7 +28,10 @@ from flask import Blueprint, current_app, flash, jsonify, render_template, reque
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
+from invenio_db import db
+from invenio_pidstore.models import PIDStatus, PersistentIdentifier
 from invenio_i18n.ext import current_i18n
+from sqlalchemy.sql.expression import func
 from weko_admin.models import AdminSettings
 from weko_admin.utils import get_search_setting
 from weko_gridlayout.utils import (
@@ -394,3 +397,27 @@ def gettitlefacet():
     titles, order = get_title_facets()
     result = {"status": True, "data": {"titles": titles, "order": order}}
     return jsonify(result), 200
+
+
+@blueprint_api.route('/get_last_item_id', methods=['GET'])
+def get_last_item_id():
+    """Get last item id."""
+    result = {"last_id": ""}
+    try:
+        data = db.session.query(
+            func.max(
+                func.to_number(
+                    PersistentIdentifier.pid_value,
+                    current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
+                )
+            )
+        ).filter(
+            PersistentIdentifier.status == PIDStatus.REGISTERED,
+            PersistentIdentifier.pid_type == 'recid',
+            PersistentIdentifier.pid_value.ilike('%.1')
+        ).one_or_none()
+        if data[0]:
+            result["last_id"] = str(data[0]).replace('.1', '')
+    except Exception as ex:
+        current_app.logger.error(ex)
+    return jsonify(data=result), 200

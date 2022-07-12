@@ -122,7 +122,7 @@ WEKO_ADMIN_REPORT_DELIVERY_SCHED = {
 }
 """Default report email delivery schedule."""
 
-WEKO_ADMIN_CACHE_PREFIX = 'admin_cache_{name}'
+WEKO_ADMIN_CACHE_PREFIX = 'admin_cache_{name}_{user_id}'
 """Redis cache."""
 
 WEKO_ADMIN_REPORT_HEADERS = {
