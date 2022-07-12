@@ -934,7 +934,7 @@ def get_uri():
         file_obj = ObjectVersion()
         file_obj.file = FileInstance()
         file_obj.file.size = 0
-        file_obj.file.json = {'accessrole', accessrole}
+        file_obj.file.json = {'url':{'url':uri}, 'accessrole': accessrole}
         file_obj.bucket_id = bucket_id
         file_obj.file_id = uuid.uuid3(uuid.NAMESPACE_URL, file_id_key)
         file_obj.root_file_id = uuid.uuid3(uuid.NAMESPACE_URL, file_id_key)
