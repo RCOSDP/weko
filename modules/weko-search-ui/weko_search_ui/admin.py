@@ -21,12 +21,12 @@
 """Weko Search-UI admin."""
 
 import codecs
-import copy
 import json
 import os
 import tempfile
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
+import pickle
 
 from blinker import Namespace
 from celery import chord
@@ -524,10 +524,10 @@ class ItemImportView(BaseView):
                         "{}({})".format(item_type.item_type_name.name, item_type.id),
                         "{}items/jsonschema/{}".format(request.url_root, item_type.id),
                     ]
-                    ids_line = copy.deepcopy(WEKO_EXPORT_TEMPLATE_BASIC_ID)
-                    names_line = copy.deepcopy(WEKO_EXPORT_TEMPLATE_BASIC_NAME)
+                    ids_line = pickle.loads(pickle.dumps(WEKO_EXPORT_TEMPLATE_BASIC_ID, -1))
+                    names_line = pickle.loads(pickle.dumps(WEKO_EXPORT_TEMPLATE_BASIC_NAME, -1))
                     systems_line = ["#"] + ["" for _ in range(len(ids_line) - 1)]
-                    options_line = copy.deepcopy(WEKO_EXPORT_TEMPLATE_BASIC_OPTION)
+                    options_line = pickle.loads(pickle.dumps(WEKO_EXPORT_TEMPLATE_BASIC_OPTION, -1))
 
                     item_type = item_type.render
                     meta_list = {
