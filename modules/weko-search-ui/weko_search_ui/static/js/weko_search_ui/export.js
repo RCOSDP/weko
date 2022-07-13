@@ -306,7 +306,7 @@ class ExportComponent extends React.Component {
                   <label>{item_type_label}: </label>
                   <select disabled={isDisableExport} class="form-control" onChange={this.SelectItemTypeChange}>{select_options}</select>&nbsp;
                   <label>{item_id_label}: </label>
-                  <input disabled={isDisableExport} class="form-control" type="text" id="item_id_range" pattern="[0-9]*-[0-9]*" onChange={this.InputItemIdChange} value={item_id_range} placeholder="e.g.: 1-100 or 1- or -100"/>
+                  <input disabled={isDisableExport} class="form-control" type="text" id="item_id_range" pattern="[0-9]*-[0-9]*" onChange={this.InputItemIdChange} value={item_id_range} placeholder="e.g.: 50 or 1-100 or 1- or -100"/>
                 </div>
               </div>
             </div>

@@ -414,10 +414,10 @@ def get_last_item_id():
         ).filter(
             PersistentIdentifier.status == PIDStatus.REGISTERED,
             PersistentIdentifier.pid_type == 'recid',
-            PersistentIdentifier.pid_value.ilike('%.1')
+            PersistentIdentifier.pid_value.notlike("%.%")
         ).one_or_none()
         if data[0]:
-            result["last_id"] = str(data[0]).replace('.1', '')
+            result["last_id"] = str(data[0])
     except Exception as ex:
         current_app.logger.error(ex)
     return jsonify(data=result), 200

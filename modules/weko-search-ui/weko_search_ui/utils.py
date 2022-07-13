@@ -3204,10 +3204,14 @@ def export_all(root_url, user_id, data):
         fromid = ""
         toid = ""
         item_id_range = data.get('item_id_range', "")
-        if item_id_range and "-" in item_id_range:
-            item_id_split = item_id_range.split("-")
-            fromid = item_id_split[0]
-            toid = item_id_split[1]
+        if item_id_range:
+            if "-" in item_id_range:
+                item_id_split = item_id_range.split("-")
+                fromid = item_id_split[0]
+                toid = item_id_split[1]
+            else:
+                fromid = item_id_range
+                toid = item_id_range
         
         result = None
         if not fromid or not toid or (fromid and toid and int(fromid) <= int(toid)):
