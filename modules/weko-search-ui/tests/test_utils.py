@@ -227,7 +227,7 @@ def test_get_content_workflow():
     result["flow_id"] = item.flow_id
     result["flow_name"] = item.flow_define.flow_name
     result["item_type_name"] = item.itemtype.item_type_name.name
-    
+
     assert get_content_workflow(item) == result
 
 # def set_nested_item(data_dict, map_list, val):
@@ -265,11 +265,11 @@ def test_unpackage_import_file(app,mocker,mocker_itemtype):
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "unpackage_import_file/result.json")
     with open(filepath,encoding="utf-8") as f:
         result = json.load(f)
-    
+
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "unpackage_import_file/result_force_new.json")
     with open(filepath,encoding="utf-8") as f:
         result_force_new = json.load(f)
-    
+
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "unpackage_import_file")
     with app.test_request_context():
         with set_locale('en'):
@@ -292,9 +292,9 @@ def test_getEncode():
         # {"file":"utf32be_bom_lf_items.csv","enc":"utf-32"},
         # {"file":"utf32le_bom_lf_items.csv","enc":"utf-32"},
          {"file":"big5.txt","enc":""},
-        
+
     ]
-    
+
     for f in csv_files:
         filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "csv",f['file'])
         print(filepath)
@@ -307,12 +307,18 @@ def test_read_stats_csv(app,mocker_itemtype):
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "csv","data.json")
     csv_file_name = "utf8_lf_items.csv"
     csv_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "csv",csv_file_name)
+    file_type = "csv"
     with open(filepath,encoding="utf-8") as f:
         data = json.load(f)
 
     with app.test_request_context():
         with set_locale('en'):
-            assert read_stats_csv(csv_file_path,csv_file_name) == data
+            res = read_stats_csv(csv_file_path,csv_file_name,file_type)
+            assert res["error"] == data["error"]
+            assert res["error_code"] == data["error_code"]
+            assert res["data_list"] == data["csv_data"]
+            assert res["item_type_schema"] == data["item_type_schema"]
+
 
 # def handle_convert_validate_msg_to_jp(message: str):
 # def handle_validate_item_import(list_record, schema) -> list:
@@ -340,7 +346,7 @@ def test_represents_int():
     assert represents_int("a") == False
     assert represents_int("30") == True
     assert represents_int("31.1") == False
-    
+
 
 # def get_item_type(item_type_id=0) -> dict:
 def test_get_item_type(mocker_itemtype):
@@ -471,7 +477,7 @@ def test_handle_fill_system_item(app,test_list_records,mocker):
         item_type_mapping = json.load(f)
     mocker.patch("weko_records.serializers.utils.get_mapping",return_value=item_map)
     mocker.patch("weko_records.api.Mapping.get_record",return_value=item_type_mapping)
-    
+
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records/list_records_fill_system.json")
     with open(filepath,encoding="utf-8") as f:
         list_record = json.load(f)
@@ -492,7 +498,7 @@ def test_handle_fill_system_item(app,test_list_records,mocker):
         item2['metadata']['item_1617265215918']['subitem_1522305645492']=a
         item2['metadata']['item_1617265215918']['subitem_1600292170262']=""
         items.append(item2)
-    
+
     for a in ACCESS_RIGHT_TYPE_URI:
         item = copy.deepcopy(list_record[0])
         item['metadata']['item_1617265215918']['subitem_1522305645492']="VoR"
@@ -506,7 +512,7 @@ def test_handle_fill_system_item(app,test_list_records,mocker):
         item2['metadata']['item_1617186476635']['subitem_1522299639480']=a
         item2['metadata']['item_1617186476635']['subitem_1600958577026']=""
         items.append(item2)
-        
+
     for a in RESOURCE_TYPE_URI:
         item = copy.deepcopy(list_record[0])
         item['metadata']['item_1617265215918']['subitem_1522305645492']="VoR"
@@ -520,18 +526,18 @@ def test_handle_fill_system_item(app,test_list_records,mocker):
         item2['metadata']['item_1617258105262']['resourcetype']=a
         item2['metadata']['item_1617258105262']['resourceuri']=""
         items.append(item2)
-    
+
     # with open("items.json","w") as f:
     #     json.dump(items,f)
-    
+
     # with open("items_result.json","w") as f:
     #     json.dump(items_result,f)
-    
+
 
     # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data/handle_fill_system_item/items.json")
     # with open(filepath,encoding="utf-8") as f:
     #     items = json.load(f)
-    
+
     # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data/handle_fill_system_item/items_result.json")
     # with open(filepath,encoding="utf-8") as f:
     #     items_result = json.load(f)
@@ -567,7 +573,7 @@ def test_handle_fill_system_item(app,test_list_records,mocker):
 
 def test_DefaultOrderDict_deepcopy():
     import copy
-    
+
     data={
         "key0":"value0",
         "key1":"value1",
@@ -578,7 +584,7 @@ def test_DefaultOrderDict_deepcopy():
         }
     dict1 = defaultify(data)
     dict2 = copy.deepcopy(dict1)
-    
+
     for i, d in enumerate(dict2):
         if i in [0, 1] :
             assert d == "key" + str(i)

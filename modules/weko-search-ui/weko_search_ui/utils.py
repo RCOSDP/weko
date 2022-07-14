@@ -36,6 +36,7 @@ from functools import partial, reduce, wraps
 from io import StringIO
 from operator import getitem
 from time import sleep
+import pickle
 
 import bagit
 import redis
@@ -170,7 +171,7 @@ class DefaultOrderedDict(OrderedDict):
             args = tuple()
         else:
             args = (self.default_factory,)
-        return type(self), args, None, None, self.items()
+        return type(self), args, None, None, iter(self.items())
 
     def copy(self):
         """Modify inherited dict provides copy.
@@ -185,9 +186,8 @@ class DefaultOrderedDict(OrderedDict):
 
     def __deepcopy__(self, memo):
         """Modify inherited dict provides __deepcopy__."""
-        import copy
 
-        return type(self)(self.default_factory, copy.deepcopy(self.items()))
+        return type(self)(self.default_factory, pickle.loads(pickle.dumps(list(self.items()), -1)))
 
     def __repr__(self):
         """Return a nicely formatted representation string."""
@@ -2486,7 +2486,7 @@ def handle_check_id(list_record):
             item["warnings"] = (
                 item["warnings"] + warning if item.get("warnings") else warning
             )
- 
+
 
 def get_data_in_deep_dict(search_key, _dict={}):
     """
@@ -2725,7 +2725,7 @@ def handle_fill_system_item(list_record):
         # subitem_1600958577026
         #current_app.logger.debug(current_type)
         # access_right
-        
+
         if isinstance(node, list):
             for sub_node in node:
                 recursive_sub(keys[1:], sub_node, uri_key, current_type)

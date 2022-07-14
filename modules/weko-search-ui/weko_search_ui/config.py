@@ -20,7 +20,7 @@
 
 """Configuration for weko-search-ui."""
 
-import copy
+import pickle
 
 from invenio_records_rest.config import RECORDS_REST_ENDPOINTS
 from invenio_records_rest.facets import terms_filter
@@ -99,7 +99,7 @@ WEKO_OPENSEARCH_SYSTEM_DESCRIPTION = (
 )
 WEKO_OPENSEARCH_IMAGE_URL = "static/favicon.ico"
 
-RECORDS_REST_ENDPOINTS = copy.deepcopy(RECORDS_REST_ENDPOINTS)
+RECORDS_REST_ENDPOINTS = pickle.loads(pickle.dumps(RECORDS_REST_ENDPOINTS, -1))
 RECORDS_REST_ENDPOINTS["recid"][
     "search_factory_imp"
 ] = "weko_search_ui.query.es_search_factory"
@@ -111,7 +111,7 @@ RECORDS_REST_ENDPOINTS["recid"]["search_index"] = "{}-weko".format(index_prefix)
 RECORDS_REST_ENDPOINTS["recid"]["search_type"] = "item-v1.0.0"
 
 # Opensearch endpoint
-RECORDS_REST_ENDPOINTS["opensearch"] = copy.deepcopy(RECORDS_REST_ENDPOINTS["recid"])
+RECORDS_REST_ENDPOINTS["opensearch"] = pickle.loads(pickle.dumps(RECORDS_REST_ENDPOINTS["recid"], -1))
 RECORDS_REST_ENDPOINTS["opensearch"][
     "search_factory_imp"
 ] = "weko_search_ui.query.opensearch_factory"

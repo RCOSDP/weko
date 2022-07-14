@@ -20,7 +20,7 @@
 
 """Blueprint for Index Search rest."""
 
-import copy
+import pickle
 from functools import partial
 
 from flask import Blueprint, abort, current_app, jsonify, redirect, request, url_for
@@ -244,7 +244,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         except BaseException:
             paths = []
         agp = rd["aggregations"]["path"]["buckets"]
-        rd["aggregations"]["aggregations"] = copy.deepcopy(agp)
+        rd["aggregations"]["aggregations"] = pickle.loads(pickle.dumps(agp, -1))
         nlst = []
         items_count = dict()
         public_indexes = Indexes.get_public_indexes_list()
@@ -333,10 +333,10 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 # get item type schema
                 item_type_id = hit["_source"]["_item_metadata"]["item_type_id"]
                 if item_type_id in item_type_list:
-                    item_type = copy.deepcopy(item_type_list[item_type_id])
+                    item_type = pickle.loads(pickle.dumps(item_type_list[item_type_id], -1))
                 else:
                     item_type = ItemType.query.filter_by(id=item_type_id).first()
-                    item_type_list[item_type_id] = copy.deepcopy(item_type)
+                    item_type_list[item_type_id] = pickle.loads(pickle.dumps(item_type, -1))
                 # heading
                 heading = get_heading_info(hit, lang, item_type)
                 hit["_source"]["heading"] = heading
