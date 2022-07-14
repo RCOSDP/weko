@@ -49,6 +49,7 @@ from invenio_records import InvenioRecords
 from invenio_search import InvenioSearch
 from sqlalchemy_utils.functions import create_database, database_exists
 
+from weko_groups import WekoGroups
 from weko_workflow import WekoWorkflow
 from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
 from weko_index_tree.views import blueprint_api
@@ -84,6 +85,7 @@ def base_app(instance_path):
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         SQLALCHEMY_ECHO=False,
         TESTING=True,
+        JSONSCHEMAS_HOST='inveniosoftware.org',
         WTF_CSRF_ENABLED=False,
         DEPOSIT_SEARCH_API='/api/search',
         SECURITY_PASSWORD_HASH='plaintext',
@@ -128,6 +130,7 @@ def base_app(instance_path):
     InvenioOAIServer(app_)
     InvenioMail(app_)
     WekoWorkflow(app_)
+    WekoGroups(app_)
 
     return app_
 

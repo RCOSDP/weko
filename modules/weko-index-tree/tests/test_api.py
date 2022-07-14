@@ -22,6 +22,7 @@
 
 import pytest
 from datetime import datetime
+from mock import patch
 from elasticsearch.exceptions import NotFoundError
 from invenio_access.models import Role
 from weko_deposit.api import WekoDeposit
@@ -30,6 +31,7 @@ from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
 from weko_index_tree import WekoIndexTree
 from invenio_accounts.testutils import login_user_via_view
+from weko_groups.api import Group
 
 def test_indexes(app, db, user, location):
     with app.test_client() as client:
@@ -107,7 +109,6 @@ def test_indexes(app, db, user, location):
         Indexes.get_recursive_tree()
 
         Indexes.get_index_with_role(3)
-
         Indexes.get_index(2)
 
         Indexes.get_index_by_name('test_name')
@@ -213,3 +214,35 @@ def test_indexes_delete_by_action(app, db, user):
     Indexes.delete_by_action('move', 2)
     with pytest.raises(NotFoundError):
         Indexes.delete_by_action('delete', 1)
+
+def test_indexes_get_index_with_role(app, db, user, location):
+    with app.test_client() as client:
+        login_user_via_view(client=client, user=user)
+
+        WekoIndexTree(app)
+        index_metadata = {
+            'id': 1,
+            'parent': 0,
+            'value': 'test_name',
+        }
+        Indexes.create(0, index_metadata)
+        index = Indexes.update(1,
+                       public_date="20220101",
+                       browsing_group="1,2",
+                       contribute_group="4,5",
+                       browsing_role="",
+                       contribute_role=""
+                       )
+        group=Group(id=1,name="test group1")
+        role_test=Role(id=999,name="test role")
+        role_admin = Role(id=0,name="Administrator")
+        
+        with db.session.begin_nested():
+            db.session.add(group)
+            db.session.add(role_test)
+            db.session.add(role_admin)
+        Indexes.get_index_with_role(1)
+
+
+        with patch("weko_index_tree.api.Indexes.get_account_role",return_value="test role"):
+            Indexes.get_index_with_role(1)
