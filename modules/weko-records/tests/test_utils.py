@@ -22,7 +22,7 @@ def k_v():
 
 @pytest.fixture
 def jsonpath():
-    return ['$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108', '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211', 
+    return ['$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108', '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211',
     '$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890',
     '$.item_1551264846237.attribute_value_mlt[1:3].subitem_1551255577890']
 
@@ -62,7 +62,7 @@ def test_convert_date_range_value():
                                                 'lte': '2000'}
     assert convert_date_range_value('2000-01-01', '2000-12-01') == {'gte': '2000-01-01',
                                                                     'lte': '2000-12-01'}
-    assert convert_date_range_value(None, '2000-12-01') == {'gte': '2000-12-01',
+    assert convert_date_range_value(None, '2000-12-01') == {'gte': '2000-12-01', 'lte': ''} # TODO check expected result
     assert convert_date_range_value(
         '1979-01-01/1960-01-01') == {'gte': '1960-01-01', 'lte': '1979-01-01'}
     assert convert_date_range_value(
@@ -159,15 +159,3 @@ def test_remove_weko2_special_character():
 # def custom_record_medata_for_export(record_metadata: dict):
 # def replace_fqdn(url_path: str, host_url: str = None) -> str:
 # def replace_fqdn_of_file_metadata(file_metadata_lst: list,
-
-
-
-
-
-
-
-
-
-
-
-    
