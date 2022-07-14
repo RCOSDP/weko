@@ -1,0 +1,31 @@
+[
+  {
+    "key": "item_test2_title",
+    "items": [
+      {
+        "key": "item_test2_title[].test_title",
+        "type": "text",
+        "title": "Title",
+        "title_i18n": { "en": "Title", "ja": "タイトル" },
+        "titlei_i18n_temp": { "en": "Title", "ja": "タイトル" },
+        "isShowList": true
+      },
+      {
+        "key": "item_test2_title[].test_title_lang",
+        "type": "select",
+        "title": "Title",
+        "titleMap": [
+          { "name": "ja", "value": "ja" },
+          { "name": "en", "value": "en" }
+        ],
+        "title_i18n": { "en": "Language", "ja": "言語" },
+        "title_i18n_temp": { "en": "Language", "ja": "言語" },
+        "isShowList": true
+      }
+    ],
+    "stype": { "add": "btn-success" },
+    "title": "Title",
+    "title_i18n": { "en": "Title", "ja": "タイトル" },
+    "isShowList": true
+  }
+]
