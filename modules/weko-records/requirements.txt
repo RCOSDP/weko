@@ -165,6 +165,7 @@ Pillow==5.4.1
 Sickle==0.6.4
 Sphinx==1.8.4
 pytest>=4.2.0
+pytest-asyncio==0.16.0
 mock==3.0.5
 pytest-mock==3.6.1
 numpy==1.16.1
