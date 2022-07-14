@@ -1,0 +1,13 @@
+{
+    "item_test2_title": {
+      "jpcoar_mapping": {
+        "title": {
+          "@value": "test_title",
+          "@attributes": {
+            "xml:lang": "test_title_lang"
+          }
+        }
+      }
+    }
+  }
+  
