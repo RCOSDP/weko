@@ -4,9 +4,16 @@ from collections import OrderedDict
 import json
 import pytest
 import os
+from mock import patch
+from tests.helpers import json_data
+
+from weko_admin.models import AdminSettings
 
 from weko_records.utils import convert_date_range_value, convert_range_value, \
-    copy_value_json_path, copy_values_json_path, makeDateRangeValue, remove_weko2_special_character
+    copy_value_json_path, copy_values_json_path, makeDateRangeValue, remove_weko2_special_character, \
+        sort_meta_data_by_options
+from weko_records.api import ItemTypes, Mapping
+from weko_records.models import ItemTypeName
 
 
 @pytest.fixture
@@ -63,6 +70,7 @@ def test_convert_date_range_value():
     assert convert_date_range_value('2000-01-01', '2000-12-01') == {'gte': '2000-01-01',
                                                                     'lte': '2000-12-01'}
     assert convert_date_range_value(None, '2000-12-01') == {'gte': '2000-12-01',
+                                                            'lte': '2000-12-01'}
     assert convert_date_range_value(
         '1979-01-01/1960-01-01') == {'gte': '1960-01-01', 'lte': '1979-01-01'}
     assert convert_date_range_value(
@@ -161,13 +169,111 @@ def test_remove_weko2_special_character():
 # def replace_fqdn_of_file_metadata(file_metadata_lst: list,
 
 
+params=[
+    ("data/item_type/item_type_render1.json",
+     "data/item_type/item_type_form1.json",
+     "data/item_type/item_type_mapping1.json",
+     "data/record_hit/record_hit1.json",
+     True),
+    ("data/item_type/item_type_render2.json",
+     "data/item_type/item_type_form2.json",
+     "data/item_type/item_type_mapping2.json",
+     "data/record_hit/record_hit2.json",
+     False),
+    ("data/item_type/item_type_render3.json",
+     "data/item_type/item_type_form3.json",
+     "data/item_type/item_type_mapping2.json",
+     "data/record_hit/record_hit3.json",
+     False),
+    ("data/item_type/item_type_render_title.json",
+     "data/item_type/item_type_form_title.json",
+     "data/item_type/item_type_mapping_title.json",
+     "data/record_hit/record_hit_title1.json",
+     False),
+    ("data/item_type/item_type_render_title.json",
+     "data/item_type/item_type_form_title.json",
+     "data/item_type/item_type_mapping_title.json",
+     "data/record_hit/record_hit_title2.json",
+     False),
+    ("data/item_type/item_type_render_title.json",
+     "data/item_type/item_type_form_title.json",
+     "data/item_type/item_type_mapping_title.json",
+     "data/record_hit/record_hit_title3.json",
+     False),
+]
+@pytest.mark.parametrize("render,form,mapping,hit,licence",params)
+@pytest.mark.asyncio
+async def test_sort_meta_data_by_options(i18n_app, db, admin_settings, mocker, 
+                                         render, form, mapping, hit,licence):
+    import asyncio
+    mocker.patch("weko_records_ui.permissions.check_file_download_permission", return_value=True)
+    _item_type_name=ItemTypeName(name="test")
+    item_type = ItemTypes.create(
+        name="test",
+        item_type_name=_item_type_name,
+        schema=json_data("data/item_type/item_type_schema.json"),
+        render=json_data(render),
+        form=json_data(form),
+        tag=1
+    )
+    item_type_mapping = Mapping.create(
+        item_type_id=item_type.id,
+        mapping=json_data(mapping)
+    )
+    record_hit=json_data(hit)
+    settings = AdminSettings.get('items_display_settings')
+    if not licence:
+        i18n_app.config.update(
+            WEKO_RECORDS_UI_LICENSE_DICT=False
+        )
+    await sort_meta_data_by_options(record_hit,settings,item_type_mapping,item_type)
 
 
+@pytest.mark.asyncio
+async def test_sort_meta_data_by_options_exception(i18n_app, db, admin_settings):
+    record_hit = {
+        "_source":{
+            "item_item_id":"",
+            "_item_metadata":{}
+        }
+    }
+    _item_type_name=ItemTypeName(name="test")
+    item_type=ItemTypes.create(
+        name="test",
+        item_type_name=_item_type_name,
+        schema={},
+        render={},
+        form={},
+        tag=1
+    )
+    item_type_mapping=Mapping.create(
+        item_type_id=item_type.id,
+        mapping={}
+    )
+    settings = AdminSettings.get("items_display_settings")
+    with patch("weko_records.serializers.utils.get_mapping",side_effect=Exception):
+        await sort_meta_data_by_options(record_hit,settings,item_type_mapping,item_type)
 
-
-
-
-
-
-
-    
+@pytest.mark.asyncio
+async def test_sort_meta_data_by_options_no_item_type_id(i18n_app, db, admin_settings):
+    record_hit = {
+        "_source":{
+            "item_item_id":"",
+            "_item_metadata":{}
+        }
+    }
+    _item_type_name=ItemTypeName(name="test")
+    item_type=ItemTypes.create(
+        name="test",
+        item_type_name=_item_type_name,
+        schema={},
+        render={},
+        form={},
+        tag=1
+    )
+    item_type_mapping=Mapping.create(
+        item_type_id=item_type.id,
+        mapping={}
+    )
+    settings = AdminSettings.get("items_display_settings")
+    await sort_meta_data_by_options(record_hit,settings,item_type_mapping,item_type)
