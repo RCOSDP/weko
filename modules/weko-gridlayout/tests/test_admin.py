@@ -13,7 +13,6 @@ from flask import url_for
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.model.base import ViewArgs
 
-# import json
 from weko_gridlayout.utils import get_register_language
 from weko_gridlayout.admin import WidgetSettingView
 
@@ -79,9 +78,10 @@ def test_index_view_editable_list_page_size_data(app, client, admin_view, view_i
     if condition2 == "with data" or condition2 == "with count":
         with patch("weko_gridlayout.admin.WidgetSettingView._get_list_extra_args", return_value=view_args):
             with patch("weko_gridlayout.admin.WidgetSettingView.get_list", return_value=(3, widget_items)):
-                index_view_url = url_for("widgetitem.index_view")
-                res = client.get(index_view_url)
-                assert res.status_code == 200
+                with patch("weko_gridlayout.admin.WidgetSettingView.list_form"):
+                    index_view_url = url_for("widgetitem.index_view")
+                    res = client.get(index_view_url)
+                    assert res.status_code == 200
 
     elif condition2 == "without count":
         with patch("weko_gridlayout.admin.WidgetSettingView.get_list", return_value=(None, widget_items)):
@@ -171,7 +171,7 @@ def test_page_size_url(app, client, admin_view, view_instance,
 
 def test_get_label_display_to_list_without_register_languages(admin_view, widget_items):
     res = WidgetSettingView.get_label_display_to_list(1)
-    assert res == None
+    assert res is None
 
 
 @pytest.mark.parametrize("num, result",
