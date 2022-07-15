@@ -29,7 +29,7 @@ def k_v():
 
 @pytest.fixture
 def jsonpath():
-    return ['$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108', '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211', 
+    return ['$.item_1551264418667.attribute_value_mlt[*].subitem_1551257245638[*].subitem_1551257276108', '$.item_1551265302120.attribute_value_mlt[*].subitem_1551256918211',
     '$.item_1551264846237.attribute_value_mlt[*].subitem_1551255577890',
     '$.item_1551264846237.attribute_value_mlt[1:3].subitem_1551255577890']
 
@@ -203,7 +203,7 @@ params=[
 ]
 @pytest.mark.parametrize("render,form,mapping,hit,licence",params)
 @pytest.mark.asyncio
-async def test_sort_meta_data_by_options(i18n_app, db, admin_settings, mocker, 
+async def test_sort_meta_data_by_options(i18n_app, db, admin_settings, mocker,
                                          render, form, mapping, hit,licence):
     import asyncio
     mocker.patch("weko_records_ui.permissions.check_file_download_permission", return_value=True)
