@@ -380,7 +380,9 @@ class ESTermsQuery(ESQuery):
                     for metric in self.metric_fields:
                         res_count[metric] = temp_res['aggregations'][metric]
                 count += len(temp_res['aggregations']['my_buckets']['buckets'])
-                res_list += copy.deepcopy(temp_res['aggregations']['my_buckets']['buckets'])
+                import pickle
+                res_list += pickle.loads(pickle.dumps(temp_res['aggregations']['my_buckets']['buckets']))
+                #res_list += copy.deepcopy(temp_res['aggregations']['my_buckets']['buckets'])
             query_result['aggregations'] = {'buckets': res_list}
             for metric in self.metric_fields:
                 query_result['aggregations'][metric] = res_count[metric]
