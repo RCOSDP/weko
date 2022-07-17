@@ -73,6 +73,9 @@ from weko_deposit.api import WekoDeposit as aWekoDeposit
 from weko_deposit.config import WEKO_BUCKET_QUOTA_SIZE, \
     WEKO_DEPOSIT_REST_ENDPOINTS, _PID, DEPOSIT_REST_ENDPOINTS
 
+from flask_login import LoginManager, UserMixin
+
+
 @pytest.yield_fixture()
 def instance_path():
     path = tempfile.mkdtemp()
@@ -80,10 +83,11 @@ def instance_path():
     shutil.rmtree(path)
 
 
+
+
 @pytest.fixture()
 def base_app(instance_path):
     """Flask application fixture."""
-
     app_ = Flask('testapp', instance_path=instance_path)
     app_.url_map.converters['pid'] = PIDConverter
     # initialize InvenioDeposit first in order to detect any invalid dependency
@@ -213,38 +217,42 @@ def client(app):
 def users(app, db):
     """Create users."""
     ds = app.extensions['invenio-accounts'].datastore
-    user_count = User.query.filter_by(email='test@test.org').count()
+    user_count = User.query.filter_by(email='user@test.org').count()
     if user_count != 1:
-        user = create_test_user(email='test@test.org')
-        contributor = create_test_user(email='test2@test.org')
-        comadmin = create_test_user(email='test3@test.org')
-        repoadmin = create_test_user(email='test4@test.org')
-        sysadmin = create_test_user(email='test5@test.org')
+        user = create_test_user(email='user@test.org')
+        contributor = create_test_user(email='contributor@test.org')
+        comadmin = create_test_user(email='comadmin@test.org')
+        repoadmin = create_test_user(email='repoadmin@test.org')
+        sysadmin = create_test_user(email='sysadmin@test.org')
+        originalroleuser = create_test_user(email='originalroleuser@test.org')
 
     else:
-        user = User.query.filter_by(email='test@test.org').first()
-        contributor = User.query.filter_by(email='test2@test.org').first()
-        comadmin = User.query.filter_by(email='test3@test.org').first()
-        repoadmin = User.query.filter_by(email='test4@test.org').first()
-        sysadmin = User.query.filter_by(email='test5@test.org').first()
+        user = User.query.filter_by(email='user@test.org').first()
+        contributor = User.query.filter_by(email='contributor@test.org').first()
+        comadmin = User.query.filter_by(email='comadmin@test.org').first()
+        repoadmin = User.query.filter_by(email='repoadmin@test.org').first()
+        sysadmin = User.query.filter_by(email='sysadmin@test.org').first()
+        originalroleuser = create_test_user(email='originalroleuser@test.org')
 
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
-        r1 = ds.create_role(name='System Administrator')
-        r2 = ds.create_role(name='Repository Administrator')
-        r3 = ds.create_role(name='Contributor')
-        r4 = ds.create_role(name='Community Administrator')
-
+        sysadmin_role = ds.create_role(name='System Administrator')
+        repoadmin_role = ds.create_role(name='Repository Administrator')
+        contributor_role = ds.create_role(name='Contributor')
+        comadmin_role = ds.create_role(name='Community Administrator')
+        originalrole = ds.create_role(name='Original Role')
     else:
-        r1 = Role.query.filter_by(name='System Administrator').first()
-        r2 = Role.query.filter_by(name='Repository Administrator').first()
-        r3 = Role.query.filter_by(name='Contributor').first()
-        r4 = Role.query.filter_by(name='Community Administrator').first()
+        sysadmin_role = Role.query.filter_by(name='System Administrator').first()
+        repoadmin_role = Role.query.filter_by(name='Repository Administrator').first()
+        contributor_role = Role.query.filter_by(name='Contributor').first()
+        comadmin_role = Role.query.filter_by(name='Community Administrator').first()
+        originalrole = Role.query.filter_by(name='Original Role').first()
 
-    ds.add_role_to_user(sysadmin, r1)
-    ds.add_role_to_user(repoadmin, r2)
-    ds.add_role_to_user(contributor, r3)
-    ds.add_role_to_user(comadmin, r4)
+    ds.add_role_to_user(sysadmin, sysadmin_role)
+    ds.add_role_to_user(repoadmin, repoadmin_role)
+    ds.add_role_to_user(contributor, contributor_role)
+    ds.add_role_to_user(comadmin, comadmin_role)
+    ds.add_role_to_user(originalroleuser, originalrole)
 
     # Assign access authorization
     with db.session.begin_nested():
@@ -259,6 +267,7 @@ def users(app, db):
         {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin},
         {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
         {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
+        {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser},
     ]
 
 
