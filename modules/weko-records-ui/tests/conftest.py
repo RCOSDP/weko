@@ -225,7 +225,7 @@ def users(app, db):
         repoadmin = create_test_user(email='repoadmin@test.org')
         sysadmin = create_test_user(email='sysadmin@test.org')
         originalroleuser = create_test_user(email='originalroleuser@test.org')
-
+        originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
     else:
         user = User.query.filter_by(email='user@test.org').first()
         contributor = User.query.filter_by(email='contributor@test.org').first()
@@ -233,6 +233,7 @@ def users(app, db):
         repoadmin = User.query.filter_by(email='repoadmin@test.org').first()
         sysadmin = User.query.filter_by(email='sysadmin@test.org').first()
         originalroleuser = create_test_user(email='originalroleuser@test.org')
+        originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
 
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
@@ -253,7 +254,9 @@ def users(app, db):
     ds.add_role_to_user(contributor, contributor_role)
     ds.add_role_to_user(comadmin, comadmin_role)
     ds.add_role_to_user(originalroleuser, originalrole)
-
+    ds.add_role_to_user(originalroleuser2, originalrole)
+    ds.add_role_to_user(originalroleuser2, repoadmin_role)
+    
     # Assign access authorization
     with db.session.begin_nested():
         action_users = [
@@ -268,6 +271,7 @@ def users(app, db):
         {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
         {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
         {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser},
+        {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2},
     ]
 
 
