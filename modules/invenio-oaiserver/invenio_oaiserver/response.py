@@ -335,7 +335,7 @@ def is_pubdate_in_future(record):
     """Check pubdate of workflow is in future."""
     adt = record.get('publish_date')
     pdt = to_utc(datetime.strptime(adt, '%Y-%m-%d'))
-    return pdt > datetime.today()
+    return pdt > datetime.utcnow() 
 
 
 def is_private_index(record):

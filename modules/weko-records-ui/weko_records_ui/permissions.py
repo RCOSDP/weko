@@ -21,7 +21,7 @@
 """Permissions for Detail Page."""
 
 from datetime import datetime as dt
-from datetime import timedelta
+from datetime import timedelta, timezone
 
 from flask import abort, current_app
 from flask_babelex import get_locale, to_user_timezone, to_utc
@@ -162,7 +162,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                         adt = date[0].get('dateValue')
                         if adt:
                             pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
-                            is_can = True if dt.today() >= pdt else False
+                            is_can = True if dt.utcnow() >= pdt else False
                         else:
                             is_can = True
             # access with open date
@@ -176,7 +176,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
                         if date and isinstance(date, list) and date[0]:
                             adt = date[0].get('dateValue')
                             pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
-                            is_can = True if dt.today() >= pdt else False
+                            is_can = True if dt.utcnow() >= pdt else False
                     except BaseException:
                         is_can = False
 
@@ -372,10 +372,15 @@ def check_publish_status(record):
     result = False
     pst = record.get('publish_status')
     pdt = record.get('pubdate', {}).get('attribute_value')
+    current_app.logger.error("pubdate:{}".format(pdt))
     try:
+        # offset-naive
         pdt = to_utc(dt.strptime(pdt, '%Y-%m-%d'))
-        pdt = True if dt.today() >= pdt else False
-    except BaseException:
+        # offset-naive
+        now = dt.utcnow() 
+        pdt = True if now >= pdt else False
+    except BaseException as e:
+        current_app.logger.error(e)
         pdt = False
     # if it's publish
     if pst and '0' in pst and pdt:

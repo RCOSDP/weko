@@ -9,7 +9,7 @@
 """Percolator test cases."""
 
 import pytest
-from helpers import create_record, run_after_insert_oai_set
+#from helpers import create_record, run_after_insert_oai_set
 from invenio_db import db
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata

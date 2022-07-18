@@ -647,7 +647,7 @@ def get_file_info_list(record):
                 if adt is None:
                     adt = dt.date.max
                 pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
-                if pdt > dt.today():
+                if pdt > dt.utcnow():
                     message = "Download is available from {}/{}/{}."
                     p_file['future_date_message'] = _(message).format(
                         pdt.year, pdt.month, pdt.day)
