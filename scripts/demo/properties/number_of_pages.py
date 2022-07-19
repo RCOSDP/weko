@@ -67,8 +67,8 @@ def form(key='', title='', title_ja=name_ja, title_en=name_en, multi_flag=multip
                     'key': '{}.subitem_number_of_pages'.format(key),
                     'title': 'ページ数',
                     'title_i18n': {
-                        'en': 'ページ数',
-                        'ja': 'Number of Pages'
+                        'ja': 'ページ数',
+                        'en': 'Number of Pages'
                     },
                     'type': 'text'
                 }
