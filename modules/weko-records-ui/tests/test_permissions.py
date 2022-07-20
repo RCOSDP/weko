@@ -111,7 +111,7 @@ def test_check_publish_status(app):
 #def check_created_id(record):
 
 
-def test_check_created_id(users,app):
+def test_check_created_id(app,users):
     datastore = app.extensions["invenio-accounts"].datastore
     login_manager = app.login_manager
 
@@ -130,11 +130,9 @@ def test_check_created_id(users,app):
     assert record.get('_deposit', {}).get('created_by') == 1
     assert record.get('item_type_id') == '15'
     assert record.get('weko_shared_id') == -1
-    sysadmin_role = Role.query.filter_by(name='System Administrator').first()
-    repoadmin_role = Role.query.filter_by(name='Repository Administrator').first()
-    contributor_role = Role.query.filter_by(name='Contributor').first()
-    comadmin_role = Role.query.filter_by(name='Community Administrator').first()
-    originalrole = Role.query.filter_by(name='Original Role').first()
+
+    supers = app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+    user_roles = app.config['WEKO_PERMISSION_ROLE_USER']
 
     with app.test_request_context(headers=[('Accept-Language','en')]):
         with app.test_client() as client:
@@ -151,466 +149,85 @@ def test_check_created_id(users,app):
             assert record.get('weko_shared_id') == -1
             assert check_created_id(record) == False
             record['item_type_id']='15'
+    
+    data_registration = app.config.get('WEKO_ITEMS_UI_DATA_REGISTRATION')
+    application_item_type_list = app.config.get('WEKO_ITEMS_UI_APPLICATION_ITEM_TYPES_LIST')
+
+    with app.test_request_context(headers=[('Accept-Language','en')]):
+        with app.test_client() as client:
+            for user in users:
+                obj = user.get('obj')
+                
+                client.get("/foo_login/{}".format(obj.email), follow_redirects=True)
+                assert current_user.is_authenticated == True
+                assert current_user.id == obj.id
+                assert current_user.roles == obj.roles
+                super_flg = False
+                for s in supers:
+                    if s in obj.roles:
+                        super_flg = True
+                print("email:{}".format(obj.email))
+                print("id:{}".format(obj.id))
+                print("roles:{}".format(obj.roles))
+                print("super_flg:{}".format(super_flg))
+
+                # no item_type_id
+                record['item_type_id']=''
+                assert record.get('item_type_id') == ''
+                record['_deposit']['created_by']=obj.id
+                record['weko_shared_id']=-1
+                assert record.get('_deposit', {}).get('created_by') == obj.id
+                assert record.get('weko_shared_id') == -1
+                assert check_created_id(record) == True
+                
+                record['_deposit']['created_by']=-1
+                record['weko_shared_id']=obj.id
+                assert record.get('_deposit', {}).get('created_by') == -1
+                assert record.get('weko_shared_id') == obj.id
+                assert check_created_id(record) == True
+                
+                record['_deposit']['created_by']=-1
+                record['weko_shared_id']=-1
+                assert record.get('_deposit', {}).get('created_by') == -1
+                assert record.get('weko_shared_id') == -1
+                if super_flg:
+                    assert check_created_id(record) == True
+                else:
+                    assert check_created_id(record) == False
             
-            # login user with no role
-            ## item_type_id
-            client.get("/foo_login/user@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 1
-            assert current_user.roles == []
-            record['item_type_id']=''
-            record['_deposit']['created_by']=1
-            record['weko_shared_id']=-1
-            assert record.get('_deposit', {}).get('created_by') == 1
-            assert record.get('item_type_id') == ''
-            assert record.get('weko_shared_id') == -1
-            assert check_created_id(record) == False
-            ## created_by
-            client.get("/foo_login/user@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 1
-            assert current_user.roles == []
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=1
-            record['weko_shared_id']=-1
-            assert record.get('_deposit', {}).get('created_by') == 1
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == -1
-            assert check_created_id(record) == True
-            ## weko_shared_id
-            client.get("/foo_login/user@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 1
-            assert current_user.roles == []
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=-1
-            record['weko_shared_id']=1
-            assert record.get('_deposit', {}).get('created_by') == -1
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == 1
-            assert check_created_id(record) == True
-            ## created_by and weko_shared_id
-            client.get("/foo_login/user@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 1
-            assert current_user.roles == []
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=1
-            record['weko_shared_id']=1
-            assert record.get('_deposit', {}).get('created_by') == 1
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == 1
-            assert check_created_id(record) == True
-            ## not created_by and weko_shared_id
-            client.get("/foo_login/user@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 1
-            assert current_user.roles == []
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=-1
-            record['weko_shared_id']=-1
-            assert record.get('_deposit', {}).get('created_by') == -1
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == -1
-            assert check_created_id(record) == False
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=1
-            record['weko_shared_id']=-1
+                record['item_type_id']='15'
+                assert record.get('item_type_id') == '15'
+                
+                # created_by
+                record['_deposit']['created_by']=obj.id
+                record['weko_shared_id']=-1
+                assert record.get('_deposit', {}).get('created_by') == obj.id
+                assert record.get('weko_shared_id') == -1
+                assert check_created_id(record) == True
 
-            # contributor
-            ## item_type_id
-            client.get("/foo_login/contributor@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 2
-            assert current_user.roles[0] == contributor_role
-            record['item_type_id']=''
-            record['_deposit']['created_by']=2
-            record['weko_shared_id']=-1
-            assert record.get('_deposit', {}).get('created_by') == 2
-            assert record.get('item_type_id') == ''
-            assert record.get('weko_shared_id') == -1
-            assert check_created_id(record) == False
-            ## created_by
-            client.get("/foo_login/contributor@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 2
-            assert current_user.roles[0] == contributor_role
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=2
-            record['weko_shared_id']=-1
-            assert record.get('_deposit', {}).get('created_by') == 2
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == -1
-            assert check_created_id(record) == True
-            ## weko_shared_id
-            client.get("/foo_login/contributor@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 2
-            assert current_user.roles[0] == contributor_role
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=-1
-            record['weko_shared_id']=2
-            assert record.get('_deposit', {}).get('created_by') == -1
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == 2
-            assert check_created_id(record) == True
-            ## created_by and weko_shared_id
-            client.get("/foo_login/contributor@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 2
-            assert current_user.roles[0] == contributor_role
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=2
-            record['weko_shared_id']=2
-            assert record.get('_deposit', {}).get('created_by') == 2
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == 2
-            assert check_created_id(record) == True
-            ## not created_by and weko_shared_id
-            client.get("/foo_login/contributor@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 2
-            assert current_user.roles[0] == contributor_role
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=-1
-            record['weko_shared_id']=-1
-            assert record.get('_deposit', {}).get('created_by') == -1
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == -1
-            assert check_created_id(record) == False
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=1
-            record['weko_shared_id']=-1
-            
-            # community administrator
-            ## item_type_id
-            client.get("/foo_login/comadmin@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 3
-            assert current_user.roles[0] == comadmin_role
-            record['item_type_id']=''
-            record['_deposit']['created_by']=3
-            record['weko_shared_id']=-1
-            assert record.get('_deposit', {}).get('created_by') == 3
-            assert record.get('item_type_id') == ''
-            assert record.get('weko_shared_id') == -1
-            assert check_created_id(record) == False
-            ## created_by
-            client.get("/foo_login/comadmin@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 3
-            assert current_user.roles[0] == comadmin_role
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=3
-            record['weko_shared_id']=-1
-            assert record.get('_deposit', {}).get('created_by') == 3
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == -1
-            assert check_created_id(record) == True
-            ## weko_shared_id
-            client.get("/foo_login/comadmin@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 3
-            assert current_user.roles[0] == comadmin_role
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=-1
-            record['weko_shared_id']=3
-            assert record.get('_deposit', {}).get('created_by') == -1
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == 3
-            assert check_created_id(record) == True
-            ## created_id and weko_shared_id
-            client.get("/foo_login/comadmin@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 3
-            assert current_user.roles[0] == comadmin_role
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=3
-            record['weko_shared_id']=3
-            assert record.get('_deposit', {}).get('created_by') == 3
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == 3
-            assert check_created_id(record) == True
-            ## not created_id and weko_shared_id
-            client.get("/foo_login/comadmin@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 3
-            assert current_user.roles[0] == comadmin_role
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=-1
-            record['weko_shared_id']=-1
-            assert record.get('_deposit', {}).get('created_by') == -1
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == -1
-            assert check_created_id(record) == False
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=1
-            record['weko_shared_id']=-1
-            
-            # repository administerator
-            ## item_type_id
-            client.get("/foo_login/repoadmin@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 4
-            assert current_user.roles[0] == repoadmin_role
-            record['item_type_id']=''
-            record['_deposit']['created_by']=4
-            record['weko_shared_id']=-1
-            assert record.get('_deposit', {}).get('created_by') == 4
-            assert record.get('item_type_id') == ''
-            assert record.get('weko_shared_id') == -1
-            assert check_created_id(record) == False
-            ## created_by
-            client.get("/foo_login/repoadmin@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 4
-            assert current_user.roles[0] == repoadmin_role
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=4
-            record['weko_shared_id']=-1
-            assert record.get('_deposit', {}).get('created_by') == 4
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == -1
-            assert check_created_id(record) == True
-            ## weko_shared_id
-            client.get("/foo_login/repoadmin@test.org", follow_redirects=True)          
-            assert current_user.is_authenticated == True
-            assert current_user.id == 4
-            assert current_user.roles[0] == repoadmin_role
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=-1
-            record['weko_shared_id']=4
-            assert record.get('_deposit', {}).get('created_by') == -1
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == 4
-            assert check_created_id(record) == True
-            ## created_id and weko_shared_id
-            client.get("/foo_login/repoadmin@test.org", follow_redirects=True)          
-            assert current_user.is_authenticated == True
-            assert current_user.id == 4
-            assert current_user.roles[0] == repoadmin_role
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=4
-            record['weko_shared_id']=4
-            assert record.get('_deposit', {}).get('created_by') == 4
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == 4
-            assert check_created_id(record) == True
-            ## not created_id and weko_shared_id
-            client.get("/foo_login/repoadmin@test.org", follow_redirects=True)          
-            assert current_user.is_authenticated == True
-            assert current_user.id == 4
-            assert current_user.roles[0] == repoadmin_role
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=-1
-            record['weko_shared_id']=-1
-            assert record.get('_deposit', {}).get('created_by') == -1
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == -1
-            assert check_created_id(record) == True
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=1
-            record['weko_shared_id']=-1
+                # weko_shared_id
+                record['_deposit']['created_by']=-1
+                record['weko_shared_id']=obj.id
+                assert record.get('_deposit', {}).get('created_by') == -1
+                assert record.get('weko_shared_id') == obj.id
+                assert check_created_id(record) == True
 
-            # system admin
-            ## item_type_id
-            client.get("/foo_login/sysadmin@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 5
-            assert current_user.roles[0] == sysadmin_role
-            record['item_type_id']=''
-            record['_deposit']['created_by']=5
-            record['weko_shared_id']=-1
-            assert record.get('_deposit', {}).get('created_by') == 5
-            assert record.get('item_type_id') == ''
-            assert record.get('weko_shared_id') == -1
-            assert check_created_id(record) == False
-            ## created_by
-            client.get("/foo_login/sysadmin@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 5
-            assert current_user.roles[0] == sysadmin_role
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=5
-            record['weko_shared_id']=-1
-            assert record.get('_deposit', {}).get('created_by') == 5
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == -1
-            assert check_created_id(record) == True
-            ## weko_shared_id
-            client.get("/foo_login/sysadmin@test.org", follow_redirects=True)          
-            assert current_user.is_authenticated == True
-            assert current_user.id == 5
-            assert current_user.roles[0] == sysadmin_role
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=-1
-            record['weko_shared_id']=5
-            assert record.get('_deposit', {}).get('created_by') == -1
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == 5
-            assert check_created_id(record) == True
-            ## created_id and weko_shared_id
-            client.get("/foo_login/sysadmin@test.org", follow_redirects=True)          
-            assert current_user.is_authenticated == True
-            assert current_user.id == 5
-            assert current_user.roles[0] == sysadmin_role
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=5
-            record['weko_shared_id']=5
-            assert record.get('_deposit', {}).get('created_by') == 5
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == 5
-            assert check_created_id(record) == True
-            ## not created_id and weko_shared_id
-            client.get("/foo_login/sysadmin@test.org", follow_redirects=True)          
-            assert current_user.is_authenticated == True
-            assert current_user.id == 5
-            assert current_user.roles[0] == sysadmin_role
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=-1
-            record['weko_shared_id']=-1
-            assert record.get('_deposit', {}).get('created_by') == -1
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == -1
-            assert check_created_id(record) == True
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=1
-            record['weko_shared_id']=-1 
+                # created_id and weko_shared_id
+                record['_deposit']['created_by']=obj.id
+                record['weko_shared_id']=obj.id
+                assert record.get('_deposit', {}).get('created_by') == obj.id
+                assert record.get('weko_shared_id') == obj.id
+                assert check_created_id(record) == True
 
-            # originalroleuser
-            ## item_type_id
-            client.get("/foo_login/originalroleuser@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 6
-            assert current_user.roles[0] == originalrole
-            record['item_type_id']=''
-            record['_deposit']['created_by']=6
-            record['weko_shared_id']=-1
-            assert record.get('_deposit', {}).get('created_by') == 6
-            assert record.get('item_type_id') == ''
-            assert record.get('weko_shared_id') == -1
-            assert check_created_id(record) == False
-            ## created_by
-            client.get("/foo_login/originalroleuser@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 6
-            assert current_user.roles[0] == originalrole
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=6
-            record['weko_shared_id']=-1
-            assert record.get('_deposit', {}).get('created_by') == 6
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == -1
-            assert check_created_id(record) == True
-            ## weko_shared_id
-            client.get("/foo_login/originalroleuser@test.org", follow_redirects=True)          
-            assert current_user.is_authenticated == True
-            assert current_user.id == 6
-            assert current_user.roles[0] == originalrole
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=-1
-            record['weko_shared_id']=6
-            assert record.get('_deposit', {}).get('created_by') == -1
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == 6
-            assert check_created_id(record) == True
-            ## created_id and weko_shared_id
-            client.get("/foo_login/originalroleuser@test.org", follow_redirects=True)          
-            assert current_user.is_authenticated == True
-            assert current_user.id == 6
-            assert current_user.roles[0] == originalrole
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=6
-            record['weko_shared_id']=6
-            assert record.get('_deposit', {}).get('created_by') == 6
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == 6
-            assert check_created_id(record) == True
-            ## not created_id and weko_shared_id
-            client.get("/foo_login/originalroleuser@test.org", follow_redirects=True)          
-            assert current_user.is_authenticated == True
-            assert current_user.id == 6
-            assert current_user.roles[0] == originalrole
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=-1
-            record['weko_shared_id']=-1
-            assert record.get('_deposit', {}).get('created_by') == -1
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == -1
-            assert check_created_id(record) == False
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=1
-            record['weko_shared_id']=-1
-
-            # originalroleuser2
-            ## item_type_id
-            client.get("/foo_login/originalroleuser2@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 7
-            assert repoadmin_role in current_user.roles
-            assert originalrole in current_user.roles
-            record['item_type_id']=''
-            record['_deposit']['created_by']=7
-            record['weko_shared_id']=-1
-            assert record.get('_deposit', {}).get('created_by') == 7
-            assert record.get('item_type_id') == ''
-            assert record.get('weko_shared_id') == -1
-            assert check_created_id(record) == False
-            ## created_by
-            client.get("/foo_login/originalroleuser2@test.org", follow_redirects=True)       
-            assert current_user.is_authenticated == True
-            assert current_user.id == 7
-            assert repoadmin_role in current_user.roles
-            assert originalrole in current_user.roles
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=7
-            record['weko_shared_id']=-1
-            assert record.get('_deposit', {}).get('created_by') == 7
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == -1
-            assert check_created_id(record) == True
-            ## weko_shared_id
-            client.get("/foo_login/originalroleuser2@test.org", follow_redirects=True)          
-            assert current_user.is_authenticated == True
-            assert current_user.id == 7
-            assert repoadmin_role in current_user.roles
-            assert originalrole in current_user.roles
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=-1
-            record['weko_shared_id']=7
-            assert record.get('_deposit', {}).get('created_by') == -1
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == 7
-            assert check_created_id(record) == True
-            ## created_by and weko_shared_id
-            client.get("/foo_login/originalroleuser2@test.org", follow_redirects=True)          
-            assert current_user.is_authenticated == True
-            assert current_user.id == 7
-            assert repoadmin_role in current_user.roles
-            assert originalrole in current_user.roles
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=7
-            record['weko_shared_id']=7
-            assert record.get('_deposit', {}).get('created_by') == 7
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == 7
-            assert check_created_id(record) == True
-            ## not created_by and weko_shared_id
-            client.get("/foo_login/originalroleuser2@test.org", follow_redirects=True)          
-            assert current_user.is_authenticated == True
-            assert current_user.id == 7
-            assert repoadmin_role in current_user.roles
-            assert originalrole in current_user.roles
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=-1
-            record['weko_shared_id']=-1
-            assert record.get('_deposit', {}).get('created_by') == -1
-            assert record.get('item_type_id') == '15'
-            assert record.get('weko_shared_id') == -1
-            assert check_created_id(record) == True
-            record['item_type_id']='15'
-            record['_deposit']['created_by']=1
-            record['weko_shared_id']=-1
+                # no created_id and weko_shared_id
+                record['_deposit']['created_by']=-1
+                record['weko_shared_id']=-1
+                assert record.get('_deposit', {}).get('created_by') == -1
+                assert record.get('weko_shared_id') == -1
+                if super_flg:
+                    assert check_created_id(record) == True
+                else:
+                    assert check_created_id(record) == False         
 
 #def check_usage_report_in_permission(permission):
 #def check_create_usage_report(record, file_json):

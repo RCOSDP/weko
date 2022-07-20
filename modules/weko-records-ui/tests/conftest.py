@@ -150,7 +150,9 @@ def base_app(instance_path):
                              'Community Administrator'],
 
 WEKO_PERMISSION_SUPER_ROLE_USER = ['System Administrator',
-                                   'Repository Administrator']
+                                   'Repository Administrator'],
+    # WEKO_ITEMS_UI_DATA_REGISTRATION = '',
+    # WEKO_ITEMS_UI_APPLICATION_ITEM_TYPES_LIST=['デフォルトアイテムタイプ（フル）'],
     )
     # with ESTestServer(timeout=30) as server:
     Babel(app_)
@@ -224,6 +226,7 @@ def users(app, db):
         comadmin = create_test_user(email='comadmin@test.org')
         repoadmin = create_test_user(email='repoadmin@test.org')
         sysadmin = create_test_user(email='sysadmin@test.org')
+        generaluser = create_test_user(email='generaluser@test.org')
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
     else:
@@ -232,6 +235,7 @@ def users(app, db):
         comadmin = User.query.filter_by(email='comadmin@test.org').first()
         repoadmin = User.query.filter_by(email='repoadmin@test.org').first()
         sysadmin = User.query.filter_by(email='sysadmin@test.org').first()
+        generaluser = User.query.filter_by(email='generaluser@test.org')
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
 
@@ -241,18 +245,21 @@ def users(app, db):
         repoadmin_role = ds.create_role(name='Repository Administrator')
         contributor_role = ds.create_role(name='Contributor')
         comadmin_role = ds.create_role(name='Community Administrator')
+        general_role = ds.create_role(name='General')
         originalrole = ds.create_role(name='Original Role')
     else:
         sysadmin_role = Role.query.filter_by(name='System Administrator').first()
         repoadmin_role = Role.query.filter_by(name='Repository Administrator').first()
         contributor_role = Role.query.filter_by(name='Contributor').first()
         comadmin_role = Role.query.filter_by(name='Community Administrator').first()
+        general_role = Role.query.filter_by(name='General').first()
         originalrole = Role.query.filter_by(name='Original Role').first()
 
     ds.add_role_to_user(sysadmin, sysadmin_role)
     ds.add_role_to_user(repoadmin, repoadmin_role)
     ds.add_role_to_user(contributor, contributor_role)
     ds.add_role_to_user(comadmin, comadmin_role)
+    ds.add_role_to_user(generaluser, general_role)
     ds.add_role_to_user(originalroleuser, originalrole)
     ds.add_role_to_user(originalroleuser2, originalrole)
     ds.add_role_to_user(originalroleuser2, repoadmin_role)
@@ -265,13 +272,14 @@ def users(app, db):
         db.session.add_all(action_users)
 
     return [
-        {'email': user.email, 'id': user.id, 'obj': user},
         {'email': contributor.email, 'id': contributor.id, 'obj': contributor},
-        {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin},
         {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
         {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
+        {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin},
+        {'email': generaluser.email, 'id': generaluser.id, 'obj': sysadmin},
         {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser},
         {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2},
+        {'email': user.email, 'id': user.id, 'obj': user},
     ]
 
 
