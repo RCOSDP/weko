@@ -286,17 +286,20 @@ def iframe_success():
                            **ctx)
 
 
-@blueprint.route('/activity/new', methods=['GET'])
+@blueprint.route('/activity/new', defaults={'community': None}, methods=['GET'])
 @login_required
-def new_activity():
-    """New activity."""
+def new_activity(community=None):
+    """New activity.
+       community: 
+    Returns:
+        _type_: _description_
+    """    
     workflow = WorkFlow()
     workflows = workflow.get_workflow_list()
     workflows = workflow.get_workflows_by_roles(workflows)
-    getargs = request.args
     ctx = {'community': None}
     community_id = ""
-    if 'community' in getargs:
+    if 'community' in request.args:
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
         if comm is not None:
@@ -323,21 +326,37 @@ def new_activity():
 @blueprint.route('/activity/init', methods=['POST'])
 @login_required
 def init_activity():
+    """init activity
+    ---
+    post:
+      parameters:
+      - workflow_id: workflow id
+      - flow_id: flow id
+      - itemtype_id: item type id
+      
+      responses:
+        200:
+          content:
+            application/json:
+              {'code':0, 'msg':'success',
+                   'data':{'redirect': url}}
+    """
+    ret = {}
     try:
         """Init activity."""
         post_activity = request.get_json()
         activity = WorkActivity()
-        getargs = request.args
-        if 'community' in getargs:
+        if 'community' in request.args:
             rtn = activity.init_activity(
                 post_activity, request.args.get('community'))
         else:
             rtn = activity.init_activity(post_activity)
         if rtn is None:
             return jsonify(code=-1, msg='error')
+        current_app.logger.error("rtn:{}".format(rtn))
         url = url_for('weko_workflow.display_activity',
                       activity_id=rtn.activity_id)
-        if 'community' in getargs and request.args.get('community') != 'undefined':
+        if 'community' in request.args and request.args.get('community') != 'undefined':
             comm = GetCommunity.get_community_by_id(
                 request.args.get('community'))
             if comm is not None:
@@ -347,14 +366,16 @@ def init_activity():
     except SQLAlchemyError as ex:
         current_app.logger.error("sqlalchemy error: {}".format(ex))
         db.session.rollback()
-        return jsonify(code=-1, msg='Failed to init activity!')
+        ret =  jsonify(code=-1, msg='Failed to init activity!')
     except BaseException as ex:
         current_app.logger.error("Unexpected error: {}".format(ex))
         db.session.rollback()
-        return jsonify(code=-1, msg='Failed to init activity!')
+        ret = jsonify(code=-1, msg='Failed to init activity!')
 
-    return jsonify(code=0, msg='success',
+    ret = jsonify(code=0, msg='success',
                    data={'redirect': url})
+    #current_app.logger.error(str(ret))
+    return ret
 
 
 @blueprint.route('/activity/list', methods=['GET'])

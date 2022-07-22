@@ -372,7 +372,6 @@ def check_publish_status(record):
     result = False
     pst = record.get('publish_status')
     pdt = record.get('pubdate', {}).get('attribute_value')
-    current_app.logger.error("pubdate:{}".format(pdt))
     try:
         # offset-naive
         pdt = to_utc(dt.strptime(pdt, '%Y-%m-%d'))
