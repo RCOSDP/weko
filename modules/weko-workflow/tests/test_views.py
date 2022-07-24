@@ -29,12 +29,39 @@ from sqlalchemy import func
 
 import weko_workflow.utils
 from weko_workflow import WekoWorkflow
+from flask_security import login_user
 from weko_workflow.models import Activity, ActivityAction, WorkFlow
 from invenio_accounts.testutils import login_user_via_session as login
 
-
 def _post(client, url, json_data):
     return client.post(url, json=json_data)
+
+def test_index_nologin(client,db_register2):
+    url = url_for('weko_workflow.index')
+    res =  client.get(url)
+    assert res.status_code == 302
+    assert res.location == url_for('security.login', next="/workflow/",_external=True)
+
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 200),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 200),
+    (5, 200),
+    (6, 200),
+])
+def test_index_users(client, users, db_register2,users_index, status_code):
+    login(client=client, email=users[users_index]['email'])
+    url = url_for('weko_workflow.index',_external=True)
+    res = client.get(url)
+    assert res.status_code == status_code
+
+    url = url_for('weko_workflow.index',community="a",_external=True)
+    assert url==""
+    res = client.get(url)
+    assert res.status_code == status_code
+
 
 
 def test_init_activity_nologin(client):

@@ -127,39 +127,34 @@ def regex_replace(s, pattern, replace):
 @blueprint.route('/')
 @login_required
 def index():
-    """_summary_
+    """Render the activity list.
+    Args:
 
-        post:
-        description: "init activity"
-        security: 
-         - OAuth2: []
-        requestBody:
-          required: true
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  workflow_id:
-                    type: string
-                  flow_id:
-                    type: integer
-                  itemtype_id:
-                    type: integer
+    Returns:
+        str: render result of weko_workflow/activity_list.html
+    ---
+      get:
+        description: Render the activity list
+        security:
+        - login_required: []
         parameters:
-          - in: "query"
-            name: "community"
-            description: "community id"
+          - name: community
+            in: query
+            description: community id
             schema:
+              type: string
+        responses:
+          200:
+            description: render result of weko_workflow/activity_list.html
+            content:
+                text/html
     """    
-    """Render a basic view."""
-
+    
     if not current_user or not current_user.roles:
         return abort(403)
 
     activity = WorkActivity()
-    getargs = request.args
-    conditions = filter_all_condition(getargs)
+    conditions = filter_all_condition(request.args)
     ctx = {'community': None}
     community_id = ""
     from weko_theme.utils import get_design_layout
@@ -171,7 +166,7 @@ def index():
 
     tab = request.args.get('tab')
     tab = WEKO_WORKFLOW_TODO_TAB if not tab else tab
-    if 'community' in getargs:
+    if 'community' in request.args:
         activities, maxpage, size, pages, name_param = activity \
             .get_activity_list(request.args.get('community'),
                                conditions=conditions)
@@ -319,9 +314,27 @@ def iframe_success():
 @login_required
 def new_activity():
     """New activity.
-       community: 
+    Args:
+
     Returns:
-        _type_: _description_
+        str: render result of weko_workflow/workflow_list.html
+    ---
+      get:
+        description: Render the workflow list
+        security:
+        - login_required: []
+        parameters:
+          - name: community
+            in: query
+            description: community id
+            schema:
+              type: string
+        responses:
+          200:
+            description: render result of weko_workflow/workflow_list.html
+            content:
+                text/html
+
     """    
     workflow = WorkFlow()
     workflows = workflow.get_workflow_list()
@@ -356,7 +369,15 @@ def new_activity():
 @blueprint.route('/activity/init', methods=['POST'])
 @login_required
 def init_activity():
-    """init activity
+    """Return URL of workflow activity made from the request body.
+    Args:
+
+    Returns:
+        dict: json data validated by ResponseMessageSchema. 
+    
+    Raises:
+        marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
+    
     ---
     post:
       description: "init activity"
