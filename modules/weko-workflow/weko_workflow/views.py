@@ -32,6 +32,9 @@ from functools import wraps
 
 import redis
 from redis import sentinel
+from weko_workflow.schema.marshmallow import InitActivitySchema,ResponseMessageSchema
+from marshmallow.exceptions import ValidationError
+
 from flask import Blueprint, abort, current_app, has_request_context, \
     jsonify, make_response, render_template, request, session, url_for
 from flask_babelex import gettext as _
@@ -124,7 +127,33 @@ def regex_replace(s, pattern, replace):
 @blueprint.route('/')
 @login_required
 def index():
+    """_summary_
+
+        post:
+        description: "init activity"
+        security: 
+         - OAuth2: []
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  workflow_id:
+                    type: string
+                  flow_id:
+                    type: integer
+                  itemtype_id:
+                    type: integer
+        parameters:
+          - in: "query"
+            name: "community"
+            description: "community id"
+            schema:
+    """    
     """Render a basic view."""
+
     if not current_user or not current_user.roles:
         return abort(403)
 
@@ -286,9 +315,9 @@ def iframe_success():
                            **ctx)
 
 
-@blueprint.route('/activity/new', defaults={'community': None}, methods=['GET'])
+@blueprint.route('/activity/new', methods=['GET'])
 @login_required
-def new_activity(community=None):
+def new_activity():
     """New activity.
        community: 
     Returns:
@@ -323,37 +352,71 @@ def new_activity(community=None):
     )
 
 
+
 @blueprint.route('/activity/init', methods=['POST'])
 @login_required
 def init_activity():
     """init activity
     ---
     post:
+      description: "init activity"
+      security:
+        - login_required: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              InitActivitySchema
+            example: { "flow_id": 1,"workflow_id":1,"itemtype_id": 15}
       parameters:
-      - workflow_id: workflow id
-      - flow_id: flow id
-      - itemtype_id: item type id
-      
+        - in: query
+          name: community
+          description: community id
+          schema:
+            type: string
       responses:
         200:
+          description: "success"
           content:
             application/json:
-              {'code':0, 'msg':'success',
-                   'data':{'redirect': url}}
+              schema:
+                ResponseMessageSchema
+              example: { "code": 0,"msg":"success","data": {"redirect": "/workflow/activity/detail/A-20220724-00008"}}
+        400:
+            description: "parameter error"
+            content:
+              application/json:
+                schema:
+                  ResponseMessageSchema
+                example: { "code": -1,"msg":"parameter error"}
+        500:
+            description: "server error"
+            content:
+              application/json:
+                schema:
+                  ResponseMessageSchema
+                example: { "code": -1,"msg":"server error"}
     """
-    ret = {}
+    url = ''
+    post_activity = None
     try:
-        """Init activity."""
-        post_activity = request.get_json()
-        activity = WorkActivity()
+        post_activity = InitActivitySchema().load(request.get_json())
+    except ValidationError as err:
+        res = ResponseMessageSchema().load({'code':-1,'msg':str(err)})
+        return jsonify(res.data), 400
+    
+    activity = WorkActivity()    
+    try:
         if 'community' in request.args:
             rtn = activity.init_activity(
-                post_activity, request.args.get('community'))
+                post_activity.data, request.args.get('community'))
         else:
-            rtn = activity.init_activity(post_activity)
+            rtn = activity.init_activity(post_activity.data)
         if rtn is None:
-            return jsonify(code=-1, msg='error')
-        current_app.logger.error("rtn:{}".format(rtn))
+            res = ResponseMessageSchema().load({'code':-1,'msg':'can not make activity_id'})
+            return jsonify(res.data), 500
+        
         url = url_for('weko_workflow.display_activity',
                       activity_id=rtn.activity_id)
         if 'community' in request.args and request.args.get('community') != 'undefined':
@@ -366,16 +429,17 @@ def init_activity():
     except SQLAlchemyError as ex:
         current_app.logger.error("sqlalchemy error: {}".format(ex))
         db.session.rollback()
-        ret =  jsonify(code=-1, msg='Failed to init activity!')
-    except BaseException as ex:
+        res = ResponseMessageSchema().load({'code':-1,'msg':"sqlalchemy error: {}".format(ex)})
+        return jsonify(res.data), 500
+    except Exception as ex:
         current_app.logger.error("Unexpected error: {}".format(ex))
         db.session.rollback()
-        ret = jsonify(code=-1, msg='Failed to init activity!')
+        res = ResponseMessageSchema().load({'code':-1,'msg':"Unexpected error: {}".format(ex)})
+        return jsonify(res.data),500 
 
-    ret = jsonify(code=0, msg='success',
-                   data={'redirect': url})
-    #current_app.logger.error(str(ret))
-    return ret
+    res = ResponseMessageSchema().load({'code':0,'msg':'success','data':{'redirect': url}})
+
+    return jsonify(res.data),200
 
 
 @blueprint.route('/activity/list', methods=['GET'])
