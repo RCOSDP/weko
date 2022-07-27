@@ -32,7 +32,7 @@ from functools import wraps
 
 import redis
 from redis import sentinel
-from weko_workflow.schema.marshmallow import InitActivitySchema,ResponseMessageSchema
+from weko_workflow.schema.marshmallow import ActivitySchema,ResponseMessageSchema
 from marshmallow.exceptions import ValidationError
 
 from flask import Blueprint, abort, current_app, has_request_context, \
@@ -388,7 +388,7 @@ def init_activity():
         content:
           application/json:
             schema:
-              InitActivitySchema
+              ActivitySchema
             example: { "flow_id": 1,"workflow_id":1,"itemtype_id": 15}
       parameters:
         - in: query
@@ -422,7 +422,7 @@ def init_activity():
     url = ''
     post_activity = None
     try:
-        post_activity = InitActivitySchema().load(request.get_json())
+        post_activity = ActivitySchema().load(request.get_json())
     except ValidationError as err:
         res = ResponseMessageSchema().load({'code':-1,'msg':str(err)})
         return jsonify(res.data), 400

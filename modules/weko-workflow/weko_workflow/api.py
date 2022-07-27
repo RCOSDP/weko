@@ -782,8 +782,9 @@ class WorkActivity(object):
         :return: activity ID.
         """
         # Table lock for calculate new activity id
-        db.session.execute(
-            'LOCK TABLE ' + _Activity.__tablename__ + ' IN EXCLUSIVE MODE')
+        if db.get_engine().driver!='pysqlite':
+            db.session.execute(
+                'LOCK TABLE ' + _Activity.__tablename__ + ' IN EXCLUSIVE MODE')
 
         # Calculate activity_id based on id
         utc_now = datetime.utcnow()

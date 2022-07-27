@@ -64,6 +64,19 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
 
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import Session
+from sqlalchemy import event
+
+# @event.listens_for(Engine, "connect")
+# def set_sqlite_pragma(dbapi_connection, connection_record):
+#     cursor = dbapi_connection.cursor()
+#     cursor.execute("PRAGMA foreign_keys=OFF;")
+#     cursor.close()
+
+# @event.listens_for(Session, 'after_begin')
+# def receive_after_begin(session, transaction, connection):
+#     connection.execute("PRAGMA foreign_keys=OFF;")
 
 @pytest.yield_fixture()
 def instance_path():
@@ -479,10 +492,10 @@ def db_register(app, db):
         for data in actionstatus_datas:
             actionstatus_db.append(ActionStatus(**data))
         db.session.add_all(actionstatus_db)
-
+    
     flow_define = FlowDefine(flow_id=uuid.uuid4(),
                              flow_name='Registration Flow',
-                             flow_user=5)
+                             flow_user=1)
 
     item_type_name = ItemTypeName(name='テストアイテムタイプ',
                                   has_site_license=True,
@@ -494,10 +507,29 @@ def db_register(app, db):
                          render={'type':'test render'},
                          tag=1,version_id=1,is_deleted=False)
     
-    flow_action = FlowAction(flow_id=flow_define.flow_id,
-                     action_id=2,
+    flow_action1 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=1,
                      action_version='1.0.0',
-                     action_order=6,
+                     action_order=1,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+    flow_action2 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=3,
+                     action_version='1.0.0',
+                     action_order=2,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={})
+    flow_action3 = FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=5,
+                     action_version='1.0.0',
+                     action_order=3,
                      action_condition='',
                      action_status='A',
                      action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
@@ -526,9 +558,14 @@ def db_register(app, db):
         db.session.add(flow_define)
         db.session.add(item_type_name)
         db.session.add(item_type)
-        db.session.add(flow_action)
+        db.session.add(flow_action1)
+        db.session.add(flow_action2)
+        db.session.add(flow_action3)
         db.session.add(workflow)
         db.session.add(activity)
+    
+    # return {'flow_define':flow_define,'item_type_name':item_type_name,'item_type':item_type,'flow_action':flow_action,'workflow':workflow,'activity':activity}
+    return {'flow_define':flow_define,'item_type':item_type,'workflow':workflow}
 
 
 @pytest.fixture()
