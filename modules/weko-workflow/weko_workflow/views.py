@@ -143,6 +143,11 @@ def index():
             description: community id
             schema:
               type: string
+          - name: tab
+            in: query
+            description: Specify tab name to initial open(todo or all or wait)  
+            schema:
+              type: string
         responses:
           200:
             description: render result of weko_workflow/activity_list.html
@@ -164,8 +169,7 @@ def index():
         request.args.get('community') or current_app.config[
             'WEKO_THEME_DEFAULT_COMMUNITY'])
 
-    tab = request.args.get('tab')
-    tab = WEKO_WORKFLOW_TODO_TAB if not tab else tab
+    tab = request.args.get('tab',WEKO_WORKFLOW_TODO_TAB)
     if 'community' in request.args:
         activities, maxpage, size, pages, name_param = activity \
             .get_activity_list(request.args.get('community'),

@@ -343,7 +343,14 @@ def db(app):
 
 @pytest.yield_fixture()
 def client(app):
-    """Get test client."""
+    """make a test client.
+
+    Args:
+        app (Flask): flask app.
+
+    Yields:
+        FlaskClient: test client
+    """
     with app.test_client() as client:
         yield client
 
@@ -414,64 +421,6 @@ def users(app, db):
         {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2},
         {'email': user.email, 'id': user.id, 'obj': user},
     ]
-
-
-# @pytest.fixture()
-# def users(app, db):
-#     """Create users."""
-#     ds = app.extensions['invenio-accounts'].datastore
-#     user_count = User.query.filter_by(email='test@test.org').count()
-#     if user_count != 1:
-#         user = create_test_user(email='test@test.org')
-#         contributor = create_test_user(email='test2@test.org')
-#         comadmin = create_test_user(email='test3@test.org')
-#         repoadmin = create_test_user(email='test4@test.org')
-#         sysadmin = create_test_user(email='test5@test.org')
-
-#     else:
-#         user = User.query.filter_by(email='test@test.org').first()
-#         contributor = User.query.filter_by(email='test2@test.org').first()
-#         comadmin = User.query.filter_by(email='test3@test.org').first()
-#         repoadmin = User.query.filter_by(email='test4@test.org').first()
-#         sysadmin = User.query.filter_by(email='test5@test.org').first()
-
-#     role_count = Role.query.filter_by(name='System Administrator').count()
-#     if role_count != 1:
-#         r1 = ds.create_role(name='System Administrator')
-#         r2 = ds.create_role(name='Repository Administrator')
-#         r3 = ds.create_role(name='Contributor')
-#         r4 = ds.create_role(name='Community Administrator')
-
-#     else:
-#         r1 = Role.query.filter_by(name='System Administrator').first()
-#         r2 = Role.query.filter_by(name='Repository Administrator').first()
-#         r3 = Role.query.filter_by(name='Contributor').first()
-#         r4 = Role.query.filter_by(name='Community Administrator').first()
-
-#     ds.add_role_to_user(sysadmin, r1)
-#     ds.add_role_to_user(repoadmin, r2)
-#     ds.add_role_to_user(contributor, r3)
-#     ds.add_role_to_user(comadmin, r4)
-
-#     # Assign access authorization
-#     with db.session.begin_nested():
-#         action_users = [
-#             ActionUsers(action='superuser-access', user=sysadmin)
-#         ]
-#         db.session.add_all(action_users)
-
-#     return [
-#         {'email': user.email, 'id': user.id,
-#          'obj': user},
-#         {'email': contributor.email, 'id': contributor.id,
-#          'obj': contributor},
-#         {'email': comadmin.email, 'id': comadmin.id,
-#          'obj': comadmin},
-#         {'email': repoadmin.email, 'id': repoadmin.id,
-#          'obj': repoadmin},
-#         {'email': sysadmin.email, 'id': sysadmin.id,
-#          'obj': sysadmin},
-#     ]
 
 @pytest.fixture()
 def db_register(app, db):
@@ -545,8 +494,8 @@ def db_register(app, db):
                         location_id=None,
                         is_gakuninrdm=False)
 
-    activity = Activity(activity_id='1',workflow_id=1, flow_id=1,
-                    action_id=2, activity_login_user=1,
+    activity = Activity(activity_id='1',workflow_id=1, flow_id=flow_define.id,
+                    action_id=1, activity_login_user=1,
                     activity_update_user=1,
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,

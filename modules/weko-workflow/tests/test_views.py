@@ -29,14 +29,18 @@ from sqlalchemy import func
 
 import weko_workflow.utils
 from weko_workflow import WekoWorkflow
+from weko_workflow.config import WEKO_WORKFLOW_TODO_TAB, WEKO_WORKFLOW_WAIT_TAB,WEKO_WORKFLOW_ALL_TAB
 from flask_security import login_user
 from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
 from invenio_accounts.testutils import login_user_via_session as login
 
 
+def test_index_acl_nologin(client):
+    """_summary_
 
-
-def test_index_acl_nologin(client,db_register2):
+    Args:
+        client (FlaskClient): flask test client
+    """    
     url = url_for('weko_workflow.index')
     res =  client.get(url)
     assert res.status_code == 302
@@ -61,7 +65,29 @@ def test_index_acl(client, users, db_register2,users_index, status_code):
     res = client.get(url)
     assert res.status_code == status_code
 
+    url = url_for('weko_workflow.index',tab=WEKO_WORKFLOW_TODO_TAB,_external=True)
+    res = client.get(url)
+    assert res.status_code == status_code
 
+    url = url_for('weko_workflow.index',tab=WEKO_WORKFLOW_TODO_TAB,community="a",_external=True)
+    res = client.get(url)
+    assert res.status_code == status_code
+
+    url = url_for('weko_workflow.index',tab=WEKO_WORKFLOW_WAIT_TAB,_external=True)
+    res = client.get(url)
+    assert res.status_code == status_code
+
+    url = url_for('weko_workflow.index',tab=WEKO_WORKFLOW_WAIT_TAB,community="a",_external=True)
+    res = client.get(url)
+    assert res.status_code == status_code
+
+    url = url_for('weko_workflow.index',tab=WEKO_WORKFLOW_ALL_TAB,_external=True)
+    res = client.get(url)
+    assert res.status_code == status_code
+
+    url = url_for('weko_workflow.index',tab=WEKO_WORKFLOW_ALL_TAB,community="a",_external=True)
+    res = client.get(url)
+    assert res.status_code == status_code
 
 def test_init_activity_acl_nologin(client):
     """Test init_activity.
@@ -188,6 +214,8 @@ def test_init_activity_guest_nologin(client):
     (2, 200),
     (3, 200),
     (4, 200),
+    (5, 200),
+    (6, 200),
 ])
 def test_init_activity_guest_users(client, users, users_index, status_code):
     """Test init activity for guest user."""
@@ -213,11 +241,13 @@ def test_find_doi_nologin(client):
 
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
+    (0, 200),
     (1, 200),
     (2, 200),
     (3, 200),
     (4, 200),
+    (5, 200),
+    (6, 200),
 ])
 def test_find_doi_users(client, users, users_index, status_code):
     """Test of find doi."""
@@ -241,11 +271,13 @@ def test_save_activity_nologin(client):
 
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
+    (0, 200),
     (1, 200),
     (2, 200),
     (3, 200),
     (4, 200),
+    (5, 200),
+    (6, 200),
 ])
 def test_save_activity_users(client, users, users_index, status_code):
     """Test of save activity."""
@@ -270,11 +302,13 @@ def test_save_feedback_maillist_nologin(client):
 
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
+    (0, 200),
     (1, 200),
     (2, 200),
     (3, 200),
     (4, 200),
+    (5, 200),
+    (6, 200),
 ])
 def test_save_feedback_maillist_users(client, users, db_register, users_index, status_code):
     """Test of save feedback maillist."""
@@ -311,11 +345,13 @@ def test_previous_action_nologin(client):
 
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
+    (0, 200),
     (1, 200),
     (2, 200),
     (3, 200),
     (4, 200),
+    (5, 200),
+    (6, 200),
 ])
 def test_previous_action_users(client, users, db_register, users_index, status_code):
     """Test of previous action."""
@@ -339,7 +375,7 @@ def test_previous_action_users(client, users, db_register, users_index, status_c
         assert res.status_code == status_code
 
 
-def test_next_action_nologin(client, db_register):
+def test_next_action_nologin(client, db_register,db_register2):
     """Test of next action."""
     url = url_for('weko_workflow.next_action', activity_id='1',
                   action_id=1)
@@ -352,11 +388,13 @@ def test_next_action_nologin(client, db_register):
 
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
+    (0, 200),
     (1, 200),
     (2, 200),
     (3, 200),
     (4, 200),
+    (5, 200),
+    (6, 200),
 ])
 def test_next_action_users(client, users, db_register, users_index, status_code):
     """Test of next action."""
@@ -393,11 +431,13 @@ def test_cancel_action_nologin(client):
 
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
+    (0, 200),
     (1, 200),
     (2, 200),
     (3, 200),
     (4, 200),
+    (5, 200),
+    (6, 200),
 ])
 def test_cancel_action_users(client, users, db_register, users_index, status_code):
     """Test of cancel action."""
@@ -437,11 +477,13 @@ def test_send_mail_nologin(client):
 
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
+    (0, 200),
     (1, 200),
     (2, 200),
     (3, 200),
     (4, 200),
+    (5, 200),
+    (6, 200),
 ])
 def test_send_mail_users(client, users, users_index, status_code):
     """Test of send mail."""
@@ -466,11 +508,13 @@ def test_lock_activity_nologin(client):
 
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
+    (0, 200),
     (1, 200),
     (2, 200),
     (3, 200),
     (4, 200),
+    (5, 200),
+    (6, 200),
 ])
 def test_lock_activity_users(client, users, users_index, status_code):
     """Test of lock activity."""
@@ -496,11 +540,13 @@ def test_unlock_activity_nologin(client):
 
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
+    (0, 200),
     (1, 200),
     (2, 200),
     (3, 200),
     (4, 200),
+    (5, 200),
+    (6, 200),
 ])
 def test_unlock_activity_users(client, users, users_index, status_code):
     """Test of unlock activity."""
@@ -527,11 +573,13 @@ def test_withdraw_confirm_nologin(client):
 
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
+    (0, 200),
     (1, 200),
     (2, 200),
     (3, 200),
     (4, 200),
+    (5, 200),
+    (6, 200),
 ])
 def test_withdraw_confirm_users(client, users, db_register, users_index, status_code):
     """Test of withdraw confirm."""
@@ -566,11 +614,13 @@ def test_display_activity_nologin(client):
 
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 403),
+    (0, 200),
     (1, 200),
     (2, 200),
     (3, 200),
     (4, 200),
+    (5, 200),
+    (6, 200),
 ])
 def test_display_activity_users(client, users, db_register, users_index, status_code):
     """
