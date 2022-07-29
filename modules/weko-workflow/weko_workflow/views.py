@@ -121,6 +121,16 @@ activity_blueprint = Blueprint(
 
 @blueprint.app_template_filter('regex_replace')
 def regex_replace(s, pattern, replace):
+    """
+
+    Args:
+        s (_type_): _description_
+        pattern (_type_): _description_
+        replace (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """    
     return re.sub(pattern, replace, s)
 
 
@@ -164,6 +174,7 @@ def index():
     community_id = ""
     from weko_theme.utils import get_design_layout
 
+    # WEKO_THEME_DEFAULT_COMMUNITY = 'Root Index'
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         request.args.get('community') or current_app.config[
@@ -172,7 +183,7 @@ def index():
     tab = request.args.get('tab',WEKO_WORKFLOW_TODO_TAB)
     if 'community' in request.args:
         activities, maxpage, size, pages, name_param = activity \
-            .get_activity_list(request.args.get('community'),
+            .get_activity_list(community_id=request.args.get('community'),
                                conditions=conditions)
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
@@ -182,18 +193,30 @@ def index():
         activities, maxpage, size, pages, name_param = activity \
             .get_activity_list(conditions=conditions)
 
+    # WEKO_WORKFOW_PAGINATION_VISIBLE_PAGES = 1
     pagination_visible_pages = current_app.config. \
         get('WEKO_WORKFOW_PAGINATION_VISIBLE_PAGES')
+    # WEKO_WORKFLOW_SELECT_DICT = []
     options = current_app.config.get('WEKO_WORKFLOW_SELECT_DICT')
+    # WEKO_ITEMS_UI_USAGE_REPORT = ""
     item_type = current_app.config.get('WEKO_ITEMS_UI_USAGE_REPORT')
+    # WEKO_WORKFLOW_ACTIONS = [
+    # WEKO_WORKFLOW_ACTION_START,
+    # WEKO_WORKFLOW_ACTION_END,
+    # WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,
+    # WEKO_WORKFLOW_ACTION_APPROVAL,
+    # WEKO_WORKFLOW_ACTION_ITEM_LINK,
+    # WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT
+    # ]
     action_status = current_app.config.get('WEKO_WORKFLOW_ACTION')
     send_mail = current_app.config.get('WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL')
     req_per_page = current_app.config.get('WEKO_WORKFLOW_PER_PAGE')
     columns = current_app.config.get('WEKO_WORKFLOW_COLUMNS')
     filters = current_app.config.get('WEKO_WORKFLOW_FILTER_COLUMNS')
+    # WEKO_WORKFLOW_SEND_MAIL_USER_GROUP = {}
     send_mail_user_group = current_app.config.get(
         'WEKO_WORKFLOW_SEND_MAIL_USER_GROUP')
-
+    # WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY = False
     enable_show_activity = current_app.config[
         'WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']
 

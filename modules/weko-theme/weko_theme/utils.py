@@ -119,9 +119,13 @@ def get_design_layout(repository_id):
     There will only be one page or main layout per repository which has the
     main contents widget. This returns the page, or if the main layout contains
     the main contents widget, render_widgets remains True.
-    :param repository_id
-    :returns page, render_widgets
-    """
+
+    Args:
+        repository_id (_type_): _description_
+
+    Returns:
+        _type_: page, render_widgets
+    """    
     if not repository_id:
         return None, False
 
