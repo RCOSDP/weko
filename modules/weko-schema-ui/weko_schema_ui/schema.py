@@ -1476,7 +1476,7 @@ class SchemaTree:
                     count_name += _max_len_name
                 else:
                     if _value[jpcoar_affname].get(self._v):
-                        _value[jpcoar_affname][self._v][0] = [[]]
+                        _value[jpcoar_affname][self._v] = [[]]
 
                 len_idtf = _child[jpcoar_nameidt]
                 if len_idtf > 0:
