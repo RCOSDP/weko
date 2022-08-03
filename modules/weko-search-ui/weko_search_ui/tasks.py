@@ -87,15 +87,18 @@ def remove_temp_dir_task(path):
 
 
 @shared_task
-def export_all_task(root_url):
+def export_all_task(root_url, user_id, data):
     """Export all items."""
     from weko_admin.utils import reset_redis_cache
 
     _task_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_URI"]
     _expired_time = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_EXPIRED_TIME"]
-    _cache_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(name=_task_config)
+    _cache_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+        name=_task_config,
+        user_id=user_id
+    )
 
-    uri = export_all(root_url)
+    uri = export_all(root_url, user_id, data)
     reset_redis_cache(_cache_key, uri)
     delete_exported_task.apply_async(
         args=(
