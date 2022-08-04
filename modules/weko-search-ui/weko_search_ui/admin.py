@@ -714,7 +714,18 @@ class ItemBulkExport(BaseView):
             export_task = export_all_task.apply_async(args=(request.url_root, user_id, data))
             reset_redis_cache(_cache_key, str(export_task.task_id))
 
-        return Response(status=200)
+        # return Response(status=200)
+        check = check_celery_is_run()
+        export_status, download_uri, message, run_message = get_export_status()
+        return jsonify(
+            data={
+                "export_status": export_status,
+                "uri_status": True if download_uri else False,
+                "celery_is_run": check,
+                "error_message": message,
+                "export_run_msg": run_message,
+            }
+        )
 
     @expose("/check_export_status", methods=["GET"])
     def check_export_status(self):

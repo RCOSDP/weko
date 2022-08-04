@@ -241,10 +241,12 @@ class ExportComponent extends React.Component {
               '&times;</button>' + celery_not_run + '</div>');
           }
           if (response.data.error_message) {
+            if(response.data.error_message.length>0){
             $('#errors').append(
               '<div class="alert alert-danger alert-dismissable">' +
               '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
               '&times;</button>' + response.data.error_message + '</div>');
+            }
           }
         }
       },
