@@ -1711,7 +1711,10 @@ def get_url_root():
 
     :return: url root.
     """
-    site_url = current_app.config['THEME_SITEURL'] + '/'
+    site_url = current_app.config['THEME_SITEURL']
+    if not site_url.endswith('/'):
+        site_url = site_url + '/'
+        
     return request.host_url if request else site_url
 
 
