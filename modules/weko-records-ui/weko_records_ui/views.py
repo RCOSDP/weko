@@ -441,6 +441,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         if hasattr(current_user, 'site_license_flag') else False
     send_info['site_license_name'] = current_user.site_license_name \
         if hasattr(current_user, 'site_license_name') else ''
+    
     record_viewed.send(
         current_app._get_current_object(),
         pid=pid,
