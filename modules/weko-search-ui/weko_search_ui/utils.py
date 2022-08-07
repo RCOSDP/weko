@@ -580,6 +580,7 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
             handle_check_cnri(list_record)
             handle_check_doi_indexes(list_record)
             handle_check_doi_ra(list_record)
+            current_app.logger.error(list_record)
             handle_check_doi(list_record)
         result["list_record"] = list_record
     except Exception as ex:
@@ -982,52 +983,51 @@ def handle_check_exist_record(list_record) -> list:
     current_app.logger.debug("handle_check_exist_record")
     for item in list_record:
         item = dict(**item, **{"status": "new"})
+        current_app.logger.debug("item:{}".format(item))
         errors = item.get("errors") or []
-        try:
-            item_id = item.get("id")
-            current_app.logger.debug(item_id)
-            if item_id:
-                system_url = request.host_url + "records/" + item_id
-                if item.get("uri") != system_url:
-                    errors.append(_("Specified URI and system" " URI do not match."))
-                    item["status"] = None
-                else:
+        item_id = item.get("id")
+        # current_app.logger.debug("item_id:{}".format(item_id))
+        if item_id and item_id is not "":
+            system_url = request.host_url + "records/" + str(item_id)
+            if item.get("uri") != system_url:
+                errors.append(_("Specified URI and system" " URI do not match."))
+                item["status"] = None
+            else:
+                try:
                     item_exist = WekoRecord.get_record_by_pid(item_id)
-                    if item_exist:
-                        if item_exist.pid.is_deleted():
-                            item["status"] = None
-                            errors.append(_("Item already DELETED" " in the system"))
-                        else:
-                            exist_url = (
-                                request.host_url + "records/" + item_exist.get("recid")
+                except PIDDoesNotExistError:
+                    item["status"] = None
+                    errors.append(_("Item does not exits" " in the system"))
+                if item_exist:
+                    if item_exist.pid.is_deleted():
+                        item["status"] = None
+                        errors.append(_("Item already DELETED" " in the system"))
+                    else:
+                        exist_url = (
+                                request.host_url + "records/" + str(item_exist.get("recid"))
                             )
-                            if item.get("uri") == exist_url:
-                                _edit_mode = item.get("edit_mode")
-                                if not _edit_mode or _edit_mode.lower() not in [
-                                    "keep",
-                                    "upgrade",
-                                ]:
-                                    errors.append(
+                        
+                        if item.get("uri") == exist_url:
+                            _edit_mode = item.get("edit_mode")
+                            if not _edit_mode or _edit_mode.lower() not in [
+                                "keep",
+                                "upgrade",
+                            ]:
+                                errors.append(
                                         _(
                                             'Please specify either "Keep"'
                                             ' or "Upgrade".'
                                         )
                                     )
-                                    item["status"] = None
-                                else:
-                                    item["status"] = _edit_mode.lower()
-            else:
-                item["id"] = None
-        #                if item.get('uri'):
-        #                    errors.append(_('Item ID does not match the'
-        #                                    + ' specified URI information.'))
-        #                    item['status'] = None
-        except PIDDoesNotExistError:
-            pass
-        except BaseException:
-            current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
+                                item["status"] = None
+                            else:
+                                item["status"] = _edit_mode.lower()
+        else:
+            item["id"] = None
+            item["status"]="new"
         if errors:
             item["errors"] = errors
+        # current_app.logger.debug("item:{}".format(item))
         result.append(item)
     return result
 
@@ -1960,7 +1960,6 @@ def handle_check_doi(list_record):
     :return
 
     """
-
     def _check_doi(doi, item):
         error = None
         split_doi = doi.split("/")
@@ -1980,7 +1979,6 @@ def handle_check_doi(list_record):
         item_id = str(item.get("id"))
         doi = item.get("doi")
         doi_ra = item.get("doi_ra")
-
         if item.get("is_change_identifier") and doi_ra and not doi:
             error = _("Please specify {}.").format("DOI")
         elif doi_ra:
@@ -2010,31 +2008,35 @@ def handle_check_doi(list_record):
                         elif not suffix:
                             error = _("Please specify {}.").format("DOI suffix")
             else:
-                pid = WekoRecord.get_record_by_pid(item_id).pid_recid
-                identifier = IdentifierHandle(pid.object_uuid)
-                _value, doi_type = identifier.get_idt_registration_data()
-                if item.get("status") == "new" or not doi_type:
-                    if doi:
+                if item.get("status") == "new":
+                     if doi:
                         error = _check_doi(doi, item)
                 else:
-                    pid_doi = None
-                    try:
-                        pid_doi = WekoRecord.get_record_by_pid(item_id).pid_doi
-                    except Exception as ex:
-                        current_app.logger.error("item id: %s not found." % item_id)
-                        current_app.logger.error(ex)
-                    if pid_doi:
-                        doi_domain = IDENTIFIER_GRANT_LIST[
-                            WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1
-                        ][2]
-                        if not doi:
-                            error = _("Please specify {}.").format("DOI")
-                        elif not pid_doi.pid_value == (doi_domain + "/" + doi):
-                            error = _(
-                                "Specified {} is different from" + " existing {}."
-                            ).format("DOI", "DOI")
-                    elif doi:
-                        error = _check_doi(doi, item)
+                    pid = WekoRecord.get_record_by_pid(item_id).pid_recid
+                    identifier = IdentifierHandle(pid.object_uuid)
+                    _value, doi_type = identifier.get_idt_registration_data()
+                    if not doi_type:
+                        if doi:
+                            error = _check_doi(doi, item)
+                    else:
+                        pid_doi = None
+                        try:
+                            pid_doi = WekoRecord.get_record_by_pid(item_id).pid_doi
+                        except Exception as ex:
+                            current_app.logger.error("item id: %s not found." % item_id)
+                            current_app.logger.error(ex)
+                        if pid_doi:
+                            doi_domain = IDENTIFIER_GRANT_LIST[
+                                WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1
+                            ][2]
+                            if not doi:
+                                error = _("Please specify {}.").format("DOI")
+                            elif not pid_doi.pid_value == (doi_domain + "/" + doi):
+                                error = _(
+                                    "Specified {} is different from" + " existing {}."
+                                ).format("DOI", "DOI")
+                        elif doi:
+                            error = _check_doi(doi, item)
 
         if error:
             item["errors"] = item["errors"] + [error] if item.get("errors") else [error]

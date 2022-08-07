@@ -1,7 +1,15 @@
+# -*- coding: utf-8 -*-
+# 
+# 
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::xxxx -vv --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+
+
 import pytest
+import unittest
+from mock import MagicMock, patch, PropertyMock
+from invenio_pidstore.errors import PIDDoesNotExistError
 import json
 import os
-
 from flask import session, url_for,current_app
 
 from weko_records.api import ItemTypes
@@ -13,7 +21,9 @@ from weko_search_ui.utils import (
     check_import_items,
     unpackage_import_file,
     read_stats_csv,
+    handle_check_exist_record,
     handle_check_date,
+    handle_check_doi,
     get_list_key_of_iso_date,
     handle_validate_item_import,
     get_item_type,handle_fill_system_item,
@@ -368,8 +378,84 @@ def test_get_item_type(mocker_itemtype):
 
     assert get_item_type(0) == {}
 
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_exist_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_exist_record(app):
+    case =  unittest.TestCase()
+    # case 1 import new items
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record.json")
+    with open(filepath,encoding="utf-8") as f:
+        list_record = json.load(f)
+    
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record_result.json")
+    with open(filepath,encoding="utf-8") as f:
+        result = json.load(f)
+ 
+    case.assertCountEqual(handle_check_exist_record(list_record),result)
 
-# def handle_check_exist_record(list_record) -> list:
+    # case 2 import items with id
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record1.json")
+    with open(filepath,encoding="utf-8") as f:
+        list_record = json.load(f)
+    
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record_result1.json")
+    with open(filepath,encoding="utf-8") as f:
+        result = json.load(f)
+
+    with app.test_request_context():
+        with set_locale('en'):
+            case.assertCountEqual(handle_check_exist_record(list_record),result)
+
+    # case 3 import items with id and uri
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record2.json")
+    with open(filepath,encoding="utf-8") as f:
+        list_record = json.load(f)
+
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record_result2.json")
+    with open(filepath,encoding="utf-8") as f:
+        result = json.load(f)
+
+    with app.test_request_context():
+        with set_locale('en'):
+            with patch("weko_deposit.api.WekoRecord.get_record_by_pid") as m:
+                m.return_value.pid.is_deleted.return_value = False
+                m.return_value.get.side_effect = [1,2,3,4,5,6,7,8,9,10]
+                case.assertCountEqual(handle_check_exist_record(list_record),result)
+
+    # case 4 import new items with doi_ra
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record3.json")
+    with open(filepath,encoding="utf-8") as f:
+        list_record = json.load(f)
+
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record3_result.json")
+    with open(filepath,encoding="utf-8") as f:
+        result = json.load(f)
+    
+    with app.test_request_context():
+        with set_locale('en'):
+            case.assertCountEqual(handle_check_exist_record(list_record),result)
+
+    # with open(filepath,encoding="utf-8", mode='wt') as f:
+    #      json.dump(result,f,ensure_ascii=False)
+    # for item in list_record:
+    #     item['uri'] = "http://localhost/records/"+str(item['id'])
+    # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record2.json")
+    # with open(filepath,encoding="utf-8", mode='wt') as f:
+    #     json.dump(list_record,f,ensure_ascii=False)
+    # i = 1
+    # for record in list_record:
+    #     record['id'] = i
+    #     i=i+1
+
+    # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record1.json")
+    # with open(filepath,encoding="utf-8", mode='wt') as f:
+    #       json.dump(list_record,f,ensure_ascii=False)
+
+
+    # with open(filepath,encoding="utf-8", mode='wt') as f:
+    #      result = handle_check_exist_record(list_record)
+    #      json.dump(result,f,ensure_ascii=False)
+   
+
 # def make_csv_by_line(lines):
 # def make_stats_csv(raw_stats, list_name):
 # def create_deposit(item_id):
@@ -390,7 +476,20 @@ def test_get_item_type(mocker_itemtype):
 # def handle_check_cnri(list_record):
 # def handle_check_doi_indexes(list_record):
 # def handle_check_doi_ra(list_record):
-# def handle_check_doi(list_record):
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_doi(app):
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "list_records.json")
+    with open(filepath,encoding="utf-8") as f:
+        list_record = json.load(f)
+    assert handle_check_doi(list_record)==None
+
+    # case new items with doi_ra
+    filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_doi.json")
+    with open(filepath,encoding="utf-8") as f:
+        list_record = json.load(f)
+    assert handle_check_doi(list_record)==None
+
 # def register_item_handle(item):
 # def prepare_doi_setting():
 # def get_doi_prefix(doi_ra):
