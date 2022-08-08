@@ -5,7 +5,7 @@
     "index": {
       "refresh_interval": "1m",
       "lifecycle.name": "weko_stats_policy",
-      "lifecycle.rollover_alias": "__SEARCH_INDEX_PREFIX__events-stats-search"
+      "lifecycle.rollover_alias": "__SEARCH_INDEX_PREFIX__stats-search"
     }
   },
   "mappings": {
