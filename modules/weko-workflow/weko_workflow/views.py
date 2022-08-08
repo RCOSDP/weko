@@ -32,6 +32,9 @@ from functools import wraps
 
 import redis
 from redis import sentinel
+from weko_workflow.schema.marshmallow import ActivitySchema,ResponseMessageSchema
+from marshmallow.exceptions import ValidationError
+
 from flask import Blueprint, abort, current_app, has_request_context, \
     jsonify, make_response, render_template, request, session, url_for
 from flask_babelex import gettext as _
@@ -118,33 +121,69 @@ activity_blueprint = Blueprint(
 
 @blueprint.app_template_filter('regex_replace')
 def regex_replace(s, pattern, replace):
+    """
+
+    Args:
+        s (_type_): _description_
+        pattern (_type_): _description_
+        replace (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """    
     return re.sub(pattern, replace, s)
 
 
 @blueprint.route('/')
 @login_required
 def index():
-    """Render a basic view."""
+    """Render the activity list.
+    Args:
+
+    Returns:
+        str: render result of weko_workflow/activity_list.html
+    ---
+      get:
+        description: Render the activity list
+        security:
+        - login_required: []
+        parameters:
+          - name: community
+            in: query
+            description: community id
+            schema:
+              type: string
+          - name: tab
+            in: query
+            description: Specify tab name to initial open(todo or all or wait)  
+            schema:
+              type: string
+        responses:
+          200:
+            description: render result of weko_workflow/activity_list.html
+            content:
+                text/html
+    """    
+    
     if not current_user or not current_user.roles:
         return abort(403)
 
     activity = WorkActivity()
-    getargs = request.args
-    conditions = filter_all_condition(getargs)
+    conditions = filter_all_condition(request.args)
     ctx = {'community': None}
     community_id = ""
     from weko_theme.utils import get_design_layout
 
+    # WEKO_THEME_DEFAULT_COMMUNITY = 'Root Index'
     # Get the design for widget rendering
     page, render_widgets = get_design_layout(
         request.args.get('community') or current_app.config[
             'WEKO_THEME_DEFAULT_COMMUNITY'])
 
-    tab = request.args.get('tab')
-    tab = WEKO_WORKFLOW_TODO_TAB if not tab else tab
-    if 'community' in getargs:
+    tab = request.args.get('tab',WEKO_WORKFLOW_TODO_TAB)
+    if 'community' in request.args:
         activities, maxpage, size, pages, name_param = activity \
-            .get_activity_list(request.args.get('community'),
+            .get_activity_list(community_id=request.args.get('community'),
                                conditions=conditions)
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
@@ -154,18 +193,30 @@ def index():
         activities, maxpage, size, pages, name_param = activity \
             .get_activity_list(conditions=conditions)
 
+    # WEKO_WORKFOW_PAGINATION_VISIBLE_PAGES = 1
     pagination_visible_pages = current_app.config. \
         get('WEKO_WORKFOW_PAGINATION_VISIBLE_PAGES')
+    # WEKO_WORKFLOW_SELECT_DICT = []
     options = current_app.config.get('WEKO_WORKFLOW_SELECT_DICT')
+    # WEKO_ITEMS_UI_USAGE_REPORT = ""
     item_type = current_app.config.get('WEKO_ITEMS_UI_USAGE_REPORT')
+    # WEKO_WORKFLOW_ACTIONS = [
+    # WEKO_WORKFLOW_ACTION_START,
+    # WEKO_WORKFLOW_ACTION_END,
+    # WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,
+    # WEKO_WORKFLOW_ACTION_APPROVAL,
+    # WEKO_WORKFLOW_ACTION_ITEM_LINK,
+    # WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT
+    # ]
     action_status = current_app.config.get('WEKO_WORKFLOW_ACTION')
     send_mail = current_app.config.get('WEKO_WORKFLOW_ENABLE_AUTO_SEND_EMAIL')
     req_per_page = current_app.config.get('WEKO_WORKFLOW_PER_PAGE')
     columns = current_app.config.get('WEKO_WORKFLOW_COLUMNS')
     filters = current_app.config.get('WEKO_WORKFLOW_FILTER_COLUMNS')
+    # WEKO_WORKFLOW_SEND_MAIL_USER_GROUP = {}
     send_mail_user_group = current_app.config.get(
         'WEKO_WORKFLOW_SEND_MAIL_USER_GROUP')
-
+    # WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY = False
     enable_show_activity = current_app.config[
         'WEKO_WORKFLOW_ENABLE_SHOW_ACTIVITY']
 
@@ -289,14 +340,35 @@ def iframe_success():
 @blueprint.route('/activity/new', methods=['GET'])
 @login_required
 def new_activity():
-    """New activity."""
+    """New activity.
+    Args:
+
+    Returns:
+        str: render result of weko_workflow/workflow_list.html
+    ---
+      get:
+        description: Render the workflow list
+        security:
+        - login_required: []
+        parameters:
+          - name: community
+            in: query
+            description: community id
+            schema:
+              type: string
+        responses:
+          200:
+            description: render result of weko_workflow/workflow_list.html
+            content:
+                text/html
+
+    """    
     workflow = WorkFlow()
     workflows = workflow.get_workflow_list()
     workflows = workflow.get_workflows_by_roles(workflows)
-    getargs = request.args
     ctx = {'community': None}
     community_id = ""
-    if 'community' in getargs:
+    if 'community' in request.args:
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
         if comm is not None:
@@ -320,24 +392,82 @@ def new_activity():
     )
 
 
+
 @blueprint.route('/activity/init', methods=['POST'])
 @login_required
 def init_activity():
+    """Return URL of workflow activity made from the request body.
+    Args:
+
+    Returns:
+        dict: json data validated by ResponseMessageSchema. 
+    
+    Raises:
+        marshmallow.exceptions.ValidationError: if ResponseMessageSchema is invalid.
+    
+    ---
+    post:
+      description: "init activity"
+      security:
+        - login_required: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              ActivitySchema
+            example: { "flow_id": 1,"workflow_id":1,"itemtype_id": 15}
+      parameters:
+        - in: query
+          name: community
+          description: community id
+          schema:
+            type: string
+      responses:
+        200:
+          description: "success"
+          content:
+            application/json:
+              schema:
+                ResponseMessageSchema
+              example: { "code": 0,"msg":"success","data": {"redirect": "/workflow/activity/detail/A-20220724-00008"}}
+        400:
+            description: "parameter error"
+            content:
+              application/json:
+                schema:
+                  ResponseMessageSchema
+                example: { "code": -1,"msg":"parameter error"}
+        500:
+            description: "server error"
+            content:
+              application/json:
+                schema:
+                  ResponseMessageSchema
+                example: { "code": -1,"msg":"server error"}
+    """
+    url = ''
+    post_activity = None
     try:
-        """Init activity."""
-        post_activity = request.get_json()
-        activity = WorkActivity()
-        getargs = request.args
-        if 'community' in getargs:
+        post_activity = ActivitySchema().load(request.get_json())
+    except ValidationError as err:
+        res = ResponseMessageSchema().load({'code':-1,'msg':str(err)})
+        return jsonify(res.data), 400
+    
+    activity = WorkActivity()    
+    try:
+        if 'community' in request.args:
             rtn = activity.init_activity(
-                post_activity, request.args.get('community'))
+                post_activity.data, request.args.get('community'))
         else:
-            rtn = activity.init_activity(post_activity)
+            rtn = activity.init_activity(post_activity.data)
         if rtn is None:
-            return jsonify(code=-1, msg='error')
+            res = ResponseMessageSchema().load({'code':-1,'msg':'can not make activity_id'})
+            return jsonify(res.data), 500
+        
         url = url_for('weko_workflow.display_activity',
                       activity_id=rtn.activity_id)
-        if 'community' in getargs and request.args.get('community') != 'undefined':
+        if 'community' in request.args and request.args.get('community') != 'undefined':
             comm = GetCommunity.get_community_by_id(
                 request.args.get('community'))
             if comm is not None:
@@ -347,14 +477,17 @@ def init_activity():
     except SQLAlchemyError as ex:
         current_app.logger.error("sqlalchemy error: {}".format(ex))
         db.session.rollback()
-        return jsonify(code=-1, msg='Failed to init activity!')
-    except BaseException as ex:
+        res = ResponseMessageSchema().load({'code':-1,'msg':"sqlalchemy error: {}".format(ex)})
+        return jsonify(res.data), 500
+    except Exception as ex:
         current_app.logger.error("Unexpected error: {}".format(ex))
         db.session.rollback()
-        return jsonify(code=-1, msg='Failed to init activity!')
+        res = ResponseMessageSchema().load({'code':-1,'msg':"Unexpected error: {}".format(ex)})
+        return jsonify(res.data),500 
 
-    return jsonify(code=0, msg='success',
-                   data={'redirect': url})
+    res = ResponseMessageSchema().load({'code':0,'msg':'success','data':{'redirect': url}})
+
+    return jsonify(res.data),200
 
 
 @blueprint.route('/activity/list', methods=['GET'])

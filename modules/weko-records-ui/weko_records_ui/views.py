@@ -364,7 +364,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     def _get_rights_title(result, rights_key, rights_values, current_lang, meta_options):
         """Get multi-lang rights title."""
         item_key = rights_key.split('.')[0]
-        item_title = meta_options[item_key]['title']
+        if meta_options[item_key].get('title'):
+            item_title = meta_options[item_key]['title']
         if meta_options[item_key]['title_i18n'].get(current_lang, None):
             item_title = meta_options[item_key]['title_i18n'][current_lang]
         elif meta_options[item_key]['title_i18n'].get('en', None):
@@ -440,6 +441,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         if hasattr(current_user, 'site_license_flag') else False
     send_info['site_license_name'] = current_user.site_license_name \
         if hasattr(current_user, 'site_license_name') else ''
+    
     record_viewed.send(
         current_app._get_current_object(),
         pid=pid,
@@ -580,7 +582,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     open_day_display_flg = current_app.config.get('OPEN_DATE_DISPLAY_FLG')
     # Hide email of creator in pdf cover page
-    item_type_id = record['item_type_id']
+    if record.get('item_type_id'):
+        item_type_id = record['item_type_id']
     is_show_email = is_show_email_of_creator(item_type_id)
     if not is_show_email:
         # list_hidden = get_ignore_item(record['item_type_id'])
@@ -611,7 +614,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     current_app.logger.debug("template :{}".format(template))
 
     file_url = ''
-    if file_order >= 0 and files:
+    if file_order >= 0 and files and files[file_order].get('url') and files[file_order]['url'].get('url'):
         file_url = files[file_order]['url']['url']
 
     return render_template(
@@ -932,7 +935,7 @@ def get_uri():
         file_obj = ObjectVersion()
         file_obj.file = FileInstance()
         file_obj.file.size = 0
-        file_obj.file.json = {'accessrole', accessrole}
+        file_obj.file.json = {'url':{'url':uri}, 'accessrole': accessrole}
         file_obj.bucket_id = bucket_id
         file_obj.file_id = uuid.uuid3(uuid.NAMESPACE_URL, file_id_key)
         file_obj.root_file_id = uuid.uuid3(uuid.NAMESPACE_URL, file_id_key)

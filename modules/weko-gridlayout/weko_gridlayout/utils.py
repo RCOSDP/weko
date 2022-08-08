@@ -824,7 +824,14 @@ def get_widget_design_page_with_main(repository_id):
 
 
 def main_design_has_main_widget(repository_id):
-    """Check if main design has main widget."""
+    """Check if main design has main widget.
+
+    Args:
+        repository_id (_type_): _description_
+
+    Returns:
+        bool: _description_
+    """
     main_design = WidgetDesignSetting.select_by_repository_id(repository_id)
     if main_design:
         settings = json.loads(main_design.get('settings', '[]')) \
@@ -835,7 +842,14 @@ def main_design_has_main_widget(repository_id):
 
 
 def has_main_contents_widget(settings):
-    """Check if settings contains the main contents widget."""
+    """Check if settings contains the main contents widget.
+
+    Args:
+        settings (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """    
     if settings:
         for item in settings:
             if item.get('type') == config.WEKO_GRIDLAYOUT_MAIN_TYPE:

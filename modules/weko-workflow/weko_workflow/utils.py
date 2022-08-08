@@ -1302,31 +1302,32 @@ def get_parent_pid_with_type(pid_type, object_uuid):
 
 
 def filter_all_condition(all_args):
-    """
-    Filter conditions.
+    """make a json data from request parameters that filtered by config['WEKO_WORKFLOW_FILTER_PARAMS'].
 
-    :param all_args:
-    :return:
-    """
+    Args:
+        all_args (werkzeug.datastructures.ImmutableMultiDict): request paramaters
+
+    Returns:
+        dict: a json data of filtered request parameters.
+    """    
     conditions = {}
     list_key_condition = current_app.config.get('WEKO_WORKFLOW_FILTER_PARAMS',
                                                 [])
     for args in all_args:
         for key in list_key_condition:
             if key in args:
-                filter_condition(conditions, key, request.args.get(args))
+                filter_condition(conditions, key, all_args.get(args))
     return conditions
 
 
 def filter_condition(json, name, condition):
-    """
-    Add conditions to json object.
+    """Add conditions to json object.
 
-    :param json:
-    :param name:
-    :param condition:
-    :return:
-    """
+    Args:
+        json (dict): _description_
+        name (string): _description_
+        condition (string): _description_
+    """    
     if json.get(name):
         json[name].append(condition)
     else:
@@ -1710,7 +1711,10 @@ def get_url_root():
 
     :return: url root.
     """
-    site_url = current_app.config['THEME_SITEURL'] + '/'
+    site_url = current_app.config['THEME_SITEURL']
+    if not site_url.endswith('/'):
+        site_url = site_url + '/'
+        
     return request.host_url if request else site_url
 
 

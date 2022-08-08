@@ -26,6 +26,7 @@ import os
 import re
 import shutil
 import sys
+import pytz
 import tempfile
 import traceback
 import uuid
@@ -69,6 +70,7 @@ from invenio_stats.processors import (
     hash_id,
 )
 from jsonschema import Draft4Validator
+from sqlalchemy import func as _func
 from sqlalchemy.exc import SQLAlchemyError
 from weko_admin.models import SessionLifetime
 from weko_admin.utils import get_redis_cache, reset_redis_cache
@@ -129,6 +131,7 @@ from .config import (
     WEKO_SEARCH_TYPE_DICT,
     WEKO_SEARCH_UI_BULK_EXPORT_LIMIT,
     WEKO_SEARCH_UI_BULK_EXPORT_MSG,
+    WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG,
     WEKO_SEARCH_UI_BULK_EXPORT_TASK,
     WEKO_SEARCH_UI_BULK_EXPORT_URI,
     WEKO_SYS_USER,
@@ -577,6 +580,7 @@ def check_import_items(file, is_change_identifier: bool, is_gakuninrdm=False):
             handle_check_cnri(list_record)
             handle_check_doi_indexes(list_record)
             handle_check_doi_ra(list_record)
+            current_app.logger.error(list_record)
             handle_check_doi(list_record)
         result["list_record"] = list_record
     except Exception as ex:
@@ -979,52 +983,51 @@ def handle_check_exist_record(list_record) -> list:
     current_app.logger.debug("handle_check_exist_record")
     for item in list_record:
         item = dict(**item, **{"status": "new"})
+        current_app.logger.debug("item:{}".format(item))
         errors = item.get("errors") or []
-        try:
-            item_id = item.get("id")
-            current_app.logger.debug(item_id)
-            if item_id:
-                system_url = request.host_url + "records/" + item_id
-                if item.get("uri") != system_url:
-                    errors.append(_("Specified URI and system" " URI do not match."))
-                    item["status"] = None
-                else:
+        item_id = item.get("id")
+        # current_app.logger.debug("item_id:{}".format(item_id))
+        if item_id and item_id is not "":
+            system_url = request.host_url + "records/" + str(item_id)
+            if item.get("uri") != system_url:
+                errors.append(_("Specified URI and system" " URI do not match."))
+                item["status"] = None
+            else:
+                try:
                     item_exist = WekoRecord.get_record_by_pid(item_id)
-                    if item_exist:
-                        if item_exist.pid.is_deleted():
-                            item["status"] = None
-                            errors.append(_("Item already DELETED" " in the system"))
-                        else:
-                            exist_url = (
-                                request.host_url + "records/" + item_exist.get("recid")
+                except PIDDoesNotExistError:
+                    item["status"] = None
+                    errors.append(_("Item does not exits" " in the system"))
+                if item_exist:
+                    if item_exist.pid.is_deleted():
+                        item["status"] = None
+                        errors.append(_("Item already DELETED" " in the system"))
+                    else:
+                        exist_url = (
+                                request.host_url + "records/" + str(item_exist.get("recid"))
                             )
-                            if item.get("uri") == exist_url:
-                                _edit_mode = item.get("edit_mode")
-                                if not _edit_mode or _edit_mode.lower() not in [
-                                    "keep",
-                                    "upgrade",
-                                ]:
-                                    errors.append(
+                        
+                        if item.get("uri") == exist_url:
+                            _edit_mode = item.get("edit_mode")
+                            if not _edit_mode or _edit_mode.lower() not in [
+                                "keep",
+                                "upgrade",
+                            ]:
+                                errors.append(
                                         _(
                                             'Please specify either "Keep"'
                                             ' or "Upgrade".'
                                         )
                                     )
-                                    item["status"] = None
-                                else:
-                                    item["status"] = _edit_mode.lower()
-            else:
-                item["id"] = None
-        #                if item.get('uri'):
-        #                    errors.append(_('Item ID does not match the'
-        #                                    + ' specified URI information.'))
-        #                    item['status'] = None
-        except PIDDoesNotExistError:
-            pass
-        except BaseException:
-            current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
+                                item["status"] = None
+                            else:
+                                item["status"] = _edit_mode.lower()
+        else:
+            item["id"] = None
+            item["status"]="new"
         if errors:
             item["errors"] = errors
+        # current_app.logger.debug("item:{}".format(item))
         result.append(item)
     return result
 
@@ -1957,7 +1960,6 @@ def handle_check_doi(list_record):
     :return
 
     """
-
     def _check_doi(doi, item):
         error = None
         split_doi = doi.split("/")
@@ -1977,7 +1979,6 @@ def handle_check_doi(list_record):
         item_id = str(item.get("id"))
         doi = item.get("doi")
         doi_ra = item.get("doi_ra")
-
         if item.get("is_change_identifier") and doi_ra and not doi:
             error = _("Please specify {}.").format("DOI")
         elif doi_ra:
@@ -2007,31 +2008,35 @@ def handle_check_doi(list_record):
                         elif not suffix:
                             error = _("Please specify {}.").format("DOI suffix")
             else:
-                pid = WekoRecord.get_record_by_pid(item_id).pid_recid
-                identifier = IdentifierHandle(pid.object_uuid)
-                _value, doi_type = identifier.get_idt_registration_data()
-                if item.get("status") == "new" or not doi_type:
-                    if doi:
+                if item.get("status") == "new":
+                     if doi:
                         error = _check_doi(doi, item)
                 else:
-                    pid_doi = None
-                    try:
-                        pid_doi = WekoRecord.get_record_by_pid(item_id).pid_doi
-                    except Exception as ex:
-                        current_app.logger.error("item id: %s not found." % item_id)
-                        current_app.logger.error(ex)
-                    if pid_doi:
-                        doi_domain = IDENTIFIER_GRANT_LIST[
-                            WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1
-                        ][2]
-                        if not doi:
-                            error = _("Please specify {}.").format("DOI")
-                        elif not pid_doi.pid_value == (doi_domain + "/" + doi):
-                            error = _(
-                                "Specified {} is different from" + " existing {}."
-                            ).format("DOI", "DOI")
-                    elif doi:
-                        error = _check_doi(doi, item)
+                    pid = WekoRecord.get_record_by_pid(item_id).pid_recid
+                    identifier = IdentifierHandle(pid.object_uuid)
+                    _value, doi_type = identifier.get_idt_registration_data()
+                    if not doi_type:
+                        if doi:
+                            error = _check_doi(doi, item)
+                    else:
+                        pid_doi = None
+                        try:
+                            pid_doi = WekoRecord.get_record_by_pid(item_id).pid_doi
+                        except Exception as ex:
+                            current_app.logger.error("item id: %s not found." % item_id)
+                            current_app.logger.error(ex)
+                        if pid_doi:
+                            doi_domain = IDENTIFIER_GRANT_LIST[
+                                WEKO_IMPORT_DOI_TYPE.index(doi_ra) + 1
+                            ][2]
+                            if not doi:
+                                error = _("Please specify {}.").format("DOI")
+                            elif not pid_doi.pid_value == (doi_domain + "/" + doi):
+                                error = _(
+                                    "Specified {} is different from" + " existing {}."
+                                ).format("DOI", "DOI")
+                        elif doi:
+                            error = _check_doi(doi, item)
 
         if error:
             item["errors"] = item["errors"] + [error] if item.get("errors") else [error]
@@ -2854,19 +2859,19 @@ def handle_get_all_sub_id_and_name(items, root_id=None, root_name=None, form=[])
                 item.get("items").get("properties"), form=sub_form.get("items", [])
             )
             ids += [key + "[0]." + _id for _id in _ids]
-            names += [title + "[0]." + _name for _name in _names]
+            names += [str(title) + "[0]." + str(_name) for _name in _names]
         elif item.get("type") == "object" and item.get("properties"):
             _ids, _names = handle_get_all_sub_id_and_name(
                 item.get("properties"), form=sub_form.get("items", [])
             )
-            ids += [key + "." + _id for _id in _ids]
-            names += [title + "." + _name for _name in _names]
+            ids += [str(key) + "." + str(_id) for _id in _ids]
+            names += [str(title) + "." + str(_name) for _name in _names]
         elif item.get("format") == "checkboxes":
-            ids.append(key + "[0]")
-            names.append(title + "[0]")
+            ids.append(str(key) + "[0]")
+            names.append(str(title) + "[0]")
         else:
-            ids.append(key)
-            names.append(title)
+            ids.append(str(key))
+            names.append(str(title))
 
     if root_id:
         ids = [root_id + "." + _id for _id in ids]
@@ -2951,7 +2956,7 @@ def handle_check_duplication_item_id(ids: list):
     return list(set(result))
 
 
-def export_all(root_url):
+def export_all(root_url, user_id, data):
     """Gather all the item data and export and return as a JSON or BIBTEX.
 
     Parameter
@@ -2960,6 +2965,19 @@ def export_all(root_url):
     :return: JSON, BIBTEX
     """
     from weko_items_ui.utils import make_stats_csv_with_permission, package_export_file
+
+    _cache_prefix = current_app.config["WEKO_ADMIN_CACHE_PREFIX"]
+    _msg_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_MSG"]
+    _msg_key = _cache_prefix.format(
+        name=_msg_config,
+        user_id=user_id
+    )
+    _run_msg_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG"]
+    _run_msg_key = _cache_prefix.format(
+        name=_run_msg_config,
+        user_id=user_id
+    )
+    _timezone = current_app.config["STATS_WEKO_DEFAULT_TIMEZONE"]
 
     def _itemtype_name(name):
         """Check a list of allowed characters in filenames."""
@@ -2999,51 +3017,89 @@ def export_all(root_url):
             csv_output = package_export_file(item_type_data)
             file.write(csv_output.getvalue())
 
-    def _get_export_data(export_path, finish_item_types, retrys, retry_info={}):
+    def _get_item_type_list(item_type_id):
+        """Get item type list."""
+        item_types = []
         try:
             # get all item type
-            item_type_all = ItemTypes.get_all()
-            item_types = [
-                (str(it.id), _itemtype_name(it.item_type_name.name))
-                for it in item_type_all
-                if str(it.id) not in finish_item_types
-            ]
-            for item_type_id, item_type_name in item_types:
+            if item_type_id == "-1":
+                item_type_all = ItemTypes.get_all()
+                item_types = [
+                    (str(it.id), _itemtype_name(it.item_type_name.name))
+                    for it in item_type_all
+                ]
+            else:
+                it = ItemTypes.get_by_id(item_type_id)
+                item_types = [(str(it.id), _itemtype_name(it.item_type_name.name))]
+        except Exception as ex:
+            current_app.logger.error(ex)
+        return item_types
+
+    def _get_export_data(export_path, item_types, retrys, fromid="", toid="", retry_info={}):
+        try:
+            for it in item_types.copy():
+                item_type_id = it[0]
+                item_type_name = it[1]
                 item_datas = {}
                 if item_type_id in retry_info:
                     counter = retry_info[item_type_id]["counter"]
                     file_part = retry_info[item_type_id]["part"]
-                    max_pid = retry_info[item_type_id]["max"]
+                    from_pid = retry_info[item_type_id]["max"]
                 else:
                     counter = 0
                     file_part = 1
-                    max_pid = "1"
+                    from_pid = fromid if fromid else "1"
                 current_app.logger.info(
                     "Start processing item type {}({}).".format(
                         item_type_name, item_type_id
                     )
                 )
                 # get all record id
-                recids = (
-                    db.session.query(
+                if toid:
+                    recids = db.session.query(
                         PersistentIdentifier.pid_value, PersistentIdentifier.object_uuid
-                    )
-                    .join(
+                    ).join(
                         ItemMetadata,
                         PersistentIdentifier.object_uuid == ItemMetadata.id,
-                    )
-                    .filter(
+                    ).filter(
                         PersistentIdentifier.pid_type == "recid",
                         PersistentIdentifier.status == PIDStatus.REGISTERED,
                         PersistentIdentifier.pid_value.notlike("%.%"),
-                        PersistentIdentifier.pid_value >= max_pid,
-                        ItemMetadata.item_type_id == item_type_id,
-                    )
-                    .order_by(PersistentIdentifier.pid_value)
-                ).all()
+                        _func.to_number(
+                            PersistentIdentifier.pid_value,
+                            current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
+                        ) >= from_pid,
+                        _func.to_number(
+                            PersistentIdentifier.pid_value,
+                            current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
+                        ) <= toid,
+                        ItemMetadata.item_type_id == item_type_id
+                    ).order_by(_func.to_number(
+                        PersistentIdentifier.pid_value,
+                        current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
+                    )).all()
+                else:
+                    recids = db.session.query(
+                        PersistentIdentifier.pid_value, PersistentIdentifier.object_uuid
+                    ).join(
+                        ItemMetadata,
+                        PersistentIdentifier.object_uuid == ItemMetadata.id,
+                    ).filter(
+                        PersistentIdentifier.pid_type == "recid",
+                        PersistentIdentifier.status == PIDStatus.REGISTERED,
+                        PersistentIdentifier.pid_value.notlike("%.%"),
+                        _func.to_number(
+                            PersistentIdentifier.pid_value,
+                            current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
+                        ) >= from_pid,
+                        ItemMetadata.item_type_id == item_type_id
+                    ).order_by(_func.to_number(
+                        PersistentIdentifier.pid_value,
+                        current_app.config["WEKO_SEARCH_UI_TO_NUMBER_FORMAT"]
+                    )).all()
 
                 if len(recids) == 0:
-                    finish_item_types.append(item_type_id)
+                    item_types.remove(it)
                     continue
 
                 record_ids = [(recid.pid_value, recid.object_uuid) for recid in recids]
@@ -3054,6 +3110,12 @@ def export_all(root_url):
                             item_datas["name"], file_part
                         )
                         _write_csv_files(item_datas, export_path)
+                        reset_redis_cache(
+                            _run_msg_key,
+                            "The latest csv file was created on {}.".format(
+                                datetime.now(pytz.timezone(_timezone)).strftime("%Y/%m/%d %H:%M:%S"))
+                            + " Number of retries: {} times.".format(retrys)
+                        )
                         current_app.logger.info(
                             "{}.csv has been created.".format(item_datas["name"])
                         )
@@ -3089,7 +3151,13 @@ def export_all(root_url):
                     )
                 # Create export info file
                 _write_csv_files(item_datas, export_path)
-                finish_item_types.append(item_type_id)
+                reset_redis_cache(
+                    _run_msg_key,
+                    "The latest csv file was created on {}.".format(
+                        datetime.now(pytz.timezone(_timezone)).strftime("%Y/%m/%d %H:%M:%S"))
+                    + " Number of retries: {} times.".format(retrys)
+                )
+                item_types.remove(it)
                 current_app.logger.info(
                     "{}.csv has been created.".format(item_datas["name"])
                 )
@@ -3108,23 +3176,24 @@ def export_all(root_url):
                 db.session.rollback()
                 sleep(5)
                 result = _get_export_data(
-                    export_path, finish_item_types, retrys, retry_info
+                    export_path, item_types, retrys, fromid, toid, retry_info
                 )
                 return result
             else:
                 return False
 
-    _cache_prefix = current_app.config["WEKO_ADMIN_CACHE_PREFIX"]
-    _msg_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_MSG"]
-    _msg_key = _cache_prefix.format(name=_msg_config)
     reset_redis_cache(_msg_key, "")
+    reset_redis_cache(_run_msg_key, "")
     temp_path = tempfile.TemporaryDirectory(
         prefix=current_app.config["WEKO_ITEMS_UI_EXPORT_TMP_PREFIX"]
     )
     try:
         # Delete old file
         _task_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_URI"]
-        _uri_key = _cache_prefix.format(name=_task_config)
+        _uri_key = _cache_prefix.format(
+            name=_task_config,
+            user_id=user_id
+        )
         prev_uri = get_redis_cache(_uri_key)
         if prev_uri:
             delete_exported(prev_uri, _uri_key)
@@ -3132,24 +3201,43 @@ def export_all(root_url):
         export_path = temp_path.name + "/" + datetime.utcnow().strftime("%Y%m%d%H%M%S")
         os.makedirs(export_path, exist_ok=True)
 
-        finish_item_types = []
-        result = _get_export_data(export_path, finish_item_types, 0)
+        item_type_id = data.get('item_type_id', "-1")
+        item_types = _get_item_type_list(item_type_id)
+        fromid = ""
+        toid = ""
+        item_id_range = data.get('item_id_range', "")
+        if item_id_range:
+            if "-" in item_id_range:
+                item_id_split = item_id_range.split("-")
+                fromid = item_id_split[0]
+                toid = item_id_split[1]
+            else:
+                fromid = item_id_range
+                toid = item_id_range
+        
+        result = None
+        if not fromid or not toid or (fromid and toid and int(fromid) <= int(toid)):
+            result = _get_export_data(export_path, item_types, 0, fromid, toid)
 
-        if result:
-            # Create bag
-            bagit.make_bag(export_path)
-            shutil.make_archive(export_path, "zip", export_path)
-            with open(export_path + ".zip", "rb") as file:
-                src = FileInstance.create()
-                src.set_contents(file, default_location=Location.get_default().uri)
-            db.session.commit()
+            if result:
+                # Create bag
+                bagit.make_bag(export_path)
+                shutil.make_archive(export_path, "zip", export_path)
+                with open(export_path + ".zip", "rb") as file:
+                    src = FileInstance.create()
+                    src.set_contents(file, default_location=Location.get_default().uri)
+                db.session.commit()
+            else:
+                reset_redis_cache(_msg_key, "Export failed.")
         else:
-            reset_redis_cache(_msg_key, "Export failed.")
+            reset_redis_cache(_msg_key, "Export failed. Please check item id range.")
+        reset_redis_cache(_run_msg_key, "")
         return src.uri if result and src else ""
     except Exception as ex:
         db.session.rollback()
         current_app.logger.error(ex)
         reset_redis_cache(_msg_key, "Export failed.")
+        reset_redis_cache(_run_msg_key, "")
         return ""
 
 
@@ -3177,7 +3265,8 @@ def cancel_export_all():
                   No:     Error
     """
     cache_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
-        name=WEKO_SEARCH_UI_BULK_EXPORT_TASK
+        name=WEKO_SEARCH_UI_BULK_EXPORT_TASK,
+        user_id=current_user.get_id()
     )
     try:
         task_id = get_redis_cache(cache_key)
@@ -3199,21 +3288,30 @@ def get_export_status():
                False:  Success / Failed / Revoked
     """
     cache_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
-        name=WEKO_SEARCH_UI_BULK_EXPORT_TASK
+        name=WEKO_SEARCH_UI_BULK_EXPORT_TASK,
+        user_id=current_user.get_id()
     )
     cache_uri = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
-        name=WEKO_SEARCH_UI_BULK_EXPORT_URI
+        name=WEKO_SEARCH_UI_BULK_EXPORT_URI,
+        user_id=current_user.get_id()
     )
     cache_msg = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
-        name=WEKO_SEARCH_UI_BULK_EXPORT_MSG
+        name=WEKO_SEARCH_UI_BULK_EXPORT_MSG,
+        user_id=current_user.get_id()
+    )
+    run_msg = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
+        name=WEKO_SEARCH_UI_BULK_EXPORT_RUN_MSG,
+        user_id=current_user.get_id()
     )
     export_status = False
     download_uri = None
     message = None
+    run_message = ""
     try:
         task_id = get_redis_cache(cache_key)
         download_uri = get_redis_cache(cache_uri)
         message = get_redis_cache(cache_msg)
+        run_message = get_redis_cache(run_msg)
         if task_id:
             task = AsyncResult(task_id)
             status_cond = task.successful() or task.failed() or task.state == "REVOKED"
@@ -3221,7 +3319,7 @@ def get_export_status():
     except Exception as ex:
         current_app.logger.error(ex)
         export_status = False
-    return export_status, download_uri, message
+    return export_status, download_uri, message, run_message
 
 
 def handle_check_item_is_locked(item):

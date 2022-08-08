@@ -67,6 +67,7 @@ RUN chmod +x /code/scripts/create-instance.sh;/code/scripts/create-instance.sh
 
 FROM stage_4 AS stage_5
 # Create Weko instance2:
+USER invenio
 WORKDIR /code
 COPY --chown=invenio:invenio scripts/instance.cfg /code/scripts/instance.cfg
 RUN chmod +x /code/scripts/create-instance2.sh;/code/scripts/create-instance2.sh

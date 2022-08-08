@@ -51,6 +51,7 @@ from weko_authors.models import Authors
 from weko_records.api import ItemsMetadata
 from weko_redis.redis import RedisConnection
 
+
 from . import config
 from .models import AdminLangSettings, AdminSettings, ApiCertificate, \
     FacetSearchSetting, FeedbackMailFailed, FeedbackMailHistory, \
@@ -491,14 +492,17 @@ def write_report_csv_rows(writer, records, file_type=None, other_info=None):
                                  record.get('file_preview')])
 
 
-def reset_redis_cache(cache_key, value):
+def reset_redis_cache(cache_key, value, ttl=None):
     """Delete and then reset a cache value to Redis."""
     try:
         redis_connection = RedisConnection()
         datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
         if datastore.redis.exists(cache_key):
             datastore.delete(cache_key)
-        datastore.put(cache_key, value.encode('utf-8'))
+        if ttl is None:
+            datastore.put(cache_key, value.encode('utf-8'))
+        else:
+            datastore.put(cache_key, value.encode('utf-8'),ttl)
     except Exception as e:
         current_app.logger.error('Could not reset redis value', e)
         raise

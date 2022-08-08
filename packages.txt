@@ -55,7 +55,7 @@ flask-shell-ipython==0.4.1
 Flask-SQLAlchemy==2.3.2
 flask-talisman==0.4.1
 Flask-WTF==0.14.3
-flask-sitemap==0.1.0
+flask-sitemap==0.4.0
 Flask-IIIF==0.6.1
 Flask-DebugToolbar==0.13.1
 fs==0.5.4

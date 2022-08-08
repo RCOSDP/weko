@@ -18,7 +18,7 @@ import pytest
 from elasticsearch import Elasticsearch
 from flask import Flask
 from flask_celeryext import FlaskCeleryExt
-from .helpers import load_records, remove_records
+#from .helpers import load_records, remove_records
 from invenio_db import InvenioDB, db
 from invenio_indexer import InvenioIndexer
 from invenio_jsonschemas import InvenioJSONSchemas
@@ -152,3 +152,4 @@ def schema():
                     'oaiserver/internal-v1.1.0.json',
         }]
     }
+

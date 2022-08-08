@@ -149,7 +149,7 @@ def set_subitem_option(data, **kwargs):
                            sub_nondisplay=subitem_list[sub_key]['level2_nondisplay'])
 
 
-def get_property_schema(title='', _schema=_schema, multi_flag=False, **kwargs):
+def get_property_schema(title='', _schema=_schema, multi_flag=False):
     """Get schema text of item type.
 
     Args:
@@ -163,7 +163,7 @@ def get_property_schema(title='', _schema=_schema, multi_flag=False, **kwargs):
     if title:
         if multi_flag:
             schema_data = _schema()
-            set_subitem_option(schema_data, **kwargs)
+            #set_subitem_option(schema_data, **kwargs)
             schema_property = {
                 'type': 'array',
                 'title': title,
@@ -173,12 +173,12 @@ def get_property_schema(title='', _schema=_schema, multi_flag=False, **kwargs):
             }
         else:
             schema_data = _schema()
-            set_subitem_option(schema_data, **kwargs)
+            #set_subitem_option(schema_data, **kwargs)
             schema_property = schema_data
             schema_property['title'] = title
     else:
         schema_data = _schema()
-        set_subitem_option(schema_data, **kwargs)
+        #set_subitem_option(schema_data, **kwargs)
         schema_property = schema_data
         schema_property['format'] = 'object'
 
@@ -237,13 +237,13 @@ def set_post_data(post_data, property_id, name, key, option, form, schema, **kwa
         form ([type], optional): form function.
         schema ([type], optional): schema function.
     """
-    title = kwargs.pop('title', name)
-    title_ja = kwargs.pop('title_ja', '')
-    title_en = kwargs.pop('title_en', '')
-    sys_property = kwargs.pop('sys_property', False)
+    title = kwargs.get('title', name)
+    title_ja = kwargs.get('title_ja', '')
+    title_en = kwargs.get('title_en', '')
+    sys_property = kwargs.get('sys_property', False)
 
     post_data['table_row_map']['form'].append(form(key, title, title_ja, title_en, option['multiple']))
-    post_data['table_row_map']['schema']['properties'][key] = schema(title, option['multiple'], **kwargs)
+    post_data['table_row_map']['schema']['properties'][key] = schema(title, option['multiple'])
     if option['required']:
         post_data['table_row_map']['schema']['required'].append(key)
     meta_data = {

@@ -336,7 +336,7 @@ def is_pubdate_in_future(record):
     """Check pubdate of workflow is in future."""
     adt = record.get('publish_date')
     pdt = to_utc(datetime.strptime(adt, '%Y-%m-%d'))
-    return pdt > datetime.today()
+    return pdt > datetime.utcnow() 
 
 
 def is_private_index(record):
@@ -556,8 +556,6 @@ def listrecords(**kwargs):
 
     identify = OaiIdentify.get_all()
     if not identify or not identify.outPutSetting:
-        current_app.logger.debug(
-            "identify.outPutSetting: {}".format(identify.outPutSetting))
         return error(get_error_code_msg(), **kwargs)
 
     index_state = get_index_state()

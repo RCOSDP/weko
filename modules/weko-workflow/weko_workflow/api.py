@@ -782,8 +782,9 @@ class WorkActivity(object):
         :return: activity ID.
         """
         # Table lock for calculate new activity id
-        db.session.execute(
-            'LOCK TABLE ' + _Activity.__tablename__ + ' IN EXCLUSIVE MODE')
+        if db.get_engine().driver!='pysqlite':
+            db.session.execute(
+                'LOCK TABLE ' + _Activity.__tablename__ + ' IN EXCLUSIVE MODE')
 
         # Calculate activity_id based on id
         utc_now = datetime.utcnow()
@@ -1549,8 +1550,9 @@ class WorkActivity(object):
     def check_current_user_role():
         """Check current user role.
 
-        :return:
-        """
+        Returns:
+            _type_: _description_
+        """        
         is_admin = False
         is_community_admin = False
         # Super admin roles
@@ -1739,7 +1741,13 @@ class WorkActivity(object):
                           is_get_all=False):
         """Get activity list info.
 
-        :return:
+        Args:
+            community_id (_type_, optional): community id. Defaults to None.
+            conditions (_type_, optional): _description_. Defaults to None.
+            is_get_all (bool, optional): _description_. Defaults to False.
+
+        Returns:
+            _type_: _description_
         """
         with db.session.no_autoflush:
             is_admin, is_community_admin = self.check_current_user_role()

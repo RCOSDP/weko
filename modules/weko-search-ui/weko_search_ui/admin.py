@@ -459,6 +459,9 @@ class ItemImportView(BaseView):
                     if task.successful() or task.failed()
                     else ""
                 )
+                item_id = task_item.get("item_id", None)
+                if not item_id and task.result:
+                    item_id = task.result.get("recid", None)
                 result.append(
                     dict(
                         **{
@@ -467,7 +470,7 @@ class ItemImportView(BaseView):
                             "start_date": start_date,
                             "end_date": task_item.get("end_date") or end_date,
                             "task_id": task_id,
-                            "item_id": task_item.get("item_id"),
+                            "item_id": item_id,
                         }
                     )
                 )
@@ -688,36 +691,54 @@ class ItemBulkExport(BaseView):
         """
         _cache_prefix = current_app.config["WEKO_ADMIN_CACHE_PREFIX"]
         _msg_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_MSG"]
-        _msg_key = _cache_prefix.format(name=_msg_config)
+        _msg_key = _cache_prefix.format(
+            name=_msg_config,
+            user_id=current_user.get_id()
+        )
         reset_redis_cache(_msg_key, "")
         return self.render(WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE)
 
-    @expose("/export_all", methods=["GET"])
+    @expose("/export_all", methods=["POST"])
     def export_all(self):
         """Export all items."""
+        data = request.get_json()
+        user_id = current_user.get_id()
         _task_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_TASK"]
         _cache_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
-            name=_task_config
+            name=_task_config,
+            user_id=user_id
         )
-        export_status, download_uri, message = get_export_status()
+        export_status, download_uri, message, run_message = get_export_status()
 
         if not export_status:
-            export_task = export_all_task.apply_async(args=(request.url_root,))
+            export_task = export_all_task.apply_async(args=(request.url_root, user_id, data))
             reset_redis_cache(_cache_key, str(export_task.task_id))
 
-        return Response(status=200)
-
-    @expose("/check_export_status", methods=["GET"])
-    def check_export_status(self):
-        """Check export status."""
+        # return Response(status=200)
         check = check_celery_is_run()
-        export_status, download_uri, message = get_export_status()
+        export_status, download_uri, message, run_message = get_export_status()
         return jsonify(
             data={
                 "export_status": export_status,
                 "uri_status": True if download_uri else False,
                 "celery_is_run": check,
                 "error_message": message,
+                "export_run_msg": run_message,
+            }
+        )
+
+    @expose("/check_export_status", methods=["GET"])
+    def check_export_status(self):
+        """Check export status."""
+        check = check_celery_is_run()
+        export_status, download_uri, message, run_message = get_export_status()
+        return jsonify(
+            data={
+                "export_status": export_status,
+                "uri_status": True if download_uri else False,
+                "celery_is_run": check,
+                "error_message": message,
+                "export_run_msg": run_message,
             }
         )
 
@@ -732,7 +753,7 @@ class ItemBulkExport(BaseView):
 
         path: it was load from FileInstance
         """
-        export_status, download_uri, message = get_export_status()
+        export_status, download_uri, message, run_message = get_export_status()
         if not export_status and download_uri is not None:
             file_instance = FileInstance.get_by_uri(download_uri)
             return file_instance.send_file(

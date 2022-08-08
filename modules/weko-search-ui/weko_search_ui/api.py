@@ -20,7 +20,7 @@
 
 """WEKO3 module docstring."""
 
-
+import markupsafe
 from operator import index
 
 from flask import current_app, json
@@ -205,7 +205,7 @@ def get_search_detail_keyword(str):
         if k_v.get("check_val"):
             for val in k_v.get("check_val"):
                 if val.get("contents"):
-                    val["contents"] = _(val["contents"])
+                    val["contents"] = escape_str(_(val["contents"]))
 
     key_options["condition_setting"] = options
 
@@ -251,3 +251,22 @@ def get_childinfo(index_tree, result_list=[], parename=""):
                     get_childinfo(childlist, result_list, pname)
 
     return result_list
+
+def escape_str(s):
+    """remove escape character from string
+
+    :argument
+        s -- {str} A string removes the escape character.
+    :return
+        s -- {str} string removing escape character.
+    """
+
+    s = repr(markupsafe.escape(s))[8:-2]
+
+    #s = repr(s)
+    #if 'Markup' == s[:6]:
+    #    s = s[8:-2]
+    #else:
+    #    s = s[1:-1]
+
+    return s
