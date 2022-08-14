@@ -33,12 +33,14 @@ def test_reverse_order():
     assert reverse_order('invalid') is None
 
 
-def test_eval_field_string():
+def test_eval_field_string(app):
     """Test string evaluation."""
-    assert eval_field("myfield", True) == dict(myfield=dict(order='asc'))
-    assert eval_field("myfield", False) == dict(myfield=dict(order='desc'))
-    assert eval_field("-myfield", True) == dict(myfield=dict(order='desc'))
-    assert eval_field("-myfield", False) == dict(myfield=dict(order='asc'))
+    assert eval_field("myfield", True) == dict(myfield=dict(order='asc',unmapped_type='long'))
+    assert eval_field("myfield", False) == dict(myfield=dict(order='desc',unmapped_type='long'))
+    assert eval_field("-myfield", True) == dict(myfield=dict(order='desc',unmapped_type='long'))
+    assert eval_field("-myfield", False) == dict(myfield=dict(order='asc',unmapped_type='long'))
+    assert eval_field("myfield", True, True) == dict(myfield=dict(order='asc',unmapped_type='long',nested=True))
+    assert eval_field("date_range", True) == {"_script":{"type":"number", "script":{"lang":"painless","source":"def x = params._source.date_range1;Date dt = new Date();if (x != null && x instanceof Map) { def st = x.getOrDefault(\"gte\",\"\");SimpleDateFormat format = new SimpleDateFormat();if (st.length()>7) {format.applyPattern(\"yyyy-MM-dd\");}else if (st.length()>4){format.applyPattern(\"yyyy-MM\");}else if (st.length()==4){format.applyPattern(\"yyyy\");} try { dt = format.parse(st);} catch (Exception e){}} return dt.getTime()"},"order": 'asc'}}
 
 
 def test_eval_field_callable():

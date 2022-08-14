@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# 
-# 
+#
+#
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::xxxx -vv --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 
 
@@ -30,6 +30,8 @@ from weko_search_ui.utils import (
     get_system_data_uri,
     represents_int,
     validation_date_property,
+    DefaultOrderedDict,
+    defaultify,
     handle_get_all_sub_id_and_name
 )
 from invenio_i18n.ext import InvenioI18N, current_i18n
@@ -39,8 +41,8 @@ from weko_search_ui.config import (
     WEKO_SYS_USER,
     WEKO_IMPORT_SYSTEM_ITEMS,
     VERSION_TYPE_URI,
-ACCESS_RIGHT_TYPE_URI,
-RESOURCE_TYPE_URI
+    ACCESS_RIGHT_TYPE_URI,
+    RESOURCE_TYPE_URI
 )
 
 from unittest.mock import patch, Mock, MagicMock
@@ -236,7 +238,7 @@ def test_get_content_workflow():
     result["flow_id"] = item.flow_id
     result["flow_name"] = item.flow_define.flow_name
     result["item_type_name"] = item.itemtype.item_type_name.name
-    
+
     assert get_content_workflow(item) == result
 
 # def set_nested_item(data_dict, map_list, val):
@@ -274,11 +276,11 @@ def test_unpackage_import_file(app,mocker,mocker_itemtype):
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "unpackage_import_file/result.json")
     with open(filepath,encoding="utf-8") as f:
         result = json.load(f)
-    
+
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "unpackage_import_file/result_force_new.json")
     with open(filepath,encoding="utf-8") as f:
         result_force_new = json.load(f)
-    
+
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "unpackage_import_file")
     with app.test_request_context():
         with set_locale('en'):
@@ -301,9 +303,9 @@ def test_getEncode():
         # {"file":"utf32be_bom_lf_items.csv","enc":"utf-32"},
         # {"file":"utf32le_bom_lf_items.csv","enc":"utf-32"},
          {"file":"big5.txt","enc":""},
-        
+
     ]
-    
+
     for f in csv_files:
         filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "csv",f['file'])
         print(filepath)
@@ -316,14 +318,21 @@ def test_read_stats_csv(app,mocker_itemtype):
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "csv","data.json")
     csv_file_name = "utf8_lf_items.csv"
     csv_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "csv",csv_file_name)
+    file_type = "csv"
     with open(filepath,encoding="utf-8") as f:
         data = json.load(f)
 
     with app.test_request_context():
         with set_locale('en'):
+            res = read_stats_csv(csv_file_path,csv_file_name,file_type)
+            assert res["error"] == data["error"]
+            assert res["error_code"] == data["error_code"]
+            assert res["data_list"] == data["data_list"]
+            assert res["item_type_schema"] == data["item_type_schema"]
+
             assert read_stats_csv(csv_file_path,csv_file_name,'csv') == data
 
-    
+
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "tsv","data.json")
     tsv_file_name = "utf8_lf_items.tsv"
     tsv_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "tsv",tsv_file_name)
@@ -360,7 +369,7 @@ def test_represents_int():
     assert represents_int("a") == False
     assert represents_int("30") == True
     assert represents_int("31.1") == False
-    
+
 
 # def get_item_type(item_type_id=0) -> dict:
 def test_get_item_type(mocker_itemtype):
@@ -385,18 +394,18 @@ def test_handle_check_exist_record(app):
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record.json")
     with open(filepath,encoding="utf-8") as f:
         list_record = json.load(f)
-    
+
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record_result.json")
     with open(filepath,encoding="utf-8") as f:
         result = json.load(f)
- 
+
     case.assertCountEqual(handle_check_exist_record(list_record),result)
 
     # case 2 import items with id
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record1.json")
     with open(filepath,encoding="utf-8") as f:
         list_record = json.load(f)
-    
+
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record_result1.json")
     with open(filepath,encoding="utf-8") as f:
         result = json.load(f)
@@ -429,7 +438,7 @@ def test_handle_check_exist_record(app):
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records", "b4_handle_check_exist_record3_result.json")
     with open(filepath,encoding="utf-8") as f:
         result = json.load(f)
-    
+
     with app.test_request_context():
         with set_locale('en'):
             case.assertCountEqual(handle_check_exist_record(list_record),result)
@@ -454,7 +463,7 @@ def test_handle_check_exist_record(app):
     # with open(filepath,encoding="utf-8", mode='wt') as f:
     #      result = handle_check_exist_record(list_record)
     #      json.dump(result,f,ensure_ascii=False)
-   
+
 
 # def make_csv_by_line(lines):
 # def make_stats_csv(raw_stats, list_name):
@@ -580,7 +589,7 @@ def test_handle_fill_system_item(app,test_list_records,mocker):
         item_type_mapping = json.load(f)
     mocker.patch("weko_records.serializers.utils.get_mapping",return_value=item_map)
     mocker.patch("weko_records.api.Mapping.get_record",return_value=item_type_mapping)
-    
+
     filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data", "list_records/list_records_fill_system.json")
     with open(filepath,encoding="utf-8") as f:
         list_record = json.load(f)
@@ -601,7 +610,7 @@ def test_handle_fill_system_item(app,test_list_records,mocker):
         item2['metadata']['item_1617265215918']['subitem_1522305645492']=a
         item2['metadata']['item_1617265215918']['subitem_1600292170262']=""
         items.append(item2)
-    
+
     for a in ACCESS_RIGHT_TYPE_URI:
         item = copy.deepcopy(list_record[0])
         item['metadata']['item_1617265215918']['subitem_1522305645492']="VoR"
@@ -615,7 +624,7 @@ def test_handle_fill_system_item(app,test_list_records,mocker):
         item2['metadata']['item_1617186476635']['subitem_1522299639480']=a
         item2['metadata']['item_1617186476635']['subitem_1600958577026']=""
         items.append(item2)
-        
+
     for a in RESOURCE_TYPE_URI:
         item = copy.deepcopy(list_record[0])
         item['metadata']['item_1617265215918']['subitem_1522305645492']="VoR"
@@ -629,18 +638,18 @@ def test_handle_fill_system_item(app,test_list_records,mocker):
         item2['metadata']['item_1617258105262']['resourcetype']=a
         item2['metadata']['item_1617258105262']['resourceuri']=""
         items.append(item2)
-    
+
     # with open("items.json","w") as f:
     #     json.dump(items,f)
-    
+
     # with open("items_result.json","w") as f:
     #     json.dump(items_result,f)
-    
+
 
     # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data/handle_fill_system_item/items.json")
     # with open(filepath,encoding="utf-8") as f:
     #     items = json.load(f)
-    
+
     # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data/handle_fill_system_item/items_result.json")
     # with open(filepath,encoding="utf-8") as f:
     #     items_result = json.load(f)
@@ -704,3 +713,28 @@ def test_handle_get_all_sub_id_and_name(app,items,root_id,root_name,form,ids,nam
 # def get_data_by_property(item_metadata, item_map, mapping_key):
 # def get_filenames_from_metadata(metadata):
 # def handle_check_filename_consistence(file_paths, meta_filenames):
+
+def test_DefaultOrderDict_deepcopy():
+    import copy
+
+    data={
+        "key0":"value0",
+        "key1":"value1",
+        "key2":{
+            "key2.0":"value2.0",
+            "key2.1":"value2.1"
+            }
+        }
+    dict1 = defaultify(data)
+    dict2 = copy.deepcopy(dict1)
+
+    for i, d in enumerate(dict2):
+        if i in [0, 1] :
+            assert d == "key" + str(i)
+            assert dict2[d] == "value" + str(i)
+        else:
+            assert d == "key" + str(i)
+            assert isinstance(dict2[d], DefaultOrderedDict)
+            for s, dd in enumerate(dict2[d]):
+                assert dd == "key{}.{}".format(i,s)
+                assert dict2[d][dd] == "value{}.{}".format(i,s)

@@ -20,6 +20,7 @@
 
 """Utilities for convert response json."""
 import copy
+import pickle
 import gzip
 import json
 import xml.etree.ElementTree as Et
@@ -477,7 +478,7 @@ def convert_data_to_edit_pack(data):
         return None
     result = dict()
     result_settings = dict()
-    settings = copy.deepcopy(data.get('settings'))
+    settings = pickle.loads(pickle.dumps(data.get('settings'), -1))
     convert_popular_data(settings, result)
     result['widget_id'] = data.get('widget_id')
     result['is_enabled'] = data.get('is_enabled')

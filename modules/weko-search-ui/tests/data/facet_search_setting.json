@@ -1,0 +1,51 @@
+{
+    "Data Language":{
+        "name_en":"Data Language",
+        "name_jp":"データの言語",
+        "mapping":"language",
+        "aggregations":[],
+        "active":true
+    },
+    "Access":{
+        "name_en":"Access",
+        "name_jp":"アクセス制限",
+        "mapping":"accessRights",
+        "aggregations":[],
+        "active":true
+    },
+    "Location":{
+        "name_en":"Location",
+        "name_jp":"地域",
+        "mapping":"geoLocation.geoLocationPlace",
+        "aggregations":[],
+        "active":true
+    },
+    "Temporal":{
+        "name_en":"Temporal",
+        "name_jp":"時間的範囲",
+        "mapping":"temporal",
+        "aggregations":[],
+        "active":true
+    },
+    "Topic":{
+        "name_en":"Topic",
+        "name_jp":"トピック",
+        "mapping":"subject.value",
+        "aggregations":[],
+        "active":true
+    },
+    "Distributor":{
+        "name_en":"Distributor",
+        "name_jp":"配布者",
+        "mapping":"contributor.contributorName",
+        "aggregations":[{"agg_value": "Distributor", "agg_mapping": "contributor.@attributes.contributorType"}],
+        "active":true
+    },
+    "Data Type":{
+        "name_en":"Data Type",
+        "name_jp":"データタイプ",
+        "mapping":"description.value",
+        "aggregations":[{"agg_value": "Other", "agg_mapping": "description.descriptionType"}],
+        "active":true
+    }
+}

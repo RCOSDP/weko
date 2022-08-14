@@ -12,9 +12,9 @@ import logging
 from datetime import datetime
 
 import pytest
-from conftest import _create_file_download_event
+from tests.conftest import _create_file_download_event
 from elasticsearch_dsl import Search
-from helpers import get_queue_size
+from tests.helpers import get_queue_size
 from invenio_queues.proxies import current_queues
 from mock import patch
 
@@ -112,7 +112,7 @@ def test_anonymize_user(mock_anonymization_salt,
     assert event['unique_session_id'] == exp_unique_session_id
 
 
-def test_anonymiation_salt(base_app):
+def test_anonymiation_salt(app):
     """Test anonymization salt for different days."""
     event = anonymize_user({
         'ip_address': '131.169.180.47', 'user_id': '100',
