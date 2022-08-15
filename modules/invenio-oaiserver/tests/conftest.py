@@ -65,9 +65,10 @@ def app():
     InvenioRecords(app)
     InvenioPIDStore(app)
     InvenioMARC21(app)
-    client = Elasticsearch(hosts=[os.environ.get('ES_HOST', 'localhost')])
+    # client = Elasticsearch(hosts=[os.environ.get('ES_HOST', 'localhost')])
+    client = Elasticsearch(hosts="elasticsearch")
     search = InvenioSearch(app, client=client)
-    search.register_mappings('records', 'data')
+    search.register_mappings('records', 'tests.data')
     InvenioIndexer(app)
     InvenioOAIServer(app)
 
