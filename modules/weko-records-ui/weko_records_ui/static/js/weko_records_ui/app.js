@@ -44,6 +44,16 @@
                     if ($('#billing_file_permission').val()) {
                         handleDownloadBillingFile(true);
                     }
+
+                    /*
+                    Replaces "Version" tab's "Object File Name" url
+                    with the "file download" link url from "Record > Information > File"
+                    replacement url: /record/<pid_value>/files/<path:filename>
+                    */
+                    var $source = $('.forcewrap').eq(1).attr("href") // download record's file download url
+                    var $target = $('#bodyModal').children().children().eq(2).children() // "Version" tab's "Object File Name" url
+                    $target.attr("href", $source) // URL changed to "file download url"
+
                 }, function errorCallback(response) {
                     console.log('Error when trigger api /api/files');
                 });
