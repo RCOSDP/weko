@@ -30,7 +30,7 @@ from flask_babelex import Babel
 from flask_celeryext import FlaskCeleryExt
 from flask_menu import Menu
 from invenio_accounts import InvenioAccounts
-from invenio_accounts.models import User
+from invenio_accounts.models import User, Role
 from invenio_accounts.testutils import create_test_user, login_user_via_session
 from invenio_access.models import ActionUsers
 from invenio_access import InvenioAccess
@@ -49,6 +49,7 @@ from invenio_records import InvenioRecords
 from invenio_search import InvenioSearch
 from sqlalchemy_utils.functions import create_database, database_exists
 
+from weko_groups import WekoGroups
 from weko_workflow import WekoWorkflow
 from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
 from weko_index_tree.views import blueprint_api
@@ -84,6 +85,7 @@ def base_app(instance_path):
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         SQLALCHEMY_ECHO=False,
         TESTING=True,
+        JSONSCHEMAS_HOST='inveniosoftware.org',
         WTF_CSRF_ENABLED=False,
         DEPOSIT_SEARCH_API='/api/search',
         SECURITY_PASSWORD_HASH='plaintext',
@@ -128,6 +130,7 @@ def base_app(instance_path):
     InvenioOAIServer(app_)
     InvenioMail(app_)
     WekoWorkflow(app_)
+    WekoGroups(app_)
 
     return app_
 
@@ -187,21 +190,51 @@ def user():
 def users(app, db):
     """Create users."""
     ds = app.extensions['invenio-accounts'].datastore
-    user = create_test_user(email='test@test.org')
-    contributor = create_test_user(email='test2@test.org')
-    comadmin = create_test_user(email='test3@test.org')
-    repoadmin = create_test_user(email='test4@test.org')
-    sysadmin = create_test_user(email='test5@test.org')
+    user_count = User.query.filter_by(email='user@test.org').count()
+    if user_count != 1:
+        user = create_test_user(email='user@test.org')
+        contributor = create_test_user(email='contributor@test.org')
+        comadmin = create_test_user(email='comadmin@test.org')
+        repoadmin = create_test_user(email='repoadmin@test.org')
+        sysadmin = create_test_user(email='sysadmin@test.org')
+        generaluser = create_test_user(email='generaluser@test.org')
+        originalroleuser = create_test_user(email='originalroleuser@test.org')
+        originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
+    else:
+        user = User.query.filter_by(email='user@test.org').first()
+        contributor = User.query.filter_by(email='contributor@test.org').first()
+        comadmin = User.query.filter_by(email='comadmin@test.org').first()
+        repoadmin = User.query.filter_by(email='repoadmin@test.org').first()
+        sysadmin = User.query.filter_by(email='sysadmin@test.org').first()
+        generaluser = User.query.filter_by(email='generaluser@test.org')
+        originalroleuser = create_test_user(email='originalroleuser@test.org')
+        originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
 
-    r1 = ds.create_role(name='System Administrator')
-    ds.add_role_to_user(sysadmin, r1)
-    r2 = ds.create_role(name='Repository Administrator')
-    ds.add_role_to_user(repoadmin, r2)
-    r3 = ds.create_role(name='Contributor')
-    ds.add_role_to_user(contributor, r3)
-    r4 = ds.create_role(name='Community Administrator')
-    ds.add_role_to_user(comadmin, r4)
+    role_count = Role.query.filter_by(name='System Administrator').count()
+    if role_count != 1:
+        sysadmin_role = ds.create_role(name='System Administrator')
+        repoadmin_role = ds.create_role(name='Repository Administrator')
+        contributor_role = ds.create_role(name='Contributor')
+        comadmin_role = ds.create_role(name='Community Administrator')
+        general_role = ds.create_role(name='General')
+        originalrole = ds.create_role(name='Original Role')
+    else:
+        sysadmin_role = Role.query.filter_by(name='System Administrator').first()
+        repoadmin_role = Role.query.filter_by(name='Repository Administrator').first()
+        contributor_role = Role.query.filter_by(name='Contributor').first()
+        comadmin_role = Role.query.filter_by(name='Community Administrator').first()
+        general_role = Role.query.filter_by(name='General').first()
+        originalrole = Role.query.filter_by(name='Original Role').first()
 
+    ds.add_role_to_user(sysadmin, sysadmin_role)
+    ds.add_role_to_user(repoadmin, repoadmin_role)
+    ds.add_role_to_user(contributor, contributor_role)
+    ds.add_role_to_user(comadmin, comadmin_role)
+    ds.add_role_to_user(generaluser, general_role)
+    ds.add_role_to_user(originalroleuser, originalrole)
+    ds.add_role_to_user(originalroleuser2, originalrole)
+    ds.add_role_to_user(originalroleuser2, repoadmin_role)
+    
     # Assign access authorization
     with db.session.begin_nested():
         action_users = [
@@ -210,14 +243,12 @@ def users(app, db):
         db.session.add_all(action_users)
 
     return [
-        {'email': user.email, 'id': user.id,
-         'password': user.password_plaintext, 'obj': user},
-        {'email': contributor.email, 'id': contributor.id,
-         'password': contributor.password_plaintext, 'obj': contributor},
-        {'email': comadmin.email, 'id': comadmin.id,
-         'password': comadmin.password_plaintext, 'obj': comadmin},
-        {'email': repoadmin.email, 'id': repoadmin.id,
-         'password': repoadmin.password_plaintext, 'obj': repoadmin},
-        {'email': sysadmin.email, 'id': sysadmin.id,
-         'password': sysadmin.password_plaintext, 'obj': sysadmin},
+        {'email': contributor.email, 'id': contributor.id, 'obj': contributor},
+        {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
+        {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
+        {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin},
+        {'email': generaluser.email, 'id': generaluser.id, 'obj': sysadmin},
+        {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser},
+        {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2},
+        {'email': user.email, 'id': user.id, 'obj': user},
     ]

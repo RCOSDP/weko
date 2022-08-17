@@ -28,7 +28,7 @@ from __future__ import absolute_import, print_function
 
 import pytest
 from click.testing import CliRunner
-from conftest import MOCK_MQ_EXCHANGE, mock_iter_entry_points_factory, \
+from tests.conftest import MOCK_MQ_EXCHANGE, mock_iter_entry_points_factory, \
     remove_queues
 from flask import Flask
 from mock import patch

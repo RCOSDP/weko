@@ -1003,6 +1003,18 @@ def next_action(activity_id='0', action_id=0):
     activity_detail = work_activity.get_activity_detail(activity_id)
     action_order = activity_detail.action_order
     post_json = request.get_json()
+    # A-20220808-00001
+    # A-20220808-00001
+    # A-20220808-00001
+    #current_app.logger.error("next_action:activity_id:{}".format(activity_id))
+    # 3
+    # 5
+    # 7
+    #current_app.logger.error("next_action:action_id:{}".format(action_id))
+    # {'commond': '', 'action_version': '1.0.1', 'temporary_save': 0}
+    # {'commond': '', 'action_version': '1.0.1', 'temporary_save': 0, 'link_data': []}
+    # {'identifier_grant': '1', 'identifier_grant_jalc_doi_suffix': '', 'identifier_grant_jalc_doi_link': 'https://doi.org/xxx/0000000059', 'identifier_grant_jalc_cr_doi_suffix': '', 'identifier_grant_jalc_cr_doi_link': 'https://doi.org/yyy/0000000059', 'identifier_grant_jalc_dc_doi_suffix': '', 'identifier_grant_jalc_dc_doi_link': 'https://doi.org/zzz/0000000059', 'identifier_grant_ndl_jalc_doi_suffix': '', 'identifier_grant_ndl_jalc_doi_link': 'https://doi.org/<Empty>/0000000059', 'identifier_grant_crni_link': '', 'action_version': '1.0.0', 'commond': '', 'temporary_save': 0}
+    #current_app.logger.error("next_action:post_json:{}".format(post_json))
     activity = dict(
         activity_id=activity_id,
         action_id=action_id,
@@ -1387,6 +1399,14 @@ def next_action(activity_id='0', action_id=0):
 def previous_action(activity_id='0', action_id=0, req=0):
     """Previous action."""
     post_data = request.get_json()
+    # A-20220808-00001
+    #current_app.logger.error("previous:activity_id:{}".format(activity_id))
+    # 7
+    #current_app.logger.error("previous:action_id:{}".format(action_id))
+    # -1
+    #current_app.logger.error("previous:req:{}".format(req))
+    # :{'identifier_grant': '1', 'identifier_grant_jalc_doi_suffix': '', 'identifier_grant_jalc_doi_link': 'https://doi.org/xxx/0000000059', 'identifier_grant_jalc_cr_doi_suffix': '', 'identifier_grant_jalc_cr_doi_link': 'https://doi.org/yyy/0000000059', 'identifier_grant_jalc_dc_doi_suffix': '', 'identifier_grant_jalc_dc_doi_link': 'https://doi.org/zzz/0000000059', 'identifier_grant_ndl_jalc_doi_suffix': '', 'identifier_grant_ndl_jalc_doi_link': 'https://doi.org/<Empty>/0000000059', 'identifier_grant_crni_link': '', 'action_version': '1.0.0', 'commond': '', 'temporary_save': 0}
+    #current_app.logger.error("previous:post_data:{}".format(post_data))
     activity = dict(
         activity_id=activity_id,
         action_id=action_id,

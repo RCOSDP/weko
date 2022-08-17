@@ -12,7 +12,7 @@ from __future__ import absolute_import, print_function
 
 import datetime
 from collections import OrderedDict
-from copy import deepcopy
+import pickle
 from functools import wraps
 
 import six
@@ -82,7 +82,7 @@ class BookmarkAPI:
 
     # NOTE: For ES7 mappings need one-level of less nesting
     MAPPINGS_ES7 = {
-        "mappings": deepcopy(MAPPINGS['mappings']['aggregation-bookmark'])
+        "mappings": pickle.loads(pickle.dumps(MAPPINGS['mappings']['aggregation-bookmark'], -1))
     }
 
     def __init__(self, client, agg_type, agg_interval):

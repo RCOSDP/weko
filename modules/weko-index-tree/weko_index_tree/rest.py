@@ -22,6 +22,7 @@
 
 import os
 from functools import wraps
+from wsgiref.util import request_uri
 
 from flask import Blueprint, abort, current_app, jsonify, make_response, \
     request
@@ -319,7 +320,6 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
     def get(self, **kwargs):
         """Get tree json."""
         from invenio_communities.models import Community
-
         try:
             action = request.values.get('action')
             comm_id = request.values.get('community')

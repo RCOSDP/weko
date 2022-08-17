@@ -22,6 +22,7 @@
 
 import pytest
 from datetime import datetime
+from mock import patch
 from elasticsearch.exceptions import NotFoundError
 from invenio_access.models import Role
 from weko_deposit.api import WekoDeposit
@@ -30,6 +31,7 @@ from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
 from weko_index_tree import WekoIndexTree
 from invenio_accounts.testutils import login_user_via_view
+from weko_groups.api import Group
 
 def test_indexes(app, db, user, location):
     with app.test_client() as client:
@@ -107,7 +109,6 @@ def test_indexes(app, db, user, location):
         Indexes.get_recursive_tree()
 
         Indexes.get_index_with_role(3)
-
         Indexes.get_index(2)
 
         Indexes.get_index_by_name('test_name')
@@ -175,7 +176,6 @@ def test_indexes(app, db, user, location):
 
         Indexes.get_public_indexes_list()
 
-
 def test_indexes_delete(app, db):
     WekoIndexTree(app)
     index_metadata = {
@@ -195,6 +195,19 @@ def test_indexes_delete(app, db):
     Indexes.delete(1)
 
 
+
+
+
+
+# class Indexes(object):
+#     def create(cls, pid=None, indexes=None):
+#         def _add_index(data):
+#     def update(cls, index_id, **data):
+#     def delete(cls, index_id, del_self=False):
+#     def delete_by_action(cls, action, index_id):
+
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_delete_by_action -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+
 def test_indexes_delete_by_action(app, db, user):
     WekoIndexTree(app)
     index_metadata = {
@@ -213,3 +226,101 @@ def test_indexes_delete_by_action(app, db, user):
     Indexes.delete_by_action('move', 2)
     with pytest.raises(NotFoundError):
         Indexes.delete_by_action('delete', 1)
+
+#     def move(cls, index_id, **data):
+#         def _update_index(new_position, parent=None):
+#         def _swap_position(i, index_tree, next_index_tree):
+#         def _re_order_tree(new_position):
+#     def get_index_tree(cls, pid=0):
+#     def get_browsing_info(cls):
+#     def get_browsing_tree(cls, pid=0):
+#     def get_more_browsing_tree(cls, pid=0, more_ids=[]):
+#     def get_browsing_tree_ignore_more(cls, pid=0):
+#     def get_browsing_tree_paths(cls, index_id: int = 0):
+#     def get_contribute_tree(cls, pid, root_node_id=0):
+#     def get_recursive_tree(cls, pid: int = 0):
+#     def get_index_with_role(cls, index_id):
+#         def _get_allow_deny(allow, role, browse_flag=False):
+#         def _get_group_allow_deny(allow_group_id=[], groups=[]):
+
+def test_indexes_get_index_with_role(app, db, user, location):
+    with app.test_client() as client:
+        login_user_via_view(client=client, user=user)
+
+        WekoIndexTree(app)
+        index_metadata = {
+            'id': 1,
+            'parent': 0,
+            'value': 'test_name',
+        }
+        Indexes.create(0, index_metadata)
+        index = Indexes.update(1,
+                       public_date="20220101",
+                       browsing_group="1,2",
+                       contribute_group="4,5",
+                       browsing_role="",
+                       contribute_role=""
+                       )
+        group=Group(id=1,name="test group1")
+        role_test=Role(id=999,name="test role")
+        role_admin = Role(id=0,name="Administrator")
+        
+        with db.session.begin_nested():
+            db.session.add(group)
+            db.session.add(role_test)
+            db.session.add(role_admin)
+        Indexes.get_index_with_role(1)
+
+
+        with patch("weko_index_tree.api.Indexes.get_account_role",return_value="test role"):
+            Indexes.get_index_with_role(1)
+
+
+#     def get_index(cls, index_id, with_count=False):
+#     def get_index_by_name(cls, index_name="", pid=0):
+#     def get_index_by_all_name(cls, index_name=""):
+#     def get_root_index_count(cls):
+#     def get_account_role(cls):
+#         def _get_dict(x):
+#     def get_path_list(cls, node_lst):
+#     def get_path_name(cls, index_ids):
+#     def get_self_list(cls, index_id, community_id=None):
+#     def get_self_path(cls, node_id):
+#     def get_child_list_recursive(cls, pid):
+#         def recursive_p():
+#     def recs_reverse_query(cls, pid=0):
+#     def recs_query(cls, pid=0):
+#     def recs_tree_query(cls, pid=0, ):
+#     def recs_root_tree_query(cls, pid=0):
+#     def get_harvest_public_state(cls, paths):
+#         def _query(path):
+#     def is_index(cls, path):
+#     def is_public_state(cls, paths):
+#         def _query(path):
+#     def is_public_state_and_not_in_future(cls, ids):
+#         def _query(_id):
+#     def set_item_sort_custom(cls, index_id, sort_json={}):
+#     def update_item_sort_custom_es(cls, index_path, sort_json=[]):
+#     def get_item_sort(cls, index_id):
+#     def have_children(cls, index_id):
+#     def get_coverpage_state(cls, indexes: list):
+#     def set_coverpage_state_resc(cls, index_id, state):
+#     def set_public_state_resc(cls, index_id, state, date):
+#     def set_contribute_role_resc(cls, index_id, contribute_role):
+#     def set_contribute_group_resc(cls, index_id, contribute_group):
+#     def set_browsing_role_resc(cls, index_id, browsing_role):
+#     def set_browsing_group_resc(cls, index_id, browsing_group):
+#     def set_online_issn_resc(cls, index_id, online_issn):
+#     def get_index_count(cls):
+#     def get_child_list(cls, index_id):
+#     def get_child_id_list(cls, index_id=0):
+#     def get_list_path_publish(cls, index_id):
+#     def get_public_indexes(cls):
+#     def get_all_indexes(cls):
+#     def get_all_parent_indexes(cls, index_id) -> list:
+#     def get_full_path_reverse(cls, index_id=0):
+#     def get_full_path(cls, index_id=0):
+#     def get_harverted_index_list(cls):
+#     def update_set_info(cls, index):
+#     def delete_set_info(cls, action, index_id, id_list):
+#     def get_public_indexes_list(cls):

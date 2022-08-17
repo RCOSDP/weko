@@ -45,7 +45,7 @@ def queues_exist(names, exist=True):
 
 
 @pytest.mark.parametrize("declared", [
-    (['queue0', 'queue1']),
+     (['queue0', 'queue1']),
     # no queue specified => declare all of them
     ([]),
 ])

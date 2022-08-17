@@ -21,12 +21,12 @@
 """Weko Search-UI admin."""
 
 import codecs
-import copy
 import json
 import os
 import tempfile
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
+import pickle
 
 from blinker import Namespace
 from celery import chord
@@ -459,6 +459,9 @@ class ItemImportView(BaseView):
                     if task.successful() or task.failed()
                     else ""
                 )
+                item_id = task_item.get("item_id", None)
+                if not item_id and task.result:
+                    item_id = task.result.get("recid", None)
                 result.append(
                     dict(
                         **{
@@ -467,7 +470,7 @@ class ItemImportView(BaseView):
                             "start_date": start_date,
                             "end_date": task_item.get("end_date") or end_date,
                             "task_id": task_id,
-                            "item_id": task_item.get("item_id"),
+                            "item_id": item_id,
                         }
                     )
                 )
@@ -527,10 +530,10 @@ class ItemImportView(BaseView):
                         "{}({})".format(item_type.item_type_name.name, item_type.id),
                         "{}items/jsonschema/{}".format(request.url_root, item_type.id),
                     ]
-                    ids_line = copy.deepcopy(WEKO_EXPORT_TEMPLATE_BASIC_ID)
-                    names_line = copy.deepcopy(WEKO_EXPORT_TEMPLATE_BASIC_NAME)
+                    ids_line = pickle.loads(pickle.dumps(WEKO_EXPORT_TEMPLATE_BASIC_ID, -1))
+                    names_line = pickle.loads(pickle.dumps(WEKO_EXPORT_TEMPLATE_BASIC_NAME, -1))
                     systems_line = ["#"] + ["" for _ in range(len(ids_line) - 1)]
-                    options_line = copy.deepcopy(WEKO_EXPORT_TEMPLATE_BASIC_OPTION)
+                    options_line = pickle.loads(pickle.dumps(WEKO_EXPORT_TEMPLATE_BASIC_OPTION, -1))
 
                     item_type = item_type.render
                     meta_list = {
@@ -688,24 +691,41 @@ class ItemBulkExport(BaseView):
         """
         _cache_prefix = current_app.config["WEKO_ADMIN_CACHE_PREFIX"]
         _msg_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_MSG"]
-        _msg_key = _cache_prefix.format(name=_msg_config)
+        _msg_key = _cache_prefix.format(
+            name=_msg_config,
+            user_id=current_user.get_id()
+        )
         reset_redis_cache(_msg_key, "")
         return self.render(WEKO_SEARCH_UI_ADMIN_EXPORT_TEMPLATE)
 
-    @expose("/export_all", methods=["GET"])
+    @expose("/export_all", methods=["POST"])
     def export_all(self):
         """Export all items."""
+        data = request.get_json()
+        user_id = current_user.get_id()
         _task_config = current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_TASK"]
         _cache_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
-            name=_task_config
+            name=_task_config,
+            user_id=user_id
         )
         export_status, download_uri, message, run_message = get_export_status()
 
         if not export_status:
-            export_task = export_all_task.apply_async(args=(request.url_root,))
+            export_task = export_all_task.apply_async(args=(request.url_root, user_id, data))
             reset_redis_cache(_cache_key, str(export_task.task_id))
 
-        return Response(status=200)
+        # return Response(status=200)
+        check = check_celery_is_run()
+        export_status, download_uri, message, run_message = get_export_status()
+        return jsonify(
+            data={
+                "export_status": export_status,
+                "uri_status": True if download_uri else False,
+                "celery_is_run": check,
+                "error_message": message,
+                "export_run_msg": run_message,
+            }
+        )
 
     @expose("/check_export_status", methods=["GET"])
     def check_export_status(self):

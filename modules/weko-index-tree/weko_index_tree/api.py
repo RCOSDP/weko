@@ -20,7 +20,7 @@
 
 """API for weko-index-tree."""
 
-from copy import deepcopy
+import pickle
 from datetime import date, datetime
 from functools import partial
 
@@ -221,7 +221,7 @@ class Indexes(object):
                         getattr(index, "contribute_role")),
                     'biblio_flag': partial(
                         cls.set_online_issn_resc, index_id,
-                        getattr(index, "online_issn"))                        
+                        getattr(index, "online_issn"))
                 }
                 for recur_key, recur_update_func in recs_group.items():
                     if getattr(index, recur_key):
@@ -671,7 +671,7 @@ class Indexes(object):
         role = cls.get_account_role()
         allow = index["browsing_role"].split(',') \
             if len(index["browsing_role"]) else []
-        allow, deny = _get_allow_deny(allow, deepcopy(role), True)
+        allow, deny = _get_allow_deny(allow, pickle.loads(pickle.dumps(role, -1)), True)
         index["browsing_role"] = dict(allow=allow, deny=deny)
 
         allow = index["contribute_role"].split(',') \
@@ -687,13 +687,13 @@ class Indexes(object):
         allow_group_id = index["browsing_group"].split(',') \
             if len(index["browsing_group"]) else []
         allow_group, deny_group = _get_group_allow_deny(allow_group_id,
-                                                        deepcopy(group_list))
+                                                        pickle.loads(pickle.dumps(group_list, -1)))
         index["browsing_group"] = dict(allow=allow_group, deny=deny_group)
 
         allow_group_id = index["contribute_group"].split(',') \
             if len(index["contribute_group"]) else []
         allow_group, deny_group = _get_group_allow_deny(allow_group_id,
-                                                        deepcopy(group_list))
+                                                        pickle.loads(pickle.dumps(group_list, -1)))
         index["contribute_group"] = dict(allow=allow_group, deny=deny_group)
 
         return index
@@ -1269,7 +1269,7 @@ class Indexes(object):
                     'parent_state')).filter(Index.id.in_(path))
 
         try:
-            _paths = deepcopy(paths)
+            _paths = pickle.loads(pickle.dumps(paths, -1))
             last_path = _paths.pop(-1).split('/')
             qry = _query(last_path)
             for i in range(len(_paths)):
@@ -1313,7 +1313,7 @@ class Indexes(object):
                     'parent_state')).filter(Index.id.in_(path))
 
         try:
-            _paths = deepcopy(paths)
+            _paths = pickle.loads(pickle.dumps(paths, -1))
             last_path = _paths.pop(-1).split('/')
             qry = _query(last_path)
             for i in range(len(_paths)):
@@ -1341,7 +1341,7 @@ class Indexes(object):
                 ))).label('parent_state'))
 
         try:
-            _ids = deepcopy(ids)
+            _ids = pickle.loads(pickle.dumps(ids, -1))
             qry = _query(_ids.pop(-1))
             for i in range(len(_ids)):
                 _ids[i] = _query(_ids[i])

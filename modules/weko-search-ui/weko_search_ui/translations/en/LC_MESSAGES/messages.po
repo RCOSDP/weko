@@ -56,7 +56,7 @@ msgstr ""
 
 #: weko_search_ui/templates/weko_search_ui/admin/import.html:94
 #: weko_search_ui/utils.py:482
-#: weko_search_ui/templates/weko_search_ui/admin/export.html:46
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:50
 msgid "Internal server error"
 msgstr ""
 
@@ -769,24 +769,34 @@ msgstr "Is the input contents discarded?"
 #~ msgstr ""
 
 #: weko_search_ui/templates/weko_search_ui/admin/export.html:40
-msgid "Export all item"
+msgid "The last item ID"
 msgstr ""
 
 #: weko_search_ui/templates/weko_search_ui/admin/export.html:41
+msgid "Filter"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:44
+msgid "Export item"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:45
 msgid "Download URL"
 msgstr ""
 
-#: weko_search_ui/templates/weko_search_ui/admin/export.html:43
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:47
 msgid "Export message"
 msgstr "Are you sure you want to export all items?"
 
-#: weko_search_ui/templates/weko_search_ui/admin/export.html:43
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:51
 msgid "Cancel export message"
 msgstr "Are you sure you want to cancel process of exporting all items?"
 
-#: weko_search_ui/templates/weko_search_ui/admin/export.html:44
+#: weko_search_ui/templates/weko_search_ui/admin/export.html:48
 msgid "Execute"
 msgstr ""
+
+
 
 msgid "import_error_msg_is_withdraw_doi"
 msgstr "This DOI was withdrawn. Please input another DOI."
