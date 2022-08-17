@@ -51,6 +51,9 @@ class SchemaConverter:
         if not rootname:
             abort(400, "Error creating Schema: Invalid root name used")
 
+        current_app.logger.error("schemafile:{}".format(schemafile))
+        current_app.logger.error("rootname:{}".format(rootname))
+
         self.rootname = rootname
         self.schema, self.namespaces, self.target_namespace = \
             self.create_schema(schemafile)

@@ -149,7 +149,7 @@ class RecordBase(dict):
             raises a :class:`jsonschema.exceptions.ValidationError`.
         """
         if '$schema' in self and self['$schema'] is not None:
-            kwargs['cls'] = kwargs.pop('validator', None)
+            kwargs['cls'] = kwargs.pop('validator', None)   
             _records_state.validate(self, self['$schema'], **kwargs)
 
     def replace_refs(self):

@@ -181,6 +181,30 @@ def item_type(app, db):
         tag=1
     )
 
+@pytest.fixture()
+def item_type2(app, db):
+    _item_type_name = ItemTypeName(name='test2')
+
+    _render = {
+        'meta_list': {},
+        'table_row_map': {
+            'schema': {
+                'properties': {
+                    'item_1': {}
+                }
+            }
+        },
+        'table_row': ['1']
+    }
+
+    return ItemTypes.create(
+        name='test2',
+        item_type_name=_item_type_name,
+        schema={},
+        render=_render,
+        tag=1
+    )
+
 
 @pytest.fixture()
 def mock_execute():
