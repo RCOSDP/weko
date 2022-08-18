@@ -118,9 +118,16 @@ class CommunityModelView(ModelView):
         if field.data:
             field.data = field.data.lower()
 
+    def _validate_input_title(self, field):
+        if field.data.strip() == '':
+            raise ValidationError('Title can not be blank.')
+
     form_args = {
         'id': {
             'validators': [_validate_input_id]
+        },
+        'title': {
+            'validators': [_validate_input_title]
         }
     }
 
