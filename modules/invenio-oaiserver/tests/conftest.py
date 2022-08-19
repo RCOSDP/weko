@@ -13,7 +13,6 @@ from __future__ import absolute_import, print_function
 import os
 import shutil
 import tempfile
-from zlib import DEF_BUF_SIZE
 import pytest
 import json
 
@@ -39,7 +38,6 @@ from weko_records_ui.config import WEKO_RECORDS_UI_LICENSE_DICT
 from invenio_oaiserver import InvenioOAIServer
 from invenio_oaiserver.views.server import blueprint
 from invenio_oaiserver.provider import OAIIDProvider
-
 from .helpers import load_records, remove_records, create_record_oai
 
 
