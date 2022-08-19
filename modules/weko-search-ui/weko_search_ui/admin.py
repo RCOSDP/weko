@@ -336,11 +336,11 @@ class ItemImportView(BaseView):
             for role in current_user.roles:
                 if role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
                     role_ids = []
+                    can_edit_indexes = [0]
                     break
                 else:
-                    can_edit_indexes = ['ALL']
                     role_ids.append(role.id)
-        if role_ids and len(can_edit_indexes) == 1 and can_edit_indexes[0] == 'ALL':
+        if role_ids and len(can_edit_indexes) == 1 and can_edit_indexes[0] != 0:
             from invenio_communities.models import Community
             comm_data = Community.query.filter(
                 Community.id_role.in_(role_ids)

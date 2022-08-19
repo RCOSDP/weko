@@ -1708,7 +1708,7 @@ def handle_check_and_prepare_index_tree(list_record, all_index_permission, can_e
             if not can_edit_indexes:
                 errors.append(msg_can_not_edit)
                 result = None
-            elif can_edit_indexes[0] != 'ALL':
+            elif can_edit_indexes[0] != 0:
                 if result not in can_edit_indexes:
                     errors.append(msg_can_not_edit)
                     result = None
