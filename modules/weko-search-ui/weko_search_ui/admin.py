@@ -330,6 +330,24 @@ class ItemImportView(BaseView):
         data = request.form
         file = request.files["file"] if request.files else None
 
+        role_ids = []
+        can_edit_indexes = []
+        if current_user and current_user.is_authenticated:
+            for role in current_user.roles:
+                if role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
+                    role_ids = []
+                    break
+                else:
+                    can_edit_indexes = ['ALL']
+                    role_ids.append(role.id)
+        if role_ids and len(can_edit_indexes) == 1 and can_edit_indexes[0] == 'ALL':
+            from invenio_communities.models import Community
+            comm_data = Community.query.filter(
+                Community.id_role.in_(role_ids)
+            ).all()
+            for comm in comm_data:
+                can_edit_indexes += [i.cid for i in Indexes.get_self_list(comm.root_node_id)]
+            can_edit_indexes = list(set(can_edit_indexes))
         if data and file:
             temp_path = (
                 tempfile.gettempdir()
@@ -346,6 +364,8 @@ class ItemImportView(BaseView):
                     data.get("is_change_identifier") == "true",
                     request.host_url,
                     current_i18n.language,
+                    False,
+                    can_edit_indexes
                 ),
             )
         return jsonify(code=1, check_import_task_id=task.task_id)
